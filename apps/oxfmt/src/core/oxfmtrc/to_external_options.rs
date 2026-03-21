@@ -94,7 +94,7 @@ pub fn finalize_external_options(config: &mut Value, strategy: &FormatFileStrate
             FormatFileStrategy::OxcFormatter { .. } => true,
             #[cfg(feature = "napi")]
             FormatFileStrategy::ExternalFormatter { parser_name, .. } => {
-                TAILWIND_PARSERS.contains(parser_name)
+                TAILWIND_PARSERS.contains(parser_name.as_str())
             }
             _ => false,
         };
@@ -122,7 +122,7 @@ pub fn finalize_external_options(config: &mut Value, strategy: &FormatFileStrate
     // Build oxfmt plugin options JSON for js-in-xxx parsers
     #[cfg(feature = "napi")]
     if let FormatFileStrategy::ExternalFormatter { path, parser_name } = strategy
-        && OXFMT_PARSERS.contains(parser_name)
+        && OXFMT_PARSERS.contains(parser_name.as_str())
     {
         let mut oxfmt_plugin_options = serde_json::Map::new();
 
@@ -314,7 +314,7 @@ mod tests {
 
         let strategy = FormatFileStrategy::ExternalFormatter {
             path: PathBuf::from("/tmp/foo/bar/App.vue"),
-            parser_name: "vue",
+            parser_name: "vue".to_string(),
         };
         finalize_external_options(&mut raw_config, &strategy);
 

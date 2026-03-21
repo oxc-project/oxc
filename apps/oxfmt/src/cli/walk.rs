@@ -1,8 +1,10 @@
 use std::{
     ffi::OsStr,
     path::{Path, PathBuf},
-    sync::{Mutex, mpsc},
+    sync::{Arc, Mutex, mpsc},
 };
+
+use rustc_hash::FxHashMap;
 
 use ignore::{
     gitignore::{Gitignore, GitignoreBuilder},
@@ -14,6 +16,7 @@ use crate::core::{FormatFileStrategy, utils::normalize_relative_path};
 
 pub struct Walk {
     inner: ignore::WalkParallel,
+    plugin_extensions: Arc<FxHashMap<String, String>>,
 }
 
 impl Walk {
@@ -24,6 +27,7 @@ impl Walk {
         with_node_modules: bool,
         config_dir: Option<&Path>,
         ignore_patterns: &[String],
+        plugin_extensions: Arc<FxHashMap<String, String>>,
     ) -> Result<Option<Self>, String> {
         //
         // Classify and normalize specified paths
@@ -191,7 +195,7 @@ impl Walk {
         });
 
         let inner = apply_walk_settings(&mut inner).build_parallel();
-        Ok(Some(Self { inner }))
+        Ok(Some(Self { inner, plugin_extensions }))
     }
 
     /// Stream entries through a channel as they are discovered
@@ -200,7 +204,7 @@ impl Walk {
 
         // Spawn the walk operation in a separate thread
         rayon::spawn(move || {
-            let mut builder = WalkBuilder { sender };
+            let mut builder = WalkBuilder { sender, plugin_extensions: self.plugin_extensions };
             self.inner.visit(&mut builder);
             // Channel will be closed when builder is dropped
         });
@@ -363,16 +367,21 @@ fn apply_walk_settings(builder: &mut ignore::WalkBuilder) -> &mut ignore::WalkBu
 
 struct WalkBuilder {
     sender: mpsc::Sender<FormatFileStrategy>,
+    plugin_extensions: Arc<FxHashMap<String, String>>,
 }
 
 impl<'s> ignore::ParallelVisitorBuilder<'s> for WalkBuilder {
     fn build(&mut self) -> Box<dyn ignore::ParallelVisitor + 's> {
-        Box::new(WalkVisitor { sender: self.sender.clone() })
+        Box::new(WalkVisitor {
+            sender: self.sender.clone(),
+            plugin_extensions: Arc::clone(&self.plugin_extensions),
+        })
     }
 }
 
 struct WalkVisitor {
     sender: mpsc::Sender<FormatFileStrategy>,
+    plugin_extensions: Arc<FxHashMap<String, String>>,
 }
 
 impl ignore::ParallelVisitor for WalkVisitor {
@@ -390,9 +399,11 @@ impl ignore::ParallelVisitor for WalkVisitor {
                     // Tier 1 = `.js`, `.tsx`, etc: JS/TS files supported by `oxc_formatter`
                     // Tier 2 = `.toml`, etc: Some files supported by `oxfmt` directly
                     // Tier 3 = `.html`, `.json`, etc: Other files supported by Prettier
-                    // (Tier 4 = `.astro`, `.svelte`, etc: Other files supported by Prettier plugins)
+                    // Tier 4 = `.astro`, `.svelte`, etc: Other files supported by Prettier plugins
                     // Everything else: Ignored
-                    let Ok(strategy) = FormatFileStrategy::try_from(entry.into_path()) else {
+                    let Ok(strategy) =
+                        FormatFileStrategy::from_path(entry.into_path(), &self.plugin_extensions)
+                    else {
                         return ignore::WalkState::Continue;
                     };
 

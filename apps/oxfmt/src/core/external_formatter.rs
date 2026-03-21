@@ -16,14 +16,14 @@ use oxc_formatter::{
 use crate::prettier_compat::from_prettier_doc;
 
 /// Type alias for the init external formatter callback function signature.
-/// Takes num_threads as argument and returns plugin languages.
+/// Takes num_threads and plugin names; returns extension-to-parser mappings.
 pub type JsInitExternalFormatterCb = ThreadsafeFunction<
     // Input arguments
-    FnArgs<(u32,)>, // (num_threads,)
+    FnArgs<(u32, Vec<String>)>, // (num_threads, plugins)
     // Return type (what JS function returns)
     Promise<Vec<String>>,
     // Arguments (repeated)
-    FnArgs<(u32,)>,
+    FnArgs<(u32, Vec<String>)>,
     // Error status
     Status,
     // CalleeHandled
@@ -116,9 +116,9 @@ impl TsfnHandles {
 }
 
 /// Callback function type for init external formatter.
-/// Takes num_threads and returns plugin languages.
+/// Takes num_threads and plugin names; returns extension-to-parser mappings.
 type InitExternalFormatterCallback =
-    Arc<dyn Fn(usize) -> Result<Vec<String>, String> + Send + Sync>;
+    Arc<dyn Fn(usize, Vec<String>) -> Result<Vec<String>, String> + Send + Sync>;
 
 /// Callback function type for formatting files with config.
 /// Takes (options, code) and returns formatted code or an error.
@@ -220,9 +220,12 @@ impl ExternalFormatter {
     }
 
     /// Initialize external formatter using the JS callback.
-    pub fn init(&self, num_threads: usize) -> Result<Vec<String>, String> {
+    ///
+    /// `plugins` is the list of Prettier plugin names/paths from the oxfmt config.
+    /// Returns extension-to-parser mappings as `"ext:parserName"` strings.
+    pub fn init(&self, num_threads: usize, plugins: Vec<String>) -> Result<Vec<String>, String> {
         debug_span!("oxfmt::external::init", num_threads = num_threads)
-            .in_scope(|| (self.init)(num_threads))
+            .in_scope(|| (self.init)(num_threads, plugins))
     }
 
     /// Format non-js file using the JS callback.
@@ -348,7 +351,7 @@ impl ExternalFormatter {
                 format_embedded_doc: Arc::new(RwLock::new(None)),
                 sort_tailwind: Arc::new(RwLock::new(None)),
             },
-            init: Arc::new(|_| Err("Dummy init called".to_string())),
+            init: Arc::new(|_, _| Err("Dummy init called".to_string())),
             format_file: Arc::new(|_, _| Err("Dummy format_file called".to_string())),
             format_embedded: Arc::new(|_, _| Err("Dummy format_embedded called".to_string())),
             format_embedded_doc: Arc::new(|_, _: &[&str]| {
@@ -392,17 +395,17 @@ fn language_to_prettier_parser(language: &str) -> Option<&'static str> {
 fn wrap_init_external_formatter(
     cb_handle: Arc<RwLock<Option<JsInitExternalFormatterCb>>>,
 ) -> InitExternalFormatterCallback {
-    Arc::new(move |num_threads: usize| {
+    Arc::new(move |num_threads: usize, plugins: Vec<String>| {
         let guard = cb_handle.read().unwrap();
         let Some(cb) = guard.as_ref() else {
             return Err("JS callback unavailable (environment shutting down)".to_string());
         };
         #[expect(clippy::cast_possible_truncation)]
         let result = block_on(async {
-            let status = cb.call_async(FnArgs::from((num_threads as u32,))).await;
+            let status = cb.call_async(FnArgs::from((num_threads as u32, plugins))).await;
             match status {
                 Ok(promise) => match promise.await {
-                    Ok(languages) => Ok(languages),
+                    Ok(mappings) => Ok(mappings),
                     Err(err) => Err(err.reason.clone()),
                 },
                 Err(err) => Err(err.reason.clone()),
