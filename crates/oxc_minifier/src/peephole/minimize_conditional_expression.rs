@@ -3,9 +3,10 @@ use oxc_allocator::TakeIn;
 use oxc_ast::{NONE, ast::*};
 use oxc_compat::ESFeature;
 use oxc_ecmascript::{
-    constant_evaluation::{ConstantEvaluation, ConstantValue},
+    constant_evaluation::{ConstantEvaluation, ConstantValue, DetermineValueType},
     side_effects::MayHaveSideEffects,
 };
+use oxc_syntax::precedence::GetPrecedence;
 use oxc_span::{ContentEq, GetSpan};
 
 use super::PeepholeOptimizations;
@@ -395,6 +396,60 @@ impl<'a> PeepholeOptimizations {
             _ => {}
         }
 
+        // "a ? 1 : 0" => "+a" (if a is boolean) or "+!!a" (if no parens needed)
+        // "a ? 0 : 1" => "+!a" (if no parens needed)
+        match (
+            expr.consequent
+                .evaluate_value(ctx)
+                .and_then(ConstantValue::into_number)
+                .filter(|_| !expr.consequent.may_have_side_effects(ctx)),
+            expr.alternate
+                .evaluate_value(ctx)
+                .and_then(ConstantValue::into_number)
+                .filter(|_| !expr.alternate.may_have_side_effects(ctx)),
+        ) {
+            (Some(1.0), Some(val)) if val == 0.0 => {
+                // "a ? 1 : 0"
+                let is_boolean = expr.test.value_type(ctx).is_boolean();
+                let needs_parens = Self::test_needs_parens(&expr.test);
+                if is_boolean {
+                    // Known boolean: +a (saves 3 chars: "a?1:0" => "+a")
+                    let test = expr.test.take_in(ctx.ast);
+                    return Some(ctx.ast.expression_unary(
+                        expr.span,
+                        UnaryOperator::UnaryPlus,
+                        test,
+                    ));
+                }
+                // Unknown type: +!!a (saves 1 char: "a?1:0" => "+!!a")
+                // But skip if parens would be needed (e.g., "a+b?1:0" => "+!!(a+b)" is longer)
+                if !needs_parens {
+                    let test = expr.test.take_in(ctx.ast);
+                    let test = Self::minimize_not(expr.span, test, ctx);
+                    let test = Self::minimize_not(expr.span, test, ctx);
+                    return Some(ctx.ast.expression_unary(
+                        expr.span,
+                        UnaryOperator::UnaryPlus,
+                        test,
+                    ));
+                }
+            }
+            (Some(val), Some(1.0)) if val == 0.0 => {
+                // "a ? 0 : 1" => "+!a"
+                // Skip if parens would be needed (e.g., "a+b?0:1" => "+!(a+b)" is same length)
+                if !Self::test_needs_parens(&expr.test) {
+                    let test = expr.test.take_in(ctx.ast);
+                    let test = Self::minimize_not(expr.span, test, ctx);
+                    return Some(ctx.ast.expression_unary(
+                        expr.span,
+                        UnaryOperator::UnaryPlus,
+                        test,
+                    ));
+                }
+            }
+            _ => {}
+        }
+
         if ctx.expr_eq(&expr.alternate, &expr.consequent) {
             // "/* @__PURE__ */ a() ? b : b" => "b"
             if !expr.test.may_have_side_effects(ctx) {
@@ -585,5 +640,19 @@ impl<'a> PeepholeOptimizations {
             _ => {}
         }
         false
+    }
+
+    /// Returns `true` if the expression would need parentheses when used as a unary operand.
+    /// Binary and conditional expressions need wrapping; identifiers, calls, unary, etc. do not.
+    fn test_needs_parens(expr: &Expression<'_>) -> bool {
+        matches!(
+            expr,
+            Expression::BinaryExpression(_)
+                | Expression::LogicalExpression(_)
+                | Expression::ConditionalExpression(_)
+                | Expression::AssignmentExpression(_)
+                | Expression::SequenceExpression(_)
+                | Expression::YieldExpression(_)
+        )
     }
 }
