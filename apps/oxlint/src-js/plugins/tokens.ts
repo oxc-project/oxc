@@ -117,8 +117,10 @@ export const cachedTokens: Token[] = [];
 // Reused for next file if next file has less tokens than the previous file (by truncating it to correct length).
 let previousTokens: Token[] = [];
 
-// Tokens whose `loc` property has been accessed, and therefore needs clearing on reset
+// Tokens whose `loc` property has been accessed, and therefore needs clearing on reset.
+// Never shrunk - `activeTokensWithLocCount` tracks the active count to avoid freeing the backing store.
 const tokensWithLoc: Token[] = [];
+let activeTokensWithLocCount = 0;
 
 // Cached regex descriptor objects, reused across files
 const regexObjects: Regex[] = [];
@@ -182,7 +184,17 @@ class Token {
     const loc = this.#loc;
     if (loc !== null) return loc;
 
-    tokensWithLoc.push(this);
+    // Store token in `tokensWithLoc` array. `resetTokens` will clear the `#loc` property.
+    // Note: The comparison `activeTokensWithLocCount < tokensWithLoc.length` must be this way around
+    // so that V8 can remove the bounds check on `tokensWithLoc[activeTokensWithLocCount]`.
+    // `tokensWithLoc.length > activeTokensWithLocCount` would *not* remove the bounds check in Maglev compiler.
+    if (activeTokensWithLocCount < tokensWithLoc.length) {
+      tokensWithLoc[activeTokensWithLocCount] = this;
+    } else {
+      tokensWithLoc.push(this);
+    }
+    activeTokensWithLocCount++;
+
     return (this.#loc = computeLoc(this.start, this.end));
   }
 
@@ -541,11 +553,11 @@ export function resetTokens() {
   }
 
   // Reset `#loc` on tokens where `loc` has been accessed
-  for (let i = 0, len = tokensWithLoc.length; i < len; i++) {
+  for (let i = 0; i < activeTokensWithLocCount; i++) {
     resetLoc(tokensWithLoc[i]);
   }
 
-  tokensWithLoc.length = 0;
+  activeTokensWithLocCount = 0;
 
   // Reset `regex` property on regex tokens.
   // This avoids having to set it for every non-regex token in `deserializeTokenIfNeeded`.

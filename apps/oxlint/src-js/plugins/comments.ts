@@ -53,7 +53,9 @@ export const cachedComments: Comment[] = [];
 let previousComments: Comment[] = [];
 
 // Comments whose `loc` property has been accessed, and therefore needs clearing on reset.
+// Never shrunk - `activeCommentsWithLocCount` tracks the active count to avoid freeing the backing store.
 const commentsWithLoc: Comment[] = [];
+let activeCommentsWithLocCount = 0;
 
 // Tracks indices of deserialized comments so their `value` can be cleared on reset,
 // preventing source text strings from being held alive by stale `value` slices.
@@ -111,7 +113,17 @@ class Comment implements Span {
     const loc = this.#loc;
     if (loc !== null) return loc;
 
-    commentsWithLoc.push(this);
+    // Store comment in `commentsWithLoc` array. `resetComments` will clear the `#loc` property.
+    // Note: The comparison `activeCommentsWithLocCount < commentsWithLoc.length` must be this way around
+    // so that V8 can remove the bounds check on `commentsWithLoc[activeCommentsWithLocCount]`.
+    // `commentsWithLoc.length > activeCommentsWithLocCount` would *not* remove the bounds check in Maglev compiler.
+    if (activeCommentsWithLocCount < commentsWithLoc.length) {
+      commentsWithLoc[activeCommentsWithLocCount] = this;
+    } else {
+      commentsWithLoc.push(this);
+    }
+    activeCommentsWithLocCount++;
+
     return (this.#loc = computeLoc(this.start, this.end));
   }
 
@@ -411,11 +423,11 @@ export function resetComments(): void {
   }
 
   // Reset `#loc` on comments where `loc` has been accessed
-  for (let i = 0, len = commentsWithLoc.length; i < len; i++) {
+  for (let i = 0; i < activeCommentsWithLocCount; i++) {
     resetCommentLoc(commentsWithLoc[i]);
   }
 
-  commentsWithLoc.length = 0;
+  activeCommentsWithLocCount = 0;
 
   // Reset other state
   comments = null;
