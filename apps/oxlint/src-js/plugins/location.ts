@@ -52,9 +52,15 @@ export interface LineColumn {
 const LINE_BREAK_PATTERN = /\r\n|[\r\n\u2028\u2029]/gu;
 
 // Lazily populated when `SOURCE_CODE.lines` is accessed.
-// `lineStartIndices` starts as `[0]`, and `resetLines` doesn't remove that initial element, so it's never empty.
+// `lineStartIndices` starts as `[0]`, and `resetLinesAndLocs` doesn't remove that initial element, so it's never empty.
 export const lines: string[] = [];
 export const lineStartIndices: number[] = [0];
+
+// Pool of `Location` objects, reused across files to reduce GC pressure.
+// Each `Location` contains `start` and `end` `LineColumn` sub-objects, which are also reused.
+// Never shrunk - `activeLocationsCount` tracks the active count to avoid freeing the backing store.
+const cachedLocations: Location[] = [];
+let activeLocationsCount = 0;
 
 /**
  * Split source text into lines.
@@ -82,7 +88,7 @@ export function initLines(): void {
    * and uses match.index to get the correct line start indices.
    */
 
-  // `lineStartIndices` starts as `[0]`, and is reset to length 1 in `resetLines`.
+  // `lineStartIndices` starts as `[0]`, and is reset to length 1 in `resetLinesAndLocs`.
   // Debug check that `lines` and `lineStartIndices` are not already initialized.
   debugAssert(lines.length === 0, "`lines` should be empty at start of `initLines`");
   debugAssert(
@@ -117,11 +123,14 @@ export function debugAssertLinesIsInitialized(): void {
 
 /**
  * Reset lines after file has been linted, to free memory.
+ * Reset `Location` object pool.
  */
-export function resetLines(): void {
+export function resetLinesAndLocs(): void {
   lines.length = 0;
   // Leave first entry (0) in place, discard the rest
   lineStartIndices.length = 1;
+
+  activeLocationsCount = 0;
 }
 
 /**
@@ -139,7 +148,6 @@ export function getLineColumnFromOffset(offset: number): LineColumn {
   // This also decodes `sourceText` if it wasn't already.
   if (lines.length === 0) initLines();
   debugAssertIsNonNull(sourceText);
-  debugAssertLinesIsInitialized();
 
   if (offset > sourceText.length) {
     throw new RangeError(
@@ -147,18 +155,20 @@ export function getLineColumnFromOffset(offset: number): LineColumn {
     );
   }
 
-  return getLineColumnFromOffsetUnchecked(offset);
+  const lineCol: LineColumn = { line: 0, column: 0 };
+  populateLineColumn(offset, lineCol);
+  return lineCol;
 }
 
 /**
- * Convert a source text index into a (line, column) pair without:
- * 1. Checking type of `offset`, or that it's in range.
- * 2. Initializing `lineStartIndices`. Caller must do that before calling this method.
+ * Populate an existing `LineColumn` object from a source text offset.
+ *
+ * Caller must ensure `lineStartIndices` is initialized before calling this function.
  *
  * @param offset - The index of a character in a file.
- * @returns `{line, column}` location object with 1-indexed line and 0-indexed column.
+ * @param out - `LineColumn` object to populate.
  */
-function getLineColumnFromOffsetUnchecked(offset: number): LineColumn {
+function populateLineColumn(offset: number, out: LineColumn): void {
   debugAssertLinesIsInitialized();
 
   // Binary search `lineStartIndices` for the line containing `offset`
@@ -174,7 +184,8 @@ function getLineColumnFromOffsetUnchecked(offset: number): LineColumn {
     }
   } while (low < high);
 
-  return { line: low, column: offset - lineStartIndices[low - 1] };
+  out.line = low;
+  out.column = offset - lineStartIndices[low - 1];
 }
 
 /**
@@ -296,7 +307,7 @@ export function getNodeLoc(node: Node): Location {
 /**
  * Compute a `Location` from `start` and `end` source offsets.
  *
- * Pure computation - does not cache the result.
+ * Returns a recycled `Location` object from the pool when possible, allocating only during warmup.
  * Initializes `lines` and `lineStartIndices` tables if they haven't been already.
  *
  * @param start - Start offset
@@ -305,10 +316,25 @@ export function getNodeLoc(node: Node): Location {
  */
 export function computeLoc(start: number, end: number): Location {
   if (lines.length === 0) initLines();
-  return {
-    start: getLineColumnFromOffsetUnchecked(start),
-    end: getLineColumnFromOffsetUnchecked(end),
-  };
+
+  // Reuse a cached `Location` object if available, otherwise create a new one.
+  // Note: The comparison `activeLocationsCount < cachedLocations.length` must be this way around
+  // so that V8 can remove the bounds check on `cachedLocations[activeLocationsCount]`.
+  // `cachedLocations.length > activeLocationsCount` would *not* remove the bounds check in Maglev compiler,
+  // even though it's semantically equivalent.
+  let loc: Location;
+  if (activeLocationsCount < cachedLocations.length) {
+    loc = cachedLocations[activeLocationsCount];
+  } else {
+    cachedLocations.push((loc = { start: { line: 0, column: 0 }, end: { line: 0, column: 0 } }));
+  }
+
+  activeLocationsCount++;
+
+  populateLineColumn(start, loc.start);
+  populateLineColumn(end, loc.end);
+
+  return loc;
 }
 
 /**
