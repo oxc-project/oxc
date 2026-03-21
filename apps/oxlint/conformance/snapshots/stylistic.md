@@ -1,5 +1,7 @@
 # Conformance test results - stylistic
 
+Tested against: [stylistic@5c4b512](https://github.com/eslint-stylistic/eslint-stylistic/tree/5c4b512a225a314fa5f41eead9fdc4d51fc243d7) (5.7.1)
+
 ## Summary
 
 ### Rules

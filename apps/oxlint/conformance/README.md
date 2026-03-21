@@ -32,9 +32,22 @@ pnpm run init-conformance
 pnpm run conformance
 ```
 
+## Updating a pinned repo version
+
+All upstream repo URLs, commit SHAs, and version labels are stored in `repos.json`.
+Both `init.sh` and the TypeScript test groups read from this single file.
+
+To update a repo to a newer version:
+
+1. Edit `repos.json` — update the `commitSha` and `version` for the repo.
+2. Re-initialize submodules: `pnpm run init-conformance`
+3. Re-run the conformance tests: `pnpm run conformance`
+4. Commit the updated `repos.json` and snapshot files.
+
 ## Adding a plugin to conformance tests
 
-- Add code to `init.sh` to clone the plugin's repo.
+- Add an entry to `repos.json` with the repo's URL, commit SHA, and version.
+- Add code to `init.sh` to clone and set up the plugin's repo.
 - Add a file to `src/groups` directory (copy pattern used for other plugins).
 - Add the group to `src/groups/index.ts`.
 
