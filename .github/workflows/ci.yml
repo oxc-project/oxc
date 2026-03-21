@@ -23,10 +23,10 @@ jobs:
     steps:
       - uses: taiki-e/checkout-action@83ed61bfbe2b8abbb3c66e8b65b1335484c70009 # v1.4.1
       - uses: oxc-project/setup-node@b8d296d30eafd1ae2968fab67aead472a1dbf6d4 # v1.0.7
-      - uses: oxc-project/setup-rust@23f38cfb0c04af97a055f76acee94d5be71c7c82 # v1.0.16
+      - uses: namespacelabs/nscloud-cache-action@v1
         with:
-          save-cache: ${{ github.ref_name == 'main' }}
-          cache-key: warm
+          cache: rust
+      - uses: oxc-project/setup-rust@23f38cfb0c04af97a055f76acee94d5be71c7c82 # v1.0.16
       - run: cargo ck
       - run: cargo test --all-features
       - run: git diff --exit-code # Must commit everything
@@ -52,11 +52,11 @@ jobs:
     runs-on: namespace-profile-mac-default
     steps:
       - uses: taiki-e/checkout-action@83ed61bfbe2b8abbb3c66e8b65b1335484c70009 # v1.4.1
+      - uses: namespacelabs/nscloud-cache-action@v1
+        with:
+          cache: rust
       - uses: oxc-project/setup-node@b8d296d30eafd1ae2968fab67aead472a1dbf6d4 # v1.0.7
       - uses: oxc-project/setup-rust@23f38cfb0c04af97a055f76acee94d5be71c7c82 # v1.0.16
-        with:
-          save-cache: ${{ github.ref_name == 'main' }}
-          cache-key: warm
       - run: cargo ck
       - run: cargo test --all-features
       - run: git diff --exit-code # Must commit everything
@@ -114,10 +114,11 @@ jobs:
     runs-on: namespace-profile-linux-x64-default
     steps:
       - uses: taiki-e/checkout-action@83ed61bfbe2b8abbb3c66e8b65b1335484c70009 # v1.4.1
+      - uses: namespacelabs/nscloud-cache-action@v1
+        with:
+          cache: rust
       - uses: oxc-project/setup-rust@23f38cfb0c04af97a055f76acee94d5be71c7c82 # v1.0.16
         with:
-          save-cache: ${{ github.ref_name == 'main' }}
-          cache-key: s390x-unknown-linux-gnu
           tools: cross
       # `--lib --bins --tests` to skip doctests which are very slow to run via `cross`.
       # https://github.com/cross-rs/cross/issues/1703
@@ -129,10 +130,11 @@ jobs:
     runs-on: namespace-profile-linux-x64-default
     steps:
       - uses: taiki-e/checkout-action@83ed61bfbe2b8abbb3c66e8b65b1335484c70009 # v1.4.1
+      - uses: namespacelabs/nscloud-cache-action@v1
+        with:
+          cache: rust
       - uses: oxc-project/setup-rust@23f38cfb0c04af97a055f76acee94d5be71c7c82 # v1.0.16
         with:
-          save-cache: ${{ github.ref_name == 'main' }}
-          cache-key: armv7-unknown-linux-gnueabihf
           tools: cross
       # `--lib --bins --tests` to skip doctests which are very slow to run via `cross`.
       # https://github.com/cross-rs/cross/issues/1703
@@ -150,11 +152,11 @@ jobs:
           paths: napi/,npm/,apps/,pnpm-lock.yaml,package.json
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
+      - uses: namespacelabs/nscloud-cache-action@v1
+        with:
+          cache: rust
       - uses: oxc-project/setup-rust@23f38cfb0c04af97a055f76acee94d5be71c7c82 # v1.0.16
         if: steps.filter.outputs.changed == 'true'
-        with:
-          cache-key: wasi
-          save-cache: ${{ github.ref_name == 'main' }}
       - uses: oxc-project/setup-node@b8d296d30eafd1ae2968fab67aead472a1dbf6d4 # v1.0.7
         if: steps.filter.outputs.changed == 'true'
       - name: Build
@@ -187,11 +189,11 @@ jobs:
           paths: napi/parser/,napi/minify/,napi/transform/,npm/oxc-types/,npm/runtime/,tasks/e2e/,pnpm-lock.yaml,package.json
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
+      - uses: namespacelabs/nscloud-cache-action@v1
+        with:
+          cache: rust
       - uses: oxc-project/setup-rust@23f38cfb0c04af97a055f76acee94d5be71c7c82 # v1.0.16
         if: steps.filter.outputs.changed == 'true'
-        with:
-          cache-key: napi
-          save-cache: ${{ github.ref_name == 'main' }}
       - uses: oxc-project/setup-node@b8d296d30eafd1ae2968fab67aead472a1dbf6d4 # v1.0.7
         if: steps.filter.outputs.changed == 'true'
       - uses: ./.github/actions/clone-submodules
@@ -227,11 +229,11 @@ jobs:
           paths: apps/oxlint/,npm/oxlint/,npm/oxlint-plugin-eslint/,npm/oxlint-plugins/,npm/oxc-types/,pnpm-lock.yaml,package.json
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
+      - uses: namespacelabs/nscloud-cache-action@v1
+        with:
+          cache: rust
       - uses: oxc-project/setup-rust@23f38cfb0c04af97a055f76acee94d5be71c7c82 # v1.0.16
         if: steps.filter.outputs.changed == 'true'
-        with:
-          cache-key: napi
-          save-cache: ${{ github.ref_name == 'main' }}
       - uses: oxc-project/setup-node@b8d296d30eafd1ae2968fab67aead472a1dbf6d4 # v1.0.7
         if: steps.filter.outputs.changed == 'true'
       - if: steps.filter.outputs.changed == 'true'
@@ -254,11 +256,11 @@ jobs:
           paths: apps/oxfmt/,npm/oxfmt/,pnpm-lock.yaml,package.json
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
+      - uses: namespacelabs/nscloud-cache-action@v1
+        with:
+          cache: rust
       - uses: oxc-project/setup-rust@23f38cfb0c04af97a055f76acee94d5be71c7c82 # v1.0.16
         if: steps.filter.outputs.changed == 'true'
-        with:
-          cache-key: napi
-          save-cache: ${{ github.ref_name == 'main' }}
       - uses: oxc-project/setup-node@b8d296d30eafd1ae2968fab67aead472a1dbf6d4 # v1.0.7
         if: steps.filter.outputs.changed == 'true'
       - if: steps.filter.outputs.changed == 'true'
@@ -419,11 +421,12 @@ jobs:
     runs-on: namespace-profile-linux-x64-default
     steps:
       - uses: taiki-e/checkout-action@83ed61bfbe2b8abbb3c66e8b65b1335484c70009 # v1.4.1
+      - uses: namespacelabs/nscloud-cache-action@v1
+        with:
+          cache: rust
       - uses: oxc-project/setup-node@b8d296d30eafd1ae2968fab67aead472a1dbf6d4 # v1.0.7
       - uses: oxc-project/setup-rust@23f38cfb0c04af97a055f76acee94d5be71c7c82 # v1.0.16
         with:
-          save-cache: ${{ github.ref_name == 'main' }}
-          cache-key: clippy
           components: clippy rust-docs
       - run: cargo lint -- -D warnings
       - run: cargo lint --profile dev-no-debug-assertions -- -D warnings
@@ -447,6 +450,10 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
 
+      - uses: namespacelabs/nscloud-cache-action@v1
+        with:
+          cache: rust
+
       - uses: ./.github/actions/clone-submodules
         if: steps.filter.outputs.changed == 'true'
         with:
@@ -458,8 +465,6 @@ jobs:
       - uses: oxc-project/setup-rust@23f38cfb0c04af97a055f76acee94d5be71c7c82 # v1.0.16
         if: steps.filter.outputs.changed == 'true'
         with:
-          cache-key: conformance
-          save-cache: ${{ github.ref_name == 'main' }}
           tools: just
 
       - name: Check Conformance
@@ -482,11 +487,12 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
 
+      - uses: namespacelabs/nscloud-cache-action@v1
+        with:
+          cache: rust
+
       - uses: oxc-project/setup-rust@23f38cfb0c04af97a055f76acee94d5be71c7c82 # v1.0.16
         if: steps.filter.outputs.changed == 'true'
-        with:
-          cache-key: minsize
-          save-cache: ${{ github.ref_name == 'main' }}
 
       - name: Check minification size
         if: steps.filter.outputs.changed == 'true'
@@ -506,11 +512,12 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
 
+      - uses: namespacelabs/nscloud-cache-action@v1
+        with:
+          cache: rust
+
       - uses: oxc-project/setup-rust@23f38cfb0c04af97a055f76acee94d5be71c7c82 # v1.0.16
         if: steps.filter.outputs.changed == 'true'
-        with:
-          cache-key: allocs
-          save-cache: ${{ github.ref_name == 'main' }}
 
       - name: Check allocations
         if: steps.filter.outputs.changed == 'true'
@@ -530,12 +537,14 @@ jobs:
         with:
           filters: ".github/generated/ast_changes_watch_list.yml"
 
+      - uses: namespacelabs/nscloud-cache-action@v1
+        with:
+          cache: rust
+
       - uses: oxc-project/setup-rust@23f38cfb0c04af97a055f76acee94d5be71c7c82 # v1.0.16
         if: steps.filter.outputs.src == 'true'
         with:
           components: rustfmt
-          cache-key: ast_changes
-          save-cache: ${{ github.ref_name == 'main' }}
 
       - uses: oxc-project/setup-node@b8d296d30eafd1ae2968fab67aead472a1dbf6d4 # v1.0.7
         if: steps.filter.outputs.src == 'true'
@@ -560,12 +569,14 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
 
+      - uses: namespacelabs/nscloud-cache-action@v1
+        with:
+          cache: rust
+
       - uses: oxc-project/setup-rust@23f38cfb0c04af97a055f76acee94d5be71c7c82 # v1.0.16
         if: steps.filter.outputs.changed == 'true'
         with:
           components: rustfmt
-          cache-key: lintgen
-          save-cache: ${{ github.ref_name == 'main' }}
 
       - name: Check linter changes
         if: steps.filter.outputs.changed == 'true'

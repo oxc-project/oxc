@@ -50,11 +50,12 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
 
+      - uses: namespacelabs/nscloud-cache-action@v1
+        with:
+          cache: rust
+
       - uses: oxc-project/setup-rust@23f38cfb0c04af97a055f76acee94d5be71c7c82 # v1.0.16
         if: steps.filter.outputs.changed == 'true'
-        with:
-          cache-key: miri
-          save-cache: ${{ github.ref_name == 'main' }}
 
       - name: Install Miri
         if: steps.filter.outputs.changed == 'true'
