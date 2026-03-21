@@ -2372,6 +2372,9 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.visit_span(&decl.span);
         self.visit_binding_identifier(&decl.id);
         self.visit_ts_enum_body(&decl.body);
+        // Evaluate enum member values after all members are bound
+        #[cfg(feature = "enum_eval")]
+        crate::ts_enum::eval::evaluate_enum_members(decl, &mut self.scoping);
         self.leave_node(kind);
     }
 
