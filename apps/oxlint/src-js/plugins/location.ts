@@ -148,28 +148,13 @@ export function getLineColumnFromOffset(offset: number): LineColumn {
   // This also decodes `sourceText` if it wasn't already.
   if (lines.length === 0) initLines();
   debugAssertIsNonNull(sourceText);
+  debugAssertLinesIsInitialized();
 
   if (offset > sourceText.length) {
     throw new RangeError(
       `Index out of range (requested index ${offset}, but source text has length ${sourceText.length}).`,
     );
   }
-
-  const lineCol: LineColumn = { line: 0, column: 0 };
-  populateLineColumn(offset, lineCol);
-  return lineCol;
-}
-
-/**
- * Populate an existing `LineColumn` object from a source text offset.
- *
- * Caller must ensure `lineStartIndices` is initialized before calling this function.
- *
- * @param offset - The index of a character in a file.
- * @param out - `LineColumn` object to populate.
- */
-function populateLineColumn(offset: number, out: LineColumn): void {
-  debugAssertLinesIsInitialized();
 
   // Find first line that starts *after* `offset`, via binary search of `lineStartIndices`.
   // `lineStartIndices` is sorted and `lineStartIndices[0]` is always 0.
@@ -190,8 +175,10 @@ function populateLineColumn(offset: number, out: LineColumn): void {
     }
   } while (low < high);
 
-  out.line = low; // 1-indexed line number
-  out.column = offset - lineStartIndices[low - 1]; // Offset from start of the line
+  return {
+    line: low, // 1-indexed line number
+    column: offset - lineStartIndices[low - 1], // Offset from start of the line
+  };
 }
 
 /**
@@ -332,7 +319,13 @@ const LOC_DESCRIPTOR: PropertyDescriptor = {
  * @returns Location
  */
 export function computeLoc(start: number, end: number): Location {
+  // All AST nodes, tokens and comments have `start < end`, with only one exception:
+  // `Program` node can have `start === end` if it has no directives or statements - either 0-length file,
+  // or purely comments and/or whitespace and/or hashbang. But `start > end` is impossible.
+  debugAssert(start <= end, "`start` must be <= `end`");
+
   if (lines.length === 0) initLines();
+  debugAssertLinesIsInitialized();
 
   // Reuse a cached `Location` object if available, otherwise create a new one.
   // Note: The comparison `activeLocationsCount < cachedLocations.length` must be this way around
@@ -348,8 +341,63 @@ export function computeLoc(start: number, end: number): Location {
 
   activeLocationsCount++;
 
-  populateLineColumn(start, loc.start);
-  populateLineColumn(end, loc.end);
+  const linesLen = lineStartIndices.length;
+
+  // Find first line that starts *after* `start`, via binary search of `lineStartIndices`.
+  // `lineStartIndices` is sorted and `lineStartIndices[0]` is always 0.
+  //
+  // After the loop, `line` is the index of the first line whose start is *past* `start`.
+  // This is also the 1-indexed line number of the line containing `start`.
+  // e.g. if `start` is on the 3rd line, `line` = 3, and `lineStartIndices[2]` is that line's start.
+  // `do...while` is safe because `lineStartIndices` always has at least one entry, so `line < high` at start of loop.
+  let line = 0,
+    high = linesLen,
+    mid: number;
+  do {
+    mid = (line + high) >>> 1;
+    if (start < lineStartIndices[mid]) {
+      high = mid;
+    } else {
+      line = mid + 1;
+    }
+  } while (line < high);
+
+  const lineStart = lineStartIndices[line - 1];
+
+  const locStart = loc.start;
+  locStart.line = line;
+  locStart.column = start - lineStart;
+
+  // Fast path: If `end` is on the same line as `start`, skip the second binary search.
+  // Most tokens (and many small AST nodes) are on a single line, so this is the common case.
+  // `line` indexes the *next* line's start in `lineStartIndices`.
+  // If we're on the last line, or `end` is before the next line's start, `end` is on the same line as `start`.
+  const locEnd = loc.end;
+  if (line === linesLen || end < lineStartIndices[line]) {
+    locEnd.line = line;
+    locEnd.column = end - lineStart;
+  } else {
+    // `end` is on a later line than `start`.
+    //
+    // Find first line that starts *after* `end`, via binary search of `lineStartIndices`.
+    // Start search from the line after the one containing `start`, to narrow the search range.
+    //
+    // After the loop, `line` is the index of the first line whose start is *past* `end`.
+    // This is also the 1-indexed line number of the line containing `end`.
+    line++;
+    high = linesLen;
+    while (line < high) {
+      mid = (line + high) >>> 1;
+      if (end < lineStartIndices[mid]) {
+        high = mid;
+      } else {
+        line = mid + 1;
+      }
+    }
+
+    locEnd.line = line;
+    locEnd.column = end - lineStartIndices[line - 1];
+  }
 
   return loc;
 }
