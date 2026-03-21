@@ -124,6 +124,14 @@ class Comment implements Span {
     return (this.#loc = computeLoc(this.start, this.end));
   }
 
+  // Include `loc` in `JSON.stringify` output.
+  // `loc` is a prototype getter, and `JSON.stringify` only serializes own properties,
+  // so without this method, `loc` would be excluded.
+  toJSON() {
+    // oxlint-disable-next-line typescript/no-misused-spread
+    return { ...this, loc: this.loc };
+  }
+
   static {
     // Defined in static block to avoid exposing this as a public method
     resetCommentLoc = (comment: Comment) => {
