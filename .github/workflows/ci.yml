@@ -29,9 +29,6 @@ jobs:
           cache: |
             rust
             pnpm
-      - uses: oxc-project/setup-rust@23f38cfb0c04af97a055f76acee94d5be71c7c82 # v1.0.16
-        with:
-          restore-cache: false
       - run: cargo ck
       - run: cargo test --all-features
       - run: git diff --exit-code # Must commit everything
@@ -64,9 +61,6 @@ jobs:
           cache: |
             rust
             pnpm
-      - uses: oxc-project/setup-rust@23f38cfb0c04af97a055f76acee94d5be71c7c82 # v1.0.16
-        with:
-          restore-cache: false
       - run: cargo ck
       - run: cargo test --all-features
       - run: git diff --exit-code # Must commit everything
@@ -128,10 +122,9 @@ jobs:
         with:
           path: /home/runner/.rustup
           cache: rust
-      - uses: oxc-project/setup-rust@23f38cfb0c04af97a055f76acee94d5be71c7c82 # v1.0.16
+      - uses: taiki-e/install-action@64c5c20c872907b6f7cd50994ac189e7274160f2 # v2.68.26
         with:
-          restore-cache: false
-          tools: cross
+          tool: cross
       # `--lib --bins --tests` to skip doctests which are very slow to run via `cross`.
       # https://github.com/cross-rs/cross/issues/1703
       - run: cross test --lib --bins --tests --all-features --target s390x-unknown-linux-gnu
@@ -146,10 +139,9 @@ jobs:
         with:
           path: /home/runner/.rustup
           cache: rust
-      - uses: oxc-project/setup-rust@23f38cfb0c04af97a055f76acee94d5be71c7c82 # v1.0.16
+      - uses: taiki-e/install-action@64c5c20c872907b6f7cd50994ac189e7274160f2 # v2.68.26
         with:
-          restore-cache: false
-          tools: cross
+          tool: cross
       # `--lib --bins --tests` to skip doctests which are very slow to run via `cross`.
       # https://github.com/cross-rs/cross/issues/1703
       - run: cross test --workspace --lib --bins --tests --all-features --exclude oxc_language_server --exclude oxc_linter --exclude oxlint --target armv7-unknown-linux-gnueabihf
@@ -175,10 +167,6 @@ jobs:
           cache: |
             rust
             pnpm
-      - uses: oxc-project/setup-rust@23f38cfb0c04af97a055f76acee94d5be71c7c82 # v1.0.16
-        if: steps.filter.outputs.changed == 'true'
-        with:
-          restore-cache: false
       - name: Build
         if: steps.filter.outputs.changed == 'true'
         run: |
@@ -218,10 +206,6 @@ jobs:
           cache: |
             rust
             pnpm
-      - uses: oxc-project/setup-rust@23f38cfb0c04af97a055f76acee94d5be71c7c82 # v1.0.16
-        if: steps.filter.outputs.changed == 'true'
-        with:
-          restore-cache: false
       - uses: ./.github/actions/clone-submodules
         if: steps.filter.outputs.changed == 'true'
         with:
@@ -264,10 +248,6 @@ jobs:
           cache: |
             rust
             pnpm
-      - uses: oxc-project/setup-rust@23f38cfb0c04af97a055f76acee94d5be71c7c82 # v1.0.16
-        if: steps.filter.outputs.changed == 'true'
-        with:
-          restore-cache: false
       - if: steps.filter.outputs.changed == 'true'
         name: Run tests
         run: |
@@ -297,10 +277,6 @@ jobs:
           cache: |
             rust
             pnpm
-      - uses: oxc-project/setup-rust@23f38cfb0c04af97a055f76acee94d5be71c7c82 # v1.0.16
-        if: steps.filter.outputs.changed == 'true'
-        with:
-          restore-cache: false
       - if: steps.filter.outputs.changed == 'true'
         name: Run tests
         run: |
@@ -466,10 +442,7 @@ jobs:
           cache: |
             rust
             pnpm
-      - uses: oxc-project/setup-rust@23f38cfb0c04af97a055f76acee94d5be71c7c82 # v1.0.16
-        with:
-          restore-cache: false
-          components: clippy rust-docs
+      - run: rustup component add clippy rust-docs
       - run: cargo lint -- -D warnings
       - run: cargo lint --profile dev-no-debug-assertions -- -D warnings
       - run: RUSTDOCFLAGS='-D warnings' cargo doc --no-deps --document-private-items
@@ -508,11 +481,10 @@ jobs:
             rust
             pnpm
 
-      - uses: oxc-project/setup-rust@23f38cfb0c04af97a055f76acee94d5be71c7c82 # v1.0.16
+      - uses: taiki-e/install-action@64c5c20c872907b6f7cd50994ac189e7274160f2 # v2.68.26
         if: steps.filter.outputs.changed == 'true'
         with:
-          restore-cache: false
-          tools: just
+          tool: just
 
       - name: Check Conformance
         if: steps.filter.outputs.changed == 'true'
@@ -539,11 +511,6 @@ jobs:
           path: /home/runner/.rustup
           cache: rust
 
-      - uses: oxc-project/setup-rust@23f38cfb0c04af97a055f76acee94d5be71c7c82 # v1.0.16
-        if: steps.filter.outputs.changed == 'true'
-        with:
-          restore-cache: false
-
       - name: Check minification size
         if: steps.filter.outputs.changed == 'true'
         run: |
@@ -566,11 +533,6 @@ jobs:
         with:
           path: /home/runner/.rustup
           cache: rust
-
-      - uses: oxc-project/setup-rust@23f38cfb0c04af97a055f76acee94d5be71c7c82 # v1.0.16
-        if: steps.filter.outputs.changed == 'true'
-        with:
-          restore-cache: false
 
       - name: Check allocations
         if: steps.filter.outputs.changed == 'true'
@@ -601,11 +563,8 @@ jobs:
             rust
             pnpm
 
-      - uses: oxc-project/setup-rust@23f38cfb0c04af97a055f76acee94d5be71c7c82 # v1.0.16
+      - run: rustup component add rustfmt
         if: steps.filter.outputs.src == 'true'
-        with:
-          restore-cache: false
-          components: rustfmt
 
       - name: Check AST Changes
         if: steps.filter.outputs.src == 'true'
@@ -632,11 +591,8 @@ jobs:
           path: /home/runner/.rustup
           cache: rust
 
-      - uses: oxc-project/setup-rust@23f38cfb0c04af97a055f76acee94d5be71c7c82 # v1.0.16
+      - run: rustup component add rustfmt
         if: steps.filter.outputs.changed == 'true'
-        with:
-          restore-cache: false
-          components: rustfmt
 
       - name: Check linter changes
         if: steps.filter.outputs.changed == 'true'
