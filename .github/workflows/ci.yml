@@ -57,7 +57,6 @@ jobs:
       - uses: oxc-project/setup-node@b8d296d30eafd1ae2968fab67aead472a1dbf6d4 # v1.0.7
       - uses: namespacelabs/nscloud-cache-action@a90bb5d4b27522ce881c6e98eebd7d7e6d1653f9 # v1
         with:
-          path: /home/runner/.rustup
           cache: |
             rust
             pnpm
