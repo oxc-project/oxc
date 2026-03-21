@@ -678,7 +678,6 @@ fn format_signature<'a, 'b>(
     format_with(move |f| {
         let content = format_with(|f| {
             group(&format_args!(
-                maybe_space(!is_first_in_chain),
                 arrow.r#async().then_some("async "),
                 arrow.type_parameters(),
                 arrow.params(),
@@ -693,6 +692,7 @@ fn format_signature<'a, 'b>(
             if is_first_in_chain {
                 write!(f, format_head);
             } else {
+                write!(f, [space()]);
                 let mut buffer = RemoveSoftLinesBuffer::new(f);
                 write!(buffer, format_head);
             }
