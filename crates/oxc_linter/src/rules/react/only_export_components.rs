@@ -555,6 +555,14 @@ impl OnlyExportComponents {
                 if is_create_context {
                     return ExportType::ReactContext(span);
                 }
+
+                // A call expression is only a valid React component if it is
+                // a recognized HOC wrapping a component. Any other call
+                // (e.g. `createFileRoute(...)({...})`) is not a component.
+                if self.is_hoc_call_expression(call_expr) && Self::starts_with_ascii_upper(name) {
+                    return ExportType::ReactComponent;
+                }
+                return ExportType::NonComponent(span);
             }
 
             let expr_without_ts = Self::skip_ts_expression(init_expr);
@@ -768,6 +776,8 @@ fn test() {
             "export const MyComponent = () => {}; export default memo(forwardRef(MyComponent));",
             None,
         ),
+        // Named export with React.memo member expression HOC call
+        ("export const MyComponent = React.memo(function MyComponent() { return null; });", None),
     ];
 
     let fail = vec![
@@ -812,6 +822,13 @@ fn test() {
             None,
         ),
         ("const MyComponent = () => {}; export default observer(MyComponent);", None),
+        // Call expression initializer is not a constant or component (#20455)
+        (
+            "export const Route = createFileRoute('/example')({ component: RouteComponent }); function RouteComponent() { return <div>Hello</div>; }",
+            Some(serde_json::json!([{ "allowConstantExport": true }])),
+        ),
+        // Non-HOC call expression with uppercase name
+        ("export const Foo = someFunction(); export const Bar = () => {};", None),
     ];
 
     Tester::new(OnlyExportComponents::NAME, OnlyExportComponents::PLUGIN, pass, fail)
