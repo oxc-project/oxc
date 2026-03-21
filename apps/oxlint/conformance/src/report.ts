@@ -21,8 +21,12 @@ const normalizeSlashes =
 
 /**
  * Generate report of test results as markdown.
- * @param results - Results of running tests
- * @returns Report as markdown
+ * @param groupName - Name of the test group or suite.
+ * @param repoUrl - URL of the repository containing the rules and tests.
+ * @param commitSha - Commit SHA associated with this test run.
+ * @param version - Version of the tool or ruleset used for the tests.
+ * @param results - Results of running tests.
+ * @returns Report as markdown.
  */
 export function generateReport(
   groupName: string,
