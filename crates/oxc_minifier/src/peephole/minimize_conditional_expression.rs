@@ -6,8 +6,8 @@ use oxc_ecmascript::{
     constant_evaluation::{ConstantEvaluation, ConstantValue, DetermineValueType},
     side_effects::MayHaveSideEffects,
 };
-use oxc_syntax::precedence::GetPrecedence;
 use oxc_span::{ContentEq, GetSpan};
+use oxc_syntax::precedence::GetPrecedence;
 
 use super::PeepholeOptimizations;
 
