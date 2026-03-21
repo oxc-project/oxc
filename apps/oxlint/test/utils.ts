@@ -217,8 +217,16 @@ const ESLINT_SPACES_MIN = 4;
  */
 export function normalizeStdout(stdout: string, fixtureName: string, isESLint: boolean): string {
   // Normalize line breaks, and trim line breaks from start and end
-  stdout = stdout.replace(/\r\n?/g, "\n").replace(/^\n+/, "").replace(/\n+$/, "");
+  stdout = stdout
+    .replace(/\r\n?/g, "\n")
+    .replace(/^(?:[ \t]*\n)+/u, "")
+    .replace(/(?:\n[ \t]*)+$/u, "");
   if (stdout === "") return "";
+
+  // Normalize non-deterministic fields in JSON output.
+  stdout = stdout
+    .replace(/"threads_count":\s*\d+/g, '"threads_count": X')
+    .replace(/"start_time":\s*\d+(?:\.\d+)?/g, '"start_time": X');
 
   let lines = stdout.split("\n");
 

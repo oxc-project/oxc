@@ -623,6 +623,7 @@ impl Runtime {
                                         section.source.start,
                                         section.source.framework_options,
                                         section.parser_tokens,
+                                        dep.source_text,
                                     ))
                                 }
                                 Err(messages) => {
@@ -725,7 +726,7 @@ impl Runtime {
                 None,
                 |me, mut module_to_lint| {
                     module_to_lint.content.with_dependent_mut(
-                    |allocator_guard, ModuleContentDependent { source_text: _, section_contents }| {
+                    |allocator_guard, ModuleContentDependent { source_text, section_contents }| {
                         assert_eq!(
                             module_to_lint.section_module_records.len(),
                             section_contents.len()
@@ -743,6 +744,7 @@ impl Runtime {
                                         section.source.start,
                                         section.source.framework_options,
                                         section.parser_tokens,
+                                        source_text,
                                     ))
                                 }
                                 Err(diagnostics) => {
@@ -804,7 +806,7 @@ impl Runtime {
         rayon::scope(|scope| {
             self.resolve_modules(file_system, &paths_set, scope, check_syntax_errors, Some(tx_error), |me, mut module| {
                 module.content.with_dependent_mut(
-                    |allocator_guard, ModuleContentDependent { source_text: _, section_contents }| {
+                    |allocator_guard, ModuleContentDependent { source_text, section_contents }| {
                         assert_eq!(module.section_module_records.len(), section_contents.len());
 
                         let context_sub_hosts: Vec<ContextSubHost<'_>> = module
@@ -818,6 +820,7 @@ impl Runtime {
                                     section.source.start,
                                     section.source.framework_options,
                                     section.parser_tokens,
+                                    source_text,
                                 )),
                                 Err(errors) => {
                                     if !errors.is_empty() {
@@ -965,8 +968,12 @@ impl Runtime {
         allocator: &'a Allocator,
         mut out_sections: Option<&mut SectionContents<'a>>,
     ) -> SmallVec<[Result<ResolvedModuleRecord, Vec<OxcDiagnostic>>; 1]> {
-        let section_sources = PartialLoader::parse(ext, source_text)
-            .unwrap_or_else(|| vec![JavaScriptSource::partial(source_text, source_type, 0)]);
+        let section_sources = if self.linter.has_external_linter() {
+            PartialLoader::parse_for_external_linter(ext, source_text)
+        } else {
+            PartialLoader::parse(ext, source_text)
+        }
+        .unwrap_or_else(|| vec![JavaScriptSource::partial(source_text, source_type, 0)]);
 
         let mut section_module_records = SmallVec::<
             [Result<ResolvedModuleRecord, Vec<OxcDiagnostic>>; 1],
