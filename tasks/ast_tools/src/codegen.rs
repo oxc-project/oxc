@@ -1,7 +1,4 @@
-use std::{
-    env,
-    path::{Path, PathBuf},
-};
+use std::path::{Path, PathBuf};
 
 use rustc_hash::FxHashMap;
 
@@ -29,14 +26,7 @@ pub struct Codegen {
 
 impl Codegen {
     /// Create new [`Codegen`].
-    pub fn new() -> Self {
-        // Get path to root of repo.
-        // Use `CARGO_MANIFEST_DIR` instead of `env::current_dir` because want to be able to run this from any directory.
-        // `CARGO_MANIFEST_DIR` is the path to `tasks/ast_tools`, so pop 2 path segments to get root of repo.
-        let mut root_path = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap());
-        root_path.pop();
-        root_path.pop();
-
+    pub fn new(root_path: PathBuf) -> Self {
         let mut derive_name_to_id = FxHashMap::default();
 
         let mut attr_processors = FxHashMap::default();

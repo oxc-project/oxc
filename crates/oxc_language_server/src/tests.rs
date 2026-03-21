@@ -1703,4 +1703,288 @@ mod test_suite {
 
         server.shutdown(4).await;
     }
+
+    // ── Single-file mode (no workspace folders / root URI on initialize) ──────
+
+    /// Helper: build an initialize request that puts the server into single-file mode.
+    fn single_file_mode_initialize() -> crate::tests::InitializeRequestOptions {
+        // workspace_folders = None, root_uri = None → single file mode
+        InitializeRequestOptions::default()
+    }
+
+    /// When all workspace folders are removed and the server had explicit workspace folders,
+    /// it should enter single-file mode so subsequent file opens create workers dynamically.
+    #[tokio::test]
+    async fn test_entering_single_file_mode_when_all_workspaces_removed() {
+        let mut server = TestServer::new_initialized(
+            |client| Backend::new(client, server_info(), vec![]),
+            initialize_request(InitializeRequestOptions::default()),
+        )
+        .await;
+
+        // Confirm there is initially one workspace worker.
+        server.send_request(test_configuration_request(2)).await;
+        let response = server.recv_response().await;
+        assert_eq!(response.result().unwrap().as_array().unwrap().len(), 1);
+
+        // Remove the only workspace folder.
+        server
+            .send_request(workspace_folders_changed(
+                vec![],
+                vec![WorkspaceFolder {
+                    uri: WORKSPACE.parse().unwrap(),
+                    name: "workspace".to_string(),
+                }],
+            ))
+            .await;
+
+        // No workers remain; the server should be in single-file mode.
+        server.send_request(test_configuration_request(3)).await;
+        let response = server.recv_response().await;
+        assert_eq!(*response.result().unwrap(), json!([]));
+
+        // Opening a file should now dynamically create a worker (single-file mode).
+        let file = "file:///path/to/some/file.js";
+        server.send_request(did_open(file, "content")).await;
+
+        server.send_request(test_configuration_request(4)).await;
+        let response = server.recv_response().await;
+        assert_eq!(response.result().unwrap().as_array().unwrap().len(), 1);
+
+        server.shutdown(5).await;
+    }
+
+    /// When workspace folders are added while the server is in single-file mode,
+    /// it should exit single-file mode and shut down existing single-file workers.
+    #[tokio::test]
+    async fn test_exiting_single_file_mode_when_workspace_added() {
+        let mut server = TestServer::new_initialized(
+            |client| Backend::new(client, server_info(), vec![]),
+            initialize_request_workspace_folders(single_file_mode_initialize()),
+        )
+        .await;
+
+        // Open a file to create a single-file worker.
+        let file = "file:///path/to/some/file.js";
+        server.send_request(did_open(file, "content")).await;
+
+        // Confirm the dynamically-created worker exists.
+        server.send_request(test_configuration_request(2)).await;
+        let response = server.recv_response().await;
+        assert_eq!(response.result().unwrap().as_array().unwrap().len(), 1);
+
+        // Add a workspace folder — this should exit single-file mode and remove the
+        // dynamically-created worker, replacing it with the new explicit workspace worker.
+        server
+            .send_request(workspace_folders_changed(
+                vec![WorkspaceFolder {
+                    uri: WORKSPACE.parse().unwrap(),
+                    name: "workspace".to_string(),
+                }],
+                vec![],
+            ))
+            .await;
+
+        // Now there should be exactly one worker: the explicitly added workspace.
+        server.send_request(test_configuration_request(3)).await;
+        let response = server.recv_response().await;
+        assert!(response.is_ok());
+        let workers = response.result().unwrap().as_array().unwrap();
+        assert_eq!(workers.len(), 1);
+
+        server.shutdown(4).await;
+    }
+
+    #[tokio::test]
+    async fn test_single_file_mode_creates_worker_on_open() {
+        let mut server = TestServer::new_initialized(
+            |client| Backend::new(client, server_info(), vec![]),
+            initialize_request_workspace_folders(single_file_mode_initialize()),
+        )
+        .await;
+
+        // Before any file is opened there should be no workers.
+        server.send_request(test_configuration_request(2)).await;
+        let response = server.recv_response().await;
+        assert!(response.is_ok());
+        assert_eq!(*response.result().unwrap(), json!([]));
+
+        // Open a file – this should cause a workspace worker to be created for its parent directory.
+        let file = "file:///path/to/some/file.js";
+        server.send_request(did_open(file, "content")).await;
+
+        // After opening the file there should be exactly one worker.
+        server.send_request(test_configuration_request(3)).await;
+        let response = server.recv_response().await;
+        assert!(response.is_ok());
+        assert_eq!(response.id(), &Id::Number(3));
+        let workers = response.result().unwrap().as_array().unwrap().len();
+        assert_eq!(workers, 1);
+
+        server.shutdown(4).await;
+    }
+
+    #[tokio::test]
+    async fn test_single_file_mode_removes_worker_on_last_close() {
+        let mut server = TestServer::new_initialized(
+            |client| Backend::new(client, server_info(), vec![]),
+            initialize_request_workspace_folders(single_file_mode_initialize()),
+        )
+        .await;
+
+        let file = "file:///path/to/some/file.js";
+        server.send_request(did_open(file, "content")).await;
+
+        // Confirm the worker was created.
+        server.send_request(test_configuration_request(2)).await;
+        let response = server.recv_response().await;
+        assert_eq!(response.result().unwrap().as_array().unwrap().len(), 1);
+
+        // Close the only open file – the workspace worker should be removed.
+        server.send_request(did_close(file)).await;
+
+        server.send_request(test_configuration_request(3)).await;
+        let response = server.recv_response().await;
+        assert!(response.is_ok());
+        assert_eq!(response.id(), &Id::Number(3));
+        assert_eq!(*response.result().unwrap(), json!([]));
+
+        server.shutdown(4).await;
+    }
+
+    #[tokio::test]
+    async fn test_single_file_mode_keeps_worker_when_sibling_still_open() {
+        let mut server = TestServer::new_initialized(
+            |client| Backend::new(client, server_info(), vec![]),
+            initialize_request_workspace_folders(single_file_mode_initialize()),
+        )
+        .await;
+
+        let file_a = "file:///path/to/some/a.js";
+        let file_b = "file:///path/to/some/b.js";
+
+        // Open two files in the same directory – both should share one worker.
+        server.send_request(did_open(file_a, "a")).await;
+        server.send_request(did_open(file_b, "b")).await;
+
+        server.send_request(test_configuration_request(2)).await;
+        let response = server.recv_response().await;
+        assert_eq!(response.result().unwrap().as_array().unwrap().len(), 1);
+
+        // Close one of them – the worker must remain because the sibling is still open.
+        server.send_request(did_close(file_a)).await;
+
+        server.send_request(test_configuration_request(3)).await;
+        let response = server.recv_response().await;
+        assert!(response.is_ok());
+        assert_eq!(response.id(), &Id::Number(3));
+        assert_eq!(response.result().unwrap().as_array().unwrap().len(), 1);
+
+        server.shutdown(4).await;
+    }
+
+    #[tokio::test]
+    async fn test_single_file_mode_separate_workers_for_different_dirs() {
+        let mut server = TestServer::new_initialized(
+            |client| Backend::new(client, server_info(), vec![]),
+            initialize_request_workspace_folders(single_file_mode_initialize()),
+        )
+        .await;
+
+        let file_a = "file:///path/to/dir_a/file.js";
+        let file_b = "file:///path/to/dir_b/file.js";
+
+        // Open files from two different directories – each should get its own worker.
+        server.send_request(did_open(file_a, "a")).await;
+        server.send_request(did_open(file_b, "b")).await;
+
+        server.send_request(test_configuration_request(2)).await;
+        let response = server.recv_response().await;
+        assert!(response.is_ok());
+        assert_eq!(response.result().unwrap().as_array().unwrap().len(), 2);
+
+        server.shutdown(4).await;
+    }
+
+    #[tokio::test]
+    async fn test_single_file_mode_non_file_uri_skipped() {
+        let mut server = TestServer::new_initialized(
+            |client| Backend::new(client, server_info(), vec![]),
+            initialize_request_workspace_folders(single_file_mode_initialize()),
+        )
+        .await;
+
+        // Non-file:// URIs (e.g. untitled) must not cause worker creation in single-file mode.
+        server.send_request(did_open("untitled:///Untitled-1", "content")).await;
+
+        server.send_request(test_configuration_request(2)).await;
+        let response = server.recv_response().await;
+        assert!(response.is_ok());
+        assert_eq!(*response.result().unwrap(), json!([]));
+
+        server.shutdown(3).await;
+    }
+
+    #[tokio::test]
+    async fn test_single_file_mode_push_diagnostics() {
+        let mut server = TestServer::new_initialized(
+            |client| {
+                Backend::new(
+                    client,
+                    server_info(),
+                    vec![Box::new(FakeToolBuilder::new(DiagnosticMode::Push))],
+                )
+            },
+            initialize_request_workspace_folders(single_file_mode_initialize()),
+        )
+        .await;
+
+        // Opening a diagnostic file should trigger push diagnostics even in single-file mode.
+        let file = "file:///path/to/some/diagnostics.config";
+        server.send_request(did_open(file, "content")).await;
+
+        let notification = server.recv_notification().await;
+        assert_eq!(notification.method(), "textDocument/publishDiagnostics");
+        let params: PublishDiagnosticsParams =
+            serde_json::from_value(notification.params().unwrap().clone()).unwrap();
+        assert_eq!(params.uri, file.parse().unwrap());
+        assert_eq!(params.diagnostics.len(), 1);
+
+        // Closing the file shuts down the dynamic workspace and clears the pushed diagnostics.
+        server.send_request(did_close(file)).await;
+        let clear_notification = server.recv_notification().await;
+        assert_eq!(clear_notification.method(), "textDocument/publishDiagnostics");
+        let clear_params: PublishDiagnosticsParams =
+            serde_json::from_value(clear_notification.params().unwrap().clone()).unwrap();
+        assert_eq!(clear_params.uri, file.parse().unwrap());
+        assert!(clear_params.diagnostics.is_empty(), "diagnostics should be cleared on close");
+
+        server.shutdown(2).await;
+    }
+
+    #[tokio::test]
+    async fn test_single_file_mode_close_all_removes_all_workers() {
+        let mut server = TestServer::new_initialized(
+            |client| Backend::new(client, server_info(), vec![]),
+            initialize_request_workspace_folders(single_file_mode_initialize()),
+        )
+        .await;
+
+        let file_a = "file:///path/to/dir_a/file.js";
+        let file_b = "file:///path/to/dir_b/file.js";
+
+        server.send_request(did_open(file_a, "a")).await;
+        server.send_request(did_open(file_b, "b")).await;
+
+        // Close both files – both dynamically created workspace workers should be removed.
+        server.send_request(did_close(file_a)).await;
+        server.send_request(did_close(file_b)).await;
+
+        server.send_request(test_configuration_request(2)).await;
+        let response = server.recv_response().await;
+        assert!(response.is_ok());
+        assert_eq!(*response.result().unwrap(), json!([]));
+
+        server.shutdown(3).await;
+    }
 }

@@ -320,6 +320,14 @@ source: crates/oxc_linter/src/tester.rs
   help: This `if` has no `else` branch, so the callback may reach the end without a `return`. Add an `else`, or add a final `return`/`throw` after the `if`.
         Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.map" does not return on all code paths
+   ╭─[array_callback_return.tsx:1:15]
+ 1 │ foo.map(() => { while (true) { if (a) break; return 1; } })
+   ·               ────────────────────────────────────────────
+   ╰────
+  help: "Array.prototype.map" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
+
   ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.every" does not return on all code paths
    ╭─[array_callback_return.tsx:1:22]
  1 │ foo.every(function() { switch (a) { case 0: break; default: return true; } })

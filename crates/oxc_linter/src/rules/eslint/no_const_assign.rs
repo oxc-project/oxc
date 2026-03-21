@@ -59,8 +59,8 @@ impl Rule for NoConstAssign {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::VariableDeclarator(decl) if decl.kind.is_const() || decl.kind.is_using() => {
-                for ident in decl.id.get_binding_identifiers() {
-                    check_symbol_id(ident.symbol_id(), ctx);
+                for symbol_id in decl.id.get_symbol_ids() {
+                    check_symbol_id(symbol_id, ctx);
                 }
             }
             _ => {}

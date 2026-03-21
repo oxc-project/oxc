@@ -1268,12 +1268,12 @@ pub enum VariableDeclarationKind {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
-#[estree(via = VariableDeclaratorConverter)]
 pub struct VariableDeclarator<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
     #[estree(skip)]
     pub kind: VariableDeclarationKind,
+    #[estree(via = VariableDeclaratorId)]
     pub id: BindingPattern<'a>,
     #[ts]
     #[estree(skip)]
@@ -2638,6 +2638,7 @@ pub struct ImportNamespaceSpecifier<'a> {
 #[estree(no_type, no_ts_def)]
 pub struct WithClause<'a> {
     pub node_id: Cell<NodeId>,
+    #[estree(skip)]
     pub span: Span,
     #[estree(skip)]
     pub keyword: WithClauseKeyword,
