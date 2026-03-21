@@ -5,7 +5,7 @@ source: apps/oxlint/src/tester.rs
 arguments: --format=github parser-error.js
 working directory: fixtures/cli/output_formatter_diagnostic
 ----------
-::error file=parser-error.js,line=3,endLine=3,col=9,endColumn=10,title=oxlint::Expected `;` but found `:`
+::error file=parser-error.js,line=3,endLine=3,col=9,endColumn=10,title=oxlint::parser-error.js:3 Expected `;` but found `:`
 
 Found 0 warnings and 1 error.
 ----------

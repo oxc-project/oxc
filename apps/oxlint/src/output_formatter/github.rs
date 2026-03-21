@@ -1,4 +1,4 @@
-use std::borrow::Cow;
+use std::fmt::Write;
 
 use oxc_diagnostics::{
     Error, Severity,
@@ -37,20 +37,44 @@ fn format_github(diagnostic: &Error) -> String {
         Severity::Error => "error",
         Severity::Warning | miette::Severity::Advice => "warning",
     };
-    let title = rule_id.map_or(Cow::Borrowed("oxlint"), Cow::Owned);
+    let title = rule_id.as_deref().unwrap_or("oxlint");
+    let message = escape_message(display_filename(&filename), start.line, &message);
     let filename = escape_property(&filename);
-    let message = escape_data(&message);
     format!(
         "::{severity} file={filename},line={},endLine={},col={},endColumn={},title={title}::{message}\n",
         start.line, end.line, start.column, end.column
     )
 }
 
-fn escape_data(value: &str) -> String {
-    // Refs:
-    // - https://github.com/actions/runner/blob/a4c57f27477077e57545af79851551ff7f5632bd/src/Runner.Common/ActionCommand.cs#L18-L22
-    // - https://github.com/actions/toolkit/blob/fe3e7ce9a7f995d29d1fcfd226a32bca407f9dc8/packages/core/src/command.ts#L80-L94
-    let mut result = String::with_capacity(value.len());
+fn escape_message(filename: &str, line: usize, message: &str) -> String {
+    let mut result = String::with_capacity(filename.len() + message.len() + 16);
+
+    if !filename.is_empty() && line > 0 {
+        push_escaped_data(&mut result, filename);
+        result.push(':');
+        write!(&mut result, "{line} ").expect("writing to String should not fail");
+    }
+
+    push_escaped_data(&mut result, message);
+    result
+}
+
+fn display_filename(filename: &str) -> &str {
+    if let Some((_, path)) = filename.split_once("://") {
+        #[cfg(windows)]
+        if let Some(path) = path.strip_prefix('/')
+            && path.as_bytes().get(1) == Some(&b':')
+        {
+            return path;
+        }
+
+        return path;
+    }
+
+    filename
+}
+
+fn push_escaped_data(result: &mut String, value: &str) {
     for c in value.chars() {
         match c {
             '\r' => result.push_str("%0D"),
@@ -59,7 +83,6 @@ fn escape_data(value: &str) -> String {
             _ => result.push(c),
         }
     }
-    result
 }
 
 fn escape_property(value: &str) -> String {
@@ -88,7 +111,7 @@ mod test {
     };
     use oxc_span::Span;
 
-    use super::GithubReporter;
+    use super::{GithubReporter, display_filename};
 
     #[test]
     fn reporter_finish() {
@@ -120,7 +143,44 @@ mod test {
         assert!(result.is_some());
         assert_eq!(
             result.unwrap(),
-            "::warning file=file%3A//test.ts,line=1,endLine=1,col=1,endColumn=9,title=oxlint::error message\n"
+            "::warning file=file%3A//test.ts,line=1,endLine=1,col=1,endColumn=9,title=oxlint::test.ts:1 error message\n"
+        );
+    }
+
+    #[test]
+    fn display_filename_keeps_nested_relative_path() {
+        assert_eq!(display_filename("packages/ui/main.ts"), "packages/ui/main.ts");
+    }
+
+    #[test]
+    fn display_filename_strips_uri_scheme() {
+        assert_eq!(display_filename("file://packages/ui/main.ts"), "packages/ui/main.ts");
+    }
+
+    #[cfg(not(windows))]
+    #[test]
+    fn display_filename_keeps_absolute_path() {
+        assert_eq!(
+            display_filename("/workspace/packages/ui/main.ts"),
+            "/workspace/packages/ui/main.ts"
+        );
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn display_filename_keeps_absolute_path() {
+        assert_eq!(
+            display_filename("C:/workspace/packages/ui/main.ts"),
+            "C:/workspace/packages/ui/main.ts"
+        );
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn display_filename_normalizes_windows_file_uri() {
+        assert_eq!(
+            display_filename("file:///C:/workspace/packages/ui/main.ts"),
+            "C:/workspace/packages/ui/main.ts"
         );
     }
 }
