@@ -7,7 +7,6 @@ use oxc_ecmascript::{
     side_effects::MayHaveSideEffects,
 };
 use oxc_span::{ContentEq, GetSpan};
-use oxc_syntax::precedence::GetPrecedence;
 
 use super::PeepholeOptimizations;
 
