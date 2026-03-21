@@ -143,6 +143,7 @@ pub(crate) mod eslint {
     pub mod no_prototype_builtins;
     pub mod no_redeclare;
     pub mod no_regex_spaces;
+    pub mod no_restricted_exports;
     pub mod no_restricted_globals;
     pub mod no_restricted_imports;
     pub mod no_return_assign;
