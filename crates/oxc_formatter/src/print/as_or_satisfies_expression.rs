@@ -2,7 +2,9 @@ use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
 use crate::{
+    FormatTrailingCommas,
     ast_nodes::{AstNode, AstNodes},
+    best_fitting,
     formatter::{Formatter, prelude::*, trivia::FormatTrailingComments},
     print::{FormatNodeWithoutTrailingComments, FormatWrite},
     write,
@@ -10,11 +12,10 @@ use crate::{
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSAsExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
-        let is_callee_or_object = is_callee_or_object_context(self.span(), self.parent());
         format_as_or_satisfies_expression(
             self.expression(),
             self.type_annotation(),
-            is_callee_or_object,
+            is_callee_or_object_context(self.span(), self.parent()),
             "as",
             f,
         );
@@ -23,11 +24,10 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSAsExpression<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSSatisfiesExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
-        let is_callee_or_object = is_callee_or_object_context(self.span(), self.parent());
         format_as_or_satisfies_expression(
             self.expression(),
             self.type_annotation(),
-            is_callee_or_object,
+            is_callee_or_object_context(self.span(), self.parent()),
             "satisfies",
             f,
         );
@@ -37,7 +37,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSSatisfiesExpression<'a>> {
 fn format_as_or_satisfies_expression<'a>(
     expression: &AstNode<'a, Expression>,
     type_annotation: &AstNode<'a, TSType>,
-    is_callee_or_object: bool,
+    should_group: bool,
     operation: &'static str,
     f: &mut Formatter<'_, 'a>,
 ) {
@@ -57,21 +57,67 @@ fn format_as_or_satisfies_expression<'a>(
             && let AstNodes::TSTypeReference(reference) = type_annotation.as_ast_nodes()
             && reference.type_name.is_const()
         {
-            write!(f, [FormatNodeWithoutTrailingComments(expression)]);
+            write!(f, [group(&FormatNodeWithoutTrailingComments(expression))]);
             write!(f, [FormatTrailingComments::Comments(block_comments)]);
             write!(f, [space(), token(operation), space(), token("const")]);
         } else if block_comments.is_empty() {
-            write!(f, [FormatNodeWithoutTrailingComments(expression)]);
-            write!(f, [space(), token(operation), space(), type_annotation]);
+            if let AstNodes::CallExpression(call) = expression.as_ast_nodes() {
+                let format_flat = format_with(|f| {
+                    write!(
+                        f,
+                        [
+                            FormatNodeWithoutTrailingComments(expression),
+                            space(),
+                            token(operation),
+                            space(),
+                            type_annotation
+                        ]
+                    );
+                });
+                let format_broken_call = format_with(|f| {
+                    let broken_arguments = format_with(|f| {
+                        let separator =
+                            format_with(|f| write!(f, [",", soft_line_break_or_space()]));
+                        write!(
+                            f,
+                            [
+                                "(",
+                                soft_block_indent(&format_with(|f| {
+                                    f.join_with(&separator).entries(call.arguments().iter());
+                                    write!(f, [FormatTrailingCommas::All]);
+                                })),
+                                ")"
+                            ]
+                        );
+                    });
+                    write!(
+                        f,
+                        [
+                            call.callee(),
+                            call.optional.then_some("?."),
+                            call.type_arguments(),
+                            broken_arguments,
+                            space(),
+                            token(operation),
+                            space(),
+                            type_annotation
+                        ]
+                    );
+                });
+                write!(f, [best_fitting!(format_flat, format_broken_call)]);
+            } else {
+                write!(f, [group(&FormatNodeWithoutTrailingComments(expression))]);
+                write!(f, [space(), token(operation), space(), type_annotation]);
+            }
         } else {
             write!(f, [expression, space(), token(operation), space(), type_annotation]);
         }
     });
 
-    if is_callee_or_object {
+    if should_group {
         write!(f, [group(&soft_block_indent(&format_inner))]);
     } else {
-        write!(f, [format_inner]);
+        write!(f, [group(&format_inner)]);
     }
 }
 

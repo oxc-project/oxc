@@ -1,0 +1,45 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+export function createStripeSchemaChecker(): void {
+  createPluginModelSyncChecker({
+    buildPartialDef: (container) => {
+      const config = PluginUtils.configByKey(
+        container.definition,
+        pluginKey,
+      ) as StripePluginDefinition | undefined;
+    },
+  });
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+export function createStripeSchemaChecker(): void {
+  createPluginModelSyncChecker({
+    buildPartialDef: (container) => {
+      const config = PluginUtils.configByKey(
+        container.definition,
+        pluginKey,
+      ) as StripePluginDefinition | undefined;
+    },
+  });
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+export function createStripeSchemaChecker(): void {
+  createPluginModelSyncChecker({
+    buildPartialDef: (container) => {
+      const config = PluginUtils.configByKey(
+        container.definition,
+        pluginKey,
+      ) as StripePluginDefinition | undefined;
+    },
+  });
+}
+
+===================== End =====================
