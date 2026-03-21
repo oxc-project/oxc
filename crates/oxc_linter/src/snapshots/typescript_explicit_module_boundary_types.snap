@@ -782,6 +782,15 @@ source: crates/oxc_linter/src/tester.rs
   help: Define an explicit return type for the function.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
+   ╭─[explicit_module_boundary_types.tsx:2:29]
+ 1 │ 
+ 2 │             export function add(a: number, b: number) {
+   ·                             ───
+ 3 │               return a + b;
+   ╰────
+  help: Define an explicit return type for the function.
+
+  ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
    ╭─[explicit_module_boundary_types.tsx:4:29]
  3 │             export function test(a: number): number;
  4 │             export function test(a: unknown) {
