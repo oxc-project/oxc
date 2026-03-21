@@ -299,10 +299,21 @@ export function getNodeLoc(node: Node): Location {
   //
   // We also don't make it configurable, because deleting it wouldn't make `node.loc` evaluate to `undefined`,
   // because the access would fall through to the getter on the prototype.
-  Object.defineProperty(node, "loc", { value: loc, writable: true });
+  //
+  // Reuse `LOC_DESCRIPTOR` object to avoid unnecessarily creating a temporary object each time.
+  LOC_DESCRIPTOR.value = loc;
+  Object.defineProperty(node, "loc", LOC_DESCRIPTOR);
 
   return loc;
 }
+
+// Reusable property descriptor for `Object.defineProperty` in `getNodeLoc`.
+const LOC_DESCRIPTOR: PropertyDescriptor = {
+  value: null,
+  writable: true,
+  enumerable: false,
+  configurable: false,
+};
 
 /**
  * Compute a `Location` from `start` and `end` source offsets.
