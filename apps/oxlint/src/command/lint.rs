@@ -247,7 +247,7 @@ pub struct WarningOptions {
 #[derive(Debug, Clone, Bpaf)]
 pub struct OutputOptions {
     /// Use a specific output format. Possible values:
-    /// `checkstyle`, `default`, `github`, `gitlab`, `json`, `junit`, `stylish`, `unix`
+    /// `agent`, `checkstyle`, `default`, `github`, `gitlab`, `json`, `junit`, `stylish`, `unix`
     #[bpaf(long, short, fallback_with(default_output_format), hide_usage)]
     pub format: OutputFormat,
 }
@@ -260,6 +260,8 @@ fn default_output_format() -> Result<OutputFormat, std::convert::Infallible> {
         Ok(OutputFormat::Github)
     } else if std::env::var("GITLAB_CI").ok().is_some_and(|value| value == "true") {
         Ok(OutputFormat::Gitlab)
+    } else if std::env::var("OXLINT_AGENT").ok().is_some() {
+        Ok(OutputFormat::Agent)
     } else {
         Ok(OutputFormat::Default)
     }
