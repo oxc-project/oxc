@@ -705,6 +705,11 @@ function assertInvalidTestCasePasses(test: InvalidTestCase, plugin: Plugin, conf
         "Test property `output` matches `code`. If no autofix is expected, set output to `null`.",
       );
     }
+  } else if (CONFORMANCE && (test.errors as unknown as string) === "__unknown__") {
+    // In conformance tests, sometimes test cases don't specify `output` property
+    // (e.g. `eslint-plugin-regexp`'s `SnapshotRuleTester` test cases store fix output in snapshots).
+    // When `errors` is `"__unknown__"`, skip the output check too.
+    // TODO: Is this the right fix for this problem? Should we handle this some other way?
   } else {
     assert.strictEqual(fixedCode, code, "The rule fixed the code. Please add `output` property.");
   }
