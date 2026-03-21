@@ -407,7 +407,7 @@ impl<'a> PeepholeOptimizations {
                 .and_then(ConstantValue::into_number)
                 .filter(|_| !expr.alternate.may_have_side_effects(ctx)),
         ) {
-            (Some(1.0), Some(val)) if val == 0.0 => {
+            (Some(1.0), Some(0.0)) => {
                 // "a ? 1 : 0"
                 let is_boolean = expr.test.value_type(ctx).is_boolean();
                 let needs_parens = Self::test_needs_parens(&expr.test);
@@ -433,7 +433,7 @@ impl<'a> PeepholeOptimizations {
                     ));
                 }
             }
-            (Some(val), Some(1.0)) if val == 0.0 => {
+            (Some(0.0), Some(1.0)) => {
                 // "a ? 0 : 1" => "+!a"
                 // Skip if parens would be needed (e.g., "a+b?0:1" => "+!(a+b)" is same length)
                 if !Self::test_needs_parens(&expr.test) {
