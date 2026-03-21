@@ -3,12 +3,15 @@
  */
 
 import { buffer, initSourceText, sourceText } from "./source_code.ts";
-import { comments, initComments } from "./comments.ts";
 import { computeLoc } from "./location.ts";
-import { TOKENS_OFFSET_POS_32, TOKENS_LEN_POS_32 } from "../generated/constants.ts";
+import {
+  COMMENT_SIZE,
+  DESERIALIZED_FLAG_OFFSET,
+  TOKENS_OFFSET_POS_32,
+  TOKENS_LEN_POS_32,
+} from "../generated/constants.ts";
 import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 
-import type { Comment } from "./comments.ts";
 import type { Location, Span } from "./location.ts";
 
 /**
@@ -89,16 +92,24 @@ export interface TemplateToken extends BaseToken {
   type: "Template";
 }
 
-export type TokenOrComment = TokenType | Comment;
-
 // Tokens for the current file.
 // Created lazily only when needed.
 export let tokens: TokenType[] | null = null;
-export let tokensAndComments: TokenOrComment[] | null = null;
+
+// Typed array views over the tokens region of the buffer.
+// These persist for the lifetime of the file (cleared in `resetTokens`).
+let tokensUint8: Uint8Array | null = null;
+export let tokensUint32: Uint32Array | null = null;
+
+// Number of tokens for the current file.
+export let tokensLen = 0;
+
+// Whether all tokens have been deserialized into `cachedTokens`.
+export let allTokensDeserialized = false;
 
 // Cached token objects, reused across files to reduce GC pressure.
 // Tokens are mutated in place during deserialization, then `tokens` is set to a slice of this array.
-const cachedTokens: Token[] = [];
+export const cachedTokens: Token[] = [];
 
 // Tokens array from previous file.
 // Reused for next file if next file has less tokens than the previous file (by truncating it to correct length).
@@ -155,10 +166,6 @@ class Token {
 // Make `loc` property enumerable so that `for (const key in token) ...` includes `loc` in the keys it iterates over
 Object.defineProperty(Token.prototype, "loc", { enumerable: true });
 
-// Typed array views over the tokens region of the buffer
-let tokensUint8: Uint8Array | null = null;
-let tokensUint32: Uint32Array | null = null;
-
 // `ESTreeKind` discriminants (set by Rust side)
 const PRIVATE_IDENTIFIER_KIND = 2;
 const REGEXP_KIND = 8;
@@ -180,46 +187,33 @@ const TOKEN_TYPES: TokenType["type"][] = [
 ];
 
 // Details of Rust `Token` type
-const TOKEN_SIZE_SHIFT = 4; // 1 << 4 == 16 bytes, the size of `Token` in Rust
+export const TOKEN_SIZE = 16;
+debugAssert(TOKEN_SIZE === COMMENT_SIZE, "Size of token, comment, and merged entry must be equal");
+
+const TOKEN_SIZE_SHIFT = 4;
+debugAssert(TOKEN_SIZE === 1 << TOKEN_SIZE_SHIFT);
+
 const KIND_FIELD_OFFSET = 8;
 const IS_ESCAPED_FIELD_OFFSET = 10;
 
+// Values for the "deserialized" flag byte in buffer.
+// * `FLAG_DESERIALIZED` indicates the token/comment is already deserialized.
+// * `FLAG_NOT_DESERIALIZED` indicates the token/comment is not yet deserialized.
+//   `Token` / `Comment` object may be uninitialized, or contain stale data.
+export const FLAG_NOT_DESERIALIZED = 0;
+export const FLAG_DESERIALIZED = 1;
+
 /**
- * Initialize tokens for current file.
+ * Deserialize all tokens and build the `tokens` array.
+ * Called by `ast.tokens` getter.
  */
-export function initTokens() {
+export function initTokens(): void {
   debugAssert(tokens === null, "Tokens already initialized");
 
-  // Deserialize tokens from buffer
-  if (sourceText === null) initSourceText();
-  debugAssertIsNonNull(sourceText);
+  if (!allTokensDeserialized) deserializeTokens();
 
-  debugAssertIsNonNull(buffer);
-
-  const { uint32 } = buffer;
-  const tokensPos = uint32[TOKENS_OFFSET_POS_32];
-  const tokensLen = uint32[TOKENS_LEN_POS_32];
-
-  // Create typed array views over just the tokens region of the buffer.
-  // These are zero-copy views over the same underlying `ArrayBuffer`.
-  const arrayBuffer = buffer.buffer,
-    absolutePos = buffer.byteOffset + tokensPos;
-  tokensUint8 = new Uint8Array(arrayBuffer, absolutePos, tokensLen << TOKEN_SIZE_SHIFT);
-  tokensUint32 = new Uint32Array(arrayBuffer, absolutePos, tokensLen << (TOKEN_SIZE_SHIFT - 2));
-
-  // Grow cache if needed (one-time cost as cache warms up)
-  while (cachedTokens.length < tokensLen) {
-    cachedTokens.push(new Token());
-  }
-
-  // Deserialize into cached token objects
-  for (let i = 0; i < tokensLen; i++) {
-    deserializeTokenInto(cachedTokens[i], i);
-  }
-
-  tokensUint8 = null;
-  tokensUint32 = null;
-
+  // Create `tokens` array as a slice of `cachedTokens` array.
+  //
   // Use `slice` rather than copying tokens one-by-one into a new array.
   // V8 implements `slice` with a single `memcpy` of the backing store, which is faster
   // than N individual `push` calls with bounds checking and potential resizing.
@@ -233,23 +227,102 @@ export function initTokens() {
   } else {
     tokens = (previousTokens = cachedTokens.slice(0, tokensLen)) as TokenType[];
   }
-
-  // Check `tokens` have valid ranges and are in ascending order
-  debugCheckValidRanges(tokens, "token");
 }
 
 /**
- * Deserialize token `i` from buffer into an existing token object.
- * @param token - Token object to mutate
- * @param index - Token index
+ * Deserialize all tokens into `cachedTokens`.
+ * Does NOT build the `tokens` array - use `initTokens` for that.
  */
-function deserializeTokenInto(token: Token, index: number): void {
-  const pos32 = index << 2;
-  const start = tokensUint32![pos32],
-    end = tokensUint32![pos32 + 1];
+export function deserializeTokens(): void {
+  debugAssert(!allTokensDeserialized, "Tokens already deserialized");
 
-  const pos = pos32 << (TOKEN_SIZE_SHIFT - 2);
+  if (tokensUint32 === null) initTokensBuffer();
+
+  for (let i = 0; i < tokensLen; i++) {
+    deserializeTokenIfNeeded(i);
+  }
+
+  allTokensDeserialized = true;
+
+  debugCheckDeserializedTokens();
+}
+
+/**
+ * Initialize typed array views over the tokens region of the buffer.
+ *
+ * Populates `tokensUint8`, `tokensUint32`, and `tokensLen`, and grows `cachedTokens` if needed.
+ * Does NOT deserialize tokens - they are deserialized lazily via `deserializeTokenIfNeeded`.
+ */
+export function initTokensBuffer(): void {
+  debugAssert(tokensUint8 === null && tokensUint32 === null, "Tokens buffer already initialized");
+
+  debugAssertIsNonNull(buffer);
+
+  // Various tokens methods rely on `sourceText` being initialized after `initTokensBuffer`,
+  // so we always initialize it here, even if there are no tokens (empty file)
+  if (sourceText === null) initSourceText();
+  debugAssertIsNonNull(sourceText);
+
+  const { uint32 } = buffer;
+  const tokensPos = uint32[TOKENS_OFFSET_POS_32];
+  tokensLen = uint32[TOKENS_LEN_POS_32];
+
+  // Create typed array views over just the tokens region of the buffer.
+  // These are zero-copy views over the same underlying `ArrayBuffer`.
+  // Views persist for the lifetime of the file (cleared in `resetTokens`).
+  const arrayBuffer = buffer.buffer,
+    absolutePos = buffer.byteOffset + tokensPos;
+  tokensUint8 = new Uint8Array(arrayBuffer, absolutePos, tokensLen << TOKEN_SIZE_SHIFT);
+  tokensUint32 = new Uint32Array(arrayBuffer, absolutePos, tokensLen << (TOKEN_SIZE_SHIFT - 2));
+
+  // Grow cache if needed (one-time cost as cache warms up)
+  while (cachedTokens.length < tokensLen) {
+    cachedTokens.push(new Token());
+  }
+
+  // Check buffer data has valid ranges and ascending order
+  debugCheckValidRanges();
+}
+
+/**
+ * Get token at `index`, deserializing if needed.
+ *
+ * Caller must ensure `initTokensBuffer()` has been called before calling this function.
+ *
+ * @param index - Token index in the tokens buffer
+ * @returns Deserialized token
+ */
+export function getToken(index: number): TokenType {
+  const token = deserializeTokenIfNeeded(index);
+  return (token === null ? cachedTokens[index] : token) as TokenType;
+}
+
+/**
+ * Deserialize token at `index` if not already deserialized.
+ *
+ * Caller must ensure `initTokensBuffer()` has been called before calling this function.
+ *
+ * @param index - Token index in the tokens buffer
+ * @returns `Token` object if newly deserialized, or `null` if already deserialized
+ */
+export function deserializeTokenIfNeeded(index: number): Token | null {
+  const pos = index << TOKEN_SIZE_SHIFT;
+
+  // Fast path: If already deserialized, exit
+  const flagPos = pos + DESERIALIZED_FLAG_OFFSET;
+  if (tokensUint8![flagPos] !== FLAG_NOT_DESERIALIZED) return null;
+
+  // Mark token as deserialized, so it won't be deserialized again
+  tokensUint8![flagPos] = FLAG_DESERIALIZED;
+
+  // Deserialize token into a cached `Token` object
+  const token = cachedTokens[index];
+
   const kind = tokensUint8![pos + KIND_FIELD_OFFSET];
+
+  const pos32 = pos >> 2,
+    start = tokensUint32![pos32],
+    end = tokensUint32![pos32 + 1];
 
   // Get `value` as slice of source text `start..end`.
   // Slice `start + 1..end` for private identifiers, to strip leading `#`.
@@ -283,6 +356,8 @@ function deserializeTokenInto(token: Token, index: number): void {
   token.value = value;
   token.range[0] = token.start = start;
   token.range[1] = token.end = end;
+
+  return token;
 }
 
 /**
@@ -301,146 +376,50 @@ function unescapeIdentifier(name: string): string {
 }
 
 /**
- * Check `tokens` have valid ranges and are in ascending order.
+ * Check tokens buffer has valid ranges and ascending order.
  *
  * Only runs in debug build (tests). In release build, this function is entirely removed by minifier.
  */
-function debugCheckValidRanges(tokens: TokenOrComment[], description: string): void {
+function debugCheckValidRanges(): void {
   if (!DEBUG) return;
 
   let lastEnd = 0;
-  for (const token of tokens) {
-    const { start, end } = token;
-    if (end <= start) throw new Error(`Invalid ${description} range: ${start}-${end}`);
+  for (let i = 0; i < tokensLen; i++) {
+    const pos32 = i << 2;
+    const start = tokensUint32![pos32];
+    const end = tokensUint32![pos32 + 1];
+    if (end <= start) throw new Error(`Invalid token range: ${start}-${end}`);
     if (start < lastEnd) {
-      throw new Error(`Overlapping ${description}s: last end: ${lastEnd}, next start: ${start}`);
+      throw new Error(`Overlapping tokens: last end: ${lastEnd}, next start: ${start}`);
     }
     lastEnd = end;
   }
 }
 
 /**
- * Initialize `tokensAndComments`.
- *
- * Caller must ensure `tokens` is initialized before calling this function,
- * by calling `initTokens()` if `tokens === null`.
- */
-export function initTokensAndComments() {
-  debugAssertIsNonNull(tokens);
-
-  // Ensure comments are initialized
-  if (comments === null) initComments();
-  debugAssertIsNonNull(comments);
-
-  // Fast paths for file with no comments, or file which is only comments
-  const commentsLength = comments.length;
-  if (commentsLength === 0) {
-    tokensAndComments = tokens;
-    return;
-  }
-
-  const tokensLength = tokens.length;
-  if (tokensLength === 0) {
-    tokensAndComments = comments;
-    return;
-  }
-
-  // File contains both tokens and comments.
-  // Fill `tokensAndComments` with the 2 arrays interleaved in source order.
-  tokensAndComments = [];
-
-  let tokenIndex = 0,
-    commentIndex = 0,
-    token = tokens[0],
-    comment = comments[0],
-    tokenStart = token.start,
-    commentStart = comment.start;
-
-  // Push any leading comments
-  while (commentStart < tokenStart) {
-    // Push current comment
-    tokensAndComments.push(comment);
-
-    // If that was last comment, push all remaining tokens, and exit
-    if (++commentIndex === commentsLength) {
-      tokensAndComments.push(...tokens.slice(tokenIndex));
-      debugCheckTokensAndComments();
-      return;
-    }
-
-    // Get next comment
-    comment = comments[commentIndex];
-    commentStart = comment.start;
-  }
-
-  // Push a run of tokens, then a run of comments, and so on, until all tokens and comments are exhausted
-  while (true) {
-    // There's at least 1 token and 1 comment remaining, and token is first.
-    // Push tokens until we reach the next comment or the end.
-    do {
-      // Push current token
-      tokensAndComments.push(token);
-
-      // If that was last token, push all remaining comments, and exit
-      if (++tokenIndex === tokensLength) {
-        tokensAndComments.push(...comments.slice(commentIndex));
-        debugCheckTokensAndComments();
-        return;
-      }
-
-      // Get next token
-      token = tokens[tokenIndex];
-      tokenStart = token.start;
-    } while (tokenStart < commentStart);
-
-    // There's at least 1 token and 1 comment remaining, and comment is first.
-    // Push comments until we reach the next token or the end.
-    do {
-      // Push current comment
-      tokensAndComments.push(comment);
-
-      // If that was last comment, push all remaining tokens, and exit
-      if (++commentIndex === commentsLength) {
-        tokensAndComments.push(...tokens.slice(tokenIndex));
-        debugCheckTokensAndComments();
-        return;
-      }
-
-      // Get next comment
-      comment = comments[commentIndex];
-      commentStart = comment.start;
-    } while (commentStart < tokenStart);
-  }
-
-  debugAssert(false, "End of `initTokensAndComments` should be unreachable");
-}
-
-/**
- * Check `tokensAndComments` contains all tokens and comments, in ascending order.
+ * Check all deserialized tokens are in ascending order.
  *
  * Only runs in debug build (tests). In release build, this function is entirely removed by minifier.
  */
-function debugCheckTokensAndComments() {
+function debugCheckDeserializedTokens(): void {
   if (!DEBUG) return;
 
-  debugAssertIsNonNull(tokens);
-  debugAssertIsNonNull(comments);
-  debugAssertIsNonNull(tokensAndComments);
-
-  const expected = [...tokens, ...comments];
-  expected.sort((a, b) => a.start - b.start);
-
-  if (tokensAndComments.length !== expected.length) {
-    throw new Error("`tokensAndComments` has wrong length");
-  }
-
-  for (let i = 0; i < tokensAndComments.length; i++) {
-    if (tokensAndComments[i] !== expected[i]) {
-      throw new Error("`tokensAndComments` is not correctly ordered");
+  let lastEnd = 0;
+  for (let i = 0; i < tokensLen; i++) {
+    const flagPos = (i << TOKEN_SIZE_SHIFT) + DESERIALIZED_FLAG_OFFSET;
+    if (tokensUint8![flagPos] !== FLAG_DESERIALIZED) {
+      throw new Error(`Token ${i} not marked as deserialized after \`deserializeTokens()\` call`);
     }
-  }
 
-  debugCheckValidRanges(tokensAndComments, "token/comment");
+    const { start, end } = cachedTokens[i];
+    if (end <= start) throw new Error(`Invalid deserialized token range: ${start}-${end}`);
+    if (start < lastEnd) {
+      throw new Error(
+        `Deserialized tokens not in order: last end: ${lastEnd}, next start: ${start}`,
+      );
+    }
+    lastEnd = end;
+  }
 }
 
 /**
@@ -461,5 +440,8 @@ export function resetTokens() {
   tokensWithRegex.length = 0;
 
   tokens = null;
-  tokensAndComments = null;
+  tokensUint8 = null;
+  tokensUint32 = null;
+  tokensLen = 0;
+  allTokensDeserialized = false;
 }

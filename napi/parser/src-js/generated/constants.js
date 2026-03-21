@@ -82,6 +82,14 @@ export const COMMENT_SIZE = 16;
 export const COMMENT_KIND_OFFSET = 12;
 
 /**
+ * Byte offset of the deserialized flag within each token/comment entry.
+ *
+ * Corresponds to `content` field of `Comment` struct, and unused bytes in `Token`.
+ * Initialized to 0 by Rust. JS side sets to 1 after deserialization.
+ */
+export const DESERIALIZED_FLAG_OFFSET = 15;
+
+/**
  * Discriminant value for `CommentKind::Line`.
  */
 export const COMMENT_LINE_KIND = 0;
