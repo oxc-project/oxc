@@ -22,6 +22,13 @@ use crate::{
 /// Errors that can occur when overriding rules
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum OverrideRulesError {
+    /// Error looking up a builtin rule
+    RuleNotFound {
+        /// The plugin the rule belongs to
+        plugin_name: String,
+        /// The missing rule name
+        rule_name: String,
+    },
     /// Error looking up an external rule
     ExternalRuleLookup(ExternalRuleLookupError),
     /// Error parsing rule configuration
@@ -36,6 +43,9 @@ pub enum OverrideRulesError {
 impl fmt::Display for OverrideRulesError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            OverrideRulesError::RuleNotFound { plugin_name, rule_name } => {
+                write!(f, "Rule '{rule_name}' not found in plugin '{plugin_name}'")
+            }
             OverrideRulesError::ExternalRuleLookup(e) => write!(f, "{e}"),
             OverrideRulesError::RuleConfiguration { rule_name, message } => {
                 write!(f, "Invalid configuration for rule `{rule_name}`:\n  {message}")
@@ -161,6 +171,18 @@ impl OxlintRules {
                                 });
                             }
                         }
+                    } else if RULES
+                        .iter()
+                        .any(|rule| rule.name() == rule_name && rule.plugin_name() == plugin_name)
+                    {
+                        // Known builtin rule, but unavailable in this config because its plugin
+                        // is disabled. Preserve the historical behavior of ignoring it rather than
+                        // treating the config as invalid.
+                    } else {
+                        errors.push(OverrideRulesError::RuleNotFound {
+                            plugin_name: plugin_name.to_string(),
+                            rule_name: rule_name.to_string(),
+                        });
                     }
                 } else {
                     // If JS plugins are disabled (language server), assume plugin name refers to a JS plugin,
@@ -534,36 +556,6 @@ mod test {
         }
     }
 
-    // FIXME
-    #[test]
-    #[should_panic(
-        expected = "eslint rules should be configurable by their typescript-eslint reimplementations:"
-    )]
-    fn test_override_empty_fixme() {
-        let config = json!({ "@typescript-eslint/no-console": "error" });
-        let mut rules = RuleSet::default();
-
-        rules.clear();
-        r#override(&mut rules, &config);
-
-        assert_eq!(
-            rules.len(),
-            1,
-            "eslint rules should be configurable by their typescript-eslint reimplementations: {config:?}"
-        );
-        let (rule, severity) = rules.iter().next().unwrap();
-        assert_eq!(
-            rule.name(),
-            "no-console",
-            "eslint rules should be configurable by their typescript-eslint reimplementations: {config:?}"
-        );
-        assert_eq!(
-            severity,
-            &AllowWarnDeny::Deny,
-            "eslint rules should be configurable by their typescript-eslint reimplementations: {config:?}"
-        );
-    }
-
     #[test]
     fn test_override_allow() {
         let mut rules = RuleSet::default();
@@ -601,6 +593,55 @@ mod test {
             assert_eq!(rule.name(), "no-unused-vars", "{config:?}");
             assert_eq!(severity, &AllowWarnDeny::Deny, "{config:?}");
         }
+    }
+
+    #[test]
+    fn test_override_ignores_known_rule_when_plugin_disabled() {
+        let rules_config =
+            OxlintRules::deserialize(&json!({ "@typescript-eslint/no-namespace": "warn" }))
+                .unwrap();
+        let mut rules = RuleSet::default();
+        let mut external_rules_for_override = FxHashMap::default();
+        let mut external_linter_store = ExternalPluginStore::default();
+        let all_rules = RULES
+            .iter()
+            .filter(|rule| rule.plugin_name() != "typescript")
+            .cloned()
+            .collect::<Vec<_>>();
+
+        let result = rules_config.override_rules(
+            &mut rules,
+            &mut external_rules_for_override,
+            &all_rules,
+            &mut external_linter_store,
+        );
+
+        assert!(result.is_ok());
+        assert!(rules.is_empty());
+    }
+
+    #[test]
+    fn test_override_ignores_known_aliased_rule_when_plugin_disabled() {
+        let rules_config =
+            OxlintRules::deserialize(&json!({ "vitest/no-disabled-tests": "error" })).unwrap();
+        let mut rules = RuleSet::default();
+        let mut external_rules_for_override = FxHashMap::default();
+        let mut external_linter_store = ExternalPluginStore::default();
+        let all_rules = RULES
+            .iter()
+            .filter(|rule| rule.plugin_name() != "jest" && rule.plugin_name() != "vitest")
+            .cloned()
+            .collect::<Vec<_>>();
+
+        let result = rules_config.override_rules(
+            &mut rules,
+            &mut external_rules_for_override,
+            &all_rules,
+            &mut external_linter_store,
+        );
+
+        assert!(result.is_ok());
+        assert!(rules.is_empty());
     }
 
     #[test]
