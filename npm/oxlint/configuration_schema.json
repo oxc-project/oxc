@@ -224,7 +224,13 @@
         },
         {
           "type": "array",
-          "items": true
+          "items": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            }
+          ],
+          "minItems": 1,
+          "additionalItems": true
         }
       ]
     },
