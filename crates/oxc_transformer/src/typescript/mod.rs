@@ -58,7 +58,7 @@ impl<'a> TypeScript<'a> {
     pub fn new(options: &TypeScriptOptions, state: &TransformState<'a>) -> Self {
         Self {
             annotations: TypeScriptAnnotations::new(options),
-            r#enum: TypeScriptEnum::new(options.optimize_const_enums),
+            r#enum: TypeScriptEnum::new(options.optimize_const_enums, options.optimize_enums),
             namespace: TypeScriptNamespace::new(options),
             module: TypeScriptModule::new(options.only_remove_type_imports, state.module),
             rewrite_extensions: TypeScriptRewriteExtensions::new(options),
