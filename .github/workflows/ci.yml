@@ -27,6 +27,8 @@ jobs:
         with:
           cache: rust
       - uses: oxc-project/setup-rust@23f38cfb0c04af97a055f76acee94d5be71c7c82 # v1.0.16
+        with:
+          restore-cache: false
       - run: cargo ck
       - run: cargo test --all-features
       - run: git diff --exit-code # Must commit everything
@@ -57,6 +59,8 @@ jobs:
           cache: rust
       - uses: oxc-project/setup-node@b8d296d30eafd1ae2968fab67aead472a1dbf6d4 # v1.0.7
       - uses: oxc-project/setup-rust@23f38cfb0c04af97a055f76acee94d5be71c7c82 # v1.0.16
+        with:
+          restore-cache: false
       - run: cargo ck
       - run: cargo test --all-features
       - run: git diff --exit-code # Must commit everything
@@ -119,6 +123,7 @@ jobs:
           cache: rust
       - uses: oxc-project/setup-rust@23f38cfb0c04af97a055f76acee94d5be71c7c82 # v1.0.16
         with:
+          restore-cache: false
           tools: cross
       # `--lib --bins --tests` to skip doctests which are very slow to run via `cross`.
       # https://github.com/cross-rs/cross/issues/1703
@@ -135,6 +140,7 @@ jobs:
           cache: rust
       - uses: oxc-project/setup-rust@23f38cfb0c04af97a055f76acee94d5be71c7c82 # v1.0.16
         with:
+          restore-cache: false
           tools: cross
       # `--lib --bins --tests` to skip doctests which are very slow to run via `cross`.
       # https://github.com/cross-rs/cross/issues/1703
@@ -157,6 +163,8 @@ jobs:
           cache: rust
       - uses: oxc-project/setup-rust@23f38cfb0c04af97a055f76acee94d5be71c7c82 # v1.0.16
         if: steps.filter.outputs.changed == 'true'
+        with:
+          restore-cache: false
       - uses: oxc-project/setup-node@b8d296d30eafd1ae2968fab67aead472a1dbf6d4 # v1.0.7
         if: steps.filter.outputs.changed == 'true'
       - name: Build
@@ -194,6 +202,8 @@ jobs:
           cache: rust
       - uses: oxc-project/setup-rust@23f38cfb0c04af97a055f76acee94d5be71c7c82 # v1.0.16
         if: steps.filter.outputs.changed == 'true'
+        with:
+          restore-cache: false
       - uses: oxc-project/setup-node@b8d296d30eafd1ae2968fab67aead472a1dbf6d4 # v1.0.7
         if: steps.filter.outputs.changed == 'true'
       - uses: ./.github/actions/clone-submodules
@@ -234,6 +244,8 @@ jobs:
           cache: rust
       - uses: oxc-project/setup-rust@23f38cfb0c04af97a055f76acee94d5be71c7c82 # v1.0.16
         if: steps.filter.outputs.changed == 'true'
+        with:
+          restore-cache: false
       - uses: oxc-project/setup-node@b8d296d30eafd1ae2968fab67aead472a1dbf6d4 # v1.0.7
         if: steps.filter.outputs.changed == 'true'
       - if: steps.filter.outputs.changed == 'true'
@@ -261,6 +273,8 @@ jobs:
           cache: rust
       - uses: oxc-project/setup-rust@23f38cfb0c04af97a055f76acee94d5be71c7c82 # v1.0.16
         if: steps.filter.outputs.changed == 'true'
+        with:
+          restore-cache: false
       - uses: oxc-project/setup-node@b8d296d30eafd1ae2968fab67aead472a1dbf6d4 # v1.0.7
         if: steps.filter.outputs.changed == 'true'
       - if: steps.filter.outputs.changed == 'true'
@@ -427,6 +441,7 @@ jobs:
       - uses: oxc-project/setup-node@b8d296d30eafd1ae2968fab67aead472a1dbf6d4 # v1.0.7
       - uses: oxc-project/setup-rust@23f38cfb0c04af97a055f76acee94d5be71c7c82 # v1.0.16
         with:
+          restore-cache: false
           components: clippy rust-docs
       - run: cargo lint -- -D warnings
       - run: cargo lint --profile dev-no-debug-assertions -- -D warnings
@@ -465,6 +480,7 @@ jobs:
       - uses: oxc-project/setup-rust@23f38cfb0c04af97a055f76acee94d5be71c7c82 # v1.0.16
         if: steps.filter.outputs.changed == 'true'
         with:
+          restore-cache: false
           tools: just
 
       - name: Check Conformance
@@ -493,6 +509,8 @@ jobs:
 
       - uses: oxc-project/setup-rust@23f38cfb0c04af97a055f76acee94d5be71c7c82 # v1.0.16
         if: steps.filter.outputs.changed == 'true'
+        with:
+          restore-cache: false
 
       - name: Check minification size
         if: steps.filter.outputs.changed == 'true'
@@ -518,6 +536,8 @@ jobs:
 
       - uses: oxc-project/setup-rust@23f38cfb0c04af97a055f76acee94d5be71c7c82 # v1.0.16
         if: steps.filter.outputs.changed == 'true'
+        with:
+          restore-cache: false
 
       - name: Check allocations
         if: steps.filter.outputs.changed == 'true'
@@ -544,6 +564,7 @@ jobs:
       - uses: oxc-project/setup-rust@23f38cfb0c04af97a055f76acee94d5be71c7c82 # v1.0.16
         if: steps.filter.outputs.src == 'true'
         with:
+          restore-cache: false
           components: rustfmt
 
       - uses: oxc-project/setup-node@b8d296d30eafd1ae2968fab67aead472a1dbf6d4 # v1.0.7
@@ -576,6 +597,7 @@ jobs:
       - uses: oxc-project/setup-rust@23f38cfb0c04af97a055f76acee94d5be71c7c82 # v1.0.16
         if: steps.filter.outputs.changed == 'true'
         with:
+          restore-cache: false
           components: rustfmt
 
       - name: Check linter changes
