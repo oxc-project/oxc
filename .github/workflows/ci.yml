@@ -199,6 +199,7 @@ jobs:
         with:
           babel: false
           prettier: false
+          node-compat-table: false
       - if: steps.filter.outputs.changed == 'true'
         name: Run tests
         env:
@@ -304,6 +305,7 @@ jobs:
         with:
           babel: false
           prettier: false
+          node-compat-table: false
       - if: steps.filter.outputs.changed == 'true'
         name: Run tests
         working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
@@ -447,6 +449,8 @@ jobs:
 
       - uses: ./.github/actions/clone-submodules
         if: steps.filter.outputs.changed == 'true'
+        with:
+          node-compat-table: false
 
       - uses: oxc-project/setup-node@b8d296d30eafd1ae2968fab67aead472a1dbf6d4 # v1.0.7
         if: steps.filter.outputs.changed == 'true'
