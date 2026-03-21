@@ -311,19 +311,137 @@ impl<'a> TypeScript<'a> {
         Self::create_assignment(target, value, ctx)
     }
 
-    /// Find the position of the `super()` call in the constructor body, otherwise return 0.
+    /// Find the position after the `super()` call in the constructor body, otherwise return 0.
     ///
-    /// Don't need to handle nested `super()` call because `TypeScript` doesn't allow it.
+    /// Handles cases where `super()` appears nested inside control flow structures (if/else).
+    /// In such cases, assignments must be inserted after the entire control flow, not before it,
+    /// to ensure `super()` is called before accessing `this`.
     pub fn get_super_call_position(statements: &[Statement<'a>]) -> usize {
-        // Find the position of the `super()` call in the constructor body.
-        // Don't need to handle nested `super()` call because `TypeScript` doesn't allow it.
-        statements
+        // Find the last statement that contains a `super()` call (top-level or nested).
+        // Insert initializers after this statement.
+        let last_super_index = statements
             .iter()
-            .position(|stmt| {
-                matches!(stmt, Statement::ExpressionStatement(stmt)
-                        if stmt.expression.is_super_call_expression())
-            })
-            .map_or(0, |pos| pos + 1)
+            .enumerate()
+            .filter(|(_, stmt)| Self::statement_contains_super(stmt))
+            .map(|(idx, _)| idx)
+            .max();
+
+        last_super_index.map_or(0, |idx| idx + 1)
+    }
+
+    /// Check if a statement contains a `super()` call anywhere in its subtree.
+    fn statement_contains_super(stmt: &Statement<'_>) -> bool {
+        match stmt {
+            Statement::IfStatement(if_stmt) => {
+                Self::expression_contains_super(&if_stmt.test)
+                    || Self::statement_contains_super(&if_stmt.consequent)
+                    || if_stmt.alternate.as_ref().is_some_and(Self::statement_contains_super)
+            }
+            Statement::SwitchStatement(switch_stmt) => switch_stmt.cases.iter().any(|case| {
+                case.test.as_ref().is_some_and(Self::expression_contains_super)
+                    || case.consequent.iter().any(Self::statement_contains_super)
+            }),
+            Statement::WhileStatement(while_stmt) => {
+                Self::expression_contains_super(&while_stmt.test)
+                    || Self::statement_contains_super(&while_stmt.body)
+            }
+            Statement::DoWhileStatement(do_while_stmt) => {
+                Self::statement_contains_super(&do_while_stmt.body)
+                    || Self::expression_contains_super(&do_while_stmt.test)
+            }
+            Statement::ForStatement(for_stmt) => {
+                let init_super =
+                    for_stmt.init.as_ref().is_some_and(|init| matches!(init, ForStatementInit::CallExpression(call) if call.callee.is_super()));
+                init_super
+                    || for_stmt.test.as_ref().is_some_and(Self::expression_contains_super)
+                    || for_stmt.update.as_ref().is_some_and(Self::expression_contains_super)
+                    || Self::statement_contains_super(&for_stmt.body)
+            }
+            Statement::ForInStatement(for_in_stmt) => {
+                Self::expression_contains_super(&for_in_stmt.right)
+                    || Self::statement_contains_super(&for_in_stmt.body)
+            }
+            Statement::ForOfStatement(for_of_stmt) => {
+                Self::expression_contains_super(&for_of_stmt.right)
+                    || Self::statement_contains_super(&for_of_stmt.body)
+            }
+            Statement::TryStatement(try_stmt) => {
+                try_stmt.block.body.iter().any(Self::statement_contains_super)
+                    || try_stmt
+                        .handler
+                        .as_ref()
+                        .is_some_and(|h| h.body.body.iter().any(Self::statement_contains_super))
+                    || try_stmt
+                        .finalizer
+                        .as_ref()
+                        .is_some_and(|f| f.body.iter().any(Self::statement_contains_super))
+            }
+            Statement::WithStatement(with_stmt) => {
+                Self::expression_contains_super(&with_stmt.object)
+                    || Self::statement_contains_super(&with_stmt.body)
+            }
+            Statement::LabeledStatement(labeled_stmt) => {
+                Self::statement_contains_super(&labeled_stmt.body)
+            }
+            Statement::BlockStatement(block_stmt) => {
+                block_stmt.body.iter().any(Self::statement_contains_super)
+            }
+            Statement::ExpressionStatement(es) => Self::expression_contains_super(&es.expression),
+            _ => false,
+        }
+    }
+
+    /// Check if an argument contains a `super()` call.
+    fn argument_contains_super(arg: &Argument<'_>) -> bool {
+        match arg {
+            // Argument variants inherited from Expression
+            Argument::CallExpression(call) => {
+                call.callee.is_super() || call.arguments.iter().any(Self::argument_contains_super)
+            }
+            Argument::SequenceExpression(seq) => {
+                seq.expressions.iter().any(Self::expression_contains_super)
+            }
+            Argument::ConditionalExpression(cond) => {
+                Self::expression_contains_super(&cond.test)
+                    || Self::expression_contains_super(&cond.consequent)
+                    || Self::expression_contains_super(&cond.alternate)
+            }
+            Argument::LogicalExpression(logical) => {
+                Self::expression_contains_super(&logical.left)
+                    || Self::expression_contains_super(&logical.right)
+            }
+            Argument::BinaryExpression(binary) => {
+                Self::expression_contains_super(&binary.left)
+                    || Self::expression_contains_super(&binary.right)
+            }
+            // SpreadElement and other Argument variants (literals, identifiers, etc.) can't contain super()
+            _ => false,
+        }
+    }
+
+    fn expression_contains_super(expr: &Expression<'_>) -> bool {
+        match expr {
+            Expression::CallExpression(call) => {
+                call.callee.is_super() || call.arguments.iter().any(Self::argument_contains_super)
+            }
+            Expression::SequenceExpression(seq) => {
+                seq.expressions.iter().any(Self::expression_contains_super)
+            }
+            Expression::ConditionalExpression(cond) => {
+                Self::expression_contains_super(&cond.test)
+                    || Self::expression_contains_super(&cond.consequent)
+                    || Self::expression_contains_super(&cond.alternate)
+            }
+            Expression::LogicalExpression(logical) => {
+                Self::expression_contains_super(&logical.left)
+                    || Self::expression_contains_super(&logical.right)
+            }
+            Expression::BinaryExpression(binary) => {
+                Self::expression_contains_super(&binary.left)
+                    || Self::expression_contains_super(&binary.right)
+            }
+            _ => false,
+        }
     }
 
     /// Convert computed key to sequence expression if there are assignments.
