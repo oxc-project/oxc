@@ -2,14 +2,7 @@
  * `SourceCode` methods related to tokens.
  */
 
-import {
-  cachedTokens,
-  tokensUint32,
-  tokensLen,
-  initTokensBuffer,
-  getToken,
-  deserializeTokenIfNeeded,
-} from "./tokens.ts";
+import { cachedTokens, tokensUint32, tokensLen, initTokensBuffer, getToken } from "./tokens.ts";
 import {
   tokensAndCommentsUint32,
   tokensAndCommentsLen,
@@ -1508,7 +1501,7 @@ function collectEntries(
   if (includeComments === false) {
     // Batch-deserialize tokens in range, then slice from `cachedTokens` array
     for (let i = startIndex; i < endIndex; i++) {
-      deserializeTokenIfNeeded(i);
+      getToken(i);
     }
     return cachedTokens!.slice(startIndex, endIndex) as TokenOrComment[];
   }
