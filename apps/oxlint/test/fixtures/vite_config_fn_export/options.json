@@ -1,3 +1,4 @@
 {
-  "singleThread": true
+  "singleThread": true,
+  "env": { "VITE_PLUS_VERSION": "1" }
 }

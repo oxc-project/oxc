@@ -14,6 +14,7 @@ use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
 
 use crate::{
     DEFAULT_JSONC_OXLINTRC_NAME, DEFAULT_OXLINTRC_NAME, DEFAULT_TS_OXLINTRC_NAME, VITE_CONFIG_NAME,
+    is_vp,
 };
 
 #[cfg(feature = "napi")]
@@ -146,6 +147,7 @@ fn to_discovered_config(entry: &DirEntry) -> Option<DiscoveredConfig> {
         return None;
     }
     let file_name = entry.path().file_name()?;
+
     if file_name == DEFAULT_OXLINTRC_NAME {
         Some(DiscoveredConfig::Json(entry.path().to_path_buf()))
     } else if file_name == DEFAULT_JSONC_OXLINTRC_NAME {
@@ -464,7 +466,18 @@ impl<'a> ConfigLoader<'a> {
     ///
     /// Checks for both `.oxlintrc.json` and `oxlint.config.ts` files in the given directory.
     /// Returns `Ok(Some(config))` if found, `Ok(None)` if not found, or `Err` on error.
+    ///
+    /// In VP mode (`VITE_PLUS_VERSION` env var set), only `vite.config.ts` is checked.
+    /// In non-VP mode, only oxlint-specific config files are checked.
     fn try_load_config_from_dir(&self, dir: &Path) -> Result<Option<Oxlintrc>, OxcDiagnostic> {
+        if is_vp() {
+            let vite_config_path = dir.join(VITE_CONFIG_NAME);
+            if vite_config_path.is_file() {
+                return self.load_root_js_config(&vite_config_path);
+            }
+            return Ok(None);
+        }
+
         let json_path = dir.join(DEFAULT_OXLINTRC_NAME);
         let jsonc_path = dir.join(DEFAULT_JSONC_OXLINTRC_NAME);
         let ts_path = dir.join(DEFAULT_TS_OXLINTRC_NAME);
@@ -492,13 +505,6 @@ impl<'a> ConfigLoader<'a> {
         }
         if jsonc_exists {
             return Oxlintrc::from_file(&jsonc_path).map(Some);
-        }
-
-        // Fallback: check for vite.config.ts with .lint field (lowest priority)
-        // If .lint field is missing, `load_root_js_config` returns `Ok(None)` to skip.
-        let vite_config_path = dir.join(VITE_CONFIG_NAME);
-        if vite_config_path.is_file() {
-            return self.load_root_js_config(&vite_config_path);
         }
 
         Ok(None)
@@ -624,7 +630,8 @@ impl<'a> ConfigLoader<'a> {
             Err(err) => return Err(CliConfigLoadError::RootConfig(err)),
         };
 
-        if !search_for_nested_configs {
+        // NOTE: For now, nested config support for Vite+ is unstated
+        if !search_for_nested_configs || is_vp() {
             return Ok(LoadedConfigs {
                 root: oxlintrc,
                 nested: FxHashMap::default(),
