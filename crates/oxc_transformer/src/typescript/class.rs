@@ -311,19 +311,43 @@ impl<'a> TypeScript<'a> {
         Self::create_assignment(target, value, ctx)
     }
 
-    /// Find the position of the `super()` call in the constructor body, otherwise return 0.
+    /// Find the position after the `super()` call in the constructor body, otherwise return 0.
     ///
-    /// Don't need to handle nested `super()` call because `TypeScript` doesn't allow it.
+    /// If `super()` is nested inside a top-level control flow statement, return the position after
+    /// the containing statement.
     pub fn get_super_call_position(statements: &[Statement<'a>]) -> usize {
-        // Find the position of the `super()` call in the constructor body.
-        // Don't need to handle nested `super()` call because `TypeScript` doesn't allow it.
-        statements
-            .iter()
-            .position(|stmt| {
-                matches!(stmt, Statement::ExpressionStatement(stmt)
-                        if stmt.expression.is_super_call_expression())
-            })
-            .map_or(0, |pos| pos + 1)
+        statements.iter().position(Self::statement_contains_super_call).map_or(0, |pos| pos + 1)
+    }
+
+    fn statement_contains_super_call(stmt: &Statement<'a>) -> bool {
+        match stmt {
+            Statement::ExpressionStatement(stmt) => stmt.expression.is_super_call_expression(),
+            Statement::BlockStatement(stmt) => {
+                stmt.body.iter().any(Self::statement_contains_super_call)
+            }
+            Statement::IfStatement(stmt) => {
+                Self::statement_contains_super_call(&stmt.consequent)
+                    || stmt
+                        .alternate
+                        .as_ref()
+                        .is_some_and(|stmt| Self::statement_contains_super_call(stmt))
+            }
+            Statement::SwitchStatement(stmt) => stmt
+                .cases
+                .iter()
+                .any(|case| case.consequent.iter().any(Self::statement_contains_super_call)),
+            Statement::TryStatement(stmt) => {
+                stmt.block.body.iter().any(Self::statement_contains_super_call)
+                    || stmt.handler.as_ref().is_some_and(|handler| {
+                        handler.body.body.iter().any(Self::statement_contains_super_call)
+                    })
+                    || stmt.finalizer.as_ref().is_some_and(|block| {
+                        block.body.iter().any(Self::statement_contains_super_call)
+                    })
+            }
+            Statement::LabeledStatement(stmt) => Self::statement_contains_super_call(&stmt.body),
+            _ => false,
+        }
     }
 
     /// Convert computed key to sequence expression if there are assignments.
