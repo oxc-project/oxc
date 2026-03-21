@@ -656,9 +656,13 @@ impl Tool for ServerLinter {
                     continue;
                 };
                 code_actions_vec.push(CodeActionOrCommand::CodeAction(fix_all));
-            } else if kind == CODE_ACTION_KIND_SOURCE_FIX_ALL_DANGEROUS_OXC
-                && self.fix_kind.is_dangerous()
-            {
+            } else if kind == CODE_ACTION_KIND_SOURCE_FIX_ALL_DANGEROUS_OXC {
+                if !self.fix_kind.is_dangerous() {
+                    warn!(
+                        "Linter is not configured to provide dangerous fixes. Please set `fixKind` to `dangerous_fix` or `dangerous_fix_or_suggestion` in the server configuration to enable it."
+                    );
+                    continue;
+                }
                 let Some(fix_all) = apply_dangerous_fix_code_action(actions.clone(), uri.clone())
                 else {
                     continue;
