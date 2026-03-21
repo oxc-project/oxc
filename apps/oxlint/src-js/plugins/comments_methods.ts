@@ -11,15 +11,21 @@ import {
   initCommentsBuffer,
   deserializeCommentIfNeeded,
 } from "./comments.ts";
-import { sourceText } from "./source_code.ts";
+import {
+  initTokensAndCommentsBuffer,
+  tokensAndCommentsUint32,
+  tokensAndCommentsLen,
+  MERGED_SIZE32,
+  MERGED_SIZE32_SHIFT,
+  MERGED_ORIGINAL_INDEX_OFFSET32,
+  MERGED_TYPE_OFFSET32,
+  MERGED_TYPE_TOKEN,
+} from "./tokens_and_comments.ts";
 import { firstTokenAtOrAfter } from "./tokens_methods.ts";
-import { debugAssertIsNonNull } from "../utils/asserts.ts";
+import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 
 import type { Comment } from "./comments.ts";
 import type { Node, NodeOrToken } from "./types.ts";
-
-// Regex that tests if a string is entirely whitespace.
-const WHITESPACE_ONLY_REGEXP = /^\s*$/;
 
 /**
  * Retrieve an array containing all comments in the source code.
@@ -30,6 +36,8 @@ export function getAllComments(): Comment[] {
   debugAssertIsNonNull(comments);
   return comments;
 }
+
+debugAssert(MERGED_TYPE_OFFSET32 > 0, "`getCommentsBefore` relies on this");
 
 /**
  * Get all comments directly before the given node or token.
@@ -49,36 +57,45 @@ export function getAllComments(): Comment[] {
  * @returns Array of `Comment`s in occurrence order.
  */
 export function getCommentsBefore(nodeOrToken: NodeOrToken): Comment[] {
-  if (commentsUint32 === null) initCommentsBuffer();
-  debugAssertIsNonNull(commentsUint32);
-  debugAssertIsNonNull(sourceText);
+  if (tokensAndCommentsUint32 === null) initTokensAndCommentsBuffer();
+  debugAssertIsNonNull(tokensAndCommentsUint32);
 
   // Early exit for files with no comments
   if (commentsLen === 0) return [];
 
-  let targetStart = nodeOrToken.range[0]; // start
+  const targetStart = nodeOrToken.range[0];
 
-  // Binary search for first comment at or past `nodeOrToken`'s start.
-  // Comments before this index are candidates to be included in returned array.
-  const sliceEnd = firstTokenAtOrAfter(commentsUint32, targetStart, 0, commentsLen);
+  // Binary search merged buffer for first entry at or after target's start
+  const searchIndex = firstTokenAtOrAfter(
+    tokensAndCommentsUint32,
+    targetStart,
+    0,
+    tokensAndCommentsLen,
+  );
 
-  let sliceStart = commentsLen;
-  for (let i = sliceEnd - 1; i >= 0; i--) {
-    // Read `end` from buffer: u32 at offset 1 of each 4 x u32 entry
-    const commentEnd = commentsUint32[(i << 2) + 1];
-    const gap = sourceText.slice(commentEnd, targetStart);
-    // Ensure that there is nothing except whitespace between the end of the
-    // current comment and the start of the next one as we iterate backwards
-    if (WHITESPACE_ONLY_REGEXP.test(gap)) {
-      sliceStart = i;
-      // Read `start` from buffer
-      targetStart = commentsUint32[i << 2];
-    } else {
-      break;
-    }
+  // Walk backwards over consecutive comments.
+  // Operate in pos32 space: `typePos32` points directly at the type field, decrementing by 4 each step,
+  // instead of recomputing `(i << 2) + 2` per iteration.
+  const startTypePos32 =
+    (searchIndex << MERGED_SIZE32_SHIFT) - (MERGED_SIZE32 - MERGED_TYPE_OFFSET32);
+  let typePos32 = startTypePos32;
+  // `MERGED_TYPE_OFFSET32` is greater than 0 (checked by debug assert above), so `typePos32 > 0` is right check.
+  // If `MERGED_TYPE_OFFSET32` was zero, it'd be `typePos32 >= 0`.
+  while (typePos32 > 0 && tokensAndCommentsUint32[typePos32] !== MERGED_TYPE_TOKEN) {
+    typePos32 -= MERGED_SIZE32;
   }
 
-  // Deserialize only the comments we're returning
+  const count32 = startTypePos32 - typePos32;
+  if (count32 === 0) return [];
+
+  // Read `originalIndex` of earliest comment, calculate slice end from how far we walked.
+  // `typePos32` is at the entry before the first comment.
+  const sliceStart =
+    tokensAndCommentsUint32[
+      typePos32 + (MERGED_SIZE32 - MERGED_TYPE_OFFSET32 + MERGED_ORIGINAL_INDEX_OFFSET32)
+    ];
+  const sliceEnd = sliceStart + (count32 >> MERGED_SIZE32_SHIFT);
+
   for (let i = sliceStart; i < sliceEnd; i++) {
     deserializeCommentIfNeeded(i);
   }
@@ -104,35 +121,43 @@ export function getCommentsBefore(nodeOrToken: NodeOrToken): Comment[] {
  * @returns Array of `Comment`s in occurrence order.
  */
 export function getCommentsAfter(nodeOrToken: NodeOrToken): Comment[] {
-  if (commentsUint32 === null) initCommentsBuffer();
-  debugAssertIsNonNull(commentsUint32);
-  debugAssertIsNonNull(sourceText);
+  if (tokensAndCommentsUint32 === null) initTokensAndCommentsBuffer();
+  debugAssertIsNonNull(tokensAndCommentsUint32);
 
   // Early exit for files with no comments
   if (commentsLen === 0) return [];
 
-  let targetEnd = nodeOrToken.range[1]; // end
+  const targetEnd = nodeOrToken.range[1];
 
-  // Binary search for first comment at or past `nodeOrToken`'s end.
-  // Comments from this index onwards are candidates to be included in returned array.
-  const sliceStart = firstTokenAtOrAfter(commentsUint32, targetEnd, 0, commentsLen);
+  // Binary search merged buffer for first entry at or after target's end.
+  const searchIndex = firstTokenAtOrAfter(
+    tokensAndCommentsUint32,
+    targetEnd,
+    0,
+    tokensAndCommentsLen,
+  );
 
-  let sliceEnd = 0;
-  for (let i = sliceStart; i < commentsLen; i++) {
-    // Ensure that there is nothing except whitespace between the
-    // end of the previous comment and the start of the current one
-    const commentStart = commentsUint32[i << 2];
-    const gap = sourceText.slice(targetEnd, commentStart);
-    if (WHITESPACE_ONLY_REGEXP.test(gap)) {
-      sliceEnd = i + 1;
-      // Read `end` from buffer
-      targetEnd = commentsUint32[(i << 2) + 1];
-    } else {
-      break;
-    }
+  // Walk forwards over consecutive comments.
+  // Operate in pos32 space: `typePos32` points directly at the type field, incrementing by 4 each step,
+  // instead of recomputing `(i << 2) + 2` per iteration.
+  // No explicit bounds check is needed - a sentinel `MERGED_TYPE_TOKEN` entry is written after the last
+  // valid entry in `initTokensAndCommentsBuffer`, so the loop terminates naturally.
+  const startTypePos32 = (searchIndex << MERGED_SIZE32_SHIFT) + MERGED_TYPE_OFFSET32;
+  let typePos32 = startTypePos32;
+  while (tokensAndCommentsUint32[typePos32] !== MERGED_TYPE_TOKEN) {
+    typePos32 += MERGED_SIZE32;
   }
 
-  // Deserialize only the comments we're returning
+  const count32 = typePos32 - startTypePos32;
+  if (count32 === 0) return [];
+
+  // Read `originalIndex` of earliest comment, calculate slice end from how far we walked
+  const sliceStart =
+    tokensAndCommentsUint32[
+      startTypePos32 - (MERGED_TYPE_OFFSET32 - MERGED_ORIGINAL_INDEX_OFFSET32)
+    ];
+  const sliceEnd = sliceStart + (count32 >> MERGED_SIZE32_SHIFT);
+
   for (let i = sliceStart; i < sliceEnd; i++) {
     deserializeCommentIfNeeded(i);
   }
