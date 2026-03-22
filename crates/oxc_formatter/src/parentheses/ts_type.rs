@@ -67,11 +67,13 @@ impl NeedsParentheses<'_> for AstNode<'_, TSInferType<'_>> {
 impl NeedsParentheses<'_> for AstNode<'_, TSConstructorType<'_>> {
     #[inline]
     fn needs_parentheses(&self, _f: &Formatter<'_, '_>) -> bool {
-        function_like_type_needs_parentheses(
-            self.span(),
-            effective_parent(self.parent()),
-            Some(&self.return_type),
-        )
+        let parent = effective_parent(self.parent());
+        if let AstNodes::TSTypeAnnotation(type_annotation) = parent
+            && matches!(type_annotation.parent(), AstNodes::ArrowFunctionExpression(_))
+        {
+            return false;
+        }
+        function_like_type_needs_parentheses(self.span(), parent, Some(&self.return_type))
     }
 }
 
