@@ -21,10 +21,20 @@ const normalizeSlashes =
 
 /**
  * Generate report of test results as markdown.
- * @param results - Results of running tests
- * @returns Report as markdown
+ * @param groupName - Name of the test group or suite.
+ * @param repoUrl - URL of the repository containing the rules and tests.
+ * @param commitSha - Commit SHA associated with this test run.
+ * @param version - Version of the tool or ruleset used for the tests.
+ * @param results - Results of running tests.
+ * @returns Report as markdown.
  */
-export function generateReport(groupName: string, results: RuleResult[]): string {
+export function generateReport(
+  groupName: string,
+  repoUrl: string,
+  commitSha: string,
+  version: string,
+  results: RuleResult[],
+): string {
   // Categorize rules
   const loadErrorRules: RuleResult[] = [],
     noTestRules: RuleResult[] = [],
@@ -118,8 +128,12 @@ export function generateReport(groupName: string, results: RuleResult[]): string
     return `${String(count).padStart(5)} | ${formatPercent(count, total).padStart(6)}`;
   }
 
+  const shortSha = commitSha.slice(0, 7);
+
   block(`
     # Conformance test results - ${groupName}
+
+    Tested against: [${groupName}@${shortSha}](${repoUrl}/tree/${commitSha}) (${version})
 
     ## Summary
 

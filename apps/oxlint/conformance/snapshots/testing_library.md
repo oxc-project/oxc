@@ -1,5 +1,7 @@
 # Conformance test results - testing_library
 
+Tested against: [testing_library@b8ef377](https://github.com/testing-library/eslint-plugin-testing-library/tree/b8ef3772487a32c886cb5c338da2a144560a437b) (7.15.4)
+
 ## Summary
 
 ### Rules

@@ -1,5 +1,7 @@
 # Conformance test results - cypress
 
+Tested against: [cypress@de98a5d](https://github.com/cypress-io/eslint-plugin-cypress/tree/de98a5de648694518873ad85b41250e40a67be95) (v6.2.0)
+
 ## Summary
 
 ### Rules

@@ -1,5 +1,7 @@
 # Conformance test results - playwright
 
+Tested against: [playwright@7e16bd5](https://github.com/mskelton/eslint-plugin-playwright/tree/7e16bd565cfccd365a6a8f1f7f6fe29a1c868036) (v2.9.0)
+
 ## Summary
 
 ### Rules
