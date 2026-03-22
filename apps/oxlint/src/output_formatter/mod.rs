@@ -1,3 +1,4 @@
+mod bitbucket;
 mod checkstyle;
 mod default;
 mod github;
@@ -11,6 +12,7 @@ mod xml_utils;
 use std::str::FromStr;
 use std::time::Duration;
 
+use bitbucket::BitbucketOutputFormatter;
 use checkstyle::CheckStyleOutputFormatter;
 use github::GithubOutputFormatter;
 use gitlab::GitlabOutputFormatter;
@@ -30,6 +32,7 @@ pub enum OutputFormat {
     /// <https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#setting-a-notice-message>
     Github,
     Gitlab,
+    Bitbucket,
     Json,
     Unix,
     Checkstyle,
@@ -48,6 +51,7 @@ impl FromStr for OutputFormat {
             "checkstyle" => Ok(Self::Checkstyle),
             "github" => Ok(Self::Github),
             "gitlab" => Ok(Self::Gitlab),
+            "bitbucket" => Ok(Self::Bitbucket),
             "stylish" => Ok(Self::Stylish),
             "junit" => Ok(Self::JUnit),
             _ => Err(format!("'{s}' is not a known format")),
@@ -102,6 +106,7 @@ impl OutputFormatter {
             OutputFormat::Checkstyle => Box::<CheckStyleOutputFormatter>::default(),
             OutputFormat::Github => Box::new(GithubOutputFormatter),
             OutputFormat::Gitlab => Box::<GitlabOutputFormatter>::default(),
+            OutputFormat::Bitbucket => Box::new(BitbucketOutputFormatter),
             OutputFormat::Unix => Box::<UnixOutputFormatter>::default(),
             OutputFormat::Default => Box::new(DefaultOutputFormatter),
             OutputFormat::Stylish => Box::<StylishOutputFormatter>::default(),
@@ -145,9 +150,11 @@ mod test {
             formats.push("json");
         }
 
-        // Exclude `gitlab` on big-endian systems because fingerprints differ there
+        // Exclude `gitlab` and `bitbucket` on big-endian systems because
+        // hash-based identifiers (fingerprint / external_id) differ there
         if cfg!(not(target_endian = "big")) {
             formats.push("gitlab");
+            formats.push("bitbucket");
         }
 
         for fmt in &formats {
@@ -169,9 +176,11 @@ mod test {
             formats.push("json");
         }
 
-        // Exclude `gitlab` on big-endian systems because fingerprints differ there
+        // Exclude `gitlab` and `bitbucket` on big-endian systems because
+        // hash-based identifiers (fingerprint / external_id) differ there
         if cfg!(not(target_endian = "big")) {
             formats.push("gitlab");
+            formats.push("bitbucket");
         }
 
         for fmt in &formats {
@@ -196,9 +205,11 @@ mod test {
             formats.push("json");
         }
 
-        // Exclude `gitlab` on big-endian systems because fingerprints differ there
+        // Exclude `gitlab` and `bitbucket` on big-endian systems because
+        // hash-based identifiers (fingerprint / external_id) differ there
         if cfg!(not(target_endian = "big")) {
             formats.push("gitlab");
+            formats.push("bitbucket");
         }
 
         for fmt in &formats {
@@ -221,9 +232,11 @@ mod test {
             formats.push("json");
         }
 
-        // Exclude `gitlab` on big-endian systems because fingerprints differ there
+        // Exclude `gitlab` and `bitbucket` on big-endian systems because
+        // hash-based identifiers (fingerprint / external_id) differ there
         if cfg!(not(target_endian = "big")) {
             formats.push("gitlab");
+            formats.push("bitbucket");
         }
 
         for fmt in &formats {
