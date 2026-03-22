@@ -1896,11 +1896,14 @@ dependencies = [
  "cow-utils",
  "fast-glob",
  "insta",
+ "itoa",
+ "markdown",
  "natord",
  "nodejs-built-in-modules",
  "oxc_allocator",
  "oxc_ast",
  "oxc_data_structures",
+ "oxc_jsdoc",
  "oxc_parser",
  "oxc_semantic",
  "oxc_span",
@@ -1911,6 +1914,7 @@ dependencies = [
  "rustc-hash",
  "serde",
  "serde_json",
+ "smallvec",
  "unicode-width",
 ]
 
@@ -2210,6 +2214,7 @@ dependencies = [
  "oxc_tasks_common",
  "pico-args",
  "rustc-hash",
+ "serde_json",
  "similar",
  "walkdir",
 ]
