@@ -1,0 +1,150 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ oxc(no-array-method-for-side-effect): Array.prototype.toSorted() called without using its return value
+   ╭─[no_array_method_for_side_effect.tsx:1:1]
+ 1 │ array.toSorted();
+   · ────────────────
+   ╰────
+  help: `.toSorted()` returns a new value. Either assign the result to a variable or use `.forEach()` for side effects.
+
+  ⚠ oxc(no-array-method-for-side-effect): Array.prototype.map() called without using its return value
+   ╭─[no_array_method_for_side_effect.tsx:1:1]
+ 1 │ array.map(x => x + 1);
+   · ─────────────────────
+   ╰────
+  help: `.map()` returns a new value. Either assign the result to a variable or use `.forEach()` for side effects.
+
+  ⚠ oxc(no-array-method-for-side-effect): Array.prototype.map() called without using its return value
+   ╭─[no_array_method_for_side_effect.tsx:1:1]
+ 1 │ array.map((item) => { console.log(item + 1); });
+   · ───────────────────────────────────────────────
+   ╰────
+  help: `.map()` returns a new value. Either assign the result to a variable or use `.forEach()` for side effects.
+
+  ⚠ oxc(no-array-method-for-side-effect): Array.prototype.filter() called without using its return value
+   ╭─[no_array_method_for_side_effect.tsx:1:1]
+ 1 │ array.filter(Boolean);
+   · ─────────────────────
+   ╰────
+  help: `.filter()` returns a new value. Either assign the result to a variable or use `.forEach()` for side effects.
+
+  ⚠ oxc(no-array-method-for-side-effect): Array.prototype.find() called without using its return value
+   ╭─[no_array_method_for_side_effect.tsx:1:1]
+ 1 │ array.find(x => x > 0);
+   · ──────────────────────
+   ╰────
+  help: `.find()` returns a new value. Either assign the result to a variable or use `.forEach()` for side effects.
+
+  ⚠ oxc(no-array-method-for-side-effect): Array.prototype.findIndex() called without using its return value
+   ╭─[no_array_method_for_side_effect.tsx:1:1]
+ 1 │ array.findIndex(x => x > 0);
+   · ───────────────────────────
+   ╰────
+  help: `.findIndex()` returns a new value. Either assign the result to a variable or use `.forEach()` for side effects.
+
+  ⚠ oxc(no-array-method-for-side-effect): Array.prototype.findLast() called without using its return value
+   ╭─[no_array_method_for_side_effect.tsx:1:1]
+ 1 │ array.findLast(x => x > 0);
+   · ──────────────────────────
+   ╰────
+  help: `.findLast()` returns a new value. Either assign the result to a variable or use `.forEach()` for side effects.
+
+  ⚠ oxc(no-array-method-for-side-effect): Array.prototype.findLastIndex() called without using its return value
+   ╭─[no_array_method_for_side_effect.tsx:1:1]
+ 1 │ array.findLastIndex(x => x > 0);
+   · ───────────────────────────────
+   ╰────
+  help: `.findLastIndex()` returns a new value. Either assign the result to a variable or use `.forEach()` for side effects.
+
+  ⚠ oxc(no-array-method-for-side-effect): Array.prototype.flat() called without using its return value
+   ╭─[no_array_method_for_side_effect.tsx:1:1]
+ 1 │ array.flat();
+   · ────────────
+   ╰────
+  help: `.flat()` returns a new value. Either assign the result to a variable or use `.forEach()` for side effects.
+
+  ⚠ oxc(no-array-method-for-side-effect): Array.prototype.flatMap() called without using its return value
+   ╭─[no_array_method_for_side_effect.tsx:1:1]
+ 1 │ array.flatMap(x => [x, x]);
+   · ──────────────────────────
+   ╰────
+  help: `.flatMap()` returns a new value. Either assign the result to a variable or use `.forEach()` for side effects.
+
+  ⚠ oxc(no-array-method-for-side-effect): Array.prototype.reduce() called without using its return value
+   ╭─[no_array_method_for_side_effect.tsx:1:1]
+ 1 │ array.reduce((a, b) => a + b, 0);
+   · ────────────────────────────────
+   ╰────
+  help: `.reduce()` returns a new value. Either assign the result to a variable or use `.forEach()` for side effects.
+
+  ⚠ oxc(no-array-method-for-side-effect): Array.prototype.reduceRight() called without using its return value
+   ╭─[no_array_method_for_side_effect.tsx:1:1]
+ 1 │ array.reduceRight((a, b) => a + b, 0);
+   · ─────────────────────────────────────
+   ╰────
+  help: `.reduceRight()` returns a new value. Either assign the result to a variable or use `.forEach()` for side effects.
+
+  ⚠ oxc(no-array-method-for-side-effect): Array.prototype.every() called without using its return value
+   ╭─[no_array_method_for_side_effect.tsx:1:1]
+ 1 │ array.every(x => x > 0);
+   · ───────────────────────
+   ╰────
+  help: `.every()` returns a new value. Either assign the result to a variable or use `.forEach()` for side effects.
+
+  ⚠ oxc(no-array-method-for-side-effect): Array.prototype.some() called without using its return value
+   ╭─[no_array_method_for_side_effect.tsx:1:1]
+ 1 │ array.some(x => x > 0);
+   · ──────────────────────
+   ╰────
+  help: `.some()` returns a new value. Either assign the result to a variable or use `.forEach()` for side effects.
+
+  ⚠ oxc(no-array-method-for-side-effect): Array.prototype.toReversed() called without using its return value
+   ╭─[no_array_method_for_side_effect.tsx:1:1]
+ 1 │ array.toReversed();
+   · ──────────────────
+   ╰────
+  help: `.toReversed()` returns a new value. Either assign the result to a variable or use `.forEach()` for side effects.
+
+  ⚠ oxc(no-array-method-for-side-effect): Array.prototype.toSpliced() called without using its return value
+   ╭─[no_array_method_for_side_effect.tsx:1:1]
+ 1 │ array.toSpliced(0, 1);
+   · ─────────────────────
+   ╰────
+  help: `.toSpliced()` returns a new value. Either assign the result to a variable or use `.forEach()` for side effects.
+
+  ⚠ oxc(no-array-method-for-side-effect): Array.prototype.with() called without using its return value
+   ╭─[no_array_method_for_side_effect.tsx:1:1]
+ 1 │ array.with(0, 'a');
+   · ──────────────────
+   ╰────
+  help: `.with()` returns a new value. Either assign the result to a variable or use `.forEach()` for side effects.
+
+  ⚠ oxc(no-array-method-for-side-effect): Array.prototype.map() called without using its return value
+   ╭─[no_array_method_for_side_effect.tsx:1:1]
+ 1 │ array?.map(x => x + 1);
+   · ──────────────────────
+   ╰────
+  help: `.map()` returns a new value. Either assign the result to a variable or use `.forEach()` for side effects.
+
+  ⚠ oxc(no-array-method-for-side-effect): Array.prototype.filter() called without using its return value
+   ╭─[no_array_method_for_side_effect.tsx:1:1]
+ 1 │ array?.filter(Boolean);
+   · ──────────────────────
+   ╰────
+  help: `.filter()` returns a new value. Either assign the result to a variable or use `.forEach()` for side effects.
+
+  ⚠ oxc(no-array-method-for-side-effect): Array.prototype.map() called without using its return value
+   ╭─[no_array_method_for_side_effect.tsx:1:1]
+ 1 │ foo.bar.baz.map(x => x + 1);
+   · ───────────────────────────
+   ╰────
+  help: `.map()` returns a new value. Either assign the result to a variable or use `.forEach()` for side effects.
+
+  ⚠ oxc(no-array-method-for-side-effect): Array.prototype.map() called without using its return value
+   ╭─[no_array_method_for_side_effect.tsx:1:1]
+ 1 │ array.filter(Boolean).map(fn);
+   · ─────────────────────────────
+   ╰────
+  help: `.map()` returns a new value. Either assign the result to a variable or use `.forEach()` for side effects.
