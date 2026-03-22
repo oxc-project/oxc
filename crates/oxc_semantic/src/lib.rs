@@ -32,6 +32,7 @@ mod builder;
 mod checker;
 mod class;
 mod diagnostics;
+mod enum_eval;
 mod is_global_reference;
 #[cfg(feature = "jsdoc")]
 mod jsdoc;
