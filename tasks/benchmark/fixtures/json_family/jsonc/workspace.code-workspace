@@ -1,0 +1,11 @@
+{
+  // Example VS Code workspace
+  "folders": [
+    { "path": "." },
+    { "path": "packages/app" },
+  ],
+  "settings": {
+    "editor.tabSize": 2,
+    "files.trimTrailingWhitespace": true,
+  },
+}

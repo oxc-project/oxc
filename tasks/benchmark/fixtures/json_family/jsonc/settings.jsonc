@@ -1,0 +1,9 @@
+{
+  /* Configuration with nested comments */
+  "name": "jsonc-bench",
+  "features": {
+    "comments": true,
+    "trailingCommas": true,
+  },
+  "include": ["src", "test",],
+}

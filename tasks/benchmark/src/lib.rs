@@ -2,6 +2,8 @@ use std::alloc::{GlobalAlloc, Layout, System};
 
 pub use criterion::*;
 
+pub mod formatter_resources;
+
 #[global_allocator]
 static GLOBAL: NeverGrowInPlaceAllocator = NeverGrowInPlaceAllocator;
 

@@ -15,8 +15,9 @@ use oxc_toml::Options as TomlFormatterOptions;
 use super::js_config::JsConfigLoaderCb;
 use super::{
     FormatFileStrategy,
+    json_formatter::JsonFlavor,
     oxfmtrc::{
-        EndOfLineConfig, FormatConfig, OxfmtOptions, OxfmtOverrideConfig, Oxfmtrc,
+        EndOfLineConfig, FormatConfig, OxfmtOptions, OxfmtOverrideConfig, Oxfmtrc, ParserConfig,
         finalize_external_options, sync_external_options, to_oxfmt_options,
     },
     utils,
@@ -37,6 +38,15 @@ const VITE_PLUS_CONFIG_NAME: &str = "vite.config.ts";
 
 fn is_js_config_file(path: &Path) -> bool {
     path.extension().and_then(|e| e.to_str()).is_some_and(|ext| JS_CONFIG_EXTENSIONS.contains(&ext))
+}
+
+fn parser_to_json_flavor(parser: ParserConfig) -> JsonFlavor {
+    match parser {
+        ParserConfig::Json => JsonFlavor::Json,
+        ParserConfig::Json5 => JsonFlavor::Json5,
+        ParserConfig::Jsonc => JsonFlavor::Jsonc,
+        ParserConfig::JsonStringify => JsonFlavor::JsonStringify,
+    }
 }
 
 #[cfg(feature = "napi")]
@@ -109,18 +119,17 @@ pub enum ResolvedOptions {
         filepath_override: Option<PathBuf>,
         insert_final_newline: bool,
     },
+    NativeJson {
+        format_options: Box<FormatOptions>,
+        flavor: JsonFlavor,
+        sort_package_json: Option<sort_package_json::SortOptions>,
+        insert_final_newline: bool,
+    },
     /// For TOML files.
     OxfmtToml { toml_options: TomlFormatterOptions, insert_final_newline: bool },
     /// For non-JS files formatted by external formatter (Prettier).
     #[cfg(feature = "napi")]
     ExternalFormatter { external_options: Value, insert_final_newline: bool },
-    /// For `package.json` files: optionally sorted then formatted.
-    #[cfg(feature = "napi")]
-    ExternalFormatterPackageJson {
-        external_options: Value,
-        sort_package_json: Option<sort_package_json::SortOptions>,
-        insert_final_newline: bool,
-    },
 }
 
 impl ResolvedOptions {
@@ -136,10 +145,21 @@ impl ResolvedOptions {
         finalize_external_options(&mut external_options, strategy);
 
         #[cfg(feature = "napi")]
-        let OxfmtOptions { format_options, toml_options, sort_package_json, insert_final_newline } =
-            oxfmt_options;
+        let OxfmtOptions {
+            format_options,
+            toml_options,
+            parser,
+            sort_package_json,
+            insert_final_newline,
+        } = oxfmt_options;
         #[cfg(not(feature = "napi"))]
-        let OxfmtOptions { format_options, toml_options, insert_final_newline, .. } = oxfmt_options;
+        let OxfmtOptions {
+            format_options,
+            toml_options,
+            parser,
+            sort_package_json,
+            insert_final_newline,
+        } = oxfmt_options;
 
         match strategy {
             FormatFileStrategy::OxcFormatter { .. } => ResolvedOptions::OxcFormatter {
@@ -148,20 +168,18 @@ impl ResolvedOptions {
                 filepath_override: None,
                 insert_final_newline,
             },
+            FormatFileStrategy::NativeJson { flavor, .. } => ResolvedOptions::NativeJson {
+                format_options: Box::new(format_options),
+                flavor: parser.map(parser_to_json_flavor).unwrap_or(*flavor),
+                sort_package_json,
+                insert_final_newline,
+            },
             FormatFileStrategy::OxfmtToml { .. } => {
                 ResolvedOptions::OxfmtToml { toml_options, insert_final_newline }
             }
             #[cfg(feature = "napi")]
             FormatFileStrategy::ExternalFormatter { .. } => {
                 ResolvedOptions::ExternalFormatter { external_options, insert_final_newline }
-            }
-            #[cfg(feature = "napi")]
-            FormatFileStrategy::ExternalFormatterPackageJson { .. } => {
-                ResolvedOptions::ExternalFormatterPackageJson {
-                    external_options,
-                    sort_package_json,
-                    insert_final_newline,
-                }
             }
             #[cfg(not(feature = "napi"))]
             _ => {
@@ -687,5 +705,42 @@ fn apply_editorconfig(config: &mut FormatConfig, props: &EditorConfigProperties)
         && let EditorConfigProperty::Value(v) = props.insert_final_newline
     {
         config.insert_final_newline = Some(v);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::path::PathBuf;
+
+    use serde_json::json;
+
+    use super::*;
+
+    #[test]
+    fn json_parser_override_can_change_native_json_flavor() {
+        let mut resolver = ConfigResolver::new(json!({ "parser": "json5" }), None, None);
+        resolver.build_and_validate().unwrap();
+
+        let strategy = FormatFileStrategy::NativeJson {
+            path: PathBuf::from("fixture.json"),
+            flavor: JsonFlavor::Json,
+        };
+
+        let resolved = resolver.resolve(&strategy);
+        assert!(matches!(resolved, ResolvedOptions::NativeJson { flavor: JsonFlavor::Json5, .. }));
+    }
+
+    #[test]
+    fn json_parser_override_can_force_json_output_for_json5_path() {
+        let mut resolver = ConfigResolver::new(json!({ "parser": "json" }), None, None);
+        resolver.build_and_validate().unwrap();
+
+        let strategy = FormatFileStrategy::NativeJson {
+            path: PathBuf::from("fixture.json5"),
+            flavor: JsonFlavor::Json5,
+        };
+
+        let resolved = resolver.resolve(&strategy);
+        assert!(matches!(resolved, ResolvedOptions::NativeJson { flavor: JsonFlavor::Json, .. }));
     }
 }

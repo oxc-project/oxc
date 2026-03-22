@@ -1,0 +1,1 @@
+{"version":"1.0.0","name":"fixture","scripts":{"build":"tsc","dev":"vite","test":"vitest"},"dependencies":{"react":"18.0.0"},"devDependencies":{"typescript":"5.0.0","vitest":"1.0.0"}}

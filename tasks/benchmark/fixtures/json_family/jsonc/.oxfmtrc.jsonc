@@ -1,0 +1,6 @@
+{
+  // Benchmark fixture exercising JSONC comments and trailing commas
+  "semi": true,
+  "lineWidth": 100,
+  "sortImports": true,
+}

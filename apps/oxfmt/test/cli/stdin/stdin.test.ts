@@ -22,6 +22,20 @@ describe("--stdin-filepath", () => {
     }).toMatchSnapshot();
   });
 
+  it("should format JSON5 code from stdin based on filepath", async () => {
+    const result = await runCliStdin('{"name":"fixture"}', "test.json5");
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toBe('{ name: "fixture" }');
+  });
+
+  it("should format package.json from stdin with json-stringify layout", async () => {
+    const result = await runCliStdin("{name:'fixture'}", "package.json");
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toBe(`{
+  "name": "fixture"
+}`);
+  });
+
   it("should fail for unsupported file type", async () => {
     const result = await runCliStdin("puts 'hello'", "test.rb");
     expect({

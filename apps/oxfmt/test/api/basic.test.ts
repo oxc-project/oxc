@@ -92,4 +92,38 @@ describe("format() API", () => {
     );
     expect(result3.errors).toStrictEqual([]);
   });
+
+  it("should normalize JSON-family formats by filepath", async () => {
+    const jsonResult = await format("foo.json", "{foo:'bar',}");
+    expect(jsonResult.code).toBe('{ "foo": "bar" }\n');
+    expect(jsonResult.errors).toStrictEqual([]);
+
+    const json5Result = await format("foo.json5", '{"foo":"bar"}');
+    expect(json5Result.code).toBe('{ foo: "bar" }\n');
+    expect(json5Result.errors).toStrictEqual([]);
+
+    const packageResult = await format("package.json", "{name:'fixture',version:'1.0.0'}");
+    expect(packageResult.code).toBe(
+      `{
+  "name": "fixture",
+  "version": "1.0.0"
+}
+`,
+    );
+    expect(packageResult.errors).toStrictEqual([]);
+  });
+
+  it("should allow overriding JSON-family parser like Prettier", async () => {
+    const jsonAsJson5 = await format("foo.json", '{"foo":"bar"}', {
+      parser: "json5",
+    });
+    expect(jsonAsJson5.code).toBe('{ foo: "bar" }\n');
+    expect(jsonAsJson5.errors).toStrictEqual([]);
+
+    const json5AsJson = await format("foo.json5", "{foo:'bar',}", {
+      parser: "json",
+    });
+    expect(json5AsJson.code).toBe('{ "foo": "bar" }\n');
+    expect(json5AsJson.errors).toStrictEqual([]);
+  });
 });
