@@ -363,12 +363,13 @@ impl<'a> ClassProperties<'a> {
                     ctx,
                 );
             }
-            InstanceInitsInsertLocation::SuperFnInsideConstructor(super_binding) => {
+            InstanceInitsInsertLocation::SuperFnInsideConstructor(super_binding, insert_index) => {
                 self.create_super_function_inside_constructor(
                     constructor.as_mut().unwrap(),
                     instance_inits,
                     &super_binding,
                     instance_inits_scope_id,
+                    insert_index,
                     ctx,
                 );
             }
