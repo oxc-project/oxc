@@ -1,0 +1,19 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --format=bitbucket parser-error.js
+working directory: fixtures/cli/output_formatter_diagnostic
+----------
+[
+  {
+    "external_id": "oxlint-f50f23f6e0a3d4dd",
+    "summary": "Expected `;` but found `:`",
+    "annotation_type": "BUG",
+    "severity": "HIGH",
+    "path": "apps/oxlint/parser-error.js",
+    "line": 3
+  }
+]----------
+CLI result: LintFoundErrors
+----------

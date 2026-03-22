@@ -1,0 +1,35 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --format=bitbucket --report-unused-disable-directives disable-directive.js
+working directory: fixtures/cli/output_formatter_diagnostic
+----------
+[
+  {
+    "external_id": "oxlint-e5bb99862a04a6a5",
+    "summary": "Unused eslint-disable directive (no problems were reported).",
+    "annotation_type": "CODE_SMELL",
+    "severity": "MEDIUM",
+    "path": "apps/oxlint/disable-directive.js",
+    "line": 9
+  },
+  {
+    "external_id": "oxlint-bd12fdeac615e7f5",
+    "summary": "Unused eslint-disable directive (no problems were reported).",
+    "annotation_type": "CODE_SMELL",
+    "severity": "MEDIUM",
+    "path": "apps/oxlint/disable-directive.js",
+    "line": 12
+  },
+  {
+    "external_id": "oxlint-9718e601f3f712eb",
+    "summary": "Unused eslint-disable directive (no problems were reported).",
+    "annotation_type": "CODE_SMELL",
+    "severity": "MEDIUM",
+    "path": "apps/oxlint/disable-directive.js",
+    "line": 15
+  }
+]----------
+CLI result: LintSucceeded
+----------
