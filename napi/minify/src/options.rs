@@ -255,22 +255,57 @@ pub struct CodegenOptions {
     ///
     /// @default true
     pub remove_whitespace: Option<bool>,
+
+    /// How to handle legal comments (comments containing `@license`, `@preserve`, or starting with `//!`/`/*!`).
+    ///
+    /// * `"none"` - Do not preserve any legal comments.
+    /// * `"inline"` - Preserve all legal comments inline.
+    /// * `"eof"` - Move all legal comments to the end of the file.
+    /// * `"linked"` - Extract legal comments and add a link comment. Requires `legalCommentsPath`.
+    /// * `"external"` - Extract legal comments without linking.
+    ///
+    /// @default "none" (when minifying)
+    pub legal_comments: Option<String>,
+
+    /// The path to use in the linked legal comments banner.
+    /// Only used when `legalComments` is `"linked"`.
+    pub legal_comments_path: Option<String>,
 }
 
 impl Default for CodegenOptions {
     fn default() -> Self {
-        Self { remove_whitespace: Some(true) }
+        Self { remove_whitespace: Some(true), legal_comments: None, legal_comments_path: None }
     }
 }
 
-impl From<&CodegenOptions> for oxc_codegen::CodegenOptions {
-    fn from(o: &CodegenOptions) -> Self {
-        if o.remove_whitespace.is_some_and(|b| b) {
+impl CodegenOptions {
+    pub fn to_codegen_options(&self) -> Result<oxc_codegen::CodegenOptions, String> {
+        let mut opts = if self.remove_whitespace.is_some_and(|b| b) {
             oxc_codegen::CodegenOptions::minify()
         } else {
             // Need to remove all comments.
             oxc_codegen::CodegenOptions { minify: false, ..oxc_codegen::CodegenOptions::minify() }
+        };
+
+        if let Some(legal) = &self.legal_comments {
+            opts.comments.legal = match legal.as_str() {
+                "none" => oxc_codegen::LegalComment::None,
+                "inline" => oxc_codegen::LegalComment::Inline,
+                "eof" => oxc_codegen::LegalComment::Eof,
+                "linked" => {
+                    let path = self.legal_comments_path.clone().unwrap_or_default();
+                    oxc_codegen::LegalComment::Linked(path)
+                }
+                "external" => oxc_codegen::LegalComment::External,
+                _ => {
+                    return Err(format!(
+                        "Invalid legalComments value: '{legal}'. Expected 'none', 'inline', 'eof', 'linked', or 'external'."
+                    ));
+                }
+            };
         }
+
+        Ok(opts)
     }
 }
 
