@@ -9,6 +9,7 @@ fn default_case_last_diagnostic(span: Span) -> OxcDiagnostic {
     let default_span = Span::sized(span.start, 7);
 
     OxcDiagnostic::warn("Enforce default clauses in switch statements to be last")
+        .with_help("Move the `default` clause to the end of the `switch` statement, after all `case` clauses.")
         .with_label(default_span.label("Default clause should be the last clause."))
 }
 
