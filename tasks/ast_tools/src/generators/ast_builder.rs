@@ -74,7 +74,6 @@ impl Generator for AstBuilderGenerator {
             #![allow(unused_imports)]
             #![expect(
                 clippy::default_trait_access,
-                clippy::unused_self,
             )]
 
             ///@@line_break
@@ -224,12 +223,23 @@ fn generate_builder_methods_for_struct(
         (String::new(), String::new())
     };
 
+    let creates_node = u32::from(struct_def.fields.iter().any(|field| field.name() == "node_id"));
+    let creates_reference =
+        u32::from(struct_def.fields.iter().any(|field| field.name() == "reference_id"));
+    let creates_symbol =
+        u32::from(struct_def.fields.iter().any(|field| field.name() == "symbol_id"));
+    let creates_scope = u32::from(struct_def.fields.iter().any(|field| field.name() == "scope_id"));
+
     // Generate builder functions including all fields (inc default fields)
     let output = generate_builder_methods_for_struct_impl(
         struct_def,
         &params,
         &fn_params,
         &fields,
+        creates_node,
+        creates_reference,
+        creates_symbol,
+        creates_scope,
         &generic_params,
         &where_clause,
         &fn_name_postfix,
@@ -249,6 +259,10 @@ fn generate_builder_methods_for_struct(
         &params,
         &fn_params,
         &fields,
+        creates_node,
+        creates_reference,
+        creates_symbol,
+        creates_scope,
         &generic_params,
         &where_clause,
         "",
@@ -269,6 +283,10 @@ fn generate_builder_methods_for_struct_impl(
     params: &[Param],
     fn_params: &TokenStream,
     fields: &TokenStream,
+    creates_node: u32,
+    creates_reference: u32,
+    creates_symbol: u32,
+    creates_scope: u32,
     generic_params: &TokenStream,
     where_clause: &TokenStream,
     fn_name_postfix: &str,
@@ -311,11 +329,25 @@ fn generate_builder_methods_for_struct_impl(
     }
 
     let params_docs = generate_doc_comment_for_params(params);
+    let mut record_call = TokenStream::new();
+    if creates_node != 0 {
+        record_call.extend(quote! { self.stats_mut().record_node(); });
+    }
+    if creates_reference != 0 {
+        record_call.extend(quote! { self.stats_mut().record_reference(); });
+    }
+    if creates_symbol != 0 {
+        record_call.extend(quote! { self.stats_mut().record_symbol(); });
+    }
+    if creates_scope != 0 {
+        record_call.extend(quote! { self.stats_mut().record_scope(); });
+    }
 
     // Special case for TemplateElement: add `escape_raw` parameter
     let (extra_params, body) = if struct_name == "TemplateElement" {
         let extra_params = quote! { , escape_raw: bool };
         let body = quote! {
+            #record_call
             let value = if escape_raw {
                 TemplateElementValue {
                     raw: escape_template_element_raw(value.raw.as_str(), self),
@@ -328,7 +360,13 @@ fn generate_builder_methods_for_struct_impl(
         };
         (extra_params, body)
     } else {
-        (quote! {}, quote! { #struct_ident { #fields } })
+        (
+            quote! {},
+            quote! {
+                #record_call
+                #struct_ident { #fields }
+            },
+        )
     };
 
     let method = quote! {
@@ -669,6 +707,11 @@ fn generate_builder_method_for_enum_variant_impl(
         fn_docs.extend(quote!( #[doc = ""] #[doc = #fn_doc2] ));
     }
     let params_docs = generate_doc_comment_for_params(params);
+    let enum_symbol_record = if enum_def.name() == "TSEnumMemberName" {
+        quote!( self.stats_mut().record_symbol(); )
+    } else {
+        quote!()
+    };
 
     quote! {
         ///@@line_break
@@ -676,6 +719,7 @@ fn generate_builder_method_for_enum_variant_impl(
         #params_docs
         #[inline]
         pub fn #fn_name #generic_params(self, #(#fn_params),*) -> #enum_ty #where_clause {
+            #enum_symbol_record
             #enum_ident::#variant_ident(self.#inner_builder_name(#(#args),*))
         }
     }

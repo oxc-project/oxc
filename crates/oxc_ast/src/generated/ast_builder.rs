@@ -4,7 +4,7 @@
 //! AST node factories
 
 #![allow(unused_imports)]
-#![expect(clippy::default_trait_access, clippy::unused_self)]
+#![expect(clippy::default_trait_access)]
 
 use std::cell::Cell;
 
@@ -40,6 +40,8 @@ impl<'a> AstBuilder<'a> {
         directives: Vec<'a, Directive<'a>>,
         body: Vec<'a, Statement<'a>>,
     ) -> Program<'a> {
+        self.stats_mut().record_node();
+        self.stats_mut().record_scope();
         Program {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -76,6 +78,8 @@ impl<'a> AstBuilder<'a> {
         body: Vec<'a, Statement<'a>>,
         scope_id: ScopeId,
     ) -> Program<'a> {
+        self.stats_mut().record_node();
+        self.stats_mut().record_scope();
         Program {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -1229,6 +1233,7 @@ impl<'a> AstBuilder<'a> {
     where
         A1: Into<Ident<'a>>,
     {
+        self.stats_mut().record_node();
         IdentifierName { node_id: Cell::new(NodeId::DUMMY), span, name: name.into() }
     }
 
@@ -1261,6 +1266,8 @@ impl<'a> AstBuilder<'a> {
     where
         A1: Into<Ident<'a>>,
     {
+        self.stats_mut().record_node();
+        self.stats_mut().record_reference();
         IdentifierReference {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -1308,6 +1315,8 @@ impl<'a> AstBuilder<'a> {
     where
         A1: Into<Ident<'a>>,
     {
+        self.stats_mut().record_node();
+        self.stats_mut().record_reference();
         IdentifierReference {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -1354,6 +1363,8 @@ impl<'a> AstBuilder<'a> {
     where
         A1: Into<Ident<'a>>,
     {
+        self.stats_mut().record_node();
+        self.stats_mut().record_symbol();
         BindingIdentifier {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -1401,6 +1412,8 @@ impl<'a> AstBuilder<'a> {
     where
         A1: Into<Ident<'a>>,
     {
+        self.stats_mut().record_node();
+        self.stats_mut().record_symbol();
         BindingIdentifier {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -1441,6 +1454,7 @@ impl<'a> AstBuilder<'a> {
     where
         A1: Into<Ident<'a>>,
     {
+        self.stats_mut().record_node();
         LabelIdentifier { node_id: Cell::new(NodeId::DUMMY), span, name: name.into() }
     }
 
@@ -1453,6 +1467,7 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn this_expression(self, span: Span) -> ThisExpression {
+        self.stats_mut().record_node();
         ThisExpression { node_id: Cell::new(NodeId::DUMMY), span }
     }
 
@@ -1482,6 +1497,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         elements: Vec<'a, ArrayExpressionElement<'a>>,
     ) -> ArrayExpression<'a> {
+        self.stats_mut().record_node();
         ArrayExpression { node_id: Cell::new(NodeId::DUMMY), span, elements }
     }
 
@@ -1533,6 +1549,7 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn elision(self, span: Span) -> Elision {
+        self.stats_mut().record_node();
         Elision { node_id: Cell::new(NodeId::DUMMY), span }
     }
 
@@ -1550,6 +1567,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         properties: Vec<'a, ObjectPropertyKind<'a>>,
     ) -> ObjectExpression<'a> {
+        self.stats_mut().record_node();
         ObjectExpression { node_id: Cell::new(NodeId::DUMMY), span, properties }
     }
 
@@ -1638,6 +1656,7 @@ impl<'a> AstBuilder<'a> {
         shorthand: bool,
         computed: bool,
     ) -> ObjectProperty<'a> {
+        self.stats_mut().record_node();
         ObjectProperty {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -1726,6 +1745,7 @@ impl<'a> AstBuilder<'a> {
         quasis: Vec<'a, TemplateElement<'a>>,
         expressions: Vec<'a, Expression<'a>>,
     ) -> TemplateLiteral<'a> {
+        self.stats_mut().record_node();
         TemplateLiteral { node_id: Cell::new(NodeId::DUMMY), span, quasis, expressions }
     }
 
@@ -1769,6 +1789,7 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
+        self.stats_mut().record_node();
         TaggedTemplateExpression {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -1819,6 +1840,7 @@ impl<'a> AstBuilder<'a> {
         tail: bool,
         escape_raw: bool,
     ) -> TemplateElement<'a> {
+        self.stats_mut().record_node();
         let value = if escape_raw {
             TemplateElementValue {
                 raw: escape_template_element_raw(value.raw.as_str(), self),
@@ -1852,6 +1874,7 @@ impl<'a> AstBuilder<'a> {
         lone_surrogates: bool,
         escape_raw: bool,
     ) -> TemplateElement<'a> {
+        self.stats_mut().record_node();
         let value = if escape_raw {
             TemplateElementValue {
                 raw: escape_template_element_raw(value.raw.as_str(), self),
@@ -1947,6 +1970,7 @@ impl<'a> AstBuilder<'a> {
         expression: Expression<'a>,
         optional: bool,
     ) -> ComputedMemberExpression<'a> {
+        self.stats_mut().record_node();
         ComputedMemberExpression {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -1998,6 +2022,7 @@ impl<'a> AstBuilder<'a> {
         property: IdentifierName<'a>,
         optional: bool,
     ) -> StaticMemberExpression<'a> {
+        self.stats_mut().record_node();
         StaticMemberExpression {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -2046,6 +2071,7 @@ impl<'a> AstBuilder<'a> {
         field: PrivateIdentifier<'a>,
         optional: bool,
     ) -> PrivateFieldExpression<'a> {
+        self.stats_mut().record_node();
         PrivateFieldExpression { node_id: Cell::new(NodeId::DUMMY), span, object, field, optional }
     }
 
@@ -2093,6 +2119,7 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
+        self.stats_mut().record_node();
         CallExpression {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -2158,6 +2185,7 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
+        self.stats_mut().record_node();
         CallExpression {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -2221,6 +2249,7 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
+        self.stats_mut().record_node();
         NewExpression {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -2278,6 +2307,7 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
+        self.stats_mut().record_node();
         NewExpression {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -2333,6 +2363,7 @@ impl<'a> AstBuilder<'a> {
         meta: IdentifierName<'a>,
         property: IdentifierName<'a>,
     ) -> MetaProperty<'a> {
+        self.stats_mut().record_node();
         MetaProperty { node_id: Cell::new(NodeId::DUMMY), span, meta, property }
     }
 
@@ -2365,6 +2396,7 @@ impl<'a> AstBuilder<'a> {
     /// * `argument`: The expression being spread.
     #[inline]
     pub fn spread_element(self, span: Span, argument: Expression<'a>) -> SpreadElement<'a> {
+        self.stats_mut().record_node();
         SpreadElement { node_id: Cell::new(NodeId::DUMMY), span, argument }
     }
 
@@ -2415,6 +2447,7 @@ impl<'a> AstBuilder<'a> {
         prefix: bool,
         argument: SimpleAssignmentTarget<'a>,
     ) -> UpdateExpression<'a> {
+        self.stats_mut().record_node();
         UpdateExpression { node_id: Cell::new(NodeId::DUMMY), span, operator, prefix, argument }
     }
 
@@ -2455,6 +2488,7 @@ impl<'a> AstBuilder<'a> {
         operator: UnaryOperator,
         argument: Expression<'a>,
     ) -> UnaryExpression<'a> {
+        self.stats_mut().record_node();
         UnaryExpression { node_id: Cell::new(NodeId::DUMMY), span, operator, argument }
     }
 
@@ -2495,6 +2529,7 @@ impl<'a> AstBuilder<'a> {
         operator: BinaryOperator,
         right: Expression<'a>,
     ) -> BinaryExpression<'a> {
+        self.stats_mut().record_node();
         BinaryExpression { node_id: Cell::new(NodeId::DUMMY), span, left, operator, right }
     }
 
@@ -2535,6 +2570,7 @@ impl<'a> AstBuilder<'a> {
         left: PrivateIdentifier<'a>,
         right: Expression<'a>,
     ) -> PrivateInExpression<'a> {
+        self.stats_mut().record_node();
         PrivateInExpression { node_id: Cell::new(NodeId::DUMMY), span, left, right }
     }
 
@@ -2575,6 +2611,7 @@ impl<'a> AstBuilder<'a> {
         operator: LogicalOperator,
         right: Expression<'a>,
     ) -> LogicalExpression<'a> {
+        self.stats_mut().record_node();
         LogicalExpression { node_id: Cell::new(NodeId::DUMMY), span, left, operator, right }
     }
 
@@ -2617,6 +2654,7 @@ impl<'a> AstBuilder<'a> {
         consequent: Expression<'a>,
         alternate: Expression<'a>,
     ) -> ConditionalExpression<'a> {
+        self.stats_mut().record_node();
         ConditionalExpression {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -2665,6 +2703,7 @@ impl<'a> AstBuilder<'a> {
         left: AssignmentTarget<'a>,
         right: Expression<'a>,
     ) -> AssignmentExpression<'a> {
+        self.stats_mut().record_node();
         AssignmentExpression { node_id: Cell::new(NodeId::DUMMY), span, operator, left, right }
     }
 
@@ -2882,6 +2921,7 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, AssignmentTargetRest<'a>>>>,
     {
+        self.stats_mut().record_node();
         ArrayAssignmentTarget {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -2931,6 +2971,7 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, AssignmentTargetRest<'a>>>>,
     {
+        self.stats_mut().record_node();
         ObjectAssignmentTarget {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -2975,6 +3016,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         target: AssignmentTarget<'a>,
     ) -> AssignmentTargetRest<'a> {
+        self.stats_mut().record_node();
         AssignmentTargetRest { node_id: Cell::new(NodeId::DUMMY), span, target }
     }
 
@@ -3031,6 +3073,7 @@ impl<'a> AstBuilder<'a> {
         binding: AssignmentTarget<'a>,
         init: Expression<'a>,
     ) -> AssignmentTargetWithDefault<'a> {
+        self.stats_mut().record_node();
         AssignmentTargetWithDefault { node_id: Cell::new(NodeId::DUMMY), span, binding, init }
     }
 
@@ -3111,6 +3154,7 @@ impl<'a> AstBuilder<'a> {
         binding: IdentifierReference<'a>,
         init: Option<Expression<'a>>,
     ) -> AssignmentTargetPropertyIdentifier<'a> {
+        self.stats_mut().record_node();
         AssignmentTargetPropertyIdentifier {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -3156,6 +3200,7 @@ impl<'a> AstBuilder<'a> {
         binding: AssignmentTargetMaybeDefault<'a>,
         computed: bool,
     ) -> AssignmentTargetPropertyProperty<'a> {
+        self.stats_mut().record_node();
         AssignmentTargetPropertyProperty {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -3203,6 +3248,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         expressions: Vec<'a, Expression<'a>>,
     ) -> SequenceExpression<'a> {
+        self.stats_mut().record_node();
         SequenceExpression { node_id: Cell::new(NodeId::DUMMY), span, expressions }
     }
 
@@ -3232,6 +3278,7 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn super_(self, span: Span) -> Super {
+        self.stats_mut().record_node();
         Super { node_id: Cell::new(NodeId::DUMMY), span }
     }
 
@@ -3257,6 +3304,7 @@ impl<'a> AstBuilder<'a> {
     /// * `argument`
     #[inline]
     pub fn await_expression(self, span: Span, argument: Expression<'a>) -> AwaitExpression<'a> {
+        self.stats_mut().record_node();
         AwaitExpression { node_id: Cell::new(NodeId::DUMMY), span, argument }
     }
 
@@ -3287,6 +3335,7 @@ impl<'a> AstBuilder<'a> {
     /// * `expression`
     #[inline]
     pub fn chain_expression(self, span: Span, expression: ChainElement<'a>) -> ChainExpression<'a> {
+        self.stats_mut().record_node();
         ChainExpression { node_id: Cell::new(NodeId::DUMMY), span, expression }
     }
 
@@ -3402,6 +3451,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         expression: Expression<'a>,
     ) -> ParenthesizedExpression<'a> {
+        self.stats_mut().record_node();
         ParenthesizedExpression { node_id: Cell::new(NodeId::DUMMY), span, expression }
     }
 
@@ -3876,6 +3926,7 @@ impl<'a> AstBuilder<'a> {
     where
         A1: Into<Atom<'a>>,
     {
+        self.stats_mut().record_node();
         Directive {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -3894,6 +3945,7 @@ impl<'a> AstBuilder<'a> {
     where
         A1: Into<Atom<'a>>,
     {
+        self.stats_mut().record_node();
         Hashbang { node_id: Cell::new(NodeId::DUMMY), span, value: value.into() }
     }
 
@@ -3907,6 +3959,8 @@ impl<'a> AstBuilder<'a> {
     /// * `body`
     #[inline]
     pub fn block_statement(self, span: Span, body: Vec<'a, Statement<'a>>) -> BlockStatement<'a> {
+        self.stats_mut().record_node();
+        self.stats_mut().record_scope();
         BlockStatement {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -3948,6 +4002,8 @@ impl<'a> AstBuilder<'a> {
         body: Vec<'a, Statement<'a>>,
         scope_id: ScopeId,
     ) -> BlockStatement<'a> {
+        self.stats_mut().record_node();
+        self.stats_mut().record_scope();
         BlockStatement {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -4528,6 +4584,7 @@ impl<'a> AstBuilder<'a> {
         declarations: Vec<'a, VariableDeclarator<'a>>,
         declare: bool,
     ) -> VariableDeclaration<'a> {
+        self.stats_mut().record_node();
         VariableDeclaration { node_id: Cell::new(NodeId::DUMMY), span, kind, declarations, declare }
     }
 
@@ -4574,6 +4631,7 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
     {
+        self.stats_mut().record_node();
         VariableDeclarator {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -4594,6 +4652,7 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn empty_statement(self, span: Span) -> EmptyStatement {
+        self.stats_mut().record_node();
         EmptyStatement { node_id: Cell::new(NodeId::DUMMY), span }
     }
 
@@ -4623,6 +4682,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         expression: Expression<'a>,
     ) -> ExpressionStatement<'a> {
+        self.stats_mut().record_node();
         ExpressionStatement { node_id: Cell::new(NodeId::DUMMY), span, expression }
     }
 
@@ -4661,6 +4721,7 @@ impl<'a> AstBuilder<'a> {
         consequent: Statement<'a>,
         alternate: Option<Statement<'a>>,
     ) -> IfStatement<'a> {
+        self.stats_mut().record_node();
         IfStatement { node_id: Cell::new(NodeId::DUMMY), span, test, consequent, alternate }
     }
 
@@ -4701,6 +4762,7 @@ impl<'a> AstBuilder<'a> {
         body: Statement<'a>,
         test: Expression<'a>,
     ) -> DoWhileStatement<'a> {
+        self.stats_mut().record_node();
         DoWhileStatement { node_id: Cell::new(NodeId::DUMMY), span, body, test }
     }
 
@@ -4739,6 +4801,7 @@ impl<'a> AstBuilder<'a> {
         test: Expression<'a>,
         body: Statement<'a>,
     ) -> WhileStatement<'a> {
+        self.stats_mut().record_node();
         WhileStatement { node_id: Cell::new(NodeId::DUMMY), span, test, body }
     }
 
@@ -4781,6 +4844,8 @@ impl<'a> AstBuilder<'a> {
         update: Option<Expression<'a>>,
         body: Statement<'a>,
     ) -> ForStatement<'a> {
+        self.stats_mut().record_node();
+        self.stats_mut().record_scope();
         ForStatement {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -4837,6 +4902,8 @@ impl<'a> AstBuilder<'a> {
         body: Statement<'a>,
         scope_id: ScopeId,
     ) -> ForStatement<'a> {
+        self.stats_mut().record_node();
+        self.stats_mut().record_scope();
         ForStatement {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -4919,6 +4986,8 @@ impl<'a> AstBuilder<'a> {
         right: Expression<'a>,
         body: Statement<'a>,
     ) -> ForInStatement<'a> {
+        self.stats_mut().record_node();
+        self.stats_mut().record_scope();
         ForInStatement {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -4970,6 +5039,8 @@ impl<'a> AstBuilder<'a> {
         body: Statement<'a>,
         scope_id: ScopeId,
     ) -> ForInStatement<'a> {
+        self.stats_mut().record_node();
+        self.stats_mut().record_scope();
         ForInStatement {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -5051,6 +5122,8 @@ impl<'a> AstBuilder<'a> {
         right: Expression<'a>,
         body: Statement<'a>,
     ) -> ForOfStatement<'a> {
+        self.stats_mut().record_node();
+        self.stats_mut().record_scope();
         ForOfStatement {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -5107,6 +5180,8 @@ impl<'a> AstBuilder<'a> {
         body: Statement<'a>,
         scope_id: ScopeId,
     ) -> ForOfStatement<'a> {
+        self.stats_mut().record_node();
+        self.stats_mut().record_scope();
         ForOfStatement {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -5160,6 +5235,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         label: Option<LabelIdentifier<'a>>,
     ) -> ContinueStatement<'a> {
+        self.stats_mut().record_node();
         ContinueStatement { node_id: Cell::new(NodeId::DUMMY), span, label }
     }
 
@@ -5194,6 +5270,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         label: Option<LabelIdentifier<'a>>,
     ) -> BreakStatement<'a> {
+        self.stats_mut().record_node();
         BreakStatement { node_id: Cell::new(NodeId::DUMMY), span, label }
     }
 
@@ -5228,6 +5305,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         argument: Option<Expression<'a>>,
     ) -> ReturnStatement<'a> {
+        self.stats_mut().record_node();
         ReturnStatement { node_id: Cell::new(NodeId::DUMMY), span, argument }
     }
 
@@ -5264,6 +5342,8 @@ impl<'a> AstBuilder<'a> {
         object: Expression<'a>,
         body: Statement<'a>,
     ) -> WithStatement<'a> {
+        self.stats_mut().record_node();
+        self.stats_mut().record_scope();
         WithStatement {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -5310,6 +5390,8 @@ impl<'a> AstBuilder<'a> {
         body: Statement<'a>,
         scope_id: ScopeId,
     ) -> WithStatement<'a> {
+        self.stats_mut().record_node();
+        self.stats_mut().record_scope();
         WithStatement {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -5356,6 +5438,8 @@ impl<'a> AstBuilder<'a> {
         discriminant: Expression<'a>,
         cases: Vec<'a, SwitchCase<'a>>,
     ) -> SwitchStatement<'a> {
+        self.stats_mut().record_node();
+        self.stats_mut().record_scope();
         SwitchStatement {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -5402,6 +5486,8 @@ impl<'a> AstBuilder<'a> {
         cases: Vec<'a, SwitchCase<'a>>,
         scope_id: ScopeId,
     ) -> SwitchStatement<'a> {
+        self.stats_mut().record_node();
+        self.stats_mut().record_scope();
         SwitchStatement {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -5448,6 +5534,7 @@ impl<'a> AstBuilder<'a> {
         test: Option<Expression<'a>>,
         consequent: Vec<'a, Statement<'a>>,
     ) -> SwitchCase<'a> {
+        self.stats_mut().record_node();
         SwitchCase { node_id: Cell::new(NodeId::DUMMY), span, test, consequent }
     }
 
@@ -5467,6 +5554,7 @@ impl<'a> AstBuilder<'a> {
         label: LabelIdentifier<'a>,
         body: Statement<'a>,
     ) -> LabeledStatement<'a> {
+        self.stats_mut().record_node();
         LabeledStatement { node_id: Cell::new(NodeId::DUMMY), span, label, body }
     }
 
@@ -5499,6 +5587,7 @@ impl<'a> AstBuilder<'a> {
     /// * `argument`: The expression being thrown, e.g. `err` in `throw err;`
     #[inline]
     pub fn throw_statement(self, span: Span, argument: Expression<'a>) -> ThrowStatement<'a> {
+        self.stats_mut().record_node();
         ThrowStatement { node_id: Cell::new(NodeId::DUMMY), span, argument }
     }
 
@@ -5542,6 +5631,7 @@ impl<'a> AstBuilder<'a> {
         T2: IntoIn<'a, Option<Box<'a, CatchClause<'a>>>>,
         T3: IntoIn<'a, Option<Box<'a, BlockStatement<'a>>>>,
     {
+        self.stats_mut().record_node();
         TryStatement {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -5596,6 +5686,8 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Box<'a, BlockStatement<'a>>>,
     {
+        self.stats_mut().record_node();
+        self.stats_mut().record_scope();
         CatchClause {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -5648,6 +5740,8 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Box<'a, BlockStatement<'a>>>,
     {
+        self.stats_mut().record_node();
+        self.stats_mut().record_scope();
         CatchClause {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -5697,6 +5791,7 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
     {
+        self.stats_mut().record_node();
         CatchParameter {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -5714,6 +5809,7 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn debugger_statement(self, span: Span) -> DebuggerStatement {
+        self.stats_mut().record_node();
         DebuggerStatement { node_id: Cell::new(NodeId::DUMMY), span }
     }
 
@@ -5843,6 +5939,7 @@ impl<'a> AstBuilder<'a> {
         left: BindingPattern<'a>,
         right: Expression<'a>,
     ) -> AssignmentPattern<'a> {
+        self.stats_mut().record_node();
         AssignmentPattern { node_id: Cell::new(NodeId::DUMMY), span, left, right }
     }
 
@@ -5884,6 +5981,7 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, BindingRestElement<'a>>>>,
     {
+        self.stats_mut().record_node();
         ObjectPattern {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -5931,6 +6029,7 @@ impl<'a> AstBuilder<'a> {
         shorthand: bool,
         computed: bool,
     ) -> BindingProperty<'a> {
+        self.stats_mut().record_node();
         BindingProperty { node_id: Cell::new(NodeId::DUMMY), span, key, value, shorthand, computed }
     }
 
@@ -5953,6 +6052,7 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, BindingRestElement<'a>>>>,
     {
+        self.stats_mut().record_node();
         ArrayPattern {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -5997,6 +6097,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         argument: BindingPattern<'a>,
     ) -> BindingRestElement<'a> {
+        self.stats_mut().record_node();
         BindingRestElement { node_id: Cell::new(NodeId::DUMMY), span, argument }
     }
 
@@ -6056,6 +6157,8 @@ impl<'a> AstBuilder<'a> {
         T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
         T5: IntoIn<'a, Option<Box<'a, FunctionBody<'a>>>>,
     {
+        self.stats_mut().record_node();
+        self.stats_mut().record_scope();
         Function {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -6177,6 +6280,8 @@ impl<'a> AstBuilder<'a> {
         T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
         T5: IntoIn<'a, Option<Box<'a, FunctionBody<'a>>>>,
     {
+        self.stats_mut().record_node();
+        self.stats_mut().record_scope();
         Function {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -6283,6 +6388,7 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, FormalParameterRest<'a>>>>,
     {
+        self.stats_mut().record_node();
         FormalParameters {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -6345,6 +6451,7 @@ impl<'a> AstBuilder<'a> {
         T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
         T2: IntoIn<'a, Option<Box<'a, Expression<'a>>>>,
     {
+        self.stats_mut().record_node();
         FormalParameter {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -6380,6 +6487,7 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
     {
+        self.stats_mut().record_node();
         FormalParameterRest {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -6432,6 +6540,7 @@ impl<'a> AstBuilder<'a> {
         directives: Vec<'a, Directive<'a>>,
         statements: Vec<'a, Statement<'a>>,
     ) -> FunctionBody<'a> {
+        self.stats_mut().record_node();
         FunctionBody { node_id: Cell::new(NodeId::DUMMY), span, directives, statements }
     }
 
@@ -6484,6 +6593,8 @@ impl<'a> AstBuilder<'a> {
         T3: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
         T4: IntoIn<'a, Box<'a, FunctionBody<'a>>>,
     {
+        self.stats_mut().record_node();
+        self.stats_mut().record_scope();
         ArrowFunctionExpression {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -6579,6 +6690,8 @@ impl<'a> AstBuilder<'a> {
         T3: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
         T4: IntoIn<'a, Box<'a, FunctionBody<'a>>>,
     {
+        self.stats_mut().record_node();
+        self.stats_mut().record_scope();
         ArrowFunctionExpression {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -6663,6 +6776,7 @@ impl<'a> AstBuilder<'a> {
         delegate: bool,
         argument: Option<Expression<'a>>,
     ) -> YieldExpression<'a> {
+        self.stats_mut().record_node();
         YieldExpression { node_id: Cell::new(NodeId::DUMMY), span, delegate, argument }
     }
 
@@ -6722,6 +6836,8 @@ impl<'a> AstBuilder<'a> {
         T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
         T3: IntoIn<'a, Box<'a, ClassBody<'a>>>,
     {
+        self.stats_mut().record_node();
+        self.stats_mut().record_scope();
         Class {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -6833,6 +6949,8 @@ impl<'a> AstBuilder<'a> {
         T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
         T3: IntoIn<'a, Box<'a, ClassBody<'a>>>,
     {
+        self.stats_mut().record_node();
+        self.stats_mut().record_scope();
         Class {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -6918,6 +7036,7 @@ impl<'a> AstBuilder<'a> {
     /// * `body`
     #[inline]
     pub fn class_body(self, span: Span, body: Vec<'a, ClassElement<'a>>) -> ClassBody<'a> {
+        self.stats_mut().record_node();
         ClassBody { node_id: Cell::new(NodeId::DUMMY), span, body }
     }
 
@@ -7194,6 +7313,7 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Box<'a, Function<'a>>>,
     {
+        self.stats_mut().record_node();
         MethodDefinition {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -7304,6 +7424,7 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
     {
+        self.stats_mut().record_node();
         PropertyDefinition {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -7398,6 +7519,7 @@ impl<'a> AstBuilder<'a> {
     where
         A1: Into<Ident<'a>>,
     {
+        self.stats_mut().record_node();
         PrivateIdentifier { node_id: Cell::new(NodeId::DUMMY), span, name: name.into() }
     }
 
@@ -7431,6 +7553,8 @@ impl<'a> AstBuilder<'a> {
     /// * `body`
     #[inline]
     pub fn static_block(self, span: Span, body: Vec<'a, Statement<'a>>) -> StaticBlock<'a> {
+        self.stats_mut().record_node();
+        self.stats_mut().record_scope();
         StaticBlock { node_id: Cell::new(NodeId::DUMMY), span, body, scope_id: Default::default() }
     }
 
@@ -7467,6 +7591,8 @@ impl<'a> AstBuilder<'a> {
         body: Vec<'a, Statement<'a>>,
         scope_id: ScopeId,
     ) -> StaticBlock<'a> {
+        self.stats_mut().record_node();
+        self.stats_mut().record_scope();
         StaticBlock {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -7680,6 +7806,7 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
     {
+        self.stats_mut().record_node();
         AccessorProperty {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -7767,6 +7894,7 @@ impl<'a> AstBuilder<'a> {
         options: Option<Expression<'a>>,
         phase: Option<ImportPhase>,
     ) -> ImportExpression<'a> {
+        self.stats_mut().record_node();
         ImportExpression { node_id: Cell::new(NodeId::DUMMY), span, source, options, phase }
     }
 
@@ -7816,6 +7944,7 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, WithClause<'a>>>>,
     {
+        self.stats_mut().record_node();
         ImportDeclaration {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -7937,6 +8066,7 @@ impl<'a> AstBuilder<'a> {
         local: BindingIdentifier<'a>,
         import_kind: ImportOrExportKind,
     ) -> ImportSpecifier<'a> {
+        self.stats_mut().record_node();
         ImportSpecifier { node_id: Cell::new(NodeId::DUMMY), span, imported, local, import_kind }
     }
 
@@ -7975,6 +8105,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         local: BindingIdentifier<'a>,
     ) -> ImportDefaultSpecifier<'a> {
+        self.stats_mut().record_node();
         ImportDefaultSpecifier { node_id: Cell::new(NodeId::DUMMY), span, local }
     }
 
@@ -8009,6 +8140,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         local: BindingIdentifier<'a>,
     ) -> ImportNamespaceSpecifier<'a> {
+        self.stats_mut().record_node();
         ImportNamespaceSpecifier { node_id: Cell::new(NodeId::DUMMY), span, local }
     }
 
@@ -8045,6 +8177,7 @@ impl<'a> AstBuilder<'a> {
         keyword: WithClauseKeyword,
         with_entries: Vec<'a, ImportAttribute<'a>>,
     ) -> WithClause<'a> {
+        self.stats_mut().record_node();
         WithClause { node_id: Cell::new(NodeId::DUMMY), span, keyword, with_entries }
     }
 
@@ -8080,6 +8213,7 @@ impl<'a> AstBuilder<'a> {
         key: ImportAttributeKey<'a>,
         value: StringLiteral<'a>,
     ) -> ImportAttribute<'a> {
+        self.stats_mut().record_node();
         ImportAttribute { node_id: Cell::new(NodeId::DUMMY), span, key, value }
     }
 
@@ -8166,6 +8300,7 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, WithClause<'a>>>>,
     {
+        self.stats_mut().record_node();
         ExportNamedDeclaration {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -8229,6 +8364,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         declaration: ExportDefaultDeclarationKind<'a>,
     ) -> ExportDefaultDeclaration<'a> {
+        self.stats_mut().record_node();
         ExportDefaultDeclaration { node_id: Cell::new(NodeId::DUMMY), span, declaration }
     }
 
@@ -8272,6 +8408,7 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, WithClause<'a>>>>,
     {
+        self.stats_mut().record_node();
         ExportAllDeclaration {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -8326,6 +8463,7 @@ impl<'a> AstBuilder<'a> {
         exported: ModuleExportName<'a>,
         export_kind: ImportOrExportKind,
     ) -> ExportSpecifier<'a> {
+        self.stats_mut().record_node();
         ExportSpecifier { node_id: Cell::new(NodeId::DUMMY), span, local, exported, export_kind }
     }
 
@@ -8750,6 +8888,7 @@ impl<'a> AstBuilder<'a> {
         name: IdentifierName<'a>,
         arguments: Vec<'a, Argument<'a>>,
     ) -> V8IntrinsicExpression<'a> {
+        self.stats_mut().record_node();
         V8IntrinsicExpression { node_id: Cell::new(NodeId::DUMMY), span, name, arguments }
     }
 
@@ -8782,6 +8921,7 @@ impl<'a> AstBuilder<'a> {
     /// * `value`: The boolean value itself
     #[inline]
     pub fn boolean_literal(self, span: Span, value: bool) -> BooleanLiteral {
+        self.stats_mut().record_node();
         BooleanLiteral { node_id: Cell::new(NodeId::DUMMY), span, value }
     }
 
@@ -8807,6 +8947,7 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: Node location in source code.
     #[inline]
     pub fn null_literal(self, span: Span) -> NullLiteral {
+        self.stats_mut().record_node();
         NullLiteral { node_id: Cell::new(NodeId::DUMMY), span }
     }
 
@@ -8840,6 +8981,7 @@ impl<'a> AstBuilder<'a> {
         raw: Option<Atom<'a>>,
         base: NumberBase,
     ) -> NumericLiteral<'a> {
+        self.stats_mut().record_node();
         NumericLiteral { node_id: Cell::new(NodeId::DUMMY), span, value, raw, base }
     }
 
@@ -8883,6 +9025,7 @@ impl<'a> AstBuilder<'a> {
     where
         A1: Into<Atom<'a>>,
     {
+        self.stats_mut().record_node();
         StringLiteral {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -8935,6 +9078,7 @@ impl<'a> AstBuilder<'a> {
     where
         A1: Into<Atom<'a>>,
     {
+        self.stats_mut().record_node();
         StringLiteral {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -8992,6 +9136,7 @@ impl<'a> AstBuilder<'a> {
     where
         A1: Into<Atom<'a>>,
     {
+        self.stats_mut().record_node();
         BigIntLiteral { node_id: Cell::new(NodeId::DUMMY), span, value: value.into(), raw, base }
     }
 
@@ -9035,6 +9180,7 @@ impl<'a> AstBuilder<'a> {
         regex: RegExp<'a>,
         raw: Option<Atom<'a>>,
     ) -> RegExpLiteral<'a> {
+        self.stats_mut().record_node();
         RegExpLiteral { node_id: Cell::new(NodeId::DUMMY), span, regex, raw }
     }
 
@@ -9079,6 +9225,7 @@ impl<'a> AstBuilder<'a> {
         T1: IntoIn<'a, Box<'a, JSXOpeningElement<'a>>>,
         T2: IntoIn<'a, Option<Box<'a, JSXClosingElement<'a>>>>,
     {
+        self.stats_mut().record_node();
         JSXElement {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -9137,6 +9284,7 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
+        self.stats_mut().record_node();
         JSXOpeningElement {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -9187,6 +9335,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         name: JSXElementName<'a>,
     ) -> JSXClosingElement<'a> {
+        self.stats_mut().record_node();
         JSXClosingElement { node_id: Cell::new(NodeId::DUMMY), span, name }
     }
 
@@ -9225,6 +9374,7 @@ impl<'a> AstBuilder<'a> {
         children: Vec<'a, JSXChild<'a>>,
         closing_fragment: JSXClosingFragment,
     ) -> JSXFragment<'a> {
+        self.stats_mut().record_node();
         JSXFragment {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -9264,6 +9414,7 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: Node location in source code.
     #[inline]
     pub fn jsx_opening_fragment(self, span: Span) -> JSXOpeningFragment {
+        self.stats_mut().record_node();
         JSXOpeningFragment { node_id: Cell::new(NodeId::DUMMY), span }
     }
 
@@ -9273,6 +9424,7 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: Node location in source code.
     #[inline]
     pub fn jsx_closing_fragment(self, span: Span) -> JSXClosingFragment {
+        self.stats_mut().record_node();
         JSXClosingFragment { node_id: Cell::new(NodeId::DUMMY), span }
     }
 
@@ -9398,6 +9550,7 @@ impl<'a> AstBuilder<'a> {
         namespace: JSXIdentifier<'a>,
         name: JSXIdentifier<'a>,
     ) -> JSXNamespacedName<'a> {
+        self.stats_mut().record_node();
         JSXNamespacedName { node_id: Cell::new(NodeId::DUMMY), span, namespace, name }
     }
 
@@ -9436,6 +9589,7 @@ impl<'a> AstBuilder<'a> {
         object: JSXMemberExpressionObject<'a>,
         property: JSXIdentifier<'a>,
     ) -> JSXMemberExpression<'a> {
+        self.stats_mut().record_node();
         JSXMemberExpression { node_id: Cell::new(NodeId::DUMMY), span, object, property }
     }
 
@@ -9548,6 +9702,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         expression: JSXExpression<'a>,
     ) -> JSXExpressionContainer<'a> {
+        self.stats_mut().record_node();
         JSXExpressionContainer { node_id: Cell::new(NodeId::DUMMY), span, expression }
     }
 
@@ -9583,6 +9738,7 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: Node location in source code.
     #[inline]
     pub fn jsx_empty_expression(self, span: Span) -> JSXEmptyExpression {
+        self.stats_mut().record_node();
         JSXEmptyExpression { node_id: Cell::new(NodeId::DUMMY), span }
     }
 
@@ -9636,6 +9792,7 @@ impl<'a> AstBuilder<'a> {
         name: JSXAttributeName<'a>,
         value: Option<JSXAttributeValue<'a>>,
     ) -> JSXAttribute<'a> {
+        self.stats_mut().record_node();
         JSXAttribute { node_id: Cell::new(NodeId::DUMMY), span, name, value }
     }
 
@@ -9672,6 +9829,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         argument: Expression<'a>,
     ) -> JSXSpreadAttribute<'a> {
+        self.stats_mut().record_node();
         JSXSpreadAttribute { node_id: Cell::new(NodeId::DUMMY), span, argument }
     }
 
@@ -9859,6 +10017,7 @@ impl<'a> AstBuilder<'a> {
     where
         A1: Into<Atom<'a>>,
     {
+        self.stats_mut().record_node();
         JSXIdentifier { node_id: Cell::new(NodeId::DUMMY), span, name: name.into() }
     }
 
@@ -9981,6 +10140,7 @@ impl<'a> AstBuilder<'a> {
     /// * `expression`: The expression being spread.
     #[inline]
     pub fn jsx_spread_child(self, span: Span, expression: Expression<'a>) -> JSXSpreadChild<'a> {
+        self.stats_mut().record_node();
         JSXSpreadChild { node_id: Cell::new(NodeId::DUMMY), span, expression }
     }
 
@@ -10015,6 +10175,7 @@ impl<'a> AstBuilder<'a> {
     where
         A1: Into<Atom<'a>>,
     {
+        self.stats_mut().record_node();
         JSXText { node_id: Cell::new(NodeId::DUMMY), span, value: value.into(), raw }
     }
 
@@ -10059,6 +10220,7 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
     {
+        self.stats_mut().record_node();
         TSThisParameter {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -10109,6 +10271,7 @@ impl<'a> AstBuilder<'a> {
         r#const: bool,
         declare: bool,
     ) -> TSEnumDeclaration<'a> {
+        self.stats_mut().record_node();
         TSEnumDeclaration { node_id: Cell::new(NodeId::DUMMY), span, id, body, r#const, declare }
     }
 
@@ -10142,6 +10305,8 @@ impl<'a> AstBuilder<'a> {
     /// * `members`
     #[inline]
     pub fn ts_enum_body(self, span: Span, members: Vec<'a, TSEnumMember<'a>>) -> TSEnumBody<'a> {
+        self.stats_mut().record_node();
+        self.stats_mut().record_scope();
         TSEnumBody {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -10163,6 +10328,8 @@ impl<'a> AstBuilder<'a> {
         members: Vec<'a, TSEnumMember<'a>>,
         scope_id: ScopeId,
     ) -> TSEnumBody<'a> {
+        self.stats_mut().record_node();
+        self.stats_mut().record_scope();
         TSEnumBody {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -10184,6 +10351,7 @@ impl<'a> AstBuilder<'a> {
         id: TSEnumMemberName<'a>,
         initializer: Option<Expression<'a>>,
     ) -> TSEnumMember<'a> {
+        self.stats_mut().record_node();
         TSEnumMember { node_id: Cell::new(NodeId::DUMMY), span, id, initializer }
     }
 
@@ -10199,6 +10367,7 @@ impl<'a> AstBuilder<'a> {
     where
         A1: Into<Ident<'a>>,
     {
+        self.stats_mut().record_symbol();
         TSEnumMemberName::Identifier(self.alloc_identifier_name(span, name))
     }
 
@@ -10220,6 +10389,7 @@ impl<'a> AstBuilder<'a> {
     where
         A1: Into<Atom<'a>>,
     {
+        self.stats_mut().record_symbol();
         TSEnumMemberName::String(self.alloc_string_literal(span, value, raw))
     }
 
@@ -10243,6 +10413,7 @@ impl<'a> AstBuilder<'a> {
     where
         A1: Into<Atom<'a>>,
     {
+        self.stats_mut().record_symbol();
         TSEnumMemberName::String(self.alloc_string_literal_with_lone_surrogates(
             span,
             value,
@@ -10269,6 +10440,7 @@ impl<'a> AstBuilder<'a> {
     where
         A1: Into<Atom<'a>>,
     {
+        self.stats_mut().record_symbol();
         TSEnumMemberName::ComputedString(self.alloc_string_literal(span, value, raw))
     }
 
@@ -10292,6 +10464,7 @@ impl<'a> AstBuilder<'a> {
     where
         A1: Into<Atom<'a>>,
     {
+        self.stats_mut().record_symbol();
         TSEnumMemberName::ComputedString(self.alloc_string_literal_with_lone_surrogates(
             span,
             value,
@@ -10315,6 +10488,7 @@ impl<'a> AstBuilder<'a> {
         quasis: Vec<'a, TemplateElement<'a>>,
         expressions: Vec<'a, Expression<'a>>,
     ) -> TSEnumMemberName<'a> {
+        self.stats_mut().record_symbol();
         TSEnumMemberName::ComputedTemplateString(self.alloc_template_literal(
             span,
             quasis,
@@ -10336,6 +10510,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         type_annotation: TSType<'a>,
     ) -> TSTypeAnnotation<'a> {
+        self.stats_mut().record_node();
         TSTypeAnnotation { node_id: Cell::new(NodeId::DUMMY), span, type_annotation }
     }
 
@@ -10366,6 +10541,7 @@ impl<'a> AstBuilder<'a> {
     /// * `literal`
     #[inline]
     pub fn ts_literal_type(self, span: Span, literal: TSLiteral<'a>) -> TSLiteralType<'a> {
+        self.stats_mut().record_node();
         TSLiteralType { node_id: Cell::new(NodeId::DUMMY), span, literal }
     }
 
@@ -11309,6 +11485,8 @@ impl<'a> AstBuilder<'a> {
         true_type: TSType<'a>,
         false_type: TSType<'a>,
     ) -> TSConditionalType<'a> {
+        self.stats_mut().record_node();
+        self.stats_mut().record_scope();
         TSConditionalType {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -11368,6 +11546,8 @@ impl<'a> AstBuilder<'a> {
         false_type: TSType<'a>,
         scope_id: ScopeId,
     ) -> TSConditionalType<'a> {
+        self.stats_mut().record_node();
+        self.stats_mut().record_scope();
         TSConditionalType {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -11424,6 +11604,7 @@ impl<'a> AstBuilder<'a> {
     /// * `types`: The types in the union.
     #[inline]
     pub fn ts_union_type(self, span: Span, types: Vec<'a, TSType<'a>>) -> TSUnionType<'a> {
+        self.stats_mut().record_node();
         TSUnionType { node_id: Cell::new(NodeId::DUMMY), span, types }
     }
 
@@ -11458,6 +11639,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         types: Vec<'a, TSType<'a>>,
     ) -> TSIntersectionType<'a> {
+        self.stats_mut().record_node();
         TSIntersectionType { node_id: Cell::new(NodeId::DUMMY), span, types }
     }
 
@@ -11492,6 +11674,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         type_annotation: TSType<'a>,
     ) -> TSParenthesizedType<'a> {
+        self.stats_mut().record_node();
         TSParenthesizedType { node_id: Cell::new(NodeId::DUMMY), span, type_annotation }
     }
 
@@ -11528,6 +11711,7 @@ impl<'a> AstBuilder<'a> {
         operator: TSTypeOperatorOperator,
         type_annotation: TSType<'a>,
     ) -> TSTypeOperator<'a> {
+        self.stats_mut().record_node();
         TSTypeOperator { node_id: Cell::new(NodeId::DUMMY), span, operator, type_annotation }
     }
 
@@ -11560,6 +11744,7 @@ impl<'a> AstBuilder<'a> {
     /// * `element_type`
     #[inline]
     pub fn ts_array_type(self, span: Span, element_type: TSType<'a>) -> TSArrayType<'a> {
+        self.stats_mut().record_node();
         TSArrayType { node_id: Cell::new(NodeId::DUMMY), span, element_type }
     }
 
@@ -11596,6 +11781,7 @@ impl<'a> AstBuilder<'a> {
         object_type: TSType<'a>,
         index_type: TSType<'a>,
     ) -> TSIndexedAccessType<'a> {
+        self.stats_mut().record_node();
         TSIndexedAccessType { node_id: Cell::new(NodeId::DUMMY), span, object_type, index_type }
     }
 
@@ -11632,6 +11818,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         element_types: Vec<'a, TSTupleElement<'a>>,
     ) -> TSTupleType<'a> {
+        self.stats_mut().record_node();
         TSTupleType { node_id: Cell::new(NodeId::DUMMY), span, element_types }
     }
 
@@ -11670,6 +11857,7 @@ impl<'a> AstBuilder<'a> {
         element_type: TSTupleElement<'a>,
         optional: bool,
     ) -> TSNamedTupleMember<'a> {
+        self.stats_mut().record_node();
         TSNamedTupleMember {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -11710,6 +11898,7 @@ impl<'a> AstBuilder<'a> {
     /// * `type_annotation`
     #[inline]
     pub fn ts_optional_type(self, span: Span, type_annotation: TSType<'a>) -> TSOptionalType<'a> {
+        self.stats_mut().record_node();
         TSOptionalType { node_id: Cell::new(NodeId::DUMMY), span, type_annotation }
     }
 
@@ -11740,6 +11929,7 @@ impl<'a> AstBuilder<'a> {
     /// * `type_annotation`
     #[inline]
     pub fn ts_rest_type(self, span: Span, type_annotation: TSType<'a>) -> TSRestType<'a> {
+        self.stats_mut().record_node();
         TSRestType { node_id: Cell::new(NodeId::DUMMY), span, type_annotation }
     }
 
@@ -11801,6 +11991,7 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn ts_any_keyword(self, span: Span) -> TSAnyKeyword {
+        self.stats_mut().record_node();
         TSAnyKeyword { node_id: Cell::new(NodeId::DUMMY), span }
     }
 
@@ -11825,6 +12016,7 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn ts_string_keyword(self, span: Span) -> TSStringKeyword {
+        self.stats_mut().record_node();
         TSStringKeyword { node_id: Cell::new(NodeId::DUMMY), span }
     }
 
@@ -11849,6 +12041,7 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn ts_boolean_keyword(self, span: Span) -> TSBooleanKeyword {
+        self.stats_mut().record_node();
         TSBooleanKeyword { node_id: Cell::new(NodeId::DUMMY), span }
     }
 
@@ -11873,6 +12066,7 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn ts_number_keyword(self, span: Span) -> TSNumberKeyword {
+        self.stats_mut().record_node();
         TSNumberKeyword { node_id: Cell::new(NodeId::DUMMY), span }
     }
 
@@ -11897,6 +12091,7 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn ts_never_keyword(self, span: Span) -> TSNeverKeyword {
+        self.stats_mut().record_node();
         TSNeverKeyword { node_id: Cell::new(NodeId::DUMMY), span }
     }
 
@@ -11921,6 +12116,7 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn ts_intrinsic_keyword(self, span: Span) -> TSIntrinsicKeyword {
+        self.stats_mut().record_node();
         TSIntrinsicKeyword { node_id: Cell::new(NodeId::DUMMY), span }
     }
 
@@ -11945,6 +12141,7 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn ts_unknown_keyword(self, span: Span) -> TSUnknownKeyword {
+        self.stats_mut().record_node();
         TSUnknownKeyword { node_id: Cell::new(NodeId::DUMMY), span }
     }
 
@@ -11969,6 +12166,7 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn ts_null_keyword(self, span: Span) -> TSNullKeyword {
+        self.stats_mut().record_node();
         TSNullKeyword { node_id: Cell::new(NodeId::DUMMY), span }
     }
 
@@ -11993,6 +12191,7 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn ts_undefined_keyword(self, span: Span) -> TSUndefinedKeyword {
+        self.stats_mut().record_node();
         TSUndefinedKeyword { node_id: Cell::new(NodeId::DUMMY), span }
     }
 
@@ -12017,6 +12216,7 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn ts_void_keyword(self, span: Span) -> TSVoidKeyword {
+        self.stats_mut().record_node();
         TSVoidKeyword { node_id: Cell::new(NodeId::DUMMY), span }
     }
 
@@ -12041,6 +12241,7 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn ts_symbol_keyword(self, span: Span) -> TSSymbolKeyword {
+        self.stats_mut().record_node();
         TSSymbolKeyword { node_id: Cell::new(NodeId::DUMMY), span }
     }
 
@@ -12065,6 +12266,7 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn ts_this_type(self, span: Span) -> TSThisType {
+        self.stats_mut().record_node();
         TSThisType { node_id: Cell::new(NodeId::DUMMY), span }
     }
 
@@ -12089,6 +12291,7 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn ts_object_keyword(self, span: Span) -> TSObjectKeyword {
+        self.stats_mut().record_node();
         TSObjectKeyword { node_id: Cell::new(NodeId::DUMMY), span }
     }
 
@@ -12113,6 +12316,7 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn ts_big_int_keyword(self, span: Span) -> TSBigIntKeyword {
+        self.stats_mut().record_node();
         TSBigIntKeyword { node_id: Cell::new(NodeId::DUMMY), span }
     }
 
@@ -12147,6 +12351,7 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
+        self.stats_mut().record_node();
         TSTypeReference {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -12262,6 +12467,7 @@ impl<'a> AstBuilder<'a> {
         left: TSTypeName<'a>,
         right: IdentifierName<'a>,
     ) -> TSQualifiedName<'a> {
+        self.stats_mut().record_node();
         TSQualifiedName { node_id: Cell::new(NodeId::DUMMY), span, left, right }
     }
 
@@ -12298,6 +12504,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         params: Vec<'a, TSType<'a>>,
     ) -> TSTypeParameterInstantiation<'a> {
+        self.stats_mut().record_node();
         TSTypeParameterInstantiation { node_id: Cell::new(NodeId::DUMMY), span, params }
     }
 
@@ -12342,6 +12549,7 @@ impl<'a> AstBuilder<'a> {
         out: bool,
         r#const: bool,
     ) -> TSTypeParameter<'a> {
+        self.stats_mut().record_node();
         TSTypeParameter {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -12398,6 +12606,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         params: Vec<'a, TSTypeParameter<'a>>,
     ) -> TSTypeParameterDeclaration<'a> {
+        self.stats_mut().record_node();
         TSTypeParameterDeclaration { node_id: Cell::new(NodeId::DUMMY), span, params }
     }
 
@@ -12441,6 +12650,8 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
     {
+        self.stats_mut().record_node();
+        self.stats_mut().record_scope();
         TSTypeAliasDeclaration {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -12506,6 +12717,8 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
     {
+        self.stats_mut().record_node();
+        self.stats_mut().record_scope();
         TSTypeAliasDeclaration {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -12571,6 +12784,7 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
+        self.stats_mut().record_node();
         TSClassImplements {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -12605,6 +12819,8 @@ impl<'a> AstBuilder<'a> {
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
         T2: IntoIn<'a, Box<'a, TSInterfaceBody<'a>>>,
     {
+        self.stats_mut().record_node();
+        self.stats_mut().record_scope();
         TSInterfaceDeclaration {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -12677,6 +12893,8 @@ impl<'a> AstBuilder<'a> {
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
         T2: IntoIn<'a, Box<'a, TSInterfaceBody<'a>>>,
     {
+        self.stats_mut().record_node();
+        self.stats_mut().record_scope();
         TSInterfaceDeclaration {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -12745,6 +12963,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         body: Vec<'a, TSSignature<'a>>,
     ) -> TSInterfaceBody<'a> {
+        self.stats_mut().record_node();
         TSInterfaceBody { node_id: Cell::new(NodeId::DUMMY), span, body }
     }
 
@@ -12790,6 +13009,7 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
     {
+        self.stats_mut().record_node();
         TSPropertySignature {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -13153,6 +13373,7 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Box<'a, TSTypeAnnotation<'a>>>,
     {
+        self.stats_mut().record_node();
         TSIndexSignature {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -13218,6 +13439,8 @@ impl<'a> AstBuilder<'a> {
         T3: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
         T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
     {
+        self.stats_mut().record_node();
+        self.stats_mut().record_scope();
         TSCallSignatureDeclaration {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -13295,6 +13518,8 @@ impl<'a> AstBuilder<'a> {
         T3: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
         T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
     {
+        self.stats_mut().record_node();
+        self.stats_mut().record_scope();
         TSCallSignatureDeclaration {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -13381,6 +13606,8 @@ impl<'a> AstBuilder<'a> {
         T3: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
         T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
     {
+        self.stats_mut().record_node();
+        self.stats_mut().record_scope();
         TSMethodSignature {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -13482,6 +13709,8 @@ impl<'a> AstBuilder<'a> {
         T3: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
         T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
     {
+        self.stats_mut().record_node();
+        self.stats_mut().record_scope();
         TSMethodSignature {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -13573,6 +13802,8 @@ impl<'a> AstBuilder<'a> {
         T2: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
         T3: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
     {
+        self.stats_mut().record_node();
+        self.stats_mut().record_scope();
         TSConstructSignatureDeclaration {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -13637,6 +13868,8 @@ impl<'a> AstBuilder<'a> {
         T2: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
         T3: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
     {
+        self.stats_mut().record_node();
+        self.stats_mut().record_scope();
         TSConstructSignatureDeclaration {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -13701,6 +13934,7 @@ impl<'a> AstBuilder<'a> {
         A1: Into<Atom<'a>>,
         T1: IntoIn<'a, Box<'a, TSTypeAnnotation<'a>>>,
     {
+        self.stats_mut().record_node();
         TSIndexSignatureName {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -13725,6 +13959,7 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
+        self.stats_mut().record_node();
         TSInterfaceHeritage {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -13754,6 +13989,7 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
     {
+        self.stats_mut().record_node();
         TSTypePredicate {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -13838,6 +14074,8 @@ impl<'a> AstBuilder<'a> {
         kind: TSModuleDeclarationKind,
         declare: bool,
     ) -> TSModuleDeclaration<'a> {
+        self.stats_mut().record_node();
+        self.stats_mut().record_scope();
         TSModuleDeclaration {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -13894,6 +14132,8 @@ impl<'a> AstBuilder<'a> {
         declare: bool,
         scope_id: ScopeId,
     ) -> TSModuleDeclaration<'a> {
+        self.stats_mut().record_node();
+        self.stats_mut().record_scope();
         TSModuleDeclaration {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -14102,6 +14342,8 @@ impl<'a> AstBuilder<'a> {
         body: TSModuleBlock<'a>,
         declare: bool,
     ) -> TSGlobalDeclaration<'a> {
+        self.stats_mut().record_node();
+        self.stats_mut().record_scope();
         TSGlobalDeclaration {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -14153,6 +14395,8 @@ impl<'a> AstBuilder<'a> {
         declare: bool,
         scope_id: ScopeId,
     ) -> TSGlobalDeclaration<'a> {
+        self.stats_mut().record_node();
+        self.stats_mut().record_scope();
         TSGlobalDeclaration {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -14205,6 +14449,7 @@ impl<'a> AstBuilder<'a> {
         directives: Vec<'a, Directive<'a>>,
         body: Vec<'a, Statement<'a>>,
     ) -> TSModuleBlock<'a> {
+        self.stats_mut().record_node();
         TSModuleBlock { node_id: Cell::new(NodeId::DUMMY), span, directives, body }
     }
 
@@ -14241,6 +14486,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         members: Vec<'a, TSSignature<'a>>,
     ) -> TSTypeLiteral<'a> {
+        self.stats_mut().record_node();
         TSTypeLiteral { node_id: Cell::new(NodeId::DUMMY), span, members }
     }
 
@@ -14274,6 +14520,7 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Box<'a, TSTypeParameter<'a>>>,
     {
+        self.stats_mut().record_node();
         TSInferType {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -14316,6 +14563,7 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
+        self.stats_mut().record_node();
         TSTypeQuery {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -14402,6 +14650,7 @@ impl<'a> AstBuilder<'a> {
         T1: IntoIn<'a, Option<Box<'a, ObjectExpression<'a>>>>,
         T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
+        self.stats_mut().record_node();
         TSImportType {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -14497,6 +14746,7 @@ impl<'a> AstBuilder<'a> {
         left: TSImportTypeQualifier<'a>,
         right: IdentifierName<'a>,
     ) -> TSImportTypeQualifiedName<'a> {
+        self.stats_mut().record_node();
         TSImportTypeQualifiedName { node_id: Cell::new(NodeId::DUMMY), span, left, right }
     }
 
@@ -14545,6 +14795,8 @@ impl<'a> AstBuilder<'a> {
         T3: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
         T4: IntoIn<'a, Box<'a, TSTypeAnnotation<'a>>>,
     {
+        self.stats_mut().record_node();
+        self.stats_mut().record_scope();
         TSFunctionType {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -14616,6 +14868,8 @@ impl<'a> AstBuilder<'a> {
         T3: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
         T4: IntoIn<'a, Box<'a, TSTypeAnnotation<'a>>>,
     {
+        self.stats_mut().record_node();
+        self.stats_mut().record_scope();
         TSFunctionType {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -14693,6 +14947,8 @@ impl<'a> AstBuilder<'a> {
         T2: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
         T3: IntoIn<'a, Box<'a, TSTypeAnnotation<'a>>>,
     {
+        self.stats_mut().record_node();
+        self.stats_mut().record_scope();
         TSConstructorType {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -14762,6 +15018,8 @@ impl<'a> AstBuilder<'a> {
         T2: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
         T3: IntoIn<'a, Box<'a, TSTypeAnnotation<'a>>>,
     {
+        self.stats_mut().record_node();
+        self.stats_mut().record_scope();
         TSConstructorType {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -14837,6 +15095,8 @@ impl<'a> AstBuilder<'a> {
         optional: Option<TSMappedTypeModifierOperator>,
         readonly: Option<TSMappedTypeModifierOperator>,
     ) -> TSMappedType<'a> {
+        self.stats_mut().record_node();
+        self.stats_mut().record_scope();
         TSMappedType {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -14914,6 +15174,8 @@ impl<'a> AstBuilder<'a> {
         readonly: Option<TSMappedTypeModifierOperator>,
         scope_id: ScopeId,
     ) -> TSMappedType<'a> {
+        self.stats_mut().record_node();
+        self.stats_mut().record_scope();
         TSMappedType {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -14984,6 +15246,7 @@ impl<'a> AstBuilder<'a> {
         quasis: Vec<'a, TemplateElement<'a>>,
         types: Vec<'a, TSType<'a>>,
     ) -> TSTemplateLiteralType<'a> {
+        self.stats_mut().record_node();
         TSTemplateLiteralType { node_id: Cell::new(NodeId::DUMMY), span, quasis, types }
     }
 
@@ -15022,6 +15285,7 @@ impl<'a> AstBuilder<'a> {
         expression: Expression<'a>,
         type_annotation: TSType<'a>,
     ) -> TSAsExpression<'a> {
+        self.stats_mut().record_node();
         TSAsExpression { node_id: Cell::new(NodeId::DUMMY), span, expression, type_annotation }
     }
 
@@ -15060,6 +15324,7 @@ impl<'a> AstBuilder<'a> {
         expression: Expression<'a>,
         type_annotation: TSType<'a>,
     ) -> TSSatisfiesExpression<'a> {
+        self.stats_mut().record_node();
         TSSatisfiesExpression {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -15103,6 +15368,7 @@ impl<'a> AstBuilder<'a> {
         type_annotation: TSType<'a>,
         expression: Expression<'a>,
     ) -> TSTypeAssertion<'a> {
+        self.stats_mut().record_node();
         TSTypeAssertion { node_id: Cell::new(NodeId::DUMMY), span, type_annotation, expression }
     }
 
@@ -15143,6 +15409,7 @@ impl<'a> AstBuilder<'a> {
         module_reference: TSModuleReference<'a>,
         import_kind: ImportOrExportKind,
     ) -> TSImportEqualsDeclaration<'a> {
+        self.stats_mut().record_node();
         TSImportEqualsDeclaration {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -15270,6 +15537,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         expression: StringLiteral<'a>,
     ) -> TSExternalModuleReference<'a> {
+        self.stats_mut().record_node();
         TSExternalModuleReference { node_id: Cell::new(NodeId::DUMMY), span, expression }
     }
 
@@ -15304,6 +15572,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         expression: Expression<'a>,
     ) -> TSNonNullExpression<'a> {
+        self.stats_mut().record_node();
         TSNonNullExpression { node_id: Cell::new(NodeId::DUMMY), span, expression }
     }
 
@@ -15331,6 +15600,7 @@ impl<'a> AstBuilder<'a> {
     /// * `expression`
     #[inline]
     pub fn decorator(self, span: Span, expression: Expression<'a>) -> Decorator<'a> {
+        self.stats_mut().record_node();
         Decorator { node_id: Cell::new(NodeId::DUMMY), span, expression }
     }
 
@@ -15348,6 +15618,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         expression: Expression<'a>,
     ) -> TSExportAssignment<'a> {
+        self.stats_mut().record_node();
         TSExportAssignment { node_id: Cell::new(NodeId::DUMMY), span, expression }
     }
 
@@ -15382,6 +15653,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         id: IdentifierName<'a>,
     ) -> TSNamespaceExportDeclaration<'a> {
+        self.stats_mut().record_node();
         TSNamespaceExportDeclaration { node_id: Cell::new(NodeId::DUMMY), span, id }
     }
 
@@ -15421,6 +15693,7 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Box<'a, TSTypeParameterInstantiation<'a>>>,
     {
+        self.stats_mut().record_node();
         TSInstantiationExpression {
             node_id: Cell::new(NodeId::DUMMY),
             span,
@@ -15470,6 +15743,7 @@ impl<'a> AstBuilder<'a> {
         type_annotation: TSType<'a>,
         postfix: bool,
     ) -> JSDocNullableType<'a> {
+        self.stats_mut().record_node();
         JSDocNullableType { node_id: Cell::new(NodeId::DUMMY), span, type_annotation, postfix }
     }
 
@@ -15508,6 +15782,7 @@ impl<'a> AstBuilder<'a> {
         type_annotation: TSType<'a>,
         postfix: bool,
     ) -> JSDocNonNullableType<'a> {
+        self.stats_mut().record_node();
         JSDocNonNullableType { node_id: Cell::new(NodeId::DUMMY), span, type_annotation, postfix }
     }
 
@@ -15539,6 +15814,7 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn js_doc_unknown_type(self, span: Span) -> JSDocUnknownType {
+        self.stats_mut().record_node();
         JSDocUnknownType { node_id: Cell::new(NodeId::DUMMY), span }
     }
 
