@@ -45,7 +45,7 @@ use crate::{
         utils::{normalize_path, range_overlaps},
     },
 };
-
+// test
 #[derive(Default)]
 pub struct ServerLinterBuilder {
     external_linter: Option<ExternalLinter>,
