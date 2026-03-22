@@ -1,8 +1,5 @@
 use cow_utils::CowUtils;
-use oxc_ast::{
-    AstKind,
-    ast::{JSXAttributeItem, JSXOpeningElement},
-};
+use oxc_ast::{AstKind, ast::JSXAttributeItem};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -13,7 +10,7 @@ use crate::{
     globals::{AriaProperty, VALID_ARIA_ROLES, is_valid_aria_property},
     rule::Rule,
     utils::{
-        get_element_type, get_jsx_attribute_name, get_string_literal_prop_value,
+        get_element_type, get_implicit_role, get_jsx_attribute_name, get_string_literal_prop_value,
         has_jsx_prop_ignore_case,
     },
 };
@@ -106,66 +103,6 @@ impl Rule for RoleSupportsAriaProps {
             }
         }
     }
-}
-
-/// ref: <https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/v6.9.0/src/util/getImplicitRole.js>
-fn get_implicit_role<'a>(
-    node: &'a JSXOpeningElement<'a>,
-    element_type: &str,
-) -> Option<&'static str> {
-    let implicit_role = match element_type {
-        "a" | "area" | "link" => match has_jsx_prop_ignore_case(node, "href") {
-            Some(_) => "link",
-            None => "",
-        },
-        "article" => "article",
-        "aside" => "complementary",
-        "body" => "document",
-        "button" => "button",
-        "datalist" | "select" => "listbox",
-        "details" => "group",
-        "dialog" => "dialog",
-        "form" => "form",
-        "h1" | "h2" | "h3" | "h4" | "h5" | "h6" => "heading",
-        "hr" => "separator",
-        "img" => has_jsx_prop_ignore_case(node, "alt").map_or("img", |i| {
-            get_string_literal_prop_value(i)
-                .map_or("img", |v| if v.is_empty() { "" } else { "img" })
-        }),
-        "input" => has_jsx_prop_ignore_case(node, "type").map_or("textbox", |input_type| {
-            match get_string_literal_prop_value(input_type) {
-                Some("button" | "image" | "reset" | "submit") => "button",
-                Some("checkbox") => "checkbox",
-                Some("radio") => "radio",
-                Some("range") => "slider",
-                _ => "textbox",
-            }
-        }),
-        "li" => "listitem",
-        "menu" => has_jsx_prop_ignore_case(node, "type").map_or("", |v| {
-            get_string_literal_prop_value(v)
-                .map_or("", |v| if v == "toolbar" { "toolbar" } else { "" })
-        }),
-        "menuitem" => has_jsx_prop_ignore_case(node, "type").map_or("", |v| {
-            match get_string_literal_prop_value(v) {
-                Some("checkbox") => "menuitemcheckbox",
-                Some("command") => "menuitem",
-                Some("radio") => "menuitemradio",
-                _ => "",
-            }
-        }),
-        "meter" | "progress" => "progressbar",
-        "nav" => "navigation",
-        "ol" | "ul" => "list",
-        "option" => "option",
-        "output" => "status",
-        "section" => "region",
-        "tbody" | "tfoot" | "thead" => "rowgroup",
-        "textarea" => "textbox",
-        _ => "",
-    };
-
-    VALID_ARIA_ROLES.contains(implicit_role).then_some(implicit_role)
 }
 
 const ALERT_ETC_PROPS: &[AriaProperty] = &[
