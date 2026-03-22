@@ -44,36 +44,6 @@ export async function resolvePlugins(): Promise<string[]> {
 
 // ---
 
-export type FormatEmbeddedCodeParam = {
-  code: string;
-  options: Options;
-};
-
-/**
- * Format xxx-in-js code snippets
- *
- * @returns Formatted code snippet
- * TODO: In the future, this should return `Doc` instead of string,
- * otherwise, we cannot calculate `printWidth` correctly.
- */
-export async function formatEmbeddedCode({
-  code,
-  options,
-}: FormatEmbeddedCodeParam): Promise<string> {
-  const prettier = await loadPrettier();
-
-  // Enable Tailwind CSS plugin for embedded code (e.g., html`...` in JS) if needed
-  await setupTailwindPlugin(options);
-
-  // NOTE: This will throw if:
-  // - Specified parser is not available
-  // - Or, code has syntax errors
-  // In such cases, Rust side will fallback to original code
-  return prettier.format(code, options);
-}
-
-// ---
-
 export type FormatFileParam = {
   code: string;
   options: Options;
@@ -94,6 +64,91 @@ export async function formatFile({ code, options }: FormatFileParam): Promise<st
   await setupOxfmtPlugin(options);
 
   return prettier.format(code, options);
+}
+
+// ---
+
+export type FormatEmbeddedCodeParam = {
+  code: string;
+  options: Options;
+};
+
+/**
+ * Format xxx-in-js code snippets into formatted string.
+ *
+ * This will be gradually replaced by `formatEmbeddedDoc` which returns `Doc`.
+ * For now, html|css|md-in-js are using this.
+ *
+ * @returns Formatted code snippet
+ */
+export async function formatEmbeddedCode({
+  code,
+  options,
+}: FormatEmbeddedCodeParam): Promise<string> {
+  const prettier = await loadPrettier();
+
+  // Enable Tailwind CSS plugin for embedded code (e.g., html`...` in JS) if needed
+  await setupTailwindPlugin(options);
+
+  // NOTE: This will throw if:
+  // - Specified parser is not available
+  // - Or, code has syntax errors
+  // In such cases, Rust side will fallback to original code
+  return prettier.format(code, options);
+}
+
+// ---
+
+export type FormatEmbeddedDocParam = {
+  texts: string[];
+  options: Options;
+};
+
+/**
+ * Format xxx-in-js code snippets into Prettier `Doc` JSON strings.
+ *
+ * This makes `oxc_formatter` correctly handle `printWidth` even for embedded code.
+ * - For gql-in-js, `texts` contains multiple parts split by `${}` in a template literal
+ * - For others, `texts` always contains a single string with `${}` parts replaced by placeholders
+ * However, this function does not need to be aware of that,
+ * as it simply formats each text part independently and returns an array of formatted parts.
+ *
+ * @returns Doc JSON strings (one per input text)
+ */
+export async function formatEmbeddedDoc({
+  texts,
+  options,
+}: FormatEmbeddedDocParam): Promise<string[]> {
+  const prettier = await loadPrettier();
+
+  // Enable Tailwind CSS plugin for embedded code (e.g., html`...` in JS) if needed
+  await setupTailwindPlugin(options);
+
+  // NOTE: This will throw if:
+  // - Specified parser is not available
+  // - Or, code has syntax errors
+  // In such cases, Rust side will fallback to original code
+  return Promise.all(
+    texts.map(async (text) => {
+      // @ts-expect-error: Use internal API, but it's necessary and only way to get `Doc`
+      const doc = await prettier.__debug.printToDoc(text, options);
+
+      // Serialize Doc to JSON, handling special values in a single pass:
+      // - Symbol group IDs (used by `group`, `if-break`, `indent-if-break`) → numeric counters
+      // - -Infinity (used by `dedentToRoot` via `align`) → marker string
+      const symbolToNumber = new Map<symbol, number>();
+      let nextId = 1;
+
+      return JSON.stringify(doc, (_key, value) => {
+        if (typeof value === "symbol") {
+          if (!symbolToNumber.has(value)) symbolToNumber.set(value, nextId++);
+          return symbolToNumber.get(value);
+        }
+        if (value === -Infinity) return "__NEGATIVE_INFINITY__";
+        return value;
+      });
+    }),
+  );
 }
 
 // ---

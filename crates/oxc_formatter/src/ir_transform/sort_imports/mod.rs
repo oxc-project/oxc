@@ -49,11 +49,11 @@ impl SortImportsTransform {
         // Roughly speaking, sort-imports is a process of swapping lines.
         // Therefore, as a preprocessing, group IR elements into line first.
         // e.g.
-        // ```
+        // ```text
         // [Text, Space, Text, Line, StartTag, Text, Text, EndTag, Line, ...]
         // ```
         // ↓↓
-        // ```
+        // ```text
         // [ [Text, Space, Text], [StartTag, Text, Text, EndTag], [...] ]
         // ```
         //
@@ -112,7 +112,7 @@ impl SortImportsTransform {
 
                 // If the linebreak falls within the body of a multiline ImportDeclaration,
                 // don't fush the line. e.g.
-                // ```
+                // ```text
                 // import React {
                 //   useState,
                 //   // this is a comment followed by a FormatElement::Line(LineMode::Hard)
@@ -125,14 +125,18 @@ impl SortImportsTransform {
 
                 // Flush current line
                 if current_line_start < idx {
+                    // Always use `Hard` for the flushed line's mode.
+                    // The outer guard guarantees `mode` is `Empty` or `Hard` here,
+                    // and the empty line semantics are already captured by the `SourceLine::Empty` pushed below.
+                    let flush_mode = LineMode::Hard;
                     let line = if is_standalone_alignable_comment {
                         // Standalone alignable comment: directly create CommentOnly
-                        SourceLine::CommentOnly(current_line_start..idx, *mode)
+                        SourceLine::CommentOnly(current_line_start..idx, flush_mode)
                     } else {
                         SourceLine::from_element_range(
                             prev_elements,
                             current_line_start..idx,
-                            *mode,
+                            flush_mode,
                         )
                     };
                     lines.push(line);
@@ -160,7 +164,7 @@ impl SortImportsTransform {
         //
         // Within each chunk, we will sort import lines.
         // e.g.
-        // ```
+        // ```text
         // import C from "c"; // chunk1
         // import B from "b"; // chunk1
         // const THIS_IS_BOUNDARY = true;
@@ -168,7 +172,7 @@ impl SortImportsTransform {
         // import A from "a"; // chunk2
         // ```
         // ↓↓
-        // ```
+        // ```text
         // import B from "b"; // chunk1
         // import C from "c"; // chunk1
         // const THIS_IS_BOUNDARY = true;
@@ -232,7 +236,7 @@ impl SortImportsTransform {
                     // - Comments followed by an empty line → `orphan_contents` (stay at slot position)
                     //
                     // e.g.
-                    // ```
+                    // ```text
                     // // orphan (after_slot: None)
                     //
                     // // leading for A
@@ -303,7 +307,7 @@ impl SortImportsTransform {
                     // Special care is needed for the last empty line.
                     // We should preserve it only if the next chunk is a boundary.
                     // e.g.
-                    // ```
+                    // ```text
                     // import A from "a"; // chunk1
                     // import B from "b"; // chunk1
                     // // This empty line should be preserved because the next chunk is a boundary.
@@ -311,7 +315,7 @@ impl SortImportsTransform {
                     // const BOUNDARY = true; // chunk2
                     // ```
                     // But in this case, we should not preserve it.
-                    // ```
+                    // ```text
                     // import A from "a"; // chunk1
                     // import B from "b"; // chunk1
                     // // This empty line should NOT be preserved because the next chunk is NOT a boundary.

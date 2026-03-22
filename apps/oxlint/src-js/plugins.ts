@@ -6,6 +6,7 @@ export { eslintCompatPlugin } from "./package/compat.ts";
 export type * as ESTree from "./generated/types";
 
 // Plugin types
+export type { Comment } from "./plugins/comments.ts";
 export type { Context, LanguageOptions } from "./plugins/context.ts";
 export type { Fix, Fixer, FixFn } from "./plugins/fix.ts";
 export type { Globals, Envs } from "./plugins/globals.ts";
@@ -24,10 +25,6 @@ export type {
 export type { Settings } from "./plugins/settings.ts";
 export type { SourceCode } from "./plugins/source_code.ts";
 export type {
-  CountOptions,
-  FilterFn,
-  RangeOptions,
-  SkipOptions,
   Token,
   BooleanToken,
   IdentifierToken,
@@ -43,6 +40,12 @@ export type {
   TemplateToken,
 } from "./plugins/tokens.ts";
 export type {
+  CountOptions,
+  FilterFn,
+  RangeOptions,
+  SkipOptions,
+} from "./plugins/tokens_methods.ts";
+export type {
   RuleMeta,
   RuleDocs,
   RuleDeprecatedInfo,
@@ -50,11 +53,4 @@ export type {
   RuleReplacedByExternalSpecifier,
 } from "./plugins/rule_meta.ts";
 export type { LineColumn, Location, Range, Ranged, Span } from "./plugins/location.ts";
-export type {
-  AfterHook,
-  BeforeHook,
-  Comment,
-  Node,
-  Visitor,
-  VisitorWithHooks,
-} from "./plugins/types.ts";
+export type { AfterHook, BeforeHook, Node, Visitor, VisitorWithHooks } from "./plugins/types.ts";

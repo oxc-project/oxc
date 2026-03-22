@@ -11,28 +11,30 @@ import {
 import { deserializeProgramOnly, resetBuffer } from "../generated/deserialize.js";
 
 import visitorKeys from "../generated/keys.ts";
-import * as commentMethods from "./comments.ts";
+import { resetComments } from "./comments.ts";
+import * as commentMethods from "./comments_methods.ts";
 import { ecmaVersion } from "./context.ts";
 import * as locationMethods from "./location.ts";
-import { getNodeLoc, initLines, lines, lineStartIndices, resetLines } from "./location.ts";
+import { getNodeLoc, initLines, lines, lineStartIndices, resetLinesAndLocs } from "./location.ts";
 import { resetScopeManager, SCOPE_MANAGER } from "./scope.ts";
 import * as scopeMethods from "./scope.ts";
 import { resetTokens } from "./tokens.ts";
-import { tokens, tokensAndComments, initTokens, initTokensAndComments } from "./tokens.ts";
-import * as tokenMethods from "./tokens.ts";
+import * as tokenMethods from "./tokens_methods.ts";
+import { getTokensAndComments, resetTokensAndComments } from "./tokens_and_comments.ts";
 import { debugAssertIsNonNull } from "../utils/asserts.ts";
 
 import type { Program } from "../generated/types.d.ts";
+import type { Comment } from "./comments.ts";
 import type { Ranged } from "./location.ts";
-import type { Token } from "./tokens.ts";
-import type { BufferWithArrays, Comment, Node } from "./types.ts";
 import type { ScopeManager } from "./scope.ts";
+import type { Token } from "./tokens.ts";
+import type { BufferWithArrays, Node } from "./types.ts";
 
 // Text decoder, for decoding source text from buffer
 const textDecoder = new TextDecoder("utf-8", { ignoreBOM: true });
 
 // Buffer containing AST. Set before linting a file by `setupSourceForFile`.
-let buffer: BufferWithArrays | null = null;
+export let buffer: BufferWithArrays | null = null;
 
 // Indicates if the original source text has a BOM. Set before linting a file by `setupSourceForFile`.
 let hasBOM = false;
@@ -134,9 +136,11 @@ export function resetSourceAndAst(): void {
   sourceText = null;
   ast = null;
   resetBuffer();
-  resetLines();
+  resetLinesAndLocs();
   resetScopeManager();
   resetTokens();
+  resetComments();
+  resetTokensAndComments();
 }
 
 /**
@@ -244,15 +248,7 @@ export const SOURCE_CODE = Object.freeze({
    */
   // This property is present in ESLint's `SourceCode`, but is undocumented
   get tokensAndComments(): (Token | Comment)[] {
-    if (tokensAndComments === null) {
-      if (tokens === null) {
-        if (sourceText === null) initSourceText();
-        initTokens();
-      }
-      initTokensAndComments();
-    }
-    debugAssertIsNonNull(tokensAndComments);
-    return tokensAndComments;
+    return getTokensAndComments();
   },
 
   /**

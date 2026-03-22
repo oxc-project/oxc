@@ -477,7 +477,7 @@ impl<'a> Source<'a> {
     /// which are safe methods, and compiler will often reduce to equally efficient code, if calling
     /// code tests the byte returned. e.g.:
     ///
-    /// ```
+    /// ```rust,ignore
     /// // Consume a space
     /// let byte = source.peek_byte();
     /// if byte == Some(b' ') {

@@ -106,19 +106,6 @@ const group: TestGroup = {
       return true;
     }
 
-    // TS parser incorrectly parses closing JSX tag with whitespace before `/`.
-    // We don't skip these tests because we should be able to make them pass.
-    /*
-    if (
-      ruleName === "jsx-tag-spacing" &&
-      (code.startsWith('<App prop="foo">< /App>') ||
-        code.startsWith('<div className="bar">< /div>;') ||
-        compact(code).startsWith('<div className="bar"><\n /div>;'))
-    ) {
-      return true;
-    }
-    */
-
     return false;
   },
 

@@ -1,6 +1,6 @@
 parser_misc Summary:
-AST Parsed     : 64/64 (100.00%)
-Positive Passed: 64/64 (100.00%)
+AST Parsed     : 65/65 (100.00%)
+Positive Passed: 65/65 (100.00%)
 Negative Passed: 134/134 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
@@ -3646,7 +3646,7 @@ Negative Passed: 134/134 (100.00%)
    ╰────
   help: No modifiers are allowed here.
 
-  × TS(8037): Type assertion expressions can only be used in TypeScript files.
+  × TS(8016): Type assertion expressions can only be used in TypeScript files.
    ╭─[misc/fail/oxc-4111-1.js:1:1]
  1 │ funtransientction as longciiConÞr>ol(cde) {
    · ─────────────────────────────────

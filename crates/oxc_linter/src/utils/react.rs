@@ -12,6 +12,7 @@ use oxc_ast::{
 use oxc_ast_visit::{Visit, walk};
 use oxc_ecmascript::{ToBoolean, WithoutGlobalReferenceInformation};
 use oxc_semantic::AstNode;
+use oxc_syntax::operator::UnaryOperator;
 use oxc_syntax::scope::ScopeFlags;
 
 use crate::globals::HTML_TAG;
@@ -474,6 +475,17 @@ pub fn parse_jsx_value(value: &JSXAttributeValue) -> Result<f64, ()> {
                 tmpl.quasis.first().unwrap().value.raw.parse().or(Err(()))
             }
             JSXExpression::NumericLiteral(num) => Ok(num.value),
+            JSXExpression::UnaryExpression(expr) => {
+                let Expression::NumericLiteral(num) = &expr.argument else {
+                    return Err(());
+                };
+
+                match expr.operator {
+                    UnaryOperator::UnaryPlus => Ok(num.value),
+                    UnaryOperator::UnaryNegation => Ok(-num.value),
+                    _ => Err(()),
+                }
+            }
             _ => Err(()),
         },
         _ => Err(()),

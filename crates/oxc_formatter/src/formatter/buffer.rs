@@ -24,7 +24,7 @@ pub trait Buffer<'ast> {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```text
     /// use biome_formatter::{Buffer, FormatElement, FormatState, SimpleFormatContext, VecBuffer};
     ///
     /// let mut state = FormatState::new(SimpleFormatContext::default());
@@ -51,7 +51,7 @@ pub trait Buffer<'ast> {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```text
     /// use biome_formatter::prelude::*;
     /// use biome_formatter::{Buffer, FormatState, SimpleFormatContext, VecBuffer, format_args};
     ///
@@ -172,7 +172,7 @@ impl<'ast> Buffer<'ast> for VecBuffer<'_, 'ast> {
 ///
 /// # Examples
 ///
-/// ```
+/// ```text
 /// use biome_formatter::{FormatState, Formatted, PreambleBuffer, SimpleFormatContext, VecBuffer, write};
 /// use biome_formatter::prelude::*;
 ///
@@ -203,7 +203,7 @@ impl<'ast> Buffer<'ast> for VecBuffer<'_, 'ast> {
 ///
 /// The pre-amble does not get written if no content is written to the buffer.
 ///
-/// ```
+/// ```text
 /// use biome_formatter::{FormatState, Formatted, PreambleBuffer, SimpleFormatContext, VecBuffer, write};
 /// use biome_formatter::prelude::*;
 ///
@@ -318,7 +318,7 @@ where
 ///
 /// # Examples
 ///
-/// ```
+/// ```text
 /// use biome_formatter::prelude::*;
 /// use biome_formatter::{format, write};
 ///
@@ -553,7 +553,7 @@ pub trait BufferExtensions<'ast>: Buffer<'ast> + Sized {
     ///
     /// #Examples
     ///
-    /// ```
+    /// ```text
     /// use std::ops::Deref;
     /// use biome_formatter::prelude::*;
     /// use biome_formatter::{write, format, SimpleFormatContext};

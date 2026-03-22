@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 
 use oxc_diagnostics::OxcDiagnostic;
 
-use crate::{LintPlugins, utils::read_to_string};
+use crate::{AllowWarnDeny, LintPlugins, utils::read_to_string};
 
 use super::{
     categories::OxlintCategories,
@@ -21,17 +21,73 @@ use super::{
     settings::OxlintSettings,
 };
 
+/// Options for the linter.
+#[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
+#[serde(default, deny_unknown_fields, rename_all = "camelCase")]
+#[non_exhaustive]
+pub struct OxlintOptions {
+    /// Enable rules that require type information.
+    ///
+    /// Equivalent to passing `--type-aware` on the CLI.
+    ///
+    /// Note that this requires the `oxlint-tsgolint` package to be installed.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub type_aware: Option<bool>,
+    /// Enable experimental type checking (includes TypeScript compiler diagnostics).
+    ///
+    /// Equivalent to passing `--type-check` on the CLI.
+    ///
+    /// Note that this requires the `oxlint-tsgolint` package to be installed.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub type_check: Option<bool>,
+    /// Ensure warnings produce a non-zero exit code.
+    ///
+    /// Equivalent to passing `--deny-warnings` on the CLI.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub deny_warnings: Option<bool>,
+    /// Specify a warning threshold. Exits with an error status if warnings exceed this value.
+    ///
+    /// Equivalent to passing `--max-warnings` on the CLI.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub max_warnings: Option<usize>,
+    /// Report unused disable directives (e.g. `// oxlint-disable-line` or `// eslint-disable-line`).
+    ///
+    /// Equivalent to passing `--report-unused-disable-directives-severity` on the CLI.
+    /// CLI flags take precedence over this value when both are set.
+    /// Only supported in the root configuration file.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub report_unused_disable_directives: Option<AllowWarnDeny>,
+}
+
+impl OxlintOptions {
+    #[must_use]
+    pub fn is_empty(&self) -> bool {
+        self.type_aware.is_none()
+            && self.type_check.is_none()
+            && self.deny_warnings.is_none()
+            && self.max_warnings.is_none()
+            && self.report_unused_disable_directives.is_none()
+    }
+
+    #[must_use]
+    pub fn merge(&self, other: &OxlintOptions) -> Self {
+        Self {
+            type_aware: self.type_aware.or(other.type_aware),
+            type_check: self.type_check.or(other.type_check),
+            deny_warnings: self.deny_warnings.or(other.deny_warnings),
+            max_warnings: self.max_warnings.or(other.max_warnings),
+            report_unused_disable_directives: self
+                .report_unused_disable_directives
+                .or(other.report_unused_disable_directives),
+        }
+    }
+}
+
 /// Oxlint Configuration File
 ///
 /// This configuration is aligned with ESLint v8's configuration schema (`eslintrc.json`).
 ///
-/// Usage: `oxlint -c oxlintrc.json --import-plugin`
-///
-/// ::: danger NOTE
-///
-/// Only the `.json` format is supported. You can use comments in configuration files.
-///
-/// :::
+/// Usage: `oxlint -c oxlintrc.json`
 ///
 /// Example
 ///
@@ -68,6 +124,41 @@ use super::{
 ///   ]
 ///  }
 /// ```
+///
+/// `oxlint.config.ts`
+///
+/// ```ts
+/// import { defineConfig } from "oxlint";
+///
+/// export default defineConfig({
+///   plugins: ["import", "typescript", "unicorn"],
+///   env: {
+///     "browser": true
+///   },
+///   globals: {
+///     "foo": "readonly"
+///   },
+///   settings: {
+///     react: {
+///       version: "18.2.0"
+///     },
+///     custom: { option: true }
+///   },
+///   rules: {
+///     "eqeqeq": "warn",
+///     "import/no-cycle": "error",
+///     "react/self-closing-comp": ["error", { "html": false }]
+///   },
+///   overrides: [
+///     {
+///       files: ["*.test.ts", "*.spec.ts"],
+///       rules: {
+///         "@typescript-eslint/no-explicit-any": "off"
+///       }
+///     }
+///   ]
+/// });
+/// ```
 #[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
 #[serde(default, deny_unknown_fields)]
 #[non_exhaustive]
@@ -87,7 +178,7 @@ pub struct Oxlintrc {
     /// Read more about JS plugins in
     /// [the docs](https://oxc.rs/docs/guide/usage/linter/js-plugins.html).
     ///
-    /// Note: JS plugins are experimental and not subject to semver.
+    /// Note: JS plugins are in alpha and not subject to semver.
     ///
     /// Examples:
     ///
@@ -150,6 +241,9 @@ pub struct Oxlintrc {
     /// Add, remove, or otherwise reconfigure rules for specific files or groups of files.
     #[serde(skip_serializing_if = "OxlintOverrides::is_empty")]
     pub overrides: OxlintOverrides,
+    /// Oxlint config options.
+    #[serde(skip_serializing_if = "OxlintOptions::is_empty")]
+    pub options: OxlintOptions,
     /// Absolute path to the configuration file.
     #[serde(skip)]
     pub path: PathBuf,
@@ -286,6 +380,7 @@ impl Oxlintrc {
         };
 
         let schema = self.schema.clone().or(other.schema);
+        let options = self.options.merge(&other.options);
 
         Oxlintrc {
             schema,
@@ -297,6 +392,7 @@ impl Oxlintrc {
             env,
             globals,
             overrides,
+            options,
             path: self.path.clone(),
             ignore_patterns: self.ignore_patterns.clone(),
             extends: self.extends.clone(),
@@ -360,6 +456,145 @@ mod test {
         assert_eq!(config.env, OxlintEnv::default());
         assert_eq!(config.path, PathBuf::default());
         assert_eq!(config.extends, Vec::<PathBuf>::default());
+        assert_eq!(config.options.type_aware, None);
+        assert_eq!(config.options.type_check, None);
+        assert_eq!(config.options.deny_warnings, None);
+        assert_eq!(config.options.max_warnings, None);
+        assert_eq!(config.options.report_unused_disable_directives, None);
+    }
+
+    #[test]
+    fn test_oxlintrc_options_deserialize() {
+        let config: Oxlintrc =
+            serde_json::from_value(json!({ "options": { "typeAware": true } })).unwrap();
+        assert_eq!(config.options.type_aware, Some(true));
+
+        let config: Oxlintrc =
+            serde_json::from_value(json!({ "options": { "typeAware": false } })).unwrap();
+        assert_eq!(config.options.type_aware, Some(false));
+
+        let config: Oxlintrc =
+            serde_json::from_value(json!({ "options": { "typeCheck": true } })).unwrap();
+        assert_eq!(config.options.type_check, Some(true));
+
+        let config: Oxlintrc =
+            serde_json::from_value(json!({ "options": { "typeCheck": false } })).unwrap();
+        assert_eq!(config.options.type_check, Some(false));
+
+        let config: Oxlintrc =
+            serde_json::from_value(json!({ "options": { "denyWarnings": true } })).unwrap();
+        assert_eq!(config.options.deny_warnings, Some(true));
+
+        let config: Oxlintrc =
+            serde_json::from_value(json!({ "options": { "denyWarnings": false } })).unwrap();
+        assert_eq!(config.options.deny_warnings, Some(false));
+
+        let config: Oxlintrc =
+            serde_json::from_value(json!({ "options": { "maxWarnings": 10 } })).unwrap();
+        assert_eq!(config.options.max_warnings, Some(10));
+
+        let config: Result<Oxlintrc, _> =
+            serde_json::from_value(json!({ "options": { "maxWarnings": -1 } }));
+        assert!(config.is_err());
+
+        let config: Oxlintrc = serde_json::from_value(
+            json!({ "options": { "reportUnusedDisableDirectives": "warn" } }),
+        )
+        .unwrap();
+        assert_eq!(config.options.report_unused_disable_directives, Some(AllowWarnDeny::Warn));
+
+        // error and deny
+
+        let config: Oxlintrc = serde_json::from_value(
+            json!({ "options": { "reportUnusedDisableDirectives": "error" } }),
+        )
+        .unwrap();
+        assert_eq!(config.options.report_unused_disable_directives, Some(AllowWarnDeny::Deny));
+
+        let config: Oxlintrc = serde_json::from_value(
+            json!({ "options": { "reportUnusedDisableDirectives": "deny" } }),
+        )
+        .unwrap();
+        assert_eq!(config.options.report_unused_disable_directives, Some(AllowWarnDeny::Deny));
+
+        // off and allow
+
+        let config: Oxlintrc = serde_json::from_value(
+            json!({ "options": { "reportUnusedDisableDirectives": "off" } }),
+        )
+        .unwrap();
+        assert_eq!(config.options.report_unused_disable_directives, Some(AllowWarnDeny::Allow));
+
+        let config: Oxlintrc = serde_json::from_value(
+            json!({ "options": { "reportUnusedDisableDirectives": "allow" } }),
+        )
+        .unwrap();
+        assert_eq!(config.options.report_unused_disable_directives, Some(AllowWarnDeny::Allow));
+    }
+
+    #[test]
+    fn test_oxlintrc_top_level_options_rejected() {
+        let config: Result<Oxlintrc, _> = serde_json::from_value(json!({ "typeAware": true }));
+        assert!(config.is_err());
+
+        let config: Result<Oxlintrc, _> = serde_json::from_value(json!({ "typeCheck": true }));
+        assert!(config.is_err());
+
+        let config: Result<Oxlintrc, _> = serde_json::from_value(json!({ "denyWarnings": true }));
+        assert!(config.is_err());
+
+        let config: Result<Oxlintrc, _> = serde_json::from_value(json!({ "maxWarnings": 1 }));
+        assert!(config.is_err());
+
+        let config: Result<Oxlintrc, _> =
+            serde_json::from_value(json!({ "reportUnusedDisableDirectives": "warn" }));
+        assert!(config.is_err());
+    }
+
+    #[test]
+    fn test_oxlintrc_merge_options() {
+        let mut root: Oxlintrc = serde_json::from_value(
+            json!({ "options": { "typeAware": true, "typeCheck": false, "denyWarnings": true, "maxWarnings": 1 } }),
+        )
+        .unwrap();
+        root.path = PathBuf::from("/root/.oxlintrc.json");
+
+        let mut base: Oxlintrc = serde_json::from_value(
+            json!({ "options": { "typeAware": false, "typeCheck": true, "denyWarnings": false, "maxWarnings": 10 } }),
+        )
+        .unwrap();
+        base.path = PathBuf::from("/root/base.json");
+
+        let merged = root.merge(base);
+        assert_eq!(merged.options.type_aware, Some(true));
+        assert_eq!(merged.options.type_check, Some(false));
+        assert_eq!(merged.options.deny_warnings, Some(true));
+        assert_eq!(merged.options.max_warnings, Some(1));
+
+        // root wins over base for reportUnusedDisableDirectives
+        let mut root: Oxlintrc = serde_json::from_value(
+            json!({ "options": { "reportUnusedDisableDirectives": "error" } }),
+        )
+        .unwrap();
+        root.path = PathBuf::from("/root/.oxlintrc.json");
+        let mut base: Oxlintrc = serde_json::from_value(
+            json!({ "options": { "reportUnusedDisableDirectives": "warn" } }),
+        )
+        .unwrap();
+        base.path = PathBuf::from("/root/base.json");
+        let merged = root.merge(base);
+        assert_eq!(merged.options.report_unused_disable_directives, Some(AllowWarnDeny::Deny));
+
+        // base value propagates when root does not set the field
+        let mut root: Oxlintrc = serde_json::from_value(json!({})).unwrap();
+        root.path = PathBuf::from("/root/.oxlintrc.json");
+        let mut base: Oxlintrc = serde_json::from_value(
+            json!({ "options": { "reportUnusedDisableDirectives": "warn" } }),
+        )
+        .unwrap();
+        base.path = PathBuf::from("/root/base.json");
+        let merged = root.merge(base);
+        assert_eq!(merged.options.report_unused_disable_directives, Some(AllowWarnDeny::Warn));
     }
 
     #[test]

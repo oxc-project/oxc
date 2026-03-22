@@ -151,17 +151,20 @@ impl Rule for DisplayName {
 
         // Phase 1: Iterate symbols to find components with declarations
         for symbol_id in ctx.scoping().symbol_ids() {
-            let declaration = ctx.scoping().symbol_declaration(symbol_id);
-            let decl_node = ctx.nodes().get_node(declaration);
+            let component_info =
+                ctx.scoping().symbol_declarations(symbol_id).find_map(|declaration| {
+                    let decl_node = ctx.nodes().get_node(declaration);
+                    is_react_component_node(
+                        decl_node,
+                        ctx,
+                        &mut version_cache,
+                        ignore_transpiler_name,
+                        check_context_objects,
+                    )
+                });
 
             // First check if the declaration itself is a component
-            if let Some(component_info) = is_react_component_node(
-                decl_node,
-                ctx,
-                &mut version_cache,
-                ignore_transpiler_name,
-                check_context_objects,
-            ) {
+            if let Some(component_info) = component_info {
                 // If component has a name and ignoreTranspilerName is false and it's not a context,
                 // the name itself is considered a valid displayName
                 if component_info.name.is_some()
@@ -178,9 +181,13 @@ impl Rule for DisplayName {
             } else if check_context_objects {
                 // If the declaration isn't a component, check if any write references assign createContext()
                 // This handles: var Hello; Hello = createContext();
-                if let Some(component_info) =
-                    check_context_assignment_references(symbol_id, decl_node, ctx)
-                {
+                let context_assignment_info =
+                    ctx.scoping().symbol_declarations(symbol_id).find_map(|declaration| {
+                        let decl_node = ctx.nodes().get_node(declaration);
+                        check_context_assignment_references(symbol_id, decl_node, ctx)
+                    });
+
+                if let Some(component_info) = context_assignment_info {
                     // Check if this symbol has a displayName assignment
                     if !has_display_name_via_semantic(symbol_id, component_info.name.as_ref(), ctx)
                     {
@@ -2143,6 +2150,19 @@ fn test() {
                     import { createContext } from 'react';
 
                     const Hello = createContext();
+                  ",
+            Some(serde_json::json!([{ "checkContextObjects": true }])),
+            None,
+        ),
+        (
+            "
+                    import { createContext } from 'react';
+
+                    interface PostHogGroupContext {
+                      value: string;
+                    }
+
+                    const PostHogGroupContext = createContext<PostHogGroupContext | null>(null);
                   ",
             Some(serde_json::json!([{ "checkContextObjects": true }])),
             None,

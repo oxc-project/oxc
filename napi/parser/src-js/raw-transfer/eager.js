@@ -1,4 +1,5 @@
 import { createRequire } from "node:module";
+import { TOKENS_OFFSET_POS_32, TOKENS_LEN_POS_32 } from "../generated/constants.js";
 import { isJsAst, parseAsyncRawImpl, parseSyncRawImpl, returnBufferToCache } from "./common.js";
 
 const require = createRequire(import.meta.url);
@@ -97,11 +98,34 @@ function deserialize(buffer, sourceText, sourceByteLen, options) {
     }
   }
 
+  // Deserialize tokens
+  const tokens = options.experimentalTokens ? deserializeTokens(buffer, sourceText, isJs) : null;
+
   // Return buffer to cache, to be reused
   returnBufferToCache(buffer);
 
   // We cannot lazily deserialize in the getters, because the buffer might be re-used to parse
   // another file before the getter is called
+  if (tokens !== null) {
+    return {
+      get program() {
+        return data.program;
+      },
+      get module() {
+        return data.module;
+      },
+      get comments() {
+        return data.comments;
+      },
+      get tokens() {
+        return tokens;
+      },
+      get errors() {
+        return data.errors;
+      },
+    };
+  }
+
   return {
     get program() {
       return data.program;
@@ -116,4 +140,110 @@ function deserialize(buffer, sourceText, sourceByteLen, options) {
       return data.errors;
     },
   };
+}
+
+// `ESTreeKind` discriminants (set by Rust side)
+const PRIVATE_IDENTIFIER_KIND = 2;
+const REGEXP_KIND = 8;
+
+// Indexed by `ESTreeKind` discriminant (matches `ESTreeKind` enum in `estree_kind.rs`)
+const TOKEN_TYPES = [
+  "Identifier",
+  "Keyword",
+  "PrivateIdentifier",
+  "Punctuator",
+  "Numeric",
+  "String",
+  "Boolean",
+  "Null",
+  "RegularExpression",
+  "Template",
+  "JSXText",
+  "JSXIdentifier",
+];
+
+// Details of Rust `Token` type
+const TOKEN_SIZE = 16;
+const KIND_FIELD_OFFSET = 8;
+const IS_ESCAPED_FIELD_OFFSET = 10;
+
+/**
+ * Deserialize tokens from buffer.
+ * @param {Uint8Array} buffer - Buffer containing AST in raw form
+ * @param {string} sourceText - Source for the file
+ * @param {boolean} isJs - `true` if parsing in JS mode
+ * @returns {Object[]} - Array of token objects
+ */
+function deserializeTokens(buffer, sourceText, isJs) {
+  const { uint32 } = buffer;
+
+  let pos = uint32[TOKENS_OFFSET_POS_32];
+  const len = uint32[TOKENS_LEN_POS_32];
+  const endPos = pos + len * TOKEN_SIZE;
+
+  const tokens = [];
+  while (pos < endPos) {
+    tokens.push(deserializeToken(pos, buffer, sourceText, isJs));
+    pos += TOKEN_SIZE;
+  }
+  return tokens;
+}
+
+/**
+ * Deserialize a token from buffer at position `pos`.
+ * @param {number} pos - Position in buffer containing Rust `Token` type
+ * @param {Uint8Array} buffer - Buffer containing AST in raw form
+ * @param {string} sourceText - Source for the file
+ * @param {boolean} isJs - `true` if parsing in JS mode
+ * @returns {Object} - Token object
+ */
+function deserializeToken(pos, buffer, sourceText, isJs) {
+  const { uint32 } = buffer;
+
+  const pos32 = pos >> 2;
+  const start = uint32[pos32],
+    end = uint32[pos32 + 1];
+
+  let value = sourceText.slice(start, end);
+
+  const kind = buffer[pos + KIND_FIELD_OFFSET];
+
+  if (kind === REGEXP_KIND) {
+    const patternEnd = value.lastIndexOf("/");
+    return {
+      type: "RegularExpression",
+      value,
+      regex: {
+        pattern: value.slice(1, patternEnd),
+        flags: value.slice(patternEnd + 1),
+      },
+      start,
+      end,
+    };
+  }
+
+  // Strip leading `#` from private identifiers
+  if (kind === PRIVATE_IDENTIFIER_KIND) value = value.slice(1);
+
+  // Unescape identifiers, keywords, and private identifiers in JS mode
+  if (isJs && kind <= PRIVATE_IDENTIFIER_KIND && buffer[pos + IS_ESCAPED_FIELD_OFFSET] === 1) {
+    value = unescapeIdentifier(value);
+  }
+
+  return { type: TOKEN_TYPES[kind], value, start, end };
+}
+
+/**
+ * Unescape an identifier.
+ *
+ * We do this on JS side, because escaped identifiers are so extremely rare that this function
+ * is never called in practice anyway.
+ *
+ * @param {string} name - Identifier name to unescape
+ * @returns {string} - Unescaped identifier name
+ */
+function unescapeIdentifier(name) {
+  return name.replace(/\\u(?:\{([0-9a-fA-F]+)\}|([0-9a-fA-F]{4}))/g, (_, hex1, hex2) =>
+    String.fromCodePoint(parseInt(hex1 ?? hex2, 16)),
+  );
 }

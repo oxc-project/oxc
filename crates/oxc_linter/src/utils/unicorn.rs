@@ -438,7 +438,10 @@ where
     let path = path.iter().rev();
 
     for e in paths {
-        if e.as_ref().iter().zip(path.clone()).all(|(x, y)| x == y) {
+        let expected_path = e.as_ref();
+        if expected_path.len() == path.len()
+            && expected_path.iter().zip(path.clone()).all(|(x, y)| x == y)
+        {
             return true;
         }
     }
@@ -475,4 +478,16 @@ pub fn get_precedence(expr: &Expression) -> Option<Precedence> {
         // Literals, identifiers, and other atomic expressions have highest precedence
         _ => None,
     }
+}
+
+pub fn is_string_raw_tagged_template_expression(node: &AstKind) -> bool {
+    if let AstKind::TaggedTemplateExpression(tagged_template_expression) = node
+        && let Expression::StaticMemberExpression(member_expr) = &tagged_template_expression.tag
+        && let Expression::Identifier(ident) = &member_expr.object
+        && member_expr.property.name == "raw"
+        && ident.name == "String"
+    {
+        return true;
+    }
+    false
 }

@@ -46,7 +46,7 @@ impl Default for MaxClassesPerFileConfig {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Enforce a maximum number of classes per file
+    /// Enforce a maximum number of classes per file.
     ///
     /// ### Why is this bad?
     ///

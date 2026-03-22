@@ -11,8 +11,78 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-unicorn(prefer-optional-catch-binding): Prefer omitting the catch binding parameter if it is unused
    ╭─[prefer_optional_catch_binding.tsx:1:15]
+ 1 │ try {} catch (foo) {
+   ·               ───
+ 2 │                 function bar(foo) {}
+   ╰────
+  help: Delete this code.
+
+  ⚠ eslint-plugin-unicorn(prefer-optional-catch-binding): Prefer omitting the catch binding parameter if it is unused
+   ╭─[prefer_optional_catch_binding.tsx:1:15]
+ 1 │ try {} catch (outer) {
+   ·               ─────
+ 2 │                 try {} catch (inner) {
+   ╰────
+  help: Delete this code.
+
+  ⚠ eslint-plugin-unicorn(prefer-optional-catch-binding): Prefer omitting the catch binding parameter if it is unused
+   ╭─[prefer_optional_catch_binding.tsx:2:31]
+ 1 │ try {} catch (outer) {
+ 2 │                 try {} catch (inner) {
+   ·                               ─────
+ 3 │                 }
+   ╰────
+  help: Delete this code.
+
+  ⚠ eslint-plugin-unicorn(prefer-optional-catch-binding): Prefer omitting the catch binding parameter if it is unused
+   ╭─[prefer_optional_catch_binding.tsx:6:31]
+ 5 │             try {
+ 6 │                 try {} catch (inTry) {
+   ·                               ─────
+ 7 │                 }
+   ╰────
+  help: Delete this code.
+
+  ⚠ eslint-plugin-unicorn(prefer-optional-catch-binding): Prefer omitting the catch binding parameter if it is unused
+   ╭─[prefer_optional_catch_binding.tsx:8:22]
+ 7 │                 }
+ 8 │             } catch (another) {
+   ·                      ───────
+ 9 │                 try {} catch (inCatch) {
+   ╰────
+  help: Delete this code.
+
+  ⚠ eslint-plugin-unicorn(prefer-optional-catch-binding): Prefer omitting the catch binding parameter if it is unused
+    ╭─[prefer_optional_catch_binding.tsx:9:31]
+  8 │             } catch (another) {
+  9 │                 try {} catch (inCatch) {
+    ·                               ───────
+ 10 │                 }
+    ╰────
+  help: Delete this code.
+
+  ⚠ eslint-plugin-unicorn(prefer-optional-catch-binding): Prefer omitting the catch binding parameter if it is unused
+    ╭─[prefer_optional_catch_binding.tsx:12:31]
+ 11 │             } finally {
+ 12 │                 try {} catch (inFinally) {
+    ·                               ─────────
+ 13 │                 }
+    ╰────
+  help: Delete this code.
+
+  ⚠ eslint-plugin-unicorn(prefer-optional-catch-binding): Prefer omitting the catch binding parameter if it is unused
+   ╭─[prefer_optional_catch_binding.tsx:1:15]
  1 │ try {} catch (theRealErrorName) {}
    ·               ────────────────
+   ╰────
+  help: Delete this code.
+
+  ⚠ eslint-plugin-unicorn(prefer-optional-catch-binding): Prefer omitting the catch binding parameter if it is unused
+   ╭─[prefer_optional_catch_binding.tsx:8:17]
+ 7 │                 // comment
+ 8 │                 unused
+   ·                 ──────
+ 9 │                 /* comment */
    ╰────
   help: Delete this code.
 
@@ -20,7 +90,7 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[prefer_optional_catch_binding.tsx:1:25]
  1 │ try    {    } catch    (e)
    ·                         ─
- 2 │                   {    }
+ 2 │                 {    }
    ╰────
   help: Delete this code.
 

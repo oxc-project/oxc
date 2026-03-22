@@ -13,6 +13,9 @@ const rule: Rule = {
 
     const { ast } = sourceCode;
 
+    // Ensure that `bom.js` does have a BOM (guarding against it being accidentally removed by e.g. formatting)
+    if (context.filename.endsWith("bom.js")) assert(sourceCode.hasBOM);
+
     for (const tokenOrComment of tokensAndComments) {
       // Check getting `range` / `loc` properties twice results in same objects
       const { range, loc } = tokenOrComment;
@@ -84,6 +87,15 @@ const rule: Rule = {
       }
 
       context.report({ message, node: token });
+    }
+
+    // Check `JSON.stringify` on tokens includes `loc`
+    const firstToken = ast.tokens[0];
+    if (firstToken) {
+      context.report({
+        message: `Token JSON.stringify:\n${JSON.stringify(firstToken, null, 2)}`,
+        node: firstToken,
+      });
     }
 
     return {};

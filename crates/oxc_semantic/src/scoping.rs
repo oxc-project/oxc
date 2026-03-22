@@ -260,8 +260,6 @@ mod scoping_cell {
 }
 use scoping_cell::ScopingCell;
 
-use crate::unresolved_stack::ReferenceIds;
-
 pub struct ScopingInner<'cell> {
     /* Symbol Table Fields */
     symbol_names: ArenaVec<'cell, Ident<'cell>>,
@@ -403,6 +401,19 @@ impl Scoping {
     #[inline]
     pub fn symbol_declaration(&self, symbol_id: SymbolId) -> NodeId {
         *self.symbol_table.symbol_declarations(symbol_id)
+    }
+
+    /// Get all declaration node IDs for a symbol.
+    ///
+    /// Most symbols have a single declaration, but TypeScript allows merged type/value
+    /// declarations (e.g. `interface Foo {}` + `const Foo = ...`).
+    /// This iterator yields all declaration nodes in those cases.
+    #[inline]
+    pub fn symbol_declarations(&self, symbol_id: SymbolId) -> impl Iterator<Item = NodeId> + '_ {
+        let redeclarations = self.symbol_redeclarations(symbol_id);
+        std::iter::once(self.symbol_declaration(symbol_id))
+            .filter(move |_| redeclarations.is_empty())
+            .chain(redeclarations.iter().map(|redeclaration| redeclaration.declaration))
     }
 
     /// Create a new symbol and append symbol metadata to the symbol table.
@@ -641,19 +652,6 @@ impl Scoping {
         &self,
     ) -> impl Iterator<Item = impl Iterator<Item = ReferenceId> + '_> + '_ {
         self.cell.borrow_dependent().root_unresolved_references.values().map(|v| v.iter().copied())
-    }
-
-    pub(crate) fn set_root_unresolved_references<'a>(
-        &mut self,
-        entries: impl Iterator<Item = (Ident<'a>, ReferenceIds)>,
-    ) {
-        self.cell.with_dependent_mut(|allocator, cell| {
-            for (k, v) in entries {
-                let k = k.clone_in(allocator);
-                let v = ArenaVec::from_iter_in(v, allocator);
-                cell.root_unresolved_references.insert(k, v);
-            }
-        });
     }
 
     /// Delete an unresolved reference.

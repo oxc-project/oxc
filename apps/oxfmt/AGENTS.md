@@ -46,6 +46,10 @@ Run tests with:
 ```sh
 # Run E2E test
 pnpm build-test && pnpm t
+# Update snapshots
+pnpm t -u
+# Run conformance test for xxx-in-js and js-in-xxx
+pnpm conformance
 # Run unit test in Rust
 cargo t
 ```
@@ -57,8 +61,10 @@ pnpm build-test
 
 # Show help
 node ./dist/cli.js --help
-# Stdin
-cat <file> | node ./dist/cli.js --stdin-filepath=<file>
+# Stdin (`npx prettier --config=<cfg> <file>` equivalent)
+cat <file> | node ./dist/cli.js --config=<cfg> --stdin-filepath=<file>
+# With log
+OXC_LOG=debug node ./dist/cli.js --threads=1 <file>
 ```
 
 NOTE: `pnpm build-test` combines `pnpm build-js` and `pnpm build-napi`, so you don't need to run them separately.
@@ -82,11 +88,11 @@ When adding new tests:
 - If the test needs fixtures, create a `fixtures/` subdirectory
 - If multiple test cases share a fixture structure, use subdirectories within `fixtures/` (e.g., `fixtures/basic/`, `fixtures/nested/`)
 
-## After updating `Oxfmtrc` (`src/core/oxfmtrc.rs`)
+## After updating `Oxfmtrc` (Under `src/core/oxfmtrc`)
 
-When modifying the `Oxfmtrc` struct (configuration options):
+When modifying the `Oxfmtrc` struct (and configuration options):
 
-- Also update `src-js/index.ts` types to match the Rust struct if needed
 - Run `just formatter-schema-json` to update `npm/oxfmt/configuration_schema.json`
+- Run `just formatter-config-ts` to regenerate `src-js/config.generated.ts` from the schema
 - Run `cargo test -p website_formatter` to update schema markdown snapshots
   - Then, `cargo insta accept`

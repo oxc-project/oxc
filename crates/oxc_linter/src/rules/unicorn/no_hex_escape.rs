@@ -1,7 +1,4 @@
-use oxc_ast::{
-    AstKind,
-    ast::{StringLiteral, TemplateLiteral},
-};
+use oxc_ast::{AstKind, ast::StringLiteral};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_regular_expression::{
@@ -10,7 +7,9 @@ use oxc_regular_expression::{
 };
 use oxc_span::Span;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode, context::LintContext, rule::Rule, utils::is_string_raw_tagged_template_expression,
+};
 
 fn no_hex_escape_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Use Unicode escapes instead of hexadecimal escapes.").with_label(span)
@@ -22,9 +21,14 @@ pub struct NoHexEscape;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Enforces a convention of using [Unicode escapes](https://mathiasbynens.be/notes/javascript-escapes#unicode) instead of [hexadecimal escapes](https://mathiasbynens.be/notes/javascript-escapes#hexadecimal) for consistency and clarity.
+    /// Enforces a convention of using [Unicode escapes](https://mathiasbynens.be/notes/javascript-escapes#unicode)
+    /// instead of [hexadecimal escapes](https://mathiasbynens.be/notes/javascript-escapes#hexadecimal) for
+    /// consistency and clarity.
     ///
     /// ### Why is this bad?
+    ///
+    /// Using hexadecimal escapes can be less readable and harder to understand
+    /// when compared to Unicode escapes.
     ///
     /// ### Examples
     ///
@@ -86,8 +90,12 @@ impl Rule for NoHexEscape {
                     });
                 }
             }
-            AstKind::TemplateLiteral(TemplateLiteral { quasis, .. }) => {
-                quasis.iter().for_each(|quasi| {
+            AstKind::TemplateLiteral(lit)
+                if !is_string_raw_tagged_template_expression(
+                    &ctx.nodes().parent_kind(lit.node_id()),
+                ) =>
+            {
+                lit.quasis.iter().for_each(|quasi| {
                     if let Some(fixed) = check_escape(quasi.span.source_text(ctx.source_text())) {
                         ctx.diagnostic_with_fix(no_hex_escape_diagnostic(quasi.span), |fixer| {
                             fixer.replace(quasi.span, fixed)
@@ -164,6 +172,7 @@ fn test() {
         r"const foo = `foo\\x12foo\\x34`",
         r"const foo = `\\\\xd8\\\\x3d\\\\xdc\\\\xa9`",
         r"const foo = `foo\\\\x12foo\\\\x34`",
+        r"const foo = String.raw`\xb1`",
     ];
 
     let fail = vec![

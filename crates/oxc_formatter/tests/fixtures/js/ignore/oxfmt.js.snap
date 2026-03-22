@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_formatter/tests/fixtures/mod.rs
+assertion_line: 229
 ---
 ==================== Input ====================
 // This file copies from https://github.com/prettier/prettier/blob/main/tests/format/js/ignore/ignore.js,
@@ -63,6 +64,49 @@ const response = {
   intent: 'lights',
 };
 
+import   {foo as bar}   from   "pkg"; // prettier-ignore
+export const item={  a:1,b:2}; // prettier-ignore
+
+const config={  retries:10,timeout:5000}; // prettier-ignore
+let data=[ 1,2,3 ]; // prettier-ignore
+
+const items = [
+  {a:aa(),b:bb(),c:cc(),d:dd(),e:ee(),f:ff(),g:gg()}, // prettier-ignore
+];
+
+foo(  {a:1,b:2},  // prettier-ignore
+  {c:3,d:4}
+);
+
+function demo() {
+  return   {a:1,b:2}; // prettier-ignore
+}
+
+function fail() {
+  throw   new Error(  "boom"  ); // prettier-ignore
+}
+
+if (ok) logger(  payload  ); // prettier-ignore
+while (keepGoing) tick(  value  ); // prettier-ignore
+
+label  :  for ( ; ; ) { break   label; } // prettier-ignore
+for (let i=0;i<3;i++) step(  i  ); // prettier-ignore
+for (const k in obj) use(  k  ); // prettier-ignore
+for (const v of arr) use(  v  ); // prettier-ignore
+while (ok) run(  x  ); // prettier-ignore
+do run(  x  ); while (ok); // prettier-ignore
+switch (kind) {case 1: act(  ); break;} // prettier-ignore
+try { a(  ); } catch (e) { b(  ); } // prettier-ignore
+with (ctx) run(  x  ); // prettier-ignore
+
+function f() {
+  return   {a:1}; // oxfmt-ignore
+}
+
+function g() {
+  throw   new Error(  "boom"  ); // oxfmt-ignore
+}
+
 ==================== Output ====================
 ------------------
 { printWidth: 80 }
@@ -95,7 +139,7 @@ function a() {
   };
 
   function giveMeSome() {
-    a(a); // oxfmt-ignore
+    a(  a  ); // oxfmt-ignore
     // shouldn't I return something?  :shrug:
   }
 
@@ -127,6 +171,50 @@ const response = {
   '_text': 'Turn on the lights',
   intent: "lights",
 };
+
+import   {foo as bar}   from   "pkg"; // prettier-ignore
+export const item={  a:1,b:2}; // prettier-ignore
+
+const config={  retries:10,timeout:5000}; // prettier-ignore
+let data=[ 1,2,3 ]; // prettier-ignore
+
+const items = [
+  {a:aa(),b:bb(),c:cc(),d:dd(),e:ee(),f:ff(),g:gg()}, // prettier-ignore
+];
+
+foo(
+  {a:1,b:2}, // prettier-ignore
+  { c: 3, d: 4 },
+);
+
+function demo() {
+  return   {a:1,b:2}; // prettier-ignore
+}
+
+function fail() {
+  throw   new Error(  "boom"  ); // prettier-ignore
+}
+
+if (ok) logger(  payload  ); // prettier-ignore
+while (keepGoing) tick(  value  ); // prettier-ignore
+
+label  :  for ( ; ; ) { break   label; } // prettier-ignore
+for (let i=0;i<3;i++) step(  i  ); // prettier-ignore
+for (const k in obj) use(  k  ); // prettier-ignore
+for (const v of arr) use(  v  ); // prettier-ignore
+while (ok) run(  x  ); // prettier-ignore
+do run(  x  ); while (ok); // prettier-ignore
+switch (kind) {case 1: act(  ); break;} // prettier-ignore
+try { a(  ); } catch (e) { b(  ); } // prettier-ignore
+with (ctx) run(  x  ); // prettier-ignore
+
+function f() {
+  return   {a:1}; // oxfmt-ignore
+}
+
+function g() {
+  throw   new Error(  "boom"  ); // oxfmt-ignore
+}
 
 -------------------
 { printWidth: 100 }
@@ -159,7 +247,7 @@ function a() {
   };
 
   function giveMeSome() {
-    a(a); // oxfmt-ignore
+    a(  a  ); // oxfmt-ignore
     // shouldn't I return something?  :shrug:
   }
 
@@ -191,5 +279,49 @@ const response = {
   '_text': 'Turn on the lights',
   intent: "lights",
 };
+
+import   {foo as bar}   from   "pkg"; // prettier-ignore
+export const item={  a:1,b:2}; // prettier-ignore
+
+const config={  retries:10,timeout:5000}; // prettier-ignore
+let data=[ 1,2,3 ]; // prettier-ignore
+
+const items = [
+  {a:aa(),b:bb(),c:cc(),d:dd(),e:ee(),f:ff(),g:gg()}, // prettier-ignore
+];
+
+foo(
+  {a:1,b:2}, // prettier-ignore
+  { c: 3, d: 4 },
+);
+
+function demo() {
+  return   {a:1,b:2}; // prettier-ignore
+}
+
+function fail() {
+  throw   new Error(  "boom"  ); // prettier-ignore
+}
+
+if (ok) logger(  payload  ); // prettier-ignore
+while (keepGoing) tick(  value  ); // prettier-ignore
+
+label  :  for ( ; ; ) { break   label; } // prettier-ignore
+for (let i=0;i<3;i++) step(  i  ); // prettier-ignore
+for (const k in obj) use(  k  ); // prettier-ignore
+for (const v of arr) use(  v  ); // prettier-ignore
+while (ok) run(  x  ); // prettier-ignore
+do run(  x  ); while (ok); // prettier-ignore
+switch (kind) {case 1: act(  ); break;} // prettier-ignore
+try { a(  ); } catch (e) { b(  ); } // prettier-ignore
+with (ctx) run(  x  ); // prettier-ignore
+
+function f() {
+  return   {a:1}; // oxfmt-ignore
+}
+
+function g() {
+  throw   new Error(  "boom"  ); // oxfmt-ignore
+}
 
 ===================== End =====================

@@ -4,6 +4,19 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.117.0] - 2026-03-09
+
+### 🚀 Features
+
+- 8345318 allocator: Add methods for boxed slices `ArenaBox<[T]>` (#19968) (overlookmotel)
+- f83be30 allocator: Add `Vec::push_fast` method (#19959) (overlookmotel)
+
+## [0.116.0] - 2026-03-02
+
+### 🚀 Features
+
+- c2a42f6 allocator: Add `Vec::into_bump_slice_mut` (#19895) (overlookmotel)
+
 ## [0.114.0] - 2026-02-16
 
 ### ⚡ Performance

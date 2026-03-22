@@ -64,6 +64,12 @@ pub fn unexpected_token(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn private_identifier_in_property_name(name: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error(format!("Private identifier '#{name}' is not allowed in property names"))
+        .with_label(span)
+}
+
+#[cold]
 pub fn html_comment_in_module(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("HTML comments are not allowed in modules").with_label(span)
 }
@@ -485,6 +491,11 @@ pub fn new_dynamic_import(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn new_super(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("'new super()' is not allowed").with_label(span)
+}
+
+#[cold]
 pub fn private_name_constructor(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Classes can't have an element named '#constructor'").with_label(span)
 }
@@ -744,6 +755,17 @@ pub fn using_declaration_not_allowed_in_switch_bare_case(span: Span) -> OxcDiagn
     OxcDiagnostic::error("Using declaration cannot appear in the bare case statement.")
         .with_label(span)
         .with_help("Wrap this declaration in a block statement")
+}
+
+#[cold]
+pub fn using_declarations_not_allowed_in_ambient_contexts(span: Span) -> OxcDiagnostic {
+    ts_error("1545", "'using' declarations are not allowed in ambient contexts.").with_label(span)
+}
+
+#[cold]
+pub fn await_using_declarations_not_allowed_in_ambient_contexts(span: Span) -> OxcDiagnostic {
+    ts_error("1546", "'await using' declarations are not allowed in ambient contexts.")
+        .with_label(span)
 }
 
 #[cold]
@@ -1080,13 +1102,13 @@ pub fn decorator_on_overload(span: Span) -> OxcDiagnostic {
 
 #[cold]
 pub fn as_in_ts(span: Span) -> OxcDiagnostic {
-    ts_error("8037", "Type assertion expressions can only be used in TypeScript files.")
+    ts_error("8016", "Type assertion expressions can only be used in TypeScript files.")
         .with_label(span)
 }
 
 #[cold]
 pub fn satisfies_in_ts(span: Span) -> OxcDiagnostic {
-    ts_error("8016", "Type satisfaction expressions can only be used in TypeScript files.")
+    ts_error("8037", "Type satisfaction expressions can only be used in TypeScript files.")
         .with_label(span)
 }
 
@@ -1113,6 +1135,11 @@ pub fn parameter_modifiers_in_ts(
     ts_error("8012", "Parameter modifiers can only be used in TypeScript files.")
         .with_label(modifier.span)
         .with_allowed_modifier_help(allowed)
+}
+
+#[cold]
+pub fn implements_clause_in_ts(span: Span) -> OxcDiagnostic {
+    ts_error("8005", "'implements' clauses can only be used in TypeScript files.").with_label(span)
 }
 
 #[cold]

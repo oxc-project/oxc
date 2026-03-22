@@ -1,9 +1,9 @@
-commit: ad04bf74
+commit: 9059e5bd
 
 parser_typescript Summary:
-AST Parsed     : 9831/9834 (99.97%)
-Positive Passed: 9820/9834 (99.86%)
-Negative Passed: 1527/2578 (59.23%)
+AST Parsed     : 9828/9831 (99.97%)
+Positive Passed: 9817/9831 (99.86%)
+Negative Passed: 1534/2587 (59.30%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration4.ts
@@ -186,6 +186,8 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declFileWith
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declFileWithErrorsInInputDeclarationFileWithOut.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitCommonJsModuleReferencedType.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitComputedPropertyNameEnum3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitDestructuringWithOptionalBindingParameters.ts
@@ -194,11 +196,19 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationE
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitMonorepoBaseUrl.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitObjectAssignedDefaultExport.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitPathMappingMonorepo.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitPathMappingMonorepo2.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitReexportedSymlinkReference3.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitRelativeModuleError.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitUnsafeImportSymbolName.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitUsingTypeAlias1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declareModifierOnImport1.ts
 
@@ -460,6 +470,8 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/importAssert
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/importDeclWithClassModifiers.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/importTypeAssertionDeprecation.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/importWithTrailingSlash.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/importedEnumMemberMergedWithExportedAliasIsError.ts
@@ -529,8 +541,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/jsFileCompil
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationDuplicateFunctionImplementation.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationDuplicateFunctionImplementationFileOrderReversed.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationHeritageClauseSyntaxOfClass.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationOptionalClassElementSyntaxOfClass.ts
 
@@ -872,8 +882,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/superCallIns
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/superInConstructorParam1.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/superNewCall1.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/superPropertyAccess2.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/superPropertyAccessInSuperCall01.ts
@@ -1007,8 +1015,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/c
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/classExpressions/classWithStaticFieldInParameterBindingPattern.2.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/classExpressions/classWithStaticFieldInParameterInitializer.2.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/classStaticBlock/classStaticBlock23.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/constructorDeclarations/classConstructorOverloadsAccessibility.ts
 
@@ -1722,11 +1728,17 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/allo
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJsTopLevelAwait.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/legacyNodeModulesExportsSpecifierGenerationConditions.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesCJSEmit1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesDeclarationEmitWithPackageExports.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesExportsBlocksSpecifierResolution.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesExportsBlocksTypesVersions.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesExportsSourceTs.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesGeneratedNameCollisions.ts
 
@@ -1954,11 +1966,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/scanner/e
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/scanner/ecmascript5/scannerNumericLiteral9.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.14.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarationsInForOf.4.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsInForOf.4.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statements/for-inStatements/for-inStatementsArrayErrors.ts
 
@@ -1982,8 +1990,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/any
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/conditional/conditionalTypes1.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/conditional/inferTypes1.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/intersection/intersectionReduction.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/intersection/intersectionReductionStrict.ts
@@ -1993,8 +1999,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/int
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/keyof/keyofAndIndexedAccess2.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/keyof/keyofAndIndexedAccessErrors.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/literal/templateLiteralTypes1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/mapped/mappedTypeErrors.ts
 
@@ -6602,7 +6606,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  30 │ }
     ╰────
 
-  × TS(2483): The left-hand side of a 'for...in' statement cannot use a type annotation.
+  × TS(2404): The left-hand side of a 'for...in' statement cannot use a type annotation.
    ╭─[typescript/tests/cases/compiler/forIn.ts:2:10]
  1 │ var arr = null;
  2 │ for (var i:number in arr) { // error
@@ -6611,7 +6615,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
   help: This iterator's type will be inferred from the iterable. You can safely remove the type annotation.
 
-  × TS(2483): The left-hand side of a 'for...in' statement cannot use a type annotation.
+  × TS(2404): The left-hand side of a 'for...in' statement cannot use a type annotation.
    ╭─[typescript/tests/cases/compiler/forInStatement4.ts:2:10]
  1 │ var expr: any;
  2 │ for (var a: number in expr) {
@@ -7370,6 +7374,12 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
   help: Add a function body (`{}`).
 
+  × TS(8005): 'implements' clauses can only be used in TypeScript files.
+   ╭─[typescript/tests/cases/compiler/jsFileCompilationHeritageClauseSyntaxOfClass.ts:1:9]
+ 1 │ class C implements D { }
+   ·         ──────────
+   ╰────
+
   × TS(8002): 'import ... =' can only be used in TypeScript files.
    ╭─[typescript/tests/cases/compiler/jsFileCompilationImportEqualsSyntax.ts:1:1]
  1 │ import a = b;
@@ -7443,7 +7453,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  2 │ Foo<number>(1);
    ╰────
 
-  × TS(8037): Type assertion expressions can only be used in TypeScript files.
+  × TS(8016): Type assertion expressions can only be used in TypeScript files.
    ╭─[typescript/tests/cases/compiler/jsFileCompilationTypeAssertions.ts:1:1]
  1 │ 0 as number;
    · ───────────
@@ -9439,11 +9449,11 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
 
   × Unexpected token
-   ╭─[typescript/tests/cases/compiler/parseAssertEntriesError.ts:2:32]
+   ╭─[typescript/tests/cases/compiler/parseAssertEntriesError.ts:2:30]
  1 │ export type LocalInterface =
- 2 │     & import("pkg", { assert: {1234, "resolution-mode": "require"} }).RequireInterface
-   ·                                ────
- 3 │     & import("pkg", { assert: {1234, "resolution-mode": "import"} }).ImportInterface;
+ 2 │     & import("pkg", { with: {1234, "resolution-mode": "require"} }).RequireInterface
+   ·                              ────
+ 3 │     & import("pkg", { with: {1234, "resolution-mode": "import"} }).ImportInterface;
    ╰────
 
   × Invalid characters after number
@@ -11810,6 +11820,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  53 │             },
     ╰────
 
+  × 'new super()' is not allowed
+    ╭─[typescript/tests/cases/compiler/superNewCall1.ts:9:13]
+  8 │     constructor() {
+  9 │         new super(value => String(value));
+    ·             ─────────────────────────────
+ 10 │     }
+    ╰────
+
   × 'super' can only be used with function calls or in property accesses
    ╭─[typescript/tests/cases/compiler/superWithTypeArgument.ts:7:9]
  6 │     constructor() {
@@ -13683,6 +13701,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·                            ──
  12 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × Private field '#x' must be declared in an enclosing class
     ╭─[typescript/tests/cases/conformance/classes/classStaticBlock/classStaticBlock16.ts:21:28]
@@ -13691,6 +13710,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·                            ──
  22 │     getY = (obj: D) => obj.#y;
     ╰────
+  help: Did you mean '#y'?
 
   × Decorators are not valid here.
    ╭─[typescript/tests/cases/conformance/classes/classStaticBlock/classStaticBlock19.ts:2:5]
@@ -13810,6 +13830,24 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  13 │     let await; // illegal, cannot declare a new binding for await
     ·         ─────
  14 │   }
+    ╰────
+
+  × Cannot use 'for await' in class static initialization block
+   ╭─[typescript/tests/cases/conformance/classes/classStaticBlock/classStaticBlock23.ts:5:5]
+ 4 │       static {
+ 5 │ ╭─▶     for await (const nn of nums) {
+ 6 │ │           console.log(nn)
+ 7 │ ╰─▶     }
+ 8 │       }
+   ╰────
+
+  × Cannot use 'for await' in class static initialization block
+    ╭─[typescript/tests/cases/conformance/classes/classStaticBlock/classStaticBlock23.ts:14:7]
+ 13 │         static {
+ 14 │ ╭─▶       for await (const nn of nums) {
+ 15 │ │             console.log(nn)
+ 16 │ ╰─▶       }
+ 17 │         }
     ╰────
 
   × Unexpected token
@@ -14165,6 +14203,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·               ────
  10 │         thing.#foo();
     ╰────
+  help: Did you mean '#baz'?
 
   × Private field '#bar' must be declared in an enclosing class
     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameAndAny.ts:16:15]
@@ -14173,6 +14212,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·               ────
  17 │         thing.#foo();
     ╰────
+  help: Did you mean '#baz'?
 
   × Private field '#bar' must be declared in an enclosing class
     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameAndAny.ts:23:15]
@@ -14181,6 +14221,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·               ────
  24 │         thing.#foo();
     ╰────
+  help: Did you mean '#baz'?
 
   × Private field '#f' must be declared in an enclosing class
    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameAndIndexSignature.ts:6:14]
@@ -14189,14 +14230,149 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·              ──
  7 │         this["#foo"] = 3;     // Okay (type has index signature and "#foo" does not collide with private identifier #foo)
    ╰────
+  help: Did you mean '#foo'?
 
-  × Unexpected token
+  × Private identifier '#foo' is not allowed in property names
    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameAndPropertySignature.ts:2:5]
  1 │ type A = {
  2 │     #foo: string;
    ·     ────
  3 │     #bar(): string;
    ╰────
+
+  × Private identifier '#bar' is not allowed in property names
+   ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameAndPropertySignature.ts:3:5]
+ 2 │     #foo: string;
+ 3 │     #bar(): string;
+   ·     ────
+ 4 │ }
+   ╰────
+
+  × Private identifier '#foo' is not allowed in property names
+   ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameAndPropertySignature.ts:7:5]
+ 6 │ interface B {
+ 7 │     #foo: string;
+   ·     ────
+ 8 │     #bar(): string;
+   ╰────
+
+  × Private identifier '#bar' is not allowed in property names
+   ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameAndPropertySignature.ts:8:5]
+ 7 │     #foo: string;
+ 8 │     #bar(): string;
+   ·     ────
+ 9 │ }
+   ╰────
+
+  × Private identifier '#foo' is not allowed in property names
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameAndPropertySignature.ts:12:5]
+ 11 │ declare const x: {
+ 12 │     #foo: number;
+    ·     ────
+ 13 │     bar: {
+    ╰────
+
+  × Private identifier '#baz' is not allowed in property names
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameAndPropertySignature.ts:14:9]
+ 13 │     bar: {
+ 14 │         #baz: string;
+    ·         ────
+ 15 │         #taz(): string;
+    ╰────
+
+  × Private identifier '#taz' is not allowed in property names
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameAndPropertySignature.ts:15:9]
+ 14 │         #baz: string;
+ 15 │         #taz(): string;
+    ·         ────
+ 16 │     }
+    ╰────
+
+  × Private identifier '#baz' is not allowed in property names
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameAndPropertySignature.ts:17:5]
+ 16 │     }
+ 17 │     #baz(): string;
+    ·     ────
+ 18 │ };
+    ╰────
+
+  × Private identifier '#quux' is not allowed in property names
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameAndPropertySignature.ts:20:28]
+ 19 │ 
+ 20 │ declare const y: [{ qux: { #quux: 3 } }];
+    ·                            ─────
+    ╰────
+
+  × Private identifier '#foo' is not allowed outside class bodies
+   ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameAndPropertySignature.ts:2:5]
+ 1 │ type A = {
+ 2 │     #foo: string;
+   ·     ────
+ 3 │     #bar(): string;
+   ╰────
+
+  × Private identifier '#bar' is not allowed outside class bodies
+   ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameAndPropertySignature.ts:3:5]
+ 2 │     #foo: string;
+ 3 │     #bar(): string;
+   ·     ────
+ 4 │ }
+   ╰────
+
+  × Private identifier '#foo' is not allowed outside class bodies
+   ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameAndPropertySignature.ts:7:5]
+ 6 │ interface B {
+ 7 │     #foo: string;
+   ·     ────
+ 8 │     #bar(): string;
+   ╰────
+
+  × Private identifier '#bar' is not allowed outside class bodies
+   ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameAndPropertySignature.ts:8:5]
+ 7 │     #foo: string;
+ 8 │     #bar(): string;
+   ·     ────
+ 9 │ }
+   ╰────
+
+  × Private identifier '#foo' is not allowed outside class bodies
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameAndPropertySignature.ts:12:5]
+ 11 │ declare const x: {
+ 12 │     #foo: number;
+    ·     ────
+ 13 │     bar: {
+    ╰────
+
+  × Private identifier '#baz' is not allowed outside class bodies
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameAndPropertySignature.ts:14:9]
+ 13 │     bar: {
+ 14 │         #baz: string;
+    ·         ────
+ 15 │         #taz(): string;
+    ╰────
+
+  × Private identifier '#taz' is not allowed outside class bodies
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameAndPropertySignature.ts:15:9]
+ 14 │         #baz: string;
+ 15 │         #taz(): string;
+    ·         ────
+ 16 │     }
+    ╰────
+
+  × Private identifier '#baz' is not allowed outside class bodies
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameAndPropertySignature.ts:17:5]
+ 16 │     }
+ 17 │     #baz(): string;
+    ·     ────
+ 18 │ };
+    ╰────
+
+  × Private identifier '#quux' is not allowed outside class bodies
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameAndPropertySignature.ts:20:28]
+ 19 │ 
+ 20 │ declare const y: [{ qux: { #quux: 3 } }];
+    ·                            ─────
+    ╰────
 
   × Private identifier '#nope' is not allowed outside class bodies
    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameBadAssignment.ts:1:9]
@@ -14229,13 +14405,109 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  13 │     }
     ╰────
 
-  × Unexpected token
+  × Private identifier '#x' is not allowed in property names
    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameBadDeclaration.ts:3:3]
  2 │ A.prototype = {
  3 │   #x: 1,         // Error
    ·   ──
  4 │   #m() {},       // Error
    ╰────
+
+  × Private identifier '#m' is not allowed in property names
+   ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameBadDeclaration.ts:4:3]
+ 3 │   #x: 1,         // Error
+ 4 │   #m() {},       // Error
+   ·   ──
+ 5 │   get #p() { return "" } // Error
+   ╰────
+
+  × Private identifier '#p' is not allowed in property names
+   ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameBadDeclaration.ts:5:7]
+ 4 │   #m() {},       // Error
+ 5 │   get #p() { return "" } // Error
+   ·       ──
+ 6 │ }
+   ╰────
+
+  × Private identifier '#y' is not allowed in property names
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameBadDeclaration.ts:9:3]
+  8 │ B.prototype = {
+  9 │   #y: 2,         // Error
+    ·   ──
+ 10 │   #m() {},       // Error
+    ╰────
+
+  × Private identifier '#m' is not allowed in property names
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameBadDeclaration.ts:10:3]
+  9 │   #y: 2,         // Error
+ 10 │   #m() {},       // Error
+    ·   ──
+ 11 │   get #p() { return "" } // Error
+    ╰────
+
+  × Private identifier '#p' is not allowed in property names
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameBadDeclaration.ts:11:7]
+ 10 │   #m() {},       // Error
+ 11 │   get #p() { return "" } // Error
+    ·       ──
+ 12 │ }
+    ╰────
+
+  × Private identifier '#x' is not allowed outside class bodies
+   ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameBadDeclaration.ts:3:3]
+ 2 │ A.prototype = {
+ 3 │   #x: 1,         // Error
+   ·   ──
+ 4 │   #m() {},       // Error
+   ╰────
+
+  × Private identifier '#m' is not allowed outside class bodies
+   ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameBadDeclaration.ts:4:3]
+ 3 │   #x: 1,         // Error
+ 4 │   #m() {},       // Error
+   ·   ──
+ 5 │   get #p() { return "" } // Error
+   ╰────
+
+  × Private identifier '#p' is not allowed outside class bodies
+   ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameBadDeclaration.ts:5:7]
+ 4 │   #m() {},       // Error
+ 5 │   get #p() { return "" } // Error
+   ·       ──
+ 6 │ }
+   ╰────
+
+  × Private identifier '#y' is not allowed outside class bodies
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameBadDeclaration.ts:9:3]
+  8 │ B.prototype = {
+  9 │   #y: 2,         // Error
+    ·   ──
+ 10 │   #m() {},       // Error
+    ╰────
+
+  × Private identifier '#m' is not allowed outside class bodies
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameBadDeclaration.ts:10:3]
+  9 │   #y: 2,         // Error
+ 10 │   #m() {},       // Error
+    ·   ──
+ 11 │   get #p() { return "" } // Error
+    ╰────
+
+  × Private identifier '#p' is not allowed outside class bodies
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameBadDeclaration.ts:11:7]
+ 10 │   #m() {},       // Error
+ 11 │   get #p() { return "" } // Error
+    ·       ──
+ 12 │ }
+    ╰────
+
+  × Private field '#z' must be declared in an enclosing class
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameBadDeclaration.ts:15:10]
+ 14 │   constructor() {
+ 15 │     this.#z = 3;
+    ·          ──
+ 16 │   }
+    ╰────
 
   × Classes can't have an element named '#constructor'
    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameConstructorReserved.ts:2:5]
@@ -15015,7 +15287,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  21 │ 
     ╰────
 
-  × Unexpected token
+  × Private identifier '#foo' is not allowed in property names
    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameInObjectLiteral-1.ts:2:5]
  1 │ const obj = {
  2 │     #foo: 1
@@ -15023,7 +15295,15 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │ };
    ╰────
 
-  × Unexpected token
+  × Private identifier '#foo' is not allowed outside class bodies
+   ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameInObjectLiteral-1.ts:2:5]
+ 1 │ const obj = {
+ 2 │     #foo: 1
+   ·     ────
+ 3 │ };
+   ╰────
+
+  × Private identifier '#foo' is not allowed in property names
    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameInObjectLiteral-2.ts:2:5]
  1 │ const obj = {
  2 │     #foo() {
@@ -15031,7 +15311,23 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │ 
    ╰────
 
-  × Unexpected token
+  × Private identifier '#foo' is not allowed outside class bodies
+   ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameInObjectLiteral-2.ts:2:5]
+ 1 │ const obj = {
+ 2 │     #foo() {
+   ·     ────
+ 3 │ 
+   ╰────
+
+  × Private identifier '#foo' is not allowed in property names
+   ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameInObjectLiteral-3.ts:2:9]
+ 1 │ const obj = {
+ 2 │     get #foo() {
+   ·         ────
+ 3 │         return ""
+   ╰────
+
+  × Private identifier '#foo' is not allowed outside class bodies
    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameInObjectLiteral-3.ts:2:9]
  1 │ const obj = {
  2 │     get #foo() {
@@ -15070,13 +15366,109 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  12 │     }
     ╰────
 
-  × Unexpected token
+  × Private identifier '#x' is not allowed in property names
    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameJsBadDeclaration.ts:3:3]
  2 │ A.prototype = {
  3 │   #x: 1,         // Error
    ·   ──
  4 │   #m() {},       // Error
    ╰────
+
+  × Private identifier '#m' is not allowed in property names
+   ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameJsBadDeclaration.ts:4:3]
+ 3 │   #x: 1,         // Error
+ 4 │   #m() {},       // Error
+   ·   ──
+ 5 │   get #p() { return "" } // Error
+   ╰────
+
+  × Private identifier '#p' is not allowed in property names
+   ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameJsBadDeclaration.ts:5:7]
+ 4 │   #m() {},       // Error
+ 5 │   get #p() { return "" } // Error
+   ·       ──
+ 6 │ }
+   ╰────
+
+  × Private identifier '#y' is not allowed in property names
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameJsBadDeclaration.ts:9:3]
+  8 │ B.prototype = {
+  9 │   #y: 2,         // Error
+    ·   ──
+ 10 │   #m() {},       // Error
+    ╰────
+
+  × Private identifier '#m' is not allowed in property names
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameJsBadDeclaration.ts:10:3]
+  9 │   #y: 2,         // Error
+ 10 │   #m() {},       // Error
+    ·   ──
+ 11 │   get #p() { return "" } // Error
+    ╰────
+
+  × Private identifier '#p' is not allowed in property names
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameJsBadDeclaration.ts:11:7]
+ 10 │   #m() {},       // Error
+ 11 │   get #p() { return "" } // Error
+    ·       ──
+ 12 │ }
+    ╰────
+
+  × Private identifier '#x' is not allowed outside class bodies
+   ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameJsBadDeclaration.ts:3:3]
+ 2 │ A.prototype = {
+ 3 │   #x: 1,         // Error
+   ·   ──
+ 4 │   #m() {},       // Error
+   ╰────
+
+  × Private identifier '#m' is not allowed outside class bodies
+   ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameJsBadDeclaration.ts:4:3]
+ 3 │   #x: 1,         // Error
+ 4 │   #m() {},       // Error
+   ·   ──
+ 5 │   get #p() { return "" } // Error
+   ╰────
+
+  × Private identifier '#p' is not allowed outside class bodies
+   ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameJsBadDeclaration.ts:5:7]
+ 4 │   #m() {},       // Error
+ 5 │   get #p() { return "" } // Error
+   ·       ──
+ 6 │ }
+   ╰────
+
+  × Private identifier '#y' is not allowed outside class bodies
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameJsBadDeclaration.ts:9:3]
+  8 │ B.prototype = {
+  9 │   #y: 2,         // Error
+    ·   ──
+ 10 │   #m() {},       // Error
+    ╰────
+
+  × Private identifier '#m' is not allowed outside class bodies
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameJsBadDeclaration.ts:10:3]
+  9 │   #y: 2,         // Error
+ 10 │   #m() {},       // Error
+    ·   ──
+ 11 │   get #p() { return "" } // Error
+    ╰────
+
+  × Private identifier '#p' is not allowed outside class bodies
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameJsBadDeclaration.ts:11:7]
+ 10 │   #m() {},       // Error
+ 11 │   get #p() { return "" } // Error
+    ·       ──
+ 12 │ }
+    ╰────
+
+  × Private field '#z' must be declared in an enclosing class
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameJsBadDeclaration.ts:15:10]
+ 14 │   constructor() {
+ 15 │     this.#z = 3;
+    ·          ──
+ 16 │   }
+    ╰────
 
   × Private identifier '#method' is not allowed outside class bodies
     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameMethodAccess.ts:12:10]
@@ -19986,7 +20378,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╰────
   help: Wrap either expression by parentheses
 
-  × Unexpected token
+  × Private identifier '#z' is not allowed in property names
     ╭─[typescript/tests/cases/conformance/expressions/objectLiterals/objectLiteralErrors.ts:50:5]
  49 │     y = 2,
  50 │     #z: 3
@@ -20011,6 +20403,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  49 │     y = 2,
     ╰────
   help: Did you mean to use a ':'? An '=' can only follow a property name when the containing object literal is part of a destructuring pattern.
+
+  × Private identifier '#z' is not allowed outside class bodies
+    ╭─[typescript/tests/cases/conformance/expressions/objectLiterals/objectLiteralErrors.ts:50:5]
+ 49 │     y = 2,
+ 50 │     #z: 3
+    ·     ──
+ 51 │ }
+    ╰────
 
   × Cannot assign to this expression
    ╭─[typescript/tests/cases/conformance/expressions/operators/incrementAndDecrement.ts:8:1]
@@ -20267,7 +20667,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
   help: Try inserting a semicolon here
 
-  × TS(8016): Type satisfaction expressions can only be used in TypeScript files.
+  × TS(8037): Type satisfaction expressions can only be used in TypeScript files.
    ╭─[typescript/tests/cases/conformance/expressions/typeSatisfaction/typeSatisfaction_js.ts:1:9]
  1 │ var v = undefined satisfies 1;
    ·         ─────────────────────
@@ -24500,7 +24900,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  2 │ }
    ╰────
 
-  × TS(2483): The left-hand side of a 'for...in' statement cannot use a type annotation.
+  × TS(2404): The left-hand side of a 'for...in' statement cannot use a type annotation.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserForInStatement5.ts:1:10]
  1 │ for (var a: number in X) {
    ·          ─
@@ -24522,7 +24922,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  2 │ }
    ╰────
 
-  × TS(2483): The left-hand side of a 'for...in' statement cannot use a type annotation.
+  × TS(2404): The left-hand side of a 'for...in' statement cannot use a type annotation.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserForInStatement7.ts:1:10]
  1 │ for (var a: number = 1, b: string = "" in X) {
    ·          ─
@@ -24530,7 +24930,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
   help: This iterator's type will be inferred from the iterable. You can safely remove the type annotation.
 
-  × TS(2483): The left-hand side of a 'for...in' statement cannot use a type annotation.
+  × TS(2404): The left-hand side of a 'for...in' statement cannot use a type annotation.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserForInStatement7.ts:1:25]
  1 │ for (var a: number = 1, b: string = "" in X) {
    ·                         ─
@@ -25281,6 +25681,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·              ──
  6 │     }
    ╰────
+  help: Did you mean '#a'?
 
   × Identifier `orbitol` has already been declared
    ╭─[typescript/tests/cases/conformance/salsa/plainJSRedeclare.ts:1:7]
@@ -25473,41 +25874,45 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
   help: Wrap this code in a block or use a module
 
-  × Using declarations must have an initializer.
+  × Cannot use 'await using' in class static initialization block
+   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.14.ts:3:9]
+ 2 │     static {
+ 3 │         await using x = null;
+   ·         ─────────────────────
+ 4 │         {
+   ╰────
+
+  × TS(1546): 'await using' declarations are not allowed in ambient contexts.
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.16.ts:2:17]
  1 │ declare namespace N {
  2 │     await using x: { [Symbol.asyncDispose](): Promise<void> };
    ·                 ─
  3 │     await using y: null;
    ╰────
-  help: Add an initializer (e.g. ` = undefined`) here
 
-  × Using declarations must have an initializer.
+  × TS(1546): 'await using' declarations are not allowed in ambient contexts.
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.16.ts:3:17]
  2 │     await using x: { [Symbol.asyncDispose](): Promise<void> };
  3 │     await using y: null;
    ·                 ─
  4 │ }
    ╰────
-  help: Add an initializer (e.g. ` = undefined`) here
 
-  × Using declarations must have an initializer.
+  × TS(1546): 'await using' declarations are not allowed in ambient contexts.
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.16.ts:6:17]
  5 │ declare module 'M' {
  6 │     await using x: { [Symbol.asyncDispose](): Promise<void> };
    ·                 ─
  7 │     await using y: null;
    ╰────
-  help: Add an initializer (e.g. ` = undefined`) here
 
-  × Using declarations must have an initializer.
+  × TS(1546): 'await using' declarations are not allowed in ambient contexts.
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.16.ts:7:17]
  6 │     await using x: { [Symbol.asyncDispose](): Promise<void> };
  7 │     await using y: null;
    ·                 ─
  8 │ }
    ╰────
-  help: Add an initializer (e.g. ` = undefined`) here
 
   × Using declaration cannot appear in the bare case statement.
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.17.ts:3:9]
@@ -25624,15 +26029,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
   help: Did you mean to use a for...of statement?
 
-  × Missing initializer in destructuring declaration
-   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarationsInForOf.3.ts:2:22]
- 1 │ async function main() {
- 2 │     for (await using {} of []) {
-   ·                      ──
- 3 │     }
-   ╰────
-  help: Add an initializer (e.g. ` = undefined`) here
-
   × Using declarations may not have binding patterns.
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarationsInForOf.3.ts:2:22]
  1 │ async function main() {
@@ -25674,41 +26070,37 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
   help: Remove the `export` here and add `export { x }` as a separate statement to export the declaration
 
-  × Using declarations must have an initializer.
+  × TS(1545): 'using' declarations are not allowed in ambient contexts.
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.16.ts:2:11]
  1 │ declare namespace N {
  2 │     using x: { [Symbol.dispose](): void };
    ·           ─
  3 │     using y: null;
    ╰────
-  help: Add an initializer (e.g. ` = undefined`) here
 
-  × Using declarations must have an initializer.
+  × TS(1545): 'using' declarations are not allowed in ambient contexts.
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.16.ts:3:11]
  2 │     using x: { [Symbol.dispose](): void };
  3 │     using y: null;
    ·           ─
  4 │ }
    ╰────
-  help: Add an initializer (e.g. ` = undefined`) here
 
-  × Using declarations must have an initializer.
+  × TS(1545): 'using' declarations are not allowed in ambient contexts.
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.16.ts:6:11]
  5 │ declare module 'M' {
  6 │     using x: { [Symbol.dispose](): void };
    ·           ─
  7 │     using y: null;
    ╰────
-  help: Add an initializer (e.g. ` = undefined`) here
 
-  × Using declarations must have an initializer.
+  × TS(1545): 'using' declarations are not allowed in ambient contexts.
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.16.ts:7:11]
  6 │     using x: { [Symbol.dispose](): void };
  7 │     using y: null;
    ·           ─
  8 │ }
    ╰────
-  help: Add an initializer (e.g. ` = undefined`) here
 
   × Using declaration cannot appear in the bare case statement.
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.17.ts:3:9]
@@ -25810,6 +26202,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·            ╰── `;` expected
  2 │ }
    ╰────
+
+  × Using declarations must have an initializer.
+   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsInForOf.4.ts:3:12]
+ 2 │ for (using of: null = null;;) break;
+ 3 │ for (using of;;) break;
+   ·            ──
+   ╰────
+  help: Add an initializer (e.g. ` = undefined`) here
 
   × Illegal break statement
    ╭─[typescript/tests/cases/conformance/statements/breakStatements/invalidDoWhileBreakStatements.ts:4:1]
@@ -26148,7 +26548,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  38 │ }
     ╰────
 
-  × TS(2483): The left-hand side of a 'for...in' statement cannot use a type annotation.
+  × TS(2404): The left-hand side of a 'for...in' statement cannot use a type annotation.
     ╭─[typescript/tests/cases/conformance/statements/for-inStatements/for-inStatementsInvalid.ts:10:10]
   9 │ 
  10 │ for (var idx : number in {}) { }
@@ -26366,6 +26766,38 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │     name = 'twelve'
    ╰────
 
+  × TS(1338): 'infer' declarations are only permitted in the 'extends' clause of a conditional type.
+    ╭─[typescript/tests/cases/conformance/types/conditional/inferTypes1.ts:82:12]
+ 81 │ 
+ 82 │ type T60 = infer U;  // Error
+    ·            ───────
+ 83 │ type T61<T> = (infer A) extends infer B ? infer C : infer D;  // Error
+    ╰────
+
+  × TS(1338): 'infer' declarations are only permitted in the 'extends' clause of a conditional type.
+    ╭─[typescript/tests/cases/conformance/types/conditional/inferTypes1.ts:83:16]
+ 82 │ type T60 = infer U;  // Error
+ 83 │ type T61<T> = (infer A) extends infer B ? infer C : infer D;  // Error
+    ·                ───────
+ 84 │ type T62<T> = U extends (infer U)[] ? U : U;  // Error
+    ╰────
+
+  × TS(1338): 'infer' declarations are only permitted in the 'extends' clause of a conditional type.
+    ╭─[typescript/tests/cases/conformance/types/conditional/inferTypes1.ts:83:43]
+ 82 │ type T60 = infer U;  // Error
+ 83 │ type T61<T> = (infer A) extends infer B ? infer C : infer D;  // Error
+    ·                                           ───────
+ 84 │ type T62<T> = U extends (infer U)[] ? U : U;  // Error
+    ╰────
+
+  × TS(1338): 'infer' declarations are only permitted in the 'extends' clause of a conditional type.
+    ╭─[typescript/tests/cases/conformance/types/conditional/inferTypes1.ts:83:53]
+ 82 │ type T60 = infer U;  // Error
+ 83 │ type T61<T> = (infer A) extends infer B ? infer C : infer D;  // Error
+    ·                                                     ───────
+ 84 │ type T62<T> = U extends (infer U)[] ? U : U;  // Error
+    ╰────
+
   × TS(1141): String literal expected.
    ╭─[typescript/tests/cases/conformance/types/import/importTypeGeneric.ts:1:67]
  1 │ export function getFooFrom<T extends "./a" | "./b">(v: T): import(T).Foo {
@@ -26406,6 +26838,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·       ╰── `from` expected
  2 │ const a = import<string, number>
    ╰────
+
+  × TS(1338): 'infer' declarations are only permitted in the 'extends' clause of a conditional type.
+     ╭─[typescript/tests/cases/conformance/types/literal/templateLiteralTypes1.ts:165:15]
+ 164 │ 
+ 165 │ type TV1 = `${infer X}`;
+     ·               ───────
+ 166 │ 
+     ╰────
 
   × Identifier `T` has already been declared
     ╭─[typescript/tests/cases/conformance/types/localTypes/localTypes4.ts:18:16]

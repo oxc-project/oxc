@@ -27,13 +27,30 @@ pub fn static_and_instance_private_identifier(x0: &str, span1: Span, span2: Span
 }
 
 #[cold]
-pub fn undefined_export(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error(format!("Export '{x0}' is not defined")).with_label(span1)
+pub fn undefined_export(x0: &str, suggestion: Option<&str>, span1: Span) -> OxcDiagnostic {
+    let mut diagnostic =
+        OxcDiagnostic::error(format!("Export '{x0}' is not defined")).with_label(span1);
+    if let Some(suggestion) = suggestion {
+        diagnostic = diagnostic.with_help(format!("Did you mean '{suggestion}'?"));
+    }
+    diagnostic
 }
 
 #[cold]
 pub fn class_static_block_await(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Cannot use await in class static initialization block").with_label(span)
+}
+
+#[cold]
+pub fn class_static_block_for_await(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Cannot use 'for await' in class static initialization block")
+        .with_label(span)
+}
+
+#[cold]
+pub fn class_static_block_await_using(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Cannot use 'await using' in class static initialization block")
+        .with_label(span)
 }
 
 #[cold]
@@ -68,9 +85,15 @@ pub fn private_not_in_class(x0: &str, span1: Span) -> OxcDiagnostic {
 }
 
 #[cold]
-pub fn private_field_undeclared(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error(format!("Private field '#{x0}' must be declared in an enclosing class"))
-        .with_label(span1)
+pub fn private_field_undeclared(x0: &str, suggestion: Option<&str>, span1: Span) -> OxcDiagnostic {
+    let mut diagnostic = OxcDiagnostic::error(format!(
+        "Private field '#{x0}' must be declared in an enclosing class"
+    ))
+    .with_label(span1);
+    if let Some(suggestion) = suggestion {
+        diagnostic = diagnostic.with_help(format!("Did you mean '#{suggestion}'?"));
+    }
+    diagnostic
 }
 
 #[cold]
@@ -168,8 +191,12 @@ pub fn invalid_label_jump_target(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
-pub fn invalid_label_target(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("Use of undefined label").with_label(span)
+pub fn invalid_label_target(suggestion: Option<&str>, span: Span) -> OxcDiagnostic {
+    let mut diagnostic = OxcDiagnostic::error("Use of undefined label").with_label(span);
+    if let Some(suggestion) = suggestion {
+        diagnostic = diagnostic.with_help(format!("Did you mean '{suggestion}'?"));
+    }
+    diagnostic
 }
 
 #[cold]
@@ -339,6 +366,16 @@ pub fn import_alias_cannot_use_import_type(span: Span) -> OxcDiagnostic {
     ts_error("1392", "An import alias cannot use 'import type'").with_label(span)
 }
 
+/// 'infer' declarations are only permitted in the 'extends' clause of a conditional type. (1338)
+#[cold]
+pub fn infer_declaration_only_permitted_in_extends_clause(span: Span) -> OxcDiagnostic {
+    ts_error(
+        "1338",
+        "'infer' declarations are only permitted in the 'extends' clause of a conditional type.",
+    )
+    .with_label(span)
+}
+
 /// - Abstract properties can only appear within an abstract class. (1253)
 /// - Abstract methods can only appear within an abstract class. (1244)
 #[cold]
@@ -410,11 +447,12 @@ pub fn accessor_without_body(span: Span) -> OxcDiagnostic {
 }
 
 /// The left-hand side of a 'for...of' statement cannot use a type annotation. (2483)
+/// The left-hand side of a 'for...in' statement cannot use a type annotation. (2404)
 #[cold]
 pub fn type_annotation_in_for_left(span: Span, is_for_in: bool) -> OxcDiagnostic {
-    let for_of_or_in = if is_for_in { "for...in" } else { "for...of" };
+    let (for_of_or_in, code) = if is_for_in { ("for...in", "2404") } else { ("for...of", "2483") };
     ts_error(
-        "2483",
+        code,
         format!(
             "The left-hand side of a '{for_of_or_in}' statement cannot use a type annotation.",
         ),

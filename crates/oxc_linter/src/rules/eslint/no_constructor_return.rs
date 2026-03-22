@@ -21,7 +21,7 @@ pub struct NoConstructorReturn;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow returning value from constructor
+    /// Disallow returning value from constructor.
     ///
     /// ### Why is this bad?
     ///

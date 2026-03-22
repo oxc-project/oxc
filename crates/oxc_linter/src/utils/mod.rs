@@ -13,7 +13,6 @@ use oxc_syntax::identifier::{is_identifier_part, is_identifier_start};
 
 mod comment;
 mod config;
-mod edit_distance;
 mod express;
 mod jest;
 mod jsdoc;
@@ -29,8 +28,8 @@ mod vitest;
 mod vue;
 
 pub use self::{
-    comment::*, config::*, edit_distance::*, express::*, jest::*, jsdoc::*, nextjs::*, promise::*,
-    react::*, react_perf::*, regex::*, typescript::*, unicorn::*, url::*, vitest::*, vue::*,
+    comment::*, config::*, express::*, jest::*, jsdoc::*, nextjs::*, promise::*, react::*,
+    react_perf::*, regex::*, typescript::*, unicorn::*, url::*, vitest::*, vue::*,
 };
 
 /// List of Jest rules that have Vitest equivalents.

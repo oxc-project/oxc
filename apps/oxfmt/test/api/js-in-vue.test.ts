@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { format } from "../../dist/index.js";
 
-// NOTE: For now, Vue files are still handled by Prettier
+// NOTE: For now, Vue files are partially handled by Prettier
+
 describe("Format js-in-vue with prettier-plugin-oxfmt", () => {
   it("should format .vue w/ sort-imports", async () => {
     const input = `
@@ -50,5 +51,56 @@ const cls = clsx("p-4 flex");
 
     expect(result.code).toMatchSnapshot();
     expect(result.errors).toStrictEqual([]);
+  });
+
+  // https://github.com/oxc-project/oxc/issues/20084
+  it("should format .vue w/ template literal idempotently (vueIndentScriptAndStyle)", async () => {
+    const input = `
+<script setup>
+const a = \`
+  hello
+  world
+\`;
+</script>
+<template>
+  <div>{{ a }}</div>
+</template>
+`;
+    const result = await format("a.vue", input, {
+      vueIndentScriptAndStyle: true,
+    });
+
+    // Format again to verify idempotency
+    const result2 = await format("a.vue", result.code, {
+      vueIndentScriptAndStyle: true,
+    });
+
+    expect(result.code).toMatchSnapshot();
+    expect(result.errors).toStrictEqual([]);
+    expect(result2.code).toBe(result.code);
+    expect(result2.errors).toStrictEqual([]);
+  });
+
+  it("should format .vue w/ template literal (no vueIndentScriptAndStyle)", async () => {
+    const input = `
+<script setup>
+const a = \`
+  hello
+  world
+\`;
+</script>
+<template>
+  <div>{{ a }}</div>
+</template>
+`;
+    const result = await format("a.vue", input);
+
+    // Format again to verify idempotency
+    const result2 = await format("a.vue", result.code);
+
+    expect(result.code).toMatchSnapshot();
+    expect(result.errors).toStrictEqual([]);
+    expect(result2.code).toBe(result.code);
+    expect(result2.errors).toStrictEqual([]);
   });
 });

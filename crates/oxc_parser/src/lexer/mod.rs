@@ -5,6 +5,8 @@
 //!     * [rustc](https://github.com/rust-lang/rust/blob/1.82.0/compiler/rustc_lexer/src)
 //!     * [v8](https://v8.dev/blog/scanner)
 
+use std::mem;
+
 use rustc_hash::FxHashMap;
 
 use oxc_allocator::{Allocator, Vec as ArenaVec};
@@ -65,6 +67,15 @@ pub enum LexerContext {
     JsxAttributeValue,
 }
 
+/// Action to take when finishing a token.
+/// Passed to [`Lexer::finish_next_inner`].
+#[derive(Clone, Copy, Eq, PartialEq)]
+enum FinishTokenMode {
+    Push,
+    Replace,
+    Discard,
+}
+
 pub struct Lexer<'a, C: Config> {
     allocator: &'a Allocator,
 
@@ -119,6 +130,23 @@ impl<'a, C: Config> Lexer<'a, C> {
     ) -> Self {
         let source = Source::new(source_text, unique);
 
+        // If collecting tokens, allocate enough space so that the `Vec<Token>` will not have to grow during parsing.
+        // `source_text.len() + 1` is almost always a large overestimate of number of tokens, but it's impossible to
+        // have more than N + 1 tokens in a file which is N bytes long, so it'll never be an underestimate.
+        //
+        // + 1 is to account for the final `Eof` token. Without adding 1, the capacity could be too small for
+        // minified files which have no space between any tokens. It would also be too small for empty files.
+        //
+        // Our largest benchmark file `binder.ts` is 190 KB, and `Token` is 16 bytes, so the `Vec<Token>`
+        // would be ~3 MB even in the case of this unusually large file. That's not a huge amount of memory.
+        //
+        // However, we should choose a better heuristic based on real-world observation, and bring this usage down.
+        let tokens = if config.tokens() {
+            ArenaVec::with_capacity_in(source_text.len() + 1, allocator)
+        } else {
+            ArenaVec::new_in(allocator)
+        };
+
         // The first token is at the start of file, so is allows on a new line
         let token = Token::new_on_new_line();
         Self {
@@ -133,7 +161,7 @@ impl<'a, C: Config> Lexer<'a, C> {
             escaped_strings: FxHashMap::default(),
             escaped_templates: FxHashMap::default(),
             multi_line_comment_end_finder: None,
-            tokens: ArenaVec::new_in(allocator),
+            tokens,
             config,
         }
     }
@@ -229,13 +257,15 @@ impl<'a, C: Config> Lexer<'a, C> {
     pub fn first_token(&mut self) -> Token {
         // HashbangComment ::
         //     `#!` SingleLineCommentChars?
-        let kind = if let Some([b'#', b'!']) = self.peek_2_bytes() {
+        if let Some([b'#', b'!']) = self.peek_2_bytes() {
             // SAFETY: Next 2 bytes are `#!`
-            unsafe { self.read_hashbang_comment() }
+            let kind = unsafe { self.read_hashbang_comment() };
+            // Hashbangs are not included in tokens
+            self.finish_next_inner(kind, FinishTokenMode::Discard)
         } else {
-            self.read_next_token()
-        };
-        self.finish_next(kind)
+            let kind = self.read_next_token();
+            self.finish_next(kind)
+        }
     }
 
     /// Read next token in file.
@@ -257,26 +287,37 @@ impl<'a, C: Config> Lexer<'a, C> {
 
     #[inline]
     fn finish_next(&mut self, kind: Kind) -> Token {
-        self.finish_next_inner::<false>(kind)
+        self.finish_next_inner(kind, FinishTokenMode::Push)
     }
 
     #[inline]
     fn finish_next_retokenized(&mut self, kind: Kind) -> Token {
-        self.finish_next_inner::<true>(kind)
+        self.finish_next_inner(kind, FinishTokenMode::Replace)
     }
 
-    #[inline]
-    fn finish_next_inner<const REPLACE_SAME_START: bool>(&mut self, kind: Kind) -> Token {
+    // `#[inline(always)]` to ensure is inlined into `finish_next` and `finish_next_retokenized`,
+    // so that `mode` is statically known
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    fn finish_next_inner(&mut self, kind: Kind, mode: FinishTokenMode) -> Token {
         self.token.set_kind(kind);
         self.token.set_end(self.offset());
         let token = self.token;
-        if self.config.tokens() && !matches!(token.kind(), Kind::Eof | Kind::HashbangComment) {
-            if REPLACE_SAME_START {
-                debug_assert!(self.tokens.last().is_some_and(|last| last.start() == token.start()));
-                let last = self.tokens.last_mut().unwrap();
-                *last = token;
-            } else {
-                self.tokens.push(token);
+        if self.config.tokens() {
+            match mode {
+                FinishTokenMode::Push => {
+                    // We allocated sufficient capacity in the `Vec` for all tokens at the start.
+                    // `push_fast` is optimized for the "doesn't need to grow" case.
+                    self.tokens.push_fast(token);
+                }
+                FinishTokenMode::Replace => {
+                    debug_assert!(
+                        self.tokens.last().is_some_and(|last| last.start() == token.start())
+                    );
+                    let last = self.tokens.last_mut().unwrap();
+                    *last = token;
+                }
+                FinishTokenMode::Discard => {}
             }
         }
         self.trivia_builder.handle_token(token);
@@ -294,12 +335,56 @@ impl<'a, C: Config> Lexer<'a, C> {
         token
     }
 
+    /// Overwrite the last token in the collected token stream.
+    ///
+    /// Used to restore a token that was popped by `re_lex_as_typescript_l_angle`
+    /// when `try_parse` fails and rewinds.
+    #[inline]
+    pub(crate) fn rewrite_last_collected_token(&mut self, token: Token) {
+        // Make this function a no-op when tokens are statically disabled (`NoTokensLexerConfig`)
+        if C::TOKENS_METHOD_IS_STATIC && !self.config.tokens() {
+            return;
+        }
+
+        // Because of the static check above, there's no need to check `self.config.tokens()` here.
+        //
+        // * If tokens are statically disabled, we already exited.
+        // * If tokens are statically enabled, then `self.tokens` is always non-empty.
+        // * If tokens are runtime disabled, then `self.tokens` is always empty.
+        // * If tokens are runtime enabled, then `self.tokens` is always non-empty.
+        //
+        // So checking `self.config.tokens()` too here would be redundant,
+        // and would be an extra branch with runtime config (`RuntimeLexerConfig`).
+        if let Some(last) = self.tokens.last_mut() {
+            *last = token;
+        } else {
+            // When tokens are enabled, this should be unreachable
+            debug_assert!(!self.config.tokens());
+        }
+    }
+
     pub(crate) fn take_tokens(&mut self) -> ArenaVec<'a, Token> {
-        std::mem::replace(&mut self.tokens, ArenaVec::new_in(self.allocator))
+        mem::replace(&mut self.tokens, ArenaVec::new_in(self.allocator))
     }
 
     pub(crate) fn set_tokens(&mut self, tokens: ArenaVec<'a, Token>) {
         self.tokens = tokens;
+    }
+
+    /// Finalize tokens and return them.
+    /// Called at very end of parsing.
+    pub(crate) fn finalize_tokens(&mut self) -> ArenaVec<'a, Token> {
+        if self.config.tokens() {
+            // Tokens are enabled. Discard last token, which is `Eof`.
+            let mut tokens = self.take_tokens();
+            let last_token = tokens.pop();
+            debug_assert!(last_token.is_some_and(|token| token.kind() == Kind::Eof));
+            tokens
+        } else {
+            // Tokens are disabled. Just return an empty vec.
+            debug_assert!(self.tokens.is_empty());
+            ArenaVec::new_in(self.allocator)
+        }
     }
 
     /// Advance source cursor to end of file.

@@ -13,7 +13,11 @@ const { execSync } = require("child_process");
  */
 function exec(command) {
   try {
-    return execSync(command, { encoding: "utf-8", stdio: ["ignore", "pipe", "ignore"] }).trim();
+    return execSync(command, {
+      encoding: "utf-8",
+      stdio: ["ignore", "pipe", "ignore"],
+      maxBuffer: 16 * 1024 * 1024,
+    }).trim();
   } catch (error) {
     console.error(`Error executing command: ${command}`);
     console.error(error.message);
@@ -33,7 +37,7 @@ function getCrateDependencies(packages, options = {}) {
   const pkgs = Array.isArray(packages) ? packages : [packages];
   const packageArgs = pkgs.map((pkg) => `-p ${pkg}`).join(" ");
 
-  let command = `cargo tree ${packageArgs} -f '{lib}' -e normal --no-dedupe --prefix none`;
+  let command = `cargo tree ${packageArgs} -f '{lib}' -e normal --prefix none`;
 
   if (options.features) {
     command += ` --features ${options.features}`;
@@ -47,6 +51,7 @@ function getCrateDependencies(packages, options = {}) {
 
   const deps = output
     .split("\n")
+    .map((dep) => dep.replace(/\s+\(\*\)$/u, ""))
     .filter((dep) => dep && dep.includes("oxc") && !pkgs.includes(dep));
 
   if (deps.length === 0) {

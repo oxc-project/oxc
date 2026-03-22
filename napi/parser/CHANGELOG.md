@@ -4,6 +4,36 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.120.0] - 2026-03-16
+
+### ⚡ Performance
+
+- 9cd612f linter/plugins: Recycle comment objects (#20362) (overlookmotel)
+
+## [0.119.0] - 2026-03-14
+
+### 📚 Documentation
+
+- e4aa5b5 parser/napi, linter/plugins: Add JSDoc comments to raw transfer constants (#20286) (overlookmotel)
+
+## [0.117.0] - 2026-03-09
+
+### 🐛 Bug Fixes
+
+- 92cfb14 linter/plugins: Fix types for `walkProgram` and `walkProgramWithCfg` (#20081) (overlookmotel)
+- ee0491e apps,napi: Explicitly specify libs in tsconfigs (#20071) (camc314)
+
+## [0.116.0] - 2026-03-02
+
+### ⚡ Performance
+
+- 05ccf9f linter/plugins: Transfer tokens via raw transfer (#19893) (overlookmotel)
+- 6a6513c linter/plugins: Use Oxc tokens in plugins (#19498) (camc314)
+
+### 📚 Documentation
+
+- 2fa936f README.md: Map npm package links to npmx.dev (#19666) (Boshen)
+
 ## [0.114.0] - 2026-02-16
 
 ### 🚀 Features

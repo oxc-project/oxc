@@ -188,24 +188,33 @@ where
 
     // 2. Check binary concat context (walk parent chain)
     for ancestor in ancestors {
-        let AstNodes::BinaryExpression(binary) = ancestor else {
-            break;
-        };
+        match ancestor {
+            AstNodes::BinaryExpression(binary) if binary.operator() == BinaryOperator::Addition => {
+                let left = binary.left().span();
+                let right = binary.right().span();
 
-        if binary.operator() != BinaryOperator::Addition {
-            break;
-        }
+                // Left operand needs trailing space for separation from `+ right`
+                if left.contains_inclusive(span) {
+                    collapse.end = false;
+                }
+                // Right operand needs leading space for separation from `left +`
+                if right.contains_inclusive(span) {
+                    collapse.start = false;
+                }
 
-        let left = binary.left().span();
-        let right = binary.right().span();
-
-        // Left operand needs trailing space for separation from `+ right`
-        if left.contains_inclusive(span) {
-            collapse.end = false;
-        }
-        // Right operand needs leading space for separation from `left +`
-        if right.contains_inclusive(span) {
-            collapse.start = false;
+                // Both flags are one-way latches; no need to continue once both are set.
+                if !collapse.start && !collapse.end {
+                    break;
+                }
+            }
+            // Transparent nodes: skip through to find outer BinaryExpression(+)
+            AstNodes::ConditionalExpression(_)
+            | AstNodes::ParenthesizedExpression(_)
+            | AstNodes::TSAsExpression(_)
+            | AstNodes::TSSatisfiesExpression(_)
+            | AstNodes::TSNonNullExpression(_)
+            | AstNodes::TSTypeAssertion(_) => {}
+            _ => break,
         }
     }
 

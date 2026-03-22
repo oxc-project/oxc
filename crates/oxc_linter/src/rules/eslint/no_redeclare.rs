@@ -12,14 +12,17 @@ use crate::{
 };
 
 fn no_redeclare_diagnostic(name: &str, decl_span: Span, re_decl_span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("'{name}' is already defined.")).with_labels([
-        decl_span.label(format!("'{name}' is already defined.")),
-        re_decl_span.label("It can not be redeclared here."),
-    ])
+    OxcDiagnostic::warn(format!("'{name}' is already defined."))
+        .with_help("Use a different variable name or remove the duplicate declaration.")
+        .with_labels([
+            decl_span.label(format!("'{name}' is already defined.")),
+            re_decl_span.label("It can not be redeclared here."),
+        ])
 }
 
 fn no_redeclare_as_builtin_in_diagnostic(name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("'{name}' is already defined as a built-in global variable."))
+        .with_help("Use a different variable name to avoid shadowing the built-in global.")
         .with_label(span)
 }
 

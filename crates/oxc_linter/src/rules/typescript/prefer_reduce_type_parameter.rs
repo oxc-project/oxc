@@ -8,11 +8,11 @@ pub struct PreferReduceTypeParameter;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This rule prefers using a type parameter for the accumulator in Array.reduce instead of casting.
+    /// This rule prefers using a type parameter for the accumulator in `Array#reduce()` instead of casting.
     ///
     /// ### Why is this bad?
     ///
-    /// Array.reduce can be called with a generic type parameter to specify the type of the accumulator. This is preferred over casting the result because it provides better type safety and is more explicit about the intended type.
+    /// `Array#reduce()` can be called with a generic type parameter to specify the type of the accumulator. This is preferred over casting the result because it provides better type safety and is more explicit about the intended type.
     ///
     /// ### Examples
     ///

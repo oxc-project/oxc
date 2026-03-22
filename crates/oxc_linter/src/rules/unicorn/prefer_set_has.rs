@@ -44,7 +44,7 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// Set#has() is faster than Array#includes().
+    /// `Set#has()` is faster than `Array#includes()`.
     ///
     /// ### Examples
     ///

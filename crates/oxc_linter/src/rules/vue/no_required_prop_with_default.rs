@@ -1,15 +1,17 @@
+use rustc_hash::FxHashSet;
+
 use oxc_ast::{
     AstKind,
     ast::{
-        BindingPattern, ExportDefaultDeclarationKind, Expression, ObjectExpression,
-        ObjectPropertyKind, PropertyKey, TSMethodSignatureKind, TSSignature, TSType, TSTypeName,
-        VariableDeclarator,
+        BindingPattern, CallExpression, ExportDefaultDeclaration, ExportDefaultDeclarationKind,
+        Expression, ObjectExpression, ObjectPropertyKind, PropertyKey, TSMethodSignatureKind,
+        TSSignature, TSType, TSTypeName, VariableDeclarator,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::NodeId;
 use oxc_span::{GetSpan, Span};
-use rustc_hash::FxHashSet;
 
 use crate::{
     AstNode,
@@ -79,31 +81,37 @@ declare_oxc_lint!(
 
 impl Rule for NoRequiredPropWithDefault {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let is_vue = ctx.file_extension().is_some_and(|ext| ext == "vue");
-        if is_vue {
-            self.run_on_vue(node, ctx);
-        } else {
-            self.check_define_component(node, ctx);
+        match node.kind() {
+            AstKind::CallExpression(call_expr) => {
+                if ctx.file_extension().is_some_and(|ext| ext == "vue") {
+                    Self::run_on_vue(node.id(), call_expr, ctx);
+                } else {
+                    Self::check_define_component(call_expr, ctx);
+                }
+            }
+            AstKind::ExportDefaultDeclaration(export_default_decl)
+                if ctx.file_extension().is_some_and(|ext| ext == "vue")
+                    && ctx.frameworks_options() != FrameworkOptions::VueSetup =>
+            {
+                Self::run_on_composition(export_default_decl, ctx);
+            }
+            _ => {}
         }
     }
 }
 
 impl NoRequiredPropWithDefault {
-    fn run_on_vue<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run_on_vue<'a>(node_id: NodeId, call_expr: &CallExpression<'a>, ctx: &LintContext<'a>) {
         if ctx.frameworks_options() == FrameworkOptions::VueSetup {
-            self.run_on_setup(node, ctx);
+            Self::run_on_setup(node_id, call_expr, ctx);
         } else {
-            self.run_on_composition(node, ctx);
+            Self::check_define_component(call_expr, ctx);
         }
     }
 
-    #[expect(clippy::unused_self)]
-    fn check_define_component(&self, node: &AstNode<'_>, ctx: &LintContext<'_>) {
+    fn check_define_component(call_expr: &CallExpression<'_>, ctx: &LintContext<'_>) {
         // only check `defineComponent` method
         // e.g. `let component = defineComponent({ props: { name: { required: true, default: 'a' } } })`
-        let AstKind::CallExpression(call_expr) = node.kind() else {
-            return;
-        };
         let Some(ident) = call_expr.callee.get_identifier_reference() else {
             return;
         };
@@ -116,10 +124,7 @@ impl NoRequiredPropWithDefault {
         }
     }
 
-    fn run_on_setup<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::CallExpression(call_expr) = node.kind() else {
-            return;
-        };
+    fn run_on_setup<'a>(node_id: NodeId, call_expr: &CallExpression<'a>, ctx: &LintContext<'a>) {
         let Some(ident) = call_expr.callee.get_identifier_reference() else {
             return;
         };
@@ -134,7 +139,7 @@ impl NoRequiredPropWithDefault {
                     // 1. const props = defineProps({ name: { required: true, default: 'a' } })
                     // 2. const { name = 'a' } =  defineProps({ name: { required: true } })
                     let key_hash =
-                        collect_hash_from_variable_declarator(ctx, node).unwrap_or_default();
+                        collect_hash_from_variable_declarator(ctx, node_id).unwrap_or_default();
                     handle_prop_object(ctx, obj, Some(&key_hash));
                 }
                 if call_expr.arguments.is_empty() {
@@ -146,7 +151,7 @@ impl NoRequiredPropWithDefault {
                     let Some(first_type_argument) = type_args.params.first() else {
                         return;
                     };
-                    if let Some(key_hash) = collect_hash_from_variable_declarator(ctx, node) {
+                    if let Some(key_hash) = collect_hash_from_variable_declarator(ctx, node_id) {
                         handle_type_argument(ctx, first_type_argument, &key_hash);
                     }
                 }
@@ -170,25 +175,21 @@ impl NoRequiredPropWithDefault {
                 }
             }
             _ => {
-                self.check_define_component(node, ctx);
+                Self::check_define_component(call_expr, ctx);
             }
         }
     }
 
-    fn run_on_composition<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
-            AstKind::ExportDefaultDeclaration(export_default_decl) => {
-                let ExportDefaultDeclarationKind::ObjectExpression(obj_expr) =
-                    &export_default_decl.declaration
-                else {
-                    return;
-                };
-                handle_object_expression(ctx, obj_expr);
-            }
-            _ => {
-                self.check_define_component(node, ctx);
-            }
-        }
+    fn run_on_composition<'a>(
+        export_default_decl: &ExportDefaultDeclaration<'a>,
+        ctx: &LintContext<'a>,
+    ) {
+        let ExportDefaultDeclarationKind::ObjectExpression(obj_expr) =
+            &export_default_decl.declaration
+        else {
+            return;
+        };
+        handle_object_expression(ctx, obj_expr);
     }
 }
 
@@ -214,9 +215,9 @@ fn collect_hash_from_object_expr(obj: &ObjectExpression) -> Option<FxHashSet<Str
 
 fn collect_hash_from_variable_declarator(
     ctx: &LintContext<'_>,
-    node: &AstNode,
+    node_id: NodeId,
 ) -> Option<FxHashSet<String>> {
-    let var_decl = get_first_variable_decl_ancestor(ctx, node)?;
+    let var_decl = get_first_variable_decl_ancestor(ctx, node_id)?;
     let BindingPattern::ObjectPattern(obj_pattern) = &var_decl.id else {
         return None;
     };
@@ -237,9 +238,9 @@ fn collect_hash_from_variable_declarator(
 
 fn get_first_variable_decl_ancestor<'a>(
     ctx: &LintContext<'a>,
-    node: &AstNode,
+    node_id: NodeId,
 ) -> Option<&'a VariableDeclarator<'a>> {
-    ctx.nodes().ancestors(node.id()).find_map(|ancestor| {
+    ctx.nodes().ancestors(node_id).find_map(|ancestor| {
         if let AstKind::VariableDeclarator(var_decl) = ancestor.kind() {
             Some(var_decl)
         } else {
@@ -695,190 +696,190 @@ fn test() {
         ),
         (
             r#"
-    		        <script setup lang="ts">
-    		          interface TestPropType {
-    		            name: string
-    		            age?: number
-    		          }
-    		          const props = withDefaults(
-    		            defineProps<TestPropType>(),
-    		            {
-    		              name: "World",
-    		            }
-    		          );
-    		        </script>
-    		      "#,
+                    <script setup lang="ts">
+                      interface TestPropType {
+                        name: string
+                        age?: number
+                      }
+                      const props = withDefaults(
+                        defineProps<TestPropType>(),
+                        {
+                          name: "World",
+                        }
+                      );
+                    </script>
+                  "#,
             Some(serde_json::json!([{ "autofix": true }])),
             None,
             Some(PathBuf::from("test.vue")),
         ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
         (
             r#"
-    		        <script setup lang="ts">
-    		          interface TestPropType {
-    		            name: string | number
-    		            age?: number
-    		          }
-    		          const props = withDefaults(
-    		            defineProps<TestPropType>(),
-    		            {
-    		              name: "World",
-    		            }
-    		          );
-    		        </script>
-    		      "#,
+                    <script setup lang="ts">
+                      interface TestPropType {
+                        name: string | number
+                        age?: number
+                      }
+                      const props = withDefaults(
+                        defineProps<TestPropType>(),
+                        {
+                          name: "World",
+                        }
+                      );
+                    </script>
+                  "#,
             Some(serde_json::json!([{ "autofix": true }])),
             None,
             Some(PathBuf::from("test.vue")),
         ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
         (
             r#"
-    		        <script setup lang="ts">
-    		          interface TestPropType {
-    		            'na::me': string
-    		            age?: number
-    		          }
-    		          const props = withDefaults(
-    		            defineProps<TestPropType>(),
-    		            {
-    		              'na::me': "World",
-    		            }
-    		          );
-    		        </script>
-    		      "#,
+                    <script setup lang="ts">
+                      interface TestPropType {
+                        'na::me': string
+                        age?: number
+                      }
+                      const props = withDefaults(
+                        defineProps<TestPropType>(),
+                        {
+                          'na::me': "World",
+                        }
+                      );
+                    </script>
+                  "#,
             Some(serde_json::json!([{ "autofix": true }])),
             None,
             Some(PathBuf::from("test.vue")),
         ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
         (
             r#"
-    		        <script setup lang="ts">
-    		          import nameType from 'name.ts';
-    		          interface TestPropType {
-    		            name: nameType
-    		            age?: number
-    		          }
-    		          const props = withDefaults(
-    		            defineProps<TestPropType>(),
-    		            {
-    		              name: "World",
-    		            }
-    		          );
-    		        </script>
-    		      "#,
+                    <script setup lang="ts">
+                      import nameType from 'name.ts';
+                      interface TestPropType {
+                        name: nameType
+                        age?: number
+                      }
+                      const props = withDefaults(
+                        defineProps<TestPropType>(),
+                        {
+                          name: "World",
+                        }
+                      );
+                    </script>
+                  "#,
             Some(serde_json::json!([{ "autofix": true }])),
             None,
             Some(PathBuf::from("test.vue")),
         ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
         (
             r#"
-    		        <script setup lang="ts">
-    		          interface TestPropType {
-    		            name
-    		          }
-    		          const props = withDefaults(
-    		            defineProps<TestPropType>(),
-    		            {
-    		              name: "World",
-    		            }
-    		          );
-    		        </script>
-    		      "#,
+                    <script setup lang="ts">
+                      interface TestPropType {
+                        name
+                      }
+                      const props = withDefaults(
+                        defineProps<TestPropType>(),
+                        {
+                          name: "World",
+                        }
+                      );
+                    </script>
+                  "#,
             Some(serde_json::json!([{ "autofix": true }])),
             None,
             Some(PathBuf::from("test.vue")),
         ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
         (
             r#"
-    		        <script setup lang="ts">
-    		          interface TestPropType {
-    		            name
-    		            age?: number
-    		          }
-    		          const props = withDefaults(
-    		            defineProps<TestPropType>(),
-    		            {
-    		              name: "World",
-    		            }
-    		          );
-    		        </script>
-    		      "#,
+                    <script setup lang="ts">
+                      interface TestPropType {
+                        name
+                        age?: number
+                      }
+                      const props = withDefaults(
+                        defineProps<TestPropType>(),
+                        {
+                          name: "World",
+                        }
+                      );
+                    </script>
+                  "#,
             Some(serde_json::json!([{ "autofix": true }])),
             None,
             Some(PathBuf::from("test.vue")),
         ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
         (
             r#"
-    		        <script setup lang="ts">
-    		          interface TestPropType {
-    		            'na\\"me2'
-    		            age?: number
-    		          }
-    		          const props = withDefaults(
-    		            defineProps<TestPropType>(),
-    		            {
-    		              'na\\"me2': "World",
-    		            }
-    		          );
-    		        </script>
-    		      "#,
+                    <script setup lang="ts">
+                      interface TestPropType {
+                        'na\\"me2'
+                        age?: number
+                      }
+                      const props = withDefaults(
+                        defineProps<TestPropType>(),
+                        {
+                          'na\\"me2': "World",
+                        }
+                      );
+                    </script>
+                  "#,
             Some(serde_json::json!([{ "autofix": true }])),
             None,
             Some(PathBuf::from("test.vue")),
         ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
         (
             r#"
-    		        <script setup lang="ts">
-    		          interface TestPropType {
-    		            foo(): void
-    		            age?: number
-    		          }
-    		          const props = withDefaults(
-    		            defineProps<TestPropType>(),
-    		            {
-    		              foo() {console.log(123)},
-    		            }
-    		          );
-    		        </script>
-    		      "#,
+                    <script setup lang="ts">
+                      interface TestPropType {
+                        foo(): void
+                        age?: number
+                      }
+                      const props = withDefaults(
+                        defineProps<TestPropType>(),
+                        {
+                          foo() {console.log(123)},
+                        }
+                      );
+                    </script>
+                  "#,
             Some(serde_json::json!([{ "autofix": true }])),
             None,
             Some(PathBuf::from("test.vue")),
         ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
         (
             r#"
-    		        <script setup lang="ts">
-    		          interface TestPropType {
-    		            readonly name
-    		            age?: number
-    		          }
-    		          const props = withDefaults(
-    		            defineProps<TestPropType>(),
-    		            {
-    		              name: 'World',
-    		            }
-    		          );
-    		        </script>
-    		      "#,
+                    <script setup lang="ts">
+                      interface TestPropType {
+                        readonly name
+                        age?: number
+                      }
+                      const props = withDefaults(
+                        defineProps<TestPropType>(),
+                        {
+                          name: 'World',
+                        }
+                      );
+                    </script>
+                  "#,
             Some(serde_json::json!([{ "autofix": true }])),
             None,
             Some(PathBuf::from("test.vue")),
         ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
         (
             r#"
-    		        <script setup lang="ts">
-    		          interface TestPropType {
-    		            readonly 'name'
-    		            age?: number
-    		          }
-    		          const props = withDefaults(
-    		            defineProps<TestPropType>(),
-    		            {
-    		              'name': 'World',
-    		            }
-    		          );
-    		        </script>
-    		      "#,
+                    <script setup lang="ts">
+                      interface TestPropType {
+                        readonly 'name'
+                        age?: number
+                      }
+                      const props = withDefaults(
+                        defineProps<TestPropType>(),
+                        {
+                          'name': 'World',
+                        }
+                      );
+                    </script>
+                  "#,
             Some(serde_json::json!([{ "autofix": true }])),
             None,
             Some(PathBuf::from("test.vue")),
@@ -886,19 +887,19 @@ fn test() {
         // Unicode escape in defaults: '\u0061' matches property 'a'
         (
             r#"
-    		        <script setup lang="ts">
-    		          interface TestPropType {
-    		            readonly 'a'
-    		            age?: number
-    		          }
-    		          const props = withDefaults(
-    		            defineProps<TestPropType>(),
-    		            {
-    		              '\u0061': 'World',
-    		            }
-    		          );
-    		        </script>
-    		      "#,
+                    <script setup lang="ts">
+                      interface TestPropType {
+                        readonly 'a'
+                        age?: number
+                      }
+                      const props = withDefaults(
+                        defineProps<TestPropType>(),
+                        {
+                          '\u0061': 'World',
+                        }
+                      );
+                    </script>
+                  "#,
             Some(serde_json::json!([{ "autofix": true }])),
             None,
             Some(PathBuf::from("test.vue")),
@@ -906,161 +907,161 @@ fn test() {
         // Unicode escape in interface: '\u0061' matches 'a' in defaults
         (
             r#"
-    		        <script setup lang="ts">
-    		          interface TestPropType {
-    		            readonly '\u0061'
-    		            age?: number
-    		          }
-    		          const props = withDefaults(
-    		            defineProps<TestPropType>(),
-    		            {
-    		              'a': 'World',
-    		            }
-    		          );
-    		        </script>
-    		      "#,
+                    <script setup lang="ts">
+                      interface TestPropType {
+                        readonly '\u0061'
+                        age?: number
+                      }
+                      const props = withDefaults(
+                        defineProps<TestPropType>(),
+                        {
+                          'a': 'World',
+                        }
+                      );
+                    </script>
+                  "#,
             Some(serde_json::json!([{ "autofix": true }])),
             None,
             Some(PathBuf::from("test.vue")),
         ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
         (
             "
-    		        <script>
-    		        export default {
-    		          props: {
-    		            name: {
-    		              required: true,
-    		              default: 'Hello'
-    		            }
-    		          }
-    		        }
-    		        </script>
-    		      ",
+                    <script>
+                    export default {
+                      props: {
+                        name: {
+                          required: true,
+                          default: 'Hello'
+                        }
+                      }
+                    }
+                    </script>
+                  ",
             Some(serde_json::json!([{ "autofix": true }])),
             None,
             Some(PathBuf::from("test.vue")),
         ),
         (
             "
-    		        <script>
-    		        export default {
-    		          props: {
-    		            'name': {
-    		              required: true,
-    		              default: 'Hello'
-    		            }
-    		          }
-    		        }
-    		        </script>
-    		      ",
+                    <script>
+                    export default {
+                      props: {
+                        'name': {
+                          required: true,
+                          default: 'Hello'
+                        }
+                      }
+                    }
+                    </script>
+                  ",
             Some(serde_json::json!([{ "autofix": true }])),
             None,
             Some(PathBuf::from("test.vue")),
         ),
         (
             "
-    		        <script>
-    		        import { defineComponent } from 'vue'
-    		        export default defineComponent({
-    		          props: {
-    		            'name': {
-    		              required: true,
-    		              default: 'Hello'
-    		            }
-    		          }
-    		        })
-    		        </script>
-    		      ",
+                    <script>
+                    import { defineComponent } from 'vue'
+                    export default defineComponent({
+                      props: {
+                        'name': {
+                          required: true,
+                          default: 'Hello'
+                        }
+                      }
+                    })
+                    </script>
+                  ",
             Some(serde_json::json!([{ "autofix": true }])),
             None,
             Some(PathBuf::from("test.vue")),
         ),
         (
             "
-    		        <script>
-    		        import { defineComponent } from 'vue'
-    		        export default defineComponent({
-    		          props: {
-    		            name: {
-    		              required: true,
-    		              default: 'Hello'
-    		            }
-    		          }
-    		        })
-    		        </script>
-    		      ",
+                    <script>
+                    import { defineComponent } from 'vue'
+                    export default defineComponent({
+                      props: {
+                        name: {
+                          required: true,
+                          default: 'Hello'
+                        }
+                      }
+                    })
+                    </script>
+                  ",
             Some(serde_json::json!([{ "autofix": true }])),
             None,
             Some(PathBuf::from("test.vue")),
         ),
         (
             "
-    		        <script>
-    		        import { defineComponent } from 'vue'
-    		        export default defineComponent({
-    		          props: {
-    		            name: {
-    		              required: true,
-    		              default: 'Hello'
-    		            }
-    		          }
-    		        })
-    		        </script>
-    		      ",
+                    <script>
+                    import { defineComponent } from 'vue'
+                    export default defineComponent({
+                      props: {
+                        name: {
+                          required: true,
+                          default: 'Hello'
+                        }
+                      }
+                    })
+                    </script>
+                  ",
             None,
             None,
             Some(PathBuf::from("test.vue")),
         ),
         (
             "
-    		        <script setup>
-    		          const props = defineProps({
-    		            name: {
-    		              required: true,
-    		              default: 'Hello'
-    		            }
-    		          })
-    		        </script>
-    		      ",
+                    <script setup>
+                      const props = defineProps({
+                        name: {
+                          required: true,
+                          default: 'Hello'
+                        }
+                      })
+                    </script>
+                  ",
             Some(serde_json::json!([{ "autofix": true }])),
             None,
             Some(PathBuf::from("test.vue")),
         ),
         (
             r#"
-    		        <script setup lang="ts">
-    		          interface TestPropType {
-    		            name: string
-    		          }
-    		          const {name="World"} = defineProps<TestPropType>();
-    		        </script>
-    		      "#,
+                    <script setup lang="ts">
+                      interface TestPropType {
+                        name: string
+                      }
+                      const {name="World"} = defineProps<TestPropType>();
+                    </script>
+                  "#,
             Some(serde_json::json!([{ "autofix": true }])),
             None,
             Some(PathBuf::from("test.vue")),
         ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
         (
             r#"
-    		        <script setup lang="ts">
-    		          const {name="World"} = defineProps<{
-    		            name: string
-    		          }>();
-    		        </script>
-    		      "#,
+                    <script setup lang="ts">
+                      const {name="World"} = defineProps<{
+                        name: string
+                      }>();
+                    </script>
+                  "#,
             Some(serde_json::json!([{ "autofix": true }])),
             None,
             Some(PathBuf::from("test.vue")),
         ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
         (
             r#"
-    		        <script setup lang="ts">
-    		          const {name="World"} = defineProps({
-    		            name: {
-    		              required: true,
-    		            }
-    		          });
-    		        </script>
-    		      "#,
+                    <script setup lang="ts">
+                      const {name="World"} = defineProps({
+                        name: {
+                          required: true,
+                        }
+                      });
+                    </script>
+                  "#,
             Some(serde_json::json!([{ "autofix": true }])),
             None,
             Some(PathBuf::from("test.vue")),

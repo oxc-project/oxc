@@ -176,6 +176,10 @@ fn test_object_literal() {
     // Object-spread may trigger getters.
     test_same("({...a})");
     test_same("({...foo()})");
+    // Spreading object literals is safe if contents are safe.
+    test("({...{}})", "");
+    test("({...{a: 1}})", "");
+    test("({...{a: foo()}})", "foo()");
     test("({ [{ foo: foo() }]: 0 })", "foo()");
     test("({ foo: { foo: foo() } })", "foo()");
 

@@ -14,6 +14,7 @@ describe("LSP formatting", () => {
       ["format/test.toml", "toml"],
       ["format/formatted.ts", "typescript"],
       ["format/test.txt", "plaintext"],
+      ["format/test.ts.txt", "typescript"],
     ])("should handle %s", async (path, languageId) => {
       expect(await formatFixture(FIXTURES_DIR, path, languageId)).toMatchSnapshot();
     });
@@ -22,6 +23,8 @@ describe("LSP formatting", () => {
   describe("config options", () => {
     it.each([
       ["config-semi/test.ts", "typescript"],
+      ["config-js-semi/test.ts", "typescript"],
+      ["config-vite-semi/test.ts", "typescript"],
       ["config-no-sort-package-json/package.json", "json"],
       ["config-vue-indent/test.vue", "vue"],
       ["config-sort-imports/test.js", "javascript"],
@@ -29,6 +32,7 @@ describe("LSP formatting", () => {
       ["config-sort-tailwindcss/test.vue", "vue"],
       ["config-sort-both/test.jsx", "javascriptreact"],
       ["editorconfig/test.ts", "typescript"],
+      ["config-js-stdout-pollution/test.ts", "typescript"],
     ])("should apply config from %s", async (path, languageId) => {
       expect(await formatFixture(FIXTURES_DIR, path, languageId)).toMatchSnapshot();
     });
@@ -65,7 +69,7 @@ describe("LSP formatting", () => {
     });
   });
 
-  describe("unsaved document", () => {
+  describe("in-memory document", () => {
     it.each([
       ["format/test.tsx", "typescriptreact"],
       ["format/test.json", "json"],
@@ -73,7 +77,7 @@ describe("LSP formatting", () => {
       ["format/test.toml", "toml"],
       ["format/formatted.ts", "typescript"],
       ["format/test.txt", "plaintext"],
-    ])("should format unsaved file %s", async (path, languageId) => {
+    ])("should format untitled file %s", async (path, languageId) => {
       expect(
         await formatFixtureContent(
           FIXTURES_DIR,
@@ -81,6 +85,37 @@ describe("LSP formatting", () => {
           "untitled://Untitled-" + languageId,
           languageId,
         ),
+      ).toMatchSnapshot();
+    });
+
+    it.each([
+      ["format/test.tsx", "typescriptreact"],
+      ["format/test.json", "json"],
+      ["format/test.vue", "vue"],
+      ["format/test.toml", "toml"],
+      ["format/formatted.ts", "typescript"],
+      ["format/test.txt", "plaintext"],
+    ])("should format vscode-userdata file %s", async (path, languageId) => {
+      expect(
+        await formatFixtureContent(
+          FIXTURES_DIR,
+          path,
+          "vscode-userdata://" + languageId,
+          languageId,
+        ),
+      ).toMatchSnapshot();
+    });
+
+    it.each([
+      ["format/test.tsx", "typescriptreact"],
+      ["format/test.json", "json"],
+      ["format/test.vue", "vue"],
+      ["format/test.toml", "toml"],
+      ["format/formatted.ts", "typescript"],
+      ["format/test.txt", "plaintext"],
+    ])("should format ccsettings file %s", async (path, languageId) => {
+      expect(
+        await formatFixtureContent(FIXTURES_DIR, path, "ccsettings://" + languageId, languageId),
       ).toMatchSnapshot();
     });
   });
@@ -103,6 +138,19 @@ describe("LSP formatting", () => {
           "typescript",
           {
             "fmt.configPath": "./format.json",
+          },
+        ),
+      ).toMatchSnapshot();
+    });
+
+    it("should use custom JS/TS config path from fmt.configPath", async () => {
+      expect(
+        await formatFixture(
+          FIXTURES_DIR,
+          "custom_config_path_js/semicolons-as-needed.ts",
+          "typescript",
+          {
+            "fmt.configPath": "./format.config.ts",
           },
         ),
       ).toMatchSnapshot();

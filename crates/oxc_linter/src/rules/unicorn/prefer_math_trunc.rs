@@ -153,6 +153,10 @@ fn test() {
         "const foo = ~3.9;",
         "const foo = 1.1 >> 1",
         "const foo = 0 << 1",
+        "let foo = 0;
+            foo |= 1;",
+        "let foo = 1.2; // comment 1
+            foo |= 1; // comment 2 and 1.2 | 0",
     ];
 
     let fail = vec![

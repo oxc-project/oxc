@@ -12,6 +12,7 @@ use crate::tester::{
 fn cases() {
     test_same_ignore_parse_errors("class C {\n\t@foo static accessor A = @bar class {};\n}\n");
     test_same_ignore_parse_errors("function foo(@foo x = @bar class {}) {}\n");
+    test_same_ignore_parse_errors("function foo(@foo ...rest) {}\n");
 }
 
 #[test]
@@ -29,11 +30,20 @@ fn module_decl() {
     test("import x from './foo.js' with {}", "import x from \"./foo.js\" with {};\n");
     test("import {} from './foo.js' with {}", "import {} from \"./foo.js\" with {};\n");
     test("export * from './foo.js' with {}", "export * from \"./foo.js\" with {};\n");
+    test(
+        "export { default } from './foo.js' with { type: 'json' }",
+        "export { default } from \"./foo.js\" with { type: \"json\" };\n",
+    );
+    test("export {} from './foo.js' with {}", "export {} from \"./foo.js\" with {};\n");
     test_minify("export { '☿' } from 'mod';", "export{\"☿\"}from\"mod\";");
     test_minify("export { '☿' as '☿' } from 'mod';", "export{\"☿\"}from\"mod\";");
     test_minify(
         "import x from './foo.custom' with { 'type': 'json' }",
         "import x from\"./foo.custom\"with{\"type\":\"json\"};",
+    );
+    test_minify(
+        "export { default } from './foo.js' with { type: 'json' }",
+        "export{default}from\"./foo.js\"with{type:\"json\"};",
     );
 }
 

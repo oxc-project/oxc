@@ -52,8 +52,7 @@ export type RuleDetails = CreateRuleDetails | CreateOnceRuleDetails;
 
 interface RuleDetailsBase {
   // Static properties of the rule
-  readonly fullName: string;
-  readonly context: Readonly<Context>;
+  readonly context: Context;
   readonly isFixable: boolean;
   readonly hasSuggestions: boolean;
   readonly messages: Readonly<Record<string, string>> | null;
@@ -64,7 +63,6 @@ interface RuleDetailsBase {
   readonly optionsSchemaValidator: SchemaValidator | false | null;
   // Updated for each file
   ruleIndex: number;
-  options: Readonly<Options> | null; // Initially `null`, set to options object before linting a file
 }
 
 interface CreateRuleDetails extends RuleDetailsBase {
@@ -250,7 +248,6 @@ export function registerPlugin(
 
     // Create `RuleDetails` object for rule.
     const ruleDetails: RuleDetails = {
-      fullName: fullRuleName,
       rule: rule as CreateRule, // Could also be `CreateOnceRule`, but just to satisfy type checker
       context: null!, // Filled in below
       isFixable,
@@ -259,7 +256,6 @@ export function registerPlugin(
       defaultOptions,
       optionsSchemaValidator: schemaValidator,
       ruleIndex: 0,
-      options: null,
       visitor: null,
       beforeHook: null,
       afterHook: null,
@@ -300,6 +296,10 @@ export function registerPlugin(
       (ruleDetails as unknown as Writable<CreateOnceRuleDetails>).beforeHook = beforeHook;
       (ruleDetails as unknown as Writable<CreateOnceRuleDetails>).afterHook = afterHook;
     }
+
+    // Set `id` property on `Context` object.
+    // Do this after calling `createOnce` - `createOnce` should not have access to `id` property.
+    Object.defineProperty(ruleDetails.context, "id", { value: fullRuleName });
 
     registeredRules.push(ruleDetails);
   }

@@ -304,7 +304,7 @@ impl TestRunner {
     /// Extract single output section from snapshot file which contains multiple test cases.
     ///
     /// Format is like below:
-    /// ```
+    /// ```text
     /// filename1
     /// ===optionsA===
     /// ====input1====

@@ -230,3 +230,12 @@ source: crates/oxc_linter/src/tester.rs
  7 │                     }
    ╰────
   help: Require or disallow initialization in variable declarations
+
+  ⚠ eslint(init-declarations): Variable 'valueOutside' should be initialized on declaration.
+   ╭─[init_declarations.tsx:5:25]
+ 4 │                   }
+ 5 │                     let valueOutside: number;
+   ·                         ────────────────────
+ 6 │                         
+   ╰────
+  help: Require or disallow initialization in variable declarations

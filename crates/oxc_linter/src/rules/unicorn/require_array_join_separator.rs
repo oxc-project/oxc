@@ -23,12 +23,12 @@ pub struct RequireArrayJoinSeparator;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Enforce using the separator argument with Array#join()
+    /// Enforce using the separator argument with `Array#join()`.
     ///
     /// ### Why is this bad?
     ///
-    /// It's better to make it clear what the separator is when calling Array#join(),
-    /// instead of relying on the default comma (',') separator.
+    /// It's better to make it clear what the separator is when calling `Array#join()`,
+    /// instead of relying on the default comma (`','`) separator.
     ///
     /// ### Examples
     ///
@@ -166,6 +166,32 @@ fn test() {
         "[].join.call(foo , );",
         "Array.prototype.join.call(foo)",
         "Array.prototype.join.call(foo, )",
+        "(
+                /**/
+                [
+                    /**/
+                ]
+                    /**/
+                    .
+                    /**/
+                    join
+                    /**/
+                    .
+                    /**/
+                    call
+                    /**/
+                    (
+                        /**/
+                        (
+                            /**/
+                            foo
+                            /**/
+                        )
+                        /**/
+                        ,
+                        /**/
+                    )/**/
+            )",
         "foo?.join()",
     ];
 

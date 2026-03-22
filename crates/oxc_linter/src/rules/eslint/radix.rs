@@ -11,7 +11,9 @@ use serde::{Deserialize, Serialize};
 use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn missing_parameters(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Missing parameters.").with_label(span)
+    OxcDiagnostic::warn("Missing parameters.")
+        .with_help("Add parameters for parsing numbers, e.g., `parseInt('10', 10)`.")
+        .with_label(span)
 }
 
 fn missing_radix(span: Span) -> OxcDiagnostic {
@@ -22,6 +24,7 @@ fn missing_radix(span: Span) -> OxcDiagnostic {
 
 fn invalid_radix(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Invalid radix parameter, must be an integer between 2 and 36.")
+        .with_help("The radix parameter should be an integer between 2 and 36, or a variable that is not `undefined`.")
         .with_label(span)
 }
 

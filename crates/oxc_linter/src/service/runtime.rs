@@ -19,9 +19,9 @@ use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet, FxHasher};
 use self_cell::self_cell;
 use smallvec::SmallVec;
 
-use oxc_allocator::{Allocator, AllocatorGuard, AllocatorPool};
+use oxc_allocator::{Allocator, AllocatorGuard, AllocatorPool, Box as ArenaBox};
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, Error, OxcDiagnostic};
-use oxc_parser::{ParseOptions, Parser};
+use oxc_parser::{ParseOptions, Parser, Token, config::RuntimeParserConfig};
 use oxc_resolver::Resolver;
 use oxc_semantic::{Semantic, SemanticBuilder};
 use oxc_span::{CompactStr, SourceType, VALID_EXTENSIONS};
@@ -127,6 +127,9 @@ struct SectionContent<'a> {
     /// None if section parsing failed. The corresponding item with the same index in
     /// `ProcessedModule.section_module_records` would be `Err(Vec<OxcDiagnostic>)`.
     semantic: Option<Semantic<'a>>,
+    /// Parser tokens for the section.
+    /// Empty if section parsing failed, or if token collection was not requested (no JS plugins).
+    parser_tokens: ArenaBox<'a, [Token]>,
 }
 
 /// A module with its source text and semantic, ready to be linted.
@@ -619,6 +622,7 @@ impl Runtime {
                                         Arc::clone(&module_record),
                                         section.source.start,
                                         section.source.framework_options,
+                                        section.parser_tokens,
                                     ))
                                 }
                                 Err(messages) => {
@@ -738,6 +742,7 @@ impl Runtime {
                                         Arc::clone(&module_record),
                                         section.source.start,
                                         section.source.framework_options,
+                                        section.parser_tokens,
                                     ))
                                 }
                                 Err(diagnostics) => {
@@ -811,7 +816,8 @@ impl Runtime {
                                     section.semantic.unwrap(),
                                     Arc::clone(&module_record),
                                     section.source.start,
-                                    section.source.framework_options
+                                    section.source.framework_options,
+                                    section.parser_tokens,
                                 )),
                                 Err(errors) => {
                                     if !errors.is_empty() {
@@ -973,12 +979,13 @@ impl Runtime {
                 section_source.source_type,
                 check_syntax_errors,
             ) {
-                Ok((record, semantic)) => {
+                Ok((record, semantic, parser_tokens)) => {
                     section_module_records.push(Ok(record));
                     if let Some(sections) = &mut out_sections {
                         sections.push(SectionContent {
                             source: section_source,
                             semantic: Some(semantic),
+                            parser_tokens,
                         });
                     }
                 }
@@ -999,7 +1006,11 @@ impl Runtime {
 
                     section_module_records.push(Err(err));
                     if let Some(sections) = &mut out_sections {
-                        sections.push(SectionContent { source: section_source, semantic: None });
+                        sections.push(SectionContent {
+                            source: section_source,
+                            semantic: None,
+                            parser_tokens: ArenaBox::new_empty_boxed_slice(),
+                        });
                     }
                 }
             }
@@ -1007,6 +1018,7 @@ impl Runtime {
         section_module_records
     }
 
+    #[expect(clippy::type_complexity)]
     fn process_source_section<'a>(
         &self,
         path: &Path,
@@ -1014,13 +1026,16 @@ impl Runtime {
         source_text: &'a str,
         source_type: SourceType,
         check_syntax_errors: bool,
-    ) -> Result<(ResolvedModuleRecord, Semantic<'a>), Vec<OxcDiagnostic>> {
+    ) -> Result<(ResolvedModuleRecord, Semantic<'a>, ArenaBox<'a, [Token]>), Vec<OxcDiagnostic>>
+    {
+        let collect_tokens = self.linter.has_external_linter();
         let ret = Parser::new(allocator, source_text, source_type)
             .with_options(ParseOptions {
                 parse_regular_expression: true,
                 allow_return_outside_function: true,
                 ..ParseOptions::default()
             })
+            .with_config(RuntimeParserConfig::new(collect_tokens))
             .parse();
 
         if !ret.errors.is_empty() {
@@ -1041,17 +1056,18 @@ impl Runtime {
 
         let module_record = Arc::new(ModuleRecord::new(path, &ret.module_record, &semantic));
 
+        let tokens = ret.tokens.into_boxed_slice();
+
         let mut resolved_module_requests: Vec<ResolvedModuleRequest> = vec![];
 
         // If import plugin is enabled.
         if let Some(resolver) = &self.resolver {
             // Retrieve all dependent modules from this module.
-            let dir = path.parent().unwrap();
             resolved_module_requests = module_record
                 .requested_modules
                 .keys()
                 .filter_map(|specifier| {
-                    let resolution = resolver.resolve(dir, specifier).ok()?;
+                    let resolution = resolver.resolve_file(path, specifier).ok()?;
                     Some(ResolvedModuleRequest {
                         specifier: specifier.clone(),
                         resolved_requested_path: Arc::<OsStr>::from(resolution.path().as_os_str()),
@@ -1059,6 +1075,6 @@ impl Runtime {
                 })
                 .collect();
         }
-        Ok((ResolvedModuleRecord { module_record, resolved_module_requests }, semantic))
+        Ok((ResolvedModuleRecord { module_record, resolved_module_requests }, semantic, tokens))
     }
 }

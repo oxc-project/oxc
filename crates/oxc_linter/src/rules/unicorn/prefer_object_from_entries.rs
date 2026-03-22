@@ -345,6 +345,7 @@ fn test() {
         ("underscore.fromPairs(pairs)", None),
         ("_.fromPairs", None),
         ("_.fromPairs()", None),
+        ("_(pairs)", None),
         ("new _.fromPairs(pairs)", None),
         ("_.fromPairs(...[pairs])", None),
         ("_?.fromPairs(pairs)", None),

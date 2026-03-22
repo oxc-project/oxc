@@ -1,0 +1,27 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --ignore-path fixtures/cli/linter/.customignore --no-ignore fixtures/cli/linter/nan.js
+working directory: 
+----------
+
+  ! eslint(no-unused-expressions): Expected expression to be used
+   ,-[fixtures/cli/linter/nan.js:1:1]
+ 1 | 123 == NaN;
+   : ^^^^^^^^^^^
+   `----
+  help: Consider using this expression or removing it
+
+  ! eslint(use-isnan): Checking equality with NaN will always return false
+   ,-[fixtures/cli/linter/nan.js:1:8]
+ 1 | 123 == NaN;
+   :        ^^^
+   `----
+  help: Use the `isNaN` function to compare with NaN.
+
+Found 2 warnings and 0 errors.
+Finished in <variable>ms on 1 file with 93 rules using 1 threads.
+----------
+CLI result: LintSucceeded
+----------

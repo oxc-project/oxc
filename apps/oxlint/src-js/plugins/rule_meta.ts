@@ -29,7 +29,7 @@ export interface RuleMeta {
    * Type of fixes that the rule provides.
    * Must be `'code'` or `'whitespace'` if the rule provides fixes.
    */
-  fixable?: "code" | "whitespace";
+  fixable?: "code" | "whitespace" | null | undefined;
   /**
    * Specifies whether rule can return suggestions.
    * Must be `true` if the rule provides suggestions.

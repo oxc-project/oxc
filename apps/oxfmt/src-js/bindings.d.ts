@@ -34,7 +34,7 @@ export declare const enum Severity {
  * # Panics
  * Panics if the current working directory cannot be determined.
  */
-export declare function format(filename: string, sourceText: string, options: any | undefined | null, initExternalFormatterCb: (numThreads: number) => Promise<string[]>, formatEmbeddedCb: (options: Record<string, any>, code: string) => Promise<string>, formatFileCb: (options: Record<string, any>, code: string) => Promise<string>, sortTailwindClassesCb: (options: Record<string, any>, classes: string[]) => Promise<string[]>): Promise<FormatResult>
+export declare function format(filename: string, sourceText: string, options: any | undefined | null, initExternalFormatterCb: (numThreads: number) => Promise<string[]>, formatFileCb: (options: Record<string, any>, code: string) => Promise<string>, formatEmbeddedCb: (options: Record<string, any>, code: string) => Promise<string | null>, formatEmbeddedDocCb: (options: Record<string, any>, texts: string[]) => Promise<string[] | null>, sortTailwindClassesCb: (options: Record<string, any>, classes: string[]) => Promise<string[] | null>): Promise<FormatResult>
 
 export interface FormatResult {
   /** The formatted code. */
@@ -47,12 +47,9 @@ export interface FormatResult {
  * NAPI based `textToDoc` API entry point for `prettier-plugin-oxfmt`.
  *
  * This API is specialized for JS/TS snippets embedded in non-JS files.
- * Unlike `format()`, it is called only for JS/TS-in-xxx `textToDoc` flow.
- *
- * # Panics
- * Panics if the current working directory cannot be determined.
+ * Unlike `format()`, it is called only for js-in-xxx `textToDoc()` flow.
  */
-export declare function jsTextToDoc(filename: string, sourceText: string, oxfmtPluginOptionsJson: string, parentContext: string, initExternalFormatterCb: (numThreads: number) => Promise<string[]>, formatEmbeddedCb: (options: Record<string, any>, code: string) => Promise<string>, formatFileCb: (options: Record<string, any>, code: string) => Promise<string>, sortTailwindClassesCb: (options: Record<string, any>, classes: string[]) => Promise<string[]>): Promise<TextToDocResult>
+export declare function jsTextToDoc(sourceExt: string, sourceText: string, oxfmtPluginOptionsJson: string, parentContext: string, initExternalFormatterCb: (numThreads: number) => Promise<string[]>, formatFileCb: (options: Record<string, any>, code: string) => Promise<string>, formatEmbeddedCb: (options: Record<string, any>, code: string) => Promise<string | null>, formatEmbeddedDocCb: (options: Record<string, any>, texts: string[]) => Promise<string[] | null>, sortTailwindClassesCb: (options: Record<string, any>, classes: string[]) => Promise<string[] | null>): Promise<string | null>
 
 /**
  * NAPI based JS CLI entry point.
@@ -60,20 +57,14 @@ export declare function jsTextToDoc(filename: string, sourceText: string, oxfmtP
  *
  * JS side passes in:
  * 1. `args`: Command line arguments (process.argv.slice(2))
- * 2. `init_external_formatter_cb`: Callback to initialize external formatter
- * 3. `format_embedded_cb`: Callback to format embedded code in templates
+ * 2. `load_js_config_cb`: Callback to load JS/TS config files
+ * 3. `init_external_formatter_cb`: Callback to initialize external formatter
  * 4. `format_file_cb`: Callback to format files
- * 5. `sort_tailwindcss_classes_cb`: Callback to sort Tailwind classes
+ * 5. `format_embedded_cb`: Callback to format embedded code in templates
+ * 6. `sort_tailwindcss_classes_cb`: Callback to sort Tailwind classes
  *
  * Returns a tuple of `[mode, exitCode]`:
  * - `mode`: If main logic will run in JS side, use this to indicate which mode
  * - `exitCode`: If main logic already ran in Rust side, return the exit code
  */
-export declare function runCli(args: Array<string>, initExternalFormatterCb: (numThreads: number) => Promise<string[]>, formatEmbeddedCb: (options: Record<string, any>, code: string) => Promise<string>, formatFileCb: (options: Record<string, any>, code: string) => Promise<string>, sortTailwindcssClassesCb: (options: Record<string, any>, classes: string[]) => Promise<string[]>): Promise<[string, number | undefined | null]>
-
-export interface TextToDocResult {
-  /** The formatted code. */
-  doc: string
-  /** Parse and format errors. */
-  errors: Array<OxcError>
-}
+export declare function runCli(args: Array<string>, loadJsConfigCb: (path: string) => Promise<any>, initExternalFormatterCb: (numThreads: number) => Promise<string[]>, formatFileCb: (options: Record<string, any>, code: string) => Promise<string>, formatEmbeddedCb: (options: Record<string, any>, code: string) => Promise<string | null>, formatEmbeddedDocCb: (options: Record<string, any>, texts: string[]) => Promise<string[] | null>, sortTailwindcssClassesCb: (options: Record<string, any>, classes: string[]) => Promise<string[] | null>): Promise<[string, number | undefined | null]>

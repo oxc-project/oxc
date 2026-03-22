@@ -1,0 +1,7 @@
+{
+  "jsPlugins": ["./plugin.ts"],
+  "categories": { "correctness": "off" },
+  "rules": {
+    "tokens-and-comments-order-plugin/tokens-and-comments-order": "error"
+  }
+}

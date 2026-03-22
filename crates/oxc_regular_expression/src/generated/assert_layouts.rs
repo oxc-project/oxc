@@ -43,8 +43,8 @@ const _: () = {
     assert!(size_of::<LookAroundAssertion>() == 48);
     assert!(align_of::<LookAroundAssertion>() == 8);
     assert!(offset_of!(LookAroundAssertion, span) == 0);
-    assert!(offset_of!(LookAroundAssertion, kind) == 40);
     assert!(offset_of!(LookAroundAssertion, body) == 8);
+    assert!(offset_of!(LookAroundAssertion, kind) == 40);
 
     assert!(size_of::<LookAroundAssertionKind>() == 1);
     assert!(align_of::<LookAroundAssertionKind>() == 1);
@@ -55,15 +55,15 @@ const _: () = {
     assert!(offset_of!(Quantifier, span) == 0);
     assert!(offset_of!(Quantifier, min) == 8);
     assert!(offset_of!(Quantifier, max) == 16);
-    assert!(offset_of!(Quantifier, greedy) == 48);
     assert!(offset_of!(Quantifier, body) == 32);
+    assert!(offset_of!(Quantifier, greedy) == 48);
 
     // Padding: 3 bytes
     assert!(size_of::<Character>() == 16);
     assert!(align_of::<Character>() == 8);
     assert!(offset_of!(Character, span) == 0);
-    assert!(offset_of!(Character, kind) == 12);
     assert!(offset_of!(Character, value) == 8);
+    assert!(offset_of!(Character, kind) == 12);
 
     assert!(size_of::<CharacterKind>() == 1);
     assert!(align_of::<CharacterKind>() == 1);
@@ -81,10 +81,10 @@ const _: () = {
     assert!(size_of::<UnicodePropertyEscape>() == 48);
     assert!(align_of::<UnicodePropertyEscape>() == 8);
     assert!(offset_of!(UnicodePropertyEscape, span) == 0);
-    assert!(offset_of!(UnicodePropertyEscape, negative) == 40);
-    assert!(offset_of!(UnicodePropertyEscape, strings) == 41);
     assert!(offset_of!(UnicodePropertyEscape, name) == 8);
     assert!(offset_of!(UnicodePropertyEscape, value) == 24);
+    assert!(offset_of!(UnicodePropertyEscape, negative) == 40);
+    assert!(offset_of!(UnicodePropertyEscape, strings) == 41);
 
     // Padding: 0 bytes
     assert!(size_of::<Dot>() == 8);
@@ -95,10 +95,10 @@ const _: () = {
     assert!(size_of::<CharacterClass>() == 40);
     assert!(align_of::<CharacterClass>() == 8);
     assert!(offset_of!(CharacterClass, span) == 0);
+    assert!(offset_of!(CharacterClass, body) == 8);
     assert!(offset_of!(CharacterClass, negative) == 32);
     assert!(offset_of!(CharacterClass, strings) == 33);
     assert!(offset_of!(CharacterClass, kind) == 34);
-    assert!(offset_of!(CharacterClass, body) == 8);
 
     assert!(size_of::<CharacterClassContentsKind>() == 1);
     assert!(align_of::<CharacterClassContentsKind>() == 1);
@@ -117,15 +117,15 @@ const _: () = {
     assert!(size_of::<ClassStringDisjunction>() == 40);
     assert!(align_of::<ClassStringDisjunction>() == 8);
     assert!(offset_of!(ClassStringDisjunction, span) == 0);
-    assert!(offset_of!(ClassStringDisjunction, strings) == 32);
     assert!(offset_of!(ClassStringDisjunction, body) == 8);
+    assert!(offset_of!(ClassStringDisjunction, strings) == 32);
 
     // Padding: 7 bytes
     assert!(size_of::<ClassString>() == 40);
     assert!(align_of::<ClassString>() == 8);
     assert!(offset_of!(ClassString, span) == 0);
-    assert!(offset_of!(ClassString, strings) == 32);
     assert!(offset_of!(ClassString, body) == 8);
+    assert!(offset_of!(ClassString, strings) == 32);
 
     // Padding: 0 bytes
     assert!(size_of::<CapturingGroup>() == 56);
@@ -201,8 +201,8 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(size_of::<LookAroundAssertion>() == 36);
     assert!(align_of::<LookAroundAssertion>() == 4);
     assert!(offset_of!(LookAroundAssertion, span) == 0);
-    assert!(offset_of!(LookAroundAssertion, kind) == 32);
     assert!(offset_of!(LookAroundAssertion, body) == 8);
+    assert!(offset_of!(LookAroundAssertion, kind) == 32);
 
     assert!(size_of::<LookAroundAssertionKind>() == 1);
     assert!(align_of::<LookAroundAssertionKind>() == 1);
@@ -213,15 +213,15 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(offset_of!(Quantifier, span) == 0);
     assert!(offset_of!(Quantifier, min) == 8);
     assert!(offset_of!(Quantifier, max) == 16);
-    assert!(offset_of!(Quantifier, greedy) == 44);
     assert!(offset_of!(Quantifier, body) == 32);
+    assert!(offset_of!(Quantifier, greedy) == 44);
 
     // Padding: 3 bytes
     assert!(size_of::<Character>() == 16);
     assert!(align_of::<Character>() == 4);
     assert!(offset_of!(Character, span) == 0);
-    assert!(offset_of!(Character, kind) == 12);
     assert!(offset_of!(Character, value) == 8);
+    assert!(offset_of!(Character, kind) == 12);
 
     assert!(size_of::<CharacterKind>() == 1);
     assert!(align_of::<CharacterKind>() == 1);
@@ -239,10 +239,10 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(size_of::<UnicodePropertyEscape>() == 28);
     assert!(align_of::<UnicodePropertyEscape>() == 4);
     assert!(offset_of!(UnicodePropertyEscape, span) == 0);
-    assert!(offset_of!(UnicodePropertyEscape, negative) == 24);
-    assert!(offset_of!(UnicodePropertyEscape, strings) == 25);
     assert!(offset_of!(UnicodePropertyEscape, name) == 8);
     assert!(offset_of!(UnicodePropertyEscape, value) == 16);
+    assert!(offset_of!(UnicodePropertyEscape, negative) == 24);
+    assert!(offset_of!(UnicodePropertyEscape, strings) == 25);
 
     // Padding: 0 bytes
     assert!(size_of::<Dot>() == 8);
@@ -253,10 +253,10 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(size_of::<CharacterClass>() == 28);
     assert!(align_of::<CharacterClass>() == 4);
     assert!(offset_of!(CharacterClass, span) == 0);
+    assert!(offset_of!(CharacterClass, body) == 8);
     assert!(offset_of!(CharacterClass, negative) == 24);
     assert!(offset_of!(CharacterClass, strings) == 25);
     assert!(offset_of!(CharacterClass, kind) == 26);
-    assert!(offset_of!(CharacterClass, body) == 8);
 
     assert!(size_of::<CharacterClassContentsKind>() == 1);
     assert!(align_of::<CharacterClassContentsKind>() == 1);
@@ -275,15 +275,15 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(size_of::<ClassStringDisjunction>() == 28);
     assert!(align_of::<ClassStringDisjunction>() == 4);
     assert!(offset_of!(ClassStringDisjunction, span) == 0);
-    assert!(offset_of!(ClassStringDisjunction, strings) == 24);
     assert!(offset_of!(ClassStringDisjunction, body) == 8);
+    assert!(offset_of!(ClassStringDisjunction, strings) == 24);
 
     // Padding: 3 bytes
     assert!(size_of::<ClassString>() == 28);
     assert!(align_of::<ClassString>() == 4);
     assert!(offset_of!(ClassString, span) == 0);
-    assert!(offset_of!(ClassString, strings) == 24);
     assert!(offset_of!(ClassString, body) == 8);
+    assert!(offset_of!(ClassString, strings) == 24);
 
     // Padding: 0 bytes
     assert!(size_of::<CapturingGroup>() == 40);

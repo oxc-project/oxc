@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /* eslint-disable no-console */
 
-const { execSync } = require("child_process");
+const { execSync, execFileSync } = require("child_process");
 const fs = require("fs");
 const path = require("path");
 
@@ -12,13 +12,23 @@ const path = require("path");
  * Example: node check-npm-packages.js "release-dir/*" "napi/parser"
  */
 
-function checkPackageExists(packageName) {
+/**
+ * Query npm registry for a package version.
+ * Returns the version string if found, or null if the package/version does not exist.
+ * Throws on unexpected errors (network issues, auth failures, etc).
+ */
+function npmViewVersion(spec) {
   try {
-    execSync(`npm view ${packageName} version`, { stdio: "pipe" });
-    return true;
+    return execFileSync("npm", ["view", spec, "version"], {
+      stdio: "pipe",
+      encoding: "utf-8",
+    }).trim();
   } catch (error) {
-    console.error(`Failed to check package ${packageName}:`, error.message);
-    return false;
+    // npm exits with E404 when the package or version doesn't exist
+    if (error.stderr && error.stderr.includes("E404")) {
+      return null;
+    }
+    throw error;
   }
 }
 
@@ -81,12 +91,20 @@ function checkPackage(packageDir, skipExistenceCheck = false) {
 
   const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf-8"));
   const packageName = packageJson.name;
+  const packageVersion = packageJson.version;
+
+  // Check if this exact version is already published (single npm registry call)
+  if (npmViewVersion(`${packageName}@${packageVersion}`) === packageVersion) {
+    console.log(`⏭ ${packageName}@${packageVersion} already published, skipping.`);
+    console.log("");
+    return true;
+  }
 
   // Check if package exists on npm (unless skipped)
   if (!skipExistenceCheck) {
     console.log(`Checking if package '${packageName}' exists on npm...`);
 
-    if (!checkPackageExists(packageName)) {
+    if (!npmViewVersion(packageName)) {
       console.error(`::error::Package '${packageName}' does not exist on npm!`);
       console.log("");
       console.log(

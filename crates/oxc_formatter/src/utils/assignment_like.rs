@@ -446,7 +446,7 @@ impl<'a> AssignmentLike<'a, '_> {
         &self,
         is_left_short: bool,
         left_may_break: bool,
-        f: &Formatter<'_, 'a>,
+        f: &mut Formatter<'_, 'a>,
     ) -> AssignmentLikeLayout {
         let right_expression = self.get_right_expression();
         if let Some(expr) = right_expression {
@@ -610,7 +610,7 @@ impl<'a> AssignmentLike<'a, '_> {
         &self,
         right_expression: Option<&AstNode<'a, Expression<'a>>>,
         is_left_short: bool,
-        f: &Formatter<'_, 'a>,
+        f: &mut Formatter<'_, 'a>,
     ) -> bool {
         let comments = f.context().comments();
         if let Some(right_expression) = right_expression {
@@ -707,7 +707,7 @@ impl<'a> AssignmentLike<'a, '_> {
 fn should_break_after_operator<'a>(
     right: &AstNode<'a, Expression<'a>>,
     is_left_short: bool,
-    f: &Formatter<'_, 'a>,
+    f: &mut Formatter<'_, 'a>,
 ) -> bool {
     if right.is_jsx() {
         return false;
@@ -919,7 +919,7 @@ impl<'a> Format<'a> for WithAssignmentLayout<'a, '_> {
 /// [Prettier applies]: <https://github.com/prettier/prettier/blob/a043ac0d733c4d53f980aa73807a63fc914f23bd/src/language-js/print/assignment.js#L329>
 fn is_poorly_breakable_member_or_call_chain<'a>(
     expression: &AstNode<'a, Expression<'a>>,
-    f: &Formatter<'_, 'a>,
+    f: &mut Formatter<'_, 'a>,
 ) -> bool {
     let threshold = f.options().line_width.value() / 4;
 
@@ -1060,47 +1060,27 @@ fn is_short_argument(argument: &Expression, threshold: u16, f: &Formatter) -> bo
 /// We need it to decide if `CallExpression` with the type arguments is breakable or not.
 /// If the type arguments is complex the function call is breakable.
 ///
-/// NOTE: This function does not follow Prettier exactly.
 /// <https://github.com/prettier/prettier/blob/a043ac0d733c4d53f980aa73807a63fc914f23bd/src/language-js/print/assignment.js#L432-L459>
 fn is_complex_type_arguments<'a>(
-    type_arguments: &TSTypeParameterInstantiation<'a>,
-    f: &Formatter<'_, 'a>,
+    type_arguments: &AstNode<'a, TSTypeParameterInstantiation<'a>>,
+    f: &mut Formatter<'_, 'a>,
 ) -> bool {
-    let is_complex_ts_type = |ts_type: &TSType| match ts_type {
-        TSType::TSUnionType(_) | TSType::TSIntersectionType(_) | TSType::TSTypeLiteral(_) => true,
-        // Check for newlines after `{` in mapped types, as it will expand to multiple lines if so
-        TSType::TSMappedType(mapped) => f.source_text().has_newline_after(mapped.span.start + 1),
-        _ => false,
-    };
-
-    let is_complex_type_reference = |reference: &TSTypeReference| {
-        reference.type_arguments.as_ref().is_some_and(|type_arguments| {
-            type_arguments.params.iter().any(|param| match param {
-                TSType::TSTypeLiteral(literal) => literal.members.len() > 1,
-                _ => false,
-            })
-        })
-    };
-
     let params = &type_arguments.params;
     if params.len() > 1 {
         return true;
     }
 
-    // NOTE: Prettier checks `willBreak(print(typeArgs))` here.
-    // Our equivalent is `type_arguments.memoized().inspect(f).will_break()`,
-    // but we avoid using it because:
-    // - `inspect(f)` (= `f.intern()`) will update the comment counting state in `f`
-    // - And resulted IRs are discarded after this check
-    // So we approximate it by checking if the type arguments contain complex types.
-    if params.first().is_some_and(|param| match param {
-        TSType::TSTypeReference(reference) => is_complex_type_reference(reference),
-        ts_type => is_complex_ts_type(ts_type),
+    if params.first().is_some_and(|param| {
+        matches!(
+            param,
+            TSType::TSUnionType(_) | TSType::TSIntersectionType(_) | TSType::TSTypeLiteral(_)
+        )
     }) {
         return true;
     }
 
-    f.comments().has_comment_in_span(type_arguments.span)
+    // Prettier: `willBreak(print(typeArgsKeyName))`
+    f.speculate_will_break(type_arguments)
 }
 
 /// [Prettier applies]: <https://github.com/prettier/prettier/blob/fde0b49d7866e203ca748c306808a87b7c15548f/src/language-js/print/assignment.js#L278>

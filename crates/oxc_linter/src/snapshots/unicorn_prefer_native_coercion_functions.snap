@@ -33,6 +33,20 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint-plugin-unicorn(prefer-native-coercion-functions): The function is equivalent to `String`. Call `String` directly.
+   ╭─[prefer_native_coercion_functions.tsx:1:13]
+ 1 │ ╭─▶ const foo = v => {
+ 2 │ │                   return String(v);
+ 3 │ ╰─▶             }
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-native-coercion-functions): The function is equivalent to `String`. Call `String` directly.
+   ╭─[prefer_native_coercion_functions.tsx:1:13]
+ 1 │ ╭─▶ const foo = function (v) {
+ 2 │ │                   return String(v);
+ 3 │ ╰─▶             }
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-native-coercion-functions): The function is equivalent to `String`. Call `String` directly.
    ╭─[prefer_native_coercion_functions.tsx:1:1]
  1 │ function foo(v) { return String(v); }
    · ─────────────────────────────────────
@@ -48,6 +62,42 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[prefer_native_coercion_functions.tsx:1:16]
  1 │ export default function (v) { return String(v); }
    ·                ──────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-native-coercion-functions): The function is equivalent to `String`. Call `String` directly.
+   ╭─[prefer_native_coercion_functions.tsx:2:20]
+ 1 │     class A {
+ 2 │ ╭─▶                 foo(v) {
+ 3 │ │                       return String(v);
+ 4 │ ╰─▶                 }
+ 5 │                     bar() {}
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-native-coercion-functions): The function is equivalent to `String`. Call `String` directly.
+   ╭─[prefer_native_coercion_functions.tsx:2:27]
+ 1 │     class A {
+ 2 │ ╭─▶                 static foo(v) {
+ 3 │ │                       return String(v);
+ 4 │ ╰─▶                 }
+ 5 │                     bar() {}
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-native-coercion-functions): The function is equivalent to `String`. Call `String` directly.
+   ╭─[prefer_native_coercion_functions.tsx:2:21]
+ 1 │     class A {
+ 2 │ ╭─▶                 #foo(v) {
+ 3 │ │                       return String(v);
+ 4 │ ╰─▶                 }
+ 5 │                     bar() {}
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-native-coercion-functions): The function is equivalent to `String`. Call `String` directly.
+   ╭─[prefer_native_coercion_functions.tsx:2:28]
+ 1 │     class A {
+ 2 │ ╭─▶                 static #foo(v) {
+ 3 │ │                       return String(v);
+ 4 │ ╰─▶                 }
+ 5 │                     bar() {}
    ╰────
 
   ⚠ eslint-plugin-unicorn(prefer-native-coercion-functions): The function is equivalent to `String`. Call `String` directly.
@@ -118,6 +168,13 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-unicorn(prefer-native-coercion-functions): The arrow function in the callback of the array is equivalent to `Boolean`. Replace the callback with `Boolean`.
    ╭─[prefer_native_coercion_functions.tsx:1:12]
+ 1 │ ╭─▶ array.some(v => {
+ 2 │ │                   return v;
+ 3 │ ╰─▶             })
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-native-coercion-functions): The arrow function in the callback of the array is equivalent to `Boolean`. Replace the callback with `Boolean`.
+   ╭─[prefer_native_coercion_functions.tsx:1:12]
  1 │ array.some((v, extra) => v)
    ·            ───────────────
    ╰────
@@ -126,4 +183,10 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[prefer_native_coercion_functions.tsx:1:12]
  1 │ array.some((v, ) => /* comment */ v)
    ·            ────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-native-coercion-functions): The arrow function in the callback of the array is equivalent to `Boolean`. Replace the callback with `Boolean`.
+   ╭─[prefer_native_coercion_functions.tsx:1:14]
+ 1 │ array.filter((value): boolean => value)
+   ·              ─────────────────────────
    ╰────

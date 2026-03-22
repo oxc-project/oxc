@@ -14,12 +14,17 @@ use std::{
     string::ToString,
 };
 
-use oxc_allocator::{Allocator, AllocatorPool, CloneIn};
-use oxc_ast::{ast::Program, ast_kind::AST_TYPE_MAX};
+use oxc_allocator::{Allocator, AllocatorPool, CloneIn, TakeIn, Vec as ArenaVec};
+use oxc_ast::{
+    ast::{Comment, CommentContent, CommentKind, Program},
+    ast_kind::AST_TYPE_MAX,
+};
 use oxc_ast_macros::ast;
 use oxc_ast_visit::utf8_to_utf16::Utf8ToUtf16;
 use oxc_data_structures::box_macros::boxed_array;
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_estree_tokens::{ESTreeTokenOptionsJS, update_tokens};
+use oxc_parser::Token;
 use oxc_semantic::AstNode;
 use oxc_span::Span;
 
@@ -473,7 +478,24 @@ impl Linter {
         }
 
         // `allocator` is a fixed-size allocator, so no need to clone AST into a new one
-        self.convert_and_call_external_linter(external_rules, path, ctx_host, program, allocator);
+        let tokens = ctx_host.parser_tokens_mut().take_in(allocator).into_bump_slice_mut();
+
+        // If file has a hashbang, add it to comments.
+        // It will be converted to a `Shebang` comment on JS side.
+        if let Some(hashbang) = &program.hashbang {
+            program
+                .comments
+                .insert(0, Comment::new(hashbang.span.start, hashbang.span.end, CommentKind::Line));
+        }
+
+        self.convert_and_call_external_linter(
+            external_rules,
+            path,
+            ctx_host,
+            program,
+            tokens,
+            allocator,
+        );
     }
 
     #[cfg(not(all(target_pointer_width = "64", target_endian = "little")))]
@@ -514,6 +536,26 @@ impl Linter {
         // to be later in the buffer than all other strings in the AST, and the allocator bumps downwards.
         let new_source_text = js_allocator.alloc_str(original_source_text);
 
+        // If file has a hashbang, add it to comments.
+        // It will be converted to a `Shebang` comment on JS side.
+        // Clear the original `Vec<Comment>` to avoid cloning it again below.
+        let comments = if let Some(hashbang) = &original_program.hashbang {
+            let mut comments_with_hashbang =
+                ArenaVec::with_capacity_in(original_program.comments.len() + 1, &js_allocator);
+            comments_with_hashbang.push(Comment::new(
+                hashbang.span.start,
+                hashbang.span.end,
+                CommentKind::Line,
+            ));
+            comments_with_hashbang.extend(original_program.comments.iter().copied());
+
+            original_program.comments.clear();
+
+            Some(comments_with_hashbang)
+        } else {
+            None
+        };
+
         // Clone `Program` into fixed-size allocator.
         // We need to allocate the `Program` struct ITSELF in the allocator, not just its contents.
         // `clone_in` returns a value on the stack, but we need it in the allocator for raw transfer.
@@ -523,11 +565,20 @@ impl Linter {
             js_allocator.alloc(program)
         };
 
+        // If added hashbang comment, set comments to the new `Vec<Comment>` including hashbang comment
+        if let Some(comments) = comments {
+            program.comments = comments;
+        }
+
+        // Clone tokens into fixed-size allocator
+        let tokens = js_allocator.alloc_slice_copy(ctx_host.parser_tokens());
+
         self.convert_and_call_external_linter(
             external_rules,
             path,
             ctx_host,
             program,
+            tokens,
             &js_allocator,
         );
 
@@ -545,6 +596,7 @@ impl Linter {
         path: &Path,
         ctx_host: &ContextHost<'_>,
         program: &mut Program<'_>,
+        tokens: &mut [Token],
         allocator: &Allocator,
     ) {
         // If has BOM, remove it
@@ -559,7 +611,7 @@ impl Linter {
             program.source_text = source_text;
         }
 
-        // Convert spans to UTF-16.
+        // Create span converter.
         // If source starts with BOM, create converter which ignores the BOM.
         let span_converter = if has_bom {
             #[expect(clippy::cast_possible_truncation)]
@@ -568,8 +620,31 @@ impl Linter {
             Utf8ToUtf16::new(source_text)
         };
 
+        // Convert token spans to UTF-16 and update token kinds
+        #[expect(clippy::if_not_else, clippy::cast_possible_truncation)]
+        let (tokens_offset, tokens_len) = if !tokens.is_empty() {
+            update_tokens(tokens, program, &span_converter, ESTreeTokenOptionsJS);
+            (tokens.as_ptr() as u32, tokens.len() as u32)
+        } else {
+            (0, 0)
+        };
+
+        // Convert AST spans to UTF-16
         span_converter.convert_program(program);
-        span_converter.convert_comments(&mut program.comments);
+
+        // Convert comment spans to UTF-16.
+        // Also set the `content` field (byte 15) of each comment to `None` (0).
+        // JS side uses this byte as a "deserialized" flag for tracking lazy deserialization.
+        if let Some(mut converter) = span_converter.converter() {
+            for comment in &mut program.comments {
+                converter.convert_span(&mut comment.span);
+                comment.content = CommentContent::None;
+            }
+        } else {
+            for comment in &mut program.comments {
+                comment.content = CommentContent::None;
+            }
+        }
 
         // Get offset of `Program` within buffer (bottom 32 bits of pointer)
         let program_offset = ptr::from_ref(program) as u32;
@@ -577,7 +652,14 @@ impl Linter {
         // Write offset of `Program` in metadata at end of buffer
         let is_ts = program.source_type.is_typescript();
         let is_jsx = program.source_type.is_jsx();
-        let metadata = RawTransferMetadata::new(program_offset, is_ts, is_jsx, has_bom);
+        let metadata = RawTransferMetadata::new(
+            program_offset,
+            is_ts,
+            is_jsx,
+            has_bom,
+            tokens_offset,
+            tokens_len,
+        );
         let metadata_ptr = allocator.end_ptr().cast::<RawTransferMetadata>();
         // SAFETY: `Allocator` was created by `FixedSizeAllocator` which reserved space after `end_ptr`
         // for a `RawTransferMetadata`. `end_ptr` is aligned for `RawTransferMetadata`.
@@ -726,14 +808,24 @@ pub struct RawTransferMetadata2 {
     pub is_jsx: bool,
     /// `true` if source text has a BOM.
     pub has_bom: bool,
-    /// Padding to pad struct to size 16.
-    pub(crate) _padding: u64,
+    /// Offset of lexer `Token`s within buffer.
+    pub tokens_offset: u32,
+    /// Number of lexer `Token`s.
+    pub tokens_len: u32,
 }
 
 use RawTransferMetadata2 as RawTransferMetadata;
 
 impl RawTransferMetadata {
-    pub fn new(data_offset: u32, is_ts: bool, is_jsx: bool, has_bom: bool) -> Self {
-        Self { data_offset, is_ts, is_jsx, has_bom, _padding: 0 }
+    pub fn new(
+        data_offset: u32,
+        is_ts: bool,
+        is_jsx: bool,
+        has_bom: bool,
+        tokens_offset: u32,
+        tokens_len: u32,
+    ) -> Self {
+        #[expect(clippy::inconsistent_struct_constructor)] // `#[ast]` macro reorders fields
+        Self { data_offset, is_ts, is_jsx, has_bom, tokens_offset, tokens_len }
     }
 }

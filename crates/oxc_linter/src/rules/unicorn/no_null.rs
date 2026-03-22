@@ -270,6 +270,7 @@ fn test() {
         ("Object.create(null as any)", None),
         ("Object.create(null, {foo: {value:1}})", None),
         ("let insertedNode = parentNode.insertBefore(newNode, null)", None),
+        ("let insertedNode = parentNode?.insertBefore(newNode, null)", None),
         ("const foo = \"null\";", None),
         ("Object.create()", None),
         ("Object.create(bar)", None),

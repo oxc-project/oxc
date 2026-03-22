@@ -4,6 +4,30 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.121.0] - 2026-03-19
+
+### 🚀 Features
+
+- 7215d9e transformer: Support lowering `accessor` with legacy decorators (#20348) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- 3bbd0cd transformer: Emit `Object` instead of `void 0` for untyped getter/setter `design:type` metadata (#20488) (Dunqing)
+- 11f9695 transformer: Legacy decorator on computed property key leaves variable unassigned (#20430) (bab)
+
+## [0.120.0] - 2026-03-16
+
+### 🐛 Bug Fixes
+
+- 1f65c3f transformer: Emit design:paramtypes when class has static anonymous class expression (#20382) (bab)
+- fa70d5c transformer: Use implementation signature for design:paramtypes when constructor is overloaded (#20394) (bab)
+
+## [0.119.0] - 2026-03-14
+
+### 🐛 Bug Fixes
+
+- 1ff5c1d transformer/typescript: Rewrite extensions in dynamic `import()` expressions (#20121) (Sverre Johansen)
+
 ## [0.114.0] - 2026-02-16
 
 ### 🚀 Features

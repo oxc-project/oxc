@@ -11,7 +11,7 @@
 //! The parser has a minimal API with three inputs (a [memory arena](oxc_allocator::Allocator), a
 //! source string, and a [`SourceType`]) and one return struct (a [ParserReturn]).
 //!
-//! ```rust
+//! ```rust,ignore
 //! let parser_return = Parser::new(&allocator, &source_text, source_type).parse();
 //! ```
 //!
@@ -36,12 +36,12 @@
 //!
 //! <https://github.com/oxc-project/oxc/blob/main/crates/oxc_parser/examples/parser.rs>
 //!
-//! ```rust
+//! ```rust,ignore
 #![doc = include_str!("../examples/parser.rs")]
 //! ```
 //!
 //! ### Parsing TSX
-//! ```rust
+//! ```rust,ignore
 #![doc = include_str!("../examples/parser_tsx.rs")]
 //! ```
 //!
@@ -54,7 +54,7 @@
 //! For ad-hoc tasks, the semantic analyzer can be used to get a parent pointing tree with untyped nodes,
 //! the nodes can be iterated through a sequential loop.
 //!
-//! ```rust
+//! ```rust,ignore
 //! for node in semantic.nodes().iter() {
 //!     match node.kind() {
 //!         // check node
@@ -85,7 +85,7 @@ mod lexer;
 #[doc(hidden)]
 pub mod lexer;
 
-use oxc_allocator::{Allocator, Box as ArenaBox, Dummy};
+use oxc_allocator::{Allocator, Box as ArenaBox, Dummy, Vec as ArenaVec};
 use oxc_ast::{
     AstBuilder,
     ast::{Expression, Program},
@@ -526,12 +526,18 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             }
         }
 
+        let tokens = if panicked {
+            ArenaVec::new_in(self.ast.allocator)
+        } else {
+            self.lexer.finalize_tokens()
+        };
+
         ParserReturn {
             program,
             module_record,
             errors,
             irregular_whitespaces,
-            tokens: self.lexer.take_tokens(),
+            tokens,
             panicked,
             is_flow_language,
         }
@@ -616,9 +622,8 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             }
         }
 
-        if let Some(tokens) = original_tokens {
-            self.lexer.take_tokens();
-            self.lexer.set_tokens(tokens);
+        if let Some(original_tokens) = original_tokens {
+            self.lexer.set_tokens(original_tokens);
         }
     }
 

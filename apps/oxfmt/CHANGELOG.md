@@ -4,6 +4,78 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.41.0] - 2026-03-16
+
+### 🚀 Features
+
+- d22c443 oxfmt: Export `OxfmtConfig` type (#20275) (leaysgur)
+- a11ecff oxfmt/lsp: Respect `angular` language id as `.component.html` file (#20242) (Sysix)
+
+### 🐛 Bug Fixes
+
+- f908742 oxfmt: Revert #20326 partially (#20413) (leaysgur)
+- 68fb0d0 oxfmt: Skip vite.config.ts which fails to import (#20326) (leaysgur)
+- 88ee826 oxfmt: Handle literalline for script-in-vue (#20130) (leaysgur)
+- 1c07b3b diagnostics: Handle `WouldBlock` in stdout writes to prevent panic (#20295) (Boshen)
+
+## [0.40.0] - 2026-03-12
+
+### 🐛 Bug Fixes
+
+- 96f761f oxfmt: Ensure stdin blocking mode is set for non-TTY environments (#20289) (camc314)
+- bc20217 oxlint,oxfmt: Omit useless `| null` for `Option<T>` field from schema (#20273) (leaysgur)
+
+## [0.39.0] - 2026-03-12
+
+### 🐛 Bug Fixes
+
+- 4ea67de oxlint,oxfmt: Skip `vite.config.ts` exports `defineConfig(fn)` (#20260) (leaysgur)
+- 11a2b45 oxfmt: Skip `vite.config.ts` w/o `.fmt` field in auto-discovery (#20254) (leaysgur)
+
+## [0.38.0] - 2026-03-11
+
+### 🚀 Features
+
+- 95943aa oxfmt: Support `vite.config.*` `.fmt` field (#20197) (leaysgur)
+- 172fc07 oxfmt: .js/.ts config file support (#20135) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- e483569 oxfmt: Avoid double-escaping in css-in-js (#20211) (leaysgur)
+
+## [0.37.0] - 2026-03-09
+
+### 🚀 Features
+
+- ee26215 oxfmt: Support css-in-js substitution (#20019) (leaysgur)
+- 0f0ff51 oxfmt: Display default settings was used message in cli stats (#19939) (leaysgur)
+- 88815b8 oxfmt: Reintroduce stats line for write mode (#19938) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- ee0491e apps,napi: Explicitly specify libs in tsconfigs (#20071) (camc314)
+- 92f4490 oxfmt: Apply `is_ignored_dir` for glob paths too (#20056) (leaysgur)
+- 114f974 oxfmt/lsp: Prefer language_id over file extension when formatting (#19977) (copilot-swe-agent)
+
+### ⚡ Performance
+
+- 2baa5fb napi: Unify build-test profile to coverage for cache sharing (#20090) (Boshen)
+
+## [0.36.0] - 2026-03-02
+
+### 🚀 Features
+
+- 4888a99 oxfmt/lsp: Support other schemes beside `file://` and `untitled://` (#19872) (Sysix)
+- 14a0181 oxfmt: Support `graphql()` variant for gql-in-js (#19703) (leaysgur)
+- ca68ea6 oxfmt: Support gql-in-js substitution (#19670) (leaysgur)
+- 035933c formatter,oxfmt: Support js-in-vue (partially) (#19514) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 8e3842d oxfmt: Avoid embedded TSFN crash by returning errors as data (take2) (#19806) (Yuji Sugiura)
+- e540585 oxfmt: Support tailwind sort for CSS/LESS/SCSS (#19803) (leaysgur)
+- 93bb861 formatter: Trim trailing whitespace before breaking line (#19740) (leaysgur)
+
 ## [0.35.0] - 2026-02-23
 
 ### 🚀 Features

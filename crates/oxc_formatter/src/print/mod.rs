@@ -11,6 +11,7 @@ mod call_like_expression;
 mod class;
 mod decorators;
 mod export_declarations;
+mod fragment;
 mod function;
 mod function_type;
 mod import_declaration;
@@ -37,6 +38,7 @@ pub use arrow_function_expression::{
     FormatJsArrowFunctionExpression, FormatJsArrowFunctionExpressionOptions,
 };
 pub use binary_like_expression::{BinaryLikeExpression, should_flatten};
+pub use fragment::{FormatVueBindingParams, FormatVueScriptGeneric};
 pub use function::FormatFunctionOptions;
 
 use cow_utils::CowUtils;
@@ -72,6 +74,7 @@ use crate::{
         object::{format_property_key, should_preserve_quote},
         statement_body::FormatStatementBody,
         string::{FormatLiteralStringToken, StringLiteralParentKind},
+        suppressed::FormatSuppressedNode,
         tailwindcss::{tailwind_context_for_string_literal, write_tailwind_string_literal},
     },
     write,
@@ -554,11 +557,19 @@ fn expression_statement_needs_semicolon<'a>(
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ExpressionStatement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
+        let span = self.span();
         // Check if we need a leading semicolon to prevent ASI issues
         if f.options().semicolons == Semicolons::AsNeeded
             && expression_statement_needs_semicolon(self, f)
         {
             write!(f, ";");
+        }
+
+        if f.comments().has_trailing_suppression_comment(span.end) {
+            // Preserve original text when the statement has an inline suppression comment:
+            // `stmt(); // prettier-ignore` or `stmt(); /* prettier-ignore */`
+            write!(f, [FormatSuppressedNode(span)]);
+            return;
         }
 
         write!(f, [self.expression(), OptionalSemicolon]);
@@ -1381,12 +1392,11 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSInterfaceDeclaration<'a>> {
                     ]
                 );
             } else {
-                let format_extends =
-                    format_with(|f| write!(f, [space(), "extends", space(), extends]));
+                let format_extends = format_with(|f| write!(f, ["extends", space(), extends]));
                 if group_mode {
                     write!(f, [soft_line_break_or_space(), group(&format_extends)]);
                 } else {
-                    write!(f, format_extends);
+                    write!(f, [space(), format_extends]);
                 }
             }
 

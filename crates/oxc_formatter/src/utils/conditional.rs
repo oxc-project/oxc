@@ -558,7 +558,7 @@ impl<'a> Format<'a> for FormatConditionalLike<'a, '_> {
             format_tail_with_indent.fmt(f);
 
             // Add a soft line break in front of the closing `)` in case the parent is a static member expression
-            // ```
+            // ```text
             // (veryLongCondition
             //      ? a
             //      : b // <- enforce line break here if the conditional breaks

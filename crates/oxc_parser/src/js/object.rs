@@ -175,6 +175,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 computed = true;
                 PropertyKey::from(self.parse_computed_property_name())
             }
+            Kind::PrivateIdentifier => {
+                let private_ident = self.parse_private_identifier();
+                self.error(diagnostics::private_identifier_in_property_name(
+                    &private_ident.name,
+                    private_ident.span,
+                ));
+                PropertyKey::PrivateIdentifier(self.alloc(private_ident))
+            }
             _ => {
                 let ident = self.parse_identifier_name();
                 PropertyKey::StaticIdentifier(self.alloc(ident))

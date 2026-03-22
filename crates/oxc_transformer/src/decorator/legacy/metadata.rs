@@ -180,7 +180,11 @@ impl<'a> Traverse<'a, TransformState<'a>> for LegacyDecoratorMetadata<'a> {
         let should_transform = !(class.is_expression() || class.declare);
 
         let constructor = class.body.body.iter_mut().find_map(|item| match item {
-            ClassElement::MethodDefinition(method) if method.kind.is_constructor() => Some(method),
+            ClassElement::MethodDefinition(method)
+                if method.kind.is_constructor() && method.value.body.is_some() =>
+            {
+                Some(method)
+            }
             _ => None,
         });
 
@@ -220,8 +224,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for LegacyDecoratorMetadata<'a> {
             // not for getters or setters.
 
             let (design_type, return_type) = if method.kind.is_get() {
-                // For getters, the design type is the type of the property
-                (self.serialize_return_type_of_node(&method.value, ctx), None)
+                // For getters, the design type is the return type (or `Object` if untyped)
+                (self.serialize_type_annotation(method.value.return_type.as_ref(), ctx), None)
             } else if method.kind.is_set()
                 && let Some(param) = method.value.params.items.first()
             {
@@ -744,7 +748,7 @@ impl<'a> LegacyDecoratorMetadata<'a> {
 
     /// Produces an expression that results in `right` if `left` is not undefined at runtime:
     ///
-    /// ```
+    /// ```rust,ignore
     /// typeof left !== "undefined" && right
     /// ```
     ///

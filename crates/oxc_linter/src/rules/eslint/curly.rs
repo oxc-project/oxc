@@ -106,8 +106,14 @@ declare_oxc_lint!(
     /// ```js
     /// /* curly: ["error", "multi"] */
     ///
-    /// if (foo) foo();
-    /// else { bar(); baz(); }
+    /// if (foo) {
+    ///   foo();
+    /// }
+    ///
+    /// if (foo) bar();
+    /// else {
+    ///   foo();
+    /// }
     /// ```
     ///
     /// Examples of **correct** code for this rule with the `"multi"` option:
@@ -123,12 +129,13 @@ declare_oxc_lint!(
     /// ```js
     /// /* curly: ["error", "multi-line"] */
     ///
-    /// if (foo) foo()
+    /// if (foo)
+    ///   foo();
     /// else
     ///   bar();
     ///
-    /// while (foo)
-    ///   foo()
+    /// if (foo)
+    ///   foo(bar, baz);
     /// ```
     ///
     /// Examples of **correct** code for this rule with the `"multi-line"` option:
@@ -151,11 +158,15 @@ declare_oxc_lint!(
     /// ```js
     /// /* curly: ["error", "multi-or-nest"] */
     ///
-    /// if (foo)
-    ///   if (bar) bar();
+    /// while (true)
+    ///   if (foo)
+    ///     foo();
+    ///   else
+    ///     bar();
     ///
-    /// while (foo)
-    ///   while (bar) bar();
+    /// if (foo) {
+    ///   foo++;
+    /// }
     /// ```
     ///
     /// Examples of **correct** code for this rule with the `"multi-or-nest"` option:

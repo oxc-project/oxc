@@ -8,13 +8,7 @@ describe("js-in-xxx", () => {
   it("should format with full-config", async () => {
     const snapshot = await runWriteModeAndSnapshot(
       fixturesDir,
-      [
-        "test.md",
-        "test.mdx",
-        // NOTE: For now, Vue files are still handled by Prettier
-        "app.vue",
-        "multi-script.vue",
-      ],
+      ["test.md", "test.mdx", "app.vue", "multi-script.vue", "no-imports.vue"],
       ["--config", "oxfmtrc-full.json"],
     );
     expect(snapshot).toMatchSnapshot();

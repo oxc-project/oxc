@@ -102,6 +102,19 @@ use oxc_span::{GetSpan, Span};
 
 use crate::formatter::SourceText;
 
+/// Snapshot of the comment processing state for speculative formatting.
+///
+/// Created by [`Comments::snapshot`] and restored by [`Comments::restore`].
+/// This allows speculative formatting (e.g., checking `will_break`) without
+/// permanently advancing the comment cursor.
+#[derive(Clone, Copy)]
+pub struct CommentSnapshot {
+    printed_count: usize,
+    last_handled_type_cast_comment: usize,
+    type_cast_node_span: Span,
+    view_limit: Option<usize>,
+}
+
 #[derive(Debug, Clone)]
 pub struct Comments<'a> {
     source_text: SourceText<'a>,
@@ -185,7 +198,7 @@ impl<'a> Comments<'a> {
         let comments = self.comments_after(pos);
         for (index, comment) in comments.iter().enumerate() {
             if self.source_text.all_bytes_match(pos, comment.span.start, |b| {
-                matches!(b, b'\t' | b' ' | b'=' | b':')
+                matches!(b, b'\t' | b' ' | b'=' | b':' | b',')
             }) {
                 if comment.is_line() || comment.followed_by_newline() {
                     return &comments[..=index];
@@ -376,6 +389,18 @@ impl<'a> Comments<'a> {
         self.comments_before(start).iter().any(|comment| self.is_suppression_comment(comment))
     }
 
+    /// Checks if there is a trailing suppression comment on the same line.
+    ///
+    /// This supports patterns like:
+    /// `statement(); // prettier-ignore`
+    /// `statement(); /* prettier-ignore */`
+    /// `value, // prettier-ignore`
+    pub fn has_trailing_suppression_comment(&self, pos: u32) -> bool {
+        self.end_of_line_comments_after(pos)
+            .iter()
+            .any(|comment| self.is_suppression_comment(comment))
+    }
+
     /// Checks if a comment is a suppression comment (`oxfmt-ignore`).
     ///
     /// `prettier-ignore` is also supported for compatibility.
@@ -468,5 +493,40 @@ impl<'a> Comments<'a> {
     #[inline]
     pub fn restore_view_limit(&mut self, limit: Option<usize>) {
         self.view_limit = limit;
+    }
+
+    /// Saves the current comment processing state for later restoration.
+    ///
+    /// Use with [`Comments::restore`] to safely perform speculative formatting
+    /// without permanently advancing the comment cursor. This prevents comment
+    /// deletion bugs when using [`Formatter::intern`] for `will_break` checks.
+    pub fn snapshot(&self) -> CommentSnapshot {
+        CommentSnapshot {
+            printed_count: self.printed_count,
+            last_handled_type_cast_comment: self.last_handled_type_cast_comment,
+            type_cast_node_span: self.type_cast_node_span,
+            view_limit: self.view_limit,
+        }
+    }
+
+    /// Restores comment processing state from a previous snapshot.
+    ///
+    /// This rolls back the comment cursor so that any comments consumed
+    /// during speculative formatting are available again for real formatting.
+    pub fn restore(&mut self, snapshot: CommentSnapshot) {
+        self.printed_count = snapshot.printed_count;
+        self.last_handled_type_cast_comment = snapshot.last_handled_type_cast_comment;
+        self.type_cast_node_span = snapshot.type_cast_node_span;
+        self.view_limit = snapshot.view_limit;
+    }
+
+    /// Advances the cursor past all comments ending before `pos`.
+    ///
+    /// Used before speculative formatting to skip comments that are outside
+    /// the span of interest, preventing them from being incorrectly included
+    /// as leading comments of the speculatively formatted node.
+    pub fn skip_comments_before(&mut self, pos: u32) {
+        let count = self.comments_before(pos).len();
+        self.printed_count += count;
     }
 }

@@ -212,6 +212,25 @@ impl<'alloc, T> Vec<'alloc, T> {
     pub fn into_bump_slice(self) -> &'alloc [T] {
         self.0.into_bump_slice()
     }
+
+    /// Converts [`Vec<T>`] into [`&'alloc mut [T]`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use oxc_allocator::{Allocator, Vec};
+    ///
+    /// let allocator = Allocator::default();
+    ///
+    /// let vec = Vec::from_iter_in([1, 2, 3], &allocator);
+    /// let slice = vec.into_bump_slice_mut();
+    /// slice[0] = 4;
+    /// assert_eq!(slice, [4, 2, 3]);
+    /// ```
+    #[inline]
+    pub fn into_bump_slice_mut(self) -> &'alloc mut [T] {
+        self.0.into_bump_slice_mut()
+    }
 }
 
 impl<'alloc, T> ops::Deref for Vec<'alloc, T> {

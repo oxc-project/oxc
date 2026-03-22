@@ -20,6 +20,16 @@ fn test_comment_at_top_of_file() {
 #[test]
 fn unit() {
     test_same("<div>{/* Hello */}</div>;\n");
+    // https://github.com/oxc-project/oxc/issues/17266
+    test("console.log(<div x={/*before*/ x} />)", "console.log(<div x={/*before*/ x} />);\n");
+    test(
+        "console.log(<div x={/*before*/ \"y\"} />)",
+        "console.log(<div x={/*before*/ \"y\"} />);\n",
+    );
+    test("console.log(<div x={/*before*/ true} />)", "console.log(<div x={/*before*/ true} />);\n");
+    test("console.log(<div {/*before*/ ...x} />)", "console.log(<div {/*before*/ ...x} />);\n");
+    test("console.log(<div>{/*before*/ x}</div>)", "console.log(<div>{/*before*/ x}</div>);\n");
+    test("console.log(<>{/*before*/ x}</>)", "console.log(<>{/*before*/ x}</>);\n");
     // https://lingui.dev/ref/macro#definemessage
     test("const message = /*i18n*/{};", "const message = (/*i18n*/ {});\n");
     test(

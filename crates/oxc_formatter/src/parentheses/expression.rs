@@ -897,7 +897,9 @@ fn type_cast_like_needs_parens(span: Span, parent: &AstNodes<'_>) -> bool {
         | AstNodes::SpreadElement(_)
         | AstNodes::JSXSpreadAttribute(_)
         // static member
-        | AstNodes::StaticMemberExpression(_) => true,
+        | AstNodes::StaticMemberExpression(_)
+        // private field member
+        | AstNodes::PrivateFieldExpression(_) => true,
         AstNodes::ComputedMemberExpression(member) => {
             member.object.span() == span
         }

@@ -9,6 +9,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ─────────────
  3 │             }
    ╰────
+  help: Remove the declaration or use it in the code.
 
   ⚠ eslint(no-unused-private-class-members): 'unusedMemberInSecondClass' is defined but never used.
    ╭─[no_unused_private_class_members.tsx:3:17]
@@ -17,6 +18,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ──────────────────────────
  4 │             }
    ╰────
+  help: Remove the declaration or use it in the code.
 
   ⚠ eslint(no-unused-private-class-members): 'unusedMemberInFirstClass' is defined but never used.
    ╭─[no_unused_private_class_members.tsx:2:17]
@@ -25,6 +27,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ─────────────────────────
  3 │             }
    ╰────
+  help: Remove the declaration or use it in the code.
 
   ⚠ eslint(no-unused-private-class-members): 'firstUnusedMemberInSameClass' is defined but never used.
    ╭─[no_unused_private_class_members.tsx:2:17]
@@ -33,6 +36,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ─────────────────────────────
  3 │                 #secondUnusedMemberInSameClass = 5;
    ╰────
+  help: Remove the declaration or use it in the code.
 
   ⚠ eslint(no-unused-private-class-members): 'secondUnusedMemberInSameClass' is defined but never used.
    ╭─[no_unused_private_class_members.tsx:3:17]
@@ -41,6 +45,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ──────────────────────────────
  4 │             }
    ╰────
+  help: Remove the declaration or use it in the code.
 
   ⚠ eslint(no-unused-private-class-members): 'usedOnlyInWrite' is defined but never used.
    ╭─[no_unused_private_class_members.tsx:2:17]
@@ -49,6 +54,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ────────────────
  3 │                 method() {
    ╰────
+  help: Remove the declaration or use it in the code.
 
   ⚠ eslint(no-unused-private-class-members): 'usedOnlyInWriteStatement' is defined but never used.
    ╭─[no_unused_private_class_members.tsx:2:17]
@@ -57,6 +63,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ─────────────────────────
  3 │                 method() {
    ╰────
+  help: Remove the declaration or use it in the code.
 
   ⚠ eslint(no-unused-private-class-members): 'usedOnlyInIncrement' is defined but never used.
    ╭─[no_unused_private_class_members.tsx:2:17]
@@ -65,6 +72,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ────────────────────
  3 │ 
    ╰────
+  help: Remove the declaration or use it in the code.
 
   ⚠ eslint(no-unused-private-class-members): 'unusedInOuterClass' is defined but never used.
    ╭─[no_unused_private_class_members.tsx:2:17]
@@ -73,6 +81,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ───────────────────
  3 │ 
    ╰────
+  help: Remove the declaration or use it in the code.
 
   ⚠ eslint(no-unused-private-class-members): 'unusedOnlyInSecondNestedClass' is defined but never used.
     ╭─[no_unused_private_class_members.tsx:20:25]
@@ -81,6 +90,7 @@ source: crates/oxc_linter/src/tester.rs
     ·                         ──────────────────────────────
  21 │                     }
     ╰────
+  help: Remove the declaration or use it in the code.
 
   ⚠ eslint(no-unused-private-class-members): 'unusedMethod' is defined but never used.
    ╭─[no_unused_private_class_members.tsx:2:17]
@@ -89,6 +99,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ─────────────
  3 │             }
    ╰────
+  help: Remove the declaration or use it in the code.
 
   ⚠ eslint(no-unused-private-class-members): 'unusedMethod' is defined but never used.
    ╭─[no_unused_private_class_members.tsx:2:17]
@@ -97,6 +108,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ─────────────
  3 │                 #usedMethod() {
    ╰────
+  help: Remove the declaration or use it in the code.
 
   ⚠ eslint(no-unused-private-class-members): 'unusedSetter' is defined but never used.
    ╭─[no_unused_private_class_members.tsx:2:21]
@@ -105,6 +117,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ─────────────
  3 │             }
    ╰────
+  help: Remove the declaration or use it in the code.
 
   ⚠ eslint(no-unused-private-class-members): 'unusedForInLoop' is defined but never used.
    ╭─[no_unused_private_class_members.tsx:2:17]
@@ -113,6 +126,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ────────────────
  3 │                 method() {
    ╰────
+  help: Remove the declaration or use it in the code.
 
   ⚠ eslint(no-unused-private-class-members): 'unusedForOfLoop' is defined but never used.
    ╭─[no_unused_private_class_members.tsx:2:17]
@@ -121,6 +135,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ────────────────
  3 │                 method() {
    ╰────
+  help: Remove the declaration or use it in the code.
 
   ⚠ eslint(no-unused-private-class-members): 'unusedInDestructuring' is defined but never used.
    ╭─[no_unused_private_class_members.tsx:2:17]
@@ -129,6 +144,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ──────────────────────
  3 │                 method() {
    ╰────
+  help: Remove the declaration or use it in the code.
 
   ⚠ eslint(no-unused-private-class-members): 'unusedInRestPattern' is defined but never used.
    ╭─[no_unused_private_class_members.tsx:2:17]
@@ -137,6 +153,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ────────────────────
  3 │                 method() {
    ╰────
+  help: Remove the declaration or use it in the code.
 
   ⚠ eslint(no-unused-private-class-members): 'unusedInAssignmentPattern' is defined but never used.
    ╭─[no_unused_private_class_members.tsx:2:17]
@@ -145,6 +162,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ──────────────────────────
  3 │                 method() {
    ╰────
+  help: Remove the declaration or use it in the code.
 
   ⚠ eslint(no-unused-private-class-members): 'unusedInAssignmentPattern' is defined but never used.
    ╭─[no_unused_private_class_members.tsx:2:17]
@@ -153,6 +171,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ──────────────────────────
  3 │                 method() {
    ╰────
+  help: Remove the declaration or use it in the code.
 
   ⚠ eslint(no-unused-private-class-members): 'usedOnlyInTheSecondInnerClass' is defined but never used.
    ╭─[no_unused_private_class_members.tsx:2:17]
@@ -161,45 +180,53 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ──────────────────────────────
  3 │ 
    ╰────
+  help: Remove the declaration or use it in the code.
 
   ⚠ eslint(no-unused-private-class-members): 'awaitedMember' is defined but never used.
    ╭─[no_unused_private_class_members.tsx:1:13]
  1 │ class Foo { #awaitedMember; async method() { await this.#awaitedMember; } }
    ·             ──────────────
    ╰────
+  help: Remove the declaration or use it in the code.
 
   ⚠ eslint(no-unused-private-class-members): 'unused' is defined but never used.
    ╭─[no_unused_private_class_members.tsx:1:13]
  1 │ class Foo { #unused; method() { Math.random() > 0.5 ? this.#unused : []; } }
    ·             ───────
    ╰────
+  help: Remove the declaration or use it in the code.
 
   ⚠ eslint(no-unused-private-class-members): 'x' is defined but never used.
    ╭─[no_unused_private_class_members.tsx:1:13]
  1 │ class Foo { #x; #y; method(a, b, c) { a ? (b ? this.#x : c) : this.#y; } }
    ·             ──
    ╰────
+  help: Remove the declaration or use it in the code.
 
   ⚠ eslint(no-unused-private-class-members): 'y' is defined but never used.
    ╭─[no_unused_private_class_members.tsx:1:17]
  1 │ class Foo { #x; #y; method(a, b, c) { a ? (b ? this.#x : c) : this.#y; } }
    ·                 ──
    ╰────
+  help: Remove the declaration or use it in the code.
 
   ⚠ eslint(no-unused-private-class-members): 'x' is defined but never used.
    ╭─[no_unused_private_class_members.tsx:1:13]
  1 │ class Foo { #x; method() { a && (b ? this.#x : c); } }
    ·             ──
    ╰────
+  help: Remove the declaration or use it in the code.
 
   ⚠ eslint(no-unused-private-class-members): 'b' is defined but never used.
    ╭─[no_unused_private_class_members.tsx:1:17]
  1 │ class Foo { #a; #b; #c; method() { this.#a ? this.#b : this.#c; } }
    ·                 ──
    ╰────
+  help: Remove the declaration or use it in the code.
 
   ⚠ eslint(no-unused-private-class-members): 'c' is defined but never used.
    ╭─[no_unused_private_class_members.tsx:1:21]
  1 │ class Foo { #a; #b; #c; method() { this.#a ? this.#b : this.#c; } }
    ·                     ──
    ╰────
+  help: Remove the declaration or use it in the code.

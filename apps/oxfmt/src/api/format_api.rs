@@ -5,8 +5,8 @@ use serde_json::Value;
 use oxc_napi::OxcError;
 
 use crate::core::{
-    ExternalFormatter, FormatFileStrategy, FormatResult, JsFormatEmbeddedCb, JsFormatFileCb,
-    JsInitExternalFormatterCb, JsSortTailwindClassesCb, SourceFormatter,
+    ExternalFormatter, FormatFileStrategy, FormatResult, JsFormatEmbeddedCb, JsFormatEmbeddedDocCb,
+    JsFormatFileCb, JsInitExternalFormatterCb, JsSortTailwindClassesCb, SourceFormatter,
     resolve_options_from_value,
 };
 
@@ -24,8 +24,9 @@ pub fn run(
     source_text: String,
     options: Option<Value>,
     init_external_formatter_cb: JsInitExternalFormatterCb,
-    format_embedded_cb: JsFormatEmbeddedCb,
     format_file_cb: JsFormatFileCb,
+    format_embedded_cb: JsFormatEmbeddedCb,
+    format_embedded_doc_cb: JsFormatEmbeddedDocCb,
     sort_tailwind_classes_cb: JsSortTailwindClassesCb,
 ) -> ApiFormatResult {
     // NOTE: In NAPI context, we don't have a config file path, since options are passed directly as a JSON.
@@ -36,8 +37,9 @@ pub fn run(
 
     let external_formatter = ExternalFormatter::new(
         init_external_formatter_cb,
-        format_embedded_cb,
         format_file_cb,
+        format_embedded_cb,
+        format_embedded_doc_cb,
         sort_tailwind_classes_cb,
     );
 
@@ -67,7 +69,7 @@ pub fn run(
 
     // Resolve format options directly from the provided options
     let resolved_options =
-        match resolve_options_from_value(&cwd, options.unwrap_or_default(), &strategy) {
+        match resolve_options_from_value(options.unwrap_or_default(), &strategy, Some(&cwd)) {
             Ok(options) => options,
             Err(err) => {
                 external_formatter.cleanup();
