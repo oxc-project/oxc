@@ -1,0 +1,119 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --type-aware
+working directory: fixtures/tsgolint_rule_options
+----------
+
+  x typescript-eslint(no-deprecated): `notAllowedDeprecated` is deprecated. Use anotherNewFunction instead
+    ,-[test.ts:36:1]
+ 35 | // This SHOULD error because notAllowedDeprecated is NOT in the allow list
+ 36 | notAllowedDeprecated();
+    : ^^^^^^^^^^^^^^^^^^^^
+ 37 | 
+    `----
+
+  x typescript-eslint(no-misused-spread): Using the spread operator on a function without additional properties can cause unexpected behavior.
+    ,-[test.ts:47:28]
+ 46 | // This SHOULD error because notAllowedFunc is NOT in the allow list
+ 47 | const notAllowedSpread = { ...notAllowedFunc };
+    :                            ^^^^^^^^^^^^^^^^^
+ 48 | 
+    `----
+  help: Did you forget to call the function?
+
+  x typescript-eslint(no-unsafe-member-access): Unsafe member access .bar on an `any` value.
+    ,-[test.ts:58:31]
+ 57 | // This SHOULD error because it's not using optional chaining
+ 58 | const unsafeAccess = anyValue.bar;
+    :                               ^^^
+ 59 | 
+    `----
+
+  x typescript-eslint(no-base-to-string): 'unknownValue' may use Object's default stringification format ('[object Object]') when stringified.
+    ,-[test.ts:63:20]
+ 62 | // This SHOULD error because checkUnknown is true
+ 63 | const unknownStr = unknownValue.toString();
+    :                    ^^^^^^^^^^^^
+ 64 | 
+    `----
+  help: Consider picking a property (e.g. `user.name`), using a formatter (or `JSON.stringify`), or implementing a custom `toString()`/`toLocaleString()` on the type.
+
+  x typescript-eslint(no-unnecessary-condition): Unnecessary conditional, value is always truthy.
+    ,-[test.ts:68:5]
+ 67 | // This SHOULD error because this object is always truthy
+ 68 | if (alwaysTruthyObject) {
+    :     ^^^^^^^^^^^^^^^^^^
+ 69 |   result += 1;
+    `----
+
+  x typescript-eslint(consistent-type-exports): Type export ExportOnlyType is not a value and should be exported using `export type`.
+    ,-[test.ts:81:1]
+ 80 | // This SHOULD error because ExportOnlyType is only used as a type.
+ 81 | export { ExportOnlyType, exportOnlyValue };
+    : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 82 | 
+    `----
+
+  x typescript-eslint(strict-void-return): Value returned in a context where a void return is expected.
+    ,-[test.ts:89:25]
+ 88 | // This SHOULD error because returning string is not allowed in a void callback
+ 89 | takesVoidCallback(() => 'not-void');
+    :                         ^^^^^^^^^^
+ 90 | 
+    `----
+
+  x typescript-eslint(prefer-readonly-parameter-types): Parameter should be a readonly type.
+    ,-[test.ts:92:27]
+ 91 | // Test prefer-readonly-parameter-types options
+ 92 | function takesAllowedType(input: RegExp): void {
+    :                           ^^^^^^^^^^^^^
+ 93 |   console.log(input.source);
+    `----
+
+  x typescript-eslint(prefer-readonly-parameter-types): Parameter should be a readonly type.
+     ,-[test.ts:101:32]
+ 100 | // This SHOULD error because parameter type is mutable
+ 101 | function takesMutableParameter(input: MutableParameter): void {
+     :                                ^^^^^^^^^^^^^^^^^^^^^^^
+ 102 |   console.log(input.value);
+     `----
+
+  x typescript-eslint(prefer-readonly): Member 'handler' is never reassigned; mark it as `readonly`.
+     ,-[test.ts:107:3]
+ 106 | class PreferReadonlyOptionExample {
+ 107 |   private handler = () => 1;
+     :   ^^^^^^^^^^^^^^^
+ 108 |   getValue() {
+     `----
+
+  x typescript-eslint(prefer-string-starts-ends-with): Use 'String#startsWith' method instead.
+     ,-[test.ts:118:28]
+ 117 | // This SHOULD error because startsWith is preferred here
+ 118 | const boundarySliceMatch = boundaryText.slice(0, 3) === 'foo';
+     :                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 119 | 
+     `----
+
+  x typescript-eslint(consistent-return): Function 'maybeReturnValue' expected a return value.
+     ,-[test.ts:126:3]
+ 125 |   // This SHOULD be treated as an unspecified return with the option enabled
+ 126 |   return undefined;
+     :   ^^^^^^^^^^^^^^^^^
+ 127 | }
+     `----
+
+  x typescript-eslint(dot-notation): ["name"] is better written in dot notation.
+     ,-[test.ts:145:19]
+ 144 | // This SHOULD error because static property access should use dot notation
+ 145 | dotNotationSimple['name'];
+     :                   ^^^^^^
+ 146 | 
+     `----
+
+Found 0 warnings and 13 errors.
+Finished in <variable>ms on 1 file with 15 rules using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------

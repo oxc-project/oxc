@@ -1,0 +1,7 @@
+{
+  "plugins": ["eslint"],
+  "rules": {
+    "no-compare-neg-zero": "error"
+  },
+  "ignorePatterns": ["files/test-backup.js"]
+}
