@@ -245,7 +245,7 @@ impl LintRunner {
                 tx_error,
                 fs,
                 suppression_manager,
-                suppression_sender,
+                &suppression_sender,
             )?;
         } else {
             drop(tx_error);

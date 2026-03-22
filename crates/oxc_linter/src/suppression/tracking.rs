@@ -151,23 +151,24 @@ impl SuppressionTracking {
     pub fn update(&mut self, diff: SuppressionDiff) {
         let map = Arc::make_mut(&mut self.suppressions);
 
-        println!("DIFF {:?} and full map {:?}", diff, map);
-
         match diff {
             SuppressionDiff::Increased { file, rule, from: _, to }
             | SuppressionDiff::Decreased { file, rule, from: _, to } => {
                 map.get_mut(&file).unwrap().get_mut(&rule).unwrap().count = to;
             }
             SuppressionDiff::PrunedRuled { file, rule } => {
-                let Some(file_map) = map.get(&file) else {
+                let Some(file_map) = map.get_mut(&file) else {
                     return;
                 };
 
-                // TODO: Make it more safe
+                let Some(_) = file_map.get(&rule) else {
+                    return;
+                };
+
                 if file_map.len() == 1 {
                     map.remove(&file);
                 } else {
-                    map.get_mut(&file).unwrap().remove(&rule);
+                    file_map.remove(&rule);
                 }
             }
             SuppressionDiff::Appeared { file, rule, count } => {

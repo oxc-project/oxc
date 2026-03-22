@@ -341,6 +341,14 @@ impl CliRunner {
         let mut options =
             LintServiceOptions::new(self.cwd.clone()).with_cross_module(use_cross_module);
 
+        let (mut suppression_manager, suppression_sender) = SuppressionManager::load(
+            options.cwd(),
+            "oxlint-suppressions.json",
+            suppression_options.suppress_all,
+            suppression_options.prune_suppressions || fix_options.is_enabled(),
+            &lint_config,
+        );
+
         let config_store = ConfigStore::new(lint_config, nested_configs, external_plugin_store);
         let type_aware = self.options.type_aware || config_store.type_aware_enabled();
         let type_check = self.options.type_check || config_store.type_check_enabled();
@@ -393,13 +401,6 @@ impl CliRunner {
             .into_iter()
             .filter(|path| !ignore_matcher.should_ignore(Path::new(path)))
             .collect::<Vec<Arc<OsStr>>>();
-
-        let (mut suppression_manager, suppression_sender) = SuppressionManager::load(
-            options.cwd(),
-            "oxlint-suppressions.json",
-            suppression_options.suppress_all,
-            suppression_options.prune_suppressions || fix_options.is_enabled(),
-        );
 
         let linter = Linter::new(LintOptions::default(), config_store, external_linter)
             .with_fix(fix_options.fix_kind())
@@ -464,7 +465,6 @@ impl CliRunner {
         drop(suppression_sender);
 
         let result = suppression_manager.report_suppression();
-        println!("Result report {:?}", result);
         let diagnostic_result = diagnostic_service.run(stdout);
 
         let oxlint_suppression_file_action = if let Err(report_suppression_error) = result {
@@ -1882,20 +1882,12 @@ mod suppression {
     }
 
     #[test]
-    #[ignore = "Not ready the test"]
-    fn test_suppression_ts_create_file() {
+    fn test_suppression_type_errors_not_recorded() {
         SuppressionTester::new()
-            .with_cwd("suppression_tsgo")
+            .with_cwd("suppression_type_errors_not_recorded")
             .with_setup_file(false)
-            .with_expected_file(true)
-            .with_backup_file(true)
-            //    .test(&["--suppress-all", "--type-aware", "--type-check"]);
-            .test(&[
-                "--suppress-all",
-                "--type-aware",
-                "--type-check",
-                "--fix",
-                "--fix-suggestions",
-            ]);
+            .with_expected_file(false)
+            .with_backup_file(false)
+            .test(&["--suppress-all", "--type-check"]);
     }
 }

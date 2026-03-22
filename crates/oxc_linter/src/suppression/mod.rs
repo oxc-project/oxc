@@ -6,14 +6,17 @@ use std::{
 use oxc_diagnostics::OxcDiagnostic;
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::Message;
+use crate::Config;
 
+mod diff;
 mod tracking;
 
 pub use tracking::{
     DiagnosticCounts, Filename, RuleName, SuppressionDiff, SuppressionFile, SuppressionFileState,
     SuppressionTracking,
 };
+
+pub use diff::DiffManager;
 
 type StaticSuppressionMap = Arc<FxHashMap<Filename, FxHashMap<RuleName, DiagnosticCounts>>>;
 
@@ -48,6 +51,7 @@ pub struct SuppressionManager {
     //If the source of truth exists
     file_exists: bool,
     receiver: SuppressionReceiver,
+    ts_go_rules: Arc<FxHashSet<RuleName>>,
 }
 
 impl SuppressionManager {
@@ -56,10 +60,24 @@ impl SuppressionManager {
         file_path: &str,
         suppress_all: bool,
         prune_suppression: bool,
+        lint_config: &Config,
     ) -> (Self, SuppressionSender) {
         let path = cwd.join(file_path);
         let (sender, receiver): (SuppressionSender, SuppressionReceiver) =
             std::sync::mpsc::channel();
+
+        let ts_go_rules = lint_config
+            .base
+            .rules
+            .iter()
+            .filter_map(|(rule, _)| {
+                if rule.is_tsgolint_rule() {
+                    Some(RuleName::new("typescript-eslint", rule.name()))
+                } else {
+                    None
+                }
+            })
+            .collect::<FxHashSet<RuleName>>();
 
         if !path.exists() {
             let manager_status = if suppress_all {
@@ -80,6 +98,7 @@ impl SuppressionManager {
                     prune_suppression,
                     suppress_all,
                     receiver,
+                    ts_go_rules: Arc::new(ts_go_rules),
                 },
                 sender,
             );
@@ -95,6 +114,7 @@ impl SuppressionManager {
                     prune_suppression,
                     suppress_all,
                     receiver,
+                    ts_go_rules: Arc::new(ts_go_rules),
                 },
                 sender,
             ),
@@ -107,56 +127,11 @@ impl SuppressionManager {
                     prune_suppression,
                     suppress_all,
                     receiver,
+                    ts_go_rules: Arc::new(ts_go_rules),
                 },
                 sender,
             ),
         }
-    }
-
-    pub fn ignore(&self) -> bool {
-        self.manager_status.ignore()
-    }
-
-    pub fn has_been_updated(&mut self) {
-        if self.manager_status == OxlintSuppressionFileAction::Exists {
-            self.manager_status = OxlintSuppressionFileAction::Updated;
-        }
-    }
-
-    pub fn concurrent_map(&self) -> StaticSuppressionMap {
-        self.suppressions_by_file.as_ref().map(|f| Arc::clone(f.suppressions())).unwrap_or_default()
-    }
-
-    pub fn is_updating_file(&self) -> bool {
-        self.suppress_all || self.prune_suppression
-    }
-
-    pub fn exists_suppression_file(&self) -> bool {
-        self.file_exists
-    }
-
-    pub fn update(&mut self, diff: SuppressionDiff) {
-        let Some(file) = self.suppressions_by_file.as_mut() else {
-            return;
-        };
-
-        file.update(diff);
-    }
-
-    pub fn write(&self) -> Result<(), OxcDiagnostic> {
-        if !self.file_exists && (self.prune_suppression && !self.suppress_all) {
-            return Err(OxcDiagnostic::error(
-                "You can't prune error messages if a bulk suppression file doesn't exist.",
-            ));
-        }
-
-        let Some(file) = self.suppressions_by_file.as_ref() else {
-            return Err(OxcDiagnostic::error(
-                "You can't prune error messages if a bulk suppression file is malformed.",
-            ));
-        };
-
-        file.save(&self.suppression_path)
     }
 
     pub fn report_suppression(&mut self) -> Result<(), OxcDiagnostic> {
@@ -177,148 +152,55 @@ impl SuppressionManager {
         }
     }
 
-    pub fn pruned_rule(filename: &Filename, rule_name: Vec<RuleName>) -> Vec<SuppressionDiff> {
-        rule_name
-            .into_iter()
-            .map(|rule| SuppressionDiff::PrunedRuled { file: filename.clone(), rule })
-            .collect()
+    pub fn build_diff(&self, suppressing_ts_go: bool) -> Arc<DiffManager> {
+        let diff_manager = DiffManager::new(
+            self.concurrent_map(),
+            self.is_updating_file(),
+            self.file_exists,
+            self.manager_status.ignore(),
+            Arc::<FxHashSet<RuleName>>::clone(&self.ts_go_rules),
+            suppressing_ts_go,
+            self.suppress_all,
+        );
+
+        Arc::new(diff_manager)
     }
 
-    pub fn diff_filename(
-        suppression_file_state: &SuppressionFile<'_>,
-        runtime_suppression: &FxHashMap<RuleName, DiagnosticCounts>,
-        filename: &Filename,
-        prune_predicate_fn: impl Fn(&RuleName) -> bool,
-    ) -> Vec<SuppressionDiff> {
-        let static_suppression = match suppression_file_state.suppression_state() {
-            SuppressionFileState::Ignored => return vec![],
-            SuppressionFileState::New => FxHashMap::default(),
-            SuppressionFileState::Exists => {
-                if let Some(data) = suppression_file_state.suppression_data() {
-                    data.to_owned()
-                } else {
-                    FxHashMap::default()
-                }
-            }
-        };
-
-        let mut diff = vec![];
-
-        if static_suppression.is_empty() && runtime_suppression.is_empty() {
-            return diff;
+    fn has_been_updated(&mut self) {
+        if self.manager_status == OxlintSuppressionFileAction::Exists {
+            self.manager_status = OxlintSuppressionFileAction::Updated;
         }
-
-        let static_suppression_keys = static_suppression.keys().collect::<FxHashSet<_>>();
-        let runtime_suppression_keys = runtime_suppression.keys().collect::<FxHashSet<_>>();
-
-        let pruned_rules = static_suppression_keys.difference(&runtime_suppression_keys);
-        let new_violations = runtime_suppression_keys.difference(&static_suppression_keys);
-        let existing_violations = static_suppression_keys.intersection(&runtime_suppression_keys);
-
-        for rule_key in pruned_rules {
-            if prune_predicate_fn(*rule_key) {
-                println!("PUSING PRUNED");
-                diff.push(SuppressionDiff::PrunedRuled {
-                    file: filename.clone(),
-                    rule: (*rule_key).clone(),
-                });
-            }
-        }
-
-        for rule_key in new_violations {
-            let Some(runtime_diagnostic) = runtime_suppression.get(rule_key) else {
-                continue;
-            };
-
-            diff.push(SuppressionDiff::Appeared {
-                file: filename.clone(),
-                rule: (*rule_key).clone(),
-                count: runtime_diagnostic.count,
-            });
-        }
-
-        for rule_key in existing_violations {
-            let file_diagnostic = &static_suppression[rule_key];
-            let Some(runtime_diagnostic) = runtime_suppression.get(rule_key) else {
-                continue;
-            };
-
-            if file_diagnostic.count > runtime_diagnostic.count {
-                diff.push(SuppressionDiff::Decreased {
-                    file: filename.clone(),
-                    rule: (*rule_key).clone(),
-                    from: file_diagnostic.count,
-                    to: runtime_diagnostic.count,
-                });
-            } else if file_diagnostic.count < runtime_diagnostic.count {
-                diff.push(SuppressionDiff::Increased {
-                    file: filename.clone(),
-                    rule: (*rule_key).clone(),
-                    from: file_diagnostic.count,
-                    to: runtime_diagnostic.count,
-                });
-            }
-        }
-
-        diff
     }
 
-    pub fn suppress_lint_diagnostics(
-        suppression_file_state: &SuppressionFile<'_>,
-        lint_diagnostics: Vec<Message>,
-    ) -> (Vec<Message>, Option<FxHashMap<RuleName, DiagnosticCounts>>) {
-        let build_suppression_map = |diagnostics: &Vec<Message>| {
-            let mut suppression_tracking: FxHashMap<RuleName, DiagnosticCounts> =
-                FxHashMap::default();
-            for message in diagnostics {
-                let Ok(key) = RuleName::try_from(message) else {
-                    continue;
-                };
+    fn concurrent_map(&self) -> StaticSuppressionMap {
+        self.suppressions_by_file.as_ref().map(|f| Arc::clone(f.suppressions())).unwrap_or_default()
+    }
 
-                suppression_tracking
-                    .entry(key)
-                    .or_insert(DiagnosticCounts { count: 0 }) // Make a default
-                    .count += 1;
-            }
+    fn is_updating_file(&self) -> bool {
+        self.suppress_all || self.prune_suppression
+    }
 
-            suppression_tracking
+    fn update(&mut self, diff: SuppressionDiff) {
+        let Some(file) = self.suppressions_by_file.as_mut() else {
+            return;
         };
 
-        match suppression_file_state.suppression_state() {
-            SuppressionFileState::Ignored => (lint_diagnostics, None),
-            SuppressionFileState::New => {
-                let runtime_suppression_tracking = build_suppression_map(&lint_diagnostics);
+        file.update(diff);
+    }
 
-                (lint_diagnostics, Some(runtime_suppression_tracking))
-            }
-            SuppressionFileState::Exists => {
-                let runtime_suppression_tracking = build_suppression_map(&lint_diagnostics);
-
-                let Some(recorded_violations) = suppression_file_state.suppression_data() else {
-                    return (lint_diagnostics, Some(runtime_suppression_tracking));
-                };
-
-                let diagnostics_filtered = lint_diagnostics
-                    .into_iter()
-                    .filter(|message| {
-                        let Ok(key) = RuleName::try_from(message) else {
-                            return true;
-                        };
-
-                        let Some(count_file) = recorded_violations.get(&key) else {
-                            return true;
-                        };
-
-                        let Some(count_runtime) = runtime_suppression_tracking.get(&key) else {
-                            return false;
-                        };
-
-                        count_file.count < count_runtime.count
-                    })
-                    .collect();
-
-                (diagnostics_filtered, Some(runtime_suppression_tracking))
-            }
+    fn write(&self) -> Result<(), OxcDiagnostic> {
+        if !self.file_exists && (self.prune_suppression && !self.suppress_all) {
+            return Err(OxcDiagnostic::error(
+                "You can't prune error messages if a bulk suppression file doesn't exist.",
+            ));
         }
+
+        let Some(file) = self.suppressions_by_file.as_ref() else {
+            return Err(OxcDiagnostic::error(
+                "You can't prune error messages if a bulk suppression file is malformed.",
+            ));
+        };
+
+        file.save(&self.suppression_path)
     }
 }

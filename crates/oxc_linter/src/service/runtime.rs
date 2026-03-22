@@ -32,7 +32,7 @@ use crate::{
     disable_directives::DisableDirectives,
     loader::{JavaScriptSource, LINT_PARTIAL_LOADER_EXTENSIONS, PartialLoader},
     module_record::ModuleRecord,
-    suppression::{Filename, RuleName, SuppressionFile, SuppressionManager, SuppressionSender},
+    suppression::{SuppressionManager, SuppressionSender},
     utils::read_to_arena_str,
 };
 
@@ -593,20 +593,7 @@ impl Runtime {
         self.modules_by_path.pin().reserve(paths.len());
         let paths_set: IndexSet<Arc<OsStr>, FxBuildHasher> = paths.into_iter().collect();
 
-        let is_updating_suppression_file = suppression_manager.is_updating_file();
-        let file_exists = suppression_manager.exists_suppression_file();
-        let concurrent_tracking_map = suppression_manager.concurrent_map();
-        let ignore_suppression = suppression_manager.ignore();
-        let ignore_tsgo_lint_rules = Arc::new(FxHashSet::from_iter(
-            self.linter
-                .config
-                .rules()
-                .iter()
-                .filter(|(rule, _)| rule.is_tsgolint_rule())
-                .map(|(rule, _)| RuleName::new("typescript-eslint", rule.name())),
-        ));
-
-        println!("IGNORED {:?}", ignore_tsgo_lint_rules);
+        let diff_manager = suppression_manager.build_diff(false);
 
         rayon::scope(|scope| {
             self.resolve_modules(
@@ -662,20 +649,6 @@ impl Runtime {
                             return;
                         }
 
-                        let suppression_file_check = if ignore_suppression {
-                            None
-                        } else if let Ok(file_path) = path.strip_prefix(&self.cwd) {
-                            let filename = Filename::new(file_path);
-                            let suppression_data = concurrent_tracking_map.get(&filename);
-                            Some(SuppressionFile::new(
-                                file_exists,
-                                self.linter.options.suppress_all,
-                                suppression_data,
-                            ))
-                        } else {
-                            Some(SuppressionFile::default())
-                        };
-
                         let (mut messages, disable_directives) =
                             me.linter.run_with_disable_directives(
                                 path,
@@ -713,46 +686,14 @@ impl Runtime {
                             messages = fix_result.messages;
                         }
 
-                        if let Some(suppression_file) = suppression_file_check {
-                            let (filtered_diagnostics, runtime_suppression_tracking) =
-                                SuppressionManager::suppress_lint_diagnostics(
-                                    &suppression_file,
-                                    messages,
-                                );
-
-                            if let Some(suppression_detected) = runtime_suppression_tracking {
-                                let filename = Filename::new(path.strip_prefix(&self.cwd).unwrap());
-
-                                let prune_predicate = |rule_key: &RuleName| {
-                                    println!(
-                                        "TO be pruned {:?}, and result is {:?}",
-                                        rule_key,
-                                        !ignore_tsgo_lint_rules.contains(rule_key)
-                                    );
-                                    !ignore_tsgo_lint_rules.contains(rule_key)
-                                };
-
-                                let diffs = SuppressionManager::diff_filename(
-                                    &suppression_file,
-                                    &suppression_detected,
-                                    &filename,
-                                    prune_predicate,
-                                );
-
-                                if !diffs.is_empty() && !is_updating_suppression_file {
-                                    let errors = diffs.into_iter().map(Into::into).collect();
-                                    let diagnostics = DiagnosticService::wrap_diagnostics(
-                                        &me.cwd, path, "", errors,
-                                    );
-                                    tx_error.send(diagnostics).unwrap();
-                                } else if !diffs.is_empty() && is_updating_suppression_file {
-                                    for diff in diffs {
-                                        suppression_sender.send(diff.clone()).unwrap();
-                                    }
-                                }
-                            }
-
-                            messages = filtered_diagnostics;
+                        if !diff_manager.skip() {
+                            messages = diff_manager.diff_file(
+                                path,
+                                &self.cwd,
+                                messages,
+                                tx_error,
+                                &suppression_sender.clone(),
+                            );
                         }
 
                         if !messages.is_empty() {
