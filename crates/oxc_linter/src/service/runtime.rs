@@ -605,6 +605,8 @@ impl Runtime {
                         let mut new_source_text = Cow::from(dep.source_text);
 
                         let path = Path::new(&module_to_lint.path);
+                        let ignore_eslint_directives =
+                            me.linter.config().ignore_eslint_directives();
 
                         assert_eq!(
                             module_to_lint.section_module_records.len(),
@@ -623,6 +625,7 @@ impl Runtime {
                                         section.source.start,
                                         section.source.framework_options,
                                         section.parser_tokens,
+                                        ignore_eslint_directives,
                                     ))
                                 }
                                 Err(messages) => {
@@ -731,6 +734,9 @@ impl Runtime {
                             section_contents.len()
                         );
 
+                        let ignore_eslint_directives =
+                            me.linter.config().ignore_eslint_directives();
+
                         let context_sub_hosts: Vec<ContextSubHost<'_>> = module_to_lint
                             .section_module_records
                             .into_iter()
@@ -743,6 +749,7 @@ impl Runtime {
                                         section.source.start,
                                         section.source.framework_options,
                                         section.parser_tokens,
+                                        ignore_eslint_directives,
                                     ))
                                 }
                                 Err(diagnostics) => {
@@ -807,6 +814,9 @@ impl Runtime {
                     |allocator_guard, ModuleContentDependent { source_text: _, section_contents }| {
                         assert_eq!(module.section_module_records.len(), section_contents.len());
 
+                        let ignore_eslint_directives =
+                            me.linter.config().ignore_eslint_directives();
+
                         let context_sub_hosts: Vec<ContextSubHost<'_>> = module
                             .section_module_records
                             .into_iter()
@@ -818,6 +828,7 @@ impl Runtime {
                                     section.source.start,
                                     section.source.framework_options,
                                     section.parser_tokens,
+                                    ignore_eslint_directives,
                                 )),
                                 Err(errors) => {
                                     if !errors.is_empty() {

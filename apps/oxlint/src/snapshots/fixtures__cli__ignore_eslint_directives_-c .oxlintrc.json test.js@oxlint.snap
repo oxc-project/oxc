@@ -1,0 +1,59 @@
+---
+source: apps/oxlint/src/tester.rs
+assertion_line: 134
+---
+########## 
+arguments: -c .oxlintrc.json test.js
+working directory: fixtures/cli/ignore_eslint_directives
+----------
+
+  ! eslint(no-debugger): `debugger` statement is not allowed
+   ,-[test.js:2:1]
+ 1 | // eslint-disable-next-line no-debugger -- IGNORED
+ 2 | debugger;
+   : ^^^^^^^^^
+ 3 | 
+   `----
+  help: Remove the debugger statement
+
+  ! eslint(no-console): Unexpected console statement.
+   ,-[test.js:8:1]
+ 7 | // eslint-disable-next-line no-console -- IGNORED
+ 8 | console.log('not suppressed (eslint-disable-next-line ignored)');
+   : ^^^^^^^^^^^
+ 9 | 
+   `----
+  help: Delete this console statement.
+
+  ! eslint(no-debugger): `debugger` statement is not allowed
+    ,-[test.js:11:1]
+ 10 | /* eslint-disable no-debugger */ // IGNORED
+ 11 | debugger;
+    : ^^^^^^^^^
+ 12 | 
+    `----
+  help: Remove the debugger statement
+
+  ! eslint(no-debugger): `debugger` statement is not allowed
+    ,-[test.js:20:1]
+ 19 | /* oxlint-enable no-debugger */ // re-enabled
+ 20 | debugger;
+    : ^^^^^^^^^
+ 21 | 
+    `----
+  help: Remove the debugger statement
+
+  ! eslint(no-console): Unexpected console statement.
+    ,-[test.js:22:1]
+ 21 | 
+ 22 | console.log('not suppressed (eslint-disable-line ignored)'); // eslint-disable-line no-console -- IGNORED
+    : ^^^^^^^^^^^
+ 23 | 
+    `----
+  help: Delete this console statement.
+
+Found 5 warnings and 0 errors.
+Finished in <variable>ms on 1 file with 94 rules using 1 threads.
+----------
+CLI result: LintSucceeded
+----------
