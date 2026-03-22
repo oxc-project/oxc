@@ -38,6 +38,12 @@ pub fn should_hug_type(node: &TSUnionType<'_>, f: &Formatter<'_, '_>) -> bool {
     let types = &node.types;
 
     if types.len() == 1 {
+        // Don't hug if there are own-line leading comments (e.g. JSDoc before the single type).
+        // They need proper indentation handling via the normal union type path.
+        // See https://github.com/oxc-project/oxc/issues/20219
+        if f.comments().has_leading_own_line_comment(node.span.start) {
+            return false;
+        }
         return true;
     }
 
