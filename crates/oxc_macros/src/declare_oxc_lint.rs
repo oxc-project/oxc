@@ -22,6 +22,8 @@ pub struct LintRuleMeta {
     /// This is the name of a struct/enum/whatever implementing
     /// schemars::JsonSchema
     config: Option<Ident>,
+    /// Tags applied to this rule (e.g. `recommended`)
+    tags: Vec<Ident>,
 }
 
 impl Parse for LintRuleMeta {
@@ -86,6 +88,7 @@ impl Parse for LintRuleMeta {
         // Do not provide a default value here so that it can be set there instead.
         let mut fix: Option<Ident> = None;
         let mut config: Option<Ident> = None;
+        let mut tags: Vec<Ident> = Vec::new();
 
         // remaining options are `key = value` pairs, with the exception of
         // fix kinds. Those can be short-handed to just the fix kind
@@ -110,6 +113,19 @@ impl Parse for LintRuleMeta {
                 "config" => {
                     input.parse::<Token!(=)>()?;
                     config.replace(input.parse()?);
+                }
+                // tags = [recommended, something_else]
+                "tags" => {
+                    input.parse::<Token!(=)>()?;
+                    let content;
+                    syn::bracketed!(content in input);
+                    while !content.is_empty() {
+                        let tag: Ident = content.parse()?;
+                        tags.push(tag);
+                        if content.peek(Token!(,)) {
+                            content.parse::<Token!(,)>()?;
+                        }
+                    }
                 }
                 _ => {
                     if input.peek(Token!(=)) || fix.is_some() {
@@ -150,6 +166,7 @@ impl Parse for LintRuleMeta {
             documentation,
             used_in_test: false,
             config,
+            tags,
         })
     }
 }
@@ -169,6 +186,7 @@ pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
         documentation,
         used_in_test,
         config,
+        tags,
     } = metadata;
 
     let canonical_name = rule_name_converter().convert(name.to_string());
@@ -195,7 +213,7 @@ pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
         None
     } else {
         Some(quote! {
-            use crate::{rule::{RuleCategory, RuleMeta, RuleFixMeta, RuleRunner}, fixer::FixKind};
+            use crate::{rule::{RuleCategory, RuleMeta, RuleFixMeta, RuleTag, RuleRunner}, fixer::FixKind};
             use oxc_semantic::AstTypesBitset;
         })
     };
@@ -235,6 +253,19 @@ pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
         }),
     };
 
+    let tags_const = if tags.is_empty() {
+        None
+    } else {
+        let tag_exprs = tags.iter().map(|tag| match tag.to_string().as_str() {
+            "recommended" => quote! { RuleTag::Recommended },
+            other => panic!("invalid tag: `{other}`. Valid tags are: recommended"),
+        });
+        let combined = tag_exprs.into_iter().reduce(|acc, t| quote! { #acc.union(#t) }).unwrap();
+        Some(quote! {
+            const TAGS: RuleTag = #combined;
+        })
+    };
+
     let output = quote! {
         #import_statement
 
@@ -254,6 +285,8 @@ pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
             #has_config
 
             #config_schema
+
+            #tags_const
         }
     };
 
