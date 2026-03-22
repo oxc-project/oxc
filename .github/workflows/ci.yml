@@ -441,13 +441,25 @@ jobs:
           cache: |
             rust
             pnpm
-      - run: rustup component add clippy rust-docs
+      - run: rustup component add clippy
       - run: cargo lint -- -D warnings
       - run: cargo lint --profile dev-no-debug-assertions -- -D warnings
-      - run: RUSTDOCFLAGS='-D warnings' cargo doc --no-deps --document-private-items
       - run: pnpm --filter oxlint-app build-js
       - run: pnpm --filter oxfmt-app build-js
       - run: node --run lint
+
+  doc:
+    name: Doc
+    runs-on: namespace-profile-linux-x64-default
+    steps:
+      - uses: taiki-e/checkout-action@83ed61bfbe2b8abbb3c66e8b65b1335484c70009 # v1.4.1
+      - uses: namespacelabs/nscloud-cache-action@a90bb5d4b27522ce881c6e98eebd7d7e6d1653f9 # v1
+        with:
+          path: /home/runner/.rustup
+          cache: rust
+      - run: rustup toolchain install nightly --profile minimal --component rust-docs
+      # https://github.com/rust-lang/rust/issues/146895
+      - run: RUSTDOCFLAGS='-D warnings' cargo +nightly doc --no-deps --document-private-items -Zrustdoc-mergeable-info
 
   conformance:
     name: Conformance
