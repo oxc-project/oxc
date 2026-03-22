@@ -1,4 +1,3 @@
-use std::collections::BTreeMap;
 use std::fmt::Write;
 
 use oxc_diagnostics::{
@@ -18,35 +17,33 @@ impl InternalFormatter for AgentOutputFormatter {
 }
 
 /// Reporter optimized for AI agent consumption.
-/// Groups diagnostics by filename and uses a minimal plain-text format
-/// to reduce token usage. Includes rule IDs and help text.
+/// Outputs one greppable line per diagnostic in the format:
+/// `file:line:col severity rule(id): message (help: ...)`
 #[derive(Default)]
 struct AgentReporter {
-    diagnostics: Vec<Error>,
+    output: String,
 }
 
 impl DiagnosticReporter for AgentReporter {
     fn finish(&mut self, result: &DiagnosticResult) -> Option<String> {
-        if self.diagnostics.is_empty() {
+        if self.output.is_empty() {
             return None;
         }
 
-        let mut output = format_agent(&mut self.diagnostics);
-
         let errors = result.errors_count();
         let warnings = result.warnings_count();
-        output.push('\n');
+        self.output.push('\n');
         match (errors, warnings) {
             (0, 0) => {}
             (e, 0) => {
-                let _ = writeln!(output, "{e} error{}", if e == 1 { "" } else { "s" });
+                let _ = writeln!(self.output, "{e} error{}", if e == 1 { "" } else { "s" });
             }
             (0, w) => {
-                let _ = writeln!(output, "{w} warning{}", if w == 1 { "" } else { "s" });
+                let _ = writeln!(self.output, "{w} warning{}", if w == 1 { "" } else { "s" });
             }
             (e, w) => {
                 let _ = writeln!(
-                    output,
+                    self.output,
                     "{e} error{}, {w} warning{}",
                     if e == 1 { "" } else { "s" },
                     if w == 1 { "" } else { "s" }
@@ -54,49 +51,34 @@ impl DiagnosticReporter for AgentReporter {
             }
         }
 
-        Some(output)
+        Some(std::mem::take(&mut self.output))
     }
 
     fn render_error(&mut self, error: Error) -> Option<String> {
-        self.diagnostics.push(error);
-        None
-    }
-}
-
-fn format_agent(diagnostics: &mut Vec<Error>) -> String {
-    // Group diagnostics by filename using BTreeMap for deterministic ordering
-    let mut by_file: BTreeMap<String, Vec<(Info, Option<String>)>> = BTreeMap::new();
-
-    for error in diagnostics.drain(..) {
         let help = error.help().map(|h| h.to_string());
         let info = Info::new(&error);
-        by_file.entry(info.filename.clone()).or_default().push((info, help));
-    }
+        let severity = match info.severity {
+            Severity::Error => "error",
+            _ => "warning",
+        };
+        let rule = info.rule_id.as_deref().unwrap_or("-");
 
-    let mut output = String::new();
-
-    for (filename, entries) in &by_file {
-        output.push_str(filename);
-        output.push('\n');
-
-        for (info, help) in entries {
-            let severity = match info.severity {
-                Severity::Error => "error",
-                _ => "warning",
-            };
-            let rule = info.rule_id.as_deref().unwrap_or("-");
+        if let Some(help) = help {
             let _ = writeln!(
-                output,
-                "  {}:{} {} {}: {}",
-                info.start.line, info.start.column, severity, rule, info.message
+                self.output,
+                "{}:{}:{} {} {}: {} (help: {})",
+                info.filename, info.start.line, info.start.column, severity, rule, info.message, help
             );
-            if let Some(help) = help {
-                let _ = writeln!(output, "    help: {help}");
-            }
+        } else {
+            let _ = writeln!(
+                self.output,
+                "{}:{}:{} {} {}: {}",
+                info.filename, info.start.line, info.start.column, severity, rule, info.message
+            );
         }
-    }
 
-    output
+        None
+    }
 }
 
 #[cfg(test)]
@@ -117,7 +99,7 @@ mod test {
     }
 
     #[test]
-    fn reporter_groups_by_file() {
+    fn reporter_one_liner_format() {
         let mut reporter = AgentReporter::default();
 
         let error1 = OxcDiagnostic::error("no debugger")
@@ -134,15 +116,14 @@ mod test {
 
         assert!(result.is_some());
         let output = result.unwrap();
-        // Both diagnostics should be under the same file header
-        assert_eq!(output.matches("file.js\n").count(), 1);
-        assert!(output.contains("error"));
-        assert!(output.contains("warning"));
+        // Each diagnostic on its own greppable line
+        assert!(output.contains("file.js:1:1 error"));
+        assert!(output.contains("file.js:1:1 warning"));
         assert!(output.contains("1 error, 1 warning"));
     }
 
     #[test]
-    fn reporter_includes_help_text() {
+    fn reporter_includes_help_inline() {
         let mut reporter = AgentReporter::default();
 
         let error = OxcDiagnostic::warn("no debugger")
@@ -156,11 +137,13 @@ mod test {
 
         assert!(result.is_some());
         let output = result.unwrap();
-        assert!(output.contains("help: Remove the `debugger` statement"));
+        // Help text should be inline, not on a separate line
+        assert!(output.contains("(help: Remove the `debugger` statement)"));
+        assert!(!output.contains("\n    help:"));
     }
 
     #[test]
-    fn reporter_error() {
+    fn reporter_greppable_line() {
         let mut reporter = AgentReporter::default();
 
         let error = OxcDiagnostic::warn("no debugger")
@@ -173,7 +156,7 @@ mod test {
 
         assert!(result.is_some());
         let output = result.unwrap();
-        assert!(output.contains("file.js\n"));
-        assert!(output.contains("1:1 warning"));
+        // Line should start with file:line:col for greppability
+        assert!(output.starts_with("file.js:1:1 warning"));
     }
 }

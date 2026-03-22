@@ -252,6 +252,23 @@ pub struct OutputOptions {
     pub format: OutputFormat,
 }
 
+/// Detect whether oxlint is running inside an AI agent environment.
+/// Checks the same environment variables as [unjs/std-env](https://github.com/unjs/std-env).
+fn is_agent_env() -> bool {
+    const AGENT_ENV_VARS: &[&str] = &[
+        "CLAUDECODE",
+        "CLAUDE_CODE",
+        "CURSOR_AGENT",
+        "GEMINI_CLI",
+        "CODEX_SANDBOX",
+        "CODEX_THREAD_ID",
+        "AUGMENT_AGENT",
+        "GOOSE_PROVIDER",
+        "REPL_ID",
+    ];
+    AGENT_ENV_VARS.iter().any(|var| std::env::var(var).is_ok())
+}
+
 #[expect(clippy::unnecessary_wraps)]
 fn default_output_format() -> Result<OutputFormat, std::convert::Infallible> {
     if cfg!(debug_assertions) {
@@ -260,7 +277,7 @@ fn default_output_format() -> Result<OutputFormat, std::convert::Infallible> {
         Ok(OutputFormat::Github)
     } else if std::env::var("GITLAB_CI").ok().is_some_and(|value| value == "true") {
         Ok(OutputFormat::Gitlab)
-    } else if std::env::var("OXLINT_AGENT").ok().is_some() {
+    } else if is_agent_env() {
         Ok(OutputFormat::Agent)
     } else {
         Ok(OutputFormat::Default)
