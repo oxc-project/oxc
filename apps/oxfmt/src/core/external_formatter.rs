@@ -309,7 +309,7 @@ impl ExternalFormatter {
 
                         from_prettier_doc::to_format_elements_for_template(
                             language,
-                            &doc_jsons,
+                            doc_jsons,
                             allocator,
                             group_id_builder,
                         )
