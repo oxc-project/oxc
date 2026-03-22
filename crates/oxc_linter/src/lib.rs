@@ -85,7 +85,7 @@ pub use crate::{
     module_record::ModuleRecord,
     options::LintOptions,
     options::{AllowWarnDeny, InvalidFilterKind, LintFilter, LintFilterKind},
-    rule::{RuleCategory, RuleFixMeta, RuleMeta, RuleRunFunctionsImplemented, RuleRunner},
+    rule::{RuleCategory, RuleFixMeta, RuleMeta, RuleRunFunctionsImplemented, RuleRunner, RuleTag},
     service::{LintService, LintServiceOptions, OsFileSystem, RuntimeFileSystem},
     tsgolint::TsGoLintState,
     utils::{read_to_arena_str, read_to_string},

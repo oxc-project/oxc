@@ -1,4 +1,4 @@
-use oxc_linter::{RuleCategory, RuleMeta};
+use oxc_linter::{RuleCategory, RuleMeta, RuleTag};
 use oxc_macros::declare_oxc_lint_test;
 
 struct TestRule;
@@ -23,6 +23,16 @@ declare_oxc_lint_test!(
     correctness
 );
 
+struct TestRuleWithTags;
+
+declare_oxc_lint_test!(
+    /// Tagged rule
+    TestRuleWithTags,
+    eslint,
+    correctness,
+    tags = recommended,
+);
+
 #[test]
 fn test_declare_oxc_lint() {
     // Simple, multiline documentation
@@ -38,4 +48,11 @@ fn test_declare_oxc_lint() {
 
     // plugin name is passed to const
     assert_eq!(TestRule::PLUGIN, "eslint");
+
+    // No tags by default
+    assert_eq!(TestRule::TAGS, RuleTag::empty());
+
+    // Tags are set when specified
+    assert_eq!(TestRuleWithTags::TAGS, RuleTag::Recommended);
+    assert!(TestRuleWithTags::TAGS.is_recommended());
 }
