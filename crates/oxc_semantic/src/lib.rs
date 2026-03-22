@@ -65,7 +65,7 @@ use class::ClassTable;
 ///
 /// [`Abstract Syntax Tree (AST)`]: crate::AstNodes
 /// [`scoping`]: crate::Scoping
-/// [`control flow graph (CFG)`]: crate::ControlFlowGraph
+/// [`control flow graph (CFG)`]: Semantic::cfg
 #[derive(Default)]
 pub struct Semantic<'a> {
     /// Source code of the JavaScript/TypeScript program being analyzed.
