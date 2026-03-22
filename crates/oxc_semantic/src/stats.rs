@@ -1,7 +1,7 @@
 use std::cell::Cell;
 
 use oxc_ast::{
-    AstKind,
+    AstBuilderStats, AstKind,
     ast::{BindingIdentifier, IdentifierReference, Program, TSEnumMemberName},
 };
 use oxc_ast_visit::{Visit, walk::walk_ts_enum_member_name};
@@ -75,6 +75,17 @@ pub struct Stats {
     pub references: u32,
 }
 
+impl From<&AstBuilderStats> for Stats {
+    fn from(stats: &AstBuilderStats) -> Self {
+        Stats {
+            nodes: stats.nodes,
+            scopes: stats.scopes,
+            symbols: stats.symbols,
+            references: stats.references,
+        }
+    }
+}
+
 impl Stats {
     /// Create new [`Stats`] from specified counts.
     pub fn new(nodes: u32, scopes: u32, symbols: u32, references: u32) -> Self {
@@ -115,14 +126,19 @@ impl Stats {
         self
     }
 
-    /// Assert that estimated [`Stats`] match actual.
+    /// Assert that estimated [`Stats`] are no smaller than `actual`.
+    ///
+    /// Estimated counts may be larger than actual counts (e.g. symbols may be overcounted
+    /// when there are redeclarations like `var x; var x;`). Overestimates are acceptable
+    /// because they only result in extra allocated capacity. Underestimates are costly
+    /// because they force reallocation and memory copying.
     ///
     /// # Panics
-    /// Panics if stats are not accurate.
+    /// Panics if any estimated count is less than the corresponding actual count.
     pub fn assert_accurate(self, actual: Self) {
-        assert_eq!(self.nodes, actual.nodes, "nodes count mismatch");
-        assert_eq!(self.scopes, actual.scopes, "scopes count mismatch");
-        assert_eq!(self.references, actual.references, "references count mismatch");
+        assert_ge!(self.nodes, actual.nodes, "nodes count mismatch");
+        assert_ge!(self.scopes, actual.scopes, "scopes count mismatch");
+        assert_ge!(self.references, actual.references, "references count mismatch");
         // `Counter` may overestimate number of symbols, because multiple `BindingIdentifier`s
         // can result in only a single symbol.
         // e.g. `var x; var x;` = 2 x `BindingIdentifier` but 1 x symbol.

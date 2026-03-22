@@ -58,6 +58,7 @@ fn main() -> std::io::Result<()> {
 
     // Build semantic model with syntax error checking
     let semantic = SemanticBuilder::new()
+        .with_stats(&parser_ret.stats)
         // Enable additional syntax checks not performed by the parser
         .with_check_syntax_error(true)
         .build(&program);
