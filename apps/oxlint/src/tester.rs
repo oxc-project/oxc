@@ -184,7 +184,7 @@ impl SuppressionTester {
     }
 
     pub fn with_cwd(mut self, fixture_name: &str) -> Self {
-        self.cwd.push(format!("fixtures/{fixture_name}"));
+        self.cwd.push(format!("fixtures/suppression/{fixture_name}"));
         self.fixture_name = fixture_name.to_string();
         self
     }

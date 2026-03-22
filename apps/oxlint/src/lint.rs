@@ -1634,94 +1634,80 @@ mod suppression {
     use crate::tester::{SuppressionTester, Tester};
 
     #[test]
-    fn test_suppression_not_file_reporting_errors() {
+    fn file_not_detected_report_all_errors() {
         let args = &["--type-aware", "--type-check"];
         Tester::new()
-            .with_cwd("fixtures/suppression_not_file_reporting_errors".into())
+            .with_cwd("fixtures/suppression/file_not_detected_report_all_errors".into())
             .test_and_snapshot(args);
     }
 
     #[test]
-    fn test_suppression_not_reporting_new_errors() {
+    fn test_diagnostics_filtered_if_count_is_the_same() {
         let args = &["--type-aware", "--type-check"];
         Tester::new()
-            .with_cwd("fixtures/suppression_not_reporting_new_errors".into())
+            .with_cwd("fixtures/suppression/diagnostics_filtered_if_count_is_the_same".into())
             .test_and_snapshot(args);
     }
 
     #[test]
-    fn test_suppression_report_only_from_one_file() {
+    fn test_only_file_diffs_are_reported() {
         let args = &[];
         Tester::new()
-            .with_cwd("fixtures/suppression_report_only_from_one_file".into())
+            .with_cwd("fixtures/suppression/only_file_diffs_are_reported".into())
             .test_and_snapshot(args);
     }
 
     #[test]
-    fn test_suppression_eslint_file_format() {
+    fn test_eslint_file_format() {
         let args = &[];
         Tester::new()
-            .with_cwd("fixtures/suppression_eslint_file_format".into())
+            .with_cwd("fixtures/suppression/eslint_file_format".into())
             .test_and_snapshot(args);
     }
 
     #[test]
-    fn test_suppression_less_rules_violations_warning() {
+    fn test_decreased_violations_are_reported() {
         let args = &[];
         Tester::new()
-            .with_cwd("fixtures/suppression_less_rules_violations_warning".into())
+            .with_cwd("fixtures/suppression/decreased_violations_are_reported".into())
             .test_and_snapshot(args);
     }
 
     #[test]
-    fn test_suppression_prune_errors_warning() {
+    fn test_prune_errors_warning() {
         let args = &["--type-aware", "--type-check"];
         Tester::new()
-            .with_cwd("fixtures/suppression_prune_errors_warning".into())
+            .with_cwd("fixtures/suppression/fixed_violations_are_reported".into())
             .test_and_snapshot(args);
     }
 
     #[test]
-    fn test_suppression_report_one_of_the_errors_from_one_file() {
+    fn test_report_one_new_error_but_filter_the_rest() {
         let args = &["--type-aware", "--type-check"];
         Tester::new()
-            .with_cwd("fixtures/suppression_report_one_of_the_errors_from_one_file".into())
+            .with_cwd("fixtures/suppression/reports_new_errors_and_filter_existing".into())
             .test_and_snapshot(args);
     }
 
     #[test]
-    fn test_suppression_without_file() {
-        let args = &["--type-aware", "--type-check"];
-        Tester::new().with_cwd("fixtures/suppression_without_file".into()).test_and_snapshot(args);
-    }
-
-    #[test]
-    fn test_suppression_report_one_new_error_but_filter_the_rest() {
-        let args = &["--type-aware", "--type-check"];
-        Tester::new()
-            .with_cwd("fixtures/suppression_report_one_new_error_but_filter_the_rest".into())
-            .test_and_snapshot(args);
-    }
-
-    #[test]
-    fn test_suppression_file_malformed() {
+    fn test_file_malformed() {
         let args = &[];
         Tester::new()
-            .with_cwd("fixtures/suppression_file_malformed".into())
+            .with_cwd("fixtures/suppression/file_malformed".into())
             .test_and_snapshot(args);
     }
 
     #[test]
-    fn test_suppression_with_suppress_all_arg_and_no_file() {
+    fn test_happy_path() {
         let args = &["--suppress-all", "--type-aware", "--type-check"];
         let suppression = SuppressionTester::new()
-            .with_cwd("suppression_with_suppress_all_arg_and_no_file")
+            .with_cwd("project_without_suppression_detected")
             .with_setup_file(false)
             .with_expected_file(true);
 
         suppression.test(args);
         let stdout = Tester::new()
-            .with_cwd("fixtures/suppression_with_suppress_all_arg_and_no_file".into())
+            .with_cwd("fixtures/suppression/project_without_suppression_detected".into())
             .test_output(args);
 
         // The error comes from the type check error. Type check errors aren't filtered
@@ -1729,18 +1715,18 @@ mod suppression {
     }
 
     #[test]
-    fn test_suppression_with_prune_all_arg_and_no_file() {
+    fn test_pruning_cannot_create_a_file() {
         SuppressionTester::new()
-            .with_cwd("suppression_with_suppress_all_arg_and_no_file")
+            .with_cwd("pruning_cannot_create_a_file")
             .with_setup_file(false)
             .with_expected_file(false)
             .test(&["--prune-suppressions", "--type-aware", "--type-check"]);
     }
 
     #[test]
-    fn test_suppression_with_suppress_all_and_fix_arg_and_no_file() {
+    fn test_only_non_fixed_diagnostics_are_reported() {
         SuppressionTester::new()
-            .with_cwd("suppression_with_suppress_all_and_fix_arg_and_no_file")
+            .with_cwd("only_non_fixed_diagnostics_are_reported")
             .with_setup_file(false)
             .with_expected_file(true)
             .with_backup_file(false)
@@ -1749,9 +1735,9 @@ mod suppression {
     }
 
     #[test]
-    fn test_suppression_update_file_after_fixing() {
+    fn test_update_file_after_fixing() {
         SuppressionTester::new()
-            .with_cwd("suppression_update_file_after_fixing")
+            .with_cwd("update_file_after_fixing")
             .with_setup_file(true)
             .with_expected_file(true)
             .with_backup_file(true)
@@ -1760,9 +1746,9 @@ mod suppression {
     }
 
     #[test]
-    fn test_suppression_not_filtered_dangerous_fix_not_applied() {
+    fn test_not_update_dangerous_fix_violation_with_fix_only() {
         SuppressionTester::new()
-            .with_cwd("suppression_not_filtered_dangerous_fix_not_applied")
+            .with_cwd("not_update_dangerous_fix_violation_with_fix_only")
             .with_setup_file(true)
             .with_expected_file(true)
             .with_backup_file(true)
@@ -1771,9 +1757,9 @@ mod suppression {
     }
 
     #[test]
-    fn test_suppression_updated_dangerous_fix_applied() {
+    fn test_updated_dangerous_fix() {
         SuppressionTester::new()
-            .with_cwd("suppression_updated_dangerous_fix_applied")
+            .with_cwd("updated_dangerous_fix")
             .with_setup_file(true)
             .with_expected_file(true)
             .with_backup_file(true)
@@ -1789,9 +1775,9 @@ mod suppression {
     }
 
     #[test]
-    fn test_suppression_not_filtered_suggestion_fix_not_applied() {
+    fn test_not_filtered_suggestion_fix_not_applied() {
         SuppressionTester::new()
-            .with_cwd("suppression_not_filtered_suggestion_fix_not_applied")
+            .with_cwd("not_update_suggestion_fix_violation_with_fix_only")
             .with_setup_file(true)
             .with_expected_file(true)
             .with_backup_file(true)
@@ -1800,9 +1786,9 @@ mod suppression {
     }
 
     #[test]
-    fn test_suppression_updated_suggestion_fix_applied() {
+    fn test_updated_suggestion_fix_applied() {
         SuppressionTester::new()
-            .with_cwd("suppression_updated_suggestion_fix_applied")
+            .with_cwd("updated_suggestion_fix")
             .with_setup_file(true)
             .with_expected_file(true)
             .with_backup_file(true)
@@ -1811,9 +1797,9 @@ mod suppression {
     }
 
     #[test]
-    fn test_suppression_with_suppress_all_arg_and_pruned_errors() {
+    fn test_with_suppress_all_arg_and_pruned_errors() {
         SuppressionTester::new()
-            .with_cwd("suppression_with_suppress_all_arg_and_pruned_errors")
+            .with_cwd("with_suppress_all_arg_and_pruned_errors")
             .with_setup_file(true)
             .with_expected_file(true)
             .with_backup_file(true)
@@ -1821,9 +1807,9 @@ mod suppression {
     }
 
     #[test]
-    fn test_suppression_with_prune_suppressions_arg_and_pruned_errors() {
+    fn test_prunning_errors_update_the_file_when_errors_are_pruned() {
         SuppressionTester::new()
-            .with_cwd("suppression_with_arg_and_pruned_errors")
+            .with_cwd("with_arg_and_pruned_errors")
             .with_setup_file(true)
             .with_expected_file(true)
             .with_backup_file(true)
@@ -1831,9 +1817,9 @@ mod suppression {
     }
 
     #[test]
-    fn test_suppression_with_suppress_all_arg_and_increased_errors() {
+    fn test_suppressiong_errors_update_the_file_when_errors_are_increased() {
         SuppressionTester::new()
-            .with_cwd("suppression_with_arg_and_increased_errors")
+            .with_cwd("with_arg_and_increased_errors")
             .with_setup_file(true)
             .with_expected_file(true)
             .with_backup_file(true)
@@ -1841,9 +1827,9 @@ mod suppression {
     }
 
     #[test]
-    fn test_suppression_with_prune_suppressions_arg_and_increased_errors() {
+    fn test_prunning_errors_update_the_file_when_errors_are_increased() {
         SuppressionTester::new()
-            .with_cwd("suppression_with_arg_and_increased_errors")
+            .with_cwd("with_arg_and_increased_errors")
             .with_setup_file(true)
             .with_expected_file(true)
             .with_backup_file(true)
@@ -1851,9 +1837,9 @@ mod suppression {
     }
 
     #[test]
-    fn test_suppression_with_suppress_all_arg_and_decreased_errors() {
+    fn test_suppressing_errors_update_the_file_when_errors_are_decreased() {
         SuppressionTester::new()
-            .with_cwd("suppression_with_arg_and_decreased_errors")
+            .with_cwd("with_arg_and_decreased_errors")
             .with_setup_file(true)
             .with_expected_file(true)
             .with_backup_file(true)
@@ -1861,9 +1847,9 @@ mod suppression {
     }
 
     #[test]
-    fn test_suppression_with_prune_suppressions_arg_and_decreased_errors() {
+    fn test_prunning_errors_update_the_file_when_errors_are_decreased() {
         SuppressionTester::new()
-            .with_cwd("suppression_with_arg_and_decreased_errors")
+            .with_cwd("with_arg_and_decreased_errors")
             .with_setup_file(true)
             .with_expected_file(true)
             .with_backup_file(true)
@@ -1871,9 +1857,9 @@ mod suppression {
     }
 
     #[test]
-    fn test_suppression_fixing_only_ts_go_errors() {
+    fn test_fixing_only_ts_go_errors() {
         SuppressionTester::new()
-            .with_cwd("suppression_fixing_only_ts_go_errors")
+            .with_cwd("fixing_only_ts_go_errors")
             .with_setup_file(true)
             .with_expected_file(true)
             .with_backup_file(true)
@@ -1882,9 +1868,9 @@ mod suppression {
     }
 
     #[test]
-    fn test_suppression_type_errors_not_recorded() {
+    fn test_type_errors_not_recorded() {
         SuppressionTester::new()
-            .with_cwd("suppression_type_errors_not_recorded")
+            .with_cwd("type_errors_not_recorded")
             .with_setup_file(false)
             .with_expected_file(false)
             .with_backup_file(false)

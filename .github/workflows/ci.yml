@@ -230,7 +230,6 @@ jobs:
   test-napi-oxlint:
     name: Test NAPI Oxlint
     runs-on: namespace-profile-linux-x64-default
-    if: ${{ github.ref_name == 'main' }}
     steps:
       - uses: taiki-e/checkout-action@83ed61bfbe2b8abbb3c66e8b65b1335484c70009 # v1.4.1
       - uses: ./.github/actions/check-changes
@@ -289,6 +288,7 @@ jobs:
   test-napi-compiler-windows:
     name: Test NAPI Compiler (windows)
     runs-on: windows-latest
+    if: ${{ github.ref_name == 'main' }}
     steps:
       - run: git config --system core.longpaths true
       - uses: taiki-e/checkout-action@83ed61bfbe2b8abbb3c66e8b65b1335484c70009 # v1.4.1
