@@ -56,9 +56,12 @@ impl<'a> Deref for FormatProgramBody<'a, '_> {
 impl<'a> Format<'a> for FormatProgramBody<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let mut join = f.join_nodes_with_hardline();
+        let mut prev_is_function = false;
+
         for stmt in
             self.iter().filter(|stmt| !matches!(stmt.as_ref(), Statement::EmptyStatement(_)))
         {
+            let is_function = is_function_like_declaration(stmt.as_ref());
             let span = match stmt.as_ref() {
                 // `@decorator export class A {}`
                 // Get the span of the decorator.
@@ -88,7 +91,14 @@ impl<'a> Format<'a> for FormatProgramBody<'a, '_> {
                 _ => stmt.span(),
             };
 
-            join.entry(span, stmt);
+            // Force an empty line between consecutive function declarations
+            if prev_is_function && is_function && !join.has_lines_before(span) {
+                join.entry_with_forced_empty_line(stmt);
+            } else {
+                join.entry(span, stmt);
+            }
+
+            prev_is_function = is_function;
         }
     }
 }
@@ -144,5 +154,20 @@ impl<'a> FormatWrite<'a> for AstNode<'a, Hashbang<'a>> {
         } else {
             write!(f, [hard_line_break()]);
         }
+    }
+}
+
+/// Returns `true` if the statement is a function declaration,
+/// including exported function declarations.
+pub(crate) fn is_function_like_declaration(stmt: &Statement<'_>) -> bool {
+    match stmt {
+        Statement::FunctionDeclaration(_) => true,
+        Statement::ExportNamedDeclaration(export) => {
+            matches!(export.declaration, Some(Declaration::FunctionDeclaration(_)))
+        }
+        Statement::ExportDefaultDeclaration(export) => {
+            matches!(export.declaration, ExportDefaultDeclarationKind::FunctionDeclaration(_))
+        }
+        _ => false,
     }
 }
