@@ -1,0 +1,2278 @@
+{
+  "valid": [
+    "\n// no accessibility === public\ninterface Foo {\n  [Z: string]: any;\n  A: string;\n  B: string;\n  C: string;\n  D: string;\n  E: string;\n  F: string;\n  new ();\n  G();\n  H();\n  I();\n  J();\n  K();\n  L();\n}\n    ",
+    {
+      "code": "\n// no accessibility === public\ninterface Foo {\n  A: string;\n  J();\n  K();\n  D: string;\n  E: string;\n  F: string;\n  new ();\n  G();\n  H();\n  [Z: string]: any;\n  B: string;\n  C: string;\n  I();\n  L();\n}\n      ",
+      "options": [{ "default": "never" }]
+    },
+    {
+      "code": "\n// no accessibility === public\ninterface Foo {\n  [Z: string]: any;\n  A: string;\n  B: string;\n  C: string;\n  D: string;\n  E: string;\n  F: string;\n  new ();\n  G();\n  H();\n  I();\n  J();\n  K();\n  L();\n}\n      ",
+      "options": [{ "default": ["signature", "field", "constructor", "method"] }]
+    },
+    {
+      "code": "\ninterface X {\n  (): void;\n  a: unknown;\n  b(): void;\n}\n      ",
+      "options": [{ "default": ["call-signature", "field", "method"] }]
+    },
+    {
+      "code": "\n// no accessibility === public\ninterface Foo {\n  A: string;\n  J();\n  K();\n  D: string;\n  [Z: string]: any;\n  E: string;\n  F: string;\n  new ();\n  G();\n  B: string;\n  C: string;\n  H();\n  I();\n  L();\n}\n      ",
+      "options": [{ "interfaces": "never" }]
+    },
+    {
+      "code": "\n// no accessibility === public\ninterface Foo {\n  [Z: string]: any;\n  G();\n  H();\n  I();\n  J();\n  K();\n  L();\n  new ();\n  A: string;\n  B: string;\n  C: string;\n  D: string;\n  E: string;\n  F: string;\n}\n      ",
+      "options": [{ "interfaces": ["signature", "method", "constructor", "field"] }]
+    },
+    {
+      "code": "\n// no accessibility === public\ninterface Foo {\n  G();\n  H();\n  I();\n  J();\n  K();\n  L();\n  new ();\n  A: string;\n  B: string;\n  C: string;\n  D: string;\n  E: string;\n  F: string;\n  [Z: string]: any;\n}\n      ",
+      "options": [
+        {
+          "default": ["signature", "field", "constructor", "method"],
+          "interfaces": ["method", "constructor", "field", "signature"]
+        }
+      ]
+    },
+    {
+      "code": "\n// no accessibility === public\ninterface Foo {\n  G();\n  H();\n  I();\n  new ();\n  [Z: string]: any;\n  D: string;\n  E: string;\n  F: string;\n  G?: string;\n  J();\n  K();\n  L();\n  A: string;\n  B: string;\n  C: string;\n}\n      ",
+      "options": [
+        { "default": ["private-instance-method", "public-constructor", "protected-static-field"] }
+      ]
+    },
+    {
+      "code": "\n// no accessibility === public\ninterface Foo {\n  G();\n  H();\n  I();\n  J();\n  K();\n  L();\n  [Z: string]: any;\n  D: string;\n  E: string;\n  F: string;\n  new ();\n  A: string;\n  B: string;\n  C: string;\n}\n      ",
+      "options": [{ "default": ["method", "public-constructor", "protected-static-field"] }]
+    },
+    "\n// no accessibility === public\ntype Foo = {\n  [Z: string]: any;\n  A: string;\n  B: string;\n  C: string;\n  D: string;\n  E: string;\n  F: string;\n  new ();\n  G();\n  H();\n  I();\n  J();\n  K();\n  L();\n};\n    ",
+    {
+      "code": "\n// no accessibility === public\ntype Foo = {\n  A: string;\n  B: string;\n  C: string;\n  D: string;\n  E: string;\n  F: string;\n  [Z: string]: any;\n  G();\n  H();\n  I();\n  J();\n  K();\n  L();\n};\n      ",
+      "options": [{ "default": "never" }]
+    },
+    {
+      "code": "\n// no accessibility === public\ntype Foo = {\n  [Z: string]: any;\n  A: string;\n  B: string;\n  C: string;\n  D: string;\n  E: string;\n  F: string;\n  G();\n  H();\n  I();\n  J();\n  K();\n  L();\n};\n      ",
+      "options": [{ "default": ["signature", "field", "constructor", "method"] }]
+    },
+    {
+      "code": "\n// no accessibility === public\ntype Foo = {\n  [Z: string]: any;\n  new ();\n  A: string;\n  B: string;\n  C: string;\n  D: string;\n  E: string;\n  F: string;\n  G();\n  H();\n  I();\n  J();\n  K();\n  L();\n};\n      ",
+      "options": [{ "default": ["field", "method"] }]
+    },
+    {
+      "code": "\n// no accessibility === public\ntype Foo = {\n  G();\n  H();\n  [Z: string]: any;\n  K();\n  L();\n  A: string;\n  B: string;\n  I();\n  J();\n  C: string;\n  D: string;\n  E: string;\n  F: string;\n};\n      ",
+      "options": [{ "typeLiterals": "never" }]
+    },
+    {
+      "code": "\n// no accessibility === public\ntype Foo = {\n  G();\n  H();\n  I();\n  J();\n  K();\n  L();\n  A: string;\n  B: string;\n  C: string;\n  D: string;\n  E: string;\n  F: string;\n  [Z: string]: any;\n};\n      ",
+      "options": [{ "typeLiterals": ["method", "field", "signature"] }]
+    },
+    {
+      "code": "\n// no accessibility === public\ntype Foo = {\n  G();\n  H();\n  I();\n  J();\n  K();\n  L();\n  A: string;\n  B: string;\n  C: string;\n  D: string;\n  E: string;\n  F: string;\n  [Z: string]: any;\n};\n      ",
+      "options": [{ "typeLiterals": ["method", "constructor", "field", "signature"] }]
+    },
+    {
+      "code": "\n// no accessibility === public\ntype Foo = {\n  G();\n  H();\n  I();\n  J();\n  K();\n  L();\n  A: string;\n  B: string;\n  C: string;\n  D: string;\n  E: string;\n  F: string;\n  [Z: string]: any;\n};\n      ",
+      "options": [
+        {
+          "default": ["signature", "field", "constructor", "method"],
+          "typeLiterals": ["method", "constructor", "field", "signature"]
+        }
+      ]
+    },
+    {
+      "code": "\n// no accessibility === public\ntype Foo = {\n  [Z: string]: any;\n  D: string;\n  E: string;\n  F: string;\n  A: string;\n  B: string;\n  C: string;\n  G();\n  H();\n  I();\n  J();\n  K();\n  L();\n};\n      ",
+      "options": [
+        {
+          "default": ["public-instance-method", "public-constructor", "protected-static-field"],
+          "typeLiterals": ["signature", "field", "method"]
+        }
+      ]
+    },
+    "\nclass Foo {\n  [Z: string]: any;\n  public static A: string;\n  protected static B: string = '';\n  private static C: string = '';\n  static #C: string = '';\n  public D: string = '';\n  protected E: string = '';\n  private F: string = '';\n  #F: string = '';\n  constructor() {}\n  public static G() {}\n  protected static H() {}\n  private static I() {}\n  static #I() {}\n  public J() {}\n  protected K() {}\n  private L() {}\n  #L() {}\n}\n    ",
+    {
+      "code": "\nclass Foo {\n  [Z: string]: any;\n  public static A: string;\n  protected static B: string = '';\n  private static C: string = '';\n  static #C: string = '';\n  public D: string = '';\n  protected E: string = '';\n  private F: string = '';\n  #F: string = '';\n  constructor() {}\n  public static G() {}\n  protected static H() {}\n  private static I() {}\n  static #I() {}\n  public J() {}\n  protected K() {}\n  private L() {}\n  #L() {}\n}\n      ",
+      "options": [{ "default": "never" }]
+    },
+    {
+      "code": "\nclass Foo {\n  [Z: string]: any;\n  public static A: string;\n  protected static B: string = '';\n  private static C: string = '';\n  static #C: string = '';\n  public D: string = '';\n  protected E: string = '';\n  private F: string = '';\n  #F: string = '';\n  constructor() {}\n  public static G() {}\n  protected static H() {}\n  private static I() {}\n  static #I() {}\n  public J() {}\n  protected K() {}\n  private L() {}\n  #L() {}\n}\n      ",
+      "options": [{ "default": ["signature", "field", "constructor", "method"] }]
+    },
+    {
+      "code": "\nclass Foo {\n  [Z: string]: any;\n  constructor() {}\n  public static A: string;\n  protected static B: string = '';\n  private static C: string = '';\n  static #C: string = '';\n  public D: string = '';\n  protected E: string = '';\n  private F: string = '';\n  #F: string = '';\n  public static G() {}\n  protected static H() {}\n  private static I() {}\n  static #I() {}\n  public J() {}\n  protected K() {}\n  private L() {}\n  #L() {}\n}\n      ",
+      "options": [{ "default": ["field", "method"] }]
+    },
+    {
+      "code": "\nclass Foo {\n  public static G() {}\n  protected K() {}\n  private L() {}\n  private static I() {}\n  public J() {}\n  public D: string = '';\n  [Z: string]: any;\n  protected static H() {}\n  public static A: string;\n  protected static B: string = '';\n  constructor() {}\n  private static C: string = '';\n  protected E: string = '';\n  private F: string = '';\n}\n      ",
+      "options": [{ "classes": "never" }]
+    },
+    {
+      "code": "\nclass Foo {\n  public static G() {}\n  protected static H() {}\n  private static I() {}\n  static #I() {}\n  public J() {}\n  protected K() {}\n  private L() {}\n  #L() {}\n  [Z: string]: any;\n  public static A: string;\n  protected static B: string = '';\n  private static C: string = '';\n  static #C: string = '';\n  public D: string = '';\n  protected E: string = '';\n  private F: string = '';\n  #F: string = '';\n  constructor() {}\n}\n      ",
+      "options": [{ "classes": ["method", "field"] }]
+    },
+    {
+      "code": "\nclass Foo {\n  public static G() {}\n  protected static H() {}\n  private static I() {}\n  public J() {}\n  protected K() {}\n  private L() {}\n  constructor() {}\n  public static A: string;\n  protected static B: string = '';\n  private static C: string = '';\n  public D: string = '';\n  protected E: string = '';\n  private F: string = '';\n  [Z: string]: any;\n}\n      ",
+      "options": [{ "classes": ["method", "constructor", "field", "signature"] }]
+    },
+    {
+      "code": "\nclass Foo {\n  private required: boolean;\n  private typeChecker: (data: any) => boolean;\n  constructor(validator: (data: any) => boolean) {\n    this.typeChecker = validator;\n  }\n  check(data: any): boolean {\n    return this.typeChecker(data);\n  }\n}\n      ",
+      "options": [{ "classes": ["field", "constructor", "method"] }]
+    },
+    {
+      "code": "\nclass Foo {\n  public static G() {}\n  protected static H() {}\n  private static I() {}\n  public J() {}\n  protected K() {}\n  private L() {}\n  constructor() {}\n  public static A: string;\n  protected static B: string = '';\n  private static C: string = '';\n  public D: string = '';\n  protected E: string = '';\n  private F: string = '';\n  [Z: string]: any;\n}\n      ",
+      "options": [
+        {
+          "classes": ["method", "constructor", "field", "signature"],
+          "default": ["signature", "field", "constructor", "method"]
+        }
+      ]
+    },
+    {
+      "code": "\nclass Foo {\n  public J() {}\n  public static G() {}\n  protected static H() {}\n  private static I() {}\n  protected K() {}\n  private L() {}\n  [Z: string]: any;\n  constructor() {}\n  public D: string = '';\n  public static A: string;\n  private static C: string = '';\n  private F: string = '';\n  static #M: string = '';\n  #N: string = '';\n  protected static B: string = '';\n  protected E: string = '';\n}\n      ",
+      "options": [
+        {
+          "classes": [
+            "public-method",
+            "signature",
+            "constructor",
+            "public-field",
+            "private-field",
+            "#private-field",
+            "protected-field"
+          ]
+        }
+      ]
+    },
+    {
+      "code": "\nclass Foo {\n  public static G() {}\n  private static I() {}\n  protected static H() {}\n  public J() {}\n  private L() {}\n  protected K() {}\n  [Z: string]: any;\n  constructor() {}\n  public D: string = '';\n  public static A: string;\n  protected static B: string = '';\n  protected E: string = '';\n  private static C: string = '';\n  private F: string = '';\n  #M: string = '';\n}\n      ",
+      "options": [
+        {
+          "classes": [
+            "public-static-method",
+            "static-method",
+            "public-instance-method",
+            "instance-method",
+            "signature",
+            "constructor",
+            "public-field",
+            "protected-field",
+            "private-field",
+            "#private-field"
+          ]
+        }
+      ]
+    },
+    {
+      "code": "\nclass Foo {\n  public J() {}\n  public static G() {}\n  public D: string = '';\n  public static A: string = '';\n  constructor() {}\n  protected K() {}\n  private L() {}\n  #P() {}\n  protected static H() {}\n  private static I() {}\n  static #O() {}\n  protected static B: string = '';\n  private static C: string = '';\n  static #N: string = '';\n  protected E: string = '';\n  private F: string = '';\n  #M: string = '';\n  [Z: string]: any;\n}\n      ",
+      "options": [
+        {
+          "default": [
+            "public-method",
+            "public-field",
+            "constructor",
+            "method",
+            "field",
+            "signature"
+          ]
+        }
+      ]
+    },
+    {
+      "code": "\nclass Foo {\n  public J() {}\n  public static G() {}\n  protected static H() {}\n  private static I() {}\n  static #I() {}\n  protected K() {}\n  private L() {}\n  #L() {}\n  constructor() {}\n  [Z: string]: any;\n  public static A: string;\n  private F: string = '';\n  #F: string = '';\n  protected static B: string = '';\n  public D: string = '';\n  private static C: string = '';\n  static #C: string = '';\n  protected E: string = '';\n}\n      ",
+      "options": [
+        {
+          "classes": [
+            "public-method",
+            "protected-static-method",
+            "#private-static-method",
+            "protected-instance-method",
+            "private-instance-method",
+            "#private-instance-method",
+            "constructor",
+            "signature",
+            "field"
+          ]
+        }
+      ]
+    },
+    {
+      "code": "\nclass Foo {\n  private L() {}\n  private static I() {}\n  protected static H() {}\n  protected static B: string = '';\n  public static G() {}\n  public J() {}\n  protected K() {}\n  private static C: string = '';\n  private F: string = '';\n  protected E: string = '';\n  public static A: string;\n  public D: string = '';\n  constructor() {}\n  [Z: string]: any;\n}\n      ",
+      "options": [{ "classes": ["private-instance-method", "protected-static-field"] }]
+    },
+    {
+      "code": "\nclass Foo {\n  private L() {}\n  private static I() {}\n  static #H() {}\n  static #B: string = '';\n  public static G() {}\n  public J() {}\n  #K() {}\n  private static C: string = '';\n  private F: string = '';\n  #E: string = '';\n  public static A: string;\n  public D: string = '';\n  constructor() {}\n  [Z: string]: any;\n}\n      ",
+      "options": [{ "classes": ["private-instance-method", "protected-static-field"] }]
+    },
+    {
+      "code": "\nclass Foo {\n  private L() {}\n  private static I() {}\n  protected static H() {}\n  public static G() {}\n  public J() {}\n  protected static B: string = '';\n  protected K() {}\n  private static C: string = '';\n  private F: string = '';\n  protected E: string = '';\n  public static A: string;\n  public D: string = '';\n  constructor() {}\n  [Z: string]: any;\n}\n      ",
+      "options": [{ "default": ["public-instance-method", "protected-static-field"] }]
+    },
+    {
+      "code": "\nclass Foo {\n  private L() {}\n  private static I() {}\n  protected static H() {}\n  public static G() {}\n  public J() {}\n  protected static B: string = '';\n  protected K() {}\n  private static C: string = '';\n  private F: string = '';\n  protected E: string = '';\n  public static A: string;\n  public D: string = '';\n  constructor() {}\n  [Z: string]: any;\n}\n      ",
+      "options": [{ "classes": ["public-instance-method", "protected-static-field"] }]
+    },
+    {
+      "code": "\nclass Foo {\n  [Z: string]: any;\n  public D: string = '';\n  private L() {}\n  private static I() {}\n  protected static H() {}\n  public static G() {}\n  public J() {}\n  private constructor() {}\n  protected static B: string = '';\n  protected K() {}\n  private static C: string = '';\n  private F: string = '';\n  protected E: string = '';\n  public static A: string;\n}\n      ",
+      "options": [
+        {
+          "classes": ["public-instance-field", "private-constructor", "protected-instance-method"],
+          "default": ["public-instance-method", "public-constructor", "protected-static-field"]
+        }
+      ]
+    },
+    {
+      "code": "\nclass Foo {\n  public constructor() {}\n  public D: string = '';\n  private L() {}\n  private static I() {}\n  protected static H() {}\n  public static G() {}\n  public J() {}\n  [Z: string]: any;\n  protected static B: string = '';\n  protected K() {}\n  private static C: string = '';\n  private F: string = '';\n  protected E: string = '';\n  public static A: string;\n}\n      ",
+      "options": [
+        {
+          "classes": ["public-instance-field", "private-constructor", "protected-instance-method"],
+          "default": ["public-instance-method", "public-constructor", "protected-static-field"]
+        }
+      ]
+    },
+    "\nconst foo = class Foo {\n  [Z: string]: any;\n  public static A: string;\n  protected static B: string = '';\n  private static C: string = '';\n  public D: string = '';\n  protected E: string = '';\n  private F: string = '';\n  constructor() {}\n  public static G() {}\n  protected static H() {}\n  private static I() {}\n  public J() {}\n  protected K() {}\n  private L() {}\n};\n    ",
+    {
+      "code": "\nconst foo = class Foo {\n  constructor() {}\n  public static A: string;\n  protected static B: string = '';\n  private static I() {}\n  public J() {}\n  private F: string = '';\n  [Z: string]: any;\n  public static G() {}\n  private static C: string = '';\n  public D: string = '';\n  protected E: string = '';\n  protected static H() {}\n  protected K() {}\n  private L() {}\n};\n      ",
+      "options": [{ "default": "never" }]
+    },
+    {
+      "code": "\nconst foo = class Foo {\n  [Z: string]: any;\n  public static A: string;\n  protected static B: string = '';\n  private static C: string = '';\n  public D: string = '';\n  protected E: string = '';\n  private F: string = '';\n  constructor() {}\n  public static G() {}\n  protected static H() {}\n  private static I() {}\n  public J() {}\n  protected K() {}\n  private L() {}\n};\n      ",
+      "options": [{ "default": ["signature", "field", "constructor", "method"] }]
+    },
+    {
+      "code": "\nconst foo = class Foo {\n  constructor() {}\n  public static A: string;\n  protected static B: string = '';\n  private static C: string = '';\n  public D: string = '';\n  protected E: string = '';\n  private F: string = '';\n  [Z: string]: any;\n  public static G() {}\n  protected static H() {}\n  private static I() {}\n  public J() {}\n  protected K() {}\n  private L() {}\n};\n      ",
+      "options": [{ "default": ["field", "method"] }]
+    },
+    {
+      "code": "\nconst foo = class Foo {\n  private L() {}\n  protected static H() {}\n  constructor() {}\n  private static I() {}\n  public J() {}\n  private static C: string = '';\n  [Z: string]: any;\n  public D: string = '';\n  protected K() {}\n  public static G() {}\n  public static A: string;\n  protected static B: string = '';\n  protected E: string = '';\n  private F: string = '';\n};\n      ",
+      "options": [{ "classExpressions": "never" }]
+    },
+    {
+      "code": "\nconst foo = class Foo {\n  public static G() {}\n  protected static H() {}\n  private static I() {}\n  public J() {}\n  protected K() {}\n  private L() {}\n  public static A: string;\n  protected static B: string = '';\n  private static C: string = '';\n  public D: string = '';\n  protected E: string = '';\n  private F: string = '';\n  constructor() {}\n  [Z: string]: any;\n};\n      ",
+      "options": [{ "classExpressions": ["method", "field"] }]
+    },
+    {
+      "code": "\nconst foo = class Foo {\n  public static G() {}\n  protected static H() {}\n  private static I() {}\n  public J() {}\n  protected K() {}\n  private L() {}\n  [Z: string]: any;\n  constructor() {}\n  public static A: string;\n  protected static B: string = '';\n  private static C: string = '';\n  public D: string = '';\n  protected E: string = '';\n  private F: string = '';\n};\n      ",
+      "options": [{ "classExpressions": ["method", "signature", "constructor", "field"] }]
+    },
+    {
+      "code": "\nconst foo = class Foo {\n  public static G() {}\n  protected static H() {}\n  private static I() {}\n  public J() {}\n  protected K() {}\n  private L() {}\n  [Z: string]: any;\n  constructor() {}\n  public static A: string;\n  protected static B: string = '';\n  private static C: string = '';\n  public D: string = '';\n  protected E: string = '';\n  private F: string = '';\n};\n      ",
+      "options": [
+        {
+          "classExpressions": ["method", "signature", "constructor", "field"],
+          "default": ["field", "constructor", "method"]
+        }
+      ]
+    },
+    {
+      "code": "\nconst foo = class Foo {\n  [Z: string]: any;\n  private L() {}\n  private static I() {}\n  protected static H() {}\n  protected static B: string = '';\n  public static G() {}\n  public J() {}\n  protected K() {}\n  private static C: string = '';\n  private F: string = '';\n  protected E: string = '';\n  public static A: string;\n  public D: string = '';\n  constructor() {}\n};\n      ",
+      "options": [{ "classExpressions": ["private-instance-method", "protected-static-field"] }]
+    },
+    {
+      "code": "\nconst foo = class Foo {\n  private L() {}\n  private static I() {}\n  protected static H() {}\n  public static G() {}\n  public J() {}\n  [Z: string]: any;\n  protected static B: string = '';\n  protected K() {}\n  private static C: string = '';\n  private F: string = '';\n  protected E: string = '';\n  public static A: string;\n  public D: string = '';\n  constructor() {}\n};\n      ",
+      "options": [{ "default": ["public-instance-method", "protected-static-field"] }]
+    },
+    {
+      "code": "\nconst foo = class Foo {\n  private L() {}\n  private static I() {}\n  protected static H() {}\n  public static G() {}\n  public J() {}\n  [Z: string]: any;\n  protected static B: string = '';\n  protected K() {}\n  private static C: string = '';\n  private F: string = '';\n  protected E: string = '';\n  public static A: string;\n  public D: string = '';\n  constructor() {}\n};\n      ",
+      "options": [{ "classExpressions": ["public-instance-method", "protected-static-field"] }]
+    },
+    {
+      "code": "\nconst foo = class Foo {\n  public D: string = '';\n  private L() {}\n  private static I() {}\n  protected static H() {}\n  public static G() {}\n  public J() {}\n  [Z: string]: any;\n  private constructor() {}\n  protected static B: string = '';\n  protected K() {}\n  private static C: string = '';\n  private F: string = '';\n  protected E: string = '';\n  public static A: string;\n};\n      ",
+      "options": [
+        {
+          "classes": ["public-instance-method", "protected-constructor", "protected-static-method"],
+          "classExpressions": [
+            "public-instance-field",
+            "private-constructor",
+            "protected-instance-method"
+          ],
+          "default": ["public-instance-method", "public-constructor", "protected-static-field"]
+        }
+      ]
+    },
+    {
+      "code": "\nconst foo = class Foo {\n  public constructor() {}\n  public D: string = '';\n  private L() {}\n  private static I() {}\n  protected static H() {}\n  public static G() {}\n  public J() {}\n  protected static B: string = '';\n  protected K() {}\n  [Z: string]: any;\n  private static C: string = '';\n  private F: string = '';\n  protected E: string = '';\n  public static A: string;\n};\n      ",
+      "options": [
+        {
+          "classes": ["public-instance-method", "protected-constructor", "protected-static-method"],
+          "classExpressions": [
+            "public-instance-field",
+            "private-constructor",
+            "protected-instance-method"
+          ],
+          "default": ["public-instance-method", "public-constructor", "protected-static-field"]
+        }
+      ]
+    },
+    "\nclass Foo {\n  [Z: string]: any;\n  A: string;\n  constructor() {}\n  J() {}\n  K = () => {};\n}\n    ",
+    {
+      "code": "\nclass Foo {\n  J() {}\n  K = () => {};\n  constructor() {}\n  A: string;\n  [Z: string]: any;\n}\n      ",
+      "options": [{ "default": ["method", "constructor", "field", "signature"] }]
+    },
+    {
+      "code": "\nclass Foo {\n  J() {}\n  K = () => {};\n  constructor() {}\n  [Z: string]: any;\n  A: string;\n  L: () => {};\n}\n      ",
+      "options": [{ "default": ["method", "constructor", "signature", "field"] }]
+    },
+    {
+      "code": "\nclass Foo {\n  static {}\n  m() {}\n  f = 1;\n}\n      ",
+      "options": [{ "default": ["static-initialization", "method", "field"] }]
+    },
+    {
+      "code": "\nclass Foo {\n  m() {}\n  f = 1;\n  static {}\n}\n      ",
+      "options": [{ "default": ["method", "field", "static-initialization"] }]
+    },
+    {
+      "code": "\nclass Foo {\n  f = 1;\n  static {}\n  m() {}\n}\n      ",
+      "options": [{ "default": ["field", "static-initialization", "method"] }]
+    },
+    "\ninterface Foo {\n  [Z: string]: any;\n  A: string;\n  K: () => {};\n  J();\n}\n    ",
+    {
+      "code": "\ninterface Foo {\n  [Z: string]: any;\n  J();\n  K: () => {};\n  A: string;\n}\n      ",
+      "options": [{ "default": ["signature", "method", "constructor", "field"] }]
+    },
+    "\ntype Foo = {\n  [Z: string]: any;\n  A: string;\n  K: () => {};\n  J();\n};\n    ",
+    {
+      "code": "\ntype Foo = {\n  J();\n  [Z: string]: any;\n  K: () => {};\n  A: string;\n};\n      ",
+      "options": [{ "default": ["method", "constructor", "signature", "field"] }]
+    },
+    { "code": "\nabstract class Foo {\n  B: string;\n  abstract A: () => {};\n}\n      " },
+    { "code": "\ninterface Foo {\n  [A: string]: number;\n  B: string;\n}\n      " },
+    {
+      "code": "\nabstract class Foo {\n  [Z: string]: any;\n  private static C: string;\n  B: string;\n  private D: string;\n  protected static F(): {};\n  public E(): {};\n  public abstract A(): void;\n  protected abstract G(): void;\n}\n      "
+    },
+    {
+      "code": "\nabstract class Foo {\n  protected typeChecker: (data: any) => boolean;\n  public abstract required: boolean;\n  abstract verify(): void;\n}\n      ",
+      "options": [{ "classes": ["signature", "field", "constructor", "method"] }]
+    },
+    {
+      "code": "\nclass Foo {\n  @Dec() B: string;\n  @Dec() A: string;\n  constructor() {}\n  D: string;\n  C: string;\n  E(): void;\n  F(): void;\n}\n      ",
+      "options": [{ "default": ["decorated-field", "field"] }]
+    },
+    {
+      "code": "\nclass Foo {\n  A: string;\n  B: string;\n  @Dec() private C: string;\n  private D: string;\n}\n      ",
+      "options": [{ "default": ["public-field", "private-decorated-field", "private-field"] }]
+    },
+    {
+      "code": "\nclass Foo {\n  constructor() {}\n  @Dec() public A(): void {}\n  @Dec() private B: string;\n  private C(): void;\n  private D: string;\n}\n      ",
+      "options": [{ "default": ["decorated-method", "private-decorated-field", "private-method"] }]
+    },
+    {
+      "code": "\nclass Foo {\n  @Dec() private A(): void {}\n  @Dec() private B: string;\n  constructor() {}\n  private C(): void;\n  private D: string;\n}\n      ",
+      "options": [
+        {
+          "default": [
+            "private-decorated-method",
+            "private-decorated-field",
+            "constructor",
+            "private-field"
+          ]
+        }
+      ]
+    },
+    {
+      "code": "\nclass Foo {\n  public A: string;\n  @Dec() private B: string;\n}\n      ",
+      "options": [
+        {
+          "classes": ["public-instance-field", "private-decorated-field"],
+          "default": ["private-decorated-field", "public-instance-field"]
+        }
+      ]
+    },
+    {
+      "code": "\nclass Foo {\n  public A(): string;\n  @Dec() public B(): string {}\n  public C(): string;\n\n  d: string;\n}\n      ",
+      "options": [{ "default": ["public-method", "field"] }]
+    },
+    {
+      "code": "\nclass Foo {\n  A: string;\n  constructor() {}\n  get B() {}\n  set B() {}\n  get C() {}\n  set C() {}\n  D(): void;\n}\n      ",
+      "options": [{ "default": ["field", "constructor", ["get", "set"], "method"] }]
+    },
+    {
+      "code": "\nclass Foo {\n  A: string;\n  constructor() {}\n  B(): void;\n}\n      ",
+      "options": [{ "default": ["field", "constructor", [], "method"] }]
+    },
+    {
+      "code": "\nclass Foo {\n  A: string;\n  constructor() {}\n  @Dec() private B: string;\n  private C(): void;\n  set D() {}\n  E(): void;\n}\n      ",
+      "options": [
+        {
+          "default": [
+            "public-field",
+            "constructor",
+            ["private-decorated-field", "public-set", "private-method"],
+            "public-method"
+          ]
+        }
+      ]
+    },
+    {
+      "code": "\nclass Foo {\n  A: string;\n  constructor() {}\n  get B() {}\n  get C() {}\n  set B() {}\n  set C() {}\n  D(): void;\n}\n      ",
+      "options": [{ "default": ["field", "constructor", ["get"], ["set"], "method"] }]
+    },
+    {
+      "code": "\n// no accessibility === public\nclass Foo {\n  imPublic() {}\n  #imPrivate() {}\n}\n      ",
+      "name": "with private identifier",
+      "options": [
+        {
+          "default": {
+            "memberTypes": ["public-method", "#private-method"],
+            "order": "alphabetically-case-insensitive"
+          }
+        }
+      ]
+    },
+    {
+      "code": "\n// no accessibility === public\nclass Foo {\n  private imPrivate() {}\n  #imPrivate() {}\n}\n      ",
+      "name": "private and #private member order",
+      "options": [
+        {
+          "default": {
+            "memberTypes": ["private-method", "#private-method"],
+            "order": "alphabetically-case-insensitive"
+          }
+        }
+      ]
+    },
+    {
+      "code": "\n// no accessibility === public\nclass Foo {\n  #imPrivate() {}\n  private imPrivate() {}\n}\n      ",
+      "name": "#private and private member order",
+      "options": [
+        {
+          "default": {
+            "memberTypes": ["#private-method", "private-method"],
+            "order": "alphabetically-case-insensitive"
+          }
+        }
+      ]
+    },
+    {
+      "code": "\n// no accessibility === public\nclass Foo {\n  [A: string]: any;\n  [a: string]: any;\n  static C: boolean;\n  static d: boolean;\n  b: any;\n  B: any;\n  get e(): string {}\n  get E(): string {}\n  private imPrivate() {}\n  private ImPrivate() {}\n}\n      ",
+      "name": "default member types with alphabetically-case-insensitive order",
+      "options": [{ "default": { "order": "alphabetically-case-insensitive" } }]
+    },
+    {
+      "code": "\nclass Foo {\n  readonly B: string;\n  readonly A: string;\n  constructor() {}\n  D: string;\n  C: string;\n  E(): void;\n  F(): void;\n}\n      ",
+      "options": [{ "default": ["readonly-field", "field"] }]
+    },
+    {
+      "code": "\nclass Foo {\n  A: string;\n  B: string;\n  private readonly C: string;\n  private D: string;\n}\n      ",
+      "options": [{ "default": ["public-field", "private-readonly-field", "private-field"] }]
+    },
+    {
+      "code": "\nclass Foo {\n  private readonly A: string;\n  constructor() {}\n  private B: string;\n}\n      ",
+      "options": [{ "default": ["private-readonly-field", "constructor", "private-field"] }]
+    },
+    {
+      "code": "\nclass Foo {\n  public A: string;\n  private readonly B: string;\n}\n      ",
+      "options": [
+        {
+          "classes": ["public-instance-field", "private-readonly-field"],
+          "default": ["private-readonly-field", "public-instance-field"]
+        }
+      ]
+    },
+    {
+      "code": "\nclass Foo {\n  public A(): string;\n  public B(): string;\n  public C(): string;\n\n  d: string;\n  readonly e: string;\n  f: string;\n}\n      ",
+      "options": [{ "default": ["public-method", "field"] }]
+    },
+    {
+      "code": "\nclass Foo {\n  private readonly A: string;\n  readonly B: string;\n  C: string;\n  constructor() {}\n  @Dec() private D: string;\n  private E(): void;\n  set F() {}\n  G(): void;\n}\n      ",
+      "options": [
+        {
+          "default": [
+            "readonly-field",
+            "public-field",
+            "constructor",
+            ["private-decorated-field", "public-set", "private-method"],
+            "public-method"
+          ]
+        }
+      ]
+    },
+    {
+      "code": "\nabstract class Foo {\n  public static readonly SA: string;\n  protected static readonly SB: string;\n  private static readonly SC: string;\n  static readonly #SD: string;\n\n  public readonly IA: string;\n  protected readonly IB: string;\n  private readonly IC: string;\n  readonly #ID: string;\n\n  public abstract readonly AA: string;\n  protected abstract readonly AB: string;\n\n  @Dec public readonly DA: string;\n  @Dec protected readonly DB: string;\n  @Dec private readonly DC: string;\n}\n      ",
+      "options": [
+        {
+          "default": [
+            "public-static-readonly-field",
+            "protected-static-readonly-field",
+            "private-static-readonly-field",
+            "#private-static-readonly-field",
+            "static-readonly-field",
+            "public-instance-readonly-field",
+            "protected-instance-readonly-field",
+            "private-instance-readonly-field",
+            "#private-instance-readonly-field",
+            "instance-readonly-field",
+            "public-readonly-field",
+            "protected-readonly-field",
+            "private-readonly-field",
+            "#private-readonly-field",
+            "readonly-field",
+            "public-abstract-readonly-field",
+            "protected-abstract-readonly-field",
+            "abstract-readonly-field",
+            "public-decorated-readonly-field",
+            "protected-decorated-readonly-field",
+            "private-decorated-readonly-field",
+            "decorated-readonly-field"
+          ]
+        }
+      ]
+    },
+    {
+      "code": "\nabstract class Foo {\n  @Dec public readonly DA: string;\n  @Dec protected readonly DB: string;\n  @Dec private readonly DC: string;\n\n  public static readonly SA: string;\n  protected static readonly SB: string;\n  private static readonly SC: string;\n  static readonly #SD: string;\n\n  public readonly IA: string;\n  protected readonly IB: string;\n  private readonly IC: string;\n  readonly #ID: string;\n\n  public abstract readonly AA: string;\n  protected abstract readonly AB: string;\n}\n      ",
+      "options": [
+        {
+          "default": [
+            "decorated-readonly-field",
+            "static-readonly-field",
+            "instance-readonly-field",
+            "abstract-readonly-field"
+          ]
+        }
+      ]
+    },
+    {
+      "code": "\nabstract class Foo {\n  @Dec public readonly DA: string;\n  @Dec protected readonly DB: string;\n  @Dec private readonly DC: string;\n\n  public static readonly SA: string;\n  public readonly IA: string;\n  public abstract readonly AA: string;\n\n  protected static readonly SB: string;\n  protected readonly IB: string;\n  protected abstract readonly AB: string;\n\n  private static readonly SC: string;\n  private readonly IC: string;\n\n  static readonly #SD: string;\n  readonly #ID: string;\n}\n      ",
+      "options": [
+        {
+          "default": [
+            "decorated-readonly-field",
+            "public-readonly-field",
+            "protected-readonly-field",
+            "private-readonly-field"
+          ]
+        }
+      ]
+    },
+    {
+      "code": "\nabstract class Foo {\n  @Dec public readonly DA: string;\n  @Dec protected readonly DB: string;\n  @Dec private readonly DC: string;\n\n  public static readonly SA: string;\n  public readonly IA: string;\n  static readonly #SD: string;\n  readonly #ID: string;\n\n  protected static readonly SB: string;\n  protected readonly IB: string;\n\n  private static readonly SC: string;\n  private readonly IC: string;\n\n  public abstract readonly AA: string;\n  protected abstract readonly AB: string;\n}\n      ",
+      "options": [
+        {
+          "default": [
+            "decorated-readonly-field",
+            ["public-readonly-field", "readonly-field"],
+            "protected-readonly-field",
+            "private-readonly-field",
+            "abstract-readonly-field"
+          ]
+        }
+      ]
+    },
+    {
+      "code": "\nabstract class Foo {\n  @Dec public readonly A: string;\n  @Dec public B: string;\n\n  public readonly C: string;\n  public static readonly D: string;\n  public E: string;\n  public static F: string;\n\n  static readonly #G: string;\n  readonly #H: string;\n  static #I: string;\n  #J: string;\n}\n      ",
+      "options": [
+        {
+          "default": [
+            ["decorated-field", "decorated-readonly-field"],
+            ["field", "readonly-field"],
+            ["#private-field", "#private-readonly-field"]
+          ]
+        }
+      ]
+    },
+    {
+      "code": "\ninterface Foo {\n  readonly A: string;\n  readonly B: string;\n\n  C: string;\n  D: string;\n}\n      ",
+      "options": [{ "default": ["readonly-field", "field"] }]
+    },
+    {
+      "code": "\ninterface Foo {\n  readonly [i: string]: string;\n  readonly A: string;\n\n  [i: number]: string;\n  B: string;\n}\n      ",
+      "options": [{ "default": ["readonly-signature", "readonly-field", "signature", "field"] }]
+    },
+    {
+      "code": "\ninterface Foo {\n  readonly [i: string]: string;\n  [i: number]: string;\n\n  readonly A: string;\n  B: string;\n}\n      ",
+      "options": [{ "default": ["readonly-signature", "signature", "readonly-field", "field"] }]
+    },
+    {
+      "code": "\ninterface Foo {\n  readonly A: string;\n  B: string;\n\n  [i: number]: string;\n  readonly [i: string]: string;\n}\n      ",
+      "options": [{ "default": ["readonly-field", "field", "signature"] }]
+    },
+    {
+      "code": "\nclass Foo {\n  #bar: string;\n\n  get bar(): string {\n    return this.#bar;\n  }\n\n  set bar(value: string) {\n    this.#bar = value;\n  }\n}\n      ",
+      "options": [{ "default": { "memberTypes": [["get", "set"]], "order": "alphabetically" } }]
+    },
+    {
+      "code": "\n// no accessibility === public\nclass Foo {\n  [A: string]: any;\n  [B: string]: any;\n  [a: string]: any;\n  [b: string]: any;\n  static C: boolean;\n  static d: boolean;\n  get E(): string {}\n  get e(): string {}\n  private ImPrivate() {}\n  private imPrivate() {}\n}\n      ",
+      "name": "default member types with alphabetically order",
+      "options": [{ "default": { "order": "alphabetically" } }]
+    },
+    {
+      "code": "\n// no accessibility === public\ninterface Foo {\n  A: string;\n  B: string;\n  [Z: string]: any;\n  c();\n  new ();\n  r();\n}\n      ",
+      "name": "alphabetically order without member types",
+      "options": [{ "default": { "memberTypes": "never", "order": "alphabetically" } }]
+    },
+    {
+      "code": "\nclass Foo {\n  #bar: string;\n\n  get bar(): string {\n    return this.#bar;\n  }\n\n  set bar(value: string) {\n    this.#bar = value;\n  }\n}\n      ",
+      "options": [{ "default": { "memberTypes": [["get", "set"]], "order": "natural" } }]
+    },
+    {
+      "code": "\nclass Foo {\n  accessor bar;\n\n  baz() {}\n}\n      ",
+      "options": [{ "default": ["accessor", "method"] }]
+    },
+    {
+      "code": "\ninterface Foo {\n  get x(): number;\n  y(): void;\n}\n      ",
+      "options": [{ "default": ["get", "method"] }]
+    },
+    {
+      "code": "\ninterface Foo {\n  y(): void;\n  get x(): number;\n}\n      ",
+      "options": [{ "default": ["method", "get"] }]
+    },
+    {
+      "code": "\nclass Foo {\n  public baz(): void;\n  @Decorator() public baz() {}\n\n  @Decorator() bar() {}\n}\n      ",
+      "options": [{ "default": ["public-decorated-method", "public-instance-method"] }]
+    },
+    {
+      "code": "\nclass Foo {\n  public bar(): void;\n  @Decorator() bar() {}\n\n  public baz(): void;\n  @Decorator() public baz() {}\n}\n      ",
+      "options": [{ "default": ["public-instance-method", "public-decorated-method"] }]
+    },
+    {
+      "code": "\nclass Foo {\n  @Decorator() bar() {}\n\n  public baz(): void;\n  @Decorator() public baz() {}\n}\n      ",
+      "options": [{ "default": ["public-instance-method", "public-decorated-method"] }]
+    }
+  ],
+  "invalid": [
+    {
+      "code": "\n// no accessibility === public\ninterface Foo {\n  [Z: string]: any;\n  A: string;\n  B: string;\n  C: string;\n  D: string;\n  E: string;\n  F: string;\n  G();\n  H();\n  I();\n  J();\n  K();\n  L();\n  new ();\n}\n      ",
+      "errors": [
+        {
+          "column": 3,
+          "data": { "name": "new", "rank": "method" },
+          "line": 17,
+          "messageId": "incorrectGroupOrder"
+        }
+      ]
+    },
+    {
+      "code": "\ninterface X {\n  a: unknown;\n  (): void;\n  b(): void;\n}\n      ",
+      "errors": [
+        {
+          "column": 3,
+          "data": { "name": "call", "rank": "field" },
+          "line": 4,
+          "messageId": "incorrectGroupOrder"
+        }
+      ],
+      "options": [{ "default": ["call-signature", "field", "method"] }]
+    },
+    {
+      "code": "\n// no accessibility === public\ninterface Foo {\n  A: string;\n  B: string;\n  C: string;\n  D: string;\n  E: string;\n  F: string;\n  G();\n  H();\n  I();\n  J();\n  K();\n  L();\n  new ();\n  [Z: string]: any;\n}\n      ",
+      "errors": [
+        {
+          "column": 3,
+          "data": { "name": "G", "rank": "field" },
+          "line": 10,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "H", "rank": "field" },
+          "line": 11,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "I", "rank": "field" },
+          "line": 12,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "J", "rank": "field" },
+          "line": 13,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "K", "rank": "field" },
+          "line": 14,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "L", "rank": "field" },
+          "line": 15,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "new", "rank": "field" },
+          "line": 16,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "Z", "rank": "field" },
+          "line": 17,
+          "messageId": "incorrectGroupOrder"
+        }
+      ],
+      "options": [{ "default": ["signature", "method", "constructor", "field"] }]
+    },
+    {
+      "code": "\n// no accessibility === public\ninterface Foo {\n  A: string;\n  B: string;\n  C: string;\n  D: string;\n  E: string;\n  F: string;\n  G();\n  H();\n  I();\n  J();\n  K();\n  L();\n  new ();\n  [Z: string]: any;\n}\n      ",
+      "errors": [
+        {
+          "column": 3,
+          "data": { "name": "G", "rank": "field" },
+          "line": 10,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "H", "rank": "field" },
+          "line": 11,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "I", "rank": "field" },
+          "line": 12,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "J", "rank": "field" },
+          "line": 13,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "K", "rank": "field" },
+          "line": 14,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "L", "rank": "field" },
+          "line": 15,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "new", "rank": "field" },
+          "line": 16,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "Z", "rank": "field" },
+          "line": 17,
+          "messageId": "incorrectGroupOrder"
+        }
+      ],
+      "options": [{ "interfaces": ["method", "signature", "constructor", "field"] }]
+    },
+    {
+      "code": "\n// no accessibility === public\ninterface Foo {\n  A: string;\n  B: string;\n  C: string;\n  D: string;\n  E: string;\n  F: string;\n  G();\n  H();\n  I();\n  J();\n  K();\n  L();\n  new ();\n  [Z: string]: any;\n}\n      ",
+      "errors": [
+        {
+          "column": 3,
+          "data": { "name": "G", "rank": "field" },
+          "line": 10,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "H", "rank": "field" },
+          "line": 11,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "I", "rank": "field" },
+          "line": 12,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "J", "rank": "field" },
+          "line": 13,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "K", "rank": "field" },
+          "line": 14,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "L", "rank": "field" },
+          "line": 15,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "new", "rank": "field" },
+          "line": 16,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "Z", "rank": "field" },
+          "line": 17,
+          "messageId": "incorrectGroupOrder"
+        }
+      ],
+      "options": [
+        {
+          "default": ["field", "method", "constructor", "signature"],
+          "interfaces": ["method", "signature", "constructor", "field"]
+        }
+      ]
+    },
+    {
+      "code": "\n// no accessibility === public\ninterface Foo {\n  [Z: string]: any;\n  new ();\n  A: string;\n  G();\n  B: string;\n  H();\n  C: string;\n  I();\n  D: string;\n  J();\n  E: string;\n  K();\n  F: string;\n  L();\n}\n      ",
+      "errors": [
+        {
+          "column": 3,
+          "data": { "name": "B", "rank": "method" },
+          "line": 8,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "C", "rank": "method" },
+          "line": 10,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "D", "rank": "method" },
+          "line": 12,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "E", "rank": "method" },
+          "line": 14,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "F", "rank": "method" },
+          "line": 16,
+          "messageId": "incorrectGroupOrder"
+        }
+      ],
+      "options": [{ "interfaces": ["signature", "constructor", "field", "method"] }]
+    },
+    {
+      "code": "\n// no accessibility === public\ntype Foo = {\n  [Z: string]: any;\n  A: string;\n  B: string;\n  C: string;\n  D: string;\n  E: string;\n  F: string;\n  G();\n  H();\n  I();\n  J();\n  K();\n  L();\n  new ();\n};\n      ",
+      "errors": [
+        {
+          "column": 3,
+          "data": { "name": "new", "rank": "method" },
+          "line": 17,
+          "messageId": "incorrectGroupOrder"
+        }
+      ]
+    },
+    {
+      "code": "\n// no accessibility === public\ntype Foo = {\n  A: string;\n  B: string;\n  C: string;\n  D: string;\n  E: string;\n  F: string;\n  G();\n  H();\n  I();\n  J();\n  K();\n  L();\n  [Z: string]: any;\n  new ();\n};\n      ",
+      "errors": [
+        {
+          "column": 3,
+          "data": { "name": "G", "rank": "field" },
+          "line": 10,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "H", "rank": "field" },
+          "line": 11,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "I", "rank": "field" },
+          "line": 12,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "J", "rank": "field" },
+          "line": 13,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "K", "rank": "field" },
+          "line": 14,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "L", "rank": "field" },
+          "line": 15,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "Z", "rank": "field" },
+          "line": 16,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "new", "rank": "field" },
+          "line": 17,
+          "messageId": "incorrectGroupOrder"
+        }
+      ],
+      "options": [{ "default": ["method", "constructor", "signature", "field"] }]
+    },
+    {
+      "code": "\n// no accessibility === public\ntype Foo = {\n  [Z: string]: any;\n  A: string;\n  B: string;\n  C: string;\n  D: string;\n  E: string;\n  F: string;\n  G();\n  H();\n  I();\n  J();\n  K();\n  L();\n  new ();\n};\n      ",
+      "errors": [
+        {
+          "column": 3,
+          "data": { "name": "G", "rank": "signature" },
+          "line": 11,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "H", "rank": "signature" },
+          "line": 12,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "I", "rank": "signature" },
+          "line": 13,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "J", "rank": "signature" },
+          "line": 14,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "K", "rank": "signature" },
+          "line": 15,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "L", "rank": "signature" },
+          "line": 16,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "new", "rank": "signature" },
+          "line": 17,
+          "messageId": "incorrectGroupOrder"
+        }
+      ],
+      "options": [{ "typeLiterals": ["method", "constructor", "signature", "field"] }]
+    },
+    {
+      "code": "\n// no accessibility === public\ntype Foo = {\n  A: string;\n  B: string;\n  C: string;\n  D: string;\n  E: string;\n  F: string;\n  G();\n  H();\n  I();\n  J();\n  K();\n  L();\n  new ();\n  [Z: string]: any;\n};\n      ",
+      "errors": [
+        {
+          "column": 3,
+          "data": { "name": "G", "rank": "field" },
+          "line": 10,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "H", "rank": "field" },
+          "line": 11,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "I", "rank": "field" },
+          "line": 12,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "J", "rank": "field" },
+          "line": 13,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "K", "rank": "field" },
+          "line": 14,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "L", "rank": "field" },
+          "line": 15,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "new", "rank": "field" },
+          "line": 16,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "Z", "rank": "field" },
+          "line": 17,
+          "messageId": "incorrectGroupOrder"
+        }
+      ],
+      "options": [
+        {
+          "default": ["field", "method", "constructor", "signature"],
+          "typeLiterals": ["signature", "method", "constructor", "field"]
+        }
+      ]
+    },
+    {
+      "code": "\n// no accessibility === public\ntype Foo = {\n  new ();\n  [Z: string]: any;\n  A: string;\n  G();\n  B: string;\n  H();\n  C: string;\n  I();\n  D: string;\n  J();\n  E: string;\n  K();\n  F: string;\n  L();\n};\n      ",
+      "errors": [
+        {
+          "column": 3,
+          "data": { "name": "B", "rank": "method" },
+          "line": 8,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "C", "rank": "method" },
+          "line": 10,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "D", "rank": "method" },
+          "line": 12,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "E", "rank": "method" },
+          "line": 14,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "F", "rank": "method" },
+          "line": 16,
+          "messageId": "incorrectGroupOrder"
+        }
+      ],
+      "options": [{ "typeLiterals": ["constructor", "signature", "field", "method"] }]
+    },
+    {
+      "code": "\nclass Foo {\n  [Z: string]: any;\n  public static A: string = '';\n  protected static B: string = '';\n  private static C: string = '';\n  static #C: string = '';\n  public D: string = '';\n  protected E: string = '';\n  private F: string = '';\n  #F: string = '';\n  constructor() {}\n  public J() {}\n  protected K() {}\n  private L() {}\n  #L() {}\n  public static G() {}\n  protected static H() {}\n  private static I() {}\n  static #I() {}\n}\n      ",
+      "errors": [
+        {
+          "column": 3,
+          "data": { "name": "G", "rank": "public instance method" },
+          "line": 17,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "H", "rank": "public instance method" },
+          "line": 18,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "I", "rank": "public instance method" },
+          "line": 19,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "I", "rank": "public instance method" },
+          "line": 20,
+          "messageId": "incorrectGroupOrder"
+        }
+      ]
+    },
+    {
+      "code": "\nclass Foo {\n  constructor() {}\n  public static A: string = '';\n  protected static B: string = '';\n  private static C: string = '';\n  static #C: string = '';\n  public D: string = '';\n  protected E: string = '';\n  private F: string = '';\n  #F: string = '';\n  public J() {}\n  protected K() {}\n  private L() {}\n  #L() {}\n  public static G() {}\n  protected static H() {}\n  private static I() {}\n  static #I() {}\n  [Z: string]: any;\n}\n      ",
+      "errors": [
+        {
+          "column": 3,
+          "data": { "name": "A", "rank": "constructor" },
+          "line": 4,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "B", "rank": "constructor" },
+          "line": 5,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "C", "rank": "constructor" },
+          "line": 6,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "C", "rank": "constructor" },
+          "line": 7,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "D", "rank": "constructor" },
+          "line": 8,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "E", "rank": "constructor" },
+          "line": 9,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "F", "rank": "constructor" },
+          "line": 10,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "F", "rank": "constructor" },
+          "line": 11,
+          "messageId": "incorrectGroupOrder"
+        }
+      ],
+      "options": [{ "default": ["field", "constructor", "method", "signature"] }]
+    },
+    {
+      "code": "\nclass Foo {\n  constructor() {}\n  protected static B: string = '';\n  private static C: string = '';\n  public D: string = '';\n  protected E: string = '';\n  private F: string = '';\n  public static G() {}\n  public static A: string;\n  protected static H() {}\n  private static I() {}\n  public J() {}\n  protected K() {}\n  private L() {}\n}\n      ",
+      "errors": [
+        {
+          "column": 3,
+          "data": { "name": "A", "rank": "method" },
+          "line": 10,
+          "messageId": "incorrectGroupOrder"
+        }
+      ],
+      "options": [{ "default": ["field", "method"] }]
+    },
+    {
+      "code": "\nclass Foo {\n  protected static H() {}\n  private static I() {}\n  public J() {}\n  protected K() {}\n  private L() {}\n  public static A: string;\n  public static G() {}\n  protected static B: string = '';\n  private static C: string = '';\n  public D: string = '';\n  protected E: string = '';\n  private F: string = '';\n  constructor() {}\n}\n      ",
+      "errors": [
+        {
+          "column": 3,
+          "data": { "name": "G", "rank": "field" },
+          "line": 9,
+          "messageId": "incorrectGroupOrder"
+        }
+      ],
+      "options": [{ "default": ["method", "field"] }]
+    },
+    {
+      "code": "\nclass Foo {\n  public static G() {}\n  protected static H() {}\n  protected static B: string = '';\n  private static I() {}\n  public J() {}\n  protected K() {}\n  private L() {}\n  public static A: string;\n  constructor() {}\n  private static C: string = '';\n  public D: string = '';\n  protected E: string = '';\n  private F: string = '';\n}\n      ",
+      "errors": [
+        {
+          "column": 3,
+          "data": { "name": "I", "rank": "field" },
+          "line": 6,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "J", "rank": "field" },
+          "line": 7,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "K", "rank": "field" },
+          "line": 8,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "L", "rank": "field" },
+          "line": 9,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "constructor", "rank": "field" },
+          "line": 11,
+          "messageId": "incorrectGroupOrder"
+        }
+      ],
+      "options": [{ "classes": ["method", "constructor", "field"] }]
+    },
+    {
+      "code": "\nclass Foo {\n  public static A: string;\n  public static G() {}\n  protected static H() {}\n  private static I() {}\n  public J() {}\n  protected K() {}\n  private L() {}\n  constructor() {}\n  protected static B: string = '';\n  private static C: string = '';\n  public D: string = '';\n  protected E: string = '';\n  private F: string = '';\n}\n      ",
+      "errors": [
+        {
+          "column": 3,
+          "data": { "name": "G", "rank": "field" },
+          "line": 4,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "H", "rank": "field" },
+          "line": 5,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "I", "rank": "field" },
+          "line": 6,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "J", "rank": "field" },
+          "line": 7,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "K", "rank": "field" },
+          "line": 8,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "L", "rank": "field" },
+          "line": 9,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "constructor", "rank": "field" },
+          "line": 10,
+          "messageId": "incorrectGroupOrder"
+        }
+      ],
+      "options": [
+        {
+          "classes": ["method", "constructor", "field"],
+          "default": ["field", "constructor", "method"]
+        }
+      ]
+    },
+    {
+      "code": "\nclass Foo {\n  private L() {}\n  public J() {}\n  public static G() {}\n  protected static H() {}\n  private static I() {}\n  protected K() {}\n  constructor() {}\n  public D: string = '';\n  private static C: string = '';\n  public static A: string;\n  private static C: string = '';\n  protected static B: string = '';\n  private F: string = '';\n  protected static B: string = '';\n  protected E: string = '';\n}\n      ",
+      "errors": [
+        {
+          "column": 3,
+          "data": { "name": "A", "rank": "private field" },
+          "line": 12,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "F", "rank": "protected field" },
+          "line": 15,
+          "messageId": "incorrectGroupOrder"
+        }
+      ],
+      "options": [
+        {
+          "classes": [
+            "public-method",
+            "constructor",
+            "public-field",
+            "private-field",
+            "protected-field"
+          ]
+        }
+      ]
+    },
+    {
+      "code": "\nclass Foo {\n  public static G() {}\n  private static I() {}\n  public J() {}\n  protected static H() {}\n  private L() {}\n  protected K() {}\n  public D: string = '';\n  constructor() {}\n  public static A: string;\n  protected static B: string = '';\n  protected E: string = '';\n  private static C: string = '';\n  private F: string = '';\n}\n      ",
+      "errors": [
+        {
+          "column": 3,
+          "data": { "name": "H", "rank": "public instance method" },
+          "line": 6,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "constructor", "rank": "public field" },
+          "line": 10,
+          "messageId": "incorrectGroupOrder"
+        }
+      ],
+      "options": [
+        {
+          "classes": [
+            "public-static-method",
+            "static-method",
+            "public-instance-method",
+            "instance-method",
+            "constructor",
+            "public-field",
+            "protected-field",
+            "private-field"
+          ]
+        }
+      ]
+    },
+    {
+      "code": "\nclass Foo {\n  public J() {}\n  public static G() {}\n  public D: string = '';\n  public static A: string = '';\n  private L() {}\n  constructor() {}\n  protected K() {}\n  protected static H() {}\n  private static I() {}\n  protected static B: string = '';\n  private static C: string = '';\n  protected E: string = '';\n  private F: string = '';\n}\n      ",
+      "errors": [
+        {
+          "column": 3,
+          "data": { "name": "constructor", "rank": "method" },
+          "line": 8,
+          "messageId": "incorrectGroupOrder"
+        }
+      ],
+      "options": [
+        { "default": ["public-method", "public-field", "constructor", "method", "field"] }
+      ]
+    },
+    {
+      "code": "\nclass Foo {\n  public J() {}\n  private static I() {}\n  public static G() {}\n  protected static H() {}\n  protected K() {}\n  private L() {}\n  constructor() {}\n  public static A: string;\n  private F: string = '';\n  protected static B: string = '';\n  public D: string = '';\n  private static C: string = '';\n  protected E: string = '';\n}\n      ",
+      "errors": [
+        {
+          "column": 3,
+          "data": { "name": "G", "rank": "private static method" },
+          "line": 5,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "H", "rank": "private static method" },
+          "line": 6,
+          "messageId": "incorrectGroupOrder"
+        }
+      ],
+      "options": [
+        {
+          "classes": [
+            "public-method",
+            "protected-static-method",
+            "private-static-method",
+            "protected-instance-method",
+            "private-instance-method",
+            "constructor",
+            "field"
+          ]
+        }
+      ]
+    },
+    {
+      "code": "\nclass Foo {\n  private static I() {}\n  protected static H() {}\n  protected static B: string = '';\n  public static G() {}\n  public J() {}\n  protected K() {}\n  private static C: string = '';\n  private L() {}\n  private F: string = '';\n  protected E: string = '';\n  public static A: string;\n  public D: string = '';\n  constructor() {}\n}\n      ",
+      "errors": [
+        {
+          "column": 3,
+          "data": { "name": "L", "rank": "protected static field" },
+          "line": 10,
+          "messageId": "incorrectGroupOrder"
+        }
+      ],
+      "options": [{ "classes": ["private-instance-method", "protected-static-field"] }]
+    },
+    {
+      "code": "\nclass Foo {\n  private L() {}\n  private static I() {}\n  protected static H() {}\n  public static G() {}\n  protected static B: string = '';\n  public J() {}\n  protected K() {}\n  private static C: string = '';\n  private F: string = '';\n  protected E: string = '';\n  public static A: string;\n  public D: string = '';\n  constructor() {}\n}\n      ",
+      "errors": [
+        {
+          "column": 3,
+          "data": { "name": "J", "rank": "protected static field" },
+          "line": 8,
+          "messageId": "incorrectGroupOrder"
+        }
+      ],
+      "options": [{ "default": ["public-instance-method", "protected-static-field"] }]
+    },
+    {
+      "code": "\nconst foo = class Foo {\n  public static A: string = '';\n  protected static B: string = '';\n  private static C: string = '';\n  public D: string = '';\n  protected E: string = '';\n  private F: string = '';\n  constructor() {}\n  public J() {}\n  protected K() {}\n  private L() {}\n  public static G() {}\n  protected static H() {}\n  private static I() {}\n};\n      ",
+      "errors": [
+        {
+          "column": 3,
+          "data": { "name": "G", "rank": "public instance method" },
+          "line": 13,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "H", "rank": "public instance method" },
+          "line": 14,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "I", "rank": "public instance method" },
+          "line": 15,
+          "messageId": "incorrectGroupOrder"
+        }
+      ]
+    },
+    {
+      "code": "\nconst foo = class {\n  [Z: string]: any;\n  constructor() {}\n  public static A: string = '';\n  protected static B: string = '';\n  private static C: string = '';\n  public D: string = '';\n  protected E: string = '';\n  private F: string = '';\n  public J() {}\n  protected K() {}\n  private L() {}\n  public static G() {}\n  protected static H() {}\n  private static I() {}\n};\n      ",
+      "errors": [
+        {
+          "column": 3,
+          "data": { "name": "A", "rank": "constructor" },
+          "line": 5,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "B", "rank": "constructor" },
+          "line": 6,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "C", "rank": "constructor" },
+          "line": 7,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "D", "rank": "constructor" },
+          "line": 8,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "E", "rank": "constructor" },
+          "line": 9,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "F", "rank": "constructor" },
+          "line": 10,
+          "messageId": "incorrectGroupOrder"
+        }
+      ],
+      "options": [{ "default": ["signature", "field", "constructor", "method"] }]
+    },
+    {
+      "code": "\nconst foo = class {\n  constructor() {}\n  protected static B: string = '';\n  private static C: string = '';\n  public D: string = '';\n  protected E: string = '';\n  private F: string = '';\n  [Z: string]: any;\n  public static G() {}\n  public static A: string;\n  protected static H() {}\n  private static I() {}\n  public J() {}\n  protected K() {}\n  private L() {}\n};\n      ",
+      "errors": [
+        {
+          "column": 3,
+          "data": { "name": "A", "rank": "method" },
+          "line": 11,
+          "messageId": "incorrectGroupOrder"
+        }
+      ],
+      "options": [{ "default": ["field", "method"] }]
+    },
+    {
+      "code": "\nconst foo = class {\n  protected static H() {}\n  private static I() {}\n  public J() {}\n  protected K() {}\n  private L() {}\n  public static A: string;\n  public static G() {}\n  protected static B: string = '';\n  private static C: string = '';\n  public D: string = '';\n  protected E: string = '';\n  private F: string = '';\n  constructor() {}\n};\n      ",
+      "errors": [
+        {
+          "column": 3,
+          "data": { "name": "G", "rank": "field" },
+          "line": 9,
+          "messageId": "incorrectGroupOrder"
+        }
+      ],
+      "options": [{ "default": ["method", "field"] }]
+    },
+    {
+      "code": "\nconst foo = class {\n  public static G() {}\n  protected static H() {}\n  protected static B: string = '';\n  private static I() {}\n  public J() {}\n  protected K() {}\n  private L() {}\n  public static A: string;\n  constructor() {}\n  [Z: string]: any;\n  private static C: string = '';\n  public D: string = '';\n  protected E: string = '';\n  private F: string = '';\n};\n      ",
+      "errors": [
+        {
+          "column": 3,
+          "data": { "name": "I", "rank": "field" },
+          "line": 6,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "J", "rank": "field" },
+          "line": 7,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "K", "rank": "field" },
+          "line": 8,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "L", "rank": "field" },
+          "line": 9,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "constructor", "rank": "field" },
+          "line": 11,
+          "messageId": "incorrectGroupOrder"
+        }
+      ],
+      "options": [{ "classExpressions": ["method", "constructor", "field"] }]
+    },
+    {
+      "code": "\nconst foo = class {\n  public static A: string;\n  public static G() {}\n  protected static H() {}\n  private static I() {}\n  public J() {}\n  protected K() {}\n  private L() {}\n  constructor() {}\n  protected static B: string = '';\n  private static C: string = '';\n  public D: string = '';\n  protected E: string = '';\n  private F: string = '';\n};\n      ",
+      "errors": [
+        {
+          "column": 3,
+          "data": { "name": "G", "rank": "field" },
+          "line": 4,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "H", "rank": "field" },
+          "line": 5,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "I", "rank": "field" },
+          "line": 6,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "J", "rank": "field" },
+          "line": 7,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "K", "rank": "field" },
+          "line": 8,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "L", "rank": "field" },
+          "line": 9,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "constructor", "rank": "field" },
+          "line": 10,
+          "messageId": "incorrectGroupOrder"
+        }
+      ],
+      "options": [
+        {
+          "classExpressions": ["method", "constructor", "field"],
+          "default": ["field", "constructor", "method"]
+        }
+      ]
+    },
+    {
+      "code": "\nconst foo = class {\n  private L() {}\n  public J() {}\n  public static G() {}\n  protected static H() {}\n  private static I() {}\n  protected K() {}\n  constructor() {}\n  public D: string = '';\n  private static C: string = '';\n  public static A: string;\n  private static C: string = '';\n  protected static B: string = '';\n  private F: string = '';\n  protected static B: string = '';\n  protected E: string = '';\n};\n      ",
+      "errors": [
+        {
+          "column": 3,
+          "data": { "name": "A", "rank": "private field" },
+          "line": 12,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "F", "rank": "protected field" },
+          "line": 15,
+          "messageId": "incorrectGroupOrder"
+        }
+      ],
+      "options": [
+        {
+          "classExpressions": [
+            "public-method",
+            "constructor",
+            "public-field",
+            "private-field",
+            "protected-field"
+          ]
+        }
+      ]
+    },
+    {
+      "code": "\nconst foo = class {\n  public static G() {}\n  private static I() {}\n  public J() {}\n  protected static H() {}\n  private L() {}\n  protected K() {}\n  public D: string = '';\n  constructor() {}\n  public static A: string;\n  protected static B: string = '';\n  protected E: string = '';\n  private static C: string = '';\n  private F: string = '';\n};\n      ",
+      "errors": [
+        {
+          "column": 3,
+          "data": { "name": "H", "rank": "public instance method" },
+          "line": 6,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "constructor", "rank": "public field" },
+          "line": 10,
+          "messageId": "incorrectGroupOrder"
+        }
+      ],
+      "options": [
+        {
+          "classExpressions": [
+            "public-static-method",
+            "static-method",
+            "public-instance-method",
+            "instance-method",
+            "constructor",
+            "public-field",
+            "protected-field",
+            "private-field"
+          ]
+        }
+      ]
+    },
+    {
+      "code": "\nconst foo = class {\n  public J() {}\n  public static G() {}\n  public D: string = '';\n  public static A: string = '';\n  private L() {}\n  constructor() {}\n  protected K() {}\n  protected static H() {}\n  private static I() {}\n  protected static B: string = '';\n  private static C: string = '';\n  protected E: string = '';\n  private F: string = '';\n};\n      ",
+      "errors": [
+        {
+          "column": 3,
+          "data": { "name": "constructor", "rank": "method" },
+          "line": 8,
+          "messageId": "incorrectGroupOrder"
+        }
+      ],
+      "options": [
+        { "default": ["public-method", "public-field", "constructor", "method", "field"] }
+      ]
+    },
+    {
+      "code": "\nconst foo = class {\n  public J() {}\n  private static I() {}\n  public static G() {}\n  protected static H() {}\n  protected K() {}\n  private L() {}\n  constructor() {}\n  public static A: string;\n  private F: string = '';\n  protected static B: string = '';\n  public D: string = '';\n  private static C: string = '';\n  protected E: string = '';\n};\n      ",
+      "errors": [
+        {
+          "column": 3,
+          "data": { "name": "G", "rank": "private static method" },
+          "line": 5,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "H", "rank": "private static method" },
+          "line": 6,
+          "messageId": "incorrectGroupOrder"
+        }
+      ],
+      "options": [
+        {
+          "classExpressions": [
+            "public-method",
+            "protected-static-method",
+            "private-static-method",
+            "protected-instance-method",
+            "private-instance-method",
+            "constructor",
+            "field"
+          ]
+        }
+      ]
+    },
+    {
+      "code": "\nconst foo = class {\n  private static I() {}\n  protected static H() {}\n  protected static B: string = '';\n  public static G() {}\n  public J() {}\n  protected K() {}\n  private static C: string = '';\n  private L() {}\n  private F: string = '';\n  protected E: string = '';\n  public static A: string;\n  public D: string = '';\n  constructor() {}\n};\n      ",
+      "errors": [
+        {
+          "column": 3,
+          "data": { "name": "L", "rank": "protected static field" },
+          "line": 10,
+          "messageId": "incorrectGroupOrder"
+        }
+      ],
+      "options": [{ "classExpressions": ["private-instance-method", "protected-static-field"] }]
+    },
+    {
+      "code": "\nconst foo = class {\n  private L() {}\n  private static I() {}\n  protected static H() {}\n  public static G() {}\n  protected static B: string = '';\n  public J() {}\n  protected K() {}\n  private static C: string = '';\n  private F: string = '';\n  protected E: string = '';\n  public static A: string;\n  public D: string = '';\n  constructor() {}\n};\n      ",
+      "errors": [
+        {
+          "column": 3,
+          "data": { "name": "J", "rank": "protected static field" },
+          "line": 8,
+          "messageId": "incorrectGroupOrder"
+        }
+      ],
+      "options": [{ "default": ["public-instance-method", "protected-static-field"] }]
+    },
+    {
+      "code": "\nclass Foo {\n  K = () => {};\n  A: string;\n  constructor() {}\n  [Z: string]: any;\n  J() {}\n}\n      ",
+      "errors": [
+        {
+          "column": 3,
+          "data": { "name": "A", "rank": "public instance method" },
+          "line": 4,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "constructor", "rank": "public instance method" },
+          "line": 5,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "Z", "rank": "public instance method" },
+          "line": 6,
+          "messageId": "incorrectGroupOrder"
+        }
+      ]
+    },
+    {
+      "code": "\nclass Foo {\n  J() {}\n  constructor() {}\n  K = () => {};\n  A: string;\n  [Z: string]: any;\n}\n      ",
+      "errors": [
+        {
+          "column": 3,
+          "data": { "name": "K", "rank": "constructor" },
+          "line": 5,
+          "messageId": "incorrectGroupOrder"
+        }
+      ],
+      "options": [{ "default": ["method", "constructor", "field", "signature"] }]
+    },
+    {
+      "code": "\nclass Foo {\n  J() {}\n  constructor() {}\n  K = () => {};\n  L: () => {};\n  A: string;\n}\n      ",
+      "errors": [
+        {
+          "column": 3,
+          "data": { "name": "K", "rank": "constructor" },
+          "line": 5,
+          "messageId": "incorrectGroupOrder"
+        }
+      ],
+      "options": [{ "default": ["method", "constructor", "field"] }]
+    },
+    {
+      "code": "\ninterface Foo {\n  K: () => {};\n  J();\n  A: string;\n}\n      ",
+      "errors": [
+        {
+          "column": 3,
+          "data": { "name": "A", "rank": "method" },
+          "line": 5,
+          "messageId": "incorrectGroupOrder"
+        }
+      ]
+    },
+    {
+      "code": "\ntype Foo = {\n  K: () => {};\n  J();\n  A: string;\n};\n      ",
+      "errors": [
+        {
+          "column": 3,
+          "data": { "name": "A", "rank": "method" },
+          "line": 5,
+          "messageId": "incorrectGroupOrder"
+        }
+      ]
+    },
+    {
+      "code": "\ntype Foo = {\n  A: string;\n  K: () => {};\n  J();\n};\n      ",
+      "errors": [
+        {
+          "column": 3,
+          "data": { "name": "J", "rank": "field" },
+          "line": 5,
+          "messageId": "incorrectGroupOrder"
+        }
+      ],
+      "options": [{ "default": ["method", "constructor", "field"] }]
+    },
+    {
+      "code": "\nabstract class Foo {\n  abstract A(): void;\n  B: string;\n}\n      ",
+      "errors": [
+        {
+          "column": 3,
+          "data": { "name": "B", "rank": "public abstract method" },
+          "line": 4,
+          "messageId": "incorrectGroupOrder"
+        }
+      ]
+    },
+    {
+      "code": "\nabstract class Foo {\n  abstract A: () => {};\n  B: string;\n}\n      ",
+      "errors": [
+        {
+          "column": 3,
+          "data": { "name": "B", "rank": "public abstract field" },
+          "line": 4,
+          "messageId": "incorrectGroupOrder"
+        }
+      ]
+    },
+    {
+      "code": "\nabstract class Foo {\n  abstract A: () => {};\n  B: string;\n  public C() {}\n  private D() {}\n  E() {}\n}\n      ",
+      "errors": [
+        {
+          "column": 3,
+          "data": { "name": "B", "rank": "public abstract field" },
+          "line": 4,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "E", "rank": "private instance method" },
+          "line": 7,
+          "messageId": "incorrectGroupOrder"
+        }
+      ]
+    },
+    {
+      "code": "\nclass Foo {\n  C: number;\n  [A: string]: number;\n  public static D() {}\n  static [B: string]: number;\n}\n      ",
+      "errors": [
+        {
+          "column": 3,
+          "data": { "name": "D", "rank": "signature" },
+          "line": 5,
+          "messageId": "incorrectGroupOrder"
+        }
+      ],
+      "options": [
+        {
+          "default": [
+            "field",
+            "method",
+            "public-static-method",
+            "private-static-method",
+            "signature"
+          ]
+        }
+      ]
+    },
+    {
+      "code": "\nabstract class Foo {\n  abstract B: string;\n  abstract A(): void;\n  public C() {}\n}\n      ",
+      "errors": [
+        {
+          "column": 3,
+          "data": { "name": "A", "rank": "field" },
+          "line": 4,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "C", "rank": "field" },
+          "line": 5,
+          "messageId": "incorrectGroupOrder"
+        }
+      ],
+      "options": [{ "default": ["method", "constructor", "field"] }]
+    },
+    {
+      "code": "\n// no accessibility === public\nclass Foo {\n  B: string;\n  @Dec() A: string = '';\n  C: string = '';\n  constructor() {}\n  D() {}\n  E() {}\n}\n      ",
+      "errors": [
+        {
+          "column": 3,
+          "data": { "name": "A", "rank": "field" },
+          "line": 5,
+          "messageId": "incorrectGroupOrder"
+        }
+      ],
+      "options": [{ "default": ["decorated-field", "field"] }]
+    },
+    {
+      "code": "\nclass Foo {\n  A() {}\n\n  @Decorator()\n  B() {}\n}\n      ",
+      "errors": [
+        {
+          "column": 3,
+          "data": { "name": "B", "rank": "method" },
+          "line": 5,
+          "messageId": "incorrectGroupOrder"
+        }
+      ],
+      "options": [{ "default": ["decorated-method", "method"] }]
+    },
+    {
+      "code": "\nclass Foo {\n  @Decorator() C() {}\n  A() {}\n}\n      ",
+      "errors": [
+        {
+          "column": 3,
+          "data": { "name": "A", "rank": "decorated method" },
+          "line": 4,
+          "messageId": "incorrectGroupOrder"
+        }
+      ],
+      "options": [{ "default": ["public-method", "decorated-method"] }]
+    },
+    {
+      "code": "\nclass Foo {\n  A(): void;\n  B(): void;\n  private C() {}\n  constructor() {}\n  @Dec() private D() {}\n}\n      ",
+      "errors": [
+        {
+          "column": 3,
+          "data": { "name": "D", "rank": "private method" },
+          "line": 7,
+          "messageId": "incorrectGroupOrder"
+        }
+      ],
+      "options": [{ "classes": ["public-method", "decorated-method", "private-method"] }]
+    },
+    {
+      "code": "\nclass Foo {\n  A: string;\n  get B() {}\n  constructor() {}\n  set B() {}\n  get C() {}\n  set C() {}\n  D(): void;\n}\n      ",
+      "errors": [
+        {
+          "column": 3,
+          "data": { "name": "constructor", "rank": "get, set" },
+          "line": 5,
+          "messageId": "incorrectGroupOrder"
+        }
+      ],
+      "options": [{ "default": ["field", "constructor", ["get", "set"], "method"] }]
+    },
+    {
+      "code": "\nclass Foo {\n  A: string;\n  private C() {}\n  constructor() {}\n  @Dec() private B: string;\n  set D() {}\n  E(): void;\n}\n      ",
+      "errors": [
+        {
+          "column": 3,
+          "data": {
+            "name": "constructor",
+            "rank": "private decorated field, public set, private method"
+          },
+          "line": 5,
+          "messageId": "incorrectGroupOrder"
+        }
+      ],
+      "options": [
+        {
+          "default": [
+            "public-field",
+            "constructor",
+            ["private-decorated-field", "public-set", "private-method"],
+            "public-method"
+          ]
+        }
+      ]
+    },
+    {
+      "code": "\nclass Foo {\n  A: string;\n  constructor() {}\n  get B() {}\n  set B() {}\n  get C() {}\n  set C() {}\n  D(): void;\n}\n      ",
+      "errors": [
+        {
+          "column": 3,
+          "data": { "name": "C", "rank": "set" },
+          "line": 7,
+          "messageId": "incorrectGroupOrder"
+        }
+      ],
+      "options": [{ "default": ["field", "constructor", "get", ["set"], "method"] }]
+    },
+    {
+      "code": "\nclass Foo {\n  static {}\n  m() {}\n  f = 1;\n}\n      ",
+      "errors": [
+        {
+          "column": 3,
+          "data": { "name": "m", "rank": "static initialization" },
+          "line": 4,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "f", "rank": "static initialization" },
+          "line": 5,
+          "messageId": "incorrectGroupOrder"
+        }
+      ],
+      "options": [{ "default": ["method", "field", "static-initialization"] }]
+    },
+    {
+      "code": "\nclass Foo {\n  m() {}\n  f = 1;\n  static {}\n}\n      ",
+      "errors": [
+        {
+          "column": 3,
+          "data": { "name": "static block", "rank": "method" },
+          "line": 5,
+          "messageId": "incorrectGroupOrder"
+        }
+      ],
+      "options": [{ "default": ["static-initialization", "method", "field"] }]
+    },
+    {
+      "code": "\nclass Foo {\n  f = 1;\n  static {}\n  m() {}\n}\n      ",
+      "errors": [
+        {
+          "column": 3,
+          "data": { "name": "static block", "rank": "field" },
+          "line": 4,
+          "messageId": "incorrectGroupOrder"
+        }
+      ],
+      "options": [{ "default": ["static-initialization", "field", "method"] }]
+    },
+    {
+      "code": "\nclass Foo {\n  static {}\n  f = 1;\n  m() {}\n}\n      ",
+      "errors": [
+        {
+          "column": 3,
+          "data": { "name": "f", "rank": "static initialization" },
+          "line": 4,
+          "messageId": "incorrectGroupOrder"
+        }
+      ],
+      "options": [{ "default": ["field", "static-initialization", "method"] }]
+    },
+    {
+      "code": "\nclass Foo {\n  private mp() {}\n  static {}\n  public m() {}\n  @dec\n  md() {}\n}\n      ",
+      "errors": [
+        {
+          "column": 3,
+          "data": { "name": "static block", "rank": "method" },
+          "line": 4,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "md", "rank": "method" },
+          "line": 6,
+          "messageId": "incorrectGroupOrder"
+        }
+      ],
+      "options": [{ "default": ["decorated-method", "static-initialization", "method"] }]
+    },
+    {
+      "code": "\n// no accessibility === public\nclass Foo {\n  #imPrivate() {}\n  imPublic() {}\n}\n      ",
+      "errors": [
+        {
+          "column": 3,
+          "data": { "name": "imPublic", "rank": "#private method" },
+          "line": 5,
+          "messageId": "incorrectGroupOrder"
+        }
+      ],
+      "name": "with private identifier",
+      "options": [
+        {
+          "default": {
+            "memberTypes": ["public-method", "#private-method"],
+            "order": "alphabetically-case-insensitive"
+          }
+        }
+      ]
+    },
+    {
+      "code": "\n// no accessibility === public\nclass Foo {\n  #imPrivate() {}\n  private imPrivate() {}\n}\n      ",
+      "errors": [
+        {
+          "column": 3,
+          "data": { "name": "imPrivate", "rank": "#private method" },
+          "line": 5,
+          "messageId": "incorrectGroupOrder"
+        }
+      ],
+      "name": "private and #private member order",
+      "options": [
+        {
+          "default": {
+            "memberTypes": ["private-method", "#private-method"],
+            "order": "alphabetically-case-insensitive"
+          }
+        }
+      ]
+    },
+    {
+      "code": "\n// no accessibility === public\nclass Foo {\n  static C: boolean;\n  [B: string]: any;\n  private A() {}\n}\n      ",
+      "errors": [
+        {
+          "column": 3,
+          "data": { "name": "B", "rank": "public static field" },
+          "line": 5,
+          "messageId": "incorrectGroupOrder"
+        }
+      ],
+      "name": "default member types with alphabetically order",
+      "options": [{ "default": { "order": "alphabetically" } }]
+    },
+    {
+      "code": "\n// no accessibility === public\nclass Foo {\n  static C: boolean;\n  [B: string]: any;\n}\n      ",
+      "errors": [
+        {
+          "column": 3,
+          "data": { "beforeMember": "C", "member": "B" },
+          "line": 5,
+          "messageId": "incorrectOrder"
+        }
+      ],
+      "name": "alphabetically order without member types",
+      "options": [{ "default": { "memberTypes": "never", "order": "alphabetically" } }]
+    },
+    {
+      "code": "\n// no accessibility === public\nclass Foo {\n  private imPrivate() {}\n  #imPrivate() {}\n}\n      ",
+      "errors": [
+        {
+          "column": 3,
+          "data": { "name": "imPrivate", "rank": "private method" },
+          "line": 5,
+          "messageId": "incorrectGroupOrder"
+        }
+      ],
+      "name": "#private and private member order",
+      "options": [
+        {
+          "default": {
+            "memberTypes": ["#private-method", "private-method"],
+            "order": "alphabetically-case-insensitive"
+          }
+        }
+      ]
+    },
+    {
+      "code": "\n// no accessibility === public\nclass Foo {\n  B: string;\n  readonly A: string = '';\n  C: string = '';\n  constructor() {}\n  D() {}\n  E() {}\n}\n      ",
+      "errors": [
+        {
+          "column": 3,
+          "data": { "name": "A", "rank": "field" },
+          "line": 5,
+          "messageId": "incorrectGroupOrder"
+        }
+      ],
+      "options": [{ "default": ["readonly-field", "field"] }]
+    },
+    {
+      "code": "\nclass Foo {\n  A: string;\n  private C() {}\n  constructor() {}\n  private readonly B: string;\n  set D() {}\n  E(): void;\n}\n      ",
+      "errors": [
+        {
+          "column": 3,
+          "data": { "name": "constructor", "rank": "public set, private method" },
+          "line": 5,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "B", "rank": "public field" },
+          "line": 6,
+          "messageId": "incorrectGroupOrder"
+        }
+      ],
+      "options": [
+        {
+          "default": [
+            "private-readonly-field",
+            "public-field",
+            "constructor",
+            ["public-set", "private-method"],
+            "public-method"
+          ]
+        }
+      ]
+    },
+    {
+      "code": "\nabstract class Foo {\n  @Dec public readonly A: string;\n  public readonly B: string;\n  public static readonly C: string;\n  static readonly #D: string;\n  readonly #E: string;\n\n  @Dec public F: string;\n  public G: string;\n  public static H: string;\n  static readonly #I: string;\n  readonly #J: string;\n}\n      ",
+      "errors": [
+        {
+          "column": 3,
+          "data": { "name": "F", "rank": "readonly field" },
+          "line": 9,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "I", "rank": "field" },
+          "line": 12,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "J", "rank": "field" },
+          "line": 13,
+          "messageId": "incorrectGroupOrder"
+        }
+      ],
+      "options": [{ "default": ["decorated-field", "readonly-field", "field"] }]
+    },
+    {
+      "code": "\nabstract class Foo {\n  @Dec public readonly DA: string;\n  @Dec protected readonly DB: string;\n  @Dec private readonly DC: string;\n\n  public static readonly SA: string;\n  protected static readonly SB: string;\n  private static readonly SC: string;\n  static readonly #SD: string;\n\n  public readonly IA: string;\n  protected readonly IB: string;\n  private readonly IC: string;\n  readonly #ID: string;\n\n  public abstract readonly AA: string;\n  protected abstract readonly AB: string;\n}\n      ",
+      "errors": [
+        {
+          "column": 3,
+          "data": { "name": "AA", "rank": "static readonly field" },
+          "line": 17,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "AB", "rank": "static readonly field" },
+          "line": 18,
+          "messageId": "incorrectGroupOrder"
+        }
+      ],
+      "options": [
+        {
+          "default": [
+            "decorated-readonly-field",
+            "abstract-readonly-field",
+            "static-readonly-field",
+            "instance-readonly-field"
+          ]
+        }
+      ]
+    },
+    {
+      "code": "\ninterface Foo {\n  readonly A: string;\n  readonly B: string;\n\n  C: string;\n  D: string;\n}\n      ",
+      "errors": [
+        {
+          "column": 3,
+          "data": { "name": "C", "rank": "readonly field" },
+          "line": 6,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "D", "rank": "readonly field" },
+          "line": 7,
+          "messageId": "incorrectGroupOrder"
+        }
+      ],
+      "options": [{ "default": ["field", "readonly-field"] }]
+    },
+    {
+      "code": "\ninterface Foo {\n  [i: number]: string;\n  readonly [i: string]: string;\n\n  A: string;\n  readonly B: string;\n}\n      ",
+      "errors": [
+        {
+          "column": 3,
+          "data": { "name": "i", "rank": "signature" },
+          "line": 4,
+          "messageId": "incorrectGroupOrder"
+        },
+        {
+          "column": 3,
+          "data": { "name": "B", "rank": "field" },
+          "line": 7,
+          "messageId": "incorrectGroupOrder"
+        }
+      ],
+      "options": [{ "default": ["readonly-signature", "signature", "readonly-field", "field"] }]
+    },
+    {
+      "code": "\nclass Foo {\n  accessor bar;\n\n  baz() {}\n}\n      ",
+      "errors": [
+        {
+          "column": 3,
+          "data": { "name": "baz", "rank": "accessor" },
+          "line": 5,
+          "messageId": "incorrectGroupOrder"
+        }
+      ],
+      "options": [{ "default": ["method", "accessor"] }]
+    },
+    {
+      "code": "\ninterface Foo {\n  y(): void;\n  get x(): number;\n}\n      ",
+      "errors": [
+        {
+          "column": 3,
+          "data": { "name": "x", "rank": "method" },
+          "line": 4,
+          "messageId": "incorrectGroupOrder"
+        }
+      ],
+      "options": [{ "default": ["get", "method"] }]
+    },
+    {
+      "code": "\ninterface Foo {\n  get x(): number;\n  y(): void;\n}\n      ",
+      "errors": [
+        {
+          "column": 3,
+          "data": { "name": "y", "rank": "get" },
+          "line": 4,
+          "messageId": "incorrectGroupOrder"
+        }
+      ],
+      "options": [{ "default": ["method", "get"] }]
+    },
+    {
+      "code": "\nclass Foo {\n  static foo() {}\n  foo(): void;\n  foo() {}\n}\n      ",
+      "errors": [
+        {
+          "column": 3,
+          "data": { "name": "foo", "rank": "public static method" },
+          "line": 5,
+          "messageId": "incorrectGroupOrder"
+        }
+      ],
+      "options": [{ "default": ["public-instance-method", "public-static-method"] }]
+    }
+  ]
+}
