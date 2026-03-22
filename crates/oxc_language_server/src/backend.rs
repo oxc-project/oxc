@@ -1329,6 +1329,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(not(target_os = "windows"))] // UNIX paths not supported on Windows
     fn test_get_parent_dir_uri() {
         // Typical file URI
         let file: Uri = "file:///path/to/dir/file.js".parse().unwrap();
