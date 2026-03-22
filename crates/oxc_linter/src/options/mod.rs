@@ -13,4 +13,6 @@ pub struct LintOptions {
     pub fix: FixKind,
     pub framework_hints: FrameworkFlags,
     pub report_unused_directive: Option<AllowWarnDeny>,
+    pub suppress_all: bool,
+    pub prune_suppressions: bool,
 }
