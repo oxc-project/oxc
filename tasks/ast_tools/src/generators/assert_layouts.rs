@@ -6,11 +6,12 @@
 
 use std::{
     borrow::Cow,
-    cmp::{Ordering, max, min},
+    cmp::{max, min},
     num,
     sync::atomic,
 };
 
+use itertools::Itertools;
 use phf_codegen::Map as PhfMapGen;
 use proc_macro2::TokenStream;
 use quote::quote;
@@ -21,8 +22,8 @@ use crate::{
     AST_MACROS_CRATE_PATH, Codegen, Generator,
     output::{Output, output_path},
     schema::{
-        Def, Discriminant, EnumDef, PointerKind, PrimitiveDef, Schema, StructDef, TypeDef, TypeId,
-        Visibility,
+        Def, Discriminant, EnumDef, FieldDef, PointerKind, PrimitiveDef, Schema, StructDef,
+        TypeDef, TypeId, Visibility,
         extensions::layout::{GetLayout, GetOffset, Layout, Niche, Offset, PlatformLayout},
     },
     utils::{format_cow, number_lit},
@@ -38,9 +39,7 @@ define_generator!(AssertLayouts);
 impl Generator for AssertLayouts {
     /// Calculate layouts of all types.
     fn prepare(&self, schema: &mut Schema, _codegen: &Codegen) {
-        for type_id in schema.types.indices() {
-            calculate_layout(type_id, schema);
-        }
+        LayoutCalculator::calculate(schema);
     }
 
     /// Generate assertions that calculated layouts are correct,
@@ -52,257 +51,369 @@ impl Generator for AssertLayouts {
     }
 }
 
-/// Calculate layout for a type.
-///
-/// If layout was calculated already, just return the existing `Layout`.
-fn calculate_layout(type_id: TypeId, schema: &mut Schema) -> &Layout {
-    fn is_not_calculated(layout: &Layout) -> bool {
-        // `align` field is set to 0 initially, but that's an illegal value
-        layout.layout_64.align == 0
+/// Layout calculator.
+struct LayoutCalculator<'s> {
+    schema: &'s mut Schema,
+    span_type_id: TypeId,
+    node_id_cell_type_id: TypeId,
+}
+
+impl LayoutCalculator<'_> {
+    /// Calculate layouts of all types.
+    fn calculate(schema: &mut Schema) {
+        let span_type_id = schema.type_names["Span"];
+        let node_id_cell_type_id =
+            schema.type_by_name("NodeId").as_primitive().unwrap().containers.cell_id.unwrap();
+
+        let mut calculator = LayoutCalculator { schema, span_type_id, node_id_cell_type_id };
+
+        for type_id in calculator.schema.types.indices() {
+            calculator.calculate_type(type_id);
+        }
     }
 
-    let span_type_id = schema.type_names["Span"];
+    /// Calculate layout for a type.
+    ///
+    /// If layout was calculated already, just return the existing `Layout`.
+    fn calculate_type(&mut self, type_id: TypeId) -> &Layout {
+        fn is_not_calculated(layout: &Layout) -> bool {
+            // `align` field is set to 0 initially, but that's an illegal value
+            layout.layout_64.align == 0
+        }
 
-    let type_def = &schema.types[type_id];
-    match type_def {
-        TypeDef::Struct(struct_def) => {
-            if is_not_calculated(&struct_def.layout) {
-                schema.struct_def_mut(type_id).layout =
-                    calculate_layout_for_struct(type_id, span_type_id, schema);
+        let type_def = &self.schema.types[type_id];
+        match type_def {
+            TypeDef::Struct(struct_def) => {
+                if is_not_calculated(&struct_def.layout) {
+                    self.schema.struct_def_mut(type_id).layout = self.calculate_struct(type_id);
+                }
+                &self.schema.struct_def(type_id).layout
             }
-            &schema.struct_def(type_id).layout
-        }
-        TypeDef::Enum(enum_def) => {
-            if is_not_calculated(&enum_def.layout) {
-                schema.enum_def_mut(type_id).layout = calculate_layout_for_enum(type_id, schema);
+            TypeDef::Enum(enum_def) => {
+                if is_not_calculated(&enum_def.layout) {
+                    self.schema.enum_def_mut(type_id).layout = self.calculate_enum(type_id);
+                }
+                &self.schema.enum_def(type_id).layout
             }
-            &schema.enum_def(type_id).layout
-        }
-        TypeDef::Primitive(primitive_def) => {
-            if is_not_calculated(&primitive_def.layout) {
-                schema.primitive_def_mut(type_id).layout =
-                    calculate_layout_for_primitive(primitive_def);
+            TypeDef::Primitive(primitive_def) => {
+                if is_not_calculated(&primitive_def.layout) {
+                    self.schema.primitive_def_mut(type_id).layout =
+                        Self::calculate_primitive(primitive_def);
+                }
+                &self.schema.primitive_def(type_id).layout
             }
-            &schema.primitive_def(type_id).layout
-        }
-        TypeDef::Option(option_def) => {
-            if is_not_calculated(&option_def.layout) {
-                schema.option_def_mut(type_id).layout =
-                    calculate_layout_for_option(type_id, schema);
+            TypeDef::Option(option_def) => {
+                if is_not_calculated(&option_def.layout) {
+                    self.schema.option_def_mut(type_id).layout = self.calculate_option(type_id);
+                }
+                &self.schema.option_def(type_id).layout
             }
-            &schema.option_def(type_id).layout
-        }
-        TypeDef::Box(box_def) => {
-            if is_not_calculated(&box_def.layout) {
-                schema.box_def_mut(type_id).layout = calculate_layout_for_box();
+            TypeDef::Box(box_def) => {
+                if is_not_calculated(&box_def.layout) {
+                    self.schema.box_def_mut(type_id).layout = Self::calculate_box();
+                }
+                &self.schema.box_def(type_id).layout
             }
-            &schema.box_def(type_id).layout
-        }
-        TypeDef::Vec(vec_def) => {
-            if is_not_calculated(&vec_def.layout) {
-                schema.vec_def_mut(type_id).layout = calculate_layout_for_vec();
+            TypeDef::Vec(vec_def) => {
+                if is_not_calculated(&vec_def.layout) {
+                    self.schema.vec_def_mut(type_id).layout = Self::calculate_vec();
+                }
+                &self.schema.vec_def(type_id).layout
             }
-            &schema.vec_def(type_id).layout
-        }
-        TypeDef::Cell(cell_def) => {
-            if is_not_calculated(&cell_def.layout) {
-                schema.cell_def_mut(type_id).layout = calculate_layout_for_cell(type_id, schema);
+            TypeDef::Cell(cell_def) => {
+                if is_not_calculated(&cell_def.layout) {
+                    self.schema.cell_def_mut(type_id).layout = self.calculate_cell(type_id);
+                }
+                &self.schema.cell_def(type_id).layout
             }
-            &schema.cell_def(type_id).layout
-        }
-        TypeDef::Pointer(pointer_def) => {
-            if is_not_calculated(&pointer_def.layout) {
-                schema.pointer_def_mut(type_id).layout =
-                    calculate_layout_for_pointer(type_id, schema);
+            TypeDef::Pointer(pointer_def) => {
+                if is_not_calculated(&pointer_def.layout) {
+                    self.schema.pointer_def_mut(type_id).layout = self.calculate_pointer(type_id);
+                }
+                &self.schema.pointer_def(type_id).layout
             }
-            &schema.pointer_def(type_id).layout
         }
     }
 }
 
-/// Calculate layout for a struct.
-///
-/// All structs in AST are `#[repr(C)]`. In a `#[repr(C)]` struct, compiler does not re-order the fields,
-/// so they are stored in memory in same order as they're defined.
-///
-/// So we determine a field order here which avoids excess padding. [`generate_struct_details`] generates
-/// code describing this field order, and `#[ast]` macro re-orders the fields.
-///
-/// This gives us the stability guarantees of `#[repr(C)]` without the downside of structs which are
-/// larger than they need to be due to excess padding.
-///
-/// Alignment of the struct is the highest alignment of its fields (or 1 if no fields).
-/// Size of struct is a multiple of its alignment.
-///
-/// A struct has a niche if any of its fields has a niche. The niche will be the largest niche
-/// in any of its fields. Padding bytes are not used as niches.
-///
-/// # Field order
-///
-/// Fields are ordered according to the following rules, in order:
-///
-/// 1. If field is `span: Span` it goes first.
-/// 2. If field is ZST, it goes last.
-/// 3. Fields with higher alignment on 64-bit systems go first.
-/// 4. Fields with higher alignment on 32-bit systems go first.
-/// 5. Otherwise, retain original field order.
-///
-/// This ordering scheme does not match `#[repr(Rust)]`, but is equally efficient in terms of packing
-/// structs into as few bytes as possible.
-///
-/// `#[repr(Rust)]` would move fields with niches (e.g. `Expression`) earlier than fields without
-/// niches (e.g. `Option<Box<T>>`), but we don't do that. AST is generally visited in source order,
-/// so keeping fields in original order as much as possible is preferable for CPU caching.
-///
-/// `span: Span` is always first to make `Expression::get_span` etc branchless, because the `span` field
-/// is in the same position for all of `Expression`'s variants.
-///
-/// Ordering by 64-bit alignment first, then 32-alignment creates a layout that is optimally packed
-/// on both platforms. Fields will be ordered `u64`, `usize`, `u32`, so `usize` will have same alignment
-/// as `u64` fields that come before it on 64-bit systems, and will have same alignment as
-/// `u32`s that come after it on 32-bit systems. So it never results in padding on either platform.
-///
-/// Note: "usize" here also includes pointer-aligned types e.g. `Box`, `Vec`, `Atom`, `&str`.
-/// "u64" includes other 8-byte aligned types e.g. `f64`, `Span`.
-///
-/// ZSTs need to go last so that they don't have same offset as another sized field.
-/// If they did, this would screw up sorting the fields in `generate_struct_details`.
-fn calculate_layout_for_struct(
-    type_id: TypeId,
-    span_type_id: TypeId,
-    schema: &mut Schema,
-) -> Layout {
-    // Get layout of fields' types and calculate optimal field order
-    struct FieldData {
-        index: usize,
-        layout: Layout,
-        is_span: bool,
-        is_zst: bool,
+struct StructState<'s> {
+    layout_64: PlatformLayout,
+    layout_32: PlatformLayout,
+    struct_def: &'s mut StructDef,
+    field_count: u32,
+    current_align_64: u32,
+    current_align_32: u32,
+}
+
+struct FieldData {
+    index: usize,
+    layout: Layout,
+    priority: u64,
+}
+
+const MAX_ALIGN: u32 = 1 << 31;
+
+impl<'s> StructState<'s> {
+    fn new(struct_def: &'s mut StructDef) -> Self {
+        Self {
+            layout_64: PlatformLayout::from_size_align(0, 1),
+            layout_32: PlatformLayout::from_size_align(0, 1),
+            struct_def,
+            field_count: 0,
+            current_align_64: MAX_ALIGN,
+            current_align_32: MAX_ALIGN,
+        }
     }
 
-    let mut field_order = schema
-        .struct_def(type_id)
-        .field_indices()
-        .map(|index| {
-            let field = &schema.struct_def(type_id).fields[index];
-            let is_span = field.type_id == span_type_id && field.name() == "span";
-            let layout = calculate_layout(field.type_id, schema);
-            let is_zst = layout.layout_64.size == 0 && layout.layout_32.size == 0;
-            FieldData { index, layout: layout.clone(), is_span, is_zst }
-        })
-        .collect::<Vec<_>>();
+    fn add_field(&mut self, field_data: &FieldData) {
+        let struct_name = self.struct_def.name();
+        let offset_64 = Self::update(
+            &mut self.layout_64,
+            &field_data.layout.layout_64,
+            &mut self.current_align_64,
+            struct_name,
+        );
+        let offset_32 = Self::update(
+            &mut self.layout_32,
+            &field_data.layout.layout_32,
+            &mut self.current_align_32,
+            struct_name,
+        );
 
-    field_order.sort_unstable_by(|f1, f2| {
-        let mut order = f1.is_span.cmp(&f2.is_span).reverse();
-        if order == Ordering::Equal {
-            order = f1.is_zst.cmp(&f2.is_zst);
-            if order == Ordering::Equal {
-                order = f1.layout.layout_64.align.cmp(&f2.layout.layout_64.align).reverse();
-                if order == Ordering::Equal {
-                    order = f1.layout.layout_32.align.cmp(&f2.layout.layout_32.align).reverse();
-                    if order == Ordering::Equal {
-                        order = f1.index.cmp(&f2.index);
-                    }
+        // Store offset on `field`
+        let field = &mut self.struct_def.fields[field_data.index];
+        field.offset = Offset { offset_64, offset_32, layout_index: self.field_count };
+
+        self.field_count += 1;
+    }
+
+    fn update(
+        layout: &mut PlatformLayout,
+        field_layout: &PlatformLayout,
+        current_align: &mut u32,
+        struct_name: &str,
+    ) -> u32 {
+        // Check alignment is correct for this field
+        let offset = layout.size;
+        assert!(
+            offset.is_multiple_of(field_layout.align),
+            "Incorrect alignment for struct fields in `{struct_name}`"
+        );
+
+        // Update alignment
+        layout.align = max(layout.align, field_layout.align);
+
+        // Update niche.
+        // Take the largest niche. Preference for (in order):
+        // * Largest single range of niche values.
+        // * Largest number of niche values at start of range.
+        // * Earlier field (earlier after re-ordering).
+        if let Some(field_niche) = &field_layout.niche
+            && layout.niche.as_ref().is_none_or(|niche| {
+                field_niche.count_max() > niche.count_max()
+                    || (field_niche.count_max() == niche.count_max()
+                        && field_niche.count_start > niche.count_start)
+            })
+        {
+            let mut niche = field_niche.clone();
+            niche.offset += offset;
+            layout.niche = Some(niche);
+        }
+
+        // Next field starts after this one
+        if field_layout.size > 0 {
+            let next_offset = offset + field_layout.size;
+            layout.size = next_offset;
+
+            // Get highest alignment next field can have
+            *current_align = next_offset & next_offset.wrapping_neg();
+        }
+
+        // Return offset of this field
+        offset
+    }
+}
+
+impl LayoutCalculator<'_> {
+    /// Calculate layout for a struct.
+    ///
+    /// All structs in AST are `#[repr(C)]`. In a `#[repr(C)]` struct, compiler does not re-order the fields,
+    /// so they are stored in memory in same order as they're defined.
+    ///
+    /// So we determine a field order here which avoids excess padding. [`generate_struct_details`] generates
+    /// code describing this field order, and `#[ast]` macro re-orders the fields.
+    ///
+    /// This gives us the stability guarantees of `#[repr(C)]` without the downside of structs which are
+    /// larger than they need to be due to excess padding.
+    ///
+    /// Alignment of the struct is the highest alignment of its fields (or 1 if no fields).
+    /// Size of struct is a multiple of its alignment.
+    ///
+    /// A struct has a niche if any of its fields has a niche. The niche will be the largest niche
+    /// in any of its fields. Padding bytes are not used as niches.
+    ///
+    /// # Field order
+    ///
+    /// Fields are ordered according to the following rules, in order:
+    ///
+    /// 1. `span: Span` goes first.
+    /// 2. `node_id: Cell<NodeId>` goes next.
+    /// 3. Fields with higher alignment on 64-bit systems go first.
+    /// 4. Fields with higher alignment on 32-bit systems go first.
+    /// 5. If the highest-aligned field cannot go next, take the next field which has suitable alignment.
+    /// 6. Otherwise, retain original field order.
+    ///
+    /// This ordering scheme does not match `#[repr(Rust)]`, but is equally efficient in terms of packing
+    /// structs into as few bytes as possible.
+    ///
+    /// `#[repr(Rust)]` would move fields with niches (e.g. `Expression`) earlier than fields without
+    /// niches (e.g. `Option<Box<T>>`), but we don't do that. AST is generally visited in source order,
+    /// so keeping fields in original order as much as possible is preferable for CPU caching.
+    ///
+    /// `span: Span` is always first to make `Expression::get_span` etc branchless, because the `span` field
+    /// is in the same position for all of `Expression`'s variants.
+    /// `node_id: Cell<NodeId>` goes after `span: Span` for the same reason - so it has consistent position
+    /// in all AST structs, which makes `AstKind::node_id` and `AstKind::set_node_id` branchless.
+    ///
+    /// Ordering by 64-bit alignment first, then 32-alignment creates a layout that is optimally packed
+    /// on both platforms. Fields will be ordered `u64`, `usize`, `u32`, so `usize` will have same alignment
+    /// as `u64` fields that come before it on 64-bit systems, and will have same alignment as
+    /// `u32`s that come after it on 32-bit systems. So it never results in padding on either platform.
+    ///
+    /// Note: "usize" here also includes pointer-aligned types e.g. `Box`, `Vec`, `Atom`, `&str`.
+    /// "u64" includes other 8-byte aligned types e.g. `f64`, `Span`.
+    fn calculate_struct(&mut self, type_id: TypeId) -> Layout {
+        // Get layout of fields' types and calculate optimal field order
+        let mut fields = self
+            .schema
+            .struct_def(type_id)
+            .field_indices()
+            .map(|index| {
+                let field = &self.schema.struct_def(type_id).fields[index];
+                let layout = self.calculate_type(field.type_id).clone();
+
+                let field = &self.schema.struct_def(type_id).fields[index];
+                let priority = if field.type_id == self.span_type_id && field.name() == "span" {
+                    // Highest priority
+                    u64::MAX
+                } else if field.type_id == self.node_id_cell_type_id && field.name() == "node_id" {
+                    // 2nd highest priority
+                    u64::MAX - 1
+                } else {
+                    // Prioritize fields with higher alignment on 64-bit systems, then 32-bit systems
+                    (u64::from(layout.layout_64.align) << 32) | u64::from(layout.layout_32.align)
+                };
+
+                FieldData { index, layout, priority }
+            })
+            .collect::<Vec<_>>();
+
+        fields.sort_by(|f1, f2| f1.priority.cmp(&f2.priority).reverse());
+
+        // Add fields
+        let mut state = StructState::new(self.schema.struct_def_mut(type_id));
+
+        while !fields.is_empty() {
+            // Find next field with alignment <= current alignment for both 32 bit and 64 bit.
+            // `other_fields` is sorted by alignment in descending order,
+            // so this will pick the next field with largest alignment which can be placed at current offset.
+            let index = fields.iter().position(|f| {
+                f.layout.layout_64.align <= state.current_align_64
+                    && f.layout.layout_32.align <= state.current_align_32
+            });
+
+            if let Some(index) = index {
+                // Found field with suitable alignment - add it to struct
+                let field_data = fields.remove(index);
+                state.add_field(&field_data);
+            } else {
+                // No field with suitable alignment found.
+                // Double desired alignment, and add padding so it's aligned.
+                // Go round loop again to find next field which satisfies new looser alignment requirements.
+                let smallest_align_64 = fields.last().unwrap().layout.layout_64.align;
+                if state.current_align_64 < smallest_align_64 {
+                    // No field meets alignment requirement for 64 bit
+                    state.current_align_64 *= 2;
+                    state.layout_64.size =
+                        state.layout_64.size.next_multiple_of(state.current_align_64);
+                } else {
+                    // No field meets alignment requirement for 32 bit
+                    state.current_align_32 *= 2;
+                    state.layout_32.size =
+                        state.layout_32.size.next_multiple_of(state.current_align_32);
                 }
             }
         }
-        order
-    });
 
-    // Calculate offset of each field, and size + alignment of struct
-    let mut layout_64 = PlatformLayout::from_size_align(0, 1);
-    let mut layout_32 = PlatformLayout::from_size_align(0, 1);
+        // Round up size to alignment
+        let StructState { mut layout_64, mut layout_32, .. } = state;
+        layout_64.size = layout_64.size.next_multiple_of(layout_64.align);
+        layout_32.size = layout_32.size.next_multiple_of(layout_32.align);
 
-    let struct_def = schema.struct_def_mut(type_id);
-    for field_data in &field_order {
-        fn update(
-            layout: &mut PlatformLayout,
-            field_layout: &PlatformLayout,
-            struct_name: &str,
-        ) -> u32 {
-            // Field should already be aligned as we've re-ordered fields to ensure they're tightly packed.
-            // This shouldn't break as long as all fields are aligned on `< 16`.
-            // If we introduce a `u128` into AST, we might need to change the field ordering algorithm
-            // to fill in the gap between `span` and the `u128` field.
-            let offset = layout.size;
-            assert!(
-                offset.is_multiple_of(field_layout.align),
-                "Incorrect alignment for struct fields in `{struct_name}`"
-            );
-
-            // Update alignment
-            layout.align = max(layout.align, field_layout.align);
-
-            // Update niche.
-            // Take the largest niche. Preference for (in order):
-            // * Largest single range of niche values.
-            // * Largest number of niche values at start of range.
-            // * Earlier field (earlier after re-ordering).
-            if let Some(field_niche) = &field_layout.niche
-                && layout.niche.as_ref().is_none_or(|niche| {
-                    field_niche.count_max() > niche.count_max()
-                        || (field_niche.count_max() == niche.count_max()
-                            && field_niche.count_start > niche.count_start)
-                })
-            {
-                let mut niche = field_niche.clone();
-                niche.offset += offset;
-                layout.niche = Some(niche);
-            }
-
-            // Next field starts after this one
-            layout.size = offset + field_layout.size;
-
-            // Return offset of this field
-            offset
-        }
-
-        let offset_64 = update(&mut layout_64, &field_data.layout.layout_64, struct_def.name());
-        let offset_32 = update(&mut layout_32, &field_data.layout.layout_32, struct_def.name());
-
-        // Store offset on `field`
-        let field = &mut struct_def.fields[field_data.index];
-        field.offset = Offset { offset_64, offset_32 };
+        Layout { layout_64, layout_32 }
     }
-
-    // Round up size to alignment
-    layout_64.size = layout_64.size.next_multiple_of(layout_64.align);
-    layout_32.size = layout_32.size.next_multiple_of(layout_32.align);
-
-    Layout { layout_64, layout_32 }
 }
 
-/// Calculate layout for an enum.
-///
-/// All enums in AST are `#[repr(C, u8)]` (if has fields) or `#[repr(u8)]` if fieldless.
-///
-/// `#[repr(C, u8)]` enums have alignment of highest-aligned variant.
-/// Size is size of largest variant + alignment of highest-aligned variant.
-///
-/// Fieldless `#[repr(u8)]` enums obey the same rules. Fieldless variants act as size 0, align 1.
-///
-/// `#[repr(C, u8)]` and `#[repr(u8)]` enums must always have at least one variant.
-///
-/// Any unused discriminant values at start of end of the range form a niche.
-fn calculate_layout_for_enum(type_id: TypeId, schema: &mut Schema) -> Layout {
-    struct State {
-        min_discriminant: Discriminant,
-        max_discriminant: Discriminant,
-        layout_64: PlatformLayout,
-        layout_32: PlatformLayout,
+struct EnumState {
+    min_discriminant: Discriminant,
+    max_discriminant: Discriminant,
+    layout_64: PlatformLayout,
+    layout_32: PlatformLayout,
+}
+
+impl LayoutCalculator<'_> {
+    /// Calculate layout for an enum.
+    ///
+    /// All enums in AST are `#[repr(C, u8)]` (if has fields) or `#[repr(u8)]` if fieldless.
+    ///
+    /// `#[repr(C, u8)]` enums have alignment of highest-aligned variant.
+    /// Size is size of largest variant + alignment of highest-aligned variant.
+    ///
+    /// Fieldless `#[repr(u8)]` enums obey the same rules. Fieldless variants act as size 0, align 1.
+    ///
+    /// `#[repr(C, u8)]` and `#[repr(u8)]` enums must always have at least one variant.
+    ///
+    /// Any unused discriminant values at start of end of the range form a niche.
+    fn calculate_enum(&mut self, type_id: TypeId) -> Layout {
+        let mut state = EnumState {
+            min_discriminant: Discriminant::MAX,
+            max_discriminant: 0,
+            layout_64: PlatformLayout::from_size_align(0, 1),
+            layout_32: PlatformLayout::from_size_align(0, 1),
+        };
+        self.process_enum_variants(type_id, &mut state);
+        let EnumState { min_discriminant, max_discriminant, mut layout_64, mut layout_32 } = state;
+
+        layout_64.size += layout_64.align;
+        layout_32.size += layout_32.align;
+
+        // Any unused discriminant values at start of end of the range form a niche.
+        // Note: The unused discriminants must be at start or end of range, *not* in the middle.
+        // `#[repr(u8)] enum Foo { A = 0, B = 255 }` has no niche.
+        // The largest available range (from start or from end) is used for the niche.
+        let niches_start = min_discriminant;
+        let niches_end = Discriminant::MAX - max_discriminant;
+
+        if niches_start != 0 || niches_end != 0 {
+            let niche = Niche::new(0, 1, u32::from(niches_start), u32::from(niches_end));
+            layout_64.niche = Some(niche.clone());
+            layout_32.niche = Some(niche);
+        }
+
+        Layout { layout_64, layout_32 }
     }
 
-    fn process_variants(type_id: TypeId, state: &mut State, schema: &mut Schema) {
-        let State { min_discriminant, max_discriminant, layout_64, layout_32 } = state;
+    fn process_enum_variants(&mut self, type_id: TypeId, state: &mut EnumState) {
+        let EnumState { min_discriminant, max_discriminant, layout_64, layout_32 } = state;
 
-        for variant_index in schema.enum_def(type_id).variant_indices() {
-            let variant = &schema.enum_def(type_id).variants[variant_index];
+        for variant_index in self.schema.enum_def(type_id).variant_indices() {
+            let variant = &self.schema.enum_def(type_id).variants[variant_index];
 
             *min_discriminant = min(*min_discriminant, variant.discriminant);
             *max_discriminant = max(*max_discriminant, variant.discriminant);
 
             if let Some(variant_type_id) = variant.field_type_id {
-                let variant_layout = calculate_layout(variant_type_id, schema);
+                let variant_layout = self.calculate_type(variant_type_id);
 
                 layout_64.size = max(layout_64.size, variant_layout.layout_64.size);
                 layout_64.align = max(layout_64.align, variant_layout.layout_64.align);
@@ -311,209 +422,184 @@ fn calculate_layout_for_enum(type_id: TypeId, schema: &mut Schema) -> Layout {
             }
         }
 
-        for inherits_index in schema.enum_def(type_id).inherits_indices() {
-            let inherits_type_id = schema.enum_def(type_id).inherits[inherits_index];
-            process_variants(inherits_type_id, state, schema);
+        for inherits_index in self.schema.enum_def(type_id).inherits_indices() {
+            let inherits_type_id = self.schema.enum_def(type_id).inherits[inherits_index];
+            self.process_enum_variants(inherits_type_id, state);
         }
     }
-
-    let mut state = State {
-        min_discriminant: Discriminant::MAX,
-        max_discriminant: 0,
-        layout_64: PlatformLayout::from_size_align(0, 1),
-        layout_32: PlatformLayout::from_size_align(0, 1),
-    };
-    process_variants(type_id, &mut state, schema);
-    let State { min_discriminant, max_discriminant, mut layout_64, mut layout_32 } = state;
-
-    layout_64.size += layout_64.align;
-    layout_32.size += layout_32.align;
-
-    // Any unused discriminant values at start of end of the range form a niche.
-    // Note: The unused discriminants must be at start or end of range, *not* in the middle.
-    // `#[repr(u8)] enum Foo { A = 0, B = 255 }` has no niche.
-    // The largest available range (from start or from end) is used for the niche.
-    let niches_start = min_discriminant;
-    let niches_end = Discriminant::MAX - max_discriminant;
-
-    if niches_start != 0 || niches_end != 0 {
-        let niche = Niche::new(0, 1, u32::from(niches_start), u32::from(niches_end));
-        layout_64.niche = Some(niche.clone());
-        layout_32.niche = Some(niche);
-    }
-
-    Layout { layout_64, layout_32 }
 }
 
-/// Calculate layout for an `Option`.
-///
-/// * If inner type has a niche:
-///   `Option` uses that niche to represent `None`.
-///   The `Option` is same size and alignment as the inner type.
-/// * If inner type has no niche:
-///   The `Option`'s size = inner type size + inner type alignment.
-///   `Some` / `None` discriminant is stored as a `bool` in first byte.
-///   This introduces a new niche, identical to a struct with `bool` as first field.
-fn calculate_layout_for_option(type_id: TypeId, schema: &mut Schema) -> Layout {
-    let option_def = schema.option_def(type_id);
-    let inner_layout = calculate_layout(option_def.inner_type_id, schema);
+impl LayoutCalculator<'_> {
+    /// Calculate layout for an `Option`.
+    ///
+    /// * If inner type has a niche:
+    ///   `Option` uses that niche to represent `None`.
+    ///   The `Option` is same size and alignment as the inner type.
+    /// * If inner type has no niche:
+    ///   The `Option`'s size = inner type size + inner type alignment.
+    ///   `Some` / `None` discriminant is stored as a `bool` in first byte.
+    ///   This introduces a new niche, identical to a struct with `bool` as first field.
+    fn calculate_option(&mut self, type_id: TypeId) -> Layout {
+        let option_def = self.schema.option_def(type_id);
+        let inner_layout = self.calculate_type(option_def.inner_type_id);
 
-    #[expect(clippy::items_after_statements)]
-    fn consume_niche(layout: &mut PlatformLayout) {
-        if let Some(niche) = &mut layout.niche {
-            if niche.count_start == 0 {
-                niche.count_end -= 1;
+        #[expect(clippy::items_after_statements)]
+        fn consume_niche(layout: &mut PlatformLayout) {
+            if let Some(niche) = &mut layout.niche {
+                if niche.count_start == 0 {
+                    niche.count_end -= 1;
+                } else {
+                    niche.count_start -= 1;
+                }
+
+                if niche.count_start == 0 && niche.count_end == 0 {
+                    layout.niche = None;
+                }
             } else {
-                niche.count_start -= 1;
+                layout.size += layout.align;
+                layout.niche = Some(Niche::new(0, 1, 0, 254));
             }
-
-            if niche.count_start == 0 && niche.count_end == 0 {
-                layout.niche = None;
-            }
-        } else {
-            layout.size += layout.align;
-            layout.niche = Some(Niche::new(0, 1, 0, 254));
         }
+
+        let mut layout = inner_layout.clone();
+        consume_niche(&mut layout.layout_64);
+        consume_niche(&mut layout.layout_32);
+        layout
     }
 
-    let mut layout = inner_layout.clone();
-    consume_niche(&mut layout.layout_64);
-    consume_niche(&mut layout.layout_32);
-    layout
-}
-
-/// Calculate layout for a `Box`.
-///
-/// All `Box`es have same layout, regardless of the inner type.
-/// `Box`es are pointer-sized, with a single niche (like `NonNull`).
-fn calculate_layout_for_box() -> Layout {
-    Layout {
-        layout_64: PlatformLayout::from_size_align_niche(8, 8, Niche::new(0, 8, 1, 0)),
-        layout_32: PlatformLayout::from_size_align_niche(4, 4, Niche::new(0, 4, 1, 0)),
-    }
-}
-
-/// Calculate layout for a `Vec`.
-///
-/// All `Vec`s have same layout, regardless of the inner type.
-/// `Vec`s contain 4 x pointer-sized fields.
-/// They have a single niche on the first field - the pointer which is `NonNull`.
-fn calculate_layout_for_vec() -> Layout {
-    Layout {
-        layout_64: PlatformLayout::from_size_align_niche(24, 8, Niche::new(0, 8, 1, 0)),
-        layout_32: PlatformLayout::from_size_align_niche(16, 4, Niche::new(0, 4, 1, 0)),
-    }
-}
-
-/// Calculate layout for a `Cell`.
-///
-/// `Cell`s have same layout as their inner type, but with no niche.
-fn calculate_layout_for_cell(type_id: TypeId, schema: &mut Schema) -> Layout {
-    let cell_def = schema.cell_def(type_id);
-    let inner_layout = calculate_layout(cell_def.inner_type_id, schema);
-
-    let mut layout = inner_layout.clone();
-    layout.layout_64.niche = None;
-    layout.layout_32.niche = None;
-    layout
-}
-
-/// Calculate layout for a pointer.
-///
-/// `NonNull` pointers have a niche, `*const` and `*mut` have no niche.
-fn calculate_layout_for_pointer(type_id: TypeId, schema: &Schema) -> Layout {
-    let pointer_def = schema.pointer_def(type_id);
-    if pointer_def.kind == PointerKind::NonNull {
+    /// Calculate layout for a `Box`.
+    ///
+    /// All `Box`es have same layout, regardless of the inner type.
+    /// `Box`es are pointer-sized, with a single niche (like `NonNull`).
+    fn calculate_box() -> Layout {
         Layout {
             layout_64: PlatformLayout::from_size_align_niche(8, 8, Niche::new(0, 8, 1, 0)),
             layout_32: PlatformLayout::from_size_align_niche(4, 4, Niche::new(0, 4, 1, 0)),
         }
-    } else {
+    }
+
+    /// Calculate layout for a `Vec`.
+    ///
+    /// All `Vec`s have same layout, regardless of the inner type.
+    /// `Vec`s contain 4 x pointer-sized fields.
+    /// They have a single niche on the first field - the pointer which is `NonNull`.
+    fn calculate_vec() -> Layout {
         Layout {
-            layout_64: PlatformLayout::from_size_align(8, 8),
-            layout_32: PlatformLayout::from_size_align(4, 4),
+            layout_64: PlatformLayout::from_size_align_niche(24, 8, Niche::new(0, 8, 1, 0)),
+            layout_32: PlatformLayout::from_size_align_niche(16, 4, Niche::new(0, 4, 1, 0)),
         }
     }
-}
 
-/// Calculate layout for a primitive.
-///
-/// Primitives have varying layouts. Some have niches, most don't.
-fn calculate_layout_for_primitive(primitive_def: &PrimitiveDef) -> Layout {
-    // `&str` and `Atom` are a `NonNull` pointer + `usize` pair. Niche for 0 on the pointer field
-    let str_layout = Layout {
-        layout_64: PlatformLayout::from_size_align_niche(16, 8, Niche::new(0, 8, 1, 0)),
-        layout_32: PlatformLayout::from_size_align_niche(8, 4, Niche::new(0, 4, 1, 0)),
-    };
-    // `usize` and `isize` are pointer-sized, but with no niche
-    let usize_layout = Layout {
-        layout_64: PlatformLayout::from_size_align(8, 8),
-        layout_32: PlatformLayout::from_size_align(4, 4),
-    };
-    // `NonZeroUsize` and `NonZeroIsize` are pointer-sized, with a single niche
-    let non_zero_usize_layout = Layout {
-        layout_64: PlatformLayout::from_size_align_niche(8, 8, Niche::new(0, 8, 1, 0)),
-        layout_32: PlatformLayout::from_size_align_niche(4, 4, Niche::new(0, 4, 1, 0)),
-    };
+    /// Calculate layout for a `Cell`.
+    ///
+    /// `Cell`s have same layout as their inner type, but with no niche.
+    fn calculate_cell(&mut self, type_id: TypeId) -> Layout {
+        let cell_def = self.schema.cell_def(type_id);
+        let inner_layout = self.calculate_type(cell_def.inner_type_id);
 
-    #[expect(clippy::match_same_arms)]
-    match primitive_def.name() {
-        "bool" => Layout::from_size_align_niche(1, 1, Niche::new(0, 1, 0, 254)),
-        "u8" => Layout::from_type::<u8>(),
-        "u16" => Layout::from_type::<u16>(),
-        "u32" => Layout::from_type::<u32>(),
-        "u64" => Layout::from_type::<u64>(),
-        "u128" => Layout::from_type::<u128>(),
-        "usize" => usize_layout,
-        "i8" => Layout::from_type::<i8>(),
-        "i16" => Layout::from_type::<i16>(),
-        "i32" => Layout::from_type::<i32>(),
-        "i64" => Layout::from_type::<i64>(),
-        "i128" => Layout::from_type::<i128>(),
-        "isize" => usize_layout,
-        "f32" => Layout::from_type::<f32>(),
-        "f64" => Layout::from_type::<f64>(),
-        "&str" => str_layout,
-        "Atom" => str_layout,
-        // `Ident` is `NonNull<u8>` + `u64` on 64-bit, `NonNull<u8>` + `u32` + `u32` on 32-bit.
-        // Niche for 0 on the pointer field.
-        "Ident" => Layout {
+        let mut layout = inner_layout.clone();
+        layout.layout_64.niche = None;
+        layout.layout_32.niche = None;
+        layout
+    }
+
+    /// Calculate layout for a pointer.
+    ///
+    /// `NonNull` pointers have a niche, `*const` and `*mut` have no niche.
+    fn calculate_pointer(&self, type_id: TypeId) -> Layout {
+        let pointer_def = self.schema.pointer_def(type_id);
+        if pointer_def.kind == PointerKind::NonNull {
+            Layout {
+                layout_64: PlatformLayout::from_size_align_niche(8, 8, Niche::new(0, 8, 1, 0)),
+                layout_32: PlatformLayout::from_size_align_niche(4, 4, Niche::new(0, 4, 1, 0)),
+            }
+        } else {
+            Layout {
+                layout_64: PlatformLayout::from_size_align(8, 8),
+                layout_32: PlatformLayout::from_size_align(4, 4),
+            }
+        }
+    }
+
+    /// Calculate layout for a primitive.
+    ///
+    /// Primitives have varying layouts. Some have niches, most don't.
+    fn calculate_primitive(primitive_def: &PrimitiveDef) -> Layout {
+        // `&str` and `Atom` are a `NonNull` pointer + `usize` pair. Niche for 0 on the pointer field
+        let str_layout = Layout {
             layout_64: PlatformLayout::from_size_align_niche(16, 8, Niche::new(0, 8, 1, 0)),
-            layout_32: PlatformLayout::from_size_align_niche(12, 4, Niche::new(0, 4, 1, 0)),
-        },
-        "NonZeroU8" => Layout::from_type_with_niche_for_zero::<num::NonZeroU8>(),
-        "NonZeroU16" => Layout::from_type_with_niche_for_zero::<num::NonZeroU16>(),
-        "NonZeroU32" => Layout::from_type_with_niche_for_zero::<num::NonZeroU32>(),
-        "NonZeroU64" => Layout::from_type_with_niche_for_zero::<num::NonZeroU64>(),
-        "NonZeroU128" => Layout::from_type_with_niche_for_zero::<num::NonZeroU128>(),
-        "NonZeroUsize" => non_zero_usize_layout,
-        "NonZeroI8" => Layout::from_type_with_niche_for_zero::<num::NonZeroI8>(),
-        "NonZeroI16" => Layout::from_type_with_niche_for_zero::<num::NonZeroI16>(),
-        "NonZeroI32" => Layout::from_type_with_niche_for_zero::<num::NonZeroI32>(),
-        "NonZeroI64" => Layout::from_type_with_niche_for_zero::<num::NonZeroI64>(),
-        "NonZeroI128" => Layout::from_type_with_niche_for_zero::<num::NonZeroI128>(),
-        "NonZeroIsize" => non_zero_usize_layout,
-        // Unlike `bool`, `AtomicBool` does not have any niches
-        "AtomicBool" => Layout::from_type::<atomic::AtomicBool>(),
-        "AtomicU8" => Layout::from_type::<atomic::AtomicU8>(),
-        "AtomicU16" => Layout::from_type::<atomic::AtomicU16>(),
-        "AtomicU32" => Layout::from_type::<atomic::AtomicU32>(),
-        "AtomicU64" => Layout::from_type::<atomic::AtomicU64>(),
-        "AtomicUsize" => usize_layout,
-        "AtomicI8" => Layout::from_type::<atomic::AtomicI8>(),
-        "AtomicI16" => Layout::from_type::<atomic::AtomicI16>(),
-        "AtomicI32" => Layout::from_type::<atomic::AtomicI32>(),
-        "AtomicI64" => Layout::from_type::<atomic::AtomicI64>(),
-        "AtomicIsize" => usize_layout,
-        // `AtomicPtr` has no niche - like `*mut T`, not `NonNull<T>`
-        "AtomicPtr" => usize_layout,
-        "PointerAlign" => Layout {
-            layout_64: PlatformLayout::from_size_align(0, 8),
-            layout_32: PlatformLayout::from_size_align(0, 4),
-        },
-        // `NodeId` is a `NonMaxU32` wrapper with a niche for max value
-        "NodeId" => Layout::from_size_align_niche(4, 4, Niche::new(0, 4, 1, 0)),
-        name => panic!("Unknown primitive type: {name}"),
+            layout_32: PlatformLayout::from_size_align_niche(8, 4, Niche::new(0, 4, 1, 0)),
+        };
+        // `usize` and `isize` are pointer-sized, but with no niche
+        let usize_layout = Layout {
+            layout_64: PlatformLayout::from_size_align(8, 8),
+            layout_32: PlatformLayout::from_size_align(4, 4),
+        };
+        // `NonZeroUsize` and `NonZeroIsize` are pointer-sized, with a single niche
+        let non_zero_usize_layout = Layout {
+            layout_64: PlatformLayout::from_size_align_niche(8, 8, Niche::new(0, 8, 1, 0)),
+            layout_32: PlatformLayout::from_size_align_niche(4, 4, Niche::new(0, 4, 1, 0)),
+        };
+
+        #[expect(clippy::match_same_arms)]
+        match primitive_def.name() {
+            "bool" => Layout::from_size_align_niche(1, 1, Niche::new(0, 1, 0, 254)),
+            "u8" => Layout::from_type::<u8>(),
+            "u16" => Layout::from_type::<u16>(),
+            "u32" => Layout::from_type::<u32>(),
+            "u64" => Layout::from_type::<u64>(),
+            "u128" => Layout::from_type::<u128>(),
+            "usize" => usize_layout,
+            "i8" => Layout::from_type::<i8>(),
+            "i16" => Layout::from_type::<i16>(),
+            "i32" => Layout::from_type::<i32>(),
+            "i64" => Layout::from_type::<i64>(),
+            "i128" => Layout::from_type::<i128>(),
+            "isize" => usize_layout,
+            "f32" => Layout::from_type::<f32>(),
+            "f64" => Layout::from_type::<f64>(),
+            "&str" => str_layout,
+            "Atom" => str_layout,
+            // `Ident` is `NonNull<u8>` + `u64` on 64-bit, `NonNull<u8>` + `u32` + `u32` on 32-bit.
+            // Niche for 0 on the pointer field.
+            "Ident" => Layout {
+                layout_64: PlatformLayout::from_size_align_niche(16, 8, Niche::new(0, 8, 1, 0)),
+                layout_32: PlatformLayout::from_size_align_niche(12, 4, Niche::new(0, 4, 1, 0)),
+            },
+            "NonZeroU8" => Layout::from_type_with_niche_for_zero::<num::NonZeroU8>(),
+            "NonZeroU16" => Layout::from_type_with_niche_for_zero::<num::NonZeroU16>(),
+            "NonZeroU32" => Layout::from_type_with_niche_for_zero::<num::NonZeroU32>(),
+            "NonZeroU64" => Layout::from_type_with_niche_for_zero::<num::NonZeroU64>(),
+            "NonZeroU128" => Layout::from_type_with_niche_for_zero::<num::NonZeroU128>(),
+            "NonZeroUsize" => non_zero_usize_layout,
+            "NonZeroI8" => Layout::from_type_with_niche_for_zero::<num::NonZeroI8>(),
+            "NonZeroI16" => Layout::from_type_with_niche_for_zero::<num::NonZeroI16>(),
+            "NonZeroI32" => Layout::from_type_with_niche_for_zero::<num::NonZeroI32>(),
+            "NonZeroI64" => Layout::from_type_with_niche_for_zero::<num::NonZeroI64>(),
+            "NonZeroI128" => Layout::from_type_with_niche_for_zero::<num::NonZeroI128>(),
+            "NonZeroIsize" => non_zero_usize_layout,
+            // Unlike `bool`, `AtomicBool` does not have any niches
+            "AtomicBool" => Layout::from_type::<atomic::AtomicBool>(),
+            "AtomicU8" => Layout::from_type::<atomic::AtomicU8>(),
+            "AtomicU16" => Layout::from_type::<atomic::AtomicU16>(),
+            "AtomicU32" => Layout::from_type::<atomic::AtomicU32>(),
+            "AtomicU64" => Layout::from_type::<atomic::AtomicU64>(),
+            "AtomicUsize" => usize_layout,
+            "AtomicI8" => Layout::from_type::<atomic::AtomicI8>(),
+            "AtomicI16" => Layout::from_type::<atomic::AtomicI16>(),
+            "AtomicI32" => Layout::from_type::<atomic::AtomicI32>(),
+            "AtomicI64" => Layout::from_type::<atomic::AtomicI64>(),
+            "AtomicIsize" => usize_layout,
+            // `AtomicPtr` has no niche - like `*mut T`, not `NonNull<T>`
+            "AtomicPtr" => usize_layout,
+            "PointerAlign" => Layout {
+                layout_64: PlatformLayout::from_size_align(0, 8),
+                layout_32: PlatformLayout::from_size_align(0, 4),
+            },
+            // `NodeId` is a `NonMaxU32` wrapper with a niche for max value
+            "NodeId" => Layout::from_size_align_niche(4, 4, Niche::new(0, 4, 1, 0)),
+            name => panic!("Unknown primitive type: {name}"),
+        }
     }
 }
 
@@ -566,6 +652,7 @@ fn generate_layout_assertions_for_struct<'s>(
 ) {
     fn r#gen(
         struct_def: &StructDef,
+        fields: &[&FieldDef],
         is_64: bool,
         struct_ident: &Ident,
         schema: &Schema,
@@ -583,7 +670,7 @@ fn generate_layout_assertions_for_struct<'s>(
 
         let size_align_assertions = generate_size_align_assertions(layout, struct_ident);
 
-        let offset_asserts = struct_def.fields.iter().filter_map(|field| {
+        let offset_asserts = fields.iter().map(|&field| {
             if struct_def.is_foreign || field.visibility == Visibility::Private {
                 // Cannot create assertions for private fields (cant access them)
                 // or foreign types (we don't know what fields they have)
@@ -605,12 +692,16 @@ fn generate_layout_assertions_for_struct<'s>(
         }
     }
 
+    // Sort fields in memory layout order
+    let mut fields = struct_def.fields.iter().collect_vec();
+    fields.sort_by(|f1, f2| f1.offset.layout_index.cmp(&f2.offset.layout_index));
+
     let (assertions_64, assertions_32) =
         assertions.entry(struct_def.file(schema).krate()).or_default();
 
     let ident = struct_def.ident();
-    assertions_64.extend(r#gen(struct_def, true, &ident, schema));
-    assertions_32.extend(r#gen(struct_def, false, &ident, schema));
+    assertions_64.extend(r#gen(struct_def, &fields, true, &ident, schema));
+    assertions_32.extend(r#gen(struct_def, &fields, false, &ident, schema));
 }
 
 /// Generate layout assertions for an enum.
@@ -709,37 +800,21 @@ fn generate_struct_details(schema: &Schema) -> Output {
     for type_def in &schema.types {
         let TypeDef::Struct(struct_def) = type_def else { continue };
 
-        // Get indexes of fields in ascending order of offset.
-        // Field index is included in sorting so any ZST fields remain in same order as in source
-        // (multiple ZST fields will have same offset as each other).
-        //
-        // If struct as written already has all fields in offset order then no-reordering is required,
+        // Get layout indexes of fields in source order.
+        // If struct as written already has fields in layout order, then no-reordering is required,
         // in which case output `None`.
-        let mut field_offsets_and_source_indexes = struct_def
-            .fields
-            .iter()
-            .enumerate()
-            .map(|(index, field)| (field.offset.offset_64, index))
-            .collect::<Vec<_>>();
-        field_offsets_and_source_indexes.sort_unstable();
+        let mut new_indexes = vec![0; struct_def.fields.len()];
+        let mut reordering_needed = false;
+        for (index, field) in struct_def.fields.iter().enumerate() {
+            if index != field.offset.layout_index as usize {
+                reordering_needed = true;
+            }
+            new_indexes[index] = field.offset.layout_index;
+        }
 
-        let field_order = if field_offsets_and_source_indexes
-            .iter()
-            .enumerate()
-            .any(|(new_index, &(_, source_index))| source_index != new_index)
-        {
-            // Field order needs to change from source order.
-            // Remap to `Vec` indexed by source field index,
-            // with each entry containing the new index after re-ordering
-            let mut source_and_new_indexes = field_offsets_and_source_indexes
-                .into_iter()
-                .enumerate()
-                .map(|(new_index, (_, source_index))| (source_index, new_index))
-                .collect::<Vec<_>>();
-            source_and_new_indexes.sort_unstable_by_key(|&(source_index, _)| source_index);
-            let new_indexes = source_and_new_indexes
-                .into_iter()
-                .map(|(_, new_index)| number_lit(u8::try_from(new_index).unwrap()));
+        let field_order = if reordering_needed {
+            let new_indexes =
+                new_indexes.into_iter().map(|index| number_lit(u8::try_from(index).unwrap()));
             quote!(Some(&[#(#new_indexes),*]))
         } else {
             // Field order stays as it is in source

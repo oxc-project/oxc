@@ -15,6 +15,14 @@ describe("LSP initialization", () => {
     expect(initResult.serverInfo?.name).toBe("oxfmt");
   });
 
+  it("should start LSP server without a workspace folder or root uri", async () => {
+    await using client = createLspConnection();
+    const initResult = await client.initialize(null);
+
+    expect(initResult.capabilities.documentFormattingProvider).toBe(true);
+    expect(initResult.serverInfo?.name).toBe("oxfmt");
+  });
+
   it.each([
     [
       undefined,

@@ -16,7 +16,7 @@ use std::{
 
 use oxc_allocator::{Allocator, AllocatorPool, CloneIn, TakeIn, Vec as ArenaVec};
 use oxc_ast::{
-    ast::{Comment, CommentKind, Program},
+    ast::{Comment, CommentContent, CommentKind, Program},
     ast_kind::AST_TYPE_MAX,
 };
 use oxc_ast_macros::ast;
@@ -611,7 +611,7 @@ impl Linter {
             program.source_text = source_text;
         }
 
-        // Convert spans to UTF-16.
+        // Create span converter.
         // If source starts with BOM, create converter which ignores the BOM.
         let span_converter = if has_bom {
             #[expect(clippy::cast_possible_truncation)]
@@ -620,7 +620,7 @@ impl Linter {
             Utf8ToUtf16::new(source_text)
         };
 
-        // Convert tokens for raw transfer
+        // Convert token spans to UTF-16 and update token kinds
         #[expect(clippy::if_not_else, clippy::cast_possible_truncation)]
         let (tokens_offset, tokens_len) = if !tokens.is_empty() {
             update_tokens(tokens, program, &span_converter, ESTreeTokenOptionsJS);
@@ -629,8 +629,22 @@ impl Linter {
             (0, 0)
         };
 
+        // Convert AST spans to UTF-16
         span_converter.convert_program(program);
-        span_converter.convert_comments(&mut program.comments);
+
+        // Convert comment spans to UTF-16.
+        // Also set the `content` field (byte 15) of each comment to `None` (0).
+        // JS side uses this byte as a "deserialized" flag for tracking lazy deserialization.
+        if let Some(mut converter) = span_converter.converter() {
+            for comment in &mut program.comments {
+                converter.convert_span(&mut comment.span);
+                comment.content = CommentContent::None;
+            }
+        } else {
+            for comment in &mut program.comments {
+                comment.content = CommentContent::None;
+            }
+        }
 
         // Get offset of `Program` within buffer (bottom 32 bits of pointer)
         let program_offset = ptr::from_ref(program) as u32;

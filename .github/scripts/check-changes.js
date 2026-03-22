@@ -5,11 +5,14 @@
 /**
  * Generic change detection script for CI jobs.
  *
- * Include mode (default): checks if changes affect specified crates or their transitive dependencies.
+ * Include mode: checks if changes affect specified crates or their transitive dependencies.
  *   node check-changes.js --packages oxc_minifier --paths tasks/minsize/
  *
  * Exclude mode: skips only if ALL changed files belong to excluded crate directories.
  *   node check-changes.js --exclude oxc_linter,oxc_language_server --paths napi/,npm/
+ *
+ * Paths-only mode: run if any changed file matches the given paths (no cargo tree).
+ *   node check-changes.js --paths apps/oxlint/,npm/oxlint/,napi/oxlint/
  */
 
 const { getChangedFiles } = require("./get-changed-files.js");
@@ -55,6 +58,22 @@ function shouldRunInclude(changedFiles, packages, paths) {
     return false;
   }
 
+  // Check additional trigger paths first (no cargo tree needed)
+  for (const file of changedFiles) {
+    for (const p of paths) {
+      if (file.startsWith(p)) {
+        console.error(`File ${file} matches trigger path ${p} - will run`);
+        return true;
+      }
+    }
+  }
+
+  // If no changed files are in crates/, cargo tree check cannot match — skip it
+  if (!changedFiles.some((file) => file.startsWith("crates/"))) {
+    console.error("No files changed in crates/ - will skip");
+    return false;
+  }
+
   // Resolve transitive dependencies via cargo tree
   let allCrates;
   try {
@@ -71,7 +90,7 @@ function shouldRunInclude(changedFiles, packages, paths) {
     return true;
   }
 
-  return checkFilesAffectCrates(changedFiles, allCrates, paths);
+  return checkFilesAffectCrates(changedFiles, allCrates);
 }
 
 /**
@@ -119,12 +138,40 @@ function shouldRunExclude(changedFiles, excludeCrates, paths) {
   return true;
 }
 
+/**
+ * Paths-only mode: run if any changed file matches any of the given paths.
+ * Used by jobs that don't need cargo tree dependency checking.
+ */
+function shouldRunPathsOnly(changedFiles, paths) {
+  if (changedFiles === null) {
+    console.error("No changed files list (manual trigger or error) - will run");
+    return true;
+  }
+
+  if (changedFiles.length === 0) {
+    console.error("No files changed - will skip");
+    return false;
+  }
+
+  for (const file of changedFiles) {
+    for (const p of paths) {
+      if (file.startsWith(p)) {
+        console.error(`File ${file} matches trigger path ${p} - will run`);
+        return true;
+      }
+    }
+  }
+
+  console.error("No files match trigger paths - will skip");
+  return false;
+}
+
 async function main() {
   try {
     const opts = parseArgs();
 
-    if (opts.packages.length === 0 && opts.exclude.length === 0) {
-      console.error("Error: must specify --packages or --exclude");
+    if (opts.packages.length === 0 && opts.exclude.length === 0 && opts.paths.length === 0) {
+      console.error("Error: must specify --packages, --exclude, or --paths");
       console.log("true");
       process.exit(0);
     }
@@ -134,8 +181,10 @@ async function main() {
     let shouldRun;
     if (opts.exclude.length > 0) {
       shouldRun = shouldRunExclude(changedFiles, opts.exclude, opts.paths);
-    } else {
+    } else if (opts.packages.length > 0) {
       shouldRun = shouldRunInclude(changedFiles, opts.packages, opts.paths);
+    } else {
+      shouldRun = shouldRunPathsOnly(changedFiles, opts.paths);
     }
 
     console.log(shouldRun ? "true" : "false");

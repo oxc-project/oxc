@@ -561,6 +561,10 @@ pub fn check_variable_declaration(decl: &VariableDeclaration, ctx: &SemanticBuil
     {
         ctx.error(diagnostics::using_declaration_not_allowed_in_script(decl.span));
     }
+    if decl.kind.is_await() && ctx.scoping.scope_flags(ctx.current_scope_id).is_class_static_block()
+    {
+        ctx.error(diagnostics::class_static_block_await_using(decl.span));
+    }
 }
 
 pub fn check_meta_property(prop: &MetaProperty, ctx: &SemanticBuilder<'_>) {
@@ -979,7 +983,7 @@ pub fn check_for_of_statement(stmt: &ForOfStatement, ctx: &SemanticBuilder<'_>) 
     // ClassStaticBlockBody : ClassStaticBlockStatementList
     //   It is a Syntax Error if ClassStaticBlockStatementList Contains await is true.
     if stmt.r#await && ctx.scoping.scope_flags(ctx.current_scope_id).is_class_static_block() {
-        ctx.error(diagnostics::class_static_block_await(stmt.span));
+        ctx.error(diagnostics::class_static_block_for_await(stmt.span));
     }
 }
 

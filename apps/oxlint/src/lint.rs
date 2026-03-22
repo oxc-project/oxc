@@ -1217,6 +1217,12 @@ mod test {
     }
 
     #[test]
+    fn test_import_plugin_detects_cycles_with_auto_discovered_tsconfig_paths() {
+        let args = &["--import-plugin", "-D", "import/no-cycle", "deep/src/dep-a.ts"];
+        Tester::new().with_cwd("fixtures/lsp/ts_path_alias".into()).test_and_snapshot(args);
+    }
+
+    #[test]
     fn test_rule_config_being_enabled_correctly() {
         let args = &["-c", ".oxlintrc.json"];
         Tester::new().with_cwd("fixtures/cli/issue_11054".into()).test_and_snapshot(args);

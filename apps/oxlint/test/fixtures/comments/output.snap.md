@@ -63,6 +63,34 @@
  32 | `-> const topLevelVariable7 = 7;
     `----
 
+  x test-comments(test-comments): Comment JSON.stringify:
+  | {
+  |   "type": "Line",
+  |   "value": " Line comment 1",
+  |   "start": 29,
+  |   "end": 46,
+  |   "range": [
+  |     29,
+  |     46
+  |   ],
+  |   "loc": {
+  |     "start": {
+  |       "line": 2,
+  |       "column": 0
+  |     },
+  |     "end": {
+  |       "line": 2,
+  |       "column": 17
+  |     }
+  |   }
+  | }
+   ,-[files/comments.js:2:1]
+ 1 | const topLevelVariable1 = 1;
+ 2 | // Line comment 1
+   : ^^^^^^^^^^^^^^^^^
+ 3 | const topLevelVariable2 = 2; /* Block comment 1 */
+   `----
+
   x test-comments(test-comments): VariableDeclaration(topLevelVariable2):
   | getCommentsBefore: 1 comment
   |   [0] Line: " Line comment 1" at [29, 46]
@@ -227,6 +255,33 @@
  32 | const topLevelVariable7 = 7;
     : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     `----
+
+  x test-comments(test-comments): Comment JSON.stringify:
+  | {
+  |   "type": "Shebang",
+  |   "value": "/usr/bin/env node",
+  |   "start": 0,
+  |   "end": 19,
+  |   "range": [
+  |     0,
+  |     19
+  |   ],
+  |   "loc": {
+  |     "start": {
+  |       "line": 1,
+  |       "column": 0
+  |     },
+  |     "end": {
+  |       "line": 1,
+  |       "column": 19
+  |     }
+  |   }
+  | }
+   ,-[files/hashbang.js:1:1]
+ 1 | #!/usr/bin/env node
+   : ^^^^^^^^^^^^^^^^^^^
+ 2 | // Line comment after hashbang
+   `----
 
   x test-comments(test-comments): VariableDeclaration(topLevelVariable1):
   | getCommentsBefore: 3 comments
@@ -455,7 +510,7 @@
     : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     `----
 
-Found 0 warnings and 32 errors.
+Found 0 warnings and 34 errors.
 Finished in Xms on 3 files with 1 rules using X threads.
 ```
 

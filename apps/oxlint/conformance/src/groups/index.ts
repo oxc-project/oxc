@@ -8,6 +8,7 @@ import e18e from "./e18e.ts";
 import testingLibrary from "./testing_library.ts";
 import storybook from "./storybook.ts";
 import playwright from "./playwright.ts";
+import cypress from "./cypress.ts";
 
 export const TEST_GROUPS: TestGroup[] = [
   eslint,
@@ -18,4 +19,5 @@ export const TEST_GROUPS: TestGroup[] = [
   testingLibrary,
   storybook,
   playwright,
+  cypress,
 ];
