@@ -1494,6 +1494,14 @@ impl<'a> Format<'a> for FormatTSSignature<'a, '_> {
             return write!(f, [self.signature]);
         }
 
+        if f.comments().has_trailing_suppression_comment(self.signature.span().end) {
+            write!(f, [FormatSuppressedNode(self.signature.span())]);
+            let comments =
+                f.context().comments().end_of_line_comments_after(self.signature.span().end);
+            write!(f, FormatTrailingComments::Comments(comments));
+            return;
+        }
+
         write!(f, [&self.signature]);
 
         match f.options().semicolons {
