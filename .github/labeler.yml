@@ -13,10 +13,12 @@ A-cfg:
 A-cli:
   - changed-files:
       - any-glob-to-any-file: ["apps/oxlint/**", "apps/oxfmt/**"]
+      - all-globs-to-all-files: ["!apps/oxlint/src/lsp/**", "!apps/oxfmt/src/lsp/**"]
 
 A-editor:
   - changed-files:
-      - any-glob-to-any-file: ["crates/oxc_language_server/**", "editors/**"]
+      - any-glob-to-any-file:
+          ["crates/oxc_language_server/**", "apps/oxlint/src/lsp/**", "apps/oxfmt/src/lsp/**"]
 
 A-formatter:
   - changed-files:
