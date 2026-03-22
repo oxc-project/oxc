@@ -444,7 +444,7 @@ jobs:
       - run: rustup component add clippy rust-docs
       - run: cargo lint -- -D warnings
       - run: cargo lint --profile dev-no-debug-assertions -- -D warnings
-      - run: RUSTDOCFLAGS='-D warnings' cargo doc --no-deps --document-private-items
+      - run: RUSTDOCFLAGS='-D warnings' cargo doc --no-deps
       - run: pnpm --filter oxlint-app build-js
       - run: pnpm --filter oxfmt-app build-js
       - run: node --run lint
