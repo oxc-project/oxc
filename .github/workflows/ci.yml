@@ -458,6 +458,7 @@ jobs:
           path: /home/runner/.rustup
           cache: rust
       - run: rustup toolchain install nightly --profile minimal --component rust-docs
+      # https://github.com/rust-lang/rust/issues/146895
       - run: RUSTDOCFLAGS='-D warnings' cargo +nightly doc --no-deps --document-private-items -Zrustdoc-mergeable-info
 
   conformance:
