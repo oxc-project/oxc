@@ -7,3 +7,14 @@ function demo(): { a: number } {
 
 type Complex = {a:1,b:2,c:3}; // prettier-ignore
 interface Cfg {a:number;b:string;} // prettier-ignore
+
+if (
+  await fetchEntryByCompositeKey(source, primaryToken, previewTextValue, groupToken, rangeStartValue, rangeEndValue) // prettier-ignore
+) {
+}
+
+function sectionsDemo() {
+  const data = {
+    primarySection: { id: 'primarySection', name: 'Primary Section', href: '/primary-section', icon: PrimarySectionIcon }, // prettier-ignore
+  };
+}
