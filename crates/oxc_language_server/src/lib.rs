@@ -10,6 +10,7 @@ mod options;
 mod tests;
 mod tool;
 mod worker;
+mod worker_manager;
 
 pub use crate::capabilities::{Capabilities, DiagnosticMode};
 pub use crate::language_id::LanguageId;

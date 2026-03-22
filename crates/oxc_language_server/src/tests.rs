@@ -201,7 +201,7 @@ impl TestServer {
             _params: Value,
         ) -> Result<Value, tower_lsp_server::jsonrpc::Error> {
             let mut configs = vec![];
-            for worker in &*service.workspace_workers.read().await {
+            for worker in &*service.worker_manager.read_workers().await {
                 configs.push(worker.options.lock().await.clone());
             }
             Ok(json!(configs))
