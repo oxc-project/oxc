@@ -53,7 +53,9 @@ pub fn prefer_to_be_simply_bool<'a>(
         let call_name = if value { "toBeTruthy" } else { "toBeFalsy" };
 
         ctx.diagnostic_with_fix(
-            OxcDiagnostic::warn(format!("Use `{call_name}` instead.")).with_label(span),
+            OxcDiagnostic::warn(format!("Use `{call_name}` instead."))
+                .with_help(format!("Replace this matcher with `.{call_name}()`."))
+                .with_label(span),
             |fixer| {
                 let new_matcher = if is_cmp_mem_expr {
                     format!("[\"{call_name}\"]()")
