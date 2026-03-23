@@ -67,6 +67,15 @@ expression: json
       "type": "boolean",
       "markdownDescription": "Whether to insert a final newline at the end of the file.\n\n- Default: `true`\n- Overrides `.editorconfig.insert_final_newline`"
     },
+    "jsdoc": {
+      "description": "Enable JSDoc comment formatting.\n\nWhen enabled, JSDoc comments are normalized and reformatted:\ntag aliases are canonicalized, descriptions are capitalized,\nlong lines are wrapped, and short comments are collapsed to single-line.\n\nPass an object (`jsdoc: {}`) to enable with defaults, or omit to disable.\n\n- Default: Disabled",
+      "allOf": [
+        {
+          "$ref": "#/definitions/JsdocConfig"
+        }
+      ],
+      "markdownDescription": "Enable JSDoc comment formatting.\n\nWhen enabled, JSDoc comments are normalized and reformatted:\ntag aliases are canonicalized, descriptions are capitalized,\nlong lines are wrapped, and short comments are collapsed to single-line.\n\nPass an object (`jsdoc: {}`) to enable with defaults, or omit to disable.\n\n- Default: Disabled"
+    },
     "jsxSingleQuote": {
       "description": "Use single quotes instead of double quotes in JSX.\n\n- Default: `false`",
       "type": "boolean",
@@ -295,6 +304,15 @@ expression: json
           "type": "boolean",
           "markdownDescription": "Whether to insert a final newline at the end of the file.\n\n- Default: `true`\n- Overrides `.editorconfig.insert_final_newline`"
         },
+        "jsdoc": {
+          "description": "Enable JSDoc comment formatting.\n\nWhen enabled, JSDoc comments are normalized and reformatted:\ntag aliases are canonicalized, descriptions are capitalized,\nlong lines are wrapped, and short comments are collapsed to single-line.\n\nPass an object (`jsdoc: {}`) to enable with defaults, or omit to disable.\n\n- Default: Disabled",
+          "allOf": [
+            {
+              "$ref": "#/definitions/JsdocConfig"
+            }
+          ],
+          "markdownDescription": "Enable JSDoc comment formatting.\n\nWhen enabled, JSDoc comments are normalized and reformatted:\ntag aliases are canonicalized, descriptions are capitalized,\nlong lines are wrapped, and short comments are collapsed to single-line.\n\nPass an object (`jsdoc: {}`) to enable with defaults, or omit to disable.\n\n- Default: Disabled"
+        },
         "jsxSingleQuote": {
           "description": "Use single quotes instead of double quotes in JSX.\n\n- Default: `false`",
           "type": "boolean",
@@ -411,6 +429,46 @@ expression: json
         "strict",
         "ignore"
       ]
+    },
+    "JsdocConfig": {
+      "description": "JSDoc configuration object with fine-grained options.",
+      "type": "object",
+      "properties": {
+        "addDefaultToDescription": {
+          "type": "boolean"
+        },
+        "bracketSpacing": {
+          "type": "boolean"
+        },
+        "capitalizeDescriptions": {
+          "type": "boolean"
+        },
+        "commentLineStrategy": {
+          "type": "string"
+        },
+        "descriptionTag": {
+          "type": "boolean"
+        },
+        "descriptionWithDot": {
+          "type": "boolean"
+        },
+        "keepUnparsableExampleIndent": {
+          "type": "boolean"
+        },
+        "lineWrappingStyle": {
+          "type": "string"
+        },
+        "preferCodeFences": {
+          "type": "boolean"
+        },
+        "separateReturnsFromParam": {
+          "type": "boolean"
+        },
+        "separateTagGroups": {
+          "type": "boolean"
+        }
+      },
+      "markdownDescription": "JSDoc configuration object with fine-grained options."
     },
     "NewlinesBetweenMarker": {
       "description": "A marker object for overriding `newlinesBetween` at a specific group boundary.",

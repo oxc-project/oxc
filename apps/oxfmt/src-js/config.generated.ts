@@ -79,6 +79,18 @@ export interface Oxfmtrc {
    */
   insertFinalNewline?: boolean;
   /**
+   * Enable JSDoc comment formatting.
+   *
+   * When enabled, JSDoc comments are normalized and reformatted:
+   * tag aliases are canonicalized, descriptions are capitalized,
+   * long lines are wrapped, and short comments are collapsed to single-line.
+   *
+   * Pass an object (`jsdoc: {}`) to enable with defaults, or omit to disable.
+   *
+   * - Default: Disabled
+   */
+  jsdoc?: JsdocConfig;
+  /**
    * Use single quotes instead of double quotes in JSX.
    *
    * - Default: `false`
@@ -204,6 +216,23 @@ export interface Oxfmtrc {
   vueIndentScriptAndStyle?: boolean;
   [k: string]: unknown;
 }
+/**
+ * JSDoc configuration object with fine-grained options.
+ */
+export interface JsdocConfig {
+  addDefaultToDescription?: boolean;
+  bracketSpacing?: boolean;
+  capitalizeDescriptions?: boolean;
+  commentLineStrategy?: string;
+  descriptionTag?: boolean;
+  descriptionWithDot?: boolean;
+  keepUnparsableExampleIndent?: boolean;
+  lineWrappingStyle?: string;
+  preferCodeFences?: boolean;
+  separateReturnsFromParam?: boolean;
+  separateTagGroups?: boolean;
+  [k: string]: unknown;
+}
 export interface OxfmtOverrideConfig {
   /**
    * Glob patterns to exclude from this override.
@@ -270,6 +299,18 @@ export interface FormatConfig {
    * - Overrides `.editorconfig.insert_final_newline`
    */
   insertFinalNewline?: boolean;
+  /**
+   * Enable JSDoc comment formatting.
+   *
+   * When enabled, JSDoc comments are normalized and reformatted:
+   * tag aliases are canonicalized, descriptions are capitalized,
+   * long lines are wrapped, and short comments are collapsed to single-line.
+   *
+   * Pass an object (`jsdoc: {}`) to enable with defaults, or omit to disable.
+   *
+   * - Default: Disabled
+   */
+  jsdoc?: JsdocConfig;
   /**
    * Use single quotes instead of double quotes in JSX.
    *

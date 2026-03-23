@@ -100,6 +100,110 @@ Whether to insert a final newline at the end of the file.
 - Overrides `.editorconfig.insert_final_newline`
 
 
+## jsdoc
+
+type: `object`
+
+
+Enable JSDoc comment formatting.
+
+When enabled, JSDoc comments are normalized and reformatted:
+tag aliases are canonicalized, descriptions are capitalized,
+long lines are wrapped, and short comments are collapsed to single-line.
+
+Pass an object (`jsdoc: {}`) to enable with defaults, or omit to disable.
+
+- Default: Disabled
+
+
+### jsdoc.addDefaultToDescription
+
+type: `boolean`
+
+
+
+
+
+### jsdoc.bracketSpacing
+
+type: `boolean`
+
+
+
+
+
+### jsdoc.capitalizeDescriptions
+
+type: `boolean`
+
+
+
+
+
+### jsdoc.commentLineStrategy
+
+type: `string`
+
+
+
+
+
+### jsdoc.descriptionTag
+
+type: `boolean`
+
+
+
+
+
+### jsdoc.descriptionWithDot
+
+type: `boolean`
+
+
+
+
+
+### jsdoc.keepUnparsableExampleIndent
+
+type: `boolean`
+
+
+
+
+
+### jsdoc.lineWrappingStyle
+
+type: `string`
+
+
+
+
+
+### jsdoc.preferCodeFences
+
+type: `boolean`
+
+
+
+
+
+### jsdoc.separateReturnsFromParam
+
+type: `boolean`
+
+
+
+
+
+### jsdoc.separateTagGroups
+
+type: `boolean`
+
+
+
+
+
 ## jsxSingleQuote
 
 type: `boolean`
@@ -242,6 +346,110 @@ Whether to insert a final newline at the end of the file.
 
 - Default: `true`
 - Overrides `.editorconfig.insert_final_newline`
+
+
+##### overrides[n].options.jsdoc
+
+type: `object`
+
+
+Enable JSDoc comment formatting.
+
+When enabled, JSDoc comments are normalized and reformatted:
+tag aliases are canonicalized, descriptions are capitalized,
+long lines are wrapped, and short comments are collapsed to single-line.
+
+Pass an object (`jsdoc: {}`) to enable with defaults, or omit to disable.
+
+- Default: Disabled
+
+
+###### overrides[n].options.jsdoc.addDefaultToDescription
+
+type: `boolean`
+
+
+
+
+
+###### overrides[n].options.jsdoc.bracketSpacing
+
+type: `boolean`
+
+
+
+
+
+###### overrides[n].options.jsdoc.capitalizeDescriptions
+
+type: `boolean`
+
+
+
+
+
+###### overrides[n].options.jsdoc.commentLineStrategy
+
+type: `string`
+
+
+
+
+
+###### overrides[n].options.jsdoc.descriptionTag
+
+type: `boolean`
+
+
+
+
+
+###### overrides[n].options.jsdoc.descriptionWithDot
+
+type: `boolean`
+
+
+
+
+
+###### overrides[n].options.jsdoc.keepUnparsableExampleIndent
+
+type: `boolean`
+
+
+
+
+
+###### overrides[n].options.jsdoc.lineWrappingStyle
+
+type: `string`
+
+
+
+
+
+###### overrides[n].options.jsdoc.preferCodeFences
+
+type: `boolean`
+
+
+
+
+
+###### overrides[n].options.jsdoc.separateReturnsFromParam
+
+type: `boolean`
+
+
+
+
+
+###### overrides[n].options.jsdoc.separateTagGroups
+
+type: `boolean`
+
+
+
 
 
 ##### overrides[n].options.jsxSingleQuote

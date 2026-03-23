@@ -223,6 +223,46 @@ pub struct FormatConfig {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(alias = "experimentalTailwindcss")]
     pub sort_tailwindcss: Option<SortTailwindcssConfig>,
+
+    /// Enable JSDoc comment formatting.
+    ///
+    /// When enabled, JSDoc comments are normalized and reformatted:
+    /// tag aliases are canonicalized, descriptions are capitalized,
+    /// long lines are wrapped, and short comments are collapsed to single-line.
+    ///
+    /// Pass an object (`jsdoc: {}`) to enable with defaults, or omit to disable.
+    ///
+    /// - Default: Disabled
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub jsdoc: Option<JsdocConfig>,
+}
+
+/// JSDoc configuration object with fine-grained options.
+#[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct JsdocConfig {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub capitalize_descriptions: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub description_with_dot: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub add_default_to_description: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub prefer_code_fences: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub line_wrapping_style: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub comment_line_strategy: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub separate_tag_groups: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub separate_returns_from_param: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub bracket_spacing: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub description_tag: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub keep_unparsable_example_indent: Option<bool>,
 }
 
 impl FormatConfig {

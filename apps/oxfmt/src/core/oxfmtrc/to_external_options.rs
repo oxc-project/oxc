@@ -141,6 +141,7 @@ pub fn finalize_external_options(config: &mut Value, strategy: &FormatFileStrate
             "jsxSingleQuote",
             "sortImports",
             "sortTailwindcss",
+            "jsdoc",
         ] {
             if let Some(value) = obj.get(key) {
                 oxfmt_plugin_options.insert(key.to_string(), value.clone());
@@ -170,6 +171,7 @@ pub fn finalize_external_options(config: &mut Value, strategy: &FormatFileStrate
         "insertFinalNewline",
         "overrides",
         "ignorePatterns",
+        "jsdoc",
     ] {
         obj.remove(key);
     }
