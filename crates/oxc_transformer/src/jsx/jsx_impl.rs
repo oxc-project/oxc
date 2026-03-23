@@ -684,13 +684,16 @@ impl<'a> JsxImpl<'a> {
             );
             let children_len = children.len();
             if children_len != 0 {
-                let value = if children_len == 1 {
-                    children.pop().unwrap()
+                // A single non-spread child is passed directly: `jsx("div", { children: child })`.
+                // Spread children must remain in an array: `jsx("div", { children: [...foo] })`,
+                // and multiple children are combined into one: `jsxs("div", { children: [...a, b, ...c] })`.
+                let value = if children_len == 1
+                    && !matches!(children[0], ArrayExpressionElement::SpreadElement(_))
+                {
+                    Expression::try_from(children.pop().unwrap()).unwrap()
                 } else {
-                    need_jsxs = true;
-                    let elements = children.into_iter().map(ArrayExpressionElement::from);
-                    let elements = ctx.ast.vec_from_iter(elements);
-                    ctx.ast.expression_array(span, elements)
+                    need_jsxs = children_len > 1;
+                    ctx.ast.expression_array(span, children)
                 };
                 let children = ctx.ast.property_key_static_identifier(SPAN, "children");
                 let kind = PropertyKind::Init;
@@ -924,17 +927,15 @@ impl<'a> JsxImpl<'a> {
         &mut self,
         child: JSXChild<'a>,
         ctx: &mut TraverseCtx<'a>,
-    ) -> Option<Expression<'a>> {
+    ) -> Option<ArrayExpressionElement<'a>> {
         // Align spread child behavior with esbuild.
         // Instead of Babel throwing `Spread children are not supported in React.`
         // `<>{...foo}</>` -> `jsxs(Fragment, { children: [ ...foo ] })`
         if let JSXChild::Spread(e) = child {
             let JSXSpreadChild { span, expression, .. } = e.unbox();
-            let spread_element = ctx.ast.array_expression_element_spread_element(span, expression);
-            let elements = ctx.ast.vec1(spread_element);
-            Some(ctx.ast.expression_array(span, elements))
+            Some(ctx.ast.array_expression_element_spread_element(span, expression))
         } else {
-            self.transform_jsx_child(child, ctx)
+            self.transform_jsx_child(child, ctx).map(ArrayExpressionElement::from)
         }
     }
 
