@@ -531,6 +531,7 @@ pub(crate) mod unicorn {
     pub mod prefer_dom_node_text_content;
     pub mod prefer_event_target;
     pub mod prefer_global_this;
+    pub mod prefer_import_meta_properties;
     pub mod prefer_includes;
     pub mod prefer_keyboard_event_key;
     pub mod prefer_logical_operator_over_ternary;
