@@ -25,6 +25,34 @@ async function loadPrettier(): Promise<typeof import("prettier")> {
   if (prettierCache) return prettierCache;
 
   prettierCache = await import("prettier");
+
+  // NOTE: This is needed for html-in-js formatting to work correctly.
+  //
+  // Prettier internally extends `options` with hidden fields for embedded-formatters during printing.
+  // However, `__debug.printToDoc()` runs `normalizeFormatOptions()` which strips unknown keys.
+  // Only keys registered in `formatOptionsHiddenDefaults` survive (via `passThrough` option).
+  // Since `__debug.printToDoc()` does NOT use `passThrough: true` (unlike internal `textToDoc()`!),
+  // our custom fields would be dropped without this registration.
+  //
+  // The default values MUST be falsy, truthy default would affect all Prettier calls, not just ours.
+  // In call sites, Prettier checks `if (!options.parentParser)`, so as long as the default is falsy,
+  // there should be no side effects on other calls that don't set these fields.
+  // @ts-expect-error: Use internal API
+  const { formatOptionsHiddenDefaults } = prettierCache.__internal;
+  // For html-in-js: Prevent attribute level formatting from running.
+  // (e.g., CSS in `style="..."` attributes, JS in `onclick="..."` event handlers)
+  // This does NOT affect `<style>`/`<script>` tags, they are always formatted.
+  // Ideally we'd only block JS attributes while allowing CSS attributes (because no nesting is possible in CSS),
+  // but Prettier's `!options.parentParser` check is all-or-nothing.
+  formatOptionsHiddenDefaults.parentParser = null;
+  // For html-in-js: Capture `htmlHasMultipleRootElements` from the HTML AST root during `__debug.printToDoc()`.
+  // This is used to decide whether to wrap content with `indent`.
+  // Without this, we'd need either:
+  // - double parse AST
+  // - or flaky traversal of the `Doc` output
+  // to extract the same information, since this hooks into the AST.
+  formatOptionsHiddenDefaults.__onHtmlRoot = null;
+
   return prettierCache;
 }
 
@@ -130,16 +158,26 @@ export async function formatEmbeddedDoc({
   // In such cases, Rust side will fallback to original code
   return Promise.all(
     texts.map(async (text) => {
+      const metadata: Record<string, unknown> = {};
+
+      // html-in-js specific options: see the comment in `loadPrettier()` for rationale
+      if (options.parser === "html") {
+        // Any truthy value works
+        options.parentParser = "OXFMT";
+        // https://github.com/prettier/prettier/blob/90983f40dce5e20beea4e5618b5e0426a6a7f4f0/src/language-js/embed/html.js#L42-L44
+        options.__onHtmlRoot = (root: { children?: unknown[] }) =>
+          (metadata.htmlHasMultipleRootElements = (root.children?.length ?? 0) > 1);
+      }
+
       // @ts-expect-error: Use internal API, but it's necessary and only way to get `Doc`
       const doc = await prettier.__debug.printToDoc(text, options);
 
-      // Serialize Doc to JSON, handling special values in a single pass:
-      // - Symbol group IDs (used by `group`, `if-break`, `indent-if-break`) → numeric counters
-      // - -Infinity (used by `dedentToRoot` via `align`) → marker string
+      // Serialize as [doc, metadata], handling special values:
+      // - Symbol group IDs → numeric counters
+      // - -Infinity (dedentToRoot) → marker string
       const symbolToNumber = new Map<symbol, number>();
       let nextId = 1;
-
-      return JSON.stringify(doc, (_key, value) => {
+      return JSON.stringify([doc, metadata], (_key, value) => {
         if (typeof value === "symbol") {
           if (!symbolToNumber.has(value)) symbolToNumber.set(value, nextId++);
           return symbolToNumber.get(value);

@@ -89,6 +89,15 @@ const rule: Rule = {
       context.report({ message, node: token });
     }
 
+    // Check `JSON.stringify` on tokens includes `loc`
+    const firstToken = ast.tokens[0];
+    if (firstToken) {
+      context.report({
+        message: `Token JSON.stringify:\n${JSON.stringify(firstToken, null, 2)}`,
+        node: firstToken,
+      });
+    }
+
     return {};
   },
 };

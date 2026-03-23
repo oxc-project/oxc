@@ -1,4 +1,5 @@
 /node_modules/
 /dist/
-/conformance/fixtures/
+/conformance/fixtures/**
+!/conformance/fixtures/edge-cases
 *.node

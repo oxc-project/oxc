@@ -19,39 +19,91 @@ const NEGATIVE_INFINITY_MARKER: &str = "__NEGATIVE_INFINITY__";
 /// Handles language-specific processing:
 /// - GraphQL: converts each doc independently → [`EmbeddedDocResult::MultipleDocs`]
 /// - CSS, HTML: merges consecutive Text nodes, counts placeholders → [`EmbeddedDocResult::DocWithPlaceholders`]
+///
+/// All Doc JSONs use a uniform `[doc, metadata]` envelope from the JS side.
 pub fn to_format_elements_for_template<'a>(
     language: &str,
-    doc_jsons: &[Value],
+    doc_jsons: Vec<Value>,
     allocator: &'a Allocator,
     group_id_builder: &UniqueGroupIdBuilder,
 ) -> Result<EmbeddedDocResult<'a>, String> {
-    let convert = |doc_json: &Value,
-                   escape_template_chars: bool|
-     -> Result<(Vec<FormatElement<'a>>, usize), String> {
+    /// Unwrap `[doc, metadata]` envelope and convert doc JSON to IR.
+    /// Panics on invalid envelope format (internal protocol we control on both sides).
+    fn convert<'a>(
+        envelope: Value,
+        allocator: &'a Allocator,
+        group_id_builder: &UniqueGroupIdBuilder,
+    ) -> Result<(Vec<FormatElement<'a>>, serde_json::Map<String, Value>), String> {
+        let Value::Array(mut arr) = envelope else {
+            unreachable!("Doc JSON envelope must be [doc, metadata]");
+        };
+        let metadata = match arr.pop() {
+            Some(Value::Object(obj)) => obj,
+            _ => serde_json::Map::new(),
+        };
+        let doc_json = arr.into_iter().next().expect("Doc JSON envelope must contain doc");
+
         let mut ctx = FmtCtx::new(allocator, group_id_builder);
-        let mut out = vec![];
-        convert_doc(doc_json, &mut out, &mut ctx)?;
-        let placeholder_count = postprocess(&mut out, allocator, escape_template_chars);
-        Ok((out, placeholder_count))
-    };
+        let mut ir = vec![];
+        convert_doc(&doc_json, &mut ir, &mut ctx)?;
+        Ok((ir, metadata))
+    }
 
     match language {
-        "tagged-css" => {
-            let doc_json = doc_jsons
-                .first()
-                .ok_or_else(|| "Expected exactly one Doc JSON for CSS".to_string())?;
-            let (ir, count) = convert(doc_json, false)?;
-            Ok(EmbeddedDocResult::DocWithPlaceholders(ir, count))
-        }
         "tagged-graphql" => {
             let irs = doc_jsons
-                .iter()
-                .map(|doc_json| {
-                    let (ir, _) = convert(doc_json, true)?;
+                .into_iter()
+                .map(|envelope| {
+                    let (mut ir, _) = convert(envelope, allocator, group_id_builder)?;
+                    postprocess(
+                        &mut ir, allocator,
+                        // GraphQL uses `.cooked` values, so template chars need escaping
+                        true, None,
+                    );
                     Ok(ir)
                 })
                 .collect::<Result<Vec<_>, String>>()?;
             Ok(EmbeddedDocResult::MultipleDocs(irs))
+        }
+        "tagged-css" => {
+            let (mut ir, _) = convert(
+                doc_jsons.into_iter().next().expect("Doc JSON for CSS"),
+                allocator,
+                group_id_builder,
+            )?;
+            let placeholder_count = postprocess(
+                &mut ir,
+                allocator,
+                // CSS uses `.raw` values, so no template char escaping needed
+                false,
+                Some(("@prettier-placeholder-", "-id")),
+            );
+            Ok(EmbeddedDocResult::DocWithPlaceholders {
+                ir,
+                placeholder_count,
+                html_has_multiple_root_elements: None,
+            })
+        }
+        "tagged-html" => {
+            let (mut ir, metadata) = convert(
+                doc_jsons.into_iter().next().expect("Doc JSON for HTML"),
+                allocator,
+                group_id_builder,
+            )?;
+            let html_has_multiple_root_elements =
+                metadata.get("htmlHasMultipleRootElements").and_then(Value::as_bool);
+            let placeholder_count = postprocess(
+                &mut ir,
+                allocator,
+                // HTML uses `.cooked` values, so template chars need escaping
+                true,
+                Some(("PRETTIER_HTML_PLACEHOLDER_", "_IN_JS")),
+            );
+            Ok(EmbeddedDocResult::DocWithPlaceholders {
+                ir,
+                placeholder_count,
+                html_has_multiple_root_elements,
+            })
         }
         _ => unreachable!("Unsupported embedded_doc language: {language}"),
     }
@@ -354,17 +406,15 @@ fn extract_group_id(
 /// - escape template characters (`\`, `` ` ``, `${`)
 ///   - for css-in-js, this is not needed because values are already escaped via `.raw`
 ///   - for others, `.cooked` is used, so escaping is needed
-/// - count `@prettier-placeholder-N-id` patterns
+/// - count placeholders matching `(prefix)(digits)(_digits)?(suffix)` pattern
 ///
-/// Returns the placeholder count (0 for non-CSS languages).
+/// Returns the placeholder count (0 when `placeholder` is `None`).
 fn postprocess<'a>(
     ir: &mut Vec<FormatElement<'a>>,
     allocator: &'a Allocator,
     escape_template_chars: bool,
+    placeholder: Option<(&str, &str)>,
 ) -> usize {
-    const PREFIX: &str = "@prettier-placeholder-";
-    const SUFFIX: &str = "-id";
-
     // Strip trailing hardline
     if ir.len() >= 2
         && matches!(ir[ir.len() - 1], FormatElement::ExpandParent)
@@ -417,22 +467,9 @@ fn postprocess<'a>(
             ir[write] = FormatElement::Text { text, width };
             write += 1;
 
-            // Count placeholders
-            let mut remaining = text;
-            while let Some(start) = remaining.find(PREFIX) {
-                let after_prefix = &remaining[start + PREFIX.len()..];
-                let digit_end = after_prefix
-                    .bytes()
-                    .position(|b| !b.is_ascii_digit())
-                    .unwrap_or(after_prefix.len());
-                if digit_end > 0
-                    && let Some(rest) = after_prefix[digit_end..].strip_prefix(SUFFIX)
-                {
-                    placeholder_count += 1;
-                    remaining = rest;
-                    continue;
-                }
-                remaining = &remaining[start + PREFIX.len()..];
+            // Count placeholders for this text if needed
+            if let Some((prefix, suffix)) = placeholder {
+                placeholder_count += count_placeholders(text, prefix, suffix);
             }
         } else {
             if write != read {
@@ -444,6 +481,41 @@ fn postprocess<'a>(
     }
     ir.truncate(write);
     placeholder_count
+}
+
+/// Count placeholder occurrences matching `{prefix}{digits}(_{digits})?{suffix}` in text.
+///
+/// The optional `_{digits}` group allows matching both formats:
+/// - CSS: `@prettier-placeholder-0-id` (no counter)
+/// - HTML: `PRETTIER_HTML_PLACEHOLDER_0_0_IN_JS` (with counter)
+fn count_placeholders(text: &str, prefix: &str, suffix: &str) -> usize {
+    let mut count = 0;
+    let mut remaining = text;
+    while let Some(start) = remaining.find(prefix) {
+        let after_prefix = &remaining[start + prefix.len()..];
+        let digit_end =
+            after_prefix.bytes().position(|b| !b.is_ascii_digit()).unwrap_or(after_prefix.len());
+        if digit_end > 0 {
+            let mut after_digits = &after_prefix[digit_end..];
+            // Skip optional `_{digits}` (e.g., HTML counter)
+            if let Some(after_underscore) = after_digits.strip_prefix('_') {
+                let c = after_underscore
+                    .bytes()
+                    .position(|b| !b.is_ascii_digit())
+                    .unwrap_or(after_underscore.len());
+                if c > 0 {
+                    after_digits = &after_underscore[c..];
+                }
+            }
+            if let Some(rest) = after_digits.strip_prefix(suffix) {
+                count += 1;
+                remaining = rest;
+                continue;
+            }
+        }
+        remaining = &remaining[start + prefix.len()..];
+    }
+    count
 }
 
 /// Escape characters that would break template literal syntax.

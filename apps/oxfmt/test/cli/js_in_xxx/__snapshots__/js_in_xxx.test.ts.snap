@@ -270,5 +270,25 @@ const count = ref(0);
   <div>{{ count }}</div>
 </template>
 
+--------------------
+
+--- FILE -----------
+no-imports.vue
+--- BEFORE ---------
+<!-- https://github.com/oxc-project/oxc/issues/20428 -->
+<script lang="ts">
+let foo = 'foo';
+
+let bar = 'bar';
+</script>
+
+--- AFTER ----------
+<!-- https://github.com/oxc-project/oxc/issues/20428 -->
+<script lang="ts">
+  let foo = "foo";
+
+  let bar = "bar";
+</script>
+
 --------------------"
 `;

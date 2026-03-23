@@ -676,3 +676,17 @@ source: crates/oxc_linter/src/tester.rs
  5 │             
    ╰────
   help: Require explicit return types on functions and class methods.
+
+  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
+   ╭─[explicit_function_return_type.tsx:1:8]
+ 1 │ export function myFunction2() { try { return 'something'; } catch (error) { throw new Error('some wrapped', { cause: error }); } }
+   ·        ────────────────────
+   ╰────
+  help: Require explicit return types on functions and class methods.
+
+  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
+   ╭─[explicit_function_return_type.tsx:1:8]
+ 1 │ export function myFunction3() { try { throw new Error('some error'); } catch (error) { throw error; } }
+   ·        ────────────────────
+   ╰────
+  help: Require explicit return types on functions and class methods.

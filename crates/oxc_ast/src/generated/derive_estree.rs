@@ -890,7 +890,13 @@ impl ESTree for VariableDeclarationKind {
 
 impl ESTree for VariableDeclarator<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        crate::serialize::js::VariableDeclaratorConverter(self).serialize(serializer)
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("VariableDeclarator"));
+        state.serialize_field("id", &crate::serialize::js::VariableDeclaratorId(self));
+        state.serialize_field("init", &self.init);
+        state.serialize_ts_field("definite", &self.definite);
+        state.serialize_span(self.span);
+        state.end();
     }
 }
 
@@ -1632,7 +1638,6 @@ impl ESTree for WithClause<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("attributes", &self.with_entries);
-        state.serialize_span(self.span);
         state.end();
     }
 }

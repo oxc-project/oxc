@@ -1,13 +1,15 @@
 mod css;
 mod graphql;
+mod html;
 
 use oxc_allocator::{Allocator, StringBuilder};
 use oxc_ast::ast::*;
 use oxc_syntax::line_terminator::LineTerminatorSplitter;
 
 use crate::{
+    IndentWidth,
     ast_nodes::{AstNode, AstNodes},
-    formatter::{Formatter, prelude::*},
+    formatter::{FormatElement, Formatter, format_element::TextWidth, prelude::*},
     write,
 };
 
@@ -20,7 +22,7 @@ pub(super) fn try_format_embedded_template<'a>(
     match get_tag_name(&tagged.tag) {
         Some("css" | "styled") => css::format_css_doc(tagged.quasi(), f),
         Some("gql" | "graphql") => graphql::format_graphql_doc(tagged.quasi(), f),
-        Some("html") => try_embed_html(tagged, f),
+        Some("html") => html::format_html_doc(tagged.quasi(), f),
         Some("md" | "markdown") => try_embed_markdown(tagged, f),
         _ => false,
     }
@@ -53,6 +55,60 @@ pub(super) fn try_format_graphql_call<'a>(
         return false;
     }
     graphql::format_graphql_doc(template, f)
+}
+
+/// Try to format a template literal with a language comment (e.g., `/* HTML */`).
+/// Returns `true` if formatting was performed, `false` if not applicable.
+///
+/// Supported languages:
+/// - HTML
+/// - GraphQL
+pub(super) fn try_format_comment_embedded<'a>(
+    template: &AstNode<'a, TemplateLiteral<'a>>,
+    f: &mut Formatter<'_, 'a>,
+) -> bool {
+    let Some(language) = get_language_comment(template, f) else {
+        return false;
+    };
+    match language {
+        "html" => html::format_html_doc(template, f),
+        "graphql" => graphql::format_graphql_doc(template, f),
+        _ => false,
+    }
+}
+
+/// Check if the template literal has a leading block comment that specifies an embedded language.
+///
+/// Returns the language name if found.
+/// The comment must be:
+/// - a block comment
+/// - with exactly one space on either side
+fn get_language_comment<'a>(
+    template: &AstNode<'a, TemplateLiteral<'a>>,
+    f: &Formatter<'_, 'a>,
+) -> Option<&'static str> {
+    // By the time `TemplateLiteral::write()` runs, parent nodes have already printed
+    // leading comments via the cursor-based system. So `/* HTML */` is the last printed comment.
+    let comment = f.context().comments().printed_comments().last()?;
+    if !comment.is_block() || comment.span.end > template.span.start {
+        return None;
+    }
+
+    // Ensure there's nothing but whitespace between the comment and the template literal.
+    // This prevents matching `const html /* HTML */ = \`...\`` where `=` is between them.
+    if !f
+        .source_text()
+        .all_bytes_match(comment.span.end, template.span.start, |b| b.is_ascii_whitespace())
+    {
+        return None;
+    }
+
+    let text = f.source_text().text_for(&comment.content_span());
+    match text {
+        " HTML " => Some("html"),
+        " GraphQL " => Some("graphql"),
+        _ => None,
+    }
 }
 
 /// Try to format a template literal inside css prop or styled-jsx with the embedded formatter.
@@ -160,18 +216,6 @@ fn get_angular_component_language(node: &AstNode<'_, TemplateLiteral<'_>>) -> Op
 
 // ---
 
-fn try_embed_html<'a>(
-    tagged: &AstNode<'a, TaggedTemplateExpression<'a>>,
-    f: &mut Formatter<'_, 'a>,
-) -> bool {
-    // TODO: Remove this check and use placeholder approach for expressions
-    if !tagged.quasi.is_no_substitution_template() {
-        return false;
-    }
-    let template_content = tagged.quasi.quasis[0].value.raw.as_str();
-    format_embedded_template(f, "tagged-html", template_content)
-}
-
 fn try_embed_markdown<'a>(
     tagged: &AstNode<'a, TaggedTemplateExpression<'a>>,
     f: &mut Formatter<'_, 'a>,
@@ -250,4 +294,106 @@ fn dedent<'a>(text: &'a str, allocator: &'a Allocator) -> &'a str {
     }
 
     result.into_str()
+}
+
+/// Split text on placeholder patterns, returning alternating parts:
+/// `[literal, index_str, literal, index_str, ...]`
+///
+/// Handles both:
+/// - CSS: `@prettier-placeholder-{N}-id`
+/// - HTML: `PRETTIER_HTML_PLACEHOLDER_{N}_{C}_IN_JS`
+///
+/// The optional `_{digits}` counter group between index and suffix is skipped when present,
+/// so the same function works for both formats.
+fn split_on_placeholders<'a>(text: &'a str, prefix: &str, suffix: &str) -> Vec<&'a str> {
+    let mut result = vec![];
+    let mut remaining = text;
+
+    loop {
+        let Some(start) = remaining.find(prefix) else {
+            result.push(remaining);
+            break;
+        };
+
+        // Push the literal before the placeholder
+        result.push(&remaining[..start]);
+
+        // Skip past the prefix
+        let after_prefix = &remaining[start + prefix.len()..];
+
+        // Find the index digits
+        let digit_end =
+            after_prefix.bytes().position(|b| !b.is_ascii_digit()).unwrap_or(after_prefix.len());
+
+        if digit_end == 0 {
+            // No digits found after prefix — not a valid placeholder, treat as literal
+            if let Some(last) = result.last_mut() {
+                let end = start + prefix.len();
+                *last = &remaining[..end];
+            }
+            remaining = &remaining[start + prefix.len()..];
+            continue;
+        }
+
+        let digits = &after_prefix[..digit_end];
+        let mut after_digits = &after_prefix[digit_end..];
+
+        // Skip optional `_{digits}` (e.g., HTML counter `_0`)
+        if let Some(after_underscore) = after_digits.strip_prefix('_') {
+            let counter_end = after_underscore
+                .bytes()
+                .position(|b| !b.is_ascii_digit())
+                .unwrap_or(after_underscore.len());
+            if counter_end > 0 {
+                after_digits = &after_underscore[counter_end..];
+            }
+        }
+
+        // Check for the suffix
+        if let Some(after_suffix) = after_digits.strip_prefix(suffix) {
+            // Valid placeholder — push the digit index
+            result.push(digits);
+            remaining = after_suffix;
+        } else {
+            // Not a valid placeholder, include in the literal
+            let end = start + prefix.len() + digit_end;
+            if let Some(last) = result.last_mut() {
+                *last = &remaining[..end];
+            }
+            remaining = &remaining[end..];
+        }
+    }
+
+    result
+}
+
+/// Emit text with newlines converted to literal line breaks (`replaceEndOfLine()` equivalent).
+///
+/// Uses `Text("\n") + ExpandParent` (= `literalline()`)
+/// instead of `hard_line_break()` to avoid adding indentation.
+///
+/// The external formatter has already computed proper indentation in the text content,
+/// so we must not add extra indent from the surrounding `block_indent`.
+fn write_text_with_line_breaks<'a>(
+    f: &mut Formatter<'_, 'a>,
+    text: &str,
+    allocator: &'a Allocator,
+    indent_width: IndentWidth,
+) {
+    let mut first = true;
+    // Splitting on `\n` is safe because `Doc` only contains normalized linebreaks.
+    for line in text.split('\n') {
+        if !first {
+            // Emit literalline: Text("\n") + ExpandParent
+            let newline = allocator.alloc_str("\n");
+            f.write_element(FormatElement::Text { text: newline, width: TextWidth::multiline(0) });
+            f.write_element(FormatElement::ExpandParent);
+        }
+        first = false;
+        if !line.is_empty() {
+            let arena_text = allocator.alloc_str(line);
+            let width = TextWidth::from_text(arena_text, indent_width);
+            f.write_element(FormatElement::Text { text: arena_text, width });
+        }
+    }
 }

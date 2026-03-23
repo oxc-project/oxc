@@ -452,6 +452,7 @@ pub(crate) mod unicorn {
     pub mod consistent_empty_array_spread;
     pub mod consistent_existence_index_check;
     pub mod consistent_function_scoping;
+    pub mod custom_error_definition;
     pub mod empty_brace_spaces;
     pub mod error_message;
     pub mod escape_case;
@@ -713,6 +714,7 @@ pub(crate) mod vitest {
     pub mod prefer_describe_function_title;
     pub mod prefer_expect_type_of;
     pub mod prefer_import_in_mock;
+    pub mod prefer_strict_boolean_matchers;
     pub mod prefer_to_be_falsy;
     pub mod prefer_to_be_object;
     pub mod prefer_to_be_truthy;

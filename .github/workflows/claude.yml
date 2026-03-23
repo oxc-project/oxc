@@ -22,7 +22,7 @@ jobs:
 
       - name: Run Claude Code
         id: claude
-        uses: anthropics/claude-code-action@26ec041249acb0a944c0a47b6c0c13f05dbc5b44 # v1.0.70
+        uses: anthropics/claude-code-action@6062f3709600659be5e47fcddf2cf76993c235c2 # v1.0.76
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           assignee_trigger: "boshen"
@@ -43,3 +43,9 @@ jobs:
             - If the issue is unclear, ask for more context
             - If fixable, provide a concrete implementation plan with specific steps
             - Any potential concerns or blockers
+
+      - name: Unassign boshen
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh issue edit ${{ github.event.issue.number }} --remove-assignee boshen

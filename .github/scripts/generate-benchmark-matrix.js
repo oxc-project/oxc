@@ -64,6 +64,9 @@ function getFeatureForComponent(component) {
   return "compiler";
 }
 
+/** @type {Map<string, string[]>} Cache of cargo tree results keyed by feature */
+const depsCache = new Map();
+
 /**
  * Get dependencies for a specific benchmark component
  * @param {string} component - Component name
@@ -71,6 +74,12 @@ function getFeatureForComponent(component) {
  */
 function getComponentDependencies(component) {
   const feature = getFeatureForComponent(component);
+
+  const cached = depsCache.get(feature);
+  if (cached) {
+    return cached;
+  }
+
   const deps = getCrateDependencies("oxc_benchmark", {
     features: feature,
     noDefaultFeatures: true,
@@ -80,6 +89,7 @@ function getComponentDependencies(component) {
     console.error(`Warning: Could not get dependencies for ${component} (feature: ${feature})`);
   }
 
+  depsCache.set(feature, deps);
   return deps;
 }
 
@@ -107,16 +117,6 @@ function isComponentAffected(component, changedFiles) {
     }
   }
 
-  // Check benchmark and common task files
-  if (
-    changedFiles.some(
-      (file) => file.startsWith("tasks/benchmark/") || file.startsWith("tasks/common/"),
-    )
-  ) {
-    console.error(`  Component ${component} affected by benchmark/common file changes`);
-    return true;
-  }
-
   return false;
 }
 
@@ -142,6 +142,25 @@ async function determineAffectedComponents() {
       component,
       feature: getFeatureForComponent(component),
     }));
+  }
+
+  // Check benchmark and common task files - affects all components
+  if (
+    changedFiles.some(
+      (file) => file.startsWith("tasks/benchmark/") || file.startsWith("tasks/common/"),
+    )
+  ) {
+    console.error("Benchmark/common task files changed - will run all benchmarks");
+    return ALL_COMPONENTS.map((component) => ({
+      component,
+      feature: getFeatureForComponent(component),
+    }));
+  }
+
+  // If no crate files changed, no benchmarks need to run
+  if (!changedFiles.some((file) => file.startsWith("crates/"))) {
+    console.error("No crate files changed - skipping cargo tree and all benchmarks");
+    return [];
   }
 
   // Check each component individually

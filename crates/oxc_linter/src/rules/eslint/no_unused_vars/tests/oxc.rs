@@ -177,6 +177,14 @@ fn test_vars_self_use() {
         let cancel = () => {}
         export function close() { cancel = cancel?.() }
         ",
+        "
+        class Chain { extend() { return this; } }
+
+        let chain = new Chain();
+        for (let i = 0; i < 10; i++) {
+            chain = chain.extend();
+        }
+        ",
     ];
     let fail = vec![
         "
@@ -196,6 +204,12 @@ fn test_vars_self_use() {
         "
         let cancel = () => {};
         { cancel = cancel?.(); }
+        ",
+        "
+        class Chain { extend() { return this; } }
+
+        let chain = new Chain();
+        chain = chain.extend();
         ",
     ];
 
