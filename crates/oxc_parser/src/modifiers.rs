@@ -544,8 +544,96 @@ impl<C: Config> ParserImpl<'_, C> {
         let kind = self.cur_kind();
         kind == Kind::LBrack || kind == Kind::PrivateIdentifier || kind.is_literal_property_name()
     }
+}
 
-    fn check_modifier(&mut self, kinds: ModifierKinds, modifier: &Modifier) {
+/// Static lookup table for which modifiers are illegal preceding another modifier.
+/// Table is indexed by [`ModifierKind`] discriminant of the later modifier.
+/// This is all calculated at compile time, and produces a 30-byte lookup table.
+static ILLEGAL_PRECEDING_MODIFIERS: [ModifierKinds; ModifierKind::VARIANTS.len()] = {
+    let mut illegal = [ModifierKinds::none(); ModifierKind::VARIANTS.len()];
+
+    let mut i = 0;
+    while i < illegal.len() {
+        let kind = ModifierKind::VARIANTS[i];
+
+        let illegal_kinds = get_illegal_preceding_modifiers(kind);
+        assert!(illegal_kinds.contains(kind), "Same modifier twice is always illegal");
+        illegal[kind as usize] = illegal_kinds;
+
+        i += 1;
+    }
+
+    illegal
+};
+
+/// Get which modifiers are illegal to precede a modifier.
+/// This must match the logic in `illegal_modifier_error`.
+const fn get_illegal_preceding_modifiers(kind: ModifierKind) -> ModifierKinds {
+    match kind {
+        ModifierKind::Public | ModifierKind::Private | ModifierKind::Protected => {
+            ModifierKinds::new([
+                ModifierKind::Public,
+                ModifierKind::Private,
+                ModifierKind::Protected,
+                ModifierKind::Override,
+                ModifierKind::Static,
+                ModifierKind::Accessor,
+                ModifierKind::Readonly,
+                ModifierKind::Async,
+                ModifierKind::Abstract,
+            ])
+        }
+        ModifierKind::Static => ModifierKinds::new([
+            ModifierKind::Static,
+            ModifierKind::Readonly,
+            ModifierKind::Async,
+            ModifierKind::Accessor,
+            ModifierKind::Override,
+        ]),
+        ModifierKind::Override => ModifierKinds::new([
+            ModifierKind::Override,
+            ModifierKind::Readonly,
+            ModifierKind::Accessor,
+            ModifierKind::Async,
+        ]),
+        ModifierKind::Abstract => ModifierKinds::new([
+            ModifierKind::Abstract,
+            ModifierKind::Override,
+            ModifierKind::Accessor,
+        ]),
+        ModifierKind::Export => ModifierKinds::new([
+            ModifierKind::Export,
+            ModifierKind::Declare,
+            ModifierKind::Abstract,
+            ModifierKind::Async,
+        ]),
+        _ => ModifierKinds::new([kind]),
+    }
+}
+
+impl<C: Config> ParserImpl<'_, C> {
+    #[inline]
+    fn check_modifier(&mut self, existing_kinds: ModifierKinds, modifier: &Modifier) {
+        // Do a quick check that this modifier is not illegal in this position.
+        //
+        // This is just 2 instructions:
+        // 1. Read from a 30-byte lookup table
+        // 2. AND operation to compare to `existing_kinds`.
+        // https://godbolt.org/z/Mh76WTTYj
+        //
+        // Only if this quick check fails (syntax error, rare), then call `#[cold]` `#[inline(never)]` function
+        // `illegal_modifier_error` to raise an error.
+        let illegal_preceding_modifier_kinds = ILLEGAL_PRECEDING_MODIFIERS[modifier.kind as usize];
+
+        if existing_kinds.intersects(illegal_preceding_modifier_kinds) {
+            self.illegal_modifier_error(existing_kinds, modifier);
+        }
+    }
+
+    /// Create an error for an illegal modifier.
+    #[cold]
+    #[inline(never)]
+    fn illegal_modifier_error(&mut self, kinds: ModifierKinds, modifier: &Modifier) {
         match modifier.kind {
             ModifierKind::Public | ModifierKind::Private | ModifierKind::Protected => {
                 if kinds.intersects(ModifierKinds::new([
