@@ -19,6 +19,11 @@ const sources = [
     repo: "vbenjs/vue-vben-admin/packages",
     version: "main",
   },
+  {
+    name: "webawesome",
+    repo: "shoelace-style/webawesome/packages/webawesome/src/components",
+    version: "next",
+  },
   // {
   //   name: "plugin-svelte",
   //   repo: "sveltejs/prettier-plugin-svelte/tests",
