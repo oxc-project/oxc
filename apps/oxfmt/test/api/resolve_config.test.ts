@@ -23,9 +23,7 @@ describe("resolveConfig() API", () => {
       await fs.mkdir(join(dir, "src"), { recursive: true });
       await fs.writeFile(join(dir, "src", "test.ts"), "export const x=1\n");
 
-      await expect(
-        resolveConfig(join(dir, "src", "test.ts")),
-      ).resolves.toBeNull();
+      await expect(resolveConfig(join(dir, "src", "test.ts"))).resolves.toBeNull();
     });
   });
 
@@ -53,14 +51,9 @@ describe("resolveConfig() API", () => {
           "",
         ].join("\n"),
       );
-      await fs.writeFile(
-        join(dir, "nested", "example.test.ts"),
-        "export const x=1\n",
-      );
+      await fs.writeFile(join(dir, "nested", "example.test.ts"), "export const x=1\n");
 
-      await expect(
-        resolveConfig(join(dir, "nested", "example.test.ts")),
-      ).resolves.toEqual({
+      await expect(resolveConfig(join(dir, "nested", "example.test.ts"))).resolves.toEqual({
         semi: false,
         useTabs: true,
         tabWidth: 4,
@@ -80,12 +73,10 @@ describe("resolveConfig() API", () => {
       );
       await fs.writeFile(join(dir, "src", "test.ts"), "export const x=1\n");
 
-      await expect(resolveConfig(join(dir, "src", "test.ts"))).resolves.toEqual(
-        {
-          semi: false,
-          singleQuote: true,
-        },
-      );
+      await expect(resolveConfig(join(dir, "src", "test.ts"))).resolves.toEqual({
+        semi: false,
+        singleQuote: true,
+      });
     });
   });
 });

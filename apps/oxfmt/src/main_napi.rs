@@ -198,8 +198,7 @@ pub async fn resolve_config(
     file_name: String,
     #[napi(ts_arg_type = "(path: string) => Promise<any>")] load_js_config_cb: JsLoadJsConfigCb,
 ) -> napi::Result<Option<Value>> {
-    resolve_config_api::run(&file_name, load_js_config_cb)
-        .map_err(napi::Error::from_reason)
+    resolve_config_api::run(&file_name, load_js_config_cb).map_err(napi::Error::from_reason)
 }
 
 // ---

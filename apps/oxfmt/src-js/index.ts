@@ -71,15 +71,9 @@ export function defineConfig<T extends OxfmtConfig>(config: T): T {
 /**
  * Format the given source text according to the specified options.
  */
-export async function format(
-  fileName: string,
-  sourceText: string,
-  options?: FormatConfig,
-) {
-  if (typeof fileName !== "string")
-    throw new TypeError("`fileName` must be a string");
-  if (typeof sourceText !== "string")
-    throw new TypeError("`sourceText` must be a string");
+export async function format(fileName: string, sourceText: string, options?: FormatConfig) {
+  if (typeof fileName !== "string") throw new TypeError("`fileName` must be a string");
+  if (typeof sourceText !== "string") throw new TypeError("`sourceText` must be a string");
 
   return napiFormat(
     fileName,
@@ -98,11 +92,8 @@ export async function format(
  *
  * Returns `null` when neither an Oxfmt config file nor `.editorconfig` is found.
  */
-export async function resolveConfig(
-  fileName: string,
-): Promise<FormatConfig | null> {
-  if (typeof fileName !== "string")
-    throw new TypeError("`fileName` must be a string");
+export async function resolveConfig(fileName: string): Promise<FormatConfig | null> {
+  if (typeof fileName !== "string") throw new TypeError("`fileName` must be a string");
   return napiResolveConfig(fileName, loadJsConfig);
 }
 
