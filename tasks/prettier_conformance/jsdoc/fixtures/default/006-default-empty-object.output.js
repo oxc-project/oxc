@@ -1,0 +1,5 @@
+/**
+ * The summary
+ *
+ * @default {}
+ */

@@ -309,7 +309,7 @@ impl ExternalFormatter {
 
                         from_prettier_doc::to_format_elements_for_template(
                             language,
-                            &doc_jsons,
+                            doc_jsons,
                             allocator,
                             group_id_builder,
                         )
@@ -365,10 +365,11 @@ impl ExternalFormatter {
 /// This is the single source of truth for supported embedded languages.
 fn language_to_prettier_parser(language: &str) -> Option<&'static str> {
     match language {
-        "tagged-css" | "styled-jsx" | "angular-styles" => Some("scss"),
-        "tagged-graphql" => Some("graphql"),
-        "tagged-html" => Some("html"),
-        "tagged-markdown" => Some("markdown"),
+        // Template literal tags + JSDoc fenced code block language names
+        "tagged-css" | "styled-jsx" | "angular-styles" | "css" | "scss" | "less" => Some("scss"),
+        "tagged-graphql" | "graphql" | "gql" => Some("graphql"),
+        "tagged-html" | "html" => Some("html"),
+        "tagged-markdown" | "markdown" | "md" => Some("markdown"),
         "angular-template" => Some("angular"),
         _ => None,
     }

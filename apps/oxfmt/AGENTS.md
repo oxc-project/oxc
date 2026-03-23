@@ -69,6 +69,15 @@ OXC_LOG=debug node ./dist/cli.js --threads=1 <file>
 
 NOTE: `pnpm build-test` combines `pnpm build-js` and `pnpm build-napi`, so you don't need to run them separately.
 
+To compare formatting output with Prettier:
+
+```sh
+# Use a shared config file (e.g., fmt.json) because oxfmt and Prettier have different default printWidth
+# Example fmt.json: { "printWidth": 80 }
+cat <file> | node ./dist/cli.js --config=fmt.json --stdin-filepath=<file>
+npx prettier --config=fmt.json <file>
+```
+
 ## Test Organization (`test/` directory)
 
 Tests are organized by domain and colocated with strict structural rules.

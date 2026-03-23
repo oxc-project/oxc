@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.122.0] - 2026-03-23
+
+### ⚡ Performance
+
+- c6ea0a0 ast: Place `NodeId` field after `Span` in structs (#20584) (overlookmotel)
+
 ## [0.116.0] - 2026-03-02
 
 ### ⚡ Performance

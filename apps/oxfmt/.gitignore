@@ -1,5 +1,5 @@
 /node_modules/
 /dist/
-/conformance/fixtures/prettier/
-/conformance/fixtures/vue-vben-admin/
+/conformance/fixtures/**
+!/conformance/fixtures/edge-cases
 *.node
