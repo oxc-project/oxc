@@ -52,6 +52,14 @@ export interface FormatResult {
 export declare function jsTextToDoc(sourceExt: string, sourceText: string, oxfmtPluginOptionsJson: string, parentContext: string, initExternalFormatterCb: (numThreads: number) => Promise<string[]>, formatFileCb: (options: Record<string, any>, code: string) => Promise<string>, formatEmbeddedCb: (options: Record<string, any>, code: string) => Promise<string | null>, formatEmbeddedDocCb: (options: Record<string, any>, texts: string[]) => Promise<string[] | null>, sortTailwindClassesCb: (options: Record<string, any>, classes: string[]) => Promise<string[] | null>): Promise<string | null>
 
 /**
+ * NAPI based config resolution API entry point.
+ *
+ * Returns the effective configuration for the given file path after applying
+ * config discovery, `.oxfmtrc` overrides, and `.editorconfig` fallback values.
+ */
+export declare function resolveConfig(fileName: string, loadJsConfigCb: (path: string) => Promise<any>): Promise<any | null>
+
+/**
  * NAPI based JS CLI entry point.
  * For pure Rust CLI entry point, see `main.rs`.
  *

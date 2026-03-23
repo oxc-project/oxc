@@ -7,7 +7,7 @@ use oxc_napi::OxcError;
 use serde_json::Value;
 
 use crate::{
-    api::{format_api, text_to_doc_api},
+    api::{format_api, resolve_config_api, text_to_doc_api},
     cli::{FormatRunner, MigrateSource, Mode, format_command, init_miette, init_rayon},
     core::{
         ExternalFormatter, JsFormatEmbeddedCb, JsFormatEmbeddedDocCb, JsFormatFileCb,
@@ -183,6 +183,23 @@ pub async fn format(
     );
 
     FormatResult { code, errors }
+}
+
+// ---
+
+/// NAPI based config resolution API entry point.
+///
+/// Returns the effective configuration for the given file path after applying
+/// config discovery, `.oxfmtrc` overrides, and `.editorconfig` fallback values.
+#[expect(clippy::allow_attributes)]
+#[allow(clippy::trailing_empty_array, clippy::unused_async, clippy::missing_errors_doc)] // https://github.com/napi-rs/napi-rs/issues/2758
+#[napi]
+pub async fn resolve_config(
+    file_name: String,
+    #[napi(ts_arg_type = "(path: string) => Promise<any>")] load_js_config_cb: JsLoadJsConfigCb,
+) -> napi::Result<Option<Value>> {
+    resolve_config_api::run(&file_name, load_js_config_cb)
+        .map_err(napi::Error::from_reason)
 }
 
 // ---

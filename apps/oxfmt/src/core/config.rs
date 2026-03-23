@@ -190,6 +190,9 @@ pub struct ConfigResolver {
     /// Cached parsed options after validation.
     /// Used to avoid re-parsing during per-file resolution, if no per-file overrides exist.
     cached_options: Option<(OxfmtOptions, Value)>,
+    /// Cached resolved `FormatConfig` after validation.
+    /// Used by API consumers that need effective config values without formatter defaults.
+    cached_format_config: Option<FormatConfig>,
     /// Resolved overrides from `.oxfmtrc` for file-specific matching.
     oxfmtrc_overrides: Option<OxfmtrcOverrides>,
     /// Parsed `.editorconfig`, if any.
@@ -204,12 +207,25 @@ impl ConfigResolver {
         config_dir: Option<PathBuf>,
         editorconfig: Option<EditorConfig>,
     ) -> Self {
-        Self { raw_config, config_dir, cached_options: None, oxfmtrc_overrides: None, editorconfig }
+        Self {
+            raw_config,
+            config_dir,
+            cached_options: None,
+            cached_format_config: None,
+            oxfmtrc_overrides: None,
+            editorconfig,
+        }
     }
 
     /// Returns the directory containing the config file, if any was loaded.
     pub fn config_dir(&self) -> Option<&Path> {
         self.config_dir.as_deref()
+    }
+
+    /// Returns `true` if an `.editorconfig` was resolved.
+    #[cfg(feature = "napi")]
+    pub fn has_editorconfig(&self) -> bool {
+        self.editorconfig.is_some()
     }
 
     /// Create a resolver, handling both JSON/JSONC and JS/TS config files.
@@ -412,6 +428,9 @@ impl ConfigResolver {
         let mut external_options = serde_json::to_value(&format_config)
             .expect("FormatConfig serialization should not fail");
 
+        // Save cache for the `resolve_format_config` fast path (before `format_config` is moved)
+        self.cached_format_config = Some(format_config.clone());
+
         // Convert `FormatConfig` to `OxfmtOptions`, applying defaults where needed
         let oxfmt_options = to_oxfmt_options(format_config)?;
 
@@ -434,6 +453,27 @@ impl ConfigResolver {
         ResolvedOptions::from_oxfmt_options(oxfmt_options, external_options, strategy)
     }
 
+    /// Resolve the effective `FormatConfig` for a specific file path.
+    ///
+    /// This applies `.oxfmtrc` overrides and `.editorconfig` fallback values,
+    /// but does not fill in formatter defaults.
+    #[cfg(feature = "napi")]
+    pub fn resolve_format_config(&self, path: &Path) -> FormatConfig {
+        let has_editorconfig_overrides =
+            self.editorconfig.as_ref().is_some_and(|ec| has_editorconfig_overrides(ec, path));
+        let has_oxfmtrc_overrides =
+            self.oxfmtrc_overrides.as_ref().is_some_and(|o| o.has_match(path));
+
+        if !has_editorconfig_overrides && !has_oxfmtrc_overrides {
+            return self
+                .cached_format_config
+                .clone()
+                .expect("`build_and_validate()` must be called first");
+        }
+
+        self.resolve_format_config_slow(path)
+    }
+
     /// Resolve options for a specific file path.
     /// Priority: oxfmtrc base → oxfmtrc overrides → editorconfig (fallback for unset fields) -> defaults
     ///
@@ -453,7 +493,20 @@ impl ConfigResolver {
                 .expect("`build_and_validate()` must be called first");
         }
 
-        // Slow path: reconstruct `FormatConfig` to apply overrides
+        let format_config = self.resolve_format_config_slow(path);
+
+        // NOTE: See `build_and_validate()` for details about `external_options` handling
+        let mut external_options = serde_json::to_value(&format_config)
+            .expect("FormatConfig serialization should not fail");
+        let oxfmt_options = to_oxfmt_options(format_config)
+            .expect("If this fails, there is an issue with override values");
+
+        sync_external_options(&oxfmt_options.format_options, &mut external_options);
+
+        (oxfmt_options, external_options)
+    }
+
+    fn resolve_format_config_slow(&self, path: &Path) -> FormatConfig {
         // Overrides are merged at `FormatConfig` level, not `OxfmtOptions` level
         let mut format_config: FormatConfig = serde_json::from_value(self.raw_config.clone())
             .expect("`build_and_validate()` should catch this before");
@@ -475,15 +528,7 @@ impl ConfigResolver {
             format_config.resolve_tailwind_paths(config_dir);
         }
 
-        // NOTE: See `build_and_validate()` for details about `external_options` handling
-        let mut external_options = serde_json::to_value(&format_config)
-            .expect("FormatConfig serialization should not fail");
-        let oxfmt_options = to_oxfmt_options(format_config)
-            .expect("If this fails, there is an issue with override values");
-
-        sync_external_options(&oxfmt_options.format_options, &mut external_options);
-
-        (oxfmt_options, external_options)
+        format_config
     }
 }
 
