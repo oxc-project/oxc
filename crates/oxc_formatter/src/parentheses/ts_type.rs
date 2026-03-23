@@ -45,11 +45,20 @@ impl NeedsParentheses<'_> for AstNode<'_, TSType<'_>> {
 impl NeedsParentheses<'_> for AstNode<'_, TSFunctionType<'_>> {
     #[inline]
     fn needs_parentheses(&self, _f: &Formatter<'_, '_>) -> bool {
-        function_like_type_needs_parentheses(
-            self.span(),
-            effective_parent(self.parent()),
-            Some(&self.return_type),
-        )
+        let parent = effective_parent(self.parent());
+
+        // TSFunctionType needs parens when used as an arrow function's return type
+        // to resolve syntactic ambiguity: `(): () => void => ...` is ambiguous without parens.
+        // TSConstructorType does NOT need this — the `new` keyword is unambiguous.
+        //
+        // https://github.com/prettier/prettier/blob/812a4d0071270f61a7aa549d625b618be7e09d71/src/language-js/parentheses/needs-parentheses.js#L514-L525
+        if let AstNodes::TSTypeAnnotation(type_annotation) = parent
+            && matches!(type_annotation.parent(), AstNodes::ArrowFunctionExpression(_))
+        {
+            return true;
+        }
+
+        function_like_type_needs_parentheses(self.span(), parent, Some(&self.return_type))
     }
 }
 
@@ -67,13 +76,11 @@ impl NeedsParentheses<'_> for AstNode<'_, TSInferType<'_>> {
 impl NeedsParentheses<'_> for AstNode<'_, TSConstructorType<'_>> {
     #[inline]
     fn needs_parentheses(&self, _f: &Formatter<'_, '_>) -> bool {
-        let parent = effective_parent(self.parent());
-        if let AstNodes::TSTypeAnnotation(type_annotation) = parent
-            && matches!(type_annotation.parent(), AstNodes::ArrowFunctionExpression(_))
-        {
-            return false;
-        }
-        function_like_type_needs_parentheses(self.span(), parent, Some(&self.return_type))
+        function_like_type_needs_parentheses(
+            self.span(),
+            effective_parent(self.parent()),
+            Some(&self.return_type),
+        )
     }
 }
 
@@ -92,9 +99,12 @@ impl NeedsParentheses<'_> for AstNode<'_, TSUnionType<'_>> {
     }
 }
 
-/// Returns `true` if a TS primary type needs parentheses
-/// Common logic for determining if function-like types (TSFunctionType, TSConstructorType)
-/// need parentheses based on their parent context.
+/// Returns `true` if a function-like TS type (TSFunctionType, TSConstructorType)
+/// needs parentheses based on their parent context.
+///
+/// Note: The arrow-function-return-type case is handled separately by each caller,
+/// because only `TSFunctionType` needs parens there (syntactic ambiguity with `=>`),
+/// while `TSConstructorType` does not (the `new` keyword is unambiguous).
 ///
 /// Ported from Biome's function_like_type_needs_parentheses
 fn function_like_type_needs_parentheses<'a>(
@@ -103,10 +113,6 @@ fn function_like_type_needs_parentheses<'a>(
     return_type: Option<&'a TSTypeAnnotation<'a>>,
 ) -> bool {
     match parent {
-        // Arrow function return types need parens
-        AstNodes::TSTypeAnnotation(type_annotation) => {
-            matches!(type_annotation.parent(), AstNodes::ArrowFunctionExpression(_))
-        }
         // In conditional types
         AstNodes::TSConditionalType(conditional) => {
             let is_check_type = conditional.check_type().span() == span;
