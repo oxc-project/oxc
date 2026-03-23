@@ -53,4 +53,49 @@ describe("JSDoc", () => {
 `.trimStart(),
     );
   });
+
+  it("should format jsdoc in vue the same as in plain js", async () => {
+    const jsdocComment = `
+/**
+ * @param {string}   name   -  The   name
+ * @returns  {boolean}   Whether   it   is   valid
+ */`;
+
+    const jsSource = `${jsdocComment.trim()}
+function validate(name) {}
+`.trim();
+
+    const vueSource = `<script>
+${jsdocComment}
+function validate(name) {}
+</script>
+`;
+
+    const jsResult = await format("a.js", jsSource, { jsdoc: {} });
+    const vueResult = await format("a.vue", vueSource, { jsdoc: {} });
+
+    expect(jsResult.errors).toStrictEqual([]);
+    expect(vueResult.errors).toStrictEqual([]);
+    // The JSDoc inside <script> should be formatted the same as in plain JS
+    expect(vueResult.code).toContain(jsResult.code.trim());
+  });
+
+  it("should format css-in-jsdoc-in-js-in-vue", async () => {
+    const source = `<script>
+/**
+ * \`\`\`css
+ * .body {color:red;
+ * }
+ * \`\`\`
+ */
+function foo() {}
+</script>
+`;
+
+    const result = await format("a.vue", source, { jsdoc: {} });
+    expect(result.errors).toStrictEqual([]);
+    expect(result.code).toContain(
+      [" * ```css", " * .body {", " *   color: red;", " * }", " * ```"].join("\n"),
+    );
+  });
 });
