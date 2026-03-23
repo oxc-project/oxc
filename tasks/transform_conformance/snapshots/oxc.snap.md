@@ -1,6 +1,6 @@
 commit: 87a048db
 
-Passed: 206/342
+Passed: 213/357
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -69,7 +69,7 @@ after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), R
 rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), ReferenceId(10)]
 
 
-# babel-plugin-transform-typescript (7/31)
+# babel-plugin-transform-typescript (14/46)
 * allow-declare-fields-false/input.ts
 Unresolved references mismatch:
 after transform: ["dce"]
@@ -437,6 +437,97 @@ rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 Symbol redeclarations mismatch for "Foo":
 after transform: SymbolId(0): [Span { start: 17, end: 20 }, Span { start: 62, end: 65 }]
 rebuilt        : SymbolId(0): []
+
+* optimize-enums/auto-increment-after-string/input.ts
+Bindings mismatch:
+after transform: ScopeId(1): ["A", "B", "Mixed"]
+rebuilt        : ScopeId(1): ["Mixed"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
+Symbol flags mismatch for "Mixed":
+after transform: SymbolId(0): SymbolFlags(RegularEnum)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
+* optimize-enums/exported-not-removed/input.ts
+Bindings mismatch:
+after transform: ScopeId(1): ["Direction", "Down", "Up"]
+rebuilt        : ScopeId(1): ["Direction"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
+Symbol flags mismatch for "Direction":
+after transform: SymbolId(0): SymbolFlags(RegularEnum)
+rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
+
+* optimize-enums/merged-enum/input.ts
+Unresolved references mismatch:
+after transform: ["A"]
+rebuilt        : []
+
+* optimize-enums/non-evaluable-kept/input.ts
+Bindings mismatch:
+after transform: ScopeId(1): ["Runtime", "X", "Y"]
+rebuilt        : ScopeId(1): ["Runtime"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
+Symbol flags mismatch for "Runtime":
+after transform: SymbolId(0): SymbolFlags(RegularEnum)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
+* optimize-enums/passed-as-argument-kept/input.ts
+Bindings mismatch:
+after transform: ScopeId(1): ["Active", "Inactive", "Status"]
+rebuilt        : ScopeId(1): ["Status"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
+Symbol flags mismatch for "Status":
+after transform: SymbolId(0): SymbolFlags(RegularEnum)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
+* optimize-enums/re-exported-not-removed/input.ts
+Bindings mismatch:
+after transform: ScopeId(1): ["A", "X"]
+rebuilt        : ScopeId(1): ["A"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
+Bindings mismatch:
+after transform: ScopeId(2): ["B", "Y"]
+rebuilt        : ScopeId(2): ["B"]
+Scope flags mismatch:
+after transform: ScopeId(2): ScopeFlags(0x0)
+rebuilt        : ScopeId(2): ScopeFlags(Function)
+Symbol flags mismatch for "A":
+after transform: SymbolId(0): SymbolFlags(RegularEnum)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+Symbol flags mismatch for "B":
+after transform: SymbolId(2): SymbolFlags(RegularEnum)
+rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
+
+* optimize-enums/typeof-kept/input.ts
+Bindings mismatch:
+after transform: ScopeId(1): ["Bar", "X"]
+rebuilt        : ScopeId(1): ["Bar"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
+Symbol flags mismatch for "Bar":
+after transform: SymbolId(0): SymbolFlags(RegularEnum)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
+* optimize-enums/value-usage-kept/input.ts
+Bindings mismatch:
+after transform: ScopeId(1): ["A", "B", "Foo"]
+rebuilt        : ScopeId(1): ["Foo"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
+Symbol flags mismatch for "Foo":
+after transform: SymbolId(0): SymbolFlags(RegularEnum)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 * preserve-import-=/input.js
 Symbol reference IDs mismatch for "Foo":
