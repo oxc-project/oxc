@@ -85,7 +85,8 @@ pub struct TypeScriptOptions {
     #[serde(default)]
     pub remove_class_fields_without_initializer: bool,
 
-    /// Unused.
+    /// When true, optimize const enums by inlining their values at usage sites
+    /// and removing the enum declaration.
     pub optimize_const_enums: bool,
 
     // Preset options
