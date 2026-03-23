@@ -640,11 +640,9 @@ impl<'a> Format<'a> for FormatCommentForEmptyStatement<'a, '_> {
 struct FormatTestOfIfAndWhileStatement<'a, 'b>(&'b AstNode<'a, Expression<'a>>);
 impl<'a> Format<'a> for FormatTestOfIfAndWhileStatement<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-        if f.comments().has_trailing_suppression_comment(self.0.span().end) {
-            write!(f, FormatSuppressedNode(self.0.span()));
-        } else {
-            write!(f, FormatNodeWithoutTrailingComments(self.0));
-        }
+        // FormatNodeWithoutTrailingComments already handles suppression comments internally,
+        // so no separate has_trailing_suppression_comment check is needed here.
+        write!(f, FormatNodeWithoutTrailingComments(self.0));
         let comments = f.context().comments().comments_before_character(self.0.span().end, b')');
         if !comments.is_empty() {
             write!(f, [space(), FormatTrailingComments::Comments(comments)]);
