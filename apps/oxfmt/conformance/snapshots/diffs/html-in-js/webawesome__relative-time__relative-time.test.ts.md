@@ -1,4 +1,4 @@
-# relative-time/relative-time.test.ts
+# webawesome/relative-time/relative-time.test.ts
 
 > html-in-js: Need to solve `label({ embed, hug }))` + `shouldExpandLastArg`
 

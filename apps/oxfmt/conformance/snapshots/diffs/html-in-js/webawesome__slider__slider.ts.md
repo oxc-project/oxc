@@ -1,4 +1,4 @@
-# slider/slider.ts
+# webawesome/slider/slider.ts
 
 > `@decorator` + union type: https://github.com/oxc-project/oxc/issues/20519
 

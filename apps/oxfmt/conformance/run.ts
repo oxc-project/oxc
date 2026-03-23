@@ -9,8 +9,6 @@ import { format } from "../dist/index.js";
 const CONFORMANCE_DIR = import.meta.dirname;
 const FIXTURES_DIR = join(CONFORMANCE_DIR, "fixtures");
 const SNAPSHOTS_DIR = join(CONFORMANCE_DIR, "snapshots");
-const PRETTIER_FIXTURES_DIR = join(FIXTURES_DIR, "prettier");
-const EDGE_CASES_DIR = join(FIXTURES_DIR, "edge-cases");
 
 type Category = {
   name: string;
@@ -31,17 +29,17 @@ const categories: Category[] = [
   {
     name: "js-in-vue",
     sources: [
-      { dir: PRETTIER_FIXTURES_DIR, ext: ".vue" },
+      { dir: join(FIXTURES_DIR, "prettier"), ext: ".vue" },
       { dir: join(FIXTURES_DIR, "vue-vben-admin"), ext: ".vue" },
-      { dir: join(EDGE_CASES_DIR, "js-in-vue") },
+      { dir: join(FIXTURES_DIR, "edge-cases", "js-in-vue") },
     ],
     optionSets: [
       { printWidth: 80 },
       { printWidth: 100, vueIndentScriptAndStyle: true, singleQuote: true },
     ],
     notes: {
-      "vue/multiparser/lang-tsx.vue": "`lang=tsx` is not supported",
-      "effects/common-ui/src/components/api-component/api-component.vue":
+      "prettier/vue/multiparser/lang-tsx.vue": "`lang=tsx` is not supported",
+      "vue-vben-admin/effects/common-ui/src/components/api-component/api-component.vue":
         "`<T = any,>() => {}` comma in generic param is removed even in .ts(x) file",
     },
   },
@@ -49,11 +47,11 @@ const categories: Category[] = [
     name: "gql-in-js",
     sources: [
       {
-        dir: join(PRETTIER_FIXTURES_DIR, "js/multiparser-graphql"),
+        dir: join(FIXTURES_DIR, "prettier", "js/multiparser-graphql"),
         ext: ".js",
         excludes: ["format.test.js"],
       },
-      { dir: join(EDGE_CASES_DIR, "gql-in-js") },
+      { dir: join(FIXTURES_DIR, "edge-cases", "gql-in-js") },
     ],
     optionSets: [{ printWidth: 80 }, { printWidth: 100 }],
     notes: {},
@@ -62,27 +60,27 @@ const categories: Category[] = [
     name: "css-in-js",
     sources: [
       {
-        dir: join(PRETTIER_FIXTURES_DIR, "js/multiparser-css"),
+        dir: join(FIXTURES_DIR, "prettier", "js/multiparser-css"),
         ext: ".js",
         excludes: ["format.test.js"],
       },
       {
-        dir: join(PRETTIER_FIXTURES_DIR, "jsx/embed"),
+        dir: join(FIXTURES_DIR, "prettier", "jsx/embed"),
         ext: ".js",
         excludes: ["format.test.js"],
       },
-      { dir: join(EDGE_CASES_DIR, "css-in-js") },
+      { dir: join(FIXTURES_DIR, "edge-cases", "css-in-js") },
     ],
     optionSets: [{ printWidth: 80 }, { printWidth: 100 }],
     notes: {
-      "styled-components.js": "`Xxx.extend` not recognized as tag",
+      "prettier/js/multiparser-css/styled-components.js": "`Xxx.extend` not recognized as tag",
     },
   },
   {
     name: "html-in-js",
     sources: [
       {
-        dir: join(PRETTIER_FIXTURES_DIR, "js/multiparser-html"),
+        dir: join(FIXTURES_DIR, "prettier", "js/multiparser-html"),
         ext: ".js",
         excludes: ["format.test.js"],
       },
@@ -90,15 +88,15 @@ const categories: Category[] = [
         dir: join(FIXTURES_DIR, "webawesome"),
         ext: ".ts",
       },
-      { dir: join(EDGE_CASES_DIR, "html-in-js") },
+      { dir: join(FIXTURES_DIR, "edge-cases", "html-in-js") },
     ],
     optionSets: [{ printWidth: 80 }, { printWidth: 100, htmlWhitespaceSensitivity: "ignore" }],
     notes: {
-      "issue-10691.js":
+      "prettier/js/multiparser-html/issue-10691.js":
         "js-in-html(`<script>`)-in-js needs lot more work; Please see oxc_formatter/src/print/template/embed/html.rs",
-      "relative-time/relative-time.test.ts":
+      "webawesome/relative-time/relative-time.test.ts":
         "html-in-js: Need to solve `label({ embed, hug }))` + `shouldExpandLastArg`",
-      "slider/slider.ts":
+      "webawesome/slider/slider.ts":
         "`@decorator` + union type: https://github.com/oxc-project/oxc/issues/20519",
     },
   },
@@ -106,18 +104,18 @@ const categories: Category[] = [
     name: "xxx-in-js-comment",
     sources: [
       {
-        dir: join(PRETTIER_FIXTURES_DIR, "js/multiparser-html/language-comment"),
+        dir: join(FIXTURES_DIR, "prettier", "js/multiparser-html/language-comment"),
         ext: ".js",
         excludes: ["format.test.js"],
       },
       {
-        dir: join(PRETTIER_FIXTURES_DIR, "js/multiparser-comments"),
+        dir: join(FIXTURES_DIR, "prettier", "js/multiparser-comments"),
         ext: ".js",
         excludes: ["format.test.js"],
       },
-      { dir: join(EDGE_CASES_DIR, "xxx-in-js-comment") },
+      { dir: join(FIXTURES_DIR, "edge-cases", "xxx-in-js-comment") },
     ],
-    optionSets: [{ printWidth: 80 }],
+    optionSets: [{ printWidth: 80 }, { printWith: 100 }],
     notes: {},
   },
 ];
@@ -180,7 +178,7 @@ function collectFixtures(sources: Source[]): Fixture[] {
       if (source.ext && !entry.name.endsWith(source.ext)) continue;
 
       const fullPath = join(entry.parentPath, entry.name);
-      const relPath = relative(source.dir, fullPath);
+      const relPath = relative(FIXTURES_DIR, fullPath);
       if (source.excludes?.some((s) => relPath.includes(s))) continue;
 
       results.push({ name: relPath, fullPath });

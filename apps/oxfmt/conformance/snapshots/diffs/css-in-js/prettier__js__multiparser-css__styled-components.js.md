@@ -1,4 +1,4 @@
-# styled-components.js
+# prettier/js/multiparser-css/styled-components.js
 
 > `Xxx.extend` not recognized as tag
 

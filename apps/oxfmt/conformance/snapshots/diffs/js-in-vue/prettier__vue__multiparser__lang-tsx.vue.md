@@ -1,4 +1,4 @@
-# vue/multiparser/lang-tsx.vue
+# prettier/vue/multiparser/lang-tsx.vue
 
 > `lang=tsx` is not supported
 
