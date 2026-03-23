@@ -71,11 +71,22 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         match self.cur_kind() {
             Kind::Str => {
                 let literal = self.parse_literal_string();
+                // We need to record these stats manually because strings don't have a symbol ID field,
+                // but a string TS enum member name will still create a symbol.
+                self.ast.stats_mut().record_symbol();
                 TSEnumMemberName::String(self.alloc(literal))
             }
             Kind::LBrack => match self.parse_computed_property_name() {
-                Expression::StringLiteral(literal) => TSEnumMemberName::ComputedString(literal),
+                Expression::StringLiteral(literal) => {
+                    // We need to record these stats manually because strings don't have a symbol ID field,
+                    // but a string TS enum member name will still create a symbol.
+                    self.ast.stats_mut().record_symbol();
+                    TSEnumMemberName::ComputedString(literal)
+                }
                 Expression::TemplateLiteral(template) if template.is_no_substitution_template() => {
+                    // We need to record these stats manually because strings don't have a symbol ID field,
+                    // but a string TS enum member name will still create a symbol.
+                    self.ast.stats_mut().record_symbol();
                     TSEnumMemberName::ComputedTemplateString(template)
                 }
                 Expression::NumericLiteral(literal) => {
@@ -101,6 +112,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
             _ => {
                 let ident_name = self.parse_identifier_name();
+                // We need to record these stats manually because identifiers don't have a symbol ID field,
+                // but an identifier TS enum member name will still create a symbol.
+                self.ast.stats_mut().record_symbol();
                 TSEnumMemberName::Identifier(self.alloc(ident_name))
             }
         }

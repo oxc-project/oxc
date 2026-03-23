@@ -87,7 +87,7 @@ pub mod lexer;
 
 use oxc_allocator::{Allocator, Box as ArenaBox, Dummy, Vec as ArenaVec};
 use oxc_ast::{
-    AstBuilder,
+    AstBuilder, AstBuilderStats,
     ast::{Expression, Program},
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -186,6 +186,14 @@ pub struct ParserReturn<'a> {
 
     /// Whether the file is [flow](https://flow.org).
     pub is_flow_language: bool,
+
+    /// Statistics about AST nodes created during parsing.
+    ///
+    /// These counts can be passed to [`SemanticBuilder::with_stats`] to avoid a
+    /// redundant AST traversal for stats collection.
+    ///
+    /// [`SemanticBuilder::with_stats`]: https://docs.rs/oxc_semantic/latest/oxc_semantic/struct.SemanticBuilder.html#method.with_stats
+    pub stats: AstBuilderStats,
 }
 
 /// Parse options
@@ -532,6 +540,8 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             self.lexer.finalize_tokens()
         };
 
+        let stats = self.ast.stats();
+
         ParserReturn {
             program,
             module_record,
@@ -540,6 +550,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             tokens,
             panicked,
             is_flow_language,
+            stats,
         }
     }
 
