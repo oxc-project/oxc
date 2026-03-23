@@ -121,7 +121,9 @@ Pass an object (`jsdoc: {}`) to enable with defaults, or omit to disable.
 type: `boolean`
 
 
+Append default values to `@param` descriptions (e.g. "Default is `value`").
 
+- Default: `true`
 
 
 ### jsdoc.bracketSpacing
@@ -129,7 +131,9 @@ type: `boolean`
 type: `boolean`
 
 
+Add spaces inside JSDoc type braces: `{string}` → `{ string }`.
 
+- Default: `false`
 
 
 ### jsdoc.capitalizeDescriptions
@@ -137,7 +141,9 @@ type: `boolean`
 type: `boolean`
 
 
+Capitalize the first letter of tag descriptions.
 
+- Default: `true`
 
 
 ### jsdoc.commentLineStrategy
@@ -145,7 +151,13 @@ type: `boolean`
 type: `string`
 
 
+How to format comment blocks.
 
+- `"singleLine"` — Convert to single-line `/** content */` when possible.
+- `"multiline"` — Always use multi-line format.
+- `"keep"` — Preserve original formatting.
+
+- Default: `"singleLine"`
 
 
 ### jsdoc.descriptionTag
@@ -153,7 +165,9 @@ type: `string`
 type: `boolean`
 
 
+Emit `@description` tag instead of inline description.
 
+- Default: `false`
 
 
 ### jsdoc.descriptionWithDot
@@ -161,7 +175,9 @@ type: `boolean`
 type: `boolean`
 
 
+Add a trailing dot to the end of descriptions.
 
+- Default: `false`
 
 
 ### jsdoc.keepUnparsableExampleIndent
@@ -169,7 +185,9 @@ type: `boolean`
 type: `boolean`
 
 
+Preserve indentation in unparsable `@example` code.
 
+- Default: `false`
 
 
 ### jsdoc.lineWrappingStyle
@@ -177,7 +195,12 @@ type: `boolean`
 type: `string`
 
 
+Strategy for wrapping description lines at print width.
 
+- `"greedy"` — Always re-wrap text to fit within print width.
+- `"balance"` — Preserve original line breaks if all lines fit within print width.
+
+- Default: `"greedy"`
 
 
 ### jsdoc.preferCodeFences
@@ -185,7 +208,9 @@ type: `string`
 type: `boolean`
 
 
+Use fenced code blocks (```` ``` ````) instead of 4-space indentation for code without a language tag.
 
+- Default: `false`
 
 
 ### jsdoc.separateReturnsFromParam
@@ -193,7 +218,9 @@ type: `boolean`
 type: `boolean`
 
 
+Add a blank line between the last `@param` and `@returns`.
 
+- Default: `false`
 
 
 ### jsdoc.separateTagGroups
@@ -201,7 +228,9 @@ type: `boolean`
 type: `boolean`
 
 
+Add blank lines between different tag groups (e.g. between `@param` and `@returns`).
 
+- Default: `false`
 
 
 ## jsxSingleQuote
@@ -369,7 +398,9 @@ Pass an object (`jsdoc: {}`) to enable with defaults, or omit to disable.
 type: `boolean`
 
 
+Append default values to `@param` descriptions (e.g. "Default is `value`").
 
+- Default: `true`
 
 
 ###### overrides[n].options.jsdoc.bracketSpacing
@@ -377,7 +408,9 @@ type: `boolean`
 type: `boolean`
 
 
+Add spaces inside JSDoc type braces: `{string}` → `{ string }`.
 
+- Default: `false`
 
 
 ###### overrides[n].options.jsdoc.capitalizeDescriptions
@@ -385,7 +418,9 @@ type: `boolean`
 type: `boolean`
 
 
+Capitalize the first letter of tag descriptions.
 
+- Default: `true`
 
 
 ###### overrides[n].options.jsdoc.commentLineStrategy
@@ -393,7 +428,13 @@ type: `boolean`
 type: `string`
 
 
+How to format comment blocks.
 
+- `"singleLine"` — Convert to single-line `/** content */` when possible.
+- `"multiline"` — Always use multi-line format.
+- `"keep"` — Preserve original formatting.
+
+- Default: `"singleLine"`
 
 
 ###### overrides[n].options.jsdoc.descriptionTag
@@ -401,7 +442,9 @@ type: `string`
 type: `boolean`
 
 
+Emit `@description` tag instead of inline description.
 
+- Default: `false`
 
 
 ###### overrides[n].options.jsdoc.descriptionWithDot
@@ -409,7 +452,9 @@ type: `boolean`
 type: `boolean`
 
 
+Add a trailing dot to the end of descriptions.
 
+- Default: `false`
 
 
 ###### overrides[n].options.jsdoc.keepUnparsableExampleIndent
@@ -417,7 +462,9 @@ type: `boolean`
 type: `boolean`
 
 
+Preserve indentation in unparsable `@example` code.
 
+- Default: `false`
 
 
 ###### overrides[n].options.jsdoc.lineWrappingStyle
@@ -425,7 +472,12 @@ type: `boolean`
 type: `string`
 
 
+Strategy for wrapping description lines at print width.
 
+- `"greedy"` — Always re-wrap text to fit within print width.
+- `"balance"` — Preserve original line breaks if all lines fit within print width.
+
+- Default: `"greedy"`
 
 
 ###### overrides[n].options.jsdoc.preferCodeFences
@@ -433,7 +485,9 @@ type: `string`
 type: `boolean`
 
 
+Use fenced code blocks (```` ``` ````) instead of 4-space indentation for code without a language tag.
 
+- Default: `false`
 
 
 ###### overrides[n].options.jsdoc.separateReturnsFromParam
@@ -441,7 +495,9 @@ type: `boolean`
 type: `boolean`
 
 
+Add a blank line between the last `@param` and `@returns`.
 
+- Default: `false`
 
 
 ###### overrides[n].options.jsdoc.separateTagGroups
@@ -449,7 +505,9 @@ type: `boolean`
 type: `boolean`
 
 
+Add blank lines between different tag groups (e.g. between `@param` and `@returns`).
 
+- Default: `false`
 
 
 ##### overrides[n].options.jsxSingleQuote

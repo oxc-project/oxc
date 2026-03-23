@@ -427,44 +427,64 @@
       ]
     },
     "JsdocConfig": {
-      "description": "JSDoc configuration object with fine-grained options.",
       "type": "object",
       "properties": {
         "addDefaultToDescription": {
-          "type": "boolean"
+          "description": "Append default values to `@param` descriptions (e.g. \"Default is `value`\").\n\n- Default: `true`",
+          "type": "boolean",
+          "markdownDescription": "Append default values to `@param` descriptions (e.g. \"Default is `value`\").\n\n- Default: `true`"
         },
         "bracketSpacing": {
-          "type": "boolean"
+          "description": "Add spaces inside JSDoc type braces: `{string}` → `{ string }`.\n\n- Default: `false`",
+          "type": "boolean",
+          "markdownDescription": "Add spaces inside JSDoc type braces: `{string}` → `{ string }`.\n\n- Default: `false`"
         },
         "capitalizeDescriptions": {
-          "type": "boolean"
+          "description": "Capitalize the first letter of tag descriptions.\n\n- Default: `true`",
+          "type": "boolean",
+          "markdownDescription": "Capitalize the first letter of tag descriptions.\n\n- Default: `true`"
         },
         "commentLineStrategy": {
-          "type": "string"
+          "description": "How to format comment blocks.\n\n- `\"singleLine\"` — Convert to single-line `/** content */` when possible.\n- `\"multiline\"` — Always use multi-line format.\n- `\"keep\"` — Preserve original formatting.\n\n- Default: `\"singleLine\"`",
+          "type": "string",
+          "markdownDescription": "How to format comment blocks.\n\n- `\"singleLine\"` — Convert to single-line `/** content */` when possible.\n- `\"multiline\"` — Always use multi-line format.\n- `\"keep\"` — Preserve original formatting.\n\n- Default: `\"singleLine\"`"
         },
         "descriptionTag": {
-          "type": "boolean"
+          "description": "Emit `@description` tag instead of inline description.\n\n- Default: `false`",
+          "type": "boolean",
+          "markdownDescription": "Emit `@description` tag instead of inline description.\n\n- Default: `false`"
         },
         "descriptionWithDot": {
-          "type": "boolean"
+          "description": "Add a trailing dot to the end of descriptions.\n\n- Default: `false`",
+          "type": "boolean",
+          "markdownDescription": "Add a trailing dot to the end of descriptions.\n\n- Default: `false`"
         },
         "keepUnparsableExampleIndent": {
-          "type": "boolean"
+          "description": "Preserve indentation in unparsable `@example` code.\n\n- Default: `false`",
+          "type": "boolean",
+          "markdownDescription": "Preserve indentation in unparsable `@example` code.\n\n- Default: `false`"
         },
         "lineWrappingStyle": {
-          "type": "string"
+          "description": "Strategy for wrapping description lines at print width.\n\n- `\"greedy\"` — Always re-wrap text to fit within print width.\n- `\"balance\"` — Preserve original line breaks if all lines fit within print width.\n\n- Default: `\"greedy\"`",
+          "type": "string",
+          "markdownDescription": "Strategy for wrapping description lines at print width.\n\n- `\"greedy\"` — Always re-wrap text to fit within print width.\n- `\"balance\"` — Preserve original line breaks if all lines fit within print width.\n\n- Default: `\"greedy\"`"
         },
         "preferCodeFences": {
-          "type": "boolean"
+          "description": "Use fenced code blocks (```` ``` ````) instead of 4-space indentation for code without a language tag.\n\n- Default: `false`",
+          "type": "boolean",
+          "markdownDescription": "Use fenced code blocks (```` ``` ````) instead of 4-space indentation for code without a language tag.\n\n- Default: `false`"
         },
         "separateReturnsFromParam": {
-          "type": "boolean"
+          "description": "Add a blank line between the last `@param` and `@returns`.\n\n- Default: `false`",
+          "type": "boolean",
+          "markdownDescription": "Add a blank line between the last `@param` and `@returns`.\n\n- Default: `false`"
         },
         "separateTagGroups": {
-          "type": "boolean"
+          "description": "Add blank lines between different tag groups (e.g. between `@param` and `@returns`).\n\n- Default: `false`",
+          "type": "boolean",
+          "markdownDescription": "Add blank lines between different tag groups (e.g. between `@param` and `@returns`).\n\n- Default: `false`"
         }
-      },
-      "markdownDescription": "JSDoc configuration object with fine-grained options."
+      }
     },
     "NewlinesBetweenMarker": {
       "description": "A marker object for overriding `newlinesBetween` at a specific group boundary.",

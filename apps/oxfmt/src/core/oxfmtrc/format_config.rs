@@ -237,34 +237,6 @@ pub struct FormatConfig {
     pub jsdoc: Option<JsdocConfig>,
 }
 
-/// JSDoc configuration object with fine-grained options.
-#[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase")]
-pub struct JsdocConfig {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub capitalize_descriptions: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub description_with_dot: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub add_default_to_description: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub prefer_code_fences: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub line_wrapping_style: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub comment_line_strategy: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub separate_tag_groups: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub separate_returns_from_param: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub bracket_spacing: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub description_tag: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub keep_unparsable_example_indent: Option<bool>,
-}
-
 impl FormatConfig {
     /// Resolve relative tailwind paths (`config`, `stylesheet`) to absolute paths.
     /// Otherwise, the plugin tries to resolve the Prettier's configuration file, not Oxfmt's.
@@ -652,6 +624,75 @@ pub struct SortTailwindcssConfig {
     /// - Default: `false`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub preserve_duplicates: Option<bool>,
+}
+
+// ---
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct JsdocConfig {
+    /// Capitalize the first letter of tag descriptions.
+    ///
+    /// - Default: `true`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub capitalize_descriptions: Option<bool>,
+    /// Add a trailing dot to the end of descriptions.
+    ///
+    /// - Default: `false`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub description_with_dot: Option<bool>,
+    /// Append default values to `@param` descriptions (e.g. "Default is `value`").
+    ///
+    /// - Default: `true`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub add_default_to_description: Option<bool>,
+    /// Use fenced code blocks (```` ``` ````) instead of 4-space indentation for code without a language tag.
+    ///
+    /// - Default: `false`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub prefer_code_fences: Option<bool>,
+    /// Strategy for wrapping description lines at print width.
+    ///
+    /// - `"greedy"` — Always re-wrap text to fit within print width.
+    /// - `"balance"` — Preserve original line breaks if all lines fit within print width.
+    ///
+    /// - Default: `"greedy"`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub line_wrapping_style: Option<String>,
+    /// How to format comment blocks.
+    ///
+    /// - `"singleLine"` — Convert to single-line `/** content */` when possible.
+    /// - `"multiline"` — Always use multi-line format.
+    /// - `"keep"` — Preserve original formatting.
+    ///
+    /// - Default: `"singleLine"`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub comment_line_strategy: Option<String>,
+    /// Add blank lines between different tag groups (e.g. between `@param` and `@returns`).
+    ///
+    /// - Default: `false`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub separate_tag_groups: Option<bool>,
+    /// Add a blank line between the last `@param` and `@returns`.
+    ///
+    /// - Default: `false`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub separate_returns_from_param: Option<bool>,
+    /// Add spaces inside JSDoc type braces: `{string}` → `{ string }`.
+    ///
+    /// - Default: `false`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub bracket_spacing: Option<bool>,
+    /// Emit `@description` tag instead of inline description.
+    ///
+    /// - Default: `false`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub description_tag: Option<bool>,
+    /// Preserve indentation in unparsable `@example` code.
+    ///
+    /// - Default: `false`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub keep_unparsable_example_indent: Option<bool>,
 }
 
 // ---
