@@ -1,6 +1,6 @@
 commit: 87a048db
 
-Passed: 213/357
+Passed: 213/358
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -69,7 +69,7 @@ after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), R
 rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), ReferenceId(10)]
 
 
-# babel-plugin-transform-typescript (14/46)
+# babel-plugin-transform-typescript (14/47)
 * allow-declare-fields-false/input.ts
 Unresolved references mismatch:
 after transform: ["dce"]
@@ -190,6 +190,20 @@ rebuilt        : SymbolId(8): SymbolFlags(BlockScopedVariable)
 Symbol reference IDs mismatch for "NestInner":
 after transform: SymbolId(18): [ReferenceId(31), ReferenceId(32), ReferenceId(33), ReferenceId(34), ReferenceId(35)]
 rebuilt        : SymbolId(9): [ReferenceId(25), ReferenceId(26), ReferenceId(28), ReferenceId(29), ReferenceId(30), ReferenceId(31)]
+
+* enum-string-alias-member/input.ts
+Bindings mismatch:
+after transform: ScopeId(2): ["Color", "Green", "Primary", "Red"]
+rebuilt        : ScopeId(1): ["Color"]
+Scope flags mismatch:
+after transform: ScopeId(2): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
+Symbol flags mismatch for "Color":
+after transform: SymbolId(4): SymbolFlags(RegularEnum)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+Symbol reference IDs mismatch for "Color":
+after transform: SymbolId(4): [ReferenceId(5), ReferenceId(6), ReferenceId(7), ReferenceId(12)]
+rebuilt        : SymbolId(0): [ReferenceId(6), ReferenceId(7), ReferenceId(8)]
 
 * enum-template-literal/input.ts
 Bindings mismatch:
