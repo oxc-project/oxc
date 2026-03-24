@@ -163,7 +163,7 @@ syn = { version = "2", default-features = false } # Rust parser for macros
 unicode-id-start = "1" # Unicode identifier validation
 
 #
-javascript-globals = "1.4.0" # JavaScript global definitions
+javascript-globals = "1.5.0" # JavaScript global definitions
 json-strip-comments = "3.1.0" # Strip JSON comments
 oxc-browserslist = "3.0.0" # Browser compatibility queries
 oxc_index = { version = "4.1.0", features = ["nonmax", "serde"] } # Type-safe indices
