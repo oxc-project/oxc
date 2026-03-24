@@ -167,7 +167,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     fn parse_extends_clause(&mut self) -> Vec<'a, TSInterfaceHeritage<'a>> {
         self.bump_any(); // bump `extends`
 
-        let mut extends = self.ast.vec();
+        let mut extends = self.ast.vec_with_capacity(1);
         loop {
             let span = self.start_span();
             let mut extend = self.parse_lhs_expression_or_higher();
