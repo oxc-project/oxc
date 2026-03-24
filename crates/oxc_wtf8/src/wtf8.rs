@@ -154,23 +154,19 @@ impl Wtf8 {
     /// Returns `None` if the string contains lone surrogates.
     #[inline]
     pub fn as_str(&self) -> Option<&str> {
-        if self.is_well_formed() {
-            // SAFETY: well-formed WTF-8 with no lone surrogates is valid UTF-8.
-            Some(unsafe { str::from_utf8_unchecked(&self.bytes) })
-        } else {
-            None
-        }
+        str::from_utf8(&self.bytes).ok()
     }
 
     /// Convert to a UTF-8 string, replacing any lone surrogates with `U+FFFD`.
     ///
     /// Returns `Cow::Borrowed` if the string contains no lone surrogates.
     pub fn to_str_lossy(&self) -> Cow<'_, str> {
+        if let Ok(s) = str::from_utf8(&self.bytes) {
+            return Cow::Borrowed(s);
+        }
+
         match self.next_lone_surrogate(0) {
-            None => {
-                // SAFETY: no lone surrogates means valid UTF-8.
-                Cow::Borrowed(unsafe { str::from_utf8_unchecked(&self.bytes) })
-            }
+            None => Cow::Owned(String::from_utf8_lossy(&self.bytes).into_owned()),
             Some((first_surrogate, _)) => {
                 let mut result = String::with_capacity(self.bytes.len());
                 // SAFETY: bytes up to the first surrogate are valid UTF-8.
