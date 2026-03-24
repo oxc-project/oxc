@@ -71,7 +71,7 @@ const VITE_CONFIG_NAME: &str = "vite.config.ts";
 pub fn get_all_rules_json() -> String {
     use crate::output_formatter::{OutputFormat, OutputFormatter};
 
-    OutputFormatter::new(OutputFormat::Json)
+    OutputFormatter::new(OutputFormat::Json, false)
         .all_rules(FxHashSet::default())
         .expect("Failed to generate rules JSON")
 }

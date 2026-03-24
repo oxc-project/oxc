@@ -74,6 +74,7 @@ impl FormatRunner {
             unreachable!("`FormatRunner` should only be called with Mode::Cli");
         };
         let num_of_threads = rayon::current_num_threads();
+        let minimal = runtime_options.minimal;
 
         // Find and load config file
         // NOTE: Currently, we only load single config file.
@@ -206,13 +207,15 @@ impl FormatRunner {
         // Count the processed files
         let total_target_files_count = changed_paths.len() + unchanged_count + error_count;
         let print_stats = |stdout, stderr| {
-            utils::print_and_flush(
-                stdout,
-                &format!(
-                    "Finished in {}ms on {total_target_files_count} files using {num_of_threads} threads.\n",
-                    start_time.elapsed().as_millis()
-                ),
-            );
+            if !minimal {
+                utils::print_and_flush(
+                    stdout,
+                    &format!(
+                        "Finished in {}ms on {total_target_files_count} files using {num_of_threads} threads.\n",
+                        start_time.elapsed().as_millis()
+                    ),
+                );
+            }
             // Config stats: only show when no config is found
             if no_config {
                 #[cfg(feature = "napi")]

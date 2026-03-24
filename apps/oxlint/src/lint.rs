@@ -67,9 +67,6 @@ impl CliRunner {
 
     /// # Panics
     pub fn run(self, stdout: &mut dyn Write) -> CliRunResult {
-        let format_str = self.options.output_options.format;
-        let output_formatter = OutputFormatter::new(format_str);
-
         let LintCommand {
             paths,
             filter,
@@ -78,11 +75,14 @@ impl CliRunner {
             ignore_options,
             fix_options,
             enable_plugins,
+            output_options,
             misc_options,
             disable_nested_config,
             inline_config_options,
             ..
         } = self.options;
+
+        let output_formatter = OutputFormatter::new(output_options.format, output_options.minimal);
 
         if basic_options.init {
             return crate::mode::run_init(&self.cwd, stdout);

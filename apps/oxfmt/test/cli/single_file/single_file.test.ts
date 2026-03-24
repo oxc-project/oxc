@@ -8,6 +8,7 @@ describe("single_file", () => {
   it("should handle single file with different flags", async () => {
     const testCases = [
       ["--check", "simple.js"],
+      ["--check", "--minimal", "simple.js"],
       ["--list-different", "simple.js"],
     ];
 

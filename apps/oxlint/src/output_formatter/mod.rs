@@ -92,18 +92,18 @@ pub struct OutputFormatter {
 }
 
 impl OutputFormatter {
-    pub fn new(format: OutputFormat) -> Self {
-        Self { internal: Self::get_internal_formatter(format) }
+    pub fn new(format: OutputFormat, minimal: bool) -> Self {
+        Self { internal: Self::get_internal_formatter(format, minimal) }
     }
 
-    fn get_internal_formatter(format: OutputFormat) -> Box<dyn InternalFormatter> {
+    fn get_internal_formatter(format: OutputFormat, minimal: bool) -> Box<dyn InternalFormatter> {
         match format {
             OutputFormat::Json => Box::<JsonOutputFormatter>::default(),
             OutputFormat::Checkstyle => Box::<CheckStyleOutputFormatter>::default(),
-            OutputFormat::Github => Box::new(GithubOutputFormatter),
+            OutputFormat::Github => Box::new(GithubOutputFormatter::new(minimal)),
             OutputFormat::Gitlab => Box::<GitlabOutputFormatter>::default(),
             OutputFormat::Unix => Box::<UnixOutputFormatter>::default(),
-            OutputFormat::Default => Box::new(DefaultOutputFormatter),
+            OutputFormat::Default => Box::new(DefaultOutputFormatter::new(minimal)),
             OutputFormat::Stylish => Box::<StylishOutputFormatter>::default(),
             OutputFormat::JUnit => Box::<JUnitOutputFormatter>::default(),
         }
@@ -235,5 +235,13 @@ mod test {
             let args_ref: Vec<&str> = args_vec.iter().map(std::string::String::as_str).collect();
             Tester::new().with_cwd(TEST_CWD.into()).test_and_snapshot(&args_ref);
         }
+    }
+
+    #[test]
+    fn test_output_formatter_default_minimal() {
+        let args_ok = &["--format=default", "--minimal", "ok.js"];
+        let args_fail = &["--format=default", "--minimal", "test.js"];
+
+        Tester::new().with_cwd(TEST_CWD.into()).test_and_snapshot_multiple(&[args_ok, args_fail]);
     }
 }

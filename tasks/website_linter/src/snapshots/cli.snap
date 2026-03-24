@@ -121,6 +121,8 @@ Arguments:
 ## Output
 - **`-f`**, **`--format`**=_`ARG`_ &mdash; 
   Use a specific output format. Possible values: `checkstyle`, `default`, `github`, `gitlab`, `json`, `junit`, `stylish`, `unix`
+- **`    --minimal`** &mdash; 
+  Hide successful summary lines such as `Found 0 warnings and 0 errors.` and timing output.
 
 
 

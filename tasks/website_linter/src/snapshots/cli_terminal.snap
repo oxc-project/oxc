@@ -74,6 +74,8 @@ Handle Warnings
 Output
     -f, --format=ARG          Use a specific output format. Possible values: `checkstyle`,
                               `default`, `github`, `gitlab`, `json`, `junit`, `stylish`, `unix`
+        --minimal             Hide successful summary lines such as `Found 0 warnings and 0 errors.`
+                              and timing output.
 
 Miscellaneous
         --silent              Do not display any diagnostics

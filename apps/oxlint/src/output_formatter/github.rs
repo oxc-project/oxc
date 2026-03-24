@@ -9,21 +9,31 @@ use super::default::get_diagnostic_result_output;
 use crate::output_formatter::InternalFormatter;
 
 #[derive(Debug)]
-pub struct GithubOutputFormatter;
+pub struct GithubOutputFormatter {
+    minimal: bool,
+}
+
+impl GithubOutputFormatter {
+    pub fn new(minimal: bool) -> Self {
+        Self { minimal }
+    }
+}
 
 impl InternalFormatter for GithubOutputFormatter {
     fn get_diagnostic_reporter(&self) -> Box<dyn DiagnosticReporter> {
-        Box::new(GithubReporter)
+        Box::new(GithubReporter { minimal: self.minimal })
     }
 }
 
 /// Formats reports using [GitHub Actions
 /// annotations](https://docs.github.com/en/actions/reference/workflow-commands-for-github-actions#setting-an-error-message). Useful for reporting in CI.
-struct GithubReporter;
+struct GithubReporter {
+    minimal: bool,
+}
 
 impl DiagnosticReporter for GithubReporter {
     fn finish(&mut self, result: &DiagnosticResult) -> Option<String> {
-        Some(get_diagnostic_result_output(result))
+        get_diagnostic_result_output(result, self.minimal)
     }
 
     fn render_error(&mut self, error: Error) -> Option<String> {
@@ -92,7 +102,7 @@ mod test {
 
     #[test]
     fn reporter_finish() {
-        let mut reporter = GithubReporter;
+        let mut reporter = GithubReporter { minimal: false };
 
         let result = reporter.finish(&DiagnosticResult::default());
 
@@ -100,8 +110,17 @@ mod test {
     }
 
     #[test]
+    fn reporter_finish_minimal() {
+        let mut reporter = GithubReporter { minimal: true };
+
+        let result = reporter.finish(&DiagnosticResult::default());
+
+        assert!(result.is_none());
+    }
+
+    #[test]
     fn reporter_finish_with_errors() {
-        let mut reporter = GithubReporter;
+        let mut reporter = GithubReporter { minimal: false };
 
         let result = reporter.finish(&DiagnosticResult::new(2, 1, false));
 
@@ -110,7 +129,7 @@ mod test {
 
     #[test]
     fn reporter_error() {
-        let mut reporter = GithubReporter;
+        let mut reporter = GithubReporter { minimal: false };
         let error = OxcDiagnostic::warn("error message")
             .with_label(Span::new(0, 8))
             .with_source_code(NamedSource::new("file://test.ts", "debugger;"));

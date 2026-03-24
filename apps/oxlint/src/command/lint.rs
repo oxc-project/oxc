@@ -250,6 +250,10 @@ pub struct OutputOptions {
     /// `checkstyle`, `default`, `github`, `gitlab`, `json`, `junit`, `stylish`, `unix`
     #[bpaf(long, short, fallback_with(default_output_format), hide_usage)]
     pub format: OutputFormat,
+
+    /// Hide successful summary lines such as `Found 0 warnings and 0 errors.` and timing output.
+    #[bpaf(switch, hide_usage)]
+    pub minimal: bool,
 }
 
 #[expect(clippy::unnecessary_wraps)]
@@ -600,7 +604,14 @@ mod lint_options {
     fn format() {
         let options = get_lint_options("-f json");
         assert_eq!(options.output_options.format, OutputFormat::Json);
+        assert!(!options.output_options.minimal);
         assert!(options.paths.is_empty());
+    }
+
+    #[test]
+    fn minimal() {
+        let options = get_lint_options("--minimal .");
+        assert!(options.output_options.minimal);
     }
 
     #[test]

@@ -166,7 +166,34 @@ pub struct RuntimeOptions {
     /// Do not exit with error when pattern is unmatched
     #[bpaf(switch, hide_usage)]
     pub no_error_on_unmatched_pattern: bool,
+    /// Hide the final timing summary line.
+    #[bpaf(switch, hide_usage)]
+    pub minimal: bool,
     /// Number of threads to use. Set to 1 for using only 1 CPU core.
     #[bpaf(argument("INT"), hide_usage)]
     pub threads: Option<usize>,
+}
+
+#[cfg(test)]
+mod runtime_options {
+    use super::{RuntimeOptions, format_command};
+
+    fn get_runtime_options(arg: &str) -> RuntimeOptions {
+        let args = arg.split(' ').map(std::string::ToString::to_string).collect::<Vec<_>>();
+        format_command().run_inner(args.as_slice()).unwrap().runtime_options
+    }
+
+    #[test]
+    fn default() {
+        let options = get_runtime_options(".");
+        assert!(!options.no_error_on_unmatched_pattern);
+        assert!(!options.minimal);
+        assert!(options.threads.is_none());
+    }
+
+    #[test]
+    fn minimal() {
+        let options = get_runtime_options("--minimal .");
+        assert!(options.minimal);
+    }
 }

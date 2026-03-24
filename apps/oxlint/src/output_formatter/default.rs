@@ -9,7 +9,9 @@ use oxc_linter::table::RuleTable;
 use rustc_hash::FxHashSet;
 
 #[derive(Debug)]
-pub struct DefaultOutputFormatter;
+pub struct DefaultOutputFormatter {
+    minimal: bool,
+}
 
 impl InternalFormatter for DefaultOutputFormatter {
     fn all_rules(&self, enabled_rules: FxHashSet<&str>) -> Option<String> {
@@ -25,6 +27,10 @@ impl InternalFormatter for DefaultOutputFormatter {
     }
 
     fn lint_command_info(&self, lint_command_info: &super::LintCommandInfo) -> Option<String> {
+        if self.minimal {
+            return None;
+        }
+
         let time = Self::get_execution_time(&lint_command_info.start_time);
         let s = if lint_command_info.number_of_files == 1 { "" } else { "s" };
 
@@ -43,18 +49,22 @@ impl InternalFormatter for DefaultOutputFormatter {
 
     #[cfg(not(any(test, feature = "testing")))]
     fn get_diagnostic_reporter(&self) -> Box<dyn DiagnosticReporter> {
-        Box::new(GraphicalReporter::default())
+        Box::new(GraphicalReporter::new(self.minimal))
     }
 
     #[cfg(any(test, feature = "testing"))]
     fn get_diagnostic_reporter(&self) -> Box<dyn DiagnosticReporter> {
         use crate::output_formatter::default::test_implementation::GraphicalReporterTester;
 
-        Box::new(GraphicalReporterTester::default())
+        Box::new(GraphicalReporterTester::new(self.minimal))
     }
 }
 
 impl DefaultOutputFormatter {
+    pub fn new(minimal: bool) -> Self {
+        Self { minimal }
+    }
+
     fn get_execution_time(duration: &Duration) -> String {
         let ms = duration.as_millis();
         if ms < 1000 { format!("{ms}ms") } else { format!("{:.1}s", duration.as_secs_f64()) }
@@ -67,17 +77,24 @@ impl DefaultOutputFormatter {
 #[cfg_attr(all(not(test), feature = "testing"), expect(dead_code))]
 struct GraphicalReporter {
     handler: GraphicalReportHandler,
+    minimal: bool,
 }
 
 impl Default for GraphicalReporter {
     fn default() -> Self {
-        Self { handler: GraphicalReportHandler::new() }
+        Self::new(false)
+    }
+}
+
+impl GraphicalReporter {
+    fn new(minimal: bool) -> Self {
+        Self { handler: GraphicalReportHandler::new(), minimal }
     }
 }
 
 impl DiagnosticReporter for GraphicalReporter {
     fn finish(&mut self, result: &DiagnosticResult) -> Option<String> {
-        Some(get_diagnostic_result_output(result))
+        get_diagnostic_result_output(result, self.minimal)
     }
 
     fn render_error(&mut self, error: Error) -> Option<String> {
@@ -87,7 +104,14 @@ impl DiagnosticReporter for GraphicalReporter {
     }
 }
 
-pub(super) fn get_diagnostic_result_output(result: &DiagnosticResult) -> String {
+pub(super) fn get_diagnostic_result_output(
+    result: &DiagnosticResult,
+    minimal: bool,
+) -> Option<String> {
+    if minimal && result.warnings_count() + result.errors_count() == 0 {
+        return None;
+    }
+
     let mut output = String::new();
 
     if result.warnings_count() + result.errors_count() > 0 {
@@ -112,7 +136,7 @@ pub(super) fn get_diagnostic_result_output(result: &DiagnosticResult) -> String 
         );
     }
 
-    output
+    Some(output)
 }
 
 #[cfg(any(test, feature = "testing"))]
@@ -127,6 +151,13 @@ mod test_implementation {
     #[derive(Default)]
     pub struct GraphicalReporterTester {
         diagnostics: Vec<Error>,
+        minimal: bool,
+    }
+
+    impl GraphicalReporterTester {
+        pub fn new(minimal: bool) -> Self {
+            Self { diagnostics: Vec::new(), minimal }
+        }
     }
 
     impl DiagnosticReporter for GraphicalReporterTester {
@@ -145,7 +176,9 @@ mod test_implementation {
                 handler.render_report(&mut output, diagnostic.as_ref()).unwrap();
             }
 
-            output.push_str(&get_diagnostic_result_output(result));
+            if let Some(summary) = get_diagnostic_result_output(result, self.minimal) {
+                output.push_str(&summary);
+            }
 
             Some(output)
         }
@@ -170,7 +203,7 @@ mod test {
 
     #[test]
     fn all_rules() {
-        let formatter = DefaultOutputFormatter;
+        let formatter = DefaultOutputFormatter::new(false);
         let result = formatter.all_rules(FxHashSet::default());
 
         assert!(result.is_some());
@@ -178,7 +211,7 @@ mod test {
 
     #[test]
     fn lint_command_info() {
-        let formatter = DefaultOutputFormatter;
+        let formatter = DefaultOutputFormatter::new(false);
         let result = formatter.lint_command_info(&LintCommandInfo {
             number_of_files: 5,
             number_of_rules: Some(10),
@@ -195,7 +228,7 @@ mod test {
 
     #[test]
     fn lint_command_info_unknown_rules() {
-        let formatter = DefaultOutputFormatter;
+        let formatter = DefaultOutputFormatter::new(false);
         let result = formatter.lint_command_info(&LintCommandInfo {
             number_of_files: 5,
             number_of_rules: None,
@@ -215,6 +248,15 @@ mod test {
 
         assert!(result.is_some());
         assert_eq!(result.unwrap(), "Found 0 warnings and 0 errors.\n");
+    }
+
+    #[test]
+    fn reporter_finish_no_results_minimal() {
+        let mut reporter = GraphicalReporter::new(true);
+
+        let result = reporter.finish(&DiagnosticResult::default());
+
+        assert!(result.is_none());
     }
 
     #[test]
@@ -248,5 +290,18 @@ mod test {
             result.unwrap(),
             "\nFound 6 warnings and 4 errors.\nExceeded maximum number of warnings. Found 6.\n"
         );
+    }
+
+    #[test]
+    fn lint_command_info_minimal() {
+        let formatter = DefaultOutputFormatter::new(true);
+        let result = formatter.lint_command_info(&LintCommandInfo {
+            number_of_files: 5,
+            number_of_rules: Some(10),
+            threads_count: 12,
+            start_time: Duration::new(1, 0),
+        });
+
+        assert!(result.is_none());
     }
 }

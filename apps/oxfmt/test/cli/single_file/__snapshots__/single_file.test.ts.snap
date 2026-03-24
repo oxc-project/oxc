@@ -16,6 +16,19 @@ Finished in <variable>ms on 1 files using 1 threads.
 
 --------------------
 --------------------
+arguments: --check --minimal simple.js
+working directory: single_file/fixtures
+exit code: 1
+--- STDOUT ---------
+Checking formatting...
+
+simple.js (<variable>ms)
+
+Format issues found in above 1 files. Run without \`--check\` to fix.
+--- STDERR ---------
+
+--------------------
+--------------------
 arguments: --list-different simple.js
 working directory: single_file/fixtures
 exit code: 1

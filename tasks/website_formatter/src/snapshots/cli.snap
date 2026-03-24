@@ -49,6 +49,8 @@ search: false
 ## Runtime Options
 - **`    --no-error-on-unmatched-pattern`** &mdash; 
   Do not exit with error when pattern is unmatched
+- **`    --minimal`** &mdash; 
+  Hide the final timing summary line.
 - **`    --threads`**=_`INT`_ &mdash; 
   Number of threads to use. Set to 1 for using only 1 CPU core.
 

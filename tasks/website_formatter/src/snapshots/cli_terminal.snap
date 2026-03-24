@@ -28,6 +28,7 @@ Ignore Options
 
 Runtime Options
         --no-error-on-unmatched-pattern  Do not exit with error when pattern is unmatched
+        --minimal            Hide the final timing summary line.
         --threads=INT        Number of threads to use. Set to 1 for using only 1 CPU core.
 
 Available positional items:
