@@ -6,17 +6,21 @@ use oxc_ast::Comment;
 
 use crate::{JsxOptions, JsxRuntime, TransformCtx, TypeScriptOptions};
 
-/// Scan through all comments and find the following pragmas:
+/// Scan through leading comments and find the following pragmas:
 ///
 /// * @jsx Preact.h
 /// * @jsxRuntime classic / automatic
 /// * @jsxImportSource custom-jsx-library
 /// * @jsxFrag Preact.Fragment
 ///
+/// The caller should only pass comments before the first statement,
+/// since pragmas are file-level directives. This is aligned with TypeScript and SWC.
+/// <https://github.com/oxc-project/oxc/issues/20669>
+///
 /// The comment does not need to be a JSDoc comment,
 /// otherwise `JSDoc` could be used instead.
 ///
-/// This behavior is aligned with ESBuild.
+/// Multiple pragmas in a single comment are accepted (aligned with esbuild).
 /// Babel is less liberal - it doesn't accept multiple pragmas in a single line
 /// e.g. `/** @jsx h @jsxRuntime classic */`
 /// <https://github.com/oxc-project/oxc/issues/10955>
