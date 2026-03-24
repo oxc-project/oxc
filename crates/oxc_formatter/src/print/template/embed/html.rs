@@ -23,14 +23,17 @@ const PLACEHOLDER_PREFIX: &str = "PRETTIER_HTML_PLACEHOLDER_";
 const PLACEHOLDER_SUFFIX: &str = "_IN_JS";
 const COUNTER: &str = "0";
 
-/// Format an HTML-in-JS template literal via the Doc->IR path with placeholder replacement.
+/// Format an HTML(Angular)-in-JS template literal via the Doc->IR path with placeholder replacement.
 ///
 /// Uses `.cooked` values (unlike CSS which uses `.raw`), joins quasis with
-/// `PRETTIER_HTML_PLACEHOLDER_{N}_0_IN_JS` markers, formats as HTML,
+/// `PRETTIER_HTML_PLACEHOLDER_{N}_0_IN_JS` markers, formats via the given `language`,
 /// then replaces placeholder occurrences in the resulting IR with `${expr}` Docs.
+///
+/// Supports both `"tagged-html"` (html-in-js) and `"angular-template"` (`@Component({ template })`).
 pub(super) fn format_html_doc<'a>(
     quasi: &AstNode<'a, TemplateLiteral<'a>>,
     f: &mut Formatter<'_, 'a>,
+    language: &str,
 ) -> bool {
     let quasis = &quasi.quasis;
     let expressions: Vec<_> = quasi.expressions().iter().collect();
@@ -59,7 +62,7 @@ pub(super) fn format_html_doc<'a>(
         })) = f.context().external_callbacks().format_embedded_doc(
             allocator,
             group_id_builder,
-            "tagged-html",
+            language,
             &[cooked],
         )
         else {
@@ -113,7 +116,7 @@ pub(super) fn format_html_doc<'a>(
     })) = f.context().external_callbacks().format_embedded_doc(
         allocator,
         group_id_builder,
-        "tagged-html",
+        language,
         &[joined],
     )
     else {

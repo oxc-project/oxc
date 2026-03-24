@@ -1,4 +1,4 @@
-use javascript_globals::GLOBALS;
+use javascript_globals::GLOBALS_BUILTIN;
 
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -75,8 +75,7 @@ impl Rule for NoRedeclare {
     }
 
     fn run_once(&self, ctx: &LintContext) {
-        // Cache `GLOBALS["builtin"]`, to avoid repeatedly fetching it (hashmap lookup) in the loop below
-        let builtin_globals = if self.builtin_globals { Some(&GLOBALS["builtin"]) } else { None };
+        let builtin_globals = if self.builtin_globals { Some(&GLOBALS_BUILTIN) } else { None };
 
         for symbol_id in ctx.scoping().symbol_ids() {
             let name = ctx.scoping().symbol_name(symbol_id);

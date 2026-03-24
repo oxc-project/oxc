@@ -152,10 +152,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     if let Some((_, implements)) = implements.as_mut() {
                         implements.extend(self.parse_ts_implements_clause());
                     } else {
-                        implements = Some((
-                            implements_kw_span,
-                            self.ast.vec_from_iter(self.parse_ts_implements_clause()),
-                        ));
+                        implements = Some((implements_kw_span, self.parse_ts_implements_clause()));
                     }
                 }
                 _ => break,
@@ -170,7 +167,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     fn parse_extends_clause(&mut self) -> Vec<'a, TSInterfaceHeritage<'a>> {
         self.bump_any(); // bump `extends`
 
-        let mut extends = self.ast.vec();
+        let mut extends = self.ast.vec_with_capacity(1);
         loop {
             let span = self.start_span();
             let mut extend = self.parse_lhs_expression_or_higher();

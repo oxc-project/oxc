@@ -49,7 +49,7 @@ rayon = { workspace = true }
 rustc-hash = { workspace = true }
 schemars = { workspace = true }
 serde = { workspace = true }
-serde_json = { workspace = true }
+serde_json = { workspace = true, features = ["unbounded_depth"] }
 simdutf8 = { workspace = true }
 sort-package-json = { workspace = true }
 oxc-toml = { workspace = true }
