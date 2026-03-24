@@ -18,11 +18,15 @@ import type {
 } from "./config.generated";
 
 // --- Type exports ---
-// Only exports top level types for now
 
-// The same naming convention as `oxlint` for consistency
-export type OxfmtConfig = Oxfmtrc;
-export type { FormatConfig } from "./config.generated";
+// Re-export all generated config types.
+// So that downstream libraries can reference them in declaration emit without TS4058/TS4082 errors.
+export type * from "./config.generated";
+
+// The same naming convention as `oxlint` for consistency.
+// Using `interface extends` so that TypeScript displays `OxfmtConfig` in errors
+// and hovers instead of resolving to the generated `Oxfmtrc` name.
+export interface OxfmtConfig extends Oxfmtrc {}
 
 // Backward-compatible type aliases using `Options` suffix.
 

@@ -136,7 +136,7 @@ jobs:
       - uses: taiki-e/checkout-action@83ed61bfbe2b8abbb3c66e8b65b1335484c70009 # v1.4.1
 
       - name: Install cross
-        uses: taiki-e/install-action@c12d62a803cbdfe2e7263af15f5a9548065cb4f2 # v2.69.3
+        uses: taiki-e/install-action@06203676c62f0d3c765be3f2fcfbebbcb02d09f5 # v2.69.6
         with:
           tool: cross # cross installs the latest rust toolchain
 
@@ -145,7 +145,7 @@ jobs:
       - name: Add Rust Target
         run: rustup target add ${{ matrix.target }}
 
-      - uses: oxc-project/setup-node@b8d296d30eafd1ae2968fab67aead472a1dbf6d4 # v1.0.7
+      - uses: oxc-project/setup-node@6734a6bb55d651e0730f908358c959c2e80be184 # v1.1.0
 
       # For cargo-zigbuild in musl builds.
       - uses: goto-bus-stop/setup-zig@abea47f85e598557f500fa1fd2ab7464fcb39406 # v2.2.1
@@ -288,7 +288,7 @@ jobs:
           path: artifacts
           pattern: oxlint-bindings-*
 
-      - uses: oxc-project/setup-node@b8d296d30eafd1ae2968fab67aead472a1dbf6d4 # v1.0.7
+      - uses: oxc-project/setup-node@6734a6bb55d651e0730f908358c959c2e80be184 # v1.1.0
 
       - name: Generate oxlint JS build
         working-directory: apps/oxlint
@@ -429,7 +429,7 @@ jobs:
       - uses: taiki-e/checkout-action@83ed61bfbe2b8abbb3c66e8b65b1335484c70009 # v1.4.1
 
       - name: Install cross
-        uses: taiki-e/install-action@c12d62a803cbdfe2e7263af15f5a9548065cb4f2 # v2.69.3
+        uses: taiki-e/install-action@06203676c62f0d3c765be3f2fcfbebbcb02d09f5 # v2.69.6
         with:
           tool: cross # cross installs the latest rust toolchain
 
@@ -438,7 +438,7 @@ jobs:
       - name: Add Rust Target
         run: rustup target add ${{ matrix.target }}
 
-      - uses: oxc-project/setup-node@b8d296d30eafd1ae2968fab67aead472a1dbf6d4 # v1.0.7
+      - uses: oxc-project/setup-node@6734a6bb55d651e0730f908358c959c2e80be184 # v1.1.0
 
       # For cargo-zigbuild in musl builds.
       - uses: goto-bus-stop/setup-zig@abea47f85e598557f500fa1fd2ab7464fcb39406 # v2.2.1
@@ -579,7 +579,7 @@ jobs:
           path: artifacts
           pattern: oxfmt-bindings-*
 
-      - uses: oxc-project/setup-node@b8d296d30eafd1ae2968fab67aead472a1dbf6d4 # v1.0.7
+      - uses: oxc-project/setup-node@6734a6bb55d651e0730f908358c959c2e80be184 # v1.1.0
 
       - name: Generate oxfmt JS build
         working-directory: apps/oxfmt

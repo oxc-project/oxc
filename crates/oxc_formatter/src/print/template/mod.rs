@@ -315,7 +315,7 @@ pub struct FormatTemplateExpressionOptions {
     pub(crate) after_new_line: bool,
 }
 
-pub(super) enum TemplateExpression<'a, 'b> {
+pub enum TemplateExpression<'a, 'b> {
     Expression(&'b AstNode<'a, Expression<'a>>),
     TSType(&'b AstNode<'a, TSType<'a>>),
 }

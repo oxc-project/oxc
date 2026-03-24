@@ -4,6 +4,14 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.122.0] - 2026-03-23
+
+### ⚡ Performance
+
+- 9a622c7 linter/plugins: Lazy deserialize tokens and comments (#20474) (overlookmotel)
+- c6ea0a0 ast: Place `NodeId` field after `Span` in structs (#20584) (overlookmotel)
+- d176ecc napi/parser, oxlint/plugins: Shorten deserializer for `WithClause` (#20575) (overlookmotel)
+
 ## [0.120.0] - 2026-03-16
 
 ### ⚡ Performance

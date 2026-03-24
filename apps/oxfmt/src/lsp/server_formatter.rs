@@ -275,7 +275,7 @@ impl Tool for ServerFormatter {
                 &file_content
             };
 
-            let Some(result) = self.format_file(&path, source_text, language_id) else {
+            let Some(result) = self.format_file(&path, source_text) else {
                 return Ok(vec![]); // No formatting for this file (unsupported or ignored)
             };
 
@@ -341,27 +341,18 @@ impl ServerFormatter {
         }
     }
 
-    fn format_file(
-        &self,
-        path: &Path,
-        source_text: &str,
-        language_id: &LanguageId,
-    ) -> Option<FormatResult> {
+    fn format_file(&self, path: &Path, source_text: &str) -> Option<FormatResult> {
         if self.is_ignored(path) {
             debug!("File is ignored: {}", path.display());
             return None;
         }
 
-        // Prefer language_id over file extension to determine the format strategy.
-        // This allows e.g. a `.txt` file opened as `typescript` to be formatted.
-        let strategy_opt = super::apply_language_id_extension(language_id, path)
-            .and_then(|p| FormatFileStrategy::try_from(p).ok())
-            .or_else(|| FormatFileStrategy::try_from(path.to_path_buf()).ok());
-
-        let Some(strategy) = strategy_opt else {
+        // Determine format strategy from file path (supports JS/TS, JSON, YAML, CSS, etc.)
+        let Ok(strategy) = FormatFileStrategy::try_from(path.to_path_buf()) else {
             debug!("Unsupported file type for formatting: {}", path.display());
             return None;
         };
+
         // Resolve options for this file
         let resolved_options = self.config_resolver.resolve(&strategy);
         debug!("resolved_options = {resolved_options:?}");

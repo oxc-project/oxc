@@ -211,9 +211,11 @@ fn format_union_types<'a>(
     let mut node_iter = node.iter().peekable();
     while let Some(element) = node_iter.next() {
         let element_span = element.span();
+        let has_trailing_suppression_comment =
+            f.comments().has_trailing_suppression_comment(element_span.end);
 
-        if suppressed_node_span == element_span {
-            let comments = f.context().comments().comments_before(suppressed_node_span.start);
+        if suppressed_node_span == element_span || has_trailing_suppression_comment {
+            let comments = f.context().comments().comments_before(element_span.start);
             FormatLeadingComments::Comments(comments).fmt(f);
             let needs_parentheses = element.needs_parentheses(f);
             if needs_parentheses {

@@ -35,7 +35,8 @@ import {
 } from "../src-js/plugins/tokens_methods.ts";
 
 import type { Node } from "../src-js/plugins/types.ts";
-import type { Token, TokenOrComment } from "../src-js/plugins/tokens.ts";
+import type { Token } from "../src-js/plugins/tokens.ts";
+import type { TokenOrComment } from "../src-js/plugins/tokens_and_comments.ts";
 import type { CountOptions, SkipOptions } from "../src-js/plugins/tokens_methods.ts";
 
 type IsExact<T, U> = [T] extends [U] ? ([U] extends [T] ? true : false) : false;

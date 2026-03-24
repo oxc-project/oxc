@@ -7,3 +7,32 @@ function demo(): { a: number } {
 
 type Complex = {a:1,b:2,c:3}; // prettier-ignore
 interface Cfg {a:number;b:string;} // prettier-ignore
+
+if (
+  await fetchEntryByCompositeKey(source, primaryToken, previewTextValue, groupToken, rangeStartValue, rangeEndValue) // prettier-ignore
+) {
+}
+
+function sectionsDemo() {
+  const data = {
+    primarySection: { id: 'primarySection', name: 'Primary Section', href: '/primary-section', icon: PrimarySectionIcon }, // prettier-ignore
+  };
+}
+
+const conditionalTest =
+  fetchEntryByCompositeKey(source, primaryToken, previewTextValue, groupToken, rangeStartValue, rangeEndValue) // prettier-ignore
+    ? leftValue
+    : rightValue;
+
+const conditionalConsequent = condition
+  ? fetchEntryByCompositeKey(source, primaryToken, previewTextValue, groupToken, rangeStartValue, rangeEndValue) // prettier-ignore
+  : rightValue;
+
+type UnionCase =
+  {a:1,b:2,c:3,d:4,e:5} // prettier-ignore
+  | Other;
+
+interface signatureLineCase {
+  value: SomeVeryLongTypeName<FirstParam, SecondParam, ThirdParam, FourthParam> // prettier-ignore
+  method(): SomeVeryLongTypeName<FirstParam, SecondParam, ThirdParam, FourthParam> // prettier-ignore
+}
