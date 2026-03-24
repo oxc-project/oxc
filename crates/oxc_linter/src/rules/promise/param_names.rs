@@ -14,6 +14,7 @@ fn param_names_diagnostic(span: Span, pattern: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
         "Promise constructor parameters must be named to match `{pattern}`"
     ))
+    .with_help("Rename the Promise constructor parameters to match the required naming convention (e.g. `resolve`, `reject`).")
     .with_label(span)
 }
 
