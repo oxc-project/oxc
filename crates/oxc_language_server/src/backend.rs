@@ -20,8 +20,8 @@ use tower_lsp_server::{
         DidSaveTextDocumentParams, DocumentDiagnosticParams, DocumentDiagnosticReport,
         DocumentDiagnosticReportKind, DocumentDiagnosticReportResult, DocumentFormattingParams,
         ExecuteCommandParams, FullDocumentDiagnosticReport, InitializeParams, InitializeResult,
-        InitializedParams, MessageType, RelatedFullDocumentDiagnosticReport, ServerInfo, TextEdit,
-        Uri,
+        InitializedParams, MessageType, RelatedFullDocumentDiagnosticReport, ServerInfo,
+        TextDocumentContentChangeEvent, TextEdit, Uri,
     },
 };
 use tracing::{debug, error, info, warn};
@@ -231,7 +231,10 @@ impl LanguageServer for Backend {
                 vec![serde_json::Value::Null; needed_configurations.len()]
             };
 
-            let known_files = self.file_system.read().await.keys();
+            // Snapshot all open-file URIs in one read lock so we don't need to
+            // re-acquire the lock just to iterate the list of URIs. Individual
+            // document lookups still take their own read lock per URI.
+            let known_uris = self.file_system.read().await.keys();
             // will only be filled when using push diagnostic model
             let mut new_diagnostics = Vec::new();
 
@@ -248,18 +251,23 @@ impl LanguageServer for Backend {
                     continue;
                 }
 
-                for uri in &known_files {
+                for uri in &known_uris {
                     // Check if this worker is the most specific one for this URI
                     let responsible_worker = Self::find_worker_for_uri(workers, uri);
                     if responsible_worker.is_none_or(|w| !std::ptr::eq(w, worker)) {
                         continue;
                     }
-                    let content =
-                        self.file_system.read().await.get(uri).map(|(_, content)| content);
-                    let diagnostics = worker.run_diagnostic(uri, content.as_deref()).await;
+                    let document = {
+                        let fs_guard = self.file_system.read().await;
+                        fs_guard.get_document(uri)
+                    };
+                    let diagnostics = worker.run_diagnostic(&document).await;
                     match diagnostics {
                         Err(err) => {
-                            error!("running diagnostics for {} failed: {err}", uri.as_str());
+                            error!(
+                                "running diagnostics for {} failed: {err}",
+                                document.uri.as_str()
+                            );
                             if self.capabilities.get().is_some_and(|cap| cap.show_message) {
                                 self.client.show_message(MessageType::ERROR, err).await;
                             }
@@ -620,14 +628,13 @@ impl LanguageServer for Backend {
             return;
         };
 
-        let content = if let Some(text) = params.text {
-            Some(text)
-        } else {
-            self.file_system.read().await.get(&uri).map(|(_, content)| content)
-        };
+        if let Some(content) = params.text {
+            self.file_system.write().await.set(uri.clone(), content);
+        }
 
+        let document = self.file_system.read().await.get_document(&uri);
         if self.capabilities.get().is_some_and(|cap| cap.diagnostic_mode == DiagnosticMode::Push) {
-            match worker.run_diagnostic_on_save(&uri, content.as_deref()).await {
+            match worker.run_diagnostic_on_save(&document).await {
                 Err(err) => {
                     error!("running diagnostics for {} failed: {err}", uri.as_str());
                     if self.capabilities.get().is_some_and(|cap| cap.show_message) {
@@ -653,14 +660,19 @@ impl LanguageServer for Backend {
         let Some(worker) = Self::find_worker_for_uri(&workers, &uri) else {
             return;
         };
-        let content = params.content_changes.first().map(|c| c.text.clone());
-
-        if let Some(content) = &content {
-            self.file_system.write().await.set(uri.clone(), content.clone());
+        if let Some(content) = params
+            .content_changes
+            .into_iter()
+            .next()
+            .map(|c: TextDocumentContentChangeEvent| c.text)
+        {
+            self.file_system.write().await.set(uri.clone(), content);
         }
 
+        let document = self.file_system.read().await.get_document(&uri);
+
         if self.capabilities.get().is_some_and(|cap| cap.diagnostic_mode == DiagnosticMode::Push) {
-            match worker.run_diagnostic_on_change(&uri, content.as_deref()).await {
+            match worker.run_diagnostic_on_change(&document).await {
                 Err(err) => {
                     error!("running diagnostics for {} failed: {err}", uri.as_str());
                     if self.capabilities.get().is_some_and(|cap| cap.show_message) {
@@ -704,11 +716,13 @@ impl LanguageServer for Backend {
         self.file_system.write().await.set_with_language(
             uri.clone(),
             LanguageId::new(params.text_document.language_id),
-            content.clone(),
+            content,
         );
 
+        let document = self.file_system.read().await.get_document(&uri);
+
         if self.capabilities.get().is_some_and(|cap| cap.diagnostic_mode == DiagnosticMode::Push) {
-            match worker.run_diagnostic(&uri, Some(&content)).await {
+            match worker.run_diagnostic(&document).await {
                 Err(err) => {
                     error!("running diagnostics for {} failed: {err}", uri.as_str());
                     if self.capabilities.get().is_some_and(|cap| cap.show_message) {
@@ -822,8 +836,8 @@ impl LanguageServer for Backend {
             )));
         };
 
-        let content = self.file_system.read().await.get(uri).map(|(_, content)| content);
-        let diagnostics = worker.run_diagnostic(uri, content.as_deref()).await;
+        let document = self.file_system.read().await.get_document(uri);
+        let diagnostics = worker.run_diagnostic(&document).await;
 
         let diagnostics = match diagnostics {
             Err(err) => {
@@ -886,12 +900,8 @@ impl LanguageServer for Backend {
             return Ok(None);
         };
 
-        let fs_entry = self.file_system.read().await.get(uri);
-        let (language_id, content) = match fs_entry {
-            Some((id, content)) => (id, Some(content)),
-            None => (LanguageId::default(), None),
-        };
-        match worker.format_file(uri, &language_id, content.as_deref()).await {
+        let document = self.file_system.read().await.get_document(uri);
+        match worker.format_file(&document).await {
             Ok(edits) => {
                 if edits.is_empty() {
                     return Ok(None);
