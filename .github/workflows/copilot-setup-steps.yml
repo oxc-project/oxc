@@ -35,4 +35,4 @@ jobs:
           tools: just,cargo-insta,typos-cli,cargo-shear@1.11.2,ast-grep
           components: clippy rust-docs rustfmt rust-analyzer
 
-      - uses: oxc-project/setup-node@b8d296d30eafd1ae2968fab67aead472a1dbf6d4 # v1.0.7
+      - uses: oxc-project/setup-node@6734a6bb55d651e0730f908358c959c2e80be184 # v1.1.0
