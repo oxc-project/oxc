@@ -604,20 +604,6 @@ impl<'a> JsxImpl<'a> {
                     JSXAttributeItem::Attribute(attr) => {
                         let JSXAttribute { span, name, value, .. } = attr.unbox();
                         match &name {
-                            JSXAttributeName::Identifier(ident)
-                                if self.options.development
-                                    && self.options.jsx_self_plugin
-                                    && ident.name == "__self" =>
-                            {
-                                JsxSelf::report_error(ident.span, ctx);
-                            }
-                            JSXAttributeName::Identifier(ident)
-                                if self.options.development
-                                    && self.options.jsx_source_plugin
-                                    && ident.name == "__source" =>
-                            {
-                                JsxSource::report_error(ident.span, ctx);
-                            }
                             JSXAttributeName::Identifier(ident) if ident.name == "key" => {
                                 if value.is_none() {
                                     ctx.state.error(diagnostics::valueless_key(ident.span));
