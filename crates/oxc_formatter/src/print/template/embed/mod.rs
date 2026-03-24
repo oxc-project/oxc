@@ -22,7 +22,7 @@ pub(super) fn try_format_embedded_template<'a>(
     match get_tag_name(&tagged.tag) {
         Some("css" | "styled") => css::format_css_doc(tagged.quasi(), f),
         Some("gql" | "graphql") => graphql::format_graphql_doc(tagged.quasi(), f),
-        Some("html") => html::format_html_doc(tagged.quasi(), f),
+        Some("html") => html::format_html_doc(tagged.quasi(), f, "tagged-html"),
         Some("md" | "markdown") => try_embed_markdown(tagged, f),
         _ => false,
     }
@@ -71,7 +71,7 @@ pub(super) fn try_format_comment_embedded<'a>(
         return false;
     };
     match language {
-        "html" => html::format_html_doc(template, f),
+        "html" => html::format_html_doc(template, f, "tagged-html"),
         "graphql" => graphql::format_graphql_doc(template, f),
         _ => false,
     }
@@ -159,13 +159,7 @@ pub(super) fn try_format_angular_component<'a>(
     f: &mut Formatter<'_, 'a>,
 ) -> bool {
     match get_angular_component_language(template_literal) {
-        Some("angular-template") => {
-            if !template_literal.is_no_substitution_template() {
-                return false;
-            }
-            let template_content = template_literal.quasis()[0].value.raw.as_str();
-            format_embedded_template(f, "angular-template", template_content)
-        }
+        Some("angular-template") => html::format_html_doc(template_literal, f, "angular-template"),
         Some("angular-styles") => css::format_css_doc(template_literal, f),
         _ => false,
     }

@@ -84,7 +84,7 @@ pub fn to_format_elements_for_template<'a>(
                 html_has_multiple_root_elements: None,
             })
         }
-        "tagged-html" => {
+        "tagged-html" | "angular-template" => {
             let (mut ir, metadata) = convert(
                 doc_jsons.into_iter().next().expect("Doc JSON for HTML"),
                 allocator,
@@ -95,7 +95,7 @@ pub fn to_format_elements_for_template<'a>(
             let placeholder_count = postprocess(
                 &mut ir,
                 allocator,
-                // HTML uses `.cooked` values, so template chars need escaping
+                // HTML/Angular use `.cooked` values, so template chars need escaping
                 true,
                 Some(("PRETTIER_HTML_PLACEHOLDER_", "_IN_JS")),
             );

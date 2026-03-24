@@ -82,6 +82,20 @@
 | :--- | :--- |
 | [prettier/js/multiparser-html/issue-10691.js](diffs/html-in-js/prettier__js__multiparser-html__issue-10691.js.md) | js-in-html(`<script>`)-in-js needs lot more work; Please see oxc_formatter/src/print/template/embed/html.rs |
 
+## angular-in-js
+
+### Option 1: 6/6 (100.00%)
+
+```json
+{"printWidth":80}
+```
+
+### Option 2: 6/6 (100.00%)
+
+```json
+{"printWidth":100,"htmlWhitespaceSensitivity":"ignore"}
+```
+
 ## xxx-in-js-comment
 
 ### Option 1: 5/5 (100.00%)

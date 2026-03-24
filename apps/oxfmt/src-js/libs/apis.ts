@@ -26,7 +26,7 @@ async function loadPrettier(): Promise<typeof import("prettier")> {
 
   prettierCache = await import("prettier");
 
-  // NOTE: This is needed for html-in-js formatting to work correctly.
+  // NOTE: This is needed for xxx-in-js formatting to work correctly.
   //
   // Prettier internally extends `options` with hidden fields for embedded-formatters during printing.
   // However, `__debug.printToDoc()` runs `normalizeFormatOptions()` which strips unknown keys.
@@ -39,13 +39,13 @@ async function loadPrettier(): Promise<typeof import("prettier")> {
   // there should be no side effects on other calls that don't set these fields.
   // @ts-expect-error: Use internal API
   const { formatOptionsHiddenDefaults } = prettierCache.__internal;
-  // For html-in-js: Prevent attribute level formatting from running.
+  // For html(angular)-in-js: Prevent attribute level formatting from running.
   // (e.g., CSS in `style="..."` attributes, JS in `onclick="..."` event handlers)
   // This does NOT affect `<style>`/`<script>` tags, they are always formatted.
   // Ideally we'd only block JS attributes while allowing CSS attributes (because no nesting is possible in CSS),
   // but Prettier's `!options.parentParser` check is all-or-nothing.
   formatOptionsHiddenDefaults.parentParser = null;
-  // For html-in-js: Capture `htmlHasMultipleRootElements` from the HTML AST root during `__debug.printToDoc()`.
+  // For html(angular)-in-js: Capture `htmlHasMultipleRootElements` from the HTML AST root during `__debug.printToDoc()`.
   // This is used to decide whether to wrap content with `indent`.
   // Without this, we'd need either:
   // - double parse AST
@@ -160,8 +160,8 @@ export async function formatEmbeddedDoc({
     texts.map(async (text) => {
       const metadata: Record<string, unknown> = {};
 
-      // html-in-js specific options: see the comment in `loadPrettier()` for rationale
-      if (options.parser === "html") {
+      // html(angular)-in-js specific options: see the comment in `loadPrettier()` for rationale
+      if (options.parser === "html" || options.parser === "angular") {
         // Any truthy value works
         options.parentParser = "OXFMT";
         // https://github.com/prettier/prettier/blob/90983f40dce5e20beea4e5618b5e0426a6a7f4f0/src/language-js/embed/html.js#L42-L44
