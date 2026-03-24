@@ -20,6 +20,7 @@
     "generate-config-types": "node scripts/generate-config-types.ts"
   },
   "dependencies": {
+    "jiti": "^2.6.1",
     "prettier": "3.8.1",
     "prettier-plugin-tailwindcss": "0.0.0-insiders.3997fbd",
     "tinypool": "2.1.0"

@@ -1,5 +1,5 @@
 import { basename as pathBasename } from "node:path";
-import { pathToFileURL } from "node:url";
+import { createJiti } from "jiti";
 
 const isObject = (v: unknown) => typeof v === "object" && v !== null && !Array.isArray(v);
 
@@ -9,7 +9,7 @@ const VITE_OXFMT_CONFIG_FIELD = "fmt";
 /**
  * Load a JavaScript/TypeScript config file.
  *
- * Uses native Node.js `import()` to evaluate the config file.
+ * Uses `jiti` to evaluate the config file, which supports TypeScript out-of-the-box.
  * The config file should have a default export containing the oxfmt configuration object.
  *
  * For `vite.config.ts`, extracts the `.fmt` field from the default export.
@@ -19,11 +19,10 @@ const VITE_OXFMT_CONFIG_FIELD = "fmt";
  * @returns Config object, or `null` to signal "skip"
  */
 export async function loadJsConfig(path: string): Promise<object | null> {
-  // Bypass Node.js module cache to allow reloading changed config files (used for LSP)
-  const fileUrl = pathToFileURL(path);
-  fileUrl.searchParams.set("cache", Date.now().toString());
-
-  const { default: config } = await import(fileUrl.href);
+  // Bypass module cache by creating a fresh jiti instance
+  const jiti = createJiti(import.meta.url, { moduleCache: false, fsCache: false });
+  const module = (await jiti.import(path)) as { default: unknown };
+  const config = module.default;
 
   if (config === undefined) throw new Error("Configuration file has no default export.");
 

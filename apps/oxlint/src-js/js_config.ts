@@ -1,7 +1,8 @@
 import { basename as pathBasename } from "node:path";
+import { createJiti } from "jiti";
 
 import { getErrorMessage } from "./utils/utils.ts";
-import { DateNow, JSONStringify } from "./utils/globals.ts";
+import { JSONStringify } from "./utils/globals.ts";
 
 interface JsConfigResult {
   path: string;
@@ -95,12 +96,11 @@ function validateConfigExtends(root: object): void {
  */
 export async function loadJsConfigs(paths: string[]): Promise<string> {
   try {
-    const cacheKey = DateNow();
+    // Bypass module cache by creating a fresh jiti instance
+    const jiti = createJiti(import.meta.url, { moduleCache: false, fsCache: false });
     const results = await Promise.allSettled(
       paths.map(async (path): Promise<JsConfigResult> => {
-        // Bypass Node.js module cache to allow reloading changed config files (used for LSP, where we reload configs after important changes)
-        const fileUrl = new URL(`file://${path}?cache=${cacheKey}`);
-        const module = await import(fileUrl.href);
+        const module = (await jiti.import(path)) as { default: unknown };
         const config = module.default;
 
         if (config === undefined) {

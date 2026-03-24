@@ -59,6 +59,9 @@ importers:
 
   apps/oxfmt:
     dependencies:
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       prettier:
         specifier: 3.8.1
         version: 3.8.1
@@ -104,6 +107,10 @@ importers:
         version: 1.0.12
 
   apps/oxlint:
+    dependencies:
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
     devDependencies:
       '@arethetypeswrong/core':
         specifier: 'catalog:'
@@ -7977,8 +7984,7 @@ snapshots:
 
   iterare@1.2.1: {}
 
-  jiti@2.6.1:
-    optional: true
+  jiti@2.6.1: {}
 
   jquery@3.7.1: {}
 

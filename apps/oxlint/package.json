@@ -29,7 +29,7 @@
     "build-napi": "napi build --esm --platform --js ./bindings.js --dts ./bindings.d.ts --output-dir src-js --no-dts-cache",
     "build-napi-test": "pnpm run build-napi --features testing --profile coverage",
     "build-napi-release": "pnpm run build-napi --release --features allocator",
-    "build-js": "node scripts/build.ts",
+    "build-js": "tsx scripts/build.ts",
     "generate-config-types": "node scripts/generate-config-types.ts",
     "test": "vitest --dir ./test run",
     "init-conformance": "cd conformance; ./init.sh",
@@ -92,5 +92,8 @@
   },
   "engines": {
     "node": "^20.19.0 || >=22.12.0"
+  },
+  "dependencies": {
+    "jiti": "^2.6.1"
   }
 }
