@@ -741,7 +741,7 @@ impl RestrictedPath {
             return ImportNameResult::Allowed;
         }
 
-        let name = literal.value.to_str_lossy().into_owned().into();
+        let name = CompactStr::new(literal.value.to_str_lossy().as_ref());
         let unused_name = &CompactStr::from("__<>import_name_that_cant_be_used<>__");
 
         match self.is_name_span_allowed(unused_name) {
@@ -845,7 +845,7 @@ impl RestrictedPattern {
             return ImportNameResult::Allowed;
         }
 
-        let name = literal.value.to_str_lossy().into_owned().into();
+        let name = CompactStr::new(literal.value.to_str_lossy().as_ref());
         let unused_name = &CompactStr::from("__<>import_name_that_cant_be_used<>__");
 
         match self.is_name_span_allowed(unused_name) {

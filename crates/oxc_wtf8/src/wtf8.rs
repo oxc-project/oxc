@@ -802,33 +802,29 @@ fn is_surrogate_at(bytes: &[u8], i: usize) -> bool {
 ///
 /// Returns `(byte_offset, code_unit)` where `byte_offset` is the index of the `0xED` byte.
 fn next_lone_surrogate_in(bytes: &[u8], start: usize) -> Option<(usize, u16)> {
-    let mut i = start;
-    while i < bytes.len() {
-        let b = bytes[i];
-        // Fast path: if the byte is not 0xED, skip past the current UTF-8 sequence.
-        if b == SURROGATE_FIRST_BYTE {
-            if i + 2 < bytes.len() {
-                let b1 = bytes[i + 1];
-                if (SURROGATE_SECOND_BYTE_MIN..=SURROGATE_SECOND_BYTE_MAX).contains(&b1) {
-                    let b2 = bytes[i + 2];
-                    if (0x80..=0xBF).contains(&b2) {
-                        return Some((i, decode_surrogate(b1, b2)));
-                    }
+    let mut search_start = start;
+    // `0xED` is the only possible first byte of a lone-surrogate 3-byte sequence.
+    // Use a simple byte-search (LLVM/auto-vectorises this into a SIMD memchr) to skip
+    // large stretches of ASCII or non-ED multi-byte sequences in one pass, then only
+    // do the detailed three-byte validation when a candidate byte is found.
+    loop {
+        // Find next 0xED byte, skipping non-candidates efficiently.
+        // Use `bytes.get(search_start..)` to avoid panicking when `search_start > bytes.len()`.
+        let slice = bytes.get(search_start..)?;
+        let rel = slice.iter().position(|&b| b == SURROGATE_FIRST_BYTE)?;
+        let i = search_start + rel;
+        if i + 2 < bytes.len() {
+            let b1 = bytes[i + 1];
+            if (SURROGATE_SECOND_BYTE_MIN..=SURROGATE_SECOND_BYTE_MAX).contains(&b1) {
+                let b2 = bytes[i + 2];
+                if (0x80..=0xBF).contains(&b2) {
+                    return Some((i, decode_surrogate(b1, b2)));
                 }
             }
-            // Not a surrogate sequence (or truncated), skip as a 3-byte sequence.
-            i += 3;
-        } else if b < 0x80 {
-            i += 1;
-        } else if b < 0xE0 {
-            i += 2;
-        } else if b < 0xF0 {
-            i += 3;
-        } else {
-            i += 4;
         }
+        // Not a surrogate sequence (or truncated), skip past this 0xED byte.
+        search_start = i + 3;
     }
-    None
 }
 
 // ──────────────────────────────────────────────────────────────────────────────

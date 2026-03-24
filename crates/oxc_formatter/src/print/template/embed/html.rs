@@ -40,7 +40,9 @@ pub(super) fn format_html_doc<'a>(
         let Some(cooked) = quasis[0].value.cooked.as_ref() else {
             return false;
         };
-        let cooked = cooked.as_str();
+        let Some(cooked) = cooked.as_str() else {
+            return false;
+        };
 
         if cooked.trim().is_empty() {
             write!(f, ["``"]);
@@ -95,7 +97,10 @@ pub(super) fn format_html_doc<'a>(
             let Some(cooked) = quasi_elem.value.cooked.as_ref() else {
                 return false;
             };
-            sb.push_str(cooked.as_str());
+            let Some(cooked) = cooked.as_str() else {
+                return false;
+            };
+            sb.push_str(cooked);
         }
         sb.into_str()
     };

@@ -365,7 +365,9 @@ fn check_rel<'a>(
 fn match_target_expression<'a>(expr: &'a Expression<'a>) -> (bool, &'a str, bool, bool) {
     let default = (false, "", false, false);
     match expr {
-        Expression::StringLiteral(str) => (str.value == "_blank", "", false, false),
+        Expression::StringLiteral(str) => {
+            (str.value.to_str_lossy().eq_ignore_ascii_case("_blank"), "", false, false)
+        }
         Expression::ConditionalExpression(expr) => {
             let consequent = match_target_expression(&expr.consequent);
             let alternate = match_target_expression(&expr.alternate);
@@ -386,7 +388,9 @@ fn match_target_expression<'a>(expr: &'a Expression<'a>) -> (bool, &'a str, bool
 fn check_target<'a>(attribute_value: &'a JSXAttributeValue<'a>) -> (bool, &'a str, bool, bool) {
     let default = (false, "", false, false);
     match attribute_value {
-        JSXAttributeValue::StringLiteral(str) => (str.value == "_blank", "", false, false),
+        JSXAttributeValue::StringLiteral(str) => {
+            (str.value.to_str_lossy().eq_ignore_ascii_case("_blank"), "", false, false)
+        }
         JSXAttributeValue::ExpressionContainer(expr) => {
             if let Some(expr) = expr.expression.as_expression() {
                 match_target_expression(expr)
