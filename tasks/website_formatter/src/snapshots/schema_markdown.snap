@@ -604,7 +604,7 @@ For JSX, you can set the `jsxSingleQuote` option.
 
 ##### overrides[n].options.sortImports
 
-type: `object`
+type: `object | boolean`
 
 
 Sort import statements.
@@ -1073,7 +1073,7 @@ For JSX, you can set the `jsxSingleQuote` option.
 
 ## sortImports
 
-type: `object`
+type: `object | boolean`
 
 
 Sort import statements.

@@ -1,0 +1,15 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`sort_imports > should sort imports when enabled with \`true\` (boolean) 1`] = `
+"--- FILE -----------
+input.ts
+--- BEFORE ---------
+import { b } from "b";
+import { a } from "a";
+
+--- AFTER ----------
+import { a } from "a";
+import { b } from "b";
+
+--------------------"
+`;

@@ -2,6 +2,23 @@ import { describe, expect, it } from "vitest";
 import { format } from "../../dist/index.js";
 
 describe("Sort imports", () => {
+  it("should sort with `true` (boolean)", async () => {
+    const input = `import { b } from "b";
+import { a } from "a";
+`;
+    const result = await format("a.ts", input, {
+      experimentalSortImports: true,
+    });
+
+    expect(result.code).toBe(
+      `
+import { a } from "a";
+import { b } from "b";
+`.trimStart(),
+    );
+    expect(result.errors).toStrictEqual([]);
+  });
+
   it("should sort with customGroups", async () => {
     const input = `import { foo } from "./foo";
 import { util } from "~/utils/util";

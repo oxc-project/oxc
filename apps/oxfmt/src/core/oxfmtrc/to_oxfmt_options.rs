@@ -11,7 +11,8 @@ use oxc_toml::Options as TomlFormatterOptions;
 use super::format_config::{
     ArrowParensConfig, CustomGroupItemConfig, EmbeddedLanguageFormattingConfig, EndOfLineConfig,
     FormatConfig, HtmlWhitespaceSensitivityConfig, ObjectWrapConfig, QuotePropsConfig,
-    SortGroupItemConfig, SortOrderConfig, SortPackageJsonConfig, TrailingCommaConfig,
+    SortGroupItemConfig, SortImportsUserConfig, SortOrderConfig, SortPackageJsonConfig,
+    TrailingCommaConfig,
 };
 
 /// Resolved format options from `FormatConfig`.
@@ -157,120 +158,133 @@ pub fn to_oxfmt_options(config: FormatConfig) -> Result<OxfmtOptions, String> {
 
     // Below are our own extensions
 
-    if let Some(sort_imports_config) = config.sort_imports {
-        let mut sort_imports = SortImportsOptions::default();
-
-        if let Some(v) = sort_imports_config.partition_by_newline {
-            sort_imports.partition_by_newline = v;
-        }
-        if let Some(v) = sort_imports_config.partition_by_comment {
-            sort_imports.partition_by_comment = v;
-        }
-        if let Some(v) = sort_imports_config.sort_side_effects {
-            sort_imports.sort_side_effects = v;
-        }
-        if let Some(v) = sort_imports_config.order {
-            sort_imports.order = match v {
-                SortOrderConfig::Asc => SortOrder::Asc,
-                SortOrderConfig::Desc => SortOrder::Desc,
-            };
-        }
-        if let Some(v) = sort_imports_config.ignore_case {
-            sort_imports.ignore_case = v;
-        }
-        if let Some(v) = sort_imports_config.newlines_between {
-            sort_imports.newlines_between = v;
-        }
-        if let Some(v) = sort_imports_config.internal_pattern {
-            sort_imports.internal_pattern = v;
-        }
-        // Validate and parse `customGroups` first, since `groups` may refer to custom group names.
-        if let Some(v) = sort_imports_config.custom_groups {
-            let mut custom_groups = Vec::with_capacity(v.len());
-            for cg in v {
-                let CustomGroupItemConfig { group_name, element_name_pattern, .. } = cg;
-                let selector = match cg.selector.as_deref() {
-                    Some(s) => match ImportSelector::parse(s) {
-                        Some(parsed) => Some(parsed),
-                        None => {
-                            return Err(format!(
-                                "Invalid `sortImports` configuration: unknown selector: `{s}` in customGroups: `{group_name}`"
-                            ));
-                        }
-                    },
-                    None => None,
-                };
-                let raw_modifiers = cg.modifiers.unwrap_or_default();
-                let mut modifiers = Vec::with_capacity(raw_modifiers.len());
-                for m in &raw_modifiers {
-                    match ImportModifier::parse(m) {
-                        Some(parsed) => modifiers.push(parsed),
-                        None => {
-                            return Err(format!(
-                                "Invalid `sortImports` configuration: unknown modifier: `{m}` in customGroups: `{group_name}`"
-                            ));
-                        }
-                    }
-                }
-                custom_groups.push(CustomGroupDefinition {
-                    group_name,
-                    element_name_pattern,
-                    selector,
-                    modifiers,
-                });
+    if let Some(sort_imports_user_config) = config.sort_imports {
+        let sort_imports_config = match sort_imports_user_config {
+            SortImportsUserConfig::Bool(false) => None,
+            SortImportsUserConfig::Bool(true) => {
+                format_options.sort_imports = Some(SortImportsOptions::default());
+                None
             }
-            sort_imports.custom_groups = custom_groups;
-        }
-        if let Some(v) = sort_imports_config.groups {
-            let custom_group_names: FxHashSet<&str> =
-                sort_imports.custom_groups.iter().map(|g| g.group_name.as_str()).collect();
-            let mut groups = Vec::new();
-            let mut newline_boundary_overrides: Vec<Option<bool>> = Vec::new();
-            let mut pending_override: Option<bool> = None;
+            SortImportsUserConfig::Object(config) => Some(config),
+        };
 
-            for item in v {
-                match item {
-                    SortGroupItemConfig::NewlinesBetween(marker) => {
-                        if groups.is_empty() {
-                            return Err("Invalid `sortImports` configuration: `{ \"newlinesBetween\" }` marker cannot appear at the start of `groups`".to_string());
-                        }
-                        if pending_override.is_some() {
-                            return Err("Invalid `sortImports` configuration: consecutive `{ \"newlinesBetween\" }` markers are not allowed in `groups`".to_string());
-                        }
-                        pending_override = Some(marker.newlines_between);
-                    }
-                    other => {
-                        if !groups.is_empty() {
-                            newline_boundary_overrides.push(pending_override.take());
-                        }
-                        let mut entries = Vec::new();
-                        for name in other.into_vec() {
-                            let entry = GroupEntry::parse(&name);
-                            if let GroupEntry::Custom(ref n) = entry
-                                && !custom_group_names.contains(n.as_str())
-                            {
+        if let Some(sort_imports_config) = sort_imports_config {
+            let mut sort_imports = SortImportsOptions::default();
+
+            if let Some(v) = sort_imports_config.partition_by_newline {
+                sort_imports.partition_by_newline = v;
+            }
+            if let Some(v) = sort_imports_config.partition_by_comment {
+                sort_imports.partition_by_comment = v;
+            }
+            if let Some(v) = sort_imports_config.sort_side_effects {
+                sort_imports.sort_side_effects = v;
+            }
+            if let Some(v) = sort_imports_config.order {
+                sort_imports.order = match v {
+                    SortOrderConfig::Asc => SortOrder::Asc,
+                    SortOrderConfig::Desc => SortOrder::Desc,
+                };
+            }
+            if let Some(v) = sort_imports_config.ignore_case {
+                sort_imports.ignore_case = v;
+            }
+            if let Some(v) = sort_imports_config.newlines_between {
+                sort_imports.newlines_between = v;
+            }
+            if let Some(v) = sort_imports_config.internal_pattern {
+                sort_imports.internal_pattern = v;
+            }
+            // Validate and parse `customGroups` first, since `groups` may refer to custom group names.
+            if let Some(v) = sort_imports_config.custom_groups {
+                let mut custom_groups = Vec::with_capacity(v.len());
+                for cg in v {
+                    let CustomGroupItemConfig { group_name, element_name_pattern, .. } = cg;
+                    let selector = match cg.selector.as_deref() {
+                        Some(s) => match ImportSelector::parse(s) {
+                            Some(parsed) => Some(parsed),
+                            None => {
                                 return Err(format!(
-                                    "Invalid `sortImports` configuration: unknown group name `{name}` in `groups`"
+                                    "Invalid `sortImports` configuration: unknown selector: `{s}` in customGroups: `{group_name}`"
                                 ));
                             }
-                            entries.push(entry);
+                        },
+                        None => None,
+                    };
+                    let raw_modifiers = cg.modifiers.unwrap_or_default();
+                    let mut modifiers = Vec::with_capacity(raw_modifiers.len());
+                    for m in &raw_modifiers {
+                        match ImportModifier::parse(m) {
+                            Some(parsed) => modifiers.push(parsed),
+                            None => {
+                                return Err(format!(
+                                    "Invalid `sortImports` configuration: unknown modifier: `{m}` in customGroups: `{group_name}`"
+                                ));
+                            }
                         }
-                        groups.push(entries);
+                    }
+                    custom_groups.push(CustomGroupDefinition {
+                        group_name,
+                        element_name_pattern,
+                        selector,
+                        modifiers,
+                    });
+                }
+                sort_imports.custom_groups = custom_groups;
+            }
+            if let Some(v) = sort_imports_config.groups {
+                let custom_group_names: FxHashSet<&str> =
+                    sort_imports.custom_groups.iter().map(|g| g.group_name.as_str()).collect();
+                let mut groups = Vec::new();
+                let mut newline_boundary_overrides: Vec<Option<bool>> = Vec::new();
+                let mut pending_override: Option<bool> = None;
+
+                for item in v {
+                    match item {
+                        SortGroupItemConfig::NewlinesBetween(marker) => {
+                            if groups.is_empty() {
+                                return Err("Invalid `sortImports` configuration: `{ \"newlinesBetween\" }` marker cannot appear at the start of `groups`".to_string());
+                            }
+                            if pending_override.is_some() {
+                                return Err("Invalid `sortImports` configuration: consecutive `{ \"newlinesBetween\" }` markers are not allowed in `groups`".to_string());
+                            }
+                            pending_override = Some(marker.newlines_between);
+                        }
+                        other => {
+                            if !groups.is_empty() {
+                                newline_boundary_overrides.push(pending_override.take());
+                            }
+                            let mut entries = Vec::new();
+                            for name in other.into_vec() {
+                                let entry = GroupEntry::parse(&name);
+                                if let GroupEntry::Custom(ref n) = entry
+                                    && !custom_group_names.contains(n.as_str())
+                                {
+                                    return Err(format!(
+                                        "Invalid `sortImports` configuration: unknown group name `{name}` in `groups`"
+                                    ));
+                                }
+                                entries.push(entry);
+                            }
+                            groups.push(entries);
+                        }
                     }
                 }
+
+                if pending_override.is_some() {
+                    return Err("Invalid `sortImports` configuration: `{ \"newlinesBetween\" }` marker cannot appear at the end of `groups`".to_string());
+                }
+
+                sort_imports.groups = groups;
+                sort_imports.newline_boundary_overrides = newline_boundary_overrides;
             }
 
-            if pending_override.is_some() {
-                return Err("Invalid `sortImports` configuration: `{ \"newlinesBetween\" }` marker cannot appear at the end of `groups`".to_string());
-            }
+            sort_imports
+                .validate()
+                .map_err(|e| format!("Invalid `sortImports` configuration: {e}"))?;
 
-            sort_imports.groups = groups;
-            sort_imports.newline_boundary_overrides = newline_boundary_overrides;
+            format_options.sort_imports = Some(sort_imports);
         }
-
-        sort_imports.validate().map_err(|e| format!("Invalid `sortImports` configuration: {e}"))?;
-
-        format_options.sort_imports = Some(sort_imports);
     }
 
     if let Some(tw_config) = config.sort_tailwindcss {

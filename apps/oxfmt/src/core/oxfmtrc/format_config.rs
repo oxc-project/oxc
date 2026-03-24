@@ -200,7 +200,7 @@ pub struct FormatConfig {
     /// - Default: Disabled
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(alias = "experimentalSortImports")]
-    pub sort_imports: Option<SortImportsConfig>,
+    pub sort_imports: Option<SortImportsUserConfig>,
 
     /// Sort `package.json` keys.
     ///
@@ -339,6 +339,19 @@ pub enum HtmlWhitespaceSensitivityConfig {
 }
 
 // ---
+
+#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
+#[serde(untagged)]
+pub enum SortImportsUserConfig {
+    Bool(bool),
+    Object(SortImportsConfig),
+}
+
+impl Default for SortImportsUserConfig {
+    fn default() -> Self {
+        Self::Bool(false)
+    }
+}
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default)]

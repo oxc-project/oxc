@@ -10,6 +10,7 @@ export type HtmlWhitespaceSensitivityConfig = "css" | "strict" | "ignore";
 export type ObjectWrapConfig = "preserve" | "collapse";
 export type ProseWrapConfig = "always" | "never" | "preserve";
 export type QuotePropsConfig = "as-needed" | "consistent" | "preserve";
+export type SortImportsUserConfig = boolean | SortImportsConfig;
 export type SortGroupItemConfig = NewlinesBetweenMarker | string | string[];
 export type SortOrderConfig = "asc" | "desc";
 export type SortPackageJsonUserConfig = boolean | SortPackageJsonConfig;
@@ -165,7 +166,7 @@ export interface Oxfmtrc {
    *
    * - Default: Disabled
    */
-  sortImports?: SortImportsConfig;
+  sortImports?: SortImportsUserConfig;
   /**
    * Sort `package.json` keys.
    *
@@ -438,7 +439,7 @@ export interface FormatConfig {
    *
    * - Default: Disabled
    */
-  sortImports?: SortImportsConfig;
+  sortImports?: SortImportsUserConfig;
   /**
    * Sort `package.json` keys.
    *

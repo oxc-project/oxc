@@ -138,7 +138,7 @@
       "description": "Sort import statements.\n\nUsing the similar algorithm as [eslint-plugin-perfectionist/sort-imports](https://perfectionist.dev/rules/sort-imports).\nFor details, see each field's documentation.\n\n- Default: Disabled",
       "allOf": [
         {
-          "$ref": "#/definitions/SortImportsConfig"
+          "$ref": "#/definitions/SortImportsUserConfig"
         }
       ],
       "markdownDescription": "Sort import statements.\n\nUsing the similar algorithm as [eslint-plugin-perfectionist/sort-imports](https://perfectionist.dev/rules/sort-imports).\nFor details, see each field's documentation.\n\n- Default: Disabled"
@@ -367,7 +367,7 @@
           "description": "Sort import statements.\n\nUsing the similar algorithm as [eslint-plugin-perfectionist/sort-imports](https://perfectionist.dev/rules/sort-imports).\nFor details, see each field's documentation.\n\n- Default: Disabled",
           "allOf": [
             {
-              "$ref": "#/definitions/SortImportsConfig"
+              "$ref": "#/definitions/SortImportsUserConfig"
             }
           ],
           "markdownDescription": "Sort import statements.\n\nUsing the similar algorithm as [eslint-plugin-perfectionist/sort-imports](https://perfectionist.dev/rules/sort-imports).\nFor details, see each field's documentation.\n\n- Default: Disabled"
@@ -644,6 +644,16 @@
           "markdownDescription": "Specifies whether side effect imports should be sorted.\n\nBy default, sorting side-effect imports is disabled for security reasons.\n\n- Default: `false`"
         }
       }
+    },
+    "SortImportsUserConfig": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "$ref": "#/definitions/SortImportsConfig"
+        }
+      ]
     },
     "SortOrderConfig": {
       "type": "string",
