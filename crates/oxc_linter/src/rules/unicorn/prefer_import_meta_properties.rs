@@ -1,8 +1,9 @@
+use crate::module_record::ImportImportName;
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, AssignmentTarget, BindingPattern, CallExpression, Expression,
-        ImportDeclarationSpecifier, NewExpression, VariableDeclarator,
+        Argument, AssignmentTarget, BindingPattern, CallExpression, Expression, NewExpression,
+        VariableDeclarator,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -20,94 +21,119 @@ const URL_MODULES: [&str; 2] = ["url", "node:url"];
 #[derive(Default)]
 struct ImportSymbols {
     /// SymbolIds that resolve to `fileURLToPath` from url/node:url
-    filename_fn_ids: FxHashSet<SymbolId>,
+    filename_fns: FxHashSet<SymbolId>,
     /// SymbolIds that resolve to `dirname` from path/node:path
-    dirname_fn_ids: FxHashSet<SymbolId>,
+    dirname_fns: FxHashSet<SymbolId>,
     /// SymbolIds that are the url module object (default/namespace import)
-    url_mod_ids: FxHashSet<SymbolId>,
+    url_mods: FxHashSet<SymbolId>,
     /// SymbolIds that are the path module object (default/namespace import)
-    path_mod_ids: FxHashSet<SymbolId>,
-    /// True when any `process.getBuiltinModule("node:url/path")` call was seen.
-    /// Set even for assigned-to-variable forms, but its primary purpose is to
-    /// prevent early-exit when the call is inline-chained (no symbol ID produced).
-    has_inline_module_calls: bool,
+    path_mods: FxHashSet<SymbolId>,
+    /// NodeIds of outer CallExpression for inline `process.getBuiltinModule("url").fileURLToPath(…)`
+    inline_filename_calls: Vec<NodeId>,
+    /// NodeIds of outer CallExpression for inline `process.getBuiltinModule("path").dirname(…)`
+    inline_dirname_calls: Vec<NodeId>,
 }
 
 impl ImportSymbols {
     fn is_empty(&self) -> bool {
-        self.filename_fn_ids.is_empty()
-            && self.dirname_fn_ids.is_empty()
-            && self.url_mod_ids.is_empty()
-            && self.path_mod_ids.is_empty()
-    }
-
-    fn has_inline_module_calls(&self) -> bool {
-        self.has_inline_module_calls
+        self.filename_fns.is_empty()
+            && self.dirname_fns.is_empty()
+            && self.url_mods.is_empty()
+            && self.path_mods.is_empty()
+            && self.inline_filename_calls.is_empty()
+            && self.inline_dirname_calls.is_empty()
     }
 }
 
 fn insert_module_obj(symbol_id: SymbolId, is_url: bool, sym: &mut ImportSymbols) {
     if is_url {
-        sym.url_mod_ids.insert(symbol_id);
+        sym.url_mods.insert(symbol_id);
     } else {
-        sym.path_mod_ids.insert(symbol_id);
+        sym.path_mods.insert(symbol_id);
     }
 }
 
 fn collect_relevant_symbols(ctx: &LintContext<'_>) -> ImportSymbols {
     let mut sym = ImportSymbols::default();
 
-    for node in ctx.nodes().iter() {
-        match node.kind() {
-            AstKind::ImportDeclaration(decl) => {
-                let source = decl.source.value.as_str();
-                let is_url = URL_MODULES.contains(&source);
-                let is_path = PATH_MODULES.contains(&source);
-                if !is_url && !is_path {
-                    continue;
-                }
-                let Some(specifiers) = &decl.specifiers else { continue };
-                for specifier in specifiers {
-                    match specifier {
-                        ImportDeclarationSpecifier::ImportSpecifier(s) => {
-                            let imported = s.imported.name().as_str();
-                            let symbol_id = s.local.symbol_id();
-                            if is_url && imported == "fileURLToPath" {
-                                sym.filename_fn_ids.insert(symbol_id);
-                            } else if is_path && imported == "dirname" {
-                                sym.dirname_fn_ids.insert(symbol_id);
-                            }
-                        }
-                        ImportDeclarationSpecifier::ImportDefaultSpecifier(s) => {
-                            insert_module_obj(s.local.symbol_id(), is_url, &mut sym);
-                        }
-                        ImportDeclarationSpecifier::ImportNamespaceSpecifier(s) => {
-                            insert_module_obj(s.local.symbol_id(), is_url, &mut sym);
-                        }
-                    }
+    // Static ESM imports via module_record.
+    for entry in &ctx.module_record().import_entries {
+        let source = entry.module_request.name();
+        let is_url = URL_MODULES.contains(&source);
+        let is_path = PATH_MODULES.contains(&source);
+        if !is_url && !is_path {
+            continue;
+        }
+        let Some(symbol_id) = ctx.scoping().get_root_binding(entry.local_name.name().into()) else {
+            continue;
+        };
+        match &entry.import_name {
+            ImportImportName::Name(name) => {
+                let imported = name.name();
+                if is_url && imported == "fileURLToPath" {
+                    sym.filename_fns.insert(symbol_id);
+                } else if is_path && imported == "dirname" {
+                    sym.dirname_fns.insert(symbol_id);
                 }
             }
-            // Handles: const { fileURLToPath } = process.getBuiltinModule("node:url")
-            // and: const path = process.getBuiltinModule("node:path")
-            AstKind::VariableDeclarator(decl) => {
-                collect_get_builtin_symbols(decl, &mut sym);
+            // import path from "…" or import * as url from "…"
+            ImportImportName::Default(_) | ImportImportName::NamespaceObject => {
+                insert_module_obj(symbol_id, is_url, &mut sym);
             }
-            // Detects any process.getBuiltinModule("node:url/path") call.
-            // Primarily catches the inline-chained form (e.g.
-            //   process.getBuiltinModule("node:url").fileURLToPath(import.meta.url))
-            // where no symbol ID is produced; also fires for assigned-to-variable forms,
-            // which is harmless since those already populate the symbol sets.
-            AstKind::CallExpression(call) => {
-                if !sym.has_inline_module_calls
-                    && (is_process_get_builtin_module_call(call, &URL_MODULES)
-                        || is_process_get_builtin_module_call(call, &PATH_MODULES))
-                {
-                    sym.has_inline_module_calls = true;
-                }
-            }
-            _ => {}
         }
     }
+
+    // Follow `process` unresolved references instead of walking all nodes.
+    // `process` is a global — all usages appear in root_unresolved_references.
+    let scoping = ctx.scoping();
+    let Some(process_refs) = scoping.root_unresolved_references().get("process") else {
+        return sym;
+    };
+
+    for &ref_id in process_refs {
+        let reference = scoping.get_reference(ref_id);
+
+        // process → parent must be StaticMemberExpression (process.getBuiltinModule)
+        let member_node_id = ctx.nodes().parent_id(reference.node_id());
+        let AstKind::StaticMemberExpression(member) = ctx.nodes().kind(member_node_id) else {
+            continue;
+        };
+        if member.optional || member.property.name != "getBuiltinModule" {
+            continue;
+        }
+
+        // process.getBuiltinModule → parent must be CallExpression (process.getBuiltinModule("…"))
+        let call_node_id = ctx.nodes().parent_id(member_node_id);
+        let AstKind::CallExpression(call) = ctx.nodes().kind(call_node_id) else { continue };
+        let is_url = is_process_get_builtin_module_call(call, &URL_MODULES);
+        let is_path = is_process_get_builtin_module_call(call, &PATH_MODULES);
+        if !is_url && !is_path {
+            continue;
+        }
+
+        // Parent of the call determines which form we have.
+        let decl_node_id = ctx.nodes().parent_id(call_node_id);
+        // const path = process.getBuiltinModule("…") or const { x } = process.getBuiltinModule("…")
+        if let AstKind::VariableDeclarator(decl) = ctx.nodes().kind(decl_node_id) {
+            collect_get_builtin_symbols(decl, &mut sym);
+        } else {
+            // Inline-chained: process.getBuiltinModule("…").fileURLToPath/dirname(…)
+            // Parent is a StaticMemberExpression — navigate to the outer CallExpression.
+            let AstKind::StaticMemberExpression(member) = ctx.nodes().kind(decl_node_id) else {
+                continue;
+            };
+            if member.optional {
+                continue;
+            }
+            let outer_call_id = ctx.nodes().parent_id(decl_node_id);
+            if is_url && member.property.name == "fileURLToPath" {
+                sym.inline_filename_calls.push(outer_call_id);
+            } else if is_path && member.property.name == "dirname" {
+                sym.inline_dirname_calls.push(outer_call_id);
+            }
+        }
+    }
+
     sym
 }
 
@@ -134,9 +160,9 @@ fn collect_get_builtin_symbols(decl: &VariableDeclarator<'_>, sym: &mut ImportSy
                 let Some(key) = prop.key.static_name() else { continue };
                 let symbol_id = id.symbol_id();
                 if is_url && key == "fileURLToPath" {
-                    sym.filename_fn_ids.insert(symbol_id);
+                    sym.filename_fns.insert(symbol_id);
                 } else if is_path && key == "dirname" {
-                    sym.dirname_fn_ids.insert(symbol_id);
+                    sym.dirname_fns.insert(symbol_id);
                 }
             }
         }
@@ -198,11 +224,10 @@ declare_oxc_lint!(
 impl Rule for PreferImportMetaProperties {
     fn run_once(&self, ctx: &LintContext<'_>) {
         let sym = collect_relevant_symbols(ctx);
-        if sym.is_empty() && !sym.has_inline_module_calls() {
+        if sym.is_empty() {
             return;
         }
-        let filename_val_ids = collect_filename_values(&sym, ctx);
-        check_patterns(&sym, &filename_val_ids, ctx);
+        check_patterns(&sym, ctx);
     }
 }
 
@@ -247,10 +272,10 @@ fn is_callee_module_fn<'a>(
 ) -> bool {
     let (fn_ids, property_name, mod_ids, modules): (_, &str, _, &[&str]) = match kind {
         ModuleKind::Filename => {
-            (&sym.filename_fn_ids, "fileURLToPath", &sym.url_mod_ids, URL_MODULES.as_slice())
+            (&sym.filename_fns, "fileURLToPath", &sym.url_mods, URL_MODULES.as_slice())
         }
         ModuleKind::Dirname => {
-            (&sym.dirname_fn_ids, "dirname", &sym.path_mod_ids, PATH_MODULES.as_slice())
+            (&sym.dirname_fns, "dirname", &sym.path_mods, PATH_MODULES.as_slice())
         }
     };
     match expr {
@@ -286,6 +311,30 @@ fn is_module_obj_expr<'a>(
     }
 }
 
+/// Emits `import.meta.dirname` for every read reference to `symbol_id`
+/// used as the sole argument to a dirname function call.
+/// Returns true if any diagnostic was emitted.
+fn emit_dirname_for_symbol(
+    symbol_id: SymbolId,
+    sym: &ImportSymbols,
+    ctx: &LintContext<'_>,
+) -> bool {
+    let mut found = false;
+    for reference in ctx.semantic().symbol_references(symbol_id).filter(|r| r.is_read()) {
+        let ref_parent_id = ctx.nodes().parent_id(reference.node_id());
+        let AstKind::CallExpression(call) = ctx.nodes().kind(ref_parent_id) else { continue };
+        if is_single_arg_call(call)
+            && is_callee_module_fn(&call.callee, ModuleKind::Dirname, sym, ctx)
+        {
+            ctx.diagnostic_with_fix(prefer_import_meta_diagnostic(call.span, "dirname"), |fixer| {
+                fixer.replace(call.span, "import.meta.dirname")
+            });
+            found = true;
+        }
+    }
+    found
+}
+
 /// Returns true if `expr` is `import.meta.<property>` (non-optional).
 fn is_import_meta_property(expr: &Expression<'_>, property: &str) -> bool {
     let Expression::StaticMemberExpression(outer) = expr else { return false };
@@ -298,132 +347,171 @@ fn is_import_meta_property(expr: &Expression<'_>, property: &str) -> bool {
         )
 }
 
-// Phase 2: data-flow — collect variables holding filename values
-
-/// Phase 2: collect SymbolIds for variables that hold a filename value.
-///
-/// Covers:
-/// - `const __filename = fileURLToPath(import.meta.url)`
-/// - `const __filename = import.meta.filename`
-/// - `__filename = fileURLToPath(import.meta.url)`   ← assignment form
-/// - `__filename = import.meta.filename`              ← assignment form
-fn collect_filename_values(sym: &ImportSymbols, ctx: &LintContext<'_>) -> FxHashSet<SymbolId> {
-    let mut ids = FxHashSet::default();
-
-    for node in ctx.nodes().iter() {
-        match node.kind() {
-            AstKind::VariableDeclarator(decl) => {
-                let BindingPattern::BindingIdentifier(id) = &decl.id else { continue };
-                if let Some(init) = &decl.init
-                    && is_filename_value_expr(init, sym, ctx)
-                {
-                    ids.insert(id.symbol_id());
-                }
-            }
-            AstKind::AssignmentExpression(assign) => {
-                let AssignmentTarget::AssignmentTargetIdentifier(target) = &assign.left else {
-                    continue;
-                };
-                let reference = ctx.scoping().get_reference(target.reference_id());
-                let Some(symbol_id) = reference.symbol_id() else { continue };
-                if is_filename_value_expr(&assign.right, sym, ctx) {
-                    ids.insert(symbol_id);
-                }
-            }
-            _ => {}
-        }
+/// Returns true if `expr` is `import.meta.filename` directly, or an identifier
+/// whose declaration or write site(s) are `import.meta.filename` assignments.
+/// Does NOT match `fileURLToPath(…)` — those are handled by the filename leg.
+fn is_meta_filename_arg(expr: &Expression<'_>, ctx: &LintContext<'_>) -> bool {
+    if is_import_meta_property(expr, "filename") {
+        return true;
     }
-    ids
-}
-
-/// Returns true if `expr` evaluates to a filename string value
-/// (i.e., is equivalent to `import.meta.filename`).
-fn is_filename_value_expr<'a>(
-    expr: &Expression<'a>,
-    sym: &ImportSymbols,
-    ctx: &LintContext<'a>,
-) -> bool {
-    // fileURLToPath(import.meta.url)
-    if let Expression::CallExpression(call) = expr
-        && is_single_arg_call(call)
-        && is_callee_module_fn(&call.callee, ModuleKind::Filename, sym, ctx)
+    let Expression::Identifier(ident) = expr else { return false };
+    let reference = ctx.scoping().get_reference(ident.reference_id());
+    let Some(symbol_id) = reference.symbol_id() else { return false };
+    // Check the declaration site (const __filename = import.meta.filename)
+    let decl_node_id = ctx.scoping().symbol_declaration(symbol_id);
+    if let AstKind::VariableDeclarator(d) = ctx.nodes().kind(decl_node_id)
+        && d.init.as_ref().is_some_and(|e| is_import_meta_property(e, "filename"))
     {
-        return call
-            .arguments
-            .first()
-            .and_then(Argument::as_expression)
-            .is_some_and(|e| is_import_meta_property(e, "url"));
+        return true;
     }
-    // import.meta.filename
-    is_import_meta_property(expr, "filename")
+    // Check later assignment sites (__filename = import.meta.filename)
+    ctx.semantic().symbol_references(symbol_id).filter(|r| r.is_write()).any(|r| {
+        let parent_id = ctx.nodes().parent_id(r.node_id());
+        let rhs: Option<&Expression<'_>> = match ctx.nodes().kind(parent_id) {
+            AstKind::AssignmentExpression(a) => Some(&a.right),
+            _ => None,
+        };
+        rhs.is_some_and(|e| is_import_meta_property(e, "filename"))
+    })
 }
 
-/// Phase 3: walk all MetaProperty nodes and report fixable patterns.
-fn check_patterns(
+/// Given a confirmed `fileURLToPath(import.meta.url)` call, emit dirname or filename diagnostic.
+fn handle_filename_call(
+    call_id: NodeId,
+    call: &CallExpression<'_>,
     sym: &ImportSymbols,
-    filename_val_ids: &FxHashSet<SymbolId>,
     ctx: &LintContext<'_>,
 ) {
-    for node in ctx.nodes().iter() {
-        let AstKind::MetaProperty(mp) = node.kind() else { continue };
-        if mp.meta.name != "import" || mp.property.name != "meta" {
-            continue;
-        }
+    if !try_report_dirname(call_id, sym, ctx) {
+        ctx.diagnostic_with_fix(prefer_import_meta_diagnostic(call.span, "filename"), |fixer| {
+            fixer.replace(call.span, "import.meta.filename")
+        });
+    }
+}
 
-        // Parent must be a non-optional static member expression (import.meta.url/filename/…)
-        let parent_id = ctx.nodes().parent_id(node.id());
-        let AstKind::StaticMemberExpression(member_expr) = ctx.nodes().kind(parent_id) else {
-            continue;
-        };
-        if member_expr.optional {
-            continue;
-        }
+/// Drive from known symbol sets and globals — no full node walk.
+fn check_patterns(sym: &ImportSymbols, ctx: &LintContext<'_>) {
+    // --- Filename leg: fileURLToPath(import.meta.url) → filename or dirname ---
 
-        match member_expr.property.name.as_str() {
-            "url" => handle_import_meta_url(parent_id, sym, ctx),
-            "filename" => {
-                try_report_dirname(parent_id, sym, ctx);
+    for &id in &sym.filename_fns {
+        for reference in ctx.semantic().symbol_references(id).filter(|r| r.is_read()) {
+            let call_id = ctx.nodes().parent_id(reference.node_id());
+            let AstKind::CallExpression(call) = ctx.nodes().kind(call_id) else { continue };
+            if !is_single_arg_call(call) {
+                continue;
             }
-            _ => {}
+            let Some(arg) = call.arguments.first().and_then(Argument::as_expression) else {
+                continue;
+            };
+            if !is_import_meta_property(arg, "url") {
+                continue;
+            }
+            handle_filename_call(call_id, call, sym, ctx);
         }
     }
 
-    // Also check filename_val_ids: variables assigned filename values,
-    // looking for path.dirname(variable) usages.
-    for &symbol_id in filename_val_ids {
-        for reference in ctx.semantic().symbol_references(symbol_id).filter(|r| r.is_read()) {
-            let ref_parent_id = ctx.nodes().parent_id(reference.node_id());
-            let AstKind::CallExpression(call) = ctx.nodes().kind(ref_parent_id) else { continue };
-            if !is_single_arg_call(call)
-                || !is_callee_module_fn(&call.callee, ModuleKind::Dirname, sym, ctx)
-            {
+    for &id in &sym.url_mods {
+        for reference in ctx.semantic().symbol_references(id).filter(|r| r.is_read()) {
+            let member_id = ctx.nodes().parent_id(reference.node_id());
+            let AstKind::StaticMemberExpression(m) = ctx.nodes().kind(member_id) else { continue };
+            if m.optional || m.property.name != "fileURLToPath" {
                 continue;
             }
+            let call_id = ctx.nodes().parent_id(member_id);
+            let AstKind::CallExpression(call) = ctx.nodes().kind(call_id) else { continue };
+            if !is_single_arg_call(call) {
+                continue;
+            }
+            let Some(arg) = call.arguments.first().and_then(Argument::as_expression) else {
+                continue;
+            };
+            if !is_import_meta_property(arg, "url") {
+                continue;
+            }
+            handle_filename_call(call_id, call, sym, ctx);
+        }
+    }
+
+    for &call_id in &sym.inline_filename_calls {
+        let AstKind::CallExpression(call) = ctx.nodes().kind(call_id) else { continue };
+        if !is_single_arg_call(call) {
+            continue;
+        }
+        let Some(arg) = call.arguments.first().and_then(Argument::as_expression) else { continue };
+        if !is_import_meta_property(arg, "url") {
+            continue;
+        }
+        handle_filename_call(call_id, call, sym, ctx);
+    }
+
+    // --- URL global leg: new URL(import.meta.url) ---
+
+    let scoping = ctx.scoping();
+    if let Some(url_refs) = scoping.root_unresolved_references().get("URL") {
+        for &ref_id in url_refs {
+            let reference = scoping.get_reference(ref_id);
+            let parent_id = ctx.nodes().parent_id(reference.node_id());
+            let AstKind::NewExpression(new_expr) = ctx.nodes().kind(parent_id) else { continue };
+            handle_new_url(new_expr, parent_id, sym, ctx);
+        }
+    }
+
+    // --- Meta-filename leg: path.dirname(import.meta.filename) ---
+
+    for &id in &sym.dirname_fns {
+        for reference in ctx.semantic().symbol_references(id).filter(|r| r.is_read()) {
+            let call_id = ctx.nodes().parent_id(reference.node_id());
+            let AstKind::CallExpression(call) = ctx.nodes().kind(call_id) else { continue };
+            if !is_single_arg_call(call) {
+                continue;
+            }
+            let Some(arg) = call.arguments.first().and_then(Argument::as_expression) else {
+                continue;
+            };
+            if is_meta_filename_arg(arg, ctx) {
+                ctx.diagnostic_with_fix(
+                    prefer_import_meta_diagnostic(call.span, "dirname"),
+                    |fixer| fixer.replace(call.span, "import.meta.dirname"),
+                );
+            }
+        }
+    }
+
+    for &id in &sym.path_mods {
+        for reference in ctx.semantic().symbol_references(id).filter(|r| r.is_read()) {
+            let member_id = ctx.nodes().parent_id(reference.node_id());
+            let AstKind::StaticMemberExpression(m) = ctx.nodes().kind(member_id) else { continue };
+            if m.optional || m.property.name != "dirname" {
+                continue;
+            }
+            let call_id = ctx.nodes().parent_id(member_id);
+            let AstKind::CallExpression(call) = ctx.nodes().kind(call_id) else { continue };
+            if !is_single_arg_call(call) {
+                continue;
+            }
+            let Some(arg) = call.arguments.first().and_then(Argument::as_expression) else {
+                continue;
+            };
+            if is_meta_filename_arg(arg, ctx) {
+                ctx.diagnostic_with_fix(
+                    prefer_import_meta_diagnostic(call.span, "dirname"),
+                    |fixer| fixer.replace(call.span, "import.meta.dirname"),
+                );
+            }
+        }
+    }
+
+    for &call_id in &sym.inline_dirname_calls {
+        let AstKind::CallExpression(call) = ctx.nodes().kind(call_id) else { continue };
+        if !is_single_arg_call(call) {
+            continue;
+        }
+        let Some(arg) = call.arguments.first().and_then(Argument::as_expression) else { continue };
+        if is_meta_filename_arg(arg, ctx) {
             ctx.diagnostic_with_fix(prefer_import_meta_diagnostic(call.span, "dirname"), |fixer| {
                 fixer.replace(call.span, "import.meta.dirname")
             });
         }
-    }
-}
-
-fn handle_import_meta_url(url_node_id: NodeId, sym: &ImportSymbols, ctx: &LintContext<'_>) {
-    let parent_id = ctx.nodes().parent_id(url_node_id);
-    match ctx.nodes().kind(parent_id) {
-        AstKind::CallExpression(call)
-            if is_single_arg_call(call)
-                && is_callee_module_fn(&call.callee, ModuleKind::Filename, sym, ctx) =>
-        {
-            if !try_report_dirname(parent_id, sym, ctx) {
-                ctx.diagnostic_with_fix(
-                    prefer_import_meta_diagnostic(call.span, "filename"),
-                    |fixer| fixer.replace(call.span, "import.meta.filename"),
-                );
-            }
-        }
-        AstKind::NewExpression(new_expr) => {
-            handle_new_url(new_expr, parent_id, sym, ctx);
-        }
-        _ => {}
     }
 }
 
@@ -444,13 +532,23 @@ fn handle_new_url(
     }
 
     let property: &str = match new_expr.arguments.len() {
-        1 => "filename",
+        1 => {
+            let Some(arg) = new_expr.arguments[0].as_expression() else { return };
+            if !is_import_meta_property(arg, "url") {
+                return;
+            }
+            "filename"
+        }
         2 => {
             let first_is_dot = matches!(
                 &new_expr.arguments[0],
                 Argument::StringLiteral(lit) if lit.value == "." || lit.value == "./"
             );
             if !first_is_dot {
+                return;
+            }
+            let Some(arg) = new_expr.arguments[1].as_expression() else { return };
+            if !is_import_meta_property(arg, "url") {
                 return;
             }
             "dirname"
@@ -470,17 +568,10 @@ fn handle_new_url(
 }
 
 /// Checks whether the filename-valued node at `filename_node_id` is used as an argument
-/// to `path.dirname(...)`, either directly or via a variable.
+/// to `path.dirname(...)`, either directly or via a variable, and emits diagnostics.
 ///
-/// - **Direct case** (`path.dirname(<filename_node>)`): emits the dirname diagnostic and
-///   returns `true`.
-/// - **Variable case** (`const v = <filename_node>; path.dirname(v)`): returns `true` if
-///   any read of `v` appears inside a `path.dirname` call, but does NOT emit — the
-///   `filename_val_ids` sweep in `check_patterns` owns that emission.
-/// - **Other**: returns `false`.
-///
-/// The return value is used by callers to decide whether to suppress a filename diagnostic
-/// (since a dirname diagnostic will already be produced for the same value).
+/// Returns `true` if a dirname diagnostic was emitted (so callers can suppress a
+/// redundant filename diagnostic for the same value).
 fn try_report_dirname(
     filename_node_id: NodeId,
     sym: &ImportSymbols,
@@ -499,20 +590,19 @@ fn try_report_dirname(
             });
             true
         }
-        // Stored: const __filename = …; path.dirname(__filename)
+        // Stored in variable: const __filename = …; path.dirname(__filename)
         AstKind::VariableDeclarator(var_decl) => {
             let BindingPattern::BindingIdentifier(bind) = &var_decl.id else { return false };
-            let symbol_id = bind.symbol_id();
-            // Check if any read reference is used in a dirname call.
-            // Do NOT emit here — the filename_val_ids sweep in check_patterns owns that emission.
-            ctx.semantic().symbol_references(symbol_id).filter(|r| r.is_read()).any(|reference| {
-                let ref_parent_id = ctx.nodes().parent_id(reference.node_id());
-                let AstKind::CallExpression(call) = ctx.nodes().kind(ref_parent_id) else {
-                    return false;
-                };
-                is_single_arg_call(call)
-                    && is_callee_module_fn(&call.callee, ModuleKind::Dirname, sym, ctx)
-            })
+            emit_dirname_for_symbol(bind.symbol_id(), sym, ctx)
+        }
+        // Stored via assignment: __filename = …; path.dirname(__filename)
+        AstKind::AssignmentExpression(assign) => {
+            let AssignmentTarget::AssignmentTargetIdentifier(target) = &assign.left else {
+                return false;
+            };
+            let reference = ctx.scoping().get_reference(target.reference_id());
+            let Some(symbol_id) = reference.symbol_id() else { return false };
+            emit_dirname_for_symbol(symbol_id, sym, ctx)
         }
         _ => false,
     }
@@ -579,6 +669,11 @@ fn test() {
         r#"import { fileURLToPath } from "url";
             const URL = class {};
             const filename = fileURLToPath(new URL(import.meta.url));"#,
+        // new URL with non-import.meta.url argument — should not flag
+        r#"import { fileURLToPath } from "url";
+            const filename = fileURLToPath(new URL("https://example.com"));"#,
+        r#"import { fileURLToPath } from "url";
+            const dirname = fileURLToPath(new URL(".", "https://example.com"));"#,
     ];
 
     let fail = vec![
