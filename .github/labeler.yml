@@ -12,8 +12,7 @@ A-cfg:
 
 A-cli:
   - changed-files:
-      - any-glob-to-any-file:
-          ["apps/oxlint/**", "apps/oxfmt/**", "!apps/oxlint/src/lsp/**", "!apps/oxfmt/src/lsp/**"]
+      - any-glob-to-any-file: ["apps/oxlint/**", "apps/oxfmt/**"]
 
 A-editor:
   - changed-files:
