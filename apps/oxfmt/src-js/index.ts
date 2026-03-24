@@ -1,6 +1,10 @@
 // napi-JS `oxfmt` API entry point
 
-import { format as napiFormat, jsTextToDoc as napiJsTextToDoc } from "./bindings";
+import {
+  format as napiFormat,
+  jsTextToDoc as napiJsTextToDoc,
+  resolveConfig as napiResolveConfig,
+} from "./bindings";
 import {
   resolvePlugins,
   formatFile,
@@ -8,6 +12,7 @@ import {
   formatEmbeddedDoc,
   sortTailwindClasses,
 } from "./libs/apis";
+import { loadJsConfig } from "./cli/js_config";
 // Types are auto-generated from the JSON Schema.
 import type {
   Oxfmtrc,
@@ -80,6 +85,16 @@ export async function format(fileName: string, sourceText: string, options?: For
     (options, texts) => formatEmbeddedDoc({ options, texts }),
     (options, classes) => sortTailwindClasses({ options, classes }),
   );
+}
+
+/**
+ * Resolve the effective configuration for the given file path.
+ *
+ * Returns `null` when neither an Oxfmt config file nor `.editorconfig` is found.
+ */
+export async function resolveConfig(fileName: string): Promise<FormatConfig | null> {
+  if (typeof fileName !== "string") throw new TypeError("`fileName` must be a string");
+  return napiResolveConfig(fileName, loadJsConfig);
 }
 
 /**
