@@ -1,0 +1,84 @@
+---
+source: crates/oxc_minifier/tests/mangler/mod.rs
+---
+function _() { var x = 1; if (true) { function y() {} } use(x); }
+function _() {
+	var e = 1;
+	if (true) {
+		function t() {}
+	}
+	use(e);
+}
+
+function _() { var x = 1; try { function y() {} } finally {} use(x); }
+function _() {
+	var e = 1;
+	try {
+		function t() {}
+	} finally {}
+	use(e);
+}
+
+function _() { var x = 1; { function y() {} } use(x); }
+function _() {
+	var e = 1;
+	{
+		function t() {}
+	}
+	use(e);
+}
+
+function _(x) { if (true) { function y() {} } use(x); }
+function _(e) {
+	if (true) {
+		function t() {}
+	}
+	use(e);
+}
+
+function _() { var x = 1; { { if (true) { function y() {} } } } use(x); }
+function _() {
+	var e = 1;
+	{
+		{
+			if (true) {
+				function t() {}
+			}
+		}
+	}
+	use(e);
+}
+
+function outer(input) { let data = input; Object.keys(data).forEach((key) => { let value = data[key]; if (value) { function appendStyle() {} console.log(appendStyle); } console.log(value); }); }
+function outer(e) {
+	let t = e;
+	Object.keys(t).forEach((e) => {
+		let n = t[e];
+		if (n) {
+			function r() {}
+			console.log(r);
+		}
+		console.log(n);
+	});
+}
+
+function _() { var x = 1; if (true) { function y() {} function z() {} } use(x); }
+function _() {
+	var e = 1;
+	if (true) {
+		function t() {}
+		function n() {}
+	}
+	use(e);
+}
+
+function _() { var x = 1; if (true) { function y() { return x; } } use(x); }
+function _() {
+	var e = 1;
+	if (true) {
+		function t() {
+			return e;
+		}
+	}
+	use(e);
+}

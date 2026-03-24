@@ -6,9 +6,12 @@ use oxc_mangler::{MangleOptions, MangleOptionsKeepNames, Mangler};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 
-fn mangle(source_text: &str, options: MangleOptions) -> String {
+fn mangle_with_source_type(
+    source_text: &str,
+    options: MangleOptions,
+    source_type: SourceType,
+) -> String {
     let allocator = Allocator::default();
-    let source_type = SourceType::mjs().with_unambiguous(true);
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     assert!(ret.errors.is_empty(), "Parser errors: {:?}", ret.errors);
     let program = ret.program;
@@ -18,6 +21,14 @@ fn mangle(source_text: &str, options: MangleOptions) -> String {
         .with_private_member_mappings(Some(mangler_return.class_private_mappings))
         .build(&program)
         .code
+}
+
+fn mangle(source_text: &str, options: MangleOptions) -> String {
+    mangle_with_source_type(source_text, options, SourceType::mjs().with_unambiguous(true))
+}
+
+fn mangle_script(source_text: &str, options: MangleOptions) -> String {
+    mangle_with_source_type(source_text, options, SourceType::script())
 }
 
 fn test(source_text: &str, expected: &str, options: MangleOptions) {
@@ -205,5 +216,42 @@ fn private_member_mangling() {
 
     insta::with_settings!({ prepend_module_to_snapshot => false, omit_expression => true }, {
         insta::assert_snapshot!("private_member_mangling", snapshot);
+    });
+}
+
+/// In sloppy mode (script), function declarations inside blocks have Annex B.3.2.1 semantics:
+/// they create an implicit `var`-like assignment in the enclosing function scope at block exit.
+/// The mangler must not assign the same name to such a function and an outer `var` binding,
+/// or the Annex B assignment would overwrite the outer variable.
+#[test]
+fn annex_b_block_scoped_function() {
+    let cases = [
+        // Core bug: var + block function in if statement (vitejs/vite#22009)
+        "function _() { var x = 1; if (true) { function y() {} } use(x); }",
+        // var + block function in try block (oxc-project/oxc#14316)
+        "function _() { var x = 1; try { function y() {} } finally {} use(x); }",
+        // var + block function in plain block
+        "function _() { var x = 1; { function y() {} } use(x); }",
+        // Parameter + block function (Annex B doesn't overwrite params, but still safe)
+        "function _(x) { if (true) { function y() {} } use(x); }",
+        // Deeply nested blocks
+        "function _() { var x = 1; { { if (true) { function y() {} } } } use(x); }",
+        // Arrow callback + block function (oxc-project/oxc#20610)
+        "function outer(input) { let data = input; Object.keys(data).forEach((key) => { let value = data[key]; if (value) { function appendStyle() {} console.log(appendStyle); } console.log(value); }); }",
+        // Multiple block functions in same scope
+        "function _() { var x = 1; if (true) { function y() {} function z() {} } use(x); }",
+        // Block function referencing outer var (liveness already covers this, but verify)
+        "function _() { var x = 1; if (true) { function y() { return x; } } use(x); }",
+    ];
+
+    let mut snapshot = String::new();
+    cases.into_iter().fold(&mut snapshot, |w, case| {
+        let options = MangleOptions::default();
+        write!(w, "{case}\n{}\n", mangle_script(case, options)).unwrap();
+        w
+    });
+
+    insta::with_settings!({ prepend_module_to_snapshot => false, omit_expression => true }, {
+        insta::assert_snapshot!("annex_b_block_scoped_function", snapshot);
     });
 }

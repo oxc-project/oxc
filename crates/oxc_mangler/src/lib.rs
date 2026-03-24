@@ -347,7 +347,8 @@ impl<'t> Mangler<'t> {
             }
             // Scopes with direct eval: collect binding names as reserved (they can be
             // accessed by eval at runtime) and skip slot assignment (keep original names).
-            if scoping.scope_flags(scope_id).contains_direct_eval() {
+            let scope_flags = scoping.scope_flags(scope_id);
+            if scope_flags.contains_direct_eval() {
                 for (name, _) in bindings {
                     eval_reserved_names.insert(name.as_str());
                 }
@@ -366,6 +367,31 @@ impl<'t> Mangler<'t> {
             }
             tmp_bindings.sort_unstable();
 
+            // Annex B.3.2.1: In sloppy mode, function declarations inside block scopes create
+            // an implicit `var`-like assignment in the enclosing function scope at block exit.
+            // If such a function gets the same mangled name as an outer `var`, the Annex B
+            // assignment overwrites it. Prevent this by giving them fresh slots (no reuse).
+            let is_sloppy_block = !scope_flags.is_var() && !scope_flags.is_strict_mode();
+            let regular_count = if is_sloppy_block {
+                // Partition `tmp_bindings` into two regions:
+                //   [regular bindings ... | function declarations ...]
+                //                         ^ regular_end (returned)
+                // For each non-function binding, swap it to the front of the array.
+                // Function declarations are left behind and end up at the tail.
+                // Only the first `regular_end` bindings will be eligible for slot reuse;
+                // the function declarations after that boundary always get fresh slots.
+                let mut regular_end = 0;
+                for i in 0..tmp_bindings.len() {
+                    if !scoping.symbol_flags(tmp_bindings[i]).is_function() {
+                        tmp_bindings.swap(regular_end, i);
+                        regular_end += 1;
+                    }
+                }
+                regular_end
+            } else {
+                tmp_bindings.len()
+            };
+
             let mut slot = slot_liveness.len();
 
             reusable_slots.clear();
@@ -380,7 +406,7 @@ impl<'t> Mangler<'t> {
                         #[expect(clippy::cast_possible_truncation)]
                         |(slot, _)| slot as Slot,
                     )
-                    .take(tmp_bindings.len()),
+                    .take(regular_count), // Annex B functions get fresh slots, not reused ones
             );
 
             // The number of new slots that needs to be allocated.
@@ -451,6 +477,19 @@ impl<'t> Mangler<'t> {
                             break;
                         }
                         slot_liveness_bitset.set_bit(ancestor_index);
+                    }
+                }
+
+                // Annex B: extend liveness to enclosing var-scope so sibling
+                // block scopes also cannot reuse this slot.
+                if regular_count < tmp_bindings.len()
+                    && scoping.symbol_flags(symbol_id).is_function()
+                {
+                    for ancestor_id in scoping.scope_ancestors(scope_id).skip(1) {
+                        slot_liveness_bitset.set_bit(ancestor_id.index());
+                        if scoping.scope_flags(ancestor_id).is_var() {
+                            break;
+                        }
                     }
                 }
             }
