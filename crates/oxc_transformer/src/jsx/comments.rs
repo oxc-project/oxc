@@ -103,6 +103,23 @@ fn find_jsx_pragma(mut comment_str: &str) -> Option<(PragmaType, &str, &str)> {
         // to find `@` characters, and then checking if `@` is followed by `jsx` separately.
         let at_sign_index = memchr(b'@', comment_str.as_bytes())?;
 
+        // `@` must be preceded by whitespace or `*` (or be at start of comment) to count
+        // as a pragma. This avoids matching inside inline code spans like `` `@jsxImportSource foo` ``.
+        // Note: esbuild does no preceding-character check at all (matches `@jsx` anywhere).
+        // We are intentionally stricter here — only checking the immediately preceding byte,
+        // which is sufficient for the backtick case without being as strict as Babel's
+        // full start-of-line regex.
+        // <https://github.com/oxc-project/oxc/issues/20669>
+        if at_sign_index > 0 {
+            let prev_byte = comment_str.as_bytes()[at_sign_index - 1];
+            if !matches!(prev_byte, b' ' | b'\t' | b'\r' | b'\n' | b'*') {
+                // SAFETY: Byte at `at_sign_index` is `@`, so `at_sign_index + 1` is either within
+                // string or end of string, and on a UTF-8 char boundary.
+                comment_str = unsafe { comment_str.get_unchecked(at_sign_index + 1..) };
+                continue;
+            }
+        }
+
         // Check `@` is start of `@jsx`.
         // Note: Checking 4 bytes including leading `@` is faster than checking the 3 bytes after `@`,
         // because 4 bytes is a `u32`.
@@ -240,6 +257,15 @@ mod tests {
             ("@jsx @jsx h", &[(PragmaType::Jsx, "@jsx")]),
             // Multiple `@` signs
             ("@@@@@jsx h", &[(PragmaType::Jsx, "h")]),
+            // Pragma inside backticks (inline code span) should not be recognized
+            ("`@jsxImportSource custom/source`", &[]),
+            ("`@jsx h`", &[]),
+            ("This mentions `@jsxImportSource custom/source` in docs", &[]),
+            // But valid pragma before backtick-wrapped text should still work
+            (
+                "@jsxImportSource react\n * This mentions `@jsxImportSource custom/source` in docs",
+                &[(PragmaType::JsxImportSource, "react")],
+            ),
         ];
 
         let prefixes = ["", "    ", "\n\n", "*\n* "];
