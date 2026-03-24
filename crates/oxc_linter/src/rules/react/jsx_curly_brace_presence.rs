@@ -536,7 +536,7 @@ fn is_allowed_string_like_in_container<'a>(
     is_prop: bool,
 ) -> bool {
     is_whitespace(s)
-        || contains_line_break_or_is_empty(s)
+        || contains_line_break(s)
         || contains_html_entity(s)
         || is_prop && contains_both_quote_characters(s)
         || !is_prop && contains_disallowed_jsx_text_chars(s)
@@ -548,11 +548,11 @@ fn is_allowed_string_like_in_container<'a>(
 }
 
 fn is_whitespace(s: &str) -> bool {
-    s.chars().all(char::is_whitespace)
+    !s.is_empty() && s.chars().all(char::is_whitespace)
 }
 
-fn contains_line_break_or_is_empty(s: &str) -> bool {
-    s.chars().any(|c| matches!(c, '\n' | '\r')) || s.trim().is_empty()
+fn contains_line_break(s: &str) -> bool {
+    s.chars().any(|c| matches!(c, '\n' | '\r'))
 }
 
 fn contains_line_break_literal(s: &str) -> bool {
@@ -1230,6 +1230,8 @@ fn test() {
                   "#,
             Some(json!(["never"])),
         ),
+        (r#"<Image alt={""} />"#, Some(json!([{ "props": "never", "children": "never" }]))),
+        (r#"<App>{""}</App>"#, Some(json!([{ "props": "never", "children": "never" }]))),
     ];
 
     let fix = vec![
@@ -1548,6 +1550,16 @@ fn test() {
                     <Foo help='The maximum time range for searches. (i.e. "P30D" for 30 days, "PT24H" for 24 hours)' />
                   "#,
             Some(json!(["never"])),
+        ),
+        (
+            r#"<Image alt={""} />"#,
+            r#"<Image alt="" />"#,
+            Some(json!([{ "props": "never", "children": "never" }])),
+        ),
+        (
+            r#"<App>{""}</App>"#,
+            r"<App></App>",
+            Some(json!([{ "props": "never", "children": "never" }])),
         ),
         (
             "

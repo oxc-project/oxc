@@ -145,7 +145,7 @@ jobs:
       - name: Add Rust Target
         run: rustup target add ${{ matrix.target }}
 
-      - uses: oxc-project/setup-node@6734a6bb55d651e0730f908358c959c2e80be184 # v1.1.0
+      - uses: oxc-project/setup-node@4c26e7cb3605b6bdef5450dacd02c434b10fd8ba # v1.2.0
 
       # For cargo-zigbuild in musl builds.
       - uses: goto-bus-stop/setup-zig@abea47f85e598557f500fa1fd2ab7464fcb39406 # v2.2.1
@@ -288,7 +288,7 @@ jobs:
           path: artifacts
           pattern: oxlint-bindings-*
 
-      - uses: oxc-project/setup-node@6734a6bb55d651e0730f908358c959c2e80be184 # v1.1.0
+      - uses: oxc-project/setup-node@4c26e7cb3605b6bdef5450dacd02c434b10fd8ba # v1.2.0
 
       - name: Generate oxlint JS build
         working-directory: apps/oxlint
@@ -438,7 +438,7 @@ jobs:
       - name: Add Rust Target
         run: rustup target add ${{ matrix.target }}
 
-      - uses: oxc-project/setup-node@6734a6bb55d651e0730f908358c959c2e80be184 # v1.1.0
+      - uses: oxc-project/setup-node@4c26e7cb3605b6bdef5450dacd02c434b10fd8ba # v1.2.0
 
       # For cargo-zigbuild in musl builds.
       - uses: goto-bus-stop/setup-zig@abea47f85e598557f500fa1fd2ab7464fcb39406 # v2.2.1
@@ -579,7 +579,7 @@ jobs:
           path: artifacts
           pattern: oxfmt-bindings-*
 
-      - uses: oxc-project/setup-node@6734a6bb55d651e0730f908358c959c2e80be184 # v1.1.0
+      - uses: oxc-project/setup-node@4c26e7cb3605b6bdef5450dacd02c434b10fd8ba # v1.2.0
 
       - name: Generate oxfmt JS build
         working-directory: apps/oxfmt
