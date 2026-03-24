@@ -101,15 +101,18 @@ impl Rule for RelativeUrlStyle {
 
         match first_arg {
             Argument::StringLiteral(str_lit) => {
-                let url = str_lit.value.as_str();
+                let url = str_lit.value.to_str_lossy();
 
                 match self.0 {
                     RelativeUrlStyleConfig::Never => {
-                        let raw = str_lit.raw.as_ref().map_or(url, |r| {
-                            let s = r.as_str();
-                            // remove surrounding quotes
-                            &s[1..s.len() - 1]
-                        });
+                        let raw = str_lit.raw.as_ref().map_or_else(
+                            || url.as_ref(),
+                            |r| {
+                                let s = r.as_str();
+                                // remove surrounding quotes
+                                &s[1..s.len() - 1]
+                            },
+                        );
 
                         if can_remove_dot_slash(raw, new_expr) {
                             ctx.diagnostic_with_fix(never_diagnostic(str_lit.span), |fixer| {
@@ -123,7 +126,7 @@ impl Rule for RelativeUrlStyle {
                         }
                     }
                     RelativeUrlStyleConfig::Always => {
-                        if can_add_dot_slash(url, new_expr) {
+                        if can_add_dot_slash(url.as_ref(), new_expr) {
                             ctx.diagnostic_with_fix(always_diagnostic(str_lit.span), |fixer| {
                                 let insert_pos = str_lit.span.start + 1;
                                 let insert_span = Span::new(insert_pos, insert_pos);
@@ -164,8 +167,8 @@ fn can_add_dot_slash(url: &str, new_expr: &NewExpression) -> bool {
     }
 
     if let Some(Argument::StringLiteral(base_lit)) = new_expr.arguments.get(1) {
-        let base = base_lit.value.as_str();
-        if is_safe_to_add_dot_slash(url, &[base]) {
+        let base = base_lit.value.to_str_lossy();
+        if is_safe_to_add_dot_slash(url, &[base.as_ref()]) {
             return true;
         }
     }
@@ -179,8 +182,8 @@ fn can_remove_dot_slash(url: &str, new_expr: &NewExpression) -> bool {
     }
 
     if let Some(Argument::StringLiteral(base_lit)) = new_expr.arguments.get(1) {
-        let base = base_lit.value.as_str();
-        if is_safe_to_remove_dot_slash(url, &[base]) {
+        let base = base_lit.value.to_str_lossy();
+        if is_safe_to_remove_dot_slash(url, &[base.as_ref()]) {
             return true;
         }
     }

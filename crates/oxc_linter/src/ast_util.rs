@@ -306,6 +306,7 @@ pub fn extract_regex_flags<'a>(
         Argument::TemplateLiteral(template) => template.single_quasi()?,
         _ => return None,
     };
+    let flag_arg = flag_arg.as_str()?;
     let mut flags = RegExpFlags::empty();
     for ch in flag_arg.chars() {
         let flag = RegExpFlags::try_from(ch).ok()?;
@@ -806,7 +807,7 @@ pub fn get_static_property_name<'a>(parent_node: &AstNode<'a>) -> Option<Cow<'a,
                 && template.quasis.len() == 1
                 && let Some(cooked) = &template.quasis[0].value.cooked
             {
-                return Some(Cow::Borrowed(cooked.as_str()));
+                return Some(Cow::Borrowed(cooked.as_str()?));
             }
 
             None

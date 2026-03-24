@@ -166,8 +166,9 @@ impl Rule for NoNoninteractiveTabindex {
         if let Some(role) = role_attr.value.as_ref() {
             match role {
                 JSXAttributeValue::StringLiteral(role) => {
+                    let role_value = role.value.to_str_lossy();
                     let is_interactive_role =
-                        role.value.split_whitespace().next().is_some_and(|role| {
+                        role_value.split_whitespace().next().is_some_and(|role| {
                             INTERACTIVE_HTML_ROLES.contains(&role)
                                 || self.0.roles.iter().any(|allowed_role| allowed_role == role)
                         });

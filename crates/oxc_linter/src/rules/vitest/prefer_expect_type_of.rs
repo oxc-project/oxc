@@ -113,7 +113,7 @@ impl PreferExpectTypeOf {
         };
 
         let method = {
-            match type_expected.value.as_ref() {
+            match type_expected.value.to_str_lossy().as_ref() {
                 "string" => "toBeString",
                 "number" => "toBeNumber",
                 "boolean" => "toBeBoolean",

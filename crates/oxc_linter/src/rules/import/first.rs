@@ -105,7 +105,7 @@ impl Rule for First {
                 Statement::TSImportEqualsDeclaration(decl) => match &decl.module_reference {
                     TSModuleReference::ExternalModuleReference(mod_ref) => {
                         if matches!(self.0, AbsoluteFirst::AbsoluteFirst) {
-                            if is_relative_path(mod_ref.expression.value.as_str()) {
+                            if mod_ref.expression.value.as_str().is_some_and(is_relative_path) {
                                 any_relative = true;
                             } else if any_relative {
                                 ctx.diagnostic(absolute_first_diagnostic(mod_ref.expression.span));
@@ -120,7 +120,7 @@ impl Rule for First {
                 },
                 Statement::ImportDeclaration(decl) => {
                     if matches!(self.0, AbsoluteFirst::AbsoluteFirst) {
-                        if is_relative_path(decl.source.value.as_str()) {
+                        if decl.source.value.as_str().is_some_and(is_relative_path) {
                             any_relative = true;
                         } else if any_relative {
                             ctx.diagnostic(absolute_first_diagnostic(decl.source.span));

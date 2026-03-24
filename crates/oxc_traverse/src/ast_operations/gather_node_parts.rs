@@ -485,7 +485,9 @@ impl<'a> GatherNodeParts<'a> for PrivateIdentifier<'a> {
 
 impl<'a> GatherNodeParts<'a> for StringLiteral<'a> {
     fn gather<F: FnMut(&str)>(&self, f: &mut F) {
-        f(self.value.as_str());
+        if let Some(s) = self.value.as_str() {
+            f(s);
+        }
     }
 }
 

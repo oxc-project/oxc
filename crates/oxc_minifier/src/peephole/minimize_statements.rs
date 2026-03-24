@@ -1738,7 +1738,7 @@ impl<'a> PeepholeOptimizations {
                                         prop.key =
                                             PropertyKey::from(ctx.ast.expression_string_literal(
                                                 prop.key.span(),
-                                                "__proto__",
+                                                "__proto__".into(),
                                                 None,
                                             ));
                                     }

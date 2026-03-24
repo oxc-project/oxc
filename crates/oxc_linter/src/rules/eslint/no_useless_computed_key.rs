@@ -192,11 +192,11 @@ fn check_computed_class_member(
 ) {
     match expr {
         Expression::StringLiteral(lit) => {
-            let key_name = lit.value.as_str();
+            let key_name = lit.value.to_str_lossy();
             let allowed = if is_static {
-                allow_static.contains(&key_name)
+                allow_static.contains(&key_name.as_ref())
             } else {
-                allow_non_static.contains(&key_name)
+                allow_non_static.contains(&key_name.as_ref())
             };
             if !allowed {
                 ctx.diagnostic(no_useless_computed_key_diagnostic(span, lit.raw));

@@ -43,7 +43,9 @@ impl<'a> PeepholeOptimizations {
             }
             Expression::ComputedMemberExpression(member) if !member.optional => {
                 match &member.expression {
-                    Expression::StringLiteral(s) => (s.value.as_str(), &member.object),
+                    Expression::StringLiteral(s) => {
+                        (s.value.as_str().unwrap_or_default(), &member.object)
+                    }
                     _ => return,
                 }
             }
@@ -287,7 +289,7 @@ impl<'a> PeepholeOptimizations {
                 }
 
                 let mut quasi_strs: Vec<Cow<'a, str>> =
-                    vec![Cow::Borrowed(base_str.value.as_str())];
+                    vec![Cow::Borrowed(base_str.value.as_str().unwrap_or_default())];
                 let mut expressions = ctx.ast.vec_with_capacity(expression_count);
                 let mut pushed_quasi = true;
                 for argument in args.drain(..) {
@@ -296,9 +298,12 @@ impl<'a> PeepholeOptimizations {
                             let last_quasi = quasi_strs
                                 .last_mut()
                                 .expect("last element should exist because pushed_quasi is true");
-                            last_quasi.to_mut().push_str(&str_lit.value);
+                            last_quasi
+                                .to_mut()
+                                .push_str(str_lit.value.as_str().unwrap_or_default());
                         } else {
-                            quasi_strs.push(Cow::Borrowed(str_lit.value.as_str()));
+                            quasi_strs
+                                .push(Cow::Borrowed(str_lit.value.as_str().unwrap_or_default()));
                         }
                         pushed_quasi = true;
                     } else {
@@ -319,7 +324,7 @@ impl<'a> PeepholeOptimizations {
                     debug_assert_eq!(quasi_strs.len(), 1);
                     return Some(ctx.ast.expression_string_literal(
                         span,
-                        ctx.ast.atom_from_cow(&quasi_strs.pop().unwrap()),
+                        ctx.ast.atom_from_cow(&quasi_strs.pop().unwrap()).into(),
                         None,
                     ));
                 }
@@ -330,7 +335,7 @@ impl<'a> PeepholeOptimizations {
                         SPAN,
                         TemplateElementValue {
                             raw: ctx.ast.atom(&Self::escape_string_for_template_literal(&s)),
-                            cooked: Some(cooked),
+                            cooked: Some(cooked.into()),
                         },
                         false,
                         false, // raw is already escaped by escape_string_for_template_literal
@@ -379,7 +384,7 @@ impl<'a> PeepholeOptimizations {
                 match &member.expression {
                     Expression::StringLiteral(s) => {
                         let span = member.span;
-                        (s.value.as_str(), &mut member.object, span)
+                        (s.value.as_str().unwrap_or_default(), &mut member.object, span)
                     }
                     Expression::NumericLiteral(n) => {
                         if let Some(integer_index) = n.value.to_integer_index() {
@@ -462,7 +467,7 @@ impl<'a> PeepholeOptimizations {
                     {
                         Some(ctx.ast.expression_string_literal(
                             span,
-                            regex.regex.pattern.text,
+                            regex.regex.pattern.text.into(),
                             None,
                         ))
                     } else {
@@ -559,10 +564,10 @@ impl<'a> PeepholeOptimizations {
         match object {
             Expression::StringLiteral(s) => {
                 if let StringCharAtResult::Value(c) =
-                    s.value.as_str().char_at(Some(property.into()))
+                    s.value.as_str().unwrap_or_default().char_at(Some(property.into()))
                 {
                     s.span = span;
-                    s.value = ctx.ast.atom(&c.to_string());
+                    s.value = ctx.ast.atom(&c.to_string()).into();
                     s.raw = None;
                     Some(object.take_in(ctx.ast))
                 } else {

@@ -1,4 +1,4 @@
-use oxc_allocator::Allocator;
+use oxc_allocator::{Allocator, IntoIn};
 use oxc_ast::{
     AstBuilder, AstKind,
     ast::{Argument, MemberExpression, RegExpFlags},
@@ -92,7 +92,7 @@ impl Rule for PreferStringReplaceAll {
                         let ast = AstBuilder::new(&alloc);
                         codegen.print_expression(&ast.expression_string_literal(
                             SPAN,
-                            ast.atom(&k),
+                            k.as_str().into_in(&alloc),
                             None,
                         ));
                         fixer.replace(pattern.span(), codegen.into_source_text())

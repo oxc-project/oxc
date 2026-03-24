@@ -266,18 +266,19 @@ fn gen_type_import_declaration<'c, 'a: 'c>(
 
 fn is_declaration_file_import(import_decl: &ImportDeclaration) -> bool {
     let source = &import_decl.source.value;
+    let source_lossy = source.to_str_lossy();
     // Relatively fast check to avoid unnecessary Path and extension parsing
     // if it doesn't even look like a declaration file import
-    if !source.contains(".d") {
+    if !source_lossy.contains(".d") {
         return false;
     }
     // Slower check that parses the file name to check if it's a declaration file
-    let path = Path::new(source.as_str());
+    let path = Path::new(source_lossy.as_ref());
     let Some(extension) = path.extension().and_then(std::ffi::os_str::OsStr::to_str) else {
         return false;
     };
     match FileExtension::from_str(extension) {
-        Ok(file_ext) => file_ext.is_ts_declaration(source),
+        Ok(file_ext) => file_ext.is_ts_declaration(source_lossy.as_ref()),
         Err(_) => false,
     }
 }

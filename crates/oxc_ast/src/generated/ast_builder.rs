@@ -15,6 +15,7 @@ use oxc_syntax::{
 };
 
 use oxc_span::{Atom, Ident};
+use oxc_wtf8::Wtf8Atom;
 
 use crate::{AstBuilder, ast::*};
 
@@ -182,44 +183,13 @@ impl<'a> AstBuilder<'a> {
     /// * `value`: The value of the string.
     /// * `raw`: The raw string as it appears in source code.
     #[inline]
-    pub fn expression_string_literal<A1>(
+    pub fn expression_string_literal(
         self,
         span: Span,
-        value: A1,
+        value: Wtf8Atom<'a>,
         raw: Option<Atom<'a>>,
-    ) -> Expression<'a>
-    where
-        A1: Into<Atom<'a>>,
-    {
+    ) -> Expression<'a> {
         Expression::StringLiteral(self.alloc_string_literal(span, value, raw))
-    }
-
-    /// Build an [`Expression::StringLiteral`] with `lone_surrogates`.
-    ///
-    /// This node contains a [`StringLiteral`] that will be stored in the memory arena.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code.
-    /// * `value`: The value of the string.
-    /// * `raw`: The raw string as it appears in source code.
-    /// * `lone_surrogates`: The string value contains lone surrogates.
-    #[inline]
-    pub fn expression_string_literal_with_lone_surrogates<A1>(
-        self,
-        span: Span,
-        value: A1,
-        raw: Option<Atom<'a>>,
-        lone_surrogates: bool,
-    ) -> Expression<'a>
-    where
-        A1: Into<Atom<'a>>,
-    {
-        Expression::StringLiteral(self.alloc_string_literal_with_lone_surrogates(
-            span,
-            value,
-            raw,
-            lone_surrogates,
-        ))
     }
 
     /// Build an [`Expression::TemplateLiteral`].
@@ -1827,40 +1797,7 @@ impl<'a> AstBuilder<'a> {
         } else {
             value
         };
-        TemplateElement {
-            node_id: Cell::new(NodeId::DUMMY),
-            span,
-            value,
-            tail,
-            lone_surrogates: Default::default(),
-        }
-    }
-
-    /// Build a [`TemplateElement`] with `lone_surrogates`.
-    ///
-    /// ## Parameters
-    /// * `span`: The [`Span`] covering this node
-    /// * `value`
-    /// * `tail`
-    /// * `lone_surrogates`: The template element contains lone surrogates.
-    #[inline]
-    pub fn template_element_with_lone_surrogates(
-        self,
-        span: Span,
-        value: TemplateElementValue<'a>,
-        tail: bool,
-        lone_surrogates: bool,
-        escape_raw: bool,
-    ) -> TemplateElement<'a> {
-        let value = if escape_raw {
-            TemplateElementValue {
-                raw: escape_template_element_raw(value.raw.as_str(), self),
-                cooked: value.cooked,
-            }
-        } else {
-            value
-        };
-        TemplateElement { node_id: Cell::new(NodeId::DUMMY), span, value, tail, lone_surrogates }
+        TemplateElement { node_id: Cell::new(NodeId::DUMMY), span, value, tail }
     }
 
     /// Build a [`MemberExpression::ComputedMemberExpression`].
@@ -8103,42 +8040,13 @@ impl<'a> AstBuilder<'a> {
     /// * `value`: The value of the string.
     /// * `raw`: The raw string as it appears in source code.
     #[inline]
-    pub fn import_attribute_key_string_literal<A1>(
+    pub fn import_attribute_key_string_literal(
         self,
         span: Span,
-        value: A1,
+        value: Wtf8Atom<'a>,
         raw: Option<Atom<'a>>,
-    ) -> ImportAttributeKey<'a>
-    where
-        A1: Into<Atom<'a>>,
-    {
+    ) -> ImportAttributeKey<'a> {
         ImportAttributeKey::StringLiteral(self.string_literal(span, value, raw))
-    }
-
-    /// Build an [`ImportAttributeKey::StringLiteral`] with `lone_surrogates`.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code.
-    /// * `value`: The value of the string.
-    /// * `raw`: The raw string as it appears in source code.
-    /// * `lone_surrogates`: The string value contains lone surrogates.
-    #[inline]
-    pub fn import_attribute_key_string_literal_with_lone_surrogates<A1>(
-        self,
-        span: Span,
-        value: A1,
-        raw: Option<Atom<'a>>,
-        lone_surrogates: bool,
-    ) -> ImportAttributeKey<'a>
-    where
-        A1: Into<Atom<'a>>,
-    {
-        ImportAttributeKey::StringLiteral(self.string_literal_with_lone_surrogates(
-            span,
-            value,
-            raw,
-            lone_surrogates,
-        ))
     }
 
     /// Build an [`ExportNamedDeclaration`].
@@ -8696,42 +8604,13 @@ impl<'a> AstBuilder<'a> {
     /// * `value`: The value of the string.
     /// * `raw`: The raw string as it appears in source code.
     #[inline]
-    pub fn module_export_name_string_literal<A1>(
+    pub fn module_export_name_string_literal(
         self,
         span: Span,
-        value: A1,
+        value: Wtf8Atom<'a>,
         raw: Option<Atom<'a>>,
-    ) -> ModuleExportName<'a>
-    where
-        A1: Into<Atom<'a>>,
-    {
+    ) -> ModuleExportName<'a> {
         ModuleExportName::StringLiteral(self.string_literal(span, value, raw))
-    }
-
-    /// Build a [`ModuleExportName::StringLiteral`] with `lone_surrogates`.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code.
-    /// * `value`: The value of the string.
-    /// * `raw`: The raw string as it appears in source code.
-    /// * `lone_surrogates`: The string value contains lone surrogates.
-    #[inline]
-    pub fn module_export_name_string_literal_with_lone_surrogates<A1>(
-        self,
-        span: Span,
-        value: A1,
-        raw: Option<Atom<'a>>,
-        lone_surrogates: bool,
-    ) -> ModuleExportName<'a>
-    where
-        A1: Into<Atom<'a>>,
-    {
-        ModuleExportName::StringLiteral(self.string_literal_with_lone_surrogates(
-            span,
-            value,
-            raw,
-            lone_surrogates,
-        ))
     }
 
     /// Build a [`V8IntrinsicExpression`].
@@ -8874,22 +8753,13 @@ impl<'a> AstBuilder<'a> {
     /// * `value`: The value of the string.
     /// * `raw`: The raw string as it appears in source code.
     #[inline]
-    pub fn string_literal<A1>(
+    pub fn string_literal(
         self,
         span: Span,
-        value: A1,
+        value: Wtf8Atom<'a>,
         raw: Option<Atom<'a>>,
-    ) -> StringLiteral<'a>
-    where
-        A1: Into<Atom<'a>>,
-    {
-        StringLiteral {
-            node_id: Cell::new(NodeId::DUMMY),
-            span,
-            value: value.into(),
-            raw,
-            lone_surrogates: Default::default(),
-        }
+    ) -> StringLiteral<'a> {
+        StringLiteral { node_id: Cell::new(NodeId::DUMMY), span, value, raw }
     }
 
     /// Build a [`StringLiteral`], and store it in the memory arena.
@@ -8902,73 +8772,13 @@ impl<'a> AstBuilder<'a> {
     /// * `value`: The value of the string.
     /// * `raw`: The raw string as it appears in source code.
     #[inline]
-    pub fn alloc_string_literal<A1>(
+    pub fn alloc_string_literal(
         self,
         span: Span,
-        value: A1,
+        value: Wtf8Atom<'a>,
         raw: Option<Atom<'a>>,
-    ) -> Box<'a, StringLiteral<'a>>
-    where
-        A1: Into<Atom<'a>>,
-    {
+    ) -> Box<'a, StringLiteral<'a>> {
         Box::new_in(self.string_literal(span, value, raw), self.allocator)
-    }
-
-    /// Build a [`StringLiteral`] with `lone_surrogates`.
-    ///
-    /// If you want the built node to be allocated in the memory arena,
-    /// use [`AstBuilder::alloc_string_literal_with_lone_surrogates`] instead.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code.
-    /// * `value`: The value of the string.
-    /// * `raw`: The raw string as it appears in source code.
-    /// * `lone_surrogates`: The string value contains lone surrogates.
-    #[inline]
-    pub fn string_literal_with_lone_surrogates<A1>(
-        self,
-        span: Span,
-        value: A1,
-        raw: Option<Atom<'a>>,
-        lone_surrogates: bool,
-    ) -> StringLiteral<'a>
-    where
-        A1: Into<Atom<'a>>,
-    {
-        StringLiteral {
-            node_id: Cell::new(NodeId::DUMMY),
-            span,
-            value: value.into(),
-            raw,
-            lone_surrogates,
-        }
-    }
-
-    /// Build a [`StringLiteral`] with `lone_surrogates`, and store it in the memory arena.
-    ///
-    /// Returns a [`Box`] containing the newly-allocated node.
-    /// If you want a stack-allocated node, use [`AstBuilder::string_literal_with_lone_surrogates`] instead.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code.
-    /// * `value`: The value of the string.
-    /// * `raw`: The raw string as it appears in source code.
-    /// * `lone_surrogates`: The string value contains lone surrogates.
-    #[inline]
-    pub fn alloc_string_literal_with_lone_surrogates<A1>(
-        self,
-        span: Span,
-        value: A1,
-        raw: Option<Atom<'a>>,
-        lone_surrogates: bool,
-    ) -> Box<'a, StringLiteral<'a>>
-    where
-        A1: Into<Atom<'a>>,
-    {
-        Box::new_in(
-            self.string_literal_with_lone_surrogates(span, value, raw, lone_surrogates),
-            self.allocator,
-        )
     }
 
     /// Build a [`BigIntLiteral`].
@@ -9734,44 +9544,13 @@ impl<'a> AstBuilder<'a> {
     /// * `value`: The value of the string.
     /// * `raw`: The raw string as it appears in source code.
     #[inline]
-    pub fn jsx_attribute_value_string_literal<A1>(
+    pub fn jsx_attribute_value_string_literal(
         self,
         span: Span,
-        value: A1,
+        value: Wtf8Atom<'a>,
         raw: Option<Atom<'a>>,
-    ) -> JSXAttributeValue<'a>
-    where
-        A1: Into<Atom<'a>>,
-    {
+    ) -> JSXAttributeValue<'a> {
         JSXAttributeValue::StringLiteral(self.alloc_string_literal(span, value, raw))
-    }
-
-    /// Build a [`JSXAttributeValue::StringLiteral`] with `lone_surrogates`.
-    ///
-    /// This node contains a [`StringLiteral`] that will be stored in the memory arena.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code.
-    /// * `value`: The value of the string.
-    /// * `raw`: The raw string as it appears in source code.
-    /// * `lone_surrogates`: The string value contains lone surrogates.
-    #[inline]
-    pub fn jsx_attribute_value_string_literal_with_lone_surrogates<A1>(
-        self,
-        span: Span,
-        value: A1,
-        raw: Option<Atom<'a>>,
-        lone_surrogates: bool,
-    ) -> JSXAttributeValue<'a>
-    where
-        A1: Into<Atom<'a>>,
-    {
-        JSXAttributeValue::StringLiteral(self.alloc_string_literal_with_lone_surrogates(
-            span,
-            value,
-            raw,
-            lone_surrogates,
-        ))
     }
 
     /// Build a [`JSXAttributeValue::ExpressionContainer`].
@@ -9887,10 +9666,12 @@ impl<'a> AstBuilder<'a> {
     /// * `value`: The text content.
     /// * `raw`: The raw string as it appears in source code.
     #[inline]
-    pub fn jsx_child_text<A1>(self, span: Span, value: A1, raw: Option<Atom<'a>>) -> JSXChild<'a>
-    where
-        A1: Into<Atom<'a>>,
-    {
+    pub fn jsx_child_text(
+        self,
+        span: Span,
+        value: Wtf8Atom<'a>,
+        raw: Option<Atom<'a>>,
+    ) -> JSXChild<'a> {
         JSXChild::Text(self.alloc_jsx_text(span, value, raw))
     }
 
@@ -10011,11 +9792,8 @@ impl<'a> AstBuilder<'a> {
     /// * `value`: The text content.
     /// * `raw`: The raw string as it appears in source code.
     #[inline]
-    pub fn jsx_text<A1>(self, span: Span, value: A1, raw: Option<Atom<'a>>) -> JSXText<'a>
-    where
-        A1: Into<Atom<'a>>,
-    {
-        JSXText { node_id: Cell::new(NodeId::DUMMY), span, value: value.into(), raw }
+    pub fn jsx_text(self, span: Span, value: Wtf8Atom<'a>, raw: Option<Atom<'a>>) -> JSXText<'a> {
+        JSXText { node_id: Cell::new(NodeId::DUMMY), span, value, raw }
     }
 
     /// Build a [`JSXText`], and store it in the memory arena.
@@ -10028,15 +9806,12 @@ impl<'a> AstBuilder<'a> {
     /// * `value`: The text content.
     /// * `raw`: The raw string as it appears in source code.
     #[inline]
-    pub fn alloc_jsx_text<A1>(
+    pub fn alloc_jsx_text(
         self,
         span: Span,
-        value: A1,
+        value: Wtf8Atom<'a>,
         raw: Option<Atom<'a>>,
-    ) -> Box<'a, JSXText<'a>>
-    where
-        A1: Into<Atom<'a>>,
-    {
+    ) -> Box<'a, JSXText<'a>> {
         Box::new_in(self.jsx_text(span, value, raw), self.allocator)
     }
 
@@ -10211,44 +9986,13 @@ impl<'a> AstBuilder<'a> {
     /// * `value`: The value of the string.
     /// * `raw`: The raw string as it appears in source code.
     #[inline]
-    pub fn ts_enum_member_name_string<A1>(
+    pub fn ts_enum_member_name_string(
         self,
         span: Span,
-        value: A1,
+        value: Wtf8Atom<'a>,
         raw: Option<Atom<'a>>,
-    ) -> TSEnumMemberName<'a>
-    where
-        A1: Into<Atom<'a>>,
-    {
+    ) -> TSEnumMemberName<'a> {
         TSEnumMemberName::String(self.alloc_string_literal(span, value, raw))
-    }
-
-    /// Build a [`TSEnumMemberName::String`] with `lone_surrogates`.
-    ///
-    /// This node contains a [`StringLiteral`] that will be stored in the memory arena.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code.
-    /// * `value`: The value of the string.
-    /// * `raw`: The raw string as it appears in source code.
-    /// * `lone_surrogates`: The string value contains lone surrogates.
-    #[inline]
-    pub fn ts_enum_member_name_string_with_lone_surrogates<A1>(
-        self,
-        span: Span,
-        value: A1,
-        raw: Option<Atom<'a>>,
-        lone_surrogates: bool,
-    ) -> TSEnumMemberName<'a>
-    where
-        A1: Into<Atom<'a>>,
-    {
-        TSEnumMemberName::String(self.alloc_string_literal_with_lone_surrogates(
-            span,
-            value,
-            raw,
-            lone_surrogates,
-        ))
     }
 
     /// Build a [`TSEnumMemberName::ComputedString`].
@@ -10260,44 +10004,13 @@ impl<'a> AstBuilder<'a> {
     /// * `value`: The value of the string.
     /// * `raw`: The raw string as it appears in source code.
     #[inline]
-    pub fn ts_enum_member_name_computed_string<A1>(
+    pub fn ts_enum_member_name_computed_string(
         self,
         span: Span,
-        value: A1,
+        value: Wtf8Atom<'a>,
         raw: Option<Atom<'a>>,
-    ) -> TSEnumMemberName<'a>
-    where
-        A1: Into<Atom<'a>>,
-    {
+    ) -> TSEnumMemberName<'a> {
         TSEnumMemberName::ComputedString(self.alloc_string_literal(span, value, raw))
-    }
-
-    /// Build a [`TSEnumMemberName::ComputedString`] with `lone_surrogates`.
-    ///
-    /// This node contains a [`StringLiteral`] that will be stored in the memory arena.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code.
-    /// * `value`: The value of the string.
-    /// * `raw`: The raw string as it appears in source code.
-    /// * `lone_surrogates`: The string value contains lone surrogates.
-    #[inline]
-    pub fn ts_enum_member_name_computed_string_with_lone_surrogates<A1>(
-        self,
-        span: Span,
-        value: A1,
-        raw: Option<Atom<'a>>,
-        lone_surrogates: bool,
-    ) -> TSEnumMemberName<'a>
-    where
-        A1: Into<Atom<'a>>,
-    {
-        TSEnumMemberName::ComputedString(self.alloc_string_literal_with_lone_surrogates(
-            span,
-            value,
-            raw,
-            lone_surrogates,
-        ))
     }
 
     /// Build a [`TSEnumMemberName::ComputedTemplateString`].
@@ -10450,44 +10163,13 @@ impl<'a> AstBuilder<'a> {
     /// * `value`: The value of the string.
     /// * `raw`: The raw string as it appears in source code.
     #[inline]
-    pub fn ts_literal_string_literal<A1>(
+    pub fn ts_literal_string_literal(
         self,
         span: Span,
-        value: A1,
+        value: Wtf8Atom<'a>,
         raw: Option<Atom<'a>>,
-    ) -> TSLiteral<'a>
-    where
-        A1: Into<Atom<'a>>,
-    {
+    ) -> TSLiteral<'a> {
         TSLiteral::StringLiteral(self.alloc_string_literal(span, value, raw))
-    }
-
-    /// Build a [`TSLiteral::StringLiteral`] with `lone_surrogates`.
-    ///
-    /// This node contains a [`StringLiteral`] that will be stored in the memory arena.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code.
-    /// * `value`: The value of the string.
-    /// * `raw`: The raw string as it appears in source code.
-    /// * `lone_surrogates`: The string value contains lone surrogates.
-    #[inline]
-    pub fn ts_literal_string_literal_with_lone_surrogates<A1>(
-        self,
-        span: Span,
-        value: A1,
-        raw: Option<Atom<'a>>,
-        lone_surrogates: bool,
-    ) -> TSLiteral<'a>
-    where
-        A1: Into<Atom<'a>>,
-    {
-        TSLiteral::StringLiteral(self.alloc_string_literal_with_lone_surrogates(
-            span,
-            value,
-            raw,
-            lone_surrogates,
-        ))
     }
 
     /// Build a [`TSLiteral::TemplateLiteral`].
@@ -13978,42 +13660,13 @@ impl<'a> AstBuilder<'a> {
     /// * `value`: The value of the string.
     /// * `raw`: The raw string as it appears in source code.
     #[inline]
-    pub fn ts_module_declaration_name_string_literal<A1>(
+    pub fn ts_module_declaration_name_string_literal(
         self,
         span: Span,
-        value: A1,
+        value: Wtf8Atom<'a>,
         raw: Option<Atom<'a>>,
-    ) -> TSModuleDeclarationName<'a>
-    where
-        A1: Into<Atom<'a>>,
-    {
+    ) -> TSModuleDeclarationName<'a> {
         TSModuleDeclarationName::StringLiteral(self.string_literal(span, value, raw))
-    }
-
-    /// Build a [`TSModuleDeclarationName::StringLiteral`] with `lone_surrogates`.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code.
-    /// * `value`: The value of the string.
-    /// * `raw`: The raw string as it appears in source code.
-    /// * `lone_surrogates`: The string value contains lone surrogates.
-    #[inline]
-    pub fn ts_module_declaration_name_string_literal_with_lone_surrogates<A1>(
-        self,
-        span: Span,
-        value: A1,
-        raw: Option<Atom<'a>>,
-        lone_surrogates: bool,
-    ) -> TSModuleDeclarationName<'a>
-    where
-        A1: Into<Atom<'a>>,
-    {
-        TSModuleDeclarationName::StringLiteral(self.string_literal_with_lone_surrogates(
-            span,
-            value,
-            raw,
-            lone_surrogates,
-        ))
     }
 
     /// Build a [`TSModuleDeclarationBody::TSModuleDeclaration`].

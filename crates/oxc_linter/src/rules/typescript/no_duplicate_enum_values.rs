@@ -115,7 +115,10 @@ impl Rule for NoDuplicateEnumValues {
                     }
                 }
                 Expression::StringLiteral(s) => {
-                    if let Some(old_span) = seen_string_values.insert(s.value.as_str(), s.span) {
+                    let Some(value) = s.value.as_str() else {
+                        continue;
+                    };
+                    if let Some(old_span) = seen_string_values.insert(value, s.span) {
                         // Formatting here for prettier messages. This makes it
                         // look like "Duplicate enum value 'A'"
                         let v = format!("'{}'", s.value);

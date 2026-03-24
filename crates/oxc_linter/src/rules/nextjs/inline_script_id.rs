@@ -103,7 +103,7 @@ impl Rule for InlineScriptId {
             return;
         };
 
-        if import_decl.source.value.as_str() != "next/script" {
+        if import_decl.source.value.as_str() != Some("next/script") {
             return;
         }
 

@@ -83,25 +83,7 @@ impl StringLiteral<'_> {
     ///
     /// See: <https://tc39.es/ecma262/multipage/abstract-operations.html#sec-isstringwellformedunicode>
     pub fn is_string_well_formed_unicode(&self) -> bool {
-        let mut chars = self.value.chars();
-        while let Some(c) = chars.next() {
-            if c == '\\' && chars.next() == Some('u') {
-                let hex = &chars.as_str()[..4];
-                if let Ok(hex) = u32::from_str_radix(hex, 16)
-                    && (0xd800..=0xdfff).contains(&hex)
-                {
-                    return false;
-                }
-            }
-        }
-        true
-    }
-}
-
-impl AsRef<str> for StringLiteral<'_> {
-    #[inline]
-    fn as_ref(&self) -> &str {
-        self.value.as_ref()
+        self.value.is_well_formed()
     }
 }
 

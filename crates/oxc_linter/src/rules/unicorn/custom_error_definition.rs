@@ -375,14 +375,14 @@ fn is_valid_name_property(name_property: Option<&PropertyDefinition>, class_name
     if let Some(prop) = name_property
         && let Some(Expression::StringLiteral(lit)) = &prop.value
     {
-        return lit.value.as_str() == class_name;
+        return lit.value.as_str() == Some(class_name);
     }
 
     false
 }
 
 fn is_expected_string_literal(expr: &Expression, expected: &str) -> bool {
-    matches!(expr, Expression::StringLiteral(lit) if lit.value.as_str() == expected)
+    matches!(expr, Expression::StringLiteral(lit) if lit.value.as_str() == Some(expected))
 }
 
 #[test]

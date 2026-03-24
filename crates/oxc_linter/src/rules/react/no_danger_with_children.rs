@@ -248,8 +248,8 @@ fn is_line_break(child: &JSXChild) -> bool {
     let JSXChild::Text(text) = child else {
         return false;
     };
-    let is_multi_line = text.value.contains('\n');
-    is_multi_line && is_whitespace(text.value.as_str())
+    let is_multi_line = text.value.as_str().unwrap_or("").contains('\n');
+    is_multi_line && is_whitespace(text.value.as_str().unwrap_or(""))
 }
 
 /// Given a JSX element, find the JSXAttributeItem with the given name.

@@ -431,7 +431,8 @@ impl<'a> ModuleRunnerTransform<'a> {
                 let pattern = binding.create_binding_pattern(ctx);
                 let imported_names = ctx.ast.vec_from_iter(specifiers.iter().map(|specifier| {
                     let local_name = specifier.local.name();
-                    let local_name_expr = ctx.ast.expression_string_literal(SPAN, local_name, None);
+                    let local_name_expr =
+                        ctx.ast.expression_string_literal(SPAN, local_name.into(), None);
                     ArrayExpressionElement::from(local_name_expr)
                 }));
                 let arguments = ctx.ast.vec_from_array([
@@ -632,7 +633,7 @@ impl<'a> ModuleRunnerTransform<'a> {
             self.import_bindings.insert(symbol_id, (binding.clone(), Some(key)));
         }
 
-        ArrayExpressionElement::from(ctx.ast.expression_string_literal(span, key, None))
+        ArrayExpressionElement::from(ctx.ast.expression_string_literal(span, key.into(), None))
     }
 
     #[inline]
@@ -778,7 +779,11 @@ impl<'a> ModuleRunnerTransform<'a> {
                 SSR_MODULE_EXPORTS_KEY,
                 ReferenceFlags::Read,
             )),
-            Argument::from(ctx.ast.expression_string_literal(SPAN, exported_name, None)),
+            Argument::from(ctx.ast.expression_string_literal(
+                SPAN,
+                exported_name.as_str().into(),
+                None,
+            )),
             Argument::from(object),
         ]);
 
@@ -819,7 +824,7 @@ fn create_compute_property_access<'a>(
     property: &str,
     ctx: &TraverseCtx<'a>,
 ) -> Expression<'a> {
-    let expression = ctx.ast.expression_string_literal(SPAN, ctx.ast.atom(property), None);
+    let expression = ctx.ast.expression_string_literal(SPAN, ctx.ast.atom(property).into(), None);
     Expression::from(ctx.ast.member_expression_computed(span, object, expression, false))
 }
 

@@ -74,11 +74,9 @@ impl Rule for NoWebpackLoaderSyntax {
                         return;
                     }
 
-                    if ident.value.contains('!') {
-                        ctx.diagnostic(no_named_as_default_diagnostic(
-                            ident.value.as_str(),
-                            ident.span,
-                        ));
+                    let value = ident.value.to_str_lossy();
+                    if value.contains('!') {
+                        ctx.diagnostic(no_named_as_default_diagnostic(value.as_ref(), ident.span));
                     }
                 }
             }
@@ -88,9 +86,10 @@ impl Rule for NoWebpackLoaderSyntax {
                     return;
                 }
 
-                if import_decl.source.value.contains('!') {
+                let source = import_decl.source.value.to_str_lossy();
+                if source.contains('!') {
                     ctx.diagnostic(no_named_as_default_diagnostic(
-                        &import_decl.source.value,
+                        source.as_ref(),
                         import_decl.source.span,
                     ));
                 }

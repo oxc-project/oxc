@@ -111,8 +111,9 @@ impl Rule for JsxNoScriptUrl {
                             return;
                         };
                         if prop_value.as_string_literal().is_some_and(|val| {
+                            let value = val.value.to_str_lossy();
                             link_props.contains(&attr.name.get_identifier().name.to_string())
-                                && JS_SCRIPT_REGEX.captures(&val.value).is_some()
+                                && JS_SCRIPT_REGEX.captures(value.as_ref()).is_some()
                         }) {
                             ctx.diagnostic(jsx_no_script_url_diagnostic(attr.span()));
                         }
@@ -125,11 +126,12 @@ impl Rule for JsxNoScriptUrl {
                             return;
                         };
                         if prop_value.as_string_literal().is_some_and(|val| {
+                            let value = val.value.to_str_lossy();
                             is_link_attribute(
                                 component_name.as_str(),
                                 attr.name.get_identifier().name.to_string(),
                                 ctx,
-                            ) && JS_SCRIPT_REGEX.captures(&val.value).is_some()
+                            ) && JS_SCRIPT_REGEX.captures(value.as_ref()).is_some()
                         }) {
                             ctx.diagnostic(jsx_no_script_url_diagnostic(attr.span()));
                         }

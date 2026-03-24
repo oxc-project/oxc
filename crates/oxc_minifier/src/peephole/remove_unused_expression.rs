@@ -513,7 +513,7 @@ impl<'a> PeepholeOptimizations {
                 && !binary_expr.left.is_specific_string_literal("")
             {
                 binary_expr.left =
-                    ctx.ast.expression_string_literal(binary_expr.left.span(), "", None);
+                    ctx.ast.expression_string_literal(binary_expr.left.span(), "".into(), None);
                 ctx.state.changed = true;
             }
 
@@ -534,7 +534,7 @@ impl<'a> PeepholeOptimizations {
                 && !binary_expr.right.is_specific_string_literal("")
             {
                 binary_expr.right =
-                    ctx.ast.expression_string_literal(binary_expr.right.span(), "", None);
+                    ctx.ast.expression_string_literal(binary_expr.right.span(), "".into(), None);
                 ctx.state.changed = true;
             }
             return true;

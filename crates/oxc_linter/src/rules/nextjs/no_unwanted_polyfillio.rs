@@ -108,7 +108,9 @@ impl Rule for NoUnwantedPolyfillio {
             return;
         };
 
-        let src_str = src_value.value.as_str();
+        let Some(src_str) = src_value.value.as_str() else {
+            return;
+        };
 
         // Check for unsafe polyfill.io domains first
         // These domains were compromised in a supply chain attack in 2024

@@ -2,6 +2,7 @@ use oxc_allocator::{Box, Vec};
 use oxc_ast::{NONE, ast::*};
 use oxc_span::GetSpan;
 use oxc_syntax::operator::UnaryOperator;
+use oxc_wtf8::Wtf8Atom;
 
 use crate::{
     Context, ParserConfig as Config, ParserImpl, diagnostics,
@@ -1085,7 +1086,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 span = self.cur_token().span();
             }
             self.error(diagnostics::ts_string_literal_expected(span));
-            self.ast.string_literal(span, "", None)
+            self.ast.string_literal(span, Wtf8Atom::from(""), None)
         };
 
         let options =
@@ -1213,7 +1214,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 let value = self.parse_assignment_expression_or_higher();
                 let key = PropertyKey::StringLiteral(self.alloc(self.ast.string_literal(
                     bracket_span,
-                    "",
+                    Wtf8Atom::from(""),
                     None,
                 )));
                 properties.push(ObjectPropertyKind::ObjectProperty(

@@ -194,7 +194,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
                 self.ast.expression_big_int_literal(span, value, None, BigintBase::Decimal)
             }
             ConstantValue::String(s) => {
-                self.ast.expression_string_literal(span, self.ast.atom_from_cow(&s), None)
+                self.ast.expression_string_literal(span, self.ast.atom_from_cow(&s).into(), None)
             }
             ConstantValue::Boolean(b) => self.ast.expression_boolean_literal(span, b),
             ConstantValue::Undefined => self.ast.void_0(span),

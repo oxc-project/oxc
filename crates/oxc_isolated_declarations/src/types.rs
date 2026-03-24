@@ -70,8 +70,11 @@ impl<'a> IsolatedDeclarations<'a> {
     fn transform_property_key(&self, key: &PropertyKey<'a>) -> PropertyKey<'a> {
         match key {
             // ["string"] -> string
-            PropertyKey::StringLiteral(literal) if is_identifier_name(&literal.value) => {
-                self.ast.property_key_static_identifier(literal.span, literal.value.as_str())
+            PropertyKey::StringLiteral(literal)
+                if literal.value.as_str().is_some_and(is_identifier_name) =>
+            {
+                self.ast
+                    .property_key_static_identifier(literal.span, literal.value.as_str().unwrap())
             }
             // [`string`] -> string
             PropertyKey::TemplateLiteral(literal)

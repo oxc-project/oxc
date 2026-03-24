@@ -100,7 +100,9 @@ impl Rule for SelfClosingComp {
                 return;
             };
 
-            if !(jsx_text.value.contains('\n') && jsx_text.value.chars().all(char::is_whitespace)) {
+            if !(jsx_text.value.as_str().unwrap_or("").contains('\n')
+                && jsx_text.value.as_str().unwrap_or("").chars().all(char::is_whitespace))
+            {
                 return;
             }
         }

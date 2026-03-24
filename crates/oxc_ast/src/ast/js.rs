@@ -35,6 +35,7 @@ use oxc_syntax::{
     scope::ScopeId,
     symbol::SymbolId,
 };
+use oxc_wtf8::Wtf8Atom;
 
 use super::{macros::inherit_variants, *};
 
@@ -493,14 +494,6 @@ pub struct TemplateElement<'a> {
     pub span: Span,
     pub value: TemplateElementValue<'a>,
     pub tail: bool,
-    /// The template element contains lone surrogates.
-    ///
-    /// `value.cooked` is encoded using `\u{FFFD}` (the lossy replacement character) as an escape character.
-    /// Lone surrogates are encoded as `\u{FFFD}XXXX`, where `XXXX` is the code unit in hex.
-    /// The lossy escape character itself is encoded as `\u{FFFD}fffd`.
-    #[builder(default)]
-    #[estree(skip)]
-    pub lone_surrogates: bool,
 }
 
 /// See [template-strings-cooked-vs-raw](https://exploringjs.com/js/book/ch_template-literals.html#template-strings-cooked-vs-raw)
@@ -517,7 +510,7 @@ pub struct TemplateElementValue<'a> {
     /// For example, \t produces a tab character.
     /// This interpretation of the template strings is stored as an Array in the first argument.
     /// cooked = None when template literal has invalid escape sequence
-    pub cooked: Option<Atom<'a>>,
+    pub cooked: Option<Wtf8Atom<'a>>,
 }
 
 /// Represents a member access expression, which can include computed member access,

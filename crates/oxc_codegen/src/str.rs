@@ -52,7 +52,7 @@ impl Codegen<'_> {
             chunk_start: bytes.ptr(),
             bytes,
             quote,
-            lone_surrogates: s.lone_surrogates,
+            lone_surrogates: s.value.contains_lone_surrogates(),
             allow_backtick,
         };
 

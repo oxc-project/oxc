@@ -320,16 +320,18 @@ impl Rule for NoImplicitCoercion {
                     // We also allow backslash characters in the cooked value because they
                     // typically come from line continuations (e.g., `\\\n${foo}`) which
                     // ESLint also treats as implicit coercion.
-                    let first_is_empty_or_whitespace = first_quasi
-                        .value
-                        .cooked
-                        .as_ref()
-                        .is_some_and(|s| s.chars().all(|c| c.is_whitespace() || c == '\\'));
-                    let last_is_empty_or_whitespace = last_quasi
-                        .value
-                        .cooked
-                        .as_ref()
-                        .is_some_and(|s| s.chars().all(|c| c.is_whitespace() || c == '\\'));
+                    let first_is_empty_or_whitespace =
+                        first_quasi.value.cooked.as_ref().is_some_and(|s| {
+                            s.as_str().is_some_and(|text| {
+                                text.chars().all(|c| c.is_whitespace() || c == '\\')
+                            })
+                        });
+                    let last_is_empty_or_whitespace =
+                        last_quasi.value.cooked.as_ref().is_some_and(|s| {
+                            s.as_str().is_some_and(|text| {
+                                text.chars().all(|c| c.is_whitespace() || c == '\\')
+                            })
+                        });
 
                     if first_is_empty_or_whitespace && last_is_empty_or_whitespace {
                         let expr = &template.expressions[0];

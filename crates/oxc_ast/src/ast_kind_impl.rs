@@ -641,10 +641,14 @@ impl<'a> MemberExpressionKind<'a> {
     pub fn static_property_info(&self) -> Option<(Span, &'a str)> {
         match self {
             Self::Computed(expr) => match &expr.expression {
-                Expression::StringLiteral(lit) => Some((lit.span, lit.value.as_str())),
+                Expression::StringLiteral(lit) => lit.value.as_str().map(|s| (lit.span, s)),
                 Expression::TemplateLiteral(lit) => {
                     if lit.quasis.len() == 1 {
-                        lit.quasis[0].value.cooked.map(|cooked| (lit.span, cooked.as_str()))
+                        if let Some(cooked) = lit.quasis[0].value.cooked {
+                            cooked.as_str().map(|s| (lit.span, s))
+                        } else {
+                            None
+                        }
                     } else {
                         None
                     }

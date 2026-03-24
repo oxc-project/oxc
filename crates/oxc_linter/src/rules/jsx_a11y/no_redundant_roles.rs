@@ -82,7 +82,8 @@ impl Rule for NoRedundantRoles {
         if let Some(JSXAttributeItem::Attribute(attr)) = has_jsx_prop_ignore_case(jsx_el, "role")
             && let Some(JSXAttributeValue::StringLiteral(role_values)) = &attr.value
         {
-            let roles = role_values.value.split_whitespace().collect::<Vec<_>>();
+            let role_values = role_values.value.to_str_lossy();
+            let roles = role_values.split_whitespace().collect::<Vec<_>>();
             for role in &roles {
                 let exceptions = get_default_role_exception(&component);
                 if exceptions.is_some_and(|set| set.contains(role)) {

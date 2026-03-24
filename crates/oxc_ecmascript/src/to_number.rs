@@ -29,7 +29,7 @@ impl<'a> ToNumber<'a> for Expression<'a> {
                 "NaN" | "undefined" if ctx.is_global_reference(ident) => Some(f64::NAN),
                 _ => None,
             },
-            Expression::StringLiteral(lit) => Some(lit.value.as_str().string_to_number()),
+            Expression::StringLiteral(lit) => Some(lit.value.as_str()?.string_to_number()),
             Expression::UnaryExpression(unary) if unary.operator.is_not() => {
                 let number = unary.argument.to_number(ctx)?;
                 Some(if number == 0.0 { 1.0 } else { 0.0 })

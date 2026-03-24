@@ -87,7 +87,7 @@ impl Rule for NoInvalidFetchOptions {
 }
 
 // set to method_name to "UNKNOWN" if we can't infer the method name
-const UNKNOWN_METHOD_NAME: Cow<'static, str> = Cow::Borrowed("UNKNOWN");
+const UNKNOWN_METHOD_NAME: &str = "UNKNOWN";
 
 fn is_invalid_fetch_options<'a>(
     obj_expr: &'a Box<'_, ObjectExpression<'_>>,
@@ -95,7 +95,7 @@ fn is_invalid_fetch_options<'a>(
 ) -> Option<(Cow<'a, str>, Span)> {
     // fetch and Request method defaults to "GET"
     let mut body_span = Span::default();
-    let mut method_name = Cow::Borrowed("GET");
+    let mut method_name = String::from("GET");
 
     for property in &obj_expr.properties {
         if property.is_spread() {
@@ -122,7 +122,7 @@ fn is_invalid_fetch_options<'a>(
                 Expression::StaticMemberExpression(s) => {
                     let symbols = ctx.scoping();
                     let Expression::Identifier(ident_ref) = &s.object else {
-                        method_name = UNKNOWN_METHOD_NAME;
+                        method_name = UNKNOWN_METHOD_NAME.into();
                         continue;
                     };
                     let reference_id = ident_ref.reference_id();
@@ -141,7 +141,7 @@ fn is_invalid_fetch_options<'a>(
                                         if let Some(Expression::StringLiteral(str_lit)) =
                                             &m.initializer
                                         {
-                                            Some(str_lit.value.to_compact_str())
+                                            Some(str_lit.value.to_str_lossy().into())
                                         } else {
                                             None
                                         }
@@ -152,24 +152,25 @@ fn is_invalid_fetch_options<'a>(
                         };
 
                         if let Some(value_ident) = enum_member_res {
-                            method_name = value_ident.into();
+                            method_name = value_ident.to_string();
                         }
                     } else {
-                        method_name = UNKNOWN_METHOD_NAME;
+                        method_name = UNKNOWN_METHOD_NAME.into();
                     }
                 }
                 Expression::StringLiteral(value_ident) => {
-                    method_name = value_ident.value.cow_to_ascii_uppercase();
+                    method_name = value_ident.value.to_str_lossy().cow_to_ascii_uppercase().into();
                 }
                 Expression::TemplateLiteral(template_lit) => {
-                    method_name = extract_method_name_from_template_literal(template_lit);
+                    method_name =
+                        extract_method_name_from_template_literal(template_lit).into_owned();
                 }
                 Expression::Identifier(value_ident) => {
                     let symbols = ctx.scoping();
                     let reference_id = value_ident.reference_id();
 
                     let Some(symbol_id) = symbols.get_reference(reference_id).symbol_id() else {
-                        method_name = UNKNOWN_METHOD_NAME;
+                        method_name = UNKNOWN_METHOD_NAME.into();
                         continue;
                     };
 
@@ -178,14 +179,16 @@ fn is_invalid_fetch_options<'a>(
                     match decl.kind() {
                         AstKind::VariableDeclarator(declarator) => match &declarator.init {
                             Some(Expression::StringLiteral(str_lit)) => {
-                                method_name = str_lit.value.cow_to_ascii_uppercase();
+                                method_name =
+                                    str_lit.value.to_str_lossy().cow_to_ascii_uppercase().into();
                             }
                             Some(Expression::TemplateLiteral(template_lit)) => {
                                 method_name =
-                                    extract_method_name_from_template_literal(template_lit);
+                                    extract_method_name_from_template_literal(template_lit)
+                                        .into_owned();
                             }
                             _ => {
-                                method_name = UNKNOWN_METHOD_NAME;
+                                method_name = UNKNOWN_METHOD_NAME.into();
                             }
                         },
                         AstKind::FormalParameter(FormalParameter {
@@ -199,25 +202,35 @@ fn is_invalid_fetch_options<'a>(
                                         if let TSType::TSLiteralType(ty) = ty {
                                             let TSLiteralType { literal, .. } = &**ty;
                                             if let TSLiteral::StringLiteral(str_lit) = literal {
-                                                return str_lit.value.cow_to_ascii_uppercase()
+                                                return str_lit
+                                                    .value
+                                                    .to_str_lossy()
+                                                    .cow_to_ascii_uppercase()
                                                     == "GET"
-                                                    || str_lit.value.cow_to_ascii_uppercase()
+                                                    || str_lit
+                                                        .value
+                                                        .to_str_lossy()
+                                                        .cow_to_ascii_uppercase()
                                                         == "HEAD";
                                             }
                                         }
                                         false
                                     }) {
-                                        method_name = UNKNOWN_METHOD_NAME;
+                                        method_name = UNKNOWN_METHOD_NAME.into();
                                     }
                                 }
                                 TSType::TSLiteralType(literal_type) => {
                                     let TSLiteralType { literal, .. } = &**literal_type;
                                     if let TSLiteral::StringLiteral(str_lit) = literal {
-                                        method_name = str_lit.value.cow_to_ascii_uppercase();
+                                        method_name = str_lit
+                                            .value
+                                            .to_str_lossy()
+                                            .cow_to_ascii_uppercase()
+                                            .into();
                                     }
                                 }
                                 _ => {
-                                    method_name = UNKNOWN_METHOD_NAME;
+                                    method_name = UNKNOWN_METHOD_NAME.into();
                                 }
                             }
                         }
@@ -225,14 +238,14 @@ fn is_invalid_fetch_options<'a>(
                     }
                 }
                 _ => {
-                    method_name = UNKNOWN_METHOD_NAME;
+                    method_name = UNKNOWN_METHOD_NAME.into();
                 }
             }
         }
     }
 
     if (method_name == "GET" || method_name == "HEAD") && !body_span.is_empty() {
-        Some((method_name, body_span))
+        Some((Cow::Owned(method_name), body_span))
     } else {
         None
     }
@@ -247,7 +260,7 @@ fn extract_method_name_from_template_literal<'a>(
             return template_element_value.value.raw.cow_to_ascii_uppercase();
         }
     }
-    UNKNOWN_METHOD_NAME
+    UNKNOWN_METHOD_NAME.into()
 }
 
 #[test]

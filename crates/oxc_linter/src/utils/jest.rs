@@ -225,7 +225,7 @@ fn collect_ids_referenced_to_import<'a, 'c>(
                 };
                 let name = semantic.scoping().symbol_name(symbol_id);
 
-                if matches!(import_decl.source.value.as_str(), "@jest/globals" | "vitest") {
+                if matches!(import_decl.source.value.as_str(), Some("@jest/globals" | "vitest")) {
                     let original = find_original_name(import_decl, name);
                     let ret = reference_ids
                         .iter()
@@ -278,11 +278,11 @@ pub fn get_node_name_vec<'a>(expr: &'a Expression<'a>) -> Vec<Cow<'a, str>> {
     match expr {
         Expression::Identifier(ident) => chain.push(Cow::Borrowed(ident.name.as_str())),
         Expression::StringLiteral(string_literal) => {
-            chain.push(Cow::Borrowed(&string_literal.value));
+            chain.push(Cow::Owned(string_literal.value.to_str_lossy().into_owned()));
         }
         Expression::TemplateLiteral(template_literal) => {
             if let Some(quasi) = template_literal.single_quasi() {
-                chain.push(Cow::Borrowed(quasi.as_str()));
+                chain.push(Cow::Owned(quasi.to_str_lossy().into_owned()));
             }
         }
         Expression::TaggedTemplateExpression(tagged_expr) => {

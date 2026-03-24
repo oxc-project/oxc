@@ -67,7 +67,10 @@ pub fn try_fold_known_global_methods<'a>(
         }
         Expression::ComputedMemberExpression(member) if !member.optional => {
             match &member.expression {
-                Expression::StringLiteral(s) => (s.value.as_str(), &member.object),
+                Expression::StringLiteral(s) => {
+                    let name = s.value.as_str()?;
+                    (name, &member.object)
+                }
                 _ => return None,
             }
         }
@@ -108,7 +111,10 @@ fn try_fold_string_casing<'a>(
     }
 
     let value = match object {
-        Expression::StringLiteral(s) => Cow::Borrowed(s.value.as_str()),
+        Expression::StringLiteral(s) => {
+            let s_str = s.value.as_str()?;
+            Cow::Borrowed(s_str)
+        }
         Expression::Identifier(ident) => ident
             .reference_id
             .get()
@@ -154,9 +160,9 @@ fn try_fold_string_index_of<'a>(
     };
 
     let result = match name {
-        "indexOf" => s.value.as_str().index_of(search_value.as_deref(), search_start_index),
+        "indexOf" => s.value.as_str()?.index_of(search_value.as_deref(), search_start_index),
         "lastIndexOf" => {
-            s.value.as_str().last_index_of(search_value.as_deref(), search_start_index)
+            s.value.as_str()?.last_index_of(search_value.as_deref(), search_start_index)
         }
         _ => unreachable!(),
     };
@@ -197,7 +203,7 @@ fn try_fold_string_substring_or_slice<'a>(
         return None;
     }
 
-    Some(ConstantValue::String(Cow::Owned(s.value.as_str().substring(start_idx, end_idx))))
+    Some(ConstantValue::String(Cow::Owned(s.value.as_str()?.substring(start_idx, end_idx))))
 }
 
 fn try_fold_string_char_at<'a>(
@@ -217,7 +223,7 @@ fn try_fold_string_char_at<'a>(
         None => None,
     };
 
-    let result = match s.value.as_str().char_at(char_at_index) {
+    let result = match s.value.as_str()?.char_at(char_at_index) {
         StringCharAtResult::Value(c) => c.to_string(),
         StringCharAtResult::InvalidChar(_) => return None,
         StringCharAtResult::OutOfRange => String::new(),
@@ -239,7 +245,7 @@ fn try_fold_string_char_code_at<'a>(
         None => None,
     };
 
-    let value = s.value.as_str().char_code_at(char_at_index).map_or(f64::NAN, |n| n as f64);
+    let value = s.value.as_str()?.char_code_at(char_at_index).map_or(f64::NAN, |n| n as f64);
     Some(ConstantValue::Number(value))
 }
 
@@ -253,7 +259,7 @@ fn try_fold_starts_with<'a>(
     }
     let Argument::StringLiteral(arg) = args.first().unwrap() else { return None };
     let Expression::StringLiteral(s) = object else { return None };
-    Some(ConstantValue::Boolean(s.value.starts_with(arg.value.as_str())))
+    Some(ConstantValue::Boolean(s.value.as_str()?.starts_with(arg.value.as_str()?)))
 }
 
 fn try_fold_string_replace<'a>(
@@ -288,8 +294,8 @@ fn try_fold_string_replace<'a>(
         return None;
     }
     let result = match name {
-        "replace" => s.value.as_str().cow_replacen(search_value.as_ref(), &replace_value, 1),
-        "replaceAll" => s.value.as_str().cow_replace(search_value.as_ref(), &replace_value),
+        "replace" => s.value.as_str()?.cow_replacen(search_value.as_ref(), &replace_value, 1),
+        "replaceAll" => s.value.as_str()?.cow_replace(search_value.as_ref(), &replace_value),
         _ => unreachable!(),
     };
     Some(ConstantValue::String(result))

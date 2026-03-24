@@ -161,7 +161,7 @@ impl Rule for PreferDestructuring {
                             }
                             if let Expression::StringLiteral(string_literal) = &comp_expr.expression
                                 && get_target_name(&assign_expr.left)
-                                    .is_some_and(|v| v == string_literal.value)
+                                    .is_some_and(|v| string_literal.value == v)
                             {
                                 ctx.diagnostic_with_fix(
                                     prefer_object_destructuring(assign_expr.span),
@@ -243,7 +243,7 @@ impl Rule for PreferDestructuring {
                                 if let Expression::StringLiteral(string_literal) =
                                     &comp_expr.expression
                                     && self.variable_declarator.object
-                                    && name.is_some_and(|v| v == string_literal.value)
+                                    && name.is_some_and(|v| string_literal.value == v)
                                 {
                                     ctx.diagnostic_with_fix(
                                         prefer_object_destructuring(init.span()),

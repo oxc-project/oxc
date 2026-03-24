@@ -239,7 +239,7 @@ fn get_property_name<'a>(assignment_target: &AssignmentTarget<'a>) -> Option<Ato
         {
             // this["property"]
             if let Expression::StringLiteral(str) = &expr.expression {
-                Some(str.value)
+                str.value.try_into_atom()
             } else {
                 None
             }

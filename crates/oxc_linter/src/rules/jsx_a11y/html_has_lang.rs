@@ -87,14 +87,14 @@ fn is_valid_lang_prop(item: &JSXAttributeItem) -> bool {
             | JSXExpression::BooleanLiteral(_)
             | JSXExpression::NumericLiteral(_) => false,
             JSXExpression::Identifier(id) => id.name != "undefined",
-            JSXExpression::StringLiteral(str) => !str.value.as_str().is_empty(),
+            JSXExpression::StringLiteral(str) => !str.value.to_str_lossy().is_empty(),
             JSXExpression::TemplateLiteral(t) => {
                 !t.expressions.is_empty()
                     || t.quasis.iter().filter(|q| !q.value.raw.is_empty()).count() > 0
             }
             _ => true,
         },
-        Some(JSXAttributeValue::StringLiteral(str)) => !str.value.as_str().is_empty(),
+        Some(JSXAttributeValue::StringLiteral(str)) => !str.value.to_str_lossy().is_empty(),
         _ => true,
     }
 }

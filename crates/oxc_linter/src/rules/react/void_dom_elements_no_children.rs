@@ -115,8 +115,9 @@ impl Rule for VoidDomElementsNoChildren {
                 else {
                     return;
                 };
+                let element_name_value = element_name.value.to_str_lossy();
 
-                if !is_void_dom_element(element_name.value.as_str()) {
+                if !is_void_dom_element(element_name_value.as_ref()) {
                     return;
                 }
 
@@ -141,7 +142,7 @@ impl Rule for VoidDomElementsNoChildren {
 
                 if call_expr.arguments.get(2).is_some() || has_children_prop_or_danger {
                     ctx.diagnostic(void_dom_elements_no_children_diagnostic(
-                        &element_name.value,
+                        element_name_value.as_ref(),
                         element_name.span,
                     ));
                 }

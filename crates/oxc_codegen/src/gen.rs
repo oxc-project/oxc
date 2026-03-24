@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::ops::Not;
 
 use cow_utils::CowUtils;
@@ -861,7 +862,7 @@ impl Gen for ImportDeclaration<'_> {
                 p.print_str("from");
                 p.print_soft_space();
                 p.print_ascii_byte(b'"');
-                p.print_str(self.source.value.as_str());
+                p.print_str(&self.source.value.to_str_lossy());
                 p.print_ascii_byte(b'"');
                 if let Some(with_clause) = &self.with_clause {
                     p.print_hard_space();
@@ -1074,11 +1075,13 @@ impl Gen for TSNamespaceExportDeclaration<'_> {
 fn get_module_export_name<'a>(
     module_export_name: &ModuleExportName<'a>,
     p: &Codegen<'a>,
-) -> &'a str {
+) -> Cow<'a, str> {
     match module_export_name {
-        ModuleExportName::IdentifierName(ident) => ident.name.as_str(),
-        ModuleExportName::IdentifierReference(ident) => p.get_identifier_reference_name(ident),
-        ModuleExportName::StringLiteral(s) => s.value.as_str(),
+        ModuleExportName::IdentifierName(ident) => Cow::Borrowed(ident.name.as_str()),
+        ModuleExportName::IdentifierReference(ident) => {
+            Cow::Borrowed(p.get_identifier_reference_name(ident))
+        }
+        ModuleExportName::StringLiteral(s) => s.value.to_str_lossy(),
     }
 }
 
@@ -2525,9 +2528,10 @@ impl Gen for JSXAttributeValue<'_> {
             Self::Fragment(fragment) => fragment.print(p, ctx),
             Self::Element(el) => el.print(p, ctx),
             Self::StringLiteral(lit) => {
-                let quote = if lit.value.contains('"') { b'\'' } else { b'"' };
+                let value = lit.value.to_str_lossy();
+                let quote = if value.contains('"') { b'\'' } else { b'"' };
                 p.print_ascii_byte(quote);
-                p.print_str(&lit.value);
+                p.print_str(&value);
                 p.print_ascii_byte(quote);
             }
             Self::ExpressionContainer(expr_container) => expr_container.print(p, ctx),
@@ -2616,7 +2620,7 @@ impl Gen for JSXClosingFragment {
 impl Gen for JSXText<'_> {
     fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
         p.add_source_mapping(self.span);
-        p.print_str(self.value.as_str());
+        p.print_str(self.value.as_str().unwrap_or(""));
     }
 }
 

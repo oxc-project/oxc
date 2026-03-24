@@ -5,6 +5,7 @@ use oxc_span::{Atom, Ident, SPAN, Span};
 use oxc_syntax::{
     comment_node::CommentNodeId, number::NumberBase, operator::UnaryOperator, scope::ScopeId,
 };
+use oxc_wtf8::Wtf8Atom;
 
 use crate::ast::*;
 
@@ -168,7 +169,11 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn use_strict_directive(self) -> Directive<'a> {
         let use_strict = Atom::from("use strict");
-        self.directive(SPAN, self.string_literal(SPAN, use_strict, None), use_strict)
+        self.directive(
+            SPAN,
+            self.string_literal(SPAN, Wtf8Atom::from(use_strict), None),
+            use_strict,
+        )
     }
 
     /* ---------- Functions ---------- */

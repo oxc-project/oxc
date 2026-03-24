@@ -77,14 +77,14 @@ impl Rule for IframeHasTitle {
 
         match get_prop_value(alt_prop) {
             Some(JSXAttributeValue::StringLiteral(str)) => {
-                if !str.value.as_str().is_empty() {
+                if !str.value.to_str_lossy().is_empty() {
                     return;
                 }
             }
             Some(JSXAttributeValue::ExpressionContainer(container)) => {
                 match &container.expression {
                     JSXExpression::StringLiteral(str) => {
-                        if !str.value.is_empty() {
+                        if !str.value.to_str_lossy().is_empty() {
                             return;
                         }
                     }

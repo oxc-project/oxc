@@ -59,7 +59,7 @@ impl Rule for JsxNoCommentTextnodes {
             return;
         };
 
-        if has_comment_pattern(&jsx_text.value) {
+        if has_comment_pattern(jsx_text.value.as_str().unwrap_or("")) {
             ctx.diagnostic(jsx_no_comment_textnodes_diagnostic(jsx_text.span));
         }
     }

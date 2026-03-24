@@ -16,6 +16,7 @@ use oxc_syntax::{
     symbol::SymbolFlags,
 };
 use oxc_traverse::{BoundIdentifier, Traverse};
+use oxc_wtf8::Wtf8Atom;
 
 use crate::{context::TraverseCtx, state::TransformState};
 
@@ -223,7 +224,7 @@ impl<'a> TypeScriptEnum<'a> {
         let mut prev_constant_number = Some(-1.0);
         let mut previous_enum_members = self.enums.entry(param_binding.name).or_default().clone();
 
-        let mut prev_member_name = None;
+        let mut prev_member_name: Option<Atom<'a>> = None;
 
         for member in members.take_in(ctx.ast) {
             let member_span = member.span;
@@ -270,7 +271,8 @@ impl<'a> TypeScriptEnum<'a> {
                 previous_enum_members.insert(member_name, None);
                 let self_ref = {
                     let obj = param_binding.create_read_expression(ctx);
-                    let expr = ctx.ast.expression_string_literal(SPAN, prev_member_name, None);
+                    let expr =
+                        ctx.ast.expression_string_literal(SPAN, prev_member_name.into(), None);
                     ast.member_expression_computed(SPAN, obj, expr, false).into()
                 };
 
@@ -287,7 +289,7 @@ impl<'a> TypeScriptEnum<'a> {
             // Foo["x"] = init
             let member_expr = {
                 let obj = param_binding.create_read_expression(ctx);
-                let expr = ast.expression_string_literal(SPAN, member_name, None);
+                let expr = ast.expression_string_literal(SPAN, member_name.into(), None);
 
                 ast.member_expression_computed(SPAN, obj, expr, false)
             };
@@ -306,7 +308,7 @@ impl<'a> TypeScriptEnum<'a> {
                     ast.member_expression_computed(SPAN, obj, expr, false)
                 };
                 let left = SimpleAssignmentTarget::from(member_expr);
-                let right = ast.expression_string_literal(SPAN, member_name, None);
+                let right = ast.expression_string_literal(SPAN, member_name.into(), None);
                 expr = ast.expression_assignment(
                     member_span,
                     AssignmentOperator::Assign,
@@ -357,7 +359,7 @@ impl<'a> TypeScriptEnum<'a> {
 #[derive(Debug, Clone, Copy)]
 enum ConstantValue<'a> {
     Number(f64),
-    String(Atom<'a>),
+    String(Wtf8Atom<'a>),
 }
 
 impl<'a> TypeScriptEnum<'a> {
@@ -427,20 +429,28 @@ impl<'a> TypeScriptEnum<'a> {
             Expression::NumericLiteral(lit) => Some(ConstantValue::Number(lit.value)),
             Expression::StringLiteral(lit) => Some(ConstantValue::String(lit.value)),
             Expression::TemplateLiteral(lit) => {
-                let value = if let Some(quasi) = lit.single_quasi() {
+                let value: Wtf8Atom<'a> = if let Some(quasi) = lit.single_quasi() {
                     quasi
                 } else {
                     let mut value = StringBuilder::new_in(ctx.ast.allocator);
                     for (i, quasi) in lit.quasis.iter().enumerate() {
-                        value.push_str(&quasi.value.cooked.unwrap_or(quasi.value.raw));
+                        if let Some(cooked) = quasi.value.cooked {
+                            let s = cooked.to_str_lossy();
+                            value.push_str(&s);
+                        } else {
+                            value.push_str(&quasi.value.raw);
+                        }
                         if i < lit.expressions.len() {
                             match self.evaluate(&lit.expressions[i], prev_members, ctx)? {
-                                ConstantValue::String(str) => value.push_str(&str),
+                                ConstantValue::String(str) => {
+                                    let s = str.to_str_lossy();
+                                    value.push_str(&s);
+                                }
                                 ConstantValue::Number(num) => value.push_str(&num.to_js_string()),
                             }
                         }
                     }
-                    Atom::from(value.into_str())
+                    Atom::from(value.into_str()).into()
                 };
                 Some(ConstantValue::String(value))
             }
@@ -464,18 +474,20 @@ impl<'a> TypeScriptEnum<'a> {
             && (matches!(left, ConstantValue::String(_))
                 || matches!(right, ConstantValue::String(_)))
         {
-            let left_string = match left {
+            let left_string: Wtf8Atom<'a> = match left {
                 ConstantValue::String(str) => str,
-                ConstantValue::Number(v) => ctx.ast.atom(&v.to_js_string()),
+                ConstantValue::Number(v) => ctx.ast.atom(&v.to_js_string()).into(),
             };
 
-            let right_string = match right {
+            let right_string: Wtf8Atom<'a> = match right {
                 ConstantValue::String(str) => str,
-                ConstantValue::Number(v) => ctx.ast.atom(&v.to_js_string()),
+                ConstantValue::Number(v) => ctx.ast.atom(&v.to_js_string()).into(),
             };
 
+            let left_cow = left_string.to_str_lossy();
+            let right_cow = right_string.to_str_lossy();
             return Some(ConstantValue::String(
-                ctx.ast.atom_from_strs_array([&left_string, &right_string]),
+                ctx.ast.atom_from_strs_array([&*left_cow, &*right_cow]).into(),
             ));
         }
 

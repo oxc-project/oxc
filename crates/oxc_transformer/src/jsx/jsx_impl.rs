@@ -103,6 +103,7 @@ use oxc_syntax::{
     xml_entities::XML_ENTITIES,
 };
 use oxc_traverse::{BoundIdentifier, Traverse};
+use oxc_wtf8::Wtf8Atom;
 
 use crate::{
     context::TraverseCtx,
@@ -799,7 +800,7 @@ impl<'a> JsxImpl<'a> {
     ) -> Expression<'a> {
         match name {
             JSXElementName::Identifier(ident) => {
-                ctx.ast.expression_string_literal(ident.span, ident.name, None)
+                ctx.ast.expression_string_literal(ident.span, ident.name.into(), None)
             }
             JSXElementName::IdentifierReference(ident) => Expression::Identifier(ident),
             JSXElementName::MemberExpression(member_expr) => {
@@ -814,7 +815,7 @@ impl<'a> JsxImpl<'a> {
                     ":",
                     &namespaced.name.name,
                 ]);
-                ctx.ast.expression_string_literal(namespaced.span, namespace_name, None)
+                ctx.ast.expression_string_literal(namespaced.span, namespace_name.into(), None)
             }
             JSXElementName::ThisExpression(expr) => ctx.ast.expression_this(expr.span),
         }
@@ -894,14 +895,15 @@ impl<'a> JsxImpl<'a> {
     ) -> Expression<'a> {
         match value {
             Some(JSXAttributeValue::StringLiteral(s)) => {
+                let s_str = s.value.to_str_lossy();
                 let mut decoded = None;
-                Self::decode_entities(s.value.as_str(), &mut decoded, s.value.len(), ctx);
-                let jsx_text = if let Some(decoded) = decoded {
+                Self::decode_entities(&s_str, &mut decoded, s_str.len(), ctx);
+                let jsx_text: Wtf8Atom<'a> = if let Some(decoded) = decoded {
                     // Text contains HTML entities which were decoded.
                     // `decoded` contains the decoded string as an `ArenaString`. Convert it to `Atom`.
-                    Atom::from(decoded)
+                    Atom::from(decoded).into()
                 } else {
-                    // No HTML entities needed to be decoded. Use the original `Atom` without copying.
+                    // No HTML entities needed to be decoded. Use the original value without copying.
                     s.value
                 };
                 ctx.ast.expression_string_literal(s.span, jsx_text, None)
@@ -978,21 +980,30 @@ impl<'a> JsxImpl<'a> {
             JSXAttributeName::Identifier(ident) => {
                 let name = ident.name;
                 if ident.name.contains('-') {
-                    PropertyKey::from(ctx.ast.expression_string_literal(ident.span, name, None))
+                    PropertyKey::from(ctx.ast.expression_string_literal(
+                        ident.span,
+                        name.into(),
+                        None,
+                    ))
                 } else {
                     ctx.ast.property_key_static_identifier(ident.span, name)
                 }
             }
             JSXAttributeName::NamespacedName(namespaced) => {
                 let name = ctx.ast.atom(&namespaced.to_string());
-                PropertyKey::from(ctx.ast.expression_string_literal(namespaced.span, name, None))
+                PropertyKey::from(ctx.ast.expression_string_literal(
+                    namespaced.span,
+                    name.into(),
+                    None,
+                ))
             }
         }
     }
 
     fn transform_jsx_text(text: &JSXText<'a>, ctx: &TraverseCtx<'a>) -> Option<Expression<'a>> {
-        Self::fixup_whitespace_and_decode_entities(text.value, ctx)
-            .map(|value| ctx.ast.expression_string_literal(text.span, value, None))
+        let value = text.value.try_into_atom().unwrap_or_else(|| ctx.ast.atom(""));
+        Self::fixup_whitespace_and_decode_entities(value, ctx)
+            .map(|value| ctx.ast.expression_string_literal(text.span, value.into(), None))
     }
 
     /// JSX trims whitespace at the end and beginning of lines, except that the

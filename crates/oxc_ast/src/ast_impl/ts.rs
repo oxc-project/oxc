@@ -16,10 +16,12 @@ impl<'a> TSEnumMemberName<'a> {
     pub fn static_name(&self) -> Atom<'a> {
         match self {
             Self::Identifier(ident) => ident.name.into(),
-            Self::String(lit) | Self::ComputedString(lit) => lit.value,
+            Self::String(lit) | Self::ComputedString(lit) => lit.value.try_into_atom().expect("String literal should not contain lone surrogates in enum member name context"),
             Self::ComputedTemplateString(template) => template
                 .single_quasi()
-                .expect("`TSEnumMemberName::TemplateString` should have no substitution and at least one quasi"),
+                .expect("`TSEnumMemberName::TemplateString` should have no substitution and at least one quasi")
+                .try_into_atom()
+                .expect("Template literal should not contain lone surrogates in enum member name context"),
         }
     }
 }
@@ -215,10 +217,17 @@ impl<'a> TSModuleDeclarationName<'a> {
     }
 
     /// Get the static name of this module declaration name.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the string literal value contains lone surrogates.
     pub fn name(&self) -> Atom<'a> {
         match self {
             Self::Identifier(ident) => ident.name.into(),
-            Self::StringLiteral(lit) => lit.value,
+            Self::StringLiteral(lit) => lit
+                .value
+                .try_into_atom()
+                .expect("String literal should not contain lone surrogates in module name context"),
         }
     }
 }

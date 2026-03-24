@@ -138,7 +138,7 @@ impl Utf8ToUtf16 {
 
 #[cfg(test)]
 mod test {
-    use oxc_allocator::Allocator;
+    use oxc_allocator::{Allocator, IntoIn};
     use oxc_ast::{
         AstBuilder, Comment, CommentKind,
         ast::{Expression, Statement},
@@ -163,7 +163,7 @@ mod test {
                 ast.statement_empty(Span::new(0, 1)),
                 ast.statement_expression(
                     Span::new(1, 7),
-                    ast.expression_string_literal(Span::new(1, 7), "🤨", None),
+                    ast.expression_string_literal(Span::new(1, 7), "🤨".into_in(&allocator), None),
                 ),
             ]),
         );

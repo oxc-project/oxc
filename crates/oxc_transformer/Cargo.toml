@@ -39,6 +39,7 @@ oxc_semantic = { workspace = true }
 oxc_span = { workspace = true }
 oxc_syntax = { workspace = true, features = ["to_js_string"] }
 oxc_traverse = { workspace = true }
+oxc_wtf8 = { workspace = true }
 
 base64 = { workspace = true }
 compact_str = { workspace = true }

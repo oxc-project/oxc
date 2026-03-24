@@ -161,17 +161,15 @@ impl Rule for ImgRedundantAlt {
 
         match alt_attribute {
             JSXAttributeValue::StringLiteral(lit) => {
-                let alt_text = lit.value.as_str();
-
-                if self.is_redundant_alt_text(alt_text) {
+                let alt_text = lit.value.to_str_lossy();
+                if self.is_redundant_alt_text(alt_text.as_ref()) {
                     ctx.diagnostic(img_redundant_alt_diagnostic(alt_attribute_name_span));
                 }
             }
             JSXAttributeValue::ExpressionContainer(container) => match &container.expression {
                 JSXExpression::StringLiteral(lit) => {
-                    let alt_text = lit.value.as_str();
-
-                    if self.is_redundant_alt_text(alt_text) {
+                    let alt_text = lit.value.to_str_lossy();
+                    if self.is_redundant_alt_text(alt_text.as_ref()) {
                         ctx.diagnostic(img_redundant_alt_diagnostic(alt_attribute_name_span));
                     }
                 }

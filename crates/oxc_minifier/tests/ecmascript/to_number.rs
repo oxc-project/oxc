@@ -23,7 +23,7 @@ fn test() {
             SPAN,
             PropertyKind::Init,
             ast.property_key_static_identifier(SPAN, "toString"),
-            ast.expression_string_literal(SPAN, "foo", None),
+            ast.expression_string_literal(SPAN, "foo".into(), None),
             false,
             false,
             false,

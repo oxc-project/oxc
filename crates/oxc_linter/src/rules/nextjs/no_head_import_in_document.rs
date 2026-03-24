@@ -83,7 +83,7 @@ impl Rule for NoHeadImportInDocument {
             return;
         };
 
-        if import_decl.source.value.as_str() != "next/head" {
+        if import_decl.source.value.as_str() != Some("next/head") {
             return;
         }
 

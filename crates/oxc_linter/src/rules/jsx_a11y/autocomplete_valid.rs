@@ -175,9 +175,9 @@ impl Rule for AutocompleteValid {
             let Some(JSXAttributeValue::StringLiteral(autocomplete_values)) = &attr.value else {
                 return;
             };
-            let value = &autocomplete_values.value;
-            if !is_valid_autocomplete_value(value) {
-                ctx.diagnostic(autocomplete_valid_diagnostic(attr.span, value));
+            let value = autocomplete_values.value.to_str_lossy();
+            if !is_valid_autocomplete_value(value.as_ref()) {
+                ctx.diagnostic(autocomplete_valid_diagnostic(attr.span, value.as_ref()));
             }
         }
     }

@@ -91,7 +91,7 @@ impl Rule for NoPageCustomFont {
         let is_custom_font = element.attributes.iter().any(|attr| {
             matches!(&attr,
               JSXAttributeItem::Attribute(attr) if attr.is_identifier("href") && attr.value.as_ref().is_some_and(|value|
-              matches!(value, JSXAttributeValue::StringLiteral(literal) if literal.value.starts_with("https://fonts.googleapis.com/css"))
+              matches!(value, JSXAttributeValue::StringLiteral(literal) if literal.value.to_str_lossy().starts_with("https://fonts.googleapis.com/css"))
             ))
         });
 

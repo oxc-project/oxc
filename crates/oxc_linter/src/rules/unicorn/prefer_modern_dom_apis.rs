@@ -135,7 +135,8 @@ impl Rule for PreferModernDomApis {
             Some(2),
             Some(2),
         ) && let Argument::StringLiteral(lit) = &call_expr.arguments[0]
-            && let Some(preferred_method) = get_replacement_for_position(lit.value.as_str())
+            && let Some(preferred_method) =
+                lit.value.as_str().and_then(get_replacement_for_position)
         {
             let diagnostic = prefer_modern_dom_apis_diagnostic(
                 preferred_method,

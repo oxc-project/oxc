@@ -512,7 +512,7 @@ impl<'a> LegacyDecoratorMetadata<'a> {
             serialized_type,
         );
         let type_of = ctx.ast.expression_unary(SPAN, UnaryOperator::Typeof, assignment);
-        let right = ctx.ast.expression_string_literal(SPAN, "function", None);
+        let right = ctx.ast.expression_string_literal(SPAN, "function".into(), None);
         let operator = BinaryOperator::StrictEquality;
         let test = ctx.ast.expression_binary(SPAN, type_of, operator, right);
         let consequent = binding.create_read_expression(ctx);
@@ -761,7 +761,7 @@ impl<'a> LegacyDecoratorMetadata<'a> {
         ctx: &TraverseCtx<'a>,
     ) -> Expression<'a> {
         let operator = BinaryOperator::StrictInequality;
-        let undefined = ctx.ast.expression_string_literal(SPAN, "undefined", None);
+        let undefined = ctx.ast.expression_string_literal(SPAN, "undefined".into(), None);
         let typeof_left = ctx.ast.expression_unary(SPAN, UnaryOperator::Typeof, left);
         let left_check = ctx.ast.expression_binary(SPAN, typeof_left, operator, undefined);
         ctx.ast.expression_logical(SPAN, left_check, LogicalOperator::And, right)
@@ -776,7 +776,7 @@ impl<'a> LegacyDecoratorMetadata<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let arguments = ctx.ast.vec_from_array([
-            Argument::from(ctx.ast.expression_string_literal(SPAN, key, None)),
+            Argument::from(ctx.ast.expression_string_literal(SPAN, key.into(), None)),
             Argument::from(value),
         ]);
         helper_call_expr(Helper::DecorateMetadata, SPAN, arguments, ctx)

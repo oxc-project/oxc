@@ -5,6 +5,7 @@ use std::{
 
 use oxc_span::{Atom, GetSpan, Ident, Span};
 use oxc_syntax::{operator::UnaryOperator, scope::ScopeFlags, symbol::SymbolId};
+use oxc_wtf8::Wtf8Atom;
 
 use crate::ast::*;
 
@@ -468,12 +469,14 @@ impl<'a> PropertyKey<'a> {
     pub fn static_name(&self) -> Option<Cow<'a, str>> {
         match self {
             Self::StaticIdentifier(ident) => Some(Cow::Borrowed(ident.name.as_str())),
-            Self::StringLiteral(lit) => Some(Cow::Borrowed(lit.value.as_str())),
+            Self::StringLiteral(lit) => lit.value.as_str().map(Cow::Borrowed),
             Self::RegExpLiteral(lit) => Some(Cow::Owned(lit.regex.to_string())),
             Self::NumericLiteral(lit) => Some(Cow::Owned(lit.value.to_string())),
             Self::BigIntLiteral(lit) => Some(Cow::Borrowed(lit.value.as_str())),
             Self::NullLiteral(_) => Some(Cow::Borrowed("null")),
-            Self::TemplateLiteral(lit) => lit.single_quasi().map(Into::into),
+            Self::TemplateLiteral(lit) => {
+                lit.single_quasi().and_then(|wtf8| wtf8.as_str().map(Cow::Borrowed))
+            }
             _ => None,
         }
     }
@@ -560,7 +563,7 @@ impl<'a> TemplateLiteral<'a> {
     }
 
     /// Get single quasi from `template`
-    pub fn single_quasi(&self) -> Option<Atom<'a>> {
+    pub fn single_quasi(&self) -> Option<Wtf8Atom<'a>> {
         if self.is_no_substitution_template() { self.quasis[0].value.cooked } else { None }
     }
 }
@@ -627,10 +630,14 @@ impl<'a> MemberExpression<'a> {
     pub fn static_property_info(&self) -> Option<(Span, &'a str)> {
         match self {
             MemberExpression::ComputedMemberExpression(expr) => match &expr.expression {
-                Expression::StringLiteral(lit) => Some((lit.span, lit.value.as_str())),
+                Expression::StringLiteral(lit) => lit.value.as_str().map(|s| (lit.span, s)),
                 Expression::TemplateLiteral(lit) => {
                     if lit.quasis.len() == 1 {
-                        lit.quasis[0].value.cooked.map(|cooked| (lit.span, cooked.as_str()))
+                        if let Some(cooked) = lit.quasis[0].value.cooked {
+                            cooked.as_str().map(|s| (lit.span, s))
+                        } else {
+                            None
+                        }
                     } else {
                         None
                     }
@@ -673,8 +680,10 @@ impl<'a> ComputedMemberExpression<'a> {
     /// Returns the static property name of this member expression, if it has one, or `None` otherwise.
     pub fn static_property_name(&self) -> Option<Atom<'a>> {
         match &self.expression {
-            Expression::StringLiteral(lit) => Some(lit.value),
-            Expression::TemplateLiteral(lit) if lit.quasis.len() == 1 => lit.quasis[0].value.cooked,
+            Expression::StringLiteral(lit) => lit.value.try_into_atom(),
+            Expression::TemplateLiteral(lit) if lit.quasis.len() == 1 => {
+                lit.quasis[0].value.cooked?.try_into_atom()
+            }
             Expression::RegExpLiteral(lit) => lit.raw,
             _ => None,
         }
@@ -685,9 +694,13 @@ impl<'a> ComputedMemberExpression<'a> {
     /// If you don't need the [`Span`], use [`ComputedMemberExpression::static_property_name`] instead.
     pub fn static_property_info(&self) -> Option<(Span, &'a str)> {
         match &self.expression {
-            Expression::StringLiteral(lit) => Some((lit.span, lit.value.as_str())),
+            Expression::StringLiteral(lit) => lit.value.as_str().map(|s| (lit.span, s)),
             Expression::TemplateLiteral(lit) if lit.quasis.len() == 1 => {
-                lit.quasis[0].value.cooked.map(|cooked| (lit.span, cooked.as_str()))
+                if let Some(cooked) = lit.quasis[0].value.cooked {
+                    cooked.as_str().map(|s| (lit.span, s))
+                } else {
+                    None
+                }
             }
             Expression::RegExpLiteral(lit) => lit.raw.map(|raw| (lit.span, raw.as_str())),
             _ => None,
@@ -1956,10 +1969,16 @@ impl<'a> ImportDeclarationSpecifier<'a> {
 
 impl<'a> ImportAttributeKey<'a> {
     /// Returns the string value of this import attribute key.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the string literal value contains lone surrogates.
     pub fn as_atom(&self) -> Atom<'a> {
         match self {
             Self::Identifier(identifier) => identifier.name.into(),
-            Self::StringLiteral(literal) => literal.value,
+            Self::StringLiteral(literal) => literal.value.try_into_atom().expect(
+                "String literal should not contain lone surrogates in ImportAttributeKey context",
+            ),
         }
     }
 }
@@ -2017,11 +2036,17 @@ impl<'a> ModuleExportName<'a> {
     /// - `export { foo }` => `"foo"`
     /// - `export { foo as bar }` => `"bar"`
     /// - `export { foo as "anything" }` => `"anything"`
+    ///
+    /// # Panics
+    ///
+    /// Panics if the string literal value contains lone surrogates.
     pub fn name(&self) -> Atom<'a> {
         match self {
             Self::IdentifierName(identifier) => identifier.name.into(),
             Self::IdentifierReference(identifier) => identifier.name.into(),
-            Self::StringLiteral(literal) => literal.value,
+            Self::StringLiteral(literal) => literal.value.try_into_atom().expect(
+                "String literal should not contain lone surrogates in module export name context",
+            ),
         }
     }
 

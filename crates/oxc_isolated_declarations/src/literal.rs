@@ -1,5 +1,6 @@
 use oxc_allocator::Box as ArenaBox;
 use oxc_ast::ast::{StringLiteral, TemplateLiteral};
+use oxc_wtf8::Wtf8Atom;
 
 use crate::IsolatedDeclarations;
 
@@ -12,7 +13,9 @@ impl<'a> IsolatedDeclarations<'a> {
             lit.quasis.first().map(|item| {
                 self.ast.alloc_string_literal(
                     lit.span,
-                    item.value.cooked.unwrap_or(item.value.raw),
+                    item.value
+                        .cooked
+                        .unwrap_or_else(|| Wtf8Atom::from_str(item.value.raw.as_str())),
                     None,
                 )
             })

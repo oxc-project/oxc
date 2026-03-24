@@ -1128,7 +1128,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for TemplateElement<'_> {
             span: CloneIn::clone_in(&self.span, allocator),
             value: CloneIn::clone_in(&self.value, allocator),
             tail: CloneIn::clone_in(&self.tail, allocator),
-            lone_surrogates: CloneIn::clone_in(&self.lone_surrogates, allocator),
         }
     }
 
@@ -1138,7 +1137,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for TemplateElement<'_> {
             span: CloneIn::clone_in_with_semantic_ids(&self.span, allocator),
             value: CloneIn::clone_in_with_semantic_ids(&self.value, allocator),
             tail: CloneIn::clone_in_with_semantic_ids(&self.tail, allocator),
-            lone_surrogates: CloneIn::clone_in_with_semantic_ids(&self.lone_surrogates, allocator),
         }
     }
 }
@@ -5101,7 +5099,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for StringLiteral<'_> {
             span: CloneIn::clone_in(&self.span, allocator),
             value: CloneIn::clone_in(&self.value, allocator),
             raw: CloneIn::clone_in(&self.raw, allocator),
-            lone_surrogates: CloneIn::clone_in(&self.lone_surrogates, allocator),
         }
     }
 
@@ -5111,7 +5108,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for StringLiteral<'_> {
             span: CloneIn::clone_in_with_semantic_ids(&self.span, allocator),
             value: CloneIn::clone_in_with_semantic_ids(&self.value, allocator),
             raw: CloneIn::clone_in_with_semantic_ids(&self.raw, allocator),
-            lone_surrogates: CloneIn::clone_in_with_semantic_ids(&self.lone_surrogates, allocator),
         }
     }
 }

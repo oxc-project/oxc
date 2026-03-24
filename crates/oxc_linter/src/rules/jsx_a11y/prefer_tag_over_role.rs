@@ -52,7 +52,8 @@ impl PreferTagOverRole {
         if let JSXAttributeItem::Attribute(attr) = role_prop
             && let Some(JSXAttributeValue::StringLiteral(role_values)) = &attr.value
         {
-            let roles = role_values.value.split_whitespace();
+            let role_values = role_values.value.to_str_lossy();
+            let roles = role_values.split_whitespace();
             for role in roles {
                 Self::check_role(role, jsx_name, attr.span, ctx);
             }

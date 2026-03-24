@@ -337,7 +337,8 @@ impl<'a> ObjectRestSpread<'a> {
                 match e {
                     AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(ident) => {
                         let name = ident.binding.name;
-                        let expr = ctx.ast.expression_string_literal(SPAN, name, None);
+                        let expr =
+                            ctx.ast.expression_string_literal(SPAN, name.as_str().into(), None);
                         Some(ArrayExpressionElement::from(expr))
                     }
                     AssignmentTargetProperty::AssignmentTargetPropertyProperty(p) => {
@@ -1000,7 +1001,8 @@ impl<'a> ObjectRestSpread<'a> {
             // `let { a, ... rest }`
             PropertyKey::StaticIdentifier(ident) => {
                 let name = ident.name;
-                let expr = ctx.ast.expression_string_literal(ident.span, name, None);
+                let expr =
+                    ctx.ast.expression_string_literal(ident.span, name.as_str().into(), None);
                 Some(ArrayExpressionElement::from(expr))
             }
             // `let { 'a', ... rest }`
@@ -1028,7 +1030,7 @@ impl<'a> ObjectRestSpread<'a> {
                     let span = expr.span();
                     let s = expr.to_js_string(&WithoutGlobalReferenceInformation {}).unwrap();
                     let s = ctx.ast.atom_from_cow(&s);
-                    let expr = ctx.ast.expression_string_literal(span, s, None);
+                    let expr = ctx.ast.expression_string_literal(span, s.into(), None);
                     return Some(ArrayExpressionElement::from(expr));
                 }
                 *all_primitives = false;

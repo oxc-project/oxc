@@ -138,7 +138,8 @@ impl PreferDescribeFunctionTitle {
                 );
             }
             Argument::StringLiteral(string_title) => {
-                if !is_imported_name(string_title.value.as_ref()) {
+                let title = string_title.value.to_str_lossy();
+                if !is_imported_name(title.as_ref()) {
                     return;
                 }
 
@@ -147,7 +148,7 @@ impl PreferDescribeFunctionTitle {
                     return;
                 }
 
-                if !is_value_imported_name(string_title.value.as_ref()) {
+                if !is_value_imported_name(title.as_ref()) {
                     ctx.diagnostic(prefer_describe_function_title_diagnostic(string_title.span));
                     return;
                 }

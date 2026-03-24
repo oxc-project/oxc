@@ -134,10 +134,10 @@ impl Rule for TripleSlashReference {
                 match stmt {
                     Statement::TSImportEqualsDeclaration(decl) => match &decl.module_reference {
                         TSModuleReference::ExternalModuleReference(mod_ref) => {
-                            if let Some(v) = refs_for_import.get(mod_ref.expression.value.as_str())
-                            {
+                            let mod_ref_value = mod_ref.expression.value.to_str_lossy();
+                            if let Some(v) = refs_for_import.get(mod_ref_value.as_ref()) {
                                 ctx.diagnostic(triple_slash_reference_diagnostic(
-                                    &mod_ref.expression.value,
+                                    mod_ref_value.as_ref(),
                                     *v,
                                 ));
                             }
@@ -146,11 +146,9 @@ impl Rule for TripleSlashReference {
                         | TSModuleReference::QualifiedName(_) => {}
                     },
                     Statement::ImportDeclaration(decl) => {
-                        if let Some(v) = refs_for_import.get(decl.source.value.as_str()) {
-                            ctx.diagnostic(triple_slash_reference_diagnostic(
-                                &decl.source.value,
-                                *v,
-                            ));
+                        let source = decl.source.value.to_str_lossy();
+                        if let Some(v) = refs_for_import.get(source.as_ref()) {
+                            ctx.diagnostic(triple_slash_reference_diagnostic(source.as_ref(), *v));
                         }
                     }
                     _ => {}

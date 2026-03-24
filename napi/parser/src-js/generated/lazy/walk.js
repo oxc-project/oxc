@@ -5433,7 +5433,8 @@ function walkVecExportSpecifier(pos, ast, visitors) {
 }
 
 function walkOptionStringLiteral(pos, ast, visitors) {
-  if (!(ast.buffer[pos + 12] === 2)) walkStringLiteral(pos, ast, visitors);
+  if (!(ast.buffer.uint32[(pos + 16) >> 2] === 0 && ast.buffer.uint32[(pos + 20) >> 2] === 0))
+    walkStringLiteral(pos, ast, visitors);
 }
 
 function walkOptionModuleExportName(pos, ast, visitors) {

@@ -92,6 +92,7 @@ impl Generator for AstBuilderGenerator {
 
             ///@@line_break
             use oxc_span::{Atom, Ident};
+            use oxc_wtf8::Wtf8Atom;
 
             ///@@line_break
             use crate::{AstBuilder, ast::*};

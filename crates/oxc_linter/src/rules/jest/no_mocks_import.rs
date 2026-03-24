@@ -86,7 +86,7 @@ impl Rule for NoMocksImport {
                 return;
             };
 
-            if contains_mocks_dir(&string_literal.value) {
+            if contains_mocks_dir(&string_literal.value.to_str_lossy()) {
                 ctx.diagnostic(no_mocks_import_diagnostic(string_literal.span));
             }
         }

@@ -154,7 +154,7 @@ impl<'a> TaggedTemplateTransform {
         let mut needs_raw_array = false;
         let cooked_elements = ctx.ast.vec_from_iter(template_lit.quasis.iter().map(|quasi| {
             let expr = if let Some(cooked) = &quasi.value.cooked {
-                if cooked.as_str() != quasi.value.raw.as_str() {
+                if cooked.as_str() != Some(quasi.value.raw.as_str()) {
                     needs_raw_array = true;
                 }
                 ctx.ast.expression_string_literal(SPAN, *cooked, None)
@@ -170,7 +170,7 @@ impl<'a> TaggedTemplateTransform {
         // Add raw array if needed: `[raw0, raw1, ...]`
         let template_arguments = if needs_raw_array {
             let elements = ctx.ast.vec_from_iter(template_lit.quasis.iter().map(|quasi| {
-                let string = ctx.ast.expression_string_literal(SPAN, quasi.value.raw, None);
+                let string = ctx.ast.expression_string_literal(SPAN, quasi.value.raw.into(), None);
                 ArrayExpressionElement::from(string)
             }));
             let raws_argument = Argument::from(ctx.ast.expression_array(SPAN, elements));

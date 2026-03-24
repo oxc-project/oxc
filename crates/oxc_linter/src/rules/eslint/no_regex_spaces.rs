@@ -112,7 +112,7 @@ impl NoRegexSpaces {
         let Some(Argument::StringLiteral(pattern)) = args.first() else {
             return None;
         };
-        if !Self::has_double_space(&pattern.value) {
+        if !Self::has_double_space(&pattern.value.to_str_lossy()) {
             return None;
         }
 

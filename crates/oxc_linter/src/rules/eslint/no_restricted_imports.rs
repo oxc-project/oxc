@@ -741,7 +741,7 @@ impl RestrictedPath {
             return ImportNameResult::Allowed;
         }
 
-        let name = literal.value.into_compact_str();
+        let name = literal.value.to_str_lossy().into_owned().into();
         let unused_name = &CompactStr::from("__<>import_name_that_cant_be_used<>__");
 
         match self.is_name_span_allowed(unused_name) {
@@ -845,7 +845,7 @@ impl RestrictedPattern {
             return ImportNameResult::Allowed;
         }
 
-        let name = literal.value.into_compact_str();
+        let name = literal.value.to_str_lossy().into_owned().into();
         let unused_name = &CompactStr::from("__<>import_name_that_cant_be_used<>__");
 
         match self.is_name_span_allowed(unused_name) {
@@ -1140,10 +1140,10 @@ impl NoRestrictedImports {
             return;
         };
 
-        let source = &reference.expression.value;
+        let source = reference.expression.value.to_str_lossy();
 
         for path in &self.paths {
-            if source != path.name.as_str() {
+            if source.as_ref() != path.name.as_str() {
                 continue;
             }
 
@@ -1156,8 +1156,12 @@ impl NoRestrictedImports {
                 continue;
             }
 
-            let diagnostic =
-                get_diagnostic_from_import_name_result_path(entry.span, source, result, path);
+            let diagnostic = get_diagnostic_from_import_name_result_path(
+                entry.span,
+                source.as_ref(),
+                result,
+                path,
+            );
 
             ctx.diagnostic(diagnostic);
         }
@@ -1175,14 +1179,17 @@ impl NoRestrictedImports {
                 continue;
             }
 
-            match pattern.get_group_glob_result(&reference.expression.value) {
+            match pattern.get_group_glob_result(source.as_ref()) {
                 GlobResult::Whitelist => {
                     whitelist_found = true;
                     break;
                 }
                 GlobResult::Found => {
                     let diagnostic: OxcDiagnostic = get_diagnostic_from_import_name_result_pattern(
-                        entry.span, source, result, pattern,
+                        entry.span,
+                        source.as_ref(),
+                        result,
+                        pattern,
                     );
 
                     found_errors.push(diagnostic);
@@ -1190,9 +1197,12 @@ impl NoRestrictedImports {
                 GlobResult::None => (),
             }
 
-            if pattern.get_regex_result(&reference.expression.value) {
+            if pattern.get_regex_result(source.as_ref()) {
                 ctx.diagnostic(get_diagnostic_from_import_name_result_pattern(
-                    entry.span, source, result, pattern,
+                    entry.span,
+                    source.as_ref(),
+                    result,
+                    pattern,
                 ));
             }
         }

@@ -183,7 +183,11 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a> {
             let callee = self.refresh_reg.to_expression(ctx);
             let arguments = ctx.ast.vec_from_array([
                 Argument::from(binding.create_read_expression(ctx)),
-                Argument::from(ctx.ast.expression_string_literal(SPAN, *persistent_id, None)),
+                Argument::from(ctx.ast.expression_string_literal(
+                    SPAN,
+                    (*persistent_id).into(),
+                    None,
+                )),
             ]);
             ctx.ast.statement_expression(
                 SPAN,
@@ -588,7 +592,7 @@ impl<'a> ReactRefresh<'a> {
         let force_reset = custom_hooks_in_scope.len() != callee_len;
 
         let mut arguments = ctx.ast.vec();
-        arguments.push(Argument::from(ctx.ast.expression_string_literal(SPAN, key, None)));
+        arguments.push(Argument::from(ctx.ast.expression_string_literal(SPAN, key.into(), None)));
 
         if force_reset || !custom_hooks_in_scope.is_empty() {
             arguments.push(Argument::from(ctx.ast.expression_boolean_literal(SPAN, force_reset)));

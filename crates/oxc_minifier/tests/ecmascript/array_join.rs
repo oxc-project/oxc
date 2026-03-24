@@ -16,9 +16,11 @@ fn test() {
         None,
         NumberBase::Decimal,
     ))));
-    elements.push(ArrayExpressionElement::StringLiteral(
-        ast.alloc(ast.string_literal(SPAN, "foo", None)),
-    ));
+    elements.push(ArrayExpressionElement::StringLiteral(ast.alloc(ast.string_literal(
+        SPAN,
+        "foo".into(),
+        None,
+    ))));
     elements
         .push(ArrayExpressionElement::BooleanLiteral(ast.alloc(ast.boolean_literal(SPAN, true))));
     elements.push(ArrayExpressionElement::BigIntLiteral(ast.alloc(ast.big_int_literal(

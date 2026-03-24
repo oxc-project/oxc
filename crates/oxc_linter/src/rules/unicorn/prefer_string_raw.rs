@@ -141,13 +141,13 @@ impl Rule for PreferStringRaw {
             return;
         }
 
-        let value = string_literal.value.as_str();
+        let value = string_literal.value.to_str_lossy();
 
         // Cannot use String.raw if the value ends with an odd number of backslashes,
         // as the final backslash would escape the closing backtick.
         // e.g., String.raw`foo\` is invalid because \` escapes the backtick
         // but String.raw`foo\\` is valid (two literal backslashes)
-        if has_odd_trailing_backslashes(value) {
+        if has_odd_trailing_backslashes(value.as_ref()) {
             return;
         }
 
@@ -163,7 +163,7 @@ impl Rule for PreferStringRaw {
 
         let unescaped = unescape_backslash(trimmed, quote);
 
-        if unescaped != value {
+        if unescaped != value.as_ref() {
             return;
         }
 

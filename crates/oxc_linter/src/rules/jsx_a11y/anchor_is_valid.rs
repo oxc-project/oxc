@@ -181,11 +181,15 @@ impl AnchorIsValid {
     fn check_value_is_empty_or_invalid(&self, value: &JSXAttributeValue) -> bool {
         match value {
             JSXAttributeValue::Element(_) => false,
-            JSXAttributeValue::StringLiteral(str_lit) => self.is_invalid_href(&str_lit.value),
+            JSXAttributeValue::StringLiteral(str_lit) => {
+                self.is_invalid_href(str_lit.value.to_str_lossy().as_ref())
+            }
             JSXAttributeValue::ExpressionContainer(exp) => match &exp.expression {
                 JSXExpression::Identifier(ident) => ident.name == "undefined",
                 JSXExpression::NullLiteral(_) => true,
-                JSXExpression::StringLiteral(str_lit) => self.is_invalid_href(&str_lit.value),
+                JSXExpression::StringLiteral(str_lit) => {
+                    self.is_invalid_href(str_lit.value.to_str_lossy().as_ref())
+                }
                 JSXExpression::TemplateLiteral(temp_lit) => {
                     if !temp_lit.expressions.is_empty() {
                         return false;
@@ -194,7 +198,7 @@ impl AnchorIsValid {
                     let Some(quasi) = temp_lit.single_quasi() else {
                         return false;
                     };
-                    self.is_invalid_href(&quasi)
+                    self.is_invalid_href(quasi.to_str_lossy().as_ref())
                 }
                 _ => false,
             },

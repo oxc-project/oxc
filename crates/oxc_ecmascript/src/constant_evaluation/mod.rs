@@ -163,7 +163,7 @@ impl<'a> ConstantEvaluation<'a> for Expression<'a> {
             Expression::BooleanLiteral(lit) => Some(ConstantValue::Boolean(lit.value)),
             Expression::BigIntLiteral(lit) => lit.to_big_int(ctx).map(ConstantValue::BigInt),
             Expression::StringLiteral(lit) => {
-                Some(ConstantValue::String(Cow::Borrowed(lit.value.as_str())))
+                lit.value.as_str().map(|s| ConstantValue::String(Cow::Borrowed(s)))
             }
             Expression::StaticMemberExpression(e) => e.evaluate_value_to(ctx, target_ty),
             Expression::ComputedMemberExpression(e) => e.evaluate_value_to(ctx, target_ty),

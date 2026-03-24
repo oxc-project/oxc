@@ -240,7 +240,7 @@ impl StatsCollector {
         //
         // NOTE: In addition, there are many cases related to `JSXText` where whitespaces are changed.
         // Just skip counting `JSXText` with only whitespaces.
-        if matches!(kind, AstKind::JSXText(t) if t.value.trim().is_empty()) {
+        if matches!(kind, AstKind::JSXText(t) if t.value.as_str().unwrap_or("").trim().is_empty()) {
             return;
         }
 
@@ -274,7 +274,8 @@ impl StatsCollector {
             // Redundant whitespaces can be truncated even if they are inside.
             // e.g. `<p>abc   :  def</p>` -> `<p>abc : def</p>`
             AstKind::JSXText(t) if t.value != " " => {
-                format!("JSX_TEXT({})", t.value.split_whitespace().collect::<Vec<_>>().join(" "))
+                let val = t.value.as_str().unwrap_or("");
+                format!("JSX_TEXT({})", val.split_whitespace().collect::<Vec<_>>().join(" "))
             }
             // When ParenthesizedExpression is removed, CallExpression(calee name) may be affected.
             // e.g. `(a?.b)?.()` -> `a?.b?.()`
@@ -291,7 +292,8 @@ impl StatsCollector {
             // and Tailwind options (custom attributes/functions) are not available here,
             // so this broad approach is acceptable for detecting code removal.
             AstKind::StringLiteral(s) => {
-                let parts: Vec<_> = s.value.split_whitespace().collect();
+                let Some(value) = s.value.as_str() else { return };
+                let parts: Vec<_> = value.split_whitespace().collect();
                 if parts.len() > 1 {
                     // Deduplicate and sort
                     let unique: FxHashSet<_> = parts.into_iter().collect();

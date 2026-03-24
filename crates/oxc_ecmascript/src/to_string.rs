@@ -55,7 +55,7 @@ impl<'a> ToJsString<'a> for ArrayExpressionElement<'a> {
 
 impl<'a> ToJsString<'a> for StringLiteral<'a> {
     fn to_js_string(&self, _ctx: &impl GlobalContext<'a>) -> Option<Cow<'a, str>> {
-        Some(Cow::Borrowed(self.value.as_str()))
+        self.value.as_str().map(Cow::Borrowed)
     }
 }
 
@@ -63,7 +63,7 @@ impl<'a> ToJsString<'a> for TemplateLiteral<'a> {
     fn to_js_string(&self, ctx: &impl GlobalContext<'a>) -> Option<Cow<'a, str>> {
         let mut str = String::new();
         for (i, quasi) in self.quasis.iter().enumerate() {
-            str.push_str(quasi.value.cooked.as_ref()?);
+            str.push_str(quasi.value.cooked.as_ref()?.as_str()?);
 
             if i < self.expressions.len() {
                 let expr = &self.expressions[i];

@@ -1,6 +1,6 @@
 use phf::{Map, phf_map};
 
-use oxc_allocator::{Allocator, GetAddress, UnstableAddress};
+use oxc_allocator::{Allocator, GetAddress, IntoIn, UnstableAddress};
 use oxc_ast::{
     AstBuilder, AstKind,
     ast::{
@@ -421,7 +421,7 @@ impl PreferKeyboardEventKey {
                 let ast = AstBuilder::new(&alloc);
                 codegen.print_expression(&ast.expression_string_literal(
                     SPAN,
-                    ast.atom(&key_name),
+                    key_name.into_in(&alloc),
                     None,
                 ));
                 let key_str = codegen.into_source_text();

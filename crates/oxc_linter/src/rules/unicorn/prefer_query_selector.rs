@@ -105,10 +105,20 @@ impl Rule for PreferQuerySelector {
             }
 
             let literal_value = match argument_expr {
-                Expression::StringLiteral(literal) => Some(literal.value.trim()),
+                Expression::StringLiteral(literal) => {
+                    let value = literal.value.to_str_lossy();
+                    Some(value.trim().to_owned())
+                }
                 Expression::TemplateLiteral(literal) => {
                     if literal.expressions.is_empty() {
-                        literal.quasis.first().unwrap().value.cooked.as_deref().map(str::trim)
+                        literal
+                            .quasis
+                            .first()
+                            .unwrap()
+                            .value
+                            .cooked
+                            .as_ref()
+                            .map(|v| v.to_str_lossy().trim().to_owned())
                     } else {
                         None
                     }
@@ -136,7 +146,7 @@ impl Rule for PreferQuerySelector {
                             let inner_quote = if quotes_symbol == '\'' { '"' } else { '\'' };
                             format!("[name={inner_quote}{literal_value}{inner_quote}]")
                         }
-                        _ => literal_value.to_string(),
+                        _ => literal_value.clone(),
                     };
                     let span = property_span.merge(argument_expr.span());
                     fixer.replace(

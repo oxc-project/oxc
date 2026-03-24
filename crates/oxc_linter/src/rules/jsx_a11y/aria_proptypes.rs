@@ -201,14 +201,14 @@ fn parse_aria_prop_value_as_string(
 ) -> Option<CompactStr> {
     match value {
         JSXAttributeValue::StringLiteral(string_lit) => {
-            Some(string_lit.value.cow_to_lowercase().into())
+            Some(string_lit.value.to_str_lossy().cow_to_lowercase().into())
         }
         JSXAttributeValue::ExpressionContainer(container) => match &container.expression {
             JSXExpression::StringLiteral(string_lit) => {
-                Some(string_lit.value.cow_to_lowercase().into())
+                Some(string_lit.value.to_str_lossy().cow_to_lowercase().into())
             }
             JSXExpression::TemplateLiteral(template_lit) => {
-                Some(template_lit.single_quasi()?.cow_to_lowercase().into())
+                Some(template_lit.single_quasi()?.to_str_lossy().cow_to_lowercase().into())
             }
             JSXExpression::BooleanLiteral(bool_lit) => {
                 if boolean_as_string {

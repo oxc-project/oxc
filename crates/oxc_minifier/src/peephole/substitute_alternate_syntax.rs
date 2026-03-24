@@ -89,7 +89,8 @@ impl<'a> PeepholeOptimizations {
         // Only check for computed property restrictions if this is actually a computed property
         if prop.computed
             && let PropertyKey::StringLiteral(str) = &prop.key
-            && property_key_parent.should_keep_as_computed_property(&str.value)
+            && property_key_parent
+                .should_keep_as_computed_property(str.value.as_str().unwrap_or_default())
         {
             return;
         }
@@ -104,7 +105,8 @@ impl<'a> PeepholeOptimizations {
         // Only check for computed property restrictions if this is actually a computed property
         if prop.computed
             && let PropertyKey::StringLiteral(str) = &prop.key
-            && property_key_parent.should_keep_as_computed_property(&str.value)
+            && property_key_parent
+                .should_keep_as_computed_property(str.value.as_str().unwrap_or_default())
         {
             return;
         }
@@ -119,7 +121,8 @@ impl<'a> PeepholeOptimizations {
         // Only check for computed property restrictions if this is actually a computed property
         if prop.computed
             && let PropertyKey::StringLiteral(str) = &prop.key
-            && property_key_parent.should_keep_as_computed_property(&str.value)
+            && property_key_parent
+                .should_keep_as_computed_property(str.value.as_str().unwrap_or_default())
         {
             return;
         }
@@ -215,7 +218,7 @@ impl<'a> PeepholeOptimizations {
             && ctx.is_global_reference(ident)
         {
             let left = e.left.take_in(ctx.ast);
-            let right = ctx.ast.expression_string_literal(e.right.span(), "u", None);
+            let right = ctx.ast.expression_string_literal(e.right.span(), "u".into(), None);
             ctx.ast.expression_binary(e.span, left, new_comp_op, right)
         } else {
             let span = e.span;
@@ -1019,7 +1022,7 @@ impl<'a> PeepholeOptimizations {
             "String" => {
                 match arg {
                     // `String()` -> `''`
-                    None => Some(ctx.ast.expression_string_literal(span, "", None)),
+                    None => Some(ctx.ast.expression_string_literal(span, "".into(), None)),
                     Some(arg) => arg
                         .evaluate_value_to_string(ctx)
                         .filter(|_| !arg.may_have_side_effects(ctx))
@@ -1259,7 +1262,8 @@ impl<'a> PeepholeOptimizations {
     pub fn substitute_template_literal(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::TemplateLiteral(t) = expr else { return };
         let Some(val) = t.to_js_string(ctx) else { return };
-        *expr = ctx.ast.expression_string_literal(t.span(), ctx.ast.atom_from_cow(&val), None);
+        *expr =
+            ctx.ast.expression_string_literal(t.span(), ctx.ast.atom_from_cow(&val).into(), None);
         ctx.state.changed = true;
     }
 
@@ -1277,15 +1281,16 @@ impl<'a> PeepholeOptimizations {
             }
             PropertyKey::StringLiteral(s) => {
                 let value = s.value.as_str();
-                if is_identifier_name_patched(value) {
+                if is_identifier_name_patched(value.unwrap_or_default()) {
                     *computed = false;
                     *key = PropertyKey::StaticIdentifier(
-                        ctx.ast.alloc_identifier_name(s.span, s.value),
+                        ctx.ast.alloc_identifier_name(s.span, value.unwrap_or_default()),
                     );
                     ctx.state.changed = true;
                     return;
                 }
-                if let Some(value) = TraverseCtx::string_to_equivalent_number_value(value)
+                if let Some(value) =
+                    TraverseCtx::string_to_equivalent_number_value(value.unwrap_or_default())
                     && value >= 0.0
                 {
                     *computed = false;
@@ -1530,7 +1535,7 @@ impl<'a> PeepholeOptimizations {
 
         let strings = array.elements.iter().map(|element| {
             let Expression::StringLiteral(str) = element.to_expression() else { unreachable!() };
-            str.value.as_str()
+            str.value.as_str().unwrap_or_default()
         });
         let Some(delimiter) = Self::pick_delimiter(&strings) else { return };
 
@@ -1543,7 +1548,7 @@ impl<'a> PeepholeOptimizations {
                 expr.span(),
                 ctx.ast.expression_string_literal(
                     expr.span(),
-                    ctx.ast.atom(&concatenated_string),
+                    ctx.ast.atom(&concatenated_string).into(),
                     None,
                 ),
                 ctx.ast.identifier_name(expr.span(), "split"),
@@ -1552,7 +1557,7 @@ impl<'a> PeepholeOptimizations {
             NONE,
             ctx.ast.vec1(Argument::from(ctx.ast.expression_string_literal(
                 expr.span(),
-                ctx.ast.atom(delimiter),
+                ctx.ast.atom(delimiter).into(),
                 None,
             ))),
             false,

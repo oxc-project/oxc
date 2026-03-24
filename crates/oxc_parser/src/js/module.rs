@@ -963,7 +963,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 let literal = self.parse_literal_string();
                 // ModuleExportName : StringLiteral
                 // It is a Syntax Error if IsStringWellFormedUnicode(the SV of StringLiteral) is false.
-                if literal.lone_surrogates || !literal.is_string_well_formed_unicode() {
+                if !literal.is_string_well_formed_unicode() {
                     self.error(diagnostics::export_lone_surrogate(literal.span));
                 }
                 ModuleExportName::StringLiteral(literal)

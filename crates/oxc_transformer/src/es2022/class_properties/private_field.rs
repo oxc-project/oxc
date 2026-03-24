@@ -2173,7 +2173,7 @@ impl<'a> ClassProperties<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let message = ctx.ast.atom_from_strs_array(["#", private_name]);
-        let message = ctx.ast.expression_string_literal(SPAN, message, None);
+        let message = ctx.ast.expression_string_literal(SPAN, message.into(), None);
         helper_call_expr(helper, SPAN, ctx.ast.vec1(Argument::from(message)), ctx)
     }
 

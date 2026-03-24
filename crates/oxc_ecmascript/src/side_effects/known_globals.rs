@@ -26,7 +26,10 @@ pub fn is_valid_regexp(args: &[Argument<'_>]) -> bool {
             // RegExp literal argument: `RegExp(/foo/)` is always valid
             Some(Expression::RegExpLiteral(_)) => return true,
             // String literal: extract the pattern to validate
-            Some(Expression::StringLiteral(s)) => s.value.as_str(),
+            Some(Expression::StringLiteral(s)) => {
+                let Some(s) = s.value.as_str() else { return false };
+                s
+            }
             // Non-literal argument: can't statically determine, assume side effects
             _ => return false,
         },
@@ -36,7 +39,7 @@ pub fn is_valid_regexp(args: &[Argument<'_>]) -> bool {
     let flags = match args.get(1) {
         None => None,
         Some(arg) => match arg.as_expression() {
-            Some(Expression::StringLiteral(s)) => Some(s.value.as_str()),
+            Some(Expression::StringLiteral(s)) => s.value.as_str(),
             // Non-literal flags: can't statically determine, assume side effects
             _ => return false,
         },

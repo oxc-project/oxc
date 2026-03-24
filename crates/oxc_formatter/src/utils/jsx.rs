@@ -117,7 +117,7 @@ pub fn is_whitespace_jsx_expression<'a>(
 ) -> bool {
     match &child.expression {
         JSXExpression::StringLiteral(literal) => {
-            matches!(literal.value.as_str(), " ") && !comments.has_comment_in_span(child.span)
+            matches!(literal.value.as_str(), Some(" ")) && !comments.has_comment_in_span(child.span)
         }
         _ => false,
     }
@@ -274,7 +274,7 @@ pub fn jsx_split_children<'a, 'b>(
                 // Split the text into words
                 // Keep track if there's any leading/trailing empty line, new line or whitespace
 
-                let text_value = &text.value;
+                let text_value = text.value.as_str().unwrap_or("");
                 let mut chunks = JsxSplitChunksIterator::new(text_value).peekable();
 
                 // Text starting with a whitespace

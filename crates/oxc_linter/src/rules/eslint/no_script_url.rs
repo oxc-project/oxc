@@ -44,7 +44,11 @@ impl Rule for NoScriptUrl {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::StringLiteral(literal)
-                if literal.value.cow_to_ascii_lowercase().starts_with("javascript:") =>
+                if literal
+                    .value
+                    .to_str_lossy()
+                    .cow_to_ascii_lowercase()
+                    .starts_with("javascript:") =>
             {
                 ctx.diagnostic(no_script_url_diagnostic(literal.span));
             }

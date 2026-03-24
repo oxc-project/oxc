@@ -270,13 +270,15 @@ impl<'a> ClassProperties<'a> {
 
         let left = match &mut prop.key {
             PropertyKey::StaticIdentifier(ident) => {
-                if needs_define(&ident.name) {
+                if needs_define(ident.name.as_str()) {
                     return self
                         .create_init_assignment_not_loose(prop, value, assignee, is_static, ctx);
                 }
                 ctx.ast.member_expression_static(SPAN, assignee, ident.as_ref().clone(), false)
             }
-            PropertyKey::StringLiteral(str_lit) if needs_define(&str_lit.value) => {
+            PropertyKey::StringLiteral(str_lit)
+                if str_lit.value.as_str().is_some_and(needs_define) =>
+            {
                 return self
                     .create_init_assignment_not_loose(prop, value, assignee, is_static, ctx);
             }
@@ -314,7 +316,7 @@ impl<'a> ClassProperties<'a> {
     ) -> Expression<'a> {
         let key = match &mut prop.key {
             PropertyKey::StaticIdentifier(ident) => {
-                ctx.ast.expression_string_literal(ident.span, ident.name, None)
+                ctx.ast.expression_string_literal(ident.span, ident.name.as_str().into(), None)
             }
             key @ match_expression!(PropertyKey) => {
                 let key = key.to_expression_mut();

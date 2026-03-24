@@ -55,7 +55,7 @@ impl Rule for NoTemplateCurlyInString {
             return;
         };
 
-        let text = literal.value.as_str();
+        let text = literal.value.to_str_lossy();
         let Some(start) = text.find("${") else { return };
 
         if text[start + 2..].contains('}') {

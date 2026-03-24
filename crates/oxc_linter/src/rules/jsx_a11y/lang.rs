@@ -88,7 +88,9 @@ fn is_valid_lang_prop(item: &JSXAttributeItem) -> bool {
             !container.expression.is_expression() || !container.expression.is_undefined()
         }
         Some(JSXAttributeValue::StringLiteral(str)) => {
-            LanguageTag::parse(str.value.as_str()).as_ref().is_ok_and(LanguageTag::is_valid)
+            LanguageTag::parse(str.value.to_str_lossy().as_ref())
+                .as_ref()
+                .is_ok_and(LanguageTag::is_valid)
         }
         _ => true,
     }

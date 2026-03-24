@@ -109,7 +109,7 @@ impl PreferImportInMock {
         ctx.diagnostic_with_fix(
             prefer_import_in_mock_diagnostic(
                 call_expr.arguments_span().unwrap(),
-                import_value.value.as_ref(),
+                import_value.value.to_str_lossy().as_ref(),
             ),
             |fixer| {
                 if !self.fixable {
@@ -118,7 +118,7 @@ impl PreferImportInMock {
 
                 fixer.replace(
                     import_value.span,
-                    format!("import('{}')", import_value.value.as_ref()),
+                    format!("import('{}')", import_value.value.to_str_lossy()),
                 )
             },
         );

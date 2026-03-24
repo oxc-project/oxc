@@ -72,7 +72,8 @@ impl Rule for RoleHasRequiredAriaProps {
             let Some(JSXAttributeValue::StringLiteral(role_values)) = &attr.value else {
                 return;
             };
-            let roles = role_values.value.split_whitespace();
+            let role_values = role_values.value.to_str_lossy();
+            let roles = role_values.split_whitespace();
             for role in roles {
                 if let Some(props) = ROLE_TO_REQUIRED_ARIA_PROPS.iter().find(|r| r.0 == role) {
                     for prop in props.1 {

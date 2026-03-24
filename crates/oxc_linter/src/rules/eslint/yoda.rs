@@ -481,7 +481,7 @@ fn is_target_literal(expr: &Expression) -> bool {
 
 fn get_string_literal<'a>(expr: &'a Expression) -> Option<&'a str> {
     match expr {
-        Expression::StringLiteral(string) => Some(&string.value),
+        Expression::StringLiteral(string) => string.value.as_str(),
         Expression::TemplateLiteral(template) => {
             if template.quasis.len() != 1 {
                 return None;

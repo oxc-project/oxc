@@ -1122,7 +1122,8 @@ impl<'a> ArrowFunctionConverter<'a> {
                 ReferenceFlags::Read,
             );
             let typeof_arguments = ctx.ast.expression_unary(SPAN, UnaryOperator::Typeof, argument);
-            let undefined_literal = ctx.ast.expression_string_literal(SPAN, "undefined", None);
+            let undefined_literal =
+                ctx.ast.expression_string_literal(SPAN, "undefined".into(), None);
             let test = ctx.ast.expression_binary(
                 SPAN,
                 typeof_arguments,

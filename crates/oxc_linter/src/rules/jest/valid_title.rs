@@ -243,23 +243,17 @@ impl ValidTitle {
 
         match arg {
             Argument::StringLiteral(string_literal) => {
-                validate_title(
-                    &string_literal.value,
-                    string_literal.span,
-                    self,
-                    &jest_fn_call.name,
-                    ctx,
-                );
+                let Some(literal) = string_literal.value.as_str() else {
+                    return;
+                };
+                validate_title(literal, string_literal.span, self, &jest_fn_call.name, ctx);
             }
             Argument::TemplateLiteral(template_literal) => {
                 if let Some(quasi) = template_literal.single_quasi() {
-                    validate_title(
-                        quasi.as_str(),
-                        template_literal.span,
-                        self,
-                        &jest_fn_call.name,
-                        ctx,
-                    );
+                    let Some(literal) = quasi.as_str() else {
+                        return;
+                    };
+                    validate_title(literal, template_literal.span, self, &jest_fn_call.name, ctx);
                 }
             }
             Argument::BinaryExpression(binary_expr) => {

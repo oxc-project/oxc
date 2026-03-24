@@ -130,7 +130,7 @@ impl Rule for NoImportingVitestGlobals {
                 );
             }
             AstKind::ImportDeclaration(import_decl) => {
-                if import_decl.source.value.as_str() != "vitest" {
+                if import_decl.source.value.as_str() != Some("vitest") {
                     return;
                 }
 
@@ -211,7 +211,7 @@ fn is_vitest_require_declaration(declaration: &VariableDeclarator<'_>) -> bool {
         return false;
     };
 
-    if require_import.value.as_str() != "vitest" {
+    if require_import.value.as_str() != Some("vitest") {
         return false;
     }
 

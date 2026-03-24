@@ -79,7 +79,7 @@ impl Rule for BadCharAtComparison {
         };
 
         if let Expression::StringLiteral(string_lit) = comparison_with
-            && !is_string_valid(string_lit.value.as_str())
+            && !is_string_valid(string_lit.value.to_str_lossy().as_ref())
         {
             ctx.diagnostic(bad_char_at_comparison_diagnostic(
                 call_expr.span,

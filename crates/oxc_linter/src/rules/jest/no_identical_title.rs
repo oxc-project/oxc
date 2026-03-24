@@ -147,11 +147,11 @@ fn filter_and_process_jest_result<'a>(
 
     match call_expr.arguments.first() {
         Some(Argument::StringLiteral(string_lit)) => {
-            Some((string_lit.span, &string_lit.value, kind, parent_id))
+            Some((string_lit.span, string_lit.value.as_str()?, kind, parent_id))
         }
         Some(Argument::TemplateLiteral(template_lit)) => template_lit
             .single_quasi()
-            .map(|quasi| (template_lit.span, quasi.as_str(), kind, parent_id)),
+            .and_then(|quasi| quasi.as_str().map(|s| (template_lit.span, s, kind, parent_id))),
         _ => None,
     }
 }

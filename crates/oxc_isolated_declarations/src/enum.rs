@@ -1,6 +1,6 @@
 use rustc_hash::FxHashMap;
 
-use oxc_allocator::CloneIn;
+use oxc_allocator::{CloneIn, FromIn};
 use oxc_ast::ast::*;
 use oxc_ecmascript::{ToInt32, ToUint32};
 use oxc_span::{Atom, GetSpan, SPAN};
@@ -8,6 +8,7 @@ use oxc_syntax::{
     number::{NumberBase, ToJsString},
     operator::{BinaryOperator, UnaryOperator},
 };
+use oxc_wtf8::Wtf8Atom;
 
 use crate::{IsolatedDeclarations, diagnostics::enum_member_initializers};
 
@@ -73,7 +74,8 @@ impl<'a> IsolatedDeclarations<'a> {
                         }
                     }
                     ConstantValue::String(v) => {
-                        self.ast.expression_string_literal(SPAN, self.ast.atom(&v), None)
+                        let atom = Wtf8Atom::from_in(v.as_str(), self.ast.allocator);
+                        self.ast.expression_string_literal(SPAN, atom, None)
                     }
                 }),
             );

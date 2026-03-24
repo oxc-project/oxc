@@ -4,7 +4,7 @@ use crate::{
     rule::Rule,
 };
 use lazy_regex::{Lazy, Regex, lazy_regex};
-use oxc_allocator::{Allocator, Vec};
+use oxc_allocator::{Allocator, IntoIn, Vec};
 
 use oxc_ast::{
     AstBuilder, AstKind,
@@ -401,7 +401,7 @@ impl JsxCurlyBracePresence {
                     self.check_expression_container(ctx, container, node, false);
                 }
                 JSXChild::Text(text) => {
-                    let text_value = text.value.as_str();
+                    let text_value = text.value.as_str().unwrap_or("");
                     if self.children.is_always()
                         && !contains_only_html_entities(text_value)
                         && !is_whitespace(text_value)
@@ -441,10 +441,11 @@ impl JsxCurlyBracePresence {
             }
             JSXAttributeValue::StringLiteral(string) => {
                 if self.props.is_always() {
+                    let value = string.value.to_str_lossy();
                     report_missing_curly_for_string_attribute_value(
                         ctx,
                         string.span,
-                        string.value.as_str(),
+                        value.as_ref(),
                     );
                 }
             }
@@ -503,10 +504,11 @@ impl JsxCurlyBracePresence {
             Expression::TemplateLiteral(template) => {
                 if allowed.is_never() && template.is_no_substitution_template() {
                     let string = template.single_quasi().unwrap();
-                    if !parent_is_attribute && contains_quote_characters(string.as_str())
+                    let string = string.to_str_lossy().into_owned();
+                    if !parent_is_attribute && contains_quote_characters(string.as_ref())
                         || is_allowed_string_like_in_container(
                             ctx,
-                            string.as_str(),
+                            string.as_ref(),
                             container,
                             node.id(),
                             parent_is_attribute,
@@ -528,7 +530,7 @@ impl JsxCurlyBracePresence {
 
 fn is_allowed_string_like_in_container<'a>(
     ctx: &LintContext<'a>,
-    s: &'a str,
+    s: &str,
     container: &JSXExpressionContainer<'a>,
     node_id: NodeId,
     is_prop: bool,
@@ -604,13 +606,15 @@ fn report_unnecessary_curly<'a>(
         match &container.expression {
             JSXExpression::TemplateLiteral(template_lit) => {
                 let mut fix = fixer.codegen();
-                fix.print_str(template_lit.single_quasi().unwrap().as_str());
+                let text = template_lit.single_quasi().unwrap().to_str_lossy();
+                fix.print_str(text.as_ref());
 
                 fixer.replace(container.span, fix.into_source_text())
             }
             JSXExpression::StringLiteral(string_literal) => {
                 let mut fix = fixer.codegen();
-                fix.print_str(string_literal.value.as_str());
+                let text = string_literal.value.to_str_lossy();
+                fix.print_str(text.as_ref());
 
                 fixer.replace(container.span, fix.into_source_text())
             }
@@ -645,14 +649,15 @@ fn report_unnecessary_curly_for_attribute_value<'a>(
         };
 
         let mut fix = fixer.codegen();
+        let str = str.to_str_lossy();
 
-        if !contains_double_quote_characters(str.as_str()) {
+        if !contains_double_quote_characters(str.as_ref()) {
             fix = fix.with_options(CodegenOptions::default());
         }
 
         fix.print_expression(&ast_builder.expression_string_literal(
             Span::default(),
-            str.as_str(),
+            str.as_ref().into_in(&alloc),
             None,
         ));
 
@@ -682,7 +687,7 @@ fn report_missing_curly_for_string_attribute_value(
 
         replace.print_expression(&ast_builder.expression_string_literal(
             Span::default(),
-            string_value,
+            string_value.into_in(&alloc),
             None,
         ));
 
@@ -723,7 +728,7 @@ fn report_missing_curly_for_text_node(ctx: &LintContext, span: Span, string_valu
             let mut replace = fixer.codegen().with_options(CodegenOptions::default());
             replace.print_expression(&ast_builder.expression_string_literal(
                 Span::default(),
-                text,
+                text.into_in(&alloc),
                 None,
             ));
             fix.push(fixer.replace(span_from_first_char, replace.into_source_text()));

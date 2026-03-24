@@ -7,6 +7,7 @@ use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 use oxc_span::{GetSpan, Ident};
 use oxc_syntax::node::NodeId;
+use oxc_wtf8::Wtf8Atom;
 
 use crate::ast_nodes::AstNode;
 use crate::formatter::{
@@ -1650,11 +1651,6 @@ impl<'a> AstNode<'a, TemplateElement<'a>> {
     #[inline]
     pub fn tail(&self) -> bool {
         self.inner.tail
-    }
-
-    #[inline]
-    pub fn lone_surrogates(&self) -> bool {
-        self.inner.lone_surrogates
     }
 
     pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
@@ -6356,18 +6352,13 @@ impl<'a> AstNode<'a, StringLiteral<'a>> {
     }
 
     #[inline]
-    pub fn value(&self) -> Atom<'a> {
+    pub fn value(&self) -> Wtf8Atom<'a> {
         self.inner.value
     }
 
     #[inline]
     pub fn raw(&self) -> Option<Atom<'a>> {
         self.inner.raw
-    }
-
-    #[inline]
-    pub fn lone_surrogates(&self) -> bool {
-        self.inner.lone_surrogates
     }
 
     pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
@@ -7173,7 +7164,7 @@ impl<'a> AstNode<'a, JSXText<'a>> {
     }
 
     #[inline]
-    pub fn value(&self) -> Atom<'a> {
+    pub fn value(&self) -> Wtf8Atom<'a> {
         self.inner.value
     }
 

@@ -2,7 +2,7 @@ use oxc_allocator::{Allocator, Vec};
 use oxc_ast::ast::*;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::BoundNames;
-use oxc_span::{GetSpan, Span};
+use oxc_span::{Atom, GetSpan, Span};
 use oxc_syntax::module_record::*;
 
 use crate::diagnostics;
@@ -200,7 +200,8 @@ impl<'a> ModuleRecordBuilder<'a> {
     }
 
     pub fn visit_import_declaration(&mut self, decl: &ImportDeclaration<'a>) {
-        let module_request = NameSpan::new(decl.source.value, decl.source.span);
+        let module_request =
+            NameSpan::new(Atom::from(decl.source.value.as_str().unwrap_or("")), decl.source.span);
 
         if let Some(specifiers) = &decl.specifiers {
             for specifier in specifiers {
@@ -246,7 +247,8 @@ impl<'a> ModuleRecordBuilder<'a> {
     }
 
     pub fn visit_export_all_declaration(&mut self, decl: &ExportAllDeclaration<'a>) {
-        let module_request = NameSpan::new(decl.source.value, decl.source.span);
+        let module_request =
+            NameSpan::new(Atom::from(decl.source.value.as_str().unwrap_or("")), decl.source.span);
         let export_entry = ExportEntry {
             statement_span: decl.span,
             span: decl.span,
@@ -315,8 +317,9 @@ impl<'a> ModuleRecordBuilder<'a> {
     }
 
     pub fn visit_export_named_declaration(&mut self, decl: &ExportNamedDeclaration<'a>) {
-        let module_request =
-            decl.source.as_ref().map(|source| NameSpan::new(source.value, source.span));
+        let module_request = decl.source.as_ref().map(|source| {
+            NameSpan::new(Atom::from(source.value.as_str().unwrap_or("")), source.span)
+        });
 
         if let Some(module_request) = &module_request {
             self.add_module_request(

@@ -122,8 +122,9 @@ impl Rule for ValidTypeof {
         };
 
         if let Expression::StringLiteral(lit) = sibling {
-            if !VALID_TYPES.contains(&lit.value.as_str()) {
-                let help = get_typo_suggestion(lit.value.as_str())
+            let lit_value = lit.value.to_str_lossy();
+            if !VALID_TYPES.contains(&lit_value.as_ref()) {
+                let help = get_typo_suggestion(lit_value.as_ref())
                     .map(|suggestion| format!("Did you mean `\"{suggestion}\"`?"));
                 ctx.diagnostic(invalid_value(help, sibling.span()));
             }
@@ -133,8 +134,9 @@ impl Rule for ValidTypeof {
         if let Expression::TemplateLiteral(template) = sibling
             && let Some(quasi) = template.single_quasi()
         {
-            if !VALID_TYPES.contains(&quasi.as_str()) {
-                let help = get_typo_suggestion(quasi.as_str())
+            let quasi_value = quasi.to_str_lossy();
+            if !VALID_TYPES.contains(&quasi_value.as_ref()) {
+                let help = get_typo_suggestion(quasi_value.as_ref())
                     .map(|suggestion| format!("Did you mean `\"{suggestion}\"`?"));
                 ctx.diagnostic(invalid_value(help, sibling.span()));
             }

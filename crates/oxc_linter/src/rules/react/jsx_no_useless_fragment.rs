@@ -272,7 +272,7 @@ fn can_fix(node: &AstNode, children: &ArenaVec<JSXChild<'_>>, ctx: &LintContext)
 
 fn is_whitespace_only_text(child: &JSXChild) -> bool {
     match child {
-        JSXChild::Text(text) => text.value.trim().is_empty(),
+        JSXChild::Text(text) => text.value.as_str().unwrap_or("").trim().is_empty(),
         _ => false,
     }
 }
@@ -299,7 +299,8 @@ fn is_fragment_with_single_expression(children: &oxc_allocator::Vec<'_, JSXChild
 
 fn is_padding_spaces(v: &JSXChild<'_>) -> bool {
     if let JSXChild::Text(v) = v {
-        return !(v.value.trim().is_empty() && v.value.contains('\n'));
+        let value = v.value.to_str_lossy();
+        return !(value.trim().is_empty() && value.contains('\n'));
     }
 
     true

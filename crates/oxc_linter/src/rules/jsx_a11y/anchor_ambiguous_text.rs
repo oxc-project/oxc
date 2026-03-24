@@ -182,7 +182,7 @@ fn get_accessible_text<'a, 'b>(
         .iter()
         .filter_map(|child| match child {
             JSXChild::Element(child_el) => get_accessible_text(child_el, ctx),
-            JSXChild::Text(text_el) => Some(Cow::Borrowed(text_el.value.as_str())),
+            JSXChild::Text(text_el) => Some(Cow::Borrowed(text_el.value.as_str().unwrap_or(""))),
             _ => None,
         })
         .collect();

@@ -410,7 +410,7 @@ impl<'a> StyledComponents<'a> {
         let quasis_elements = ctx.ast.vec_from_iter(quasis.into_iter().map(|quasi| {
             ArrayExpressionElement::from(ctx.ast.expression_string_literal(
                 quasi.span,
-                quasi.value.raw,
+                quasi.value.raw.into(),
                 None,
             ))
         }));
@@ -467,7 +467,7 @@ impl<'a> StyledComponents<'a> {
         for statement in &program.body {
             let Statement::ImportDeclaration(import) = &statement else { continue };
             let Some(specifiers) = &import.specifiers else { continue };
-            if !is_valid_styled_component_source(&import.source.value) {
+            if !is_valid_styled_component_source(import.source.value.as_str().unwrap_or_default()) {
                 continue;
             }
 
@@ -797,7 +797,7 @@ impl<'a> StyledComponents<'a> {
         ctx: &TraverseCtx<'a>,
     ) -> ObjectPropertyKind<'a> {
         let key = ctx.ast.property_key_static_identifier(SPAN, key);
-        let value = ctx.ast.expression_string_literal(SPAN, value, None);
+        let value = ctx.ast.expression_string_literal(SPAN, value.into(), None);
         ctx.ast.object_property_kind_object_property(
             SPAN,
             PropertyKind::Init,
@@ -1140,7 +1140,7 @@ fn insert_space_if_required(output: &mut Vec<u8>, is_first_output: bool) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use oxc_allocator::Allocator;
+    use oxc_allocator::{Allocator, IntoIn};
     use oxc_ast::{AstBuilder, ast::TemplateElementValue};
     use oxc_span::SPAN;
 
@@ -1152,7 +1152,10 @@ mod tests {
             SPAN,
             ast.vec1(ast.template_element(
                 SPAN,
-                TemplateElementValue { raw: ast.atom(input), cooked: Some(ast.atom(input)) },
+                TemplateElementValue {
+                    raw: ast.atom(input),
+                    cooked: Some(input.into_in(&allocator)),
+                },
                 true,
                 false,
             )),

@@ -46,7 +46,8 @@ fn extract_callee_path<'a>(callee: &'a Expression<'a>) -> Option<Vec<&'a str>> {
                 let Expression::StringLiteral(lit) = &member.expression else {
                     return None;
                 };
-                path_parts.push(lit.value.as_str());
+                let str_val = lit.value.as_str()?;
+                path_parts.push(str_val);
                 current = &member.object;
             }
             Expression::CallExpression(call) => {
@@ -64,7 +65,8 @@ fn extract_callee_path<'a>(callee: &'a Expression<'a>) -> Option<Vec<&'a str>> {
                     let Expression::StringLiteral(lit) = &member.expression else {
                         return None;
                     };
-                    path_parts.push(lit.value.as_str());
+                    let str_val = lit.value.as_str()?;
+                    path_parts.push(str_val);
                     current = &member.object;
                 }
                 ChainElement::CallExpression(call) => {

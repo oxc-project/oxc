@@ -17,8 +17,9 @@ impl<'a> PeepholeOptimizations {
     pub fn convert_to_dotted_properties(expr: &mut MemberExpression<'a>, ctx: &TraverseCtx<'a>) {
         let MemberExpression::ComputedMemberExpression(e) = expr else { return };
         let Expression::StringLiteral(s) = &e.expression else { return };
-        if is_identifier_name_patched(&s.value) {
-            let property = ctx.ast.identifier_name(s.span, s.value);
+        let Some(v) = s.value.as_str() else { return };
+        if is_identifier_name_patched(v) {
+            let property = ctx.ast.identifier_name(s.span, Atom::from(v));
             *expr =
                 MemberExpression::StaticMemberExpression(ctx.ast.alloc_static_member_expression(
                     e.span,
@@ -28,7 +29,6 @@ impl<'a> PeepholeOptimizations {
                 ));
             return;
         }
-        let v = s.value.as_str();
         if e.optional {
             return;
         }

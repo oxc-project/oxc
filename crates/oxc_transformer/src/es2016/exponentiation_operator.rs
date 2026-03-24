@@ -245,7 +245,7 @@ impl<'a> ExponentiationOperator<'a> {
         // ```
         let prop_span = member_expr.property.span;
         let prop_name = member_expr.property.name;
-        let prop = ctx.ast.expression_string_literal(prop_span, prop_name, None);
+        let prop = ctx.ast.expression_string_literal(prop_span, prop_name.as_str().into(), None);
 
         // Complete 2nd member expression
         // ```
@@ -263,7 +263,7 @@ impl<'a> ExponentiationOperator<'a> {
             AssignmentTarget::ComputedMemberExpression(ctx.ast.alloc_computed_member_expression(
                 member_expr.span,
                 member_expr.object.take_in(ctx.ast),
-                ctx.ast.expression_string_literal(prop_span, prop_name, None),
+                ctx.ast.expression_string_literal(prop_span, prop_name.as_str().into(), None),
                 false,
             ));
 

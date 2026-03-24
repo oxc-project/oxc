@@ -114,12 +114,13 @@ impl Rule for NoNodejsModules {
             return;
         };
 
-        if self.allow.contains(module_name.as_str()) {
+        if module_name.as_str().is_some_and(|s| self.allow.contains(s)) {
             return;
         }
 
-        if module_name.starts_with("node:") || is_nodejs_builtin_module(&module_name) {
-            ctx.diagnostic(no_nodejs_modules_diagnostic(node.span(), &module_name));
+        let module_name_lossy = module_name.to_str_lossy();
+        if module_name_lossy.starts_with("node:") || is_nodejs_builtin_module(&module_name_lossy) {
+            ctx.diagnostic(no_nodejs_modules_diagnostic(node.span(), &module_name_lossy));
         }
     }
 }

@@ -32,7 +32,7 @@ impl PropName for PropertyKey<'_> {
         match self {
             PropertyKey::StaticIdentifier(ident) => Some((&ident.name, ident.span)),
             PropertyKey::Identifier(ident) => Some((&ident.name, ident.span)),
-            PropertyKey::StringLiteral(lit) => Some((&lit.value, lit.span)),
+            PropertyKey::StringLiteral(lit) => lit.value.as_str().map(|s| (s, lit.span)),
             _ => None,
         }
     }

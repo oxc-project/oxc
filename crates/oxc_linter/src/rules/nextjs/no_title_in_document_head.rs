@@ -69,7 +69,7 @@ impl Rule for NoTitleInDocumentHead {
             return;
         };
 
-        if import_decl.source.value.as_str() != "next/document" {
+        if import_decl.source.value.as_str() != Some("next/document") {
             return;
         }
 

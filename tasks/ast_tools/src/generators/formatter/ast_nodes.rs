@@ -118,6 +118,7 @@ impl Generator for FormatterAstNodesGenerator {
             use oxc_ast::ast::*;
             use oxc_span::{GetSpan, Ident};
             use oxc_syntax::node::NodeId;
+            use oxc_wtf8::Wtf8Atom;
             ///@@line_break
             use crate::ast_nodes::AstNode;
             use crate::formatter::{

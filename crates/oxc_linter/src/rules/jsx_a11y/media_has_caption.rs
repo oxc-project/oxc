@@ -166,8 +166,9 @@ impl Rule for MediaHasCaption {
                                 return false;
                             };
                             if let Some(JSXAttributeValue::StringLiteral(s)) = &attr.value {
+                                let kind = s.value.to_str_lossy();
                                 return iden.name == "kind"
-                                    && s.value.eq_ignore_ascii_case("captions");
+                                    && kind.eq_ignore_ascii_case("captions");
                             }
                             false
                         })

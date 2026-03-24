@@ -212,7 +212,7 @@ impl<'a> InjectGlobalVariables<'a> {
     fn inject_imports(&mut self, injects: &[InjectImport], program: &mut Program<'a>) {
         let imports = injects.iter().map(|inject| {
             let specifiers = Some(self.ast.vec1(self.inject_import_to_specifier(inject)));
-            let source = self.ast.string_literal(SPAN, self.ast.atom(&inject.source), None);
+            let source = self.ast.string_literal(SPAN, self.ast.atom(&inject.source).into(), None);
             let kind = ImportOrExportKind::Value;
             let import_decl = self
                 .ast
@@ -232,7 +232,11 @@ impl<'a> InjectGlobalVariables<'a> {
                         if identifier::is_identifier_name(&imported_name) {
                             self.ast.module_export_name_identifier_name(SPAN, imported_name)
                         } else {
-                            self.ast.module_export_name_string_literal(SPAN, imported_name, None)
+                            self.ast.module_export_name_string_literal(
+                                SPAN,
+                                imported_name.into(),
+                                None,
+                            )
                         }
                     }
                     None => self.ast.module_export_name_identifier_name(SPAN, "default"),

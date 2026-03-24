@@ -874,7 +874,7 @@ impl<'b, 'a> DotDefineMemberExpression<'b, 'a> {
                 Some(expr.property.name.as_atom())
             }
             DotDefineMemberExpression::ComputedMemberExpression(expr) => {
-                static_property_name_of_computed_expr(expr).copied()
+                static_property_name_of_computed_expr(expr)
             }
         }
     }
@@ -887,13 +887,13 @@ impl<'b, 'a> DotDefineMemberExpression<'b, 'a> {
     }
 }
 
-fn static_property_name_of_computed_expr<'b, 'a: 'b>(
-    expr: &'b ComputedMemberExpression<'a>,
-) -> Option<&'b Atom<'a>> {
+fn static_property_name_of_computed_expr<'a>(
+    expr: &ComputedMemberExpression<'a>,
+) -> Option<Atom<'a>> {
     match &expr.expression {
-        Expression::StringLiteral(lit) => Some(&lit.value),
+        Expression::StringLiteral(lit) => lit.value.try_into_atom(),
         Expression::TemplateLiteral(lit) if lit.expressions.is_empty() && lit.quasis.len() == 1 => {
-            Some(&lit.quasis[0].value.raw)
+            Some(lit.quasis[0].value.raw)
         }
         _ => None,
     }

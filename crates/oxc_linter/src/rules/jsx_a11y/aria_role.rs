@@ -128,7 +128,7 @@ impl Rule for AriaRole {
                     }
                 }
                 Some(JSXAttributeValue::StringLiteral(str)) => {
-                    let words_str = String::from(str.value.as_str());
+                    let words_str = str.value.to_str_lossy();
                     let words = words_str.split_whitespace();
                     if words_str.trim().is_empty() {
                         ctx.diagnostic(aria_role_diagnostic(str.span, ""));

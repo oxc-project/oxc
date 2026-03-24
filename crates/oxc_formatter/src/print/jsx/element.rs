@@ -319,7 +319,7 @@ impl<'a, 'b> AnyJsxTagWithChildren<'a, 'b> {
 
                 match child.as_ast_nodes() {
                     AstNodes::JSXText(text) => {
-                        if is_meaningful_jsx_text(&text.value) {
+                        if is_meaningful_jsx_text(text.value.as_str().unwrap_or("")) {
                             ElementLayout::Default
                         } else {
                             ElementLayout::NoChildren

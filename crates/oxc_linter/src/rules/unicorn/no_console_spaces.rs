@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -73,7 +75,7 @@ impl Rule for NoConsoleSpaces {
             if let Some(expression_arg) = arg.as_expression() {
                 let (literal_raw, is_template_lit) = match expression_arg {
                     Expression::StringLiteral(string_lit) => {
-                        let literal_raw = string_lit.value.as_str();
+                        let literal_raw = string_lit.value.to_str_lossy();
 
                         (literal_raw, false)
                     }
@@ -84,13 +86,13 @@ impl Rule for NoConsoleSpaces {
                             .trim_start_matches('`')
                             .trim_end_matches('`');
 
-                        (literal_raw, true)
+                        (Cow::Borrowed(literal_raw), true)
                     }
 
                     _ => continue,
                 };
 
-                if check_literal_leading(i, literal_raw) {
+                if check_literal_leading(i, literal_raw.as_ref()) {
                     report_diagnostic(
                         "leading",
                         // SAFETY: `is_method_call` ensures that `call_expr`'s `callee` is a `MemberExpression` with a `MemberExpression` as its `object`.
@@ -101,7 +103,7 @@ impl Rule for NoConsoleSpaces {
                     );
                 }
 
-                if check_literal_trailing(i, literal_raw, call_expr_arg_len) {
+                if check_literal_trailing(i, literal_raw.as_ref(), call_expr_arg_len) {
                     report_diagnostic(
                         "trailing",
                         // SAFETY: `is_method_call` ensures that `call_expr`'s `callee` is a `MemberExpression` with a `MemberExpression` as its `object`.

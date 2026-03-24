@@ -178,47 +178,49 @@ impl VisitMut<'_> for SpecParser {
                             _ => {}
                         },
                         Expression::StringLiteral(literal) => {
-                            let s = literal.value.as_str();
-                            match name.as_ref() {
-                                "trailingComma" => {
-                                    options.trailing_commas = TrailingCommas::from_str(s).unwrap();
+                            if let Some(s) = literal.value.as_str() {
+                                match name.as_ref() {
+                                    "trailingComma" => {
+                                        options.trailing_commas =
+                                            TrailingCommas::from_str(s).unwrap();
+                                    }
+                                    "endOfLine" => {
+                                        // TODO: change `unwrap_or_default` to `unwrap`
+                                        options.line_ending =
+                                            LineEnding::from_str(s).unwrap_or_default();
+                                    }
+                                    "quoteProps" => {
+                                        // TODO: change `unwrap_or_default` to `unwrap`
+                                        options.quote_properties =
+                                            QuoteProperties::from_str(s).unwrap_or_default();
+                                    }
+                                    "objectWrap" => {
+                                        // TODO: change `unwrap_or_default` to `unwrap`
+                                        options.expand = Expand::from_str(
+                                            // Prettier uses "preserve"/"collapse", but we use "auto"/"never"
+                                            match s {
+                                                "preserve" => "auto",
+                                                "collapse" => "never",
+                                                _ => s,
+                                            },
+                                        )
+                                        .unwrap_or_default();
+                                    }
+                                    "arrowParens" => {
+                                        // TODO: change `unwrap_or_default` to `unwrap`
+                                        options.arrow_parentheses = ArrowParentheses::from_str(
+                                            // Prettier uses "avoid", but we use "as-needed"
+                                            if s == "avoid" { "as-needed" } else { s },
+                                        )
+                                        .unwrap_or_default();
+                                    }
+                                    "experimentalOperatorPosition" => {
+                                        // TODO: change `unwrap_or_default` to `unwrap`
+                                        options.experimental_operator_position =
+                                            OperatorPosition::from_str(s).unwrap_or_default();
+                                    }
+                                    _ => {}
                                 }
-                                "endOfLine" => {
-                                    // TODO: change `unwrap_or_default` to `unwrap`
-                                    options.line_ending =
-                                        LineEnding::from_str(s).unwrap_or_default();
-                                }
-                                "quoteProps" => {
-                                    // TODO: change `unwrap_or_default` to `unwrap`
-                                    options.quote_properties =
-                                        QuoteProperties::from_str(s).unwrap_or_default();
-                                }
-                                "objectWrap" => {
-                                    // TODO: change `unwrap_or_default` to `unwrap`
-                                    options.expand = Expand::from_str(
-                                        // Prettier uses "preserve"/"collapse", but we use "auto"/"never"
-                                        match s {
-                                            "preserve" => "auto",
-                                            "collapse" => "never",
-                                            _ => s,
-                                        },
-                                    )
-                                    .unwrap_or_default();
-                                }
-                                "arrowParens" => {
-                                    // TODO: change `unwrap_or_default` to `unwrap`
-                                    options.arrow_parentheses = ArrowParentheses::from_str(
-                                        // Prettier uses "avoid", but we use "as-needed"
-                                        if s == "avoid" { "as-needed" } else { s },
-                                    )
-                                    .unwrap_or_default();
-                                }
-                                "experimentalOperatorPosition" => {
-                                    // TODO: change `unwrap_or_default` to `unwrap`
-                                    options.experimental_operator_position =
-                                        OperatorPosition::from_str(s).unwrap_or_default();
-                                }
-                                _ => {}
                             }
                         }
                         _ => {}

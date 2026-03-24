@@ -854,7 +854,11 @@ impl<'a> ClassProperties<'a> {
         helper_call_expr(
             Helper::ClassPrivateFieldLooseKey,
             SPAN,
-            ctx.ast.vec1(Argument::from(ctx.ast.expression_string_literal(SPAN, name, None))),
+            ctx.ast.vec1(Argument::from(ctx.ast.expression_string_literal(
+                SPAN,
+                name.as_str().into(),
+                None,
+            ))),
             ctx,
         )
     }

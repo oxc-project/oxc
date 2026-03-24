@@ -16,6 +16,7 @@ use oxc_syntax::{
     node::NodeId,
     number::{BigintBase, NumberBase},
 };
+use oxc_wtf8::Wtf8Atom;
 
 /// Boolean literal
 ///
@@ -89,22 +90,13 @@ pub struct StringLiteral<'a> {
     ///
     /// Any escape sequences in the raw code are unescaped.
     #[estree(via = StringLiteralValue)]
-    pub value: Atom<'a>,
+    pub value: Wtf8Atom<'a>,
 
     /// The raw string as it appears in source code.
     ///
     /// `None` when this ast node is not constructed from the parser.
     #[content_eq(skip)]
     pub raw: Option<Atom<'a>>,
-
-    /// The string value contains lone surrogates.
-    ///
-    /// `value` is encoded using `\u{FFFD}` (the lossy replacement character) as an escape character.
-    /// Lone surrogates are encoded as `\u{FFFD}XXXX`, where `XXXX` is the code unit in hex.
-    /// The lossy escape character itself is encoded as `\u{FFFD}fffd`.
-    #[builder(default)]
-    #[estree(skip)]
-    pub lone_surrogates: bool,
 }
 
 /// BigInt literal

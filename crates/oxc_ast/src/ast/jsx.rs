@@ -11,6 +11,7 @@ use oxc_ast_macros::ast;
 use oxc_estree::ESTree;
 use oxc_span::{Atom, ContentEq, GetSpan, GetSpanMut, Span};
 use oxc_syntax::node::NodeId;
+use oxc_wtf8::Wtf8Atom;
 
 use super::{inherit_variants, js::*, literal::*, ts::*};
 
@@ -511,7 +512,7 @@ pub struct JSXText<'a> {
     /// Node location in source code.
     pub span: Span,
     /// The text content.
-    pub value: Atom<'a>,
+    pub value: Wtf8Atom<'a>,
 
     /// The raw string as it appears in source code.
     ///
