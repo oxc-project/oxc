@@ -12,8 +12,7 @@ use crate::{
 };
 
 use super::{
-    LintConfig, LintPlugins, OxlintEnv, OxlintGlobals, categories::OxlintCategories,
-    overrides::GlobSet,
+    LintConfig, LintPlugins, OxlintGlobals, categories::OxlintCategories, overrides::GlobSet,
 };
 
 // TODO: support `categories` et. al. in overrides.
@@ -46,7 +45,6 @@ impl ResolvedOxlintOverrides {
 #[derive(Debug, Clone)]
 pub struct ResolvedOxlintOverride {
     pub files: GlobSet,
-    pub env: Option<OxlintEnv>,
     pub globals: Option<OxlintGlobals>,
     pub plugins: Option<LintPlugins>,
     pub rules: ResolvedOxlintOverrideRules,
@@ -144,7 +142,6 @@ impl Config {
             return self.base.clone();
         }
 
-        let mut env = self.base.config.env.clone();
         let mut globals = self.base.config.globals.clone();
         let mut plugins = self.base.config.plugins;
         let settings = self.base.config.settings.clone();
@@ -228,17 +225,12 @@ impl Config {
                 external_rules.insert(*external_rule_id, (*options_id, *severity));
             }
 
-            if let Some(override_env) = &override_config.env {
-                override_env.override_envs(&mut env);
-            }
-
             if let Some(override_globals) = &override_config.globals {
                 override_globals.override_globals(&mut globals);
             }
         }
 
         let config: Arc<LintConfig> = if plugins == self.base.config.plugins
-            && env == self.base.config.env
             && globals == self.base.config.globals
             && settings == self.base.config.settings
         {
@@ -247,7 +239,6 @@ impl Config {
             let mut config = (*self.base.config).clone();
 
             config.plugins = plugins;
-            config.env = env;
             config.globals = globals;
             config.settings = settings;
             Arc::new(config)
@@ -398,7 +389,7 @@ mod test {
     use crate::{
         AllowWarnDeny, ExternalOptionsId, ExternalPluginStore, LintPlugins, RuleCategory, RuleEnum,
         config::{
-            LintConfig, OxlintEnv, OxlintGlobals, OxlintSettings,
+            LintConfig, OxlintGlobals, OxlintSettings,
             categories::OxlintCategories,
             config_store::{Config, ResolvedOxlintOverride, ResolvedOxlintOverrideRules},
             overrides::GlobSet,
@@ -427,7 +418,6 @@ mod test {
     fn test_no_rules() {
         let base_rules = vec![no_explicit_any()];
         let overrides = ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {
-            env: None,
             files: GlobSet::new(vec!["*.test.{ts,tsx}"]),
             plugins: None,
             globals: None,
@@ -458,7 +448,6 @@ mod test {
     fn test_no_rules_and_new_plugins() {
         let base_rules = vec![no_explicit_any()];
         let overrides = ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {
-            env: None,
             files: GlobSet::new(vec!["*.test.{ts,tsx}"]),
             plugins: Some(
                 LintPlugins::REACT
@@ -494,7 +483,6 @@ mod test {
     fn test_remove_rule() {
         let base_rules = vec![no_explicit_any()];
         let overrides = ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {
-            env: None,
             files: GlobSet::new(vec!["*.test.{ts,tsx}"]),
             plugins: None,
             globals: None,
@@ -531,7 +519,6 @@ mod test {
     fn test_add_rule() {
         let base_rules = vec![no_explicit_any()];
         let overrides = ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {
-            env: None,
             files: GlobSet::new(vec!["src/**/*.{ts,tsx}"]),
             plugins: None,
             globals: None,
@@ -568,7 +555,6 @@ mod test {
     fn test_change_rule_severity() {
         let base_rules = vec![no_explicit_any()];
         let overrides = ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {
-            env: None,
             files: GlobSet::new(vec!["src/**/*.{ts,tsx}"]),
             plugins: None,
             globals: None,
@@ -608,7 +594,6 @@ mod test {
         let base_config = LintConfig { plugins: LintPlugins::IMPORT, ..Default::default() };
         let overrides = ResolvedOxlintOverrides::new(vec![
             ResolvedOxlintOverride {
-                env: None,
                 files: GlobSet::new(vec!["*.jsx", "*.tsx"]),
                 plugins: Some(LintPlugins::REACT),
                 globals: None,
@@ -618,7 +603,6 @@ mod test {
                 },
             },
             ResolvedOxlintOverride {
-                env: None,
                 files: GlobSet::new(vec!["*.ts", "*.tsx"]),
                 plugins: Some(LintPlugins::TYPESCRIPT),
                 globals: None,
@@ -651,57 +635,11 @@ mod test {
     }
 
     #[test]
-    fn test_add_env() {
-        let base_config = LintConfig { plugins: LintPlugins::ESLINT, ..Default::default() };
-        let overrides = ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {
-            env: Some(OxlintEnv::from_iter(["es2024".to_string()])),
-            files: GlobSet::new(vec!["*.tsx"]),
-            plugins: None,
-            globals: None,
-            rules: ResolvedOxlintOverrideRules { builtin_rules: vec![], external_rules: vec![] },
-        }]);
-
-        let store = ConfigStore::new(
-            Config::new(vec![], vec![], OxlintCategories::default(), base_config, overrides),
-            FxHashMap::default(),
-            ExternalPluginStore::default(),
-        );
-        assert!(!store.base.base.config.env.contains("React"));
-
-        let app = store.resolve("App.tsx".as_ref()).config;
-        assert!(app.env.contains("es2024"));
-    }
-
-    #[test]
-    fn test_replace_env() {
-        let base_config =
-            LintConfig { env: OxlintEnv::from_iter(["es2024".into()]), ..Default::default() };
-        let overrides = ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {
-            files: GlobSet::new(vec!["*.tsx"]),
-            env: Some(from_json!({ "es2024": false })),
-            plugins: None,
-            globals: None,
-            rules: ResolvedOxlintOverrideRules { builtin_rules: vec![], external_rules: vec![] },
-        }]);
-
-        let store = ConfigStore::new(
-            Config::new(vec![], vec![], OxlintCategories::default(), base_config, overrides),
-            FxHashMap::default(),
-            ExternalPluginStore::default(),
-        );
-        assert!(store.base.base.config.env.contains("es2024"));
-
-        let app = store.resolve("App.tsx".as_ref()).config;
-        assert!(!app.env.contains("es2024"));
-    }
-
-    #[test]
     fn test_add_globals() {
         let base_config = LintConfig { plugins: LintPlugins::ESLINT, ..Default::default() };
 
         let overrides = ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {
             files: GlobSet::new(vec!["*.tsx"]),
-            env: None,
             plugins: None,
             globals: Some(from_json!({ "React": "readonly", "Secret": "writable" })),
             rules: ResolvedOxlintOverrideRules { builtin_rules: vec![], external_rules: vec![] },
@@ -739,7 +677,6 @@ mod test {
 
         let overrides = ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {
             files: GlobSet::new(vec!["*.ts"]),
-            env: None,
             plugins: None,
             globals: None,
             rules: ResolvedOxlintOverrideRules { builtin_rules: vec![], external_rules: vec![] },
@@ -776,7 +713,6 @@ mod test {
 
         let overrides = ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {
             files: GlobSet::new(vec!["*.tsx"]),
-            env: None,
             plugins: None,
             globals: Some(from_json!({ "React": "off", "Secret": "off" })),
             rules: ResolvedOxlintOverrideRules { builtin_rules: vec![], external_rules: vec![] },
@@ -804,7 +740,6 @@ mod test {
         // Root config with react, typescript, unicorn plugins and restriction category
         let base_config = LintConfig {
             plugins: LintPlugins::REACT | LintPlugins::TYPESCRIPT | LintPlugins::UNICORN,
-            env: OxlintEnv::default(),
             settings: OxlintSettings::default(),
             globals: OxlintGlobals::default(),
             path: None,
@@ -819,7 +754,6 @@ mod test {
         let overrides = ResolvedOxlintOverrides::new(vec![
             // First override: typescript plugin for *.{ts,tsx,mts}
             ResolvedOxlintOverride {
-                env: None,
                 files: GlobSet::new(vec!["*.{ts,tsx,mts}"]),
                 plugins: Some(LintPlugins::TYPESCRIPT),
                 globals: None,
@@ -830,7 +764,6 @@ mod test {
             },
             // Second override: react plugin for *.{ts,tsx} with jsx-filename-extension turned off
             ResolvedOxlintOverride {
-                env: None,
                 files: GlobSet::new(vec!["*.{ts,tsx}"]),
                 plugins: Some(LintPlugins::REACT),
                 globals: None,
@@ -844,7 +777,6 @@ mod test {
             },
             // Third override: unicorn plugin for *.{ts,tsx,mts}
             ResolvedOxlintOverride {
-                env: None,
                 files: GlobSet::new(vec!["*.{ts,tsx,mts}"]),
                 plugins: Some(LintPlugins::UNICORN),
                 globals: None,
@@ -892,7 +824,6 @@ mod test {
         // Root config with only typescript plugin
         let base_config = LintConfig {
             plugins: (LintPlugins::TYPESCRIPT),
-            env: OxlintEnv::default(),
             settings: OxlintSettings::default(),
             globals: OxlintGlobals::default(),
             path: None,
@@ -905,7 +836,6 @@ mod test {
 
         // Override adds react plugin (new plugin not in root)
         let overrides = ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {
-            env: None,
             files: GlobSet::new(vec!["*.tsx"]),
             plugins: Some(LintPlugins::REACT),
             globals: None,
@@ -938,7 +868,6 @@ mod test {
             EslintNoUnusedVars::from_configuration(Value::from_str(r#"["local"]"#).unwrap())
                 .unwrap();
         let overrides = ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {
-            env: None,
             files: GlobSet::new(vec!["*.tsx"]),
             plugins: None,
             globals: None,
@@ -998,7 +927,6 @@ mod test {
         // Root config with react plugin
         let base_config = LintConfig {
             plugins: (LintPlugins::REACT),
-            env: OxlintEnv::default(),
             settings: OxlintSettings::default(),
             globals: OxlintGlobals::default(),
             path: None,
@@ -1017,7 +945,6 @@ mod test {
 
         // Override adds typescript plugin
         let overrides = ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {
-            env: None,
             files: GlobSet::new(vec!["*.tsx"]),
             plugins: Some(LintPlugins::TYPESCRIPT),
             globals: None,
@@ -1137,7 +1064,6 @@ mod test {
             LintConfig::default(),
             ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {
                 files: GlobSet::new(vec!["*.js"]),
-                env: None,
                 globals: None,
                 plugins: None,
                 // Override redefines the same rule with options B and severity error

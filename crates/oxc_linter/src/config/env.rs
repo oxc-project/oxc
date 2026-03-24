@@ -1,8 +1,11 @@
 use std::{borrow::Borrow, hash::Hash};
 
+use javascript_globals::GLOBALS;
 use rustc_hash::FxHashMap;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+
+use crate::config::{GlobalValue, OxlintGlobals};
 
 /// Predefine global variables.
 ///
@@ -43,9 +46,18 @@ impl OxlintEnv {
         self.0.iter().filter_map(|(k, v)| (*v).then_some(k.as_str()))
     }
 
-    pub(crate) fn override_envs(&self, envs_to_override: &mut OxlintEnv) {
-        for (env, supported) in self.0.clone() {
-            envs_to_override.0.insert(env, supported);
+    pub(crate) fn override_globals(&self, globals_to_override: &mut OxlintGlobals) {
+        for (name, active) in &self.0 {
+            let Some(globals_entries) = GLOBALS.get(name) else {
+                continue;
+            };
+            for (env, supported) in globals_entries.entries() {
+                if *active {
+                    globals_to_override.insert(env.to_string(), GlobalValue::from(*supported));
+                } else {
+                    globals_to_override.insert(env.to_string(), GlobalValue::Off);
+                }
+            }
         }
     }
 }
@@ -73,18 +85,5 @@ mod test {
         let env = OxlintEnv::default();
         assert_eq!(env.iter().count(), 1);
         assert!(env.contains("builtin"));
-    }
-
-    #[test]
-    fn test_override_envs() {
-        let mut env = OxlintEnv::default();
-        let override_env = OxlintEnv::deserialize(&serde_json::json!({
-            "browser": true,
-        }))
-        .unwrap();
-
-        override_env.override_envs(&mut env);
-
-        assert!(env.contains("browser"));
     }
 }
