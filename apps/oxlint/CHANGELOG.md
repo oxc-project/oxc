@@ -4,37 +4,6 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
-## [1.57.0] - 2026-03-23
-
-### 🐛 Bug Fixes
-
-- 532c921 linter/plugins: Include `loc` when call `JSON.stringify` on `Token`s and `Comment`s (#20512) (overlookmotel)
-- c3d9e91 linter/plugins: Fix memory leak in tokens and comments (#20477) (overlookmotel)
-- 525c398 linter: Detect no-cycle with auto-discovered tsconfig paths (#20566) (camc314)
-- 04c84bb linter: Fix cloning on Windows by reducing the size of a problematic snapshot filename. (#20511) (connorshea)
-- 0c57312 tsgolint: Use primary span for the disable directive (#20436) (camc314)
-- 4791b2e linter: Add summary output to GitHub formatter (#20404) (Hideyasu-Ozawa)
-
-### ⚡ Performance
-
-- 30891bd linter/plugins: Share empty `Uint32Array` across multiple places (#20509) (overlookmotel)
-- 336f7f7 linter/plugins: Faster conversion of span to `Location` (#20507) (overlookmotel)
-- a187333 linter/plugins: Reuse descriptor objects for `Object.defineProperty` calls (#20505) (overlookmotel)
-- 5984a66 linter/plugins: Recycle `Location` objects (#20491) (overlookmotel)
-- 8729614 linter/plugins: Reduce operations in binary search (#20490) (overlookmotel)
-- 9cfc312 linter/plugins: Reduce allocations for tokens and comments with accessed `loc` (#20480) (overlookmotel)
-- 9c7a267 linter/plugins: Reduce allocations for regex tokens (#20479) (overlookmotel)
-- 4ee80ac linter/plugins: Remove bounds checks on regex tokens (#20478) (overlookmotel)
-- 4a22f60 linter/plugins: Remove regex from `getCommentsBefore` + `getCommentsAfter` (#20475) (overlookmotel)
-- 9a622c7 linter/plugins: Lazy deserialize tokens and comments (#20474) (overlookmotel)
-- c6ea0a0 ast: Place `NodeId` field after `Span` in structs (#20584) (overlookmotel)
-- d176ecc napi/parser, oxlint/plugins: Shorten deserializer for `WithClause` (#20575) (overlookmotel)
-
-### 📚 Documentation
-
-- f064f80 linter/plugins: Correct comment about offset to line-column conversion (#20506) (overlookmotel)
-- 4047e71 linter/plugins: Improve docs for conformance tests (#20528) (overlookmotel)
-
 ## [1.56.0] - 2026-03-16
 
 ### 🚀 Features

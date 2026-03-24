@@ -4,13 +4,6 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
-## [0.42.0] - 2026-03-23
-
-### 🚀 Features
-
-- 416865a formatter,oxfmt: Add doc comments for `JsdocConfig` (#20644) (leaysgur)
-- 4fec907 formatter: Add JSDoc comment formatting support (#19828) (Dunqing)
-
 ## [0.40.0] - 2026-03-12
 
 ### 🐛 Bug Fixes
