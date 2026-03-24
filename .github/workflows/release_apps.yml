@@ -756,3 +756,11 @@ jobs:
           workflow: main.yml
           token: ${{ secrets.OXC_BOT_PAT }}
           ref: main
+
+      - name: Bump oxc-project/mirrors-oxfmt
+        uses: benc-uk/workflow-dispatch@7a027648b88c2413826b6ddd6c76114894dc5ec4 # v1.3.1
+        with:
+          repo: oxc-project/mirrors-oxfmt
+          workflow: main.yml
+          token: ${{ secrets.OXC_BOT_PAT }}
+          ref: main
