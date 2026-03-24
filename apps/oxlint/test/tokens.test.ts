@@ -31,7 +31,7 @@ import { parse as parseRaw } from "../src-js/package/parse.ts";
 import { debugAssertIsNonNull } from "../src-js/utils/asserts.ts";
 
 import type { Node } from "../src-js/plugins/types.ts";
-import type { TokenOrComment } from "../src-js/plugins/tokens.ts";
+import type { TokenOrComment } from "../src-js/plugins/tokens_and_comments.ts";
 import type { BinaryExpression } from "../src-js/generated/types.d.ts";
 
 // Source text used for most tests

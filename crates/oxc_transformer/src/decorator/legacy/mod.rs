@@ -47,22 +47,25 @@ mod metadata;
 
 use std::mem;
 
-use oxc_allocator::{Address, GetAddress, TakeIn, UnstableAddress, Vec as ArenaVec};
+use oxc_allocator::{Address, CloneIn, GetAddress, TakeIn, UnstableAddress, Vec as ArenaVec};
 use oxc_ast::{NONE, ast::*};
 use oxc_ast_visit::{Visit, VisitMut};
 use oxc_data_structures::stack::NonEmptyStack;
-use oxc_semantic::{ScopeFlags, SymbolFlags};
+use oxc_semantic::{ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::SPAN;
 use oxc_syntax::operator::AssignmentOperator;
-use oxc_traverse::{Ancestor, BoundIdentifier, Traverse};
+use oxc_traverse::{Ancestor, BoundIdentifier, Traverse, ast_operations::get_var_name_from_node};
 use rustc_hash::FxHashMap;
 
 use crate::{
     Helper,
-    common::{helper_loader::helper_call_expr, var_declarations::VarDeclarationsStore},
+    common::{
+        duplicate::duplicate_expression, helper_loader::helper_call_expr,
+        var_declarations::VarDeclarationsStore,
+    },
     context::TraverseCtx,
     state::TransformState,
-    utils::ast_builder::{create_assignment, create_prototype_member},
+    utils::ast_builder::{create_assignment, create_class_method, create_prototype_member},
 };
 use metadata::LegacyDecoratorMetadata;
 
@@ -151,6 +154,11 @@ impl<'a> Traverse<'a, TransformState<'a>> for LegacyDecorator<'a> {
 
     #[inline]
     fn enter_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
+        // Lower `accessor` properties to private backing fields + get/set pairs.
+        // Must run before `enter_class_body` so that es2022 class-properties can
+        // transform the newly created private backing fields.
+        Self::lower_accessor_properties(class, ctx);
+
         self.class_decorations_stack.push(
             ClassDecorations::default()
                 .with_should_transform(!(class.is_expression() || class.declare)),
@@ -297,6 +305,246 @@ impl<'a> Traverse<'a, TransformState<'a>> for LegacyDecorator<'a> {
 }
 
 impl<'a> LegacyDecorator<'a> {
+    /// Lower `accessor` properties to private backing fields + get/set pairs.
+    ///
+    /// `accessor prop: T = val` becomes:
+    /// ```js
+    /// #prop_accessor_storage = val;
+    /// get prop() { return this.#prop_accessor_storage; }
+    /// set prop(value) { this.#prop_accessor_storage = value; }
+    /// ```
+    fn lower_accessor_properties(class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
+        if !class
+            .body
+            .body
+            .iter()
+            .any(|e| matches!(e, ClassElement::AccessorProperty(p) if !p.r#type.is_abstract()))
+        {
+            return;
+        }
+
+        // For static accessors, use the class name instead of `this` to ensure
+        // correct behavior when accessed via subclasses.
+        // Named class: `C.#storage`, Anonymous class expression: `_a.#storage`
+        let has_static_accessor = class.body.body.iter().any(|e| {
+            matches!(e, ClassElement::AccessorProperty(p) if p.r#static && !p.r#type.is_abstract())
+        });
+        let static_class_binding = if has_static_accessor {
+            Some(if let Some(ident) = class.id.as_ref() {
+                BoundIdentifier::from_binding_ident(ident)
+            } else {
+                ctx.generate_uid_in_current_scope("class", SymbolFlags::Class)
+            })
+        } else {
+            None
+        };
+
+        let class_scope_id = class.scope_id();
+        let mut new_body = ctx.ast.vec_with_capacity(class.body.body.len() * 3);
+
+        for element in class.body.body.drain(..) {
+            let ClassElement::AccessorProperty(accessor) = element else {
+                new_body.push(element);
+                continue;
+            };
+            if accessor.r#type.is_abstract() {
+                new_body.push(ClassElement::AccessorProperty(accessor));
+                continue;
+            }
+
+            let mut accessor = accessor.unbox();
+            let is_static = accessor.r#static;
+            let computed = accessor.computed;
+
+            // Transfer decorators to the getter so legacy decorator transform can process them.
+            let decorators = std::mem::replace(&mut accessor.decorators, ctx.ast.vec());
+
+            // For computed keys, duplicate the key expression so getter and setter
+            // each get their own reference:
+            //   `accessor [expr] = val` →
+            //   `get [_expr = expr]() { ... } set [expr](value) { ... }`
+            // Note: Legacy decorators do not support private identifiers,
+            // so we only handle static identifiers and computed keys.
+            let (storage_name, getter_key, setter_key) = if accessor.computed {
+                let key_expr = accessor.key.into_expression();
+                let (assignment, reference) = duplicate_expression(key_expr, true, ctx);
+
+                let getter_key = PropertyKey::from(assignment);
+                let setter_key = PropertyKey::from(reference);
+                let storage_name = ctx.ast.atom_from_strs_array([
+                    "_",
+                    &get_var_name_from_node(&setter_key),
+                    "_computed_accessor_storage",
+                ]);
+                (storage_name, getter_key, setter_key)
+            } else {
+                let storage_name = ctx.ast.atom_from_strs_array([
+                    "_",
+                    &get_var_name_from_node(&accessor.key),
+                    "_accessor_storage",
+                ]);
+                let getter_key = accessor.key.clone_in(ctx.ast.allocator);
+                let setter_key = accessor.key.clone_in(ctx.ast.allocator);
+                (storage_name, getter_key, setter_key)
+            };
+
+            // For static accessors, use class name reference; for instance accessors, use `this`.
+            let object_binding = if is_static { static_class_binding.as_ref() } else { None };
+
+            // 1. Private backing field: `#<name>_accessor_storage = <value>`
+            new_body.push(ctx.ast.class_element_property_definition(
+                SPAN,
+                PropertyDefinitionType::PropertyDefinition,
+                ctx.ast.vec(),
+                ctx.ast.property_key_private_identifier(SPAN, storage_name),
+                NONE,
+                accessor.value.take(),
+                false,
+                is_static,
+                false,
+                false,
+                false,
+                false,
+                false,
+                None,
+            ));
+
+            // 2. Getter: `get <name>() { return <object>.#<name>_accessor_storage; }`
+            new_body.push(Self::create_accessor_method(
+                decorators,
+                getter_key,
+                MethodDefinitionKind::Get,
+                computed,
+                is_static,
+                storage_name,
+                object_binding,
+                class_scope_id,
+                ctx,
+            ));
+
+            // 3. Setter: `set <name>(value) { <object>.#<name>_accessor_storage = value; }`
+            new_body.push(Self::create_accessor_method(
+                ctx.ast.vec(),
+                setter_key,
+                MethodDefinitionKind::Set,
+                computed,
+                is_static,
+                storage_name,
+                object_binding,
+                class_scope_id,
+                ctx,
+            ));
+        }
+
+        // For anonymous class expressions with static accessors, assign the class
+        // to the generated binding: `var _class; const c = _class = class { ... }`
+        if let Some(binding) = &static_class_binding
+            && class.id.is_none()
+        {
+            class.id = Some(binding.create_binding_identifier(ctx));
+        }
+
+        class.body.body = new_body;
+    }
+
+    /// Create a getter or setter method that accesses a private backing field.
+    ///
+    /// Instance: `get <key>() { return this.#<storage_name>; }`
+    /// Static:   `get <key>() { return ClassName.#<storage_name>; }`
+    fn create_accessor_method(
+        decorators: ArenaVec<'a, Decorator<'a>>,
+        key: PropertyKey<'a>,
+        kind: MethodDefinitionKind,
+        computed: bool,
+        is_static: bool,
+        storage_name: Atom<'a>,
+        object_binding: Option<&BoundIdentifier<'a>>,
+        class_scope_id: ScopeId,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> ClassElement<'a> {
+        let is_getter = kind == MethodDefinitionKind::Get;
+        let scope_flags = ScopeFlags::Function
+            | ScopeFlags::StrictMode
+            | if is_getter { ScopeFlags::GetAccessor } else { ScopeFlags::SetAccessor };
+        let scope_id = ctx.create_child_scope(class_scope_id, scope_flags);
+
+        // For static accessors use class name, for instance accessors use `this`.
+        let create_object = |ctx: &mut TraverseCtx<'a>| -> Expression<'a> {
+            if let Some(binding) = object_binding {
+                binding.create_read_expression(ctx)
+            } else {
+                ctx.ast.expression_this(SPAN)
+            }
+        };
+
+        let (params, body_stmt) = if is_getter {
+            let params = ctx.ast.alloc_formal_parameters(
+                SPAN,
+                FormalParameterKind::FormalParameter,
+                ctx.ast.vec(),
+                NONE,
+            );
+            let field_expr = Expression::from(ctx.ast.member_expression_private_field_expression(
+                SPAN,
+                create_object(ctx),
+                ctx.ast.private_identifier(SPAN, storage_name),
+                false,
+            ));
+            let stmt = ctx.ast.statement_return(SPAN, Some(field_expr));
+            (params, stmt)
+        } else {
+            let value_binding = ctx.generate_binding(
+                Atom::from("value").into(),
+                scope_id,
+                SymbolFlags::FunctionScopedVariable,
+            );
+            let param = ctx.ast.formal_parameter(
+                SPAN,
+                ctx.ast.vec(),
+                value_binding.create_binding_pattern(ctx),
+                NONE,
+                NONE,
+                false,
+                None,
+                false,
+                false,
+            );
+            let params = ctx.ast.alloc_formal_parameters(
+                SPAN,
+                FormalParameterKind::FormalParameter,
+                ctx.ast.vec1(param),
+                NONE,
+            );
+            let assign = ctx.ast.expression_assignment(
+                SPAN,
+                AssignmentOperator::Assign,
+                AssignmentTarget::from(SimpleAssignmentTarget::from(
+                    ctx.ast.member_expression_private_field_expression(
+                        SPAN,
+                        create_object(ctx),
+                        ctx.ast.private_identifier(SPAN, storage_name),
+                        false,
+                    ),
+                )),
+                value_binding.create_read_expression(ctx),
+            );
+            let stmt = ctx.ast.statement_expression(SPAN, assign);
+            (params, stmt)
+        };
+
+        create_class_method(
+            decorators,
+            key,
+            kind,
+            params,
+            ctx.ast.vec1(body_stmt),
+            computed,
+            is_static,
+            scope_id,
+            ctx,
+        )
+    }
+
     /// Helper method to handle a decorated class element (method, property, or accessor).
     /// Accumulates decoration statements in the current decoration stack.
     fn handle_decorated_class_element(
@@ -507,10 +755,13 @@ impl<'a> LegacyDecorator<'a> {
             );
         }
 
-        debug_assert!(
-            !self.emit_decorator_metadata || self.metadata.pop_constructor_metadata().is_none(),
-            "`pop_constructor_metadata` should be `None` because there are no class decorators, so no metadata was generated."
-        );
+        if self.emit_decorator_metadata {
+            let metadata = self.metadata.pop_constructor_metadata();
+            debug_assert!(
+                metadata.is_none(),
+                "`pop_constructor_metadata` should be `None` because there are no class decorators, so no metadata was generated."
+            );
+        }
     }
 
     /// Transforms a decorated class declaration and appends the resulting statements. If
@@ -799,7 +1050,7 @@ impl<'a> LegacyDecorator<'a> {
     /// ```
     ///
     /// These decorators transform into:
-    /// ```
+    /// ```rust,ignore
     /// _decorate([
     ///   _decorateParam(0, dec)
     ///   ], Class.prototype, "method", null);
@@ -1112,7 +1363,7 @@ impl<'a> LegacyDecorator<'a> {
                 // Create a unique binding for the computed property key, and insert it outside of the class
                 let binding = VarDeclarationsStore::create_uid_var_based_on_node(key, ctx);
                 let operator = AssignmentOperator::Assign;
-                let left = binding.create_read_write_target(ctx);
+                let left = binding.create_write_target(ctx);
                 let right = key.to_expression_mut().take_in(ctx.ast);
                 let key_expr = ctx.ast.expression_assignment(SPAN, operator, left, right);
                 *key = PropertyKey::from(key_expr);

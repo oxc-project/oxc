@@ -318,22 +318,34 @@ fn generate_enum_implementation(enum_def: &EnumDef, schema: &Schema) -> TokenStr
     };
     let node_type = get_node_type(&enum_ty);
 
-    let inline_trailing_suppression = if enum_def.name() == "Statement" {
-        // Expression statements need specialized ASI-safe suppression handling in
-        // `AstNode<ExpressionStatement>::write`.
-        quote! {
-            if !matches!(self.inner, Statement::ExpressionStatement(_))
-                && f.comments().has_trailing_suppression_comment(self.span().end)
-            {
-                format_leading_comments(self.span()).fmt(f);
-                FormatSuppressedNode(self.span()).fmt(f);
-                format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
-                    .fmt(f);
-                return;
+    let inline_trailing_suppression = match enum_def.name() {
+        "Statement" => {
+            // Expression statements need specialized ASI-safe suppression handling in
+            // `AstNode<ExpressionStatement>::write`.
+            quote! {
+                if !matches!(self.inner, Statement::ExpressionStatement(_))
+                    && f.comments().has_trailing_suppression_comment(self.span().end)
+                {
+                    format_leading_comments(self.span()).fmt(f);
+                    FormatSuppressedNode(self.span()).fmt(f);
+                    format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
+                        .fmt(f);
+                    return;
+                }
             }
         }
-    } else {
-        quote! {}
+        "Expression" => {
+            quote! {
+                if f.comments().has_trailing_suppression_comment(self.span().end) {
+                    format_leading_comments(self.span()).fmt(f);
+                    FormatSuppressedNode(self.span()).fmt(f);
+                    format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
+                        .fmt(f);
+                    return;
+                }
+            }
+        }
+        _ => quote! {},
     };
 
     quote! {

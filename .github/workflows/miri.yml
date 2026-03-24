@@ -33,21 +33,30 @@ concurrency:
 jobs:
   miri:
     name: Miri
-    runs-on: ubuntu-latest
+    runs-on: namespace-profile-linux-x64-default
     env:
       # FIXME: cargo-miri is broken on nightly-2026-02-12.
       # https://github.com/rust-lang/miri/issues/4855
       MIRI_TOOLCHAIN: nightly-2026-02-11
     steps:
       - name: Checkout
-        uses: taiki-e/checkout-action@3ab630d442e198ebb0ca30872832406ca01c46eb # v1.4.0
+        uses: taiki-e/checkout-action@83ed61bfbe2b8abbb3c66e8b65b1335484c70009 # v1.4.1
 
-      - uses: oxc-project/setup-rust@704e1648ce532a12b4d6fb98db0ba10afa3ae879 # v1.0.13
+      - uses: ./.github/actions/check-changes
+        id: filter
         with:
-          cache-key: miri
-          save-cache: ${{ github.ref_name == 'main' }}
+          packages: oxc_allocator,oxc_ast,oxc_data_structures,oxc_parser,oxc_transformer
+          paths: .github/workflows/miri.yml
+          token: ${{ secrets.GITHUB_TOKEN }}
+          pr-number: ${{ github.event.pull_request.number }}
+
+      - uses: namespacelabs/nscloud-cache-action@a90bb5d4b27522ce881c6e98eebd7d7e6d1653f9 # v1.4.2
+        with:
+          path: /home/runner/.rustup
+          cache: rust
 
       - name: Install Miri
+        if: steps.filter.outputs.changed == 'true'
         run: |
           rustup toolchain install "${MIRI_TOOLCHAIN}" --component miri
           cargo +"${MIRI_TOOLCHAIN}" miri setup
@@ -55,6 +64,7 @@ jobs:
       # `--lib --bins --tests` omits doctests, which Miri can't run
       # https://github.com/oxc-project/oxc/pull/11092
       - name: Test with Miri
+        if: steps.filter.outputs.changed == 'true'
         run: |
           cargo +"${MIRI_TOOLCHAIN}" miri test --lib --bins --tests --all-features -p oxc_allocator -p oxc_ast -p oxc_data_structures
           cargo +"${MIRI_TOOLCHAIN}" miri test --lib --bins --tests -p oxc_parser -p oxc_transformer

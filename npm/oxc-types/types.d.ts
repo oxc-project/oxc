@@ -1670,6 +1670,14 @@ export interface JSDocUnknownType extends Span {
   parent?: Node;
 }
 
+export type ModuleKind = "script" | "module" | "commonjs";
+
+export interface Span {
+  start: number;
+  end: number;
+  range?: [number, number];
+}
+
 export type AssignmentOperator =
   | "="
   | "+="
@@ -1717,14 +1725,6 @@ export type LogicalOperator = "||" | "&&" | "??";
 export type UnaryOperator = "+" | "-" | "!" | "~" | "typeof" | "void" | "delete";
 
 export type UpdateOperator = "++" | "--";
-
-export interface Span {
-  start: number;
-  end: number;
-  range?: [number, number];
-}
-
-export type ModuleKind = "script" | "module" | "commonjs";
 
 export type Node =
   | Program

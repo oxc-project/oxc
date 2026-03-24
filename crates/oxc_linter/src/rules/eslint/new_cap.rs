@@ -1,5 +1,7 @@
-use crate::{AstNode, context::LintContext, rule::Rule};
 use lazy_regex::Regex;
+use schemars::JsonSchema;
+use serde::Deserialize;
+
 use oxc_ast::{
     AstKind,
     ast::{ChainElement, ComputedMemberExpression, Expression},
@@ -7,7 +9,12 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
-use schemars::JsonSchema;
+
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn new_cap_diagnostic(span: Span, cap: &GetCapResult) -> OxcDiagnostic {
     let msg = if *cap == GetCapResult::Lower {
@@ -31,11 +38,11 @@ fn new_cap_diagnostic(span: Span, cap: &GetCapResult) -> OxcDiagnostic {
     OxcDiagnostic::warn(msg).with_help(help).with_label(span.label(label))
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct NewCap(Box<NewCapConfig>);
 
-#[derive(Debug, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[derive(Debug, Clone, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NewCapConfig {
     /// `true` to require that all constructor names start with an uppercase letter, e.g. `new Person()`.
     new_is_cap: bool,
@@ -44,10 +51,12 @@ pub struct NewCapConfig {
     /// Exceptions to ignore for constructor names starting with an uppercase letter.
     new_is_cap_exceptions: Vec<CompactStr>,
     /// A regex pattern to match exceptions for constructor names starting with an uppercase letter.
+    #[serde(default, deserialize_with = "deserialize_regex_option")]
     new_is_cap_exception_pattern: Option<Regex>,
     /// Exceptions to ignore for functions with names starting with an uppercase letter.
     cap_is_new_exceptions: Vec<CompactStr>,
     /// A regex pattern to match exceptions for functions with names starting with an uppercase letter.
+    #[serde(default, deserialize_with = "deserialize_regex_option")]
     cap_is_new_exception_pattern: Option<Regex>,
     /// `true` to require capitalization for object properties (e.g., `new obj.Method()`).
     properties: bool,
@@ -75,69 +84,15 @@ impl std::ops::Deref for NewCap {
     }
 }
 
-fn bool_serde_value(map: &serde_json::Map<String, serde_json::Value>, key: &str) -> bool {
-    let Some(value) = map.get(key) else {
-        return true; // default value
-    };
+fn deserialize_regex_option<'de, D>(deserializer: D) -> Result<Option<Regex>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    use serde::de::Error;
 
-    value.as_bool().unwrap_or(true)
-}
-
-fn vec_str_serde_value(
-    map: &serde_json::Map<String, serde_json::Value>,
-    key: &str,
-    default_value: Vec<CompactStr>,
-) -> Vec<CompactStr> {
-    let Some(value) = map.get(key) else {
-        return default_value; // default value
-    };
-
-    let Some(array_value) = value.as_array() else {
-        return default_value; // default value
-    };
-
-    array_value
-        .iter()
-        .map(|value| CompactStr::new(value.as_str().unwrap_or_default()))
-        .collect::<Vec<CompactStr>>()
-}
-
-fn regex_serde_value(map: &serde_json::Map<String, serde_json::Value>, key: &str) -> Option<Regex> {
-    let value = map.get(key)?;
-    let regex_string = value.as_str()?;
-
-    if let Ok(regex) = Regex::new(regex_string) {
-        return Some(regex);
-    }
-
-    None
-}
-
-impl From<&serde_json::Value> for NewCap {
-    fn from(raw: &serde_json::Value) -> Self {
-        let Some(config_entry) = raw.get(0) else {
-            return Self(Box::default());
-        };
-
-        let config = config_entry
-            .as_object()
-            .map_or_else(|| Err(OxcDiagnostic::warn("Invalid configuration, expected object.")), Ok)
-            .unwrap();
-
-        Self(Box::new(NewCapConfig {
-            new_is_cap: bool_serde_value(config, "newIsCap"),
-            cap_is_new: bool_serde_value(config, "capIsNew"),
-            new_is_cap_exceptions: vec_str_serde_value(
-                config,
-                "newIsCapExceptions",
-                caps_allowed_vec(),
-            ),
-            new_is_cap_exception_pattern: regex_serde_value(config, "newIsCapExceptionPattern"),
-            cap_is_new_exceptions: vec_str_serde_value(config, "capIsNewExceptions", vec![]),
-            cap_is_new_exception_pattern: regex_serde_value(config, "capIsNewExceptionPattern"),
-            properties: bool_serde_value(config, "properties"),
-        }))
-    }
+    Option::<String>::deserialize(deserializer)?
+        .map(|pattern| Regex::new(&pattern).map_err(D::Error::custom))
+        .transpose()
 }
 
 const CAPS_ALLOWED: [&str; 11] = [
@@ -470,7 +425,7 @@ declare_oxc_lint!(
 
 impl Rule for NewCap {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        Ok(NewCap::from(&value))
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
@@ -830,4 +785,16 @@ fn test() {
     ];
 
     Tester::new(NewCap::NAME, NewCap::PLUGIN, pass, fail).test_and_snapshot();
+}
+
+#[test]
+fn invalid_configs_error_in_from_configuration() {
+    let invalid = serde_json::json!([{ "unknown": true }]);
+    assert!(NewCap::from_configuration(invalid).is_err());
+
+    let invalid = serde_json::json!([{ "newIsCapExceptionPattern": "[" }]);
+    assert!(NewCap::from_configuration(invalid).is_err());
+
+    let valid = serde_json::json!([{ "capIsNew": false, "properties": false }]);
+    assert!(NewCap::from_configuration(valid).is_ok());
 }

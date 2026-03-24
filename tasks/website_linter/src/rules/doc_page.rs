@@ -93,7 +93,7 @@ const source = `{}`;{}
         )?;
 
         // Add a <RuleHeader> element, will be handled by the Vitepress site to render necessary data.
-        writeln!(self.page, "\n<RuleHeader />\n")?;
+        writeln!(self.page, "\n<RuleHeader />")?;
 
         // rule documentation
         if let Some(docs) = documentation {
@@ -118,21 +118,11 @@ const source = `{}`;{}
             }
         }
 
-        // how to use
-        writeln!(self.page, "\n## How to use\n{}", how_to_use(rule))?;
-        writeln!(self.page, "\n## References\n")?;
-
-        // rule source link(s)
+        // how-to-use and rule references components.
         writeln!(
             self.page,
-            r#"- <a v-bind:href="source" target="_blank" rel="noreferrer">Rule Source</a>"#
+            "\n## How to use\n<RuleHowToUse />\n\n## References\n<RuleReferences />"
         )?;
-        if *is_tsgolint_rule {
-            writeln!(
-                self.page,
-                r#"- <a v-bind:href="tsgolintSource" target="_blank" rel="noreferrer">Rule Source (tsgolint)</a>"#
-            )?;
-        }
 
         Ok(self.page.take())
     }
@@ -267,73 +257,12 @@ fn tsgolint_rule_source(rule: &RuleTableRow) -> String {
     format!("https://github.com/oxc-project/tsgolint/blob/main/internal/rules/{rule_path}")
 }
 
-/// Returns `true` if the given plugin is a default plugin.
-/// - Example: `eslint` => true
-/// - Example: `jest` => false
-fn is_default_plugin(plugin: &str) -> bool {
-    LintPlugins::try_from(plugin).is_ok_and(|plugin| LintPlugins::default().contains(plugin))
-}
-
 /// Returns the normalized plugin name.
 /// - Example: `react_perf` -> `react-perf`
 /// - Example: `eslint` -> `eslint`
 /// - Example: `jsx_a11y` -> `jsx-a11y`
 fn get_normalized_plugin_name(plugin: &str) -> &str {
     LintPlugins::try_from(plugin).unwrap_or(LintPlugins::empty()).into()
-}
-
-fn how_to_use(rule: &RuleTableRow) -> String {
-    let plugin = &rule.plugin;
-    let normalized_plugin_name = get_normalized_plugin_name(plugin);
-    // We don't want to display the `eslint/` prefix in the how-to-use for now.
-    let rule_full_name = full_rule_name(rule, normalized_plugin_name, false);
-    let is_default_plugin = is_default_plugin(plugin);
-    let is_tsgolint_rule = rule.is_tsgolint_rule;
-
-    let type_aware_flag = if is_tsgolint_rule { "--type-aware " } else { "" };
-
-    let enable_bash_example = if is_default_plugin {
-        format!(r"oxlint {type_aware_flag}--deny {rule_full_name}")
-    } else {
-        format!(
-            r"oxlint {type_aware_flag}--deny {rule_full_name} --{normalized_plugin_name}-plugin"
-        )
-    };
-    let enable_config_example = if is_default_plugin {
-        format!(
-            r#"{{
-    "rules": {{
-        "{rule_full_name}": "error"
-    }}
-}}"#
-        )
-    } else {
-        format!(
-            r#"{{
-    "plugins": ["{normalized_plugin_name}"],
-    "rules": {{
-        "{rule_full_name}": "error"
-    }}
-}}"#
-        )
-    };
-    format!(
-        r"
-To **enable** this rule using the config file or in the CLI, you can use:
-
-::: code-group
-
-```json [Config (.oxlintrc.json)]
-{enable_config_example}
-```
-
-```bash [CLI]
-{enable_bash_example}
-```
-
-:::
-"
-    )
 }
 
 // Return the full rule name, including plugin prefix if necessary. For example:

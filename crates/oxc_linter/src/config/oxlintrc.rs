@@ -157,7 +157,6 @@ impl OxlintOptions {
 ///       }
 ///     }
 ///   ]
-///  }
 /// });
 /// ```
 #[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
@@ -179,7 +178,7 @@ pub struct Oxlintrc {
     /// Read more about JS plugins in
     /// [the docs](https://oxc.rs/docs/guide/usage/linter/js-plugins.html).
     ///
-    /// Note: JS plugins are experimental and not subject to semver.
+    /// Note: JS plugins are in alpha and not subject to semver.
     ///
     /// Examples:
     ///
@@ -504,6 +503,8 @@ mod test {
         .unwrap();
         assert_eq!(config.options.report_unused_disable_directives, Some(AllowWarnDeny::Warn));
 
+        // error and deny
+
         let config: Oxlintrc = serde_json::from_value(
             json!({ "options": { "reportUnusedDisableDirectives": "error" } }),
         )
@@ -511,7 +512,21 @@ mod test {
         assert_eq!(config.options.report_unused_disable_directives, Some(AllowWarnDeny::Deny));
 
         let config: Oxlintrc = serde_json::from_value(
+            json!({ "options": { "reportUnusedDisableDirectives": "deny" } }),
+        )
+        .unwrap();
+        assert_eq!(config.options.report_unused_disable_directives, Some(AllowWarnDeny::Deny));
+
+        // off and allow
+
+        let config: Oxlintrc = serde_json::from_value(
             json!({ "options": { "reportUnusedDisableDirectives": "off" } }),
+        )
+        .unwrap();
+        assert_eq!(config.options.report_unused_disable_directives, Some(AllowWarnDeny::Allow));
+
+        let config: Oxlintrc = serde_json::from_value(
+            json!({ "options": { "reportUnusedDisableDirectives": "allow" } }),
         )
         .unwrap();
         assert_eq!(config.options.report_unused_disable_directives, Some(AllowWarnDeny::Allow));

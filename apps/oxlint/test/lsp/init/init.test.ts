@@ -15,6 +15,14 @@ describe("LSP initialization", () => {
     expect(initResult.serverInfo?.name).toBe("oxlint");
   });
 
+  it("should start LSP server without a workspace folder or root uri", async () => {
+    await using client = createLspConnection();
+    const initResult = await client.initialize(null);
+
+    expect(initResult.capabilities.diagnosticProvider).toBeUndefined();
+    expect(initResult.serverInfo?.name).toBe("oxlint");
+  });
+
   it("should start LSP server with diagnostics provider", async () => {
     const dirPath = import.meta.dirname;
     await using client = createLspConnection();
@@ -37,8 +45,14 @@ describe("LSP initialization", () => {
   });
 
   it.each([
-    [undefined, ["**/.oxlintrc.json", "**/.oxlintrc.jsonc", "**/oxlint.config.ts"]],
-    [{ configPath: "" }, ["**/.oxlintrc.json", "**/.oxlintrc.jsonc", "**/oxlint.config.ts"]],
+    [
+      undefined,
+      ["**/.oxlintrc.json", "**/.oxlintrc.jsonc", "**/oxlint.config.ts", "**/vite.config.ts"],
+    ],
+    [
+      { configPath: "" },
+      ["**/.oxlintrc.json", "**/.oxlintrc.jsonc", "**/oxlint.config.ts", "**/vite.config.ts"],
+    ],
     [{ configPath: "./custom-config.json" }, ["./custom-config.json"]],
   ])(
     "should send correct dynamic watch pattern registration for config: %s",

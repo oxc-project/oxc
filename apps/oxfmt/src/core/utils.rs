@@ -60,7 +60,10 @@ pub fn print_and_flush(writer: &mut dyn Write, message: &str) {
     use std::io::{Error, ErrorKind};
     fn check_for_writer_error(error: Error) -> Result<(), Error> {
         // Do not panic when the process is killed (e.g. piping into `less`).
-        if matches!(error.kind(), ErrorKind::Interrupted | ErrorKind::BrokenPipe) {
+        if matches!(
+            error.kind(),
+            ErrorKind::Interrupted | ErrorKind::BrokenPipe | ErrorKind::WouldBlock
+        ) {
             Ok(())
         } else {
             Err(error)

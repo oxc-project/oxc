@@ -21,7 +21,7 @@ use crate::{
         FormatJsArrowFunctionExpressionOptions,
         array_element_list::can_concisely_print_array_list,
         arrow_function_expression::{
-            FunctionCacheMode, GroupedCallArgumentLayout,
+            FunctionCacheMode, GroupedCallArgumentLayout, is_huggable_html_embed,
             is_multiline_template_starting_on_same_line,
         },
         function::FormatFunction,
@@ -78,6 +78,7 @@ impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
             })
             || is_multiline_template_only_args(self, f.source_text())
             || is_graphql_call_with_single_template_arg(self, call_expression)
+            || is_huggable_html_embed_single_arg(self, f)
             || is_react_hook_with_deps_array(self, f.comments())
         {
             return write!(
@@ -439,7 +440,7 @@ fn should_group_last_argument(args: &[Argument], f: &Formatter<'_, '_>) -> bool 
 /// additional cases through. The simplicity is determined as
 /// either being a keyword type or any reference type with no additional type
 /// parameters. For example:
-/// ```
+/// ```text
 ///     number          => true
 ///     unknown         => true
 ///     HTMLElement     => true
@@ -448,7 +449,7 @@ fn should_group_last_argument(args: &[Argument], f: &Formatter<'_, '_>) -> bool 
 /// ```
 /// This function also introspects into array and generic types to extract the
 /// core type, but only to a limited extent:
-/// ```
+/// ```text
 ///     string[]        => string
 ///     string[][]      => string
 ///     string[][][]    => string
@@ -1106,6 +1107,14 @@ fn is_graphql_call_with_single_template_arg<'a>(
         && call.is_some_and(
             |c| matches!(&c.callee, Expression::Identifier(id) if id.name.as_str() == "graphql"),
         )
+}
+
+/// Returns `true` if the single argument is an HTML embed template that should be hugged.
+fn is_huggable_html_embed_single_arg(arguments: &[Argument], f: &Formatter<'_, '_>) -> bool {
+    if arguments.len() != 1 {
+        return false;
+    }
+    arguments.first().unwrap().as_expression().is_some_and(|expr| is_huggable_html_embed(expr, f))
 }
 
 /// This function is used to check if the code is a hook-like code:

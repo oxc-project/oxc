@@ -17,7 +17,8 @@ Output Options:
         --list-different     List files that would be changed
 
 Config Options
-    -c, --config=PATH        Path to the configuration file
+    -c, --config=PATH        Path to the configuration file (.json, .jsonc, .ts, .mts, .cts, .js,
+                             .mjs, .cjs)
 
 Ignore Options
         --ignore-path=PATH   Path to ignore file(s). Can be specified multiple times. If not

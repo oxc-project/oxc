@@ -108,6 +108,17 @@ help: The promise must end with a call to .catch, or end with a call to .then wi
 --------------------"
 `;
 
+exports[`LSP linting > config options > should apply config from config-ts-stdout-pollution/test.js 1`] = `
+"--- FILE -----------
+config-ts-stdout-pollution/test.js
+--- Diagnostics ---------
+> 1 | debugger;
+    | ^^^^^^^^^ Error: \`debugger\` statement is not allowed
+help: Remove the debugger statement
+  2 |
+--------------------"
+`;
+
 exports[`LSP linting > config options > should apply config from config-ts-type-aware/test.ts 1`] = `
 "--- FILE -----------
 config-ts-type-aware/test.ts
@@ -137,6 +148,25 @@ unused-disable-directive-from-config/test.ts
     |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Error: Unused eslint-disable directive (no problems were reported).
   2 | console.log("This directive is not used");
   3 |
+--------------------"
+`;
+
+exports[`LSP linting > config options > should apply config from vite-config-skip-finds-parent/child/test.js 1`] = `
+"--- FILE -----------
+vite-config-skip-finds-parent/child/test.js
+--- Diagnostics ---------
+  1 | debugger;
+> 2 | if (x == 1) {
+    |       ^^ Warning: Expected === and instead saw ==
+help: Prefer === operator
+  3 | }
+  4 |
+--------------------> 1 | debugger;
+    | ^^^^^^^^^ Error: \`debugger\` statement is not allowed
+help: Remove the debugger statement
+  2 | if (x == 1) {
+  3 | }
+  4 |
 --------------------"
 `;
 

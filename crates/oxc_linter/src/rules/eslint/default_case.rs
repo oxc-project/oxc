@@ -1,11 +1,17 @@
 use lazy_regex::{Regex, RegexBuilder};
+use schemars::JsonSchema;
+use serde::Deserialize;
+
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use schemars::JsonSchema;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn default_case_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Require `default` cases in `switch` statements.")
@@ -13,11 +19,11 @@ fn default_case_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct DefaultCase(Box<DefaultCaseConfig>);
 
-#[derive(Debug, Default, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct DefaultCaseConfig {
     /// A regex pattern used to detect comments that mark the absence
     /// of a `default` case as intentional.
@@ -41,6 +47,7 @@ pub struct DefaultCaseConfig {
     ///   // skip default
     /// }
     /// ```
+    #[serde(default, deserialize_with = "deserialize_comment_pattern")]
     comment_pattern: Option<Regex>,
 }
 
@@ -50,6 +57,18 @@ impl std::ops::Deref for DefaultCase {
     fn deref(&self) -> &Self::Target {
         &self.0
     }
+}
+
+fn deserialize_comment_pattern<'de, D>(deserializer: D) -> Result<Option<Regex>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    use serde::de::Error;
+
+    Option::<String>::deserialize(deserializer)?
+        .map(|pattern| RegexBuilder::new(&pattern).case_insensitive(true).build())
+        .transpose()
+        .map_err(D::Error::custom)
 }
 
 declare_oxc_lint!(
@@ -107,14 +126,7 @@ declare_oxc_lint!(
 
 impl Rule for DefaultCase {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        let comment_pattern = value
-            .get(0)
-            .and_then(|config| config.get("commentPattern"))
-            .and_then(serde_json::Value::as_str)
-            .and_then(|pattern| RegexBuilder::new(pattern).case_insensitive(true).build().ok());
-        let case_config = DefaultCaseConfig { comment_pattern };
-
-        Ok(Self(Box::new(case_config)))
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

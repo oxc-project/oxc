@@ -4,6 +4,81 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.42.0] - 2026-03-24
+
+### 🚀 Features
+
+- 416865a formatter,oxfmt: Add doc comments for `JsdocConfig` (#20644) (leaysgur)
+- 4fec907 formatter: Add JSDoc comment formatting support (#19828) (Dunqing)
+- c21c5a7 oxfmt: Support html-in-js substitution (#20193) (leaysgur)
+- c5aeae4 formatter,oxfmt: Support `/* LANG */` comment for gql|html-in-js (#20224) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 828b56a oxfmt: Re-export all nested types (#20636) (leaysgur)
+- c1b461b oxfmt/lsp: Revert #19977, prefer file extension over languageId for format strategy (#20623) (Sysix)
+- d35b25f formatter,oxfmt: Remove redundant space after soft_line_break_or_space (#20562) (leaysgur)
+- f8c452a formatter,oxfmt: Handle css-in-js comment inside template (#20452) (leaysgur)
+- 7c233f4 formatter,oxfmt: Handle nested `BinaryExpression` for tailwind trailing spaces (#20450) (leaysgur)
+- 71628e6 formatter,oxfmt: Sort imports should not flush Empty line (#20443) (leaysgur)
+
+## [0.41.0] - 2026-03-16
+
+### 🚀 Features
+
+- d22c443 oxfmt: Export `OxfmtConfig` type (#20275) (leaysgur)
+- a11ecff oxfmt/lsp: Respect `angular` language id as `.component.html` file (#20242) (Sysix)
+
+### 🐛 Bug Fixes
+
+- f908742 oxfmt: Revert #20326 partially (#20413) (leaysgur)
+- 68fb0d0 oxfmt: Skip vite.config.ts which fails to import (#20326) (leaysgur)
+- 88ee826 oxfmt: Handle literalline for script-in-vue (#20130) (leaysgur)
+- 1c07b3b diagnostics: Handle `WouldBlock` in stdout writes to prevent panic (#20295) (Boshen)
+
+## [0.40.0] - 2026-03-12
+
+### 🐛 Bug Fixes
+
+- 96f761f oxfmt: Ensure stdin blocking mode is set for non-TTY environments (#20289) (camc314)
+- bc20217 oxlint,oxfmt: Omit useless `| null` for `Option<T>` field from schema (#20273) (leaysgur)
+
+## [0.39.0] - 2026-03-12
+
+### 🐛 Bug Fixes
+
+- 4ea67de oxlint,oxfmt: Skip `vite.config.ts` exports `defineConfig(fn)` (#20260) (leaysgur)
+- 11a2b45 oxfmt: Skip `vite.config.ts` w/o `.fmt` field in auto-discovery (#20254) (leaysgur)
+
+## [0.38.0] - 2026-03-11
+
+### 🚀 Features
+
+- 95943aa oxfmt: Support `vite.config.*` `.fmt` field (#20197) (leaysgur)
+- 172fc07 oxfmt: .js/.ts config file support (#20135) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- e483569 oxfmt: Avoid double-escaping in css-in-js (#20211) (leaysgur)
+
+## [0.37.0] - 2026-03-09
+
+### 🚀 Features
+
+- ee26215 oxfmt: Support css-in-js substitution (#20019) (leaysgur)
+- 0f0ff51 oxfmt: Display default settings was used message in cli stats (#19939) (leaysgur)
+- 88815b8 oxfmt: Reintroduce stats line for write mode (#19938) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- ee0491e apps,napi: Explicitly specify libs in tsconfigs (#20071) (camc314)
+- 92f4490 oxfmt: Apply `is_ignored_dir` for glob paths too (#20056) (leaysgur)
+- 114f974 oxfmt/lsp: Prefer language_id over file extension when formatting (#19977) (copilot-swe-agent)
+
+### ⚡ Performance
+
+- 2baa5fb napi: Unify build-test profile to coverage for cache sharing (#20090) (Boshen)
+
 ## [0.36.0] - 2026-03-02
 
 ### 🚀 Features

@@ -260,8 +260,6 @@ mod scoping_cell {
 }
 use scoping_cell::ScopingCell;
 
-use crate::unresolved_stack::ReferenceIds;
-
 pub struct ScopingInner<'cell> {
     /* Symbol Table Fields */
     symbol_names: ArenaVec<'cell, Ident<'cell>>,
@@ -654,19 +652,6 @@ impl Scoping {
         &self,
     ) -> impl Iterator<Item = impl Iterator<Item = ReferenceId> + '_> + '_ {
         self.cell.borrow_dependent().root_unresolved_references.values().map(|v| v.iter().copied())
-    }
-
-    pub(crate) fn set_root_unresolved_references<'a>(
-        &mut self,
-        entries: impl Iterator<Item = (Ident<'a>, ReferenceIds)>,
-    ) {
-        self.cell.with_dependent_mut(|allocator, cell| {
-            for (k, v) in entries {
-                let k = k.clone_in(allocator);
-                let v = ArenaVec::from_iter_in(v, allocator);
-                cell.root_unresolved_references.insert(k, v);
-            }
-        });
     }
 
     /// Delete an unresolved reference.

@@ -22,7 +22,7 @@ impl Walk {
         paths: &[PathBuf],
         ignore_paths: &[PathBuf],
         with_node_modules: bool,
-        oxfmtrc_path: Option<&Path>,
+        config_dir: Option<&Path>,
         ignore_patterns: &[String],
     ) -> Result<Option<Self>, String> {
         //
@@ -103,11 +103,9 @@ impl Walk {
         // 2. Handle `oxfmtrc.ignorePatterns`
         // Patterns are relative to the config file location
         if !ignore_patterns.is_empty()
-            && let Some(oxfmtrc_path) = oxfmtrc_path
+            && let Some(config_dir) = config_dir
         {
-            let mut builder = GitignoreBuilder::new(
-                oxfmtrc_path.parent().expect("`oxfmtrc_path` should have a parent directory"),
-            );
+            let mut builder = GitignoreBuilder::new(config_dir);
             for pattern in ignore_patterns {
                 if builder.add_line(None, pattern).is_err() {
                     return Err(format!(

@@ -1,0 +1,287 @@
+use oxc_allocator::Allocator;
+use oxc_parser::Parser;
+use oxc_span::SourceType;
+
+use crate::options::TrailingCommas;
+use crate::{FormatOptions, Formatter, LineWidth, get_parse_options};
+
+use super::serialize::truncate_trim_end;
+
+/// Returns `true` if the fenced code block language is JS/TS/JSX/TSX.
+pub(super) fn is_js_ts_lang(lang: &str) -> bool {
+    matches!(lang, "js" | "javascript" | "jsx" | "ts" | "typescript" | "tsx")
+}
+
+/// Count unescaped backticks on a line and update template literal depth.
+/// Returns the new depth after processing the line.
+///
+/// Handles `${...}` expressions inside template literals: when inside a template
+/// (depth > 0) and `${` is encountered, we push a brace depth. Closing `}` at
+/// the template expression level restores the template context.
+pub(super) fn update_template_depth(line: &str, mut depth: u32) -> u32 {
+    let bytes = line.as_bytes();
+    let mut i = 0;
+    // Track nested `${...}` expression brace depth as a stack.
+    // Each entry represents the brace nesting depth within a template expression.
+    let mut expr_brace_depth: smallvec::SmallVec<[u32; 4]> = smallvec::SmallVec::new();
+    while i < bytes.len() {
+        if bytes[i] == b'\\' {
+            i += 2; // skip escaped character
+            continue;
+        }
+        if bytes[i] == b'`' {
+            if expr_brace_depth.is_empty() {
+                // Not inside a `${...}` expression
+                if depth == 0 {
+                    depth += 1;
+                } else {
+                    depth -= 1;
+                }
+            } else {
+                // Inside a `${...}` expression — this starts a nested template
+                expr_brace_depth.push(0);
+            }
+        } else if depth > 0 && bytes[i] == b'$' && i + 1 < bytes.len() && bytes[i + 1] == b'{' {
+            // Entering a template expression `${`
+            expr_brace_depth.push(0);
+            i += 2;
+            continue;
+        } else if !expr_brace_depth.is_empty() && bytes[i] == b'{' {
+            // Nested brace inside a template expression
+            if let Some(last) = expr_brace_depth.last_mut() {
+                *last += 1;
+            }
+        } else if !expr_brace_depth.is_empty()
+            && bytes[i] == b'}'
+            && let Some(last) = expr_brace_depth.last_mut()
+        {
+            if *last == 0 {
+                // Closing the `${...}` expression
+                expr_brace_depth.pop();
+            } else {
+                *last -= 1;
+            }
+        }
+        i += 1;
+    }
+    depth
+}
+
+/// Try to format JS/TS/JSX code using the formatter.
+/// Returns `Some(formatted)` on success, `None` if parsing fails.
+/// The `print_width` is the available width for the formatted code.
+/// Uses the parent `format_options` to ensure consistent formatting behavior.
+pub(super) fn format_embedded_js(
+    code: &str,
+    print_width: usize,
+    format_options: &FormatOptions,
+    allocator: &Allocator,
+) -> Option<String> {
+    let width = u16::try_from(print_width).unwrap_or(80).clamp(1, 320);
+    let line_width = LineWidth::try_from(width).unwrap();
+
+    // Null out sort_imports/sort_tailwindcss — they're top-level concerns irrelevant
+    // to embedded code, and their Vec fields make cloning expensive.
+    // Inherit indent_style from parent so embedded code uses tabs when useTabs=true,
+    // matching upstream prettier-plugin-jsdoc behavior.
+    let base_options = FormatOptions {
+        line_width,
+        jsdoc: None,
+        sort_imports: None,
+        sort_tailwindcss: None,
+        ..format_options.clone()
+    };
+
+    // Try to parse and format with the given source type
+    let try_format = |code: &str, source_type: SourceType| -> Option<String> {
+        let ret =
+            Parser::new(allocator, code, source_type).with_options(get_parse_options()).parse();
+        if ret.panicked || !ret.errors.is_empty() {
+            return None;
+        }
+        let mut formatted = Formatter::new(allocator, base_options.clone()).build(&ret.program);
+        truncate_trim_end(&mut formatted);
+        Some(formatted)
+    };
+
+    // If code starts with `{`, try expression wrapping FIRST to handle object
+    // literals like `{ key: value }` that would otherwise parse as block statements
+    // with labels. The upstream plugin uses `parser: "json"` for this case.
+    let trimmed = code.trim();
+    if trimmed.starts_with('{') {
+        let wrapped = allocator.alloc_concat_strs_array(["(", trimmed, ")"]);
+        // Use TrailingCommas::None for object literals since JSON-like code
+        // shouldn't have trailing commas
+        let obj_options =
+            FormatOptions { trailing_commas: TrailingCommas::None, ..base_options.clone() };
+
+        let try_format_obj = |code: &str, source_type: SourceType| -> Option<String> {
+            let ret =
+                Parser::new(allocator, code, source_type).with_options(get_parse_options()).parse();
+            if ret.panicked || !ret.errors.is_empty() {
+                return None;
+            }
+            let formatted = Formatter::new(allocator, obj_options.clone()).build(&ret.program);
+            let formatted = formatted.trim_end();
+            // Remove the wrapping parens and trailing semicolon
+            if let Some(inner) = formatted.strip_prefix('(')
+                && let Some(inner) = inner.strip_suffix(");")
+            {
+                // Validate the unwrapped result: the formatter may add its own
+                // parens (e.g., `({ obj })("args")`) causing the unwrap to
+                // produce invalid code. Reject if there's content after the
+                // closing `}`, which indicates a call expression, not a pure
+                // object literal.
+                let trimmed_inner = inner.trim();
+                if !trimmed_inner.ends_with('}') {
+                    return None;
+                }
+                return Some(String::from(inner));
+            }
+            Some(String::from(formatted))
+        };
+
+        // If the original has quoted keys (JSON-like), reject formatting since
+        // the JS formatter removes unnecessary quotes. Upstream uses `parser: "json"`
+        // which preserves quoted keys; we don't have a JSON formatter.
+        let has_quoted_keys = trimmed.contains('"') && trimmed.find('"') < trimmed.find('}');
+        if !has_quoted_keys {
+            if let Some(result) = try_format_obj(wrapped, SourceType::jsx()) {
+                return Some(result);
+            }
+            if let Some(result) = try_format_obj(wrapped, SourceType::tsx()) {
+                return Some(result);
+            }
+        }
+
+        // Upstream (utils.ts:248-274) tries JSON for `{`-starting code and
+        // falls back to keeping the original if JSON fails — it does NOT
+        // reformat as JavaScript. Matching that: if the object-literal
+        // approach failed, return None (pass-through) instead of trying
+        // regular JS formatting, which would alter semantics (e.g., removing
+        // quotes from object keys, or reformatting pseudo-code).
+        return None;
+    }
+
+    // Try TSX first — it's a superset of JSX and correctly handles TypeScript
+    // generics like `getItem<number>(...)` that JSX would mangle into comparisons.
+    if let Some(result) = try_format(code, SourceType::tsx()) {
+        return Some(result);
+    }
+    if let Some(result) = try_format(code, SourceType::jsx()) {
+        return Some(result);
+    }
+
+    None
+}
+
+/// Format a JSDoc type expression using the formatter (simulating upstream's `formatType()`).
+///
+/// Wraps the type as `type __t = {type_str};`, parses as TSX, formats, then extracts
+/// the formatted type. Handles `...Type` rest params by formatting the inner type
+/// separately. Returns `None` on parse/format failure.
+/// `type_options` must already have `jsdoc: None` to prevent recursive formatting.
+///
+/// String literals (`"..."` and `'...'`) are protected from the formatter by replacing
+/// them with placeholder identifiers before formatting, then restoring afterwards.
+/// This matches the upstream prettier-plugin-jsdoc's `withoutStrings()` approach,
+/// preventing the formatter from changing quote style inside type expressions.
+pub(super) fn format_type_via_formatter(
+    type_str: &str,
+    type_options: &FormatOptions,
+    allocator: &Allocator,
+) -> Option<String> {
+    if type_str.is_empty() {
+        return None;
+    }
+
+    // Handle rest/spread prefix: convert `...Type` to `(Type)[]`, format, then strip
+    // the trailing `[]` and prepend `...`. Same approach as upstream's `formatType()`.
+    if let Some(rest) = type_str.strip_prefix("...") {
+        let rest = rest.trim_start();
+        if rest.is_empty() {
+            return None;
+        }
+        let wrapped = allocator.alloc_concat_strs_array(["(", rest, ")[]"]);
+        let formatted = format_type_via_formatter(wrapped, type_options, allocator)?;
+        let inner = formatted.strip_suffix("[]")?;
+        let mut result = String::with_capacity(inner.len() + 3);
+        result.push_str("...");
+        result.push_str(inner);
+        return Some(result);
+    }
+
+    // Fast path: skip the expensive parse+format cycle for types that the TS
+    // formatter won't change. Types without union/intersection operators, object
+    // literals, function arrows, or parenthesized expressions are already in
+    // their final form after normalize_type().
+    if !needs_formatter_pass(type_str) {
+        return None;
+    }
+
+    // Let the TS formatter handle quote conversion naturally, matching Prettier's
+    // TS parser which uses the configured quote style (double by default).
+    // No string literal protection needed — the formatter should convert quotes.
+    let input = allocator.alloc_concat_strs_array(["type __t = ", type_str, ";"]);
+
+    let ret =
+        Parser::new(allocator, input, SourceType::tsx()).with_options(get_parse_options()).parse();
+    if ret.panicked || !ret.errors.is_empty() {
+        return None;
+    }
+
+    let formatted = Formatter::new(allocator, type_options.clone()).build(&ret.program);
+    let formatted = formatted.trim_end();
+
+    // Strip the `type __t = ` prefix (11 chars) using slice, matching upstream's
+    // `pretty.slice(TYPE_START.length)` approach. This handles both same-line and
+    // wrapped output (e.g. `type __t =\n  | ...`).
+    let result = formatted.get("type __t = ".len()..)?;
+
+    // Upstream cleanup: strip leading whitespace, trailing `;` and newlines,
+    // leading `|`, then trim. Matches upstream's regex:
+    //   .replace(/^\s*/g, "")     — strip leading whitespace
+    //   .replace(/[;\n]*$/g, "")  — strip trailing `;` and newlines
+    //   .replace(/^\|/g, "")      — strip leading pipe
+    //   .trim()
+    // Interior newlines are preserved — the TS formatter's multi-line output
+    // for complex types (object literals, function types) is kept as-is.
+    let result = result.trim_start();
+    let result = result.trim_end_matches([';', '\n']);
+    let result = result.strip_prefix('|').unwrap_or(result);
+    let result = String::from(result.trim());
+
+    if result.is_empty() || result == type_str {
+        return None;
+    }
+
+    Some(result)
+}
+
+/// Collapse a multi-line TS-formatted type back to a single-line JSDoc type.
+///
+/// Check if a type expression needs to go through the TS formatter.
+///
+/// Returns `false` for types that are already in their final form after
+/// `normalize_type()` — simple identifiers, dotted names, array shorthand (`T[]`),
+/// and generic types without complex structure.
+///
+/// The TS formatter can only change types that contain:
+/// - `|` or `&`: union/intersection types may need wrapping
+/// - `{` or `}`: object literal types need spacing
+/// - `(` or `)`: parenthesized/function types need formatting
+/// - `=>`: function type arrows
+/// - Newlines: multi-line types need reformatting
+pub(super) fn needs_formatter_pass(type_str: &str) -> bool {
+    let bytes = type_str.as_bytes();
+    let mut i = 0;
+    while i < bytes.len() {
+        match bytes[i] {
+            b'|' | b'&' | b'{' | b'}' | b'(' | b')' | b'\n' => return true,
+            b'=' if bytes.get(i + 1) == Some(&b'>') => return true,
+            _ => {}
+        }
+        i += 1;
+    }
+    false
+}

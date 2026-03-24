@@ -176,13 +176,17 @@ function createContextAndVisitor(rule: CreateOnceRule): {
   }
 
   // Call `createOnce` with empty context object.
-  // Really, accessing `options` or calling `report` should throw, because they're illegal in `createOnce`.
-  // But any such bugs should have been caught when testing the rule in Oxlint, so should be OK to take this shortcut.
-  // `FILE_CONTEXT` prototype provides `extends` method, which is available in `createOnce`.
+  // We don't use `Object.preventExtensions` on the context object, as we need to change its prototype for each file.
   const context: Context = Object.create(FILE_CONTEXT, {
-    id: { value: "", enumerable: true, configurable: true },
+    id: { value: null, enumerable: true, configurable: true },
     options: { value: null, enumerable: true, configurable: true },
-    report: { value: null, enumerable: true, configurable: true },
+    report: {
+      value() {
+        throw new Error("Cannot report errors in `createOnce`");
+      },
+      enumerable: true,
+      configurable: true,
+    },
   });
 
   let {

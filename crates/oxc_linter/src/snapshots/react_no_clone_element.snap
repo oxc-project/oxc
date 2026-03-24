@@ -1,0 +1,81 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint-plugin-react(no-clone-element): `React.cloneElement` should not be used.
+   ╭─[no_clone_element.tsx:2:34]
+ 1 │ import { cloneElement } from "react";
+ 2 │            const clonedElement = cloneElement(
+   ·                                  ────────────
+ 3 │              <Row title="Cabbage">Hello</Row>,
+   ╰────
+  help: `React.cloneElement` is uncommon and leads to fragile React components.
+  note: https://react.dev/reference/react/cloneElement#alternatives
+
+  ⚠ eslint-plugin-react(no-clone-element): `React.cloneElement` should not be used.
+   ╭─[no_clone_element.tsx:4:21]
+ 3 │              const element = <div />;
+ 4 │              return cloneElement(element, { isHighlighted: true });
+   ·                     ────────────
+ 5 │            }
+   ╰────
+  help: `React.cloneElement` is uncommon and leads to fragile React components.
+  note: https://react.dev/reference/react/cloneElement#alternatives
+
+  ⚠ eslint-plugin-react(no-clone-element): `React.cloneElement` should not be used.
+   ╭─[no_clone_element.tsx:3:32]
+ 2 │          const element = <div />;
+ 3 │          const clonedElement = cloneElement(element);
+   ·                                ────────────
+   ╰────
+  help: `React.cloneElement` is uncommon and leads to fragile React components.
+  note: https://react.dev/reference/react/cloneElement#alternatives
+
+  ⚠ eslint-plugin-react(no-clone-element): `React.cloneElement` should not be used.
+   ╭─[no_clone_element.tsx:3:32]
+ 2 │          const element = <div />;
+ 3 │          const clonedElement = React.cloneElement(element);
+   ·                                ──────────────────
+   ╰────
+  help: `React.cloneElement` is uncommon and leads to fragile React components.
+  note: https://react.dev/reference/react/cloneElement#alternatives
+
+  ⚠ eslint-plugin-react(no-clone-element): `React.cloneElement` should not be used.
+   ╭─[no_clone_element.tsx:1:50]
+ 1 │ import React from 'react'; const clonedElement = React.cloneElement(<div />);
+   ·                                                  ──────────────────
+   ╰────
+  help: `React.cloneElement` is uncommon and leads to fragile React components.
+  note: https://react.dev/reference/react/cloneElement#alternatives
+
+  ⚠ eslint-plugin-react(no-clone-element): `React.cloneElement` should not be used.
+   ╭─[no_clone_element.tsx:1:52]
+ 1 │ import Aliased from 'react'; const clonedElement = Aliased.cloneElement(<div />);
+   ·                                                    ────────────────────
+   ╰────
+  help: `React.cloneElement` is uncommon and leads to fragile React components.
+  note: https://react.dev/reference/react/cloneElement#alternatives
+
+  ⚠ eslint-plugin-react(no-clone-element): `React.cloneElement` should not be used.
+   ╭─[no_clone_element.tsx:1:62]
+ 1 │ import { cloneElement } from 'react'; const clonedElement = (cloneElement)(<div />);
+   ·                                                              ────────────
+   ╰────
+  help: `React.cloneElement` is uncommon and leads to fragile React components.
+  note: https://react.dev/reference/react/cloneElement#alternatives
+
+  ⚠ eslint-plugin-react(no-clone-element): `React.cloneElement` should not be used.
+   ╭─[no_clone_element.tsx:1:50]
+ 1 │ import React from 'react'; const clonedElement = React["cloneElement"](<div />);
+   ·                                                  ─────────────────────
+   ╰────
+  help: `React.cloneElement` is uncommon and leads to fragile React components.
+  note: https://react.dev/reference/react/cloneElement#alternatives
+
+  ⚠ eslint-plugin-react(no-clone-element): `React.cloneElement` should not be used.
+   ╭─[no_clone_element.tsx:1:50]
+ 1 │ import React from 'react'; const clonedElement = React?.cloneElement(<div />);
+   ·                                                  ───────────────────
+   ╰────
+  help: `React.cloneElement` is uncommon and leads to fragile React components.
+  note: https://react.dev/reference/react/cloneElement#alternatives

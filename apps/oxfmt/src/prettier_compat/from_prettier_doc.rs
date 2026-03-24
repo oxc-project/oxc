@@ -19,37 +19,108 @@ const NEGATIVE_INFINITY_MARKER: &str = "__NEGATIVE_INFINITY__";
 /// Handles language-specific processing:
 /// - GraphQL: converts each doc independently → [`EmbeddedDocResult::MultipleDocs`]
 /// - CSS, HTML: merges consecutive Text nodes, counts placeholders → [`EmbeddedDocResult::DocWithPlaceholders`]
+///
+/// All Doc JSONs use a uniform `[doc, metadata]` envelope from the JS side.
 pub fn to_format_elements_for_template<'a>(
     language: &str,
-    doc_jsons: &[Value],
+    doc_jsons: Vec<Value>,
     allocator: &'a Allocator,
     group_id_builder: &UniqueGroupIdBuilder,
 ) -> Result<EmbeddedDocResult<'a>, String> {
-    let convert = |doc_json: &Value| -> Result<(Vec<FormatElement<'a>>, usize), String> {
+    /// Unwrap `[doc, metadata]` envelope and convert doc JSON to IR.
+    /// Panics on invalid envelope format (internal protocol we control on both sides).
+    fn convert<'a>(
+        envelope: Value,
+        allocator: &'a Allocator,
+        group_id_builder: &UniqueGroupIdBuilder,
+    ) -> Result<(Vec<FormatElement<'a>>, serde_json::Map<String, Value>), String> {
+        let Value::Array(mut arr) = envelope else {
+            unreachable!("Doc JSON envelope must be [doc, metadata]");
+        };
+        let metadata = match arr.pop() {
+            Some(Value::Object(obj)) => obj,
+            _ => serde_json::Map::new(),
+        };
+        let doc_json = arr.into_iter().next().expect("Doc JSON envelope must contain doc");
+
         let mut ctx = FmtCtx::new(allocator, group_id_builder);
-        let mut out = vec![];
-        convert_doc(doc_json, &mut out, &mut ctx)?;
-        let placeholder_count = postprocess(&mut out, allocator);
-        Ok((out, placeholder_count))
-    };
+        let mut ir = vec![];
+        convert_doc(&doc_json, &mut ir, &mut ctx)?;
+        Ok((ir, metadata))
+    }
 
     match language {
-        "tagged-css" => {
-            let doc_json = doc_jsons
-                .first()
-                .ok_or_else(|| "Expected exactly one Doc JSON for CSS".to_string())?;
-            let (ir, count) = convert(doc_json)?;
-            Ok(EmbeddedDocResult::DocWithPlaceholders(ir, count))
-        }
         "tagged-graphql" => {
             let irs = doc_jsons
-                .iter()
-                .map(|doc_json| {
-                    let (ir, _) = convert(doc_json)?;
+                .into_iter()
+                .map(|envelope| {
+                    let (mut ir, _) = convert(envelope, allocator, group_id_builder)?;
+                    postprocess(
+                        &mut ir,
+                        allocator,
+                        // GraphQL uses `.cooked` values, so template chars need escaping
+                        TemplateEscape::Full,
+                        None,
+                    );
                     Ok(ir)
                 })
                 .collect::<Result<Vec<_>, String>>()?;
             Ok(EmbeddedDocResult::MultipleDocs(irs))
+        }
+        "tagged-css" => {
+            let (mut ir, _) = convert(
+                doc_jsons.into_iter().next().expect("Doc JSON for CSS"),
+                allocator,
+                group_id_builder,
+            )?;
+            let placeholder_count = postprocess(
+                &mut ir,
+                allocator,
+                // CSS uses `.raw` values, so no template char escaping needed
+                TemplateEscape::None,
+                Some(("@prettier-placeholder-", "-id")),
+            );
+            Ok(EmbeddedDocResult::DocWithPlaceholders {
+                ir,
+                placeholder_count,
+                html_has_multiple_root_elements: None,
+            })
+        }
+        "tagged-html" | "angular-template" => {
+            let (mut ir, metadata) = convert(
+                doc_jsons.into_iter().next().expect("Doc JSON for HTML"),
+                allocator,
+                group_id_builder,
+            )?;
+            let html_has_multiple_root_elements =
+                metadata.get("htmlHasMultipleRootElements").and_then(Value::as_bool);
+            let placeholder_count = postprocess(
+                &mut ir,
+                allocator,
+                // HTML/Angular use `.cooked` values, so template chars need escaping
+                TemplateEscape::Full,
+                Some(("PRETTIER_HTML_PLACEHOLDER_", "_IN_JS")),
+            );
+            Ok(EmbeddedDocResult::DocWithPlaceholders {
+                ir,
+                placeholder_count,
+                html_has_multiple_root_elements,
+            })
+        }
+        "tagged-markdown" => {
+            let (mut ir, _) = convert(
+                doc_jsons.into_iter().next().expect("Doc JSON for Markdown"),
+                allocator,
+                group_id_builder,
+            )?;
+            postprocess(
+                &mut ir,
+                allocator,
+                // Markdown uses `.raw` values with backtick unescaping on Rust side
+                TemplateEscape::RawBacktick,
+                None,
+            );
+            Ok(EmbeddedDocResult::SingleDoc(ir))
         }
         _ => unreachable!("Unsupported embedded_doc language: {language}"),
     }
@@ -219,10 +290,10 @@ fn convert_align<'a>(
                     }
                     out.push(FormatElement::Tag(Tag::EndDedent(DedentMode::Level)));
                     return Ok(());
-                } else if i > 0 && i <= 255 {
+                } else if i > 0 {
+                    debug_assert!(i <= 255, "align value {i} exceeds NonZeroU8 range");
                     #[expect(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
-                    let count = i as u8;
-                    if let Some(nz) = NonZeroU8::new(count) {
+                    if let Some(nz) = NonZeroU8::new(i as u8) {
                         out.push(FormatElement::Tag(Tag::StartAlign(Align::new(nz))));
                         if let Some(contents) = obj.get("contents") {
                             convert_doc(contents, out, ctx)?;
@@ -241,6 +312,53 @@ fn convert_align<'a>(
             }
             out.push(FormatElement::Tag(Tag::EndDedent(DedentMode::Root)));
             Ok(())
+        }
+        Value::String(s) => {
+            // String alignment (e.g., "  " for markdown list continuation indent).
+            // Prettier uses the string length as the number of spaces to align by.
+            if s.is_empty() {
+                // Empty string → no alignment, just render contents
+                if let Some(contents) = obj.get("contents") {
+                    convert_doc(contents, out, ctx)?;
+                }
+                return Ok(());
+            }
+            debug_assert!(
+                s.len() <= 255,
+                "align string length {} exceeds NonZeroU8 range",
+                s.len()
+            );
+            #[expect(clippy::cast_possible_truncation)]
+            if let Some(nz) = NonZeroU8::new(s.len() as u8) {
+                out.push(FormatElement::Tag(Tag::StartAlign(Align::new(nz))));
+                if let Some(contents) = obj.get("contents") {
+                    convert_doc(contents, out, ctx)?;
+                }
+                out.push(FormatElement::Tag(Tag::EndAlign));
+                return Ok(());
+            }
+            Err(format!("Unsupported align value: {n}"))
+        }
+        Value::Object(obj_val) => {
+            // `align({type: "root"}, ...)` = Prettier's `markAsRoot()`.
+            // In Prettier, `markAsRoot` records the current indent position
+            // so that a later `dedentToRoot` can return to it.
+            // However, `oxc_formatter`'s `DedentMode::Root` always resets to absolute level 0
+            // and has no way to store a custom root position.
+            // Skipping the root capture is safe because
+            // embedded language Docs are processed in their own context starting near level 0,
+            // so `dedentToRoot` to absolute 0 produces the same result.
+            //
+            // NOTE: `markAsRoot` is used in Prettier for other cases.
+            // e.g. JS comment printer, YAML block printer, and front-matter embed.
+            // But none of those go through this Doc→IR path.
+            if obj_val.get("type").and_then(Value::as_str) == Some("root") {
+                if let Some(contents) = obj.get("contents") {
+                    convert_doc(contents, out, ctx)?;
+                }
+                return Ok(());
+            }
+            Err(format!("Unsupported align value: {n}"))
         }
         _ => Err(format!("Unsupported align value: {n}")),
     }
@@ -345,18 +463,30 @@ fn extract_group_id(
 
 // ---
 
+#[derive(Clone, Copy)]
+enum TemplateEscape {
+    /// No escaping
+    None,
+    /// Full escaping: `\` → `\\`, `` ` `` → `` \` ``, `${` → `\${`.
+    Full,
+    /// Raw backtick escaping: `(\\*)\`` → `$1$1\\\``.
+    RawBacktick,
+}
+
 /// Post-process FormatElements in a single compaction pass:
 /// - strip trailing hardline (useless for embedded parts)
 /// - collapse double-hardlines `[Hard, ExpandParent, Hard, ExpandParent]` → `[Empty, ExpandParent]`
 /// - merge consecutive Text nodes (SCSS emits split strings like `"@"` + `"prettier-placeholder-0-id"`)
-/// - escape template characters (`\`, `` ` ``, `${`)
-/// - count `@prettier-placeholder-N-id` patterns
+/// - escape template characters (mode determined by [`TemplateEscape`])
+/// - count placeholders matching `(prefix)(digits)(_digits)?(suffix)` pattern
 ///
-/// Returns the placeholder count (0 for non-CSS languages).
-fn postprocess<'a>(ir: &mut Vec<FormatElement<'a>>, allocator: &'a Allocator) -> usize {
-    const PREFIX: &str = "@prettier-placeholder-";
-    const SUFFIX: &str = "-id";
-
+/// Returns the placeholder count (0 when `placeholder` is `None`).
+fn postprocess<'a>(
+    ir: &mut Vec<FormatElement<'a>>,
+    allocator: &'a Allocator,
+    escape: TemplateEscape,
+    placeholder: Option<(&str, &str)>,
+) -> usize {
     // Strip trailing hardline
     if ir.len() >= 2
         && matches!(ir[ir.len() - 1], FormatElement::ExpandParent)
@@ -388,9 +518,9 @@ fn postprocess<'a>(ir: &mut Vec<FormatElement<'a>>, allocator: &'a Allocator) ->
                 read += 1;
             }
 
-            let escaped = if read - run_start == 1 {
+            let text = if read - run_start == 1 {
                 let FormatElement::Text { text, .. } = &ir[run_start] else { unreachable!() };
-                escape_template_characters(text, allocator)
+                text
             } else {
                 let mut sb = StringBuilder::new_in(allocator);
                 for element in &ir[run_start..read] {
@@ -398,28 +528,20 @@ fn postprocess<'a>(ir: &mut Vec<FormatElement<'a>>, allocator: &'a Allocator) ->
                         sb.push_str(text);
                     }
                 }
-                escape_template_characters(sb.into_str(), allocator)
+                sb.into_str()
             };
-            let width = TextWidth::from_text(escaped, IndentWidth::default());
-            ir[write] = FormatElement::Text { text: escaped, width };
+            let text = match escape {
+                TemplateEscape::None => text,
+                TemplateEscape::Full => escape_template_characters(text, allocator),
+                TemplateEscape::RawBacktick => escape_backticks_raw_str(text, allocator),
+            };
+            let width = TextWidth::from_text(text, IndentWidth::default());
+            ir[write] = FormatElement::Text { text, width };
             write += 1;
 
-            // Count placeholders
-            let mut remaining = escaped;
-            while let Some(start) = remaining.find(PREFIX) {
-                let after_prefix = &remaining[start + PREFIX.len()..];
-                let digit_end = after_prefix
-                    .bytes()
-                    .position(|b| !b.is_ascii_digit())
-                    .unwrap_or(after_prefix.len());
-                if digit_end > 0
-                    && let Some(rest) = after_prefix[digit_end..].strip_prefix(SUFFIX)
-                {
-                    placeholder_count += 1;
-                    remaining = rest;
-                    continue;
-                }
-                remaining = &remaining[start + PREFIX.len()..];
+            // Count placeholders for this text if needed
+            if let Some((prefix, suffix)) = placeholder {
+                placeholder_count += count_placeholders(text, prefix, suffix);
             }
         } else {
             if write != read {
@@ -433,6 +555,41 @@ fn postprocess<'a>(ir: &mut Vec<FormatElement<'a>>, allocator: &'a Allocator) ->
     placeholder_count
 }
 
+/// Count placeholder occurrences matching `{prefix}{digits}(_{digits})?{suffix}` in text.
+///
+/// The optional `_{digits}` group allows matching both formats:
+/// - CSS: `@prettier-placeholder-0-id` (no counter)
+/// - HTML: `PRETTIER_HTML_PLACEHOLDER_0_0_IN_JS` (with counter)
+fn count_placeholders(text: &str, prefix: &str, suffix: &str) -> usize {
+    let mut count = 0;
+    let mut remaining = text;
+    while let Some(start) = remaining.find(prefix) {
+        let after_prefix = &remaining[start + prefix.len()..];
+        let digit_end =
+            after_prefix.bytes().position(|b| !b.is_ascii_digit()).unwrap_or(after_prefix.len());
+        if digit_end > 0 {
+            let mut after_digits = &after_prefix[digit_end..];
+            // Skip optional `_{digits}` (e.g., HTML counter)
+            if let Some(after_underscore) = after_digits.strip_prefix('_') {
+                let c = after_underscore
+                    .bytes()
+                    .position(|b| !b.is_ascii_digit())
+                    .unwrap_or(after_underscore.len());
+                if c > 0 {
+                    after_digits = &after_underscore[c..];
+                }
+            }
+            if let Some(rest) = after_digits.strip_prefix(suffix) {
+                count += 1;
+                remaining = rest;
+                continue;
+            }
+        }
+        remaining = &remaining[start + prefix.len()..];
+    }
+    count
+}
+
 /// Escape characters that would break template literal syntax.
 ///
 /// Equivalent to Prettier's `uncookTemplateElementValue`:
@@ -441,7 +598,9 @@ fn escape_template_characters<'a>(s: &'a str, allocator: &'a Allocator) -> &'a s
     let bytes = s.as_bytes();
     let len = bytes.len();
 
-    // Fast path: scan for characters that need escaping.
+    // Fast path: scan for the first character that needs escaping.
+    // All characters of interest (`\`, `` ` ``, `$`, `{`) are single-byte ASCII,
+    // so byte-indexed access is safe and avoids multi-byte decode overhead.
     let first_escape = (0..len).find(|&i| {
         let ch = bytes[i];
         ch == b'\\' || ch == b'`' || (ch == b'$' && i + 1 < len && bytes[i + 1] == b'{')
@@ -451,7 +610,7 @@ fn escape_template_characters<'a>(s: &'a str, allocator: &'a Allocator) -> &'a s
         return s;
     };
 
-    // Slow path: build escaped string in the arena.
+    // Slow path: build escaped string in the arena, reusing the clean prefix.
     let mut result = StringBuilder::with_capacity_in(len + 1, allocator);
     result.push_str(&s[..first]);
 
@@ -470,5 +629,42 @@ fn escape_template_characters<'a>(s: &'a str, allocator: &'a Allocator) -> &'a s
         i += 1;
     }
 
+    result.into_str()
+}
+
+/// Escape backticks in raw mode for markdown-in-JS template literals.
+///
+/// Equivalent to Prettier's `escapeTemplateCharacters(doc, /* raw */ true)`:
+/// <https://github.com/prettier/prettier/blob/90983f40dce5e20beea4e5618b5e0426a6a7f4f0/src/language-js/print/template-literal.js#L277-L287>
+/// `str.replaceAll(/(\\*)`/g, "$1$1\\`")`
+///
+/// For each backtick, doubles the preceding backslashes and adds `\` before the backtick:
+/// - `` ` `` → `` \` ``
+/// - `` \` `` → `` \\\` ``
+/// - `` \\` `` → `` \\\\\` ``
+fn escape_backticks_raw_str<'a>(s: &'a str, allocator: &'a Allocator) -> &'a str {
+    if !s.contains('`') {
+        return s;
+    }
+    let mut result = StringBuilder::with_capacity_in(s.len() + 1, allocator);
+    let mut bs_count: usize = 0;
+    for ch in s.chars() {
+        if ch == '\\' {
+            bs_count += 1;
+            result.push('\\');
+        } else if ch == '`' {
+            // The backslash branch already emitted `bs_count` backslashes.
+            // Emit another `bs_count` to double them, then add `\``.
+            for _ in 0..bs_count {
+                result.push('\\');
+            }
+            result.push('\\');
+            result.push('`');
+            bs_count = 0;
+        } else {
+            bs_count = 0;
+            result.push(ch);
+        }
+    }
     result.into_str()
 }

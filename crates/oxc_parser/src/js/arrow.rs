@@ -22,7 +22,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         match self.is_parenthesized_arrow_function_expression() {
             Tristate::False => None,
             Tristate::True => Some(self.parse_parenthesized_arrow_function_expression(
-                /* allow_return_type_in_arrow_function */ true,
+                allow_return_type_in_arrow_function,
             )),
             Tristate::Maybe => self.parse_possible_parenthesized_arrow_function_expression(
                 allow_return_type_in_arrow_function,

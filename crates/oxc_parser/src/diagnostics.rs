@@ -491,6 +491,11 @@ pub fn new_dynamic_import(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn new_super(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("'new super()' is not allowed").with_label(span)
+}
+
+#[cold]
 pub fn private_name_constructor(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Classes can't have an element named '#constructor'").with_label(span)
 }
@@ -750,6 +755,17 @@ pub fn using_declaration_not_allowed_in_switch_bare_case(span: Span) -> OxcDiagn
     OxcDiagnostic::error("Using declaration cannot appear in the bare case statement.")
         .with_label(span)
         .with_help("Wrap this declaration in a block statement")
+}
+
+#[cold]
+pub fn using_declarations_not_allowed_in_ambient_contexts(span: Span) -> OxcDiagnostic {
+    ts_error("1545", "'using' declarations are not allowed in ambient contexts.").with_label(span)
+}
+
+#[cold]
+pub fn await_using_declarations_not_allowed_in_ambient_contexts(span: Span) -> OxcDiagnostic {
+    ts_error("1546", "'await using' declarations are not allowed in ambient contexts.")
+        .with_label(span)
 }
 
 #[cold]

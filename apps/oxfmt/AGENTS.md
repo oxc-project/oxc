@@ -46,6 +46,10 @@ Run tests with:
 ```sh
 # Run E2E test
 pnpm build-test && pnpm t
+# Update snapshots
+pnpm t -u
+# Run conformance test for xxx-in-js and js-in-xxx
+pnpm conformance
 # Run unit test in Rust
 cargo t
 ```
@@ -57,11 +61,22 @@ pnpm build-test
 
 # Show help
 node ./dist/cli.js --help
-# Stdin
-cat <file> | node ./dist/cli.js --stdin-filepath=<file>
+# Stdin (`npx prettier --config=<cfg> <file>` equivalent)
+cat <file> | node ./dist/cli.js --config=<cfg> --stdin-filepath=<file>
+# With log
+OXC_LOG=debug node ./dist/cli.js --threads=1 <file>
 ```
 
 NOTE: `pnpm build-test` combines `pnpm build-js` and `pnpm build-napi`, so you don't need to run them separately.
+
+To compare formatting output with Prettier:
+
+```sh
+# Use a shared config file (e.g., fmt.json) because oxfmt and Prettier have different default printWidth
+# Example fmt.json: { "printWidth": 80 }
+cat <file> | node ./dist/cli.js --config=fmt.json --stdin-filepath=<file>
+npx prettier --config=fmt.json <file>
+```
 
 ## Test Organization (`test/` directory)
 

@@ -1,8 +1,8 @@
-commit: 308c8d85
+commit: 0124e7c7
 
 semantic_babel Summary:
-AST Parsed     : 2227/2227 (100.00%)
-Positive Passed: 2026/2227 (90.97%)
+AST Parsed     : 2232/2232 (100.00%)
+Positive Passed: 2030/2232 (90.95%)
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/decorators/decorators-after-export/input.js
 Symbol span mismatch for "C":
 after transform: SymbolId(0): Span { start: 65, end: 66 }
@@ -24,6 +24,17 @@ rebuilt        : SymbolId(2): Span { start: 65, end: 66 }
 Symbol flags mismatch for "_default":
 after transform: SymbolId(3): SymbolFlags(Class)
 rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/typescript/TSEnumBody-trailing-comma/input.ts
+Bindings mismatch:
+after transform: ScopeId(1): ["A", "E"]
+rebuilt        : ScopeId(1): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
+Symbol flags mismatch for "E":
+after transform: SymbolId(0): SymbolFlags(RegularEnum)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/sourcetype-unambiguous/typescript-type-only/input.ts
 Bindings mismatch:

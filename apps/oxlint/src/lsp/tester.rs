@@ -191,7 +191,7 @@ impl Tester<'_> {
         Self { relative_root_dir, options }
     }
 
-    fn create_linter(&self) -> ServerLinter {
+    pub fn create_linter(&self) -> ServerLinter {
         ServerLinterBuilder::default()
             .build(&Self::get_root_uri(self.relative_root_dir), self.options.clone())
     }
@@ -209,6 +209,10 @@ impl Tester<'_> {
         self.test_and_snapshot_multiple_file(&[relative_file_path]);
     }
 
+    pub fn get_file_uri(&self, relative_file_path: &str) -> Uri {
+        get_file_uri(&format!("{}/{}", self.relative_root_dir, relative_file_path))
+    }
+
     pub fn test_and_snapshot_multiple_file(&self, relative_file_paths: &[&str]) {
         let mut snapshot_result = String::new();
         let context = CodeActionContext::default();
@@ -217,7 +221,7 @@ impl Tester<'_> {
             ..Default::default()
         };
         for relative_file_path in relative_file_paths {
-            let uri = get_file_uri(&format!("{}/{}", self.relative_root_dir, relative_file_path));
+            let uri = self.get_file_uri(relative_file_path);
             let linter = self.create_linter();
             let range = Range::new(Position::new(0, 0), Position::new(u32::MAX, u32::MAX));
             let reports = FileResult {

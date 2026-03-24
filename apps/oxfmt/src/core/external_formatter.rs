@@ -5,8 +5,9 @@ use napi::{
     bindgen_prelude::{FnArgs, Promise, block_on},
     threadsafe_function::ThreadsafeFunction,
 };
+use serde::Deserialize;
 use serde_json::Value;
-use tracing::debug_span;
+use tracing::{debug, debug_span};
 
 use oxc_formatter::{
     EmbeddedDocFormatterCallback, EmbeddedFormatterCallback, ExternalCallbacks, FormatOptions,
@@ -267,10 +268,8 @@ impl ExternalFormatter {
                                 code.truncate(trimmed_len);
                                 code
                             })
-                            .map_err(|err| {
-                                format!(
-                                    "Failed to format embedded code for parser '{parser_name}': {err}"
-                                )
+                            .inspect_err(|err| {
+                                debug!("Failed to format embedded code for parser '{parser_name}': {err}");
                             })
                     },
                 )
@@ -303,16 +302,29 @@ impl ExternalFormatter {
                             })?;
                         let doc_jsons = doc_json_strs
                             .into_iter()
-                            .map(|s| serde_json::from_str(&s))
+                            .map(|s| {
+                                // Prettier's Doc can produce deeply nested arrays.
+                                // (e.g., md-in-js with `proseWrap: preserve`,
+                                // which nests each word in `[[[prev, " "], word], " "]`)
+                                // The default recursion limit of 128 is not enough for long paragraphs.
+                                // This only affects this deserialization call;
+                                // other `serde_json` usage in the codebase keeps the default limit.
+                                let mut de = serde_json::Deserializer::from_str(&s);
+                                de.disable_recursion_limit();
+                                serde_json::Value::deserialize(&mut de)
+                            })
                             .collect::<Result<Vec<_>, _>>()
                             .map_err(|e| format!("Failed to parse Doc JSON: {e}"))?;
 
                         from_prettier_doc::to_format_elements_for_template(
                             language,
-                            &doc_jsons,
+                            doc_jsons,
                             allocator,
                             group_id_builder,
                         )
+                    })
+                    .inspect_err(|err| {
+                        debug!("Failed to format embedded doc for parser '{parser_name}': {err}");
                     })
             }))
         } else {
@@ -365,10 +377,11 @@ impl ExternalFormatter {
 /// This is the single source of truth for supported embedded languages.
 fn language_to_prettier_parser(language: &str) -> Option<&'static str> {
     match language {
-        "tagged-css" | "styled-jsx" | "angular-styles" => Some("scss"),
-        "tagged-graphql" => Some("graphql"),
-        "tagged-html" => Some("html"),
-        "tagged-markdown" => Some("markdown"),
+        // Template literal tags + JSDoc fenced code block language names
+        "tagged-css" | "styled-jsx" | "angular-styles" | "css" | "scss" | "less" => Some("scss"),
+        "tagged-graphql" | "graphql" | "gql" => Some("graphql"),
+        "tagged-html" | "html" => Some("html"),
+        "tagged-markdown" | "markdown" | "md" => Some("markdown"),
         "angular-template" => Some("angular"),
         _ => None,
     }

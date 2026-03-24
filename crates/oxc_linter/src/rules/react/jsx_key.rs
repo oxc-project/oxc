@@ -81,25 +81,30 @@ impl Deref for JsxKey {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Enforce `key` prop for elements in array
+    /// Enforce `key` prop for elements in array.
     ///
     /// ### Why is this bad?
     ///
-    /// React requires a `key` prop for elements in an array to help identify which items have changed, are added, or are removed.
+    /// React requires a `key` prop for elements in an array to help identify which
+    /// items have changed, are added, or are removed.
     ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```jsx
     /// [1, 2, 3].map(x => <App />);
-    /// [1, 2, 3]?.map(x => <BabelEslintApp />)
+    /// [1, 2, 3]?.map(x => <ListItem />)
     /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```jsx
     /// [1, 2, 3].map(x => <App key={x} />);
-    /// [1, 2, 3]?.map(x => <BabelEslintApp key={x} />)
+    /// [1, 2, 3]?.map(x => <ListItem key={x} />)
     /// ```
+    ///
+    /// NOTE: This rule's option defaults differ from the defaults in the original ESLint plugin. It is recommended to keep
+    /// all options set to `true` for correctness reasons, but you may want to set them back to `false` to get behavior
+    /// parity when migrating from ESLint.
     JsxKey,
     react,
     correctness,
@@ -479,116 +484,123 @@ fn test() {
         (r"foo(() => <></>);", None, None),
         (r"<></>;", None, None),
         (r"<App {...{}} />;", None, None),
-(r#"<App key="keyBeforeSpread" {...{}} />;"#, Some(serde_json::json!([{ "checkKeyMustBeforeSpread": true }])), None),
-(r#"<div key="keyBeforeSpread" {...{}} />;"#, Some(serde_json::json!([{ "checkKeyMustBeforeSpread": true }])), None),
-(r#"
-			        const spans = [
-			          <span key="notunique"/>,
-			          <span key="notunique"/>,
-			        ];
-			      "#, None, None),
-(r#"
-			        function Component(props) {
-			          return hasPayment ? (
-			            <div className="stuff">
-			              <BookingDetailSomething {...props} />
-			              {props.modal && props.calculatedPrice && (
-			                <SomeOtherThing items={props.something} discount={props.discount} />
-			              )}
-			            </div>
-			          ) : null;
-			        }
-			      "#, None, None),
-(r#"
-			        import React, { FC, useRef, useState } from 'react';
+        (r#"<App key="keyBeforeSpread" {...{}} />;"#, Some(serde_json::json!([{ "checkKeyMustBeforeSpread": true }])), None),
+        (r#"<div key="keyBeforeSpread" {...{}} />;"#, Some(serde_json::json!([{ "checkKeyMustBeforeSpread": true }])), None),
+        (r#"
+        const spans = [
+            <span key="notunique"/>,
+            <span key="notunique"/>,
+        ];
+        "#, None, None),
+        (r#"
+        function Component(props) {
+            return hasPayment ? (
+            <div className="stuff">
+                <BookingDetailSomething {...props} />
+                {props.modal && props.calculatedPrice && (
+                <SomeOtherThing items={props.something} discount={props.discount} />
+                )}
+            </div>
+            ) : null;
+        }
+        "#, None, None),
+        (r#"
+        import React, { FC, useRef, useState } from 'react';
 
-			        import './ResourceVideo.sass';
-			        import VimeoVideoPlayInModal from '../vimeoVideoPlayInModal/VimeoVideoPlayInModal';
+        import './ResourceVideo.sass';
+        import VimeoVideoPlayInModal from '../vimeoVideoPlayInModal/VimeoVideoPlayInModal';
 
-			        type Props = {
-			          videoUrl: string;
-			          videoTitle: string;
-			        };
-			        const ResourceVideo: FC<Props> = ({
-			          videoUrl,
-			          videoTitle,
-			        }: Props): JSX.Element => {
-			          return (
-			            <div className="resource-video">
-			              <VimeoVideoPlayInModal videoUrl={videoUrl} />
-			              <h3>{videoTitle}</h3>
-			            </div>
-			          );
-			        };
+        type Props = {
+            videoUrl: string;
+            videoTitle: string;
+        };
+        const ResourceVideo: FC<Props> = ({
+            videoUrl,
+            videoTitle,
+        }: Props): JSX.Element => {
+            return (
+            <div className="resource-video">
+                <VimeoVideoPlayInModal videoUrl={videoUrl} />
+                <h3>{videoTitle}</h3>
+            </div>
+            );
+        };
 
-			        export default ResourceVideo;
-			      "#, None, None),
-("
-			        // testrule.jsx
-			        const trackLink = () => {};
-			        const getAnalyticsUiElement = () => {};
+        export default ResourceVideo;
+        "#, None, None),
+        ("
+        // testrule.jsx
+        const trackLink = () => {};
+        const getAnalyticsUiElement = () => {};
 
-			        const onTextButtonClick = (e, item) => trackLink([, getAnalyticsUiElement(item), item.name], e);
-			      ", None, None),
-(r#"
-			        function Component({ allRatings }) {
-			          return (
-			            <RatingDetailsStyles>
-			              {Object.entries(allRatings)?.map(([key, value], index) => {
-			                const rate = value?.split(/(?=[%, /])/);
+        const onTextButtonClick = (e, item) => trackLink([, getAnalyticsUiElement(item), item.name], e);
+        ", None, None),
+        (r#"
+        function Component({ allRatings }) {
+            return (
+            <RatingDetailsStyles>
+                {Object.entries(allRatings)?.map(([key, value], index) => {
+                const rate = value?.split(/(?=[%, /])/);
 
-			                if (!rate) return null;
+                if (!rate) return null;
 
-			                return (
-			                  <li key={`${entertainment.tmdbId}${index}`}>
-			                    <img src={`/assets/rating/${key}.png`} />
-			                    <span className="rating-details--rate">{rate?.[0]}</span>
-			                    <span className="rating-details--rate-suffix">{rate?.[1]}</span>
-			                  </li>
-			                );
-			              })}
-			            </RatingDetailsStyles>
-			          );
-			        }
-			      "#, None, None),
-("
-			        const baz = foo?.bar?.()?.[1] ?? 'qux';
+                return (
+                    <li key={`${entertainment.tmdbId}${index}`}>
+                    <img src={`/assets/rating/${key}.png`} />
+                    <span className="rating-details--rate">{rate?.[0]}</span>
+                    <span className="rating-details--rate-suffix">{rate?.[1]}</span>
+                    </li>
+                );
+                })}
+            </RatingDetailsStyles>
+            );
+        }
+        "#, None, None),
+        ("
+        const baz = foo?.bar?.()?.[1] ?? 'qux';
 
-			        qux()?.map()
+        qux()?.map()
 
-			        const directiveRanges = comments?.map(tryParseTSDirective)
-			      ", None, None),
-(r#"
-			        import { observable } from "mobx";
+        const directiveRanges = comments?.map(tryParseTSDirective)
+        ", None, None),
+        (r#"
+        import { observable } from "mobx";
 
-			        export interface ClusterFrameInfo {
-			          frameId: number;
-			          processId: number;
-			        }
+        export interface ClusterFrameInfo {
+            frameId: number;
+            processId: number;
+        }
 
-			        export const clusterFrameMap = observable.map<string, ClusterFrameInfo>();
-			      "#, None, None),
-("React.Children.toArray([1, 2 ,3].map(x => <App />));", None, None),
-(r#"
-			        import { Children } from "react";
-			        Children.toArray([1, 2 ,3].map(x => <App />));
-			      "#, None, None),
-("
-			        import Act from 'react';
-			        import { Children as ReactChildren } from 'react';
+        export const clusterFrameMap = observable.map<string, ClusterFrameInfo>();
+        "#, None, None),
+        ("React.Children.toArray([1, 2 ,3].map(x => <App />));", None, None),
+        (r#"import { Children } from "react";
+            Children.toArray([1, 2 ,3].map(x => <App />));"#,
+            None, None),
+        ("import Act from 'react';
+          import { Children as ReactChildren } from 'react';
 
-			        const { Children } = Act;
-			        const { toArray } = Children;
+          const { Children } = Act;
+          const { toArray } = Children;
 
-			        Act.Children.toArray([1, 2 ,3].map(x => <App />));
-			        Act.Children.toArray(Array.from([1, 2 ,3], x => <App />));
-			        Children.toArray([1, 2 ,3].map(x => <App />));
-			        Children.toArray(Array.from([1, 2 ,3], x => <App />));
-			        // ReactChildren.toArray([1, 2 ,3].map(x => <App />));
-			        // ReactChildren.toArray(Array.from([1, 2 ,3], x => <App />));
-			        // toArray([1, 2 ,3].map(x => <App />));
-			        // toArray(Array.from([1, 2 ,3], x => <App />));
-			      ", None, Some(serde_json::json!({ "settings": { "react": { "pragma": "Act", "fragment": "Frag" } }})))
+          Act.Children.toArray([1, 2 ,3].map(x => <App />));
+          Act.Children.toArray(Array.from([1, 2 ,3], x => <App />));
+          Children.toArray([1, 2 ,3].map(x => <App />));
+          Children.toArray(Array.from([1, 2 ,3], x => <App />));
+          // ReactChildren.toArray([1, 2 ,3].map(x => <App />));
+          // ReactChildren.toArray(Array.from([1, 2 ,3], x => <App />));
+          // toArray([1, 2 ,3].map(x => <App />));
+          // toArray(Array.from([1, 2 ,3], x => <App />));
+          ", None, Some(
+            serde_json::json!({ "settings": { "react": { "pragma": "Act", "fragment": "Frag" } }}
+        ))),
+        ("[1, 2, 3].map(x => { return x && <App key={x} />; });", None, None),
+        ("[1, 2, 3].map(x => { return x && y && <App key={x} />; });", None, None),
+        ("[1, 2, 3].map(x => { return x && foo(); });", None, None),
+        ("[1, 2, 3].map((item) => {
+            return item === 'bar' ? <div key={item}>{item}</div> : <span key={item}>{item}</span>;
+          })", None, None
+        )
     ];
 
     let fail = vec![
@@ -636,104 +648,144 @@ fn test() {
         ),
         (
             r#"
-			        const spans = [
-			          <span key="notunique"/>,
-			          <span key="notunique"/>,
-			        ];
-			      "#,
+                    const spans = [
+                      <span key="notunique"/>,
+                      <span key="notunique"/>,
+                    ];
+                  "#,
             Some(serde_json::json!([{ "warnOnDuplicates": true }])),
             None,
         ),
         (
             r#"
-			        const div = (
-			          <div>
-			            <span key="notunique"/>
-			            <span key="notunique"/>
-			          </div>
-			        );
-			      "#,
+                    const div = (
+                      <div>
+                        <span key="notunique"/>
+                        <span key="notunique"/>
+                      </div>
+                    );
+                  "#,
             Some(serde_json::json!([{ "warnOnDuplicates": true }])),
             None,
         ),
         (
             "
-			        const Test = () => {
-			          const list = [1, 2, 3, 4, 5];
+                    const Test = () => {
+                      const list = [1, 2, 3, 4, 5];
 
-			          return (
-			            <div>
-			              {list.map(item => {
-			                if (item < 2) {
-			                  return <div>{item}</div>;
-			                }
+                      return (
+                        <div>
+                          {list.map(item => {
+                            if (item < 2) {
+                              return <div>{item}</div>;
+                            }
 
-			                return <div />;
-			              })}
-			            </div>
-			          );
-			        };
-			      ",
+                            return <div />;
+                          })}
+                        </div>
+                      );
+                    };
+                  ",
             None,
             None,
         ),
         (
             "
-			        const TestO = () => {
-			          const list = [1, 2, 3, 4, 5];
+                    const TestO = () => {
+                      const list = [1, 2, 3, 4, 5];
 
-			          return (
-			            <div>
-			              {list.map(item => {
-			                if (item < 2) {
-			                  return <div>{item}</div>;
-			                } else if (item < 5) {
-			                  return <div></div>
-			                }  else {
-			                  return <div></div>
-			                }
+                      return (
+                        <div>
+                          {list.map(item => {
+                            if (item < 2) {
+                              return <div>{item}</div>;
+                            } else if (item < 5) {
+                              return <div></div>
+                            }  else {
+                              return <div></div>
+                            }
 
-			                return <div />;
-			              })}
-			            </div>
-			          );
-			        };
-			      ",
+                            return <div />;
+                          })}
+                        </div>
+                      );
+                    };
+                  ",
             None,
             None,
         ),
         (
             "
-			        const TestCase = () => {
-			          const list = [1, 2, 3, 4, 5];
+                    const TestCase = () => {
+                      const list = [1, 2, 3, 4, 5];
 
-			          return (
-			            <div>
-			              {list.map(item => {
-			                if (item < 2) return <div>{item}</div>;
-			                else if (item < 5) return <div />;
-			                else return <div />;
-			              })}
-			            </div>
-			          );
-			        };
-			      ",
+                      return (
+                        <div>
+                          {list.map(item => {
+                            if (item < 2) return <div>{item}</div>;
+                            else if (item < 5) return <div />;
+                            else return <div />;
+                          })}
+                        </div>
+                      );
+                    };
+                  ",
             None,
             None,
         ),
         (
             "
-			        const TestCase = () => {
-			          const list = [1, 2, 3, 4, 5];
+                    const TestCase = () => {
+                      const list = [1, 2, 3, 4, 5];
 
-			          return (
-			            <div>
-			              {list.map(x => <div {...spread} key={x} />)}
-			            </div>
-			          );
-			        };
-			      ",
+                      return (
+                        <div>
+                          {list.map(x => <div {...spread} key={x} />)}
+                        </div>
+                      );
+                    };
+                  ",
             Some(serde_json::json!([{ "checkKeyMustBeforeSpread": true }])),
+            None,
+        ),
+        ("[1, 2, 3].map(x => { return x && <App />; });", None, None),
+        ("[1, 2, 3].map(x => { return x || y || <App />; });", None, None),
+        (
+            "[1, 2, 3].map((item) => {
+               return item === 'bar' ? <div>{item}</div> : <span>{item}</span>;
+             })",
+            None,
+            None,
+        ),
+        (
+            "[1, 2, 3].map(function(item) {
+               return item === 'bar' ? <div>{item}</div> : <span>{item}</span>;
+             })",
+            None,
+            None,
+        ),
+        (
+            "Array.from([1, 2, 3], (item) => {
+               return item === 'bar' ? <div>{item}</div> : <span>{item}</span>;
+             })",
+            None,
+            None,
+        ),
+        (
+            "import { Fragment } from 'react';
+
+             const ITEMS = ['bar', 'foo'];
+
+             export default function BugIssue() {
+               return (
+                 <Fragment>
+                   {ITEMS.map((item) => {
+                     return item === 'bar' ? <div>{item}</div> : <span>{item}</span>;
+                   })}
+                 </Fragment>
+               );
+             }",
+            None,
             None,
         ),
     ];

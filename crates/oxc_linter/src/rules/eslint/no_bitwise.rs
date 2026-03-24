@@ -57,7 +57,7 @@ impl std::ops::Deref for NoBitwise {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow bitwise operators
+    /// Disallow bitwise operators.
     ///
     /// ### Why is this bad?
     ///

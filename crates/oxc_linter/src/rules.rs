@@ -409,6 +409,7 @@ pub(crate) mod react {
     pub mod jsx_sort_props;
     pub mod no_array_index_key;
     pub mod no_children_prop;
+    pub mod no_clone_element;
     pub mod no_danger;
     pub mod no_danger_with_children;
     pub mod no_did_mount_set_state;
@@ -417,6 +418,7 @@ pub(crate) mod react {
     pub mod no_is_mounted;
     pub mod no_multi_comp;
     pub mod no_namespace;
+    pub mod no_react_children;
     pub mod no_redundant_should_component_update;
     pub mod no_render_return_value;
     pub mod no_set_state;
@@ -451,6 +453,7 @@ pub(crate) mod unicorn {
     pub mod consistent_empty_array_spread;
     pub mod consistent_existence_index_check;
     pub mod consistent_function_scoping;
+    pub mod custom_error_definition;
     pub mod empty_brace_spaces;
     pub mod error_message;
     pub mod escape_case;
@@ -712,6 +715,7 @@ pub(crate) mod vitest {
     pub mod prefer_describe_function_title;
     pub mod prefer_expect_type_of;
     pub mod prefer_import_in_mock;
+    pub mod prefer_strict_boolean_matchers;
     pub mod prefer_to_be_falsy;
     pub mod prefer_to_be_object;
     pub mod prefer_to_be_truthy;
@@ -721,6 +725,7 @@ pub(crate) mod vitest {
 
 pub(crate) mod node {
     pub mod global_require;
+    pub mod handle_callback_err;
     pub mod no_exports_assign;
     pub mod no_new_require;
     pub mod no_path_concat;

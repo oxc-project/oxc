@@ -17,7 +17,7 @@ pub struct NoContinue;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow `continue` statements
+    /// Disallow `continue` statements.
     ///
     /// ### Why is this bad?
     ///

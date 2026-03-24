@@ -1,8 +1,8 @@
-commit: 308c8d85
+commit: 0124e7c7
 
 formatter_babel Summary:
-AST Parsed     : 2227/2227 (100.00%)
-Positive Passed: 2221/2227 (99.73%)
+AST Parsed     : 2232/2232 (100.00%)
+Positive Passed: 2226/2232 (99.73%)
 Mismatch: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/basic/async-arrow-function/input.js
 
 Mismatch: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/basic/class-method/input.js

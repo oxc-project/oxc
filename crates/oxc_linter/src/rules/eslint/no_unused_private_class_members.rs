@@ -20,7 +20,7 @@ pub struct NoUnusedPrivateClassMembers;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow unused private class members
+    /// Disallow unused private class members.
     ///
     /// ### Why is this bad?
     ///
@@ -234,6 +234,7 @@ fn is_value_context(parent: &AstNode, child: &AstNode, semantic: &Semantic<'_>) 
         | AstKind::SpreadElement(_)
         | AstKind::AssignmentPattern(_)
         | AstKind::SwitchCase(_)
+        | AstKind::SwitchStatement(_)
         | AstKind::ThrowStatement(_)
         | AstKind::WhileStatement(_)
         | AstKind::DoWhileStatement(_)
@@ -510,6 +511,7 @@ fn test() {
         r"class ExampleBar { #bar = 0; bar(bar) { bar = ++this.#bar; return bar; } }",
         r"class Test { #url: string; constructor(url: string) { this.#url = url; } open() { return new WebSocket(this.#url); } }",
         r"export class Foo { #fetch: typeof fetch; constructor() { this.#fetch = fetch; } async bar() { return (0, this.#fetch)('https://example.com'); } }",
+        r"export class StateMachine { #state = 'idle'; step() { switch (this.#state) { case 'idle': { this.#state = 'running'; break; } case 'running': { this.#state = 'done'; break; } } } }",
     ];
 
     let fail = vec![

@@ -1,6 +1,7 @@
 #![expect(clippy::print_stdout)]
 
 mod ignore_list;
+pub mod jsdoc;
 pub mod options;
 mod spec;
 
@@ -208,7 +209,7 @@ impl TestRunner {
             spec_path.to_string_lossy()
         );
 
-        let spec_calls = parse_spec(spec_path)
+        let spec_calls = spec_calls
             .into_iter()
             .filter(|call| {
                 let options = &call.0;
@@ -304,7 +305,7 @@ impl TestRunner {
     /// Extract single output section from snapshot file which contains multiple test cases.
     ///
     /// Format is like below:
-    /// ```
+    /// ```text
     /// filename1
     /// ===optionsA===
     /// ====input1====

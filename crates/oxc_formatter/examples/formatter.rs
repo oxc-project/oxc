@@ -9,6 +9,7 @@
 //! ```bash
 //! cargo run -p oxc_formatter --example formatter [filename]
 //! cargo run -p oxc_formatter --example formatter -- --no-semi [filename]
+//! cargo run -p oxc_formatter --example formatter -- --jsdoc [filename]
 //! cargo run -p oxc_formatter --example formatter -- --diff [filename]
 //! ```
 
@@ -16,7 +17,8 @@ use std::{fs, path::Path};
 
 use oxc_allocator::Allocator;
 use oxc_formatter::{
-    BracketSameLine, FormatOptions, Formatter, LineWidth, Semicolons, get_parse_options,
+    BracketSameLine, FormatOptions, Formatter, JsdocOptions, LineWidth, Semicolons,
+    get_parse_options,
 };
 use oxc_parser::Parser;
 use oxc_span::SourceType;
@@ -27,6 +29,7 @@ use pico_args::Arguments;
 fn main() -> Result<(), String> {
     let mut args = Arguments::from_env();
     let no_semi = args.contains("--no-semi");
+    let jsdoc = args.contains("--jsdoc");
     let show_ir = args.contains("--ir");
     // Show diff between original and formatted code
     let show_diff = args.contains("--diff");
@@ -44,10 +47,12 @@ fn main() -> Result<(), String> {
         Some(width) => LineWidth::try_from(width).unwrap(),
         None => LineWidth::try_from(80).unwrap(),
     };
+    let jsdoc_options = if jsdoc { Some(JsdocOptions::default()) } else { None };
     let options = FormatOptions {
         bracket_same_line: BracketSameLine::from(true),
         semicolons,
         line_width,
+        jsdoc: jsdoc_options,
         ..Default::default()
     };
 
@@ -83,9 +88,9 @@ fn main() -> Result<(), String> {
             print_diff_in_terminal(&source_text, &formatted_code);
         }
     } else {
-        println!("--- Formatted Code ---");
-        println!("{formatted_code}");
-        println!("--- End Formatted Code ---");
+        // println!("--- Formatted Code ---");
+        // println!("{formatted_code}");
+        // println!("--- End Formatted Code ---");
     }
 
     Ok(())

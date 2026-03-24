@@ -562,7 +562,9 @@ impl<'a> Visit<'a> for ExplicitTypesChecker<'a, '_> {
 
         match get_typed_inner_expression(init) {
             // we consider these well-typed
-            Expression::TSAsExpression(_) | Expression::TSTypeAssertion(_) => {}
+            Expression::TSAsExpression(_)
+            | Expression::TSTypeAssertion(_)
+            | Expression::TSSatisfiesExpression(_) => {}
             expr if expr.is_literal() => {}
             expr => {
                 self.with_target_binding(Some(binding));
@@ -574,6 +576,16 @@ impl<'a> Visit<'a> for ExplicitTypesChecker<'a, '_> {
 
     fn visit_call_expression(&mut self, _it: &CallExpression<'a>) {
         // ignore
+    }
+
+    fn visit_new_expression(&mut self, it: &NewExpression<'a>) {
+        // Constructor arguments are implementation details of the exported value,
+        // not part of the module boundary. Still inspect the callee so class
+        // expressions used with `new` continue to be checked.
+        self.visit_expression(&it.callee);
+        if let Some(type_arguments) = &it.type_arguments {
+            self.visit_ts_type_parameter_instantiation(type_arguments);
+        }
     }
 
     fn visit_jsx_element(&mut self, _it: &JSXElement<'a>) {
@@ -692,6 +704,27 @@ impl<'a> Visit<'a> for ExplicitTypesChecker<'a, '_> {
 
         self.ctx.diagnostic(func_missing_argument_type(it.span));
     }
+
+    fn visit_ts_as_expression(&mut self, it: &TSAsExpression<'a>) {
+        if is_wrapped_function_expression(&it.expression) {
+            return;
+        }
+        walk::walk_ts_as_expression(self, it);
+    }
+
+    fn visit_ts_satisfies_expression(&mut self, it: &TSSatisfiesExpression<'a>) {
+        if is_wrapped_function_expression(&it.expression) {
+            return;
+        }
+        walk::walk_ts_satisfies_expression(self, it);
+    }
+
+    fn visit_ts_type_assertion(&mut self, it: &TSTypeAssertion<'a>) {
+        if is_wrapped_function_expression(&it.expression) {
+            return;
+        }
+        walk::walk_ts_type_assertion(self, it);
+    }
 }
 
 /// like [`Expression::get_inner_expression`], but does not skip over most ts syntax
@@ -701,6 +734,13 @@ fn get_typed_inner_expression<'a, 'e>(expr: &'e Expression<'a>) -> &'e Expressio
         Expression::TSNonNullExpression(expr) => get_typed_inner_expression(&expr.expression),
         _ => expr,
     }
+}
+
+fn is_wrapped_function_expression(expr: &Expression<'_>) -> bool {
+    matches!(
+        get_typed_inner_expression(expr),
+        Expression::ArrowFunctionExpression(_) | Expression::FunctionExpression(_)
+    )
 }
 
 #[cfg(test)]
@@ -1536,6 +1576,38 @@ mod test {
             ("function Test(): void { const _x = () => {}; } export default Test;", None),
             (
                 "function Test(): void { const _x = () => { }; } function Test2() { return (): void => { }; } export { Test2 };",
+                None,
+            ),
+            (
+                "
+            export const widgetSettingsDeserializer = new JsonInterfaceDeserializer<WidgetSettings, SupportedWidget>(
+              raw => raw.widgetSpecificationId as SupportedWidget
+            );
+            ",
+                None,
+            ),
+            (
+                "type F = (x: number) => number; export const f = (x => x) satisfies F;",
+                None,
+            ),
+            (
+                "
+            type F = () => number;
+
+            export const OBJ = {
+              f: (() => 42) satisfies F,
+            };
+            ",
+                None,
+            ),
+            (
+                "
+            type F = () => number;
+
+            export class Class {
+              g = (() => 42) satisfies F;
+            }
+            ",
                 None,
             ),
         ];

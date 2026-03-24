@@ -19,7 +19,7 @@ pub struct NoConstantBinaryExpression;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow expressions where the operation doesn't affect the value
+    /// Disallow expressions where the operation doesn't affect the value.
     ///
     /// ### Why is this bad?
     ///
@@ -350,8 +350,7 @@ impl NoConstantBinaryExpression {
             | Expression::RegExpLiteral(_) => true,
             Expression::NewExpression(call_expr) => {
                 if let Expression::Identifier(ident) = &call_expr.callee {
-                    return ctx.env_contains_var(ident.name.as_str())
-                        && ctx.scoping().root_unresolved_references().contains_key(&ident.name);
+                    return ctx.is_ecma_script_global(&ident.name);
                 }
                 false
             }

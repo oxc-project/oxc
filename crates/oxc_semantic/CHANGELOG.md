@@ -4,6 +4,19 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.122.0] - 2026-03-23
+
+### 🚀 Features
+
+- 07128b0 semantic: Report error for `await using` in class static block (#20535) (camc314)
+- 728fc8d semantic: Improve diagnostic for `await` in static block (#20534) (camc314)
+
+## [0.119.0] - 2026-03-14
+
+### ⚡ Performance
+
+- 5474d0a semantic: V8-style walk-up reference resolution (#20292) (Boshen)
+
 ## [0.116.0] - 2026-03-02
 
 ### 🚀 Features

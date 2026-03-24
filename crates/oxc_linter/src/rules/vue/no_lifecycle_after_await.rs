@@ -235,54 +235,54 @@ fn test() {
 
     let pass = vec![
             ("
-			      <script>
-			      import {onMounted} from 'vue'
-			      export default {
-			        async setup() {
-			          onMounted(() => { /* ... */ }) // ok
+                  <script>
+                  import {onMounted} from 'vue'
+                  export default {
+                    async setup() {
+                      onMounted(() => { /* ... */ }) // ok
 
-			          await doSomething()
-			        }
-			      }
-			      </script>
-			      ", None, None, Some(PathBuf::from("test.vue"))),
+                      await doSomething()
+                    }
+                  }
+                  </script>
+                  ", None, None, Some(PathBuf::from("test.vue"))),
                       ("
-			      <script>
-			      import {onMounted} from 'vue'
+                  <script>
+                  import {onMounted} from 'vue'
                   let a = {
                     async setup() {
                       await doSomething()
                       onMounted(() => { /* ... */ }) // ok
                     }
                   }
-			      export default a;
-			      </script>
-			      ", None, None, Some(PathBuf::from("test.vue"))),
+                  export default a;
+                  </script>
+                  ", None, None, Some(PathBuf::from("test.vue"))),
                       ("
-			      <script>
-			      import {onMounted} from 'vue'
-			      export default {
-			        async setup() {
+                  <script>
+                  import {onMounted} from 'vue'
+                  export default {
+                    async setup() {
                         await doSomething()
                         onUpdated(() => { /* ... */ }) // ok
-			        }
-			      }
-			      </script>
-			      ", None, None, Some(PathBuf::from("test.vue"))),
+                    }
+                  }
+                  </script>
+                  ", None, None, Some(PathBuf::from("test.vue"))),
                       ("
-			      <script>
-			      import {onMounted} from 'vue'
-			      export default {
-			        async setup() {
+                  <script>
+                  import {onMounted} from 'vue'
+                  export default {
+                    async setup() {
                       function onMounted(callback) {
                         return;
                       }
                       await doSomething()
-			          onMounted(() => { /* ... */ }) // ok
-			        }
-			      }
-			      </script>
-			      ", None, None, Some(PathBuf::from("test.vue"))),
+                      onMounted(() => { /* ... */ }) // ok
+                    }
+                  }
+                  </script>
+                  ", None, None, Some(PathBuf::from("test.vue"))),
                       (
                         "
                         <script>
@@ -321,156 +321,156 @@ fn test() {
                         Some(PathBuf::from("test.vue"))
                       ),
     ("
-			      <script>
-			      import {onMounted} from 'vue'
-			      export default {
-			        async setup() {
-			          onMounted(() => { /* ... */ })
-			        }
-			      }
-			      </script>
-			      ", None, None, Some(PathBuf::from("test.vue"))),
+                  <script>
+                  import {onMounted} from 'vue'
+                  export default {
+                    async setup() {
+                      onMounted(() => { /* ... */ })
+                    }
+                  }
+                  </script>
+                  ", None, None, Some(PathBuf::from("test.vue"))),
     ("
-			      <script>
-			      import {onBeforeMount, onBeforeUnmount, onBeforeUpdate, onErrorCaptured, onMounted, onRenderTracked, onRenderTriggered, onUnmounted, onUpdated, onActivated, onDeactivated} from 'vue'
-			      export default {
-			        async setup() {
-			          onBeforeMount(() => { /* ... */ })
-			          onBeforeUnmount(() => { /* ... */ })
-			          onBeforeUpdate(() => { /* ... */ })
-			          onErrorCaptured(() => { /* ... */ })
-			          onMounted(() => { /* ... */ })
-			          onRenderTracked(() => { /* ... */ })
-			          onRenderTriggered(() => { /* ... */ })
-			          onUnmounted(() => { /* ... */ })
-			          onUpdated(() => { /* ... */ })
-			          onActivated(() => { /* ... */ })
-			          onDeactivated(() => { /* ... */ })
+                  <script>
+                  import {onBeforeMount, onBeforeUnmount, onBeforeUpdate, onErrorCaptured, onMounted, onRenderTracked, onRenderTriggered, onUnmounted, onUpdated, onActivated, onDeactivated} from 'vue'
+                  export default {
+                    async setup() {
+                      onBeforeMount(() => { /* ... */ })
+                      onBeforeUnmount(() => { /* ... */ })
+                      onBeforeUpdate(() => { /* ... */ })
+                      onErrorCaptured(() => { /* ... */ })
+                      onMounted(() => { /* ... */ })
+                      onRenderTracked(() => { /* ... */ })
+                      onRenderTriggered(() => { /* ... */ })
+                      onUnmounted(() => { /* ... */ })
+                      onUpdated(() => { /* ... */ })
+                      onActivated(() => { /* ... */ })
+                      onDeactivated(() => { /* ... */ })
 
-			          await doSomething()
-			        }
-			      }
-			      </script>
-			      ", None, None, Some(PathBuf::from("test.vue"))),
+                      await doSomething()
+                    }
+                  }
+                  </script>
+                  ", None, None, Some(PathBuf::from("test.vue"))),
                       ("
-			      <script>
+                  <script>
                   import { h } from 'vue'
-			      export default {
-			        async setup() {
+                  export default {
+                    async setup() {
                       await doSomething();
-			          onBeforeMount(() => { /* ... */ })
-			          onBeforeUnmount(() => { /* ... */ })
-			          onBeforeUpdate(() => { /* ... */ })
-			          onErrorCaptured(() => { /* ... */ })
-			          onMounted(() => { /* ... */ })
-			          onRenderTracked(() => { /* ... */ })
-			          onRenderTriggered(() => { /* ... */ })
-			          onUnmounted(() => { /* ... */ })
-			          onUpdated(() => { /* ... */ })
-			          onActivated(() => { /* ... */ })
-			          onDeactivated(() => { /* ... */ })
-			        }
-			      }
-			      </script>
-			      ", None, None, Some(PathBuf::from("test.vue"))),
+                      onBeforeMount(() => { /* ... */ })
+                      onBeforeUnmount(() => { /* ... */ })
+                      onBeforeUpdate(() => { /* ... */ })
+                      onErrorCaptured(() => { /* ... */ })
+                      onMounted(() => { /* ... */ })
+                      onRenderTracked(() => { /* ... */ })
+                      onRenderTriggered(() => { /* ... */ })
+                      onUnmounted(() => { /* ... */ })
+                      onUpdated(() => { /* ... */ })
+                      onActivated(() => { /* ... */ })
+                      onDeactivated(() => { /* ... */ })
+                    }
+                  }
+                  </script>
+                  ", None, None, Some(PathBuf::from("test.vue"))),
     ("
-			      <script>
-			      import {onMounted} from 'vue'
-			      export default {
-			        async _setup() {
-			          await doSomething()
+                  <script>
+                  import {onMounted} from 'vue'
+                  export default {
+                    async _setup() {
+                      await doSomething()
 
-			          onMounted(() => { /* ... */ }) // error
-			        }
-			      }
-			      </script>
-			      ", None, None, Some(PathBuf::from("test.vue"))),
+                      onMounted(() => { /* ... */ }) // error
+                    }
+                  }
+                  </script>
+                  ", None, None, Some(PathBuf::from("test.vue"))),
     ("
-			      <script setup>
-			      import {onMounted} from 'vue'
-			      onMounted(() => { /* ... */ })
-			      await doSomething()
-			      </script>
-			      ", None, None, Some(PathBuf::from("test.vue"))), // { "ecmaVersion": 2022 },
+                  <script setup>
+                  import {onMounted} from 'vue'
+                  onMounted(() => { /* ... */ })
+                  await doSomething()
+                  </script>
+                  ", None, None, Some(PathBuf::from("test.vue"))), // { "ecmaVersion": 2022 },
     ("
-			      <script setup>
-			      await doSomething()
-			      </script>
-			      <script>
-			      import {onMounted} from 'vue'
-			      onMounted(() => { /* ... */ }) // not error
-			      </script>
-			      ", None, None, Some(PathBuf::from("test.vue"))), // { "ecmaVersion": 2022 },
+                  <script setup>
+                  await doSomething()
+                  </script>
+                  <script>
+                  import {onMounted} from 'vue'
+                  onMounted(() => { /* ... */ }) // not error
+                  </script>
+                  ", None, None, Some(PathBuf::from("test.vue"))), // { "ecmaVersion": 2022 },
     ("
-			      <script setup>
-			      </script>
-			      <script>
-			      import {onMounted} from 'vue'
-			      await doSomething()
-			      onMounted(() => { /* ... */ }) // not error
-			      </script>
-			      ", None, None, Some(PathBuf::from("test.vue"))), // { "ecmaVersion": 2022 },
+                  <script setup>
+                  </script>
+                  <script>
+                  import {onMounted} from 'vue'
+                  await doSomething()
+                  onMounted(() => { /* ... */ }) // not error
+                  </script>
+                  ", None, None, Some(PathBuf::from("test.vue"))), // { "ecmaVersion": 2022 },
     ("
-			      <script setup>
-			      import {onMounted} from 'vue'
-			      await doSomething()
+                  <script setup>
+                  import {onMounted} from 'vue'
+                  await doSomething()
 
-			      onMounted(() => { /* ... */ }) // not error
-			      </script>
-			      ", None, None, Some(PathBuf::from("test.vue"))), // { "ecmaVersion": 2022 },
+                  onMounted(() => { /* ... */ }) // not error
+                  </script>
+                  ", None, None, Some(PathBuf::from("test.vue"))), // { "ecmaVersion": 2022 },
     ("
-			      <script>
-			      import {onMounted} from 'vue'
-			      export default {
-			        async setup() {
-			          await doSomething()
+                  <script>
+                  import {onMounted} from 'vue'
+                  export default {
+                    async setup() {
+                      await doSomething()
 
-			          function logMessage() {
-			            onMounted(() => {
-			              console.log('Component has been mounted')
-			            })
-			          }
-			        }
-			      }
-			      </script>
-			      ", None, None, Some(PathBuf::from("test.vue"))),
+                      function logMessage() {
+                        onMounted(() => {
+                          console.log('Component has been mounted')
+                        })
+                      }
+                    }
+                  }
+                  </script>
+                  ", None, None, Some(PathBuf::from("test.vue"))),
                       ("
-			      <script>
-			      import {onMounted} from 'vue'
-			      let a = {
-			        async setup() {
-			          await d();
-			          onMounted(() => {});
-			        }
-			      }
-			      export default a;
-			      </script>
-			      ", None, None, Some(PathBuf::from("test.vue"))),
+                  <script>
+                  import {onMounted} from 'vue'
+                  let a = {
+                    async setup() {
+                      await d();
+                      onMounted(() => {});
+                    }
+                  }
+                  export default a;
+                  </script>
+                  ", None, None, Some(PathBuf::from("test.vue"))),
                       ("
-			      <script>
-			      import {onBeforeMount, onBeforeUnmount, onBeforeUpdate, onErrorCaptured, onMounted, onRenderTracked, onRenderTriggered, onUnmounted, onUpdated, onActivated, onDeactivated} from 'vue'
-			      export default {
-			        async setup() {
-			          await doSomething()
+                  <script>
+                  import {onBeforeMount, onBeforeUnmount, onBeforeUpdate, onErrorCaptured, onMounted, onRenderTracked, onRenderTriggered, onUnmounted, onUpdated, onActivated, onDeactivated} from 'vue'
+                  export default {
+                    async setup() {
+                      await doSomething()
 
-			          onBeforeMount(() => { /* ... */ }, instance)
-			          onBeforeUnmount(() => { /* ... */ }, instance)
-			          onBeforeUpdate(() => { /* ... */ }, instance)
-			          onErrorCaptured(() => { /* ... */ }, instance)
-			          onMounted(() => { /* ... */ }, instance)
-			          onRenderTracked(() => { /* ... */ }, instance)
-			          onRenderTriggered(() => { /* ... */ }, instance)
-			          onUnmounted(() => { /* ... */ }, instance)
-			          onUpdated(() => { /* ... */ }, instance)
-			          onActivated(() => { /* ... */ }, instance)
-			          onDeactivated(() => { /* ... */ }, instance)
-			        }
-			      }
-			      </script>
-			      ", None, None, Some(PathBuf::from("test.vue"))),
+                      onBeforeMount(() => { /* ... */ }, instance)
+                      onBeforeUnmount(() => { /* ... */ }, instance)
+                      onBeforeUpdate(() => { /* ... */ }, instance)
+                      onErrorCaptured(() => { /* ... */ }, instance)
+                      onMounted(() => { /* ... */ }, instance)
+                      onRenderTracked(() => { /* ... */ }, instance)
+                      onRenderTriggered(() => { /* ... */ }, instance)
+                      onUnmounted(() => { /* ... */ }, instance)
+                      onUpdated(() => { /* ... */ }, instance)
+                      onActivated(() => { /* ... */ }, instance)
+                      onDeactivated(() => { /* ... */ }, instance)
+                    }
+                  }
+                  </script>
+                  ", None, None, Some(PathBuf::from("test.vue"))),
                   // https://github.com/oxc-project/oxc/issues/18298
                       ("
-			      <script>
+                  <script>
                   import { onMounted } from 'vue';
                   export default {
                     async setup() {
@@ -484,116 +484,116 @@ fn test() {
                     },
                   };
                   </script>
-			      ", None, None, Some(PathBuf::from("test.vue")))
+                  ", None, None, Some(PathBuf::from("test.vue")))
         ];
 
     let fail = vec![
         ("
-			      <script>
-			      import {onMounted} from 'vue'
-			      export default {
-			        async setup() {
-			          await doSomething();
+                  <script>
+                  import {onMounted} from 'vue'
+                  export default {
+                    async setup() {
+                      await doSomething();
 
-			          (onMounted)(() => { /* ... */ }) // error
-			        }
-			      }
-			      </script>
-			      ", None, None, Some(PathBuf::from("test.vue"))),
+                      (onMounted)(() => { /* ... */ }) // error
+                    }
+                  }
+                  </script>
+                  ", None, None, Some(PathBuf::from("test.vue"))),
                   ("
-			      <script>
-			      import {onMounted} from 'vue'
-			      export default defineComponent({
+                  <script>
+                  import {onMounted} from 'vue'
+                  export default defineComponent({
                     name: 'Index',
                     async setup() {
                         await doSomething();
                         onMounted(() => {});
                     },
                     });
-			      </script>
-			      ", None, None, Some(PathBuf::from("test.vue"))),
+                  </script>
+                  ", None, None, Some(PathBuf::from("test.vue"))),
                   ("
-			      <script>
-			      import {onMounted} from 'vue'
-			      defineComponent({
+                  <script>
+                  import {onMounted} from 'vue'
+                  defineComponent({
                     name: 'Index',
                     async setup() {
                         await doSomething();
                         onMounted(() => {});
                     },
                     });
-			      </script>
-			      ", None, None, Some(PathBuf::from("test.vue"))),
+                  </script>
+                  ", None, None, Some(PathBuf::from("test.vue"))),
                   ("
-			      <script>
-			      import {onMounted} from 'vue'
-			      export default {
-			        setup: async () => {
-			          await doSomething()
+                  <script>
+                  import {onMounted} from 'vue'
+                  export default {
+                    setup: async () => {
+                      await doSomething()
 
-			          onMounted(() => { /* ... */ }) // error
-			        }
-			      }
-			      </script>
-			      ", None, None, Some(PathBuf::from("test.vue"))),
+                      onMounted(() => { /* ... */ }) // error
+                    }
+                  }
+                  </script>
+                  ", None, None, Some(PathBuf::from("test.vue"))),
 ("
-			      <script>
-			      import {onBeforeMount, onBeforeUnmount, onBeforeUpdate, onErrorCaptured, onMounted, onRenderTracked, onRenderTriggered, onUnmounted, onUpdated, onActivated, onDeactivated} from 'vue'
-			      export default {
-			        async setup() {
-			          await doSomething()
+                  <script>
+                  import {onBeforeMount, onBeforeUnmount, onBeforeUpdate, onErrorCaptured, onMounted, onRenderTracked, onRenderTriggered, onUnmounted, onUpdated, onActivated, onDeactivated} from 'vue'
+                  export default {
+                    async setup() {
+                      await doSomething()
 
-			          onBeforeMount(() => { /* ... */ })
-			          onBeforeUnmount(() => { /* ... */ })
-			          onBeforeUpdate(() => { /* ... */ })
-			          onErrorCaptured(() => { /* ... */ })
-			          onMounted(() => { /* ... */ })
-			          onRenderTracked(() => { /* ... */ })
-			          onRenderTriggered(() => { /* ... */ })
-			          onUnmounted(() => { /* ... */ })
-			          onUpdated(() => { /* ... */ })
-			          onActivated(() => { /* ... */ })
-			          onDeactivated(() => { /* ... */ })
-			        }
-			      }
-			      </script>
-			      ", None, None, Some(PathBuf::from("test.vue"))),
+                      onBeforeMount(() => { /* ... */ })
+                      onBeforeUnmount(() => { /* ... */ })
+                      onBeforeUpdate(() => { /* ... */ })
+                      onErrorCaptured(() => { /* ... */ })
+                      onMounted(() => { /* ... */ })
+                      onRenderTracked(() => { /* ... */ })
+                      onRenderTriggered(() => { /* ... */ })
+                      onUnmounted(() => { /* ... */ })
+                      onUpdated(() => { /* ... */ })
+                      onActivated(() => { /* ... */ })
+                      onDeactivated(() => { /* ... */ })
+                    }
+                  }
+                  </script>
+                  ", None, None, Some(PathBuf::from("test.vue"))),
 ("
-			      <script>
-			      import {onMounted} from 'vue'
-			      export default {
-			        async setup() {
-			          await doSomething()
+                  <script>
+                  import {onMounted} from 'vue'
+                  export default {
+                    async setup() {
+                      await doSomething()
 
-			          onMounted?.(() => { /* ... */ }) // error
-			        }
-			      }
-			      </script>
-			      ", None, None, Some(PathBuf::from("test.vue"))),
+                      onMounted?.(() => { /* ... */ }) // error
+                    }
+                  }
+                  </script>
+                  ", None, None, Some(PathBuf::from("test.vue"))),
                   ("
-			      <script>
-			      import {onMounted as A} from 'vue'
-			      export default {
-			        async setup() {
-			          await doSomething()
+                  <script>
+                  import {onMounted as A} from 'vue'
+                  export default {
+                    async setup() {
+                      await doSomething()
 
-			          A?.(() => { /* ... */ }) // error
-			        }
-			      }
-			      </script>
-			      ", None, None, Some(PathBuf::from("test.vue"))),
+                      A?.(() => { /* ... */ }) // error
+                    }
+                  }
+                  </script>
+                  ", None, None, Some(PathBuf::from("test.vue"))),
                   ("
-			      <script>
-			      import {onMounted as A} from 'vue'
-			      export default {
-			        async setup() {
-			          await doSomething()
+                  <script>
+                  import {onMounted as A} from 'vue'
+                  export default {
+                    async setup() {
+                      await doSomething()
 
-			          A() // error
-			        }
-			      }
-			      </script>
-			      ", None, None, Some(PathBuf::from("test.vue"))),
+                      A() // error
+                    }
+                  }
+                  </script>
+                  ", None, None, Some(PathBuf::from("test.vue"))),
     ];
 
     Tester::new(NoLifecycleAfterAwait::NAME, NoLifecycleAfterAwait::PLUGIN, pass, fail)

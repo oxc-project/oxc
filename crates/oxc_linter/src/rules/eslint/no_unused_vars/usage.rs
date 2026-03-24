@@ -258,7 +258,7 @@ impl<'a> Symbol<'_, 'a> {
                 | AstKind::AssignmentTargetPropertyIdentifier(_)
                 | AstKind::AssignmentTargetPropertyProperty(_) => {}
                 AstKind::AssignmentExpression(assignment) => {
-                    return options.is_ignored_assignment_target(self, &assignment.left);
+                    return options.is_ignored_assignment_target(self, &assignment.left).is_some();
                 }
                 // Needs to be checked separately from AssignmentTarget due to
                 // weird heritage bug for object assignment patterns.
@@ -267,14 +267,14 @@ impl<'a> Symbol<'_, 'a> {
                 // expression instead of the top-level AssignmentTarget
                 AstKind::ObjectAssignmentTarget(obj) => {
                     match options.search_obj_assignment_target(self, obj) {
-                        FoundStatus::Ignored => return true,
+                        FoundStatus::Ignored(_) => return true,
                         FoundStatus::NotIgnored => return false,
                         FoundStatus::NotFound => {}
                     }
                 }
                 AstKind::ArrayAssignmentTarget(arr) => {
                     match options.search_array_assignment_target(self, arr) {
-                        FoundStatus::Ignored => return true,
+                        FoundStatus::Ignored(_) => return true,
                         FoundStatus::NotIgnored => return false,
                         FoundStatus::NotFound => {}
                     }
@@ -521,6 +521,9 @@ impl<'a> Symbol<'_, 'a> {
                 | AstKind::WhileStatement(_) => break,
                 // this is needed to handle `return () => foo++`
                 AstKind::ExpressionStatement(_) => {
+                    if self.is_in_loop_body(node.id()) {
+                        return false;
+                    }
                     if self.is_in_return_statement(node.id()) {
                         return false;
                     }
@@ -572,6 +575,36 @@ impl<'a> Symbol<'_, 'a> {
                             .is_some_and(|update| update.span().contains_inclusive(node_span));
                 }
                 x if x.is_statement() => return false,
+                _ => {}
+            }
+        }
+        false
+    }
+
+    /// Check if a [`AstNode`] is within the body of a loop that may execute
+    /// more than once.
+    fn is_in_loop_body(&self, node_id: NodeId) -> bool {
+        let node_span = self.nodes().get_node(node_id).span();
+        for parent in self.iter_relevant_parents_of(node_id).map(AstNode::kind) {
+            match parent {
+                AstKind::ForStatement(for_stmt) => {
+                    return for_stmt.body.span().contains_inclusive(node_span);
+                }
+                AstKind::ForInStatement(for_stmt) => {
+                    return for_stmt.body.span().contains_inclusive(node_span);
+                }
+                AstKind::ForOfStatement(for_stmt) => {
+                    return for_stmt.body.span().contains_inclusive(node_span);
+                }
+                AstKind::WhileStatement(while_stmt) => {
+                    return while_stmt.body.span().contains_inclusive(node_span);
+                }
+                AstKind::DoWhileStatement(do_while_stmt) => {
+                    return do_while_stmt.body.span().contains_inclusive(node_span);
+                }
+                AstKind::Function(_)
+                | AstKind::ArrowFunctionExpression(_)
+                | AstKind::Program(_) => return false,
                 _ => {}
             }
         }

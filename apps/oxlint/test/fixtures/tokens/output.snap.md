@@ -10,6 +10,32 @@
    : ^
    `----
 
+  x tokens-plugin(tokens): Token JSON.stringify:
+  | {
+  |   "type": "Identifier",
+  |   "value": "a",
+  |   "start": 0,
+  |   "end": 1,
+  |   "range": [
+  |     0,
+  |     1
+  |   ],
+  |   "loc": {
+  |     "start": {
+  |       "line": 1,
+  |       "column": 0
+  |     },
+  |     "end": {
+  |       "line": 1,
+  |       "column": 1
+  |     }
+  |   }
+  | }
+   ,-[files/bom.js:1:4]
+ 1 | ﻿a = b;
+   : ^
+   `----
+
   x tokens-plugin(tokens): Tokens and comments:
   | Identifier        loc= 1:0 - 1:1    range= 0-1     "a"
   | Punctuator        loc= 1:2 - 1:3    range= 2-3     "="
@@ -310,6 +336,34 @@
 
   x tokens-plugin(tokens): Keyword ("var")
   |   regex: undefined
+   ,-[files/escaped_idents.js:2:1]
+ 1 | // abc
+ 2 | var \u{61}b\u0063;
+   : ^^^
+ 3 | 
+   `----
+
+  x tokens-plugin(tokens): Token JSON.stringify:
+  | {
+  |   "type": "Keyword",
+  |   "value": "var",
+  |   "start": 7,
+  |   "end": 10,
+  |   "range": [
+  |     7,
+  |     10
+  |   ],
+  |   "loc": {
+  |     "start": {
+  |       "line": 2,
+  |       "column": 0
+  |     },
+  |     "end": {
+  |       "line": 2,
+  |       "column": 3
+  |     }
+  |   }
+  | }
    ,-[files/escaped_idents.js:2:1]
  1 | // abc
  2 | var \u{61}b\u0063;
@@ -1043,6 +1097,33 @@
  2 |   fn: <T>(arg: T): T => {
    `----
 
+  x tokens-plugin(tokens): Token JSON.stringify:
+  | {
+  |   "type": "Keyword",
+  |   "value": "const",
+  |   "start": 0,
+  |   "end": 5,
+  |   "range": [
+  |     0,
+  |     5
+  |   ],
+  |   "loc": {
+  |     "start": {
+  |       "line": 1,
+  |       "column": 0
+  |     },
+  |     "end": {
+  |       "line": 1,
+  |       "column": 5
+  |     }
+  |   }
+  | }
+   ,-[files/generic_arrow.ts:1:1]
+ 1 | const obj = {
+   : ^^^^^
+ 2 |   fn: <T>(arg: T): T => {
+   `----
+
   x tokens-plugin(tokens): Tokens and comments:
   | Keyword           loc= 1:0 - 1:5    range= 0-5     "const"
   | Identifier        loc= 1:6 - 1:9    range= 6-9     "obj"
@@ -1453,6 +1534,34 @@
  4 | 
    `----
 
+  x tokens-plugin(tokens): Token JSON.stringify:
+  | {
+  |   "type": "Keyword",
+  |   "value": "let",
+  |   "start": 20,
+  |   "end": 23,
+  |   "range": [
+  |     20,
+  |     23
+  |   ],
+  |   "loc": {
+  |     "start": {
+  |       "line": 3,
+  |       "column": 0
+  |     },
+  |     "end": {
+  |       "line": 3,
+  |       "column": 3
+  |     }
+  |   }
+  | }
+   ,-[files/index.js:3:1]
+ 2 | 
+ 3 | let x = /* inline comment */ 1;
+   : ^^^
+ 4 | 
+   `----
+
   x tokens-plugin(tokens): Identifier ("x")
   |   regex: undefined
    ,-[files/index.js:3:5]
@@ -1559,6 +1668,33 @@
 
   x tokens-plugin(tokens): Keyword ("const")
   |   regex: undefined
+   ,-[files/jsx_element.tsx:1:1]
+ 1 | const Component = () => {
+   : ^^^^^
+ 2 |   return <div className="test">Hello</div>;
+   `----
+
+  x tokens-plugin(tokens): Token JSON.stringify:
+  | {
+  |   "type": "Keyword",
+  |   "value": "const",
+  |   "start": 0,
+  |   "end": 5,
+  |   "range": [
+  |     0,
+  |     5
+  |   ],
+  |   "loc": {
+  |     "start": {
+  |       "line": 1,
+  |       "column": 0
+  |     },
+  |     "end": {
+  |       "line": 1,
+  |       "column": 5
+  |     }
+  |   }
+  | }
    ,-[files/jsx_element.tsx:1:1]
  1 | const Component = () => {
    : ^^^^^
@@ -1873,6 +2009,33 @@
 
   x tokens-plugin(tokens): Keyword ("const")
   |   regex: undefined
+   ,-[files/keywords.js:1:1]
+ 1 | const obj = {
+   : ^^^^^
+ 2 |   // Identifier tokens
+   `----
+
+  x tokens-plugin(tokens): Token JSON.stringify:
+  | {
+  |   "type": "Keyword",
+  |   "value": "const",
+  |   "start": 0,
+  |   "end": 5,
+  |   "range": [
+  |     0,
+  |     5
+  |   ],
+  |   "loc": {
+  |     "start": {
+  |       "line": 1,
+  |       "column": 0
+  |     },
+  |     "end": {
+  |       "line": 1,
+  |       "column": 5
+  |     }
+  |   }
+  | }
    ,-[files/keywords.js:1:1]
  1 | const obj = {
    : ^^^^^
@@ -2299,6 +2462,34 @@
  3 | 
    `----
 
+  x tokens-plugin(tokens): Token JSON.stringify:
+  | {
+  |   "type": "Keyword",
+  |   "value": "const",
+  |   "start": 91,
+  |   "end": 96,
+  |   "range": [
+  |     91,
+  |     96
+  |   ],
+  |   "loc": {
+  |     "start": {
+  |       "line": 2,
+  |       "column": 0
+  |     },
+  |     "end": {
+  |       "line": 2,
+  |       "column": 5
+  |     }
+  |   }
+  | }
+   ,-[files/ts_angle_relex.ts:2:1]
+ 1 | // `<<` is disambiguated: speculatively tried as `<` for type args, fails, rewinds to `<<`
+ 2 | const a = n << 2;
+   : ^^^^^
+ 3 | 
+   `----
+
   x tokens-plugin(tokens): Identifier ("a")
   |   regex: undefined
    ,-[files/ts_angle_relex.ts:2:7]
@@ -2572,6 +2763,33 @@
  2 | // 😀🤪😆😎🤮
    `----
 
+  x tokens-plugin(tokens): Token JSON.stringify:
+  | {
+  |   "type": "Identifier",
+  |   "value": "a",
+  |   "start": 0,
+  |   "end": 1,
+  |   "range": [
+  |     0,
+  |     1
+  |   ],
+  |   "loc": {
+  |     "start": {
+  |       "line": 1,
+  |       "column": 0
+  |     },
+  |     "end": {
+  |       "line": 1,
+  |       "column": 1
+  |     }
+  |   }
+  | }
+   ,-[files/unicode.js:1:1]
+ 1 | a;
+   : ^
+ 2 | // 😀🤪😆😎🤮
+   `----
+
   x tokens-plugin(tokens): Tokens and comments:
   | Identifier        loc= 1:0 - 1:1    range= 0-1     "a"
   | Punctuator        loc= 1:1 - 1:2    range= 1-2     ";"
@@ -2627,7 +2845,7 @@
    :  ^
    `----
 
-Found 0 warnings and 243 errors.
+Found 0 warnings and 251 errors.
 Finished in Xms on 8 files with 1 rules using X threads.
 ```
 

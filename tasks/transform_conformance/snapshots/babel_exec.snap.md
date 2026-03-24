@@ -1,6 +1,6 @@
-commit: 308c8d85
+commit: 0124e7c7
 
-node: v24.12.0
+node: v24.14.0
 
 Passed: 324 of 413 (78.45%)
 
@@ -13,7 +13,7 @@ At file: /fixtures/babel/babel-plugin-transform-arrow-functions-test-fixtures-ar
 ./fixtures/babel/babel-plugin-transform-async-generator-functions-test-fixtures-async-generators-await-in-finally-exec.test.js
 AssertionError: expected { value: 2, done: true } to deeply equal { value: 4, done: false }
     at test (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-async-generator-functions-test-fixtures-async-generators-await-in-finally-exec.test.js:28:44)
-    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at processTicksAndRejections (node:internal/process/task_queues:104:5)
 
 ./fixtures/babel/babel-plugin-transform-async-to-generator-test-fixtures-async-to-generator-async-complex-params-exec.test.js
 TypeError: Cannot destructure property 'b' of 'undefined' as it is undefined.
@@ -55,9 +55,9 @@ TypeError: e.has is not a function
 
 ./fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-public-computed-toPrimitive-exec.test.js
 AssertionError: expected [Function] to throw error including '@@toPrimitive must return a primitive…' but got 'Cannot convert object to primitive va…'
-    at Proxy.<anonymous> (./node_modules/.pnpm/@vitest+expect@4.0.18/node_modules/@vitest/expect/dist/index.js:1485:16)
-    at Proxy.<anonymous> (./node_modules/.pnpm/@vitest+expect@4.0.18/node_modules/@vitest/expect/dist/index.js:1090:14)
-    at Proxy.methodWrapper (./node_modules/.pnpm/chai@6.2.1/node_modules/chai/index.js:1700:25)
+    at Proxy.<anonymous> (./node_modules/.pnpm/@vitest+expect@4.1.0/node_modules/@vitest/expect/dist/index.js:1547:16)
+    at Proxy.<anonymous> (./node_modules/.pnpm/@vitest+expect@4.1.0/node_modules/@vitest/expect/dist/index.js:1151:15)
+    at Proxy.methodWrapper (./node_modules/.pnpm/chai@6.2.2/node_modules/chai/index.js:1700:25)
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-public-computed-toPrimitive-exec.test.js:37:5
 
 ./fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-public-delete-super-property-exec.test.js
@@ -436,9 +436,9 @@ ReferenceError: _Foo_brand is not defined
 
 ./fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-private-loose-rhs-not-object-exec.test.js
 AssertionError: expected [Function] to throw error including 'right-hand side of \'in\' should be a…' but got '_Class_brand is not defined'
-    at Proxy.<anonymous> (./node_modules/.pnpm/@vitest+expect@4.0.18/node_modules/@vitest/expect/dist/index.js:1485:16)
-    at Proxy.<anonymous> (./node_modules/.pnpm/@vitest+expect@4.0.18/node_modules/@vitest/expect/dist/index.js:1090:14)
-    at Proxy.methodWrapper (./node_modules/.pnpm/chai@6.2.1/node_modules/chai/index.js:1700:25)
+    at Proxy.<anonymous> (./node_modules/.pnpm/@vitest+expect@4.1.0/node_modules/@vitest/expect/dist/index.js:1547:16)
+    at Proxy.<anonymous> (./node_modules/.pnpm/@vitest+expect@4.1.0/node_modules/@vitest/expect/dist/index.js:1151:15)
+    at Proxy.methodWrapper (./node_modules/.pnpm/chai@6.2.2/node_modules/chai/index.js:1700:25)
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-private-loose-rhs-not-object-exec.test.js:176:5
 
 ./fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-private-loose-static-shadow-exec.test.js
@@ -459,9 +459,9 @@ AssertionError: expected 2 to be 5 // Object.is equality
 
 ./fixtures/babel/babel-preset-env-test-fixtures-plugins-integration-issue-15170-exec.test.js
 AssertionError: expected [Function] to not throw an error but 'ReferenceError: x is not defined' was thrown
-    at Proxy.<anonymous> (./node_modules/.pnpm/@vitest+expect@4.0.18/node_modules/@vitest/expect/dist/index.js:1485:16)
-    at Proxy.<anonymous> (./node_modules/.pnpm/@vitest+expect@4.0.18/node_modules/@vitest/expect/dist/index.js:1090:14)
-    at Proxy.methodWrapper (./node_modules/.pnpm/chai@6.2.1/node_modules/chai/index.js:1700:25)
+    at Proxy.<anonymous> (./node_modules/.pnpm/@vitest+expect@4.1.0/node_modules/@vitest/expect/dist/index.js:1547:16)
+    at Proxy.<anonymous> (./node_modules/.pnpm/@vitest+expect@4.1.0/node_modules/@vitest/expect/dist/index.js:1151:15)
+    at Proxy.methodWrapper (./node_modules/.pnpm/chai@6.2.2/node_modules/chai/index.js:1700:25)
     at ./tasks/transform_conformance/fixtures/babel/babel-preset-env-test-fixtures-plugins-integration-issue-15170-exec.test.js:6:9
 
 ./fixtures/babel/babel-preset-env-test-fixtures-sanity-check-es2015-constants-exec.test.js

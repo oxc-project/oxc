@@ -1,6 +1,7 @@
 // oxlint-disable no-console, no-await-in-loop
 
-import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { createTwoFilesPatch } from "diff";
+import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join, relative } from "node:path";
 import prettier from "prettier";
 import { format } from "../dist/index.js";
@@ -8,8 +9,6 @@ import { format } from "../dist/index.js";
 const CONFORMANCE_DIR = import.meta.dirname;
 const FIXTURES_DIR = join(CONFORMANCE_DIR, "fixtures");
 const SNAPSHOTS_DIR = join(CONFORMANCE_DIR, "snapshots");
-const PRETTIER_FIXTURES_DIR = join(FIXTURES_DIR, "prettier");
-const EDGE_CASES_DIR = join(FIXTURES_DIR, "edge-cases");
 
 type Category = {
   name: string;
@@ -30,51 +29,119 @@ const categories: Category[] = [
   {
     name: "js-in-vue",
     sources: [
-      { dir: PRETTIER_FIXTURES_DIR, ext: ".vue" },
-      { dir: join(EDGE_CASES_DIR, "js-in-vue") },
+      { dir: join(FIXTURES_DIR, "prettier"), ext: ".vue" },
+      { dir: join(FIXTURES_DIR, "vue-vben-admin"), ext: ".vue" },
+      { dir: join(FIXTURES_DIR, "edge-cases", "js-in-vue") },
     ],
     optionSets: [
       { printWidth: 80 },
       { printWidth: 100, vueIndentScriptAndStyle: true, singleQuote: true },
     ],
     notes: {
-      "vue/multiparser/lang-tsx.vue": "`lang=tsx` is not supported",
+      "prettier/vue/multiparser/lang-tsx.vue": "`lang=tsx` is not supported",
+      "vue-vben-admin/effects/common-ui/src/components/api-component/api-component.vue":
+        "`<T = any,>() => {}` comma in generic param is removed even in .ts(x) file",
     },
   },
   {
     name: "gql-in-js",
     sources: [
       {
-        dir: join(PRETTIER_FIXTURES_DIR, "js/multiparser-graphql"),
+        dir: join(FIXTURES_DIR, "prettier", "js/multiparser-graphql"),
         ext: ".js",
         excludes: ["format.test.js"],
       },
-      { dir: join(EDGE_CASES_DIR, "gql-in-js") },
+      { dir: join(FIXTURES_DIR, "edge-cases", "gql-in-js") },
     ],
     optionSets: [{ printWidth: 80 }, { printWidth: 100 }],
-    notes: {
-      "comment-tag.js": "`/* GraphQL */` comment tag not yet supported",
-    },
+    notes: {},
   },
   {
     name: "css-in-js",
     sources: [
       {
-        dir: join(PRETTIER_FIXTURES_DIR, "js/multiparser-css"),
+        dir: join(FIXTURES_DIR, "prettier", "js/multiparser-css"),
         ext: ".js",
         excludes: ["format.test.js"],
       },
       {
-        dir: join(PRETTIER_FIXTURES_DIR, "jsx/embed"),
+        dir: join(FIXTURES_DIR, "prettier", "jsx/embed"),
         ext: ".js",
         excludes: ["format.test.js"],
       },
-      { dir: join(EDGE_CASES_DIR, "css-in-js") },
+      { dir: join(FIXTURES_DIR, "edge-cases", "css-in-js") },
     ],
     optionSets: [{ printWidth: 80 }, { printWidth: 100 }],
     notes: {
-      "styled-components.js": "Multiple issues: `Button.extend` not recognized as tag",
+      "prettier/js/multiparser-css/styled-components.js": "`Xxx.extend` not recognized as tag",
     },
+  },
+  {
+    name: "html-in-js",
+    sources: [
+      {
+        dir: join(FIXTURES_DIR, "prettier", "js/multiparser-html"),
+        ext: ".js",
+        excludes: ["format.test.js"],
+      },
+      {
+        dir: join(FIXTURES_DIR, "webawesome"),
+        ext: ".ts",
+      },
+      { dir: join(FIXTURES_DIR, "edge-cases", "html-in-js") },
+    ],
+    optionSets: [{ printWidth: 80 }, { printWidth: 100, htmlWhitespaceSensitivity: "ignore" }],
+    notes: {
+      "prettier/js/multiparser-html/issue-10691.js":
+        "js-in-html(`<script>`)-in-js needs lot more work; Please see oxc_formatter/src/print/template/embed/html.rs",
+      "webawesome/relative-time/relative-time.test.ts":
+        "html-in-js: Need to solve `label({ embed, hug }))` + `shouldExpandLastArg`",
+      "webawesome/slider/slider.ts":
+        "`@decorator` + union type: https://github.com/oxc-project/oxc/issues/20519",
+    },
+  },
+  {
+    name: "angular-in-js",
+    sources: [
+      {
+        dir: join(FIXTURES_DIR, "prettier", "typescript/angular-component-examples"),
+        ext: ".ts",
+      },
+      { dir: join(FIXTURES_DIR, "edge-cases", "angular-in-js") },
+    ],
+    optionSets: [{ printWidth: 80 }, { printWidth: 100, htmlWhitespaceSensitivity: "ignore" }],
+    notes: {},
+  },
+  {
+    name: "md-in-js",
+    sources: [
+      {
+        dir: join(FIXTURES_DIR, "prettier", "js/multiparser-markdown"),
+        ext: ".js",
+        excludes: ["format.test.js"],
+      },
+      { dir: join(FIXTURES_DIR, "edge-cases", "md-in-js") },
+    ],
+    optionSets: [{ printWidth: 80 }, { printWidth: 100, proseWrap: "always" }],
+    notes: {},
+  },
+  {
+    name: "xxx-in-js-comment",
+    sources: [
+      {
+        dir: join(FIXTURES_DIR, "prettier", "js/multiparser-html/language-comment"),
+        ext: ".js",
+        excludes: ["format.test.js"],
+      },
+      {
+        dir: join(FIXTURES_DIR, "prettier", "js/multiparser-comments"),
+        ext: ".js",
+        excludes: ["format.test.js"],
+      },
+      { dir: join(FIXTURES_DIR, "edge-cases", "xxx-in-js-comment") },
+    ],
+    optionSets: [{ printWidth: 80 }, { printWith: 100 }],
+    notes: {},
   },
 ];
 
@@ -109,6 +176,8 @@ type Fixture = { name: string; fullPath: string };
 type Failure = {
   name: string;
   note?: string;
+  oxfmt: string;
+  prettier: string;
 };
 
 type OptionSetResult = {
@@ -134,7 +203,7 @@ function collectFixtures(sources: Source[]): Fixture[] {
       if (source.ext && !entry.name.endsWith(source.ext)) continue;
 
       const fullPath = join(entry.parentPath, entry.name);
-      const relPath = relative(source.dir, fullPath);
+      const relPath = relative(FIXTURES_DIR, fullPath);
       if (source.excludes?.some((s) => relPath.includes(s))) continue;
 
       results.push({ name: relPath, fullPath });
@@ -162,7 +231,12 @@ async function runCategory(category: Category, fixtures: Fixture[]): Promise<Cat
       if (oxfmtResult === prettierResult) {
         passed++;
       } else {
-        failures.push({ name: fixture.name, note: category.notes?.[fixture.name] });
+        failures.push({
+          name: fixture.name,
+          note: category.notes?.[fixture.name],
+          oxfmt: oxfmtResult,
+          prettier: prettierResult,
+        });
       }
     }
 
@@ -200,10 +274,35 @@ async function compareWithPrettier(
 
 function writeReport(results: CategoryResult[]) {
   const lines: string[] = [];
+  const diffsDir = join(SNAPSHOTS_DIR, "diffs");
+
+  // Clean up old diffs and recreate
+  rmSync(diffsDir, { recursive: true, force: true });
 
   for (const result of results) {
     lines.push(`## ${result.name}`);
     lines.push("");
+
+    // Collect all failures per fixture across option sets
+    const failuresByFixture = new Map<
+      string,
+      { optionIndex: number; options: Record<string, unknown>; failure: Failure }[]
+    >();
+    for (let i = 0; i < result.optionSetResults.length; i++) {
+      for (const failure of result.optionSetResults[i].failures) {
+        let entries = failuresByFixture.get(failure.name);
+        if (!entries) {
+          entries = [];
+          failuresByFixture.set(failure.name, entries);
+        }
+        entries.push({ optionIndex: i + 1, options: result.optionSetResults[i].options, failure });
+      }
+    }
+
+    // Write one diff file per fixture
+    for (const [fixtureName, entries] of failuresByFixture) {
+      writeDiffFile(diffsDir, result.name, fixtureName, entries);
+    }
 
     for (let i = 0; i < result.optionSetResults.length; i++) {
       const r = result.optionSetResults[i];
@@ -219,7 +318,10 @@ function writeReport(results: CategoryResult[]) {
         lines.push("| File | Note |");
         lines.push("| :--- | :--- |");
         for (const failure of r.failures) {
-          lines.push(`| ${failure.name} | ${failure.note ?? ""} |`);
+          const safeName = failure.name.replaceAll("/", "__");
+          const diffRelPath = `diffs/${result.name}/${safeName}.md`;
+          const diffLink = `[${failure.name}](${diffRelPath})`;
+          lines.push(`| ${diffLink} | ${failure.note ?? ""} |`);
         }
         lines.push("");
       }
@@ -231,4 +333,64 @@ function writeReport(results: CategoryResult[]) {
   writeFileSync(outPath, lines.join("\n"));
   console.log("=".repeat(60));
   console.log(`Report written to ${relative(process.cwd(), outPath)}`);
+}
+
+function writeDiffFile(
+  diffsDir: string,
+  categoryName: string,
+  fixtureName: string,
+  entries: { optionIndex: number; options: Record<string, unknown>; failure: Failure }[],
+) {
+  const safeName = fixtureName.replaceAll("/", "__");
+  const dir = join(diffsDir, categoryName);
+  mkdirSync(dir, { recursive: true });
+
+  const lines: string[] = [];
+  lines.push(`# ${fixtureName}`);
+  lines.push("");
+
+  const {
+    failure: { note },
+  } = entries[0];
+  if (note) {
+    lines.push(`> ${note}`);
+    lines.push("");
+  }
+
+  for (const entry of entries) {
+    lines.push(`## Option ${entry.optionIndex}`);
+    lines.push("");
+    lines.push("`````json");
+    lines.push(JSON.stringify(entry.options));
+    lines.push("`````");
+    lines.push("");
+    const lang = fixtureName.split(".").pop() ?? "";
+    const patch = createTwoFilesPatch(
+      "prettier",
+      "oxfmt",
+      entry.failure.prettier,
+      entry.failure.oxfmt,
+    );
+    lines.push("### Diff");
+    lines.push("");
+    lines.push("`````diff");
+    lines.push(patch);
+    lines.push("`````");
+    lines.push("");
+    lines.push("### Actual (oxfmt)");
+    lines.push("");
+    lines.push(`\`\`\`\`\`${lang}`);
+    lines.push(entry.failure.oxfmt);
+    lines.push("`````");
+    lines.push("");
+    lines.push("### Expected (prettier)");
+    lines.push("");
+    lines.push(`\`\`\`\`\`${lang}`);
+    lines.push(entry.failure.prettier);
+    lines.push("`````");
+    lines.push("");
+  }
+
+  const filePath = join(dir, `${safeName}.md`);
+  writeFileSync(filePath, lines.join("\n"));
 }

@@ -13,12 +13,19 @@ pub type EmbeddedFormatterCallback =
 ///
 /// The variant depends on the language being formatted:
 /// - GraphQL: multiple IRs (one per quasi text)
-/// - CSS: single IR with placeholder survival count
-/// - HTML(TODO): single IR with placeholder survival count
+/// - CSS/HTML: single IR with placeholder survival count
+/// - Markdown: single IR only (no placeholders or metadata)
 pub enum EmbeddedDocResult<'a> {
     MultipleDocs(Vec<Vec<FormatElement<'a>>>),
-    /// CSS: The count indicates how many `@prettier-placeholder-N-id` patterns survived formatting
-    DocWithPlaceholders(Vec<FormatElement<'a>>, usize),
+    DocWithPlaceholders {
+        ir: Vec<FormatElement<'a>>,
+        /// This indicates how many placeholder patterns survived formatting.
+        placeholder_count: usize,
+        /// HTML-specific: whether the parsed HTML has more than one root element.
+        /// Used to decide whether to `indent` the template content, `None` for non-HTML languages.
+        html_has_multiple_root_elements: Option<bool>,
+    },
+    SingleDoc(Vec<FormatElement<'a>>),
 }
 
 /// Callback function type for formatting embedded code via `Doc`.

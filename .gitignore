@@ -12,12 +12,14 @@ target/
 /tasks/benchmark/codspeed/node_modules/
 /tasks/transform_conformance/node_modules/
 /tasks/compat_data/node_modules/
+/tasks/prettier_conformance/jsdoc/scripts/node_modules/
 /tasks/compat_data/compat-table/
 /tasks/e2e/node_modules/
 /plugins/node_modules/
 /tasks/e2e/tests/nestjs/node_modules/
 /npm/*/node_modules
 /napi/*/npm-dir
+/napi/parser/tsconfig.browser.tsbuildinfo
 
 # Cloned conformance repos
 tasks/coverage/babel/
