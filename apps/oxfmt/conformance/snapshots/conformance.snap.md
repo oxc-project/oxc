@@ -96,6 +96,20 @@
 {"printWidth":100,"htmlWhitespaceSensitivity":"ignore"}
 ```
 
+## md-in-js
+
+### Option 1: 8/8 (100.00%)
+
+```json
+{"printWidth":80}
+```
+
+### Option 2: 8/8 (100.00%)
+
+```json
+{"printWidth":100,"proseWrap":"always"}
+```
+
 ## xxx-in-js-comment
 
 ### Option 1: 5/5 (100.00%)

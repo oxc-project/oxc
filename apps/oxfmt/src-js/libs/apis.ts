@@ -52,6 +52,8 @@ async function loadPrettier(): Promise<typeof import("prettier")> {
   // - or flaky traversal of the `Doc` output
   // to extract the same information, since this hooks into the AST.
   formatOptionsHiddenDefaults.__onHtmlRoot = null;
+  // For md-in-js: Use `~` instead of `` ` `` for code fences
+  formatOptionsHiddenDefaults.__inJsTemplate = null;
 
   return prettierCache;
 }
@@ -167,6 +169,12 @@ export async function formatEmbeddedDoc({
         // https://github.com/prettier/prettier/blob/90983f40dce5e20beea4e5618b5e0426a6a7f4f0/src/language-js/embed/html.js#L42-L44
         options.__onHtmlRoot = (root: { children?: unknown[] }) =>
           (metadata.htmlHasMultipleRootElements = (root.children?.length ?? 0) > 1);
+      }
+
+      // md-in-js specific options: see the comment in `loadPrettier()` for rationale
+      if (options.parser === "markdown") {
+        // https://github.com/prettier/prettier/blob/90983f40dce5e20beea4e5618b5e0426a6a7f4f0/src/language-js/embed/markdown.js#L21
+        options.__inJsTemplate = true;
       }
 
       // @ts-expect-error: Use internal API, but it's necessary and only way to get `Doc`
