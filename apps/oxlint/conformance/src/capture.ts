@@ -36,6 +36,7 @@ export let currentGroup: TestGroup | null = null;
 /**
  * Set the current group being tested.
  * Call before starting running tests for a test group.
+ *
  * @param group - `TestGroup` object
  */
 export function setCurrentGroup(group: TestGroup): void {
@@ -48,6 +49,7 @@ export let currentRule: RuleResult | null = null;
 /**
  * Set the current rule being tested.
  * Call before loading a file containing tests.
+ *
  * @param rule - `RuleResult` object
  */
 export function setCurrentRule(rule: RuleResult): void {
@@ -68,6 +70,7 @@ let currentTest: TestCase | null = null;
 /**
  * Set the current test being tested.
  * Call before running linter for a test case (in `modifyTestCase` hook).
+ *
  * @param test - `TestCase` object
  */
 export function setCurrentTest(test: TestCase): void {
@@ -76,6 +79,7 @@ export function setCurrentTest(test: TestCase): void {
 
 /**
  * `describe` function that tracks the test hierarchy.
+ *
  * @param name - Name of the test group
  * @param fn - Function to run tests in the group
  */
@@ -106,6 +110,7 @@ export function describe(name: string, fn: () => void): void {
 
 /**
  * `it` function that runs and records individual tests.
+ *
  * @param name - Name of the test
  * @param fn - Function to run test
  */
@@ -154,6 +159,7 @@ export function it(code: string, fn: () => void): void {
 
 /**
  * Determine if failing test case should be skipped.
+ *
  * @param ruleName - Rule name
  * @param test - Test case
  * @param code - Code for test case

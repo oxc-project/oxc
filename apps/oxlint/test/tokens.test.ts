@@ -41,13 +41,16 @@ const SOURCE_TEXT = "/*A*/var answer/*B*/=/*C*/a/*D*/* b/*E*///F\n    call();\n/
  * Setup for a test case, using `sourceText` as source text.
  *
  * This function:
+ *
  * - Parses source text with Oxc parser - which writes AST and source text into buffer.
  * - Initializes global state, as if was linting the provided file.
  * - Initializes source text.
- * - Does *not* deserialize the AST - tokens methods should do that automatically where they require AST.
+ * - Does _not_ deserialize the AST - tokens methods should do that automatically where they require
+ *   AST.
  *
- * It's not necessary to call this function before each test case, because `beforeEach` hook calls it already.
- * Only use this function if test needs to set source text to a different value from default `SOURCE_TEXT`.
+ * It's not necessary to call this function before each test case, because `beforeEach` hook calls
+ * it already. Only use this function if test needs to set source text to a different value from
+ * default `SOURCE_TEXT`.
  *
  * @param sourceText - Source text to use for test
  */

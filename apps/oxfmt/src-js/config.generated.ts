@@ -42,7 +42,8 @@ export interface Oxfmtrc {
    */
   bracketSpacing?: boolean;
   /**
-   * Control whether to format embedded parts (For example, CSS-in-JS, or JS-in-Vue, etc.) in the file.
+   * Control whether to format embedded parts (For example, CSS-in-JS, or JS-in-Vue, etc.) in the
+   * file.
    *
    * NOTE: XXX-in-JS support is incomplete.
    *
@@ -100,14 +101,15 @@ export interface Oxfmtrc {
    * How to wrap object literals when they could fit on one line or span multiple lines.
    *
    * By default, formats objects as multi-line if there is a newline prior to the first property.
-   * Authors can use this heuristic to contextually improve readability, though it has some downsides.
+   * Authors can use this heuristic to contextually improve readability, though it has some
+   * downsides.
    *
    * - Default: `"preserve"`
    */
   objectWrap?: ObjectWrapConfig;
   /**
-   * File-specific overrides.
-   * When a file matches multiple overrides, the later override takes precedence (array order matters).
+   * File-specific overrides. When a file matches multiple overrides, the later override takes
+   * precedence (array order matters).
    *
    * - Default: `[]`
    */
@@ -115,7 +117,8 @@ export interface Oxfmtrc {
   /**
    * Specify the line length that the printer will wrap on.
    *
-   * If you don't want line wrapping when formatting Markdown, you can set the `proseWrap` option to disable it.
+   * If you don't want line wrapping when formatting Markdown, you can set the `proseWrap` option to
+   * disable it.
    *
    * - Default: `100`
    * - Overrides `.editorconfig.max_line_length`
@@ -124,9 +127,10 @@ export interface Oxfmtrc {
   /**
    * How to wrap prose.
    *
-   * By default, formatter will not change wrapping in markdown text since some services use a linebreak-sensitive renderer, e.g. GitHub comments and BitBucket.
-   * To wrap prose to the print width, change this option to "always".
-   * If you want to force all prose blocks to be on a single line and rely on editor/viewer soft wrapping instead, you can use "never".
+   * By default, formatter will not change wrapping in markdown text since some services use a
+   * linebreak-sensitive renderer, e.g. GitHub comments and BitBucket. To wrap prose to the print
+   * width, change this option to "always". If you want to force all prose blocks to be on a single
+   * line and rely on editor/viewer soft wrapping instead, you can use "never".
    *
    * - Default: `"preserve"`
    */
@@ -160,8 +164,9 @@ export interface Oxfmtrc {
   /**
    * Sort import statements.
    *
-   * Using the similar algorithm as [eslint-plugin-perfectionist/sort-imports](https://perfectionist.dev/rules/sort-imports).
-   * For details, see each field's documentation.
+   * Using the similar algorithm as
+   * [eslint-plugin-perfectionist/sort-imports](https://perfectionist.dev/rules/sort-imports). For
+   * details, see each field's documentation.
    *
    * - Default: Disabled
    */
@@ -169,9 +174,9 @@ export interface Oxfmtrc {
   /**
    * Sort `package.json` keys.
    *
-   * The algorithm is NOT compatible with [prettier-plugin-sort-packagejson](https://github.com/matzkoh/prettier-plugin-packagejson).
-   * But we believe it is clearer and easier to navigate.
-   * For details, see each field's documentation.
+   * The algorithm is NOT compatible with
+   * [prettier-plugin-sort-packagejson](https://github.com/matzkoh/prettier-plugin-packagejson). But
+   * we believe it is clearer and easier to navigate. For details, see each field's documentation.
    *
    * - Default: `true`
    */
@@ -179,9 +184,10 @@ export interface Oxfmtrc {
   /**
    * Sort Tailwind CSS classes.
    *
-   * Using the same algorithm as [prettier-plugin-tailwindcss](https://github.com/tailwindlabs/prettier-plugin-tailwindcss).
-   * Option names omit the `tailwind` prefix used in the original plugin (e.g., `config` instead of `tailwindConfig`).
-   * For details, see each field's documentation.
+   * Using the same algorithm as
+   * [prettier-plugin-tailwindcss](https://github.com/tailwindlabs/prettier-plugin-tailwindcss).
+   * Option names omit the `tailwind` prefix used in the original plugin (e.g., `config` instead of
+   * `tailwindConfig`). For details, see each field's documentation.
    *
    * - Default: Disabled
    */
@@ -241,7 +247,6 @@ export interface JsdocConfig {
    * - `"singleLine"` — Convert to single-line `/** content * /` when possible.
    * - `"multiline"` — Always use multi-line format.
    * - `"keep"` — Preserve original formatting.
-   *
    * - Default: `"singleLine"`
    */
   commentLineStrategy?: string;
@@ -268,12 +273,11 @@ export interface JsdocConfig {
    *
    * - `"greedy"` — Always re-wrap text to fit within print width.
    * - `"balance"` — Preserve original line breaks if all lines fit within print width.
-   *
    * - Default: `"greedy"`
    */
   lineWrappingStyle?: string;
   /**
-   * Use fenced code blocks (```` ``` ````) instead of 4-space indentation for code without a language tag.
+   * Use fenced code blocks (`````) instead of 4-space indentation for code without a language tag.
    *
    * - Default: `false`
    */
@@ -329,7 +333,8 @@ export interface FormatConfig {
    */
   bracketSpacing?: boolean;
   /**
-   * Control whether to format embedded parts (For example, CSS-in-JS, or JS-in-Vue, etc.) in the file.
+   * Control whether to format embedded parts (For example, CSS-in-JS, or JS-in-Vue, etc.) in the
+   * file.
    *
    * NOTE: XXX-in-JS support is incomplete.
    *
@@ -380,7 +385,8 @@ export interface FormatConfig {
    * How to wrap object literals when they could fit on one line or span multiple lines.
    *
    * By default, formats objects as multi-line if there is a newline prior to the first property.
-   * Authors can use this heuristic to contextually improve readability, though it has some downsides.
+   * Authors can use this heuristic to contextually improve readability, though it has some
+   * downsides.
    *
    * - Default: `"preserve"`
    */
@@ -388,7 +394,8 @@ export interface FormatConfig {
   /**
    * Specify the line length that the printer will wrap on.
    *
-   * If you don't want line wrapping when formatting Markdown, you can set the `proseWrap` option to disable it.
+   * If you don't want line wrapping when formatting Markdown, you can set the `proseWrap` option to
+   * disable it.
    *
    * - Default: `100`
    * - Overrides `.editorconfig.max_line_length`
@@ -397,9 +404,10 @@ export interface FormatConfig {
   /**
    * How to wrap prose.
    *
-   * By default, formatter will not change wrapping in markdown text since some services use a linebreak-sensitive renderer, e.g. GitHub comments and BitBucket.
-   * To wrap prose to the print width, change this option to "always".
-   * If you want to force all prose blocks to be on a single line and rely on editor/viewer soft wrapping instead, you can use "never".
+   * By default, formatter will not change wrapping in markdown text since some services use a
+   * linebreak-sensitive renderer, e.g. GitHub comments and BitBucket. To wrap prose to the print
+   * width, change this option to "always". If you want to force all prose blocks to be on a single
+   * line and rely on editor/viewer soft wrapping instead, you can use "never".
    *
    * - Default: `"preserve"`
    */
@@ -433,8 +441,9 @@ export interface FormatConfig {
   /**
    * Sort import statements.
    *
-   * Using the similar algorithm as [eslint-plugin-perfectionist/sort-imports](https://perfectionist.dev/rules/sort-imports).
-   * For details, see each field's documentation.
+   * Using the similar algorithm as
+   * [eslint-plugin-perfectionist/sort-imports](https://perfectionist.dev/rules/sort-imports). For
+   * details, see each field's documentation.
    *
    * - Default: Disabled
    */
@@ -442,9 +451,9 @@ export interface FormatConfig {
   /**
    * Sort `package.json` keys.
    *
-   * The algorithm is NOT compatible with [prettier-plugin-sort-packagejson](https://github.com/matzkoh/prettier-plugin-packagejson).
-   * But we believe it is clearer and easier to navigate.
-   * For details, see each field's documentation.
+   * The algorithm is NOT compatible with
+   * [prettier-plugin-sort-packagejson](https://github.com/matzkoh/prettier-plugin-packagejson). But
+   * we believe it is clearer and easier to navigate. For details, see each field's documentation.
    *
    * - Default: `true`
    */
@@ -452,9 +461,10 @@ export interface FormatConfig {
   /**
    * Sort Tailwind CSS classes.
    *
-   * Using the same algorithm as [prettier-plugin-tailwindcss](https://github.com/tailwindlabs/prettier-plugin-tailwindcss).
-   * Option names omit the `tailwind` prefix used in the original plugin (e.g., `config` instead of `tailwindConfig`).
-   * For details, see each field's documentation.
+   * Using the same algorithm as
+   * [prettier-plugin-tailwindcss](https://github.com/tailwindlabs/prettier-plugin-tailwindcss).
+   * Option names omit the `tailwind` prefix used in the original plugin (e.g., `config` instead of
+   * `tailwindConfig`). For details, see each field's documentation.
    *
    * - Default: Disabled
    */
@@ -496,8 +506,9 @@ export interface SortImportsConfig {
    * The `customGroups` list is ordered: The first definition that matches an element will be used.
    * Custom groups have a higher priority than any predefined group.
    *
-   * If you want a predefined group to take precedence over a custom group,
-   * you must write a custom group definition that does the same as what the predefined group does, and put it first in the list.
+   * If you want a predefined group to take precedence over a custom group, you must write a custom
+   * group definition that does the same as what the predefined group does, and put it first in the
+   * list.
    *
    * If you specify multiple conditions like `elementNamePattern`, `selector`, and `modifiers`,
    * all conditions must be met for an import to match the custom group (AND logic).
@@ -508,19 +519,22 @@ export interface SortImportsConfig {
   /**
    * Specifies a list of predefined import groups for sorting.
    *
-   * Each import will be assigned a single group specified in the groups option (or the `unknown` group if no match is found).
-   * The order of items in the `groups` option determines how groups are ordered.
+   * Each import will be assigned a single group specified in the groups option (or the `unknown`
+   * group if no match is found). The order of items in the `groups` option determines how groups
+   * are ordered.
    *
-   * Within a given group, members will be sorted according to the type, order, ignoreCase, etc. options.
+   * Within a given group, members will be sorted according to the type, order, ignoreCase, etc.
+   * options.
    *
-   * Individual groups can be combined together by placing them in an array.
-   * The order of groups in that array does not matter.
-   * All members of the groups in the array will be sorted together as if they were part of a single group.
+   * Individual groups can be combined together by placing them in an array. The order of groups in
+   * that array does not matter. All members of the groups in the array will be sorted together as
+   * if they were part of a single group.
    *
    * Predefined groups are characterized by a single selector and potentially multiple modifiers.
    * You may enter modifiers in any order, but the selector must always come at the end.
    *
    * The list of selectors is sorted from most to least important:
+   *
    * - `type` — TypeScript type imports.
    * - `side_effect_style` — Side effect style imports.
    * - `side_effect` — Side effect imports.
@@ -535,14 +549,15 @@ export interface SortImportsConfig {
    * - `import` — Any import.
    *
    * The list of modifiers is sorted from most to least important:
+   *
    * - `side_effect` — Side effect imports.
    * - `type` — TypeScript type imports.
    * - `value` — Value imports.
    * - `default` — Imports containing the default specifier.
    * - `wildcard` — Imports containing the wildcard (`* as`) specifier.
    * - `named` — Imports containing at least one named specifier.
-   *
    * - Default: See below
+   *
    * ```json
    * [
    * "builtin",
@@ -554,8 +569,9 @@ export interface SortImportsConfig {
    * ]
    * ```
    *
-   * Also, you can override the global `newlinesBetween` setting for specific group boundaries
-   * by including a `{ "newlinesBetween": boolean }` marker object in the `groups` list at the desired position.
+   * Also, you can override the global `newlinesBetween` setting for specific group boundaries by
+   * including a `{ "newlinesBetween": boolean }` marker object in the `groups` list at the desired
+   * position.
    */
   groups?: SortGroupItemConfig[];
   /**
@@ -592,10 +608,10 @@ export interface SortImportsConfig {
    * When `true`, all comments will be treated as delimiters, creating partitions.
    *
    * ```js
-   * import { b1, b2 } from 'b'
+   * import { b1, b2 } from "b";
    * // PARTITION
-   * import { a } from 'a'
-   * import { c } from 'c'
+   * import { a } from "a";
+   * import { c } from "c";
    * ```
    *
    * - Default: `false`
@@ -608,10 +624,10 @@ export interface SortImportsConfig {
    * This helps maintain the defined order of logically separated groups of members.
    *
    * ```js
-   * import { b1, b2 } from 'b'
+   * import { b1, b2 } from "b";
    *
-   * import { a } from 'a'
-   * import { c } from 'c'
+   * import { a } from "a";
+   * import { c } from "c";
    * ```
    *
    * - Default: `false`

@@ -35,6 +35,7 @@ export interface OxfmtConfig extends Oxfmtrc {}
  *
  * Based on `FormatConfig` generated from the JSON Schema,
  * with additional deprecated aliases for backward compatibility.
+ *
  * @deprecated Use `FormatConfig` instead.
  */
 export type FormatOptions = FormatConfig & {

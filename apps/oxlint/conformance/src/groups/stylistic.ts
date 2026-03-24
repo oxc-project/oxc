@@ -238,7 +238,9 @@ function createStylisticRuleRunnerMock(tsEslintParser: TSEslintParser) {
 }
 
 /**
- * Modify a valid test case from `eslint-vitest-rule-tester`'s object shape to what `RuleTester` expects.
+ * Modify a valid test case from `eslint-vitest-rule-tester`'s object shape to what `RuleTester`
+ * expects.
+ *
  * @param test - Test case
  */
 function modifyValidTestCase(test: ValidTestCase) {
@@ -246,7 +248,9 @@ function modifyValidTestCase(test: ValidTestCase) {
 }
 
 /**
- * Modify an invalid test case from `eslint-vitest-rule-tester`'s object shape to what `RuleTester` expects.
+ * Modify an invalid test case from `eslint-vitest-rule-tester`'s object shape to what `RuleTester`
+ * expects.
+ *
  * @param test - Test case
  */
 function modifyInvalidTestCase(test: InvalidTestCase) {
@@ -270,6 +274,7 @@ function modifyInvalidTestCase(test: InvalidTestCase) {
 /**
  * `eslint-vitest-rule-tester` takes `parserOptions` and `parser` as properties of test case.
  * Move them to be properties of `languageOptions`.
+ *
  * @param test - Test case
  */
 function modifyTestCase(test: StylisticTestCase) {
@@ -289,9 +294,12 @@ function modifyTestCase(test: StylisticTestCase) {
 
 /**
  * Get language options from `StylisticParserOptions` and `LanguageOptions`.
- * @param parserOptions - Parser options from options passed to `run` function, or included as properties of test case
+ *
+ * @param parserOptions - Parser options from options passed to `run` function, or included as
+ *   properties of test case
  * @param languageOptions - Language options from test case object
- * @returns `LanguageOptions` to add to config / test case, combining `parserOptions` and `languageOptions`
+ * @returns `LanguageOptions` to add to config / test case, combining `parserOptions` and
+ *   `languageOptions`
  */
 function getLanguageOptions(
   parserOptions: StylisticParserOptions,
@@ -317,6 +325,7 @@ function getLanguageOptions(
 
 /**
  * Compact whitespace in code.
+ *
  * @param code - Code
  * @returns Code with whitespace compacted
  */

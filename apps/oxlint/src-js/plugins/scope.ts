@@ -223,6 +223,7 @@ function addGlobals(): void {
 
 /**
  * Create a global variable with the given name and add it to the global scope.
+ *
  * @param name - Var name
  * @param globalScope - Global scope object
  * @param isWritable - `true` if the variable is writable, `false` otherwise
@@ -300,6 +301,7 @@ export const SCOPE_MANAGER = Object.freeze({
    * Get the variables that a given AST node defines.
    * The returned variables' `def[].node` / `def[].parent` property is the node.
    * If the node does not define any variable, this returns an empty array.
+   *
    * @param node AST node to get variables of.
    */
   getDeclaredVariables(node: ESTree.Node): Variable[] {
@@ -328,6 +330,7 @@ export type ScopeManager = typeof SCOPE_MANAGER;
 
 /**
  * Determine whether the given identifier node is a reference to a global variable.
+ *
  * @param node - `Identifier` node to check.
  * @returns `true` if the identifier is a reference to a global variable.
  */
@@ -362,6 +365,7 @@ export function isGlobalReference(node: ESTree.Node): boolean {
 /**
  * Get the variables that `node` defines.
  * This is a convenience method that passes through to the same method on the `ScopeManager`.
+ *
  * @param node - The node for which the variables are obtained.
  * @returns An array of variable nodes representing the variables that `node` defines.
  */
@@ -376,6 +380,7 @@ export function getDeclaredVariables(node: ESTree.Node): Variable[] {
 
 /**
  * Get the scope for the given node.
+ *
  * @param node - The node to get the scope of.
  * @returns The scope information for this node.
  */
@@ -408,9 +413,9 @@ export function getScope(node: ESTree.Node): Scope {
 /**
  * Marks as used a variable with the given name in a scope indicated by the given reference node.
  *
- * IMPORTANT: At present marking variables as used only affects other JS plugins.
- * It does *not* get communicated to Oxlint's rules which are implemented on Rust side e.g. `no-unused-vars`.
- * This is a known shortcoming, and will be addressed in a future release.
+ * IMPORTANT: At present marking variables as used only affects other JS plugins. It does _not_ get
+ * communicated to Oxlint's rules which are implemented on Rust side e.g. `no-unused-vars`. This is
+ * a known shortcoming, and will be addressed in a future release.
  * https://github.com/oxc-project/oxc/issues/20350
  *
  * @param name - Variable name

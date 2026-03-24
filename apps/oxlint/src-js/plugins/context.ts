@@ -52,6 +52,7 @@ export let cwd: string | null = null;
 
 /**
  * Set CWD. Used when switching workspaces.
+ *
  * @param cwdInput - CWD
  */
 export function setCwd(cwdInput: string) {
@@ -60,6 +61,7 @@ export function setCwd(cwdInput: string) {
 
 /**
  * Set up context for linting a file.
+ *
  * @param filePathInput - Absolute path of file being linted
  */
 export function setupFileContext(filePathInput: string): void {
@@ -69,9 +71,10 @@ export function setupFileContext(filePathInput: string): void {
 /**
  * Reset file context.
  *
- * This disables all getters on `Context` objects, and `FILE_CONTEXT`.
- * Only way user could trigger a getter if this wasn't done is to store a `Context` object, and then access one of its
- * properties in next tick, in between linting files (highly unlikely). But it's cheap to do, so we cover this odd case.
+ * This disables all getters on `Context` objects, and `FILE_CONTEXT`. Only way user could trigger a
+ * getter if this wasn't done is to store a `Context` object, and then access one of its properties
+ * in next tick, in between linting files (highly unlikely). But it's cheap to do, so we cover this
+ * odd case.
  */
 export function resetFileContext(): void {
   filePath = null;
@@ -101,6 +104,7 @@ const PARSER = Object.freeze({
 
   /**
    * Parse code into an AST.
+   *
    * @param code - Code to parse
    * @param options? - Parser options
    * @returns AST
@@ -335,8 +339,9 @@ const FILE_CONTEXT = Object.freeze({
 
   /**
    * Get absolute path of the file being linted.
-   * @returns Absolute path of the file being linted.
+   *
    * @deprecated Use `context.filename` property instead.
+   * @returns Absolute path of the file being linted.
    */
   getFilename(): string {
     if (filePath === null) throw new Error("Cannot call `context.getFilename` in `createOnce`");
@@ -357,8 +362,9 @@ const FILE_CONTEXT = Object.freeze({
 
   /**
    * Get physical absolute path of the file being linted.
-   * @returns Physical absolute path of the file being linted.
+   *
    * @deprecated Use `context.physicalFilename` property instead.
+   * @returns Physical absolute path of the file being linted.
    */
   getPhysicalFilename(): string {
     if (filePath === null) {
@@ -379,8 +385,9 @@ const FILE_CONTEXT = Object.freeze({
 
   /**
    * Get current working directory.
-   * @returns The current working directory.
+   *
    * @deprecated Use `context.cwd` property instead.
+   * @returns The current working directory.
    */
   getCwd(): string {
     if (filePath === null) throw new Error("Cannot call `context.getCwd` in `createOnce`");
@@ -399,8 +406,9 @@ const FILE_CONTEXT = Object.freeze({
 
   /**
    * Get source code of the file being linted.
-   * @returns Source code of the file being linted.
+   *
    * @deprecated Use `context.sourceCode` property instead.
+   * @returns Source code of the file being linted.
    */
   getSourceCode(): SourceCode {
     if (filePath === null) throw new Error("Cannot call `context.getSourceCode` in `createOnce`");
@@ -432,6 +440,7 @@ const FILE_CONTEXT = Object.freeze({
   /**
    * Create a new object with the current object as the prototype and
    * the specified properties as its own properties.
+   *
    * @param extension - The properties to add to the new object.
    * @returns A new object with the current object as the prototype
    *   and the specified properties as its own properties.
@@ -443,6 +452,7 @@ const FILE_CONTEXT = Object.freeze({
 
   /**
    * Parser options used to parse the file being linted.
+   *
    * @deprecated Use `languageOptions.parserOptions` instead.
    */
   get parserOptions(): Record<string, unknown> {
@@ -452,6 +462,7 @@ const FILE_CONTEXT = Object.freeze({
 
   /**
    * The path to the parser used to parse this file.
+   *
    * @deprecated No longer supported.
    */
   get parserPath(): string | undefined {
@@ -489,6 +500,7 @@ export interface Context extends FileContext {
 
 /**
  * Create `Context` object for a rule.
+ *
  * @param ruleDetails - `RuleDetails` object
  * @returns `Context` object
  */

@@ -23,12 +23,12 @@ export class Visitor {
    *
    * ```js
    * const visitor = new Visitor({
-   *     BinaryExpression(binExpr) {
-   *         // Do stuff when entering a `BinaryExpression`
-   *     },
-   *     'BinaryExpression:exit'(binExpr) {
-   *         // Do stuff when exiting a `BinaryExpression`
-   *     },
+   *   BinaryExpression(binExpr) {
+   *     // Do stuff when entering a `BinaryExpression`
+   *   },
+   *   "BinaryExpression:exit"(binExpr) {
+   *     // Do stuff when exiting a `BinaryExpression`
+   *   },
    * });
    * ```
    *
@@ -52,13 +52,13 @@ export const getVisitorsArr = getVisitorsArrTemp;
  *
  * Each element of array is one of:
  *
- * * No visitor for this type = `null`.
- * * Visitor for leaf node = visit function.
- * * Visitor for non-leaf node = object of form `{ enter, exit }`,
- *   where each property is either a visitor function or `null`.
+ * - No visitor for this type = `null`.
+ * - Visitor for leaf node = visit function.
+ * - Visitor for non-leaf node = object of form `{ enter, exit }`, where each property is either a
+ *   visitor function or `null`.
  *
  * @param {Object} visitor - Visitors object from user
- * @returns {Array<Object|Function|null>} - Array of visitors
+ * @returns {(Object | Function | null)[]} - Array of visitors
  */
 function createVisitorsArr(visitor) {
   if (visitor === null || typeof visitor !== "object") {

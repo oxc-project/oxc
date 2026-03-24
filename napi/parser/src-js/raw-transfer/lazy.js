@@ -12,8 +12,8 @@ export { Visitor } from "./visitor.js";
  * The data in buffer is not deserialized. Is deserialized to JS objects lazily, when accessing the
  * properties of objects.
  *
- * e.g. `program` in returned object is an instance of `Program` class, with getters for `start`, `end`,
- * `body` etc.
+ * E.g. `program` in returned object is an instance of `Program` class, with getters for `start`,
+ * `end`, `body` etc.
  *
  * Returned object contains a `visit` function which can be used to visit the AST with a `Visitor`
  * (`Visitor` class can be obtained by calling `experimentalGetLazyVisitor()`).
@@ -39,11 +39,11 @@ export function parseSyncLazy(filename, sourceText, options) {
  * The data in buffer is not deserialized. Is deserialized to JS objects lazily, when accessing the
  * properties of objects.
  *
- * e.g. `program` in returned object is an instance of `Program` class, with getters for `start`, `end`,
- * `body` etc.
+ * E.g. `program` in returned object is an instance of `Program` class, with getters for `start`,
+ * `end`, `body` etc.
  *
- * Because this function does not deserialize the AST, unlike `parse`, very little work happens
- * on current thread in this function. Deserialization work only occurs when properties of the objects
+ * Because this function does not deserialize the AST, unlike `parse`, very little work happens on
+ * current thread in this function. Deserialization work only occurs when properties of the objects
  * are accessed.
  *
  * Returned object contains a `visit` function which can be used to visit the AST with a `Visitor`
@@ -128,10 +128,10 @@ function construct(buffer, sourceText, sourceByteLen, _options) {
  *
  * Buffer is returned to the cache to be reused.
  *
- * The buffer would be returned to the cache anyway, once all nodes of the AST are garbage collected,
- * but calling `dispose` is preferable, as it will happen immediately.
- * Otherwise, garbage collector may take time to collect the `ast` object, and new buffers may be created
- * in the meantime, when we could have reused this one.
+ * The buffer would be returned to the cache anyway, once all nodes of the AST are garbage
+ * collected, but calling `dispose` is preferable, as it will happen immediately. Otherwise, garbage
+ * collector may take time to collect the `ast` object, and new buffers may be created in the
+ * meantime, when we could have reused this one.
  *
  * @param {Object} ast - AST object containing buffer etc
  * @returns {undefined}

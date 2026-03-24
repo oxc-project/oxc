@@ -13,7 +13,8 @@ const META_OPTIONS_REGEX = /^\/\/\s*@(\w+)\s*:\s*([^\r\n]*)/gm;
 
 /**
  * Convert settings value to boolean
- * @param {string|null} value - Setting value
+ *
+ * @param {string | null} value - Setting value
  * @param {boolean} defaultValue - Default value if setting is not present
  * @returns {boolean}
  */
@@ -25,7 +26,8 @@ function valueToBoolean(value, defaultValue) {
 
 /**
  * Split comma-separated values into array
- * @param {string|null} value - Setting value
+ *
+ * @param {string | null} value - Setting value
  * @returns {string[]}
  */
 function splitValueOptions(value) {
@@ -35,6 +37,7 @@ function splitValueOptions(value) {
 
 /**
  * Create compiler settings from options map
+ *
  * @param {Map<string, string>} options - Compiler options
  * @returns {Object} CompilerSettings
  */
@@ -67,6 +70,7 @@ const EXTENSIONS = {
 
 /**
  * Check if extension explicitly indicates module type
+ *
  * @param {string} ext - File extension (lowercase, with dot)
  * @returns {boolean}
  */
@@ -76,9 +80,10 @@ function isExplicitModuleExtension(ext) {
 
 /**
  * Get source type from file path
+ *
  * @param {string} filePath - Path to the file
  * @param {Object} options - Compiler options
- * @returns {Object|null} Source type
+ * @returns {Object | null} Source type
  */
 function getSourceType(filePath, options) {
   const ext = path.extname(filePath).toLowerCase();
@@ -99,6 +104,7 @@ function getSourceType(filePath, options) {
 
 /**
  * Get error files for the test
+ *
  * @param {string} filePath - Path to the test file
  * @param {Object} options - Compiler options
  * @returns {string[]} Error files content
@@ -133,6 +139,7 @@ function getErrorFiles(filePath, options) {
 
 /**
  * Extract individual test units from a TypeScript test file
+ *
  * @param {string} filePath - Path to the test file
  * @param {string} code - Content of the test file
  * @returns {Object} TestCaseContent object

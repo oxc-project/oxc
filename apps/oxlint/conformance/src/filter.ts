@@ -22,6 +22,7 @@ export const SHOULD_SKIP_CODE = createShouldSkipFn(FILTER_ONLY_CODE);
 
 /**
  * Create a function which determines if should skip based on a filter.
+ *
  * @param filter - Filter
  * @returns Filter function
  */

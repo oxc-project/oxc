@@ -76,8 +76,8 @@ export class NodeArray extends Array {
    * Override `slice` method to return a `NodeArray`.
    *
    * @this {NodeArray}
-   * @param {*} start - Start of slice
-   * @param {*} end - End of slice
+   * @param {any} start - Start of slice
+   * @param {any} end - End of slice
    * @returns {NodeArray} - `NodeArray` containing slice of this one
    */
   slice(start, end) {
@@ -128,6 +128,7 @@ export class NodeArray extends Array {
   static {
     /**
      * Get internal properties of `NodeArray`, given a proxy wrapping a `NodeArray`.
+     *
      * @param {Proxy} proxy - Proxy wrapping `NodeArray` object
      * @returns {Object} - Internal properties object
      */
@@ -135,6 +136,7 @@ export class NodeArray extends Array {
 
     /**
      * Get length of `NodeArray`.
+     *
      * @param {NodeArray} arr - `NodeArray` object
      * @returns {number} - Array length
      */
@@ -145,7 +147,7 @@ export class NodeArray extends Array {
      *
      * @param {NodeArray} arr - `NodeArray` object
      * @param {number} index - Index of element to get
-     * @returns {*} - Element at index `index`, or `undefined` if out of bounds
+     * @returns {any} - Element at index `index`, or `undefined` if out of bounds
      */
     getElement = (arr, index) => {
       const internal = arr.#internal;
@@ -334,8 +336,9 @@ const PROXY_HANDLERS = {
  * e.g. `"-1"`, `"01"`, `"0xFF"`, `"1e1"`, `"1 "` are not valid indexes.
  * Integers >= 4294967295 are not valid indexes.
  *
- * @param {string|Symbol} - Key used for property lookup.
- * @returns {number|null} - `key` converted to integer, if it's a valid array index, otherwise `null`.
+ * @param {string | Symbol} - Key used for property lookup.
+ * @returns {number | null} - `key` converted to integer, if it's a valid array index, otherwise
+ *   `null`.
  */
 function toIndex(key) {
   if (typeof key === "string") {
@@ -354,7 +357,7 @@ const INDEX_REGEX = /^[1-9]\d*$/;
  * Convert value to integer.
  * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number#integer_conversion
  *
- * @param {*} value - Value to convert to integer.
+ * @param {any} value - Value to convert to integer.
  * @returns {number} - Integer
  */
 function toInt(value) {

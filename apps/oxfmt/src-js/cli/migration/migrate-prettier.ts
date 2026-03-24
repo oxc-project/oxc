@@ -6,8 +6,8 @@ import { hasOxfmtrcFile, createBlankOxfmtrcFile, saveOxfmtrcFile, exitWithError 
 import { Options } from "prettier";
 
 /**
- * Run the `--migrate prettier` command to migrate various Prettier's config to `.oxfmtrc.json` file.
- * https://prettier.io/docs/configuration
+ * Run the `--migrate prettier` command to migrate various Prettier's config to `.oxfmtrc.json`
+ * file. https://prettier.io/docs/configuration
  */
 export async function runMigratePrettier() {
   const cwd = process.cwd();
@@ -187,6 +187,7 @@ const TAILWIND_OPTION_MAPPING: Record<string, string> = {
  * Migrate prettier-plugin-tailwindcss options to Oxfmt's sortTailwindcss format.
  *
  * Prettier format:
+ *
  * ```json
  * {
  *   "plugins": ["prettier-plugin-tailwindcss"],
@@ -196,6 +197,7 @@ const TAILWIND_OPTION_MAPPING: Record<string, string> = {
  * ```
  *
  * Oxfmt format:
+ *
  * ```json
  * {
  *   "sortTailwindcss": {

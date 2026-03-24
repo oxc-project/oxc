@@ -57,6 +57,7 @@ const readAllPendingFixRuleNames = async () => {
 
   /**
    * Recursively read all .rs files in a directory
+   *
    * @param {string} dir
    * @returns {Promise<string[]>}
    */
@@ -119,24 +120,25 @@ const readAllPendingFixRuleNames = async () => {
 /**
  * These rules will not be supported/implemented in oxlint.
  *
- * oxlint does not intend to cover stylistic lint rules, as oxfmt will handle code formatting.
- * There are some other rules listed here which are difficult to support due to technical limitations,
- * or rules that are deprecated in their source plugins and no longer relevant.
+ * Oxlint does not intend to cover stylistic lint rules, as oxfmt will handle code formatting. There
+ * are some other rules listed here which are difficult to support due to technical limitations, or
+ * rules that are deprecated in their source plugins and no longer relevant.
  *
  * @type {Set<string>}
- **/
+ */
 const NOT_SUPPORTED_RULE_NAMES = new Set(Object.keys(unsupportedRules.unsupportedRules ?? {}));
 
 /**
  * @typedef {{
- *   docsUrl: string,
- *   isDeprecated: boolean,
- *   isRecommended: boolean,
- *   isImplemented: boolean,
- *   isNotSupported: boolean,
- *   isPendingFix: boolean,
- *   unsupportedRationale: string | null
+ *   docsUrl: string;
+ *   isDeprecated: boolean;
+ *   isRecommended: boolean;
+ *   isImplemented: boolean;
+ *   isNotSupported: boolean;
+ *   isPendingFix: boolean;
+ *   unsupportedRationale: string | null;
  * }} RuleEntry
+ *
  * @typedef {Map<string, RuleEntry>} RuleEntries
  */
 
@@ -282,6 +284,7 @@ export const overrideTypeScriptPluginStatusWithEslintPluginStatus = async (ruleE
 /**
  * Some Jest rules are written to be compatible with Vitest, so we should
  * override the status of the Vitest rules to match the Jest rules.
+ *
  * @param {RuleEntries} ruleEntries
  */
 export const syncVitestPluginStatusWithJestPluginStatus = async (ruleEntries) => {
@@ -315,6 +318,7 @@ export const syncVitestPluginStatusWithJestPluginStatus = async (ruleEntries) =>
 /**
  * Some Unicorn rules rules are re-implemented version of eslint rules.
  * We should override these to make implementation status up-to-date.
+ *
  * @param {RuleEntries} ruleEntries
  */
 export const syncUnicornPluginStatusWithEslintPluginStatus = (ruleEntries) => {

@@ -217,8 +217,8 @@ function getFixesFromFixFn(fixFn: FixFn, thisArg: Diagnostic | Suggestion): FixR
  *
  * Check that `range` has 2 numeric elements, and convert `text` to string if needed.
  *
- * Purpose of validation is to ensure any input which ESLint accepts does not cause an error in `JSON.stringify()`,
- * or in deserializing on Rust side.
+ * Purpose of validation is to ensure any input which ESLint accepts does not cause an error in
+ * `JSON.stringify()`, or in deserializing on Rust side.
  *
  * @param fix - Fix object to validate, possibly malformed
  * @returns `FixReport` object

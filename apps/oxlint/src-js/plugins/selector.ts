@@ -60,6 +60,7 @@ const ESQUERY_OPTIONS: ESQueryOptions = {
 // ESQuery license: https://github.com/estools/esquery/blob/6c4f10370606c5a08adfcb5becc8248fb1edad43/license.txt
 /**
  * Check if an AST node matches a selector class.
+ *
  * @param className - Class name parsed from selector
  * @param node - AST node
  * @param _ancestors - AST node's ancestors
@@ -209,7 +210,8 @@ export function parseSelector(key: string): Selector {
  * Analyse an `EsquerySelector` to determine:
  *
  * 1. What node types it matches on.
- * 2. Whether it is "simple" or "complex" - "simple" matches a subset of node types without further conditions.
+ * 2. Whether it is "simple" or "complex" - "simple" matches a subset of node types without further
+ *    conditions.
  * 3. It's specificity (number of identifiers and attributes).
  *
  * This function traverses the `EsquerySelector` and calls itself recursively.

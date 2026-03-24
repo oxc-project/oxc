@@ -81,9 +81,9 @@ const group: TestGroup = {
 export default group;
 
 /**
- * Create a module to replace `@typescript-eslint/rule-tester`,
- * which presents the same API, but uses conformance `RuleTester` with TS-ESLint parser.
- * It also adds `before` and `after` hooks to all test cases to track when we're in a test case for this plugin.
+ * Create a module to replace `@typescript-eslint/rule-tester`, which presents the same API, but
+ * uses conformance `RuleTester` with TS-ESLint parser. It also adds `before` and `after` hooks to
+ * all test cases to track when we're in a test case for this plugin.
  *
  * @param tsEslintParser - TSESLint parser module
  * @param codeDirPath - Path to `code` directory in submodule

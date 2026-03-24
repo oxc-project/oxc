@@ -67,6 +67,7 @@ export function deepFreezeJsonArray(arr: JsonValue[]): undefined {
 
 /**
  * Deep clone a JSON value, recursively cloning all nested objects and arrays.
+ *
  * @param value - The value to deep clone
  * @returns Cloned value
  */
@@ -79,6 +80,7 @@ export function deepCloneJsonValue(value: JsonValue): JsonValue {
 
 /**
  * Deep clone a JSON object, recursively cloning all nested objects and arrays.
+ *
  * @param obj - The object to deep clone
  * @returns Cloned object
  */
@@ -98,6 +100,7 @@ export function deepCloneJsonObject(obj: JsonObject): JsonObject {
 
 /**
  * Deep clone a JSON array, recursively cloning all nested objects and arrays.
+ *
  * @param arr - The array to deep clone
  * @returns Cloned array
  */

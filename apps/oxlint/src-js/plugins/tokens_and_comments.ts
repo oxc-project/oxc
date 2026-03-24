@@ -215,7 +215,8 @@ function mergeTokensAndComments(tokensUint32: Uint32Array, commentsUint32: Uint3
 /**
  * Check that merged entries are in ascending order of `start`.
  *
- * Only runs in debug build (tests). In release build, this function is entirely removed by minifier.
+ * Only runs in debug build (tests). In release build, this function is entirely removed by
+ * minifier.
  */
 function debugCheckMergedOrder(): void {
   if (!DEBUG) return;

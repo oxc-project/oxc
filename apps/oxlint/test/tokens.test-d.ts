@@ -1,19 +1,23 @@
 /**
  * Type tests for token method return types.
  *
- * These are compile-time only — they don't run any code, they just verify that the conditional return types
- * resolve correctly for various calling patterns.
+ * These are compile-time only — they don't run any code, they just verify that the conditional
+ * return types resolve correctly for various calling patterns.
  *
  * Enforced by the type-checker: If any `satisfies` check fails, type check will error.
  *
- * `getTokens` and `getFirstToken` are tested exhaustively because they represent the two return type patterns:
+ * `getTokens` and `getFirstToken` are tested exhaustively because they represent the two return
+ * type patterns:
+ *
  * 1. Array - `TokenResult<Options>[]`
  * 2. Single - `TokenResult<Options> | null`
  *
- * All other conditional-return methods use the same `TokenResult` type, so they only get minimal tests:
+ * All other conditional-return methods use the same `TokenResult` type, so they only get minimal
+ * tests:
+ *
  * 1. No options -> `Token`
- * 2. `{ includeComments: true }` -> `TokenOrComment`
- * This guards against a method accidentally missing the `TokenResult` return type.
+ * 2. `{ includeComments: true }` -> `TokenOrComment` This guards against a method accidentally missing
+ *    the `TokenResult` return type.
  */
 
 import {

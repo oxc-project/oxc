@@ -480,7 +480,8 @@ function unescapeIdentifier(name: string): string {
 /**
  * Check tokens buffer has valid ranges and ascending order.
  *
- * Only runs in debug build (tests). In release build, this function is entirely removed by minifier.
+ * Only runs in debug build (tests). In release build, this function is entirely removed by
+ * minifier.
  */
 function debugCheckValidRanges(): void {
   if (!DEBUG) return;
@@ -501,7 +502,8 @@ function debugCheckValidRanges(): void {
 /**
  * Check all deserialized tokens are in ascending order.
  *
- * Only runs in debug build (tests). In release build, this function is entirely removed by minifier.
+ * Only runs in debug build (tests). In release build, this function is entirely removed by
+ * minifier.
  */
 function debugCheckDeserializedTokens(): void {
   if (!DEBUG) return;
@@ -595,7 +597,8 @@ export function resetTokens() {
 /**
  * Check that all token and regex objects have been cleared.
  *
- * Only runs in debug build (tests). In release build, this function is entirely removed by minifier.
+ * Only runs in debug build (tests). In release build, this function is entirely removed by
+ * minifier.
  */
 function debugAssertAllTokensCleared(): void {
   if (!DEBUG) return;

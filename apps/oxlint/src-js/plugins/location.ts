@@ -135,9 +135,10 @@ export function resetLinesAndLocs(): void {
 
 /**
  * Convert a source text index into a (line, column) pair.
+ *
  * @param offset - The index of a character in a file.
  * @returns `{line, column}` location object with 1-indexed line and 0-indexed column.
- * @throws {TypeError|RangeError} If non-numeric `offset`, or `offset` out of range.
+ * @throws {TypeError | RangeError} If non-numeric `offset`, or `offset` out of range.
  */
 export function getLineColumnFromOffset(offset: number): LineColumn {
   if (typeof offset !== "number" || offset < 0 || (offset | 0) !== offset) {
@@ -183,10 +184,12 @@ export function getLineColumnFromOffset(offset: number): LineColumn {
 
 /**
  * Convert a `{ line, column }` pair into a range index.
+ *
  * @param loc - A line/column location.
  * @returns The character index of the location in the file.
- * @throws {TypeError|RangeError} If `loc` is not an object with a numeric `line` and `column`,
- *   or if the `line` is less than or equal to zero, or the line or column is out of the expected range.
+ * @throws {TypeError | RangeError} If `loc` is not an object with a numeric `line` and `column`, or
+ *   if the `line` is less than or equal to zero, or the line or column is out of the expected
+ *   range.
  */
 export function getOffsetFromLineColumn(loc: LineColumn): number {
   if (loc !== null && typeof loc === "object") {
@@ -246,6 +249,7 @@ export function getOffsetFromLineColumn(loc: LineColumn): number {
 
 /**
  * Get the range of the given node or token.
+ *
  * @param nodeOrToken - Node or token to get the range of
  * @returns Range of the node or token
  */
@@ -255,6 +259,7 @@ export function getRange(nodeOrToken: NodeOrToken): Range {
 
 /**
  * Get the location of the given node or token.
+ *
  * @param nodeOrToken - Node or token to get the location of
  * @returns Location of the node or token
  */
@@ -272,8 +277,8 @@ export function getLoc(nodeOrToken: NodeOrToken): Location {
  * Used in `loc` getter on AST nodes (not tokens or comments - they use their own caching
  * via `Token` / `Comment` class private fields).
  *
- * Defines a `loc` property on the node with the calculated `Location`, so accessing `loc` twice on same node
- * results in the same object each time.
+ * Defines a `loc` property on the node with the calculated `Location`, so accessing `loc` twice on
+ * same node results in the same object each time.
  *
  * For internal use only.
  *
@@ -404,6 +409,7 @@ export function computeLoc(start: number, end: number): Location {
 
 /**
  * Get the deepest node containing a range index.
+ *
  * @param offset - Range index of the desired node
  * @returns The node if found, or `null` if not found
  */

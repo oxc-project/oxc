@@ -147,7 +147,9 @@ const group: TestGroup = {
 export default group;
 
 /**
- * If test case contains JSX syntax with a `.js` filename, convert filename to `.jsx` to allow them to be parsed.
+ * If test case contains JSX syntax with a `.js` filename, convert filename to `.jsx` to allow them
+ * to be parsed.
+ *
  * @param test - Test case
  * @returns - Amended test case
  */

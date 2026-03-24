@@ -75,12 +75,14 @@ const INCLUDE_COMMENTS_SKIP_OPTIONS: SkipOptions = { includeComments: true, skip
 
 /**
  * Get all tokens that are related to the given node.
+ *
  * @param node - The AST node.
  * @param countOptions? - Options object. If is a function, equivalent to `{ filter: fn }`.
  * @returns Array of `Token`s, or array of `Token | Comment`s if `includeComments` is `true`.
  */
 /**
  * Get all tokens that are related to the given node.
+ *
  * @param node - The AST node.
  * @param beforeCount? - The number of tokens before the node to retrieve.
  * @param afterCount? - The number of tokens after the node to retrieve.
@@ -171,6 +173,7 @@ export function getTokens<Options extends CountOptions | number | FilterFn | nul
 
 /**
  * Get the first token of the given node.
+ *
  * @param node - The AST node.
  * @param skipOptions? - Options object.
  *   If is a number, equivalent to `{ skip: n }`.
@@ -252,6 +255,7 @@ export function getFirstToken<Options extends SkipOptions | number | FilterFn | 
 
 /**
  * Get the first tokens of the given node.
+ *
  * @param node - The AST node.
  * @param countOptions? - Options object.
  *   If is a number, equivalent to `{ count: n }`.
@@ -332,6 +336,7 @@ export function getFirstTokens<Options extends CountOptions | number | FilterFn 
 
 /**
  * Get the last token of the given node.
+ *
  * @param node - The AST node.
  * @param skipOptions? - Options object.
  *   If is a number, equivalent to `{ skip: n }`.
@@ -412,6 +417,7 @@ export function getLastToken<Options extends SkipOptions | number | FilterFn | n
 
 /**
  * Get the last tokens of the given node.
+ *
  * @param node - The AST node.
  * @param countOptions? - Options object.
  *   If is a number, equivalent to `{ count: n }`.
@@ -495,6 +501,7 @@ export function getLastTokens<Options extends CountOptions | number | FilterFn |
 
 /**
  * Get the token that precedes a given node or token.
+ *
  * @param nodeOrToken - The AST node or token.
  * @param skipOptions? - Options object.
  *   If is a number, equivalent to `{ skip: n }`.
@@ -574,7 +581,6 @@ export function getTokenBefore<Options extends SkipOptions | number | FilterFn |
  * Get the token that precedes a given node or token.
  *
  * @deprecated Use `sourceCode.getTokenBefore` with `includeComments: true` instead.
- *
  * @param nodeOrToken The AST node or token.
  * @param skip - Number of tokens to skip.
  * @returns `TokenOrComment | null`.
@@ -591,6 +597,7 @@ export function getTokenOrCommentBefore(
 
 /**
  * Get the tokens that precede a given node or token.
+ *
  * @param nodeOrToken - The AST node or token.
  * @param countOptions? - Options object.
  *   If is a number, equivalent to `{ count: n }`.
@@ -664,6 +671,7 @@ export function getTokensBefore<
 
 /**
  * Get the token that follows a given node or token.
+ *
  * @param nodeOrToken - The AST node or token.
  * @param skipOptions? - Options object.
  *   If is a number, equivalent to `{ skip: n }`.
@@ -742,7 +750,6 @@ export function getTokenAfter<Options extends SkipOptions | number | FilterFn | 
  * Get the token that follows a given node or token.
  *
  * @deprecated Use `sourceCode.getTokenAfter` with `includeComments: true` instead.
- *
  * @param nodeOrToken The AST node or token.
  * @param skip - Number of tokens to skip.
  * @returns `TokenOrComment | null`.
@@ -759,6 +766,7 @@ export function getTokenOrCommentAfter(
 
 /**
  * Get the tokens that follow a given node or token.
+ *
  * @param nodeOrToken - The AST node or token.
  * @param countOptions? - Options object.
  *   If is a number, equivalent to `{ count: n }`.
@@ -832,6 +840,7 @@ export function getTokensAfter<Options extends CountOptions | number | FilterFn 
 
 /**
  * Get all of the tokens between two non-overlapping nodes.
+ *
  * @param left - Node or token before the desired token range.
  * @param right - Node or token after the desired token range.
  * @param countOptions? - Options object. If is a function, equivalent to `{ filter: fn }`.
@@ -839,6 +848,7 @@ export function getTokensAfter<Options extends CountOptions | number | FilterFn 
  */
 /**
  * Get all of the tokens between two non-overlapping nodes.
+ *
  * @param left - Node or token before the desired token range.
  * @param right - Node or token after the desired token range.
  * @param padding - Number of extra tokens on either side of center.
@@ -921,6 +931,7 @@ export function getTokensBetween<
 
 /**
  * Get the first token between two non-overlapping nodes.
+ *
  * @param left - Node or token before the desired token range.
  * @param right - Node or token after the desired token range.
  * @param skipOptions? - Options object.
@@ -1003,6 +1014,7 @@ export function getFirstTokenBetween<
 
 /**
  * Get the first tokens between two non-overlapping nodes.
+ *
  * @param left - Node or token before the desired token range.
  * @param right - Node or token after the desired token range.
  * @param countOptions? - Options object.
@@ -1085,6 +1097,7 @@ export function getFirstTokensBetween<
 
 /**
  * Get the last token between two non-overlapping nodes.
+ *
  * @param left - Node or token before the desired token range.
  * @param right - Node or token after the desired token range.
  * @param skipOptions? - Options object.
@@ -1169,6 +1182,7 @@ export function getLastTokenBetween<
 
 /**
  * Get the last tokens between two non-overlapping nodes.
+ *
  * @param left - Node or token before the desired token range.
  * @param right - Node or token after the desired token range.
  * @param countOptions? - Options object.
@@ -1253,6 +1267,7 @@ export function getLastTokensBetween<
 
 /**
  * Get the token starting at the specified index.
+ *
  * @param offset - Start offset of the token.
  * @param rangeOptions - Options object.
  * @returns `Token` (or `Token | Comment` if `includeComments` is `true`), or `null` if none found.
@@ -1373,12 +1388,11 @@ export function isSpaceBetween(first: NodeOrToken, second: NodeOrToken): boolean
  * Checks for whitespace *between tokens*, not including whitespace *inside tokens*.
  * e.g. Returns `false` for `isSpaceBetween(x, y)` in `x+" "+y`.
  *
- * Unlike `SourceCode#isSpaceBetween`, this function does return `true` if there is a `JSText` token between the two
- * input tokens, and it contains whitespace.
- * e.g. Returns `true` for `isSpaceBetweenTokens(x, slash)` in `<X>a b</X>`.
+ * Unlike `SourceCode#isSpaceBetween`, this function does return `true` if there is a `JSText` token
+ * between the two input tokens, and it contains whitespace. e.g. Returns `true` for
+ * `isSpaceBetweenTokens(x, slash)` in `<X>a b</X>`.
  *
  * @deprecated Use `sourceCode.isSpaceBetween` instead.
- *
  * @param first - The first node or token to check between.
  * @param second - The second node or token to check between.
  * @returns `true` if there is a whitespace character between
@@ -1470,8 +1484,8 @@ function entryStart(index: number, uint32: Uint32Array): number {
 }
 
 /**
- * Get `end` offset of token/comment at `index`.
- * For tokens-only, reads from `tokensUint32`. For `includeComments`, looks up from the original buffer.
+ * Get `end` offset of token/comment at `index`. For tokens-only, reads from `tokensUint32`. For
+ * `includeComments`, looks up from the original buffer.
  *
  * @param index - Entry index in the tokens or merged buffer
  * @param includeComments - Whether to use the merged tokens-and-comments buffer
@@ -1521,7 +1535,8 @@ function collectEntries(
 }
 
 /**
- * Find the index of the first entry in a `Uint32Array` buffer whose `start` is >= `offset`, via binary search.
+ * Find the index of the first entry in a `Uint32Array` buffer whose `start` is >= `offset`, via
+ * binary search.
  *
  * Each entry occupies 4 x u32s (16 bytes), with `start` as the first u32.
  * Searched range starts at `startIndex` and ends at `length`.

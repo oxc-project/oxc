@@ -38,6 +38,7 @@ const events = new Map<string, Record<string, string[]>>();
 
 /**
  * Record an event.
+ *
  * @param context - Context object
  * @param event - Event name
  */
@@ -64,6 +65,7 @@ function addEvent(context: Context, event: string) {
 
 /**
  * Get recorded events for a directory, serialized as pretty-printed JSON.
+ *
  * @param path - File path
  * @returns Events for directory as JSON string
  */

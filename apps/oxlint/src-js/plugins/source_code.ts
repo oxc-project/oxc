@@ -48,6 +48,7 @@ export let ast: Program | null = null;
 
 /**
  * Set up source for the file about to be linted.
+ *
  * @param bufferInput - Buffer containing AST
  * @param hasBOMInput - `true` if file's original source text has Unicode BOM
  */
@@ -87,11 +88,12 @@ export function initAst(): void {
 /**
  * Fix AST for conformance tests.
  *
- * Oxc parser always parses as latest ECMAScript version.
- * Some conformance tests request parsing with `ecmaVersion: 3`, and expect directives to be parsed as string literals.
- * When using ES3, traverse the AST and remove the `directive` property from `ExpressionStatement`s.
+ * Oxc parser always parses as latest ECMAScript version. Some conformance tests request parsing
+ * with `ecmaVersion: 3`, and expect directives to be parsed as string literals. When using ES3,
+ * traverse the AST and remove the `directive` property from `ExpressionStatement`s.
  *
- * This function is only called in conformance tests. In standard builds, minifier removes this function entirely.
+ * This function is only called in conformance tests. In standard builds, minifier removes this
+ * function entirely.
  */
 function fixES3Ast(): void {
   if (!CONFORMANCE) throw new Error("Should be unreachable outside of conformance tests");
@@ -124,12 +126,11 @@ function fixES3Node(node: any): void {
 /**
  * Reset source and AST after file has been linted, to free memory.
  *
- * Setting `buffer` to `null` also prevents AST being deserialized after linting,
- * at which point the buffer may be being reused for another file.
- * The buffer might contain a half-constructed AST (if parsing is currently in progress in Rust),
- * which would cause deserialization to malfunction.
- * With `buffer` set to `null`, accessing `SOURCE_CODE.ast` will still throw, but the error message will be clearer,
- * and no danger of an infinite loop due to a circular AST (unlikely but possible).
+ * Setting `buffer` to `null` also prevents AST being deserialized after linting, at which point the
+ * buffer may be being reused for another file. The buffer might contain a half-constructed AST (if
+ * parsing is currently in progress in Rust), which would cause deserialization to malfunction. With
+ * `buffer` set to `null`, accessing `SOURCE_CODE.ast` will still throw, but the error message will
+ * be clearer, and no danger of an infinite loop due to a circular AST (unlikely but possible).
  */
 export function resetSourceAndAst(): void {
   buffer = null;
@@ -145,6 +146,7 @@ export function resetSourceAndAst(): void {
 
 /**
  * Get whether file is JSX.
+ *
  * @returns `true` if file is JSX, `false` if not
  */
 export function fileIsJsx(): boolean {
@@ -155,6 +157,7 @@ export function fileIsJsx(): boolean {
 
 /**
  * Get whether file is TypeScript.
+ *
  * @returns `true` if file is TypeScript, `false` if not
  */
 export function fileIsTs(): boolean {
@@ -253,6 +256,7 @@ export const SOURCE_CODE = Object.freeze({
 
   /**
    * Get the source code for the given node.
+   *
    * @param node? - The AST node to get the text for.
    * @param beforeCount? - The number of characters before the node to retrieve.
    * @param afterCount? - The number of characters after the node to retrieve.
@@ -276,6 +280,7 @@ export const SOURCE_CODE = Object.freeze({
 
   /**
    * Get all the ancestors of a given node.
+   *
    * @param node - AST node
    * @returns All the ancestor nodes in the AST, not including the provided node,
    *   starting from the root node at index 0 and going inwards to the parent node.
@@ -294,7 +299,8 @@ export const SOURCE_CODE = Object.freeze({
   },
 
   /**
-   * Get source text as array of lines, split according to specification's definition of line breaks.
+   * Get source text as array of lines, split according to specification's definition of line
+   * breaks.
    */
   getLines(): string[] {
     if (lines.length === 0) initLines();

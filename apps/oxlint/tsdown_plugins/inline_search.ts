@@ -22,11 +22,12 @@ const { fnParams, returnParamIndex, fnBodySource } = extractInlinedFunction(
 );
 
 /**
- * Plugin to inline calls to binary search helper function `firstTokenAtOrAfter` into its call sites.
+ * Plugin to inline calls to binary search helper function `firstTokenAtOrAfter` into its call
+ * sites.
  *
  * This eliminates function call overhead for the binary search used by all token/comment methods.
- * The function definition is read from the source file, so edits to the helper function are automatically
- * reflected in the inlined output.
+ * The function definition is read from the source file, so edits to the helper function are
+ * automatically reflected in the inlined output.
  *
  * The function is inlined into all call sites in `FILES` list above.
  *
@@ -62,6 +63,7 @@ const plugin: Plugin = {
 
       /**
        * Convert offset to line number.
+       *
        * @param offset - Offset in source code
        * @returns Line number
        */
@@ -165,6 +167,7 @@ export default plugin;
 
 /**
  * Check if a node is a call to the function to be inlined.
+ *
  * @param node - AST node to check
  * @returns `true` if `node` is a call to the function to be inlined
  */

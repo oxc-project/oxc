@@ -175,9 +175,10 @@ const textEncoder = new TextEncoder();
  *
  * @param {string} sourceText - Source text of file
  * @returns {Object} - Object of form `{ buffer, sourceByteLen }`.
+ *
  *   - `buffer`: `Uint8Array` containing the AST in raw form.
- *   - `sourceByteLen`: Length of source text in UTF-8 bytes
- *     (which may not be equal to `sourceText.length` if source contains non-ASCII characters).
+ *   - `sourceByteLen`: Length of source text in UTF-8 bytes (which may not be equal to
+ *     `sourceText.length` if source contains non-ASCII characters).
  */
 export function prepareRaw(sourceText) {
   // Cancel timeout for clearing buffers
@@ -254,8 +255,8 @@ function clearBuffersCache() {
 /**
  * Create a `Uint8Array` which is 2 GiB in size, with its start aligned on 4 GiB.
  *
- * Achieve this by creating a 6 GiB `ArrayBuffer`, getting the offset within it that's aligned to 4 GiB,
- * chopping off that number of bytes from the start, and shortening to 2 GiB.
+ * Achieve this by creating a 6 GiB `ArrayBuffer`, getting the offset within it that's aligned to 4
+ * GiB, chopping off that number of bytes from the start, and shortening to 2 GiB.
  *
  * It's always possible to obtain a 2 GiB slice aligned on 4 GiB within a 6 GiB buffer,
  * no matter how the 6 GiB buffer is aligned.

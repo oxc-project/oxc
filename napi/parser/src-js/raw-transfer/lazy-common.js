@@ -4,6 +4,7 @@ export const TOKEN = {};
 
 /**
  * Throw error when restricted class constructor is called by user code.
+ *
  * @throws {Error}
  */
 export function constructorError() {

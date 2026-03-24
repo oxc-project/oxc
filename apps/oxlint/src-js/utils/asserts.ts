@@ -12,14 +12,14 @@ export function typeAssertIs<T>(value: unknown): asserts value is T {}
 /**
  * Assert a value is not `null` or `undefined`.
  *
- * In release builds, is a no-op. Only does runtime checks in debug builds.
- * Minification removes this function and all calls to it in release builds, so it has zero runtime cost.
+ * In release builds, is a no-op. Only does runtime checks in debug builds. Minification removes
+ * this function and all calls to it in release builds, so it has zero runtime cost.
  *
  * Use this for testing conditions which would indicate a bug in the code.
  * Do NOT use this for validating user input.
  *
- * If creating the error message is expensive, or potentially creating the message itself can result in an error
- * when the assertion passes, pass a function which returns the message.
+ * If creating the error message is expensive, or potentially creating the message itself can result
+ * in an error when the assertion passes, pass a function which returns the message.
  *
  * ```ts
  * debugAssertIsNonNull(thing, () => `Should not be null: ${getErrorMessage()}`);
@@ -50,14 +50,14 @@ export function debugAssertIsNonNull<T>(
 /**
  * Assert a value is not `undefined`.
  *
- * In release builds, is a no-op. Only does runtime checks in debug builds.
- * Minification removes this function and all calls to it in release builds, so it has zero runtime cost.
+ * In release builds, is a no-op. Only does runtime checks in debug builds. Minification removes
+ * this function and all calls to it in release builds, so it has zero runtime cost.
  *
  * Use this for testing conditions which would indicate a bug in the code.
  * Do NOT use this for validating user input.
  *
- * If creating the error message is expensive, or potentially creating the message itself can result in an error
- * when the assertion passes, pass a function which returns the message.
+ * If creating the error message is expensive, or potentially creating the message itself can result
+ * in an error when the assertion passes, pass a function which returns the message.
  *
  * ```ts
  * debugAssertIsNotUndefined(thing, () => `Should not be undefined: ${getErrorMessage()}`);
@@ -87,8 +87,8 @@ export function debugAssertIsNotUndefined<T>(
 /**
  * Debug assert that `fn` is a function.
  *
- * In release builds, is a no-op. Only does runtime checks in debug builds.
- * Minification removes this function and all calls to it in release builds, so it has zero runtime cost.
+ * In release builds, is a no-op. Only does runtime checks in debug builds. Minification removes
+ * this function and all calls to it in release builds, so it has zero runtime cost.
  *
  * @param fn - Function
  * @throws {TypeError} If `fn` is not a function in debug build
@@ -102,14 +102,14 @@ export function debugAssertIsFunction(fn: unknown): asserts fn is Function {
 /**
  * Assert a condition.
  *
- * In release builds, is a no-op. Only does runtime checks in debug builds.
- * Minification removes this function and all calls to it in release builds, so it has zero runtime cost.
+ * In release builds, is a no-op. Only does runtime checks in debug builds. Minification removes
+ * this function and all calls to it in release builds, so it has zero runtime cost.
  *
  * Use this for testing conditions which would indicate a bug in the code.
  * Do NOT use this for validating user input.
  *
- * If creating the error message is expensive, or potentially creating the message itself can result in an error
- * when the assertion passes, pass a function which returns the message.
+ * If creating the error message is expensive, or potentially creating the message itself can result
+ * in an error when the assertion passes, pass a function which returns the message.
  *
  * ```ts
  * debugAssert(condition, () => `Condition failed: ${getErrorMessage()}`);

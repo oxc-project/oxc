@@ -97,6 +97,7 @@ export const PLACEHOLDER_REGEX = /\{\{([^{}]+)\}\}/gu;
 
 /**
  * Report error.
+ *
  * @param diagnostic - Diagnostic object
  * @param extraArgs - Extra arguments passed to `context.report()` (legacy positional forms)
  * @param ruleDetails - `RuleDetails` object, containing rule-specific details e.g. `isFixable`
@@ -240,13 +241,14 @@ function convertLegacyCallArgs(node: unknown, extraArgs: unknown[]): Diagnostic 
 /**
  * Get message from a diagnostic or suggestion.
  *
- * Resolve message from `messageId` if present, and interpolate placeholders {{key}} with data values.
+ * Resolve message from `messageId` if present, and interpolate placeholders {{key}} with data
+ * values.
  *
  * @param message - Provided message string
  * @param descriptor - `Diagnostic` or `Suggestion` object
  * @param ruleDetails - `RuleDetails` object, containing rule-specific `messages`
  * @returns Object containing message string and message ID (if present in `descriptor`)
- * @throws {Error|TypeError} If neither `message` nor `messageId` provided, or of wrong type
+ * @throws {Error | TypeError} If neither `message` nor `messageId` provided, or of wrong type
  */
 export function getMessage(
   message: string | null | undefined,
@@ -277,6 +279,7 @@ export function getMessage(
 
 /**
  * Resolve a message ID to its message string, with optional data interpolation.
+ *
  * @param messageId - The message ID to resolve
  * @param ruleDetails - `RuleDetails` object, containing rule-specific `messages`
  * @returns Resolved message string
@@ -303,6 +306,7 @@ function resolveMessageFromMessageId(messageId: string, ruleDetails: RuleDetails
 
 /**
  * Replace placeholders in message with values from `data`.
+ *
  * @param message - Message
  * @param data - Data to replace placeholders with
  * @returns Message with placeholders replaced with data values
@@ -324,13 +328,14 @@ export function replacePlaceholders(message: string, data: DiagnosticData): stri
  * 1. Does not check that `lineCol` is an object - caller must do that.
  * 2. Allows `column` to be less than 0 or greater than the length of the line.
  *
- * Relaxing the restriction on `column` is required because some rules (e.g. ESLint's `func-call-spacing`)
- * produce `column: -1` in some cases.
+ * Relaxing the restriction on `column` is required because some rules (e.g. ESLint's
+ * `func-call-spacing`) produce `column: -1` in some cases.
  *
  * @param lineCol - A line/column location.
  * @returns The character index of the location in the file.
  * @throws {TypeError} If `lineCol` is not an object with a integer `line` and `column`.
- * @throws {RangeError} If `line` is less than or equal to 0, or greater than the number of lines in the source text.
+ * @throws {RangeError} If `line` is less than or equal to 0, or greater than the number of lines in
+ *   the source text.
  * @throws {RangeError} If computed offset is out of range of the source text.
  */
 function getOffsetFromLineColumn(lineCol: LineColumn): number {

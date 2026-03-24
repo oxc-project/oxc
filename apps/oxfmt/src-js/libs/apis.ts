@@ -2,10 +2,13 @@
  * API functions for Prettier integration.
  *
  * These must be plain functions because:
+ *
  * - They can be called as `tinypool` RPC functions via `cli-worker.ts`
+ *
  *   - Tinypool runs workers as `child_process`, so each worker is an isolated process
  *   - Module-level caches are shared only within each worker process
  * - They can also be imported directly via `index.ts` (Node.js API)
+ *
  *   - In this case, module-level caches are shared globally
  *
  * The caches (`xxxCache`) are for lazy loading
@@ -138,10 +141,11 @@ export type FormatEmbeddedDocParam = {
  * Format xxx-in-js code snippets into Prettier `Doc` JSON strings.
  *
  * This makes `oxc_formatter` correctly handle `printWidth` even for embedded code.
+ *
  * - For gql-in-js, `texts` contains multiple parts split by `${}` in a template literal
  * - For others, `texts` always contains a single string with `${}` parts replaced by placeholders
- * However, this function does not need to be aware of that,
- * as it simply formats each text part independently and returns an array of formatted parts.
+ *   However, this function does not need to be aware of that, as it simply formats each text part
+ *   independently and returns an array of formatted parts.
  *
  * @returns Doc JSON strings (one per input text)
  */
@@ -245,6 +249,7 @@ export interface SortTailwindClassesArgs {
 
 /**
  * Process Tailwind CSS classes found in JS/TS files in batch.
+ *
  * @param args - Object containing classes and options (filepath is in options.filepath)
  * @returns Array of sorted class strings (same order/length as input)
  */

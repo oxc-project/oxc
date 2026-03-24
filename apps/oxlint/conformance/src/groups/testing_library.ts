@@ -115,8 +115,10 @@ function createRuleTesterModule(tsEslintParser: TSEslintParser): { RuleTester: t
 }
 
 /**
- * Patch test case to make `filename`'s extension `.tsx` if `languageOptions.parserOptions.ecmaFeatures.jsx` is `true`.
- * Otherwise, `filename: "whatever.test.js"` takes precedence over `jsx: true`, and fails to parse.
+ * Patch test case to make `filename`'s extension `.tsx` if
+ * `languageOptions.parserOptions.ecmaFeatures.jsx` is `true`. Otherwise, `filename:
+ * "whatever.test.js"` takes precedence over `jsx: true`, and fails to parse.
+ *
  * @param test - Test case
  * @param languageOptions - Language options from config
  * @returns Patched test case

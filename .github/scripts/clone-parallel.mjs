@@ -31,6 +31,7 @@ const NODE_COMPAT_TABLE = args[5] !== "false";
 
 /**
  * Run a git command and return a promise
+ *
  * @param {string[]} gitArgs - Arguments to pass to git
  * @param {string} cwd - Working directory
  * @returns {Promise<void>}
@@ -61,12 +62,13 @@ function runGit(gitArgs, cwd) {
 
 /**
  * Clone or update a repository
+ *
  * @param {boolean} shouldClone - Whether to clone this repo
  * @param {string} repo - GitHub repo path (e.g., "tc39/test262")
  * @param {string} path - Local path relative to repo root
  * @param {string} ref - Git ref (SHA) to checkout
  * @param {string} name - Display name for logging
- * @returns {Promise<{success: boolean, name: string, error?: string}>}
+ * @returns {Promise<{ success: boolean; name: string; error?: string }>}
  */
 async function cloneRepo(shouldClone, repo, path, ref, name) {
   if (!shouldClone) {

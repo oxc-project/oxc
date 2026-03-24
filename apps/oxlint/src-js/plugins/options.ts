@@ -38,9 +38,8 @@ export type Options = JsonValue[];
 export type RuleOptionsSchema = JSONSchema4 | JSONSchema4[] | false;
 
 /**
- * Schema validator function.
- * Does not return anything. Throws an error if validation fails.
- * Should be passed full name of the rule, in form `<plugin>/<rule>`. This is used in error messages.
+ * Schema validator function. Does not return anything. Throws an error if validation fails. Should
+ * be passed full name of the rule, in form `<plugin>/<rule>`. This is used in error messages.
  * `options` maybe be mutated if schema contains default values.
  */
 export type SchemaValidator = (options: Options, ruleName: string) => void;
@@ -56,6 +55,7 @@ export let allOptions: Readonly<Options>[] | null = null;
 
 /**
  * Set `allOptions`. Used when switching workspaces.
+ *
  * @param options - Array of options objects
  */
 export function setAllOptions(options: Readonly<Options>[]) {
@@ -100,16 +100,18 @@ AJV.addMetaSchema(metaSchema);
  *
  * Returned validator function will throw if validation fails.
  *
- * This function should be called once when loading a rule, and the returned validator stored in `RuleDetails`.
+ * This function should be called once when loading a rule, and the returned validator stored in
+ * `RuleDetails`.
  *
- * ESLint allows array shorthand: `schema: [item1, item2]` which means `options[0]` must match `item1`, etc.
- * This function converts that to a proper JSON Schema, before compiling it.
+ * ESLint allows array shorthand: `schema: [item1, item2]` which means `options[0]` must match
+ * `item1`, etc. This function converts that to a proper JSON Schema, before compiling it.
  *
  * Based on ESLint's `getRuleOptionsSchema`:
  * https://github.com/eslint/eslint/blob/v9.39.2/lib/config/config.js#L177-L210
  *
  * @param schema - Rule's schema from `meta.schema`
- * @returns Compiled AJV validator, or `null` if no options accepted, or `false` if validation is disabled
+ * @returns Compiled AJV validator, or `null` if no options accepted, or `false` if validation is
+ *   disabled
  */
 export function compileSchema(
   schema: RuleOptionsSchema | null | undefined,
@@ -142,6 +144,7 @@ export function compileSchema(
 
 /**
  * Wrap AJV validator function to throw if validation fails.
+ *
  * @param validate - AJV validator function
  * @returns Wrapped validator function, which throws if validation fails
  */
@@ -186,6 +189,7 @@ function wrapSchemaValidator(validate: Ajv.ValidateFunction): SchemaValidator {
 /**
  * Set all external rule options.
  * Called once from Rust after config building, before any linting occurs.
+ *
  * @param optionsJSON - Array of all rule options across all configurations, serialized as JSON
  * @throws `Error` if options fail validation
  */
@@ -258,7 +262,8 @@ export function setOptions(optionsJson: string): void {
  *
  * This order ensures precedence: config > defaultOptions > schema defaults.
  *
- * ESLint calls `#normalizeRulesConfig()` first (merges `defaultOptions`), then `validateRulesConfig()` (AJV):
+ * ESLint calls `#normalizeRulesConfig()` first (merges `defaultOptions`), then
+ * `validateRulesConfig()` (AJV):
  * https://github.com/eslint/eslint/blob/v9.39.2/lib/config/config.js#L483-L484
  * https://github.com/eslint/eslint/blob/v9.39.2/lib/config/config.js#L532-L637
  *
@@ -312,9 +317,9 @@ function processOptions(configOptions: Options, ruleDetails: RuleDetails): Reado
  *
  * Config options take precedence over default options.
  *
- * Options returned are entirely mutable. No parts are frozen, even parts which come from default options.
- * Any parts of `defaultOptions` which are included are deep cloned.
- * Any parts of `configOptions` which are included in return value are *not* cloned.
+ * Options returned are entirely mutable. No parts are frozen, even parts which come from default
+ * options. Any parts of `defaultOptions` which are included are deep cloned. Any parts of
+ * `configOptions` which are included in return value are _not_ cloned.
  *
  * @param configOptions - Options from config
  * @param defaultOptions - Default options from `rule.meta.defaultOptions`

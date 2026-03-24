@@ -31,6 +31,7 @@ export class Visitor {
 
   /**
    * Visit AST.
+   *
    * @param program - The AST to visit.
    * @returns {undefined}
    */

@@ -25,6 +25,7 @@ import type { Node, Program } from "../generated/types.d.ts";
  * Using 256 as it's a power of 2 and larger than the maximum type ID (171).
  *
  * Type ID encoding:
+ *
  * - Enter visit (nodes): 0 to NODE_TYPES_COUNT - 1 (0-164)
  * - Call method (CFG events): NODE_TYPES_COUNT to TYPE_IDS_COUNT - 1 (165-171)
  * - Exit visit (non-leaf nodes): Node type ID + EXIT_TYPE_ID_OFFSET (256+)
@@ -41,6 +42,7 @@ debugAssert(
 
 /**
  * Encoded type IDs for each step.
+ *
  * - For enter visits: Node type ID (0-164)
  * - For CFG events: Event type ID (165-171)
  * - For exit visits: Node type ID + `EXIT_TYPE_ID_OFFSET` (256+)
@@ -70,16 +72,16 @@ export function resetCfgWalk(): void {
  *
  * Use this function to walk AST instead of `walkProgram`, when visitor listens for CFG events.
  *
- * It's much slower than `walkProgram`, so prefer `walkProgram` unless visitor includes handlers for CFG events.
+ * It's much slower than `walkProgram`, so prefer `walkProgram` unless visitor includes handlers for
+ * CFG events.
  *
  * It walks the whole AST twice:
  *
- * 1. First time to build the CFG graph.
- *    In this first pass, it builds a list of steps to walk AST (including visiting nodes and CFG events).
- *    This list is stored in the SoA arrays (stepTypeIds, stepData).
- *
- * 2. Visit AST with provided visitor.
- *    Run through the steps, in order, calling visit functions for each step.
+ * 1. First time to build the CFG graph. In this first pass, it builds a list of steps to walk AST
+ *    (including visiting nodes and CFG events). This list is stored in the SoA arrays (stepTypeIds,
+ *    stepData).
+ * 2. Visit AST with provided visitor. Run through the steps, in order, calling visit functions for
+ *    each step.
  *
  * TODO: This is was originally copied from ESLint, and has been adapted for better performance.
  * We could further improve its performance by copying ESLint's `CodePathAnalyzer` into this repo,
@@ -156,6 +158,7 @@ export function walkProgramWithCfg(
 
 /**
  * Walk AST and put a list of all steps to walk AST into the SoA arrays.
+ *
  * @param ast - AST
  */
 function prepareSteps(ast: Program) {
@@ -278,6 +281,7 @@ function traverseNode(node: Node, enter: (node: Node) => void, leave: (node: Nod
 /**
  * Debug assert that `enterExit` is an `EnterExit` object.
  * In release build, this function does nothing and is removed entirely by minifier.
+ *
  * @param enterExit - Object
  * @throws {TypeError} If `enterExit` is not an `EnterExit` object in debug build
  */
@@ -289,6 +293,7 @@ export function debugAssertIsEnterExitObject(enterExit: unknown): asserts enterE
 
 /**
  * Check if an object is an `EnterExit` object.
+ *
  * @param obj - Object
  * @returns `true` if `obj` is an `EnterExit` object, `false` otherwise
  */
