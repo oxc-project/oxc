@@ -1655,6 +1655,28 @@ fn test_ignore() {
         .test_and_snapshot();
 }
 
+/// https://github.com/oxc-project/oxc/issues/20670
+#[test]
+fn test_type_value_redeclaration() {
+    let pass = vec![
+        // Both type param and value param are used
+        ("export function f<T>(T: T): T { return T; }", None),
+        // Type param used in return type, value param used in body
+        ("export function f<T>(T: number): T { return T; }", None),
+    ];
+
+    let fail = vec![
+        // Type param T is unused, only value param T is used
+        ("export function useParam<T>(T: number) { return T; }", None),
+        ("export function useParam<T>(T: number): T { }", None),
+    ];
+
+    Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
+        .intentionally_allow_no_fix_tests()
+        .with_snapshot_suffix("type-value-redeclaration")
+        .test_and_snapshot();
+}
+
 // #[test]
 // fn test_template() {
 //     let pass = vec![];

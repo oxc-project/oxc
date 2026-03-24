@@ -1,0 +1,20 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 444
+---
+
+  ⚠ eslint(no-unused-vars): Type parameter 'T' is declared but never used. Unused type parameters should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:26]
+ 1 │ export function useParam<T>(T: number) { return T; }
+   ·                          ┬
+   ·                          ╰── 'T' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Parameter 'T' is declared but never used. Unused parameters should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:29]
+ 1 │ export function useParam<T>(T: number): T { }
+   ·                             ┬
+   ·                             ╰── 'T' is declared here
+   ╰────
+  help: Consider removing this parameter.

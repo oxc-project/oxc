@@ -18,7 +18,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Consider removing this declaration.
 
-  ⚠ eslint(no-unused-vars): Variable 'T' is declared but never used. Unused variables should start with a '_'.
+  ⚠ eslint(no-unused-vars): Type parameter 'T' is declared but never used. Unused type parameters should start with a '_'.
    ╭─[no_unused_vars.tsx:3:39]
  2 │         export namespace NonAmbientModuleDeclaration {
  3 │             export interface Matchers<T> extends MatcherOverride {
@@ -28,7 +28,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Consider removing this declaration.
 
-  ⚠ eslint(no-unused-vars): Variable 'T' is declared but never used. Unused variables should start with a '_'.
+  ⚠ eslint(no-unused-vars): Type parameter 'T' is declared but never used. Unused type parameters should start with a '_'.
    ╭─[no_unused_vars.tsx:1:44]
  1 │ declare module 'bun:test' { type Matchers2<T> = {} }
    ·                                            ┬
@@ -44,7 +44,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Consider removing this declaration.
 
-  ⚠ eslint(no-unused-vars): Variable 'T' is declared but never used. Unused variables should start with a '_'.
+  ⚠ eslint(no-unused-vars): Type parameter 'T' is declared but never used. Unused type parameters should start with a '_'.
    ╭─[no_unused_vars.tsx:1:43]
  1 │ declare module 'bun:test' { class MyClass<T> {} }
    ·                                           ┬

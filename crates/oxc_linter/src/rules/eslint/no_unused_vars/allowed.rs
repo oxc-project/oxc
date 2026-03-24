@@ -199,15 +199,16 @@ impl NoUnusedVars {
         module_record: &ModuleRecord,
         symbol: &Symbol<'_, 'a>,
         param: &FormalParameter<'a>,
+        param_node_id: NodeId,
     ) -> bool {
         // early short-circuit when no argument checking should be performed
         if self.args.is_none() {
             return true;
         }
 
-        // find FormalParameters. Should be the next parent of param, but this
-        // is safer.
-        let Some((params, params_id)) = symbol.iter_parents().find_map(|p| {
+        // find FormalParameters by walking ancestors from the param node, not
+        // the symbol's primary declaration (which may differ in redeclarations).
+        let Some((params, params_id)) = symbol.nodes().ancestors(param_node_id).find_map(|p| {
             let params = p.kind().as_formal_parameters()?;
             Some((params, p.id()))
         }) else {

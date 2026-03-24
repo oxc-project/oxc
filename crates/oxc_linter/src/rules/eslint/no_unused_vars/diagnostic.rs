@@ -18,6 +18,8 @@ fn pronoun_for_symbol(
         ("Interface", "interfaces")
     } else if symbol_flags.is_type_alias() {
         ("Type alias", "type aliases")
+    } else if symbol_flags.contains(SymbolFlags::TypeParameter) {
+        ("Type parameter", "type parameters")
     } else if symbol_flags.is_enum() {
         ("Enum", "enums")
     } else if symbol_flags.is_enum_member() {
@@ -85,6 +87,24 @@ where
     .with_help(help)
 }
 
+/// Like [`declared`], but uses an explicit span and flags for redeclaration reporting.
+pub fn declared_at<R>(
+    name: &str,
+    flags: SymbolFlags,
+    span: Span,
+    pat: &IgnorePattern<R>,
+) -> OxcDiagnostic
+where
+    R: fmt::Display,
+{
+    let (pronoun, pronoun_plural) = pronoun_for_symbol(flags);
+    let suffix = pat.diagnostic_help(pronoun_plural);
+
+    OxcDiagnostic::warn(format!("{pronoun} '{name}' is declared but never used.{suffix}"))
+        .with_label(span.label(format!("'{name}' is declared here")))
+        .with_help("Consider removing this declaration.")
+}
+
 /// Variable 'x' is assigned a value but never used.
 pub fn assign<R>(
     symbol: &Symbol<'_, '_>,
@@ -111,11 +131,18 @@ pub fn param<R>(symbol: &Symbol<'_, '_>, pat: &IgnorePattern<R>) -> OxcDiagnosti
 where
     R: fmt::Display,
 {
-    let name = symbol.name();
+    param_at(symbol.name(), symbol.span(), pat)
+}
+
+/// Like [`param`], but uses an explicit span for redeclaration reporting.
+pub fn param_at<R>(name: &str, span: Span, pat: &IgnorePattern<R>) -> OxcDiagnostic
+where
+    R: fmt::Display,
+{
     let suffix = pat.diagnostic_help("parameters");
 
     OxcDiagnostic::warn(format!("Parameter '{name}' is declared but never used.{suffix}"))
-        .with_label(symbol.span().label(format!("'{name}' is declared here")))
+        .with_label(span.label(format!("'{name}' is declared here")))
         .with_help("Consider removing this parameter.")
 }
 

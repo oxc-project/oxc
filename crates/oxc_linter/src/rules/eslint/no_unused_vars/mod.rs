@@ -249,10 +249,15 @@ impl NoUnusedVars {
                 if self.report_used_ignore_pattern {
                     ctx.diagnostic(diagnostic::used_ignored(symbol, &self.vars_ignore_pattern));
                 }
+
                 return;
             }
             // used, ignored because of other ignore reason (e.g. rest siblings)
-            (_, Some(_)) | (true, None) => return,
+            (_, Some(_)) => return,
+            (true, None) => {
+                self.check_unused_redeclarations(symbol, ctx);
+                return;
+            }
             // needs acceptance check and/or reporting
             (false, None) => {}
         }
@@ -303,7 +308,7 @@ impl NoUnusedVars {
                 });
             }
             AstKind::FormalParameter(param) => {
-                if self.is_allowed_argument(ctx.semantic(), ctx.module_record(), symbol, param) {
+                if self.is_allowed_argument(ctx.semantic(), ctx.module_record(), symbol, param, declaration.id()) {
                     return;
                 }
                 ctx.diagnostic(diagnostic::param(symbol, &self.args_ignore_pattern));
@@ -364,6 +369,95 @@ impl NoUnusedVars {
                 );
             }
             _ => ctx.diagnostic(diagnostic::declared(symbol, &IgnorePattern::<&str>::None, false)),
+        }
+    }
+
+    /// When a symbol is "used" but has redeclarations that mix type parameters
+    /// with value declarations, one of the redeclarations might actually be unused.
+    ///
+    /// For example, in `function f<T>(T: number) { return T; }`, both the type
+    /// parameter `T` and the function parameter `T` share the same symbol ID.
+    /// Only the function parameter is referenced (value reference), so the type
+    /// parameter should be reported as unused.
+    ///
+    /// Only type parameters are checked here — unlike interfaces or type aliases,
+    /// type parameters shadow (not merge with) value declarations in TypeScript.
+    fn check_unused_redeclarations<'a>(&self, symbol: &Symbol<'_, 'a>, ctx: &LintContext<'a>) {
+        let redeclarations = ctx.scoping().symbol_redeclarations(symbol.id());
+        if redeclarations.is_empty() {
+            return;
+        }
+
+        let (mut has_type_param, mut has_value_decl) = (false, false);
+        for r in redeclarations {
+            if r.flags.contains(SymbolFlags::TypeParameter) {
+                has_type_param = true;
+            } else {
+                has_value_decl = true;
+            }
+            if has_type_param && has_value_decl {
+                break;
+            }
+        }
+        if !has_type_param || !has_value_decl {
+            return;
+        }
+
+        let (mut has_type_ref, mut has_value_ref) = (false, false);
+        for r in symbol.references() {
+            if r.is_type() {
+                has_type_ref = true;
+            } else {
+                has_value_ref = true;
+            }
+            if has_type_ref && has_value_ref {
+                break;
+            }
+        }
+
+        if has_type_ref && has_value_ref {
+            return;
+        }
+
+        let name = symbol.name();
+        for redecl in redeclarations {
+            let is_type_param = redecl.flags.contains(SymbolFlags::TypeParameter);
+            if is_type_param && !has_type_ref {
+                if self.is_allowed_type_parameter(symbol, redecl.declaration) {
+                    continue;
+                }
+                ctx.diagnostic(diagnostic::declared_at(
+                    name,
+                    redecl.flags,
+                    redecl.span,
+                    &self.vars_ignore_pattern,
+                ));
+            } else if !is_type_param && !has_value_ref {
+                let declaration_node = ctx.nodes().get_node(redecl.declaration);
+                if let AstKind::FormalParameter(param) = declaration_node.kind() {
+                    if self.is_allowed_argument(
+                        ctx.semantic(),
+                        ctx.module_record(),
+                        symbol,
+                        param,
+                        redecl.declaration,
+                    ) {
+                        continue;
+                    }
+                    ctx.diagnostic(diagnostic::param_at(
+                        name,
+                        redecl.span,
+                        &self.args_ignore_pattern,
+                    ));
+                } else {
+                    ctx.diagnostic(diagnostic::declared_at(
+                        name,
+                        redecl.flags,
+                        redecl.span,
+                        &self.vars_ignore_pattern,
+                    ));
+                }
+            }
         }
     }
 
