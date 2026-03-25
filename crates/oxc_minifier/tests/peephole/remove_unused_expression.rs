@@ -1,5 +1,7 @@
+use oxc_ecmascript::side_effects::PropertyReadSideEffects;
+
 use crate::{
-    CompressOptions, TreeShakeOptions, default_options, test, test_options,
+    CompressOptions, CompressOptionsUnused, TreeShakeOptions, default_options, test, test_options,
     test_options_source_type, test_same, test_same_options, test_same_options_source_type,
 };
 
@@ -475,4 +477,68 @@ fn remove_unused_class_expression() {
 
     // TypeError
     test_same_options("(class extends (() => {}) {})", &options);
+}
+
+#[test]
+fn test_property_write_side_effects() {
+    let options = CompressOptions {
+        unused: CompressOptionsUnused::Remove,
+        treeshake: TreeShakeOptions {
+            property_write_side_effects: false,
+            property_read_side_effects: PropertyReadSideEffects::None,
+            ..TreeShakeOptions::default()
+        },
+        ..CompressOptions::smallest()
+    };
+
+    // Issue #14207: drop function declarations with property assignments
+    test_options("function A() {} A.from = () => {};", "", &options);
+
+    // Function declaration + multiple property assignments
+    test_options("function A() {} A.foo = 1; A.bar = 2;", "", &options);
+
+    // Class declaration + property assignment
+    test_options("class A {} A.foo = 1;", "", &options);
+
+    // Property write is kept when variable is read elsewhere (statement fusion merges them)
+    test_options(
+        "function A() {} A.foo = 1; console.log(A);",
+        "function A() {} A.foo = 1, console.log(A);",
+        &options,
+    );
+
+    // Should keep if the assignment RHS has side effects
+    test_same_options("function A() {} A.foo = sideEffect();", &options);
+
+    // Property assignment on global (not local binding) should be kept
+    test_same_options("globalObj.foo = 1;", &options);
+
+    // Object literal + property assignment (fresh value, safe to drop)
+    test_options("const B = {}; B.foo = 1;", "", &options);
+
+    // Alias where nothing is exported: inlining resolves alias, then everything drops
+    test_options("const a = {}; const b = a; b.foo = 1;", "", &options);
+
+    // Alias where target is exported: must preserve the property write
+    test_options(
+        "const a = {}; const b = a; b.add = 1; export { a };",
+        "const a = {}, b = a; b.add = 1; export { a };",
+        &options,
+    );
+
+    // Chained member expression: b.a.add = 1 must be preserved
+    // because b.a could alias exported a
+    test_options(
+        "const a = {}; const b = { a }; b.a.add = 1; export { a };",
+        "const a = {}, b = { a }; b.a.add = 1; export { a };",
+        &options,
+    );
+
+    // Exported function: property write must be preserved (observable by importers)
+    test_same_options("export function A() {} A.foo = 1;", &options);
+
+    // Default options (property_write_side_effects: true) should NOT drop these
+    let default_opts =
+        CompressOptions { unused: CompressOptionsUnused::Remove, ..CompressOptions::smallest() };
+    test_same_options("function A() {} A.from = () => {};", &default_opts);
 }

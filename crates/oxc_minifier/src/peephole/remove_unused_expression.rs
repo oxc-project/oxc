@@ -596,17 +596,26 @@ impl<'a> PeepholeOptimizations {
         e: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> bool {
-        let Expression::AssignmentExpression(assign_expr) = e else { return false };
+        let Expression::AssignmentExpression(assign_expr) = &*e else { return false };
         if matches!(
             ctx.state.options.unused,
             CompressOptionsUnused::Keep | CompressOptionsUnused::KeepAssign
         ) {
             return false;
         }
+        // Member expression assignments (e.g. `A.from = () => {}`) use a different path.
+        if !matches!(
+            assign_expr.left.as_simple_assignment_target(),
+            Some(SimpleAssignmentTarget::AssignmentTargetIdentifier(_))
+        ) {
+            return Self::remove_unused_member_assignment(e, ctx);
+        }
+        // Identifier assignments (e.g. `A = expr`).
+        let Expression::AssignmentExpression(assign_expr) = e else { unreachable!() };
         let Some(SimpleAssignmentTarget::AssignmentTargetIdentifier(ident)) =
             assign_expr.left.as_simple_assignment_target()
         else {
-            return false;
+            unreachable!()
         };
         if Self::keep_top_level_var_in_script_mode(ctx)
             || ctx.current_scope_flags().contains_direct_eval()
@@ -634,6 +643,56 @@ impl<'a> PeepholeOptimizations {
         *e = assign_expr.right.take_in(ctx.ast);
         ctx.state.changed = true;
         false
+    }
+
+    /// Try to remove a member expression assignment (e.g. `A.from = () => {}`).
+    /// Checks side-effect analysis (respects `property_write_side_effects`) and
+    /// verifies the root object is an unused local binding.
+    fn remove_unused_member_assignment(
+        e: &Expression<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) -> bool {
+        if e.may_have_side_effects(ctx) {
+            return false;
+        }
+        let Expression::AssignmentExpression(assign_expr) = e else { unreachable!() };
+        Self::is_member_assign_to_unused_binding(assign_expr, ctx)
+    }
+
+    /// Check if a member expression assignment (e.g. `A.from = () => {}`) targets
+    /// a local binding whose only references are property-write targets.
+    ///
+    /// Three conditions must hold:
+    /// 1. The target is a single-level member expression (`A.foo`, not `a.b.c`)
+    /// 2. ALL references to the symbol have the `MemberWriteTarget` flag
+    /// 3. The symbol creates a fresh value (not an alias to another variable)
+    fn is_member_assign_to_unused_binding(
+        assign_expr: &AssignmentExpression<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) -> bool {
+        // Only handle single-level member expressions (A.foo, not a.b.c).
+        // Chained access like `b.a.foo = 1` may write through aliased properties.
+        let object: &Expression<'a> = match &assign_expr.left {
+            AssignmentTarget::StaticMemberExpression(e) => &e.object,
+            AssignmentTarget::ComputedMemberExpression(e) => &e.object,
+            AssignmentTarget::PrivateFieldExpression(e) => &e.object,
+            _ => return false,
+        };
+        let Expression::Identifier(ident) = object else { return false };
+        let reference_id = ident.reference_id();
+        let Some(symbol_id) = ctx.scoping().get_reference(reference_id).symbol_id() else {
+            return false;
+        };
+        // Check: all references are property-write targets (MemberWriteTarget flag).
+        let mut references = ctx.scoping().get_resolved_references(symbol_id);
+        if !references.all(|r| r.flags().is_member_write_target()) {
+            return false;
+        }
+        // Check: symbol creates a fresh value (not an alias) and is not exported.
+        let Some(sv) = ctx.state.symbol_values.get_symbol_value(symbol_id) else {
+            return false;
+        };
+        sv.is_fresh_value && !sv.exported
     }
 
     fn remove_unused_class_expr(e: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) -> bool {

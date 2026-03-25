@@ -18,7 +18,31 @@ impl<'a> PeepholeOptimizations {
         } else {
             decl.init.as_ref().map_or(Some(ConstantValue::Undefined), |e| e.evaluate_value(ctx))
         };
-        ctx.init_value(symbol_id, value);
+        let is_fresh_value = decl.init.as_ref().is_some_and(Self::is_fresh_value_expression);
+        ctx.init_value(symbol_id, value, is_fresh_value);
+    }
+
+    /// Check if an expression creates a fresh value that cannot alias another binding.
+    fn is_fresh_value_expression(expr: &Expression<'a>) -> bool {
+        matches!(
+            expr,
+            Expression::ObjectExpression(_)
+                | Expression::ArrayExpression(_)
+                | Expression::ArrowFunctionExpression(_)
+                | Expression::FunctionExpression(_)
+                | Expression::ClassExpression(_)
+        )
+    }
+
+    /// Initialize symbol value for function or class declarations.
+    /// These always create fresh values (cannot alias another binding).
+    pub fn init_declaration_symbol_value(
+        id: Option<&BindingIdentifier<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let Some(id) = id else { return };
+        let Some(symbol_id) = id.symbol_id.get() else { return };
+        ctx.init_value(symbol_id, None, true);
     }
 
     fn is_for_statement_init(ctx: &TraverseCtx<'a>) -> bool {
