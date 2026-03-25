@@ -781,7 +781,7 @@ fn nested_report_unused_disable_directives_not_supported(path: &Path) -> OxcDiag
 mod test {
     use std::path::{Path, PathBuf};
 
-    use oxc_linter::ExternalPluginStore;
+    use oxc_linter::{ConfigStoreBuilder, ExternalPluginStore};
 
     use super::{ConfigLoadError, ConfigLoader, DiscoveredConfig, is_js_config_path};
     #[cfg(feature = "napi")]
@@ -806,6 +806,19 @@ mod test {
     ) -> JsConfigResult {
         let mut config: oxc_linter::Oxlintrc = serde_json::from_value(serde_json::json!({
             "options": { "typeAware": type_aware, "typeCheck": type_check }
+        }))
+        .unwrap();
+        config.path = path.clone();
+        if let Some(config_dir) = path.parent() {
+            config.set_config_dir(config_dir);
+        }
+        JsConfigResult { path, config: Some(config) }
+    }
+
+    #[cfg(feature = "napi")]
+    fn make_js_config_with_rules(path: PathBuf, rules: &serde_json::Value) -> JsConfigResult {
+        let mut config: oxc_linter::Oxlintrc = serde_json::from_value(serde_json::json!({
+            "rules": rules
         }))
         .unwrap();
         config.path = path.clone();
@@ -1009,6 +1022,44 @@ mod test {
             .unwrap();
 
         assert_eq!(config.options.type_check, Some(true));
+    }
+
+    #[cfg(feature = "napi")]
+    #[test]
+    fn test_root_oxlint_config_ts_rejects_missing_builtin_rule() {
+        let root_dir = tempfile::tempdir().unwrap();
+        let root_path = root_dir.path().join("oxlint.config.ts");
+        std::fs::write(&root_path, "export default {};").unwrap();
+
+        let mut external_plugin_store = ExternalPluginStore::new(false);
+        let js_loader = make_js_loader({
+            move |paths| {
+                assert_eq!(paths, vec![root_path.to_string_lossy().to_string()]);
+                Ok(vec![make_js_config_with_rules(
+                    root_path.clone(),
+                    &serde_json::json!({ "no-console-typo": "error" }),
+                )])
+            }
+        });
+
+        let oxlintrc = {
+            let loader = ConfigLoader::new(None, &mut external_plugin_store, &[], None);
+            let loader = loader.with_js_config_loader(Some(&js_loader));
+            loader
+                .load_root_config(root_dir.path(), Some(&PathBuf::from("oxlint.config.ts")))
+                .unwrap()
+        };
+
+        let err = ConfigStoreBuilder::from_oxlintrc(
+            false,
+            oxlintrc,
+            None,
+            &mut external_plugin_store,
+            None,
+        )
+        .unwrap_err();
+
+        assert_eq!(err.to_string(), "Rule 'no-console-typo' not found in plugin 'eslint'");
     }
 
     #[cfg(feature = "napi")]
