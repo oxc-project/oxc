@@ -40,15 +40,7 @@ impl ServerFormatterBuilder {
     /// # Panics
     /// Panics if the root URI cannot be converted to a file path.
     pub fn build(&self, root_uri: &Uri, options: serde_json::Value) -> ServerFormatter {
-        let options = match serde_json::from_value::<LSPFormatOptions>(options) {
-            Ok(opts) => opts,
-            Err(err) => {
-                warn!(
-                    "Failed to deserialize LSPFormatOptions from JSON: {err}, falling back to default options"
-                );
-                LSPFormatOptions::default()
-            }
-        };
+        let options = deserialize_lsp_options(options);
 
         let root_path = root_uri.to_file_path().unwrap();
         debug!("root_path = {:?}", root_path.display());
@@ -187,27 +179,8 @@ impl Tool for ServerFormatter {
         old_options_json: &serde_json::Value,
         new_options_json: serde_json::Value,
     ) -> ToolRestartChanges {
-        let old_option = match serde_json::from_value::<LSPFormatOptions>(old_options_json.clone())
-        {
-            Ok(opts) => opts,
-            Err(e) => {
-                warn!(
-                    "Failed to deserialize LSPFormatOptions from JSON: {e}. Falling back to default options."
-                );
-                LSPFormatOptions::default()
-            }
-        };
-
-        let new_option = match serde_json::from_value::<LSPFormatOptions>(new_options_json.clone())
-        {
-            Ok(opts) => opts,
-            Err(e) => {
-                warn!(
-                    "Failed to deserialize LSPFormatOptions from JSON: {e}. Falling back to default options."
-                );
-                LSPFormatOptions::default()
-            }
-        };
+        let old_option = deserialize_lsp_options(old_options_json.clone());
+        let new_option = deserialize_lsp_options(new_options_json.clone());
 
         if old_option == new_option {
             return ToolRestartChanges { tool: None, watch_patterns: None };
@@ -220,15 +193,7 @@ impl Tool for ServerFormatter {
     }
 
     fn get_watcher_patterns(&self, options: serde_json::Value) -> Vec<Pattern> {
-        let options = match serde_json::from_value::<LSPFormatOptions>(options) {
-            Ok(opts) => opts,
-            Err(e) => {
-                warn!(
-                    "Failed to deserialize LSPFormatOptions from JSON: {e}. Falling back to default options."
-                );
-                LSPFormatOptions::default()
-            }
-        };
+        let options = deserialize_lsp_options(options);
 
         let mut patterns: Vec<Pattern> =
             if let Some(config_path) = options.config_path.as_ref().filter(|s| !s.is_empty()) {
@@ -393,6 +358,19 @@ impl ServerFormatter {
 }
 
 // ---
+
+/// Deserialize `LSPFormatOptions` from JSON, falling back to defaults on failure.
+fn deserialize_lsp_options(value: serde_json::Value) -> LSPFormatOptions {
+    match serde_json::from_value::<LSPFormatOptions>(value) {
+        Ok(opts) => opts,
+        Err(err) => {
+            warn!(
+                "Failed to deserialize LSPFormatOptions from JSON: {err}, falling back to default options"
+            );
+            LSPFormatOptions::default()
+        }
+    }
+}
 
 /// Returns the minimal text edit (start, end, replacement) to transform `source_text` into `formatted_text`
 #[expect(clippy::cast_possible_truncation)]
