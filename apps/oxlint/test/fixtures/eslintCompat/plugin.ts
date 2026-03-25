@@ -1,6 +1,8 @@
 import { eslintCompatPlugin } from "#oxlint/plugins";
 
-import type { Node, Rule } from "#oxlint/plugins";
+import type { Node, Rule, Visitor, ESTree } from "#oxlint/plugins";
+
+type ESTreeNode = ESTree.Node;
 
 const SPAN: Node = {
   start: 0,
@@ -198,6 +200,80 @@ const createOnceSelectorRule: Rule = {
   },
 };
 
+// This tests that `after` hook runs after all CFG event handlers.
+// This rules is only run on `files/cfg.js`, to ensure CFG events handlers do not affect behavior of other rules
+// which don't use CFG event listeners.
+const createOnceCfgRule: Rule = {
+  createOnce(context) {
+    // Collect all visits and check them in `after` hook
+    const visits: { event: string; nodeType?: string }[] = [];
+
+    return {
+      onCodePathStart(_codePath: unknown, node: ESTreeNode) {
+        visits.push({ event: "onCodePathStart", nodeType: node.type });
+      },
+      onCodePathEnd(_codePath: unknown, node: ESTreeNode) {
+        visits.push({ event: "onCodePathEnd", nodeType: node.type });
+      },
+      onCodePathSegmentStart(_segment: unknown, node: ESTreeNode) {
+        visits.push({ event: "onCodePathSegmentStart", nodeType: node.type });
+      },
+      onCodePathSegmentEnd(_segment: unknown, node: ESTreeNode) {
+        visits.push({ event: "onCodePathSegmentEnd", nodeType: node.type });
+      },
+      onUnreachableCodePathSegmentStart(_segment: unknown, node: ESTreeNode) {
+        visits.push({ event: "onUnreachableCodePathSegmentStart", nodeType: node.type });
+      },
+      onUnreachableCodePathSegmentEnd(_segment: unknown, node: ESTreeNode) {
+        visits.push({ event: "onUnreachableCodePathSegmentEnd", nodeType: node.type });
+      },
+      onCodePathSegmentLoop(_fromSegment: unknown, _toSegment: unknown, node: ESTreeNode) {
+        visits.push({ event: "onCodePathSegmentLoop", nodeType: node.type });
+      },
+      after() {
+        context.report({
+          message: "after hook:\n" + `filename: ${context.filename}`,
+          node: SPAN,
+        });
+
+        visits.push({ event: "after" });
+
+        const expectedVisits: typeof visits = [
+          { event: "onCodePathStart", nodeType: "Program" },
+          { event: "onCodePathSegmentStart", nodeType: "Program" },
+          { event: "onCodePathSegmentEnd", nodeType: "BinaryExpression" },
+          { event: "onCodePathSegmentStart", nodeType: "BinaryExpression" },
+          { event: "onCodePathSegmentEnd", nodeType: "UpdateExpression" },
+          { event: "onCodePathSegmentStart", nodeType: "UpdateExpression" },
+          { event: "onCodePathSegmentLoop", nodeType: "BlockStatement" },
+          { event: "onCodePathSegmentEnd", nodeType: "BlockStatement" },
+          { event: "onCodePathSegmentStart", nodeType: "BlockStatement" },
+          { event: "onCodePathSegmentEnd", nodeType: "BlockStatement" },
+          { event: "onUnreachableCodePathSegmentStart", nodeType: "BlockStatement" },
+          { event: "onUnreachableCodePathSegmentEnd", nodeType: "ForStatement" },
+          { event: "onCodePathSegmentStart", nodeType: "ForStatement" },
+          { event: "onCodePathSegmentEnd", nodeType: "Program" },
+          { event: "onCodePathEnd", nodeType: "Program" },
+          { event: "after" },
+        ];
+
+        if (
+          visits.length !== expectedVisits.length ||
+          visits.some(
+            (v, i) =>
+              v.event !== expectedVisits[i].event || v.nodeType !== expectedVisits[i].nodeType,
+          )
+        ) {
+          context.report({
+            message: `Unexpected visits:\n${JSON.stringify(visits, null, 2)}`,
+            node: SPAN,
+          });
+        }
+      },
+    } as unknown as Visitor; // TODO: Our types don't include CFG event handlers at present
+  },
+};
+
 // Tests that `before` hook returning `false` disables visiting AST for the file.
 const createOnceBeforeFalseRule: Rule = {
   createOnce(context) {
@@ -308,6 +384,7 @@ export default eslintCompatPlugin({
     create: createRule,
     "create-once": createOnceRule,
     "create-once-selector": createOnceSelectorRule,
+    "create-once-cfg": createOnceCfgRule,
     "create-once-before-false": createOnceBeforeFalseRule,
     "create-once-before-only": createOnceBeforeOnlyRule,
     "create-once-after-only": createOnceAfterOnlyRule,

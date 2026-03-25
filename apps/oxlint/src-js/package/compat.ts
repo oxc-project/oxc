@@ -10,6 +10,7 @@ import type { CreateOnceRule, Plugin, Rule } from "../plugins/load.ts";
 import type { Settings } from "../plugins/settings.ts";
 import type { SourceCode } from "../plugins/source_code.ts";
 import type { BeforeHook, Visitor, VisitorWithHooks } from "../plugins/types.ts";
+import type { Program, Node as ESTreeNode } from "../generated/types.d.ts";
 import type { SetNullable } from "../utils/types.ts";
 
 // Empty visitor object, returned by `create` when `before` hook returns `false`.
@@ -63,12 +64,13 @@ function convertRule(rule: Rule) {
   // Add `create` function to `rule`
   let context: Context | null = null,
     visitor: Visitor | undefined,
-    beforeHook: BeforeHook | null;
+    beforeHook: BeforeHook | null,
+    setupAfterHook: ((program: Program) => void) | null;
 
   rule.create = (eslintContext) => {
     // Lazily call `createOnce` on first invocation of `create`
     if (context === null) {
-      ({ context, visitor, beforeHook } = createContextAndVisitor(rule));
+      ({ context, visitor, beforeHook, setupAfterHook } = createContextAndVisitor(rule));
     }
     debugAssertIsNonNull(visitor);
 
@@ -80,13 +82,17 @@ function convertRule(rule: Rule) {
       options: { value: eslintContext.options },
       report: { value: eslintContext.report },
     });
-    Object.setPrototypeOf(context, Object.getPrototypeOf(eslintContext));
+    const eslintFileContext = Object.getPrototypeOf(eslintContext);
+    Object.setPrototypeOf(context, eslintFileContext);
 
     // If `before` hook returns `false`, skip traversal by returning an empty object as visitor
     if (beforeHook !== null) {
       const shouldRun = beforeHook();
       if (shouldRun === false) return EMPTY_VISITOR;
     }
+
+    // If there's an `after` hook, call `setupAfterHook` with the `Program` node of the current file
+    if (setupAfterHook !== null) setupAfterHook(eslintFileContext.sourceCode.ast);
 
     // Return same visitor each time
     return visitor;
@@ -159,12 +165,14 @@ const FILE_CONTEXT: FileContext = Object.freeze({
  * Call `createOnce` method of rule, and return `Context`, `Visitor`, and `beforeHook` (if any).
  *
  * @param rule - Rule with `createOnce` method
- * @returns Object with `context`, `visitor`, and `beforeHook` properties
+ * @returns Object with `context`, `visitor`, and `beforeHook` properties,
+ *   and `setupAfterHook` function if visitor has an `after` hook
  */
 function createContextAndVisitor(rule: CreateOnceRule): {
   context: Context;
   visitor: Visitor;
   beforeHook: BeforeHook | null;
+  setupAfterHook: ((program: Program) => void) | null;
 } {
   // Validate type of `createOnce`
   const { createOnce } = rule;
@@ -201,66 +209,47 @@ function createContextAndVisitor(rule: CreateOnceRule): {
     throw new Error("`before` property of visitor must be a function if defined");
   }
 
-  // Add `after` hook to `Program:exit` visit fn
+  // Handle `after` hook
+  let setupAfterHook: ((program: Program) => void) | null = null;
+
   if (afterHook != null) {
     if (typeof afterHook !== "function") {
       throw new Error("`after` property of visitor must be a function if defined");
     }
 
-    // We need to make sure that `after` hook is called after all visit fns have been called.
-    // Usually this is done by adding a `Program:exit` visit fn, but there's an odd edge case:
-    // Other visit fns could be called after `Program:exit` if they're selectors with a higher specificity.
-    // e.g. `[body]:exit` would match `Program`, but has higher specificity than `Program:exit`, so would run last.
-    //
-    // We don't want to parse every visitor key here to calculate their specificity, so we take a shortcut.
-    // Selectors which have highest specificity are of types `attribute`, `field`, `nth-child`, and `nth-last-child`.
-    //
-    // Examples of selectors of these types:
-    // * `[id]` (attribute)
-    // * `.id` (field)
-    // * `:first-child` (nth-child)
-    // * `:nth-child(2)` (nth-child)
-    // * `:last-child` (nth-last-child)
-    // * `:nth-last-child(2)` (nth-last-child)
-    //
-    // All these contain the characters `[`, `.`, or `:`. So just count these characters in all visitor keys, and create
-    // a selector which always matches `Program`, but with a higher specificity than the most specific exit selector.
-    //
-    // e.g. If visitor has key `[id]:first-child:exit`, that contains 2 special characters (not including `:exit`).
-    // So we use a selector `Program[type][type][type]:exit` (3 attributes = more specific than 2).
-    //
-    // ESLint will recognise that this `Program[type][type][type]` selector can only match `Program` nodes,
-    // and will only execute it only on `Program` node. So the additional cost of checking if the selector matches
-    // is only paid once per file - insignificant impact on performance.
-    // `nodeTypes` for this selector is `["Program"]`, so it only gets added to `exitSelectorsByNodeType` for `Program`.
-    // https://github.com/eslint/eslint/blob/4cecf8393ae9af18c4cfd50621115eb23b3d0cb6/lib/linter/esquery.js#L143-L231
-    // https://github.com/eslint/eslint/blob/4cecf8393ae9af18c4cfd50621115eb23b3d0cb6/lib/linter/source-code-traverser.js#L93-L125
-    //
-    // This is blunt tool. We may well create a selector which has a higher specificity than we need.
-    // But that doesn't really matter - as long as it's specific *enough*, it'll work correctly.
-    const CHAR_CODE_BRACKET = "[".charCodeAt(0);
-    const CHAR_CODE_DOT = ".".charCodeAt(0);
-    const CHAR_CODE_COLON = ":".charCodeAt(0);
+    let program: Program | null = null;
 
-    let maxAttrs = -1;
-    for (const key in visitor) {
-      if (!Object.hasOwn(visitor, key)) continue;
+    // Pass function to populate `program` var back out to the `create` function generated by `convertRule`.
+    // `create` will call this function at the start of linting each file.
+    // Having `program` in a local var makes the `node === program` check in `onCodePathEnd` as cheap as it can be.
+    // Otherwise it'd have to be `node === context.sourceCode.ast`, which would be slower.
+    setupAfterHook = (ast: Program) => {
+      program = ast;
+    };
 
-      // Only `:exit` visit functions matter here
-      if (!key.endsWith(":exit")) continue;
+    // Add `onCodePathEnd` CFG event handler to run `after` hook at end of AST traversal.
+    // This fires after all visit fns have been called (after `Program:exit`), and after all other CFG event handlers.
+    type CodePathHandler = (this: Visitor, codePath: unknown, node: ESTreeNode) => void;
 
-      const end = key.length - ":exit".length;
-      let count = 0;
-      for (let i = 0; i < end; i++) {
-        const c = key.charCodeAt(i);
-        if (c === CHAR_CODE_BRACKET || c === CHAR_CODE_DOT || c === CHAR_CODE_COLON) count++;
-      }
-      if (count > maxAttrs) maxAttrs = count;
-    }
+    const onCodePathEnd = visitor.onCodePathEnd as CodePathHandler | null | undefined;
 
-    const key = `Program${"[type]".repeat(maxAttrs + 1)}:exit`;
-    visitor[key] = (_node) => afterHook();
+    (visitor as unknown as { onCodePathEnd: CodePathHandler }).onCodePathEnd =
+      onCodePathEnd == null
+        ? function (this: Visitor, _codePath: unknown, node: ESTreeNode) {
+            if (node === program) {
+              program = null;
+              afterHook();
+            }
+          }
+        : function (this: Visitor, codePath: unknown, node: ESTreeNode) {
+            onCodePathEnd.call(this, codePath, node);
+
+            if (node === program) {
+              program = null;
+              afterHook();
+            }
+          };
   }
 
-  return { context, visitor, beforeHook };
+  return { context, visitor, beforeHook, setupAfterHook };
 }

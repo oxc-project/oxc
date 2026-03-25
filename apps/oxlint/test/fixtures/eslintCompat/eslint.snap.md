@@ -20,11 +20,11 @@ filename: <fixture>/files/1.js                              eslint-compat-plugin
 identNum: 2
 filename: <fixture>/files/1.js                              eslint-compat-plugin/create-once
   0:1  error  after hook:
+filename: <fixture>/files/1.js                              eslint-compat-plugin/create-once-selector
+  0:1  error  after hook:
 filename: <fixture>/files/1.js                              eslint-compat-plugin/create-once-after-only
   0:1  error  after hook:
 filename: <fixture>/files/1.js                              eslint-compat-plugin/create-once-hooks-only
-  0:1  error  after hook:
-filename: <fixture>/files/1.js                              eslint-compat-plugin/create-once-selector
   1:1  error  *:exit visit fn:
 filename: <fixture>/files/1.js                              eslint-compat-plugin/create-once-selector
   1:1  error  Program:exit visit fn:
@@ -73,13 +73,13 @@ filename: <fixture>/files/2.js                              eslint-compat-plugin
 identNum: 2
 filename: <fixture>/files/2.js                              eslint-compat-plugin/create-once
   0:1  error  after hook:
+filename: <fixture>/files/2.js                              eslint-compat-plugin/create-once-selector
+  0:1  error  after hook:
 filename: <fixture>/files/2.js                              eslint-compat-plugin/create-once-before-false
   0:1  error  after hook:
 filename: <fixture>/files/2.js                              eslint-compat-plugin/create-once-after-only
   0:1  error  after hook:
 filename: <fixture>/files/2.js                              eslint-compat-plugin/create-once-hooks-only
-  0:1  error  after hook:
-filename: <fixture>/files/2.js                              eslint-compat-plugin/create-once-selector
   1:1  error  *:exit visit fn:
 filename: <fixture>/files/2.js                              eslint-compat-plugin/create-once-selector
   1:1  error  Program:exit visit fn:
@@ -115,7 +115,11 @@ filename: <fixture>/files/2.js                              eslint-compat-plugin
   1:8  error  ident visit fn "d":
 filename: <fixture>/files/2.js                              eslint-compat-plugin/create-once-no-hooks
 
-✖ 49 problems (49 errors, 0 warnings)
+<fixture>/files/cfg.js
+  0:1  error  after hook:
+filename: <fixture>/files/cfg.js                            eslint-compat-plugin/create-once-cfg
+
+✖ 50 problems (50 errors, 0 warnings)
 ```
 
 # stderr
