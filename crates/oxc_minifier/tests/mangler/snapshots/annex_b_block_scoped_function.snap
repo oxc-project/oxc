@@ -82,3 +82,42 @@ function _() {
 	}
 	use(e);
 }
+
+function _() { var x = 1; if (true) { function y() {} } { let z = 2; use(z); } use(x); }
+function _() {
+	var e = 1;
+	if (true) {
+		function t() {}
+	}
+	{
+		let e = 2;
+		use(e);
+	}
+	use(e);
+}
+
+function _() { var x = 1; if (true) { function y() {} } if (true) { function z() {} } use(x); }
+function _() {
+	var e = 1;
+	if (true) {
+		function t() {}
+	}
+	if (true) {
+		function n() {}
+	}
+	use(e);
+}
+
+function _() { var x = 1; if (true) { function y() {} } try { throw 0; } catch (z) { use(z); } use(x); }
+function _() {
+	var e = 1;
+	if (true) {
+		function t() {}
+	}
+	try {
+		throw 0;
+	} catch (e) {
+		use(e);
+	}
+	use(e);
+}

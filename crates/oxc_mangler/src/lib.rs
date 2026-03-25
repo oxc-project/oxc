@@ -479,19 +479,6 @@ impl<'t> Mangler<'t> {
                         slot_liveness_bitset.set_bit(ancestor_index);
                     }
                 }
-
-                // Annex B: extend liveness to enclosing var-scope so sibling
-                // block scopes also cannot reuse this slot.
-                if regular_count < tmp_bindings.len()
-                    && scoping.symbol_flags(symbol_id).is_function()
-                {
-                    for ancestor_id in scoping.scope_ancestors(scope_id).skip(1) {
-                        slot_liveness_bitset.set_bit(ancestor_id.index());
-                        if scoping.scope_flags(ancestor_id).is_var() {
-                            break;
-                        }
-                    }
-                }
             }
         }
 

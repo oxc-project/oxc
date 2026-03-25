@@ -242,6 +242,12 @@ fn annex_b_block_scoped_function() {
         "function _() { var x = 1; if (true) { function y() {} function z() {} } use(x); }",
         // Block function referencing outer var (liveness already covers this, but verify)
         "function _() { var x = 1; if (true) { function y() { return x; } } use(x); }",
+        // Sibling block with let reusing function's slot is safe (let is truly block-scoped)
+        "function _() { var x = 1; if (true) { function y() {} } { let z = 2; use(z); } use(x); }",
+        // Sibling Annex B functions both get fresh slots
+        "function _() { var x = 1; if (true) { function y() {} } if (true) { function z() {} } use(x); }",
+        // Catch parameter in sibling scope
+        "function _() { var x = 1; if (true) { function y() {} } try { throw 0; } catch (z) { use(z); } use(x); }",
     ];
 
     let mut snapshot = String::new();
