@@ -248,6 +248,8 @@ fn annex_b_block_scoped_function() {
         "function _() { var x = 1; if (true) { function y() {} } if (true) { function z() {} } use(x); }",
         // Catch parameter in sibling scope
         "function _() { var x = 1; if (true) { function y() {} } try { throw 0; } catch (z) { use(z); } use(x); }",
+        // Sibling var is hoisted to function scope, so no conflict
+        "function _() { var x = 1; if (true) { function y() {} } { var z = 2; use(z); } use(x); }",
     ];
 
     let mut snapshot = String::new();

@@ -121,3 +121,16 @@ function _() {
 	}
 	use(e);
 }
+
+function _() { var x = 1; if (true) { function y() {} } { var z = 2; use(z); } use(x); }
+function _() {
+	var e = 1;
+	if (true) {
+		function n() {}
+	}
+	{
+		var t = 2;
+		use(t);
+	}
+	use(e);
+}
