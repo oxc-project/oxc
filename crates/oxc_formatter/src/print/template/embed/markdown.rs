@@ -40,7 +40,7 @@ pub(super) fn try_embed_markdown<'a>(
     let Some(Ok(crate::external_formatter::EmbeddedDocResult::SingleDoc(ir))) = f
         .context()
         .external_callbacks()
-        .format_embedded_doc(allocator, group_id_builder, "tagged-markdown", &[text])
+        .format_embedded_doc(allocator, group_id_builder, "markdown", &[text])
     else {
         return false;
     };

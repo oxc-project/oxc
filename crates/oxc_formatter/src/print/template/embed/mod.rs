@@ -21,7 +21,7 @@ pub(super) fn try_format_embedded_template<'a>(
     match get_tag_name(&tagged.tag) {
         Some("css" | "styled") => css::format_css_doc(tagged.quasi(), f),
         Some("gql" | "graphql") => graphql::format_graphql_doc(tagged.quasi(), f),
-        Some("html") => html::format_html_doc(tagged.quasi(), f, "tagged-html"),
+        Some("html") => html::format_html_doc(tagged.quasi(), f, false),
         // Markdown never supports `${}` (Prettier doesn't either)
         Some("md" | "markdown") if tagged.quasi.is_no_substitution_template() => {
             markdown::try_embed_markdown(tagged, f)
@@ -69,31 +69,13 @@ pub(super) fn try_format_comment_embedded<'a>(
     template: &AstNode<'a, TemplateLiteral<'a>>,
     f: &mut Formatter<'_, 'a>,
 ) -> bool {
-    let Some(language) = get_language_comment(template, f) else {
-        return false;
-    };
-    match language {
-        "html" => html::format_html_doc(template, f, "tagged-html"),
-        "graphql" => graphql::format_graphql_doc(template, f),
-        _ => false,
-    }
-}
-
-/// Check if the template literal has a leading block comment that specifies an embedded language.
-///
-/// Returns the language name if found.
-/// The comment must be:
-/// - a block comment
-/// - with exactly one space on either side
-fn get_language_comment<'a>(
-    template: &AstNode<'a, TemplateLiteral<'a>>,
-    f: &Formatter<'_, 'a>,
-) -> Option<&'static str> {
     // By the time `TemplateLiteral::write()` runs, parent nodes have already printed
     // leading comments via the cursor-based system. So `/* HTML */` is the last printed comment.
-    let comment = f.context().comments().printed_comments().last()?;
+    let Some(comment) = f.context().comments().printed_comments().last() else {
+        return false;
+    };
     if !comment.is_block() || comment.span.end > template.span.start {
-        return None;
+        return false;
     }
 
     // Ensure there's nothing but whitespace between the comment and the template literal.
@@ -102,14 +84,14 @@ fn get_language_comment<'a>(
         .source_text()
         .all_bytes_match(comment.span.end, template.span.start, |b| b.is_ascii_whitespace())
     {
-        return None;
+        return false;
     }
 
     let text = f.source_text().text_for(&comment.content_span());
     match text {
-        " HTML " => Some("html"),
-        " GraphQL " => Some("graphql"),
-        _ => None,
+        " HTML " => html::format_html_doc(template, f, false),
+        " GraphQL " => graphql::format_graphql_doc(template, f),
+        _ => false,
     }
 }
 
@@ -160,15 +142,15 @@ pub(super) fn try_format_angular_component<'a>(
     template_literal: &AstNode<'a, TemplateLiteral<'a>>,
     f: &mut Formatter<'_, 'a>,
 ) -> bool {
-    match get_angular_component_language(template_literal) {
-        Some("angular-template") => html::format_html_doc(template_literal, f, "angular-template"),
-        Some("angular-styles") => css::format_css_doc(template_literal, f),
+    match get_angular_component_property(template_literal) {
+        Some("template") => html::format_html_doc(template_literal, f, true),
+        Some("styles") => css::format_css_doc(template_literal, f),
         _ => false,
     }
 }
 
 /// Detect Angular `@Component({ template: \`...\`, styles: \`...\` })`.
-fn get_angular_component_language(node: &AstNode<'_, TemplateLiteral<'_>>) -> Option<&'static str> {
+fn get_angular_component_property<'a>(node: &AstNode<'a, TemplateLiteral<'a>>) -> Option<&'a str> {
     let prop = match node.parent() {
         AstNodes::ObjectProperty(prop) => prop,
         AstNodes::ArrayExpression(arr) => {
@@ -204,8 +186,7 @@ fn get_angular_component_language(node: &AstNode<'_, TemplateLiteral<'_>>) -> Op
     }
 
     match key.name.as_str() {
-        "template" => Some("angular-template"),
-        "styles" => Some("angular-styles"),
+        "template" | "styles" => Some(key.name.as_str()),
         _ => None,
     }
 }
