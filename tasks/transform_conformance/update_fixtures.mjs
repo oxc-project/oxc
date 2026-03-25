@@ -55,9 +55,11 @@ for (const packageName of PACKAGES) {
 
 /**
  * Update fixtures in directory, and its sub-directories.
+ *
  * @param {string} dirPath - Path to directory containing fixtures
  * @param {object} options - Transform options from parent directory
- * @param {boolean} hasChangedOptions - `true` if transform options from parent directory have changed
+ * @param {boolean} hasChangedOptions - `true` if transform options from parent directory have
+ *   changed
  * @returns {Promise<undefined>}
  */
 async function updateDir(dirPath, options, hasChangedOptions) {
@@ -118,6 +120,7 @@ async function updateDir(dirPath, options, hasChangedOptions) {
 
 /**
  * Remove unsupported presets + plugins from `options`.
+ *
  * @param {Object} options - Options object
  * @returns {boolean} - `true` if `options` has been altered.
  */
@@ -182,6 +185,7 @@ function ensureAllClassPluginsEnabled(options) {
 
 /**
  * Transform input with Babel.
+ *
  * @param {string} inputPath - Path of input file
  * @param {object} options - Transform options
  * @returns {Promise<string>}
@@ -234,7 +238,8 @@ async function transform(inputPath, options) {
 
 /**
  * Get name of plugin/preset.
- * @param {string|Array} stringOrArray - Input
+ *
+ * @param {string | Array} stringOrArray - Input
  * @returns {string} - Name of plugin/preset
  */
 function getName(stringOrArray) {
@@ -244,6 +249,7 @@ function getName(stringOrArray) {
 
 /**
  * Backup file.
+ *
  * @param {string} path - Original path
  * @returns {Promise<undefined>}
  */

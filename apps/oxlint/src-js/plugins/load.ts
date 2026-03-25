@@ -86,6 +86,7 @@ export let registeredRules: RuleDetails[] = [];
 
 /**
  * Set `registeredRules`. Used when switching workspaces.
+ *
  * @param rules - Array of `RuleDetails` objects
  */
 export function setRegisteredRules(rules: RuleDetails[]) {
@@ -108,11 +109,13 @@ interface PluginDetails {
 /**
  * Load a plugin.
  *
- * Main logic is in separate function `loadPluginImpl`, because V8 cannot optimize functions containing try/catch.
+ * Main logic is in separate function `loadPluginImpl`, because V8 cannot optimize functions
+ * containing try/catch.
  *
  * @param url - Absolute path of plugin file as a `file://...` URL
  * @param pluginName - Plugin name (either alias or package name)
- * @param pluginNameIsAlias - `true` if plugin name is an alias (takes priority over name that plugin defines itself)
+ * @param pluginNameIsAlias - `true` if plugin name is an alias (takes priority over name that
+ *   plugin defines itself)
  * @param workspaceUri - Workspace URI (`null` in CLI, string in LSP)
  * @returns Plugin details or error serialized to JSON string
  */
@@ -136,11 +139,13 @@ export async function loadPlugin(
  *
  * @param plugin - Plugin
  * @param pluginName - Plugin name (either alias or package name)
- * @param pluginNameIsAlias - `true` if plugin name is an alias (takes priority over name that plugin defines itself)
+ * @param pluginNameIsAlias - `true` if plugin name is an alias (takes priority over name that
+ *   plugin defines itself)
  * @param workspaceUri - Workspace URI (`null` in CLI, string in LSP)
  * @returns - Plugin details
  * @throws {Error} If `plugin.meta.name` is `null` / `undefined` and `packageName` not provided
- * @throws {TypeError} If one of plugin's rules is malformed, or its `createOnce` method returns invalid visitor
+ * @throws {TypeError} If one of plugin's rules is malformed, or its `createOnce` method returns
+ *   invalid visitor
  * @throws {TypeError} If `plugin.meta.name` is not a string
  */
 export function registerPlugin(
@@ -317,7 +322,8 @@ export function registerPlugin(
  *
  * @param plugin - Plugin object
  * @param pluginName - Plugin name (either alias or package name)
- * @param pluginNameIsAlias - `true` if plugin name is an alias (takes priority over name that plugin defines itself)
+ * @param pluginNameIsAlias - `true` if plugin name is an alias (takes priority over name that
+ *   plugin defines itself)
  * @returns Plugin name
  * @throws {TypeError} If `plugin.meta.name` is not a string
  * @throws {Error} If neither `plugin.meta.name` nor `packageName` are defined
@@ -356,12 +362,13 @@ function getPluginName(
  * Normalize plugin name by stripping common ESLint plugin prefixes and suffixes.
  *
  * This handles the various naming conventions used in the ESLint ecosystem:
+ *
  * - `eslint-plugin-foo` -> `foo`
  * - `@scope/eslint-plugin` -> `@scope`
  * - `@scope/eslint-plugin-foo` -> `@scope/foo`
  *
- * This logic is replicated on Rust side in `normalize_plugin_name` in `crates/oxc_linter/src/config/plugins.rs`.
- * The 2 implementations must be kept in sync.
+ * This logic is replicated on Rust side in `normalize_plugin_name` in
+ * `crates/oxc_linter/src/config/plugins.rs`. The 2 implementations must be kept in sync.
  *
  * @param name - Plugin name defined by plugin
  * @returns Normalized plugin name
@@ -389,9 +396,10 @@ function normalizePluginName(name: string): string {
 /**
  * Serialize default options to JSON and deserialize again.
  *
- * This is the simplest way to make sure that `defaultOptions` does not contain any `undefined` values,
- * or circular references. It may also be the fastest, as `JSON.parse` and `JSON.stringify` are native code.
- * If we move to doing options merging on Rust side, we'll need to convert to JSON anyway.
+ * This is the simplest way to make sure that `defaultOptions` does not contain any `undefined`
+ * values, or circular references. It may also be the fastest, as `JSON.parse` and `JSON.stringify`
+ * are native code. If we move to doing options merging on Rust side, we'll need to convert to JSON
+ * anyway.
  *
  * Special handling for `Infinity` / `-Infinity` values, to ensure they survive the round trip.
  * Without this, they would be converted to `null`.
@@ -443,6 +451,7 @@ const NEG_INFINITY_PLACEHOLDER_STR = JSON.stringify(NEG_INFINITY_PLACEHOLDER);
 
 /**
  * Validate and conform `before` / `after` hook function.
+ *
  * @param hookFn - Hook function, or `null` / `undefined`
  * @param hookName - Name of the hook
  * @returns Hook function, or null

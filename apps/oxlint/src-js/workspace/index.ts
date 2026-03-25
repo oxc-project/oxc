@@ -91,6 +91,7 @@ export function destroyWorkspace(workspaceUri: string): undefined {
 
 /**
  * Set the current workspace.
+ *
  * @param workspace - Workspace object
  * @param workspaceUri - Workspace URI
  */

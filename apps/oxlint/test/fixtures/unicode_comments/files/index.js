@@ -3,6 +3,7 @@ const greeting = "Hello 🌍"; // Line comment with emoji
 
 /**
  * Function with emoji in JSDoc
+ *
  * @param {string} name - User's name 👤
  * @returns {string} Greeting message
  */
@@ -18,6 +19,7 @@ const 你好世界 = "Testing üöä"; // Line comment: ñáéíóú
 
 /**
  * JSDoc with emojis and unicode: 你好 👋
+ *
  * @param {number} count - Number of items 🔢
  */
 function processItems(count) {

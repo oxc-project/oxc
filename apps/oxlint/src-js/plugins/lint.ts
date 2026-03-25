@@ -41,11 +41,13 @@ const OPTIONS_DESCRIPTOR: PropertyDescriptor = { value: null };
 /**
  * Lint a file.
  *
- * Main logic is in separate function `lintFileImpl`, because V8 cannot optimize functions containing try/catch.
+ * Main logic is in separate function `lintFileImpl`, because V8 cannot optimize functions
+ * containing try/catch.
  *
  * @param filePath - Absolute path of file being linted
  * @param bufferId - ID of buffer containing file data
- * @param buffer - Buffer containing file data, or `null` if buffer with this ID was previously sent to JS
+ * @param buffer - Buffer containing file data, or `null` if buffer with this ID was previously sent
+ *   to JS
  * @param ruleIds - IDs of rules to run on this file
  * @param optionsIds - IDs of options to use for rules on this file, in same order as `ruleIds`
  * @param settingsJSON - Settings for this file, as JSON string
@@ -102,14 +104,15 @@ export function lintFile(
  *
  * @param filePath - Absolute path of file being linted
  * @param bufferId - ID of buffer containing file data
- * @param buffer - Buffer containing file data, or `null` if buffer with this ID was previously sent to JS
+ * @param buffer - Buffer containing file data, or `null` if buffer with this ID was previously sent
+ *   to JS
  * @param ruleIds - IDs of rules to run on this file
  * @param optionsIds - IDs of options to use for rules on this file, in same order as `ruleIds`
  * @param settingsJSON - Settings for this file, as JSON string
  * @param globalsJSON - Globals for this file, as JSON string
  * @param workspaceUri - Workspace URI (`null` in CLI, string in LSP)
  * @throws {Error} If any parameters are invalid
- * @throws {*} If any rule throws
+ * @throws {any} If any rule throws
  */
 export function lintFileImpl(
   filePath: string,
@@ -261,17 +264,20 @@ export function lintFileImpl(
 /**
  * Run any `after` hooks.
  *
- * Rules using `before` and `after` hooks likely maintain some internal state in their `createOnce` method.
- * To keep that state in sync, it's critical that `after` hooks always run, even if an error is thrown during any of:
+ * Rules using `before` and `after` hooks likely maintain some internal state in their `createOnce`
+ * method. To keep that state in sync, it's critical that `after` hooks always run, even if an error
+ * is thrown during any of:
  *
  * 1. A later rule's `before` hook.
  * 2. AST walk.
  * 3. An earlier rule's `after` hook.
  *
- * So if any `after` hook throws an error, this function continues running remaining hooks, and re-throws the error
- * only at the very end. This ensures an error in one rule does not affect any other rules.
+ * So if any `after` hook throws an error, this function continues running remaining hooks, and
+ * re-throws the error only at the very end. This ensures an error in one rule does not affect any
+ * other rules.
  *
- * This function is called by `resetStateAfterError` to ensure `after` hooks are run no matter where an error occurs.
+ * This function is called by `resetStateAfterError` to ensure `after` hooks are run no matter where
+ * an error occurs.
  *
  * @param shouldThrowIfError - `true` if any errors thrown in after hooks should be re-thrown
  */

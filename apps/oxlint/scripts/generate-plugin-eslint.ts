@@ -3,26 +3,27 @@
  *
  * This script produces:
  *
- * 1. `rules/<name>.cjs` - One file for each ESLint core rule, that re-exports the rule's `create` function.
- * 2. `index.ts` - Exports all rules as a `Record<string, CreateRule>`.
- *    This is the `rules` property of the `oxlint-plugin-eslint` plugin.
+ * 1. `rules/<name>.cjs` - One file for each ESLint core rule, that re-exports the rule's `create`
+ *    function.
+ * 2. `index.ts` - Exports all rules as a `Record<string, CreateRule>`. This is the `rules` property of
+ *    the `oxlint-plugin-eslint` plugin.
  * 3. `rule_names.ts` - Exports a list of all rule names, which is used in TSDown config.
  *
  * `index.ts` uses a split eager/lazy strategy so that `registerPlugin` can read each rule's `meta`
  * without loading the rule module itself:
  *
- * - `meta` is serialized and inlined at build time.
- *   `registerPlugin` needs it at plugin registration time (for `fixable`, `hasSuggestions`, `schema`,
- *   `defaultOptions`, `messages`), so it must be available immediately without requiring the rule module.
- *
- * - `create` is deferred via a cached `require` call.
- *   The rule module is only loaded the first time `create` is called (i.e. when the rule actually runs at lint time).
- *   A top-level variable per rule caches the loaded function so subsequent calls skip the `require` call.
+ * - `meta` is serialized and inlined at build time. `registerPlugin` needs it at plugin registration
+ *   time (for `fixable`, `hasSuggestions`, `schema`, `defaultOptions`, `messages`), so it must be
+ *   available immediately without requiring the rule module.
+ * - `create` is deferred via a cached `require` call. The rule module is only loaded the first time
+ *   `create` is called (i.e. when the rule actually runs at lint time). A top-level variable per
+ *   rule caches the loaded function so subsequent calls skip the `require` call.
  *
  * Build-time validations:
+ *
  * - Each rule object must only have `meta` and `create` properties.
- * - `meta` values are walked to ensure they contain no functions
- *   (which would be serialized as executable code by `serialize-javascript`).
+ * - `meta` values are walked to ensure they contain no functions (which would be serialized as
+ *   executable code by `serialize-javascript`).
  */
 
 import { readdirSync, mkdirSync, writeFileSync, rmSync } from "node:fs";

@@ -157,6 +157,7 @@ export default plugin;
 
 /**
  * Parse `utils/globals.ts` and return a list of globals and global vars it exports.
+ *
  * @param path - Path to `utils/globals.ts`
  * @returns Mapping from global name (e.g. `Object`) to mapping of properties of that global to var names
  *   (e.g. `hasOwn` -> `ObjectHasOwn`).

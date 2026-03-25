@@ -96,6 +96,7 @@ class RuleTesterShim extends RuleTester {
 
 /**
  * Add `before` hook to test case to store test case in `currentTest`.
+ *
  * @param test - Test case
  * @returns Test case
  */
@@ -126,6 +127,7 @@ function addBeforeHook<T extends TestCase>(test: T): T {
 
 /**
  * Check if test case should run.
+ *
  * @param test - Test case
  * @returns `true` if test case should run, `false` if is filtered out
  */
@@ -140,6 +142,7 @@ function shouldRunTestCase(test: TestCase): boolean {
 /**
  * Modify test case before running it.
  * Store test case in `currentTest` so it can be accessed in `it` function.
+ *
  * @param test - Test case
  */
 function modifyTestCase(test: TestCase): void {
@@ -242,6 +245,7 @@ function modifyTestCase(test: TestCase): void {
 /**
  * Combine globals from test case and ESLint's preset based on `languageOptions.ecmaVersion`
  * and `languageOptions.sourceType`.
+ *
  * @param languageOptions - Language options from test case
  * @returns Globals object
  */
@@ -300,6 +304,7 @@ function getGlobalsForEcmaVersion(
 
 /**
  * Add vars to `globals` from a globals preset.
+ *
  * @param preset - Globals preset object
  * @param globals - Globals object to add to
  */

@@ -21,6 +21,7 @@ const normalizeSlashes =
 
 /**
  * Generate report of test results as markdown.
+ *
  * @param results - Results of running tests
  * @returns Report as markdown
  */
@@ -244,6 +245,7 @@ const CONTROL_CHAR_REGEX = /[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/gu;
  * Clean a string for output.
  * Remove ANSI escape sequences and control characters from a string.
  * Keeps tab, newline, and carriage return.
+ *
  * @param str - String to clean
  * @returns Cleaned string
  */
@@ -324,6 +326,7 @@ function formatError(err: Error | null): string {
 
 /**
  * Format a test case as JSON.
+ *
  * @param testCase - Test case to format
  * @returns Test case formatted as JSON string, or `null` if not present, or could not format
  */
@@ -354,6 +357,7 @@ function formatTestCase(testCase: TestCase | null, code: string): string | null 
 
 /**
  * Produce a string of the form `count / total (percent%)`.
+ *
  * @param count - Count
  * @param total - Total count
  * @returns Formatted proportion
@@ -364,6 +368,7 @@ function formatProportion(count: number, total: number): string {
 
 /**
  * Produce a string representing `count / total` as a percentage.
+ *
  * @param count - Count
  * @param total - Total count
  * @returns Formatted percent

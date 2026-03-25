@@ -11,24 +11,13 @@ export type ExternalPluginEntry =
       /**
        * Custom name/alias for the plugin.
        *
-       * Note: The following plugin names are reserved because they are implemented natively in Rust within oxlint and cannot be used for JS plugins:
-       * - react (includes react-hooks)
-       * - unicorn
-       * - typescript (includes @typescript-eslint)
-       * - oxc
-       * - import (includes import-x)
-       * - jsdoc
-       * - jest
-       * - vitest
-       * - jsx-a11y
-       * - nextjs
-       * - react-perf
-       * - promise
-       * - node
-       * - vue
-       * - eslint
+       * Note: The following plugin names are reserved because they are implemented natively in Rust
+       * within oxlint and cannot be used for JS plugins: - react (includes react-hooks) - unicorn -
+       * typescript (includes @typescript-eslint) - oxc - import (includes import-x) - jsdoc - jest
+       * - vitest - jsx-a11y - nextjs - react-perf - promise - node - vue - eslint
        *
-       * If you need to use the JavaScript version of any of these plugins, provide a custom alias to avoid conflicts.
+       * If you need to use the JavaScript version of any of these plugins, provide a custom alias
+       * to avoid conflicts.
        */
       name: string;
       /**
@@ -148,32 +137,32 @@ export type CustomComponent =
  * import { defineConfig } from "oxlint";
  *
  * export default defineConfig({
- * plugins: ["import", "typescript", "unicorn"],
- * env: {
- * "browser": true
- * },
- * globals: {
- * "foo": "readonly"
- * },
- * settings: {
- * react: {
- * version: "18.2.0"
- * },
- * custom: { option: true }
- * },
- * rules: {
- * "eqeqeq": "warn",
- * "import/no-cycle": "error",
- * "react/self-closing-comp": ["error", { "html": false }]
- * },
- * overrides: [
- * {
- * files: ["*.test.ts", "*.spec.ts"],
- * rules: {
- * "@typescript-eslint/no-explicit-any": "off"
- * }
- * }
- * ]
+ *   plugins: ["import", "typescript", "unicorn"],
+ *   env: {
+ *     browser: true,
+ *   },
+ *   globals: {
+ *     foo: "readonly",
+ *   },
+ *   settings: {
+ *     react: {
+ *       version: "18.2.0",
+ *     },
+ *     custom: { option: true },
+ *   },
+ *   rules: {
+ *     eqeqeq: "warn",
+ *     "import/no-cycle": "error",
+ *     "react/self-closing-comp": ["error", { html: false }],
+ *   },
+ *   overrides: [
+ *     {
+ *       files: ["*.test.ts", "*.spec.ts"],
+ *       rules: {
+ *         "@typescript-eslint/no-explicit-any": "off",
+ *       },
+ *     },
+ *   ],
  * });
  * ```
  */
@@ -302,6 +291,7 @@ export interface Oxlintrc {
  * Rules enabled or disabled this way will be overwritten by individual rules in the `rules` field.
  *
  * Example
+ *
  * ```json
  * {
  *   "$schema": "./node_modules/oxlint/configuration_schema.json",
@@ -326,8 +316,8 @@ export interface RuleCategories {
 /**
  * Predefine global variables.
  *
- * Environments specify what global variables are predefined.
- * See [ESLint's list of environments](https://eslint.org/docs/v8.x/use/configure/language-options#specifying-environments)
+ * Environments specify what global variables are predefined. See [ESLint's list of
+ * environments](https://eslint.org/docs/v8.x/use/configure/language-options#specifying-environments)
  * for what environments are available and what each one provides.
  */
 export interface OxlintEnv {
@@ -411,6 +401,7 @@ export interface OxlintOverride {
    * A list of glob patterns to override.
    *
    * ## Example
+   *
    * `[ "*.test.ts", "*.spec.ts" ]`
    */
   files: GlobSet;
@@ -573,7 +564,7 @@ export interface JSXA11YPluginSettings {
    * For example, if you set the `polymorphicPropName` to `as`, then this element:
    *
    * ```jsx
-   * <Box as="h3">Hello</Box>
+   * <Box as="h3">Hello</Box>;
    * ```
    *
    * Will be treated as an `h3`. If not set, this component will be treated
@@ -610,7 +601,8 @@ export interface NextPluginSettings {
 /**
  * Configure React plugin rules.
  *
- * Derived from [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react#configuration-legacy-eslintrc-)
+ * Derived from
+ * [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react#configuration-legacy-eslintrc-)
  */
 export interface ReactPluginSettings {
   /**

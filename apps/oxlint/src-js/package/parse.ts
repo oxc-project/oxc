@@ -34,6 +34,7 @@ let rawTransferIsSupported: boolean | null = null;
 
 /**
  * Parser source text into buffer.
+ *
  * @param path - Path of file to parse
  * @param sourceText - Source text to parse
  * @param options - Parsing options
@@ -82,10 +83,11 @@ export function parse(path: string, sourceText: string, options?: ParseOptions) 
 /**
  * Create a `Uint8Array` which is 2 GiB in size, with its start aligned on 4 GiB.
  *
- * Store it in `buffer`, and also in `buffers` array, so it's accessible to `lintFileImpl` by passing `0`as `bufferId`.
+ * Store it in `buffer`, and also in `buffers` array, so it's accessible to `lintFileImpl` by
+ * passing `0`as `bufferId`.
  *
- * Achieve this by creating a 6 GiB `ArrayBuffer`, getting the offset within it that's aligned to 4 GiB,
- * chopping off that number of bytes from the start, and shortening to 2 GiB.
+ * Achieve this by creating a 6 GiB `ArrayBuffer`, getting the offset within it that's aligned to 4
+ * GiB, chopping off that number of bytes from the start, and shortening to 2 GiB.
  *
  * It's always possible to obtain a 2 GiB slice aligned on 4 GiB within a 6 GiB buffer,
  * no matter how the 6 GiB buffer is aligned.

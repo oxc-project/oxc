@@ -53,6 +53,7 @@ const DEFAULT_OPTIONS: Fixture["options"] = {
 
 /**
  * Get all fixtures in `test/fixtures`, and their options.
+ *
  * @returns Array of fixtures
  */
 export function getFixtures(): Fixture[] {
@@ -121,6 +122,7 @@ interface TestFixtureOptions {
 
 /**
  * Run a test fixture.
+ *
  * @param options - Options for running the test
  */
 export async function testFixtureWithCommand(options: TestFixtureOptions): Promise<void> {
@@ -317,6 +319,7 @@ export function normalizeStdout(stdout: string, fixtureName: string, isESLint: b
  * before being passed to this function.
  *
  * Examples:
+ *
  * - `/apps/oxlint/test/fixtures/foo/bar.js` => `<fixture>/bar.js`
  * - `/apps/oxlint/test/fixtures/foo` => `<fixtures>/foo`
  * - `/apps/oxlint/something/else` => `<root>/apps/oxlint/something/else`
@@ -339,6 +342,7 @@ export function convertSubPath(subPath: string, fixtureName: string): string {
  * before being passed to this function.
  *
  * Examples:
+ *
  * - `/foo/bar.js` => `<fixture>/bar.js`
  * - `/foo` => `<fixtures>/foo`
  */

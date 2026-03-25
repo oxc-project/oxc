@@ -8,6 +8,7 @@ const { execSync } = require("child_process");
 
 /**
  * Execute a shell command and return the output
+ *
  * @param {string} command - Command to execute
  * @returns {string} Command output
  */
@@ -27,6 +28,7 @@ function exec(command) {
 
 /**
  * Get dependencies for one or more crates using cargo tree
+ *
  * @param {string | string[]} packages - Package name(s) to query
  * @param {object} options - Additional options
  * @param {string} [options.features] - Features to enable
@@ -64,6 +66,7 @@ function getCrateDependencies(packages, options = {}) {
 
 /**
  * Check if any changed files affect specified crates or paths
+ *
  * @param {string[] | null} changedFiles - Array of changed file paths, or null
  * @param {string[]} crates - Array of crate names to check
  * @param {string[]} [additionalPaths] - Additional paths to check (e.g., 'tasks/benchmark/')

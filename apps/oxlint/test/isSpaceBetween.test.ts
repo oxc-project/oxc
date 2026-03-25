@@ -19,6 +19,7 @@ import type { Program } from "../src-js/generated/types.d.ts";
 /**
  * Parse source text into AST using Oxc parser.
  * Set up global state, as if was linting the provided file.
+ *
  * @param filename - Filename
  * @param sourceText - Source text
  * @param options - Parse options

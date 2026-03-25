@@ -39,6 +39,7 @@ RuleTester.it = itHook;
 
 /**
  * Run all current test cases.
+ *
  * @returns Array containing errors for each test case
  */
 function runCases(): (Error | null)[] {

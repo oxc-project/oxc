@@ -319,7 +319,8 @@ export function finalizeCompiledVisitor() {
 }
 
 /**
- * Merge array of visit functions into a single function, which calls each of input functions in turn.
+ * Merge array of visit functions into a single function, which calls each of input functions in
+ * turn.
  *
  * The array passed is cleared (length set to 0), so the array can be reused.
  *

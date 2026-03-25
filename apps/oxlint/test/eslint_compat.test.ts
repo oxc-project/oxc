@@ -26,6 +26,7 @@ describe("ESLint compatibility", { timeout: 20_000 }, () => {
 
 /**
  * Run ESLint on a test fixture.
+ *
  * @param fixture - Fixture object
  */
 async function runFixture(fixture: Fixture): Promise<void> {

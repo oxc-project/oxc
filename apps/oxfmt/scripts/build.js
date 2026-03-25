@@ -23,6 +23,7 @@ console.log("Build complete!");
 
 /**
  * Copy a file, creating parent directories if needed.
+ *
  * @param {string} srcPath - Source file path, absolute
  * @param {string} destPath - Destination file path, absolute
  * @returns {void}

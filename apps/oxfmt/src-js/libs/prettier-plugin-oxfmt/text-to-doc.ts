@@ -38,7 +38,9 @@ export const textToDoc: Parser<Doc>["parse"] = async (embeddedSourceText, textTo
  * Detects Vue fragment mode from Prettier's internal flags.
  *
  * When Prettier formats Vue SFC templates, it calls textToDoc with special flags:
- * - `__isVueForBindingLeft`: v-for left-hand side (e.g., `(item, index)` in `v-for="(item, index) in items"`)
+ *
+ * - `__isVueForBindingLeft`: v-for left-hand side (e.g., `(item, index)` in `v-for="(item, index) in
+ *   items"`)
  * - `__isVueBindings`: v-slot bindings (e.g., `{ item }` in `#default="{ item }"`)
  * - `__isEmbeddedTypescriptGenericParameters`: `<script generic="...">` type parameters
  */

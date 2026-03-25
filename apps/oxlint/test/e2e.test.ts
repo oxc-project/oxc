@@ -19,9 +19,10 @@ const NODE_BIN_PATH = process.execPath;
  * - `files` as the first argument (so only lints the files in the fixture's `files` directory).
  * - Additional arguments from `options.json` file in fixture directory, if it exists.
  *
- * Fixtures with an `options.json` file containing `"fix": true` are also run with `--fix` CLI option.
- * Fixtures with an `options.json` file containing `"fixSuggestions": true` are also run with `--fix-suggestions` CLI option.
- * The files' contents after fixes are recorded in the snapshot.
+ * Fixtures with an `options.json` file containing `"fix": true` are also run with `--fix` CLI
+ * option. Fixtures with an `options.json` file containing `"fixSuggestions": true` are also run
+ * with `--fix-suggestions` CLI option. The files' contents after fixes are recorded in the
+ * snapshot.
  *
  * Fixtures with an `options.json` file containing `"oxlint": false` are skipped.
  */
@@ -47,6 +48,7 @@ describe("oxlint CLI", { concurrent: process.platform !== "win32" }, () => {
 
 /**
  * Run Oxlint on a test fixture.
+ *
  * @param fixture - Fixture object
  * @param expect - Vitest expect function from test context
  */

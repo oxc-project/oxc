@@ -1,5 +1,9 @@
 {
   "$schema": "./npm/oxfmt/configuration_schema.json",
+  "jsdoc": {
+    "commentLineStrategy": "keep",
+    "lineWrappingStyle": "balance",
+  },
   "ignorePatterns": [
     "**/tests/**",
     // Ignore `fixtures` directories except for `apps/oxlint/test/fixtures`

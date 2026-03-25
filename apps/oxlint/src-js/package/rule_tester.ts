@@ -37,6 +37,7 @@ type ItFn = ((text: string, fn: () => void) => void) & { only?: ItFn };
 
 /**
  * Default `describe` function, if `describe` doesn't exist as a global.
+ *
  * @param text - Description of the test case
  * @param method - Test case logic
  * @returns Returned value of `method`
@@ -53,10 +54,11 @@ let describe: DescribeFn =
 
 /**
  * Default `it` function, if `it` doesn't exist as a global.
+ *
  * @param text - Description of the test case
  * @param method - Test case logic
- * @throws {Error} Any error upon execution of `method`
  * @returns Returned value of `method`
+ * @throws {Error} Any error upon execution of `method`
  */
 function defaultIt<T, R>(this: T, text: string, method: (this: T) => R): R {
   try {
@@ -78,9 +80,10 @@ let itOnly: ItFn | null =
 
 /**
  * Get `it` function.
+ *
  * @param only - `true` if `it.only` should be used
- * @throws {Error} If `it.only` is not available
  * @returns `it` or `it.only` function
+ * @throws {Error} If `it.only` is not available
  */
 function getIt(only?: boolean): ItFn {
   return only ? getItOnly() : it;
@@ -88,8 +91,9 @@ function getIt(only?: boolean): ItFn {
 
 /**
  * Get `it.only` function.
- * @throws {Error} If `it.only` is not available
+ *
  * @returns `it.only` function
+ * @throws {Error} If `it.only` is not available
  */
 function getItOnly(): ItFn {
   if (itOnly === null) {
@@ -116,15 +120,13 @@ interface Config {
    * It is recommended to only use this option as a temporary measure and alter the test cases
    * so `eslintCompat` is no longer required.
    *
-   * If `true`:
-   * - Column offsets in diagnostics are incremented by 1.
-   * - Fixes which are adjacent to each other are considered overlapping, and only the first fix is applied.
-   * - Defaults `sourceType` to "module" if not provided (otherwise default is "unambiguous").
-   * - Disallows `sourceType: "unambiguous"`.
-   * - Allows `null` as property value for `globals`.
-   *   `globals: { foo: null }` is treated as equivalent to `globals: { foo: "readonly" }`.
-   *   ESLint accepts `null`, though this is undocumented. Oxlint does not accept `null`.
-   * - Slightly different behavior when `report` is called with `loc` of form `{ line, column }`.
+   * If `true`: - Column offsets in diagnostics are incremented by 1. - Fixes which are adjacent to
+   * each other are considered overlapping, and only the first fix is applied. - Defaults
+   * `sourceType` to "module" if not provided (otherwise default is "unambiguous"). - Disallows
+   * `sourceType: "unambiguous"`. - Allows `null` as property value for `globals`. `globals: { foo:
+   * null }` is treated as equivalent to `globals: { foo: "readonly" }`. ESLint accepts `null`,
+   * though this is undocumented. Oxlint does not accept `null`. - Slightly different behavior when
+   * `report` is called with `loc` of form `{ line, column }`.
    *
    * All of these match ESLint `RuleTester`'s behavior.
    */
@@ -164,10 +166,9 @@ interface LanguageOptions {
 }
 
 /**
- * Language options config, with `parser` and `ecmaVersion` properties, and extended `parserOptions`.
- * These properties should not be present in `languageOptions` config,
- * but could be if test cases are ported from ESLint.
- * For internal use only.
+ * Language options config, with `parser` and `ecmaVersion` properties, and extended
+ * `parserOptions`. These properties should not be present in `languageOptions` config, but could be
+ * if test cases are ported from ESLint. For internal use only.
  */
 export interface LanguageOptionsInternal extends LanguageOptions {
   ecmaVersion?: number | "latest";
@@ -412,6 +413,7 @@ export class RuleTester {
 
   /**
    * Creates a new instance of RuleTester.
+   *
    * @param config? - Extra configuration for the tester (optional)
    */
   constructor(config?: Config | null) {
@@ -426,6 +428,7 @@ export class RuleTester {
 
   /**
    * Set the configuration to use for all future tests.
+   *
    * @param config - The configuration to use
    * @throws {TypeError} If `config` is not an object
    */
@@ -438,6 +441,7 @@ export class RuleTester {
 
   /**
    * Get the current configuration used for all tests.
+   *
    * @returns The current configuration
    */
   static getDefaultConfig(): Config {
@@ -447,6 +451,7 @@ export class RuleTester {
   /**
    * Reset the configuration to the initial configuration of the tester removing
    * any changes made until now.
+   *
    * @returns {void}
    */
   static resetDefaultConfig() {
@@ -486,6 +491,7 @@ export class RuleTester {
 
   /**
    * Add the `only` property to a test to run it in isolation.
+   *
    * @param item - A single test to run by itself
    * @returns The test with `only` set
    */
@@ -496,10 +502,11 @@ export class RuleTester {
 
   /**
    * Adds a new rule test to execute.
+   *
    * @param ruleName - Name of the rule to run
    * @param rule - Rule to test
    * @param tests - Collection of tests to run
-   * @throws {TypeError|Error} If `rule` is not an object with a `create` method,
+   * @throws {TypeError | Error} If `rule` is not an object with a `create` method,
    *   or if non-object `test`, or if a required scenario of the given type is missing
    */
   run(ruleName: string, rule: Rule, tests: TestCases): void {
@@ -554,6 +561,7 @@ if (CONFORMANCE) {
 
 /**
  * Run valid test case.
+ *
  * @param test - Valid test case
  * @param plugin - Plugin containing rule being tested
  * @param config - Config from `RuleTester` instance
@@ -577,6 +585,7 @@ function runValidTestCase(
 
 /**
  * Assert that valid test case passes.
+ *
  * @param test - Valid test case
  * @param plugin - Plugin containing rule being tested
  * @param config - Config from `RuleTester` instance
@@ -591,6 +600,7 @@ function assertValidTestCasePasses(test: ValidTestCase, plugin: Plugin, config: 
 
 /**
  * Run invalid test case.
+ *
  * @param test - Invalid test case
  * @param plugin - Plugin containing rule being tested
  * @param config - Config from `RuleTester` instance
@@ -615,6 +625,7 @@ function runInvalidTestCase(
 
 /**
  * Assert that invalid test case passes.
+ *
  * @param test - Invalid test case
  * @param plugin - Plugin containing rule being tested
  * @param config - Config from `RuleTester` instance
@@ -734,6 +745,7 @@ function runFixes(diagnostics: Diagnostic[], code: string, eslintCompat: boolean
 
 /**
  * Assert that message reported by rule under test matches the expected message.
+ *
  * @param diagnostic - Diagnostic emitted by rule under test
  * @param error - Error object from test case
  * @param messages - Messages from rule under test
@@ -772,7 +784,8 @@ function assertInvalidTestCaseMessageIsCorrect(
 }
 
 /**
- * Assert that a `messageId` used by the rule under test is correct, and validate `data` (if provided).
+ * Assert that a `messageId` used by the rule under test is correct, and validate `data` (if
+ * provided).
  *
  * @param reportedMessageId - `messageId` from the diagnostic or suggestion
  * @param reportedMessage - Message from the diagnostic or suggestion
@@ -781,7 +794,8 @@ function assertInvalidTestCaseMessageIsCorrect(
  * @param messages - Messages from the rule under test
  * @param prefix - Prefix for assertion error messages (e.g. "" or "Suggestion at index 0: ")
  * @throws {AssertionError} If messageId is not correct
- * @throws {AssertionError} If message tenplate with placeholder data inserted does not match reported message
+ * @throws {AssertionError} If message tenplate with placeholder data inserted does not match
+ *   reported message
  */
 function assertMessageIdIsCorrect(
   reportedMessageId: string | null,
@@ -841,6 +855,7 @@ function assertMessageIdIsCorrect(
 
 /**
  * Assert that location reported by rule under test matches the expected location.
+ *
  * @param diagnostic - Diagnostic emitted by rule under test
  * @param error - Error object from test case
  * @param config - Config for this test case
@@ -914,6 +929,7 @@ function assertInvalidTestCaseLocationIsCorrect(
 
 /**
  * Assert that suggestions reported by the rule under test match expected suggestions.
+ *
  * @param diagnostic - Diagnostic emitted by the rule under test
  * @param error - Error object from the test case
  * @param messages - Messages from the rule under test
@@ -968,6 +984,7 @@ function assertSuggestionsAreCorrect(
 
 /**
  * Assert that a suggestion's message matches expectations.
+ *
  * @param actual - Actual suggestion from the diagnostic
  * @param expected - Expected suggestion from the test case
  * @param messages - Messages from the rule under test
@@ -1018,6 +1035,7 @@ function assertSuggestionMessageIsCorrect(
 
 /**
  * Assert that the number of errors reported for test case is as expected.
+ *
  * @param diagnostics - Diagnostics reported by the rule under test
  * @param expectedErrorCount - Expected number of diagnistics
  * @throws {AssertionError} If the number of diagnostics is not as expected
@@ -1041,6 +1059,7 @@ function assertErrorCountIsCorrect(diagnostics: Diagnostic[], expectedErrorCount
 /**
  * Assert that message is matched by matcher.
  * Matcher can be a string or a regular expression.
+ *
  * @param message - Message
  * @param matcher - Matcher
  * @throws {AssertionError} If message does not match
@@ -1054,8 +1073,9 @@ function assertMessageMatches(message: string, matcher: string | RegExp) {
 }
 
 /**
- * Get placeholders in the reported messages but only includes the placeholders available in the raw message
- * and not in the provided data.
+ * Get placeholders in the reported messages but only includes the placeholders available in the raw
+ * message and not in the provided data.
+ *
  * @param message - Reported message
  * @param raw - Raw message specified in the rule's `meta.messages`
  * @param data - Data from the test case's error object
@@ -1078,6 +1098,7 @@ function getUnsubstitutedMessagePlaceholders(
 
 /**
  * Extract names of `{{ name }}` placeholders from a message.
+ *
  * @param message - Message
  * @returns Array of placeholder names
  */
@@ -1086,9 +1107,9 @@ function getMessagePlaceholders(message: string): string[] {
 }
 
 /**
- * Create config for a test run.
- * Merges config from `RuleTester` instance on top of shared config.
- * Removes properties which are not allowed in `Config`s, as they can only be properties of `TestCase`.
+ * Create config for a test run. Merges config from `RuleTester` instance on top of shared config.
+ * Removes properties which are not allowed in `Config`s, as they can only be properties of
+ * `TestCase`.
  *
  * @param config - Config from `RuleTester` instance
  * @returns Merged config
@@ -1142,6 +1163,7 @@ function mergeConfigIntoTestCase<T extends ValidTestCase | InvalidTestCase>(
 
 /**
  * Merge language options from test case / config onto language options from base config.
+ *
  * @param localLanguageOptions - Language options from test case / config
  * @param baseLanguageOptions - Language options from base config
  * @returns Merged language options, or `undefined` if neither has language options
@@ -1166,6 +1188,7 @@ function mergeLanguageOptions(
 
 /**
  * Merge parser options from test case / config onto language options from base config.
+ *
  * @param localParserOptions - Parser options from test case / config
  * @param baseParserOptions - Parser options from base config
  * @returns Merged parser options, or `undefined` if neither has parser options
@@ -1189,6 +1212,7 @@ function mergeParserOptions(
 
 /**
  * Merge ecma features from test case / config onto ecma features from base config.
+ *
  * @param localEcmaFeatures - Ecma features from test case / config
  * @param baseEcmaFeatures - Ecma features from base config
  * @returns Merged ecma features, or `undefined` if neither has ecma features
@@ -1204,6 +1228,7 @@ function mergeEcmaFeatures(
 
 /**
  * Merge globals from test case / config onto globals from base config.
+ *
  * @param localGlobals - Globals from test case / config
  * @param baseGlobals - Globals from base config
  * @returns Merged globals
@@ -1219,6 +1244,7 @@ function mergeGlobals(
 
 /**
  * Lint a test case.
+ *
  * @param test - Test case
  * @param plugin - Plugin containing rule being tested
  * @returns Array of diagnostics
@@ -1323,6 +1349,7 @@ function lint(test: TestCase, plugin: Plugin): Diagnostic[] {
 
 /**
  * Get parse options for a test case.
+ *
  * @param test - Test case
  * @returns Parse options
  */
@@ -1461,7 +1488,8 @@ function getGlobalsJson(test: TestCase): string {
  *
  * This function builds a JSON string in same format as Rust does, and calls `setOptions` with it.
  *
- * Returns the options ID to pass to `lintFileImpl` (either 0 for default options, or 1 for user-provided options).
+ * Returns the options ID to pass to `lintFileImpl` (either 0 for default options, or 1 for
+ * user-provided options).
  *
  * @param test - Test case
  * @param cwd - Current working directory for test case
@@ -1507,8 +1535,10 @@ function setupOptions(test: TestCase, cwd: string): number {
  * - `languageOptions.parserOptions.ecmaFeatures.globalReturn` into scope analyzer options.
  * - `languageOptions.parserOptions.ecmaFeatures.impliedStrict` into scope analyzer options.
  *
- * This is only supported in conformance tests, where it's necessary to pass some tests.
- * Oxlint doesn't support any ECMA version except latest, or the `globalReturn` or `impliedStrict` ECMA features.
+ * This is only supported in conformance tests, where it's necessary to pass some tests. Oxlint
+ * doesn't support any ECMA version except latest, or the `globalReturn` or `impliedStrict` ECMA
+ * features.
+ *
  * @param test - Test case
  */
 function setEcmaVersionAndFeatures(test: TestCase) {
@@ -1545,6 +1575,7 @@ const CONTROL_CHAR_REGEX = /[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/gu;
 /**
  * Get name of test case.
  * Control characters in name are replaced with `\u00xx` form.
+ *
  * @param test - Test case
  * @returns Name of test case
  */
@@ -1561,9 +1592,10 @@ function getTestName(test: TestCase): string {
 
 /**
  * Runs before hook on the given test case.
+ *
  * @param test - Test to run the hook on
  * @throws {Error} - If the hook is not a function
- * @throws {*} - Value thrown by the hook function
+ * @throws {any} - Value thrown by the hook function
  */
 function runBeforeHook(test: TestCase): void {
   // oxlint-disable-next-line typescript/unbound-method - bound in `runHook`
@@ -1572,9 +1604,10 @@ function runBeforeHook(test: TestCase): void {
 
 /**
  * Runs after hook on the given test case.
+ *
  * @param test - Test to run the hook on
  * @throws {Error} - If the hook is not a function
- * @throws {*} - Value thrown by the hook function
+ * @throws {any} - Value thrown by the hook function
  */
 function runAfterHook(test: TestCase): void {
   // oxlint-disable-next-line typescript/unbound-method - bound in `runHook`
@@ -1583,11 +1616,12 @@ function runAfterHook(test: TestCase): void {
 
 /**
  * Runs a hook on the given test case.
+ *
  * @param test - Test to run the hook on
  * @param hook - Hook function
  * @param name - Name of the hook
  * @throws {Error} - If the property is not a function
- * @throws {*} - Value thrown by the hook function
+ * @throws {any} - Value thrown by the hook function
  */
 function runHook<T extends TestCase>(
   test: T,
@@ -1679,6 +1713,7 @@ function assertInvalidTestCaseIsWellFormed(
 
 /**
  * Assert that the common properties of a valid/invalid test case have the correct types.
+ *
  * @param {Object} test - Test case object to check
  * @throws {AssertionError} If the test case is not valid
  */
@@ -1708,8 +1743,10 @@ const DUPLICATION_IGNORED_PROPS = new Set(["name", "errors", "output"]);
 
 /**
  * Assert that this test case is not a duplicate of one we have seen before.
+ *
  * @param test - Test case object
- * @param seenTestCases - Set of serialized test cases we have seen so far (managed by this function)
+ * @param seenTestCases - Set of serialized test cases we have seen so far (managed by this
+ *   function)
  * @throws {AssertionError} If the test case is a duplicate
  */
 function assertNotDuplicateTestCase(test: TestCase, seenTestCases: Set<string>): void {
@@ -1730,9 +1767,10 @@ function assertNotDuplicateTestCase(test: TestCase, seenTestCases: Set<string>):
 }
 
 /**
- * Check if a value is serializable.
- * Functions or objects like RegExp cannot be serialized by JSON.stringify().
- * Inspired by: https://stackoverflow.com/questions/30579940/reliable-way-to-check-if-objects-is-serializable-in-javascript
+ * Check if a value is serializable. Functions or objects like RegExp cannot be serialized by
+ * JSON.stringify(). Inspired by:
+ * https://stackoverflow.com/questions/30579940/reliable-way-to-check-if-objects-is-serializable-in-javascript
+ *
  * @param value - Value
  * @param seenObjects - Objects already seen in this path from the root object.
  * @returns {boolean} `true` if the value is serializable
@@ -1763,6 +1801,7 @@ function isSerializable(value: unknown, seenObjects: Set<object> = new Set()): b
 
 /**
  * Check if a value is a primitive or plain object created by the `Object` constructor.
+ *
  * @param value - Value to check
  * @returns `true` if `value` is a primitive or plain object
  */

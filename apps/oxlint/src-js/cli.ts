@@ -15,11 +15,13 @@ let loadJsConfigs: typeof import("./js_config.ts").loadJsConfigs | null = null;
 /**
  * Load a plugin.
  *
- * Lazy-loads plugins code on first call, so that overhead is skipped if user doesn't use JS plugins.
+ * Lazy-loads plugins code on first call, so that overhead is skipped if user doesn't use JS
+ * plugins.
  *
  * @param path - Absolute path of plugin file
  * @param pluginName - Plugin name (either alias or package name)
- * @param pluginNameIsAlias - `true` if plugin name is an alias (takes priority over name that plugin defines itself)
+ * @param pluginNameIsAlias - `true` if plugin name is an alias (takes priority over name that
+ *   plugin defines itself)
  * @param workspaceUri - Workspace URI (`null` in CLI mode, `string` in LSP mode)
  * @returns Plugin details or error serialized to JSON string
  */
@@ -65,7 +67,8 @@ function setupRuleConfigsWrapper(optionsJSON: string): string | null {
  *
  * @param filePath - Absolute path of file being linted
  * @param bufferId - ID of buffer containing file data
- * @param buffer - Buffer containing file data, or `null` if buffer with this ID was previously sent to JS
+ * @param buffer - Buffer containing file data, or `null` if buffer with this ID was previously sent
+ *   to JS
  * @param ruleIds - IDs of rules to run on this file
  * @param optionsIds - IDs of options to use for rules on this file, in same order as `ruleIds`
  * @param settingsJSON - Settings for file, as JSON
@@ -106,7 +109,8 @@ function lintFileWrapper(
 /**
  * Create a new workspace.
  *
- * Lazy-loads workspace code on first call, so that overhead is skipped if user doesn't use JS plugins.
+ * Lazy-loads workspace code on first call, so that overhead is skipped if user doesn't use JS
+ * plugins.
  *
  * @param workspace - Workspace URI
  * @returns Promise which resolves when workspace is created

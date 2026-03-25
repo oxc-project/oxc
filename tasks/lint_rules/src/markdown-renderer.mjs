@@ -1,9 +1,15 @@
 /**
- * @typedef {({ name: string } & import("./oxlint-rules.mjs").RuleEntry)} RuleEntryView
- * @typedef {{ isImplemented: number; isNotSupported: number; isPendingFix: number; total: number }} CounterView
+ * @typedef {{ name: string } & import("./oxlint-rules.mjs").RuleEntry} RuleEntryView
+ *
+ * @typedef {{
+ *   isImplemented: number;
+ *   isNotSupported: number;
+ *   isPendingFix: number;
+ *   total: number;
+ * }} CounterView
  */
 
-/** @param {{ npm: string[]; }} props */
+/** @param {{ npm: string[] }} props */
 const renderIntroduction = ({ npm }) => `
 > [!WARNING]
 > This comment is maintained by CI. Do not edit this comment directly.
@@ -63,7 +69,8 @@ Then implement the rule and get all the tests passing.
  *   counters: CounterView;
  *   views: RuleEntryView[];
  *   defaultOpen?: boolean;
- * }} props */
+ * }} props
+ */
 const renderRulesList = ({ title, counters, views, defaultOpen = true }) => `
 ## ${title}
 

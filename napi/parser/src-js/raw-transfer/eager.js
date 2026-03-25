@@ -5,12 +5,14 @@ import { isJsAst, parseAsyncRawImpl, parseSyncRawImpl, returnBufferToCache } fro
 const require = createRequire(import.meta.url);
 
 /**
- * Parse JS/TS source synchronously on current thread, using raw transfer to speed up deserialization.
+ * Parse JS/TS source synchronously on current thread, using raw transfer to speed up
+ * deserialization.
  *
  * @param {string} filename - Filename
  * @param {string} sourceText - Source text of file
  * @param {Object} options - Parsing options
- * @returns {Object} - Object with property getters for `program`, `module`, `comments`, and `errors`
+ * @returns {Object} - Object with property getters for `program`, `module`, `comments`, and
+ *   `errors`
  */
 export function parseSyncRaw(filename, sourceText, options) {
   return parseSyncRawImpl(filename, sourceText, options, deserialize);
@@ -19,20 +21,22 @@ export function parseSyncRaw(filename, sourceText, options) {
 /**
  * Parse JS/TS source asynchronously, using raw transfer to speed up deserialization.
  *
- * Note that not all of the workload can happen on a separate thread.
- * Parsing on Rust side does happen in a separate thread, but deserialization of the AST to JS objects
- * has to happen on current thread. This synchronous deserialization work typically outweighs
- * the asynchronous parsing by a factor of around 3.
+ * Note that not all of the workload can happen on a separate thread. Parsing on Rust side does
+ * happen in a separate thread, but deserialization of the AST to JS objects has to happen on
+ * current thread. This synchronous deserialization work typically outweighs the asynchronous
+ * parsing by a factor of around 3.
  *
- * i.e. the majority of the workload cannot be parallelized by using this method.
+ * I.e. the majority of the workload cannot be parallelized by using this method.
  *
- * Generally `parseSyncRaw` is preferable to use as it does not have the overhead of spawning a thread.
- * If you need to parallelize parsing multiple files, it is recommended to use worker threads.
+ * Generally `parseSyncRaw` is preferable to use as it does not have the overhead of spawning a
+ * thread. If you need to parallelize parsing multiple files, it is recommended to use worker
+ * threads.
  *
  * @param {string} filename - Filename
  * @param {string} sourceText - Source text of file
  * @param {Object} options - Parsing options
- * @returns {Object} - Object with property getters for `program`, `module`, `comments`, and `errors`
+ * @returns {Object} - Object with property getters for `program`, `module`, `comments`, and
+ *   `errors`
  */
 export function parse(filename, sourceText, options) {
   return parseAsyncRawImpl(filename, sourceText, options, deserialize);
@@ -60,7 +64,8 @@ const deserializerNames = [
  * @param {string} sourceText - Source for the file
  * @param {number} sourceByteLen - Length of source text in UTF-8 bytes
  * @param {Object} options - Parsing options
- * @returns {Object} - Object with property getters for `program`, `module`, `comments`, and `errors`
+ * @returns {Object} - Object with property getters for `program`, `module`, `comments`, and
+ *   `errors`
  */
 function deserialize(buffer, sourceText, sourceByteLen, options) {
   const isJs = isJsAst(buffer),
@@ -169,6 +174,7 @@ const IS_ESCAPED_FIELD_OFFSET = 10;
 
 /**
  * Deserialize tokens from buffer.
+ *
  * @param {Uint8Array} buffer - Buffer containing AST in raw form
  * @param {string} sourceText - Source for the file
  * @param {boolean} isJs - `true` if parsing in JS mode
@@ -191,6 +197,7 @@ function deserializeTokens(buffer, sourceText, isJs) {
 
 /**
  * Deserialize a token from buffer at position `pos`.
+ *
  * @param {number} pos - Position in buffer containing Rust `Token` type
  * @param {Uint8Array} buffer - Buffer containing AST in raw form
  * @param {string} sourceText - Source for the file

@@ -34,6 +34,7 @@ const GLOBAL_FILES = [
 
 /**
  * Check if any global files have changed that affect all benchmarks
+ *
  * @param {string[]} changedFiles - Array of changed file paths
  * @returns {boolean} True if global changes detected
  */
@@ -54,6 +55,7 @@ function checkGlobalChanges(changedFiles) {
 
 /**
  * Map component to its feature
+ *
  * @param {string} component - Component name
  * @returns {string} Feature name
  */
@@ -69,6 +71,7 @@ const depsCache = new Map();
 
 /**
  * Get dependencies for a specific benchmark component
+ *
  * @param {string} component - Component name
  * @returns {string[]} Array of dependency names
  */
@@ -95,6 +98,7 @@ function getComponentDependencies(component) {
 
 /**
  * Check if a component is affected by the changed files
+ *
  * @param {string} component - Component name
  * @param {string[]} changedFiles - Array of changed file paths
  * @returns {boolean} True if component is affected
@@ -122,7 +126,8 @@ function isComponentAffected(component, changedFiles) {
 
 /**
  * Determine which components are affected by changes
- * @returns {Promise<Array<{component: string, feature: string}>>} Array of affected component objects
+ *
+ * @returns {Promise<{ component: string; feature: string }[]>} Array of affected component objects
  */
 async function determineAffectedComponents() {
   const changedFiles = await getChangedFiles();

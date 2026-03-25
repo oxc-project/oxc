@@ -8,13 +8,13 @@ export interface RuleMeta {
   /**
    * Type of rule.
    *
-   * - `problem`: The rule is identifying code that either will cause an error or may cause a confusing behavior.
-   *   Developers should consider this a high priority to resolve.
-   * - `suggestion`: The rule is identifying something that could be done in a better way but no errors will occur
-   *   if the code isn’t changed.
-   * - `layout`: The rule cares primarily about whitespace, semicolons, commas, and parentheses, all the parts
-   *   of the program that determine how the code looks rather than how it executes.
-   *   These rules work on parts of the code that aren’t specified in the AST.
+   * - `problem`: The rule is identifying code that either will cause an error or may cause a
+   *   confusing behavior. Developers should consider this a high priority to resolve.
+   * - `suggestion`: The rule is identifying something that could be done in a better way but no
+   *   errors will occur if the code isn’t changed.
+   * - `layout`: The rule cares primarily about whitespace, semicolons, commas, and parentheses, all
+   *   the parts of the program that determine how the code looks rather than how it executes. These
+   *   rules work on parts of the code that aren’t specified in the AST.
    */
   type?: "problem" | "suggestion" | "layout";
   /**
@@ -33,6 +33,7 @@ export interface RuleMeta {
   /**
    * Specifies whether rule can return suggestions.
    * Must be `true` if the rule provides suggestions.
+   *
    * @default false
    */
   hasSuggestions?: boolean;
@@ -42,17 +43,19 @@ export interface RuleMeta {
    */
   schema?: RuleOptionsSchema;
   /**
-   * Default options for the rule.
-   * If present, any user-provided options in their config will be merged on top of them recursively.
+   * Default options for the rule. If present, any user-provided options in their config will be
+   * merged on top of them recursively.
    */
   defaultOptions?: Options;
   /**
-   * Indicates whether the rule has been deprecated, and info about the deprecation and possible replacements.
+   * Indicates whether the rule has been deprecated, and info about the deprecation and possible
+   * replacements.
    */
   deprecated?: boolean | RuleDeprecatedInfo;
   /**
    * Information about available replacements for the rule.
    * This may be an empty array to explicitly state there is no replacement.
+   *
    * @deprecated Use `deprecated.replacedBy` instead.
    */
   replacedBy?: RuleReplacedByInfo[];
@@ -90,7 +93,8 @@ export interface RuleDocs {
 // Note: ESLint docs specifically say "Every property is optional."
 export interface RuleDeprecatedInfo {
   /**
-   * General message presentable to the user. May contain why this rule is deprecated or how to replace the rule.
+   * General message presentable to the user. May contain why this rule is deprecated or how to
+   * replace the rule.
    */
   message?: string;
   /**
@@ -110,7 +114,8 @@ export interface RuleDeprecatedInfo {
    * Version (as semver string) likely to remove the rule.
    * e.g. the next major version.
    *
-   * The special value `null` means the rule will no longer be changed, but will be kept available indefinitely.
+   * The special value `null` means the rule will no longer be changed, but will be kept available
+   * indefinitely.
    */
   availableUntil?: string | null;
 }

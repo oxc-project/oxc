@@ -52,19 +52,21 @@ export interface TestGroup {
   submoduleName: string;
 
   /**
-   * Path to the directory containing test files for this group, relative to the submodule directory.
+   * Path to the directory containing test files for this group, relative to the submodule
+   * directory.
    */
   testFilesDirPath: string;
 
   /**
    * Transform test file name to test name.
    *
-   * e.g.:
+   * E.g.:
+   *
    * ```ts
    * (path: string) => {
    *   if (!path.endsWith(".js")) return null;
    *   return path.slice(0, -3);
-   * }
+   * };
    * ```
    *
    * @param filename - Filename of test file
@@ -74,6 +76,7 @@ export interface TestGroup {
 
   /**
    * Function to run before loading any test files.
+   *
    * @param require - Require function, which requires modules relative to the test files directory
    * @param mock - Mock function, which mocks modules relative to the test files directory
    */
@@ -94,16 +97,18 @@ export interface TestGroup {
   /**
    * `RuleTester` instances to replace with the Oxc conformance `RuleTester`.
    *
-   * - `specifier` is a module specifier which is resolved relative to the tests directory, using `require.resolve`.
-   * - `propName` is name of the property to set on the module to the `RuleTester` class.
-   *   If `null`, the module is set as `module.exports`.
+   * - `specifier` is a module specifier which is resolved relative to the tests directory, using
+   *   `require.resolve`.
+   * - `propName` is name of the property to set on the module to the `RuleTester` class. If `null`,
+   *   the module is set as `module.exports`.
    *
-   * e.g.:
+   * E.g.:
+   *
    * ```js
    * [
    *   { specifier: "eslint", propName: "RuleTester" },
    *   { specifier: "../../lib/rule-tester.js", propName: null },
-   * ]
+   * ];
    * ```
    */
   ruleTesters: { specifier: string; propName: string | null }[];
@@ -111,14 +116,15 @@ export interface TestGroup {
   /**
    * Known parsers to accept.
    *
-   * If one of these parsers is passed as `languageOptions.parser` in test case config, Oxc parser will be used instead.
-   * Otherwise, custom parsers are not accepted, and the test case will throw an error.
+   * If one of these parsers is passed as `languageOptions.parser` in test case config, Oxc parser
+   * will be used instead. Otherwise, custom parsers are not accepted, and the test case will throw
+   * an error.
    *
-   * `specifier` is a module specifier which is resolved relative to the tests directory, using `require.resolve`.
-   * `lang` is the language to parse the test case code with when this parser is used.
-   * `propName` (optional) is the name of the property of the module which is the parser.
+   * `specifier` is a module specifier which is resolved relative to the tests directory, using
+   * `require.resolve`. `lang` is the language to parse the test case code with when this parser is
+   * used. `propName` (optional) is the name of the property of the module which is the parser.
    *
-   * e.g. `{ specifier: "@typescript-eslint/parser", lang: "ts" }`
+   * E.g. `{ specifier: "@typescript-eslint/parser", lang: "ts" }`
    * e.g. `{ specifier: "typescript-eslint", propName: "parser", lang: "ts" }`
    */
   parsers: ParserDetails[];
@@ -133,8 +139,8 @@ export interface TestGroup {
  * If need to mock a module which is imported by another package, pass the specifiers of
  * "breadcrumb" packages on way to the module as `via`.
  *
- * e.g. If test file imports `foo`, `foo` imports `bar`, and `bar` imports `qux`, and `qux` is the module to mock:
- * `mock("qux", value, ["foo", "bar"])`
+ * E.g. If test file imports `foo`, `foo` imports `bar`, and `bar` imports `qux`, and `qux` is the
+ * module to mock: `mock("qux", value, ["foo", "bar"])`
  */
 export type MockFn = (specifier: string, value: unknown, via?: string[]) => void;
 
@@ -211,6 +217,7 @@ function initMocks(): Mocks {
 
 /**
  * Run all test groups.
+ *
  * @param groups - Test groups
  */
 function runGroups(groups: TestGroup[], mocks: Mocks) {
@@ -222,6 +229,7 @@ function runGroups(groups: TestGroup[], mocks: Mocks) {
 
 /**
  * Run all tests in a test group.
+ *
  * @param group - Test group
  */
 function runGroup(group: TestGroup, mocks: Mocks) {
@@ -334,6 +342,7 @@ function runGroup(group: TestGroup, mocks: Mocks) {
 
 /**
  * Create a mock function which mocks a module relative to the test files directory.
+ *
  * @param testFilesDirPath - Path to the test files directory
  * @param mocks - Mocks
  * @returns Mock function
@@ -355,6 +364,7 @@ function createMockFn(testFilesDirPath: string, mocks: Mocks): MockFn {
 
 /**
  * Find all test files for a test group.
+ *
  * @param group - Test group
  * @returns Test file details
  */
@@ -383,6 +393,7 @@ function findTestFiles(group: TestGroup): TestFile[] {
 
 /**
  * Run all test files for a group.
+ *
  * @param testFiles - Test files
  * @returns Results of running tests
  */
@@ -421,6 +432,7 @@ function runAllTests(testFiles: TestFile[]): RuleResult[] {
 
 /**
  * Run tests for a single rule file.
+ *
  * @param testFile - Test file details
  * @returns Results of running tests for rule
  */

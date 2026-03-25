@@ -92,10 +92,10 @@ let getCommentPrivateLoc: (comment: Comment) => Location | null;
 /**
  * Comment class.
  *
- * Creates `loc` lazily and caches it in a private field.
- * Using a class with a private `#loc` field avoids hidden class transitions that would occur
- * with `Object.defineProperty` / `delete` on plain objects.
- * All `Comment` instances always have the same V8 hidden class, keeping property access monomorphic.
+ * Creates `loc` lazily and caches it in a private field. Using a class with a private `#loc` field
+ * avoids hidden class transitions that would occur with `Object.defineProperty` / `delete` on plain
+ * objects. All `Comment` instances always have the same V8 hidden class, keeping property access
+ * monomorphic.
  */
 class Comment implements Span {
   type: CommentType["type"] = null!; // Overwritten later
@@ -197,10 +197,12 @@ export function deserializeComments(): void {
 /**
  * Initialize typed array views over the comments region of the buffer.
  *
- * Populates `commentsUint8`, `commentsUint32`, and `commentsLen`, and grows `cachedComments` if needed.
- * Does NOT deserialize comments - they are deserialized lazily via `deserializeCommentIfNeeded`.
+ * Populates `commentsUint8`, `commentsUint32`, and `commentsLen`, and grows `cachedComments` if
+ * needed. Does NOT deserialize comments - they are deserialized lazily via
+ * `deserializeCommentIfNeeded`.
  *
- * Exception: If the file has a hashbang, eagerly deserializes the first comment and sets its type to `Shebang`.
+ * Exception: If the file has a hashbang, eagerly deserializes the first comment and sets its type
+ * to `Shebang`.
  */
 export function initCommentsBuffer(): void {
   debugAssert(
@@ -340,7 +342,8 @@ function deserializeCommentIfNeeded(index: number): Comment | null {
 /**
  * Check comments buffer has valid ranges and ascending order.
  *
- * Only runs in debug build (tests). In release build, this function is entirely removed by minifier.
+ * Only runs in debug build (tests). In release build, this function is entirely removed by
+ * minifier.
  */
 function debugCheckValidRanges(): void {
   if (!DEBUG) return;
@@ -365,7 +368,8 @@ function debugCheckValidRanges(): void {
 /**
  * Check all deserialized comments are in ascending order.
  *
- * Only runs in debug build (tests). In release build, this function is entirely removed by minifier.
+ * Only runs in debug build (tests). In release build, this function is entirely removed by
+ * minifier.
  */
 function debugCheckDeserializedComments(): void {
   if (!DEBUG) return;
@@ -446,7 +450,8 @@ export function resetComments(): void {
 /**
  * Check that all comment objects have been cleared.
  *
- * Only runs in debug build (tests). In release build, this function is entirely removed by minifier.
+ * Only runs in debug build (tests). In release build, this function is entirely removed by
+ * minifier.
  */
 function debugAssertAllCommentsCleared(): void {
   if (!DEBUG) return;

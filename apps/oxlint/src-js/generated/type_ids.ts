@@ -198,8 +198,8 @@ export const DECLARATION_NODE_TYPE_IDS = [
 ];
 
 /**
- * Type IDs which may match `:pattern` selector class.
- * Only *may* match because `Identifier` nodes only match this class if their parent is not a `MetaProperty`.
+ * Type IDs which may match `:pattern` selector class. Only _may_ match because `Identifier` nodes
+ * only match this class if their parent is not a `MetaProperty`.
  */
 export const PATTERN_NODE_TYPE_IDS = [
   2, 6, 8, 28, 29, 30, 31, 32, 33, 34, 37, 39, 42, 43, 56, 57, 62, 66, 67, 68, 70, 71, 72, 73, 79,
@@ -207,8 +207,8 @@ export const PATTERN_NODE_TYPE_IDS = [
 ];
 
 /**
- * Type IDs which may match `:expression` selector class.
- * Only *may* match because `Identifier` nodes only match this class if their parent is not a `MetaProperty`.
+ * Type IDs which may match `:expression` selector class. Only _may_ match because `Identifier`
+ * nodes only match this class if their parent is not a `MetaProperty`.
  */
 export const EXPRESSION_NODE_TYPE_IDS = [
   2, 6, 8, 28, 30, 31, 33, 34, 37, 39, 42, 43, 56, 57, 62, 66, 67, 68, 70, 71, 73, 79, 84, 85, 88,

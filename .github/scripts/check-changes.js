@@ -6,13 +6,13 @@
  * Generic change detection script for CI jobs.
  *
  * Include mode: checks if changes affect specified crates or their transitive dependencies.
- *   node check-changes.js --packages oxc_minifier --paths tasks/minsize/
+ * node check-changes.js --packages oxc_minifier --paths tasks/minsize/
  *
  * Exclude mode: skips only if ALL changed files belong to excluded crate directories.
- *   node check-changes.js --exclude oxc_linter,oxc_language_server --paths napi/,npm/
+ * node check-changes.js --exclude oxc_linter,oxc_language_server --paths napi/,npm/
  *
  * Paths-only mode: run if any changed file matches the given paths (no cargo tree).
- *   node check-changes.js --paths apps/oxlint/,npm/oxlint/,napi/oxlint/
+ * node check-changes.js --paths apps/oxlint/,npm/oxlint/,napi/oxlint/
  */
 
 const { getChangedFiles } = require("./get-changed-files.js");
@@ -20,7 +20,8 @@ const { getCrateDependencies, checkFilesAffectCrates } = require("./utils.js");
 
 /**
  * Parse CLI arguments into structured options.
- * @returns {{ packages: string[], exclude: string[], paths: string[] }}
+ *
+ * @returns {{ packages: string[]; exclude: string[]; paths: string[] }}
  */
 function parseArgs() {
   const args = process.argv.slice(2);
@@ -42,6 +43,7 @@ function parseArgs() {
 
 /**
  * Include mode: run if changes affect any of the specified crates (+ transitive deps) or paths.
+ *
  * @param {string[] | null} changedFiles
  * @param {string[]} packages - Root crate names
  * @param {string[]} paths - Additional trigger paths
@@ -94,8 +96,9 @@ function shouldRunInclude(changedFiles, packages, paths) {
 }
 
 /**
- * Exclude mode: skip only if ALL changed files belong to excluded crate directories.
- * Files matching `paths` always trigger the job. No cargo tree — exclusion is intentionally shallow.
+ * Exclude mode: skip only if ALL changed files belong to excluded crate directories. Files matching
+ * `paths` always trigger the job. No cargo tree — exclusion is intentionally shallow.
+ *
  * @param {string[] | null} changedFiles
  * @param {string[]} excludeCrates - Crate names to exclude
  * @param {string[]} paths - Additional paths that always trigger the job

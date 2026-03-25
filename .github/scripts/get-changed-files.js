@@ -12,6 +12,7 @@ const process = require("process");
 
 /**
  * Make a GitHub API request
+ *
  * @param {string} path - API path
  * @returns {Promise<any>} API response
  */
@@ -50,6 +51,7 @@ function githubApi(path) {
 
 /**
  * Get all changed files for a PR, paginating through all pages
+ *
  * @param {string} repository - Repository name (owner/repo)
  * @param {string} prNumber - Pull request number
  * @returns {Promise<string[]>} Array of changed file paths
@@ -74,6 +76,7 @@ async function getPrChangedFiles(repository, prNumber) {
 
 /**
  * Get changed files based on the GitHub event type
+ *
  * @returns {Promise<string[] | null>} Array of changed file paths, or null to signal "run all"
  */
 async function getChangedFiles() {

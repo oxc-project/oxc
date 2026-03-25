@@ -8,12 +8,12 @@ import type { Plugin } from "rolldown";
 const ASSERTS_PATH = pathJoin(import.meta.dirname, "../src-js/utils/asserts.ts");
 
 /**
- * Plugin to remove imports of `debugAssert*` / `typeAssert*` functions from `src-js/utils/asserts.ts`,
- * and all their call sites.
+ * Plugin to remove imports of `debugAssert*` / `typeAssert*` functions from
+ * `src-js/utils/asserts.ts`, and all their call sites.
  *
  * ```ts
  * // Original code
- * import { debugAssertIsNonNull } from '../utils/asserts.ts';
+ * import { debugAssertIsNonNull } from "../utils/asserts.ts";
  * const foo = getFoo();
  * debugAssertIsNonNull(foo.bar);
  *
@@ -25,17 +25,17 @@ const ASSERTS_PATH = pathJoin(import.meta.dirname, "../src-js/utils/asserts.ts")
  *
  * # 1. Minifier works chunk-by-chunk
  *
- * Minifier can already remove all calls to these functions as dead code, but only if the functions are defined
- * in the same file as the call sites.
+ * Minifier can already remove all calls to these functions as dead code, but only if the functions
+ * are defined in the same file as the call sites.
  *
- * Problem is that `asserts.ts` is imported by files which end up in all output chunks.
- * So without this transform, TSDown creates a shared chunk for `asserts.ts`. Minifier works chunk-by-chunk,
- * so can't see that these functions are no-ops, and doesn't remove the function calls.
+ * Problem is that `asserts.ts` is imported by files which end up in all output chunks. So without
+ * this transform, TSDown creates a shared chunk for `asserts.ts`. Minifier works chunk-by-chunk, so
+ * can't see that these functions are no-ops, and doesn't remove the function calls.
  *
  * # 2. Not entirely removed
  *
- * Even if minifier does remove all calls to these functions, it can't prove that expressions *inside* the calls
- * don't have side effects.
+ * Even if minifier does remove all calls to these functions, it can't prove that expressions
+ * _inside_ the calls don't have side effects.
  *
  * In example above, it can't know if `foo` has a getter for `bar` property.
  * So it removes the call to `debugAssertIsNonNull`, but leaves behind the `foo.bar` expression.
@@ -45,8 +45,8 @@ const ASSERTS_PATH = pathJoin(import.meta.dirname, "../src-js/utils/asserts.ts")
  * foo.bar;
  * ```
  *
- * This plugin visits AST and removes all calls to `debugAssert*` / `typeAssert*` functions entirely,
- * *including* the expressions inside the calls.
+ * This plugin visits AST and removes all calls to `debugAssert*` / `typeAssert*` functions
+ * entirely, _including_ the expressions inside the calls.
  *
  * This makes these debug assertion functions act like `debug_assert!` in Rust.
  */

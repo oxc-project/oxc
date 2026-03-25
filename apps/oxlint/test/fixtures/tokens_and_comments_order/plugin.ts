@@ -6,9 +6,9 @@
  * Files are named `001.js` through `120.js` (5! = 120 permutations).
  * The filename number determines the order in which 5 operations are performed.
  *
- * After performing all operations, we verify:
- * 1. Each operation returns correct results.
- * 2. Object identity is preserved - the same token/comment objects are returned by all methods that return them.
+ * After performing all operations, we verify: 1. Each operation returns correct results. 2. Object
+ * identity is preserved - the same token/comment objects are returned by all methods that return
+ * them.
  */
 import assert from "node:assert";
 

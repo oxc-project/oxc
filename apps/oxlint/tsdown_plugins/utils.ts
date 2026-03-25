@@ -4,6 +4,7 @@ import type { Program } from "@oxc-project/types";
 
 /**
  * Parse code and return the AST.
+ *
  * @param path - Path to file
  * @param code - Source code
  * @returns AST

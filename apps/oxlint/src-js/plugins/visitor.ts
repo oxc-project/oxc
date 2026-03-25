@@ -508,9 +508,11 @@ export function finalizeCompiledVisitor(): VisitorState {
 /**
  * Reset compiled visitor.
  *
- * This frees visit functions stored in `compiledVisitor`, and makes them eligible for garbage collection.
+ * This frees visit functions stored in `compiledVisitor`, and makes them eligible for garbage
+ * collection.
  *
- * After calling this function, `compiledVisitor` is in a clean state, ready for next file's visitor to be compiled.
+ * After calling this function, `compiledVisitor` is in a clean state, ready for next file's visitor
+ * to be compiled.
  */
 export function resetCompiledVisitor(): void {
   // Reset `compiledVisitor` array
@@ -536,7 +538,8 @@ type Merger = (visitProps: VisitProp[]) => VisitFn;
 type CfgMerger = (visitProps: CfgVisitProp[]) => CfgVisitFn;
 
 /**
- * Merge array of visit functions into a single function, which calls each of input functions in turn.
+ * Merge array of visit functions into a single function, which calls each of input functions in
+ * turn.
  *
  * The array passed is cleared (length set to 0), so the array can be reused.
  *
@@ -594,13 +597,15 @@ function mergeVisitFns(visitProps: VisitProp[]): VisitFn {
 }
 
 /**
- * Merge array of CFG visit functions into a single function, which calls each of input functions in turn.
+ * Merge array of CFG visit functions into a single function, which calls each of input functions in
+ * turn.
  *
- * The difference between this function and `mergeVisitFns` is that this function is for CFG event handlers.
- * Unlike all other visit functions, CFG event handlers are called with more than 1 argument.
- * We keep this separate from `mergeVisitFns` because the merger functions use `...args` to pass all arguments,
- * which is likely less performant than the simpler version which passes a single argument.
- * AST node visitation is a lot more common than CFG event visitation, and we want to keep the common case fast.
+ * The difference between this function and `mergeVisitFns` is that this function is for CFG event
+ * handlers. Unlike all other visit functions, CFG event handlers are called with more than 1
+ * argument. We keep this separate from `mergeVisitFns` because the merger functions use `...args`
+ * to pass all arguments, which is likely less performant than the simpler version which passes a
+ * single argument. AST node visitation is a lot more common than CFG event visitation, and we want
+ * to keep the common case fast.
  *
  * The array passed is cleared (length set to 0), so the array can be reused.
  *
@@ -648,6 +653,7 @@ function mergeCfgVisitFns(visitProps: CfgVisitProp[]): CfgVisitFn {
  * Create a merger function that merges `fnCount` functions.
  *
  * Generated code for `fnCount: 3`, `isCfg: false` (AST node visit function merger):
+ *
  * ```js
  * function(p) {
  *   var v0 = p[0].fn,
@@ -662,6 +668,7 @@ function mergeCfgVisitFns(visitProps: CfgVisitProp[]): CfgVisitFn {
  * ```
  *
  * Generated code for `fnCount: 2`, `isCfg: true` (CFG event handler merger):
+ *
  * ```js
  * function(p) {
  *   var v0 = p[0].fn,
