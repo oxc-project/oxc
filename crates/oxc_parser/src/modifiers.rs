@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::fmt::{self, Display};
 
 use bitflags::bitflags;
 use cow_utils::CowUtils;
@@ -98,7 +98,7 @@ impl ModifierFlags {
 }
 
 impl Display for ModifierFlags {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         for (i, (name, _)) in self.iter_names().enumerate() {
             if i != 0 {
                 write!(f, ", ")?;
@@ -290,8 +290,8 @@ impl TryFrom<Kind> for ModifierKind {
     }
 }
 
-impl std::fmt::Display for ModifierKind {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl Display for ModifierKind {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.as_str())
     }
 }
