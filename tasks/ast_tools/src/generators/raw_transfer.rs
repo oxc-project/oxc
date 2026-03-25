@@ -236,6 +236,11 @@ fn generate_deserializers(
         export declare function resetBuffer(): void;
     ".to_string();
 
+    // Track generated deserializer function names to avoid duplicates.
+    // Multiple types can map to the same deserializer name (e.g. `Option<Atom>` and
+    // `Option<Wtf8Atom>` both produce `deserializeOptionStr`).
+    let mut generated_deserializer_names = FxHashSet::default();
+
     for type_def in &schema.types {
         match type_def {
             TypeDef::Struct(struct_def) => {
@@ -245,16 +250,39 @@ fn generate_deserializers(
                 generate_enum(enum_def, &mut code, estree_derive_id, schema);
             }
             TypeDef::Primitive(primitive_def) => {
-                generate_primitive(primitive_def, &mut code, schema);
+                generate_primitive(
+                    primitive_def,
+                    &mut code,
+                    &mut generated_deserializer_names,
+                    schema,
+                );
             }
             TypeDef::Option(option_def) => {
-                generate_option(option_def, &mut code, estree_derive_id, schema);
+                generate_option(
+                    option_def,
+                    &mut code,
+                    &mut generated_deserializer_names,
+                    estree_derive_id,
+                    schema,
+                );
             }
             TypeDef::Box(box_def) => {
-                generate_box(box_def, &mut code, estree_derive_id, schema);
+                generate_box(
+                    box_def,
+                    &mut code,
+                    &mut generated_deserializer_names,
+                    estree_derive_id,
+                    schema,
+                );
             }
             TypeDef::Vec(vec_def) => {
-                generate_vec(vec_def, &mut code, estree_derive_id, schema);
+                generate_vec(
+                    vec_def,
+                    &mut code,
+                    &mut generated_deserializer_names,
+                    estree_derive_id,
+                    schema,
+                );
             }
             TypeDef::Cell(_cell_def) => {
                 // No deserializers for `Cell`s - use inner type's deserializer
@@ -817,7 +845,12 @@ fn generate_enum(
 }
 
 /// Generate deserialize function for a primitive.
-fn generate_primitive(primitive_def: &PrimitiveDef, code: &mut String, schema: &Schema) {
+fn generate_primitive(
+    primitive_def: &PrimitiveDef,
+    code: &mut String,
+    generated_names: &mut FxHashSet<String>,
+    schema: &Schema,
+) {
     #[expect(clippy::match_same_arms)]
     let ret = match primitive_def.name() {
         // Reuse deserializer for `&str`
@@ -855,6 +888,9 @@ fn generate_primitive(primitive_def: &PrimitiveDef, code: &mut String, schema: &
     };
 
     let fn_name = primitive_def.deser_name(schema);
+    if !generated_names.insert(fn_name.to_string()) {
+        return;
+    }
 
     #[rustfmt::skip]
     write_it!(code, "
@@ -904,6 +940,7 @@ static STR_DESERIALIZER_BODY: &str = "
 fn generate_option(
     option_def: &OptionDef,
     code: &mut String,
+    generated_names: &mut FxHashSet<String>,
     estree_derive_id: DeriveId,
     schema: &Schema,
 ) {
@@ -913,6 +950,9 @@ fn generate_option(
     }
 
     let fn_name = option_def.deser_name(schema);
+    if !generated_names.insert(fn_name.to_string()) {
+        return;
+    }
     let inner_fn_name = inner_type.deser_name(schema);
     let inner_layout = inner_type.layout_64();
 
@@ -951,13 +991,22 @@ fn generate_option(
 }
 
 /// Generate deserialize function for a `Box`.
-fn generate_box(box_def: &BoxDef, code: &mut String, estree_derive_id: DeriveId, schema: &Schema) {
+fn generate_box(
+    box_def: &BoxDef,
+    code: &mut String,
+    generated_names: &mut FxHashSet<String>,
+    estree_derive_id: DeriveId,
+    schema: &Schema,
+) {
     let inner_type = box_def.inner_type(schema);
     if should_skip_innermost_type(inner_type, estree_derive_id, schema) {
         return;
     }
 
     let fn_name = box_def.deser_name(schema);
+    if !generated_names.insert(fn_name.to_string()) {
+        return;
+    }
     let inner_fn_name = inner_type.deser_name(schema);
 
     #[rustfmt::skip]
@@ -969,13 +1018,22 @@ fn generate_box(box_def: &BoxDef, code: &mut String, estree_derive_id: DeriveId,
 }
 
 /// Generate deserialize function for a `Vec`.
-fn generate_vec(vec_def: &VecDef, code: &mut String, estree_derive_id: DeriveId, schema: &Schema) {
+fn generate_vec(
+    vec_def: &VecDef,
+    code: &mut String,
+    generated_names: &mut FxHashSet<String>,
+    estree_derive_id: DeriveId,
+    schema: &Schema,
+) {
     let inner_type = vec_def.inner_type(schema);
     if should_skip_innermost_type(inner_type, estree_derive_id, schema) {
         return;
     }
 
     let fn_name = vec_def.deser_name(schema);
+    if !generated_names.insert(fn_name.to_string()) {
+        return;
+    }
     let inner_fn_name = inner_type.deser_name(schema);
     let inner_type_size = inner_type.layout_64().size;
 

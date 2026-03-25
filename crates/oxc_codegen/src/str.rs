@@ -48,13 +48,7 @@ impl Codegen<'_> {
         // Loop through bytes, looking for any which need to be escaped.
         // String is written to buffer in chunks.
         let bytes = s.value.as_bytes().iter();
-        let mut state = PrintStringState {
-            chunk_start: bytes.ptr(),
-            bytes,
-            quote,
-            lone_surrogates: s.value.contains_lone_surrogates(),
-            allow_backtick,
-        };
+        let mut state = PrintStringState { chunk_start: bytes.ptr(), bytes, quote, allow_backtick };
 
         // Loop through bytes.
         while let Some(b) = state.peek() {
@@ -94,12 +88,11 @@ impl Codegen<'_> {
 /// String printer state.
 ///
 /// Main purpose is to contain `bytes` iterator.
-/// This iterator must always be positioned on a UTF-8 character boundary.
+/// This iterator must always be positioned on a WTF-8 character boundary.
 struct PrintStringState<'s> {
     chunk_start: *const u8,
     bytes: slice::Iter<'s, u8>,
     quote: Option<Quote>,
-    lone_surrogates: bool,
     allow_backtick: bool,
 }
 
@@ -190,11 +183,12 @@ impl PrintStringState<'_> {
             bytes_ptr.offset_from_unsigned(self.chunk_start)
         };
 
-        // SAFETY: `chunk_start` is within bounds of original `&str`.
-        // `bytes` iter cannot go past end of `&str` either.
-        // So a slice of `len` bytes starting at `chunk_start` must be within bounds of the `&str`.
-        // `bytes` iterator is always positioned on a UTF-8 character boundary, as is `chunk_start`.
-        // Therefore the slice between these two must be a valid UTF-8 string.
+        // SAFETY: `chunk_start` is within bounds of the original slice.
+        // `bytes` iter cannot go past end of slice either.
+        // So a slice of `len` bytes starting at `chunk_start` must be within bounds.
+        // `bytes` iterator is always positioned on a WTF-8 character boundary, as is `chunk_start`.
+        // The WS (0xED) handler flushes before any WTF-8 lone surrogate bytes, so flushed chunks
+        // never contain raw WTF-8 surrogate sequences. All flushed bytes are therefore valid UTF-8.
         unsafe {
             let slice = slice::from_raw_parts(self.chunk_start, len);
             codegen.code.print_bytes_unchecked(slice);
@@ -301,12 +295,6 @@ const NBSP_BYTES: [u8; 2] = to_bytes(NBSP);
 const _: () = assert!(NBSP_BYTES[0] == 0xC2);
 const NBSP_LAST_BYTE: u8 = NBSP_BYTES[1];
 
-/// Lossy replacement character (U+FFFD) as UTF-8 bytes.
-const LOSSY_REPLACEMENT_CHAR_BYTES: [u8; 3] = to_bytes('\u{FFFD}');
-const _: () = assert!(LOSSY_REPLACEMENT_CHAR_BYTES[0] == 0xEF);
-const LOSSY_REPLACEMENT_CHAR_LAST_2_BYTES: [u8; 2] =
-    [LOSSY_REPLACEMENT_CHAR_BYTES[1], LOSSY_REPLACEMENT_CHAR_BYTES[2]];
-
 /// Escape codes.
 ///
 /// Discriminant - 1 is used as index into `BYTE_HANDLERS` (except for `__` variant).
@@ -331,6 +319,7 @@ enum Escape {
     LS = 15, // LS/PS - U+2028 LINE SEPARATOR or U+2029 PARAGRAPH SEPARATOR (first byte)
     NB = 16, // NBSP  - Non-breaking space (first byte)
     LO = 17, // �     - U+FFFD lossy replacement character (first byte)
+    WS = 18, // WTF-8 surrogate (first byte 0xED, possible lone surrogate U+D800..=U+DFFF)
 }
 
 /// Struct which ensures content is aligned on 128.
@@ -361,7 +350,7 @@ static ESCAPES: Aligned128<[Escape; 256]> = {
         __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // B
         __, __, NB, __, __, __, __, __, __, __, __, __, __, __, __, __, // C
         __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // D
-        __, __, LS, __, __, __, __, __, __, __, __, __, __, __, __, LO, // E
+        __, __, LS, __, __, __, __, __, __, __, __, __, __, WS, __, LO, // E
         __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // F
     ])
 };
@@ -373,10 +362,10 @@ type ByteHandler = unsafe fn(&mut Codegen, &mut PrintStringState);
 /// Indexed by `escape as usize - 1` (where `escape` is not `Escape::__`).
 /// Must be in same order as discriminants in `Escape`.
 ///
-/// Function pointers are 8 bytes each, so `BYTE_HANDLERS` is 136 bytes in total.
+/// Function pointers are 8 bytes each, so `BYTE_HANDLERS` is 144 bytes in total.
 /// Aligned on 128, so first 16 occupy a pair of L1 cache lines.
-/// The last will be in separate cache line, but it should be vanishingly rare that it's accessed.
-static BYTE_HANDLERS: Aligned128<[ByteHandler; 17]> = Aligned128([
+/// The last two will be in a separate cache line, but they should be vanishingly rarely accessed.
+static BYTE_HANDLERS: Aligned128<[ByteHandler; 18]> = Aligned128([
     print_null,
     print_bell,
     print_backspace,
@@ -394,6 +383,7 @@ static BYTE_HANDLERS: Aligned128<[ByteHandler; 17]> = Aligned128([
     print_ls_or_ps,
     print_non_breaking_space,
     print_lossy_replacement,
+    print_wtf8_surrogate,
 ]);
 
 /// Call byte handler for byte which needs escaping.
@@ -638,68 +628,63 @@ unsafe fn print_non_breaking_space(codegen: &mut Codegen, state: &mut PrintStrin
     }
 }
 
-// 0xEF - first byte of lossy replacement character (U+FFFD)
-unsafe fn print_lossy_replacement(codegen: &mut Codegen, state: &mut PrintStringState) {
+// 0xEF - first byte of U+FFFD lossy replacement character.
+// In the WTF-8 migration, lone surrogates are stored as actual WTF-8 bytes (0xED sequences),
+// so U+FFFD here is always a real replacement character, not a surrogate marker.
+unsafe fn print_lossy_replacement(_codegen: &mut Codegen, state: &mut PrintStringState) {
     debug_assert_eq!(state.peek(), Some(0xEF));
-
-    if state.lone_surrogates {
-        // String contains lone surrogates which use the lossy replacement character (U+FFFD)
-        // as an escape marker.
-        // The lone surrogate is encoded as `\u{FFFD}XXXX` where `XXXX` is the code point as hex.
-        let next2: [u8; 2] = {
-            // SAFETY: 0xEF is always the start of a 3-byte Unicode character,
-            // so there must be 2 more bytes available to consume
-            let next2 = unsafe { state.bytes.as_slice().get_unchecked(1..3) };
-            next2.try_into().unwrap()
-        };
-
-        if next2 == LOSSY_REPLACEMENT_CHAR_LAST_2_BYTES {
-            // Get the 4 hex bytes
-            let bytes = &mut state.bytes;
-            let hex: [u8; 4] = bytes.as_slice()[3..7].try_into().unwrap();
-
-            if hex == *b"fffd" {
-                // Actual lossy replacement character.
-                // Flush up to and including the lossy replacement character, then skip the 4 hex bytes.
-                // SAFETY: 0xEF is always the start of a 3-byte Unicode character
-                unsafe { state.consume_bytes_unchecked(3) };
-                state.flush(codegen);
-                // SAFETY: 0xEF is always the start of a 3-byte Unicode character.
-                // `bytes.as_slice()[3..7]` would have panicked if there weren't 4 more bytes after it.
-                // All those bytes are ASCII, so this leaves `bytes` on a UTF-8 char boundary.
-                unsafe { state.consume_bytes_unchecked(4) };
-                // Start next chunk after the 4 hex bytes
-                state.start_chunk();
-                return;
-            }
-
-            // Flush text before the lossy replacement character
-            state.flush(codegen);
-
-            // Check all 4 hex bytes are ASCII
-            assert_eq!(u32::from_ne_bytes(hex) & 0x8080_8080, 0);
-
-            // SAFETY: `bytes.as_slice()[3..7]` would have panicked if there weren't at least 7 bytes
-            // remaining. First 3 bytes are lossy replacement character, and we just checked that
-            // next 4 bytes are ASCII, so this leaves `bytes` on a UTF-8 char boundary.
-            unsafe { state.consume_bytes_unchecked(7) };
-
-            // Start next chunk after the 4 hex bytes
-            state.start_chunk();
-
-            codegen.print_str("\\u");
-            // SAFETY: Just checked all 4 hex bytes are ASCII
-            unsafe { codegen.code.print_bytes_unchecked(&hex) };
-
-            return;
-        }
-    }
-
-    // `lone_surrogates` is `false` or character is some other character starting with 0xEF.
-    // Advance past the character.
+    // U+FFFD is a 3-byte UTF-8 sequence. Just advance past it (no escaping needed).
     // SAFETY: 0xEF is always the start of a 3-byte Unicode character
     unsafe { state.consume_bytes_unchecked(3) };
 }
+
+// 0xED - possible first byte of a WTF-8 lone surrogate sequence (U+D800..=U+DFFF).
+//
+// In WTF-8, lone surrogates are encoded as 3-byte sequences:
+//   0xED, 0xA0..=0xBF, 0x80..=0xBF
+//
+// Note: 0xED is also a valid first byte for UTF-8 characters U+D000..=U+D7FF,
+// which have the form:  0xED, 0x80..=0x9F, 0x80..=0xBF
+// Those characters need no escaping and are passed through unchanged.
+unsafe fn print_wtf8_surrogate(codegen: &mut Codegen, state: &mut PrintStringState) {
+    debug_assert_eq!(state.peek(), Some(0xED));
+
+    // SAFETY: 0xED is always the first byte of a 3-byte sequence, so 2 more bytes are available.
+    let next2: [u8; 2] = unsafe {
+        let slice = state.bytes.as_slice().get_unchecked(1..3);
+        [*slice.get_unchecked(0), *slice.get_unchecked(1)]
+    };
+
+    let b1 = next2[0];
+    if b1 >= 0xA0 {
+        // WTF-8 lone surrogate: 0xED, 0xA0..=0xBF, 0x80..=0xBF
+        // Decode code unit: 0xD000 | ((b1 & 0x3F) << 6) | (b2 & 0x3F)
+        let b2 = next2[1];
+        let code_unit = 0xD000u16 | (u16::from(b1 & 0x3F) << 6) | u16::from(b2 & 0x3F);
+
+        // Flush bytes before the surrogate, consume the 3 surrogate bytes, start new chunk.
+        // SAFETY: 0xED is always a 3-byte sequence; we just checked 2 more bytes are available.
+        unsafe { state.flush_and_consume_bytes(codegen, 3) };
+
+        // Print the escape sequence e.g. `\ud800`
+        let hex = [
+            HEX_CHARS[usize::from((code_unit >> 12) & 0xF)],
+            HEX_CHARS[usize::from((code_unit >> 8) & 0xF)],
+            HEX_CHARS[usize::from((code_unit >> 4) & 0xF)],
+            HEX_CHARS[usize::from(code_unit & 0xF)],
+        ];
+        codegen.print_str("\\u");
+        // SAFETY: All bytes in `hex` are lowercase hex ASCII characters.
+        unsafe { codegen.code.print_bytes_unchecked(&hex) };
+    } else {
+        // Valid UTF-8 character in range U+D000..=U+D7FF. No escaping needed.
+        // SAFETY: 0xED with b1 in 0x80..=0x9F is always a valid 3-byte UTF-8 sequence.
+        unsafe { state.consume_bytes_unchecked(3) };
+    }
+}
+
+/// Lowercase hex digit lookup table.
+static HEX_CHARS: [u8; 16] = *b"0123456789abcdef";
 
 /// Call a closure while hinting to compiler that this branch is rarely taken.
 ///

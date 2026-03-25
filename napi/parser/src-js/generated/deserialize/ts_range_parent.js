@@ -6799,11 +6799,6 @@ function deserializeF64(pos) {
   return float64[pos >> 3];
 }
 
-function deserializeOptionStr(pos) {
-  if (uint32[pos >> 2] === 0 && uint32[(pos + 4) >> 2] === 0) return null;
-  return deserializeStr(pos);
-}
-
 function deserializeU8(pos) {
   return uint8[pos];
 }

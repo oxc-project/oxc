@@ -1,5 +1,6 @@
 use oxc_ast::ast::*;
 use oxc_span::{GetSpan, Span};
+use oxc_wtf8::Wtf8Atom;
 
 use crate::{
     ast_nodes::{AstNode, AstNodes},
@@ -423,13 +424,13 @@ pub fn is_huggable_html_embed(expression: &Expression<'_>, f: &Formatter<'_, '_>
         .quasis
         .first()
         .and_then(|q| q.value.cooked.as_ref())
-        .and_then(|s| s.as_str())
+        .and_then(Wtf8Atom::as_str)
         .is_some_and(|s| s.starts_with(|c: char| c.is_ascii_whitespace()));
     let has_trailing_ws = template
         .quasis
         .last()
         .and_then(|q| q.value.cooked.as_ref())
-        .and_then(|s| s.as_str())
+        .and_then(Wtf8Atom::as_str)
         .is_some_and(|s| s.ends_with(|c: char| c.is_ascii_whitespace()));
     has_leading_ws && has_trailing_ws
 }
