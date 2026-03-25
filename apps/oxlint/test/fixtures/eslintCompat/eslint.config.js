@@ -24,6 +24,7 @@ export default [
     },
     rules: {
       "eslint-compat-plugin/create-once-cfg": "error",
+      "eslint-compat-plugin/create-once-cfg2": "error",
     },
   },
 ];

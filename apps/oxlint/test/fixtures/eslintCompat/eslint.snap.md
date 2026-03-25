@@ -118,8 +118,10 @@ filename: <fixture>/files/2.js                              eslint-compat-plugin
 <fixture>/files/cfg.js
   0:1  error  after hook:
 filename: <fixture>/files/cfg.js                            eslint-compat-plugin/create-once-cfg
+  0:1  error  after hook:
+filename: <fixture>/files/cfg.js                            eslint-compat-plugin/create-once-cfg2
 
-✖ 50 problems (50 errors, 0 warnings)
+✖ 51 problems (51 errors, 0 warnings)
 ```
 
 # stderr
