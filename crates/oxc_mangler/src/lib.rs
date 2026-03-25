@@ -338,59 +338,81 @@ impl<'t> Mangler<'t> {
         //
         // TODO: This is conservative, ideally, we would reserve names per-slot.
         let mut eval_reserved_names: FxHashSet<&str> = FxHashSet::default();
+
+        // Annex B.3.2.1: In sloppy mode, function declarations inside block scopes create
+        // an implicit `var`-like assignment in the enclosing function scope at block exit.
+        // If such a function gets the same mangled name as an outer `var`, the Annex B
+        // assignment overwrites it. To prevent this, hoist these functions to the enclosing
+        // var scope for slot assignment — the same way `var` is hoisted by oxc_semantic.
+        let mut annex_b_hoisted: FxHashMap<usize, Vec<'_, SymbolId>> = FxHashMap::default();
+        let mut annex_b_skip = BitSet::new_in(scoping.symbols_len(), temp_allocator);
+        for (scope_id, bindings) in scoping.iter_bindings() {
+            let flags = scoping.scope_flags(scope_id);
+            if flags.is_var() || flags.is_strict_mode() {
+                continue;
+            }
+            for &symbol_id in bindings.values() {
+                if !scoping.symbol_flags(symbol_id).is_function() {
+                    continue;
+                }
+                for ancestor_id in scoping.scope_ancestors(scope_id).skip(1) {
+                    if scoping.scope_flags(ancestor_id).is_var() {
+                        annex_b_hoisted
+                            .entry(ancestor_id.index())
+                            .or_insert_with(|| Vec::new_in(temp_allocator))
+                            .push(symbol_id);
+                        annex_b_skip.set_bit(symbol_id.index());
+                        break;
+                    }
+                }
+            }
+        }
+
         // Walk down the scope tree and assign a slot number for each symbol.
         // It is possible to do this in a loop over the symbol list,
         // but walking down the scope tree seems to generate a better code.
         for (scope_id, bindings) in scoping.iter_bindings() {
-            if bindings.is_empty() {
+            if bindings.is_empty() && !annex_b_hoisted.contains_key(&scope_id.index()) {
                 continue;
             }
             // Scopes with direct eval: collect binding names as reserved (they can be
             // accessed by eval at runtime) and skip slot assignment (keep original names).
-            let scope_flags = scoping.scope_flags(scope_id);
-            if scope_flags.contains_direct_eval() {
+            if scoping.scope_flags(scope_id).contains_direct_eval() {
                 for (name, _) in bindings {
                     eval_reserved_names.insert(name.as_str());
+                }
+                if let Some(hoisted) = annex_b_hoisted.get(&scope_id.index()) {
+                    for &symbol_id in hoisted {
+                        eval_reserved_names.insert(scoping.symbol_name(symbol_id));
+                    }
                 }
                 continue;
             }
 
-            // Sort `bindings` in declaration order.
+            // Collect bindings in declaration order.
+            // Annex B functions are skipped here — they're processed with their var scope.
             tmp_bindings.clear();
-            tmp_bindings.extend(bindings.values().copied().filter(|binding| {
-                !keep_name_symbols
-                    .as_ref()
-                    .is_some_and(|keep_name_symbols| keep_name_symbols.has_bit(binding.index()))
-            }));
+            tmp_bindings.extend(
+                bindings
+                    .values()
+                    .copied()
+                    .filter(|id| !annex_b_skip.has_bit(id.index()))
+                    .chain(
+                        annex_b_hoisted
+                            .get(&scope_id.index())
+                            .into_iter()
+                            .flat_map(|v| v.iter().copied()),
+                    )
+                    .filter(|binding| {
+                        !keep_name_symbols.as_ref().is_some_and(|keep_name_symbols| {
+                            keep_name_symbols.has_bit(binding.index())
+                        })
+                    }),
+            );
             if tmp_bindings.is_empty() {
                 continue;
             }
             tmp_bindings.sort_unstable();
-
-            // Annex B.3.2.1: In sloppy mode, function declarations inside block scopes create
-            // an implicit `var`-like assignment in the enclosing function scope at block exit.
-            // If such a function gets the same mangled name as an outer `var`, the Annex B
-            // assignment overwrites it. Prevent this by giving them fresh slots (no reuse).
-            let is_sloppy_block = !scope_flags.is_var() && !scope_flags.is_strict_mode();
-            let regular_count = if is_sloppy_block {
-                // Partition `tmp_bindings` into two regions:
-                //   [regular bindings ... | function declarations ...]
-                //                         ^ regular_end (returned)
-                // For each non-function binding, swap it to the front of the array.
-                // Function declarations are left behind and end up at the tail.
-                // Only the first `regular_end` bindings will be eligible for slot reuse;
-                // the function declarations after that boundary always get fresh slots.
-                let mut regular_end = 0;
-                for i in 0..tmp_bindings.len() {
-                    if !scoping.symbol_flags(tmp_bindings[i]).is_function() {
-                        tmp_bindings.swap(regular_end, i);
-                        regular_end += 1;
-                    }
-                }
-                regular_end
-            } else {
-                tmp_bindings.len()
-            };
 
             let mut slot = slot_liveness.len();
 
@@ -406,7 +428,7 @@ impl<'t> Mangler<'t> {
                         #[expect(clippy::cast_possible_truncation)]
                         |(slot, _)| slot as Slot,
                     )
-                    .take(regular_count), // Annex B functions get fresh slots, not reused ones
+                    .take(tmp_bindings.len()),
             );
 
             // The number of new slots that needs to be allocated.

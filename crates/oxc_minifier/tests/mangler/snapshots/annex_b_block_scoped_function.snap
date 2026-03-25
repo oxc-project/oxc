@@ -126,11 +126,25 @@ function _() { var x = 1; if (true) { function y() {} } { var z = 2; use(z); } u
 function _() {
 	var e = 1;
 	if (true) {
-		function n() {}
+		function t() {}
 	}
 	{
-		var t = 2;
-		use(t);
+		var n = 2;
+		use(n);
 	}
 	use(e);
+}
+
+function _() { function foo() { var x; use(x); } function bar() { if (true) { function baz() {} use(baz); } } }
+function _() {
+	function e() {
+		var e;
+		use(e);
+	}
+	function t() {
+		if (true) {
+			function e() {}
+			use(e);
+		}
+	}
 }
