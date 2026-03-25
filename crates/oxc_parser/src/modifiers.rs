@@ -119,11 +119,6 @@ impl Modifier {
     pub fn new(span: Span, kind: ModifierKind) -> Self {
         Self { span, kind }
     }
-
-    #[inline]
-    pub fn is_static(&self) -> bool {
-        matches!(self.kind, ModifierKind::Static)
-    }
 }
 
 /// Symbol modifiers. Primarily used in TypeScript code, but some are also used
@@ -370,7 +365,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             permit_const_as_modifier,
             stop_on_start_of_class_static_block,
         ) {
-            if modifier.is_static() {
+            if modifier.kind == ModifierKind::Static {
                 has_seen_static_modifier = true;
             }
             self.check_modifier(modifier_flags, &modifier);
