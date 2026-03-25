@@ -228,7 +228,13 @@ expression: json
         },
         {
           "type": "array",
-          "items": true
+          "items": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            }
+          ],
+          "additionalItems": true,
+          "minItems": 1
         }
       ]
     },

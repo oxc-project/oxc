@@ -1,4 +1,4 @@
-commit: 9059e5bd
+commit: 4f7b4175
 
 parser_typescript Summary:
 AST Parsed     : 9828/9831 (99.97%)
@@ -25880,6 +25880,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │         await using x = null;
    ·         ─────────────────────
  4 │         {
+   ╰────
+
+  × Cannot use 'await using' in class static initialization block
+   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.14.ts:5:13]
+ 4 │         {
+ 5 │             await using y = null;
+   ·             ─────────────────────
+ 6 │         }
    ╰────
 
   × TS(1546): 'await using' declarations are not allowed in ambient contexts.

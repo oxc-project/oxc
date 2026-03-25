@@ -8,7 +8,7 @@ use serde_json::Value;
 
 use crate::{
     api::{format_api, text_to_doc_api},
-    cli::{FormatRunner, MigrateSource, Mode, format_command, init_miette, init_rayon},
+    cli::{CliRunner, MigrateSource, Mode, format_command, init_miette, init_rayon},
     core::{
         ExternalFormatter, JsFormatEmbeddedCb, JsFormatEmbeddedDocCb, JsFormatFileCb,
         JsInitExternalFormatterCb, JsLoadJsConfigCb, JsSortTailwindClassesCb,
@@ -116,7 +116,7 @@ pub async fn run_cli(
             init_miette();
             init_rayon(command.runtime_options.threads);
 
-            let result = FormatRunner::new(command)
+            let result = CliRunner::new(command)
                 .with_external_formatter(Some(external_formatter.clone()))
                 .with_js_config_loader(Arc::clone(&js_config_loader))
                 .run();

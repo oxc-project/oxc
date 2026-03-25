@@ -100,7 +100,7 @@ impl<'c, 'a: 'c> RuleFixer<'c, 'a> {
                 let target_text = fixer.possibly_truncate_range(target);
                 let borrowed_replacement = Cow::Borrowed(replacement_text);
                 let replacement_text = fixer.possibly_truncate_snippet(&borrowed_replacement);
-                Cow::Owned(format!("Replace `{target_text}` with `{replacement_text}`."))
+                Cow::Owned(format_replace_message(target_text.as_ref(), replacement_text.as_ref()))
             });
 
             fixer.new_fix(CompositeFix::Single(fix), message)
@@ -119,9 +119,9 @@ impl<'c, 'a: 'c> RuleFixer<'c, 'a> {
             let fix = Fix::new(replacement, target);
             let target_text = fixer.possibly_truncate_range(target);
             let content = fixer.possibly_truncate_snippet(&fix.content);
-            let message = fixer
-                .auto_message
-                .then(|| Cow::Owned(format!("Replace `{target_text}` with `{content}`.")));
+            let message = fixer.auto_message.then(|| {
+                Cow::Owned(format_replace_message(target_text.as_ref(), content.as_ref()))
+            });
 
             fixer.new_fix(CompositeFix::Single(fix), message)
         }
@@ -221,6 +221,14 @@ impl<'c, 'a: 'c> RuleFixer<'c, 'a> {
         } else {
             Cow::Borrowed(snippet)
         }
+    }
+}
+
+fn format_replace_message(target_text: &str, replacement_text: &str) -> String {
+    if replacement_text.is_empty() {
+        format!("Remove `{target_text}`.")
+    } else {
+        format!("Replace `{target_text}` with `{replacement_text}`.")
     }
 }
 
@@ -452,7 +460,9 @@ mod test {
 
     use crate::FixKind;
 
-    use super::{CompositeFix, Fix, FixResult, Fixer, Message, PossibleFixes};
+    use super::{
+        CompositeFix, Fix, FixResult, Fixer, Message, PossibleFixes, format_replace_message,
+    };
 
     fn insert_at_end() -> OxcDiagnostic {
         OxcDiagnostic::warn("End")
@@ -949,5 +959,15 @@ mod test {
         let result = fixer.fix();
         assert!(result.fixed);
         assert_eq!(result.fixed_code, "let answer = 42;");
+    }
+
+    #[test]
+    fn format_replace_message_for_non_empty_replacement() {
+        assert_eq!(format_replace_message("{foo}", "bar"), "Replace `{foo}` with `bar`.");
+    }
+
+    #[test]
+    fn format_replace_message_for_empty_replacement() {
+        assert_eq!(format_replace_message(r#"{""}"#, ""), r#"Remove `{""}`."#);
     }
 }
