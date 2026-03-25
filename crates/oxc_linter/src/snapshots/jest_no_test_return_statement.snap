@@ -9,7 +9,8 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ──────
  4 │                 });
    ╰────
-  help: Use `await` for async assertions or remove the return statement. Jest ignores returned values from tests.
+  help: Use `await` for async assertions or remove the return statement.
+  note: Jest ignores returned values from tests.
 
   ⚠ eslint-plugin-jest(no-test-return-statement): Jest tests should not return a value
    ╭─[no_test_return_statement.tsx:3:21]
@@ -18,7 +19,8 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ──────
  4 │                 });
    ╰────
-  help: Use `await` for async assertions or remove the return statement. Jest ignores returned values from tests.
+  help: Use `await` for async assertions or remove the return statement.
+  note: Jest ignores returned values from tests.
 
   ⚠ eslint-plugin-jest(no-test-return-statement): Jest tests should not return a value
    ╭─[no_test_return_statement.tsx:3:21]
@@ -27,7 +29,8 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ──────
  4 │                 });
    ╰────
-  help: Use `await` for async assertions or remove the return statement. Jest ignores returned values from tests.
+  help: Use `await` for async assertions or remove the return statement.
+  note: Jest ignores returned values from tests.
 
   ⚠ eslint-plugin-jest(no-test-return-statement): Jest tests should not return a value
    ╭─[no_test_return_statement.tsx:3:21]
@@ -36,7 +39,8 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ──────
  4 │                 });
    ╰────
-  help: Use `await` for async assertions or remove the return statement. Jest ignores returned values from tests.
+  help: Use `await` for async assertions or remove the return statement.
+  note: Jest ignores returned values from tests.
 
   ⚠ eslint-plugin-jest(no-test-return-statement): Jest tests should not return a value
    ╭─[no_test_return_statement.tsx:3:21]
@@ -45,7 +49,8 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ──────
  4 │                 });
    ╰────
-  help: Use `await` for async assertions or remove the return statement. Jest ignores returned values from tests.
+  help: Use `await` for async assertions or remove the return statement.
+  note: Jest ignores returned values from tests.
 
   ⚠ eslint-plugin-jest(no-test-return-statement): Jest tests should not return a value
    ╭─[no_test_return_statement.tsx:3:21]
@@ -54,7 +59,8 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ──────
  4 │                 });
    ╰────
-  help: Use `await` for async assertions or remove the return statement. Jest ignores returned values from tests.
+  help: Use `await` for async assertions or remove the return statement.
+  note: Jest ignores returned values from tests.
 
   ⚠ eslint-plugin-jest(no-test-return-statement): Jest tests should not return a value
    ╭─[no_test_return_statement.tsx:3:21]
@@ -63,7 +69,8 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ──────
  4 │                 });
    ╰────
-  help: Use `await` for async assertions or remove the return statement. Jest ignores returned values from tests.
+  help: Use `await` for async assertions or remove the return statement.
+  note: Jest ignores returned values from tests.
 
   ⚠ eslint-plugin-jest(no-test-return-statement): Jest tests should not return a value
    ╭─[no_test_return_statement.tsx:3:21]
@@ -72,7 +79,8 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ──────
  4 │                 });
    ╰────
-  help: Use `await` for async assertions or remove the return statement. Jest ignores returned values from tests.
+  help: Use `await` for async assertions or remove the return statement.
+  note: Jest ignores returned values from tests.
 
   ⚠ eslint-plugin-jest(no-test-return-statement): Jest tests should not return a value
    ╭─[no_test_return_statement.tsx:3:21]
@@ -81,7 +89,8 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ──────
  4 │                 });
    ╰────
-  help: Use `await` for async assertions or remove the return statement. Jest ignores returned values from tests.
+  help: Use `await` for async assertions or remove the return statement.
+  note: Jest ignores returned values from tests.
 
   ⚠ eslint-plugin-jest(no-test-return-statement): Jest tests should not return a value
    ╭─[no_test_return_statement.tsx:3:21]
@@ -90,7 +99,8 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ──────
  4 │                 });
    ╰────
-  help: Use `await` for async assertions or remove the return statement. Jest ignores returned values from tests.
+  help: Use `await` for async assertions or remove the return statement.
+  note: Jest ignores returned values from tests.
 
   ⚠ eslint-plugin-jest(no-test-return-statement): Jest tests should not return a value
    ╭─[no_test_return_statement.tsx:3:21]
@@ -99,7 +109,8 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ──────
  4 │                 });
    ╰────
-  help: Use `await` for async assertions or remove the return statement. Jest ignores returned values from tests.
+  help: Use `await` for async assertions or remove the return statement.
+  note: Jest ignores returned values from tests.
 
   ⚠ eslint-plugin-jest(no-test-return-statement): Jest tests should not return a value
    ╭─[no_test_return_statement.tsx:3:21]
@@ -108,7 +119,8 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ──────
  4 │                 });
    ╰────
-  help: Use `await` for async assertions or remove the return statement. Jest ignores returned values from tests.
+  help: Use `await` for async assertions or remove the return statement.
+  note: Jest ignores returned values from tests.
 
   ⚠ eslint-plugin-jest(no-test-return-statement): Jest tests should not return a value
    ╭─[no_test_return_statement.tsx:3:21]
@@ -117,7 +129,8 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ──────
  4 │                 });
    ╰────
-  help: Use `await` for async assertions or remove the return statement. Jest ignores returned values from tests.
+  help: Use `await` for async assertions or remove the return statement.
+  note: Jest ignores returned values from tests.
 
   ⚠ eslint-plugin-jest(no-test-return-statement): Jest tests should not return a value
    ╭─[no_test_return_statement.tsx:4:21]
@@ -126,4 +139,5 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ──────
  5 │                 }
    ╰────
-  help: Use `await` for async assertions or remove the return statement. Jest ignores returned values from tests.
+  help: Use `await` for async assertions or remove the return statement.
+  note: Jest ignores returned values from tests.

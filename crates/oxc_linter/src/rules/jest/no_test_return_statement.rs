@@ -16,7 +16,8 @@ use crate::{
 
 fn no_test_return_statement_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Jest tests should not return a value")
-        .with_help("Use `await` for async assertions or remove the return statement. Jest ignores returned values from tests.")
+        .with_help("Use `await` for async assertions or remove the return statement.")
+        .with_note("Jest ignores returned values from tests.")
         .with_label(span)
 }
 
