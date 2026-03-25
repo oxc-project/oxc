@@ -517,6 +517,7 @@ impl Gen for SwitchStatement<'_> {
 impl Gen for SwitchCase<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_semicolon_if_needed();
+        p.print_comments_at(self.span.start);
         p.print_indent();
         p.add_source_mapping(self.span);
         match &self.test {
@@ -1907,6 +1908,13 @@ impl GenExpr for ConditionalExpression<'_> {
             p.print_soft_space();
             p.print_colon();
             p.print_soft_space();
+            if let Some(comments) = p.get_comments(self.alternate.span().start) {
+                p.print_comments(&comments);
+                if p.print_next_indent_as_space {
+                    p.print_hard_space();
+                    p.print_next_indent_as_space = false;
+                }
+            }
             self.alternate.print_expr(p, Precedence::Yield, ctx & Context::FORBID_IN);
         });
     }
