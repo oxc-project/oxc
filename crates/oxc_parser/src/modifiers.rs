@@ -7,10 +7,7 @@ use oxc_ast::ast::TSAccessibility;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::Span;
 
-use crate::{
-    ParserConfig as Config, ParserImpl, diagnostics,
-    lexer::{Kind, Token},
-};
+use crate::{ParserConfig as Config, ParserImpl, diagnostics, lexer::Kind};
 
 bitflags! {
   /// Bitflag of modifiers and contextual modifiers.
@@ -33,7 +30,6 @@ bitflags! {
       const ACCESSOR      = 1 << 14;
       const EXPORT        = 1 << 15;
       const ACCESSIBILITY = Self::PRIVATE.bits() | Self::PROTECTED.bits() | Self::PUBLIC.bits();
-      const TYPE_PARAM    = Self::CONST.bits() | Self::IN.bits() | Self::OUT.bits();
   }
 }
 
@@ -127,14 +123,6 @@ impl Modifier {
     #[inline]
     pub fn is_static(&self) -> bool {
         matches!(self.kind, ModifierKind::Static)
-    }
-}
-
-impl TryFrom<Token> for Modifier {
-    type Error = <ModifierKind as TryFrom<Kind>>::Error;
-
-    fn try_from(tok: Token) -> Result<Self, Self::Error> {
-        ModifierKind::try_from(tok.kind()).map(|kind| Self { span: tok.span(), kind })
     }
 }
 
