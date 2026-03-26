@@ -12527,7 +12527,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  3 │ }
    ╰────
 
-  × TS(1029): 'public' modifier must precede 'override' modifier.
+  × TS(1029): 'public' modifier must precede 'readonly' modifier.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/constructor-with-invalid-order-modifiers-3/input.ts:2:33]
  1 │ class D extends B {
  2 │   constructor(override readonly public foo: string) {}
