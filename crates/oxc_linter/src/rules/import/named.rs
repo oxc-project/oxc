@@ -15,7 +15,8 @@ fn named_diagnostic(imported_name: &str, module_name: &str, span: Span) -> OxcDi
 }
 
 fn has_default_export(module_record: &ModuleRecord) -> bool {
-    module_record.export_default.is_some() || module_record.exported_bindings.contains_key("default")
+    module_record.export_default.is_some()
+        || module_record.exported_bindings.contains_key("default")
 }
 
 fn is_reexport_of_default_import(
