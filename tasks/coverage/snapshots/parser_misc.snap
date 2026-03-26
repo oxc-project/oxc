@@ -1,7 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 65/65 (100.00%)
 Positive Passed: 65/65 (100.00%)
-Negative Passed: 134/134 (100.00%)
+Negative Passed: 135/135 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval.ts:1:10]
@@ -3806,6 +3806,14 @@ Negative Passed: 134/134 (100.00%)
    · ─────────────
    ╰────
   help: Wrap this code in a block or use a module
+
+  × Cannot use 'for await' in class static initialization block
+   ╭─[misc/fail/semantic-for-await-in-block-in-static-block.mjs:4:7]
+ 3 │     {
+ 4 │       for await (const x of y) {}
+   ·       ───────────────────────────
+ 5 │     }
+   ╰────
 
   × Expected switch clause
    ╭─[misc/fail/switch-invalid-clause.js:2:3]

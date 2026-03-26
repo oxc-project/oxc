@@ -981,7 +981,7 @@ pub fn check_for_statement_left(
 pub fn check_for_of_statement(stmt: &ForOfStatement, ctx: &SemanticBuilder<'_>) {
     // ClassStaticBlockBody : ClassStaticBlockStatementList
     //   It is a Syntax Error if ClassStaticBlockStatementList Contains await is true.
-    if stmt.r#await && ctx.scoping.scope_flags(ctx.current_scope_id).is_class_static_block() {
+    if stmt.r#await && is_in_class_static_block(ctx) {
         ctx.error(diagnostics::class_static_block_for_await(stmt.span));
     }
 }
