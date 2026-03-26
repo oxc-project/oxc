@@ -21,7 +21,6 @@ fn no_export(span: Span, specifier_name: &str, namespace_name: &str) -> OxcDiagn
     OxcDiagnostic::warn(format!(
         "{specifier_name:?} not found in imported namespace {namespace_name:?}."
     ))
-    .with_help("Check for typos in the referenced name, or add the missing export to the source module.")
     .with_label(span)
 }
 
@@ -33,7 +32,6 @@ fn no_export_in_deeply_imported_namespace(
     OxcDiagnostic::warn(format!(
         "{specifier_name:?} not found in deeply imported namespace {namespace_name:?}."
     ))
-    .with_help("Check the nested namespace chain and ensure the name is exported at each level.")
     .with_label(span)
 }
 
