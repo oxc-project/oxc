@@ -2017,8 +2017,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         // Compound assignments (`+=`) and update expressions (`++`) have Read|Write flags,
         // so `is_write_only()` is false and they correctly skip this branch.
         if self.current_reference_flags.is_write_only() {
-            self.current_reference_flags =
-                ReferenceFlags::Read | ReferenceFlags::MemberWriteTarget;
+            self.current_reference_flags = ReferenceFlags::Read | ReferenceFlags::MemberWriteTarget;
         } else {
             self.current_reference_flags -= ReferenceFlags::Write;
         }
