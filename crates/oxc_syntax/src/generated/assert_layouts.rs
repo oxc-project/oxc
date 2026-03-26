@@ -14,18 +14,18 @@ use crate::{
 #[cfg(target_pointer_width = "64")]
 const _: () = {
     // Padding: 0 bytes
-    assert!(size_of::<NonMaxU32>() == 4);
-    assert!(align_of::<NonMaxU32>() == 4);
-
-    // Padding: 0 bytes
     assert!(size_of::<CommentNodeId>() == 4);
     assert!(align_of::<CommentNodeId>() == 4);
 
     // Padding: 0 bytes
+    assert!(size_of::<NonMaxU32>() == 4);
+    assert!(align_of::<NonMaxU32>() == 4);
+
+    // Padding: 0 bytes
     assert!(size_of::<NameSpan>() == 24);
     assert!(align_of::<NameSpan>() == 8);
-    assert!(offset_of!(NameSpan, name) == 8);
     assert!(offset_of!(NameSpan, span) == 0);
+    assert!(offset_of!(NameSpan, name) == 8);
 
     // Padding: 7 bytes
     assert!(size_of::<ImportEntry>() == 96);
@@ -42,8 +42,8 @@ const _: () = {
     // Padding: 7 bytes
     assert!(size_of::<ExportEntry>() == 144);
     assert!(align_of::<ExportEntry>() == 8);
-    assert!(offset_of!(ExportEntry, statement_span) == 8);
     assert!(offset_of!(ExportEntry, span) == 0);
+    assert!(offset_of!(ExportEntry, statement_span) == 8);
     assert!(offset_of!(ExportEntry, module_request) == 16);
     assert!(offset_of!(ExportEntry, import_name) == 40);
     assert!(offset_of!(ExportEntry, export_name) == 72);
@@ -87,33 +87,33 @@ const _: () = {
     assert!(align_of::<UpdateOperator>() == 1);
 
     // Padding: 0 bytes
+    assert!(size_of::<ReferenceId>() == 4);
+    assert!(align_of::<ReferenceId>() == 4);
+
+    // Padding: 0 bytes
     assert!(size_of::<ScopeId>() == 4);
     assert!(align_of::<ScopeId>() == 4);
 
     // Padding: 0 bytes
     assert!(size_of::<SymbolId>() == 4);
     assert!(align_of::<SymbolId>() == 4);
-
-    // Padding: 0 bytes
-    assert!(size_of::<ReferenceId>() == 4);
-    assert!(align_of::<ReferenceId>() == 4);
 };
 
 #[cfg(target_pointer_width = "32")]
 const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     // Padding: 0 bytes
-    assert!(size_of::<NonMaxU32>() == 4);
-    assert!(align_of::<NonMaxU32>() == 4);
-
-    // Padding: 0 bytes
     assert!(size_of::<CommentNodeId>() == 4);
     assert!(align_of::<CommentNodeId>() == 4);
 
     // Padding: 0 bytes
+    assert!(size_of::<NonMaxU32>() == 4);
+    assert!(align_of::<NonMaxU32>() == 4);
+
+    // Padding: 0 bytes
     assert!(size_of::<NameSpan>() == 16);
     assert!(align_of::<NameSpan>() == 4);
-    assert!(offset_of!(NameSpan, name) == 8);
     assert!(offset_of!(NameSpan, span) == 0);
+    assert!(offset_of!(NameSpan, name) == 8);
 
     // Padding: 3 bytes
     assert!(size_of::<ImportEntry>() == 64);
@@ -130,8 +130,8 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     // Padding: 3 bytes
     assert!(size_of::<ExportEntry>() == 96);
     assert!(align_of::<ExportEntry>() == 4);
-    assert!(offset_of!(ExportEntry, statement_span) == 8);
     assert!(offset_of!(ExportEntry, span) == 0);
+    assert!(offset_of!(ExportEntry, statement_span) == 8);
     assert!(offset_of!(ExportEntry, module_request) == 16);
     assert!(offset_of!(ExportEntry, import_name) == 32);
     assert!(offset_of!(ExportEntry, export_name) == 52);
@@ -175,16 +175,16 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(align_of::<UpdateOperator>() == 1);
 
     // Padding: 0 bytes
+    assert!(size_of::<ReferenceId>() == 4);
+    assert!(align_of::<ReferenceId>() == 4);
+
+    // Padding: 0 bytes
     assert!(size_of::<ScopeId>() == 4);
     assert!(align_of::<ScopeId>() == 4);
 
     // Padding: 0 bytes
     assert!(size_of::<SymbolId>() == 4);
     assert!(align_of::<SymbolId>() == 4);
-
-    // Padding: 0 bytes
-    assert!(size_of::<ReferenceId>() == 4);
-    assert!(align_of::<ReferenceId>() == 4);
 };
 
 #[cfg(not(any(target_pointer_width = "64", target_pointer_width = "32")))]

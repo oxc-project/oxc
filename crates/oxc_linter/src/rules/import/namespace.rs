@@ -39,11 +39,13 @@ fn computed_reference(span: Span, namespace_name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
         "Unable to validate computed reference to imported namespace {namespace_name:?}."
     ))
+    .with_help("Use a static property access (e.g. `namespace.name`) instead of a computed one.")
     .with_label(span)
 }
 
 fn assignment(span: Span, namespace_name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Assignment to member of namespace {namespace_name:?}.'"))
+        .with_help("Imported namespace members are read-only. Assign to a local variable instead.")
         .with_label(span)
 }
 

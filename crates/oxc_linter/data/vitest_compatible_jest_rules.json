@@ -35,6 +35,7 @@
   "prefer-strict-equal",
   "prefer-to-be",
   "prefer-to-contain",
+  "prefer-to-have-been-called-times",
   "prefer-to-have-length",
   "prefer-todo",
   "require-hook",

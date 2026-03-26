@@ -22,11 +22,13 @@ jobs:
     runs-on: namespace-profile-linux-x64-default
     steps:
       - uses: taiki-e/checkout-action@83ed61bfbe2b8abbb3c66e8b65b1335484c70009 # v1.4.1
-      - uses: oxc-project/setup-node@8958a8e040102244b619c4a94fccb657a44b1c21 # v1.0.6
-      - uses: oxc-project/setup-rust@4f86b5d871ae7d24bc420e578be68964ab09e5cc # v1.0.15
+      - uses: oxc-project/setup-node@4c26e7cb3605b6bdef5450dacd02c434b10fd8ba # v1.2.0
+      - uses: namespacelabs/nscloud-cache-action@a90bb5d4b27522ce881c6e98eebd7d7e6d1653f9 # v1.4.2
         with:
-          save-cache: ${{ github.ref_name == 'main' }}
-          cache-key: warm
+          path: /home/runner/.rustup
+          cache: |
+            rust
+            pnpm
       - run: cargo ck
       - run: cargo test --all-features
       - run: git diff --exit-code # Must commit everything
@@ -37,8 +39,8 @@ jobs:
     runs-on: ubuntu-24.04-arm
     steps:
       - uses: taiki-e/checkout-action@83ed61bfbe2b8abbb3c66e8b65b1335484c70009 # v1.4.1
-      - uses: oxc-project/setup-node@8958a8e040102244b619c4a94fccb657a44b1c21 # v1.0.6
-      - uses: oxc-project/setup-rust@4f86b5d871ae7d24bc420e578be68964ab09e5cc # v1.0.15
+      - uses: oxc-project/setup-node@4c26e7cb3605b6bdef5450dacd02c434b10fd8ba # v1.2.0
+      - uses: oxc-project/setup-rust@23f38cfb0c04af97a055f76acee94d5be71c7c82 # v1.0.16
         with:
           save-cache: ${{ github.ref_name == 'main' }}
           cache-key: warm-aarch64
@@ -52,11 +54,12 @@ jobs:
     runs-on: namespace-profile-mac-default
     steps:
       - uses: taiki-e/checkout-action@83ed61bfbe2b8abbb3c66e8b65b1335484c70009 # v1.4.1
-      - uses: oxc-project/setup-node@8958a8e040102244b619c4a94fccb657a44b1c21 # v1.0.6
-      - uses: oxc-project/setup-rust@4f86b5d871ae7d24bc420e578be68964ab09e5cc # v1.0.15
+      - uses: oxc-project/setup-node@4c26e7cb3605b6bdef5450dacd02c434b10fd8ba # v1.2.0
+      - uses: namespacelabs/nscloud-cache-action@a90bb5d4b27522ce881c6e98eebd7d7e6d1653f9 # v1.4.2
         with:
-          save-cache: ${{ github.ref_name == 'main' }}
-          cache-key: warm
+          cache: |
+            rust
+            pnpm
       - run: cargo ck
       - run: cargo test --all-features
       - run: git diff --exit-code # Must commit everything
@@ -71,7 +74,7 @@ jobs:
       # Unsung heroes of the internet, who led me here to speed up Windows' slowness:
       # https://github.com/actions/cache/issues/752#issuecomment-1847036770
       # https://github.com/astral-sh/uv/blob/502e04200d52de30d3159894833b3db4f0d6644d/.github/workflows/ci.yml#L158
-      - uses: oxc-project/setup-node@8958a8e040102244b619c4a94fccb657a44b1c21 # v1.0.6
+      - uses: oxc-project/setup-node@4c26e7cb3605b6bdef5450dacd02c434b10fd8ba # v1.2.0
       - uses: samypr100/setup-dev-drive@30f0f98ae5636b2b6501e181dfb3631b9974818d # v4.0.0
         with:
           workspace-copy: true
@@ -95,7 +98,7 @@ jobs:
           rustup show
           git restore .
 
-      - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
+      - uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
         with:
           workspaces: ${{ env.DEV_DRIVE_WORKSPACE }}
           save-if: ${{ github.ref_name == 'main' }}
@@ -114,11 +117,13 @@ jobs:
     runs-on: namespace-profile-linux-x64-default
     steps:
       - uses: taiki-e/checkout-action@83ed61bfbe2b8abbb3c66e8b65b1335484c70009 # v1.4.1
-      - uses: oxc-project/setup-rust@4f86b5d871ae7d24bc420e578be68964ab09e5cc # v1.0.15
+      - uses: namespacelabs/nscloud-cache-action@a90bb5d4b27522ce881c6e98eebd7d7e6d1653f9 # v1.4.2
         with:
-          save-cache: ${{ github.ref_name == 'main' }}
-          cache-key: s390x-unknown-linux-gnu
-          tools: cross
+          path: /home/runner/.rustup
+          cache: rust
+      - uses: taiki-e/install-action@06203676c62f0d3c765be3f2fcfbebbcb02d09f5 # v2.69.6
+        with:
+          tool: cross
       # `--lib --bins --tests` to skip doctests which are very slow to run via `cross`.
       # https://github.com/cross-rs/cross/issues/1703
       - run: cross test --lib --bins --tests --all-features --target s390x-unknown-linux-gnu
@@ -129,11 +134,13 @@ jobs:
     runs-on: namespace-profile-linux-x64-default
     steps:
       - uses: taiki-e/checkout-action@83ed61bfbe2b8abbb3c66e8b65b1335484c70009 # v1.4.1
-      - uses: oxc-project/setup-rust@4f86b5d871ae7d24bc420e578be68964ab09e5cc # v1.0.15
+      - uses: namespacelabs/nscloud-cache-action@a90bb5d4b27522ce881c6e98eebd7d7e6d1653f9 # v1.4.2
         with:
-          save-cache: ${{ github.ref_name == 'main' }}
-          cache-key: armv7-unknown-linux-gnueabihf
-          tools: cross
+          path: /home/runner/.rustup
+          cache: rust
+      - uses: taiki-e/install-action@06203676c62f0d3c765be3f2fcfbebbcb02d09f5 # v2.69.6
+        with:
+          tool: cross
       # `--lib --bins --tests` to skip doctests which are very slow to run via `cross`.
       # https://github.com/cross-rs/cross/issues/1703
       - run: cross test --workspace --lib --bins --tests --all-features --exclude oxc_language_server --exclude oxc_linter --exclude oxlint --target armv7-unknown-linux-gnueabihf
@@ -150,13 +157,15 @@ jobs:
           paths: napi/,npm/,apps/,pnpm-lock.yaml,package.json
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
-      - uses: oxc-project/setup-rust@4f86b5d871ae7d24bc420e578be68964ab09e5cc # v1.0.15
+      - uses: oxc-project/setup-node@4c26e7cb3605b6bdef5450dacd02c434b10fd8ba # v1.2.0
+        if: steps.filter.outputs.changed == 'true'
+      - uses: namespacelabs/nscloud-cache-action@a90bb5d4b27522ce881c6e98eebd7d7e6d1653f9 # v1.4.2
         if: steps.filter.outputs.changed == 'true'
         with:
-          cache-key: wasi
-          save-cache: ${{ github.ref_name == 'main' }}
-      - uses: oxc-project/setup-node@8958a8e040102244b619c4a94fccb657a44b1c21 # v1.0.6
-        if: steps.filter.outputs.changed == 'true'
+          path: /home/runner/.rustup
+          cache: |
+            rust
+            pnpm
       - name: Build
         if: steps.filter.outputs.changed == 'true'
         run: |
@@ -187,25 +196,27 @@ jobs:
           paths: napi/parser/,napi/minify/,napi/transform/,npm/oxc-types/,npm/runtime/,tasks/e2e/,pnpm-lock.yaml,package.json
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
-      - uses: oxc-project/setup-rust@4f86b5d871ae7d24bc420e578be68964ab09e5cc # v1.0.15
+      - uses: oxc-project/setup-node@4c26e7cb3605b6bdef5450dacd02c434b10fd8ba # v1.2.0
+        if: steps.filter.outputs.changed == 'true'
+      - uses: namespacelabs/nscloud-cache-action@a90bb5d4b27522ce881c6e98eebd7d7e6d1653f9 # v1.4.2
         if: steps.filter.outputs.changed == 'true'
         with:
-          cache-key: napi
-          save-cache: ${{ github.ref_name == 'main' }}
-      - uses: oxc-project/setup-node@8958a8e040102244b619c4a94fccb657a44b1c21 # v1.0.6
-        if: steps.filter.outputs.changed == 'true'
+          path: /home/runner/.rustup
+          cache: |
+            rust
+            pnpm
       - uses: ./.github/actions/clone-submodules
         if: steps.filter.outputs.changed == 'true'
         with:
           babel: false
           prettier: false
+          node-compat-table: false
       - if: steps.filter.outputs.changed == 'true'
         name: Run tests
         env:
           RUN_RAW_RANGE_TESTS: "true"
           RUN_RAW_TOKENS_TESTS: "true"
         run: |
-          rustup target add wasm32-wasip1-threads
           pnpm --workspace-concurrency=1 --filter "./napi/parser" --filter "./napi/minify" --filter "./napi/transform" build-test
           pnpm --workspace-concurrency=1 --filter "./napi/parser" --filter "./napi/minify" --filter "./napi/transform" test
       - if: steps.filter.outputs.changed == 'true'
@@ -227,13 +238,15 @@ jobs:
           paths: apps/oxlint/,npm/oxlint/,npm/oxlint-plugin-eslint/,npm/oxlint-plugins/,npm/oxc-types/,pnpm-lock.yaml,package.json
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
-      - uses: oxc-project/setup-rust@4f86b5d871ae7d24bc420e578be68964ab09e5cc # v1.0.15
+      - uses: oxc-project/setup-node@4c26e7cb3605b6bdef5450dacd02c434b10fd8ba # v1.2.0
+        if: steps.filter.outputs.changed == 'true'
+      - uses: namespacelabs/nscloud-cache-action@a90bb5d4b27522ce881c6e98eebd7d7e6d1653f9 # v1.4.2
         if: steps.filter.outputs.changed == 'true'
         with:
-          cache-key: napi
-          save-cache: ${{ github.ref_name == 'main' }}
-      - uses: oxc-project/setup-node@8958a8e040102244b619c4a94fccb657a44b1c21 # v1.0.6
-        if: steps.filter.outputs.changed == 'true'
+          path: /home/runner/.rustup
+          cache: |
+            rust
+            pnpm
       - if: steps.filter.outputs.changed == 'true'
         name: Run tests
         run: |
@@ -254,13 +267,15 @@ jobs:
           paths: apps/oxfmt/,npm/oxfmt/,pnpm-lock.yaml,package.json
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
-      - uses: oxc-project/setup-rust@4f86b5d871ae7d24bc420e578be68964ab09e5cc # v1.0.15
+      - uses: oxc-project/setup-node@4c26e7cb3605b6bdef5450dacd02c434b10fd8ba # v1.2.0
+        if: steps.filter.outputs.changed == 'true'
+      - uses: namespacelabs/nscloud-cache-action@a90bb5d4b27522ce881c6e98eebd7d7e6d1653f9 # v1.4.2
         if: steps.filter.outputs.changed == 'true'
         with:
-          cache-key: napi
-          save-cache: ${{ github.ref_name == 'main' }}
-      - uses: oxc-project/setup-node@8958a8e040102244b619c4a94fccb657a44b1c21 # v1.0.6
-        if: steps.filter.outputs.changed == 'true'
+          path: /home/runner/.rustup
+          cache: |
+            rust
+            pnpm
       - if: steps.filter.outputs.changed == 'true'
         name: Run tests
         run: |
@@ -284,7 +299,7 @@ jobs:
           paths: napi/parser/,napi/minify/,napi/transform/,npm/oxc-types/,npm/runtime/,tasks/e2e/,pnpm-lock.yaml,package.json
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
-      - uses: oxc-project/setup-node@8958a8e040102244b619c4a94fccb657a44b1c21 # v1.0.6
+      - uses: oxc-project/setup-node@4c26e7cb3605b6bdef5450dacd02c434b10fd8ba # v1.2.0
         if: steps.filter.outputs.changed == 'true'
       - uses: samypr100/setup-dev-drive@30f0f98ae5636b2b6501e181dfb3631b9974818d # v4.0.0
         if: steps.filter.outputs.changed == 'true'
@@ -295,7 +310,7 @@ jobs:
           env-mapping: |
             CARGO_HOME,{{ DEV_DRIVE }}/.cargo
             RUSTUP_HOME,{{ DEV_DRIVE }}/.rustup
-      - uses: oxc-project/setup-rust@4f86b5d871ae7d24bc420e578be68964ab09e5cc # v1.0.15
+      - uses: oxc-project/setup-rust@23f38cfb0c04af97a055f76acee94d5be71c7c82 # v1.0.16
         if: steps.filter.outputs.changed == 'true'
         with:
           cache-key: napi
@@ -305,13 +320,13 @@ jobs:
         with:
           babel: false
           prettier: false
+          node-compat-table: false
       - if: steps.filter.outputs.changed == 'true'
         name: Run tests
         working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
         env:
           RUN_RAW_RANGE_TESTS: "true"
         run: |
-          rustup target add wasm32-wasip1-threads
           pnpm --workspace-concurrency=1 --filter "./napi/parser" --filter "./napi/minify" --filter "./napi/transform" build-test
           pnpm --workspace-concurrency=1 --filter "./napi/parser" --filter "./napi/minify" --filter "./napi/transform" test
       - if: steps.filter.outputs.changed == 'true'
@@ -338,7 +353,7 @@ jobs:
           paths: apps/oxlint/,npm/oxlint/,npm/oxlint-plugin-eslint/,npm/oxlint-plugins/,npm/oxc-types/,pnpm-lock.yaml,package.json
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
-      - uses: oxc-project/setup-node@8958a8e040102244b619c4a94fccb657a44b1c21 # v1.0.6
+      - uses: oxc-project/setup-node@4c26e7cb3605b6bdef5450dacd02c434b10fd8ba # v1.2.0
         if: steps.filter.outputs.changed == 'true'
       - uses: samypr100/setup-dev-drive@30f0f98ae5636b2b6501e181dfb3631b9974818d # v4.0.0
         if: steps.filter.outputs.changed == 'true'
@@ -349,7 +364,7 @@ jobs:
           env-mapping: |
             CARGO_HOME,{{ DEV_DRIVE }}/.cargo
             RUSTUP_HOME,{{ DEV_DRIVE }}/.rustup
-      - uses: oxc-project/setup-rust@4f86b5d871ae7d24bc420e578be68964ab09e5cc # v1.0.15
+      - uses: oxc-project/setup-rust@23f38cfb0c04af97a055f76acee94d5be71c7c82 # v1.0.16
         if: steps.filter.outputs.changed == 'true'
         with:
           cache-key: napi
@@ -378,7 +393,7 @@ jobs:
           paths: apps/oxfmt/,npm/oxfmt/,pnpm-lock.yaml,package.json
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
-      - uses: oxc-project/setup-node@8958a8e040102244b619c4a94fccb657a44b1c21 # v1.0.6
+      - uses: oxc-project/setup-node@4c26e7cb3605b6bdef5450dacd02c434b10fd8ba # v1.2.0
         if: steps.filter.outputs.changed == 'true'
       - uses: samypr100/setup-dev-drive@30f0f98ae5636b2b6501e181dfb3631b9974818d # v4.0.0
         if: steps.filter.outputs.changed == 'true'
@@ -389,7 +404,7 @@ jobs:
           env-mapping: |
             CARGO_HOME,{{ DEV_DRIVE }}/.cargo
             RUSTUP_HOME,{{ DEV_DRIVE }}/.rustup
-      - uses: oxc-project/setup-rust@4f86b5d871ae7d24bc420e578be68964ab09e5cc # v1.0.15
+      - uses: oxc-project/setup-rust@23f38cfb0c04af97a055f76acee94d5be71c7c82 # v1.0.16
         if: steps.filter.outputs.changed == 'true'
         with:
           cache-key: napi
@@ -419,18 +434,32 @@ jobs:
     runs-on: namespace-profile-linux-x64-default
     steps:
       - uses: taiki-e/checkout-action@83ed61bfbe2b8abbb3c66e8b65b1335484c70009 # v1.4.1
-      - uses: oxc-project/setup-node@8958a8e040102244b619c4a94fccb657a44b1c21 # v1.0.6
-      - uses: oxc-project/setup-rust@4f86b5d871ae7d24bc420e578be68964ab09e5cc # v1.0.15
+      - uses: oxc-project/setup-node@4c26e7cb3605b6bdef5450dacd02c434b10fd8ba # v1.2.0
+      - uses: namespacelabs/nscloud-cache-action@a90bb5d4b27522ce881c6e98eebd7d7e6d1653f9 # v1.4.2
         with:
-          save-cache: ${{ github.ref_name == 'main' }}
-          cache-key: clippy
-          components: clippy rust-docs
+          path: /home/runner/.rustup
+          cache: |
+            rust
+            pnpm
+      - run: rustup component add clippy
       - run: cargo lint -- -D warnings
       - run: cargo lint --profile dev-no-debug-assertions -- -D warnings
-      - run: RUSTDOCFLAGS='-D warnings' cargo doc --no-deps --document-private-items
       - run: pnpm --filter oxlint-app build-js
       - run: pnpm --filter oxfmt-app build-js
       - run: node --run lint
+
+  doc:
+    name: Doc
+    runs-on: namespace-profile-linux-x64-default
+    steps:
+      - uses: taiki-e/checkout-action@83ed61bfbe2b8abbb3c66e8b65b1335484c70009 # v1.4.1
+      - uses: namespacelabs/nscloud-cache-action@a90bb5d4b27522ce881c6e98eebd7d7e6d1653f9 # v1.4.2
+        with:
+          path: /home/runner/.rustup
+          cache: rust
+      - run: rustup toolchain install nightly --profile minimal --component rust-docs
+      # https://github.com/rust-lang/rust/issues/146895
+      - run: RUSTDOCFLAGS='-D warnings' cargo +nightly doc --no-deps --document-private-items -Zrustdoc-mergeable-info
 
   conformance:
     name: Conformance
@@ -440,28 +469,36 @@ jobs:
 
       - name: Check if conformance should run
         id: filter
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_PR_NUMBER: ${{ github.event.pull_request.number }}
-        run: |
-          SHOULD_RUN=$(node .github/scripts/check-conformance-changes.js)
-          echo "src=$SHOULD_RUN" >> $GITHUB_OUTPUT
+        uses: ./.github/actions/check-changes
+        with:
+          packages: oxc_coverage,oxc_transform_conformance,oxc_prettier_conformance
+          paths: tasks/coverage/,tasks/common/,tasks/oxc_transform_conformance/,tasks/oxc_prettier_conformance/,pnpm-lock.yaml
+          token: ${{ secrets.GITHUB_TOKEN }}
+          pr-number: ${{ github.event.pull_request.number }}
 
       - uses: ./.github/actions/clone-submodules
-        if: steps.filter.outputs.src == 'true'
-
-      - uses: oxc-project/setup-node@8958a8e040102244b619c4a94fccb657a44b1c21 # v1.0.6
-        if: steps.filter.outputs.src == 'true'
-
-      - uses: oxc-project/setup-rust@4f86b5d871ae7d24bc420e578be68964ab09e5cc # v1.0.15
-        if: steps.filter.outputs.src == 'true'
+        if: steps.filter.outputs.changed == 'true'
         with:
-          cache-key: conformance
-          save-cache: ${{ github.ref_name == 'main' }}
-          tools: just
+          node-compat-table: false
+
+      - uses: oxc-project/setup-node@4c26e7cb3605b6bdef5450dacd02c434b10fd8ba # v1.2.0
+        if: steps.filter.outputs.changed == 'true'
+
+      - uses: namespacelabs/nscloud-cache-action@a90bb5d4b27522ce881c6e98eebd7d7e6d1653f9 # v1.4.2
+        if: steps.filter.outputs.changed == 'true'
+        with:
+          path: /home/runner/.rustup
+          cache: |
+            rust
+            pnpm
+
+      - uses: taiki-e/install-action@06203676c62f0d3c765be3f2fcfbebbcb02d09f5 # v2.69.6
+        if: steps.filter.outputs.changed == 'true'
+        with:
+          tool: just
 
       - name: Check Conformance
-        if: steps.filter.outputs.src == 'true'
+        if: steps.filter.outputs.changed == 'true'
         run: |
           just update-transformer-fixtures
           just coverage
@@ -480,11 +517,10 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
 
-      - uses: oxc-project/setup-rust@4f86b5d871ae7d24bc420e578be68964ab09e5cc # v1.0.15
-        if: steps.filter.outputs.changed == 'true'
+      - uses: namespacelabs/nscloud-cache-action@a90bb5d4b27522ce881c6e98eebd7d7e6d1653f9 # v1.4.2
         with:
-          cache-key: minsize
-          save-cache: ${{ github.ref_name == 'main' }}
+          path: /home/runner/.rustup
+          cache: rust
 
       - name: Check minification size
         if: steps.filter.outputs.changed == 'true'
@@ -504,11 +540,10 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
 
-      - uses: oxc-project/setup-rust@4f86b5d871ae7d24bc420e578be68964ab09e5cc # v1.0.15
-        if: steps.filter.outputs.changed == 'true'
+      - uses: namespacelabs/nscloud-cache-action@a90bb5d4b27522ce881c6e98eebd7d7e6d1653f9 # v1.4.2
         with:
-          cache-key: allocs
-          save-cache: ${{ github.ref_name == 'main' }}
+          path: /home/runner/.rustup
+          cache: rust
 
       - name: Check allocations
         if: steps.filter.outputs.changed == 'true'
@@ -528,14 +563,18 @@ jobs:
         with:
           filters: ".github/generated/ast_changes_watch_list.yml"
 
-      - uses: oxc-project/setup-rust@4f86b5d871ae7d24bc420e578be68964ab09e5cc # v1.0.15
+      - uses: oxc-project/setup-node@4c26e7cb3605b6bdef5450dacd02c434b10fd8ba # v1.2.0
+        if: steps.filter.outputs.src == 'true'
+
+      - uses: namespacelabs/nscloud-cache-action@a90bb5d4b27522ce881c6e98eebd7d7e6d1653f9 # v1.4.2
         if: steps.filter.outputs.src == 'true'
         with:
-          components: rustfmt
-          cache-key: ast_changes
-          save-cache: ${{ github.ref_name == 'main' }}
+          path: /home/runner/.rustup
+          cache: |
+            rust
+            pnpm
 
-      - uses: oxc-project/setup-node@8958a8e040102244b619c4a94fccb657a44b1c21 # v1.0.6
+      - run: rustup component add rustfmt
         if: steps.filter.outputs.src == 'true'
 
       - name: Check AST Changes
@@ -558,12 +597,13 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
 
-      - uses: oxc-project/setup-rust@4f86b5d871ae7d24bc420e578be68964ab09e5cc # v1.0.15
-        if: steps.filter.outputs.changed == 'true'
+      - uses: namespacelabs/nscloud-cache-action@a90bb5d4b27522ce881c6e98eebd7d7e6d1653f9 # v1.4.2
         with:
-          components: rustfmt
-          cache-key: lintgen
-          save-cache: ${{ github.ref_name == 'main' }}
+          path: /home/runner/.rustup
+          cache: rust
+
+      - run: rustup component add rustfmt
+        if: steps.filter.outputs.changed == 'true'
 
       - name: Check linter changes
         if: steps.filter.outputs.changed == 'true'

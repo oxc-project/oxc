@@ -10,9 +10,7 @@ mod server_formatter;
 #[cfg(test)]
 mod tester;
 
-pub(super) fn get_file_extension_from_language_id(
-    language_id: &LanguageId,
-) -> Option<&'static str> {
+fn get_file_extension_from_language_id(language_id: &LanguageId) -> Option<&'static str> {
     match language_id.as_str() {
         "javascript" => Some("js"),
         "typescript" => Some("ts"),
@@ -38,25 +36,14 @@ pub(super) fn get_file_extension_from_language_id(
     }
 }
 
-/// Returns a copy of `path` with the extension replaced by the one corresponding to `language_id`.
-/// Returns `None` if `language_id` is not recognized.
-pub(super) fn apply_language_id_extension(
-    language_id: &LanguageId,
-    path: &Path,
-) -> Option<PathBuf> {
-    let ext = get_file_extension_from_language_id(language_id)?;
-    let mut p = path.to_path_buf();
-    p.set_extension(ext);
-    Some(p)
-}
-
 pub fn create_fake_file_path_from_language_id(
     language_id: &LanguageId,
     root: &Path,
     uri: &Uri,
 ) -> Option<PathBuf> {
-    let base = root.join(uri.authority()?.as_str());
-    apply_language_id_extension(language_id, &base)
+    let file_extension = get_file_extension_from_language_id(language_id)?;
+    let file_name = format!("{}.{}", uri.authority()?, file_extension);
+    Some(root.join(file_name))
 }
 
 /// Run the language server
