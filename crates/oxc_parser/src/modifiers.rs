@@ -387,9 +387,6 @@ pub use modifier_kinds::ModifierKinds;
 
 impl<C: Config> ParserImpl<'_, C> {
     pub(crate) fn eat_modifiers_before_declaration(&mut self) -> Modifiers {
-        if !self.at_modifier() {
-            return Modifiers::empty();
-        }
         let mut modifiers = Modifiers::empty();
         while self.at_modifier() {
             let span = self.start_span();
