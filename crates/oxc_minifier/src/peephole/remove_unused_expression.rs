@@ -648,10 +648,7 @@ impl<'a> PeepholeOptimizations {
     /// Try to remove a member expression assignment (e.g. `A.from = () => {}`).
     /// Checks side-effect analysis (respects `property_write_side_effects`) and
     /// verifies the root object is an unused local binding.
-    fn remove_unused_member_assignment(
-        e: &Expression<'a>,
-        ctx: &TraverseCtx<'a>,
-    ) -> bool {
+    fn remove_unused_member_assignment(e: &Expression<'a>, ctx: &TraverseCtx<'a>) -> bool {
         if e.may_have_side_effects(ctx) {
             return false;
         }
