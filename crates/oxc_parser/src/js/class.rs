@@ -462,7 +462,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         modifiers: &Modifiers<'a>,
         decorators: Vec<'a, Decorator<'a>>,
     ) -> ClassElement<'a> {
-        if let Some(modifier) = modifiers.iter().find(|m| m.kind == ModifierKind::Declare) {
+        if let Some(modifier) = modifiers.get(ModifierKind::Declare) {
             self.error(diagnostics::declare_constructor(modifier.span));
         }
 

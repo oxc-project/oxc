@@ -207,6 +207,17 @@ impl<'a> Modifiers<'a> {
         self.modifiers.as_ref().into_iter().flat_map(|modifiers| modifiers.iter())
     }
 
+    /// Look up a specific modifier by [`ModifierKind`].
+    pub fn get(&self, kind: ModifierKind) -> Option<&Modifier> {
+        if self.kinds.contains(kind) {
+            let modifier = self.iter().find(|m| m.kind == kind);
+            debug_assert!(modifier.is_some());
+            modifier
+        } else {
+            None
+        }
+    }
+
     pub fn accessibility(&self) -> Option<TSAccessibility> {
         self.kinds.accessibility()
     }
