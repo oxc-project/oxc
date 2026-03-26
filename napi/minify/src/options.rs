@@ -25,6 +25,14 @@ pub struct TreeShakeOptions {
     #[napi(ts_type = "boolean | 'always'")]
     pub property_read_side_effects: Option<Either<bool, String>>,
 
+    /// Whether property write accesses (assignments to member expressions) have side effects.
+    ///
+    /// When false, assignments like `obj.prop = value` are considered side-effect-free
+    /// (assuming the object and value expressions themselves are side-effect-free).
+    ///
+    /// @default true
+    pub property_write_side_effects: Option<bool>,
+
     /// Whether accessing a global variable has side effects.
     ///
     /// Accessing a non-existing global variable will throw an error.
@@ -64,6 +72,9 @@ impl TryFrom<&TreeShakeOptions> for oxc_minifier::TreeShakeOptions {
                 }
                 None => default.property_read_side_effects,
             },
+            property_write_side_effects: o
+                .property_write_side_effects
+                .unwrap_or(default.property_write_side_effects),
             unknown_global_side_effects: o
                 .unknown_global_side_effects
                 .unwrap_or(default.unknown_global_side_effects),
