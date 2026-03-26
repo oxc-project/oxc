@@ -204,7 +204,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let modifiers = self.parse_modifiers(true, false);
         self.verify_modifiers(
             &modifiers,
-            ModifierFlags::IN | ModifierFlags::OUT | ModifierFlags::CONST,
+            ModifierFlags::new([ModifierKind::In, ModifierKind::Out, ModifierKind::Const]),
             false, // `in` and `out` are only allowed on a type parameter of a class, interface or type alias
             diagnostics::cannot_appear_on_a_type_parameter,
         );
@@ -1427,7 +1427,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if kind == Kind::LParen || kind == Kind::LAngle {
             self.verify_modifiers(
                 modifiers,
-                !ModifierFlags::READONLY,
+                ModifierFlags::all_except([ModifierKind::Readonly]),
                 false,
                 diagnostics::modifier_only_on_property_declaration_or_index_signature,
             );

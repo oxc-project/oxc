@@ -97,7 +97,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         self.verify_modifiers(
             modifiers,
-            ModifierFlags::DECLARE | ModifierFlags::ABSTRACT,
+            ModifierFlags::new([ModifierKind::Declare, ModifierKind::Abstract]),
             true,
             diagnostics::modifier_cannot_be_used_here,
         );
@@ -247,7 +247,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         self.verify_modifiers(
             &modifiers,
-            !ModifierFlags::EXPORT,
+            ModifierFlags::all_except([ModifierKind::Export]),
             false,
             diagnostics::cannot_appear_on_class_elements,
         );
@@ -295,7 +295,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             // No modifiers except `static` and `readonly` are valid here
             self.verify_modifiers(
                 &modifiers,
-                ModifierFlags::READONLY | ModifierFlags::STATIC,
+                ModifierFlags::new([ModifierKind::Readonly, ModifierKind::Static]),
                 true,
                 diagnostics::cannot_appear_on_an_index_signature,
             );
@@ -323,7 +323,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     fn parse_class_element_name(&mut self, modifiers: &Modifiers<'a>) -> (PropertyKey<'a>, bool) {
         self.verify_modifiers(
             modifiers,
-            !(ModifierFlags::CONST | ModifierFlags::IN | ModifierFlags::OUT),
+            ModifierFlags::all_except([ModifierKind::Const, ModifierKind::In, ModifierKind::Out]),
             false,
             |modifier, _| {
                 match modifier.kind {
@@ -343,7 +343,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 if self.is_ts {
                     self.verify_modifiers(
                         modifiers,
-                        !ModifierFlags::ACCESSIBILITY,
+                        ModifierFlags::all_except([
+                            ModifierKind::Public,
+                            ModifierKind::Private,
+                            ModifierKind::Protected,
+                        ]),
                         false,
                         diagnostics::accessibility_modifier_on_private_property,
                     );
@@ -386,11 +390,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         };
         self.verify_modifiers(
             modifiers,
-            ModifierFlags::ACCESSIBILITY
-                | ModifierFlags::ACCESSOR
-                | ModifierFlags::STATIC
-                | ModifierFlags::ABSTRACT
-                | ModifierFlags::OVERRIDE,
+            ModifierFlags::new([
+                ModifierKind::Public,
+                ModifierKind::Private,
+                ModifierKind::Protected,
+                ModifierKind::Accessor,
+                ModifierKind::Static,
+                ModifierKind::Abstract,
+                ModifierKind::Override,
+            ]),
             true,
             diagnostics::accessor_modifier,
         );
@@ -439,7 +447,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.check_method_definition_accessor(&method_definition);
         self.verify_modifiers(
             modifiers,
-            !(ModifierFlags::ASYNC | ModifierFlags::DECLARE),
+            ModifierFlags::all_except([ModifierKind::Async, ModifierKind::Declare]),
             false,
             diagnostics::modifier_cannot_be_used_here,
         );
@@ -519,32 +527,31 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if generator || matches!(self.cur_kind(), Kind::LParen | Kind::LAngle) {
             self.verify_modifiers(
                 modifiers,
-                !(ModifierFlags::DECLARE | ModifierFlags::READONLY),
+                ModifierFlags::all_except([ModifierKind::Declare, ModifierKind::Readonly]),
                 false,
-                |modifier, _| match modifier.kind {
-                    ModifierKind::Declare => diagnostics::cannot_appear_on_class_elements(
-                        modifier,
-                        Some(
-                            ModifierFlags::ACCESSIBILITY
-                                | ModifierFlags::STATIC
-                                | ModifierFlags::ABSTRACT
-                                | ModifierFlags::OVERRIDE
-                                | ModifierFlags::ASYNC,
-                        ),
-                    ),
-                    ModifierKind::Readonly => {
-                        diagnostics::modifier_only_on_property_declaration_or_index_signature(
-                            modifier,
-                            Some(
-                                ModifierFlags::ACCESSIBILITY
-                                    | ModifierFlags::STATIC
-                                    | ModifierFlags::ABSTRACT
-                                    | ModifierFlags::OVERRIDE
-                                    | ModifierFlags::ASYNC,
-                            ),
-                        )
+                |modifier, _| {
+                    const ALLOWED: ModifierFlags = ModifierFlags::new([
+                        ModifierKind::Public,
+                        ModifierKind::Private,
+                        ModifierKind::Protected,
+                        ModifierKind::Static,
+                        ModifierKind::Abstract,
+                        ModifierKind::Override,
+                        ModifierKind::Async,
+                    ]);
+
+                    match modifier.kind {
+                        ModifierKind::Declare => {
+                            diagnostics::cannot_appear_on_class_elements(modifier, Some(ALLOWED))
+                        }
+                        ModifierKind::Readonly => {
+                            diagnostics::modifier_only_on_property_declaration_or_index_signature(
+                                modifier,
+                                Some(ALLOWED),
+                            )
+                        }
+                        _ => unreachable!(),
                     }
-                    _ => unreachable!(),
                 },
             );
             return self.parse_method_declaration(

@@ -158,7 +158,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let modifiers = self.parse_modifiers(false, false);
         if self.is_ts {
             let allowed_modifiers = if func_kind == FunctionKind::Constructor {
-                ModifierFlags::ACCESSIBILITY | ModifierFlags::OVERRIDE | ModifierFlags::READONLY
+                ModifierFlags::new([
+                    ModifierKind::Public,
+                    ModifierKind::Private,
+                    ModifierKind::Protected,
+                    ModifierKind::Override,
+                    ModifierKind::Readonly,
+                ])
             } else {
                 ModifierFlags::empty()
             };
@@ -287,7 +293,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
         self.verify_modifiers(
             modifiers,
-            ModifierFlags::DECLARE | ModifierFlags::ASYNC,
+            ModifierFlags::new([ModifierKind::Declare, ModifierKind::Async]),
             true,
             diagnostics::modifier_cannot_be_used_here,
         );

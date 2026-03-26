@@ -5,7 +5,7 @@ use oxc_syntax::operator::AssignmentOperator;
 use crate::{
     Context, ParserConfig as Config, ParserImpl, diagnostics,
     lexer::Kind,
-    modifiers::{ModifierFlags, Modifiers},
+    modifiers::{ModifierFlags, ModifierKind, Modifiers},
 };
 
 use super::FunctionKind;
@@ -67,7 +67,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if asterisk_token || matches!(self.cur_kind(), Kind::LParen | Kind::LAngle) {
             self.verify_modifiers(
                 &modifiers,
-                ModifierFlags::ASYNC,
+                ModifierFlags::new([ModifierKind::Async]),
                 true,
                 diagnostics::modifier_cannot_be_used_here,
             );
