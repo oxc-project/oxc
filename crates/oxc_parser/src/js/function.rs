@@ -166,7 +166,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     ModifierKind::Readonly,
                 ])
             } else {
-                ModifierKinds::empty()
+                ModifierKinds::none()
             };
             self.verify_modifiers(
                 &modifiers,
@@ -177,7 +177,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         } else {
             self.verify_modifiers(
                 &modifiers,
-                ModifierKinds::empty(),
+                ModifierKinds::none(),
                 true,
                 diagnostics::parameter_modifiers_in_ts,
             );

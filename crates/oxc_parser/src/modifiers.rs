@@ -20,7 +20,7 @@ impl ModifierKinds {
     /// Create a set from an array of modifier kinds.
     #[inline]
     pub const fn new<const N: usize>(kinds: [ModifierKind; N]) -> Self {
-        let mut out = Self::empty();
+        let mut out = Self::none();
         let mut i = 0;
         while i < N {
             out = out.with(kinds[i]);
@@ -38,7 +38,7 @@ impl ModifierKinds {
 
     /// Empty set (no modifiers).
     #[inline]
-    pub const fn empty() -> Self {
+    pub const fn none() -> Self {
         Self(0)
     }
 
@@ -182,13 +182,13 @@ impl<'a> Modifiers<'a> {
             if let Some(modifiers) = &modifiers {
                 assert!(!modifiers.is_empty());
 
-                let mut found_kinds = ModifierKinds::empty();
+                let mut found_kinds = ModifierKinds::none();
                 for modifier in modifiers {
                     found_kinds = found_kinds.with(modifier.kind);
                 }
                 assert_eq!(found_kinds, kinds);
             } else {
-                assert_eq!(kinds, ModifierKinds::empty());
+                assert_eq!(kinds, ModifierKinds::none());
             }
         }
 
@@ -196,7 +196,7 @@ impl<'a> Modifiers<'a> {
     }
 
     pub fn empty() -> Self {
-        Self { modifiers: None, kinds: ModifierKinds::empty() }
+        Self { modifiers: None, kinds: ModifierKinds::none() }
     }
 
     pub fn contains(&self, target: ModifierKind) -> bool {
@@ -337,7 +337,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if !self.at_modifier() {
             return Modifiers::empty();
         }
-        let mut kinds = ModifierKinds::empty();
+        let mut kinds = ModifierKinds::none();
         let mut modifiers = self.ast.vec();
         while self.at_modifier() {
             let span = self.start_span();
@@ -393,7 +393,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let mut has_seen_static_modifier = false;
 
         let mut modifiers = None;
-        let mut modifier_kinds = ModifierKinds::empty();
+        let mut modifier_kinds = ModifierKinds::none();
 
         while let Some(modifier) = self.try_parse_modifier(
             has_seen_static_modifier,

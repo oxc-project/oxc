@@ -89,7 +89,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         self.verify_modifiers(
             &modifiers,
-            ModifierKinds::empty(),
+            ModifierKinds::none(),
             true,
             diagnostics::modifier_cannot_be_used_here,
         );
@@ -219,7 +219,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
         self.verify_modifiers(
             modifiers,
-            ModifierKinds::empty(),
+            ModifierKinds::none(),
             true,
             diagnostics::modifier_cannot_be_used_here,
         );

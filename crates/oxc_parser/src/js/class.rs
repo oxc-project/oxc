@@ -238,7 +238,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
             self.verify_modifiers(
                 &modifiers,
-                ModifierKinds::empty(),
+                ModifierKinds::none(),
                 false,
                 diagnostics::modifiers_cannot_appear_here,
             );
