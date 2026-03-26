@@ -308,7 +308,13 @@ impl NoUnusedVars {
                 });
             }
             AstKind::FormalParameter(param) => {
-                if self.is_allowed_argument(ctx.semantic(), ctx.module_record(), symbol, param, declaration.id()) {
+                if self.is_allowed_argument(
+                    ctx.semantic(),
+                    ctx.module_record(),
+                    symbol,
+                    param,
+                    declaration.id(),
+                ) {
                     return;
                 }
                 ctx.diagnostic(diagnostic::param(symbol, &self.args_ignore_pattern));
