@@ -10,6 +10,7 @@ mod ignore_matcher;
 mod overrides;
 mod oxlintrc;
 pub mod plugins;
+mod recommended;
 mod rules;
 mod settings;
 pub use config_builder::{ConfigBuilderError, ConfigStoreBuilder};
@@ -20,6 +21,7 @@ pub use ignore_matcher::LintIgnoreMatcher;
 pub use overrides::OxlintOverrides;
 pub use oxlintrc::Oxlintrc;
 pub use plugins::LintPlugins;
+pub use recommended::RecommendedConfig;
 pub use rules::{ESLintRule, OxlintRules};
 pub use settings::{OxlintSettings, ReactVersion, jsdoc::JSDocPluginSettings};
 

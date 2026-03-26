@@ -129,6 +129,29 @@ impl LintPlugins {
     pub fn has_import(self) -> bool {
         self.contains(LintPlugins::IMPORT)
     }
+
+    /// Returns the name of the plugin, if there is only one, otherwise returns `None`.
+    #[inline]
+    pub fn name(self) -> Option<&'static str> {
+        match self {
+            LintPlugins::ESLINT => Some("eslint"),
+            LintPlugins::REACT => Some("react"),
+            LintPlugins::UNICORN => Some("unicorn"),
+            LintPlugins::TYPESCRIPT => Some("typescript"),
+            LintPlugins::OXC => Some("oxc"),
+            LintPlugins::IMPORT => Some("import"),
+            LintPlugins::JSDOC => Some("jsdoc"),
+            LintPlugins::JEST => Some("jest"),
+            LintPlugins::VITEST => Some("vitest"),
+            LintPlugins::JSX_A11Y => Some("jsx_a11y"),
+            LintPlugins::NEXTJS => Some("nextjs"),
+            LintPlugins::REACT_PERF => Some("react_perf"),
+            LintPlugins::PROMISE => Some("promise"),
+            LintPlugins::NODE => Some("node"),
+            LintPlugins::VUE => Some("vue"),
+            _ => None,
+        }
+    }
 }
 
 impl TryFrom<&str> for LintPlugins {

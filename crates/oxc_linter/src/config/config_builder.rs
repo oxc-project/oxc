@@ -1,11 +1,13 @@
 use std::{
     fmt::{self, Debug, Display},
     path::{Component as PathComponent, Path, PathBuf},
+    str::FromStr,
 };
 
 use itertools::Itertools;
 use oxc_resolver::{ResolveOptions, Resolver};
 use rustc_hash::{FxHashMap, FxHashSet};
+use smallvec::SmallVec;
 use url::Url;
 
 use oxc_span::{CompactStr, format_compact_str};
@@ -14,7 +16,7 @@ use crate::{
     AllowWarnDeny, ExternalPluginStore, LintConfig, LintFilter, LintFilterKind, Oxlintrc,
     RuleCategory, RuleEnum,
     config::{
-        ESLintRule, OxlintOverrides, OxlintRules,
+        ESLintRule, OxlintOverrides, OxlintRules, RecommendedConfig,
         external_plugins::ExternalPluginEntry,
         overrides::OxlintOverride,
         plugins::{LintPlugins, is_normal_plugin_name, normalize_plugin_name},
@@ -78,6 +80,46 @@ impl ConfigStoreBuilder {
         let external_rules = FxHashMap::default();
         let extended_paths = Vec::new();
         Self { rules, external_rules, config, categories, overrides, extended_paths }
+    }
+
+    /// Returns the recommended configuration for the given plugin.
+    pub fn recommended(config: RecommendedConfig) -> Self {
+        let plugin = match config {
+            RecommendedConfig::Base => LintPlugins::ESLINT,
+            RecommendedConfig::React => LintPlugins::REACT,
+            RecommendedConfig::Unicorn => LintPlugins::UNICORN,
+            RecommendedConfig::TypeScript => LintPlugins::TYPESCRIPT,
+            RecommendedConfig::Oxc => LintPlugins::OXC,
+            RecommendedConfig::Import => LintPlugins::IMPORT,
+            RecommendedConfig::JsDoc => LintPlugins::JSDOC,
+            RecommendedConfig::Jest => LintPlugins::JEST,
+            RecommendedConfig::Vitest => LintPlugins::VITEST,
+            RecommendedConfig::JsxA11y => LintPlugins::JSX_A11Y,
+            RecommendedConfig::NextJs => LintPlugins::NEXTJS,
+            RecommendedConfig::ReactPerf => LintPlugins::REACT_PERF,
+            RecommendedConfig::Promise => LintPlugins::PROMISE,
+            RecommendedConfig::Node => LintPlugins::NODE,
+            RecommendedConfig::Vue => LintPlugins::VUE,
+        };
+        let Some(plugin_name) = plugin.name() else { return Self::empty() };
+        let config = LintConfig { plugins: plugin, ..LintConfig::default() };
+        let rules = RULES
+            .iter()
+            .filter(|rule| {
+                rule.plugin_name() == plugin_name
+                    && rule.tags().is_recommended()
+                    && rule.category() != RuleCategory::Nursery
+            })
+            .map(|rule| (rule.clone(), AllowWarnDeny::Deny))
+            .collect();
+        Self {
+            rules,
+            external_rules: FxHashMap::default(),
+            config,
+            categories: OxlintCategories::default(),
+            overrides: OxlintOverrides::default(),
+            extended_paths: Vec::new(),
+        }
     }
 
     /// Create a [`ConfigStoreBuilder`] from a loaded or manually built [`Oxlintrc`].
@@ -172,9 +214,17 @@ impl ConfigStoreBuilder {
                     // `eslint:` and `plugin:` named configs are not supported
                     continue;
                 }
+
+                let path_str = path.to_string_lossy();
+
+                if let Ok(recommended) = RecommendedConfig::from_str(&path_str) {
+                    oxlintrc = oxlintrc.merge(ConfigStoreBuilder::recommended(recommended).into());
+                    continue;
+                }
+
                 // if path does not include a ".", then we will heuristically skip it since it
                 // kind of looks like it might be a named config
-                if !path.to_string_lossy().contains('.') {
+                if !path_str.contains('.') {
                     continue;
                 }
 
@@ -700,6 +750,33 @@ fn get_name(plugin_name: &str, rule_name: &str) -> CompactStr {
         CompactStr::from(rule_name)
     } else {
         format_compact_str!("{plugin_name}/{rule_name}")
+    }
+}
+
+impl From<ConfigStoreBuilder> for Oxlintrc {
+    fn from(builder: ConfigStoreBuilder) -> Self {
+        Oxlintrc {
+            plugins: Some(builder.config.plugins),
+            categories: builder.categories,
+            rules: OxlintRules::new(
+                builder
+                    .rules
+                    .into_iter()
+                    .map(|(rule, severity)| ESLintRule {
+                        plugin_name: rule.plugin_name().to_string(),
+                        rule_name: rule.name().to_string(),
+                        severity,
+                        config: SmallVec::default(),
+                    })
+                    .collect(),
+            ),
+            settings: builder.config.settings,
+            env: builder.config.env,
+            globals: builder.config.globals,
+            overrides: builder.overrides,
+            options: builder.config.options,
+            ..Oxlintrc::default()
+        }
     }
 }
 
@@ -1480,6 +1557,25 @@ mod test {
             r#"{ "extends": ["fixtures/extends_config/options/max_warnings_0.json"] }"#,
         );
         assert_eq!(config.base.config.options.max_warnings, Some(0));
+    }
+
+    #[test]
+    fn test_extends_oxlint_recommended() {
+        let config = config_store_from_str(r#"{ "extends": ["oxlint:recommended/base"] }"#);
+        // This test may need to be updated over time, but assert that a rule that is
+        // not enabled by default (i.e., in correctness) is now enabled
+        // check preserve-caught-error
+        let rule = "preserve-caught-error";
+        assert_eq!(
+            RULES.iter().find(|r| r.name() == rule).unwrap().category(),
+            RuleCategory::Suspicious
+        );
+        assert!(
+            config
+                .rules()
+                .iter()
+                .any(|(r, severity)| r.name() == rule && *severity == AllowWarnDeny::Deny)
+        );
     }
 
     #[test]
