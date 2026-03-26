@@ -12,121 +12,6 @@ use oxc_span::Span;
 
 use crate::{ParserConfig as Config, ParserImpl, diagnostics, lexer::Kind};
 
-/// A set of modifier kinds, stored as a bitfield.
-#[derive(Clone, Copy, PartialEq, Eq)]
-pub struct ModifierKinds(u16);
-
-impl ModifierKinds {
-    /// Create a set from an array of modifier kinds.
-    #[inline]
-    pub const fn new<const N: usize>(kinds: [ModifierKind; N]) -> Self {
-        let mut out = Self::none();
-        let mut i = 0;
-        while i < N {
-            out = out.with(kinds[i]);
-            i += 1;
-        }
-        out
-    }
-
-    /// Create a set containing all modifier kinds EXCEPT the ones listed.
-    #[inline]
-    pub const fn all_except<const N: usize>(kinds: [ModifierKind; N]) -> Self {
-        const ALL: ModifierKinds = ModifierKinds::new(ModifierKind::VARIANTS);
-        Self(Self::new(kinds).0 ^ ALL.0)
-    }
-
-    /// Empty set (no modifiers).
-    #[inline]
-    pub const fn none() -> Self {
-        Self(0)
-    }
-
-    /// Check if `kind` is present in this set.
-    #[inline]
-    pub const fn contains(self, kind: ModifierKind) -> bool {
-        self.0 & (1 << (kind as u8)) != 0
-    }
-
-    /// Check if this set has any overlap with `other`.
-    #[inline]
-    pub const fn intersects(self, other: Self) -> bool {
-        self.0 & other.0 != 0
-    }
-
-    /// Check if this set contains any kinds not present in `other`.
-    #[inline]
-    pub const fn has_any_not_in(self, other: Self) -> bool {
-        self.0 & !other.0 != 0
-    }
-
-    /// Return a new set with `kind` added.
-    #[inline]
-    pub const fn with(self, kind: ModifierKind) -> Self {
-        Self(self.0 | (1 << (kind as u8)))
-    }
-
-    /// Return a new set with `kind` removed.
-    #[inline]
-    pub const fn without(self, kind: ModifierKind) -> Self {
-        Self(self.0 & !(1 << (kind as u8)))
-    }
-
-    /// Count how many [`ModifierKind`]s are in this set.
-    #[inline]
-    pub const fn count(self) -> usize {
-        self.0.count_ones() as usize
-    }
-
-    /// Iterate over all present [`ModifierKind`]s.
-    pub fn iter(self) -> impl Iterator<Item = ModifierKind> {
-        let mut remaining = self.0;
-        iter::from_fn(move || {
-            // Exit if there are no more bits set
-            let bits = NonZeroU16::new(remaining)?;
-            // Get the index of the next set bit
-            let bit = bits.trailing_zeros();
-            // Unset the bit
-            remaining &= remaining - 1;
-
-            // SAFETY: All other methods ensure that only bits for valid `ModifierKind`s are set
-            let kind = unsafe { ModifierKind::from_usize_unchecked(bit as usize) };
-            Some(kind)
-        })
-    }
-
-    fn accessibility(self) -> Option<TSAccessibility> {
-        if self.contains(ModifierKind::Public) {
-            return Some(TSAccessibility::Public);
-        }
-        if self.contains(ModifierKind::Protected) {
-            return Some(TSAccessibility::Protected);
-        }
-        if self.contains(ModifierKind::Private) {
-            return Some(TSAccessibility::Private);
-        }
-        None
-    }
-}
-
-impl Display for ModifierKinds {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        for (i, kind) in self.iter().enumerate() {
-            if i != 0 {
-                f.write_str(", ")?;
-            }
-            f.write_str(kind.as_str())?;
-        }
-        Ok(())
-    }
-}
-
-impl Debug for ModifierKinds {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_list().entries(self.iter()).finish()
-    }
-}
-
 #[derive(Debug)]
 pub struct Modifier {
     pub span: Span,
@@ -217,10 +102,6 @@ impl Modifiers {
         }
     }
 
-    pub fn accessibility(&self) -> Option<TSAccessibility> {
-        self.kinds.accessibility()
-    }
-
     #[inline]
     pub fn contains_async(&self) -> bool {
         self.kinds.contains(ModifierKind::Async)
@@ -249,6 +130,19 @@ impl Modifiers {
     #[inline]
     pub fn contains_override(&self) -> bool {
         self.kinds.contains(ModifierKind::Override)
+    }
+
+    pub fn accessibility(&self) -> Option<TSAccessibility> {
+        if self.kinds.contains(ModifierKind::Public) {
+            return Some(TSAccessibility::Public);
+        }
+        if self.kinds.contains(ModifierKind::Protected) {
+            return Some(TSAccessibility::Protected);
+        }
+        if self.kinds.contains(ModifierKind::Private) {
+            return Some(TSAccessibility::Private);
+        }
+        None
     }
 }
 
@@ -367,6 +261,108 @@ impl TryFrom<Kind> for ModifierKind {
 impl Display for ModifierKind {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.as_str())
+    }
+}
+
+/// A set of modifier kinds, stored as a bitfield.
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub struct ModifierKinds(u16);
+
+impl ModifierKinds {
+    /// Create a set from an array of modifier kinds.
+    #[inline]
+    pub const fn new<const N: usize>(kinds: [ModifierKind; N]) -> Self {
+        let mut out = Self::none();
+        let mut i = 0;
+        while i < N {
+            out = out.with(kinds[i]);
+            i += 1;
+        }
+        out
+    }
+
+    /// Create a set containing all modifier kinds EXCEPT the ones listed.
+    #[inline]
+    pub const fn all_except<const N: usize>(kinds: [ModifierKind; N]) -> Self {
+        const ALL: ModifierKinds = ModifierKinds::new(ModifierKind::VARIANTS);
+        Self(Self::new(kinds).0 ^ ALL.0)
+    }
+
+    /// Empty set (no modifiers).
+    #[inline]
+    pub const fn none() -> Self {
+        Self(0)
+    }
+
+    /// Check if `kind` is present in this set.
+    #[inline]
+    pub const fn contains(self, kind: ModifierKind) -> bool {
+        self.0 & (1 << (kind as u8)) != 0
+    }
+
+    /// Check if this set has any overlap with `other`.
+    #[inline]
+    pub const fn intersects(self, other: Self) -> bool {
+        self.0 & other.0 != 0
+    }
+
+    /// Check if this set contains any kinds not present in `other`.
+    #[inline]
+    pub const fn has_any_not_in(self, other: Self) -> bool {
+        self.0 & !other.0 != 0
+    }
+
+    /// Return a new set with `kind` added.
+    #[inline]
+    pub const fn with(self, kind: ModifierKind) -> Self {
+        Self(self.0 | (1 << (kind as u8)))
+    }
+
+    /// Return a new set with `kind` removed.
+    #[inline]
+    pub const fn without(self, kind: ModifierKind) -> Self {
+        Self(self.0 & !(1 << (kind as u8)))
+    }
+
+    /// Count how many [`ModifierKind`]s are in this set.
+    #[inline]
+    pub const fn count(self) -> usize {
+        self.0.count_ones() as usize
+    }
+
+    /// Iterate over all present [`ModifierKind`]s.
+    pub fn iter(self) -> impl Iterator<Item = ModifierKind> {
+        let mut remaining = self.0;
+        iter::from_fn(move || {
+            // Exit if there are no more bits set
+            let bits = NonZeroU16::new(remaining)?;
+            // Get the index of the next set bit
+            let bit = bits.trailing_zeros();
+            // Unset the bit
+            remaining &= remaining - 1;
+
+            // SAFETY: All other methods ensure that only bits for valid `ModifierKind`s are set
+            let kind = unsafe { ModifierKind::from_usize_unchecked(bit as usize) };
+            Some(kind)
+        })
+    }
+}
+
+impl Display for ModifierKinds {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        for (i, kind) in self.iter().enumerate() {
+            if i != 0 {
+                f.write_str(", ")?;
+            }
+            f.write_str(kind.as_str())?;
+        }
+        Ok(())
+    }
+}
+
+impl Debug for ModifierKinds {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_list().entries(self.iter()).finish()
     }
 }
 
