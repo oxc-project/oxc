@@ -6,7 +6,7 @@ use super::FunctionKind;
 use crate::{
     Context, ParserConfig as Config, ParserImpl, StatementContext, diagnostics,
     lexer::Kind,
-    modifiers::{ModifierFlags, ModifierKind, Modifiers},
+    modifiers::{ModifierKind, ModifierKinds, Modifiers},
 };
 
 impl FunctionKind {
@@ -158,7 +158,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let modifiers = self.parse_modifiers(false, false);
         if self.is_ts {
             let allowed_modifiers = if func_kind == FunctionKind::Constructor {
-                ModifierFlags::new([
+                ModifierKinds::new([
                     ModifierKind::Public,
                     ModifierKind::Private,
                     ModifierKind::Protected,
@@ -166,7 +166,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     ModifierKind::Readonly,
                 ])
             } else {
-                ModifierFlags::empty()
+                ModifierKinds::empty()
             };
             self.verify_modifiers(
                 &modifiers,
@@ -177,7 +177,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         } else {
             self.verify_modifiers(
                 &modifiers,
-                ModifierFlags::empty(),
+                ModifierKinds::empty(),
                 true,
                 diagnostics::parameter_modifiers_in_ts,
             );
@@ -293,7 +293,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
         self.verify_modifiers(
             modifiers,
-            ModifierFlags::new([ModifierKind::Declare, ModifierKind::Async]),
+            ModifierKinds::new([ModifierKind::Declare, ModifierKind::Async]),
             true,
             diagnostics::modifier_cannot_be_used_here,
         );

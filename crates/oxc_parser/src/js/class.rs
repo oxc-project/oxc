@@ -6,7 +6,7 @@ use oxc_span::{GetSpan, Span};
 use crate::{
     Context, ParserConfig as Config, ParserImpl, StatementContext, diagnostics,
     lexer::Kind,
-    modifiers::{ModifierFlags, ModifierKind, Modifiers},
+    modifiers::{ModifierKind, ModifierKinds, Modifiers},
 };
 
 use super::FunctionKind;
@@ -97,7 +97,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         self.verify_modifiers(
             modifiers,
-            ModifierFlags::new([ModifierKind::Declare, ModifierKind::Abstract]),
+            ModifierKinds::new([ModifierKind::Declare, ModifierKind::Abstract]),
             true,
             diagnostics::modifier_cannot_be_used_here,
         );
@@ -238,7 +238,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
             self.verify_modifiers(
                 &modifiers,
-                ModifierFlags::empty(),
+                ModifierKinds::empty(),
                 false,
                 diagnostics::modifiers_cannot_appear_here,
             );
@@ -247,7 +247,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         self.verify_modifiers(
             &modifiers,
-            ModifierFlags::all_except([ModifierKind::Export]),
+            ModifierKinds::all_except([ModifierKind::Export]),
             false,
             diagnostics::cannot_appear_on_class_elements,
         );
@@ -295,7 +295,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             // No modifiers except `static` and `readonly` are valid here
             self.verify_modifiers(
                 &modifiers,
-                ModifierFlags::new([ModifierKind::Readonly, ModifierKind::Static]),
+                ModifierKinds::new([ModifierKind::Readonly, ModifierKind::Static]),
                 true,
                 diagnostics::cannot_appear_on_an_index_signature,
             );
@@ -323,7 +323,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     fn parse_class_element_name(&mut self, modifiers: &Modifiers<'a>) -> (PropertyKey<'a>, bool) {
         self.verify_modifiers(
             modifiers,
-            ModifierFlags::all_except([ModifierKind::Const, ModifierKind::In, ModifierKind::Out]),
+            ModifierKinds::all_except([ModifierKind::Const, ModifierKind::In, ModifierKind::Out]),
             false,
             |modifier, _| {
                 match modifier.kind {
@@ -343,7 +343,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 if self.is_ts {
                     self.verify_modifiers(
                         modifiers,
-                        ModifierFlags::all_except([
+                        ModifierKinds::all_except([
                             ModifierKind::Public,
                             ModifierKind::Private,
                             ModifierKind::Protected,
@@ -390,7 +390,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         };
         self.verify_modifiers(
             modifiers,
-            ModifierFlags::new([
+            ModifierKinds::new([
                 ModifierKind::Public,
                 ModifierKind::Private,
                 ModifierKind::Protected,
@@ -447,7 +447,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.check_method_definition_accessor(&method_definition);
         self.verify_modifiers(
             modifiers,
-            ModifierFlags::all_except([ModifierKind::Async, ModifierKind::Declare]),
+            ModifierKinds::all_except([ModifierKind::Async, ModifierKind::Declare]),
             false,
             diagnostics::modifier_cannot_be_used_here,
         );
@@ -527,10 +527,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if generator || matches!(self.cur_kind(), Kind::LParen | Kind::LAngle) {
             self.verify_modifiers(
                 modifiers,
-                ModifierFlags::all_except([ModifierKind::Declare, ModifierKind::Readonly]),
+                ModifierKinds::all_except([ModifierKind::Declare, ModifierKind::Readonly]),
                 false,
                 |modifier, _| {
-                    const ALLOWED: ModifierFlags = ModifierFlags::new([
+                    const ALLOWED: ModifierKinds = ModifierKinds::new([
                         ModifierKind::Public,
                         ModifierKind::Private,
                         ModifierKind::Protected,

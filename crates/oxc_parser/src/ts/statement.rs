@@ -6,7 +6,7 @@ use crate::{
     Context, ParserConfig as Config, ParserImpl, diagnostics,
     js::{FunctionKind, VariableDeclarationParent},
     lexer::Kind,
-    modifiers::{ModifierFlags, ModifierKind, Modifiers},
+    modifiers::{ModifierKind, ModifierKinds, Modifiers},
 };
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
@@ -29,7 +29,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let span = self.end_span(span);
         self.verify_modifiers(
             modifiers,
-            ModifierFlags::new([ModifierKind::Declare, ModifierKind::Const]),
+            ModifierKinds::new([ModifierKind::Declare, ModifierKind::Const]),
             true,
             diagnostics::modifier_cannot_be_used_here,
         );
@@ -163,7 +163,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         self.verify_modifiers(
             modifiers,
-            ModifierFlags::new([ModifierKind::Declare]),
+            ModifierKinds::new([ModifierKind::Declare]),
             true,
             diagnostics::modifier_cannot_be_used_here,
         );
@@ -185,7 +185,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let extends = extends.unwrap_or_else(|| self.ast.vec());
         self.verify_modifiers(
             modifiers,
-            ModifierFlags::new([ModifierKind::Declare]),
+            ModifierKinds::new([ModifierKind::Declare]),
             true,
             diagnostics::modifier_cannot_be_used_here,
         );
@@ -239,7 +239,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if self.is_index_signature() {
             self.verify_modifiers(
                 &modifiers,
-                ModifierFlags::new([ModifierKind::Readonly]),
+                ModifierKinds::new([ModifierKind::Readonly]),
                 true,
                 diagnostics::cannot_appear_on_an_index_signature,
             );
@@ -250,7 +250,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         self.verify_modifiers(
             &modifiers,
-            ModifierFlags::new([ModifierKind::Readonly]),
+            ModifierKinds::new([ModifierKind::Readonly]),
             true,
             diagnostics::cannot_appear_on_a_type_member,
         );
@@ -329,7 +329,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         };
         self.verify_modifiers(
             modifiers,
-            ModifierFlags::new([ModifierKind::Declare]),
+            ModifierKinds::new([ModifierKind::Declare]),
             true,
             diagnostics::modifier_cannot_be_used_here,
         );
@@ -369,7 +369,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         };
         self.verify_modifiers(
             modifiers,
-            ModifierFlags::new([ModifierKind::Declare]),
+            ModifierKinds::new([ModifierKind::Declare]),
             true,
             diagnostics::modifier_cannot_be_used_here,
         );
@@ -395,7 +395,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         self.verify_modifiers(
             modifiers,
-            ModifierFlags::new([ModifierKind::Declare]),
+            ModifierKinds::new([ModifierKind::Declare]),
             true,
             diagnostics::modifier_cannot_be_used_here,
         );
@@ -440,7 +440,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 self.bump_any();
                 self.verify_modifiers(
                     modifiers,
-                    ModifierFlags::new([ModifierKind::Declare]),
+                    ModifierKinds::new([ModifierKind::Declare]),
                     true,
                     diagnostics::modifier_cannot_be_used_here,
                 );

@@ -6,7 +6,7 @@ use oxc_syntax::operator::UnaryOperator;
 use crate::{
     Context, ParserConfig as Config, ParserImpl, diagnostics,
     lexer::Kind,
-    modifiers::{ModifierFlags, ModifierKind, Modifiers},
+    modifiers::{ModifierKind, ModifierKinds, Modifiers},
 };
 
 use super::{super::js::FunctionKind, statement::CallOrConstructorSignature};
@@ -204,7 +204,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let modifiers = self.parse_modifiers(true, false);
         self.verify_modifiers(
             &modifiers,
-            ModifierFlags::new([ModifierKind::In, ModifierKind::Out, ModifierKind::Const]),
+            ModifierKinds::new([ModifierKind::In, ModifierKind::Out, ModifierKind::Const]),
             false, // `in` and `out` are only allowed on a type parameter of a class, interface or type alias
             diagnostics::cannot_appear_on_a_type_parameter,
         );
@@ -1427,7 +1427,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if kind == Kind::LParen || kind == Kind::LAngle {
             self.verify_modifiers(
                 modifiers,
-                ModifierFlags::all_except([ModifierKind::Readonly]),
+                ModifierKinds::all_except([ModifierKind::Readonly]),
                 false,
                 diagnostics::modifier_only_on_property_declaration_or_index_signature,
             );

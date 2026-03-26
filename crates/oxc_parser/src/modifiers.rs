@@ -14,25 +14,25 @@ use crate::{ParserConfig as Config, ParserImpl, diagnostics, lexer::Kind};
 
 /// A set of modifier kinds, stored as a bitfield.
 #[derive(Clone, Copy, PartialEq, Eq)]
-pub struct ModifierFlags(u16);
+pub struct ModifierKinds(u16);
 
-impl ModifierFlags {
+impl ModifierKinds {
     /// Create a set from an array of modifier kinds.
     #[inline]
     pub const fn new<const N: usize>(kinds: [ModifierKind; N]) -> Self {
-        let mut flags = Self::empty();
+        let mut out = Self::empty();
         let mut i = 0;
         while i < N {
-            flags = flags.with(kinds[i]);
+            out = out.with(kinds[i]);
             i += 1;
         }
-        flags
+        out
     }
 
     /// Create a set containing all modifier kinds EXCEPT the ones listed.
     #[inline]
     pub const fn all_except<const N: usize>(kinds: [ModifierKind; N]) -> Self {
-        const ALL: ModifierFlags = ModifierFlags::new(ModifierKind::VARIANTS);
+        const ALL: ModifierKinds = ModifierKinds::new(ModifierKind::VARIANTS);
         Self(Self::new(kinds).0 ^ ALL.0)
     }
 
@@ -109,7 +109,7 @@ impl ModifierFlags {
     }
 }
 
-impl Display for ModifierFlags {
+impl Display for ModifierKinds {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         for (i, kind) in self.iter().enumerate() {
             if i != 0 {
@@ -121,7 +121,7 @@ impl Display for ModifierFlags {
     }
 }
 
-impl Debug for ModifierFlags {
+impl Debug for ModifierKinds {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_list().entries(self.iter()).finish()
     }
@@ -159,7 +159,7 @@ pub struct Modifiers<'a> {
     /// Bitflag representation of modifier kinds stored in [`Self::modifiers`].
     /// Pre-computed to save CPU cycles on [`Self::contains`] checks (`O(1)`
     /// bitflag intersection vs `O(n)` linear search).
-    flags: ModifierFlags,
+    kinds: ModifierKinds,
 }
 
 impl Default for Modifiers<'_> {
@@ -172,35 +172,35 @@ impl<'a> Modifiers<'a> {
     /// Create a new set of modifiers
     ///
     /// # Invariants
-    /// `flags` must correctly reflect the [`ModifierKind`]s within
-    ///  `modifiers`. E.g., if `modifiers` is empty, then so is `flags``.
+    /// `kinds` must correctly reflect the [`ModifierKind`]s within
+    ///  `modifiers`. e.g., if `modifiers` is empty, then so is `kinds`.
     #[must_use]
-    pub(crate) fn new(modifiers: Option<Vec<'a, Modifier>>, flags: ModifierFlags) -> Self {
-        // Debug check that `modifiers` and `flags` are consistent with each other
+    pub(crate) fn new(modifiers: Option<Vec<'a, Modifier>>, kinds: ModifierKinds) -> Self {
+        // Debug check that `modifiers` and `kinds` are consistent with each other
         #[cfg(debug_assertions)]
         {
             if let Some(modifiers) = &modifiers {
                 assert!(!modifiers.is_empty());
 
-                let mut found_flags = ModifierFlags::empty();
+                let mut found_kinds = ModifierKinds::empty();
                 for modifier in modifiers {
-                    found_flags = found_flags.with(modifier.kind);
+                    found_kinds = found_kinds.with(modifier.kind);
                 }
-                assert_eq!(found_flags, flags);
+                assert_eq!(found_kinds, kinds);
             } else {
-                assert_eq!(flags, ModifierFlags::empty());
+                assert_eq!(kinds, ModifierKinds::empty());
             }
         }
 
-        Self { modifiers, flags }
+        Self { modifiers, kinds }
     }
 
     pub fn empty() -> Self {
-        Self { modifiers: None, flags: ModifierFlags::empty() }
+        Self { modifiers: None, kinds: ModifierKinds::empty() }
     }
 
     pub fn contains(&self, target: ModifierKind) -> bool {
-        self.flags.contains(target)
+        self.kinds.contains(target)
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &Modifier> + '_ {
@@ -208,37 +208,37 @@ impl<'a> Modifiers<'a> {
     }
 
     pub fn accessibility(&self) -> Option<TSAccessibility> {
-        self.flags.accessibility()
+        self.kinds.accessibility()
     }
 
     #[inline]
     pub fn contains_async(&self) -> bool {
-        self.flags.contains(ModifierKind::Async)
+        self.kinds.contains(ModifierKind::Async)
     }
 
     #[inline]
     pub fn contains_const(&self) -> bool {
-        self.flags.contains(ModifierKind::Const)
+        self.kinds.contains(ModifierKind::Const)
     }
 
     #[inline]
     pub fn contains_declare(&self) -> bool {
-        self.flags.contains(ModifierKind::Declare)
+        self.kinds.contains(ModifierKind::Declare)
     }
 
     #[inline]
     pub fn contains_abstract(&self) -> bool {
-        self.flags.contains(ModifierKind::Abstract)
+        self.kinds.contains(ModifierKind::Abstract)
     }
 
     #[inline]
     pub fn contains_readonly(&self) -> bool {
-        self.flags.contains(ModifierKind::Readonly)
+        self.kinds.contains(ModifierKind::Readonly)
     }
 
     #[inline]
     pub fn contains_override(&self) -> bool {
-        self.flags.contains(ModifierKind::Override)
+        self.kinds.contains(ModifierKind::Override)
     }
 }
 
@@ -337,18 +337,18 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if !self.at_modifier() {
             return Modifiers::empty();
         }
-        let mut flags = ModifierFlags::empty();
+        let mut kinds = ModifierKinds::empty();
         let mut modifiers = self.ast.vec();
         while self.at_modifier() {
             let span = self.start_span();
             let kind = self.cur_kind();
             self.bump_any();
             let modifier = self.modifier(kind, self.end_span(span));
-            self.check_modifier(flags, &modifier);
-            flags = flags.with(modifier.kind);
+            self.check_modifier(kinds, &modifier);
+            kinds = kinds.with(modifier.kind);
             modifiers.push(modifier);
         }
-        Modifiers::new(Some(modifiers), flags)
+        Modifiers::new(Some(modifiers), kinds)
     }
 
     fn at_modifier(&mut self) -> bool {
@@ -393,7 +393,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let mut has_seen_static_modifier = false;
 
         let mut modifiers = None;
-        let mut modifier_flags = ModifierFlags::empty();
+        let mut modifier_kinds = ModifierKinds::empty();
 
         while let Some(modifier) = self.try_parse_modifier(
             has_seen_static_modifier,
@@ -403,12 +403,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             if modifier.kind == ModifierKind::Static {
                 has_seen_static_modifier = true;
             }
-            self.check_modifier(modifier_flags, &modifier);
-            modifier_flags = modifier_flags.with(modifier.kind);
+            self.check_modifier(modifier_kinds, &modifier);
+            modifier_kinds = modifier_kinds.with(modifier.kind);
             modifiers.get_or_insert_with(|| self.ast.vec()).push(modifier);
         }
 
-        Modifiers::new(modifiers, modifier_flags)
+        Modifiers::new(modifiers, modifier_kinds)
     }
 
     fn try_parse_modifier(
@@ -500,41 +500,41 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         kind == Kind::LBrack || kind == Kind::PrivateIdentifier || kind.is_literal_property_name()
     }
 
-    fn check_modifier(&mut self, flags: ModifierFlags, modifier: &Modifier) {
+    fn check_modifier(&mut self, kinds: ModifierKinds, modifier: &Modifier) {
         match modifier.kind {
             ModifierKind::Public | ModifierKind::Private | ModifierKind::Protected => {
-                if flags.intersects(ModifierFlags::new([
+                if kinds.intersects(ModifierKinds::new([
                     ModifierKind::Public,
                     ModifierKind::Private,
                     ModifierKind::Protected,
                 ])) {
                     self.error(diagnostics::accessibility_modifier_already_seen(modifier));
-                } else if flags.contains(ModifierKind::Override) {
+                } else if kinds.contains(ModifierKind::Override) {
                     self.error(diagnostics::modifier_must_precede_other_modifier(
                         modifier,
                         ModifierKind::Override,
                     ));
-                } else if flags.contains(ModifierKind::Static) {
+                } else if kinds.contains(ModifierKind::Static) {
                     self.error(diagnostics::modifier_must_precede_other_modifier(
                         modifier,
                         ModifierKind::Static,
                     ));
-                } else if flags.contains(ModifierKind::Accessor) {
+                } else if kinds.contains(ModifierKind::Accessor) {
                     self.error(diagnostics::modifier_must_precede_other_modifier(
                         modifier,
                         ModifierKind::Accessor,
                     ));
-                } else if flags.contains(ModifierKind::Readonly) {
+                } else if kinds.contains(ModifierKind::Readonly) {
                     self.error(diagnostics::modifier_must_precede_other_modifier(
                         modifier,
                         ModifierKind::Readonly,
                     ));
-                } else if flags.contains(ModifierKind::Async) {
+                } else if kinds.contains(ModifierKind::Async) {
                     self.error(diagnostics::modifier_must_precede_other_modifier(
                         modifier,
                         ModifierKind::Async,
                     ));
-                } else if flags.contains(ModifierKind::Abstract) {
+                } else if kinds.contains(ModifierKind::Abstract) {
                     self.error(diagnostics::modifier_must_precede_other_modifier(
                         modifier,
                         ModifierKind::Abstract,
@@ -542,24 +542,24 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 }
             }
             ModifierKind::Static => {
-                if flags.contains(ModifierKind::Static) {
+                if kinds.contains(ModifierKind::Static) {
                     self.error(diagnostics::modifier_already_seen(modifier));
-                } else if flags.contains(ModifierKind::Readonly) {
+                } else if kinds.contains(ModifierKind::Readonly) {
                     self.error(diagnostics::modifier_must_precede_other_modifier(
                         modifier,
                         ModifierKind::Readonly,
                     ));
-                } else if flags.contains(ModifierKind::Async) {
+                } else if kinds.contains(ModifierKind::Async) {
                     self.error(diagnostics::modifier_must_precede_other_modifier(
                         modifier,
                         ModifierKind::Async,
                     ));
-                } else if flags.contains(ModifierKind::Accessor) {
+                } else if kinds.contains(ModifierKind::Accessor) {
                     self.error(diagnostics::modifier_must_precede_other_modifier(
                         modifier,
                         ModifierKind::Accessor,
                     ));
-                } else if flags.contains(ModifierKind::Override) {
+                } else if kinds.contains(ModifierKind::Override) {
                     self.error(diagnostics::modifier_must_precede_other_modifier(
                         modifier,
                         ModifierKind::Override,
@@ -567,19 +567,19 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 }
             }
             ModifierKind::Override => {
-                if flags.contains(ModifierKind::Override) {
+                if kinds.contains(ModifierKind::Override) {
                     self.error(diagnostics::modifier_already_seen(modifier));
-                } else if flags.contains(ModifierKind::Readonly) {
+                } else if kinds.contains(ModifierKind::Readonly) {
                     self.error(diagnostics::modifier_must_precede_other_modifier(
                         modifier,
                         ModifierKind::Readonly,
                     ));
-                } else if flags.contains(ModifierKind::Accessor) {
+                } else if kinds.contains(ModifierKind::Accessor) {
                     self.error(diagnostics::modifier_must_precede_other_modifier(
                         modifier,
                         ModifierKind::Accessor,
                     ));
-                } else if flags.contains(ModifierKind::Async) {
+                } else if kinds.contains(ModifierKind::Async) {
                     self.error(diagnostics::modifier_must_precede_other_modifier(
                         modifier,
                         ModifierKind::Async,
@@ -587,14 +587,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 }
             }
             ModifierKind::Abstract => {
-                if flags.contains(ModifierKind::Abstract) {
+                if kinds.contains(ModifierKind::Abstract) {
                     self.error(diagnostics::modifier_already_seen(modifier));
-                } else if flags.contains(ModifierKind::Override) {
+                } else if kinds.contains(ModifierKind::Override) {
                     self.error(diagnostics::modifier_must_precede_other_modifier(
                         modifier,
                         ModifierKind::Override,
                     ));
-                } else if flags.contains(ModifierKind::Accessor) {
+                } else if kinds.contains(ModifierKind::Accessor) {
                     self.error(diagnostics::modifier_must_precede_other_modifier(
                         modifier,
                         ModifierKind::Accessor,
@@ -602,19 +602,19 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 }
             }
             ModifierKind::Export => {
-                if flags.contains(ModifierKind::Export) {
+                if kinds.contains(ModifierKind::Export) {
                     self.error(diagnostics::modifier_already_seen(modifier));
-                } else if flags.contains(ModifierKind::Declare) {
+                } else if kinds.contains(ModifierKind::Declare) {
                     self.error(diagnostics::modifier_must_precede_other_modifier(
                         modifier,
                         ModifierKind::Declare,
                     ));
-                } else if flags.contains(ModifierKind::Abstract) {
+                } else if kinds.contains(ModifierKind::Abstract) {
                     self.error(diagnostics::modifier_must_precede_other_modifier(
                         modifier,
                         ModifierKind::Abstract,
                     ));
-                } else if flags.contains(ModifierKind::Async) {
+                } else if kinds.contains(ModifierKind::Async) {
                     self.error(diagnostics::modifier_must_precede_other_modifier(
                         modifier,
                         ModifierKind::Async,
@@ -622,7 +622,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 }
             }
             _ => {
-                if flags.contains(modifier.kind) {
+                if kinds.contains(modifier.kind) {
                     self.error(diagnostics::modifier_already_seen(modifier));
                 }
             }
@@ -633,15 +633,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn verify_modifiers<F>(
         &mut self,
         modifiers: &Modifiers<'a>,
-        allowed: ModifierFlags,
+        allowed: ModifierKinds,
         // If `true`, `allowed` is exact match; if `false`, `allowed` is a superset.
         // Used for whether to pass `allowed` to `create_diagnostic` function.
         strict: bool,
         create_diagnostic: F,
     ) where
-        F: Fn(&Modifier, Option<ModifierFlags>) -> OxcDiagnostic,
+        F: Fn(&Modifier, Option<ModifierKinds>) -> OxcDiagnostic,
     {
-        if modifiers.flags.has_any_not_in(allowed) {
+        if modifiers.kinds.has_any_not_in(allowed) {
             // Invalid modifiers are rare, so handle this case in `#[cold]` function.
             // Also `#[inline(never)]` to help `verify_modifiers` to get inlined.
             #[cold]
@@ -649,11 +649,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             fn report<'a, C: Config, F>(
                 parser: &mut ParserImpl<'a, C>,
                 modifiers: &Modifiers<'a>,
-                allowed: ModifierFlags,
+                allowed: ModifierKinds,
                 strict: bool,
                 create_diagnostic: F,
             ) where
-                F: Fn(&Modifier, Option<ModifierFlags>) -> OxcDiagnostic,
+                F: Fn(&Modifier, Option<ModifierKinds>) -> OxcDiagnostic,
             {
                 let mut found_invalid_modifier = false;
                 for modifier in modifiers.iter() {
