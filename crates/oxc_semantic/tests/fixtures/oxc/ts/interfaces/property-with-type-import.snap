@@ -43,13 +43,6 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/ts/interfaces/property-with-t
             "name": "X",
             "node_id": 13,
             "scope_id": 2
-          },
-          {
-            "flags": "ReferenceFlags(Type)",
-            "id": 2,
-            "name": "X",
-            "node_id": 23,
-            "scope_id": 3
           }
         ]
       },

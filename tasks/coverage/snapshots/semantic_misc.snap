@@ -1,6 +1,6 @@
 semantic_misc Summary:
 AST Parsed     : 65/65 (100.00%)
-Positive Passed: 51/65 (78.46%)
+Positive Passed: 42/65 (64.62%)
 semantic Error: tasks/coverage/misc/pass/conditional-arrow-alternate-return-type.ts
 Unresolved references mismatch:
 after transform: ["Pick", "Record"]
@@ -11,6 +11,61 @@ Bindings mismatch:
 after transform: ScopeId(0): ["private"]
 rebuilt        : ScopeId(0): []
 
+semantic Error: tasks/coverage/misc/pass/let-member-expression.cjs
+Reference flags mismatch for "let":
+after transform: ReferenceId(4): ReferenceFlags(Read | MemberWriteTarget)
+rebuilt        : ReferenceId(5): ReferenceFlags(Read)
+Reference flags mismatch for "_let":
+after transform: ReferenceId(8): ReferenceFlags(Read)
+rebuilt        : ReferenceId(7): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "let":
+after transform: ReferenceId(5): ReferenceFlags(Read | MemberWriteTarget)
+rebuilt        : ReferenceId(9): ReferenceFlags(Read)
+Reference flags mismatch for "_let2":
+after transform: ReferenceId(11): ReferenceFlags(Read)
+rebuilt        : ReferenceId(11): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "let":
+after transform: ReferenceId(6): ReferenceFlags(Read | MemberWriteTarget)
+rebuilt        : ReferenceId(13): ReferenceFlags(Read)
+Reference flags mismatch for "_let3":
+after transform: ReferenceId(14): ReferenceFlags(Read)
+rebuilt        : ReferenceId(15): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "let":
+after transform: ReferenceId(7): ReferenceFlags(Read | MemberWriteTarget)
+rebuilt        : ReferenceId(17): ReferenceFlags(Read)
+Reference flags mismatch for "_let4":
+after transform: ReferenceId(17): ReferenceFlags(Read)
+rebuilt        : ReferenceId(19): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/misc/pass/oxc-10981.ts
+Reference flags mismatch for "_usingCtx":
+after transform: ReferenceId(3): ReferenceFlags(Read)
+rebuilt        : ReferenceId(2): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx":
+after transform: ReferenceId(5): ReferenceFlags(Read)
+rebuilt        : ReferenceId(4): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx":
+after transform: ReferenceId(7): ReferenceFlags(Read)
+rebuilt        : ReferenceId(6): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx3":
+after transform: ReferenceId(9): ReferenceFlags(Read)
+rebuilt        : ReferenceId(9): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx3":
+after transform: ReferenceId(11): ReferenceFlags(Read)
+rebuilt        : ReferenceId(11): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx3":
+after transform: ReferenceId(13): ReferenceFlags(Read)
+rebuilt        : ReferenceId(13): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx4":
+after transform: ReferenceId(15): ReferenceFlags(Read)
+rebuilt        : ReferenceId(16): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx4":
+after transform: ReferenceId(17): ReferenceFlags(Read)
+rebuilt        : ReferenceId(18): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx4":
+after transform: ReferenceId(19): ReferenceFlags(Read)
+rebuilt        : ReferenceId(20): ReferenceFlags(Read | MemberWriteTarget)
+
 semantic Error: tasks/coverage/misc/pass/oxc-11593.ts
 Scope parent mismatch:
 after transform: ScopeId(2): Some(ScopeId(1))
@@ -18,6 +73,9 @@ rebuilt        : ScopeId(5): Some(ScopeId(0))
 Scope parent mismatch:
 after transform: ScopeId(4): Some(ScopeId(1))
 rebuilt        : ScopeId(7): Some(ScopeId(0))
+Reference flags mismatch for "C":
+after transform: ReferenceId(16): ReferenceFlags(Read)
+rebuilt        : ReferenceId(20): ReferenceFlags(Read | MemberWriteTarget)
 
 semantic Error: tasks/coverage/misc/pass/oxc-1288.ts
 Bindings mismatch:
@@ -102,6 +160,333 @@ rebuilt        : SymbolId(292): Span { start: 0, end: 0 }
 Symbol span mismatch for "Inner4":
 after transform: SymbolId(328): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(293): Span { start: 12166, end: 12172 }
+Reference flags mismatch for "_defineProperty":
+after transform: ReferenceId(31): ReferenceFlags(Read)
+rebuilt        : ReferenceId(9): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_defineProperty":
+after transform: ReferenceId(32): ReferenceFlags(Read)
+rebuilt        : ReferenceId(10): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_defineProperty":
+after transform: ReferenceId(33): ReferenceFlags(Read)
+rebuilt        : ReferenceId(11): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_defineProperty":
+after transform: ReferenceId(34): ReferenceFlags(Read)
+rebuilt        : ReferenceId(12): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_classPrivateFieldInitSpec":
+after transform: ReferenceId(36): ReferenceFlags(Read)
+rebuilt        : ReferenceId(13): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_classPrivateFieldInitSpec":
+after transform: ReferenceId(38): ReferenceFlags(Read)
+rebuilt        : ReferenceId(15): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_classPrivateFieldInitSpec":
+after transform: ReferenceId(40): ReferenceFlags(Read)
+rebuilt        : ReferenceId(17): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_classPrivateFieldInitSpec":
+after transform: ReferenceId(42): ReferenceFlags(Read)
+rebuilt        : ReferenceId(19): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_assertClassBrand":
+after transform: ReferenceId(45): ReferenceFlags(Read)
+rebuilt        : ReferenceId(21): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_access1_accessor_storage2":
+after transform: ReferenceId(46): ReferenceFlags(Read)
+rebuilt        : ReferenceId(24): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_assertClassBrand":
+after transform: ReferenceId(51): ReferenceFlags(Read)
+rebuilt        : ReferenceId(28): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_access2_accessor_storage2":
+after transform: ReferenceId(52): ReferenceFlags(Read)
+rebuilt        : ReferenceId(31): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_assertClassBrand":
+after transform: ReferenceId(57): ReferenceFlags(Read)
+rebuilt        : ReferenceId(35): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_access3_accessor_storage2":
+after transform: ReferenceId(58): ReferenceFlags(Read)
+rebuilt        : ReferenceId(38): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_assertClassBrand":
+after transform: ReferenceId(63): ReferenceFlags(Read)
+rebuilt        : ReferenceId(42): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_access4_accessor_storage2":
+after transform: ReferenceId(64): ReferenceFlags(Read)
+rebuilt        : ReferenceId(45): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_access1_accessor_storage2":
+after transform: ReferenceId(67): ReferenceFlags(Read)
+rebuilt        : ReferenceId(49): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_access1_accessor_storage2":
+after transform: ReferenceId(68): ReferenceFlags(Read)
+rebuilt        : ReferenceId(50): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_access2_accessor_storage2":
+after transform: ReferenceId(69): ReferenceFlags(Read)
+rebuilt        : ReferenceId(52): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_access2_accessor_storage2":
+after transform: ReferenceId(70): ReferenceFlags(Read)
+rebuilt        : ReferenceId(53): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_access3_accessor_storage2":
+after transform: ReferenceId(71): ReferenceFlags(Read)
+rebuilt        : ReferenceId(55): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_access3_accessor_storage2":
+after transform: ReferenceId(72): ReferenceFlags(Read)
+rebuilt        : ReferenceId(56): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_access4_accessor_storage2":
+after transform: ReferenceId(73): ReferenceFlags(Read)
+rebuilt        : ReferenceId(58): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_access4_accessor_storage2":
+after transform: ReferenceId(74): ReferenceFlags(Read)
+rebuilt        : ReferenceId(59): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_superPropGet":
+after transform: ReferenceId(97): ReferenceFlags(Read)
+rebuilt        : ReferenceId(87): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_superPropGet":
+after transform: ReferenceId(106): ReferenceFlags(Read)
+rebuilt        : ReferenceId(96): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_defineProperty":
+after transform: ReferenceId(126): ReferenceFlags(Read)
+rebuilt        : ReferenceId(125): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "Inner5":
+after transform: ReferenceId(156): ReferenceFlags(Read)
+rebuilt        : ReferenceId(151): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_assertClassBrand":
+after transform: ReferenceId(179): ReferenceFlags(Read)
+rebuilt        : ReferenceId(155): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_access_accessor_storage2":
+after transform: ReferenceId(182): ReferenceFlags(Read)
+rebuilt        : ReferenceId(158): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_access_accessor_storage2":
+after transform: ReferenceId(188): ReferenceFlags(Read)
+rebuilt        : ReferenceId(162): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_access_accessor_storage2":
+after transform: ReferenceId(191): ReferenceFlags(Read)
+rebuilt        : ReferenceId(163): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_decorateMetadata":
+after transform: ReferenceId(167): ReferenceFlags(Read)
+rebuilt        : ReferenceId(168): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "Inner6":
+after transform: ReferenceId(168): ReferenceFlags(Read)
+rebuilt        : ReferenceId(170): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_decorateMetadata":
+after transform: ReferenceId(171): ReferenceFlags(Read)
+rebuilt        : ReferenceId(172): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_decorateMetadata":
+after transform: ReferenceId(175): ReferenceFlags(Read)
+rebuilt        : ReferenceId(176): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "Inner6":
+after transform: ReferenceId(180): ReferenceFlags(Read)
+rebuilt        : ReferenceId(179): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_decorateMetadata":
+after transform: ReferenceId(186): ReferenceFlags(Read)
+rebuilt        : ReferenceId(181): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_decorateMetadata":
+after transform: ReferenceId(193): ReferenceFlags(Read)
+rebuilt        : ReferenceId(186): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "Inner6":
+after transform: ReferenceId(196): ReferenceFlags(Read)
+rebuilt        : ReferenceId(190): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_decorateMetadata":
+after transform: ReferenceId(199): ReferenceFlags(Read)
+rebuilt        : ReferenceId(192): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_defineProperty":
+after transform: ReferenceId(216): ReferenceFlags(Read)
+rebuilt        : ReferenceId(208): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_defineProperty":
+after transform: ReferenceId(208): ReferenceFlags(Read)
+rebuilt        : ReferenceId(229): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_defineProperty":
+after transform: ReferenceId(255): ReferenceFlags(Read)
+rebuilt        : ReferenceId(240): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "WeakMap":
+after transform: ReferenceId(407): ReferenceFlags(Read)
+rebuilt        : ReferenceId(261): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_defineProperty":
+after transform: ReferenceId(372): ReferenceFlags(Read)
+rebuilt        : ReferenceId(269): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_decorateMetadata":
+after transform: ReferenceId(383): ReferenceFlags(Read)
+rebuilt        : ReferenceId(290): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "Inner":
+after transform: ReferenceId(384): ReferenceFlags(Read)
+rebuilt        : ReferenceId(292): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_decorateMetadata":
+after transform: ReferenceId(387): ReferenceFlags(Read)
+rebuilt        : ReferenceId(294): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "Inner":
+after transform: ReferenceId(391): ReferenceFlags(Read)
+rebuilt        : ReferenceId(297): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_decorateMetadata":
+after transform: ReferenceId(396): ReferenceFlags(Read)
+rebuilt        : ReferenceId(299): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "Inner":
+after transform: ReferenceId(399): ReferenceFlags(Read)
+rebuilt        : ReferenceId(303): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_defineProperty":
+after transform: ReferenceId(415): ReferenceFlags(Read)
+rebuilt        : ReferenceId(314): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "WeakMap":
+after transform: ReferenceId(489): ReferenceFlags(Read)
+rebuilt        : ReferenceId(334): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_defineProperty":
+after transform: ReferenceId(454): ReferenceFlags(Read)
+rebuilt        : ReferenceId(342): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_decorateMetadata":
+after transform: ReferenceId(465): ReferenceFlags(Read)
+rebuilt        : ReferenceId(363): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "Inner":
+after transform: ReferenceId(466): ReferenceFlags(Read)
+rebuilt        : ReferenceId(365): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_decorateMetadata":
+after transform: ReferenceId(469): ReferenceFlags(Read)
+rebuilt        : ReferenceId(367): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "Inner":
+after transform: ReferenceId(473): ReferenceFlags(Read)
+rebuilt        : ReferenceId(370): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_decorateMetadata":
+after transform: ReferenceId(478): ReferenceFlags(Read)
+rebuilt        : ReferenceId(372): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "Inner":
+after transform: ReferenceId(481): ReferenceFlags(Read)
+rebuilt        : ReferenceId(376): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_defineProperty":
+after transform: ReferenceId(497): ReferenceFlags(Read)
+rebuilt        : ReferenceId(387): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "WeakMap":
+after transform: ReferenceId(571): ReferenceFlags(Read)
+rebuilt        : ReferenceId(407): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_defineProperty":
+after transform: ReferenceId(536): ReferenceFlags(Read)
+rebuilt        : ReferenceId(415): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_decorateMetadata":
+after transform: ReferenceId(547): ReferenceFlags(Read)
+rebuilt        : ReferenceId(436): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "Inner":
+after transform: ReferenceId(548): ReferenceFlags(Read)
+rebuilt        : ReferenceId(438): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_decorateMetadata":
+after transform: ReferenceId(551): ReferenceFlags(Read)
+rebuilt        : ReferenceId(440): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "Inner":
+after transform: ReferenceId(555): ReferenceFlags(Read)
+rebuilt        : ReferenceId(443): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_decorateMetadata":
+after transform: ReferenceId(560): ReferenceFlags(Read)
+rebuilt        : ReferenceId(445): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "Inner":
+after transform: ReferenceId(563): ReferenceFlags(Read)
+rebuilt        : ReferenceId(449): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_defineProperty":
+after transform: ReferenceId(579): ReferenceFlags(Read)
+rebuilt        : ReferenceId(460): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "Inner":
+after transform: ReferenceId(630): ReferenceFlags(Read)
+rebuilt        : ReferenceId(626): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "Inner":
+after transform: ReferenceId(637): ReferenceFlags(Read)
+rebuilt        : ReferenceId(634): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "Inner":
+after transform: ReferenceId(645): ReferenceFlags(Read)
+rebuilt        : ReferenceId(643): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_defineProperty":
+after transform: ReferenceId(778): ReferenceFlags(Read)
+rebuilt        : ReferenceId(699): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_defineProperty":
+after transform: ReferenceId(779): ReferenceFlags(Read)
+rebuilt        : ReferenceId(700): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_defineProperty":
+after transform: ReferenceId(780): ReferenceFlags(Read)
+rebuilt        : ReferenceId(701): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_classPrivateFieldInitSpec":
+after transform: ReferenceId(782): ReferenceFlags(Read)
+rebuilt        : ReferenceId(702): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_classPrivateFieldInitSpec":
+after transform: ReferenceId(784): ReferenceFlags(Read)
+rebuilt        : ReferenceId(704): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_classPrivateFieldInitSpec":
+after transform: ReferenceId(786): ReferenceFlags(Read)
+rebuilt        : ReferenceId(706): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_classPrivateFieldInitSpec":
+after transform: ReferenceId(788): ReferenceFlags(Read)
+rebuilt        : ReferenceId(708): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_classPrivateFieldGet":
+after transform: ReferenceId(790): ReferenceFlags(Read)
+rebuilt        : ReferenceId(710): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_defineProperty":
+after transform: ReferenceId(829): ReferenceFlags(Read)
+rebuilt        : ReferenceId(755): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_decorateMetadata":
+after transform: ReferenceId(840): ReferenceFlags(Read)
+rebuilt        : ReferenceId(776): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "Inner2":
+after transform: ReferenceId(841): ReferenceFlags(Read)
+rebuilt        : ReferenceId(778): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_decorateMetadata":
+after transform: ReferenceId(844): ReferenceFlags(Read)
+rebuilt        : ReferenceId(780): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "Inner2":
+after transform: ReferenceId(848): ReferenceFlags(Read)
+rebuilt        : ReferenceId(783): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_decorateMetadata":
+after transform: ReferenceId(853): ReferenceFlags(Read)
+rebuilt        : ReferenceId(785): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "Inner2":
+after transform: ReferenceId(856): ReferenceFlags(Read)
+rebuilt        : ReferenceId(789): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "Inner4":
+after transform: ReferenceId(866): ReferenceFlags(Read)
+rebuilt        : ReferenceId(792): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_assertClassBrand":
+after transform: ReferenceId(885): ReferenceFlags(Read)
+rebuilt        : ReferenceId(796): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_access_accessor_storage17":
+after transform: ReferenceId(888): ReferenceFlags(Read)
+rebuilt        : ReferenceId(799): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_access_accessor_storage17":
+after transform: ReferenceId(898): ReferenceFlags(Read)
+rebuilt        : ReferenceId(803): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_access_accessor_storage17":
+after transform: ReferenceId(901): ReferenceFlags(Read)
+rebuilt        : ReferenceId(804): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_decorateMetadata":
+after transform: ReferenceId(877): ReferenceFlags(Read)
+rebuilt        : ReferenceId(809): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "Inner5":
+after transform: ReferenceId(878): ReferenceFlags(Read)
+rebuilt        : ReferenceId(811): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_decorateMetadata":
+after transform: ReferenceId(881): ReferenceFlags(Read)
+rebuilt        : ReferenceId(813): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "Inner5":
+after transform: ReferenceId(886): ReferenceFlags(Read)
+rebuilt        : ReferenceId(816): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_decorateMetadata":
+after transform: ReferenceId(892): ReferenceFlags(Read)
+rebuilt        : ReferenceId(818): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_decorateMetadata":
+after transform: ReferenceId(896): ReferenceFlags(Read)
+rebuilt        : ReferenceId(822): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_decorateMetadata":
+after transform: ReferenceId(903): ReferenceFlags(Read)
+rebuilt        : ReferenceId(827): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "Inner5":
+after transform: ReferenceId(906): ReferenceFlags(Read)
+rebuilt        : ReferenceId(831): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_decorateMetadata":
+after transform: ReferenceId(909): ReferenceFlags(Read)
+rebuilt        : ReferenceId(833): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "Super":
+after transform: ReferenceId(13): ReferenceFlags(Read | MemberWriteTarget)
+rebuilt        : ReferenceId(838): ReferenceFlags(Read)
+Reference flags mismatch for "G":
+after transform: ReferenceId(928): ReferenceFlags(Read)
+rebuilt        : ReferenceId(844): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_decorate":
+after transform: ReferenceId(943): ReferenceFlags(Read)
+rebuilt        : ReferenceId(845): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "G":
+after transform: ReferenceId(942): ReferenceFlags(Read)
+rebuilt        : ReferenceId(850): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_decorate":
+after transform: ReferenceId(957): ReferenceFlags(Read)
+rebuilt        : ReferenceId(852): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "G":
+after transform: ReferenceId(956): ReferenceFlags(Read)
+rebuilt        : ReferenceId(857): ReferenceFlags(Read | MemberWriteTarget)
 Unresolved reference IDs mismatch for "Function":
 after transform: [ReferenceId(192), ReferenceId(198), ReferenceId(235), ReferenceId(274), ReferenceId(313), ReferenceId(352), ReferenceId(395), ReferenceId(434), ReferenceId(477), ReferenceId(516), ReferenceId(559), ReferenceId(598), ReferenceId(641), ReferenceId(680), ReferenceId(852), ReferenceId(902), ReferenceId(908), ReferenceId(916), ReferenceId(920), ReferenceId(924), ReferenceId(930), ReferenceId(934), ReferenceId(938), ReferenceId(944), ReferenceId(948), ReferenceId(952)]
 rebuilt        : [ReferenceId(187), ReferenceId(193), ReferenceId(300), ReferenceId(373), ReferenceId(446), ReferenceId(640), ReferenceId(786), ReferenceId(828), ReferenceId(834), ReferenceId(841), ReferenceId(847), ReferenceId(854)]
@@ -117,6 +502,31 @@ Unresolved references mismatch:
 after transform: ["Super", "WeakMap", "require", "super"]
 rebuilt        : ["Super", "WeakMap", "require"]
 
+semantic Error: tasks/coverage/misc/pass/oxc-16077.ts
+Reference flags mismatch for "x":
+after transform: ReferenceId(0): ReferenceFlags(Read)
+rebuilt        : ReferenceId(0): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "y":
+after transform: ReferenceId(1): ReferenceFlags(Read)
+rebuilt        : ReferenceId(1): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "z":
+after transform: ReferenceId(2): ReferenceFlags(Read)
+rebuilt        : ReferenceId(2): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "w":
+after transform: ReferenceId(3): ReferenceFlags(Read)
+rebuilt        : ReferenceId(3): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "x":
+after transform: ReferenceId(4): ReferenceFlags(Read)
+rebuilt        : ReferenceId(4): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "y":
+after transform: ReferenceId(5): ReferenceFlags(Read)
+rebuilt        : ReferenceId(5): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/misc/pass/oxc-1740.tsx
+Reference flags mismatch for "_ref":
+after transform: ReferenceId(10): ReferenceFlags(Read)
+rebuilt        : ReferenceId(10): ReferenceFlags(Read | MemberWriteTarget)
+
 semantic Error: tasks/coverage/misc/pass/oxc-2562.ts
 Symbol span mismatch for "HooksController":
 after transform: SymbolId(0): Span { start: 67, end: 82 }
@@ -124,6 +534,38 @@ rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
 Symbol span mismatch for "HooksController":
 after transform: SymbolId(1): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(2): Span { start: 67, end: 82 }
+
+semantic Error: tasks/coverage/misc/pass/oxc-2674.tsx
+Reference flags mismatch for "_reactJsxRuntime":
+after transform: ReferenceId(1): ReferenceFlags(Read)
+rebuilt        : ReferenceId(1): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_reactJsxRuntime":
+after transform: ReferenceId(3): ReferenceFlags(Read)
+rebuilt        : ReferenceId(3): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_reactJsxRuntime":
+after transform: ReferenceId(5): ReferenceFlags(Read)
+rebuilt        : ReferenceId(5): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/misc/pass/oxc-2723.jsx
+Reference flags mismatch for "_reactJsxRuntime":
+after transform: ReferenceId(1): ReferenceFlags(Read)
+rebuilt        : ReferenceId(1): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_reactJsxRuntime":
+after transform: ReferenceId(3): ReferenceFlags(Read)
+rebuilt        : ReferenceId(3): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/misc/pass/oxc-2948-2.ts
+Reference flags mismatch for "override":
+after transform: ReferenceId(17): ReferenceFlags(Read)
+rebuilt        : ReferenceId(11): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "readonly":
+after transform: ReferenceId(18): ReferenceFlags(Read)
+rebuilt        : ReferenceId(12): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/misc/pass/oxc-3262.js
+Reference flags mismatch for "Foo":
+after transform: ReferenceId(6): ReferenceFlags(Read)
+rebuilt        : ReferenceId(9): ReferenceFlags(Read | MemberWriteTarget)
 
 semantic Error: tasks/coverage/misc/pass/oxc-3443.tsx
 Unresolved references mismatch:
@@ -187,6 +629,39 @@ rebuilt        : SymbolId(46): [ReferenceId(23), ReferenceId(82), ReferenceId(11
 Symbol span mismatch for "TestWorkingCopyBackupTracker":
 after transform: SymbolId(144): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(47): Span { start: 3208, end: 3236 }
+Reference flags mismatch for "_asyncToGenerator":
+after transform: ReferenceId(383): ReferenceFlags(Read)
+rebuilt        : ReferenceId(19): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_superprop_getRestoreBackups":
+after transform: ReferenceId(381): ReferenceFlags(Read)
+rebuilt        : ReferenceId(20): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "handler":
+after transform: ReferenceId(37): ReferenceFlags(Read | MemberWriteTarget)
+rebuilt        : ReferenceId(22): ReferenceFlags(Read)
+Reference flags mismatch for "_createTracker":
+after transform: ReferenceId(398): ReferenceFlags(Read)
+rebuilt        : ReferenceId(86): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_createTracker":
+after transform: ReferenceId(402): ReferenceFlags(Read)
+rebuilt        : ReferenceId(124): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_untitledBackupTest":
+after transform: ReferenceId(412): ReferenceFlags(Read)
+rebuilt        : ReferenceId(126): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_await$accessor$edito":
+after transform: ReferenceId(403): ReferenceFlags(Read)
+rebuilt        : ReferenceId(137): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_untitledTextModel$te":
+after transform: ReferenceId(408): ReferenceFlags(Read)
+rebuilt        : ReferenceId(146): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_untitledBackupTest":
+after transform: ReferenceId(416): ReferenceFlags(Read)
+rebuilt        : ReferenceId(156): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_restoreBackupsInit":
+after transform: ReferenceId(421): ReferenceFlags(Read)
+rebuilt        : ReferenceId(208): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_restoreBackupsInit":
+after transform: ReferenceId(425): ReferenceFlags(Read)
+rebuilt        : ReferenceId(275): ReferenceFlags(Read | MemberWriteTarget)
 Unresolved reference IDs mismatch for "Promise":
 after transform: [ReferenceId(36), ReferenceId(39), ReferenceId(82), ReferenceId(114), ReferenceId(153), ReferenceId(282)]
 rebuilt        : [ReferenceId(343)]
@@ -264,6 +739,54 @@ rebuilt        : SymbolId(12): SymbolFlags(FunctionScopedVariable)
 Symbol flags mismatch for "H":
 after transform: SymbolId(14): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(14): SymbolFlags(FunctionScopedVariable)
+Reference flags mismatch for "A":
+after transform: ReferenceId(1): ReferenceFlags(Read)
+rebuilt        : ReferenceId(0): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "A":
+after transform: ReferenceId(0): ReferenceFlags(Read)
+rebuilt        : ReferenceId(1): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "B":
+after transform: ReferenceId(5): ReferenceFlags(Read)
+rebuilt        : ReferenceId(4): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "B":
+after transform: ReferenceId(4): ReferenceFlags(Read)
+rebuilt        : ReferenceId(5): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "C":
+after transform: ReferenceId(9): ReferenceFlags(Read)
+rebuilt        : ReferenceId(8): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "C":
+after transform: ReferenceId(8): ReferenceFlags(Read)
+rebuilt        : ReferenceId(9): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "D":
+after transform: ReferenceId(13): ReferenceFlags(Read)
+rebuilt        : ReferenceId(12): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "D":
+after transform: ReferenceId(12): ReferenceFlags(Read)
+rebuilt        : ReferenceId(13): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "E":
+after transform: ReferenceId(17): ReferenceFlags(Read)
+rebuilt        : ReferenceId(16): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "E":
+after transform: ReferenceId(16): ReferenceFlags(Read)
+rebuilt        : ReferenceId(17): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "F":
+after transform: ReferenceId(21): ReferenceFlags(Read)
+rebuilt        : ReferenceId(20): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "F":
+after transform: ReferenceId(20): ReferenceFlags(Read)
+rebuilt        : ReferenceId(21): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "G":
+after transform: ReferenceId(25): ReferenceFlags(Read)
+rebuilt        : ReferenceId(24): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "G":
+after transform: ReferenceId(24): ReferenceFlags(Read)
+rebuilt        : ReferenceId(25): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "H":
+after transform: ReferenceId(29): ReferenceFlags(Read)
+rebuilt        : ReferenceId(28): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "H":
+after transform: ReferenceId(28): ReferenceFlags(Read)
+rebuilt        : ReferenceId(29): ReferenceFlags(Read | MemberWriteTarget)
 
 semantic Error: tasks/coverage/misc/pass/oxc-8193.ts
 Scope flags mismatch:
@@ -277,4 +800,15 @@ semantic Error: tasks/coverage/misc/pass/oxc-9215.ts
 Unresolved references mismatch:
 after transform: ["a", "b", "d", "e"]
 rebuilt        : ["a", "b", "e"]
+
+semantic Error: tasks/coverage/misc/pass/script-using-in-block.js
+Reference flags mismatch for "_usingCtx":
+after transform: ReferenceId(0): ReferenceFlags(Read)
+rebuilt        : ReferenceId(2): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx":
+after transform: ReferenceId(2): ReferenceFlags(Read)
+rebuilt        : ReferenceId(3): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx":
+after transform: ReferenceId(4): ReferenceFlags(Read)
+rebuilt        : ReferenceId(5): ReferenceFlags(Read | MemberWriteTarget)
 

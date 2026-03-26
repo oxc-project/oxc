@@ -59,15 +59,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
         "id": 1,
         "name": "Member",
         "node": "TSModuleDeclaration(Member)",
-        "references": [
-          {
-            "flags": "ReferenceFlags(Type)",
-            "id": 0,
-            "name": "Member",
-            "node_id": 15,
-            "scope_id": 4
-          }
-        ]
+        "references": []
       },
       {
         "flags": "SymbolFlags(Interface)",
