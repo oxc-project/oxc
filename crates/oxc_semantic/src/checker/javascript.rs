@@ -1388,7 +1388,7 @@ pub fn check_await_expression(expr: &AwaitExpression, ctx: &SemanticBuilder<'_>)
         ctx.error(diagnostics::await_or_yield_in_parameter("await", expr.span));
     }
     // It is a Syntax Error if ClassStaticBlockStatementList Contains await is true.
-    if ctx.scoping.scope_flags(ctx.current_scope_id).is_class_static_block() {
+    if is_in_class_static_block(ctx) {
         let start = expr.span.start;
         ctx.error(diagnostics::class_static_block_await(Span::sized(start, 5)));
     }
