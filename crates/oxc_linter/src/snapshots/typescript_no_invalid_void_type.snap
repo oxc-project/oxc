@@ -327,6 +327,15 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace this `void` type with an allowed type, or keep `void` only in a valid return position.
 
+  ⚠ typescript-eslint(no-invalid-void-type): Do not use `void` as a type argument for `Producer`.
+   ╭─[no_invalid_void_type.tsx:6:51]
+ 5 │ 
+ 6 │             export class Test implements Producer<void> {
+   ·                                                   ────
+ 7 │               get = () => null;
+   ╰────
+  help: Replace this `void` type with an allowed type, or keep `void` only in a valid return position.
+
   ⚠ typescript-eslint(no-invalid-void-type): Use `void` only as a return type or generic type argument.
    ╭─[no_invalid_void_type.tsx:1:26]
  1 │ function takeVoid(thing: void) {}
@@ -352,5 +361,28 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_invalid_void_type.tsx:1:20]
  1 │ type alias = Array<void>;
    ·                    ────
+   ╰────
+  help: Replace this `void` type with an allowed type, or keep `void` only in a valid return position.
+
+  ⚠ typescript-eslint(no-invalid-void-type): Use `void` only as a return type.
+   ╭─[no_invalid_void_type.tsx:6:51]
+ 5 │ 
+ 6 │             export class Test implements Producer<void> {
+   ·                                                   ────
+ 7 │               get = () => null;
+   ╰────
+  help: Replace this `void` type with an allowed type, or keep `void` only in a valid return position.
+
+  ⚠ typescript-eslint(no-invalid-void-type): Use `void` only as a return type.
+   ╭─[no_invalid_void_type.tsx:1:25]
+ 1 │ class Test extends Base<void> {}
+   ·                         ────
+   ╰────
+  help: Replace this `void` type with an allowed type, or keep `void` only in a valid return position.
+
+  ⚠ typescript-eslint(no-invalid-void-type): Use `void` only as a return type.
+   ╭─[no_invalid_void_type.tsx:1:29]
+ 1 │ interface Test extends Base<void> {}
+   ·                             ────
    ╰────
   help: Replace this `void` type with an allowed type, or keep `void` only in a valid return position.
