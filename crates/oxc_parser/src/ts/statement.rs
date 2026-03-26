@@ -21,7 +21,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn parse_ts_enum_declaration(
         &mut self,
         span: u32,
-        modifiers: &Modifiers<'a>,
+        modifiers: &Modifiers,
     ) -> Declaration<'a> {
         self.bump_any(); // bump `enum`
         let id = self.parse_binding_identifier();
@@ -124,7 +124,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn parse_ts_type_alias_declaration(
         &mut self,
         span: u32,
-        modifiers: &Modifiers<'a>,
+        modifiers: &Modifiers,
     ) -> Declaration<'a> {
         self.expect(Kind::Type);
 
@@ -176,7 +176,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn parse_ts_interface_declaration(
         &mut self,
         span: u32,
-        modifiers: &Modifiers<'a>,
+        modifiers: &Modifiers,
     ) -> Declaration<'a> {
         let id = self.parse_binding_identifier();
         let type_parameters = self.parse_ts_type_parameters();
@@ -300,7 +300,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     fn parse_ts_module_declaration(
         &mut self,
         span: u32,
-        modifiers: &Modifiers<'a>,
+        modifiers: &Modifiers,
     ) -> Box<'a, TSModuleDeclaration<'a>> {
         let kind = if self.eat(Kind::Namespace) {
             TSModuleDeclarationKind::Namespace
@@ -317,7 +317,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     fn parse_ambient_external_module_declaration(
         &mut self,
         span: u32,
-        modifiers: &Modifiers<'a>,
+        modifiers: &Modifiers,
     ) -> Box<'a, TSModuleDeclaration<'a>> {
         let id = TSModuleDeclarationName::StringLiteral(self.parse_literal_string());
         let body = if self.at(Kind::LCurly) {
@@ -356,7 +356,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         &mut self,
         span: u32,
         kind: TSModuleDeclarationKind,
-        modifiers: &Modifiers<'a>,
+        modifiers: &Modifiers,
     ) -> Box<'a, TSModuleDeclaration<'a>> {
         let id = TSModuleDeclarationName::Identifier(self.parse_binding_identifier());
         let body = if self.eat(Kind::Dot) {
@@ -385,7 +385,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     fn parse_ts_global_declaration(
         &mut self,
         span: u32,
-        modifiers: &Modifiers<'a>,
+        modifiers: &Modifiers,
     ) -> Box<'a, TSGlobalDeclaration<'a>> {
         let keyword_span_start = self.start_span();
         self.expect(Kind::Global);
@@ -425,7 +425,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn parse_declaration(
         &mut self,
         start_span: u32,
-        modifiers: &Modifiers<'a>,
+        modifiers: &Modifiers,
         decorators: Vec<'a, Decorator<'a>>,
     ) -> Declaration<'a> {
         let kind = self.cur_kind();
@@ -528,7 +528,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn parse_ts_declare_function(
         &mut self,
         start_span: u32,
-        modifiers: &Modifiers<'a>,
+        modifiers: &Modifiers,
     ) -> Box<'a, Function<'a>> {
         let r#async = modifiers.contains(ModifierKind::Async);
         self.expect(Kind::Function);

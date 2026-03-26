@@ -7,7 +7,7 @@ use super::FunctionKind;
 use crate::{
     ParserConfig as Config, ParserImpl, diagnostics,
     lexer::Kind,
-    modifiers::{Modifier, ModifierKind, ModifierKinds, Modifiers},
+    modifiers::{Modifier, ModifierKind, Modifiers},
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -711,13 +711,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             if !cur_token.is_on_new_line() {
                 // export default abstract class ...
                 if is_abstract && kind == Kind::Class {
-                    let modifiers = self
-                        .ast
-                        .vec1(Modifier::new(self.end_span(modifier_span), ModifierKind::Abstract));
-                    let modifiers = Modifiers::new(
-                        Some(modifiers),
-                        ModifierKinds::new([ModifierKind::Abstract]),
-                    );
+                    let modifiers = Modifiers::new_single(ModifierKind::Abstract, modifier_span);
                     return ExportDefaultDeclarationKind::ClassDeclaration(
                         self.parse_class_declaration(decl_span, &modifiers, decorators),
                     );

@@ -1418,7 +1418,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     pub(super) fn parse_property_or_method_signature(
         &mut self,
         span: u32,
-        modifiers: &Modifiers<'a>,
+        modifiers: &Modifiers,
     ) -> TSSignature<'a> {
         let (key, computed) = self.parse_property_name();
         let optional = self.eat(Kind::Question);
@@ -1465,7 +1465,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn parse_index_signature_declaration(
         &mut self,
         span: u32,
-        modifiers: &Modifiers<'a>,
+        modifiers: &Modifiers,
     ) -> Box<'a, TSIndexSignature<'a>> {
         let opening_span = self.cur_token().span();
         self.expect(Kind::LBrack);
