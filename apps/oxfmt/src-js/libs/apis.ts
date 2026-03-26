@@ -104,10 +104,9 @@ export type FormatEmbeddedCodeParam = {
 };
 
 /**
- * Format xxx-in-js code snippets into formatted string.
- *
- * This will be gradually replaced by `formatEmbeddedDoc` which returns `Doc`.
- * For now, html|css|md-in-js are using this.
+ * Format non-js code snippets into formatted string.
+ * Mainly used for formatting code fences within JSDoc,
+ * and is also used as a temporary fallback for html-in-js.
  *
  * @returns Formatted code snippet
  */
@@ -135,15 +134,15 @@ export type FormatEmbeddedDocParam = {
 };
 
 /**
- * Format xxx-in-js code snippets into Prettier `Doc` JSON strings.
+ * Format non-js code snippets into Prettier `Doc` JSON strings.
  *
- * This makes `oxc_formatter` correctly handle `printWidth` even for embedded code.
+ * This makes our printer correctly handle `printWidth` even for embedded code.
  * - For gql-in-js, `texts` contains multiple parts split by `${}` in a template literal
  * - For others, `texts` always contains a single string with `${}` parts replaced by placeholders
  * However, this function does not need to be aware of that,
  * as it simply formats each text part independently and returns an array of formatted parts.
  *
- * @returns Doc JSON strings (one per input text)
+ * @returns Doc JSON strings
  */
 export async function formatEmbeddedDoc({
   texts,

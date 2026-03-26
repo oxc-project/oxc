@@ -9,7 +9,8 @@ use tower_lsp_server::{
 };
 
 use crate::{
-    DiagnosticMode, Tool, ToolBuilder, ToolRestartChanges, backend::Backend, tool::DiagnosticResult,
+    DiagnosticMode, TextDocument, Tool, ToolBuilder, ToolRestartChanges, backend::Backend,
+    tool::DiagnosticResult,
 };
 
 #[derive(Default)]
@@ -151,35 +152,35 @@ impl Tool for FakeTool {
         vec![]
     }
 
-    fn run_diagnostic(&self, uri: &Uri, content: Option<&str>) -> DiagnosticResult {
-        if uri.as_str().ends_with("diagnostics.config") {
+    fn run_diagnostic(&self, document: &TextDocument) -> DiagnosticResult {
+        if document.uri.as_str().ends_with("diagnostics.config") {
             return Ok(vec![(
-                uri.clone(),
+                document.uri.clone(),
                 vec![Diagnostic {
                     message: format!(
                         "Fake diagnostic for content: {}",
-                        content.unwrap_or("<no content>")
+                        document.text.as_deref().unwrap_or("<no content>")
                     ),
                     ..Default::default()
                 }],
             )]);
         }
 
-        if uri.as_str().ends_with("error.config") {
+        if document.uri.as_str().ends_with("error.config") {
             return Err("Fake diagnostic error".to_string());
         }
 
         Ok(Vec::new())
     }
 
-    fn run_diagnostic_on_change(&self, uri: &Uri, content: Option<&str>) -> DiagnosticResult {
+    fn run_diagnostic_on_change(&self, document: &TextDocument) -> DiagnosticResult {
         // For this fake tool, we use the same logic as run_diagnostic
-        self.run_diagnostic(uri, content)
+        self.run_diagnostic(document)
     }
 
-    fn run_diagnostic_on_save(&self, uri: &Uri, content: Option<&str>) -> DiagnosticResult {
+    fn run_diagnostic_on_save(&self, document: &TextDocument) -> DiagnosticResult {
         // For this fake tool, we use the same logic as run_diagnostic
-        self.run_diagnostic(uri, content)
+        self.run_diagnostic(document)
     }
 }
 
@@ -201,7 +202,7 @@ impl TestServer {
             _params: Value,
         ) -> Result<Value, tower_lsp_server::jsonrpc::Error> {
             let mut configs = vec![];
-            for worker in &*service.workspace_workers.read().await {
+            for worker in &*service.worker_manager.read_workers().await {
                 configs.push(worker.options.lock().await.clone());
             }
             Ok(json!(configs))

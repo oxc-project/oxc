@@ -50,7 +50,7 @@ pub fn to_format_elements_for_template<'a>(
     }
 
     match language {
-        "tagged-graphql" => {
+        "graphql" => {
             let irs = doc_jsons
                 .into_iter()
                 .map(|envelope| {
@@ -67,7 +67,7 @@ pub fn to_format_elements_for_template<'a>(
                 .collect::<Result<Vec<_>, String>>()?;
             Ok(EmbeddedDocResult::MultipleDocs(irs))
         }
-        "tagged-css" => {
+        "css" => {
             let (mut ir, _) = convert(
                 doc_jsons.into_iter().next().expect("Doc JSON for CSS"),
                 allocator,
@@ -86,7 +86,7 @@ pub fn to_format_elements_for_template<'a>(
                 html_has_multiple_root_elements: None,
             })
         }
-        "tagged-html" | "angular-template" => {
+        "html" | "angular" => {
             let (mut ir, metadata) = convert(
                 doc_jsons.into_iter().next().expect("Doc JSON for HTML"),
                 allocator,
@@ -107,7 +107,7 @@ pub fn to_format_elements_for_template<'a>(
                 html_has_multiple_root_elements,
             })
         }
-        "tagged-markdown" => {
+        "markdown" => {
             let (mut ir, _) = convert(
                 doc_jsons.into_iter().next().expect("Doc JSON for Markdown"),
                 allocator,

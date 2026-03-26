@@ -109,6 +109,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ) -> Statement<'a> {
         let has_no_side_effects_comment =
             self.lexer.trivia_builder.previous_token_has_no_side_effects_comment();
+        let pure_comment_index = self.lexer.trivia_builder.previous_token_has_pure_comment();
 
         let mut stmt = match self.cur_kind() {
             Kind::LCurly => self.parse_block_statement(),
@@ -169,6 +170,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
             _ => self.parse_expression_or_labeled_statement(),
         };
+
+        // `/* #__PURE__ */ function foo() {}` - pure comment before non-expression statements cannot be applied.
+        // Expression statements handle pure comments internally in `parse_assignment_expression_or_higher_impl`.
+        if let Some(index) = pure_comment_index
+            && !matches!(stmt, Statement::ExpressionStatement(_))
+        {
+            self.lexer.trivia_builder.mark_pure_comment_not_applied(index);
+        }
 
         if has_no_side_effects_comment {
             Self::set_pure_on_function_stmt(&mut stmt);

@@ -42,7 +42,7 @@ pub(super) fn format_css_doc<'a>(
         let Some(Ok(EmbeddedDocResult::DocWithPlaceholders { ir, .. })) = f
             .context()
             .external_callbacks()
-            .format_embedded_doc(allocator, group_id_builder, "tagged-css", &[raw])
+            .format_embedded_doc(allocator, group_id_builder, "css", &[raw])
         else {
             return false;
         };
@@ -74,7 +74,7 @@ pub(super) fn format_css_doc<'a>(
     let Some(Ok(EmbeddedDocResult::DocWithPlaceholders { ir, placeholder_count, .. })) = f
         .context()
         .external_callbacks()
-        .format_embedded_doc(allocator, group_id_builder, "tagged-css", &[joined])
+        .format_embedded_doc(allocator, group_id_builder, "css", &[joined])
     else {
         return false;
     };

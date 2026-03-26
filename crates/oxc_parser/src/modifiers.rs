@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::fmt::{self, Display};
 
 use bitflags::bitflags;
 use cow_utils::CowUtils;
@@ -7,10 +7,7 @@ use oxc_ast::ast::TSAccessibility;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::Span;
 
-use crate::{
-    ParserConfig as Config, ParserImpl, diagnostics,
-    lexer::{Kind, Token},
-};
+use crate::{ParserConfig as Config, ParserImpl, diagnostics, lexer::Kind};
 
 bitflags! {
   /// Bitflag of modifiers and contextual modifiers.
@@ -33,7 +30,6 @@ bitflags! {
       const ACCESSOR      = 1 << 14;
       const EXPORT        = 1 << 15;
       const ACCESSIBILITY = Self::PRIVATE.bits() | Self::PROTECTED.bits() | Self::PUBLIC.bits();
-      const TYPE_PARAM    = Self::CONST.bits() | Self::IN.bits() | Self::OUT.bits();
   }
 }
 
@@ -102,7 +98,7 @@ impl ModifierFlags {
 }
 
 impl Display for ModifierFlags {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         for (i, (name, _)) in self.iter_names().enumerate() {
             if i != 0 {
                 write!(f, ", ")?;
@@ -122,19 +118,6 @@ pub struct Modifier {
 impl Modifier {
     pub fn new(span: Span, kind: ModifierKind) -> Self {
         Self { span, kind }
-    }
-
-    #[inline]
-    pub fn is_static(&self) -> bool {
-        matches!(self.kind, ModifierKind::Static)
-    }
-}
-
-impl TryFrom<Token> for Modifier {
-    type Error = <ModifierKind as TryFrom<Kind>>::Error;
-
-    fn try_from(tok: Token) -> Result<Self, Self::Error> {
-        ModifierKind::try_from(tok.kind()).map(|kind| Self { span: tok.span(), kind })
     }
 }
 
@@ -307,8 +290,8 @@ impl TryFrom<Kind> for ModifierKind {
     }
 }
 
-impl std::fmt::Display for ModifierKind {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl Display for ModifierKind {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.as_str())
     }
 }
@@ -382,7 +365,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             permit_const_as_modifier,
             stop_on_start_of_class_static_block,
         ) {
-            if modifier.is_static() {
+            if modifier.kind == ModifierKind::Static {
                 has_seen_static_modifier = true;
             }
             self.check_modifier(modifier_flags, &modifier);

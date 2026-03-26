@@ -92,18 +92,20 @@ impl ExternalCallbacks {
         self
     }
 
-    /// Format embedded code with the given tag name.
+    /// Format embedded code with the given language name.
     ///
     /// # Arguments
-    /// * `tag_name` - The template tag (e.g., "css", "gql", "html")
+    /// * `language` - A generic language identifier (e.g., "css", "html", "graphql").
+    ///   These are NOT specific to any external formatter.
+    ///   The callback implementation is responsible for mapping them to its own parser/language names.
     /// * `code` - The code to format
     ///
     /// # Returns
     /// * `Some(Ok(String))` - The formatted code
     /// * `Some(Err(String))` - An error message if formatting failed
     /// * `None` - No embedded formatter callback is set
-    pub fn format_embedded(&self, tag_name: &str, code: &str) -> Option<Result<String, String>> {
-        self.embedded_formatter.as_ref().map(|cb| cb(tag_name, code))
+    pub fn format_embedded(&self, language: &str, code: &str) -> Option<Result<String, String>> {
+        self.embedded_formatter.as_ref().map(|cb| cb(language, code))
     }
 
     /// Format embedded code as Doc.
@@ -111,7 +113,9 @@ impl ExternalCallbacks {
     /// # Arguments
     /// * `allocator` - The arena allocator for allocating strings in `FormatElement::Text`
     /// * `group_id_builder` - Builder for creating unique `GroupId`s
-    /// * `language` - The embedded language (e.g. "tagged-css", "tagged-graphql")
+    /// * `language` - A generic language identifier (e.g., "css", "graphql", "html", "angular").
+    ///   These are NOT specific to any external formatter.
+    ///   The callback implementation is responsible for mapping them to its own parser/language names.
     /// * `texts` - The code texts to format (multiple quasis for GraphQL, single joined text for CSS/HTML)
     ///
     /// # Returns

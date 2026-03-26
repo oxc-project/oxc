@@ -6,7 +6,11 @@ use oxc_span::Span;
 use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn avoid_new_promise_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Avoid creating new promises").with_label(span)
+    OxcDiagnostic::warn("Avoid creating new promises")
+        .with_help(
+            "Use `async`/`await` instead, or return an existing promise from a library function.",
+        )
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

@@ -1256,10 +1256,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let span = self.start_span();
         let operator = map_unary_operator(self.cur_kind());
         self.bump_any();
-        let has_pure_comment = self.lexer.trivia_builder.previous_token_has_pure_comment();
+        let pure_comment_index = self.lexer.trivia_builder.previous_token_has_pure_comment();
         let mut argument = self.parse_simple_unary_expression(self.start_span());
-        if has_pure_comment {
-            Self::set_pure_on_call_or_new_expr(&mut argument);
+        if let Some(index) = pure_comment_index
+            && !Self::set_pure_on_call_or_new_expr(&mut argument)
+        {
+            self.lexer.trivia_builder.mark_pure_comment_not_applied(index);
         }
         self.ast.expression_unary(self.end_span(span), operator, argument)
     }
@@ -1275,7 +1277,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let lhs = if self.ctx.has_in() && self.at(Kind::PrivateIdentifier) {
             self.parse_private_in_expression(lhs_span, lhs_precedence)
         } else {
-            let has_pure_comment = self.lexer.trivia_builder.previous_token_has_pure_comment();
+            let has_pure_comment =
+                self.lexer.trivia_builder.previous_token_has_pure_comment().is_some();
             let mut expr = self.parse_unary_expression_or_higher(lhs_span);
             if has_pure_comment {
                 Self::set_pure_on_call_or_new_expr(&mut expr);
@@ -1428,7 +1431,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ) -> Expression<'a> {
         let has_no_side_effects_comment =
             self.lexer.trivia_builder.previous_token_has_no_side_effects_comment();
-        let has_pure_comment = self.lexer.trivia_builder.previous_token_has_pure_comment();
+        let pure_comment_index = self.lexer.trivia_builder.previous_token_has_pure_comment();
         // [+Yield] YieldExpression
         if self.is_yield_expression() {
             return self.parse_yield_expression();
@@ -1492,8 +1495,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let mut expr =
             self.parse_conditional_expression_rest(span, lhs, allow_return_type_in_arrow_function);
 
-        if has_pure_comment {
-            Self::set_pure_on_call_or_new_expr(&mut expr);
+        if let Some(index) = pure_comment_index
+            && !Self::set_pure_on_call_or_new_expr(&mut expr)
+        {
+            self.lexer.trivia_builder.mark_pure_comment_not_applied(index);
         }
 
         if has_no_side_effects_comment {
@@ -1503,29 +1508,34 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         expr
     }
 
-    fn set_pure_on_call_or_new_expr(expr: &mut Expression<'a>) {
+    fn set_pure_on_call_or_new_expr(expr: &mut Expression<'a>) -> bool {
         match &mut expr.get_inner_expression_mut() {
             Expression::CallExpression(call_expr) => {
                 call_expr.pure = true;
+                true
             }
             Expression::NewExpression(new_expr) => {
                 new_expr.pure = true;
+                true
             }
             Expression::BinaryExpression(binary_expr) => {
-                Self::set_pure_on_call_or_new_expr(&mut binary_expr.left);
+                Self::set_pure_on_call_or_new_expr(&mut binary_expr.left)
             }
             Expression::LogicalExpression(logical_expr) => {
-                Self::set_pure_on_call_or_new_expr(&mut logical_expr.left);
+                Self::set_pure_on_call_or_new_expr(&mut logical_expr.left)
             }
             Expression::ConditionalExpression(conditional_expr) => {
-                Self::set_pure_on_call_or_new_expr(&mut conditional_expr.test);
+                Self::set_pure_on_call_or_new_expr(&mut conditional_expr.test)
             }
             Expression::ChainExpression(chain_expr) => {
                 if let ChainElement::CallExpression(call_expr) = &mut chain_expr.expression {
                     call_expr.pure = true;
+                    true
+                } else {
+                    false
                 }
             }
-            _ => {}
+            _ => false,
         }
     }
 

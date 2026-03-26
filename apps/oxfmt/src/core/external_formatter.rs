@@ -373,16 +373,23 @@ impl ExternalFormatter {
 
 // ---
 
-/// Mapping from `oxc_formatter` language identifiers to Prettier `parser` names.
+/// Mapping from language identifiers to Prettier `parser` names.
 /// This is the single source of truth for supported embedded languages.
+///
+/// Language identifiers come from two sources:
+/// - xxx-in-js `(Tagged)TemplateLiteral` (`embed/*.rs`)
+/// - JSDoc fenced code blocks (`jsdoc/mdast_serialize/`)
+///
+/// NOTE: these identifiers happen to overlap with some Prettier parser names,
+/// but `oxc_formatter` treats them as generic language names.
+/// This function is the only place that maps them to Prettier-specific parsers.
 fn language_to_prettier_parser(language: &str) -> Option<&'static str> {
     match language {
-        // Template literal tags + JSDoc fenced code block language names
-        "tagged-css" | "styled-jsx" | "angular-styles" | "css" | "scss" | "less" => Some("scss"),
-        "tagged-graphql" | "graphql" | "gql" => Some("graphql"),
-        "tagged-html" | "html" => Some("html"),
-        "tagged-markdown" | "markdown" | "md" => Some("markdown"),
-        "angular-template" => Some("angular"),
+        "css" | "scss" | "less" => Some("scss"),
+        "graphql" | "gql" => Some("graphql"),
+        "html" => Some("html"),
+        "angular" => Some("angular"),
+        "markdown" | "md" => Some("markdown"),
         _ => None,
     }
 }

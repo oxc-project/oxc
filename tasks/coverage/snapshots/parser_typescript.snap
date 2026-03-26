@@ -25882,6 +25882,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  4 │         {
    ╰────
 
+  × Cannot use 'await using' in class static initialization block
+   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.14.ts:5:13]
+ 4 │         {
+ 5 │             await using y = null;
+   ·             ─────────────────────
+ 6 │         }
+   ╰────
+
   × TS(1546): 'await using' declarations are not allowed in ambient contexts.
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.16.ts:2:17]
  1 │ declare namespace N {
