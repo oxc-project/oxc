@@ -187,10 +187,14 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
                 }
                 Statement::TryStatement(_) => Self::try_fold_try(stmt, ctx),
                 Statement::LabeledStatement(_) => Self::try_fold_labeled(stmt, ctx),
-                Statement::FunctionDeclaration(_) => {
+                Statement::FunctionDeclaration(f) => {
+                    Self::init_declaration_symbol_value(f.id.as_ref(), ctx);
                     Self::remove_unused_function_declaration(stmt, ctx);
                 }
-                Statement::ClassDeclaration(_) => Self::remove_unused_class_declaration(stmt, ctx),
+                Statement::ClassDeclaration(c) => {
+                    Self::init_declaration_symbol_value(c.id.as_ref(), ctx);
+                    Self::remove_unused_class_declaration(stmt, ctx);
+                }
                 Statement::ImportDeclaration(_) => Self::remove_unused_import_specifiers(stmt, ctx),
                 _ => {}
             }
