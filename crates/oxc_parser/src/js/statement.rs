@@ -795,7 +795,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.bump_any();
         if self.is_ts && self.at(Kind::Enum) {
             let modifiers = self.ast.vec1(Modifier::new(self.end_span(span), ModifierKind::Const));
-            let modifiers = Modifiers::new(Some(modifiers), ModifierFlags::CONST);
+            let modifiers =
+                Modifiers::new(Some(modifiers), ModifierFlags::new([ModifierKind::Const]));
             Statement::from(self.parse_ts_enum_declaration(span, &modifiers))
         } else {
             self.parse_variable_statement(span, VariableDeclarationKind::Const, stmt_ctx)

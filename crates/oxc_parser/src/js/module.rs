@@ -714,7 +714,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     let modifiers = self
                         .ast
                         .vec1(Modifier::new(self.end_span(modifier_span), ModifierKind::Abstract));
-                    let modifiers = Modifiers::new(Some(modifiers), ModifierFlags::ABSTRACT);
+                    let modifiers = Modifiers::new(
+                        Some(modifiers),
+                        ModifierFlags::new([ModifierKind::Abstract]),
+                    );
                     return ExportDefaultDeclarationKind::ClassDeclaration(
                         self.parse_class_declaration(decl_span, &modifiers, decorators),
                     );

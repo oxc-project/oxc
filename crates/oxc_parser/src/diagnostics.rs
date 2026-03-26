@@ -13,12 +13,10 @@ trait DiagnosticExt {
 impl DiagnosticExt for OxcDiagnostic {
     fn with_allowed_modifier_help(self, allowed: Option<ModifierFlags>) -> Self {
         if let Some(allowed) = allowed {
-            if allowed.is_empty() {
-                self.with_help("No modifiers are allowed here.")
-            } else if allowed.iter().count() == 1 {
-                self.with_help(format!("Only '{allowed}' modifier is allowed here."))
-            } else {
-                self.with_help(format!("Allowed modifiers are: {allowed}"))
+            match allowed.count() {
+                0 => self.with_help("No modifiers are allowed here."),
+                1 => self.with_help(format!("Only '{allowed}' modifier is allowed here.")),
+                _ => self.with_help(format!("Allowed modifiers are: {allowed}")),
             }
         } else {
             self
@@ -972,7 +970,7 @@ pub fn accessor_modifier(modifier: &Modifier, allowed: Option<ModifierFlags>) ->
         format!("'accessor' modifier cannot be used with '{}' modifier.", modifier.kind),
     )
     .with_label(modifier.span)
-    .with_allowed_modifier_help(allowed.map(|a| a - ModifierFlags::ACCESSOR))
+    .with_allowed_modifier_help(allowed.map(|a| a.without(ModifierKind::Accessor)))
 }
 
 #[cold]
