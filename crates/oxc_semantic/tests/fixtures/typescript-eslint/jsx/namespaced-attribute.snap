@@ -25,7 +25,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/jsx/namespaced-
             "node": "FormalParameter(props)",
             "references": [
               {
-                "flags": "ReferenceFlags(Read)",
+                "flags": "ReferenceFlags(Read | MemberWriteTarget)",
                 "id": 3,
                 "name": "props",
                 "node_id": 49,

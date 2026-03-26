@@ -61,7 +61,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/ts/namespaces/value-module.ts
             "scope_id": 3
           },
           {
-            "flags": "ReferenceFlags(Read)",
+            "flags": "ReferenceFlags(Read | MemberWriteTarget)",
             "id": 1,
             "name": "N1",
             "node_id": 24,

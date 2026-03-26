@@ -39,7 +39,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
         "node": "TSEnumDeclaration(Foo)",
         "references": [
           {
-            "flags": "ReferenceFlags(Type)",
+            "flags": "ReferenceFlags(Read | MemberWriteTarget)",
             "id": 0,
             "name": "Foo",
             "node_id": 11,
