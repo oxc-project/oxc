@@ -30,7 +30,7 @@ pub struct RequireAwaitedExpectPoll;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This rule ensures that promises returned by expect.poll & expect.element calls are handled properly.
+    /// This rule ensures that promises returned by `expect.poll` and `expect.element` calls are handled properly.
     ///
     /// ### Why is this bad?
     ///
