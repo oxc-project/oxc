@@ -1,4 +1,5 @@
 {
   "singleThread": true,
-  "args": ["--config", "vite.config.ts"]
+  "args": ["--config", "vite.config.ts"],
+  "env": { "VITE_PLUS_VERSION": "1" }
 }

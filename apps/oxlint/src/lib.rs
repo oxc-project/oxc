@@ -62,6 +62,13 @@ const DEFAULT_TS_OXLINTRC_NAME: &str = "oxlint.config.ts";
 /// Vite config file that may contain oxlint config under a `.lint` field.
 const VITE_CONFIG_NAME: &str = "vite.config.ts";
 
+/// Returns `true` when running inside Vite+ mode (`VITE_PLUS_VERSION` env var is set).
+/// When true, only `vite.config.ts` is used as a config source.
+/// When false, `vite.config.ts` is ignored and only oxlint-specific configs are used.
+fn is_vp() -> bool {
+    std::env::var_os("VITE_PLUS_VERSION").is_some()
+}
+
 /// Return a JSON blob containing metadata for all available oxlint rules.
 ///
 /// This uses the internal JSON output formatter to generate the full list.

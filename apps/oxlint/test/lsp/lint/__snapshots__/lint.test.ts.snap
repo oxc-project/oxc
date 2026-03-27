@@ -155,14 +155,8 @@ exports[`LSP linting > config options > should apply config from vite-config-ski
 "--- FILE -----------
 vite-config-skip-finds-parent/child/test.js
 --- Diagnostics ---------
-  1 | debugger;
-> 2 | if (x == 1) {
-    |       ^^ Warning: Expected === and instead saw ==
-help: Prefer === operator
-  3 | }
-  4 |
---------------------> 1 | debugger;
-    | ^^^^^^^^^ Error: \`debugger\` statement is not allowed
+> 1 | debugger;
+    | ^^^^^^^^^ Warning: \`debugger\` statement is not allowed
 help: Remove the debugger statement
   2 | if (x == 1) {
   3 | }

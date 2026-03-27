@@ -23,7 +23,6 @@ describe("LSP formatting", () => {
     it.each([
       ["config-semi/test.ts", "typescript"],
       ["config-js-semi/test.ts", "typescript"],
-      ["config-vite-semi/test.ts", "typescript"],
       ["config-no-sort-package-json/package.json", "json"],
       ["config-vue-indent/test.vue", "vue"],
       ["config-sort-imports/test.js", "javascript"],
@@ -34,6 +33,16 @@ describe("LSP formatting", () => {
       ["config-js-stdout-pollution/test.ts", "typescript"],
     ])("should apply config from %s", async (path, languageId) => {
       expect(await formatFixture(FIXTURES_DIR, path, languageId)).toMatchSnapshot();
+    });
+
+    it("should apply config from config-vite-semi/test.ts", async () => {
+      await using client = createLspConnection({ VITE_PLUS_VERSION: "1" });
+      const path = "config-vite-semi/test.ts";
+      const dirPath = dirname(join(FIXTURES_DIR, path));
+      await client.initialize([{ uri: pathToFileURL(dirPath).href, name: "test" }], {}, [
+        { workspaceUri: pathToFileURL(dirPath).href, options: null },
+      ]);
+      expect(await formatFixture(FIXTURES_DIR, path, "typescript", client)).toMatchSnapshot();
     });
   });
 
