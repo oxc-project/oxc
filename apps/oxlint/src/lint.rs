@@ -15,6 +15,7 @@ use oxc_diagnostics::{DiagnosticSender, DiagnosticService, GraphicalReportHandle
 use oxc_linter::{
     AllowWarnDeny, ConfigStore, ConfigStoreBuilder, ExternalLinter, ExternalPluginStore,
     InvalidFilterKind, LintFilter, LintOptions, LintRunner, LintServiceOptions, Linter,
+    OxlintSuppressionFileAction, SuppressionManager,
 };
 
 #[cfg(feature = "napi")]
@@ -81,6 +82,7 @@ impl CliRunner {
             misc_options,
             disable_nested_config,
             inline_config_options,
+            suppression_options,
             ..
         } = self.options;
 
@@ -161,6 +163,7 @@ impl CliRunner {
                     number_of_rules: None,
                     threads_count: rayon::current_num_threads(),
                     start_time: now.elapsed(),
+                    oxlint_suppression_file_action: OxlintSuppressionFileAction::None,
                 }) {
                     print_and_flush_stdout(stdout, &end);
                 }
@@ -391,9 +394,18 @@ impl CliRunner {
             .filter(|path| !ignore_matcher.should_ignore(Path::new(path)))
             .collect::<Vec<Arc<OsStr>>>();
 
+        let (mut suppression_manager, suppression_sender) = SuppressionManager::load(
+            options.cwd(),
+            "oxlint-suppressions.json",
+            suppression_options.suppress_all,
+            suppression_options.prune_suppressions || fix_options.is_enabled(),
+        );
+
         let linter = Linter::new(LintOptions::default(), config_store, external_linter)
             .with_fix(fix_options.fix_kind())
-            .with_report_unused_directives(report_unused_directives);
+            .with_report_unused_directives(report_unused_directives)
+            .with_suppress_all(suppression_options.suppress_all)
+            .with_prune_suppressions(suppression_options.prune_suppressions);
 
         let number_of_files = files_to_lint.len();
         let tsconfig = basic_options.tsconfig;
@@ -433,7 +445,12 @@ impl CliRunner {
             }
         };
 
-        match lint_runner.lint_files(&files_to_lint, tx_error.clone()) {
+        match lint_runner.lint_files(
+            &files_to_lint,
+            tx_error.clone(),
+            &suppression_manager,
+            suppression_sender.clone(),
+        ) {
             Ok(lint_runner) => {
                 lint_runner.report_unused_directives(report_unused_directives, &tx_error);
             }
@@ -444,14 +461,23 @@ impl CliRunner {
         }
 
         drop(tx_error);
+        drop(suppression_sender);
 
+        let result = suppression_manager.report_suppression();
         let diagnostic_result = diagnostic_service.run(stdout);
+
+        let oxlint_suppression_file_action = if let Err(report_suppression_error) = result {
+            OxlintSuppressionFileAction::UnableToPerformFsOperation(report_suppression_error)
+        } else {
+            suppression_manager.manager_status
+        };
 
         if let Some(end) = output_formatter.lint_command_info(&LintCommandInfo {
             number_of_files,
             number_of_rules,
             threads_count: rayon::current_num_threads(),
             start_time: now.elapsed(),
+            oxlint_suppression_file_action,
         }) {
             print_and_flush_stdout(stdout, &end);
         }
@@ -1598,5 +1624,240 @@ export { redundant };
         Tester::new()
             .with_cwd("fixtures/cli/invalid_config_tuple_rules".into())
             .test_and_snapshot(&[]);
+    }
+}
+
+#[cfg(test)]
+mod suppression {
+
+    use crate::tester::{SuppressionTester, Tester};
+
+    #[test]
+    fn test_suppression_not_file_reporting_errors() {
+        let args = &[];
+        Tester::new()
+            .with_cwd("fixtures/suppression_not_file_reporting_errors".into())
+            .test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_suppression_not_reporting_new_errors() {
+        let args = &[];
+        Tester::new()
+            .with_cwd("fixtures/suppression_not_reporting_new_errors".into())
+            .test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_suppression_report_only_from_one_file() {
+        let args = &[];
+        Tester::new()
+            .with_cwd("fixtures/suppression_report_only_from_one_file".into())
+            .test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_suppression_eslint_file_format() {
+        let args = &[];
+        Tester::new()
+            .with_cwd("fixtures/suppression_eslint_file_format".into())
+            .test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_suppression_less_rules_violations_warning() {
+        let args = &[];
+        Tester::new()
+            .with_cwd("fixtures/suppression_less_rules_violations_warning".into())
+            .test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_suppression_prune_errors_warning() {
+        let args = &[];
+        Tester::new()
+            .with_cwd("fixtures/suppression_prune_errors_warning".into())
+            .test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_suppression_report_one_of_the_errors_from_one_file() {
+        let args = &[];
+        Tester::new()
+            .with_cwd("fixtures/suppression_report_one_of_the_errors_from_one_file".into())
+            .test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_suppression_without_file() {
+        let args = &[];
+        Tester::new().with_cwd("fixtures/suppression_without_file".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_suppression_report_one_new_error_but_filter_the_rest() {
+        let args = &[];
+        Tester::new()
+            .with_cwd("fixtures/suppression_report_one_new_error_but_filter_the_rest".into())
+            .test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_suppression_file_malformed() {
+        let args = &[];
+        Tester::new()
+            .with_cwd("fixtures/suppression_file_malformed".into())
+            .test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_suppression_with_suppress_all_arg_and_no_file() {
+        let args = &["--suppress-all"];
+        let suppression = SuppressionTester::new()
+            .with_cwd("suppression_with_suppress_all_arg_and_no_file")
+            .with_setup_file(false)
+            .with_expected_file(true);
+
+        suppression.test(args);
+        let stdout = Tester::new()
+            .with_cwd("fixtures/suppression_with_suppress_all_arg_and_no_file".into())
+            .test_output(args);
+
+        assert!(stdout.starts_with("Found 0 warnings and 0 errors."), "Unexpected errors found");
+    }
+
+    #[test]
+    fn test_suppression_with_prune_all_arg_and_no_file() {
+        SuppressionTester::new()
+            .with_cwd("suppression_with_suppress_all_arg_and_no_file")
+            .with_setup_file(false)
+            .with_expected_file(false)
+            .test(&["--prune-suppressions"]);
+    }
+
+    #[test]
+    fn test_suppression_with_suppress_all_and_fix_arg_and_no_file() {
+        SuppressionTester::new()
+            .with_cwd("suppression_with_suppress_all_and_fix_arg_and_no_file")
+            .with_setup_file(false)
+            .with_expected_file(false)
+            .with_backup_file(false)
+            .with_files_fixed(true)
+            .test(&["--fix", "--suppress-all"]);
+    }
+
+    #[test]
+    fn test_suppression_with_suppress_all_and_fix_arg_and_file() {
+        SuppressionTester::new()
+            .with_cwd("suppression_with_suppress_all_and_fix_arg_and_file")
+            .with_setup_file(true)
+            .with_expected_file(true)
+            .with_backup_file(true)
+            .with_files_fixed(true)
+            .test(&["--fix", "--suppress-all"]);
+    }
+
+    #[test]
+    fn test_suppression_not_filtered_dangerous_fix_not_applied() {
+        SuppressionTester::new()
+            .with_cwd("suppression_not_filtered_dangerous_fix_not_applied")
+            .with_setup_file(true)
+            .with_expected_file(true)
+            .with_backup_file(true)
+            .with_files_fixed(true)
+            .test(&["--fix"]);
+    }
+
+    #[test]
+    fn test_suppression_updated_dangerous_fix_applied() {
+        SuppressionTester::new()
+            .with_cwd("suppression_updated_dangerous_fix_applied")
+            .with_setup_file(true)
+            .with_expected_file(true)
+            .with_backup_file(true)
+            .with_files_fixed(true)
+            .test(&["--fix", "--fix-suggestions", "--fix-dangerously"]); // Adding both fix see https://github.com/oxc-project/oxc/pull/13366, https://github.com/oxc-project/oxc/issues/12491
+    }
+
+    #[test]
+    fn test_suppression_not_filtered_suggestion_fix_not_applied() {
+        SuppressionTester::new()
+            .with_cwd("suppression_not_filtered_suggestion_fix_not_applied")
+            .with_setup_file(true)
+            .with_expected_file(true)
+            .with_backup_file(true)
+            .with_files_fixed(true)
+            .test(&["--fix"]);
+    }
+
+    #[test]
+    fn test_suppression_updated_suggestion_fix_applied() {
+        SuppressionTester::new()
+            .with_cwd("suppression_updated_suggestion_fix_applied")
+            .with_setup_file(true)
+            .with_expected_file(true)
+            .with_backup_file(true)
+            .with_files_fixed(true)
+            .test(&["--fix", "--fix-suggestions"]);
+    }
+
+    #[test]
+    fn test_suppression_with_suppress_all_arg_and_pruned_errors() {
+        SuppressionTester::new()
+            .with_cwd("suppression_with_suppress_all_arg_and_pruned_errors")
+            .with_setup_file(true)
+            .with_expected_file(true)
+            .with_backup_file(true)
+            .test(&["--suppress-all"]);
+    }
+
+    #[test]
+    fn test_suppression_with_prune_suppressions_arg_and_pruned_errors() {
+        SuppressionTester::new()
+            .with_cwd("suppression_with_arg_and_pruned_errors")
+            .with_setup_file(true)
+            .with_expected_file(true)
+            .with_backup_file(true)
+            .test(&["--prune-suppressions"]);
+    }
+
+    #[test]
+    fn test_suppression_with_suppress_all_arg_and_increased_errors() {
+        SuppressionTester::new()
+            .with_cwd("suppression_with_arg_and_increased_errors")
+            .with_setup_file(true)
+            .with_expected_file(true)
+            .with_backup_file(true)
+            .test(&["--suppress-all"]);
+    }
+
+    #[test]
+    fn test_suppression_with_prune_suppressions_arg_and_increased_errors() {
+        SuppressionTester::new()
+            .with_cwd("suppression_with_arg_and_increased_errors")
+            .with_setup_file(true)
+            .with_expected_file(true)
+            .with_backup_file(true)
+            .test(&["--prune-suppressions"]);
+    }
+
+    #[test]
+    fn test_suppression_with_suppress_all_arg_and_decreased_errors() {
+        SuppressionTester::new()
+            .with_cwd("suppression_with_arg_and_decreased_errors")
+            .with_setup_file(true)
+            .with_expected_file(true)
+            .with_backup_file(true)
+            .test(&["--suppress-all"]);
+    }
+
+    #[test]
+    fn test_suppression_with_prune_suppressions_arg_and_decreased_errors() {
+        SuppressionTester::new()
+            .with_cwd("suppression_with_arg_and_decreased_errors")
+            .with_setup_file(true)
+            .with_expected_file(true)
+            .with_backup_file(true)
+            .test(&["--prune-suppressions"]);
     }
 }

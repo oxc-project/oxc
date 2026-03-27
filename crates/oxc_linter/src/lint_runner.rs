@@ -11,7 +11,7 @@ use oxc_span::Span;
 
 use crate::{
     AllowWarnDeny, DisableDirectives, FixKind, LintService, LintServiceOptions, Linter, Message,
-    OsFileSystem, TsGoLintState,
+    OsFileSystem, SuppressionManager, TsGoLintState, suppression::SuppressionSender,
 };
 
 /// Unified runner that orchestrates both regular (oxc) and type-aware (tsgolint) linting
@@ -224,16 +224,32 @@ impl LintRunner {
         mut self,
         files: &[Arc<OsStr>],
         tx_error: DiagnosticSender,
+        suppression_manager: &SuppressionManager,
+        suppression_sender: SuppressionSender,
     ) -> Result<Self, String> {
         // Phase 1: Regular linting (collects disable directives)
         let fs: &(dyn crate::RuntimeFileSystem + Sync + Send) = &OsFileSystem;
 
-        self.lint_service.run(fs, files.to_owned(), &tx_error);
+        self.lint_service.run(
+            fs,
+            files.to_owned(),
+            &tx_error,
+            suppression_manager,
+            &suppression_sender,
+        );
 
         if let Some(type_aware_linter) = self.type_aware_linter.take() {
-            type_aware_linter.lint(files, self.directives_store.map(), tx_error, fs)?;
+            type_aware_linter.lint(
+                files,
+                self.directives_store.map(),
+                tx_error,
+                fs,
+                suppression_manager,
+                suppression_sender,
+            )?;
         } else {
             drop(tx_error);
+            drop(suppression_sender);
         }
 
         Ok(self)
