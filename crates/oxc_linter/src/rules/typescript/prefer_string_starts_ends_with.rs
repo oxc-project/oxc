@@ -46,7 +46,7 @@ declare_oxc_lint!(
     /// ```
     PreferStringStartsEndsWith(tsgolint),
     typescript,
-    nursery,
+    style,
     config = PreferStringStartsEndsWithConfig,
 );
 
