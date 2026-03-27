@@ -54,11 +54,14 @@ pub struct RequireTestTimeout;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// FIXME: Briefly describe the rule's purpose.
+    /// Requires every test to have a timeout specified, either as a numeric third
+    /// argument, a `{ timeout }` option, or via `vi.setConfig({ testTimeout: ... })`.
     ///
     /// ### Why is this bad?
     ///
-    /// FIXME: Explain why violating this rule is problematic.
+    /// Tests without an explicit timeout rely on the default, which may be too
+    /// generous to catch performance regressions or too short for slow CI
+    /// environments, leading to flaky failures.
     ///
     /// ### Examples
     ///
@@ -130,18 +133,10 @@ impl RequireTestTimeout {
                 }
 
                 if let Some(Argument::ObjectExpression(test_config)) = call_expr.arguments.first() {
-                    let Some(ObjectPropertyKind::ObjectProperty(property)) =
-                        test_config.properties.iter().find(|property| {
-                            let ObjectPropertyKind::ObjectProperty(object_pair) = property else {
-                                return false;
-                            };
-
-                            let Some(object_key_name) = object_pair.key.static_name() else {
-                                return false;
-                            };
-
-                            object_key_name == "testTimeout"
-                        })
+                    let Some(ObjectPropertyKind::ObjectProperty(property)) = test_config
+                        .properties
+                        .iter()
+                        .find(|property| is_property_name_equals(property, "testTimeout"))
                     else {
                         return;
                     };
@@ -151,27 +146,7 @@ impl RequireTestTimeout {
                         (config_a.end - config_b.end).cmp(&config_a.end)
                     });
 
-                    match &property.value {
-                        Expression::NullLiteral(_) => {
-                            ctx.diagnostic(timeout_must_be_a_number(property.value.span()))
-                        }
-                        Expression::NumericLiteral(_) => {
-                            return;
-                        }
-                        Expression::UnaryExpression(expression) => {
-                            let Expression::NumericLiteral(_) = &expression.argument else {
-                                ctx.diagnostic(timeout_must_be_a_number(property.value.span()));
-                                return;
-                            };
-
-                            if matches!(expression.operator, UnaryOperator::UnaryPlus) {
-                                return;
-                            }
-
-                            ctx.diagnostic(timeout_must_be_non_negative(property.value.span()))
-                        }
-                        _ => ctx.diagnostic(timeout_must_be_a_number(property.value.span())),
-                    }
+                    parse_timeout_value(&property.value, property.value.span(), ctx);
                 } else {
                     ctx.diagnostic(config_missing_timeout_object(call_expr.span()))
                 }
@@ -203,66 +178,22 @@ impl RequireTestTimeout {
                 // test() and it() only have two options, a second parameter with options or a last argument with a number
 
                 if let Some(Argument::ObjectExpression(test_config)) = call_expr.arguments.get(1) {
-                    let Some(ObjectPropertyKind::ObjectProperty(property)) =
-                        test_config.properties.iter().find(|property| {
-                            let ObjectPropertyKind::ObjectProperty(object_pair) = property else {
-                                return false;
-                            };
-
-                            let Some(object_key_name) = object_pair.key.static_name() else {
-                                return false;
-                            };
-
-                            object_key_name == "timeout"
-                        })
+                    let Some(ObjectPropertyKind::ObjectProperty(property)) = test_config
+                        .properties
+                        .iter()
+                        .find(|property| is_property_name_equals(property, "timeout"))
                     else {
                         ctx.diagnostic(test_options_missing_timeout_property(test_config.span()));
                         return;
                     };
 
-                    match &property.value {
-                        Expression::NullLiteral(_) => {
-                            ctx.diagnostic(timeout_must_be_a_number(property.value.span()))
-                        }
-                        Expression::NumericLiteral(_) => {
-                            return;
-                        }
-                        Expression::UnaryExpression(expression) => {
-                            let Expression::NumericLiteral(_) = &expression.argument else {
-                                ctx.diagnostic(timeout_must_be_a_number(property.value.span()));
-                                return;
-                            };
-
-                            if matches!(expression.operator, UnaryOperator::UnaryPlus) {
-                                return;
-                            }
-
-                            ctx.diagnostic(timeout_must_be_non_negative(property.value.span()))
-                        }
-                        _ => ctx.diagnostic(timeout_must_be_a_number(property.value.span())),
-                    }
+                    parse_timeout_value(&property.value, property.value.span(), ctx);
                 } else if let Some(last_argument) = call_expr.arguments.get(2) {
-                    match last_argument {
-                        Argument::NullLiteral(_) => {
-                            ctx.diagnostic(timeout_must_be_a_number(last_argument.span()))
-                        }
-                        Argument::NumericLiteral(_) => {
-                            return;
-                        }
-                        Argument::UnaryExpression(expression) => {
-                            let Expression::NumericLiteral(_) = &expression.argument else {
-                                ctx.diagnostic(timeout_must_be_a_number(last_argument.span()));
-                                return;
-                            };
+                    let Some(argument_expression) = last_argument.as_expression() else {
+                        return;
+                    };
 
-                            if matches!(expression.operator, UnaryOperator::UnaryPlus) {
-                                return;
-                            }
-
-                            ctx.diagnostic(timeout_must_be_non_negative(last_argument.span()))
-                        }
-                        _ => ctx.diagnostic(timeout_must_be_a_number(last_argument.span())),
-                    }
+                    parse_timeout_value(argument_expression, last_argument.span(), ctx);
                 } else {
                     ctx.diagnostic(test_missing_timeout(call_expr.span()))
                 }
@@ -276,6 +207,40 @@ impl RequireTestTimeout {
 
 fn is_todo_or_skipped(member: &KnownMemberExpressionProperty<'_>) -> bool {
     member.is_name_equal("todo") || member.is_name_equal("skip")
+}
+
+fn is_property_name_equals(property: &&ObjectPropertyKind<'_>, name: &str) -> bool {
+    let ObjectPropertyKind::ObjectProperty(object_pair) = property else {
+        return false;
+    };
+
+    let Some(object_key_name) = object_pair.key.static_name() else {
+        return false;
+    };
+
+    object_key_name == name
+}
+
+fn parse_timeout_value<'a>(expression: &Expression<'_>, span: Span, ctx: &LintContext<'a>) {
+    match expression {
+        Expression::NullLiteral(_) => ctx.diagnostic(timeout_must_be_a_number(span)),
+        Expression::NumericLiteral(_) => {
+            return;
+        }
+        Expression::UnaryExpression(expression) => {
+            let Expression::NumericLiteral(_) = &expression.argument else {
+                ctx.diagnostic(timeout_must_be_a_number(span));
+                return;
+            };
+
+            if matches!(expression.operator, UnaryOperator::UnaryPlus) {
+                return;
+            }
+
+            ctx.diagnostic(timeout_must_be_non_negative(span))
+        }
+        _ => ctx.diagnostic(timeout_must_be_a_number(span)),
+    }
 }
 
 #[test]
