@@ -45,7 +45,7 @@
     }
   },
   "peerDependencies": {
-    "oxlint-tsgolint": ">=0.15.0"
+    "oxlint-tsgolint": ">=0.18.0"
   },
   "peerDependenciesMeta": {
     "oxlint-tsgolint": {

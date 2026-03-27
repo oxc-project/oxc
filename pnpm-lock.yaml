@@ -296,7 +296,7 @@ importers:
   npm/oxlint:
     dependencies:
       oxlint-tsgolint:
-        specifier: '>=0.15.0'
+        specifier: '>=0.18.0'
         version: 0.18.0
 
   npm/oxlint-plugin-eslint: {}
