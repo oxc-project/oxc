@@ -298,8 +298,7 @@ impl ConfigStore {
     /// Returns the total number of rules, inclusive of JS Plugin rules, optionally filtering out tsgolint rules if type_aware_enabled is false.
     pub fn number_of_rules(&self, type_aware_enabled: bool) -> Option<usize> {
         // If there are nested configs the number of rules may vary per-file, so return `None`.
-        // Note: this is `> 1` due to https://github.com/oxc-project/oxc/issues/16356
-        if self.nested_configs.len() > 1 {
+        if !self.nested_configs.is_empty() {
             return None;
         }
 
@@ -1069,9 +1068,6 @@ mod test {
             ConfigStore::new(base.clone(), FxHashMap::default(), ExternalPluginStore::default());
 
         let mut nested_configs = FxHashMap::default();
-        // Add the base config to nested_configs, as that's how it actually works right now.
-        // TODO: Can remove this addition of the base config when we fix https://github.com/oxc-project/oxc/issues/16356
-        nested_configs.insert(PathBuf::new(), base.clone());
         // Then add another so we have more than just the base config here.
         nested_configs.insert(PathBuf::from("nested"), base);
 

@@ -27,6 +27,16 @@ pub enum DiscoveredConfig {
     Js(PathBuf),
 }
 
+impl DiscoveredConfig {
+    pub fn path(&self) -> &Path {
+        match self {
+            DiscoveredConfig::Json(path)
+            | DiscoveredConfig::Jsonc(path)
+            | DiscoveredConfig::Js(path) => path,
+        }
+    }
+}
+
 /// Discover config files by walking UP from each file's directory to ancestors.
 ///
 /// Used by CLI where we have specific files to lint and need to find configs
@@ -37,6 +47,7 @@ pub enum DiscoveredConfig {
 /// - Returns paths to any `.oxlintrc.json`, `.oxlintrc.jsonc`, or `oxlint.config.ts` files found
 pub fn discover_configs_in_ancestors<P: AsRef<Path>>(
     files: &[P],
+    base_config_path: &Path,
 ) -> impl IntoIterator<Item = DiscoveredConfig> {
     let mut config_paths = FxHashSet::<DiscoveredConfig>::default();
     let mut visited_dirs = FxHashSet::default();
@@ -52,6 +63,10 @@ pub fn discover_configs_in_ancestors<P: AsRef<Path>>(
                 break;
             }
             for config in find_configs_in_directory(dir) {
+                if config.path() == base_config_path {
+                    // Skip the base config file (e.g., root oxlintrc) to avoid duplicate loading
+                    continue;
+                }
                 config_paths.insert(config);
             }
             current = dir.parent();
@@ -650,7 +665,7 @@ impl<'a> ConfigLoader<'a> {
         // Discover config files by walking up from each file's directory
         let config_paths: Vec<_> =
             paths.iter().map(|p| Path::new(p.as_ref()).to_path_buf()).collect();
-        let discovered_configs = discover_configs_in_ancestors(&config_paths);
+        let discovered_configs = discover_configs_in_ancestors(&config_paths, &oxlintrc.path);
 
         let (configs, errors) = self.load_many(discovered_configs, Some(cwd));
 
