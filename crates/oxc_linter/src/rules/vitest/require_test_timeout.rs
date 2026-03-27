@@ -168,13 +168,6 @@ impl RequireTestTimeout {
                     return;
                 }
 
-                if config_positions
-                    .last()
-                    .is_some_and(|config_position| config_position.end < call_expr.span.start)
-                {
-                    return;
-                }
-
                 // test() and it() only have two options, a second parameter with options or a last argument with a number
 
                 if let Some(Argument::ObjectExpression(test_config)) = call_expr.arguments.get(1) {
@@ -195,6 +188,13 @@ impl RequireTestTimeout {
 
                     parse_timeout_value(argument_expression, last_argument.span(), ctx);
                 } else {
+                    if config_positions
+                        .last()
+                        .is_some_and(|config_position| config_position.end < call_expr.span.start)
+                    {
+                        return;
+                    }
+
                     ctx.diagnostic(test_missing_timeout(call_expr.span()))
                 }
             }
@@ -247,8 +247,10 @@ fn parse_timeout_value<'a>(expression: &Expression<'_>, span: Span, ctx: &LintCo
 fn test() {
     use crate::tester::Tester;
 
+    /*
+     * Commented test are invalid because Vitest doesn't allow that API for timeout https://vitest.dev/api/test.html#timeout
+     */
     let pass = vec![
-        // Commented test are invalid because Vitest doesn't allow that API https://vitest.dev/api/test.html#timeout
         r#"test.todo("a")"#,
         r#"xit("a", () => {})"#,
         r#"test("a", () => {}, 0)"#,
@@ -267,6 +269,13 @@ fn test() {
         //r#"test("a", { foo: 1 }, { timeout: 500 }, () => {})"#,
         r#"test("a", { timeout: 500 }, 1000, () => {})"#,
         r#"test("a", () => {}, 1000, { extra: true })"#,
+        r#"test("a", () => {}, +500)"#,
+        r#"vi.setConfig({ testTimeout: +500 }); test("a", () => {})"#,
+        r#"test("a", { timeout: +500 }, () => {})"#,
+        r#"vi.setConfig({ testTimeout: 0 }); test("a", () => {})"#,
+        r#"vi.setConfig({ testTimeout: 1000 }); test("a", () => {}); vi.setConfig({ testTimeout: 2000 }); test("b", () => {})"#,
+        r#"vi.setConfig({ testTimeout: 1000 }); test("a", () => {}, 500)"#,
+        r#"describe("suite", () => {})"#,
     ];
 
     let fail = vec![
@@ -290,6 +299,19 @@ fn test() {
         r#"test("a", () => {}, { timeout: 500 }, { timeout: -1 })"#,
         r#"test("a", () => {}, { timeout: -1 }, 1000)"#,
         //r#"test("a", () => {}, 1000, { timeout: -1 })"#,
+        r#"test("a", () => {}, null)"#,
+        r#"test("a", () => {}, "1000")"#,
+        r#"test("a", { timeout: "1000" }, () => {})"#,
+        r#"vi.setConfig({ testTimeout: "1000" })"#,
+        r#"vi.setConfig({ testTimeout: -"1" })"#,
+        r#"test("a", { timeout: null }, () => {})"#,
+        r#"test("a", () => {}, undefined)"#,
+        r#"vi.setConfig({ testTimeout: -100 }); test("a", () => {})"#,
+        r#"test("a", { timeout: -500 }, () => {})"#,
+        r#"vi.setConfig("invalid"); test("a", () => {})"#,
+        r#"test("a", { retries: 3 }, () => {})"#,
+        r#"vi.setConfig({ testTimeout: 1000 }); test("a", () => {}); vi.setConfig({ testTimeout: null }); test("b", () => {})"#,
+        r#"vi.setConfig({ testTimeout: 1000 }); test("a", () => {}, -1)"#,
     ];
 
     Tester::new(RequireTestTimeout::NAME, RequireTestTimeout::PLUGIN, pass, fail)
