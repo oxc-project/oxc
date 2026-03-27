@@ -241,24 +241,21 @@ fn report_useless_computed_key(
     key_span: Span,
     raw: Option<Atom>,
 ) {
-    ctx.diagnostic_with_fix(
-        no_useless_computed_key_diagnostic(diagnostic_span, raw),
-        |fixer| {
-            let Some(raw) = raw else {
-                return fixer.noop();
-            };
-            let Some(computed_key_span) = get_computed_key_span(ctx, member_span, key_span) else {
-                return fixer.noop();
-            };
-            if ctx.has_comments_between(computed_key_span) {
-                return fixer.noop();
-            }
+    ctx.diagnostic_with_fix(no_useless_computed_key_diagnostic(diagnostic_span, raw), |fixer| {
+        let Some(raw) = raw else {
+            return fixer.noop();
+        };
+        let Some(computed_key_span) = get_computed_key_span(ctx, member_span, key_span) else {
+            return fixer.noop();
+        };
+        if ctx.has_comments_between(computed_key_span) {
+            return fixer.noop();
+        }
 
-            let mut replacement = raw.to_string();
-            pad_fix_with_token_boundary(ctx.source_text(), computed_key_span, &mut replacement);
-            fixer.replace(computed_key_span, replacement)
-        },
-    );
+        let mut replacement = raw.to_string();
+        pad_fix_with_token_boundary(ctx.source_text(), computed_key_span, &mut replacement);
+        fixer.replace(computed_key_span, replacement)
+    });
 }
 
 fn get_computed_key_span(ctx: &LintContext<'_>, member_span: Span, key_span: Span) -> Option<Span> {
