@@ -43,6 +43,8 @@ impl Checker<'_> {
                     .collect::<Vec<_>>()
                     .join(" & ")
             }
+            // TODO: implement display for remaining type variants
+            _ => "{...}".to_string(),
         }
     }
 }

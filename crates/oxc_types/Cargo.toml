@@ -26,3 +26,4 @@ oxc_syntax = { workspace = true }
 
 bitflags = { workspace = true }
 nonmax = { workspace = true }
+smallvec = { workspace = true }

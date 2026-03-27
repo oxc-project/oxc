@@ -1,3 +1,7 @@
+use std::sync::Arc;
+
+use smallvec::smallvec;
+
 use crate::{IntrinsicType, ObjectFlags, TypeArena, TypeData, TypeFlags, UnionType};
 
 #[test]
@@ -53,7 +57,7 @@ fn create_union_type() {
     let union_type = arena.new_type(
         TypeFlags::Union,
         ObjectFlags::None,
-        TypeData::Union(UnionType { types: vec![string_type, number_type] }),
+        TypeData::Union(UnionType { types: Arc::new(smallvec![string_type, number_type]) }),
         None,
     );
 

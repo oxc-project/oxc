@@ -253,7 +253,7 @@ impl ControlFlowGraph {
         .unwrap_or(false)
     }
 
-    /// Returns `None` the given node isn't the cyclic point of an infinite loop.
+   /// Returns `None` the given node isn't the cyclic point of an infinite loop.
     /// Otherwise returns `Some(loop_start, loop_end)`.
     ///
     /// # Panics

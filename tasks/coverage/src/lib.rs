@@ -459,6 +459,12 @@ impl AppArgs {
             &data.typescript,
             tools::run_checker_typescript,
         );
+        self.run_tool(
+            "checker_errors_typescript",
+            TYPESCRIPT_PATH,
+            &data.typescript,
+            tools::run_checker_errors_typescript,
+        );
     }
 
     /// Run transpiler tests (isolated declarations)

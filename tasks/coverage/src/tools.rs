@@ -1269,6 +1269,91 @@ impl<'a> oxc::ast_visit::Visit<'a> for TypeCollectorVisitor<'a, '_> {
     }
 }
 
+// ================================
+// Checker (.errors.txt error code conformance)
+// ================================
+
+pub fn run_checker_errors_typescript(files: &[TypeScriptFile]) -> Vec<CoverageResult> {
+    files
+        .par_iter()
+        .filter_map(|f| {
+            // Only test files that have expected error codes
+            if f.error_codes.is_empty() {
+                return None;
+            }
+            // Only handle single-unit files for now
+            if f.units.len() != 1 {
+                return None;
+            }
+
+            let source = &f.units[0].content;
+            let source_type = f.units[0].source_type;
+            let result = run_checker_errors_single(source, source_type, &f.error_codes);
+            Some(CoverageResult { path: f.path.clone(), should_fail: false, result })
+        })
+        .collect()
+}
+
+fn run_checker_errors_single(
+    source: &str,
+    source_type: SourceType,
+    expected_codes: &[String],
+) -> TestResult {
+    use oxc::semantic::SemanticBuilder;
+    use oxc_checker::Checker;
+
+    // Parse source → semantic → checker
+    let allocator = Allocator::default();
+    let parsed = Parser::new(&allocator, source, source_type).parse();
+    if !parsed.errors.is_empty() {
+        return TestResult::ParseError(
+            parsed.errors.iter().map(|e| e.message.to_string()).collect::<Vec<_>>().join("\n"),
+            false,
+        );
+    }
+    let program = &parsed.program;
+    let semantic = SemanticBuilder::new().build(program).semantic;
+    let checker = Checker::new(semantic);
+    let diagnostics = checker.check_program(program);
+
+    // Extract error codes from our diagnostics
+    let mut actual_codes: Vec<String> = diagnostics
+        .iter()
+        .filter_map(|d| d.code.number.as_ref().map(|n| n.to_string()))
+        .collect();
+    actual_codes.sort();
+    actual_codes.dedup();
+
+    // Check if our actual codes match expected codes
+    let mut expected_sorted: Vec<&str> = expected_codes.iter().map(|s| s.as_str()).collect();
+    expected_sorted.sort();
+
+    // "Passed" if our error codes are exactly the expected set
+    // For now, count as passed if we produced at least one matching error code
+    let matching: Vec<&str> = actual_codes
+        .iter()
+        .filter(|c| expected_sorted.contains(&c.as_str()))
+        .map(|s| s.as_str())
+        .collect();
+
+    if matching.is_empty() && !expected_sorted.is_empty() {
+        TestResult::Mismatch(
+            "checker_errors",
+            format!("actual: [{}]", actual_codes.join(", ")),
+            format!("expected: [{}]", expected_sorted.join(", ")),
+        )
+    } else if actual_codes.iter().map(|s| s.as_str()).collect::<Vec<_>>() == expected_sorted {
+        TestResult::Passed
+    } else {
+        // Partial match — we got some right but not all
+        TestResult::Mismatch(
+            "checker_errors",
+            format!("actual: [{}]", actual_codes.join(", ")),
+            format!("expected: [{}]", expected_sorted.join(", ")),
+        )
+    }
+}
+
 fn parse_estree_json_blocks<'a>(content: &'a str, section_kind: &str) -> Vec<&'a str> {
     let prefix = format!(":{section_kind}:\n```json\n");
     content

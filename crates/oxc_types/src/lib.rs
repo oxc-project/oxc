@@ -12,7 +12,7 @@ mod type_id;
 
 pub use object_flags::ObjectFlags;
 pub use type_arena::TypeArena;
-pub use type_data::{IntersectionType, IntrinsicType, LiteralType, TypeData, UnionType};
+pub use type_data::*;
 pub use type_flags::TypeFlags;
 pub use type_id::TypeId;
 
