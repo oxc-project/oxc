@@ -92,6 +92,11 @@ pub enum CommentContent {
     /// `v8 ignore`, `c8 ignore`, `node:coverage`, `istanbul ignore`
     /// <https://github.com/oxc-project/oxc/issues/10091>
     CoverageIgnore = 9,
+
+    /// Turbopack magic comment
+    /// e.g. `/* turbopackOptional: true */`
+    /// <https://nextjs.org/docs/app/guides/lazy-loading#turbopackoptional-turbopack-only>
+    Turbopack = 10,
 }
 
 bitflags! {
@@ -265,6 +270,12 @@ impl Comment {
     #[inline]
     pub fn is_webpack(self) -> bool {
         self.content == CommentContent::Webpack
+    }
+
+    /// Is turbopack magic comment.
+    #[inline]
+    pub fn is_turbopack(self) -> bool {
+        self.content == CommentContent::Turbopack
     }
 
     /// Is vite special comment.
