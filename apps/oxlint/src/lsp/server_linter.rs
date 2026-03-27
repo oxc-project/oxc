@@ -90,20 +90,6 @@ impl ServerLinterBuilder {
             }
         }
 
-        let mut nested_ignore_patterns = Vec::new();
-        let mut extended_paths = FxHashSet::default();
-        let nested_configs = if options.use_nested_configs() {
-            self.create_nested_configs(
-                &root_path,
-                &mut external_plugin_store,
-                &mut nested_ignore_patterns,
-                &mut extended_paths,
-                Some(root_uri.as_str()),
-            )
-        } else {
-            FxHashMap::default()
-        };
-
         let config_path = options.config_path.as_ref().filter(|p| !p.is_empty()).map(PathBuf::from);
         let loader = ConfigLoader::new(
             external_linter,
@@ -122,6 +108,21 @@ impl ServerLinterBuilder {
                     Oxlintrc::default()
                 }
             };
+
+        let mut nested_ignore_patterns = Vec::new();
+        let mut extended_paths = FxHashSet::default();
+        let nested_configs = if options.use_nested_configs() {
+            self.create_nested_configs(
+                &root_path,
+                &oxlintrc.path,
+                &mut external_plugin_store,
+                &mut nested_ignore_patterns,
+                &mut extended_paths,
+                Some(root_uri.as_str()),
+            )
+        } else {
+            FxHashMap::default()
+        };
 
         let base_patterns = oxlintrc.ignore_patterns.clone();
 
@@ -342,12 +343,13 @@ impl ServerLinterBuilder {
     fn create_nested_configs(
         &self,
         root_path: &Path,
+        base_config_path: &Path,
         external_plugin_store: &mut ExternalPluginStore,
         nested_ignore_patterns: &mut Vec<(Vec<String>, PathBuf)>,
         extended_paths: &mut FxHashSet<PathBuf>,
         workspace_uri: Option<&str>,
     ) -> FxHashMap<PathBuf, Config> {
-        let config_paths = discover_configs_in_tree(root_path);
+        let config_paths = discover_configs_in_tree(root_path, base_config_path);
 
         #[cfg_attr(not(feature = "napi"), allow(unused_mut))]
         let mut loader = ConfigLoader::new(
@@ -1253,8 +1255,10 @@ mod test {
         let mut nested_ignore_patterns = Vec::new();
         let mut external_plugin_store = ExternalPluginStore::new(false);
         let mut extended_paths = FxHashSet::default();
+        let base_config_path = get_file_path("fixtures/lsp/init_nested_configs/.oxlintrc.json");
         let configs = builder.create_nested_configs(
             &get_file_path("fixtures/lsp/init_nested_configs"),
+            &base_config_path,
             &mut external_plugin_store,
             &mut nested_ignore_patterns,
             &mut extended_paths,
@@ -1264,10 +1268,9 @@ mod test {
         // sorting the key because for consistent tests results
         configs_dirs.sort();
 
-        assert!(configs_dirs.len() == 3);
-        assert!(configs_dirs[2].ends_with("deep2"));
-        assert!(configs_dirs[1].ends_with("deep1"));
-        assert!(configs_dirs[0].ends_with("init_nested_configs"));
+        assert_eq!(configs_dirs.len(), 2);
+        assert!(configs_dirs[1].ends_with("deep2"));
+        assert!(configs_dirs[0].ends_with("deep1"));
     }
 
     #[test]

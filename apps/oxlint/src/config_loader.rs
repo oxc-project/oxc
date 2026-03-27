@@ -62,10 +62,14 @@ pub fn discover_configs_in_ancestors<P: AsRef<Path>>(
 }
 
 /// Discover config files by walking DOWN from a root directory.
+/// Will skip the base config file (e.g., root oxlintrc) to avoid duplicate loading.
 ///
 /// Used by LSP where we have a workspace root and need to discover all configs
 /// upfront for file watching and diagnostics.
-pub fn discover_configs_in_tree(root: &Path) -> impl IntoIterator<Item = DiscoveredConfig> {
+pub fn discover_configs_in_tree(
+    root: &Path,
+    base_config_path: &Path,
+) -> impl IntoIterator<Item = DiscoveredConfig> {
     let walker = ignore::WalkBuilder::new(root)
         .hidden(false) // don't skip hidden files
         .parents(false) // disable gitignore from parent dirs
@@ -75,7 +79,8 @@ pub fn discover_configs_in_tree(root: &Path) -> impl IntoIterator<Item = Discove
         .build_parallel();
 
     let (sender, receiver) = mpsc::channel::<Vec<DiscoveredConfig>>();
-    let mut builder = ConfigWalkBuilder { sender };
+    let mut builder =
+        ConfigWalkBuilder { sender, base_config_path: base_config_path.to_path_buf() };
     walker.visit(&mut builder);
     drop(builder);
 
@@ -106,17 +111,23 @@ fn find_configs_in_directory(dir: &Path) -> Vec<DiscoveredConfig> {
 // Helper types for parallel directory walking
 struct ConfigWalkBuilder {
     sender: mpsc::Sender<Vec<DiscoveredConfig>>,
+    base_config_path: PathBuf,
 }
 
 impl<'s> ignore::ParallelVisitorBuilder<'s> for ConfigWalkBuilder {
     fn build(&mut self) -> Box<dyn ignore::ParallelVisitor + 's> {
-        Box::new(ConfigWalkCollector { configs: vec![], sender: self.sender.clone() })
+        Box::new(ConfigWalkCollector {
+            configs: vec![],
+            sender: self.sender.clone(),
+            base_config_path: self.base_config_path.clone(),
+        })
     }
 }
 
 struct ConfigWalkCollector {
     configs: Vec<DiscoveredConfig>,
     sender: mpsc::Sender<Vec<DiscoveredConfig>>,
+    base_config_path: PathBuf,
 }
 
 impl Drop for ConfigWalkCollector {
@@ -130,7 +141,7 @@ impl ignore::ParallelVisitor for ConfigWalkCollector {
     fn visit(&mut self, entry: Result<DirEntry, ignore::Error>) -> ignore::WalkState {
         match entry {
             Ok(entry) => {
-                if let Some(config) = to_discovered_config(&entry) {
+                if let Some(config) = to_discovered_config(&entry, &self.base_config_path) {
                     self.configs.push(config);
                 }
                 ignore::WalkState::Continue
@@ -140,9 +151,13 @@ impl ignore::ParallelVisitor for ConfigWalkCollector {
     }
 }
 
-fn to_discovered_config(entry: &DirEntry) -> Option<DiscoveredConfig> {
+fn to_discovered_config(entry: &DirEntry, base_config_path: &Path) -> Option<DiscoveredConfig> {
     let file_type = entry.file_type()?;
     if file_type.is_dir() {
+        return None;
+    }
+    if entry.path() == base_config_path {
+        // Skip the base config file (e.g., root oxlintrc) to avoid duplicate loading
         return None;
     }
     let file_name = entry.path().file_name()?;
