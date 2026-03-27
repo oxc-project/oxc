@@ -91,6 +91,7 @@ declare_oxc_lint!(
     NoUselessEscape,
     eslint,
     correctness,
+    tags = [recommended],
     fix,
     config = NoUselessEscapeConfig,
 );

@@ -62,6 +62,7 @@ declare_oxc_lint!(
     NoDeprecatedDestroyedLifecycle,
     vue,
     correctness,
+    tags = [recommended],
     fix
 );
 

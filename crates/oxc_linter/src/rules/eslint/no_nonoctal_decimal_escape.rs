@@ -45,6 +45,7 @@ declare_oxc_lint!(
     NoNonoctalDecimalEscape,
     eslint,
     correctness,
+    tags = [recommended],
     suggestion
 );
 

@@ -51,6 +51,7 @@ declare_oxc_lint!(
     NoRedundantTypeConstituents(tsgolint),
     typescript,
     correctness,
+    tags = [recommended],
 );
 
 impl Rule for NoRedundantTypeConstituents {}

@@ -54,7 +54,8 @@ declare_oxc_lint!(
     /// ```
     NoChildrenProp,
     react,
-    correctness
+    correctness,
+    tags = [recommended],
 );
 
 impl Rule for NoChildrenProp {

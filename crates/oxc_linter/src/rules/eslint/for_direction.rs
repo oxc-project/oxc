@@ -84,7 +84,8 @@ declare_oxc_lint!(
     ForDirection,
     eslint,
     correctness,
-    fix_dangerous
+    tags = [recommended],
+    fix_dangerous,
 );
 
 #[derive(Debug, Eq, PartialEq)]

@@ -76,6 +76,7 @@ declare_oxc_lint!(
     NoRequiredPropWithDefault,
     vue,
     suspicious,
+    tags = [recommended],
     suggestion
 );
 

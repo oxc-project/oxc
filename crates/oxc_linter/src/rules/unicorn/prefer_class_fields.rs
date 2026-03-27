@@ -83,6 +83,7 @@ declare_oxc_lint!(
     PreferClassFields,
     unicorn,
     style,
+    tags = [recommended],
     conditional_fix_suggestion
 );
 

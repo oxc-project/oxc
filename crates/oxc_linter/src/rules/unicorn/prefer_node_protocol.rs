@@ -41,6 +41,7 @@ declare_oxc_lint!(
     PreferNodeProtocol,
     unicorn,
     restriction,
+    tags = [recommended],
     fix
 );
 

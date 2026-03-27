@@ -64,6 +64,7 @@ declare_oxc_lint!(
     NoArrayReverse,
     unicorn,
     suspicious,
+    tags = [recommended],
     fix,
     config = NoArrayReverse,
 );

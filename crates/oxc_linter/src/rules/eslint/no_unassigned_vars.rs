@@ -50,6 +50,7 @@ declare_oxc_lint!(
     NoUnassignedVars,
     eslint,
     correctness,
+    tags = [recommended],
 );
 
 impl Rule for NoUnassignedVars {

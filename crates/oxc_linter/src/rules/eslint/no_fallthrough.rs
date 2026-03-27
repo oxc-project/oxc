@@ -247,6 +247,7 @@ declare_oxc_lint!(
     NoFallthrough,
     eslint,
     pedantic, // Fall through code are still incorrect.
+    tags = [recommended],
     pending, // TODO: add a dangerous suggestion for this rule.
     config = NoFallthroughConfig,
 );

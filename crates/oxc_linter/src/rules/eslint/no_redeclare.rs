@@ -66,6 +66,7 @@ declare_oxc_lint!(
     NoRedeclare,
     eslint,
     pedantic,
+    tags = [recommended],
     config = NoRedeclare,
 );
 

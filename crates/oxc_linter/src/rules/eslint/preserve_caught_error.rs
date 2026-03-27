@@ -285,9 +285,9 @@ declare_oxc_lint!(
     PreserveCaughtError,
     eslint,
     suspicious,
+    tags = [recommended],
     conditional_fix,
     config = PreserveCaughtErrorOptions,
-    tags = [recommended],
 );
 impl PreserveCaughtError {
     fn check_try_statement<'a>(&self, try_stmt: &'a TryStatement<'a>, ctx: &LintContext<'a>) {

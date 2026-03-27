@@ -136,6 +136,7 @@ declare_oxc_lint!(
     AltText,
     jsx_a11y,
     correctness,
+    tags = [recommended],
     config = AltTextConfig,
 );
 

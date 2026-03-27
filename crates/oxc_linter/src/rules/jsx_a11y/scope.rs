@@ -46,6 +46,7 @@ declare_oxc_lint!(
     Scope,
     jsx_a11y,
     correctness,
+    tags = [recommended],
     fix
 );
 

@@ -57,6 +57,7 @@ declare_oxc_lint!(
     NoTestPrefixes,
     jest,
     style,
+    tags = [recommended],
     fix
 );
 

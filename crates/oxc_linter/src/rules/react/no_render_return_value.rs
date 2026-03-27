@@ -48,7 +48,8 @@ declare_oxc_lint!(
     /// ```
     NoRenderReturnValue,
     react,
-    correctness
+    correctness,
+    tags = [recommended],
 );
 
 impl Rule for NoRenderReturnValue {

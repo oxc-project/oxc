@@ -56,6 +56,7 @@ declare_oxc_lint!(
     PreferAsConst,
     typescript,
     correctness,
+    tags = [recommended],
     conditional_fix
 );
 

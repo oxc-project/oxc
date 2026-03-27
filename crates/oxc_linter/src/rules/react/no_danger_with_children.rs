@@ -45,7 +45,8 @@ declare_oxc_lint!(
     /// ```
     NoDangerWithChildren,
     react,
-    correctness
+    correctness,
+    tags = [recommended],
 );
 
 impl Rule for NoDangerWithChildren {

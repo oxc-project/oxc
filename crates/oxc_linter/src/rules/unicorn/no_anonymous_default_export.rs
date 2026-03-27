@@ -61,6 +61,7 @@ declare_oxc_lint!(
     NoAnonymousDefaultExport,
     unicorn,
     restriction,
+    tags = [recommended],
     pending,
 );
 

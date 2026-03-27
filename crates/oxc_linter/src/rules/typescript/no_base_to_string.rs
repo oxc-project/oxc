@@ -78,6 +78,7 @@ declare_oxc_lint!(
     NoBaseToString(tsgolint),
     typescript,
     correctness,
+    tags = [recommended],
     config = NoBaseToStringConfig,
 );
 

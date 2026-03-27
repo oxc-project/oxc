@@ -52,6 +52,7 @@ declare_oxc_lint!(
     PreferPrototypeMethods,
     unicorn,
     pedantic,
+    tags = [recommended],
     fix
 );
 

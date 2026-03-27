@@ -76,6 +76,7 @@ declare_oxc_lint!(
     NoUselessUndefined,
     unicorn,
     pedantic,
+    tags = [recommended],
     fix,
     config = NoUselessUndefined,
 );

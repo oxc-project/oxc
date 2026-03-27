@@ -80,6 +80,7 @@ declare_oxc_lint!(
     PreferObjectFromEntries,
     unicorn,
     style,
+    tags = [recommended],
     pending,
     config = PreferObjectFromEntriesConfig,
 );

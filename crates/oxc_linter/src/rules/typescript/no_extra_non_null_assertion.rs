@@ -70,6 +70,7 @@ declare_oxc_lint!(
     NoExtraNonNullAssertion,
     typescript,
     correctness,
+    tags = [recommended],
     pending
 );
 

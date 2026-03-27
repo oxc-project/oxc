@@ -69,7 +69,8 @@ declare_oxc_lint!(
     /// ```
     NoArrowFunctionsInWatch,
     vue,
-    correctness
+    correctness,
+    tags = [recommended],
 );
 
 impl Rule for NoArrowFunctionsInWatch {

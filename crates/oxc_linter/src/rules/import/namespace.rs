@@ -108,6 +108,7 @@ declare_oxc_lint!(
     Namespace,
     import,
     correctness,
+    tags = [recommended],
     config = Namespace,
 );
 

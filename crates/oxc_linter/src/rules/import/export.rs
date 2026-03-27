@@ -45,7 +45,8 @@ declare_oxc_lint!(
     /// ```
     Export,
     import,
-    nursery
+    nursery,
+    tags = [recommended],
 );
 
 impl Rule for Export {

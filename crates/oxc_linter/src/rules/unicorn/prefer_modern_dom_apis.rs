@@ -78,6 +78,7 @@ declare_oxc_lint!(
     PreferModernDomApis,
     unicorn,
     style,
+    tags = [recommended],
     suggestion
 );
 

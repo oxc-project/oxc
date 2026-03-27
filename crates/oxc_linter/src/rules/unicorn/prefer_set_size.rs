@@ -43,6 +43,7 @@ declare_oxc_lint!(
     PreferSetSize,
     unicorn,
     correctness,
+    tags = [recommended],
     fix
 );
 

@@ -62,6 +62,7 @@ declare_oxc_lint!(
     NoUnsafeMemberAccess(tsgolint),
     typescript,
     pedantic,
+    tags = [recommended],
     config = NoUnsafeMemberAccessConfig,
 );
 

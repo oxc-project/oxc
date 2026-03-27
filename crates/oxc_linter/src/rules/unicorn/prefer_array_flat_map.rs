@@ -40,6 +40,7 @@ declare_oxc_lint!(
     PreferArrayFlatMap,
     unicorn,
     perf,
+    tags = [recommended],
     fix
 );
 

@@ -132,6 +132,7 @@ declare_oxc_lint!(
     ValidDefineEmits,
     vue,
     correctness,
+    tags = [recommended],
     pending  // TODO: removing empty `defineEmits` and merging multiple `defineEmits` calls
 );
 

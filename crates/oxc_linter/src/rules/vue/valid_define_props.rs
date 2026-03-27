@@ -132,6 +132,7 @@ declare_oxc_lint!(
     ValidDefineProps,
     vue,
     correctness,
+    tags = [recommended],
     pending  // TODO: removing empty `defineProps` and merging multiple `defineProps` calls
 );
 

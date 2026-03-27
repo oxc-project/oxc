@@ -59,6 +59,7 @@ declare_oxc_lint!(
     CheckPropertyNames,
     jsdoc,
     correctness,
+    tags = [recommended],
     pending
 );
 

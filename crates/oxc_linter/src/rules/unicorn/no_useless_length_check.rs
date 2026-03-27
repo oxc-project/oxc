@@ -61,6 +61,7 @@ declare_oxc_lint!(
     NoUselessLengthCheck,
     unicorn,
     correctness,
+    tags = [recommended],
     pending
 );
 

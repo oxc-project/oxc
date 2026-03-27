@@ -41,6 +41,7 @@ declare_oxc_lint!(
     PreferImportFromVue,
     vue,
     correctness,
+    tags = [recommended],
     fix
 );
 

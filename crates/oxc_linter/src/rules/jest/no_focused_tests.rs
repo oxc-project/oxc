@@ -65,6 +65,7 @@ declare_oxc_lint!(
     NoFocusedTests,
     jest,
     correctness,
+    tags = [recommended],
     fix
 );
 

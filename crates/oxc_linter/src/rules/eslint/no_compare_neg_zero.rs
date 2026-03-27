@@ -62,6 +62,7 @@ declare_oxc_lint!(
     NoCompareNegZero,
     eslint,
     correctness,
+    tags = [recommended],
     conditional_fix_suggestion
 );
 

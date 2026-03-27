@@ -100,6 +100,7 @@ declare_oxc_lint!(
     RequireYields,
     jsdoc,
     correctness,
+    tags = [recommended],
     config = RequireYieldsConfig,
 );
 

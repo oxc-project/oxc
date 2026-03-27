@@ -76,7 +76,8 @@ declare_oxc_lint!(
     /// ```
     NoDuplicateCase,
     eslint,
-    correctness
+    correctness,
+    tags = [recommended],
 );
 
 impl Rule for NoDuplicateCase {

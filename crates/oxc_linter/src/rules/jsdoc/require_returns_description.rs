@@ -45,6 +45,7 @@ declare_oxc_lint!(
     RequireReturnsDescription,
     jsdoc,
     pedantic,
+    tags = [recommended],
 );
 
 impl Rule for RequireReturnsDescription {
@@ -108,7 +109,7 @@ fn test() {
 			           *
 			           */
 			          function quux () {
-			
+
 			          }
 			      ",
             None,
@@ -120,7 +121,7 @@ fn test() {
 			           * @returns Foo.
 			           */
 			          function quux () {
-			
+
 			          }
 			      ",
             None,
@@ -132,7 +133,7 @@ fn test() {
 			           * @returns Foo.
 			           */
 			          function quux () {
-			
+
 			          }
 			      ",
             Some(serde_json::json!([
@@ -150,7 +151,7 @@ fn test() {
 			           * @returns {undefined}
 			           */
 			          function quux () {
-			
+
 			          }
 			      ",
             None,
@@ -162,7 +163,7 @@ fn test() {
 			           * @returns {void}
 			           */
 			          function quux () {
-			
+
 			          }
 			      ",
             None,
@@ -174,7 +175,7 @@ fn test() {
 			           * @returns {Promise<void>}
 			           */
 			          function quux () {
-			
+
 			          }
 			      ",
             None,
@@ -186,7 +187,7 @@ fn test() {
 			           * @returns {Promise<undefined>}
 			           */
 			          function quux () {
-			
+
 			          }
 			      ",
             None,
@@ -221,7 +222,7 @@ fn test() {
 			           * @returns
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ",
             None,
@@ -233,7 +234,7 @@ fn test() {
 			           * @returns {string}
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ",
             None,
@@ -245,7 +246,7 @@ fn test() {
 			           * @return
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ",
             None,

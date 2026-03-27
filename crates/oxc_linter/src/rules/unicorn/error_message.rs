@@ -51,7 +51,8 @@ declare_oxc_lint!(
     /// ```
     ErrorMessage,
     unicorn,
-    style
+    style,
+    tags = [recommended],
 );
 
 impl Rule for ErrorMessage {

@@ -93,6 +93,7 @@ declare_oxc_lint!(
     NoUnknownProperty,
     react,
     restriction,
+    tags = [recommended],
     pending,
     config = NoUnknownPropertyConfig,
 );

@@ -56,7 +56,8 @@ declare_oxc_lint!(
     /// ```
     NoMocksImport,
     jest,
-    style
+    style,
+    tags = [recommended],
 );
 
 impl Rule for NoMocksImport {

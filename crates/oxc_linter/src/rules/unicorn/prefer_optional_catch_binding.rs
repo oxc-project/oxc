@@ -40,6 +40,7 @@ declare_oxc_lint!(
     PreferOptionalCatchBinding,
     unicorn,
     style,
+    tags = [recommended],
     fix
 );
 

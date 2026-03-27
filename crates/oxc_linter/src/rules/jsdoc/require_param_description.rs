@@ -47,6 +47,7 @@ declare_oxc_lint!(
     RequireParamDescription,
     jsdoc,
     pedantic,
+    tags = [recommended],
     pending,
 );
 
@@ -115,7 +116,7 @@ fn test() {
 			           *
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ",
             None,
@@ -127,7 +128,7 @@ fn test() {
 			           * @param foo Foo.
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ",
             None,
@@ -176,7 +177,7 @@ fn test() {
 			           * @param {boolean} baz Baz description
 			           */
 			          function quux (foo, {bar}, baz) {
-			
+
 			          }
 			      ",
             None,
@@ -192,7 +193,7 @@ fn test() {
 			           * @param {object} root.bar
 			           */
 			          function quux (foo, {bar: {baz}}) {
-			
+
 			          }
 			      ",
             None,
@@ -209,7 +210,7 @@ fn test() {
 			           * @param foo
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ",
             None,
@@ -221,7 +222,7 @@ fn test() {
 			           * @arg foo
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ",
             None,
@@ -237,7 +238,7 @@ fn test() {
 			           * @param {boolean} baz Baz description
 			           */
 			          function quux (foo, {bar}, baz) {
-			
+
 			          }
 			      ",
             Some(
@@ -253,7 +254,7 @@ fn test() {
 			           * @param {boolean} baz Baz description
 			           */
 			          function quux (foo, {bar}, baz) {
-			
+
 			          }
 			      ",
             Some(
@@ -269,7 +270,7 @@ fn test() {
 			           * @param {boolean} baz Baz description
 			           */
 			          function quux (foo, {bar}, baz) {
-			
+
 			          }
 			      ",
             Some(

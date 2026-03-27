@@ -84,7 +84,8 @@ declare_oxc_lint!(
     /// ```
     NoClassAssign,
     eslint,
-    correctness
+    correctness,
+    tags = [recommended],
 );
 
 impl Rule for NoClassAssign {

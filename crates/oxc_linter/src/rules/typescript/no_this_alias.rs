@@ -95,6 +95,7 @@ declare_oxc_lint!(
     NoThisAlias,
     typescript,
     correctness,
+    tags = [recommended],
     config = NoThisAliasConfig,
 );
 

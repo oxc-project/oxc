@@ -43,7 +43,8 @@ declare_oxc_lint!(
     /// ```
     JsxNoNewObjectAsProp,
     react_perf,
-    perf
+    perf,
+    tags = [recommended],
 );
 
 impl ReactPerfRule for JsxNoNewObjectAsProp {

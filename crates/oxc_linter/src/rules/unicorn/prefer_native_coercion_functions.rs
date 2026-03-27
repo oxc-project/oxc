@@ -53,6 +53,7 @@ declare_oxc_lint!(
     PreferNativeCoercionFunctions,
     unicorn,
     pedantic,
+    tags = [recommended],
     pending
 );
 

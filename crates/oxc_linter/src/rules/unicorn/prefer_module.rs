@@ -57,6 +57,7 @@ declare_oxc_lint!(
     PreferModule,
     unicorn,
     restriction,
+    tags = [recommended],
     pending
 );
 

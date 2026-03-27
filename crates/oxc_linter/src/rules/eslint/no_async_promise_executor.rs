@@ -80,7 +80,8 @@ declare_oxc_lint!(
     /// ```
     NoAsyncPromiseExecutor,
     eslint,
-    correctness
+    correctness,
+    tags = [recommended],
 );
 
 impl Rule for NoAsyncPromiseExecutor {

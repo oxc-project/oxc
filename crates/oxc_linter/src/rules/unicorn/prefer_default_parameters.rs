@@ -61,6 +61,7 @@ declare_oxc_lint!(
     PreferDefaultParameters,
     unicorn,
     style,
+    tags = [recommended],
     pending,
 );
 

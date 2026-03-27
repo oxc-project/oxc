@@ -41,6 +41,7 @@ declare_oxc_lint!(
     NoUnnecessaryAwait,
     unicorn,
     correctness,
+    tags = [recommended],
     conditional_fix
 );
 

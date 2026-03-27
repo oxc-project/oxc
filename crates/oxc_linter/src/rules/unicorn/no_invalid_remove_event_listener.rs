@@ -44,7 +44,8 @@ declare_oxc_lint!(
     /// ```
     NoInvalidRemoveEventListener,
     unicorn,
-    correctness
+    correctness,
+    tags = [recommended],
 );
 
 impl Rule for NoInvalidRemoveEventListener {

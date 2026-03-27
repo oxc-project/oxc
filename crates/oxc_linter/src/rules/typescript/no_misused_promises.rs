@@ -125,6 +125,7 @@ declare_oxc_lint!(
     NoMisusedPromises(tsgolint),
     typescript,
     pedantic,
+    tags = [recommended],
     config = NoMisusedPromisesConfig,
 );
 

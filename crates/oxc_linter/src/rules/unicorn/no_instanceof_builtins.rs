@@ -124,6 +124,7 @@ declare_oxc_lint!(
     NoInstanceofBuiltins,
     unicorn,
     suspicious,
+    tags = [recommended],
     conditional_suggestion,
     config = NoInstanceofBuiltinsConfig,
 );

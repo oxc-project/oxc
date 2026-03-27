@@ -96,6 +96,7 @@ declare_oxc_lint!(
     UseIsnan,
     eslint,
     correctness,
+    tags = [recommended],
     conditional_fix,
     config = UseIsnan,
 );

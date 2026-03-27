@@ -69,6 +69,7 @@ declare_oxc_lint!(
     NoUnsafeNegation,
     eslint,
     correctness,
+    tags = [recommended],
     fix,
     config = NoUnsafeNegation,
 );

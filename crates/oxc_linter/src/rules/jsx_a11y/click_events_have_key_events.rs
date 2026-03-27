@@ -46,7 +46,8 @@ declare_oxc_lint!(
     /// ```
     ClickEventsHaveKeyEvents,
     jsx_a11y,
-    correctness
+    correctness,
+    tags = [recommended],
 );
 
 impl Rule for ClickEventsHaveKeyEvents {

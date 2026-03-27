@@ -62,6 +62,7 @@ declare_oxc_lint!(
     NoUselessCollectionArgument,
     unicorn,
     style,
+    tags = [recommended],
     suggestion,
 );
 

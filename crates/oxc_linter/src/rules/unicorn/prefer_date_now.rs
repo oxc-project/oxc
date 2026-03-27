@@ -54,6 +54,7 @@ declare_oxc_lint!(
     PreferDateNow,
     unicorn,
     pedantic,
+    tags = [recommended],
     fix
 );
 

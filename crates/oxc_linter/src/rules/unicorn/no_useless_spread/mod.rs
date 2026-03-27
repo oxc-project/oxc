@@ -142,6 +142,7 @@ declare_oxc_lint!(
     NoUselessSpread,
     unicorn,
     correctness,
+    tags = [recommended],
     fix_dangerous
 );
 

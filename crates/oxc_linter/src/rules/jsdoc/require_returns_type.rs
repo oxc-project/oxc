@@ -44,6 +44,7 @@ declare_oxc_lint!(
     RequireReturnsType,
     jsdoc,
     pedantic,
+    tags = [recommended],
 );
 
 impl Rule for RequireReturnsType {
@@ -95,7 +96,7 @@ fn test() {
 			           * @returns {number}
 			           */
 			          function quux () {
-			
+
 			          }
 			      ",
             None,
@@ -130,7 +131,7 @@ fn test() {
 			           * @returns
 			           */
 			          function quux () {
-			
+
 			          }
 			      ",
             None,
@@ -142,7 +143,7 @@ fn test() {
 			           * @returns Foo.
 			           */
 			          function quux () {
-			
+
 			          }
 			      ",
             None,
@@ -154,7 +155,7 @@ fn test() {
 			           * @return Foo.
 			           */
 			          function quux () {
-			
+
 			          }
 			      ",
             None,

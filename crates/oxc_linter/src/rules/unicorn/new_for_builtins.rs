@@ -49,6 +49,7 @@ declare_oxc_lint!(
     NewForBuiltins,
     unicorn,
     pedantic,
+    tags = [recommended],
     pending
 );
 

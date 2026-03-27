@@ -55,7 +55,8 @@ declare_oxc_lint!(
     /// ```
     NoThisAssignment,
     unicorn,
-    pedantic
+    pedantic,
+    tags = [recommended],
 );
 
 impl Rule for NoThisAssignment {

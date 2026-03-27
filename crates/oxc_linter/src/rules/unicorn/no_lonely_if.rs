@@ -43,6 +43,7 @@ declare_oxc_lint!(
     NoLonelyIf,
     unicorn,
     pedantic,
+    tags = [recommended],
     pending
 );
 

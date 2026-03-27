@@ -55,7 +55,8 @@ declare_oxc_lint!(
     /// ```
     NoSyncScripts,
     nextjs,
-    correctness
+    correctness,
+    tags = [recommended],
 );
 
 impl Rule for NoSyncScripts {
@@ -99,7 +100,7 @@ fn test() {
 
     let pass = vec![
         r"import {Head} from 'next/document';
-			
+
 			      export class Blah extends Head {
 			        render() {
 			          return (
@@ -111,7 +112,7 @@ fn test() {
 			        }
 			    }",
         r"import {Head} from 'next/document';
-			
+
 			      export class Blah extends Head {
 			        render(props) {
 			          return (
@@ -127,7 +128,7 @@ fn test() {
     let fail = vec![
         r"
 			      import {Head} from 'next/document';
-			
+
 			        export class Blah extends Head {
 			          render() {
 			            return (
@@ -140,7 +141,7 @@ fn test() {
 			      }",
         r"
 			      import {Head} from 'next/document';
-			
+
 			        export class Blah extends Head {
 			          render(props) {
 			            return (

@@ -122,6 +122,7 @@ declare_oxc_lint!(
     AnchorIsValid,
     jsx_a11y,
     correctness,
+    tags = [recommended],
     config = AnchorIsValidConfig
 );
 

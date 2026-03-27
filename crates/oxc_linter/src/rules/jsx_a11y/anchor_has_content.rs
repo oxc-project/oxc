@@ -58,6 +58,7 @@ declare_oxc_lint!(
     AnchorHasContent,
     jsx_a11y,
     correctness,
+    tags = [recommended],
     conditional_suggestion
 );
 

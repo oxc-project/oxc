@@ -39,6 +39,7 @@ declare_oxc_lint!(
     PreferStringSlice,
     unicorn,
     pedantic,
+    tags = [recommended],
     conditional_fix
 );
 
