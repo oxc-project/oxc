@@ -10,6 +10,7 @@ TESTING_LIBRARY_SHA="b8ef3772487a32c886cb5c338da2a144560a437b" # 7.15.4
 STORYBOOK_SHA="99aa48989f6798ae24d9867bc2b5fe6991a2e341" # v10.3.0-alpha.12
 PLAYWRIGHT_SHA="7e16bd565cfccd365a6a8f1f7f6fe29a1c868036" # v2.9.0
 CYPRESS_SHA="de98a5de648694518873ad85b41250e40a67be95" # v6.2.0
+MOCHA_SHA="1e5a3a1a9597ab54e5cc3d3fc58071009d0335d3" # v11.1.0
 
 # Shallow clone a repo at a specific commit, and `cd` into the cloned directory.
 # Git commands copied from `.github/scripts/clone-parallel.mjs`.
@@ -238,6 +239,19 @@ cd ..
 
 # Clone `eslint-plugin-cypress` repo into `submodules/cypress`
 clone cypress https://github.com/cypress-io/eslint-plugin-cypress.git "$CYPRESS_SHA"
+
+# Install dependencies
+npm install
+
+# Return to `submodules` directory
+cd ..
+
+###############################################################################
+# Mocha
+###############################################################################
+
+# Clone `eslint-plugin-mocha` repo into `submodules/mocha`
+clone mocha https://github.com/lo1tuma/eslint-plugin-mocha.git "$MOCHA_SHA"
 
 # Install dependencies
 npm install
