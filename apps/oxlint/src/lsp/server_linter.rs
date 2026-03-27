@@ -32,7 +32,8 @@ use crate::{
     config_loader::{ConfigLoader, build_nested_configs, discover_configs_in_tree},
     lsp::{
         code_actions::{
-            CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC, apply_all_fix_code_action, apply_fix_code_actions,
+            CODE_ACTION_KIND_SOURCE_FIX_ALL_DANGEROUS_OXC, CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC,
+            apply_all_fix_code_action, apply_dangerous_fix_code_action, apply_fix_code_actions,
             fix_all_text_edit,
         },
         commands::{FIX_ALL_COMMAND_ID, FixAllCommandArgs},
@@ -227,6 +228,7 @@ impl ServerLinterBuilder {
             Self::create_ignore_glob(&root_path),
             extended_paths,
             runner,
+            fix_kind,
             lint_options.report_unused_directive,
         )
     }
@@ -252,6 +254,9 @@ impl ToolBuilder for ServerLinterBuilder {
         }
         if !code_action_kinds.contains(&CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC) {
             code_action_kinds.push(CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC);
+        }
+        if !code_action_kinds.contains(&CODE_ACTION_KIND_SOURCE_FIX_ALL_DANGEROUS_OXC) {
+            code_action_kinds.push(CODE_ACTION_KIND_SOURCE_FIX_ALL_DANGEROUS_OXC);
         }
         if !code_action_kinds.contains(&CodeActionKind::SOURCE_FIX_ALL) {
             code_action_kinds.push(CodeActionKind::SOURCE_FIX_ALL);
@@ -420,6 +425,7 @@ pub struct ServerLinter {
     extended_paths: FxHashSet<PathBuf>,
     code_actions: Arc<ConcurrentHashMap<Uri, Option<Vec<LinterCodeAction>>>>,
     runner: LintRunner,
+    fix_kind: FixKind,
     unused_directives_severity: Option<AllowWarnDeny>,
 }
 
@@ -652,6 +658,18 @@ impl Tool for ServerLinter {
                     continue;
                 };
                 code_actions_vec.push(CodeActionOrCommand::CodeAction(fix_all));
+            } else if kind == CODE_ACTION_KIND_SOURCE_FIX_ALL_DANGEROUS_OXC {
+                if !self.fix_kind.is_dangerous() {
+                    warn!(
+                        "Linter is not configured to provide dangerous fixes. Please set `fixKind` to `dangerous_fix` or `dangerous_fix_or_suggestion` in the server configuration to enable it."
+                    );
+                    continue;
+                }
+                let Some(fix_all) = apply_dangerous_fix_code_action(actions.clone(), uri.clone())
+                else {
+                    continue;
+                };
+                code_actions_vec.push(CodeActionOrCommand::CodeAction(fix_all));
             } else if kind == CodeActionKind::QUICKFIX {
                 for action in actions.clone() {
                     let fix_actions = apply_fix_code_actions(action, uri);
@@ -705,6 +723,7 @@ impl ServerLinter {
         gitignore_glob: Vec<Gitignore>,
         extended_paths: FxHashSet<PathBuf>,
         runner: LintRunner,
+        fix_kind: FixKind,
         unused_directives_severity: Option<AllowWarnDeny>,
     ) -> Self {
         Self {
@@ -715,6 +734,7 @@ impl ServerLinter {
             extended_paths,
             code_actions: Arc::new(ConcurrentHashMap::default()),
             runner,
+            fix_kind,
             unused_directives_severity,
         }
     }
@@ -887,7 +907,10 @@ mod tests_builder {
     use oxc_language_server::{Capabilities, DiagnosticMode, ToolBuilder};
 
     use crate::lsp::{
-        code_actions::CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC, commands::FIX_ALL_COMMAND_ID,
+        code_actions::{
+            CODE_ACTION_KIND_SOURCE_FIX_ALL_DANGEROUS_OXC, CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC,
+        },
+        commands::FIX_ALL_COMMAND_ID,
         server_linter::ServerLinterBuilder,
     };
 
@@ -904,8 +927,9 @@ mod tests_builder {
                 let code_action_kinds = options.code_action_kinds.as_ref().unwrap();
                 assert!(code_action_kinds.contains(&CodeActionKind::QUICKFIX));
                 assert!(code_action_kinds.contains(&CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC));
+                assert!(code_action_kinds.contains(&CODE_ACTION_KIND_SOURCE_FIX_ALL_DANGEROUS_OXC));
                 assert!(code_action_kinds.contains(&CodeActionKind::SOURCE_FIX_ALL));
-                assert_eq!(code_action_kinds.len(), 3);
+                assert_eq!(code_action_kinds.len(), 4);
             }
             _ => panic!("Expected code action provider options"),
         }
@@ -936,8 +960,9 @@ mod tests_builder {
                 assert!(code_action_kinds.contains(&CodeActionKind::REFACTOR));
                 assert!(code_action_kinds.contains(&CodeActionKind::QUICKFIX));
                 assert!(code_action_kinds.contains(&CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC));
+                assert!(code_action_kinds.contains(&CODE_ACTION_KIND_SOURCE_FIX_ALL_DANGEROUS_OXC));
                 assert!(code_action_kinds.contains(&CodeActionKind::SOURCE_FIX_ALL));
-                assert_eq!(code_action_kinds.len(), 4);
+                assert_eq!(code_action_kinds.len(), 5);
                 assert_eq!(options.resolve_provider, Some(true));
             }
             _ => panic!("Expected code action provider options"),
@@ -963,8 +988,9 @@ mod tests_builder {
                 let code_action_kinds = options.code_action_kinds.as_ref().unwrap();
                 assert!(code_action_kinds.contains(&CodeActionKind::QUICKFIX));
                 assert!(code_action_kinds.contains(&CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC));
+                assert!(code_action_kinds.contains(&CODE_ACTION_KIND_SOURCE_FIX_ALL_DANGEROUS_OXC));
                 assert!(code_action_kinds.contains(&CodeActionKind::SOURCE_FIX_ALL));
-                assert_eq!(code_action_kinds.len(), 3);
+                assert_eq!(code_action_kinds.len(), 4);
             }
             _ => panic!("Expected code action provider options"),
         }
@@ -986,8 +1012,9 @@ mod tests_builder {
                 let code_action_kinds = options.code_action_kinds.as_ref().unwrap();
                 assert!(code_action_kinds.contains(&CodeActionKind::QUICKFIX));
                 assert!(code_action_kinds.contains(&CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC));
+                assert!(code_action_kinds.contains(&CODE_ACTION_KIND_SOURCE_FIX_ALL_DANGEROUS_OXC));
                 assert!(code_action_kinds.contains(&CodeActionKind::SOURCE_FIX_ALL));
-                assert_eq!(code_action_kinds.len(), 3);
+                assert_eq!(code_action_kinds.len(), 4);
             }
             _ => panic!("Expected code action provider options"),
         }
@@ -1244,7 +1271,9 @@ mod test {
     };
 
     use crate::lsp::{
-        code_actions::CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC,
+        code_actions::{
+            CODE_ACTION_KIND_SOURCE_FIX_ALL_DANGEROUS_OXC, CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC,
+        },
         server_linter::ServerLinterBuilder,
         tester::{Tester, get_file_path},
     };
@@ -1271,6 +1300,41 @@ mod test {
         assert_eq!(configs_dirs.len(), 2);
         assert!(configs_dirs[1].ends_with("deep2"));
         assert!(configs_dirs[0].ends_with("deep1"));
+    }
+
+    #[test]
+    fn test_fix_all_dangerous_returns_dangerous_fix_action() {
+        let tester =
+            Tester::new("fixtures/lsp/dangerous_fix", json!({ "fixKind": "dangerous_fix" }));
+        let linter = tester.create_linter();
+        let range = Range::new(Position::new(0, 0), Position::new(u32::MAX, u32::MAX));
+        let uri = tester.get_file_uri("unused_var.js");
+        let _ = linter.run_file(&uri, Some("let a = 1;")).unwrap();
+
+        // source.fixAll should only return safe fixes, not dangerous ones
+        let safe_actions = linter.get_code_actions_or_commands(
+            &uri,
+            &range,
+            &CodeActionContext {
+                only: Some(vec![CodeActionKind::SOURCE_FIX_ALL]),
+                ..Default::default()
+            },
+        );
+        assert!(safe_actions.is_empty(), "source.fixAll should not apply dangerous fixes");
+
+        // source.fixAllDangerous.oxc should return dangerous fix actions when fix_kind is dangerous
+        let dangerous_actions = linter.get_code_actions_or_commands(
+            &uri,
+            &range,
+            &CodeActionContext {
+                only: Some(vec![CODE_ACTION_KIND_SOURCE_FIX_ALL_DANGEROUS_OXC]),
+                ..Default::default()
+            },
+        );
+        assert!(
+            !dangerous_actions.is_empty(),
+            "source.fixAllDangerous.oxc should return dangerous fix action when fix_kind is dangerous"
+        );
     }
 
     #[test]
