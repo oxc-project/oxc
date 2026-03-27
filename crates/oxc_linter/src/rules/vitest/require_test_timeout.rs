@@ -103,14 +103,13 @@ impl Rule for RequireTestTimeout {
         possible_jest_nodes.sort_unstable_by_key(|n| n.node.id());
 
         for possible_jest_node in possible_jest_nodes {
-            self.run_rule(&possible_jest_node, &mut config_positions, ctx);
+            Self::run_rule(&possible_jest_node, &mut config_positions, ctx);
         }
     }
 }
 
 impl RequireTestTimeout {
-    fn run_rule<'a>(
-        &self,
+    pub fn run_rule<'a>(
         possible_jest_node: &PossibleJestNode<'a, '_>,
         config_positions: &mut Vec<Span>,
         ctx: &LintContext<'a>,
@@ -148,14 +147,11 @@ impl RequireTestTimeout {
 
                     parse_timeout_value(&property.value, property.value.span(), ctx);
                 } else {
-                    ctx.diagnostic(config_missing_timeout_object(call_expr.span()))
+                    ctx.diagnostic(config_missing_timeout_object(call_expr.span()));
                 }
             }
-            JestFnKind::General(JestGeneralFnKind::Describe) => {
-                return;
-            }
             JestFnKind::General(JestGeneralFnKind::Test) => {
-                if vi_node.members.iter().any(is_todo_or_skipped) || vi_node.name.starts_with("x") {
+                if vi_node.members.iter().any(is_todo_or_skipped) || vi_node.name.starts_with('x') {
                     return;
                 }
 
@@ -195,13 +191,11 @@ impl RequireTestTimeout {
                         return;
                     }
 
-                    ctx.diagnostic(test_missing_timeout(call_expr.span()))
+                    ctx.diagnostic(test_missing_timeout(call_expr.span()));
                 }
             }
-            _ => {
-                return;
-            }
-        };
+            _ => {}
+        }
     }
 }
 
@@ -209,7 +203,7 @@ fn is_todo_or_skipped(member: &KnownMemberExpressionProperty<'_>) -> bool {
     member.is_name_equal("todo") || member.is_name_equal("skip")
 }
 
-fn is_property_name_equals(property: &&ObjectPropertyKind<'_>, name: &str) -> bool {
+fn is_property_name_equals(property: &ObjectPropertyKind<'_>, name: &str) -> bool {
     let ObjectPropertyKind::ObjectProperty(object_pair) = property else {
         return false;
     };
@@ -221,12 +215,9 @@ fn is_property_name_equals(property: &&ObjectPropertyKind<'_>, name: &str) -> bo
     object_key_name == name
 }
 
-fn parse_timeout_value<'a>(expression: &Expression<'_>, span: Span, ctx: &LintContext<'a>) {
+fn parse_timeout_value(expression: &Expression<'_>, span: Span, ctx: &LintContext<'_>) {
     match expression {
-        Expression::NullLiteral(_) => ctx.diagnostic(timeout_must_be_a_number(span)),
-        Expression::NumericLiteral(_) => {
-            return;
-        }
+        Expression::NumericLiteral(_) => {}
         Expression::UnaryExpression(expression) => {
             let Expression::NumericLiteral(_) = &expression.argument else {
                 ctx.diagnostic(timeout_must_be_a_number(span));
@@ -237,7 +228,7 @@ fn parse_timeout_value<'a>(expression: &Expression<'_>, span: Span, ctx: &LintCo
                 return;
             }
 
-            ctx.diagnostic(timeout_must_be_non_negative(span))
+            ctx.diagnostic(timeout_must_be_non_negative(span));
         }
         _ => ctx.diagnostic(timeout_must_be_a_number(span)),
     }
