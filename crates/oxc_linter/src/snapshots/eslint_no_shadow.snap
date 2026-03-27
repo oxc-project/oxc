@@ -417,6 +417,20 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Consider renaming 'top' to avoid shadowing the global variable.
 
+  ⚠ eslint(no-shadow): 'window' is already a global variable.
+   ╭─[no_shadow.tsx:1:22]
+ 1 │ function foo() { var window = 0; var process = 0; }
+   ·                      ──────
+   ╰────
+  help: Consider renaming 'window' to avoid shadowing the global variable.
+
+  ⚠ eslint(no-shadow): 'process' is already a global variable.
+   ╭─[no_shadow.tsx:1:38]
+ 1 │ function foo() { var window = 0; var process = 0; }
+   ·                                      ───────
+   ╰────
+  help: Consider renaming 'process' to avoid shadowing the global variable.
+
   ⚠ eslint(no-shadow): 'Object' is already a global variable.
    ╭─[no_shadow.tsx:1:5]
  1 │ var Object = 0;
