@@ -40,7 +40,7 @@ declare_oxc_lint!(
     ///  */
     ///
     /// /**
-    ///  * @namespace {Object} SomeNamesoace
+    ///  * @namespace {Object} SomeNamespace
     ///  */
     /// ```
     ///
