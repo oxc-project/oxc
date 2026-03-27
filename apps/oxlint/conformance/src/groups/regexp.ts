@@ -114,7 +114,7 @@ class SnapshotRuleTesterShim extends RuleTester {
 }
 
 /**
- * Parse a `.eslintsnap` snapshot file to extract expected fix output for each invalid test case.
+ * Parse an `.eslintsnap` snapshot file to extract expected fix output for each invalid test case.
  *
  * The eslintsnap format (v1) looks like:
  * ```
