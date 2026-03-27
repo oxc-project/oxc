@@ -8,8 +8,9 @@ use crate::{
     ast_nodes::{AstNode, AstNodes},
     format_args,
     formatter::{
-        Formatter, prelude::*,
+        Formatter,
         format_element::{FormatElement, ImportDeclMetadata},
+        prelude::*,
         separated::FormatSeparatedIter,
         trivia::FormatLeadingComments,
     },
@@ -50,7 +51,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ImportDeclaration<'a>> {
             if f.options().sort_imports.is_some() {
                 let (mut has_default, mut has_namespace, mut has_named) = (false, false, false);
                 if let Some(specs) = &self.specifiers {
-                    for s in specs.iter() {
+                    for s in specs {
                         match s {
                             ImportDeclarationSpecifier::ImportDefaultSpecifier(_) => {
                                 has_default = true;

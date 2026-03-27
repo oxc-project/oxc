@@ -278,6 +278,7 @@ impl<'a> Printer<'a> {
                     self.print_text(Text::Text { text, width });
                 }
             }
+            #[expect(clippy::match_same_arms)]
             FormatElement::ImportMetadata(_) => {}
         }
 
