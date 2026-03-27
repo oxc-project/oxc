@@ -94,11 +94,9 @@ impl Rule for NoRestrictedGlobals {
                 return;
             };
 
-            if ctx.scoping().root_unresolved_references().contains_key(&ident.name) {
-                let reference = ctx.scoping().get_reference(ident.reference_id());
-                if !reference.is_type() {
-                    ctx.diagnostic(no_restricted_globals(&ident.name, message, ident.span));
-                }
+            let reference = ctx.scoping().get_reference(ident.reference_id());
+            if reference.symbol_id().is_none() && !reference.is_type() {
+                ctx.diagnostic(no_restricted_globals(&ident.name, message, ident.span));
             }
         }
     }
@@ -130,6 +128,11 @@ fn test() {
         ("function fn() { var foo; }", Some(serde_json::json!(["foo"])), None),
         ("foo.bar", Some(serde_json::json!(["bar"])), None),
         ("foo", Some(serde_json::json!([{ "name": "bar", "message": "Use baz instead." }])), None),
+        (
+            "function test(history: {location: {pathname: string}}) {\n  const {location} = history\n  return location.pathname\n}\nexport {test}",
+            Some(serde_json::json!([{ "name": "location", "message": "Use router." }])),
+            None,
+        ),
     ];
 
     let fail = vec![
@@ -199,6 +202,11 @@ fn test() {
         (
             "var foo = obj => hasOwnProperty(obj, 'name');",
             Some(serde_json::json!(["hasOwnProperty"])),
+            None,
+        ),
+        (
+            "const globalPath = location.pathname\nfunction test(history: {location: {pathname: string}}) {\n  const {location} = history\n  return location.pathname\n}\nexport {test, globalPath}",
+            Some(serde_json::json!([{ "name": "location", "message": "Use router." }])),
             None,
         ),
     ];

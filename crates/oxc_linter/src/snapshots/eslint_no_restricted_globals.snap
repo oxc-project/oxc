@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+assertion_line: 444
 ---
 
   ⚠ eslint(no-restricted-globals): Unexpected use of 'foo'.
@@ -153,5 +154,13 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_restricted_globals.tsx:1:18]
  1 │ var foo = obj => hasOwnProperty(obj, 'name');
    ·                  ──────────────
+   ╰────
+  help: Use a local variable or function parameter instead of the restricted global.
+
+  ⚠ eslint(no-restricted-globals): Unexpected use of 'location'. Use router.
+   ╭─[no_restricted_globals.tsx:1:20]
+ 1 │ const globalPath = location.pathname
+   ·                    ────────
+ 2 │ function test(history: {location: {pathname: string}}) {
    ╰────
   help: Use a local variable or function parameter instead of the restricted global.
