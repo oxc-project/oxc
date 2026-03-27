@@ -155,3 +155,11 @@ source: crates/oxc_linter/src/tester.rs
    ·                  ──────────────
    ╰────
   help: Use a local variable or function parameter instead of the restricted global.
+
+  ⚠ eslint(no-restricted-globals): Unexpected use of 'location'. Use router.
+   ╭─[no_restricted_globals.tsx:1:20]
+ 1 │ const globalPath = location.pathname;
+   ·                    ────────
+ 2 │ function test(history: { location: { pathname: string } }) {
+   ╰────
+  help: Use a local variable or function parameter instead of the restricted global.
