@@ -1,3 +1,6 @@
+use schemars::JsonSchema;
+use serde::Deserialize;
+
 use oxc_ast::{
     AstKind,
     ast::{CallExpression, Expression},
@@ -5,8 +8,6 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
-use schemars::JsonSchema;
-use serde::Deserialize;
 
 use crate::{
     context::LintContext,
@@ -25,10 +26,10 @@ fn require_mock_type_parameters_diagnostic(span: Span, method_name: &str) -> Oxc
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Deserialize, Clone)]
 pub struct RequireMockTypeParameters(Box<RequireMockTypeParametersConfig>);
 
-#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+#[derive(Debug, Default, Deserialize, Clone, JsonSchema)]
 #[serde(rename_all = "camelCase", default)]
 pub struct RequireMockTypeParametersConfig {
     /// Also require type parameters for `importActual` and `importMock`.
@@ -110,11 +111,7 @@ declare_oxc_lint!(
 
 impl Rule for RequireMockTypeParameters {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        Ok(Self(Box::new(
-            serde_json::from_value::<DefaultRuleConfig<RequireMockTypeParametersConfig>>(value)
-                .unwrap_or_default()
-                .into_inner(),
-        )))
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run_on_jest_node<'a, 'c>(
