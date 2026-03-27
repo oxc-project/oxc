@@ -85,7 +85,8 @@ declare_oxc_lint!(
     /// ```
     NoBeforeInteractiveScriptOutsideDocument,
     nextjs,
-    correctness
+    correctness,
+    tags = [recommended],
 );
 
 impl Rule for NoBeforeInteractiveScriptOutsideDocument {

@@ -39,7 +39,8 @@ declare_oxc_lint!(
     /// ```
     NoWith,
     eslint,
-    correctness
+    correctness,
+    tags = [recommended],
 );
 
 impl Rule for NoWith {

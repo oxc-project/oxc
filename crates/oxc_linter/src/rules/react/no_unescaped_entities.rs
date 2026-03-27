@@ -48,6 +48,7 @@ declare_oxc_lint!(
     NoUnescapedEntities,
     react,
     pedantic,
+    tags = [recommended],
     pending
 );
 

@@ -85,6 +85,7 @@ declare_oxc_lint!(
     NoStringRefs,
     react,
     correctness,
+    tags = [recommended],
     config = NoStringRefs,
 );
 

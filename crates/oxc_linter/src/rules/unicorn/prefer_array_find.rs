@@ -51,6 +51,7 @@ declare_oxc_lint!(
     PreferArrayFind,
     unicorn,
     perf, // Encourages more efficient use of built-in methods
+    tags = [recommended],
     pending
 );
 

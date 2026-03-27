@@ -63,6 +63,7 @@ declare_oxc_lint!(
     PreferArrayFlat,
     unicorn,
     pedantic,
+    tags = [recommended],
     conditional_dangerous_fix
 );
 

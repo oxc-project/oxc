@@ -80,6 +80,7 @@ declare_oxc_lint!(
     NoStaticElementInteractions,
     jsx_a11y,
     correctness,
+    tags = [recommended],
     config = NoStaticElementInteractionsConfig,
 );
 

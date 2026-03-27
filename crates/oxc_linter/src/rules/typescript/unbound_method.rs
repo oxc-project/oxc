@@ -96,6 +96,7 @@ declare_oxc_lint!(
     UnboundMethod(tsgolint),
     typescript,
     correctness,
+    tags = [recommended],
     config = UnboundMethodConfig,
 );
 

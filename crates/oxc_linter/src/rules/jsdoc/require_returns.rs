@@ -94,6 +94,7 @@ declare_oxc_lint!(
     RequireReturns,
     jsdoc,
     pedantic,
+    tags = [recommended],
     pending,
     config = RequireReturnsConfig,
 );

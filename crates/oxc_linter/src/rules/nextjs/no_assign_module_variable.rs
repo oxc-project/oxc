@@ -57,7 +57,8 @@ declare_oxc_lint!(
     /// ```
     NoAssignModuleVariable,
     nextjs,
-    correctness
+    correctness,
+    tags = [recommended],
 );
 
 impl Rule for NoAssignModuleVariable {

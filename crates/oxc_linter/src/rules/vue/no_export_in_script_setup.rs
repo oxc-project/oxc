@@ -44,6 +44,7 @@ declare_oxc_lint!(
     NoExportInScriptSetup,
     vue,
     correctness,
+    tags = [recommended],
 );
 
 impl Rule for NoExportInScriptSetup {

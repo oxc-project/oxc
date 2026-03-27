@@ -85,7 +85,8 @@ declare_oxc_lint!(
     /// ```
     NoAsyncClientComponent,
     nextjs,
-    correctness
+    correctness,
+    tags = [recommended],
 );
 
 impl Rule for NoAsyncClientComponent {

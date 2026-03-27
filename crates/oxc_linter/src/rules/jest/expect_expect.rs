@@ -101,6 +101,7 @@ declare_oxc_lint!(
     ExpectExpect,
     jest,
     correctness,
+    tags = [recommended],
     config = ExpectExpectConfig,
 );
 

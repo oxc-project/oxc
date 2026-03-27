@@ -63,7 +63,8 @@ declare_oxc_lint!(
     /// ```
     NoDupeKeys,
     eslint,
-    correctness
+    correctness,
+    tags = [recommended],
 );
 
 impl Rule for NoDupeKeys {

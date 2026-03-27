@@ -43,7 +43,8 @@ declare_oxc_lint!(
     /// ```
     NoEmptyCharacterClass,
     eslint,
-    correctness
+    correctness,
+    tags = [recommended],
 );
 
 impl Rule for NoEmptyCharacterClass {

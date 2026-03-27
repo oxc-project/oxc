@@ -66,6 +66,7 @@ declare_oxc_lint!(
     NoArraySort,
     unicorn,
     suspicious,
+    tags = [recommended],
     fix,
     config = NoArraySort,
 );

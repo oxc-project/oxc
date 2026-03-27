@@ -50,6 +50,7 @@ declare_oxc_lint!(
     NoTypos,
     nextjs,
     correctness,
+    tags = [recommended],
     pending
 );
 

@@ -60,6 +60,7 @@ declare_oxc_lint!(
     NoUnsafeOptionalChaining,
     eslint,
     correctness,
+    tags = [recommended],
     config = NoUnsafeOptionalChaining,
 );
 

@@ -59,6 +59,7 @@ declare_oxc_lint!(
     NoUselessErrorCaptureStackTrace,
     unicorn,
     restriction,
+    tags = [recommended],
     suggestion
 );
 
@@ -376,7 +377,7 @@ fn test() {
             "class MyError extends Error {
                 constructor() {
                     const foo = () => {
-                        
+
                     }
                 }
             }",
@@ -389,7 +390,7 @@ fn test() {
             }",
             "export default class extends Error {
                 constructor() {
-                    
+
                 }
             }",
         ),
@@ -404,7 +405,7 @@ fn test() {
             "export default (
                 class extends Error {
                     constructor() {
-                        
+
                     }
                 }
             )",

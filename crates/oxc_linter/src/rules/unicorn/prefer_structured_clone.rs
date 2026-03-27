@@ -73,6 +73,7 @@ declare_oxc_lint!(
     PreferStructuredClone,
     unicorn,
     style,
+    tags = [recommended],
     suggestion,
     config = PreferStructuredCloneConfig,
 );

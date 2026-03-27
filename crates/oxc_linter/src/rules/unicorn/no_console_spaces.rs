@@ -48,6 +48,7 @@ declare_oxc_lint!(
     NoConsoleSpaces,
     unicorn,
     style,
+    tags = [recommended],
     fix
 );
 

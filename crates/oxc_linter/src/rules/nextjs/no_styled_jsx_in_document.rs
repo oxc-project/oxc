@@ -75,6 +75,7 @@ declare_oxc_lint!(
     NoStyledJsxInDocument,
     nextjs,
     correctness,
+    tags = [recommended],
 );
 
 impl Rule for NoStyledJsxInDocument {

@@ -67,6 +67,7 @@ declare_oxc_lint!(
     ConsistentExistenceIndexCheck,
     unicorn,
     style,
+    tags = [recommended],
     fix,
 );
 

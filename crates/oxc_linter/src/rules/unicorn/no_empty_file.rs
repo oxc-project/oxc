@@ -94,6 +94,7 @@ declare_oxc_lint!(
     NoEmptyFile,
     unicorn,
     correctness,
+    tags = [recommended],
 );
 
 impl Rule for NoEmptyFile {

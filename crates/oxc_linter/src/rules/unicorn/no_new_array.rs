@@ -38,6 +38,7 @@ declare_oxc_lint!(
     NoNewArray,
     unicorn,
     correctness,
+    tags = [recommended],
     pending
 );
 

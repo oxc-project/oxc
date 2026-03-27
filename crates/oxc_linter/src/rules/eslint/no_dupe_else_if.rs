@@ -105,7 +105,8 @@ declare_oxc_lint!(
     /// ```
     NoDupeElseIf,
     eslint,
-    correctness
+    correctness,
+    tags = [recommended],
 );
 
 impl Rule for NoDupeElseIf {

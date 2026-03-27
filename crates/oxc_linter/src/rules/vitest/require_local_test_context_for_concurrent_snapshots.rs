@@ -85,6 +85,7 @@ declare_oxc_lint!(
     RequireLocalTestContextForConcurrentSnapshots,
     vitest,
     correctness,
+    tags = [recommended],
     pending
 );
 

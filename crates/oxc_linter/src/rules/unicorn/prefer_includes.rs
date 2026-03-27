@@ -58,6 +58,7 @@ declare_oxc_lint!(
     PreferIncludes,
     unicorn,
     style,
+    tags = [recommended],
     suggestion
 );
 

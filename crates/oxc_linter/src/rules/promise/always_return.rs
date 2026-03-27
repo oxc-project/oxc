@@ -183,6 +183,7 @@ declare_oxc_lint!(
     AlwaysReturn,
     promise,
     suspicious,
+    tags = [recommended],
     config = AlwaysReturnConfig,
 );
 

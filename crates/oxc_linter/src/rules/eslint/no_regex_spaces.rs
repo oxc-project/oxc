@@ -52,6 +52,7 @@ declare_oxc_lint!(
     NoRegexSpaces,
     eslint,
     restriction,
+    tags = [recommended],
     fix
 );
 

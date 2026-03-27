@@ -46,6 +46,7 @@ declare_oxc_lint!(
     NoPromiseInCallback,
     promise,
     suspicious,
+    tags = [recommended],
 );
 
 impl Rule for NoPromiseInCallback {

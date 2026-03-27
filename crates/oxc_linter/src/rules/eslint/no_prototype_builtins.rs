@@ -44,6 +44,7 @@ declare_oxc_lint!(
     NoPrototypeBuiltins,
     eslint,
     pedantic,
+    tags = [recommended],
     pending
 );
 

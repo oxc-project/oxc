@@ -42,6 +42,7 @@ declare_oxc_lint!(
     PreferCodePoint,
     unicorn,
     pedantic,
+    tags = [recommended],
     fix
 );
 

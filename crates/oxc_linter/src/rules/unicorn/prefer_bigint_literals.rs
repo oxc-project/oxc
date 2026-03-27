@@ -52,6 +52,7 @@ declare_oxc_lint!(
     PreferBigintLiterals,
     unicorn,
     style,
+    tags = [recommended],
     fix
 );
 

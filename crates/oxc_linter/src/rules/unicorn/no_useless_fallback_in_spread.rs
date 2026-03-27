@@ -39,6 +39,7 @@ declare_oxc_lint!(
     NoUselessFallbackInSpread,
     unicorn,
     correctness,
+    tags = [recommended],
     conditional_fix
 );
 

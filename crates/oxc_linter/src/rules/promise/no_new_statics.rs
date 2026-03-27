@@ -40,6 +40,7 @@ declare_oxc_lint!(
     NoNewStatics,
     promise,
     correctness,
+    tags = [recommended],
     fix
 );
 

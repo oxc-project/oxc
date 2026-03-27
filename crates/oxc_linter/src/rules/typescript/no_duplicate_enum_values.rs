@@ -85,7 +85,8 @@ declare_oxc_lint!(
     /// ```
     NoDuplicateEnumValues,
     typescript,
-    correctness
+    correctness,
+    tags = [recommended],
 );
 
 impl Rule for NoDuplicateEnumValues {

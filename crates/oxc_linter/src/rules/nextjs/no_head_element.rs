@@ -66,7 +66,8 @@ declare_oxc_lint!(
     /// ```
     NoHeadElement,
     nextjs,
-    correctness
+    correctness,
+    tags = [recommended],
 );
 
 impl Rule for NoHeadElement {

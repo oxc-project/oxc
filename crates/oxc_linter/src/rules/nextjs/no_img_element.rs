@@ -63,6 +63,7 @@ declare_oxc_lint!(
     NoImgElement,
     nextjs,
     correctness,
+    tags = [recommended],
     pending // TODO: add `import Image from "next/image"` (if missing), then change `<img />` to `<Image />`
 );
 

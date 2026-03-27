@@ -94,6 +94,7 @@ declare_oxc_lint!(
     NoShadowRestrictedNames,
     eslint,
     correctness,
+    tags = [recommended],
     config = NoShadowRestrictedNamesConfig
 );
 

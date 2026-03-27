@@ -53,7 +53,8 @@ declare_oxc_lint!(
     /// ```
     HtmlHasLang,
     jsx_a11y,
-    correctness
+    correctness,
+    tags = [recommended],
 );
 
 impl Rule for HtmlHasLang {

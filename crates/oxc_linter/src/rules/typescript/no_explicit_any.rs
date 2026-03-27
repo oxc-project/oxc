@@ -72,6 +72,7 @@ declare_oxc_lint!(
     NoExplicitAny,
     typescript,
     restriction,
+    tags = [recommended],
     conditional_fix,
     config = NoExplicitAny,
 );

@@ -52,7 +52,8 @@ declare_oxc_lint!(
     /// ```
     NoUnsafeFinally,
     eslint,
-    correctness
+    correctness,
+    tags = [recommended],
 );
 
 impl Rule for NoUnsafeFinally {

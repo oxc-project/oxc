@@ -134,6 +134,7 @@ declare_oxc_lint!(
     NumericSeparatorsStyle,
     unicorn,
     style,
+    tags = [recommended],
     fix,
     config = NumericSeparatorsStyleConfig,
 );

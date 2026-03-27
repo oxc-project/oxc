@@ -63,7 +63,8 @@ declare_oxc_lint!(
     /// ```
     NoUnwantedPolyfillio,
     nextjs,
-    correctness
+    correctness,
+    tags = [recommended],
 );
 
 impl Rule for NoUnwantedPolyfillio {

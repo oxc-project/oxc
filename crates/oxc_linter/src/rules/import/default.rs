@@ -48,7 +48,8 @@ declare_oxc_lint!(
     /// ```
     Default,
     import,
-    correctness
+    correctness,
+    tags = [recommended],
 );
 
 impl Rule for Default {

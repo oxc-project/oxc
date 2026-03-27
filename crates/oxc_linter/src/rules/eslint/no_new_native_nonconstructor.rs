@@ -48,6 +48,7 @@ declare_oxc_lint!(
     NoNewNativeNonconstructor,
     eslint,
     correctness,
+    tags = [recommended],
 );
 
 impl Rule for NoNewNativeNonconstructor {

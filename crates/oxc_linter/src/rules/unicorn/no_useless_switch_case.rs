@@ -49,6 +49,7 @@ declare_oxc_lint!(
     NoUselessSwitchCase,
     unicorn,
     pedantic,
+    tags = [recommended],
     pending
 );
 

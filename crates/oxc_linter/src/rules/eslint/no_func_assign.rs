@@ -67,7 +67,8 @@ declare_oxc_lint!(
     /// ```
     NoFuncAssign,
     eslint,
-    correctness
+    correctness,
+    tags = [recommended],
 );
 
 impl Rule for NoFuncAssign {

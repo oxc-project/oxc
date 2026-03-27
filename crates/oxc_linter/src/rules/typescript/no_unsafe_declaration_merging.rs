@@ -44,7 +44,8 @@ declare_oxc_lint!(
     /// ```
     NoUnsafeDeclarationMerging,
     typescript,
-    correctness
+    correctness,
+    tags = [recommended],
 );
 
 impl Rule for NoUnsafeDeclarationMerging {

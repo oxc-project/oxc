@@ -68,6 +68,7 @@ declare_oxc_lint!(
     NoCondAssign,
     eslint,
     correctness,
+    tags = [recommended],
     config = NoCondAssignConfig,
 );
 

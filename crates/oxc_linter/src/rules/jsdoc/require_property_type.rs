@@ -45,7 +45,8 @@ declare_oxc_lint!(
     /// ```
     RequirePropertyType,
     jsdoc,
-    correctness
+    correctness,
+    tags = [recommended],
 );
 
 impl Rule for RequirePropertyType {

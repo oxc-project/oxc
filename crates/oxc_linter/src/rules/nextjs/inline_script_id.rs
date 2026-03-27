@@ -91,7 +91,8 @@ declare_oxc_lint!(
     /// ```
     InlineScriptId,
     nextjs,
-    correctness
+    correctness,
+    tags = [recommended],
 );
 
 impl Rule for InlineScriptId {

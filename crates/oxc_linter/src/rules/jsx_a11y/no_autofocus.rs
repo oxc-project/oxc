@@ -56,6 +56,7 @@ declare_oxc_lint!(
     NoAutofocus,
     jsx_a11y,
     correctness,
+    tags = [recommended],
     suggestion,
     config = NoAutofocus,
 );

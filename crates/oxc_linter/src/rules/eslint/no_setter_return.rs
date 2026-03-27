@@ -40,7 +40,8 @@ declare_oxc_lint!(
     /// ```
     NoSetterReturn,
     eslint,
-    correctness
+    correctness,
+    tags = [recommended],
 );
 
 impl Rule for NoSetterReturn {

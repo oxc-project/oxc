@@ -46,6 +46,7 @@ declare_oxc_lint!(
     PreferMathTrunc,
     unicorn,
     pedantic,
+    tags = [recommended],
     suggestion
 );
 

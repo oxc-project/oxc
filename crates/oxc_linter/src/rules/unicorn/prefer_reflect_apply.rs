@@ -47,6 +47,7 @@ declare_oxc_lint!(
     PreferReflectApply,
     unicorn,
     style,
+    tags = [recommended],
     suggestion,
 );
 

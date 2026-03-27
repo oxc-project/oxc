@@ -113,6 +113,7 @@ declare_oxc_lint!(
     ConstructorSuper,
     eslint,
     correctness,
+    tags = [recommended],
 );
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

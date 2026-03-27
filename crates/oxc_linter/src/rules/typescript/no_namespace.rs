@@ -112,6 +112,7 @@ declare_oxc_lint!(
     NoNamespace,
     typescript,
     restriction,
+    tags = [recommended],
     config = NoNamespace,
 );
 

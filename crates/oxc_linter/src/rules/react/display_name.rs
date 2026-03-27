@@ -62,6 +62,7 @@ declare_oxc_lint!(
     DisplayName,
     react,
     pedantic,
+    tags = [recommended],
     config = DisplayNameConfig,
 );
 

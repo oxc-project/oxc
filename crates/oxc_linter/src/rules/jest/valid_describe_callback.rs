@@ -71,7 +71,8 @@ declare_oxc_lint!(
     /// ```
     ValidDescribeCallback,
     jest,
-    correctness
+    correctness,
+    tags = [recommended],
 );
 
 impl Rule for ValidDescribeCallback {

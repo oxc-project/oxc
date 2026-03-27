@@ -60,6 +60,7 @@ declare_oxc_lint!(
     PreferTopLevelAwait,
     unicorn,
     pedantic,
+    tags = [recommended],
     pending
 );
 

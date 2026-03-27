@@ -59,6 +59,7 @@ declare_oxc_lint!(
     PreferGlobalThis,
     unicorn,
     style,
+    tags = [recommended],
     suggestion
 );
 

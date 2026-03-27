@@ -69,7 +69,8 @@ declare_oxc_lint!(
     /// ```
     NoMisusedNew,
     typescript,
-    correctness
+    correctness,
+    tags = [recommended],
 );
 
 impl Rule for NoMisusedNew {

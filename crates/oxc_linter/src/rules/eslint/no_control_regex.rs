@@ -84,7 +84,8 @@ declare_oxc_lint!(
     /// ```
     NoControlRegex,
     eslint,
-    correctness
+    correctness,
+    tags = [recommended],
 );
 
 impl Rule for NoControlRegex {

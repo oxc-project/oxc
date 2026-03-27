@@ -50,6 +50,7 @@ declare_oxc_lint!(
     NoArrayMethodThisArgument,
     unicorn,
     style,
+    tags = [recommended],
     pending
 );
 

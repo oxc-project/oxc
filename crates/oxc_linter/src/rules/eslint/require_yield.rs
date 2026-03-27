@@ -33,7 +33,8 @@ declare_oxc_lint!(
     /// ```
     RequireYield,
     eslint,
-    correctness
+    correctness,
+    tags = [recommended],
 );
 
 impl Rule for RequireYield {

@@ -47,6 +47,7 @@ declare_oxc_lint!(
     PreferResponseStaticJson,
     unicorn,
     style,
+    tags = [recommended],
     suggestion
 );
 

@@ -49,6 +49,7 @@ declare_oxc_lint!(
     ThrowNewError,
     unicorn,
     style,
+    tags = [recommended],
     fix
 );
 

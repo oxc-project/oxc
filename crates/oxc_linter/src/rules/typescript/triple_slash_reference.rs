@@ -97,6 +97,7 @@ declare_oxc_lint!(
     TripleSlashReference,
     typescript,
     correctness,
+    tags = [recommended],
     config = TripleSlashReferenceConfig,
 );
 
