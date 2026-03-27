@@ -6,6 +6,7 @@ use std::{
 use itertools::Itertools;
 use oxc_resolver::{ResolveOptions, Resolver};
 use rustc_hash::{FxHashMap, FxHashSet};
+use smallvec::SmallVec;
 use url::Url;
 
 use oxc_span::{CompactStr, format_compact_str};
@@ -78,6 +79,23 @@ impl ConfigStoreBuilder {
         let external_rules = FxHashMap::default();
         let extended_paths = Vec::new();
         Self { rules, external_rules, config, categories, overrides, extended_paths }
+    }
+
+    pub fn recommended() -> Self {
+        let config = LintConfig { plugins: LintPlugins::ESLINT, ..LintConfig::default() };
+        let rules = RULES
+            .iter()
+            .filter(|rule| rule.tags().is_recommended() && rule.category() != RuleCategory::Nursery)
+            .map(|rule| (rule.clone(), AllowWarnDeny::Deny))
+            .collect();
+        Self {
+            rules,
+            external_rules: FxHashMap::default(),
+            config,
+            categories: OxlintCategories::default(),
+            overrides: OxlintOverrides::default(),
+            extended_paths: Vec::new(),
+        }
     }
 
     /// Create a [`ConfigStoreBuilder`] from a loaded or manually built [`Oxlintrc`].
@@ -168,6 +186,11 @@ impl ConfigStoreBuilder {
             }
 
             for path in extends.iter().rev() {
+                if path == "oxlint:recommended" {
+                    oxlintrc = oxlintrc.merge(ConfigStoreBuilder::recommended().into());
+                    continue;
+                }
+
                 if path.starts_with("eslint:") || path.starts_with("plugin:") {
                     // `eslint:` and `plugin:` named configs are not supported
                     continue;
@@ -700,6 +723,33 @@ fn get_name(plugin_name: &str, rule_name: &str) -> CompactStr {
         CompactStr::from(rule_name)
     } else {
         format_compact_str!("{plugin_name}/{rule_name}")
+    }
+}
+
+impl From<ConfigStoreBuilder> for Oxlintrc {
+    fn from(builder: ConfigStoreBuilder) -> Self {
+        Oxlintrc {
+            plugins: Some(builder.config.plugins),
+            categories: builder.categories,
+            rules: OxlintRules::new(
+                builder
+                    .rules
+                    .into_iter()
+                    .map(|(rule, severity)| ESLintRule {
+                        plugin_name: rule.plugin_name().to_string(),
+                        rule_name: rule.name().to_string(),
+                        severity,
+                        config: SmallVec::default(),
+                    })
+                    .collect(),
+            ),
+            settings: builder.config.settings,
+            env: builder.config.env,
+            globals: builder.config.globals,
+            overrides: builder.overrides,
+            options: builder.config.options,
+            ..Oxlintrc::default()
+        }
     }
 }
 
@@ -1480,6 +1530,25 @@ mod test {
             r#"{ "extends": ["fixtures/extends_config/options/max_warnings_0.json"] }"#,
         );
         assert_eq!(config.base.config.options.max_warnings, Some(0));
+    }
+
+    #[test]
+    fn test_extends_oxlint_recommended() {
+        let config = config_store_from_str(r#"{ "extends": ["oxlint:recommended"] }"#);
+        // This test may need to be updated over time, but assert that a rule that is
+        // not enabled by default (i.e., in correctness) is now enabled
+        // check preserve-caught-error
+        let rule = "preserve-caught-error";
+        assert_eq!(
+            RULES.iter().find(|r| r.name() == rule).unwrap().category(),
+            RuleCategory::Suspicious
+        );
+        assert!(
+            config
+                .rules()
+                .iter()
+                .any(|(r, severity)| r.name() == rule && *severity == AllowWarnDeny::Deny)
+        );
     }
 
     #[test]
