@@ -9,6 +9,7 @@ import { HAS_BOM_FLAG_POS } from "../generated/constants.ts";
 import { typeAssertIs, debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 import { getErrorMessage } from "../utils/utils.ts";
 import { setGlobalsForFile, resetGlobals } from "./globals.ts";
+import { resetWeakMaps } from "./weak_map.ts";
 import { switchWorkspace } from "./workspace.ts";
 import {
   addVisitorToCompiled,
@@ -310,6 +311,7 @@ export function resetFile() {
   resetSourceAndAst();
   resetSettings();
   resetGlobals();
+  resetWeakMaps();
 }
 
 /**
