@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import { RuleTester } from "../rule_tester.ts";
 
 import type { MockFn, TestGroup } from "../index.ts";
-import type { InvalidTestCase, TestCases } from "../rule_tester.ts";
+import type { InvalidTestCase, TestCase, TestCases } from "../rule_tester.ts";
 import type { Rule } from "#oxlint/plugins";
 
 const SNAPSHOTS_DIR = pathJoin(
@@ -29,6 +29,26 @@ const group: TestGroup = {
     // which is a `RuleTester` subclass that records snapshots.
     // We replace it with a shim that normalizes test cases for the conformance `RuleTester`.
     mock("eslint-snapshot-rule-tester", { SnapshotRuleTester: SnapshotRuleTesterShim });
+  },
+
+  shouldSkipTest(ruleName: string, test: TestCase, code: string, err: Error): boolean {
+    // Skip test cases which start with `/* exported */` comment.
+    // Oxlint does not support defining globals inline.
+    if (code.match(/^\s*\/\*\s*exported\s/)) return true;
+
+    // Skip test cases which include `// eslint-disable` or `/* eslint-disable` comments.
+    // These are not handled by `RuleTester`.
+    if (code.match(/\/[/*]\s*eslint-disable((-next)?-line)?(\s|$)/)) return true;
+
+    // Skip stand-alone tests that don't use `RuleTester` in test file for `no-useless-flag` rule
+    if (
+      ruleName === "Don't conflict even if using the rules together." &&
+      err.message === "Test case was not run with `RuleTester`"
+    ) {
+      return true;
+    }
+
+    return false;
   },
 
   ruleTesters: [],
