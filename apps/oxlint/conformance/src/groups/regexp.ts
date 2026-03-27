@@ -1,11 +1,27 @@
 import fs from "node:fs";
 import { join as pathJoin } from "node:path";
 import { fileURLToPath } from "node:url";
+import assert from "node:assert";
 import { RuleTester } from "../rule_tester.ts";
 
 import type { MockFn, TestGroup } from "../index.ts";
-import type { InvalidTestCase, TestCase, TestCases } from "../rule_tester.ts";
+import type {
+  InvalidTestCase,
+  TestCase,
+  TestCases,
+  Error,
+  ErrorSuggestion,
+} from "../rule_tester.ts";
 import type { Rule } from "#oxlint/plugins";
+
+/**
+ * Test case details parsed from snapshot file.
+ */
+interface SnapshotCase {
+  code: string;
+  output: string | null;
+  errors: (Error | string)[];
+}
 
 const SNAPSHOTS_DIR = pathJoin(
   fileURLToPath(import.meta.url),
@@ -59,21 +75,24 @@ const group: TestGroup = {
 export default group;
 
 /**
- * Shim for `SnapshotRuleTester`.
+ * Replication of `eslint-snapshot-rule-tester`'s `SnapshotRuleTester`.
  *
- * `SnapshotRuleTester` allows invalid test cases to be plain strings
- * and doesn't require `errors` or `output` properties (both are validated via snapshots).
- * This shim normalizes test cases to the format the conformance `RuleTester` expects:
- * - Converts string invalid test cases to `{ code: string }` objects.
- * - Sets `errors` to `"__unknown__"` when not specified, which tells the conformance
- *   `RuleTester` to skip error count/content validation.
- * - Reads `.eslintsnap` snapshot files to inject the expected `output` for each invalid
- *   test case, enabling proper fix output validation.
+ * `SnapshotRuleTester` allows invalid test cases to be plain strings and gets `output` and `errors`
+ * from snapshot files instead of them being specified in the test case.
+ *
+ * This RuleTester class loads snapshot files from the `__snapshots__` directory and extracts `output` and `errors`
+ * from snapshots. It adds these properties to invalid test cases, allowing them to be validated.
  */
 class SnapshotRuleTesterShim extends RuleTester {
   run(ruleName: string, rule: Rule, tests: TestCases): void {
     // Parse expected outputs from the snapshot file for this rule
-    const snapshotOutputs = parseSnapshotOutputs(ruleName);
+    const snapshotCases = parseSnapshot(ruleName);
+
+    assert.equal(
+      tests.invalid.length,
+      snapshotCases.length,
+      "Snapshot file has wrong number of invalid test cases",
+    );
 
     tests = {
       valid: tests.valid,
@@ -82,20 +101,28 @@ class SnapshotRuleTesterShim extends RuleTester {
           test = { code: test } as unknown as InvalidTestCase;
         }
 
-        // Set errors to __unknown__ if not specified.
-        // `SnapshotRuleTester` validates errors via snapshots, not inline.
-        if (test.errors == null) {
-          (test.errors as unknown as string) = "__unknown__";
+        // Add `output` and `errors` from snapshot if not specified in test case
+        const snapshotCase = snapshotCases[index];
+        assert.equal(snapshotCase.code, test.code, "Code in snapshot does not match test case");
+
+        if (test.output === undefined) {
+          test.output = snapshotCase.output;
+        } else {
+          assert.equal(
+            test.output,
+            snapshotCase.output,
+            "Output in snapshot does not match test case",
+          );
         }
 
-        // Inject expected output from snapshot if available and not already specified.
-        // `null` means "Output: unchanged" (no fix expected).
-        // A string means the expected code after fixing.
-        if (!Object.hasOwn(test, "output") && snapshotOutputs != null) {
-          const output = snapshotOutputs.get(index);
-          if (output !== undefined) {
-            test.output = output;
-          }
+        if (test.errors === undefined) {
+          test.errors = snapshotCase.errors;
+        } else {
+          assert.deepStrictEqual(
+            test.errors,
+            snapshotCase.errors,
+            "Errors in snapshot do not match test case",
+          );
         }
 
         // Enable recursive fixing to match `SnapshotRuleTester`'s behavior.
@@ -129,56 +156,156 @@ class SnapshotRuleTesterShim extends RuleTester {
  *
  * `Output: unchanged` means the rule doesn't produce a fix.
  *
- * @param ruleName - Name of the rule (used to find the snapshot file)
- * @returns Map from invalid test case index to expected output (string or `null` for unchanged),
- *          or `null` if the snapshot file doesn't exist.
+ * @param ruleName - Name of the rule
+ * @returns Array of test case snapshot details
  */
-function parseSnapshotOutputs(ruleName: string): Map<number, string | null> | null {
+function parseSnapshot(ruleName: string): SnapshotCase[] {
+  // Read snapshot file
   const snapshotPath = pathJoin(SNAPSHOTS_DIR, `${ruleName}.ts.eslintsnap`);
 
   let content: string;
   try {
     content = fs.readFileSync(snapshotPath, "utf8");
   } catch {
-    return null;
+    return [];
   }
 
-  const results = new Map<number, string | null>();
-  const lines = content.split("\n");
-  let invalidIndex = 0;
-  let i = 0;
+  // Strip header and footer
+  const HEADER = "# eslint-snapshot-rule-tester format: v1\n";
+  assert(content.startsWith(HEADER), "Missing header");
+  content = content.slice(HEADER.length).trim();
 
-  while (i < lines.length) {
-    if (lines[i].startsWith("Test:") && lines[i].includes(">> invalid")) {
-      // Scan forward for the Output section of this test case
-      while (i < lines.length && lines[i] !== "---") {
-        if (lines[i] === "Output: unchanged") {
-          results.set(invalidIndex, null);
-          break;
+  if (content === "") return [];
+
+  const FOOTER = "\n---";
+  assert(content.endsWith(FOOTER), "Missing footer");
+  content = content.slice(0, -FOOTER.length);
+
+  // Parse test cases from snapshot
+  return content.split("\n---\n").map((caseText) => {
+    const lines = caseText.trimStart().split("\n");
+
+    // Parse header.
+    // `Test: rule-name >> invalid` or
+    // `Test: rule-name >> invalid >>> ...`
+    const firstLineExpected = `Test: ${ruleName} >> invalid`;
+    const firstLine = lines[0];
+    assert(
+      firstLine === firstLineExpected ||
+        (firstLine.startsWith(firstLineExpected) &&
+          firstLine.slice(firstLineExpected.length).startsWith(" >>> ")),
+      "Invalid header",
+    );
+
+    // Skip down to code section
+    let lineIndex = 1;
+    for (; lineIndex < lines.length; lineIndex++) {
+      if (lines[lineIndex] === "Code:") break;
+    }
+    lineIndex++;
+    assert(lineIndex < lines.length, "Missing code section");
+
+    // Parse source code.
+    // ```
+    // Code:
+    //   1 | /\x00/
+    //     |  ^~~~ [1]
+    // ```
+    // Can be multiple lines.
+    function parseCode(shouldAcceptErrorLines: boolean): string {
+      let code = "",
+        codeLineNum = 1;
+      for (; lineIndex < lines.length; lineIndex++) {
+        const match = lines[lineIndex].match(/^\s+(?:(\d+) )?\|(?: (.*))?$/);
+        if (!match) break;
+
+        const [, lineNumber, codeLine] = match;
+        if (lineNumber === undefined) {
+          assert(shouldAcceptErrorLines, "Unexpected error line");
+        } else {
+          assert.equal(lineNumber, codeLineNum.toString(), "Misnumbered line in code extract");
+          if (codeLineNum > 1) code += "\n";
+          if (codeLine !== undefined) code += codeLine;
+          codeLineNum++;
         }
-
-        if (lines[i] === "Output:") {
-          i++;
-          const outputLines: string[] = [];
-          // Collect lines matching the `  <linenum> | <content>` format
-          while (i < lines.length && /^\s+\d+\s+\|/.test(lines[i])) {
-            const match = lines[i].match(/^\s+\d+\s+\|\s?(.*)/);
-            outputLines.push(match ? match[1] : "");
-            i++;
-          }
-          results.set(invalidIndex, outputLines.join("\n"));
-          i--; // Compensate for outer i++
-          break;
-        }
-
-        i++;
       }
-
-      invalidIndex++;
+      return code;
     }
 
-    i++;
-  }
+    const code = parseCode(true);
 
-  return results;
+    assert.equal(lines[lineIndex], "", "Expected empty line after code");
+    lineIndex++;
+
+    // Parse output.
+    // ```
+    // Output:
+    //   1 | /\0/
+    // ```
+    // Can be multiple lines.
+    let output: string | null = null;
+    if (lines[lineIndex] === "Output:") {
+      lineIndex++;
+      output = parseCode(false);
+
+      assert.equal(lines[lineIndex], "", "Expected empty line after output");
+      lineIndex++;
+    } else if (lines[lineIndex] === "Output: unchanged") {
+      assert.equal(lines[lineIndex + 1], "", "Expected empty line after output");
+      lineIndex += 2;
+    }
+
+    // Parse errors and their suggestions.
+    // ```
+    // [1] Unexpected control character escape '\x00' (U+0000). Use '\0' instead.
+    // "[2] Don't abuse reptiles under any circumstances."
+    // [3] Unexpected gonads on railway track.
+    //     Suggestions:
+    //       - Remove the gonads.
+    //         Output:
+    //           1 | const railway = "no gonads here";
+    // ```
+    const errors: (Error | string)[] = [];
+    while (lineIndex < lines.length) {
+      // Parse error message
+      const match = lines[lineIndex].match(/^(")?\[(\d+)\] (.*?)(")?$/)!;
+      assert(match !== null, "Invalid error message");
+      lineIndex++;
+
+      // Decode error message if line wrapped in quotes
+      let [, quoteStart, errorNumber, message, quoteEnd] = match;
+      assert.equal(errorNumber, (errors.length + 1).toString(), "Misnumbered error number");
+      if (quoteStart === '"') {
+        assert.equal(quoteEnd, '"', "Mismatched quotes");
+        message = JSON.parse(`"${message}"`);
+      }
+
+      // Pass suggestions for error
+      if (/^\s+Suggestions:/.test(lines[lineIndex])) {
+        lineIndex++;
+
+        const suggestions: ErrorSuggestion[] = [];
+
+        while (lineIndex < lines.length) {
+          const match = lines[lineIndex].match(/^\s+- (.*)$/)!;
+          if (!match) break;
+
+          const desc = match[1];
+          lineIndex++;
+
+          assert(/^\s+Output:$/.test(lines[lineIndex]), "Expected output section for suggestion");
+          lineIndex++;
+
+          const output = parseCode(false);
+          suggestions.push({ desc, output });
+        }
+
+        errors.push({ message, suggestions });
+      } else {
+        errors.push(message);
+      }
+    }
+
+    return { code, output, errors };
+  });
 }

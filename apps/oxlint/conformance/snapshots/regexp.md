@@ -130,22 +130,22 @@ Skip: 0 / 18 (0.0%)
     "ecmaVersion": "latest",
     "sourceType": "module"
   },
-  "errors": "__unknown__",
   "output": "/\\w/gimsuy",
+  "errors": [
+    "The flags 'yusimg' should be in the order 'gimsuy'."
+  ],
   "recursive": true
 }
 ```
 
-AssertionError [ERR_ASSERTION]: Output is incorrect
-+ actual - expected
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
 
-+ '/\\w/yusimg'
-- '/\\w/gimsuy'
+0 !== 1
 
+    at assertErrorCountIsCorrect (apps/oxlint/dist/plugins-dev.js)
     at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
     at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
     at apps/oxlint/dist/plugins-dev.js
-    at it (apps/oxlint/conformance/src/capture.ts:123:5)
 
 
 #### sort-flags > invalid
@@ -160,20 +160,20 @@ AssertionError [ERR_ASSERTION]: Output is incorrect
     "ecmaVersion": "latest",
     "sourceType": "module"
   },
-  "errors": "__unknown__",
   "output": "/\\w/gimsvy",
+  "errors": [
+    "The flags 'yvsimg' should be in the order 'gimsvy'."
+  ],
   "recursive": true
 }
 ```
 
-AssertionError [ERR_ASSERTION]: Output is incorrect
-+ actual - expected
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
 
-+ '/\\w/yvsimg'
-- '/\\w/gimsvy'
+0 !== 1
 
+    at assertErrorCountIsCorrect (apps/oxlint/dist/plugins-dev.js)
     at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
     at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
     at apps/oxlint/dist/plugins-dev.js
-    at it (apps/oxlint/conformance/src/capture.ts:123:5)
 
