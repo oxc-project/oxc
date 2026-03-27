@@ -101,9 +101,7 @@ class SnapshotRuleTesterShim extends RuleTester {
         // Enable recursive fixing to match ESLint's `RuleTester` behavior.
         // ESLint re-lints and re-fixes up to 10 times, which is needed for rules
         // whose fixes cascade (e.g. removing duplicates, then simplifying subsets).
-        if (test.recursive == null) {
-          test.recursive = true;
-        }
+        if (test.recursive == null) test.recursive = true;
 
         return test;
       }),
