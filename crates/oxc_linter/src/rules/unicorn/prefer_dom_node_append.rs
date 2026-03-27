@@ -37,6 +37,7 @@ declare_oxc_lint!(
     PreferDomNodeAppend,
     unicorn,
     pedantic,
+    tags = [recommended],
     fix
 );
 

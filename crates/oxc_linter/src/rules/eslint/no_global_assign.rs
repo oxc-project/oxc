@@ -53,6 +53,7 @@ declare_oxc_lint!(
     NoGlobalAssign,
     eslint,
     correctness,
+    tags = [recommended],
     config = NoGlobalAssignConfig
 );
 

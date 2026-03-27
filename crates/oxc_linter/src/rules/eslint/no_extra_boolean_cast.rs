@@ -81,6 +81,7 @@ declare_oxc_lint!(
     NoExtraBooleanCast,
     eslint,
     correctness,
+    tags = [recommended],
     conditional_fix_or_conditional_suggestion,
     config = NoExtraBooleanCast,
 );

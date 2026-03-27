@@ -71,6 +71,7 @@ declare_oxc_lint!(
     ParamNames,
     promise,
     style,
+    tags = [recommended],
     config = ParamNamesConfig,
 );
 

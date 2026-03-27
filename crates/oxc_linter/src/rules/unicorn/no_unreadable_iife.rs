@@ -49,7 +49,8 @@ declare_oxc_lint!(
     /// ```
     NoUnreadableIife,
     unicorn,
-    pedantic
+    pedantic,
+    tags = [recommended],
 );
 
 impl Rule for NoUnreadableIife {

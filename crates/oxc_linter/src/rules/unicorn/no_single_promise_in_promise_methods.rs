@@ -55,6 +55,7 @@ declare_oxc_lint!(
     NoSinglePromiseInPromiseMethods,
     unicorn,
     correctness,
+    tags = [recommended],
     conditional_fix
 );
 

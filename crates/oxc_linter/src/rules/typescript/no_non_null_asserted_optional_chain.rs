@@ -57,6 +57,7 @@ declare_oxc_lint!(
     NoNonNullAssertedOptionalChain,
     typescript,
     correctness,
+    tags = [recommended],
     suggestion
 );
 

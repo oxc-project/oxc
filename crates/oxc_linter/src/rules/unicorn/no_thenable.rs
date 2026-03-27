@@ -73,7 +73,8 @@ declare_oxc_lint!(
     /// ```
     NoThenable,
     unicorn,
-    correctness
+    correctness,
+    tags = [recommended],
 );
 
 impl Rule for NoThenable {

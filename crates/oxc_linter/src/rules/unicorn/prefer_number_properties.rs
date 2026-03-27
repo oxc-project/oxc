@@ -82,6 +82,7 @@ declare_oxc_lint!(
     PreferNumberProperties,
     unicorn,
     restriction,
+    tags = [recommended],
     dangerous_fix,
     config = PreferNumberPropertiesConfig,
 );

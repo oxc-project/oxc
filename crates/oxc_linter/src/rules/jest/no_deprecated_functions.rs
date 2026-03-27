@@ -95,6 +95,7 @@ declare_oxc_lint!(
     NoDeprecatedFunctions,
     jest,
     style,
+    tags = [recommended],
     fix,
     config = NoDeprecatedFunctionsConfig,
 );

@@ -51,6 +51,7 @@ declare_oxc_lint!(
     AriaProps,
     jsx_a11y,
     correctness,
+    tags = [recommended],
     conditional_fix
 );
 

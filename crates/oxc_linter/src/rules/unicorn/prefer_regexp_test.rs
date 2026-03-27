@@ -47,6 +47,7 @@ declare_oxc_lint!(
     PreferRegexpTest,
     unicorn,
     pedantic,
+    tags = [recommended],
     fix
 );
 

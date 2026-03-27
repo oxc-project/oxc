@@ -106,6 +106,7 @@ declare_oxc_lint!(
     NoFloatingPromises(tsgolint),
     typescript,
     correctness,
+    tags = [recommended],
     suggestion,
     config = NoFloatingPromisesConfig,
 );

@@ -108,6 +108,7 @@ declare_oxc_lint!(
     JsxKey,
     react,
     correctness,
+    tags = [recommended],
     config = JsxKey,
 );
 

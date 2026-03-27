@@ -106,7 +106,8 @@ declare_oxc_lint!(
     /// ```
     NoConditionalExpect,
     jest,
-    correctness
+    correctness,
+    tags = [recommended],
 );
 
 // To flag we encountered a conditional block/catch block when traversing the parents.

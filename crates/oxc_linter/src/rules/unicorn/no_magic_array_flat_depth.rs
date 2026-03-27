@@ -48,6 +48,7 @@ declare_oxc_lint!(
     NoMagicArrayFlatDepth,
     unicorn,
     restriction,
+    tags = [recommended],
 );
 
 impl Rule for NoMagicArrayFlatDepth {

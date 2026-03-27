@@ -53,6 +53,7 @@ declare_oxc_lint!(
     NoUnnecessaryArraySpliceCount,
     unicorn,
     pedantic,
+    tags = [recommended],
     fix
 );
 

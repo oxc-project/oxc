@@ -53,6 +53,7 @@ declare_oxc_lint!(
     NoUnsafeArgument(tsgolint),
     typescript,
     pedantic,
+    tags = [recommended],
 );
 
 impl Rule for NoUnsafeArgument {}

@@ -54,7 +54,8 @@ declare_oxc_lint!(
     /// ```
     RoleSupportsAriaProps,
     jsx_a11y,
-    correctness
+    correctness,
+    tags = [recommended],
 );
 
 fn default(span: Span, attr_name: &str, role: &str) -> OxcDiagnostic {

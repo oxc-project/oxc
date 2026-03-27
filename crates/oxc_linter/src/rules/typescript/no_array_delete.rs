@@ -37,6 +37,7 @@ declare_oxc_lint!(
     NoArrayDelete(tsgolint),
     typescript,
     correctness,
+    tags = [recommended],
     suggestion,
 );
 

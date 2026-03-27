@@ -50,7 +50,8 @@ declare_oxc_lint!(
     /// ```
     NoExAssign,
     eslint,
-    correctness
+    correctness,
+    tags = [recommended],
 );
 
 impl Rule for NoExAssign {

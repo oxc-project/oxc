@@ -47,7 +47,8 @@ declare_oxc_lint!(
     /// ```
     NoFindDomNode,
     react,
-    correctness
+    correctness,
+    tags = [recommended],
 );
 
 impl Rule for NoFindDomNode {

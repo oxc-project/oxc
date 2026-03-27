@@ -70,6 +70,7 @@ declare_oxc_lint!(
     NoInvalidRegexp,
     eslint,
     correctness,
+    tags = [recommended],
     config = NoInvalidRegexpConfig,
 );
 

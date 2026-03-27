@@ -56,7 +56,8 @@ declare_oxc_lint!(
     /// ```
     NoConstantBinaryExpression,
     eslint,
-    correctness
+    correctness,
+    tags = [recommended],
 );
 
 fn constant_short_circuit(lhs_name: &str, expr_name: &str, span: Span) -> OxcDiagnostic {

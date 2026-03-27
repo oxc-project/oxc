@@ -66,7 +66,8 @@ declare_oxc_lint!(
     /// ```
     NoLifecycleAfterAwait,
     vue,
-    correctness
+    correctness,
+    tags = [recommended],
 );
 
 const LIFECYCLE_HOOKS: &[&str] = &[

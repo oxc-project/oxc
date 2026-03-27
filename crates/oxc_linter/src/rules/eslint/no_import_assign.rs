@@ -49,7 +49,8 @@ declare_oxc_lint!(
     /// ```
     NoImportAssign,
     eslint,
-    correctness
+    correctness,
+    tags = [recommended],
 );
 
 const OBJECT_MUTATION_METHODS: [&str; 5] =

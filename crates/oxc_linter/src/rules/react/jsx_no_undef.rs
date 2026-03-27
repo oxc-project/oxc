@@ -40,7 +40,8 @@ declare_oxc_lint!(
     /// ```
     JsxNoUndef,
     react,
-    correctness
+    correctness,
+    tags = [recommended],
 );
 
 fn get_resolvable_ident<'a>(node: &'a JSXElementName<'a>) -> Option<&'a IdentifierReference<'a>> {

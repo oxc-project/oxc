@@ -58,6 +58,7 @@ declare_oxc_lint!(
     PreferClasslistToggle,
     unicorn,
     style,
+    tags = [recommended],
     fix
 );
 

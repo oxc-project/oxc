@@ -56,7 +56,8 @@ declare_oxc_lint!(
     /// ```
     IframeHasTitle,
     jsx_a11y,
-    correctness
+    correctness,
+    tags = [recommended],
 );
 
 impl Rule for IframeHasTitle {

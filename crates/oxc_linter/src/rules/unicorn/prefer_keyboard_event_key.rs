@@ -69,6 +69,7 @@ declare_oxc_lint!(
     PreferKeyboardEventKey,
     unicorn,
     style,
+    tags = [recommended],
     fix
 );
 

@@ -76,6 +76,7 @@ declare_oxc_lint!(
     TextEncodingIdentifierCase,
     unicorn,
     style,
+    tags = [recommended],
     fix,
     config = TextEncodingIdentifierCase
 );

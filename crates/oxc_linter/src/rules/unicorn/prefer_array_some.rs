@@ -64,6 +64,7 @@ declare_oxc_lint!(
     PreferArraySome,
     unicorn,
     pedantic,
+    tags = [recommended],
     fix
 );
 

@@ -64,6 +64,7 @@ declare_oxc_lint!(
     NoObjCalls,
     eslint,
     correctness,
+    tags = [recommended],
 );
 
 fn is_global_obj(s: &str) -> bool {

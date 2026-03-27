@@ -87,6 +87,7 @@ declare_oxc_lint!(
     NoDistractingElements,
     jsx_a11y,
     correctness,
+    tags = [recommended],
     config = NoDistractingElementsConfig,
 );
 

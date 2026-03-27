@@ -69,6 +69,7 @@ declare_oxc_lint!(
     NoUselessPromiseResolveReject,
     unicorn,
     pedantic,
+    tags = [recommended],
     fix,
     config = NoUselessPromiseResolveRejectOptions,
 );

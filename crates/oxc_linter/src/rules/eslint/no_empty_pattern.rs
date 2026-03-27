@@ -78,6 +78,7 @@ declare_oxc_lint!(
     NoEmptyPattern,
     eslint,
     correctness,
+    tags = [recommended],
 );
 
 impl Rule for NoEmptyPattern {

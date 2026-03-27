@@ -47,6 +47,7 @@ declare_oxc_lint!(
     PreferTypeError,
     unicorn,
     pedantic,
+    tags = [recommended],
     fix
 );
 

@@ -41,6 +41,7 @@ declare_oxc_lint!(
     ConsistentDateClone,
     unicorn,
     style,
+    tags = [recommended],
     fix
 );
 

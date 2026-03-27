@@ -46,6 +46,7 @@ declare_oxc_lint!(
     NoHexEscape,
     unicorn,
     pedantic,
+    tags = [recommended],
     fix
 );
 

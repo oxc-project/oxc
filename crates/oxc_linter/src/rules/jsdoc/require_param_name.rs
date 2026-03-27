@@ -44,6 +44,7 @@ declare_oxc_lint!(
     RequireParamName,
     jsdoc,
     pedantic,
+    tags = [recommended],
 );
 
 impl Rule for RequireParamName {

@@ -116,6 +116,7 @@ declare_oxc_lint!(
     NoMisleadingCharacterClass,
     eslint,
     correctness,
+    tags = [recommended],
     pending,
     config = NoMisleadingCharacterClass,
 );

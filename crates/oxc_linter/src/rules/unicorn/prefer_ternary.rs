@@ -61,6 +61,7 @@ declare_oxc_lint!(
     PreferTernary,
     unicorn,
     style,
+    tags = [recommended],
     pending,
     config = PreferTernaryOption
 );

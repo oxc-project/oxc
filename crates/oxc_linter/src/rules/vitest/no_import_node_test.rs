@@ -48,6 +48,7 @@ declare_oxc_lint!(
     NoImportNodeTest,
     vitest,
     style,
+    tags = [recommended],
     suggestion
 );
 

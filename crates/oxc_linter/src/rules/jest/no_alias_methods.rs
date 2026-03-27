@@ -97,6 +97,7 @@ declare_oxc_lint!(
     NoAliasMethods,
     jest,
     style,
+    tags = [recommended],
     fix
 );
 

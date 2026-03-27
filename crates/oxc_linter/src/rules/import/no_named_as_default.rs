@@ -68,7 +68,8 @@ declare_oxc_lint!(
     /// `tsconfig.json` files.
     NoNamedAsDefault,
     import,
-    suspicious
+    suspicious,
+    tags = [recommended],
 );
 
 impl Rule for NoNamedAsDefault {

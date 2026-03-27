@@ -56,6 +56,7 @@ declare_oxc_lint!(
     PreferMathMinMax,
     unicorn,
     pedantic,
+    tags = [recommended],
     fix
 );
 

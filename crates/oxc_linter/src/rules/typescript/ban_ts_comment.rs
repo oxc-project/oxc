@@ -157,6 +157,7 @@ declare_oxc_lint!(
     BanTsComment,
     typescript,
     pedantic,
+    tags = [recommended],
     conditional_fix,
     config = BanTsCommentConfig,
 );

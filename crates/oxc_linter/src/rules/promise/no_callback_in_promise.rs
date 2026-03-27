@@ -84,6 +84,7 @@ declare_oxc_lint!(
     NoCallbackInPromise,
     promise,
     correctness,
+    tags = [recommended],
     config = NoCallbackInPromiseConfig,
 );
 

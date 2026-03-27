@@ -103,6 +103,7 @@ declare_oxc_lint!(
     NoConstantCondition,
     eslint,
     correctness,
+    tags = [recommended],
     config = NoConstantCondition,
 );
 

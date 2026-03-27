@@ -50,6 +50,7 @@ declare_oxc_lint!(
     NoImpliedEval(tsgolint),
     typescript,
     correctness,
+    tags = [recommended],
 );
 
 impl Rule for NoImpliedEval {}

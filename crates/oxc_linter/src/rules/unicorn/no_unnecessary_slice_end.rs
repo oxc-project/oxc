@@ -50,6 +50,7 @@ declare_oxc_lint!(
     NoUnnecessarySliceEnd,
     unicorn,
     pedantic,
+    tags = [recommended],
     fix,
 );
 

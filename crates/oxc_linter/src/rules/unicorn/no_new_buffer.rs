@@ -41,6 +41,7 @@ declare_oxc_lint!(
     NoNewBuffer,
     unicorn,
     pedantic,
+    tags = [recommended],
     suggestion
 );
 

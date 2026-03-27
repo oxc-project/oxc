@@ -46,6 +46,7 @@ declare_oxc_lint!(
     NoUnusedLabels,
     eslint,
     correctness,
+    tags = [recommended],
     fix
 );
 

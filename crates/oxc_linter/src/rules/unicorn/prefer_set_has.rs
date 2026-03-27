@@ -66,6 +66,7 @@ declare_oxc_lint!(
     PreferSetHas,
     unicorn,
     perf,
+    tags = [recommended],
     dangerous_fix
 );
 

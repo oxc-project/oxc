@@ -84,7 +84,8 @@ declare_oxc_lint!(
     /// ```
     RequireLocalTestContextForConcurrentSnapshots,
     vitest,
-    correctness
+    correctness,
+    tags = [recommended],
 );
 
 impl Rule for RequireLocalTestContextForConcurrentSnapshots {

@@ -51,6 +51,7 @@ declare_oxc_lint!(
     PreferStringReplaceAll,
     unicorn,
     pedantic,
+    tags = [recommended],
     fix
 );
 

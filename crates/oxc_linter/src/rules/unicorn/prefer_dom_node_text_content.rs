@@ -40,6 +40,7 @@ declare_oxc_lint!(
     PreferDomNodeTextContent,
     unicorn,
     style,
+    tags = [recommended],
     conditional_fix
 );
 

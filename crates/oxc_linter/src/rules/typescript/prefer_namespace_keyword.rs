@@ -61,6 +61,7 @@ declare_oxc_lint!(
     PreferNamespaceKeyword,
     typescript,
     correctness,
+    tags = [recommended],
     fix
 );
 

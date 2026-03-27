@@ -44,7 +44,8 @@ declare_oxc_lint!(
     /// ```
     GoogleFontPreconnect,
     nextjs,
-    correctness
+    correctness,
+    tags = [recommended],
 );
 
 impl Rule for GoogleFontPreconnect {

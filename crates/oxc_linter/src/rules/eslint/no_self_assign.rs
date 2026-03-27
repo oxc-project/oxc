@@ -101,6 +101,7 @@ declare_oxc_lint!(
     NoSelfAssign,
     eslint,
     correctness,
+    tags = [recommended],
     config = NoSelfAssign
 );
 

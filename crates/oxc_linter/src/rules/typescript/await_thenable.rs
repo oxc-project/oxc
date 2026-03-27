@@ -49,6 +49,7 @@ declare_oxc_lint!(
     AwaitThenable(tsgolint),
     typescript,
     correctness,
+    tags = [recommended],
     suggestion,
 );
 

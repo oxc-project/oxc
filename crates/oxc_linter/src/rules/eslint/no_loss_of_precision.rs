@@ -83,7 +83,8 @@ declare_oxc_lint!(
     /// ```
     NoLossOfPrecision,
     eslint,
-    correctness
+    correctness,
+    tags = [recommended],
 );
 
 impl Rule for NoLossOfPrecision {

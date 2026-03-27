@@ -58,6 +58,7 @@ declare_oxc_lint!(
     AriaProptypes,
     jsx_a11y,
     correctness,
+    tags = [recommended],
 );
 
 impl Rule for AriaProptypes {

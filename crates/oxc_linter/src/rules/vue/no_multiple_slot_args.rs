@@ -68,6 +68,7 @@ declare_oxc_lint!(
     NoMultipleSlotArgs,
     vue,
     restriction,
+    tags = [recommended],
     pending  // TODO: Remove second argument, Spread argument is possible not supported
 );
 

@@ -62,7 +62,8 @@ declare_oxc_lint!(
     /// ```
     NoNamedAsDefaultMember,
     import,
-    suspicious
+    suspicious,
+    tags = [recommended],
 );
 
 fn get_symbol_id_from_ident(

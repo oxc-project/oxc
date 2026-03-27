@@ -80,7 +80,8 @@ declare_oxc_lint!(
     /// ```
     NextScriptForGa,
     nextjs,
-    correctness
+    correctness,
+    tags = [recommended],
 );
 
 impl Rule for NextScriptForGa {
