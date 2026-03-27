@@ -2,13 +2,7 @@ use std::ops::Range;
 
 use oxc_allocator::Vec as ArenaVec;
 
-use crate::{
-    JsLabels,
-    formatter::format_element::{
-        FormatElement, LineMode,
-        tag::{LabelId, Tag},
-    },
-};
+use crate::formatter::format_element::{FormatElement, ImportDeclMetadata, LineMode};
 
 #[derive(Debug)]
 pub enum SourceLine<'a> {
@@ -16,7 +10,7 @@ pub enum SourceLine<'a> {
     /// May have leading comments like `/* ... */ import ...`.
     /// And also may have trailing comments like `import ...; // ...`.
     /// Never be a boundary.
-    Import(Range<usize>, ImportLineMetadata<'a>),
+    Import(Range<usize>, &'a ImportDeclMetadata<'a>),
     /// Empty line.
     /// May be used as a boundary if `options.partition_by_newline` is true.
     Empty,
@@ -38,6 +32,16 @@ impl<'a> SourceLine<'a> {
             "`range` must not be empty, otherwise use `SourceLine::Empty` directly."
         );
 
+        // Check if the line contains an import by looking for ImportMetadata element.
+        // This metadata was attached during formatting from AST information,
+        // so no token re-parsing is needed.
+        for idx in range.clone() {
+            if let FormatElement::ImportMetadata(metadata) = &elements[idx] {
+                // TODO: Check line has trailing ignore comment?
+                return SourceLine::Import(range, metadata);
+            }
+        }
+
         // Check if the line is comment-only.
         // e.g.
         // ```text
@@ -57,95 +61,6 @@ impl<'a> SourceLine<'a> {
         });
         if is_comment_only {
             return SourceLine::CommentOnly(range, line_mode);
-        }
-
-        // Check if the line contains an import statement.
-        // Sometimes, there might be leading comments in the same line,
-        // so we need to check all elements in the line to find an `ImportDeclaration`.
-        // ```text
-        // /* THIS */ import ...
-        // import ...
-        // ```
-        let mut has_import = false;
-        let mut source = None;
-        let mut is_side_effect = true;
-        let mut is_type_import = false;
-        let mut has_default_specifier = false;
-        let mut has_namespace_specifier = false;
-        let mut has_named_specifier = false;
-
-        for idx in range.clone() {
-            let element = &elements[idx];
-
-            // Special marker for `ImportDeclaration`
-            if let FormatElement::Tag(Tag::StartLabelled(id)) = element {
-                if *id == LabelId::of(JsLabels::ImportDeclaration) {
-                    has_import = true;
-                }
-                continue;
-            }
-            if !has_import {
-                continue;
-            }
-
-            match element {
-                FormatElement::Token { text } => match *text {
-                    "import" => {
-                        // Look ahead to determine import type (skip spaces)
-                        // Continue scanning to find all specifier types (default, namespace, named)
-                        let mut offset = 1;
-                        let mut first_token = true; // Track if this is the first token after "import"
-                        while idx + offset < elements.len() {
-                            if matches!(elements[idx + offset], FormatElement::Space) {
-                                offset += 1;
-                                continue;
-                            }
-
-                            match &elements[idx + offset] {
-                                FormatElement::Token { text } => match *text {
-                                    "type" if first_token => is_type_import = true,
-                                    "*" => has_namespace_specifier = true,
-                                    "{" => has_named_specifier = true,
-                                    "from" => break, // Stop when we reach "from"
-                                    _ => {}
-                                },
-                                FormatElement::Text { .. } => {
-                                    has_default_specifier = true;
-                                }
-                                _ => {}
-                            }
-                            first_token = false;
-                            offset += 1;
-                        }
-                    }
-                    "from" => {
-                        is_side_effect = false;
-                        source = None;
-                    }
-                    _ => {}
-                },
-                FormatElement::Text { text, .. } => {
-                    if source.is_none() {
-                        source = Some(text);
-                    }
-                }
-                _ => {}
-            }
-        }
-
-        if has_import && let Some(source) = source {
-            // TODO: Check line has trailing ignore comment?
-            return SourceLine::Import(
-                range,
-                ImportLineMetadata {
-                    source,
-                    is_side_effect,
-                    is_type_import,
-                    has_default_specifier,
-                    has_namespace_specifier,
-                    has_named_specifier,
-                },
-            );
         }
 
         // Otherwise, this line is neither of:
@@ -186,20 +101,3 @@ impl<'a> SourceLine<'a> {
     }
 }
 
-/// Import line metadata extracted during parsing.
-/// Just holds the information found, without interpretation.
-#[derive(Debug)]
-pub struct ImportLineMetadata<'a> {
-    /// Index of the import source in the original `elements` slice.
-    pub source: &'a str,
-    /// Whether this is a side-effect-only import (e.g., `import "foo"`).
-    pub is_side_effect: bool,
-    /// Whether this is a type-only import (e.g., `import type { Foo } from "foo"`).
-    pub is_type_import: bool,
-    /// Whether this import has a default specifier (e.g., `import Foo from "foo"`).
-    pub has_default_specifier: bool,
-    /// Whether this import has a namespace specifier (e.g., `import * as Foo from "foo"`).
-    pub has_namespace_specifier: bool,
-    /// Whether this import has named specifiers (e.g., `import { foo } from "foo"`).
-    pub has_named_specifier: bool,
-}

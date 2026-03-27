@@ -3,22 +3,24 @@ use std::{borrow::Cow, path::Path};
 use cow_utils::CowUtils;
 use phf::phf_set;
 
-use crate::ir_transform::sort_imports::{
-    group_config::{ImportModifier, ImportSelector},
-    group_matcher::{GroupMatcher, ImportMetadata},
-    options::SortImportsOptions,
-    source_line::ImportLineMetadata,
+use crate::{
+    formatter::format_element::ImportDeclMetadata,
+    ir_transform::sort_imports::{
+        group_config::{ImportModifier, ImportSelector},
+        group_matcher::{GroupMatcher, ImportMetadata},
+        options::SortImportsOptions,
+    },
 };
 
 /// Compute all metadata derived from import line metadata.
 ///
 /// Returns `(group_idx, normalized_source, is_ignored)`.
 pub fn compute_import_metadata<'a>(
-    metadata: &ImportLineMetadata<'a>,
+    metadata: &ImportDeclMetadata<'a>,
     group_matcher: &GroupMatcher,
     options: &SortImportsOptions,
 ) -> (usize, Cow<'a, str>, bool) {
-    let source = extract_source_path(metadata.source);
+    let source = metadata.source.split('?').next().unwrap_or(metadata.source);
     let is_style_import = is_style(source);
     let path_kind = to_path_kind(source, options);
 
@@ -60,7 +62,7 @@ pub fn compute_import_metadata<'a>(
 /// 4. Path-based selectors (builtin, external, internal, parent, sibling, index)
 /// 5. Catch-all import selector
 fn compute_selectors(
-    metadata: &ImportLineMetadata,
+    metadata: &ImportDeclMetadata,
     is_style_import: bool,
     is_subpath: bool,
     path_kind: &ImportPathKind,
@@ -114,7 +116,7 @@ fn compute_selectors(
 }
 
 /// Compute all modifiers for this import.
-fn compute_modifiers(metadata: &ImportLineMetadata) -> Vec<ImportModifier> {
+fn compute_modifiers(metadata: &ImportDeclMetadata) -> Vec<ImportModifier> {
     let mut modifiers = vec![];
 
     if metadata.is_side_effect {
@@ -139,15 +141,6 @@ fn compute_modifiers(metadata: &ImportLineMetadata) -> Vec<ImportModifier> {
 }
 
 // ---
-
-/// Extract the import source path.
-///
-/// This removes quotes and query parameters from the source string.
-/// For example, `"./foo.js?bar"` becomes `./foo.js`.
-fn extract_source_path(source: &str) -> &str {
-    let source = source.trim_matches('"').trim_matches('\'');
-    source.split('?').next().unwrap_or(source)
-}
 
 // spellchecker:off
 static STYLE_EXTENSIONS: phf::Set<&'static str> = phf_set! {

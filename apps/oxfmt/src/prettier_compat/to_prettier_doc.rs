@@ -295,6 +295,7 @@ fn convert_elements(
                 }
                 printer.last_was_hardline = false;
             }
+            FormatElement::ImportMetadata(_) => {}
         }
     }
 

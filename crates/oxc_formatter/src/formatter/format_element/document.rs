@@ -536,6 +536,7 @@ impl<'a> Format<'a> for &[FormatElement<'a>] {
                         );
                     }
                 }
+                FormatElement::ImportMetadata(_) => {}
             }
         }
 

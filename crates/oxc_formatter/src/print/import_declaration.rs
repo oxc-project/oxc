@@ -8,7 +8,10 @@ use crate::{
     ast_nodes::{AstNode, AstNodes},
     format_args,
     formatter::{
-        Formatter, prelude::*, separated::FormatSeparatedIter, trivia::FormatLeadingComments,
+        Formatter, prelude::*,
+        format_element::{FormatElement, ImportDeclMetadata},
+        separated::FormatSeparatedIter,
+        trivia::FormatLeadingComments,
     },
     print::semicolon::OptionalSemicolon,
     utils::string::{FormatLiteralStringToken, StringLiteralParentKind},
@@ -44,6 +47,32 @@ pub fn format_import_and_export_source_with_clause<'a>(
 impl<'a> FormatWrite<'a> for AstNode<'a, ImportDeclaration<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         let decl = &format_with(|f| {
+            if f.options().sort_imports.is_some() {
+                let (mut has_default, mut has_namespace, mut has_named) = (false, false, false);
+                if let Some(specs) = &self.specifiers {
+                    for s in specs.iter() {
+                        match s {
+                            ImportDeclarationSpecifier::ImportDefaultSpecifier(_) => {
+                                has_default = true;
+                            }
+                            ImportDeclarationSpecifier::ImportNamespaceSpecifier(_) => {
+                                has_namespace = true;
+                            }
+                            ImportDeclarationSpecifier::ImportSpecifier(_) => has_named = true,
+                        }
+                    }
+                }
+                let metadata = f.allocator().alloc(ImportDeclMetadata {
+                    source: self.source.value.as_str(),
+                    is_side_effect: self.specifiers.is_none(),
+                    is_type_import: self.import_kind.is_type(),
+                    has_default_specifier: has_default,
+                    has_namespace_specifier: has_namespace,
+                    has_named_specifier: has_named,
+                });
+                f.write_element(FormatElement::ImportMetadata(metadata));
+            }
+
             write!(f, ["import", space(), self.import_kind]);
 
             if let Some(specifiers) = self.specifiers() {
