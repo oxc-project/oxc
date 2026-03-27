@@ -329,6 +329,10 @@ fn keep_exposed_variables() {
     test("var x = foo; x()", "foo()");
     test_script_same("var x = foo; x()");
     test_script("{ let x = foo; x() }", "foo()");
+    test(
+        "var b = 'b', l = { '-a': 'a', b }; export { l }",
+        "var l = { '-a': 'a', b: 'b' }; export { l }",
+    );
 }
 
 #[test]
