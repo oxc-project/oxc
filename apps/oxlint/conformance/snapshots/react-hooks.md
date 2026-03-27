@@ -1,5 +1,7 @@
 # Conformance test results - react-hooks
 
+Tested against: [react-hooks@612e371](https://github.com/facebook/react/tree/612e371fb215498edde4c853bd1e0c8e9203808f) (19.2.3)
+
 ## Summary
 
 ### Rules
