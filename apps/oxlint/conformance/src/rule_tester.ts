@@ -23,6 +23,8 @@ type Globals = RuleTester.Globals;
 export type Language = RuleTester.Language;
 export type LanguageOptions = LanguageOptionsInternal;
 export type ParserOptions = ParserOptionsInternal;
+export type Error = RuleTester.Error;
+export type ErrorSuggestion = RuleTester.ErrorSuggestion;
 
 interface TestCaseExtension {
   languageOptions?: LanguageOptionsInternal;
