@@ -73,8 +73,8 @@ const mixedQuery = gql\`
 const mixedTemplate = html\`<div><h1>Title</h1></div>\`;
 
 const mixedDocs = md\`
-  #Documentation
-  This is **important**.
+#Documentation
+This is **important**.
 \`;
 
 // Multi-line with blank lines - should preserve blank lines without trailing whitespace
@@ -279,11 +279,9 @@ export class AppComponent1 {}
 // Array form styles
 @Component({
   selector: "app-test",
-  template: \`
-    <ul>
-      <li>test</li>
-    </ul>
-  \`,
+  template: \`<ul>
+    <li>test</li>
+  </ul> \`,
   styles: [
     \`
       :host {
@@ -574,17 +572,18 @@ npm install package
 --- AFTER ----------
 // Tagged template literals with md and markdown tags
 const documentation = md\`
-  #Heading
-  This is **bold**.
-  -Item 1
-  -Item 2
+#Heading
+This is **bold**.
+-Item 1
+-Item 2
 \`;
 
 const readme = markdown\`
-  ##Installation
-  \\\`\\\`\\\`bash
-  npm install package
-  \\\`\\\`\\\`
+##Installation
+
+~~~bash
+npm install package
+~~~
 \`;
 
 --------------------"
@@ -847,17 +846,18 @@ npm install package
 --- AFTER ----------
 // Tagged template literals with md and markdown tags
 const documentation = md\`
-  #Heading
-  This is **bold**.
-  -Item 1
-  -Item 2
+#Heading
+This is **bold**.
+-Item 1
+-Item 2
 \`;
 
 const readme = markdown\`
-  ##Installation
-  \\\`\\\`\\\`bash
-  npm install package
-  \\\`\\\`\\\`
+##Installation
+
+~~~bash
+npm install package
+~~~
 \`;
 
 --------------------
@@ -935,11 +935,9 @@ export class AppComponent1 {}
 // Array form styles
 @Component({
   selector: "app-test",
-  template: \`
-    <ul>
-      <li>test</li>
-    </ul>
-  \`,
+  template: \`<ul>
+    <li>test</li>
+  </ul> \`,
   styles: [
     \`
       :host {

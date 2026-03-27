@@ -1,8 +1,8 @@
-commit: 9059e5bd
+commit: 4f7b4175
 
 semantic_typescript Summary:
 AST Parsed     : 4772/4772 (100.00%)
-Positive Passed: 2669/4772 (55.93%)
+Positive Passed: 2665/4772 (55.85%)
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/2dArrays.ts
 Symbol reference IDs mismatch for "Cell":
 after transform: SymbolId(0): [ReferenceId(1)]
@@ -6176,6 +6176,17 @@ Symbol redeclarations mismatch for "Foo":
 after transform: SymbolId(7): [Span { start: 284, end: 287 }, Span { start: 348, end: 351 }]
 rebuilt        : SymbolId(12): []
 
+semantic Error: tasks/coverage/typescript/tests/cases/compiler/duplicateLabel3.ts
+Bindings mismatch:
+after transform: ScopeId(0): []
+rebuilt        : ScopeId(0): ["f"]
+Bindings mismatch:
+after transform: ScopeId(1): ["f"]
+rebuilt        : ScopeId(1): []
+Symbol scope ID mismatch for "f":
+after transform: SymbolId(0): ScopeId(1)
+rebuilt        : SymbolId(0): ScopeId(0)
+
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/duplicatePackage_packageIdIncludesSubModule.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["Foo", "x"]
@@ -7828,15 +7839,24 @@ after transform: ["Function", "undefined"]
 rebuilt        : ["undefined"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/functionInIfStatementInModule.ts
+Bindings mismatch:
+after transform: ScopeId(1): ["_Midori"]
+rebuilt        : ScopeId(1): ["Foo", "_Midori"]
 Scope flags mismatch:
 after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function)
+Bindings mismatch:
+after transform: ScopeId(2): ["Foo"]
+rebuilt        : ScopeId(2): []
 Symbol flags mismatch for "Midori":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "Midori":
 after transform: SymbolId(0): Span { start: 12, end: 18 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
+Symbol scope ID mismatch for "Foo":
+after transform: SymbolId(1): ScopeId(2)
+rebuilt        : SymbolId(2): ScopeId(1)
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/functionMergedWithModule.ts
 Scope flags mismatch:
@@ -19486,6 +19506,23 @@ Scope flags mismatch:
 after transform: ScopeId(5): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(8): ScopeFlags(Function)
 
+semantic Error: tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNameClassExpressionLoop.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["_C_brand", "_classPrivateFieldInitSpec", "_classPrivateMethodInitSpec", "_myField", "array"]
+rebuilt        : ScopeId(0): ["_C_brand", "_classPrivateFieldInitSpec", "_classPrivateMethodInitSpec", "_get_accessor", "_method", "_myField", "_set_accessor", "array"]
+Bindings mismatch:
+after transform: ScopeId(2): ["_get_accessor", "_method", "_set_accessor"]
+rebuilt        : ScopeId(2): []
+Symbol scope ID mismatch for "_method":
+after transform: SymbolId(5): ScopeId(2)
+rebuilt        : SymbolId(7): ScopeId(0)
+Symbol scope ID mismatch for "_get_accessor":
+after transform: SymbolId(6): ScopeId(2)
+rebuilt        : SymbolId(8): ScopeId(0)
+Symbol scope ID mismatch for "_set_accessor":
+after transform: SymbolId(7): ScopeId(2)
+rebuilt        : SymbolId(9): ScopeId(0)
+
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNameComputedPropertyName1.ts
 Unresolved references mismatch:
 after transform: ["Record", "WeakMap", "console", "require"]
@@ -26361,6 +26398,12 @@ after transform: ["Record"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardsInFunctionAndModuleBlock.ts
+Bindings mismatch:
+after transform: ScopeId(9): ["x", "y"]
+rebuilt        : ScopeId(9): ["foo", "x", "y"]
+Bindings mismatch:
+after transform: ScopeId(10): ["foo"]
+rebuilt        : ScopeId(10): []
 Scope flags mismatch:
 after transform: ScopeId(12): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(12): ScopeFlags(Function)
@@ -26376,6 +26419,9 @@ rebuilt        : ScopeId(17): ScopeFlags(Function)
 Scope flags mismatch:
 after transform: ScopeId(18): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(18): ScopeFlags(Function)
+Symbol scope ID mismatch for "foo":
+after transform: SymbolId(19): ScopeId(10)
+rebuilt        : SymbolId(19): ScopeId(9)
 Symbol flags mismatch for "m":
 after transform: SymbolId(21): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(21): SymbolFlags(BlockScopedVariable)
@@ -27992,6 +28038,17 @@ Unresolved references mismatch:
 after transform: []
 rebuilt        : ["a"]
 
+semantic Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/LabeledStatements/parser_duplicateLabel3.ts
+Bindings mismatch:
+after transform: ScopeId(0): []
+rebuilt        : ScopeId(0): ["f"]
+Bindings mismatch:
+after transform: ScopeId(1): ["f"]
+rebuilt        : ScopeId(1): []
+Symbol scope ID mismatch for "f":
+after transform: SymbolId(0): ScopeId(1)
+rebuilt        : SymbolId(0): ScopeId(0)
+
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/parserNotRegex2.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["A", "B", "C", "x"]
@@ -28141,6 +28198,17 @@ semantic Error: tasks/coverage/typescript/tests/cases/conformance/statements/for
 Unresolved references mismatch:
 after transform: ["Date"]
 rebuilt        : []
+
+semantic Error: tasks/coverage/typescript/tests/cases/conformance/statements/for-ofStatements/ES5For-of19.ts
+Bindings mismatch:
+after transform: ScopeId(0): []
+rebuilt        : ScopeId(0): ["foo"]
+Bindings mismatch:
+after transform: ScopeId(2): ["foo"]
+rebuilt        : ScopeId(2): []
+Symbol scope ID mismatch for "foo":
+after transform: SymbolId(1): ScopeId(2)
+rebuilt        : SymbolId(1): ScopeId(0)
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/statements/throwStatements/throwStatements.ts
 Scope flags mismatch:

@@ -26,7 +26,7 @@ async function loadPrettier(): Promise<typeof import("prettier")> {
 
   prettierCache = await import("prettier");
 
-  // NOTE: This is needed for html-in-js formatting to work correctly.
+  // NOTE: This is needed for xxx-in-js formatting to work correctly.
   //
   // Prettier internally extends `options` with hidden fields for embedded-formatters during printing.
   // However, `__debug.printToDoc()` runs `normalizeFormatOptions()` which strips unknown keys.
@@ -39,19 +39,21 @@ async function loadPrettier(): Promise<typeof import("prettier")> {
   // there should be no side effects on other calls that don't set these fields.
   // @ts-expect-error: Use internal API
   const { formatOptionsHiddenDefaults } = prettierCache.__internal;
-  // For html-in-js: Prevent attribute level formatting from running.
+  // For html(angular)-in-js: Prevent attribute level formatting from running.
   // (e.g., CSS in `style="..."` attributes, JS in `onclick="..."` event handlers)
   // This does NOT affect `<style>`/`<script>` tags, they are always formatted.
   // Ideally we'd only block JS attributes while allowing CSS attributes (because no nesting is possible in CSS),
   // but Prettier's `!options.parentParser` check is all-or-nothing.
   formatOptionsHiddenDefaults.parentParser = null;
-  // For html-in-js: Capture `htmlHasMultipleRootElements` from the HTML AST root during `__debug.printToDoc()`.
+  // For html(angular)-in-js: Capture `htmlHasMultipleRootElements` from the HTML AST root during `__debug.printToDoc()`.
   // This is used to decide whether to wrap content with `indent`.
   // Without this, we'd need either:
   // - double parse AST
   // - or flaky traversal of the `Doc` output
   // to extract the same information, since this hooks into the AST.
   formatOptionsHiddenDefaults.__onHtmlRoot = null;
+  // For md-in-js: Use `~` instead of `` ` `` for code fences
+  formatOptionsHiddenDefaults.__inJsTemplate = null;
 
   return prettierCache;
 }
@@ -102,10 +104,9 @@ export type FormatEmbeddedCodeParam = {
 };
 
 /**
- * Format xxx-in-js code snippets into formatted string.
- *
- * This will be gradually replaced by `formatEmbeddedDoc` which returns `Doc`.
- * For now, html|css|md-in-js are using this.
+ * Format non-js code snippets into formatted string.
+ * Mainly used for formatting code fences within JSDoc,
+ * and is also used as a temporary fallback for html-in-js.
  *
  * @returns Formatted code snippet
  */
@@ -133,15 +134,15 @@ export type FormatEmbeddedDocParam = {
 };
 
 /**
- * Format xxx-in-js code snippets into Prettier `Doc` JSON strings.
+ * Format non-js code snippets into Prettier `Doc` JSON strings.
  *
- * This makes `oxc_formatter` correctly handle `printWidth` even for embedded code.
+ * This makes our printer correctly handle `printWidth` even for embedded code.
  * - For gql-in-js, `texts` contains multiple parts split by `${}` in a template literal
  * - For others, `texts` always contains a single string with `${}` parts replaced by placeholders
  * However, this function does not need to be aware of that,
  * as it simply formats each text part independently and returns an array of formatted parts.
  *
- * @returns Doc JSON strings (one per input text)
+ * @returns Doc JSON strings
  */
 export async function formatEmbeddedDoc({
   texts,
@@ -160,13 +161,19 @@ export async function formatEmbeddedDoc({
     texts.map(async (text) => {
       const metadata: Record<string, unknown> = {};
 
-      // html-in-js specific options: see the comment in `loadPrettier()` for rationale
-      if (options.parser === "html") {
+      // html(angular)-in-js specific options: see the comment in `loadPrettier()` for rationale
+      if (options.parser === "html" || options.parser === "angular") {
         // Any truthy value works
         options.parentParser = "OXFMT";
         // https://github.com/prettier/prettier/blob/90983f40dce5e20beea4e5618b5e0426a6a7f4f0/src/language-js/embed/html.js#L42-L44
         options.__onHtmlRoot = (root: { children?: unknown[] }) =>
           (metadata.htmlHasMultipleRootElements = (root.children?.length ?? 0) > 1);
+      }
+
+      // md-in-js specific options: see the comment in `loadPrettier()` for rationale
+      if (options.parser === "markdown") {
+        // https://github.com/prettier/prettier/blob/90983f40dce5e20beea4e5618b5e0426a6a7f4f0/src/language-js/embed/markdown.js#L21
+        options.__inJsTemplate = true;
       }
 
       // @ts-expect-error: Use internal API, but it's necessary and only way to get `Doc`

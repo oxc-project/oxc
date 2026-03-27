@@ -101,6 +101,31 @@ const categories: Category[] = [
     },
   },
   {
+    name: "angular-in-js",
+    sources: [
+      {
+        dir: join(FIXTURES_DIR, "prettier", "typescript/angular-component-examples"),
+        ext: ".ts",
+      },
+      { dir: join(FIXTURES_DIR, "edge-cases", "angular-in-js") },
+    ],
+    optionSets: [{ printWidth: 80 }, { printWidth: 100, htmlWhitespaceSensitivity: "ignore" }],
+    notes: {},
+  },
+  {
+    name: "md-in-js",
+    sources: [
+      {
+        dir: join(FIXTURES_DIR, "prettier", "js/multiparser-markdown"),
+        ext: ".js",
+        excludes: ["format.test.js"],
+      },
+      { dir: join(FIXTURES_DIR, "edge-cases", "md-in-js") },
+    ],
+    optionSets: [{ printWidth: 80 }, { printWidth: 100, proseWrap: "always" }],
+    notes: {},
+  },
+  {
     name: "xxx-in-js-comment",
     sources: [
       {

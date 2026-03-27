@@ -151,12 +151,10 @@ impl Rule for NoInvalidVoidType {
 
         if let AstKind::TSTypeParameterInstantiation(_) = parent.kind() {
             let grand_parent_node = ctx.nodes().parent_node(parent.id());
-            if let AstKind::TSTypeReference(type_reference) = grand_parent_node.kind() {
-                self.check_generic_type_argument(
-                    keyword.span,
-                    ctx.source_range(type_reference.type_name.span()),
-                    ctx,
-                );
+            if let Some(fully_qualified_name) =
+                get_generic_type_argument_name(parent.kind().span(), grand_parent_node.kind(), ctx)
+            {
+                self.check_generic_type_argument(keyword.span, fully_qualified_name, ctx);
                 return;
             }
 
@@ -264,6 +262,32 @@ impl NoInvalidVoidType {
         } else {
             invalid_void_not_return_diagnostic(span)
         }
+    }
+}
+
+fn get_generic_type_argument_name<'a>(
+    type_arguments_span: Span,
+    grand_parent: AstKind<'a>,
+    ctx: &LintContext<'a>,
+) -> Option<&'a str> {
+    match grand_parent {
+        AstKind::TSTypeReference(type_reference) => {
+            Some(ctx.source_range(type_reference.type_name.span()))
+        }
+        AstKind::TSClassImplements(class_implements) => {
+            Some(ctx.source_range(class_implements.expression.span()))
+        }
+        AstKind::TSInterfaceHeritage(interface_heritage) => {
+            Some(ctx.source_range(interface_heritage.expression.span()))
+        }
+        AstKind::Class(class) => class
+            .super_type_arguments
+            .as_ref()
+            .filter(|type_arguments| type_arguments.span == type_arguments_span)
+            .and_then(|_| {
+                class.super_class.as_ref().map(|super_class| ctx.source_range(super_class.span()))
+            }),
+        _ => None,
     }
 }
 
@@ -829,6 +853,32 @@ fn test() {
                   ",
             Some(serde_json::json!([{ "allowAsThisParameter": true }])),
         ),
+        (
+            "
+            interface Producer<T> {
+              get: () => T;
+            }
+
+            export class Test implements Producer<void> {
+              get = () => null;
+            }
+                ",
+            None,
+        ),
+        ("class Test extends Base<void> {}", None),
+        ("interface Test extends Base<void> {}", None),
+        (
+            "
+            interface Producer<T> {
+              get: () => T;
+            }
+
+            export class Test implements Producer<void> {
+              get = () => null;
+            }
+                ",
+            Some(serde_json::json!([{ "allowInGenericTypeArguments": ["Producer"] }])),
+        ),
     ];
 
     let fail = vec![
@@ -974,6 +1024,18 @@ fn test() {
             Some(serde_json::json!([{ "allowInGenericTypeArguments": ["Tx"] }])),
         ),
         (
+            "
+            interface Producer<T> {
+              get: () => T;
+            }
+
+            export class Test implements Producer<void> {
+              get = () => null;
+            }
+                ",
+            Some(serde_json::json!([{ "allowInGenericTypeArguments": ["Base"] }])),
+        ),
+        (
             "function takeVoid(thing: void) {}",
             Some(serde_json::json!([{ "allowInGenericTypeArguments": ["Allowed"] }])),
         ),
@@ -994,6 +1056,26 @@ fn test() {
             Some(
                 serde_json::json!([ { "allowAsThisParameter": true, "allowInGenericTypeArguments": false }, ]),
             ),
+        ),
+        (
+            "
+            interface Producer<T> {
+              get: () => T;
+            }
+
+            export class Test implements Producer<void> {
+              get = () => null;
+            }
+                ",
+            Some(serde_json::json!([{ "allowInGenericTypeArguments": false }])),
+        ),
+        (
+            "class Test extends Base<void> {}",
+            Some(serde_json::json!([{ "allowInGenericTypeArguments": false }])),
+        ),
+        (
+            "interface Test extends Base<void> {}",
+            Some(serde_json::json!([{ "allowInGenericTypeArguments": false }])),
         ),
     ];
 

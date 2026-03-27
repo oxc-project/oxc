@@ -23,15 +23,19 @@ const PLACEHOLDER_PREFIX: &str = "PRETTIER_HTML_PLACEHOLDER_";
 const PLACEHOLDER_SUFFIX: &str = "_IN_JS";
 const COUNTER: &str = "0";
 
-/// Format an HTML-in-JS template literal via the Doc->IR path with placeholder replacement.
+/// Format an HTML(Angular)-in-JS template literal via the Doc->IR path with placeholder replacement.
 ///
 /// Uses `.cooked` values (unlike CSS which uses `.raw`), joins quasis with
-/// `PRETTIER_HTML_PLACEHOLDER_{N}_0_IN_JS` markers, formats as HTML,
+/// `PRETTIER_HTML_PLACEHOLDER_{N}_0_IN_JS` markers, formats via the given `embedded_language`,
 /// then replaces placeholder occurrences in the resulting IR with `${expr}` Docs.
+///
+/// Supports both html-in-js and angular-in-js (`@Component({ template })`).
 pub(super) fn format_html_doc<'a>(
     quasi: &AstNode<'a, TemplateLiteral<'a>>,
     f: &mut Formatter<'_, 'a>,
+    is_angular: bool,
 ) -> bool {
+    let embedded_language = if is_angular { "angular" } else { "html" };
     let quasis = &quasi.quasis;
     let expressions: Vec<_> = quasi.expressions().iter().collect();
 
@@ -59,7 +63,7 @@ pub(super) fn format_html_doc<'a>(
         })) = f.context().external_callbacks().format_embedded_doc(
             allocator,
             group_id_builder,
-            "tagged-html",
+            embedded_language,
             &[cooked],
         )
         else {
@@ -113,7 +117,7 @@ pub(super) fn format_html_doc<'a>(
     })) = f.context().external_callbacks().format_embedded_doc(
         allocator,
         group_id_builder,
-        "tagged-html",
+        embedded_language,
         &[joined],
     )
     else {
@@ -325,8 +329,7 @@ fn format_js_in_html_as_fallback<'a>(
     expressions: &[&AstNode<'a, Expression<'a>>],
     f: &mut Formatter<'_, 'a>,
 ) -> bool {
-    let Some(Ok(formatted)) =
-        f.context().external_callbacks().format_embedded("tagged-html", joined)
+    let Some(Ok(formatted)) = f.context().external_callbacks().format_embedded("html", joined)
     else {
         return false;
     };

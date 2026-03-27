@@ -50,22 +50,24 @@ pub fn to_format_elements_for_template<'a>(
     }
 
     match language {
-        "tagged-graphql" => {
+        "graphql" => {
             let irs = doc_jsons
                 .into_iter()
                 .map(|envelope| {
                     let (mut ir, _) = convert(envelope, allocator, group_id_builder)?;
                     postprocess(
-                        &mut ir, allocator,
+                        &mut ir,
+                        allocator,
                         // GraphQL uses `.cooked` values, so template chars need escaping
-                        true, None,
+                        TemplateEscape::Full,
+                        None,
                     );
                     Ok(ir)
                 })
                 .collect::<Result<Vec<_>, String>>()?;
             Ok(EmbeddedDocResult::MultipleDocs(irs))
         }
-        "tagged-css" => {
+        "css" => {
             let (mut ir, _) = convert(
                 doc_jsons.into_iter().next().expect("Doc JSON for CSS"),
                 allocator,
@@ -75,7 +77,7 @@ pub fn to_format_elements_for_template<'a>(
                 &mut ir,
                 allocator,
                 // CSS uses `.raw` values, so no template char escaping needed
-                false,
+                TemplateEscape::None,
                 Some(("@prettier-placeholder-", "-id")),
             );
             Ok(EmbeddedDocResult::DocWithPlaceholders {
@@ -84,7 +86,7 @@ pub fn to_format_elements_for_template<'a>(
                 html_has_multiple_root_elements: None,
             })
         }
-        "tagged-html" => {
+        "html" | "angular" => {
             let (mut ir, metadata) = convert(
                 doc_jsons.into_iter().next().expect("Doc JSON for HTML"),
                 allocator,
@@ -95,8 +97,8 @@ pub fn to_format_elements_for_template<'a>(
             let placeholder_count = postprocess(
                 &mut ir,
                 allocator,
-                // HTML uses `.cooked` values, so template chars need escaping
-                true,
+                // HTML/Angular use `.cooked` values, so template chars need escaping
+                TemplateEscape::Full,
                 Some(("PRETTIER_HTML_PLACEHOLDER_", "_IN_JS")),
             );
             Ok(EmbeddedDocResult::DocWithPlaceholders {
@@ -104,6 +106,21 @@ pub fn to_format_elements_for_template<'a>(
                 placeholder_count,
                 html_has_multiple_root_elements,
             })
+        }
+        "markdown" => {
+            let (mut ir, _) = convert(
+                doc_jsons.into_iter().next().expect("Doc JSON for Markdown"),
+                allocator,
+                group_id_builder,
+            )?;
+            postprocess(
+                &mut ir,
+                allocator,
+                // Markdown uses `.raw` values with backtick unescaping on Rust side
+                TemplateEscape::RawBacktick,
+                None,
+            );
+            Ok(EmbeddedDocResult::SingleDoc(ir))
         }
         _ => unreachable!("Unsupported embedded_doc language: {language}"),
     }
@@ -273,10 +290,10 @@ fn convert_align<'a>(
                     }
                     out.push(FormatElement::Tag(Tag::EndDedent(DedentMode::Level)));
                     return Ok(());
-                } else if i > 0 && i <= 255 {
+                } else if i > 0 {
+                    debug_assert!(i <= 255, "align value {i} exceeds NonZeroU8 range");
                     #[expect(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
-                    let count = i as u8;
-                    if let Some(nz) = NonZeroU8::new(count) {
+                    if let Some(nz) = NonZeroU8::new(i as u8) {
                         out.push(FormatElement::Tag(Tag::StartAlign(Align::new(nz))));
                         if let Some(contents) = obj.get("contents") {
                             convert_doc(contents, out, ctx)?;
@@ -295,6 +312,53 @@ fn convert_align<'a>(
             }
             out.push(FormatElement::Tag(Tag::EndDedent(DedentMode::Root)));
             Ok(())
+        }
+        Value::String(s) => {
+            // String alignment (e.g., "  " for markdown list continuation indent).
+            // Prettier uses the string length as the number of spaces to align by.
+            if s.is_empty() {
+                // Empty string → no alignment, just render contents
+                if let Some(contents) = obj.get("contents") {
+                    convert_doc(contents, out, ctx)?;
+                }
+                return Ok(());
+            }
+            debug_assert!(
+                s.len() <= 255,
+                "align string length {} exceeds NonZeroU8 range",
+                s.len()
+            );
+            #[expect(clippy::cast_possible_truncation)]
+            if let Some(nz) = NonZeroU8::new(s.len() as u8) {
+                out.push(FormatElement::Tag(Tag::StartAlign(Align::new(nz))));
+                if let Some(contents) = obj.get("contents") {
+                    convert_doc(contents, out, ctx)?;
+                }
+                out.push(FormatElement::Tag(Tag::EndAlign));
+                return Ok(());
+            }
+            Err(format!("Unsupported align value: {n}"))
+        }
+        Value::Object(obj_val) => {
+            // `align({type: "root"}, ...)` = Prettier's `markAsRoot()`.
+            // In Prettier, `markAsRoot` records the current indent position
+            // so that a later `dedentToRoot` can return to it.
+            // However, `oxc_formatter`'s `DedentMode::Root` always resets to absolute level 0
+            // and has no way to store a custom root position.
+            // Skipping the root capture is safe because
+            // embedded language Docs are processed in their own context starting near level 0,
+            // so `dedentToRoot` to absolute 0 produces the same result.
+            //
+            // NOTE: `markAsRoot` is used in Prettier for other cases.
+            // e.g. JS comment printer, YAML block printer, and front-matter embed.
+            // But none of those go through this Doc→IR path.
+            if obj_val.get("type").and_then(Value::as_str) == Some("root") {
+                if let Some(contents) = obj.get("contents") {
+                    convert_doc(contents, out, ctx)?;
+                }
+                return Ok(());
+            }
+            Err(format!("Unsupported align value: {n}"))
         }
         _ => Err(format!("Unsupported align value: {n}")),
     }
@@ -399,20 +463,28 @@ fn extract_group_id(
 
 // ---
 
+#[derive(Clone, Copy)]
+enum TemplateEscape {
+    /// No escaping
+    None,
+    /// Full escaping: `\` → `\\`, `` ` `` → `` \` ``, `${` → `\${`.
+    Full,
+    /// Raw backtick escaping: `(\\*)\`` → `$1$1\\\``.
+    RawBacktick,
+}
+
 /// Post-process FormatElements in a single compaction pass:
 /// - strip trailing hardline (useless for embedded parts)
 /// - collapse double-hardlines `[Hard, ExpandParent, Hard, ExpandParent]` → `[Empty, ExpandParent]`
 /// - merge consecutive Text nodes (SCSS emits split strings like `"@"` + `"prettier-placeholder-0-id"`)
-/// - escape template characters (`\`, `` ` ``, `${`)
-///   - for css-in-js, this is not needed because values are already escaped via `.raw`
-///   - for others, `.cooked` is used, so escaping is needed
+/// - escape template characters (mode determined by [`TemplateEscape`])
 /// - count placeholders matching `(prefix)(digits)(_digits)?(suffix)` pattern
 ///
 /// Returns the placeholder count (0 when `placeholder` is `None`).
 fn postprocess<'a>(
     ir: &mut Vec<FormatElement<'a>>,
     allocator: &'a Allocator,
-    escape_template_chars: bool,
+    escape: TemplateEscape,
     placeholder: Option<(&str, &str)>,
 ) -> usize {
     // Strip trailing hardline
@@ -458,10 +530,10 @@ fn postprocess<'a>(
                 }
                 sb.into_str()
             };
-            let text = if escape_template_chars {
-                escape_template_characters(text, allocator)
-            } else {
-                text
+            let text = match escape {
+                TemplateEscape::None => text,
+                TemplateEscape::Full => escape_template_characters(text, allocator),
+                TemplateEscape::RawBacktick => escape_backticks_raw_str(text, allocator),
             };
             let width = TextWidth::from_text(text, IndentWidth::default());
             ir[write] = FormatElement::Text { text, width };
@@ -526,7 +598,9 @@ fn escape_template_characters<'a>(s: &'a str, allocator: &'a Allocator) -> &'a s
     let bytes = s.as_bytes();
     let len = bytes.len();
 
-    // Fast path: scan for characters that need escaping.
+    // Fast path: scan for the first character that needs escaping.
+    // All characters of interest (`\`, `` ` ``, `$`, `{`) are single-byte ASCII,
+    // so byte-indexed access is safe and avoids multi-byte decode overhead.
     let first_escape = (0..len).find(|&i| {
         let ch = bytes[i];
         ch == b'\\' || ch == b'`' || (ch == b'$' && i + 1 < len && bytes[i + 1] == b'{')
@@ -536,7 +610,7 @@ fn escape_template_characters<'a>(s: &'a str, allocator: &'a Allocator) -> &'a s
         return s;
     };
 
-    // Slow path: build escaped string in the arena.
+    // Slow path: build escaped string in the arena, reusing the clean prefix.
     let mut result = StringBuilder::with_capacity_in(len + 1, allocator);
     result.push_str(&s[..first]);
 
@@ -555,5 +629,42 @@ fn escape_template_characters<'a>(s: &'a str, allocator: &'a Allocator) -> &'a s
         i += 1;
     }
 
+    result.into_str()
+}
+
+/// Escape backticks in raw mode for markdown-in-JS template literals.
+///
+/// Equivalent to Prettier's `escapeTemplateCharacters(doc, /* raw */ true)`:
+/// <https://github.com/prettier/prettier/blob/90983f40dce5e20beea4e5618b5e0426a6a7f4f0/src/language-js/print/template-literal.js#L277-L287>
+/// `str.replaceAll(/(\\*)`/g, "$1$1\\`")`
+///
+/// For each backtick, doubles the preceding backslashes and adds `\` before the backtick:
+/// - `` ` `` → `` \` ``
+/// - `` \` `` → `` \\\` ``
+/// - `` \\` `` → `` \\\\\` ``
+fn escape_backticks_raw_str<'a>(s: &'a str, allocator: &'a Allocator) -> &'a str {
+    if !s.contains('`') {
+        return s;
+    }
+    let mut result = StringBuilder::with_capacity_in(s.len() + 1, allocator);
+    let mut bs_count: usize = 0;
+    for ch in s.chars() {
+        if ch == '\\' {
+            bs_count += 1;
+            result.push('\\');
+        } else if ch == '`' {
+            // The backslash branch already emitted `bs_count` backslashes.
+            // Emit another `bs_count` to double them, then add `\``.
+            for _ in 0..bs_count {
+                result.push('\\');
+            }
+            result.push('\\');
+            result.push('`');
+            bs_count = 0;
+        } else {
+            bs_count = 0;
+            result.push(ch);
+        }
+    }
     result.into_str()
 }

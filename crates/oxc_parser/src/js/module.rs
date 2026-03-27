@@ -7,7 +7,7 @@ use super::FunctionKind;
 use crate::{
     ParserConfig as Config, ParserImpl, diagnostics,
     lexer::Kind,
-    modifiers::{Modifier, ModifierFlags, ModifierKind, Modifiers},
+    modifiers::{Modifier, ModifierKind, Modifiers},
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -287,8 +287,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                                 default_span,
                             ));
                         }
-                        let mut import_specifiers = self.parse_import_specifiers(import_kind);
-                        specifiers.append(&mut import_specifiers);
+                        self.parse_import_specifiers_into(&mut specifiers, import_kind);
                     }
                     _ => return self.unexpected(),
                 }
@@ -309,8 +308,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             specifiers.push(self.parse_import_namespace_specifier());
         } else if self.at(Kind::LCurly) {
             // import { export1 , export2 as alias2 , [...] } from "module-name";
-            let mut import_specifiers = self.parse_import_specifiers(import_kind);
-            specifiers.append(&mut import_specifiers);
+            self.parse_import_specifiers_into(&mut specifiers, import_kind);
         }
 
         self.expect(Kind::From);
@@ -328,19 +326,23 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     // import { export1 , export2 as alias2 , [...] } from "module-name";
-    fn parse_import_specifiers(
+    fn parse_import_specifiers_into(
         &mut self,
+        specifiers: &mut Vec<'a, ImportDeclarationSpecifier<'a>>,
         import_kind: ImportOrExportKind,
-    ) -> Vec<'a, ImportDeclarationSpecifier<'a>> {
+    ) {
         let opening_span = self.cur_token().span();
         self.expect(Kind::LCurly);
-        let (list, _) = self.context_remove(self.ctx, |p| {
-            p.parse_delimited_list(Kind::RCurly, Kind::Comma, opening_span, |parser| {
-                parser.parse_import_specifier(import_kind)
-            })
+        self.context_remove(self.ctx, |p| {
+            let _ = p.parse_delimited_list_into(
+                specifiers,
+                Kind::RCurly,
+                Kind::Comma,
+                opening_span,
+                |parser| parser.parse_import_specifier(import_kind),
+            );
         });
         self.expect(Kind::RCurly);
-        list
     }
 
     /// [Import Attributes](https://tc39.es/proposal-import-attributes)
@@ -709,10 +711,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             if !cur_token.is_on_new_line() {
                 // export default abstract class ...
                 if is_abstract && kind == Kind::Class {
-                    let modifiers = self
-                        .ast
-                        .vec1(Modifier::new(self.end_span(modifier_span), ModifierKind::Abstract));
-                    let modifiers = Modifiers::new(Some(modifiers), ModifierFlags::ABSTRACT);
+                    let modifiers = Modifiers::new_single(ModifierKind::Abstract, modifier_span);
                     return ExportDefaultDeclarationKind::ClassDeclaration(
                         self.parse_class_declaration(decl_span, &modifiers, decorators),
                     );
