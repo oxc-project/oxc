@@ -157,7 +157,7 @@ pub fn to_oxfmt_options(config: FormatConfig) -> Result<OxfmtOptions, String> {
 
     // Below are our own extensions
 
-    if let Some(sort_imports_config) = config.sort_imports {
+    if let Some(sort_imports_config) = config.sort_imports.and_then(|c| c.into_config()) {
         let mut sort_imports = SortImportsOptions::default();
 
         if let Some(v) = sort_imports_config.partition_by_newline {
@@ -273,7 +273,7 @@ pub fn to_oxfmt_options(config: FormatConfig) -> Result<OxfmtOptions, String> {
         format_options.sort_imports = Some(sort_imports);
     }
 
-    if let Some(tw_config) = config.sort_tailwindcss {
+    if let Some(tw_config) = config.sort_tailwindcss.and_then(|c| c.into_config()) {
         format_options.sort_tailwindcss = Some(SortTailwindcssOptions {
             config: tw_config.config,
             stylesheet: tw_config.stylesheet,
@@ -284,7 +284,7 @@ pub fn to_oxfmt_options(config: FormatConfig) -> Result<OxfmtOptions, String> {
         });
     }
 
-    if let Some(jsdoc_config) = &config.jsdoc {
+    if let Some(jsdoc_config) = config.jsdoc.and_then(|c| c.into_config()) {
         let mut opts = oxc_formatter::JsdocOptions::default();
         if let Some(v) = jsdoc_config.capitalize_descriptions {
             opts.capitalize_descriptions = v;
