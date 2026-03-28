@@ -68,6 +68,111 @@ pub fn get_string_literal_prop_value<'a>(item: &'a JSXAttributeItem<'_>) -> Opti
 
 // TODO: Move the a11y methods to their own util for jsx-a11y?
 
+/// Check if a JSX attribute has a truthy literal value.
+///
+/// Valueless attributes (e.g., `<select multiple>`) are treated as `true`.
+fn is_truthy_prop(item: &JSXAttributeItem<'_>) -> bool {
+    match get_prop_value(item) {
+        None => true,
+        Some(JSXAttributeValue::StringLiteral(s)) => !s.value.is_empty(),
+        Some(JSXAttributeValue::ExpressionContainer(container)) => match &container.expression {
+            JSXExpression::BooleanLiteral(b) => b.value,
+            JSXExpression::NumericLiteral(n) => n.value != 0.0 && !n.value.is_nan(),
+            JSXExpression::StringLiteral(s) => !s.value.is_empty(),
+            _ => false,
+        },
+        _ => false,
+    }
+}
+
+/// ref: <https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/v6.9.0/src/util/getImplicitRole.js>
+pub fn get_implicit_role<'a>(
+    node: &'a JSXOpeningElement<'a>,
+    element_type: &str,
+) -> Option<&'static str> {
+    let implicit_role = match element_type {
+        "a" | "area" | "link" => match has_jsx_prop_ignore_case(node, "href") {
+            Some(_) => "link",
+            None => return None,
+        },
+        "article" => "article",
+        "aside" => "complementary",
+        "body" => "document",
+        "button" => "button",
+        "datalist" => "listbox",
+        "details" => "group",
+        "dialog" => "dialog",
+        "form" => "form",
+        "h1" | "h2" | "h3" | "h4" | "h5" | "h6" => "heading",
+        "hr" => "separator",
+        "img" => {
+            if has_jsx_prop_ignore_case(node, "alt")
+                .and_then(get_string_literal_prop_value)
+                .is_some_and(str::is_empty)
+            {
+                return None;
+            }
+            if has_jsx_prop_ignore_case(node, "src")
+                .and_then(get_string_literal_prop_value)
+                .is_some_and(|s| s.contains(".svg"))
+            {
+                return None;
+            }
+            "img"
+        }
+        "input" => has_jsx_prop_ignore_case(node, "type").map_or("textbox", |input_type| {
+            match get_string_literal_prop_value(input_type) {
+                Some("button" | "image" | "reset" | "submit") => "button",
+                Some("checkbox") => "checkbox",
+                Some("radio") => "radio",
+                Some("range") => "slider",
+                _ => "textbox",
+            }
+        }),
+        "li" => "listitem",
+        "menu" => {
+            return has_jsx_prop_ignore_case(node, "type").and_then(|v| {
+                get_string_literal_prop_value(v).and_then(|v| {
+                    if v.eq_ignore_ascii_case("toolbar") { Some("toolbar") } else { None }
+                })
+            });
+        }
+        "menuitem" => {
+            return has_jsx_prop_ignore_case(node, "type").and_then(|v| {
+                match get_string_literal_prop_value(v) {
+                    Some("checkbox") => Some("menuitemcheckbox"),
+                    Some("command") => Some("menuitem"),
+                    Some("radio") => Some("menuitemradio"),
+                    _ => None,
+                }
+            });
+        }
+        "meter" | "progress" => "progressbar",
+        "nav" => "navigation",
+        "ol" | "ul" => "list",
+        "option" => "option",
+        "output" => "status",
+        "section" => "region",
+        "select" => {
+            if has_jsx_prop_ignore_case(node, "multiple").is_some_and(is_truthy_prop) {
+                return Some("listbox");
+            }
+            if has_jsx_prop_ignore_case(node, "size")
+                .and_then(get_prop_value)
+                .is_some_and(|v| parse_jsx_value(v).is_ok_and(|n| n > 1.0))
+            {
+                return Some("listbox");
+            }
+            "combobox"
+        }
+        "tbody" | "tfoot" | "thead" => "rowgroup",
+        "textarea" => "textbox",
+        _ => return None,
+    };
+
+    Some(implicit_role)
+}
+
 // ref: https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/v6.9.0/src/util/isHiddenFromScreenReader.js
 pub fn is_hidden_from_screen_reader<'a>(
     ctx: &LintContext<'a>,
