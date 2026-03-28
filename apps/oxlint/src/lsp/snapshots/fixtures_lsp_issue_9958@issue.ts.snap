@@ -45,6 +45,24 @@ tags: None
 
 ########### Code Actions/Commands
 CodeAction: 
+Title: Replace `!!x` with `x`.
+Is Preferred: Some(true)
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 3,
+            character: 14,
+        },
+        end: Position {
+            line: 3,
+            character: 17,
+        },
+    },
+    new_text: "x",
+}
+
+
+CodeAction: 
 Title: Disable no-extra-boolean-cast for this line
 Is Preferred: Some(false)
 TextEdit: TextEdit {
@@ -77,6 +95,24 @@ TextEdit: TextEdit {
         },
     },
     new_text: "// oxlint-disable no-extra-boolean-cast\n",
+}
+
+
+CodeAction: 
+Title: Delete this code.
+Is Preferred: Some(true)
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 11,
+            character: 21,
+        },
+        end: Position {
+            line: 11,
+            character: 22,
+        },
+    },
+    new_text: "",
 }
 
 
@@ -117,4 +153,32 @@ TextEdit: TextEdit {
 
 
 ########### Fix All Action
-None
+CodeAction: 
+Title: quick fix
+Is Preferred: Some(true)
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 3,
+            character: 14,
+        },
+        end: Position {
+            line: 3,
+            character: 17,
+        },
+    },
+    new_text: "x",
+}
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 11,
+            character: 21,
+        },
+        end: Position {
+            line: 11,
+            character: 22,
+        },
+    },
+    new_text: "",
+}
