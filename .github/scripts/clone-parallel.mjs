@@ -88,22 +88,18 @@ async function cloneRepo(shouldClone, repo, path, ref, name) {
     }
 
     if (existsSync(gitDir)) {
-      // Directory exists with git repo - update it
-    } else if (existsSync(fullPath)) {
-      // Directory exists but no git repo - initialize it
-      await runGit(["init", "--quiet"], fullPath);
+      // Directory exists with git repo - ensure origin URL is correct
+      try {
+        await runGit(["remote", "set-url", "origin", repoUrl], fullPath);
+      } catch {
+        await runGit(["remote", "add", "origin", repoUrl], fullPath);
+      }
     } else {
-      // Directory doesn't exist - clone it
-      await runGit(
-        ["clone", "--quiet", "--no-progress", "--single-branch", "--depth", "1", repoUrl, fullPath],
-        repoRoot,
-      );
-    }
-
-    // Check if origin exists and update or add it
-    try {
-      await runGit(["remote", "set-url", "origin", repoUrl], fullPath);
-    } catch {
+      // Directory doesn't exist or has no git repo - initialize it
+      if (!existsSync(fullPath)) {
+        mkdirSync(fullPath, { recursive: true });
+      }
+      await runGit(["init", "--quiet"], fullPath);
       await runGit(["remote", "add", "origin", repoUrl], fullPath);
     }
 
