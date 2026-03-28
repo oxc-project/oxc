@@ -12,7 +12,7 @@ use oxc_span::Span;
 
 use crate::{ParserConfig as Config, ParserImpl, diagnostics, lexer::Kind};
 
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug)]
 pub struct Modifier {
     pub span_start: u32,
     pub kind: ModifierKind,
@@ -23,7 +23,7 @@ impl Modifier {
         Self { span_start, kind }
     }
 
-    pub const fn span(&self) -> Span {
+    pub const fn span(self) -> Span {
         Span::new(self.span_start, self.span_start + self.kind.len())
     }
 }
@@ -408,7 +408,7 @@ impl<C: Config> ParserImpl<'_, C> {
         while let Some(modifier_kind) = self.get_modifier() {
             let modifier = Modifier::new(self.start_span(), modifier_kind);
             self.bump_any();
-            self.check_modifier(modifiers.kinds(), &modifier);
+            self.check_modifier(modifiers.kinds(), modifier);
             modifiers.add(modifier.kind, modifier.span_start);
         }
         modifiers
@@ -458,7 +458,7 @@ impl<C: Config> ParserImpl<'_, C> {
             permit_const_as_modifier,
             stop_on_start_of_class_static_block,
         ) {
-            self.check_modifier(modifiers.kinds(), &modifier);
+            self.check_modifier(modifiers.kinds(), modifier);
             modifiers.add(modifier.kind, modifier.span_start);
         }
 
@@ -621,7 +621,7 @@ const fn get_illegal_preceding_modifiers(kind: ModifierKind) -> ModifierKinds {
 
 impl<C: Config> ParserImpl<'_, C> {
     #[inline]
-    fn check_modifier(&mut self, existing_kinds: ModifierKinds, modifier: &Modifier) {
+    fn check_modifier(&mut self, existing_kinds: ModifierKinds, modifier: Modifier) {
         // Do a quick check that this modifier is not illegal in this position.
         //
         // This is just 2 instructions:
@@ -641,7 +641,7 @@ impl<C: Config> ParserImpl<'_, C> {
     /// Create an error for an illegal modifier.
     #[cold]
     #[inline(never)]
-    fn illegal_modifier_error(&mut self, existing_kinds: ModifierKinds, modifier: &Modifier) {
+    fn illegal_modifier_error(&mut self, existing_kinds: ModifierKinds, modifier: Modifier) {
         const ACCESSIBILITY_KINDS: ModifierKinds = ModifierKinds::new([
             ModifierKind::Public,
             ModifierKind::Private,
@@ -686,7 +686,7 @@ impl<C: Config> ParserImpl<'_, C> {
         strict: bool,
         create_diagnostic: F,
     ) where
-        F: Fn(&Modifier, Option<ModifierKinds>) -> OxcDiagnostic,
+        F: Fn(Modifier, Option<ModifierKinds>) -> OxcDiagnostic,
     {
         if modifiers.kinds().has_any_not_in(allowed) {
             // Invalid modifiers are rare, so handle this case in `#[cold]` function.
@@ -700,7 +700,7 @@ impl<C: Config> ParserImpl<'_, C> {
                 strict: bool,
                 create_diagnostic: F,
             ) where
-                F: Fn(&Modifier, Option<ModifierKinds>) -> OxcDiagnostic,
+                F: Fn(Modifier, Option<ModifierKinds>) -> OxcDiagnostic,
             {
                 // Sort modifiers to produce errors in source code order
                 let mut disallowed_modifiers = modifiers
@@ -711,7 +711,7 @@ impl<C: Config> ParserImpl<'_, C> {
 
                 debug_assert!(!disallowed_modifiers.is_empty());
 
-                for modifier in &disallowed_modifiers {
+                for modifier in disallowed_modifiers {
                     parser.error(create_diagnostic(modifier, strict.then_some(allowed)));
                 }
             }
