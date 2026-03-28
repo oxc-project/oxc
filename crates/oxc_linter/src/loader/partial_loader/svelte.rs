@@ -51,12 +51,24 @@ impl<'a> SveltePartialLoader<'a> {
             &comment_end_finder,
         )?;
 
+        // skip `<script-...>` tags and keep searching for a real `<script>` block
+        if !self.source_text[*pointer..].starts_with([' ', '>']) {
+            return self.parse_script(pointer);
+        }
+
         // find closing ">"
         let offset = find_script_closing_angle(self.source_text, *pointer)?;
 
-        // get lang="ts" attribute
         let content = &self.source_text[*pointer..*pointer + offset];
-        let is_ts = content.contains("ts");
+        let lang = Self::extract_lang_attribute(content);
+        let Ok(mut source_type) = SourceType::from_extension(lang) else { return None };
+
+        // Svelte script blocks use module semantics. Keep the existing behavior for plain
+        // `<script>` blocks while also correctly detecting `lang="ts"`, `module`, and
+        // `context="module"`.
+        if source_type.is_unambiguous() || Self::is_module_script(content) {
+            source_type = source_type.with_module(true);
+        }
 
         *pointer += offset + 1;
         let js_start = *pointer;
@@ -67,11 +79,77 @@ impl<'a> SveltePartialLoader<'a> {
         *pointer += offset + SCRIPT_END.len();
 
         let source_text = &self.source_text[js_start..js_end];
-        let source_type = SourceType::mjs().with_typescript(is_ts);
 
         // NOTE: loader checked that source_text.len() is less than u32::MAX
         #[expect(clippy::cast_possible_truncation)]
         Some(JavaScriptSource::partial(source_text, source_type, js_start as u32))
+    }
+
+    fn extract_lang_attribute(content: &str) -> &str {
+        Self::find_attribute(content, "lang")
+            .flatten()
+            .filter(|lang| !lang.is_empty())
+            .unwrap_or("mjs")
+    }
+
+    fn is_module_script(content: &str) -> bool {
+        Self::find_attribute(content, "module").is_some()
+            || matches!(Self::find_attribute(content, "context"), Some(Some("module")))
+    }
+
+    fn find_attribute<'b>(content: &'b str, target: &str) -> Option<Option<&'b str>> {
+        let mut rest = content.trim();
+        if let Some(stripped) = rest.strip_prefix("<script") {
+            rest = stripped;
+        }
+
+        loop {
+            rest = rest.trim_start_matches(|c: char| c.is_whitespace() || c == '/');
+            if rest.is_empty() || rest.starts_with('>') {
+                return None;
+            }
+
+            let name_end = rest
+                .find(|c: char| c.is_whitespace() || matches!(c, '=' | '>' | '/'))
+                .unwrap_or(rest.len());
+            if name_end == 0 {
+                return None;
+            }
+
+            let name = &rest[..name_end];
+            rest = &rest[name_end..];
+            rest = rest.trim_start();
+
+            let value = if let Some(stripped) = rest.strip_prefix('=') {
+                rest = stripped.trim_start();
+
+                match rest.chars().next() {
+                    Some('"' | '\'') => {
+                        let quote = rest.chars().next().unwrap();
+                        rest = &rest[quote.len_utf8()..];
+                        let end = rest.find(quote)?;
+                        let value = &rest[..end];
+                        rest = &rest[end + quote.len_utf8()..];
+                        Some(value)
+                    }
+                    Some(_) => {
+                        let end = rest
+                            .find(|c: char| c.is_whitespace() || matches!(c, '>' | '/'))
+                            .unwrap_or(rest.len());
+                        let value = &rest[..end];
+                        rest = &rest[end..];
+                        Some(value)
+                    }
+                    None => return None,
+                }
+            } else {
+                None
+            };
+
+            if name == target {
+                return Some(value);
+            }
+        }
     }
 }
 
@@ -95,6 +173,7 @@ mod test {
 
         let result = parse_svelte(source_text);
         assert_eq!(result.source_text.trim(), r#"console.log("hi");"#);
+        assert!(result.source_type.is_module());
     }
 
     #[test]
@@ -121,6 +200,8 @@ mod test {
 
         let result = parse_svelte(source_text);
         assert_eq!(result.source_text.trim(), r#"console.log("hi");"#);
+        assert!(result.source_type.is_typescript());
+        assert!(result.source_type.is_module());
     }
 
     #[test]
@@ -142,5 +223,84 @@ mod test {
             "export async function load() { /* some loading logic */ }"
         );
         assert_eq!(sources[1].source_text.trim(), r#"console.log("hi");"#);
+        assert!(sources[0].source_type.is_module());
+        assert!(sources[1].source_type.is_module());
+    }
+
+    #[test]
+    fn test_parse_svelte_with_context_module_script() {
+        let source_text = r#"
+        <script context="module">
+          debugger;
+        </script>
+        <script>
+          console.log("hi");
+        </script>
+        "#;
+
+        let sources = SveltePartialLoader::new(source_text).parse();
+        assert_eq!(sources.len(), 2);
+        assert_eq!(sources[0].source_text.trim(), "debugger;");
+        assert_eq!(sources[1].source_text.trim(), r#"console.log("hi");"#);
+        assert!(sources[0].source_type.is_module());
+        assert!(sources[1].source_type.is_module());
+    }
+
+    #[test]
+    fn test_parse_svelte_module_script_lang_ts() {
+        let source_text = r#"
+        <script module lang='ts'>
+          debugger;
+        </script>
+        "#;
+
+        let result = parse_svelte(source_text);
+        assert!(result.source_type.is_typescript());
+        assert!(result.source_type.is_module());
+        assert_eq!(result.source_text.trim(), "debugger;");
+    }
+
+    #[test]
+    fn test_parse_svelte_context_module_script_lang_ts() {
+        let source_text = r#"
+        <script context="module" lang="ts">
+          debugger;
+        </script>
+        "#;
+
+        let result = parse_svelte(source_text);
+        assert!(result.source_type.is_typescript());
+        assert!(result.source_type.is_module());
+        assert_eq!(result.source_text.trim(), "debugger;");
+    }
+
+    #[test]
+    fn test_parse_svelte_does_not_treat_data_language_as_lang() {
+        let source_text = r#"
+        <script data-language="ts">
+          debugger;
+        </script>
+        "#;
+
+        let result = parse_svelte(source_text);
+        assert!(!result.source_type.is_typescript());
+        assert!(result.source_type.is_module());
+        assert_eq!(result.source_text.trim(), "debugger;");
+    }
+
+    #[test]
+    fn test_parse_svelte_ignores_script_like_tags() {
+        let source_text = r#"
+        <script-setup>
+          debugger;
+        </script-setup>
+        <script>
+          console.log("hi");
+        </script>
+        "#;
+
+        let result = parse_svelte(source_text);
+        assert_eq!(result.source_text.trim(), r#"console.log("hi");"#);
+        assert!(result.source_type.is_module());
     }
 }
