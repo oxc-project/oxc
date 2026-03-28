@@ -49,6 +49,7 @@ impl RuleTable {
             .filter(|rule| {
                 rule.category() == RuleCategory::Correctness
                     && default_plugin_names.contains(&rule.plugin_name())
+                    && !rule.is_tsgolint_rule()
             })
             .map(super::rules::RuleEnum::name)
             .collect::<FxHashSet<&str>>();
