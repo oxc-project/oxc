@@ -20,7 +20,9 @@ oxlint = { workspace = true }
 pico-args = { workspace = true }
 project-root = { workspace = true }
 schemars = { workspace = true }
+serde_json = { workspace = true }
 website_common = { workspace = true }
+rustc-hash = { workspace = true }
 
 [dev-dependencies]
 insta = { workspace = true }
