@@ -522,6 +522,18 @@ expression: json
           ],
           "markdownDescription": "Enabled or disabled specific global variables."
         },
+        "ignores": {
+          "description": "If a file matches any of these glob patterns, the overrides configuration won't apply.",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/GlobSet"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "markdownDescription": "If a file matches any of these glob patterns, the overrides configuration won't apply."
+        },
         "jsPlugins": {
           "description": "JS plugins for this override, allows usage of ESLint plugins with Oxlint.\n\nRead more about JS plugins in\n[the docs](https://oxc.rs/docs/guide/usage/linter/js-plugins.html).\n\nNote: JS plugins are experimental and not subject to semver.\nThey are not supported in the language server (and thus editor integrations) at present.",
           "anyOf": [
