@@ -52,7 +52,11 @@ impl<'a> SveltePartialLoader<'a> {
         )?;
 
         // skip `<script-...>` tags and keep searching for a real `<script>` block
-        if !self.source_text[*pointer..].starts_with([' ', '>']) {
+        let is_script_tag_boundary = self.source_text[*pointer..]
+            .chars()
+            .next()
+            .is_some_and(|ch| ch.is_whitespace() || ch == '>');
+        if !is_script_tag_boundary {
             return self.parse_script(pointer);
         }
 
@@ -301,6 +305,31 @@ mod test {
 
         let result = parse_svelte(source_text);
         assert_eq!(result.source_text.trim(), r#"console.log("hi");"#);
+        assert!(result.source_type.is_module());
+    }
+
+    #[test]
+    fn test_parse_svelte_script_tag_allows_newline_after_script_name() {
+        let source_text = r#"
+        <script
+          lang="ts">
+          debugger;
+        </script>
+        "#;
+
+        let result = parse_svelte(source_text);
+        assert_eq!(result.source_text.trim(), "debugger;");
+        assert!(result.source_type.is_typescript());
+        assert!(result.source_type.is_module());
+    }
+
+    #[test]
+    fn test_parse_svelte_script_tag_allows_tab_after_script_name() {
+        let source_text = "<script\tlang=\"ts\">\n  debugger;\n</script>\n";
+
+        let result = parse_svelte(source_text);
+        assert_eq!(result.source_text.trim(), "debugger;");
+        assert!(result.source_type.is_typescript());
         assert!(result.source_type.is_module());
     }
 }
