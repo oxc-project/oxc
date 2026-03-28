@@ -448,17 +448,13 @@ impl<C: Config> ParserImpl<'_, C> {
         permit_const_as_modifier: bool,
         stop_on_start_of_class_static_block: bool,
     ) -> Modifiers {
-        let mut has_seen_static_modifier = false;
         let mut modifiers = Modifiers::empty();
 
         while let Some(modifier) = self.try_parse_modifier(
-            has_seen_static_modifier,
+            modifiers.kinds(),
             permit_const_as_modifier,
             stop_on_start_of_class_static_block,
         ) {
-            if modifier.kind == ModifierKind::Static {
-                has_seen_static_modifier = true;
-            }
             self.check_modifier(modifiers.kinds(), &modifier);
             modifiers.add(modifier.kind, modifier.span.start);
         }
@@ -468,7 +464,7 @@ impl<C: Config> ParserImpl<'_, C> {
 
     fn try_parse_modifier(
         &mut self,
-        has_seen_static_modifier: bool,
+        seen_modifier_kinds: ModifierKinds,
         permit_const_as_modifier: bool,
         stop_on_start_of_class_static_block: bool,
     ) -> Option<Modifier> {
@@ -490,7 +486,7 @@ impl<C: Config> ParserImpl<'_, C> {
             && kind == Kind::Static
             && self.lexer.peek_token().kind() == Kind::LCurly)
             // we may be at the start of a static block
-            || (has_seen_static_modifier && kind == Kind::Static)
+            || (kind == Kind::Static && seen_modifier_kinds.contains(ModifierKind::Static))
             // next token is not a modifier
             || (!self.parse_any_contextual_modifier())
         {
