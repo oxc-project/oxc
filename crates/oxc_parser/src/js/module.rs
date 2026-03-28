@@ -519,7 +519,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             _ => {
                 if self.at(Kind::Export) {
                     self.error(diagnostics::modifier_already_seen(&Modifier::new(
-                        self.cur_token().span(),
+                        self.cur_token().start(),
                         ModifierKind::Export,
                     )));
                     self.bump_any();

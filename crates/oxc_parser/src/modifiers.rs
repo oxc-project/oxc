@@ -14,13 +14,17 @@ use crate::{ParserConfig as Config, ParserImpl, diagnostics, lexer::Kind};
 
 #[derive(Debug)]
 pub struct Modifier {
-    pub span: Span,
+    pub span_start: u32,
     pub kind: ModifierKind,
 }
 
 impl Modifier {
-    pub fn new(span: Span, kind: ModifierKind) -> Self {
-        Self { span, kind }
+    pub fn new(span_start: u32, kind: ModifierKind) -> Self {
+        Self { span_start, kind }
+    }
+
+    pub const fn span(&self) -> Span {
+        Span::new(self.span_start, self.span_start + self.kind.len())
     }
 }
 
@@ -96,7 +100,7 @@ mod modifiers {
                 // (in `add` method). `kinds.iter()` only yields kinds whose bit is set. So `offsets[kind as usize]`
                 // must be initialized.
                 let start = unsafe { self.offsets[kind as usize].assume_init() };
-                Modifier { span: Span::new(start, start + kind.len()), kind }
+                Modifier::new(start, kind)
             })
         }
 
@@ -106,7 +110,7 @@ mod modifiers {
                 // SAFETY: Bits in `kinds` are set and the corresponding offset in `offsets` are initialized together
                 // (in `add` method). Here, bit for `kind` is set, so `offsets[kind as usize]` must be initialized.
                 let start = unsafe { self.offsets[kind as usize].assume_init() };
-                Some(Modifier { span: Span::new(start, start + kind.len()), kind })
+                Some(Modifier::new(start, kind))
             } else {
                 None
             }
@@ -240,8 +244,8 @@ impl ModifierKind {
     }
 
     /// Get length of this modifier keyword in bytes.
-    pub fn len(self) -> u32 {
-        u32::from(MODIFIER_LENGTHS[self as usize])
+    pub const fn len(self) -> u32 {
+        MODIFIER_LENGTHS[self as usize] as u32
     }
 }
 
@@ -402,11 +406,10 @@ impl<C: Config> ParserImpl<'_, C> {
     pub(crate) fn eat_modifiers_before_declaration(&mut self) -> Modifiers {
         let mut modifiers = Modifiers::empty();
         while let Some(modifier_kind) = self.get_modifier() {
-            let span = self.start_span();
+            let modifier = Modifier::new(self.start_span(), modifier_kind);
             self.bump_any();
-            let modifier = Modifier::new(self.end_span(span), modifier_kind);
             self.check_modifier(modifiers.kinds(), &modifier);
-            modifiers.add(modifier.kind, modifier.span.start);
+            modifiers.add(modifier.kind, modifier.span_start);
         }
         modifiers
     }
@@ -435,12 +438,12 @@ impl<C: Config> ParserImpl<'_, C> {
         }
     }
 
-    fn modifier(&mut self, kind: Kind, span: Span) -> Modifier {
+    fn modifier(&mut self, kind: Kind, span_start: u32) -> Modifier {
         let modifier_kind = ModifierKind::try_from(kind).unwrap_or_else(|()| {
             self.set_unexpected();
             ModifierKind::Abstract // Dummy value
         });
-        Modifier { span, kind: modifier_kind }
+        Modifier::new(span_start, modifier_kind)
     }
 
     pub(crate) fn parse_modifiers(
@@ -456,7 +459,7 @@ impl<C: Config> ParserImpl<'_, C> {
             stop_on_start_of_class_static_block,
         ) {
             self.check_modifier(modifiers.kinds(), &modifier);
-            modifiers.add(modifier.kind, modifier.span.start);
+            modifiers.add(modifier.kind, modifier.span_start);
         }
 
         modifiers
@@ -468,7 +471,7 @@ impl<C: Config> ParserImpl<'_, C> {
         permit_const_as_modifier: bool,
         stop_on_start_of_class_static_block: bool,
     ) -> Option<Modifier> {
-        let span = self.start_span();
+        let span_start = self.start_span();
         let kind = self.cur_kind();
 
         if kind == Kind::Const {
@@ -492,7 +495,7 @@ impl<C: Config> ParserImpl<'_, C> {
         {
             return None;
         }
-        Some(self.modifier(kind, self.end_span(span)))
+        Some(self.modifier(kind, span_start))
     }
 
     pub(crate) fn parse_contextual_modifier(&mut self, kind: Kind) -> bool {
@@ -704,7 +707,7 @@ impl<C: Config> ParserImpl<'_, C> {
                     .iter()
                     .filter(|modifier| !allowed.contains(modifier.kind))
                     .collect::<Vec<_>>();
-                disallowed_modifiers.sort_unstable_by_key(|modifier| modifier.span.start);
+                disallowed_modifiers.sort_unstable_by_key(|modifier| modifier.span_start);
 
                 debug_assert!(!disallowed_modifiers.is_empty());
 
