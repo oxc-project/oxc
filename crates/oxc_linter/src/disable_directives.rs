@@ -330,8 +330,13 @@ impl DisableDirectivesBuilder {
         }
     }
 
-    pub fn build(mut self, source_text: &str, comments: &[Comment]) -> DisableDirectives {
-        self.build_impl(source_text, comments);
+    pub fn build(
+        mut self,
+        source_text: &str,
+        comments: &[Comment],
+        ignore_eslint_directives: bool,
+    ) -> DisableDirectives {
+        self.build_impl(source_text, comments, ignore_eslint_directives);
 
         DisableDirectives {
             intervals: self.intervals,
@@ -346,7 +351,12 @@ impl DisableDirectivesBuilder {
     }
 
     #[expect(clippy::cast_possible_truncation)] // for `as u32`
-    fn build_impl(&mut self, source_text: &str, comments: &[Comment]) {
+    fn build_impl(
+        &mut self,
+        source_text: &str,
+        comments: &[Comment],
+        ignore_eslint_directives: bool,
+    ) {
         let source_len = source_text.len() as u32;
         // This algorithm iterates through the comments and builds all intervals
         // for matching disable and enable pairs.
@@ -366,9 +376,9 @@ impl DisableDirectivesBuilder {
             let text = text_source.trim_start();
             let mut rule_name_start = comment_span.start + (text_source.len() - text.len()) as u32;
 
-            if let Some(text) =
-                text.strip_prefix("eslint-disable").or_else(|| text.strip_prefix("oxlint-disable"))
-            {
+            if let Some(text) = text.strip_prefix("oxlint-disable").or_else(|| {
+                if ignore_eslint_directives { None } else { text.strip_prefix("eslint-disable") }
+            }) {
                 rule_name_start += 14; // eslint-disable and oxlint-disable are each 14 bytes
                 // `eslint-disable`
                 if text.trim().is_empty() {
@@ -503,9 +513,9 @@ impl DisableDirectivesBuilder {
                 }
             }
 
-            if let Some(text) =
-                text.strip_prefix("eslint-enable").or_else(|| text.strip_prefix("oxlint-enable"))
-            {
+            if let Some(text) = text.strip_prefix("oxlint-enable").or_else(|| {
+                if ignore_eslint_directives { None } else { text.strip_prefix("eslint-enable") }
+            }) {
                 rule_name_start += 13; // eslint-enable is 13 bytes
                 // `eslint-enable`
                 if text.trim().is_empty() {
@@ -1098,7 +1108,7 @@ mod tests {
             let semantic = process_source(&allocator, &source_text);
             let comments = semantic.comments();
             let directives =
-                DisableDirectivesBuilder::new().build(semantic.source_text(), comments);
+                DisableDirectivesBuilder::new().build(semantic.source_text(), comments, false);
             test(comments, directives);
         }
     }
@@ -1106,8 +1116,11 @@ mod tests {
     fn test_directive_span(source_text: &str, expected_start: u32, expected_stop: u32) {
         let allocator = Allocator::default();
         let semantic = process_source(&allocator, source_text);
-        let directives =
-            DisableDirectivesBuilder::new().build(semantic.source_text(), semantic.comments());
+        let directives = DisableDirectivesBuilder::new().build(
+            semantic.source_text(),
+            semantic.comments(),
+            false,
+        );
         let interval = &directives.intervals.intervals[0];
 
         assert_eq!(interval.start, expected_start);
@@ -1351,8 +1364,11 @@ function test() {
 ";
         let allocator = Allocator::default();
         let semantic = process_source(&allocator, source_text);
-        let directives =
-            DisableDirectivesBuilder::new().build(semantic.source_text(), semantic.comments());
+        let directives = DisableDirectivesBuilder::new().build(
+            semantic.source_text(),
+            semantic.comments(),
+            false,
+        );
 
         // The function spans from line 2 to line 6 (positions 1 to 138)
         let function_span = Span::new(1, 138);
@@ -1380,6 +1396,98 @@ function test() {
         assert!(
             !directives.contains("no-console", second_console_log_span),
             "eslint-disable-next-line should NOT suppress diagnostics on lines after the next line"
+        );
+    }
+
+    #[test]
+    fn ignore_eslint_directives_skips_eslint_comments() {
+        let source_text = "// eslint-disable-next-line no-debugger\ndebugger;\n// oxlint-disable-next-line no-console\nconsole.log('suppressed');\n";
+        let allocator = Allocator::default();
+        let semantic = process_source(&allocator, source_text);
+        let directives = DisableDirectivesBuilder::new().build(
+            semantic.source_text(),
+            semantic.comments(),
+            true,
+        );
+
+        let debugger_start = source_text.find("\ndebugger").unwrap() as u32 + 1;
+        let debugger_span = Span::new(debugger_start, debugger_start + 8);
+        assert_eq!(debugger_span.source_text(source_text), "debugger");
+        assert!(
+            !directives.contains("no-debugger", debugger_span),
+            "eslint-disable-next-line should be ignored when ignore_eslint_directives is true"
+        );
+
+        let console_start = source_text.find("console.log").unwrap() as u32;
+        let console_span = Span::new(console_start, console_start + 11);
+        assert_eq!(console_span.source_text(source_text), "console.log");
+        assert!(
+            directives.contains("no-console", console_span),
+            "oxlint-disable-next-line should still suppress when ignore_eslint_directives is true"
+        );
+    }
+
+    #[test]
+    fn ignore_eslint_directives_skips_eslint_enable() {
+        let source_text = "/* oxlint-disable no-debugger */\ndebugger;\n/* eslint-enable no-debugger */\ndebugger;\n/* oxlint-enable no-debugger */\ndebugger;\n";
+        let allocator = Allocator::default();
+        let semantic = process_source(&allocator, source_text);
+        let directives = DisableDirectivesBuilder::new().build(
+            semantic.source_text(),
+            semantic.comments(),
+            true,
+        );
+
+        let mut debugger_positions = vec![];
+        let mut start = 0;
+        while let Some(pos) = source_text[start..].find("\ndebugger") {
+            debugger_positions.push((start + pos + 1) as u32);
+            start += pos + 9;
+        }
+        assert_eq!(debugger_positions.len(), 3);
+
+        // First debugger: inside oxlint-disable, should be suppressed
+        let first = Span::new(debugger_positions[0], debugger_positions[0] + 8);
+        assert_eq!(first.source_text(source_text), "debugger");
+        assert!(
+            directives.contains("no-debugger", first),
+            "first debugger should be suppressed by oxlint-disable"
+        );
+
+        // Second debugger: eslint-enable should have been ignored, still suppressed
+        let second = Span::new(debugger_positions[1], debugger_positions[1] + 8);
+        assert_eq!(second.source_text(source_text), "debugger");
+        assert!(
+            directives.contains("no-debugger", second),
+            "eslint-enable should be ignored, second debugger should still be suppressed"
+        );
+
+        // Third debugger: oxlint-enable re-enabled the rule, should NOT be suppressed
+        let third = Span::new(debugger_positions[2], debugger_positions[2] + 8);
+        assert_eq!(third.source_text(source_text), "debugger");
+        assert!(
+            !directives.contains("no-debugger", third),
+            "oxlint-enable should re-enable the rule, third debugger should not be suppressed"
+        );
+    }
+
+    #[test]
+    fn ignore_eslint_directives_false_honors_eslint_comments() {
+        let source_text = "// eslint-disable-next-line no-debugger\ndebugger;\n";
+        let allocator = Allocator::default();
+        let semantic = process_source(&allocator, source_text);
+        let directives = DisableDirectivesBuilder::new().build(
+            semantic.source_text(),
+            semantic.comments(),
+            false,
+        );
+
+        let debugger_start = source_text.find("\ndebugger").unwrap() as u32 + 1;
+        let debugger_span = Span::new(debugger_start, debugger_start + 8);
+        assert_eq!(debugger_span.source_text(source_text), "debugger");
+        assert!(
+            directives.contains("no-debugger", debugger_span),
+            "eslint-disable-next-line should suppress when ignore_eslint_directives is false"
         );
     }
 }

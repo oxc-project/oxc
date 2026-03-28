@@ -1,5 +1,6 @@
 ---
 source: tasks/website_linter/src/json_schema.rs
+assertion_line: 22
 expression: json
 ---
 {
@@ -499,6 +500,11 @@ expression: json
           "description": "Ensure warnings produce a non-zero exit code.\n\nEquivalent to passing `--deny-warnings` on the CLI.",
           "type": "boolean",
           "markdownDescription": "Ensure warnings produce a non-zero exit code.\n\nEquivalent to passing `--deny-warnings` on the CLI."
+        },
+        "ignoreEslintDirectives": {
+          "description": "Ignore `eslint-disable`, `eslint-disable-next-line`, `eslint-disable-line`, and\n`eslint-enable` directive comments. When enabled, only `oxlint-*` directives are honored.\n\nThis is useful for projects migrating from ESLint where legacy `eslint-*` comments\nshould no longer suppress diagnostics.\nOnly supported in the root configuration file.",
+          "type": "boolean",
+          "markdownDescription": "Ignore `eslint-disable`, `eslint-disable-next-line`, `eslint-disable-line`, and\n`eslint-enable` directive comments. When enabled, only `oxlint-*` directives are honored.\n\nThis is useful for projects migrating from ESLint where legacy `eslint-*` comments\nshould no longer suppress diagnostics.\nOnly supported in the root configuration file."
         },
         "maxWarnings": {
           "description": "Specify a warning threshold. Exits with an error status if warnings exceed this value.\n\nEquivalent to passing `--max-warnings` on the CLI.",

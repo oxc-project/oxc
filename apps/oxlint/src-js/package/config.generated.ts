@@ -372,6 +372,14 @@ export interface OxlintOptions {
    */
   denyWarnings?: boolean;
   /**
+   * Ignore `eslint-disable`, `eslint-disable-next-line`, `eslint-disable-line`, and
+   * `eslint-enable` directive comments. When enabled, only `oxlint-*` directives are honored.
+   *
+   * This is useful for projects migrating from ESLint where legacy `eslint-*` comments
+   * should no longer suppress diagnostics.
+   */
+  ignoreEslintDirectives?: boolean;
+  /**
    * Specify a warning threshold. Exits with an error status if warnings exceed this value.
    *
    * Equivalent to passing `--max-warnings` on the CLI.

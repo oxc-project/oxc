@@ -1113,6 +1113,14 @@ mod test {
     }
 
     #[test]
+    fn test_ignore_eslint_directives() {
+        let args = &["-c", ".oxlintrc.json", "test.js"];
+        Tester::new()
+            .with_cwd("fixtures/cli/ignore_eslint_directives".into())
+            .test_and_snapshot(args);
+    }
+
+    #[test]
     fn test_report_unused_directives_cli_overrides_config() {
         // Verify that the CLI flag takes precedence over the config file value.
         // Config has `reportUnusedDisableDirectives: "warn"`, but CLI passes `off`,

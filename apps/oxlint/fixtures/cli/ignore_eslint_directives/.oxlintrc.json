@@ -1,0 +1,9 @@
+{
+    "options": {
+        "ignoreEslintDirectives": true
+    },
+    "rules": {
+        "no-console": "warn",
+        "no-debugger": "warn"
+    }
+}

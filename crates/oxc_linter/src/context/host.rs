@@ -57,6 +57,7 @@ impl<'a> ContextSubHost<'a> {
             source_text_offset,
             FrameworkOptions::Default,
             ArenaBox::new_empty_boxed_slice(),
+            false,
         )
     }
 
@@ -68,6 +69,7 @@ impl<'a> ContextSubHost<'a> {
         source_text_offset: u32,
         frameworks_options: FrameworkOptions,
         parser_tokens: ArenaBox<'a, [Token]>,
+        ignore_eslint_directives: bool,
     ) -> Self {
         // We should always check for `semantic.cfg()` being `Some` since we depend on it and it is
         // unwrapped without any runtime checks after construction.
@@ -76,8 +78,11 @@ impl<'a> ContextSubHost<'a> {
             "`LintContext` depends on `Semantic::cfg`, Build your semantic with cfg enabled(`SemanticBuilder::with_cfg`)."
         );
 
-        let disable_directives =
-            DisableDirectivesBuilder::new().build(semantic.source_text(), semantic.comments());
+        let disable_directives = DisableDirectivesBuilder::new().build(
+            semantic.source_text(),
+            semantic.comments(),
+            ignore_eslint_directives,
+        );
 
         Self {
             semantic,
