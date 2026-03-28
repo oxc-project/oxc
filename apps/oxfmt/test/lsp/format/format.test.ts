@@ -117,6 +117,27 @@ describe("LSP formatting", () => {
         await formatFixtureContent(FIXTURES_DIR, path, "ccsettings://" + languageId, languageId),
       ).toMatchSnapshot();
     });
+
+    it("should respect json5 language id for untitled content", async () => {
+      expect(
+        await formatFixtureContent(
+          FIXTURES_DIR,
+          "format/test.json",
+          "untitled://Untitled-json5",
+          "json5",
+        ),
+      ).toBe(
+        `--- URI -----------
+untitled://Untitled-json5
+--- BEFORE ---------
+{"name":"test","version":"1.0.0"}
+
+--- AFTER ----------
+{ name: "test", version: "1.0.0" }
+
+--------------------`,
+      );
+    });
   });
 
   describe("ignore patterns", () => {

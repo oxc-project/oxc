@@ -94,6 +94,15 @@
       },
       "markdownDescription": "File-specific overrides.\nWhen a file matches multiple overrides, the later override takes precedence (array order matters).\n\n- Default: `[]`"
     },
+    "parser": {
+      "description": "Which parser to use for JSON-family formatting.\n\nThis mirrors Prettier's JSON-family parser override behavior for native JSON files.\nIt allows treating a `.json` file as `json5` or `jsonc`, and vice versa.\n\nSupported values: `\"json\"`, `\"json5\"`, `\"jsonc\"`, `\"json-stringify\"`.\n\n- Default: inferred from filepath",
+      "allOf": [
+        {
+          "$ref": "#/definitions/ParserConfig"
+        }
+      ],
+      "markdownDescription": "Which parser to use for JSON-family formatting.\n\nThis mirrors Prettier's JSON-family parser override behavior for native JSON files.\nIt allows treating a `.json` file as `json5` or `jsonc`, and vice versa.\n\nSupported values: `\"json\"`, `\"json5\"`, `\"jsonc\"`, `\"json-stringify\"`.\n\n- Default: inferred from filepath"
+    },
     "printWidth": {
       "description": "Specify the line length that the printer will wrap on.\n\nIf you don't want line wrapping when formatting Markdown, you can set the `proseWrap` option to disable it.\n\n- Default: `100`\n- Overrides `.editorconfig.max_line_length`",
       "type": "integer",
@@ -323,6 +332,15 @@
           ],
           "markdownDescription": "How to wrap object literals when they could fit on one line or span multiple lines.\n\nBy default, formats objects as multi-line if there is a newline prior to the first property.\nAuthors can use this heuristic to contextually improve readability, though it has some downsides.\n\n- Default: `\"preserve\"`"
         },
+        "parser": {
+          "description": "Which parser to use for JSON-family formatting.\n\nThis mirrors Prettier's JSON-family parser override behavior for native JSON files.\nIt allows treating a `.json` file as `json5` or `jsonc`, and vice versa.\n\nSupported values: `\"json\"`, `\"json5\"`, `\"jsonc\"`, `\"json-stringify\"`.\n\n- Default: inferred from filepath",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ParserConfig"
+            }
+          ],
+          "markdownDescription": "Which parser to use for JSON-family formatting.\n\nThis mirrors Prettier's JSON-family parser override behavior for native JSON files.\nIt allows treating a `.json` file as `json5` or `jsonc`, and vice versa.\n\nSupported values: `\"json\"`, `\"json5\"`, `\"jsonc\"`, `\"json-stringify\"`.\n\n- Default: inferred from filepath"
+        },
         "printWidth": {
           "description": "Specify the line length that the printer will wrap on.\n\nIf you don't want line wrapping when formatting Markdown, you can set the `proseWrap` option to disable it.\n\n- Default: `100`\n- Overrides `.editorconfig.max_line_length`",
           "type": "integer",
@@ -539,6 +557,15 @@
           "markdownDescription": "Format options to apply for matched files."
         }
       }
+    },
+    "ParserConfig": {
+      "type": "string",
+      "enum": [
+        "json",
+        "json5",
+        "jsonc",
+        "json-stringify"
+      ]
     },
     "ProseWrapConfig": {
       "type": "string",

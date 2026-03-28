@@ -1,5 +1,6 @@
 mod config;
 mod format;
+mod json_formatter;
 pub mod oxfmtrc;
 mod support;
 pub mod utils;

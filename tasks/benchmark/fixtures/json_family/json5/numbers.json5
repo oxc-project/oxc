@@ -1,0 +1,7 @@
+{
+  finite: 12.5,
+  positiveInfinity: +Infinity,
+  negativeInfinity: -Infinity,
+  notANumber: NaN,
+  checksum: 0x1a2b,
+}

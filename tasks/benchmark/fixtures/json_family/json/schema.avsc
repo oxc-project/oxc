@@ -1,0 +1,1 @@
+{"type":"record","name":"User","namespace":"bench.fixture","fields":[{"name":"id","type":"string"},{"name":"email","type":"string"},{"name":"active","type":"boolean","default":true},{"name":"roles","type":{"type":"array","items":"string"}}]}

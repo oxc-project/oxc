@@ -141,6 +141,16 @@ pub struct FormatConfig {
     /// - Default: `false`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub single_attribute_per_line: Option<bool>,
+    /// Which parser to use for JSON-family formatting.
+    ///
+    /// This mirrors Prettier's JSON-family parser override behavior for native JSON files.
+    /// It allows treating a `.json` file as `json5` or `jsonc`, and vice versa.
+    ///
+    /// Supported values: `"json"`, `"json5"`, `"jsonc"`, `"json-stringify"`.
+    ///
+    /// - Default: inferred from filepath
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub parser: Option<ParserConfig>,
 
     // NOTE: These experimental options are not yet supported.
     // Just be here to report error if they are used.
@@ -318,6 +328,15 @@ pub enum ObjectWrapConfig {
 pub enum EmbeddedLanguageFormattingConfig {
     Auto,
     Off,
+}
+
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "kebab-case")]
+pub enum ParserConfig {
+    Json,
+    Json5,
+    Jsonc,
+    JsonStringify,
 }
 
 // ---

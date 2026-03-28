@@ -8,6 +8,7 @@ export type EmbeddedLanguageFormattingConfig = "auto" | "off";
 export type EndOfLineConfig = "lf" | "crlf" | "cr";
 export type HtmlWhitespaceSensitivityConfig = "css" | "strict" | "ignore";
 export type ObjectWrapConfig = "preserve" | "collapse";
+export type ParserConfig = "json" | "json5" | "jsonc" | "json-stringify";
 export type ProseWrapConfig = "always" | "never" | "preserve";
 export type QuotePropsConfig = "as-needed" | "consistent" | "preserve";
 export type SortGroupItemConfig = NewlinesBetweenMarker | string | string[];
@@ -112,6 +113,17 @@ export interface Oxfmtrc {
    * - Default: `[]`
    */
   overrides?: OxfmtOverrideConfig[];
+  /**
+   * Which parser to use for JSON-family formatting.
+   *
+   * This mirrors Prettier's JSON-family parser override behavior for native JSON files.
+   * It allows treating a `.json` file as `json5` or `jsonc`, and vice versa.
+   *
+   * Supported values: `"json"`, `"json5"`, `"jsonc"`, `"json-stringify"`.
+   *
+   * - Default: inferred from filepath
+   */
+  parser?: ParserConfig;
   /**
    * Specify the line length that the printer will wrap on.
    *
@@ -385,6 +397,17 @@ export interface FormatConfig {
    * - Default: `"preserve"`
    */
   objectWrap?: ObjectWrapConfig;
+  /**
+   * Which parser to use for JSON-family formatting.
+   *
+   * This mirrors Prettier's JSON-family parser override behavior for native JSON files.
+   * It allows treating a `.json` file as `json5` or `jsonc`, and vice versa.
+   *
+   * Supported values: `"json"`, `"json5"`, `"jsonc"`, `"json-stringify"`.
+   *
+   * - Default: inferred from filepath
+   */
+  parser?: ParserConfig;
   /**
    * Specify the line length that the printer will wrap on.
    *

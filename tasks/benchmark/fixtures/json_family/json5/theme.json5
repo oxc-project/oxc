@@ -1,0 +1,11 @@
+{
+  palette: {
+    primary: '#0f172a',
+    secondary: '#f97316',
+  },
+  spacing: [4, 8, 16, 24,],
+  featureFlags: {
+    useFastPath: true,
+    allowComments: true,
+  },
+}

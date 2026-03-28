@@ -1,0 +1,8 @@
+{
+  // JSON5 object fixture
+  name: 'json5-bench',
+  version: '1.0.0',
+  enabled: true,
+  hex: 0xff,
+  trailing: ['a', 'b',],
+}

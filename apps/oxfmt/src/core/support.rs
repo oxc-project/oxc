@@ -5,7 +5,7 @@ use phf::phf_set;
 use oxc_formatter::get_supported_source_type;
 use oxc_span::SourceType;
 
-use super::utils;
+use super::{json_formatter::JsonFlavor, utils};
 
 pub enum FormatFileStrategy {
     OxcFormatter {
@@ -16,12 +16,11 @@ pub enum FormatFileStrategy {
     OxfmtToml {
         path: PathBuf,
     },
-    ExternalFormatter {
+    NativeJson {
         path: PathBuf,
-        parser_name: &'static str,
+        flavor: JsonFlavor,
     },
-    /// `package.json` is special: sorted by `sort-package-json` then formatted by external formatter.
-    ExternalFormatterPackageJson {
+    ExternalFormatter {
         path: PathBuf,
         parser_name: &'static str,
     },
@@ -52,12 +51,11 @@ impl TryFrom<PathBuf> for FormatFileStrategy {
             return Ok(Self::OxfmtToml { path });
         }
 
-        // Then external formatter files
-        // `package.json` is special: sorted then formatted
-        if file_name == "package.json" {
-            return Ok(Self::ExternalFormatterPackageJson { path, parser_name: "json-stringify" });
+        if let Some(flavor) = JsonFlavor::from_path(&path) {
+            return Ok(Self::NativeJson { path, flavor });
         }
 
+        // Then external formatter files
         let extension = path.extension().and_then(|ext| ext.to_str());
         if let Some(parser_name) = get_external_parser_name(file_name, extension) {
             return Ok(Self::ExternalFormatter { path, parser_name });
@@ -70,15 +68,15 @@ impl TryFrom<PathBuf> for FormatFileStrategy {
 impl FormatFileStrategy {
     #[cfg(not(feature = "napi"))]
     pub fn can_format_without_external(&self) -> bool {
-        matches!(self, Self::OxcFormatter { .. } | Self::OxfmtToml { .. })
+        matches!(self, Self::OxcFormatter { .. } | Self::OxfmtToml { .. } | Self::NativeJson { .. })
     }
 
     pub fn path(&self) -> &Path {
         match self {
             Self::OxcFormatter { path, .. }
             | Self::OxfmtToml { path }
-            | Self::ExternalFormatter { path, .. }
-            | Self::ExternalFormatterPackageJson { path, .. } => path,
+            | Self::NativeJson { path, .. }
+            | Self::ExternalFormatter { path, .. } => path,
         }
     }
 
@@ -108,8 +106,8 @@ impl FormatFileStrategy {
         match &mut self {
             Self::OxcFormatter { path, .. }
             | Self::OxfmtToml { path }
-            | Self::ExternalFormatter { path, .. }
-            | Self::ExternalFormatterPackageJson { path, .. } => {
+            | Self::NativeJson { path, .. }
+            | Self::ExternalFormatter { path, .. } => {
                 *path = utils::normalize_relative_path(cwd, path);
             }
         }
@@ -187,28 +185,6 @@ static TOML_FILENAMES: phf::Set<&'static str> = phf_set! {
 /// Returns parser name for external formatter, if supported.
 /// See also `prettier --support-info | jq '.languages[]'`
 fn get_external_parser_name(file_name: &str, extension: Option<&str>) -> Option<&'static str> {
-    // JSON and variants
-    // NOTE: `package.json` is handled separately in `FormatFileStrategy::try_from()`
-    if file_name == "composer.json" || extension == Some("importmap") {
-        return Some("json-stringify");
-    }
-    if JSON_FILENAMES.contains(file_name) {
-        return Some("json");
-    }
-    if let Some(ext) = extension
-        && JSON_EXTENSIONS.contains(ext)
-    {
-        return Some("json");
-    }
-    if let Some(ext) = extension
-        && JSONC_EXTENSIONS.contains(ext)
-    {
-        return Some("jsonc");
-    }
-    if extension == Some("json5") {
-        return Some("json5");
-    }
-
     // YAML
     if YAML_FILENAMES.contains(file_name) {
         return Some("yaml");
@@ -278,67 +254,6 @@ fn get_external_parser_name(file_name: &str, extension: Option<&str>) -> Option<
 
     None
 }
-
-static JSON_EXTENSIONS: phf::Set<&'static str> = phf_set! {
-    "json",
-    "4DForm",
-    "4DProject",
-    "avsc",
-    "geojson",
-    "gltf",
-    "har",
-    "ice",
-    "JSON-tmLanguage",
-    "json.example",
-    "mcmeta",
-    "sarif",
-    "tact",
-    "tfstate",
-    "tfstate.backup",
-    "topojson",
-    "webapp",
-    "webmanifest",
-    "yy",
-    "yyp",
-};
-
-static JSON_FILENAMES: phf::Set<&'static str> = phf_set! {
-    ".all-contributorsrc",
-    ".arcconfig",
-    ".auto-changelog",
-    ".c8rc",
-    ".htmlhintrc",
-    ".imgbotconfig",
-    ".nycrc",
-    ".tern-config",
-    ".tern-project",
-    ".watchmanconfig",
-    ".babelrc",
-    ".jscsrc",
-    ".jshintrc",
-    ".jslintrc",
-    ".swcrc",
-};
-
-static JSONC_EXTENSIONS: phf::Set<&'static str> = phf_set! {
-    "jsonc",
-    "code-snippets",
-    "code-workspace",
-    "sublime-build",
-    "sublime-color-scheme",
-    "sublime-commands",
-    "sublime-completions",
-    "sublime-keymap",
-    "sublime-macro",
-    "sublime-menu",
-    "sublime-mousemap",
-    "sublime-project",
-    "sublime-settings",
-    "sublime-theme",
-    "sublime-workspace",
-    "sublime_metrics",
-    "sublime_session",
-};
 
 static HTML_EXTENSIONS: phf::Set<&'static str> = phf_set! {
     "html",
@@ -425,12 +340,6 @@ mod tests {
     #[test]
     fn test_get_external_parser_name() {
         let test_cases = vec![
-            // JSON (NOTE: `package.json` is handled in TryFrom, not here)
-            ("config.importmap", Some("json-stringify")),
-            ("data.json", Some("json")),
-            ("schema.avsc", Some("json")),
-            ("config.code-workspace", Some("jsonc")),
-            ("settings.json5", Some("json5")),
             // HTML
             ("index.html", Some("html")),
             ("page.htm", Some("html")),
@@ -483,10 +392,26 @@ mod tests {
     #[test]
     fn test_package_json_is_special() {
         let source = FormatFileStrategy::try_from(PathBuf::from("package.json")).unwrap();
-        assert!(matches!(source, FormatFileStrategy::ExternalFormatterPackageJson { .. }));
+        assert!(matches!(source, FormatFileStrategy::NativeJson { .. }));
 
         let source = FormatFileStrategy::try_from(PathBuf::from("composer.json")).unwrap();
-        assert!(matches!(source, FormatFileStrategy::ExternalFormatter { .. }));
+        assert!(matches!(source, FormatFileStrategy::NativeJson { .. }));
+    }
+
+    #[test]
+    fn test_json_family_files_are_native() {
+        for file_name in [
+            "data.json",
+            "config.jsonc",
+            "settings.json5",
+            ".babelrc",
+            "workspace.code-workspace",
+            "schema.avsc",
+            "config.importmap",
+        ] {
+            let source = FormatFileStrategy::try_from(PathBuf::from(file_name)).unwrap();
+            assert!(matches!(source, FormatFileStrategy::NativeJson { .. }), "{file_name}");
+        }
     }
 
     #[test]

@@ -10,8 +10,9 @@ use oxc_toml::Options as TomlFormatterOptions;
 
 use super::format_config::{
     ArrowParensConfig, CustomGroupItemConfig, EmbeddedLanguageFormattingConfig, EndOfLineConfig,
-    FormatConfig, HtmlWhitespaceSensitivityConfig, ObjectWrapConfig, QuotePropsConfig,
-    SortGroupItemConfig, SortOrderConfig, SortPackageJsonConfig, TrailingCommaConfig,
+    FormatConfig, HtmlWhitespaceSensitivityConfig, ObjectWrapConfig, ParserConfig,
+    QuotePropsConfig, SortGroupItemConfig, SortOrderConfig, SortPackageJsonConfig,
+    TrailingCommaConfig,
 };
 
 /// Resolved format options from `FormatConfig`.
@@ -22,6 +23,7 @@ use super::format_config::{
 pub struct OxfmtOptions {
     pub format_options: FormatOptions,
     pub toml_options: TomlFormatterOptions,
+    pub parser: Option<ParserConfig>,
     pub sort_package_json: Option<sort_package_json::SortOptions>,
     pub insert_final_newline: bool,
 }
@@ -342,6 +344,8 @@ pub fn to_oxfmt_options(config: FormatConfig) -> Result<OxfmtOptions, String> {
     // Currently, there is a no options for TOML formatter
     let toml_options = build_toml_options(&format_options);
 
+    let parser = config.parser;
+
     let sort_package_json = config.sort_package_json.map_or_else(
         || Some(SortPackageJsonConfig::default().to_sort_options()),
         |c| c.to_sort_options(),
@@ -349,7 +353,13 @@ pub fn to_oxfmt_options(config: FormatConfig) -> Result<OxfmtOptions, String> {
 
     let insert_final_newline = config.insert_final_newline.unwrap_or(true);
 
-    Ok(OxfmtOptions { format_options, toml_options, sort_package_json, insert_final_newline })
+    Ok(OxfmtOptions {
+        format_options,
+        toml_options,
+        parser,
+        sort_package_json,
+        insert_final_newline,
+    })
 }
 
 // ---

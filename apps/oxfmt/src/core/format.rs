@@ -9,7 +9,7 @@ use oxc_formatter::{FormatOptions, Formatter, enable_jsx_source_type, get_parse_
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 
-use super::{FormatFileStrategy, ResolvedOptions};
+use super::{FormatFileStrategy, ResolvedOptions, json_formatter};
 
 pub enum FormatResult {
     Success { is_changed: bool, code: String },
@@ -60,6 +60,25 @@ impl SourceFormatter {
                 insert_final_newline,
             ),
             (
+                FormatFileStrategy::NativeJson { path, flavor },
+                ResolvedOptions::NativeJson {
+                    format_options,
+                    flavor: resolved_flavor,
+                    sort_package_json,
+                    insert_final_newline,
+                },
+            ) => (
+                self.format_by_native_json(
+                    source_text,
+                    path,
+                    *flavor,
+                    format_options.as_ref(),
+                    resolved_flavor,
+                    sort_package_json.as_ref(),
+                ),
+                insert_final_newline,
+            ),
+            (
                 FormatFileStrategy::OxfmtToml { .. },
                 ResolvedOptions::OxfmtToml { toml_options, insert_final_newline },
             ) => (Ok(Self::format_by_toml(source_text, toml_options)), insert_final_newline),
@@ -69,24 +88,6 @@ impl SourceFormatter {
                 ResolvedOptions::ExternalFormatter { external_options, insert_final_newline },
             ) => (
                 self.format_by_external_formatter(source_text, path, parser_name, external_options),
-                insert_final_newline,
-            ),
-            #[cfg(feature = "napi")]
-            (
-                FormatFileStrategy::ExternalFormatterPackageJson { path, parser_name },
-                ResolvedOptions::ExternalFormatterPackageJson {
-                    external_options,
-                    sort_package_json,
-                    insert_final_newline,
-                },
-            ) => (
-                self.format_by_external_formatter_package_json(
-                    source_text,
-                    path,
-                    parser_name,
-                    external_options,
-                    sort_package_json.as_ref(),
-                ),
                 insert_final_newline,
             ),
             _ => unreachable!("FormatFileStrategy and ResolvedOptions variant mismatch"),
@@ -172,6 +173,90 @@ impl SourceFormatter {
     #[instrument(level = "debug", name = "oxfmt::format::oxc_toml", skip_all)]
     fn format_by_toml(source_text: &str, options: oxc_toml::Options) -> String {
         oxc_toml::format(source_text, options)
+    }
+
+    fn format_by_native_json(
+        &self,
+        source_text: &str,
+        path: &Path,
+        _strategy_flavor: super::json_formatter::JsonFlavor,
+        format_options: &FormatOptions,
+        resolved_flavor: super::json_formatter::JsonFlavor,
+        sort_options: Option<&sort_package_json::SortOptions>,
+    ) -> Result<String, OxcDiagnostic> {
+        let source_text: std::borrow::Cow<'_, str> =
+            if path.file_name().and_then(|f| f.to_str()) == Some("package.json") {
+                if let Some(options) = sort_options {
+                    match sort_package_json::sort_package_json_with_options(source_text, options) {
+                        Ok(sorted) => std::borrow::Cow::Owned(sorted),
+                        Err(_) => std::borrow::Cow::Borrowed(source_text),
+                    }
+                } else {
+                    std::borrow::Cow::Borrowed(source_text)
+                }
+            } else {
+                std::borrow::Cow::Borrowed(source_text)
+            };
+
+        json_formatter::format_json(&source_text, path, resolved_flavor, format_options)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::path::PathBuf;
+
+    use oxc_formatter::FormatOptions;
+
+    use super::*;
+    use crate::core::json_formatter::JsonFlavor;
+
+    #[test]
+    fn native_json_parser_override_formats_json_as_json5() {
+        let formatter = SourceFormatter::new(1);
+        let entry = FormatFileStrategy::NativeJson {
+            path: PathBuf::from("fixture.json"),
+            flavor: JsonFlavor::Json,
+        };
+        let result = formatter.format(
+            &entry,
+            r#"{"foo":"bar"}"#,
+            ResolvedOptions::NativeJson {
+                format_options: Box::new(FormatOptions::default()),
+                flavor: JsonFlavor::Json5,
+                sort_package_json: None,
+                insert_final_newline: true,
+            },
+        );
+
+        match result {
+            FormatResult::Success { code, .. } => assert_eq!(code, "{ foo: \"bar\" }\n"),
+            FormatResult::Error(errs) => panic!("unexpected errors: {errs:?}"),
+        }
+    }
+
+    #[test]
+    fn native_json_parser_override_formats_json5_as_json() {
+        let formatter = SourceFormatter::new(1);
+        let entry = FormatFileStrategy::NativeJson {
+            path: PathBuf::from("fixture.json5"),
+            flavor: JsonFlavor::Json5,
+        };
+        let result = formatter.format(
+            &entry,
+            "{foo:'bar',}",
+            ResolvedOptions::NativeJson {
+                format_options: Box::new(FormatOptions::default()),
+                flavor: JsonFlavor::Json,
+                sort_package_json: None,
+                insert_final_newline: true,
+            },
+        );
+
+        match result {
+            FormatResult::Success { code, .. } => assert_eq!(code, "{ \"foo\": \"bar\" }\n"),
+            FormatResult::Error(errs) => panic!("unexpected errors: {errs:?}"),
+        }
     }
 }
 
@@ -263,35 +348,5 @@ impl SourceFormatter {
             };
             OxcDiagnostic::error(message)
         })
-    }
-
-    /// Format `package.json`: optionally sort then format by external formatter.
-    #[instrument(
-        level = "debug",
-        name = "oxfmt::format::external_formatter_package_json",
-        skip_all
-    )]
-    fn format_by_external_formatter_package_json(
-        &self,
-        source_text: &str,
-        path: &Path,
-        parser_name: &str,
-        external_options: Value,
-        sort_options: Option<&sort_package_json::SortOptions>,
-    ) -> Result<String, OxcDiagnostic> {
-        let source_text: std::borrow::Cow<'_, str> = if let Some(options) = sort_options {
-            match sort_package_json::sort_package_json_with_options(source_text, options) {
-                Ok(sorted) => std::borrow::Cow::Owned(sorted),
-                // `sort_package_json` can only handle strictly valid JSON.
-                // On the other hand, Prettier's `json-stringify` parser is very permissive.
-                // It can format JSON like input even with unquoted keys or trailing commas.
-                // Therefore, rather than bailing out due to a sorting failure, we opt to format without sorting.
-                Err(_) => std::borrow::Cow::Borrowed(source_text),
-            }
-        } else {
-            std::borrow::Cow::Borrowed(source_text)
-        };
-
-        self.format_by_external_formatter(&source_text, path, parser_name, external_options)
     }
 }
