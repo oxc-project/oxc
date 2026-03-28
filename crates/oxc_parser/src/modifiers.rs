@@ -19,7 +19,7 @@ pub struct Modifier {
 }
 
 impl Modifier {
-    pub fn new(span_start: u32, kind: ModifierKind) -> Self {
+    pub const fn new(span_start: u32, kind: ModifierKind) -> Self {
         Self { span_start, kind }
     }
 
@@ -72,15 +72,15 @@ mod modifiers {
         /// Create a set of modifiers from a single modifier.
         pub const fn new_single(kind: ModifierKind, start: u32) -> Self {
             let mut modifiers = Self::empty();
-            modifiers.add(kind, start);
+            modifiers.add(Modifier::new(start, kind));
             modifiers
         }
 
         /// Add a modifier.
         /// If a modifier with this [`ModifierKind`] has already been added, it is overwritten.
-        pub(super) const fn add(&mut self, kind: ModifierKind, start: u32) {
-            self.kinds = self.kinds.with(kind);
-            self.offsets[kind as usize] = MaybeUninit::new(start);
+        pub(super) const fn add(&mut self, modifier: Modifier) {
+            self.kinds = self.kinds.with(modifier.kind);
+            self.offsets[modifier.kind as usize] = MaybeUninit::new(modifier.span_start);
         }
 
         pub fn contains(&self, target: ModifierKind) -> bool {
@@ -409,7 +409,7 @@ impl<C: Config> ParserImpl<'_, C> {
             let modifier = Modifier::new(self.start_span(), modifier_kind);
             self.bump_any();
             self.check_modifier(modifiers.kinds(), modifier);
-            modifiers.add(modifier.kind, modifier.span_start);
+            modifiers.add(modifier);
         }
         modifiers
     }
@@ -459,7 +459,7 @@ impl<C: Config> ParserImpl<'_, C> {
             stop_on_start_of_class_static_block,
         ) {
             self.check_modifier(modifiers.kinds(), modifier);
-            modifiers.add(modifier.kind, modifier.span_start);
+            modifiers.add(modifier);
         }
 
         modifiers
