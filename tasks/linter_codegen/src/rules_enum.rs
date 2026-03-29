@@ -111,7 +111,7 @@ fn generate_imports() -> TokenStream {
     quote! {
         use crate::{
             context::{ContextHost, LintContext},
-            rule::{Rule, RuleCategory, RuleFixMeta, RuleMeta, RuleRunner, RuleRunFunctionsImplemented},
+            rule::{Rule, RuleCategory, RuleFixMeta, RuleMeta, RuleRunner, RuleRunFunctionsImplemented, RuleTag},
             utils::PossibleJestNode,
             AstNode
         };
@@ -275,6 +275,14 @@ fn generate_rule_enum_impl(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
         })
         .collect();
 
+    let tags_arms: Vec<TokenStream> = rule_entries
+        .iter()
+        .map(|rule| {
+            let enum_name = make_enum_ident(rule);
+            quote! { Self::#enum_name(_) => #enum_name::TAGS }
+        })
+        .collect();
+
     // Whether a rule declares a configuration type (i.e. `config = FooConfig`)
 
     quote! {
@@ -386,6 +394,13 @@ fn generate_rule_enum_impl(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
             pub fn run_info(&self) -> RuleRunFunctionsImplemented {
                 match self {
                     #(#run_info_arms),*
+                }
+            }
+
+            /// Return the set of tags associated with this rule, e.g. whether it's a "recommended" rule.
+            pub fn tags(&self) -> RuleTag {
+                match self {
+                    #(#tags_arms),*
                 }
             }
         }
