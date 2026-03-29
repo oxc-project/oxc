@@ -634,6 +634,7 @@ pub use crate::rules::unicorn::prefer_dom_node_remove::PreferDomNodeRemove as Un
 pub use crate::rules::unicorn::prefer_dom_node_text_content::PreferDomNodeTextContent as UnicornPreferDomNodeTextContent;
 pub use crate::rules::unicorn::prefer_event_target::PreferEventTarget as UnicornPreferEventTarget;
 pub use crate::rules::unicorn::prefer_global_this::PreferGlobalThis as UnicornPreferGlobalThis;
+pub use crate::rules::unicorn::prefer_import_meta_properties::PreferImportMetaProperties as UnicornPreferImportMetaProperties;
 pub use crate::rules::unicorn::prefer_includes::PreferIncludes as UnicornPreferIncludes;
 pub use crate::rules::unicorn::prefer_keyboard_event_key::PreferKeyboardEventKey as UnicornPreferKeyboardEventKey;
 pub use crate::rules::unicorn::prefer_logical_operator_over_ternary::PreferLogicalOperatorOverTernary as UnicornPreferLogicalOperatorOverTernary;
@@ -1231,6 +1232,7 @@ pub enum RuleEnum {
     UnicornPreferDomNodeTextContent(UnicornPreferDomNodeTextContent),
     UnicornPreferEventTarget(UnicornPreferEventTarget),
     UnicornPreferGlobalThis(UnicornPreferGlobalThis),
+    UnicornPreferImportMetaProperties(UnicornPreferImportMetaProperties),
     UnicornPreferIncludes(UnicornPreferIncludes),
     UnicornPreferKeyboardEventKey(UnicornPreferKeyboardEventKey),
     UnicornPreferLogicalOperatorOverTernary(UnicornPreferLogicalOperatorOverTernary),
@@ -2001,7 +2003,8 @@ const UNICORN_PREFER_DOM_NODE_REMOVE_ID: usize = UNICORN_PREFER_DOM_NODE_DATASET
 const UNICORN_PREFER_DOM_NODE_TEXT_CONTENT_ID: usize = UNICORN_PREFER_DOM_NODE_REMOVE_ID + 1usize;
 const UNICORN_PREFER_EVENT_TARGET_ID: usize = UNICORN_PREFER_DOM_NODE_TEXT_CONTENT_ID + 1usize;
 const UNICORN_PREFER_GLOBAL_THIS_ID: usize = UNICORN_PREFER_EVENT_TARGET_ID + 1usize;
-const UNICORN_PREFER_INCLUDES_ID: usize = UNICORN_PREFER_GLOBAL_THIS_ID + 1usize;
+const UNICORN_PREFER_IMPORT_META_PROPERTIES_ID: usize = UNICORN_PREFER_GLOBAL_THIS_ID + 1usize;
+const UNICORN_PREFER_INCLUDES_ID: usize = UNICORN_PREFER_IMPORT_META_PROPERTIES_ID + 1usize;
 const UNICORN_PREFER_KEYBOARD_EVENT_KEY_ID: usize = UNICORN_PREFER_INCLUDES_ID + 1usize;
 const UNICORN_PREFER_LOGICAL_OPERATOR_OVER_TERNARY_ID: usize =
     UNICORN_PREFER_KEYBOARD_EVENT_KEY_ID + 1usize;
@@ -2821,6 +2824,7 @@ impl RuleEnum {
             Self::UnicornPreferDomNodeTextContent(_) => UNICORN_PREFER_DOM_NODE_TEXT_CONTENT_ID,
             Self::UnicornPreferEventTarget(_) => UNICORN_PREFER_EVENT_TARGET_ID,
             Self::UnicornPreferGlobalThis(_) => UNICORN_PREFER_GLOBAL_THIS_ID,
+            Self::UnicornPreferImportMetaProperties(_) => UNICORN_PREFER_IMPORT_META_PROPERTIES_ID,
             Self::UnicornPreferIncludes(_) => UNICORN_PREFER_INCLUDES_ID,
             Self::UnicornPreferKeyboardEventKey(_) => UNICORN_PREFER_KEYBOARD_EVENT_KEY_ID,
             Self::UnicornPreferLogicalOperatorOverTernary(_) => {
@@ -3627,6 +3631,7 @@ impl RuleEnum {
             Self::UnicornPreferDomNodeTextContent(_) => UnicornPreferDomNodeTextContent::NAME,
             Self::UnicornPreferEventTarget(_) => UnicornPreferEventTarget::NAME,
             Self::UnicornPreferGlobalThis(_) => UnicornPreferGlobalThis::NAME,
+            Self::UnicornPreferImportMetaProperties(_) => UnicornPreferImportMetaProperties::NAME,
             Self::UnicornPreferIncludes(_) => UnicornPreferIncludes::NAME,
             Self::UnicornPreferKeyboardEventKey(_) => UnicornPreferKeyboardEventKey::NAME,
             Self::UnicornPreferLogicalOperatorOverTernary(_) => {
@@ -4465,6 +4470,9 @@ impl RuleEnum {
             Self::UnicornPreferDomNodeTextContent(_) => UnicornPreferDomNodeTextContent::CATEGORY,
             Self::UnicornPreferEventTarget(_) => UnicornPreferEventTarget::CATEGORY,
             Self::UnicornPreferGlobalThis(_) => UnicornPreferGlobalThis::CATEGORY,
+            Self::UnicornPreferImportMetaProperties(_) => {
+                UnicornPreferImportMetaProperties::CATEGORY
+            }
             Self::UnicornPreferIncludes(_) => UnicornPreferIncludes::CATEGORY,
             Self::UnicornPreferKeyboardEventKey(_) => UnicornPreferKeyboardEventKey::CATEGORY,
             Self::UnicornPreferLogicalOperatorOverTernary(_) => {
@@ -5286,6 +5294,7 @@ impl RuleEnum {
             Self::UnicornPreferDomNodeTextContent(_) => UnicornPreferDomNodeTextContent::FIX,
             Self::UnicornPreferEventTarget(_) => UnicornPreferEventTarget::FIX,
             Self::UnicornPreferGlobalThis(_) => UnicornPreferGlobalThis::FIX,
+            Self::UnicornPreferImportMetaProperties(_) => UnicornPreferImportMetaProperties::FIX,
             Self::UnicornPreferIncludes(_) => UnicornPreferIncludes::FIX,
             Self::UnicornPreferKeyboardEventKey(_) => UnicornPreferKeyboardEventKey::FIX,
             Self::UnicornPreferLogicalOperatorOverTernary(_) => {
@@ -6231,6 +6240,9 @@ impl RuleEnum {
             }
             Self::UnicornPreferEventTarget(_) => UnicornPreferEventTarget::documentation(),
             Self::UnicornPreferGlobalThis(_) => UnicornPreferGlobalThis::documentation(),
+            Self::UnicornPreferImportMetaProperties(_) => {
+                UnicornPreferImportMetaProperties::documentation()
+            }
             Self::UnicornPreferIncludes(_) => UnicornPreferIncludes::documentation(),
             Self::UnicornPreferKeyboardEventKey(_) => {
                 UnicornPreferKeyboardEventKey::documentation()
@@ -7961,6 +7973,10 @@ impl RuleEnum {
                 .or_else(|| UnicornPreferEventTarget::schema(generator)),
             Self::UnicornPreferGlobalThis(_) => UnicornPreferGlobalThis::config_schema(generator)
                 .or_else(|| UnicornPreferGlobalThis::schema(generator)),
+            Self::UnicornPreferImportMetaProperties(_) => {
+                UnicornPreferImportMetaProperties::config_schema(generator)
+                    .or_else(|| UnicornPreferImportMetaProperties::schema(generator))
+            }
             Self::UnicornPreferIncludes(_) => UnicornPreferIncludes::config_schema(generator)
                 .or_else(|| UnicornPreferIncludes::schema(generator)),
             Self::UnicornPreferKeyboardEventKey(_) => {
@@ -9026,6 +9042,7 @@ impl RuleEnum {
             Self::UnicornPreferDomNodeTextContent(_) => "unicorn",
             Self::UnicornPreferEventTarget(_) => "unicorn",
             Self::UnicornPreferGlobalThis(_) => "unicorn",
+            Self::UnicornPreferImportMetaProperties(_) => "unicorn",
             Self::UnicornPreferIncludes(_) => "unicorn",
             Self::UnicornPreferKeyboardEventKey(_) => "unicorn",
             Self::UnicornPreferLogicalOperatorOverTernary(_) => "unicorn",
@@ -10871,6 +10888,11 @@ impl RuleEnum {
             Self::UnicornPreferGlobalThis(_) => Ok(Self::UnicornPreferGlobalThis(
                 UnicornPreferGlobalThis::from_configuration(value)?,
             )),
+            Self::UnicornPreferImportMetaProperties(_) => {
+                Ok(Self::UnicornPreferImportMetaProperties(
+                    UnicornPreferImportMetaProperties::from_configuration(value)?,
+                ))
+            }
             Self::UnicornPreferIncludes(_) => {
                 Ok(Self::UnicornPreferIncludes(UnicornPreferIncludes::from_configuration(value)?))
             }
@@ -12003,6 +12025,7 @@ impl RuleEnum {
             Self::UnicornPreferDomNodeTextContent(rule) => rule.to_configuration(),
             Self::UnicornPreferEventTarget(rule) => rule.to_configuration(),
             Self::UnicornPreferGlobalThis(rule) => rule.to_configuration(),
+            Self::UnicornPreferImportMetaProperties(rule) => rule.to_configuration(),
             Self::UnicornPreferIncludes(rule) => rule.to_configuration(),
             Self::UnicornPreferKeyboardEventKey(rule) => rule.to_configuration(),
             Self::UnicornPreferLogicalOperatorOverTernary(rule) => rule.to_configuration(),
@@ -12713,6 +12736,7 @@ impl RuleEnum {
             Self::UnicornPreferDomNodeTextContent(rule) => rule.run(node, ctx),
             Self::UnicornPreferEventTarget(rule) => rule.run(node, ctx),
             Self::UnicornPreferGlobalThis(rule) => rule.run(node, ctx),
+            Self::UnicornPreferImportMetaProperties(rule) => rule.run(node, ctx),
             Self::UnicornPreferIncludes(rule) => rule.run(node, ctx),
             Self::UnicornPreferKeyboardEventKey(rule) => rule.run(node, ctx),
             Self::UnicornPreferLogicalOperatorOverTernary(rule) => rule.run(node, ctx),
@@ -13421,6 +13445,7 @@ impl RuleEnum {
             Self::UnicornPreferDomNodeTextContent(rule) => rule.run_once(ctx),
             Self::UnicornPreferEventTarget(rule) => rule.run_once(ctx),
             Self::UnicornPreferGlobalThis(rule) => rule.run_once(ctx),
+            Self::UnicornPreferImportMetaProperties(rule) => rule.run_once(ctx),
             Self::UnicornPreferIncludes(rule) => rule.run_once(ctx),
             Self::UnicornPreferKeyboardEventKey(rule) => rule.run_once(ctx),
             Self::UnicornPreferLogicalOperatorOverTernary(rule) => rule.run_once(ctx),
@@ -14215,6 +14240,7 @@ impl RuleEnum {
             Self::UnicornPreferDomNodeTextContent(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornPreferEventTarget(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornPreferGlobalThis(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::UnicornPreferImportMetaProperties(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornPreferIncludes(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornPreferKeyboardEventKey(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornPreferLogicalOperatorOverTernary(rule) => {
@@ -14937,6 +14963,7 @@ impl RuleEnum {
             Self::UnicornPreferDomNodeTextContent(rule) => rule.should_run(ctx),
             Self::UnicornPreferEventTarget(rule) => rule.should_run(ctx),
             Self::UnicornPreferGlobalThis(rule) => rule.should_run(ctx),
+            Self::UnicornPreferImportMetaProperties(rule) => rule.should_run(ctx),
             Self::UnicornPreferIncludes(rule) => rule.should_run(ctx),
             Self::UnicornPreferKeyboardEventKey(rule) => rule.should_run(ctx),
             Self::UnicornPreferLogicalOperatorOverTernary(rule) => rule.should_run(ctx),
@@ -15867,6 +15894,9 @@ impl RuleEnum {
             }
             Self::UnicornPreferEventTarget(_) => UnicornPreferEventTarget::IS_TSGOLINT_RULE,
             Self::UnicornPreferGlobalThis(_) => UnicornPreferGlobalThis::IS_TSGOLINT_RULE,
+            Self::UnicornPreferImportMetaProperties(_) => {
+                UnicornPreferImportMetaProperties::IS_TSGOLINT_RULE
+            }
             Self::UnicornPreferIncludes(_) => UnicornPreferIncludes::IS_TSGOLINT_RULE,
             Self::UnicornPreferKeyboardEventKey(_) => {
                 UnicornPreferKeyboardEventKey::IS_TSGOLINT_RULE
@@ -16794,6 +16824,9 @@ impl RuleEnum {
             Self::UnicornPreferDomNodeTextContent(_) => UnicornPreferDomNodeTextContent::HAS_CONFIG,
             Self::UnicornPreferEventTarget(_) => UnicornPreferEventTarget::HAS_CONFIG,
             Self::UnicornPreferGlobalThis(_) => UnicornPreferGlobalThis::HAS_CONFIG,
+            Self::UnicornPreferImportMetaProperties(_) => {
+                UnicornPreferImportMetaProperties::HAS_CONFIG
+            }
             Self::UnicornPreferIncludes(_) => UnicornPreferIncludes::HAS_CONFIG,
             Self::UnicornPreferKeyboardEventKey(_) => UnicornPreferKeyboardEventKey::HAS_CONFIG,
             Self::UnicornPreferLogicalOperatorOverTernary(_) => {
@@ -17536,6 +17569,7 @@ impl RuleEnum {
             Self::UnicornPreferDomNodeTextContent(rule) => rule.types_info(),
             Self::UnicornPreferEventTarget(rule) => rule.types_info(),
             Self::UnicornPreferGlobalThis(rule) => rule.types_info(),
+            Self::UnicornPreferImportMetaProperties(rule) => rule.types_info(),
             Self::UnicornPreferIncludes(rule) => rule.types_info(),
             Self::UnicornPreferKeyboardEventKey(rule) => rule.types_info(),
             Self::UnicornPreferLogicalOperatorOverTernary(rule) => rule.types_info(),
@@ -18244,6 +18278,7 @@ impl RuleEnum {
             Self::UnicornPreferDomNodeTextContent(rule) => rule.run_info(),
             Self::UnicornPreferEventTarget(rule) => rule.run_info(),
             Self::UnicornPreferGlobalThis(rule) => rule.run_info(),
+            Self::UnicornPreferImportMetaProperties(rule) => rule.run_info(),
             Self::UnicornPreferIncludes(rule) => rule.run_info(),
             Self::UnicornPreferKeyboardEventKey(rule) => rule.run_info(),
             Self::UnicornPreferLogicalOperatorOverTernary(rule) => rule.run_info(),
@@ -19056,6 +19091,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::UnicornPreferDomNodeTextContent(UnicornPreferDomNodeTextContent::default()),
         RuleEnum::UnicornPreferEventTarget(UnicornPreferEventTarget::default()),
         RuleEnum::UnicornPreferGlobalThis(UnicornPreferGlobalThis::default()),
+        RuleEnum::UnicornPreferImportMetaProperties(UnicornPreferImportMetaProperties::default()),
         RuleEnum::UnicornPreferIncludes(UnicornPreferIncludes::default()),
         RuleEnum::UnicornPreferKeyboardEventKey(UnicornPreferKeyboardEventKey::default()),
         RuleEnum::UnicornPreferLogicalOperatorOverTernary(
