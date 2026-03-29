@@ -53,13 +53,16 @@ mod modifiers {
     /// Stored as a fixed-size array of start offsets indexed by [`ModifierKind`] discriminant.
     /// The `kinds` bitfield tracks which entries are populated.
     /// Full `Span`s are reconstructed on demand, since each modifier keyword has a fixed length.
+    ///
+    /// `#[repr(C)]` to make `kinds` field first. This is preferable as it is the most commonly accessed field.
+    #[repr(C)]
     pub struct Modifiers {
+        /// Bitfield of which modifier kinds are present.
+        kinds: ModifierKinds,
         /// Start offset for each modifier, indexed by `ModifierKind` discriminant.
         /// Entries whose corresponding bit is set in `kinds` are initialized, other entries may not be.
         /// Therefore it is only safe to assume that `offsets[kind as usize]` is initialized if `kinds.contains(kind)`.
         offsets: [MaybeUninit<u32>; ModifierKind::VARIANTS.len()],
-        /// Bitfield of which modifier kinds are present.
-        kinds: ModifierKinds,
     }
 
     impl Modifiers {
@@ -67,8 +70,8 @@ mod modifiers {
         #[inline]
         pub const fn empty() -> Self {
             Self {
-                offsets: [MaybeUninit::uninit(); ModifierKind::VARIANTS.len()],
                 kinds: ModifierKinds::none(),
+                offsets: [MaybeUninit::uninit(); ModifierKind::VARIANTS.len()],
             }
         }
 
