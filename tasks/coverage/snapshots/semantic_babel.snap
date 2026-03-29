@@ -2,7 +2,20 @@ commit: 0124e7c7
 
 semantic_babel Summary:
 AST Parsed     : 2232/2232 (100.00%)
-Positive Passed: 2030/2232 (90.95%)
+Positive Passed: 1929/2232 (86.42%)
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/basic/async-arrow-function/input.js
+Reference flags mismatch for "_ref":
+after transform: ReferenceId(3): ReferenceFlags(Read)
+rebuilt        : ReferenceId(4): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/basic/async-function/input.js
+Reference flags mismatch for "_f":
+after transform: ReferenceId(1): ReferenceFlags(Read)
+rebuilt        : ReferenceId(1): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_f":
+after transform: ReferenceId(5): ReferenceFlags(Read)
+rebuilt        : ReferenceId(5): ReferenceFlags(Read | MemberWriteTarget)
+
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/decorators/decorators-after-export/input.js
 Symbol span mismatch for "C":
 after transform: SymbolId(0): Span { start: 65, end: 66 }
@@ -35,6 +48,36 @@ rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "E":
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+Reference flags mismatch for "E":
+after transform: ReferenceId(1): ReferenceFlags(Read)
+rebuilt        : ReferenceId(0): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "E":
+after transform: ReferenceId(0): ReferenceFlags(Read)
+rebuilt        : ReferenceId(1): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/create-parenthesized-expressions/valid-parenthesized-await-before-exponential/input.js
+Reference flags mismatch for "Math":
+after transform: ReferenceId(0): ReferenceFlags(Read)
+rebuilt        : ReferenceId(2): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/opts/allowYieldOutsideFunction-true-2/input.js
+Reference flags mismatch for "_fn":
+after transform: ReferenceId(2): ReferenceFlags(Read)
+rebuilt        : ReferenceId(1): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_fn":
+after transform: ReferenceId(6): ReferenceFlags(Read)
+rebuilt        : ReferenceId(6): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/sourcetype-commonjs/top-level-using/input.js
+Reference flags mismatch for "_usingCtx":
+after transform: ReferenceId(0): ReferenceFlags(Read)
+rebuilt        : ReferenceId(2): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx":
+after transform: ReferenceId(2): ReferenceFlags(Read)
+rebuilt        : ReferenceId(3): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx":
+after transform: ReferenceId(4): ReferenceFlags(Read)
+rebuilt        : ReferenceId(5): ReferenceFlags(Read | MemberWriteTarget)
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/sourcetype-unambiguous/typescript-type-only/input.ts
 Bindings mismatch:
@@ -45,6 +88,495 @@ semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/so
 Bindings mismatch:
 after transform: ScopeId(0): ["Foo"]
 rebuilt        : ScopeId(0): []
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/regression/6864/input.js
+Reference flags mismatch for "_ref":
+after transform: ReferenceId(4): ReferenceFlags(Read)
+rebuilt        : ReferenceId(4): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_ref2":
+after transform: ReferenceId(7): ReferenceFlags(Read)
+rebuilt        : ReferenceId(8): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/uncategorised/385/input.js
+Reference flags mismatch for "_foo":
+after transform: ReferenceId(1): ReferenceFlags(Read)
+rebuilt        : ReferenceId(0): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_foo":
+after transform: ReferenceId(5): ReferenceFlags(Read)
+rebuilt        : ReferenceId(4): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2016/exponentiation-operator/1/input.js
+Reference flags mismatch for "Math":
+after transform: ReferenceId(0): ReferenceFlags(Read)
+rebuilt        : ReferenceId(0): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2016/exponentiation-operator/2/input.js
+Reference flags mismatch for "Math":
+after transform: ReferenceId(0): ReferenceFlags(Read)
+rebuilt        : ReferenceId(0): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2016/exponentiation-operator/3/input.js
+Reference flags mismatch for "Math":
+after transform: ReferenceId(4): ReferenceFlags(Read)
+rebuilt        : ReferenceId(3): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2016/exponentiation-operator/4/input.js
+Reference flags mismatch for "Math":
+after transform: ReferenceId(0): ReferenceFlags(Read)
+rebuilt        : ReferenceId(0): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2016/exponentiation-operator/5/input.js
+Reference flags mismatch for "Math":
+after transform: ReferenceId(0): ReferenceFlags(Read)
+rebuilt        : ReferenceId(0): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "Math":
+after transform: ReferenceId(1): ReferenceFlags(Read)
+rebuilt        : ReferenceId(1): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2016/exponentiation-operator/6/input.js
+Reference flags mismatch for "Math":
+after transform: ReferenceId(0): ReferenceFlags(Read)
+rebuilt        : ReferenceId(0): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "Math":
+after transform: ReferenceId(1): ReferenceFlags(Read)
+rebuilt        : ReferenceId(1): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2016/exponentiation-operator/7/input.js
+Reference flags mismatch for "Math":
+after transform: ReferenceId(0): ReferenceFlags(Read)
+rebuilt        : ReferenceId(0): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2016/exponentiation-operator/8/input.js
+Reference flags mismatch for "Math":
+after transform: ReferenceId(0): ReferenceFlags(Read)
+rebuilt        : ReferenceId(0): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2016/exponentiation-operator/9/input.js
+Reference flags mismatch for "Math":
+after transform: ReferenceId(0): ReferenceFlags(Read)
+rebuilt        : ReferenceId(0): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2016/exponentiation-operator/valid-parenthesized-await-before-exponential/input.js
+Reference flags mismatch for "Math":
+after transform: ReferenceId(0): ReferenceFlags(Read)
+rebuilt        : ReferenceId(2): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2016/simple-parameter-list/async-arrow-function-concise-body/input.js
+Reference flags mismatch for "_ref":
+after transform: ReferenceId(2): ReferenceFlags(Read)
+rebuilt        : ReferenceId(3): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-arrow/parenthesized-assign-object/input.js
+Reference flags mismatch for "_ref":
+after transform: ReferenceId(1): ReferenceFlags(Read)
+rebuilt        : ReferenceId(2): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/12/input.js
+Reference flags mismatch for "_foo":
+after transform: ReferenceId(2): ReferenceFlags(Read)
+rebuilt        : ReferenceId(1): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_foo":
+after transform: ReferenceId(6): ReferenceFlags(Read)
+rebuilt        : ReferenceId(6): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/13/input.js
+Reference flags mismatch for "_inner":
+after transform: ReferenceId(2): ReferenceFlags(Read)
+rebuilt        : ReferenceId(1): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_inner":
+after transform: ReferenceId(6): ReferenceFlags(Read)
+rebuilt        : ReferenceId(6): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/14/input.js
+Reference flags mismatch for "_ref":
+after transform: ReferenceId(2): ReferenceFlags(Read)
+rebuilt        : ReferenceId(3): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/17/input.js
+Reference flags mismatch for "_ref":
+after transform: ReferenceId(4): ReferenceFlags(Read)
+rebuilt        : ReferenceId(5): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/18/input.js
+Reference flags mismatch for "_ref":
+after transform: ReferenceId(3): ReferenceFlags(Read)
+rebuilt        : ReferenceId(4): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/25/input.js
+Reference flags mismatch for "_foo":
+after transform: ReferenceId(1): ReferenceFlags(Read)
+rebuilt        : ReferenceId(0): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_foo":
+after transform: ReferenceId(5): ReferenceFlags(Read)
+rebuilt        : ReferenceId(4): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/26/input.js
+Reference flags mismatch for "_ref":
+after transform: ReferenceId(6): ReferenceFlags(Read)
+rebuilt        : ReferenceId(6): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/31/input.js
+Reference flags mismatch for "_ref":
+after transform: ReferenceId(2): ReferenceFlags(Read)
+rebuilt        : ReferenceId(3): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/32/input.js
+Reference flags mismatch for "_ref":
+after transform: ReferenceId(3): ReferenceFlags(Read)
+rebuilt        : ReferenceId(4): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/33/input.js
+Reference flags mismatch for "_ref":
+after transform: ReferenceId(2): ReferenceFlags(Read)
+rebuilt        : ReferenceId(3): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/34/input.js
+Reference flags mismatch for "_ref":
+after transform: ReferenceId(3): ReferenceFlags(Read)
+rebuilt        : ReferenceId(4): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/await-async-function-declaration-name/input.js
+Reference flags mismatch for "_await":
+after transform: ReferenceId(1): ReferenceFlags(Read)
+rebuilt        : ReferenceId(1): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_await":
+after transform: ReferenceId(5): ReferenceFlags(Read)
+rebuilt        : ReferenceId(5): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/await-function-expression-name-inside-async-function/input.js
+Reference flags mismatch for "_fn":
+after transform: ReferenceId(1): ReferenceFlags(Read)
+rebuilt        : ReferenceId(1): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_fn":
+after transform: ReferenceId(5): ReferenceFlags(Read)
+rebuilt        : ReferenceId(5): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/await-identifier-inside-parameters-of-nested-function/input.js
+Reference flags mismatch for "_fn":
+after transform: ReferenceId(2): ReferenceFlags(Read)
+rebuilt        : ReferenceId(1): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_fn":
+after transform: ReferenceId(6): ReferenceFlags(Read)
+rebuilt        : ReferenceId(6): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/await-inside-arguments-of-async-function-call/input.js
+Reference flags mismatch for "_fn":
+after transform: ReferenceId(3): ReferenceFlags(Read)
+rebuilt        : ReferenceId(1): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_fn":
+after transform: ReferenceId(7): ReferenceFlags(Read)
+rebuilt        : ReferenceId(7): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/await-inside-async-call-inside-parameters-of-function-inside-async-function/input.js
+Reference flags mismatch for "_f":
+after transform: ReferenceId(3): ReferenceFlags(Read)
+rebuilt        : ReferenceId(1): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_f":
+after transform: ReferenceId(7): ReferenceFlags(Read)
+rebuilt        : ReferenceId(7): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/await-inside-params-of-arrow-inside-arguments-of-async-call/input.js
+Reference flags mismatch for "_ref":
+after transform: ReferenceId(3): ReferenceFlags(Read)
+rebuilt        : ReferenceId(4): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/await-inside-parenthesized-assign/input.js
+Reference flags mismatch for "_fn":
+after transform: ReferenceId(2): ReferenceFlags(Read)
+rebuilt        : ReferenceId(1): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_fn":
+after transform: ReferenceId(6): ReferenceFlags(Read)
+rebuilt        : ReferenceId(6): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/context-division-after-expression/input.js
+Reference flags mismatch for "_fn":
+after transform: ReferenceId(3): ReferenceFlags(Read)
+rebuilt        : ReferenceId(2): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/context-regex-after-statement/input.js
+Reference flags mismatch for "_fn":
+after transform: ReferenceId(1): ReferenceFlags(Read)
+rebuilt        : ReferenceId(1): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_fn":
+after transform: ReferenceId(5): ReferenceFlags(Read)
+rebuilt        : ReferenceId(5): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/export/input.js
+Reference flags mismatch for "_foo":
+after transform: ReferenceId(1): ReferenceFlags(Read)
+rebuilt        : ReferenceId(0): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_foo":
+after transform: ReferenceId(5): ReferenceFlags(Read)
+rebuilt        : ReferenceId(4): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_bar":
+after transform: ReferenceId(7): ReferenceFlags(Read)
+rebuilt        : ReferenceId(6): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_bar":
+after transform: ReferenceId(11): ReferenceFlags(Read)
+rebuilt        : ReferenceId(10): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/object-default-params/input.js
+Reference flags mismatch for "_ref":
+after transform: ReferenceId(1): ReferenceFlags(Read)
+rebuilt        : ReferenceId(2): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/valid-await-expr-using-in/input.js
+Reference flags mismatch for "_f":
+after transform: ReferenceId(3): ReferenceFlags(Read)
+rebuilt        : ReferenceId(1): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_f":
+after transform: ReferenceId(7): ReferenceFlags(Read)
+rebuilt        : ReferenceId(7): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/valid-await-expr-using-instanceof/input.js
+Reference flags mismatch for "_f":
+after transform: ReferenceId(3): ReferenceFlags(Read)
+rebuilt        : ReferenceId(1): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_f":
+after transform: ReferenceId(7): ReferenceFlags(Read)
+rebuilt        : ReferenceId(7): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2018/async-generators/class-method/input.js
+Reference flags mismatch for "_this":
+after transform: ReferenceId(2): ReferenceFlags(Read)
+rebuilt        : ReferenceId(5): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "id":
+after transform: ReferenceId(1): ReferenceFlags(Read | MemberWriteTarget)
+rebuilt        : ReferenceId(6): ReferenceFlags(Read)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2018/async-generators/for-await/input.js
+Reference flags mismatch for "_f":
+after transform: ReferenceId(16): ReferenceFlags(Read)
+rebuilt        : ReferenceId(2): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_iterator":
+after transform: ReferenceId(5): ReferenceFlags(Read)
+rebuilt        : ReferenceId(10): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_step":
+after transform: ReferenceId(1): ReferenceFlags(Read)
+rebuilt        : ReferenceId(12): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_iterator":
+after transform: ReferenceId(11): ReferenceFlags(Read)
+rebuilt        : ReferenceId(17): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_iterator":
+after transform: ReferenceId(12): ReferenceFlags(Read)
+rebuilt        : ReferenceId(18): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_f":
+after transform: ReferenceId(20): ReferenceFlags(Read)
+rebuilt        : ReferenceId(21): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2018/async-generators/for-await-async-of/input.js
+Reference flags mismatch for "_f":
+after transform: ReferenceId(17): ReferenceFlags(Read)
+rebuilt        : ReferenceId(2): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_iterator":
+after transform: ReferenceId(6): ReferenceFlags(Read)
+rebuilt        : ReferenceId(10): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_step":
+after transform: ReferenceId(2): ReferenceFlags(Read)
+rebuilt        : ReferenceId(13): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_iterator":
+after transform: ReferenceId(12): ReferenceFlags(Read)
+rebuilt        : ReferenceId(18): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_iterator":
+after transform: ReferenceId(13): ReferenceFlags(Read)
+rebuilt        : ReferenceId(19): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_f":
+after transform: ReferenceId(21): ReferenceFlags(Read)
+rebuilt        : ReferenceId(22): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2018/async-generators/object-method/input.js
+Reference flags mismatch for "_this":
+after transform: ReferenceId(2): ReferenceFlags(Read)
+rebuilt        : ReferenceId(5): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "id":
+after transform: ReferenceId(1): ReferenceFlags(Read | MemberWriteTarget)
+rebuilt        : ReferenceId(6): ReferenceFlags(Read)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2020/optional-chaining/chaining-off-optionally-chained-keys-named-class-or-function/input.js
+Reference flags mismatch for "foo":
+after transform: ReferenceId(0): ReferenceFlags(Read | MemberWriteTarget)
+rebuilt        : ReferenceId(1): ReferenceFlags(Read)
+Reference flags mismatch for "_foo":
+after transform: ReferenceId(4): ReferenceFlags(Read)
+rebuilt        : ReferenceId(3): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "foo":
+after transform: ReferenceId(1): ReferenceFlags(Read | MemberWriteTarget)
+rebuilt        : ReferenceId(5): ReferenceFlags(Read)
+Reference flags mismatch for "_foo2":
+after transform: ReferenceId(7): ReferenceFlags(Read)
+rebuilt        : ReferenceId(7): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "foo":
+after transform: ReferenceId(2): ReferenceFlags(Read | MemberWriteTarget)
+rebuilt        : ReferenceId(9): ReferenceFlags(Read)
+Reference flags mismatch for "_foo3":
+after transform: ReferenceId(10): ReferenceFlags(Read)
+rebuilt        : ReferenceId(12): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_foo3":
+after transform: ReferenceId(13): ReferenceFlags(Read)
+rebuilt        : ReferenceId(14): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "foo":
+after transform: ReferenceId(3): ReferenceFlags(Read | MemberWriteTarget)
+rebuilt        : ReferenceId(16): ReferenceFlags(Read)
+Reference flags mismatch for "_foo4":
+after transform: ReferenceId(16): ReferenceFlags(Read)
+rebuilt        : ReferenceId(19): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_foo4":
+after transform: ReferenceId(19): ReferenceFlags(Read)
+rebuilt        : ReferenceId(21): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2020/optional-chaining/function-call/input.js
+Reference flags mismatch for "a":
+after transform: ReferenceId(4): ReferenceFlags(Read | MemberWriteTarget)
+rebuilt        : ReferenceId(11): ReferenceFlags(Read)
+Reference flags mismatch for "_a":
+after transform: ReferenceId(15): ReferenceFlags(Read)
+rebuilt        : ReferenceId(14): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_a$func":
+after transform: ReferenceId(18): ReferenceFlags(Read)
+rebuilt        : ReferenceId(16): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "a":
+after transform: ReferenceId(5): ReferenceFlags(Read | MemberWriteTarget)
+rebuilt        : ReferenceId(19): ReferenceFlags(Read)
+Reference flags mismatch for "_a2":
+after transform: ReferenceId(22): ReferenceFlags(Read)
+rebuilt        : ReferenceId(22): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_a2$func":
+after transform: ReferenceId(25): ReferenceFlags(Read)
+rebuilt        : ReferenceId(24): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "a":
+after transform: ReferenceId(8): ReferenceFlags(Read | MemberWriteTarget)
+rebuilt        : ReferenceId(30): ReferenceFlags(Read)
+Reference flags mismatch for "_a$func2":
+after transform: ReferenceId(30): ReferenceFlags(Read)
+rebuilt        : ReferenceId(32): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2020/optional-chaining/member-access/input.js
+Reference flags mismatch for "foo":
+after transform: ReferenceId(0): ReferenceFlags(Read | MemberWriteTarget)
+rebuilt        : ReferenceId(1): ReferenceFlags(Read)
+Reference flags mismatch for "_foo":
+after transform: ReferenceId(3): ReferenceFlags(Read)
+rebuilt        : ReferenceId(3): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "foo":
+after transform: ReferenceId(1): ReferenceFlags(Read | MemberWriteTarget)
+rebuilt        : ReferenceId(5): ReferenceFlags(Read)
+Reference flags mismatch for "_foo2":
+after transform: ReferenceId(6): ReferenceFlags(Read)
+rebuilt        : ReferenceId(8): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_foo2":
+after transform: ReferenceId(9): ReferenceFlags(Read)
+rebuilt        : ReferenceId(10): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_foo$bar":
+after transform: ReferenceId(12): ReferenceFlags(Read)
+rebuilt        : ReferenceId(14): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2020/optional-chaining/member-access-bracket/input.js
+Reference flags mismatch for "obj":
+after transform: ReferenceId(0): ReferenceFlags(Read | MemberWriteTarget)
+rebuilt        : ReferenceId(1): ReferenceFlags(Read)
+Reference flags mismatch for "_obj":
+after transform: ReferenceId(10): ReferenceFlags(Read)
+rebuilt        : ReferenceId(3): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "obj":
+after transform: ReferenceId(2): ReferenceFlags(Read | MemberWriteTarget)
+rebuilt        : ReferenceId(6): ReferenceFlags(Read)
+Reference flags mismatch for "_obj2":
+after transform: ReferenceId(13): ReferenceFlags(Read)
+rebuilt        : ReferenceId(9): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_obj2":
+after transform: ReferenceId(16): ReferenceFlags(Read)
+rebuilt        : ReferenceId(12): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "obj":
+after transform: ReferenceId(5): ReferenceFlags(Read | MemberWriteTarget)
+rebuilt        : ReferenceId(15): ReferenceFlags(Read)
+Reference flags mismatch for "_obj3":
+after transform: ReferenceId(19): ReferenceFlags(Read)
+rebuilt        : ReferenceId(17): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "obj":
+after transform: ReferenceId(6): ReferenceFlags(Read | MemberWriteTarget)
+rebuilt        : ReferenceId(19): ReferenceFlags(Read)
+Reference flags mismatch for "_obj4":
+after transform: ReferenceId(22): ReferenceFlags(Read)
+rebuilt        : ReferenceId(22): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_obj4":
+after transform: ReferenceId(25): ReferenceFlags(Read)
+rebuilt        : ReferenceId(24): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_obj$a":
+after transform: ReferenceId(28): ReferenceFlags(Read)
+rebuilt        : ReferenceId(28): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_obj$a2":
+after transform: ReferenceId(31): ReferenceFlags(Read)
+rebuilt        : ReferenceId(33): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2020/optional-chaining/optioanl-chain-expression/input.js
+Reference flags mismatch for "_a$b":
+after transform: ReferenceId(1): ReferenceFlags(Read)
+rebuilt        : ReferenceId(3): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2020/optional-chaining/parenthised-chain/input.js
+Reference flags mismatch for "a":
+after transform: ReferenceId(0): ReferenceFlags(Read | MemberWriteTarget)
+rebuilt        : ReferenceId(1): ReferenceFlags(Read)
+Reference flags mismatch for "_a":
+after transform: ReferenceId(3): ReferenceFlags(Read)
+rebuilt        : ReferenceId(3): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "a":
+after transform: ReferenceId(1): ReferenceFlags(Read | MemberWriteTarget)
+rebuilt        : ReferenceId(5): ReferenceFlags(Read)
+Reference flags mismatch for "_a2":
+after transform: ReferenceId(6): ReferenceFlags(Read)
+rebuilt        : ReferenceId(7): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "a":
+after transform: ReferenceId(2): ReferenceFlags(Read | MemberWriteTarget)
+rebuilt        : ReferenceId(9): ReferenceFlags(Read)
+Reference flags mismatch for "_a3":
+after transform: ReferenceId(9): ReferenceFlags(Read)
+rebuilt        : ReferenceId(12): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_a3":
+after transform: ReferenceId(12): ReferenceFlags(Read)
+rebuilt        : ReferenceId(15): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_a3":
+after transform: ReferenceId(15): ReferenceFlags(Read)
+rebuilt        : ReferenceId(17): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2020/optional-chaining/separated-chaining/input.js
+Reference flags mismatch for "a":
+after transform: ReferenceId(0): ReferenceFlags(Read | MemberWriteTarget)
+rebuilt        : ReferenceId(1): ReferenceFlags(Read)
+Reference flags mismatch for "_a":
+after transform: ReferenceId(2): ReferenceFlags(Read)
+rebuilt        : ReferenceId(4): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_a":
+after transform: ReferenceId(5): ReferenceFlags(Read)
+rebuilt        : ReferenceId(6): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_a$b$c":
+after transform: ReferenceId(8): ReferenceFlags(Read)
+rebuilt        : ReferenceId(10): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2020/optional-chaining/super-method-class/input.js
+Reference flags mismatch for "_super":
+after transform: ReferenceId(1): ReferenceFlags(Read)
+rebuilt        : ReferenceId(3): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2021/for-async-of/for-statement/input.js
+Reference flags mismatch for "_ref":
+after transform: ReferenceId(1): ReferenceFlags(Read)
+rebuilt        : ReferenceId(2): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2021/logical-assignment-operator/and-and-equals/input.js
+Reference flags mismatch for "_obj":
+after transform: ReferenceId(6): ReferenceFlags(Read)
+rebuilt        : ReferenceId(5): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2021/logical-assignment-operator/mallet/input.js
+Reference flags mismatch for "_obj":
+after transform: ReferenceId(6): ReferenceFlags(Read)
+rebuilt        : ReferenceId(5): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2021/logical-assignment-operator/qq-equals/input.js
+Reference flags mismatch for "_obj":
+after transform: ReferenceId(9): ReferenceFlags(Read)
+rebuilt        : ReferenceId(11): ReferenceFlags(Read | MemberWriteTarget)
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-private-methods/async/input.js
 Scope flags mismatch:
@@ -76,6 +608,134 @@ Symbol scope ID mismatch for "_x":
 after transform: SymbolId(1): ScopeId(1)
 rebuilt        : SymbolId(2): ScopeId(0)
 
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/nested/input.js
+Reference flags mismatch for "x":
+after transform: ReferenceId(0): ReferenceFlags(Read | MemberWriteTarget)
+rebuilt        : ReferenceId(11): ReferenceFlags(Read)
+Reference flags mismatch for "y":
+after transform: ReferenceId(1): ReferenceFlags(Read | MemberWriteTarget)
+rebuilt        : ReferenceId(14): ReferenceFlags(Read)
+Reference flags mismatch for "x":
+after transform: ReferenceId(2): ReferenceFlags(Read | MemberWriteTarget)
+rebuilt        : ReferenceId(25): ReferenceFlags(Read)
+Reference flags mismatch for "y":
+after transform: ReferenceId(3): ReferenceFlags(Read | MemberWriteTarget)
+rebuilt        : ReferenceId(28): ReferenceFlags(Read)
+Reference flags mismatch for "value":
+after transform: ReferenceId(4): ReferenceFlags(Read | MemberWriteTarget)
+rebuilt        : ReferenceId(33): ReferenceFlags(Read)
+Reference flags mismatch for "value":
+after transform: ReferenceId(5): ReferenceFlags(Read | MemberWriteTarget)
+rebuilt        : ReferenceId(38): ReferenceFlags(Read)
+Reference flags mismatch for "p":
+after transform: ReferenceId(6): ReferenceFlags(Read | MemberWriteTarget)
+rebuilt        : ReferenceId(43): ReferenceFlags(Read)
+Reference flags mismatch for "p":
+after transform: ReferenceId(7): ReferenceFlags(Read | MemberWriteTarget)
+rebuilt        : ReferenceId(48): ReferenceFlags(Read)
+Reference flags mismatch for "value":
+after transform: ReferenceId(8): ReferenceFlags(Read | MemberWriteTarget)
+rebuilt        : ReferenceId(57): ReferenceFlags(Read)
+Reference flags mismatch for "value":
+after transform: ReferenceId(9): ReferenceFlags(Read | MemberWriteTarget)
+rebuilt        : ReferenceId(62): ReferenceFlags(Read)
+Reference flags mismatch for "p":
+after transform: ReferenceId(10): ReferenceFlags(Read | MemberWriteTarget)
+rebuilt        : ReferenceId(67): ReferenceFlags(Read)
+Reference flags mismatch for "p":
+after transform: ReferenceId(11): ReferenceFlags(Read | MemberWriteTarget)
+rebuilt        : ReferenceId(72): ReferenceFlags(Read)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/optional-chain-object/input.js
+Reference flags mismatch for "o":
+after transform: ReferenceId(1): ReferenceFlags(Read | MemberWriteTarget)
+rebuilt        : ReferenceId(2): ReferenceFlags(Read)
+Reference flags mismatch for "_assertClassBrand":
+after transform: ReferenceId(9): ReferenceFlags(Read)
+rebuilt        : ReferenceId(4): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "o":
+after transform: ReferenceId(5): ReferenceFlags(Read)
+rebuilt        : ReferenceId(6): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "o":
+after transform: ReferenceId(2): ReferenceFlags(Read | MemberWriteTarget)
+rebuilt        : ReferenceId(8): ReferenceFlags(Read)
+Reference flags mismatch for "_assertClassBrand":
+after transform: ReferenceId(14): ReferenceFlags(Read)
+rebuilt        : ReferenceId(10): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "o":
+after transform: ReferenceId(10): ReferenceFlags(Read)
+rebuilt        : ReferenceId(12): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "o":
+after transform: ReferenceId(3): ReferenceFlags(Read | MemberWriteTarget)
+rebuilt        : ReferenceId(14): ReferenceFlags(Read)
+Reference flags mismatch for "_assertClassBrand":
+after transform: ReferenceId(19): ReferenceFlags(Read)
+rebuilt        : ReferenceId(16): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "o":
+after transform: ReferenceId(15): ReferenceFlags(Read)
+rebuilt        : ReferenceId(18): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "o":
+after transform: ReferenceId(4): ReferenceFlags(Read | MemberWriteTarget)
+rebuilt        : ReferenceId(20): ReferenceFlags(Read)
+Reference flags mismatch for "_assertClassBrand":
+after transform: ReferenceId(26): ReferenceFlags(Read)
+rebuilt        : ReferenceId(22): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "o":
+after transform: ReferenceId(20): ReferenceFlags(Read)
+rebuilt        : ReferenceId(25): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/optional-chain-start-call/input.js
+Reference flags mismatch for "Foo":
+after transform: ReferenceId(0): ReferenceFlags(Read | MemberWriteTarget)
+rebuilt        : ReferenceId(0): ReferenceFlags(Read)
+Reference flags mismatch for "_m":
+after transform: ReferenceId(3): ReferenceFlags(Read)
+rebuilt        : ReferenceId(2): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/optional-chain-start-member/input.js
+Reference flags mismatch for "Foo":
+after transform: ReferenceId(0): ReferenceFlags(Read | MemberWriteTarget)
+rebuilt        : ReferenceId(0): ReferenceFlags(Read)
+Reference flags mismatch for "_x":
+after transform: ReferenceId(3): ReferenceFlags(Read)
+rebuilt        : ReferenceId(2): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/optional-chain-start-member-call/input.js
+Reference flags mismatch for "Foo":
+after transform: ReferenceId(0): ReferenceFlags(Read | MemberWriteTarget)
+rebuilt        : ReferenceId(0): ReferenceFlags(Read)
+Reference flags mismatch for "_x":
+after transform: ReferenceId(3): ReferenceFlags(Read)
+rebuilt        : ReferenceId(2): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/optional-chain-start-simple/input.js
+Reference flags mismatch for "Foo":
+after transform: ReferenceId(0): ReferenceFlags(Read | MemberWriteTarget)
+rebuilt        : ReferenceId(0): ReferenceFlags(Read)
+Reference flags mismatch for "_x":
+after transform: ReferenceId(3): ReferenceFlags(Read)
+rebuilt        : ReferenceId(2): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/pbn-success/input.js
+Reference flags mismatch for "x":
+after transform: ReferenceId(0): ReferenceFlags(Read | MemberWriteTarget)
+rebuilt        : ReferenceId(11): ReferenceFlags(Read)
+Reference flags mismatch for "y":
+after transform: ReferenceId(1): ReferenceFlags(Read | MemberWriteTarget)
+rebuilt        : ReferenceId(14): ReferenceFlags(Read)
+Reference flags mismatch for "value":
+after transform: ReferenceId(2): ReferenceFlags(Read | MemberWriteTarget)
+rebuilt        : ReferenceId(19): ReferenceFlags(Read)
+Reference flags mismatch for "value":
+after transform: ReferenceId(3): ReferenceFlags(Read | MemberWriteTarget)
+rebuilt        : ReferenceId(24): ReferenceFlags(Read)
+Reference flags mismatch for "p":
+after transform: ReferenceId(4): ReferenceFlags(Read | MemberWriteTarget)
+rebuilt        : ReferenceId(29): ReferenceFlags(Read)
+Reference flags mismatch for "p":
+after transform: ReferenceId(5): ReferenceFlags(Read | MemberWriteTarget)
+rebuilt        : ReferenceId(34): ReferenceFlags(Read)
+
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-properties/await-identifier-in-computed-property-inside-params-of-function-inside-params-of-async-function/input.js
 Bindings mismatch:
 after transform: ScopeId(0): ["_asyncToGenerator", "_defineProperty"]
@@ -86,6 +746,113 @@ rebuilt        : ScopeId(2): ["f", "x"]
 Symbol scope ID mismatch for "_await":
 after transform: SymbolId(3): ScopeId(2)
 rebuilt        : SymbolId(2): ScopeId(0)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-static-block/basic/input.js
+Reference flags mismatch for "_C":
+after transform: ReferenceId(0): ReferenceFlags(Read)
+rebuilt        : ReferenceId(2): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_C":
+after transform: ReferenceId(1): ReferenceFlags(Read)
+rebuilt        : ReferenceId(3): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-static-block/directive-like-literal/input.js
+Reference flags mismatch for "_C":
+after transform: ReferenceId(0): ReferenceFlags(Read)
+rebuilt        : ReferenceId(2): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_C":
+after transform: ReferenceId(1): ReferenceFlags(Read)
+rebuilt        : ReferenceId(3): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-static-block/nested-control-flow/input.js
+Reference flags mismatch for "_C":
+after transform: ReferenceId(0): ReferenceFlags(Read)
+rebuilt        : ReferenceId(2): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_C":
+after transform: ReferenceId(1): ReferenceFlags(Read)
+rebuilt        : ReferenceId(3): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-static-block/super-property/input.js
+Reference flags mismatch for "_C":
+after transform: ReferenceId(1): ReferenceFlags(Read)
+rebuilt        : ReferenceId(4): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/private-in/private-in/input.js
+Reference flags mismatch for "_x":
+after transform: ReferenceId(2): ReferenceFlags(Read)
+rebuilt        : ReferenceId(5): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/private-in/private-in-class-heritage/input.js
+Reference flags mismatch for "_x":
+after transform: ReferenceId(2): ReferenceFlags(Read)
+rebuilt        : ReferenceId(5): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/private-in/private-in-escaped-sequence/input.js
+Reference flags mismatch for "_a":
+after transform: ReferenceId(2): ReferenceFlags(Read)
+rebuilt        : ReferenceId(5): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/top-level-await-module/for-await/input.js
+Reference flags mismatch for "_iterator":
+after transform: ReferenceId(5): ReferenceFlags(Read)
+rebuilt        : ReferenceId(4): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_step":
+after transform: ReferenceId(1): ReferenceFlags(Read)
+rebuilt        : ReferenceId(6): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_iterator":
+after transform: ReferenceId(11): ReferenceFlags(Read)
+rebuilt        : ReferenceId(11): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_iterator":
+after transform: ReferenceId(12): ReferenceFlags(Read)
+rebuilt        : ReferenceId(12): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/valid-await-asi-using-binding/input.js
+Reference flags mismatch for "_usingCtx":
+after transform: ReferenceId(2): ReferenceFlags(Read)
+rebuilt        : ReferenceId(3): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx":
+after transform: ReferenceId(4): ReferenceFlags(Read)
+rebuilt        : ReferenceId(5): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx":
+after transform: ReferenceId(6): ReferenceFlags(Read)
+rebuilt        : ReferenceId(7): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/valid-await-expr-using/input.js
+Reference flags mismatch for "_f":
+after transform: ReferenceId(11): ReferenceFlags(Read)
+rebuilt        : ReferenceId(1): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "using":
+after transform: ReferenceId(5): ReferenceFlags(Read | MemberWriteTarget)
+rebuilt        : ReferenceId(11): ReferenceFlags(Read)
+Reference flags mismatch for "_using":
+after transform: ReferenceId(7): ReferenceFlags(Read)
+rebuilt        : ReferenceId(13): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_f":
+after transform: ReferenceId(15): ReferenceFlags(Read)
+rebuilt        : ReferenceId(15): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/valid-await-expr-using-in/input.js
+Reference flags mismatch for "_f":
+after transform: ReferenceId(3): ReferenceFlags(Read)
+rebuilt        : ReferenceId(1): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_f":
+after transform: ReferenceId(7): ReferenceFlags(Read)
+rebuilt        : ReferenceId(7): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/valid-await-expr-using-instanceof/input.js
+Reference flags mismatch for "_f":
+after transform: ReferenceId(3): ReferenceFlags(Read)
+rebuilt        : ReferenceId(1): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_f":
+after transform: ReferenceId(7): ReferenceFlags(Read)
+rebuilt        : ReferenceId(7): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/valid-await-using-asi-assignment/input.js
+Reference flags mismatch for "_f":
+after transform: ReferenceId(4): ReferenceFlags(Read)
+rebuilt        : ReferenceId(1): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_f":
+after transform: ReferenceId(8): ReferenceFlags(Read)
+rebuilt        : ReferenceId(8): ReferenceFlags(Read | MemberWriteTarget)
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/valid-await-using-comments/input.js
 Bindings mismatch:
@@ -109,6 +876,85 @@ rebuilt        : SymbolId(16): ScopeId(3)
 Symbol scope ID mismatch for "_step":
 after transform: SymbolId(11): ScopeId(7)
 rebuilt        : SymbolId(17): ScopeId(3)
+Reference flags mismatch for "_f":
+after transform: ReferenceId(35): ReferenceFlags(Read)
+rebuilt        : ReferenceId(3): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx":
+after transform: ReferenceId(4): ReferenceFlags(Read)
+rebuilt        : ReferenceId(8): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx":
+after transform: ReferenceId(6): ReferenceFlags(Read)
+rebuilt        : ReferenceId(10): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx":
+after transform: ReferenceId(8): ReferenceFlags(Read)
+rebuilt        : ReferenceId(12): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx3":
+after transform: ReferenceId(10): ReferenceFlags(Read)
+rebuilt        : ReferenceId(16): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx3":
+after transform: ReferenceId(12): ReferenceFlags(Read)
+rebuilt        : ReferenceId(18): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx3":
+after transform: ReferenceId(14): ReferenceFlags(Read)
+rebuilt        : ReferenceId(20): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_iterator":
+after transform: ReferenceId(19): ReferenceFlags(Read)
+rebuilt        : ReferenceId(25): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx4":
+after transform: ReferenceId(29): ReferenceFlags(Read)
+rebuilt        : ReferenceId(28): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_step":
+after transform: ReferenceId(15): ReferenceFlags(Read)
+rebuilt        : ReferenceId(29): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx4":
+after transform: ReferenceId(31): ReferenceFlags(Read)
+rebuilt        : ReferenceId(30): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx4":
+after transform: ReferenceId(33): ReferenceFlags(Read)
+rebuilt        : ReferenceId(32): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_iterator":
+after transform: ReferenceId(25): ReferenceFlags(Read)
+rebuilt        : ReferenceId(37): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_iterator":
+after transform: ReferenceId(26): ReferenceFlags(Read)
+rebuilt        : ReferenceId(38): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_f":
+after transform: ReferenceId(39): ReferenceFlags(Read)
+rebuilt        : ReferenceId(41): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/valid-case-block-await-using-binding/input.js
+Reference flags mismatch for "_f":
+after transform: ReferenceId(13): ReferenceFlags(Read)
+rebuilt        : ReferenceId(2): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx":
+after transform: ReferenceId(2): ReferenceFlags(Read)
+rebuilt        : ReferenceId(7): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx":
+after transform: ReferenceId(4): ReferenceFlags(Read)
+rebuilt        : ReferenceId(9): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx":
+after transform: ReferenceId(6): ReferenceFlags(Read)
+rebuilt        : ReferenceId(11): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx3":
+after transform: ReferenceId(7): ReferenceFlags(Read)
+rebuilt        : ReferenceId(13): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx3":
+after transform: ReferenceId(9): ReferenceFlags(Read)
+rebuilt        : ReferenceId(15): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx3":
+after transform: ReferenceId(11): ReferenceFlags(Read)
+rebuilt        : ReferenceId(17): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_f":
+after transform: ReferenceId(17): ReferenceFlags(Read)
+rebuilt        : ReferenceId(18): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/valid-case-for-await-using-binding/input.js
+Reference flags mismatch for "_f":
+after transform: ReferenceId(2): ReferenceFlags(Read)
+rebuilt        : ReferenceId(1): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_f":
+after transform: ReferenceId(6): ReferenceFlags(Read)
+rebuilt        : ReferenceId(6): ReferenceFlags(Read | MemberWriteTarget)
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/valid-for-using-binding-of-of/input.js
 Symbol reference IDs mismatch for "of":
@@ -117,15 +963,59 @@ rebuilt        : SymbolId(7): []
 Symbol reference IDs mismatch for "of":
 after transform: SymbolId(2): [ReferenceId(1)]
 rebuilt        : SymbolId(15): []
+Reference flags mismatch for "_f":
+after transform: ReferenceId(28): ReferenceFlags(Read)
+rebuilt        : ReferenceId(3): ReferenceFlags(Read | MemberWriteTarget)
 Reference symbol mismatch for "of":
 after transform: SymbolId(1) "of"
 rebuilt        : <None>
+Reference flags mismatch for "_usingCtx":
+after transform: ReferenceId(3): ReferenceFlags(Read)
+rebuilt        : ReferenceId(9): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx":
+after transform: ReferenceId(5): ReferenceFlags(Read)
+rebuilt        : ReferenceId(11): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx":
+after transform: ReferenceId(7): ReferenceFlags(Read)
+rebuilt        : ReferenceId(13): ReferenceFlags(Read | MemberWriteTarget)
 Reference symbol mismatch for "of":
 after transform: SymbolId(2) "of"
 rebuilt        : <None>
+Reference flags mismatch for "_iterator":
+after transform: ReferenceId(12): ReferenceFlags(Read)
+rebuilt        : ReferenceId(18): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx3":
+after transform: ReferenceId(22): ReferenceFlags(Read)
+rebuilt        : ReferenceId(21): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_step":
+after transform: ReferenceId(8): ReferenceFlags(Read)
+rebuilt        : ReferenceId(22): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx3":
+after transform: ReferenceId(24): ReferenceFlags(Read)
+rebuilt        : ReferenceId(23): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx3":
+after transform: ReferenceId(26): ReferenceFlags(Read)
+rebuilt        : ReferenceId(25): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_iterator":
+after transform: ReferenceId(18): ReferenceFlags(Read)
+rebuilt        : ReferenceId(30): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_iterator":
+after transform: ReferenceId(19): ReferenceFlags(Read)
+rebuilt        : ReferenceId(31): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_f":
+after transform: ReferenceId(32): ReferenceFlags(Read)
+rebuilt        : ReferenceId(34): ReferenceFlags(Read | MemberWriteTarget)
 Unresolved references mismatch:
 after transform: ["arguments", "require"]
 rebuilt        : ["arguments", "of", "require"]
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/valid-for-using-declaration/input.js
+Reference flags mismatch for "_f":
+after transform: ReferenceId(2): ReferenceFlags(Read)
+rebuilt        : ReferenceId(1): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_f":
+after transform: ReferenceId(6): ReferenceFlags(Read)
+rebuilt        : ReferenceId(6): ReferenceFlags(Read | MemberWriteTarget)
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/valid-using-binding-basic/input.js
 Bindings mismatch:
@@ -137,6 +1027,21 @@ rebuilt        : ScopeId(4): ["basic"]
 Symbol scope ID mismatch for "basic":
 after transform: SymbolId(1): ScopeId(1)
 rebuilt        : SymbolId(5): ScopeId(4)
+Reference flags mismatch for "_f":
+after transform: ReferenceId(7): ReferenceFlags(Read)
+rebuilt        : ReferenceId(2): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx":
+after transform: ReferenceId(1): ReferenceFlags(Read)
+rebuilt        : ReferenceId(7): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx":
+after transform: ReferenceId(3): ReferenceFlags(Read)
+rebuilt        : ReferenceId(9): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx":
+after transform: ReferenceId(5): ReferenceFlags(Read)
+rebuilt        : ReferenceId(11): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_f":
+after transform: ReferenceId(11): ReferenceFlags(Read)
+rebuilt        : ReferenceId(12): ReferenceFlags(Read | MemberWriteTarget)
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/valid-using-binding-escaped/input.js
 Bindings mismatch:
@@ -148,6 +1053,21 @@ rebuilt        : ScopeId(4): ["ab"]
 Symbol scope ID mismatch for "ab":
 after transform: SymbolId(1): ScopeId(1)
 rebuilt        : SymbolId(5): ScopeId(4)
+Reference flags mismatch for "_f":
+after transform: ReferenceId(7): ReferenceFlags(Read)
+rebuilt        : ReferenceId(2): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx":
+after transform: ReferenceId(1): ReferenceFlags(Read)
+rebuilt        : ReferenceId(7): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx":
+after transform: ReferenceId(3): ReferenceFlags(Read)
+rebuilt        : ReferenceId(9): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx":
+after transform: ReferenceId(5): ReferenceFlags(Read)
+rebuilt        : ReferenceId(11): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_f":
+after transform: ReferenceId(11): ReferenceFlags(Read)
+rebuilt        : ReferenceId(12): ReferenceFlags(Read | MemberWriteTarget)
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/valid-using-binding-non-bmp/input.js
 Bindings mismatch:
@@ -159,6 +1079,21 @@ rebuilt        : ScopeId(4): ["𠮷"]
 Symbol scope ID mismatch for "𠮷":
 after transform: SymbolId(1): ScopeId(1)
 rebuilt        : SymbolId(5): ScopeId(4)
+Reference flags mismatch for "_f":
+after transform: ReferenceId(7): ReferenceFlags(Read)
+rebuilt        : ReferenceId(2): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx":
+after transform: ReferenceId(1): ReferenceFlags(Read)
+rebuilt        : ReferenceId(7): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx":
+after transform: ReferenceId(3): ReferenceFlags(Read)
+rebuilt        : ReferenceId(9): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx":
+after transform: ReferenceId(5): ReferenceFlags(Read)
+rebuilt        : ReferenceId(11): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_f":
+after transform: ReferenceId(11): ReferenceFlags(Read)
+rebuilt        : ReferenceId(12): ReferenceFlags(Read | MemberWriteTarget)
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/valid-using-binding-using/input.js
 Bindings mismatch:
@@ -170,6 +1105,169 @@ rebuilt        : ScopeId(4): ["using"]
 Symbol scope ID mismatch for "using":
 after transform: SymbolId(1): ScopeId(1)
 rebuilt        : SymbolId(5): ScopeId(4)
+Reference flags mismatch for "_f":
+after transform: ReferenceId(14): ReferenceFlags(Read)
+rebuilt        : ReferenceId(2): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx":
+after transform: ReferenceId(2): ReferenceFlags(Read)
+rebuilt        : ReferenceId(7): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx3":
+after transform: ReferenceId(8): ReferenceFlags(Read)
+rebuilt        : ReferenceId(11): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx3":
+after transform: ReferenceId(10): ReferenceFlags(Read)
+rebuilt        : ReferenceId(13): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx3":
+after transform: ReferenceId(12): ReferenceFlags(Read)
+rebuilt        : ReferenceId(15): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx":
+after transform: ReferenceId(4): ReferenceFlags(Read)
+rebuilt        : ReferenceId(16): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx":
+after transform: ReferenceId(6): ReferenceFlags(Read)
+rebuilt        : ReferenceId(18): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_f":
+after transform: ReferenceId(18): ReferenceFlags(Read)
+rebuilt        : ReferenceId(19): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/valid-case-block-using-binding/input.js
+Reference flags mismatch for "_usingCtx":
+after transform: ReferenceId(2): ReferenceFlags(Read)
+rebuilt        : ReferenceId(2): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx":
+after transform: ReferenceId(4): ReferenceFlags(Read)
+rebuilt        : ReferenceId(4): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx":
+after transform: ReferenceId(6): ReferenceFlags(Read)
+rebuilt        : ReferenceId(6): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx3":
+after transform: ReferenceId(7): ReferenceFlags(Read)
+rebuilt        : ReferenceId(8): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx3":
+after transform: ReferenceId(9): ReferenceFlags(Read)
+rebuilt        : ReferenceId(10): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx3":
+after transform: ReferenceId(11): ReferenceFlags(Read)
+rebuilt        : ReferenceId(12): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/valid-using-as-identifier-for-await-of/input.js
+Reference flags mismatch for "_iterator":
+after transform: ReferenceId(6): ReferenceFlags(Read)
+rebuilt        : ReferenceId(4): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_step":
+after transform: ReferenceId(2): ReferenceFlags(Read)
+rebuilt        : ReferenceId(7): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_iterator":
+after transform: ReferenceId(12): ReferenceFlags(Read)
+rebuilt        : ReferenceId(12): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_iterator":
+after transform: ReferenceId(13): ReferenceFlags(Read)
+rebuilt        : ReferenceId(13): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/valid-using-binding-await-script/input.js
+Reference flags mismatch for "_usingCtx":
+after transform: ReferenceId(4): ReferenceFlags(Read)
+rebuilt        : ReferenceId(2): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx":
+after transform: ReferenceId(6): ReferenceFlags(Read)
+rebuilt        : ReferenceId(4): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx":
+after transform: ReferenceId(8): ReferenceFlags(Read)
+rebuilt        : ReferenceId(6): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx3":
+after transform: ReferenceId(9): ReferenceFlags(Read)
+rebuilt        : ReferenceId(8): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx3":
+after transform: ReferenceId(11): ReferenceFlags(Read)
+rebuilt        : ReferenceId(10): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx3":
+after transform: ReferenceId(13): ReferenceFlags(Read)
+rebuilt        : ReferenceId(12): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx4":
+after transform: ReferenceId(14): ReferenceFlags(Read)
+rebuilt        : ReferenceId(14): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx4":
+after transform: ReferenceId(15): ReferenceFlags(Read)
+rebuilt        : ReferenceId(16): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx4":
+after transform: ReferenceId(17): ReferenceFlags(Read)
+rebuilt        : ReferenceId(18): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx4":
+after transform: ReferenceId(19): ReferenceFlags(Read)
+rebuilt        : ReferenceId(20): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx5":
+after transform: ReferenceId(21): ReferenceFlags(Read)
+rebuilt        : ReferenceId(22): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx5":
+after transform: ReferenceId(23): ReferenceFlags(Read)
+rebuilt        : ReferenceId(24): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx5":
+after transform: ReferenceId(25): ReferenceFlags(Read)
+rebuilt        : ReferenceId(26): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/valid-using-binding-basic/input.js
+Reference flags mismatch for "_usingCtx":
+after transform: ReferenceId(1): ReferenceFlags(Read)
+rebuilt        : ReferenceId(2): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx":
+after transform: ReferenceId(3): ReferenceFlags(Read)
+rebuilt        : ReferenceId(4): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx":
+after transform: ReferenceId(5): ReferenceFlags(Read)
+rebuilt        : ReferenceId(6): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/valid-using-binding-escaped/input.js
+Reference flags mismatch for "_usingCtx":
+after transform: ReferenceId(1): ReferenceFlags(Read)
+rebuilt        : ReferenceId(2): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx":
+after transform: ReferenceId(3): ReferenceFlags(Read)
+rebuilt        : ReferenceId(4): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx":
+after transform: ReferenceId(5): ReferenceFlags(Read)
+rebuilt        : ReferenceId(6): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/valid-using-binding-non-bmp/input.js
+Reference flags mismatch for "_usingCtx":
+after transform: ReferenceId(1): ReferenceFlags(Read)
+rebuilt        : ReferenceId(2): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx":
+after transform: ReferenceId(3): ReferenceFlags(Read)
+rebuilt        : ReferenceId(4): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx":
+after transform: ReferenceId(5): ReferenceFlags(Read)
+rebuilt        : ReferenceId(6): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/valid-using-binding-of/input.js
+Reference flags mismatch for "_usingCtx":
+after transform: ReferenceId(1): ReferenceFlags(Read)
+rebuilt        : ReferenceId(2): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx":
+after transform: ReferenceId(3): ReferenceFlags(Read)
+rebuilt        : ReferenceId(4): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx":
+after transform: ReferenceId(5): ReferenceFlags(Read)
+rebuilt        : ReferenceId(6): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/valid-using-binding-using/input.js
+Reference flags mismatch for "_usingCtx":
+after transform: ReferenceId(2): ReferenceFlags(Read)
+rebuilt        : ReferenceId(2): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx3":
+after transform: ReferenceId(8): ReferenceFlags(Read)
+rebuilt        : ReferenceId(6): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx3":
+after transform: ReferenceId(10): ReferenceFlags(Read)
+rebuilt        : ReferenceId(8): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx3":
+after transform: ReferenceId(12): ReferenceFlags(Read)
+rebuilt        : ReferenceId(10): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx":
+after transform: ReferenceId(4): ReferenceFlags(Read)
+rebuilt        : ReferenceId(11): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_usingCtx":
+after transform: ReferenceId(6): ReferenceFlags(Read)
+rebuilt        : ReferenceId(13): ReferenceFlags(Read | MemberWriteTarget)
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/class-private-method/typescript-invalid-abstract/input.ts
 'abstract' modifier cannot be used with a private identifier.
@@ -189,8 +1287,32 @@ rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "A":
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+Reference flags mismatch for "A":
+after transform: ReferenceId(1): ReferenceFlags(Read)
+rebuilt        : ReferenceId(0): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "A":
+after transform: ReferenceId(0): ReferenceFlags(Read)
+rebuilt        : ReferenceId(1): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "A":
+after transform: ReferenceId(3): ReferenceFlags(Read)
+rebuilt        : ReferenceId(2): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "A":
+after transform: ReferenceId(2): ReferenceFlags(Read)
+rebuilt        : ReferenceId(3): ReferenceFlags(Read | MemberWriteTarget)
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/typescript/instantiation-expression-optional-chain/input.ts
+Reference flags mismatch for "a":
+after transform: ReferenceId(0): ReferenceFlags(Read | MemberWriteTarget)
+rebuilt        : ReferenceId(1): ReferenceFlags(Read)
+Reference flags mismatch for "_a":
+after transform: ReferenceId(4): ReferenceFlags(Read)
+rebuilt        : ReferenceId(3): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "a":
+after transform: ReferenceId(2): ReferenceFlags(Read | MemberWriteTarget)
+rebuilt        : ReferenceId(5): ReferenceFlags(Read)
+Reference flags mismatch for "_a2":
+after transform: ReferenceId(7): ReferenceFlags(Read)
+rebuilt        : ReferenceId(7): ReferenceFlags(Read | MemberWriteTarget)
 Unresolved references mismatch:
 after transform: ["a", "c"]
 rebuilt        : ["a"]
@@ -201,11 +1323,34 @@ after transform: ScopeId(0): ["AssertsFoo", "Foo", "_defineProperty"]
 rebuilt        : ScopeId(0): ["AssertsFoo", "_defineProperty"]
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/typescript/optional-chaining/input.js
+Reference flags mismatch for "foo":
+after transform: ReferenceId(0): ReferenceFlags(Read | MemberWriteTarget)
+rebuilt        : ReferenceId(1): ReferenceFlags(Read)
+Reference flags mismatch for "_foo":
+after transform: ReferenceId(4): ReferenceFlags(Read)
+rebuilt        : ReferenceId(3): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "foo":
+after transform: ReferenceId(2): ReferenceFlags(Read | MemberWriteTarget)
+rebuilt        : ReferenceId(5): ReferenceFlags(Read)
+Reference flags mismatch for "_foo2":
+after transform: ReferenceId(7): ReferenceFlags(Read)
+rebuilt        : ReferenceId(8): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_foo2$foo":
+after transform: ReferenceId(10): ReferenceFlags(Read)
+rebuilt        : ReferenceId(10): ReferenceFlags(Read | MemberWriteTarget)
 Unresolved references mismatch:
 after transform: ["T", "foo"]
 rebuilt        : ["foo"]
 
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/misc/regression/issue-17290/input.js
+Reference flags mismatch for "_assertClassBrand":
+after transform: ReferenceId(4): ReferenceFlags(Read)
+rebuilt        : ReferenceId(5): ReferenceFlags(Read | MemberWriteTarget)
+
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/arrow-function/arrow-function-with-newline/input.ts
+Reference flags mismatch for "_ref":
+after transform: ReferenceId(2): ReferenceFlags(Read)
+rebuilt        : ReferenceId(1): ReferenceFlags(Read | MemberWriteTarget)
 Unresolved references mismatch:
 after transform: ["arguments", "t"]
 rebuilt        : ["arguments"]
@@ -220,7 +1365,15 @@ Unresolved references mismatch:
 after transform: ["v"]
 rebuilt        : []
 
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/arrow-function/async/input.ts
+Reference flags mismatch for "_ref":
+after transform: ReferenceId(2): ReferenceFlags(Read)
+rebuilt        : ReferenceId(2): ReferenceFlags(Read | MemberWriteTarget)
+
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/arrow-function/async-call-in-conditional/input.ts
+Reference flags mismatch for "_ref":
+after transform: ReferenceId(9): ReferenceFlags(Read)
+rebuilt        : ReferenceId(8): ReferenceFlags(Read | MemberWriteTarget)
 Unresolved references mismatch:
 after transform: ["a", "arguments", "async", "b"]
 rebuilt        : ["a", "arguments", "async"]
@@ -229,6 +1382,11 @@ semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescr
 Unresolved references mismatch:
 after transform: ["T", "async"]
 rebuilt        : ["async"]
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/arrow-function/async-generic-tokens-true/input.ts
+Reference flags mismatch for "_ref":
+after transform: ReferenceId(4): ReferenceFlags(Read)
+rebuilt        : ReferenceId(2): ReferenceFlags(Read | MemberWriteTarget)
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/arrow-function/destructuring-with-annotation-newline/input.ts
 Unresolved references mismatch:
@@ -292,6 +1450,9 @@ after transform: ["T", "a"]
 rebuilt        : ["a"]
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/need-parentheses/input.ts
+Reference flags mismatch for "x":
+after transform: ReferenceId(1): ReferenceFlags(Read)
+rebuilt        : ReferenceId(0): ReferenceFlags(Read | MemberWriteTarget)
 Unresolved references mismatch:
 after transform: ["T", "x"]
 rebuilt        : ["x"]
@@ -311,6 +1472,14 @@ Bindings mismatch:
 after transform: ScopeId(0): ["C1", "C2", "C3", "C4", "C5"]
 rebuilt        : ScopeId(0): ["C1", "C3", "C4", "C5"]
 
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/accessor/input.ts
+Reference flags mismatch for "_prop2_accessor_storage":
+after transform: ReferenceId(24): ReferenceFlags(Read)
+rebuilt        : ReferenceId(25): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_prop2_accessor_storage":
+after transform: ReferenceId(25): ReferenceFlags(Read)
+rebuilt        : ReferenceId(26): ReferenceFlags(Read | MemberWriteTarget)
+
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/async-optional-method/input.js
 Unresolved references mismatch:
 after transform: ["B", "Promise"]
@@ -318,6 +1487,11 @@ rebuilt        : ["B"]
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/constructor-with-modifier-names/input.ts
 Multiple constructor implementations are not allowed.
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/constructor-with-override-modifer-names/input.ts
+Reference flags mismatch for "foo":
+after transform: ReferenceId(2): ReferenceFlags(Read)
+rebuilt        : ReferenceId(2): ReferenceFlags(Read | MemberWriteTarget)
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/declare/input.ts
 Identifier `x` has already been declared
@@ -391,6 +1565,40 @@ semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescr
 An implementation cannot be declared in ambient contexts.
 Identifier `show` has already been declared
 Identifier `size` has already been declared
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/optional-generator/input.ts
+Reference flags mismatch for "a":
+after transform: ReferenceId(0): ReferenceFlags(Read | MemberWriteTarget)
+rebuilt        : ReferenceId(1): ReferenceFlags(Read)
+Reference flags mismatch for "_a":
+after transform: ReferenceId(1): ReferenceFlags(Read)
+rebuilt        : ReferenceId(3): ReferenceFlags(Read | MemberWriteTarget)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/optional-generator-method-with-modifiers/input.ts
+Reference flags mismatch for "a":
+after transform: ReferenceId(0): ReferenceFlags(Read | MemberWriteTarget)
+rebuilt        : ReferenceId(1): ReferenceFlags(Read)
+Reference flags mismatch for "_a":
+after transform: ReferenceId(4): ReferenceFlags(Read)
+rebuilt        : ReferenceId(3): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "b":
+after transform: ReferenceId(1): ReferenceFlags(Read | MemberWriteTarget)
+rebuilt        : ReferenceId(5): ReferenceFlags(Read)
+Reference flags mismatch for "_b":
+after transform: ReferenceId(7): ReferenceFlags(Read)
+rebuilt        : ReferenceId(7): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "c":
+after transform: ReferenceId(2): ReferenceFlags(Read | MemberWriteTarget)
+rebuilt        : ReferenceId(9): ReferenceFlags(Read)
+Reference flags mismatch for "_c":
+after transform: ReferenceId(10): ReferenceFlags(Read)
+rebuilt        : ReferenceId(11): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "g":
+after transform: ReferenceId(3): ReferenceFlags(Read | MemberWriteTarget)
+rebuilt        : ReferenceId(13): ReferenceFlags(Read)
+Reference flags mismatch for "_g":
+after transform: ReferenceId(13): ReferenceFlags(Read)
+rebuilt        : ReferenceId(15): ReferenceFlags(Read | MemberWriteTarget)
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/parameter-properties/input.ts
 A parameter cannot have a question mark and an initializer.
@@ -522,6 +1730,18 @@ rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
 Symbol flags mismatch for "E":
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+Reference flags mismatch for "E":
+after transform: ReferenceId(1): ReferenceFlags(Read)
+rebuilt        : ReferenceId(0): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "E":
+after transform: ReferenceId(0): ReferenceFlags(Read)
+rebuilt        : ReferenceId(1): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "E":
+after transform: ReferenceId(3): ReferenceFlags(Read)
+rebuilt        : ReferenceId(2): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "E":
+after transform: ReferenceId(2): ReferenceFlags(Read)
+rebuilt        : ReferenceId(3): ReferenceFlags(Read | MemberWriteTarget)
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/enum/members-reserved-words/input.ts
 Bindings mismatch:
@@ -533,6 +1753,18 @@ rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
 Symbol flags mismatch for "E":
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+Reference flags mismatch for "E":
+after transform: ReferenceId(1): ReferenceFlags(Read)
+rebuilt        : ReferenceId(0): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "E":
+after transform: ReferenceId(0): ReferenceFlags(Read)
+rebuilt        : ReferenceId(1): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "E":
+after transform: ReferenceId(3): ReferenceFlags(Read)
+rebuilt        : ReferenceId(2): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "E":
+after transform: ReferenceId(2): ReferenceFlags(Read)
+rebuilt        : ReferenceId(3): ReferenceFlags(Read | MemberWriteTarget)
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/enum/members-strings/input.ts
 Bindings mismatch:
@@ -544,6 +1776,18 @@ rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
 Symbol flags mismatch for "E":
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+Reference flags mismatch for "E":
+after transform: ReferenceId(1): ReferenceFlags(Read)
+rebuilt        : ReferenceId(0): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "E":
+after transform: ReferenceId(0): ReferenceFlags(Read)
+rebuilt        : ReferenceId(1): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "E":
+after transform: ReferenceId(3): ReferenceFlags(Read)
+rebuilt        : ReferenceId(2): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "E":
+after transform: ReferenceId(2): ReferenceFlags(Read)
+rebuilt        : ReferenceId(3): ReferenceFlags(Read | MemberWriteTarget)
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/enum/members-trailing-comma/input.ts
 Bindings mismatch:
@@ -555,6 +1799,12 @@ rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
 Symbol flags mismatch for "E":
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+Reference flags mismatch for "E":
+after transform: ReferenceId(1): ReferenceFlags(Read)
+rebuilt        : ReferenceId(0): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "E":
+after transform: ReferenceId(0): ReferenceFlags(Read)
+rebuilt        : ReferenceId(1): ReferenceFlags(Read | MemberWriteTarget)
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/enum/members-trailing-comma-with-initializer/input.ts
 Bindings mismatch:
@@ -566,11 +1816,25 @@ rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
 Symbol flags mismatch for "E":
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+Reference flags mismatch for "E":
+after transform: ReferenceId(1): ReferenceFlags(Read)
+rebuilt        : ReferenceId(0): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "E":
+after transform: ReferenceId(0): ReferenceFlags(Read)
+rebuilt        : ReferenceId(1): ReferenceFlags(Read | MemberWriteTarget)
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/explicit-resource-management/valid-for-using-declaration-binding-of/input.js
 Unresolved references mismatch:
 after transform: ["Reader", "reader"]
 rebuilt        : ["reader"]
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/exponentiation/valid-parenthesized-await-non-null-before-exponential/input.ts
+Reference flags mismatch for "Math":
+after transform: ReferenceId(1): ReferenceFlags(Read)
+rebuilt        : ReferenceId(1): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "_ref":
+after transform: ReferenceId(3): ReferenceFlags(Read)
+rebuilt        : ReferenceId(3): ReferenceFlags(Read | MemberWriteTarget)
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/export/declare/input.ts
 Bindings mismatch:
@@ -578,11 +1842,17 @@ after transform: ScopeId(0): ["C", "N", "_bar", "bar", "f", "foo", "x"]
 rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/export/equals/input.ts
+Reference flags mismatch for "module":
+after transform: ReferenceId(1): ReferenceFlags(Read)
+rebuilt        : ReferenceId(0): ReferenceFlags(Read | MemberWriteTarget)
 Reference flags mismatch for "f":
 after transform: ReferenceId(0): ReferenceFlags(Read | Type)
 rebuilt        : ReferenceId(1): ReferenceFlags(Read)
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/export/equals-in-unambiguous/input.ts
+Reference flags mismatch for "module":
+after transform: ReferenceId(1): ReferenceFlags(Read)
+rebuilt        : ReferenceId(0): ReferenceFlags(Read | MemberWriteTarget)
 Reference flags mismatch for "f":
 after transform: ReferenceId(0): ReferenceFlags(Read | Type)
 rebuilt        : ReferenceId(1): ReferenceFlags(Read)
@@ -610,6 +1880,9 @@ rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "N":
 after transform: SymbolId(1): Span { start: 37, end: 38 }
 rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
+Reference flags mismatch for "_N":
+after transform: ReferenceId(0): ReferenceFlags(Read)
+rebuilt        : ReferenceId(0): ReferenceFlags(Read | MemberWriteTarget)
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/function/anonymous-generator/input.ts
 Unresolved references mismatch:
@@ -638,6 +1911,11 @@ semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescr
 Unresolved references mismatch:
 after transform: ["B"]
 rebuilt        : []
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/export-import/input.ts
+Reference flags mismatch for "B":
+after transform: ReferenceId(0): ReferenceFlags(Read)
+rebuilt        : ReferenceId(0): ReferenceFlags(Read | MemberWriteTarget)
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/export-import-type-require/input.ts
 Bindings mismatch:
@@ -736,6 +2014,11 @@ Bindings mismatch:
 after transform: ScopeId(0): ["as", "satisfies"]
 rebuilt        : ScopeId(0): []
 
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/optional-chaining/type-arguments/input.ts
+Reference flags mismatch for "_example$inner":
+after transform: ReferenceId(1): ReferenceFlags(Read)
+rebuilt        : ReferenceId(3): ReferenceFlags(Read | MemberWriteTarget)
+
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/elision-arrow-destructuring-13636/input.ts
 Unresolved references mismatch:
 after transform: ["b", "c"]
@@ -748,6 +2031,11 @@ rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
 Symbol flags mismatch for "E":
 after transform: SymbolId(1): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/keyword-qualified-type/input.ts
+Unresolved references mismatch:
+after transform: ["T"]
+rebuilt        : []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/nested-extends-in-arrow-type-param/input.ts
 Unresolved references mismatch:
@@ -1275,6 +2563,18 @@ after transform: ["a", "b", "c"]
 rebuilt        : ["a", "c"]
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/instantiation-expression-optional-chain/input.ts
+Reference flags mismatch for "a":
+after transform: ReferenceId(0): ReferenceFlags(Read | MemberWriteTarget)
+rebuilt        : ReferenceId(1): ReferenceFlags(Read)
+Reference flags mismatch for "_a":
+after transform: ReferenceId(4): ReferenceFlags(Read)
+rebuilt        : ReferenceId(3): ReferenceFlags(Read | MemberWriteTarget)
+Reference flags mismatch for "a":
+after transform: ReferenceId(2): ReferenceFlags(Read | MemberWriteTarget)
+rebuilt        : ReferenceId(5): ReferenceFlags(Read)
+Reference flags mismatch for "_a2":
+after transform: ReferenceId(7): ReferenceFlags(Read)
+rebuilt        : ReferenceId(7): ReferenceFlags(Read | MemberWriteTarget)
 Unresolved references mismatch:
 after transform: ["a", "c"]
 rebuilt        : ["a"]

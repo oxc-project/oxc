@@ -20,7 +20,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/declarati
                 "node": "FormalParameter(printName)",
                 "references": [
                   {
-                    "flags": "ReferenceFlags(Read)",
+                    "flags": "ReferenceFlags(Read | MemberWriteTarget)",
                     "id": 0,
                     "name": "printName",
                     "node_id": 16,
@@ -43,7 +43,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/declarati
                 "node": "FormalParameter(printerName)",
                 "references": [
                   {
-                    "flags": "ReferenceFlags(Read)",
+                    "flags": "ReferenceFlags(Read | MemberWriteTarget)",
                     "id": 1,
                     "name": "printerName",
                     "node_id": 34,
