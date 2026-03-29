@@ -48,16 +48,16 @@ impl std::ops::Deref for WorkerGuard<'_> {
 pub struct WorkerManager {
     workers: RwLock<Vec<WorkspaceWorker>>,
     single_file_mode: AtomicBool,
-    tool_builders: Arc<[Box<dyn ToolBuilder>]>,
+    tool_builder: Arc<dyn ToolBuilder>,
 }
 
 impl WorkerManager {
     /// Create a new [`WorkerManager`] with no workers and single-file mode disabled.
-    pub fn new(tool_builders: Arc<[Box<dyn ToolBuilder>]>) -> Self {
+    pub fn new(tool_builder: Arc<dyn ToolBuilder>) -> Self {
         Self {
             workers: RwLock::new(vec![]),
             single_file_mode: AtomicBool::new(false),
-            tool_builders,
+            tool_builder,
         }
     }
 
@@ -68,9 +68,9 @@ impl WorkerManager {
         self.workers.read().await
     }
 
-    /// Iterate over the tool builders.
-    pub fn read_tool_builders(&self) -> &[Box<dyn ToolBuilder>] {
-        &self.tool_builders
+    /// Access the tool builder.
+    pub fn read_tool_builder(&self) -> &Arc<dyn ToolBuilder> {
+        &self.tool_builder
     }
 
     /// Returns `true` when the server was started without any workspace folders.
@@ -98,7 +98,7 @@ impl WorkerManager {
     /// Build a new [`WorkspaceWorker`] for the given root URI without starting
     /// it.  Call [`WorkspaceWorker::start_worker`] afterwards.
     pub fn create_worker(&self, root_uri: Uri, diagnostic_mode: DiagnosticMode) -> WorkspaceWorker {
-        WorkspaceWorker::new(root_uri, Arc::clone(&self.tool_builders), diagnostic_mode)
+        WorkspaceWorker::new(root_uri, Arc::clone(&self.tool_builder), diagnostic_mode)
     }
 
     // ── Lookup helpers (associated functions) ─────────────────────────────────
@@ -265,7 +265,7 @@ impl WorkerManager {
 
         debug!("single file mode: creating workspace worker for {}", parent_uri.as_str());
         let worker =
-            WorkspaceWorker::new(parent_uri, Arc::clone(&self.tool_builders), diagnostic_mode);
+            WorkspaceWorker::new(parent_uri, Arc::clone(&self.tool_builder), diagnostic_mode);
         worker.start_worker(Value::Null).await;
         let registrations = if dynamic_watchers { worker.init_watchers().await } else { vec![] };
 
@@ -336,18 +336,25 @@ mod tests {
 
     use tower_lsp_server::ls_types::Uri;
 
-    use crate::{DiagnosticMode, worker::WorkspaceWorker, worker_manager::WorkerManager};
+    use crate::{
+        DiagnosticMode, ToolBuilder, tests::FakeToolBuilder, worker::WorkspaceWorker,
+        worker_manager::WorkerManager,
+    };
+
+    fn create_builder() -> Arc<dyn ToolBuilder> {
+        Arc::new(FakeToolBuilder::default()) as Arc<dyn ToolBuilder>
+    }
 
     #[test]
     fn test_find_worker_for_uri_nested_workspaces() {
         let workspace = WorkspaceWorker::new(
             "file:///path/to/workspace".parse().unwrap(),
-            Arc::new([]),
+            create_builder(),
             DiagnosticMode::None,
         );
         let workspace_deeper = WorkspaceWorker::new(
             "file:///path/to/workspace/deeper".parse().unwrap(),
-            Arc::new([]),
+            create_builder(),
             DiagnosticMode::None,
         );
         let workers = vec![workspace, workspace_deeper];
@@ -374,12 +381,12 @@ mod tests {
     fn test_find_worker_for_uri_similar_names() {
         let workspace = WorkspaceWorker::new(
             "file:///path/to/workspace".parse().unwrap(),
-            Arc::new([]),
+            create_builder(),
             DiagnosticMode::None,
         );
         let workspace2 = WorkspaceWorker::new(
             "file:///path/to/workspace-2".parse().unwrap(),
-            Arc::new([]),
+            create_builder(),
             DiagnosticMode::None,
         );
         let workers = vec![workspace, workspace2];
@@ -401,7 +408,7 @@ mod tests {
     fn test_find_worker_for_uri_single_workspace() {
         let workspace = WorkspaceWorker::new(
             "file:///path/to/workspace".parse().unwrap(),
-            Arc::new([]),
+            create_builder(),
             DiagnosticMode::None,
         );
         let workers = vec![workspace];
@@ -431,7 +438,7 @@ mod tests {
     fn test_find_worker_for_uri_vscode_user_data_single_workspace() {
         let workspace = WorkspaceWorker::new(
             "file:///path/to/workspace".parse().unwrap(),
-            Arc::new([]),
+            create_builder(),
             DiagnosticMode::None,
         );
         let workers = vec![workspace];
@@ -447,7 +454,7 @@ mod tests {
     fn test_find_worker_for_uri_untitled_single_workspace() {
         let workspace = WorkspaceWorker::new(
             "file:///path/to/workspace".parse().unwrap(),
-            Arc::new([]),
+            create_builder(),
             DiagnosticMode::None,
         );
         let workers = vec![workspace];
@@ -463,12 +470,12 @@ mod tests {
     fn test_find_worker_for_uri_untitled_multiple_workspaces() {
         let workspace1 = WorkspaceWorker::new(
             "file:///path/to/workspace1".parse().unwrap(),
-            Arc::new([]),
+            create_builder(),
             DiagnosticMode::None,
         );
         let workspace2 = WorkspaceWorker::new(
             "file:///path/to/workspace2".parse().unwrap(),
-            Arc::new([]),
+            create_builder(),
             DiagnosticMode::None,
         );
         let workers = vec![workspace1, workspace2];
@@ -494,12 +501,12 @@ mod tests {
     fn test_find_worker_for_uri_untitled_with_nested_workspaces() {
         let workspace = WorkspaceWorker::new(
             "file:///path/to/workspace".parse().unwrap(),
-            Arc::new([]),
+            create_builder(),
             DiagnosticMode::None,
         );
         let workspace_deeper = WorkspaceWorker::new(
             "file:///path/to/workspace/deeper".parse().unwrap(),
-            Arc::new([]),
+            create_builder(),
             DiagnosticMode::None,
         );
         let workers = vec![workspace, workspace_deeper];

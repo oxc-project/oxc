@@ -58,6 +58,8 @@ pub trait Tool: Send + Sync {
     ) -> ToolRestartChanges;
 
     /// Check if this tool is responsible for handling the given command.
+    /// TODO: this is not needed anymore, we have only one tool per server,
+    /// we can remove this method and directly call execute_command on the tool.
     fn is_responsible_for_command(&self, _command: &str) -> bool {
         false
     }
