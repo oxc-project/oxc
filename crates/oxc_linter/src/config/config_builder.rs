@@ -216,9 +216,10 @@ impl ConfigStoreBuilder {
             }
         }
 
-        // If external plugins are not enabled (language server), then skip loading JS plugins.
-        // This is so that a project can use JS plugins via `oxlint` CLI, and language server
-        // will just silently ignore them - rather than crashing.
+        // Only attempt to load external JS plugins when external plugins are enabled,
+        // i.e., when the external JS linter is available/initialized. If the store is
+        // disabled, configs that reference external plugins are accepted but the plugins
+        // themselves are not loaded, to avoid failing config parsing.
         if !external_plugins.is_empty() && external_plugin_store.is_enabled() {
             let Some(external_linter) = external_linter else {
                 #[expect(clippy::missing_panics_doc, reason = "infallible")]

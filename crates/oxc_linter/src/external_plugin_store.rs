@@ -45,7 +45,6 @@ pub struct ExternalPluginStore {
     /// The rule ID is also stored, so that can merge options with the rule's default options on JS side.
     options: IndexVec<ExternalOptionsId, (ExternalRuleId, SmallVec<[serde_json::Value; 1]>)>,
 
-    /// `true` for `oxlint`, `false` for language server
     is_enabled: bool,
 }
 
