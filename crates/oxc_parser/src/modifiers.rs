@@ -19,10 +19,12 @@ pub struct Modifier {
 }
 
 impl Modifier {
-    pub fn new(span_start: u32, kind: ModifierKind) -> Self {
+    #[inline]
+    pub const fn new(span_start: u32, kind: ModifierKind) -> Self {
         Self { span_start, kind }
     }
 
+    #[inline]
     pub const fn span(&self) -> Span {
         Span::new(self.span_start, self.span_start + self.kind.len())
     }
@@ -62,6 +64,7 @@ mod modifiers {
 
     impl Modifiers {
         /// Create an empty set of modifiers.
+        #[inline]
         pub const fn empty() -> Self {
             Self {
                 offsets: [MaybeUninit::uninit(); ModifierKind::VARIANTS.len()],
@@ -70,6 +73,7 @@ mod modifiers {
         }
 
         /// Create a set of modifiers from a single modifier.
+        #[inline]
         pub const fn new_single(kind: ModifierKind, start: u32) -> Self {
             let mut modifiers = Self::empty();
             modifiers.add(kind, start);
@@ -78,15 +82,18 @@ mod modifiers {
 
         /// Add a modifier.
         /// If a modifier with this [`ModifierKind`] has already been added, it is overwritten.
+        #[inline]
         pub(super) const fn add(&mut self, kind: ModifierKind, start: u32) {
             self.kinds = self.kinds.with(kind);
             self.offsets[kind as usize] = MaybeUninit::new(start);
         }
 
+        #[inline]
         pub fn contains(&self, target: ModifierKind) -> bool {
             self.kinds.contains(target)
         }
 
+        #[inline]
         pub fn kinds(&self) -> ModifierKinds {
             self.kinds
         }
@@ -244,6 +251,7 @@ impl ModifierKind {
     }
 
     /// Get length of this modifier keyword in bytes.
+    #[inline]
     pub const fn len(self) -> u32 {
         MODIFIER_LENGTHS[self as usize] as u32
     }
