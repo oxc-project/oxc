@@ -45,6 +45,7 @@ serde_json = { workspace = true }
 [features]
 default = []
 cfg = ["dep:oxc_cfg"]
+enum_eval = ["oxc_syntax/to_js_string"]
 jsdoc = ["dep:oxc_jsdoc"]
 linter = ["jsdoc"]
 serialize = ["oxc_span/serialize", "oxc_syntax/serialize"]
