@@ -1266,6 +1266,7 @@ fn test() {
   c: 1
 }",
         ),
+        // spellchecker:off
         (
             "const values = {
     b: {
@@ -1288,6 +1289,7 @@ fn test() {
     },
 };",
         ),
+        // spellchecker:on
     ];
 
     Tester::new(SortKeys::NAME, SortKeys::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();
