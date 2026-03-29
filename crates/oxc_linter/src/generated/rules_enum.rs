@@ -407,6 +407,7 @@ pub use crate::rules::react::jsx_no_useless_fragment::JsxNoUselessFragment as Re
 pub use crate::rules::react::jsx_pascal_case::JsxPascalCase as ReactJsxPascalCase;
 pub use crate::rules::react::jsx_props_no_spread_multi::JsxPropsNoSpreadMulti as ReactJsxPropsNoSpreadMulti;
 pub use crate::rules::react::jsx_props_no_spreading::JsxPropsNoSpreading as ReactJsxPropsNoSpreading;
+pub use crate::rules::react::jsx_sort_props::JsxSortProps as ReactJsxSortProps;
 pub use crate::rules::react::no_array_index_key::NoArrayIndexKey as ReactNoArrayIndexKey;
 pub use crate::rules::react::no_children_prop::NoChildrenProp as ReactNoChildrenProp;
 pub use crate::rules::react::no_clone_element::NoCloneElement as ReactNoCloneElement;
@@ -1112,6 +1113,7 @@ pub enum RuleEnum {
     ReactJsxPascalCase(ReactJsxPascalCase),
     ReactJsxPropsNoSpreadMulti(ReactJsxPropsNoSpreadMulti),
     ReactJsxPropsNoSpreading(ReactJsxPropsNoSpreading),
+    ReactJsxSortProps(ReactJsxSortProps),
     ReactNoArrayIndexKey(ReactNoArrayIndexKey),
     ReactNoChildrenProp(ReactNoChildrenProp),
     ReactNoCloneElement(ReactNoCloneElement),
@@ -1865,7 +1867,8 @@ const REACT_JSX_NO_USELESS_FRAGMENT_ID: usize = REACT_JSX_NO_UNDEF_ID + 1usize;
 const REACT_JSX_PASCAL_CASE_ID: usize = REACT_JSX_NO_USELESS_FRAGMENT_ID + 1usize;
 const REACT_JSX_PROPS_NO_SPREAD_MULTI_ID: usize = REACT_JSX_PASCAL_CASE_ID + 1usize;
 const REACT_JSX_PROPS_NO_SPREADING_ID: usize = REACT_JSX_PROPS_NO_SPREAD_MULTI_ID + 1usize;
-const REACT_NO_ARRAY_INDEX_KEY_ID: usize = REACT_JSX_PROPS_NO_SPREADING_ID + 1usize;
+const REACT_JSX_SORT_PROPS_ID: usize = REACT_JSX_PROPS_NO_SPREADING_ID + 1usize;
+const REACT_NO_ARRAY_INDEX_KEY_ID: usize = REACT_JSX_SORT_PROPS_ID + 1usize;
 const REACT_NO_CHILDREN_PROP_ID: usize = REACT_NO_ARRAY_INDEX_KEY_ID + 1usize;
 const REACT_NO_CLONE_ELEMENT_ID: usize = REACT_NO_CHILDREN_PROP_ID + 1usize;
 const REACT_NO_DANGER_ID: usize = REACT_NO_CLONE_ELEMENT_ID + 1usize;
@@ -2682,6 +2685,7 @@ impl RuleEnum {
             Self::ReactJsxPascalCase(_) => REACT_JSX_PASCAL_CASE_ID,
             Self::ReactJsxPropsNoSpreadMulti(_) => REACT_JSX_PROPS_NO_SPREAD_MULTI_ID,
             Self::ReactJsxPropsNoSpreading(_) => REACT_JSX_PROPS_NO_SPREADING_ID,
+            Self::ReactJsxSortProps(_) => REACT_JSX_SORT_PROPS_ID,
             Self::ReactNoArrayIndexKey(_) => REACT_NO_ARRAY_INDEX_KEY_ID,
             Self::ReactNoChildrenProp(_) => REACT_NO_CHILDREN_PROP_ID,
             Self::ReactNoCloneElement(_) => REACT_NO_CLONE_ELEMENT_ID,
@@ -3492,6 +3496,7 @@ impl RuleEnum {
             Self::ReactJsxPascalCase(_) => ReactJsxPascalCase::NAME,
             Self::ReactJsxPropsNoSpreadMulti(_) => ReactJsxPropsNoSpreadMulti::NAME,
             Self::ReactJsxPropsNoSpreading(_) => ReactJsxPropsNoSpreading::NAME,
+            Self::ReactJsxSortProps(_) => ReactJsxSortProps::NAME,
             Self::ReactNoArrayIndexKey(_) => ReactNoArrayIndexKey::NAME,
             Self::ReactNoChildrenProp(_) => ReactNoChildrenProp::NAME,
             Self::ReactNoCloneElement(_) => ReactNoCloneElement::NAME,
@@ -4322,6 +4327,7 @@ impl RuleEnum {
             Self::ReactJsxPascalCase(_) => ReactJsxPascalCase::CATEGORY,
             Self::ReactJsxPropsNoSpreadMulti(_) => ReactJsxPropsNoSpreadMulti::CATEGORY,
             Self::ReactJsxPropsNoSpreading(_) => ReactJsxPropsNoSpreading::CATEGORY,
+            Self::ReactJsxSortProps(_) => ReactJsxSortProps::CATEGORY,
             Self::ReactNoArrayIndexKey(_) => ReactNoArrayIndexKey::CATEGORY,
             Self::ReactNoChildrenProp(_) => ReactNoChildrenProp::CATEGORY,
             Self::ReactNoCloneElement(_) => ReactNoCloneElement::CATEGORY,
@@ -5151,6 +5157,7 @@ impl RuleEnum {
             Self::ReactJsxPascalCase(_) => ReactJsxPascalCase::FIX,
             Self::ReactJsxPropsNoSpreadMulti(_) => ReactJsxPropsNoSpreadMulti::FIX,
             Self::ReactJsxPropsNoSpreading(_) => ReactJsxPropsNoSpreading::FIX,
+            Self::ReactJsxSortProps(_) => ReactJsxSortProps::FIX,
             Self::ReactNoArrayIndexKey(_) => ReactNoArrayIndexKey::FIX,
             Self::ReactNoChildrenProp(_) => ReactNoChildrenProp::FIX,
             Self::ReactNoCloneElement(_) => ReactNoCloneElement::FIX,
@@ -6054,6 +6061,7 @@ impl RuleEnum {
             Self::ReactJsxPascalCase(_) => ReactJsxPascalCase::documentation(),
             Self::ReactJsxPropsNoSpreadMulti(_) => ReactJsxPropsNoSpreadMulti::documentation(),
             Self::ReactJsxPropsNoSpreading(_) => ReactJsxPropsNoSpreading::documentation(),
+            Self::ReactJsxSortProps(_) => ReactJsxSortProps::documentation(),
             Self::ReactNoArrayIndexKey(_) => ReactNoArrayIndexKey::documentation(),
             Self::ReactNoChildrenProp(_) => ReactNoChildrenProp::documentation(),
             Self::ReactNoCloneElement(_) => ReactNoCloneElement::documentation(),
@@ -7610,6 +7618,8 @@ impl RuleEnum {
             }
             Self::ReactJsxPropsNoSpreading(_) => ReactJsxPropsNoSpreading::config_schema(generator)
                 .or_else(|| ReactJsxPropsNoSpreading::schema(generator)),
+            Self::ReactJsxSortProps(_) => ReactJsxSortProps::config_schema(generator)
+                .or_else(|| ReactJsxSortProps::schema(generator)),
             Self::ReactNoArrayIndexKey(_) => ReactNoArrayIndexKey::config_schema(generator)
                 .or_else(|| ReactNoArrayIndexKey::schema(generator)),
             Self::ReactNoChildrenProp(_) => ReactNoChildrenProp::config_schema(generator)
@@ -8907,6 +8917,7 @@ impl RuleEnum {
             Self::ReactJsxPascalCase(_) => "react",
             Self::ReactJsxPropsNoSpreadMulti(_) => "react",
             Self::ReactJsxPropsNoSpreading(_) => "react",
+            Self::ReactJsxSortProps(_) => "react",
             Self::ReactNoArrayIndexKey(_) => "react",
             Self::ReactNoChildrenProp(_) => "react",
             Self::ReactNoCloneElement(_) => "react",
@@ -10482,6 +10493,9 @@ impl RuleEnum {
             Self::ReactJsxPropsNoSpreading(_) => Ok(Self::ReactJsxPropsNoSpreading(
                 ReactJsxPropsNoSpreading::from_configuration(value)?,
             )),
+            Self::ReactJsxSortProps(_) => {
+                Ok(Self::ReactJsxSortProps(ReactJsxSortProps::from_configuration(value)?))
+            }
             Self::ReactNoArrayIndexKey(_) => {
                 Ok(Self::ReactNoArrayIndexKey(ReactNoArrayIndexKey::from_configuration(value)?))
             }
@@ -11884,6 +11898,7 @@ impl RuleEnum {
             Self::ReactJsxPascalCase(rule) => rule.to_configuration(),
             Self::ReactJsxPropsNoSpreadMulti(rule) => rule.to_configuration(),
             Self::ReactJsxPropsNoSpreading(rule) => rule.to_configuration(),
+            Self::ReactJsxSortProps(rule) => rule.to_configuration(),
             Self::ReactNoArrayIndexKey(rule) => rule.to_configuration(),
             Self::ReactNoChildrenProp(rule) => rule.to_configuration(),
             Self::ReactNoCloneElement(rule) => rule.to_configuration(),
@@ -12594,6 +12609,7 @@ impl RuleEnum {
             Self::ReactJsxPascalCase(rule) => rule.run(node, ctx),
             Self::ReactJsxPropsNoSpreadMulti(rule) => rule.run(node, ctx),
             Self::ReactJsxPropsNoSpreading(rule) => rule.run(node, ctx),
+            Self::ReactJsxSortProps(rule) => rule.run(node, ctx),
             Self::ReactNoArrayIndexKey(rule) => rule.run(node, ctx),
             Self::ReactNoChildrenProp(rule) => rule.run(node, ctx),
             Self::ReactNoCloneElement(rule) => rule.run(node, ctx),
@@ -13302,6 +13318,7 @@ impl RuleEnum {
             Self::ReactJsxPascalCase(rule) => rule.run_once(ctx),
             Self::ReactJsxPropsNoSpreadMulti(rule) => rule.run_once(ctx),
             Self::ReactJsxPropsNoSpreading(rule) => rule.run_once(ctx),
+            Self::ReactJsxSortProps(rule) => rule.run_once(ctx),
             Self::ReactNoArrayIndexKey(rule) => rule.run_once(ctx),
             Self::ReactNoChildrenProp(rule) => rule.run_once(ctx),
             Self::ReactNoCloneElement(rule) => rule.run_once(ctx),
@@ -14080,6 +14097,7 @@ impl RuleEnum {
             Self::ReactJsxPascalCase(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactJsxPropsNoSpreadMulti(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactJsxPropsNoSpreading(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactJsxSortProps(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactNoArrayIndexKey(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactNoChildrenProp(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactNoCloneElement(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -14818,6 +14836,7 @@ impl RuleEnum {
             Self::ReactJsxPascalCase(rule) => rule.should_run(ctx),
             Self::ReactJsxPropsNoSpreadMulti(rule) => rule.should_run(ctx),
             Self::ReactJsxPropsNoSpreading(rule) => rule.should_run(ctx),
+            Self::ReactJsxSortProps(rule) => rule.should_run(ctx),
             Self::ReactNoArrayIndexKey(rule) => rule.should_run(ctx),
             Self::ReactNoChildrenProp(rule) => rule.should_run(ctx),
             Self::ReactNoCloneElement(rule) => rule.should_run(ctx),
@@ -15690,6 +15709,7 @@ impl RuleEnum {
             Self::ReactJsxPascalCase(_) => ReactJsxPascalCase::IS_TSGOLINT_RULE,
             Self::ReactJsxPropsNoSpreadMulti(_) => ReactJsxPropsNoSpreadMulti::IS_TSGOLINT_RULE,
             Self::ReactJsxPropsNoSpreading(_) => ReactJsxPropsNoSpreading::IS_TSGOLINT_RULE,
+            Self::ReactJsxSortProps(_) => ReactJsxSortProps::IS_TSGOLINT_RULE,
             Self::ReactNoArrayIndexKey(_) => ReactNoArrayIndexKey::IS_TSGOLINT_RULE,
             Self::ReactNoChildrenProp(_) => ReactNoChildrenProp::IS_TSGOLINT_RULE,
             Self::ReactNoCloneElement(_) => ReactNoCloneElement::IS_TSGOLINT_RULE,
@@ -16643,6 +16663,7 @@ impl RuleEnum {
             Self::ReactJsxPascalCase(_) => ReactJsxPascalCase::HAS_CONFIG,
             Self::ReactJsxPropsNoSpreadMulti(_) => ReactJsxPropsNoSpreadMulti::HAS_CONFIG,
             Self::ReactJsxPropsNoSpreading(_) => ReactJsxPropsNoSpreading::HAS_CONFIG,
+            Self::ReactJsxSortProps(_) => ReactJsxSortProps::HAS_CONFIG,
             Self::ReactNoArrayIndexKey(_) => ReactNoArrayIndexKey::HAS_CONFIG,
             Self::ReactNoChildrenProp(_) => ReactNoChildrenProp::HAS_CONFIG,
             Self::ReactNoCloneElement(_) => ReactNoCloneElement::HAS_CONFIG,
@@ -17417,6 +17438,7 @@ impl RuleEnum {
             Self::ReactJsxPascalCase(rule) => rule.types_info(),
             Self::ReactJsxPropsNoSpreadMulti(rule) => rule.types_info(),
             Self::ReactJsxPropsNoSpreading(rule) => rule.types_info(),
+            Self::ReactJsxSortProps(rule) => rule.types_info(),
             Self::ReactNoArrayIndexKey(rule) => rule.types_info(),
             Self::ReactNoChildrenProp(rule) => rule.types_info(),
             Self::ReactNoCloneElement(rule) => rule.types_info(),
@@ -18125,6 +18147,7 @@ impl RuleEnum {
             Self::ReactJsxPascalCase(rule) => rule.run_info(),
             Self::ReactJsxPropsNoSpreadMulti(rule) => rule.run_info(),
             Self::ReactJsxPropsNoSpreading(rule) => rule.run_info(),
+            Self::ReactJsxSortProps(rule) => rule.run_info(),
             Self::ReactNoArrayIndexKey(rule) => rule.run_info(),
             Self::ReactNoChildrenProp(rule) => rule.run_info(),
             Self::ReactNoCloneElement(rule) => rule.run_info(),
@@ -18921,6 +18944,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::ReactJsxPascalCase(ReactJsxPascalCase::default()),
         RuleEnum::ReactJsxPropsNoSpreadMulti(ReactJsxPropsNoSpreadMulti::default()),
         RuleEnum::ReactJsxPropsNoSpreading(ReactJsxPropsNoSpreading::default()),
+        RuleEnum::ReactJsxSortProps(ReactJsxSortProps::default()),
         RuleEnum::ReactNoArrayIndexKey(ReactNoArrayIndexKey::default()),
         RuleEnum::ReactNoChildrenProp(ReactNoChildrenProp::default()),
         RuleEnum::ReactNoCloneElement(ReactNoCloneElement::default()),
