@@ -947,10 +947,28 @@ fn test_fix_options() {
         (
             "import foo from './foo';",
             "",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "import foo from './foo';",
+            "",
             Some(json!([{ "fix": { "imports": "fix" } }])),
             FixKind::DangerousFix,
         ),
         ("let a = 1;", "", Some(json!([{ "fix": { "variables": "fix" } }])), FixKind::DangerousFix),
+        (
+            "import foo from './foo';",
+            "",
+            Some(json!([{ "fix": { "imports": "safe-fix" } }])),
+            FixKind::SafeFix,
+        ),
+        (
+            "let a = 1;",
+            "",
+            Some(json!([{ "fix": { "variables": "safe-fix" } }])),
+            FixKind::DangerousFix, // safe-fix is not applicable to variables
+        ),
     ];
 
     Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail).expect_fix(fix).test();

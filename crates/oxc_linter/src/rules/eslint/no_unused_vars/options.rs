@@ -255,6 +255,9 @@ pub enum NoUnusedVarsFixMode {
     Suggestion,
     /// Emit fix-style fixes.
     Fix,
+    /// Like `Fix`, but does not mark them as dangerous.
+    /// Only applicable for imports, unavailable for variables.
+    SafeFix,
 }
 
 impl NoUnusedVarsFixMode {
@@ -578,8 +581,9 @@ fn parse_fix_mode(value: Option<&Value>, name: &str) -> Result<NoUnusedVarsFixMo
             "off" => Ok(NoUnusedVarsFixMode::Off),
             "suggestion" => Ok(NoUnusedVarsFixMode::Suggestion),
             "fix" => Ok(NoUnusedVarsFixMode::Fix),
+            "safe-fix" => Ok(NoUnusedVarsFixMode::SafeFix),
             actual => {
-                Err(invalid_option_mismatch_error(name, ["off", "suggestion", "fix"], actual))
+                Err(invalid_option_mismatch_error(name, ["off", "suggestion", "fix", "safe-fix"], actual))
             }
         },
         _ => Err(invalid_option_error(name, format!("Expected a boolean or string, got {value}"))),
