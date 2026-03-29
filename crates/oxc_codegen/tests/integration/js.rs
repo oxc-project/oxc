@@ -443,14 +443,14 @@ fn pure_comment() {
     );
     test("const foo /* #__PURE__ */ = pureOperation();", "const foo = pureOperation();\n"); // INVALID: "=" not allowed after annotation
 
-    test("/* #__PURE__ */ function foo() {}\n", "function foo() {}\n");
+    test_same("/* #__PURE__ */ function foo() {}\n"); // INVALID: not before a call/new expression
 
     test("/* @__PURE__ */ (foo());", "/* @__PURE__ */ foo();\n");
     test("/* @__PURE__ */ (new Foo());\n", "/* @__PURE__ */ new Foo();\n");
-    test("/*#__PURE__*/ (foo(), bar());", "foo(), bar();\n"); // INVALID, there is a comma expression in the parentheses
+    test("/*#__PURE__*/ (foo(), bar());", "/*#__PURE__*/ foo(), bar();\n"); // INVALID, there is a comma expression in the parentheses
 
     test_same("/* @__PURE__ */ a.b().c.d();\n");
-    test("/* @__PURE__ */ a().b;", "a().b;\n"); // INVALID, it does not end with a call
+    test("/* @__PURE__ */ a().b;", "/* @__PURE__ */ a().b;\n"); // INVALID, it does not end with a call
     test_same("(/* @__PURE__ */ a()).b;\n");
 
     // More

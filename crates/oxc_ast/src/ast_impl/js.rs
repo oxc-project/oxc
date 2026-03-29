@@ -4,7 +4,7 @@ use std::{
 };
 
 use oxc_span::{Atom, GetSpan, Ident, Span};
-use oxc_syntax::{operator::UnaryOperator, scope::ScopeFlags};
+use oxc_syntax::{operator::UnaryOperator, scope::ScopeFlags, symbol::SymbolId};
 
 use crate::ast::*;
 
@@ -1322,6 +1322,38 @@ impl<'a> BindingPattern<'a> {
         let mut idents = vec![];
         self.append_binding_identifiers(&mut idents);
         idents
+    }
+
+    fn append_symbol_ids(&self, symbol_ids: &mut std::vec::Vec<SymbolId>) {
+        match self {
+            Self::BindingIdentifier(ident) => {
+                symbol_ids.push(ident.symbol_id());
+            }
+            Self::AssignmentPattern(assign) => assign.left.append_symbol_ids(symbol_ids),
+            Self::ArrayPattern(pattern) => {
+                pattern
+                    .elements
+                    .iter()
+                    .filter_map(|item| item.as_ref())
+                    .for_each(|item| item.append_symbol_ids(symbol_ids));
+                if let Some(rest) = &pattern.rest {
+                    rest.argument.append_symbol_ids(symbol_ids);
+                }
+            }
+            Self::ObjectPattern(pattern) => {
+                pattern.properties.iter().for_each(|item| item.value.append_symbol_ids(symbol_ids));
+                if let Some(rest) = &pattern.rest {
+                    rest.argument.append_symbol_ids(symbol_ids);
+                }
+            }
+        }
+    }
+
+    /// Returns the [`SymbolId`]s of the bound identifiers in this binding pattern.
+    pub fn get_symbol_ids(&self) -> std::vec::Vec<SymbolId> {
+        let mut symbol_ids = vec![];
+        self.append_symbol_ids(&mut symbol_ids);
+        symbol_ids
     }
 
     /// Returns `true` if all binding identifiers in this pattern satisfy the given predicate.

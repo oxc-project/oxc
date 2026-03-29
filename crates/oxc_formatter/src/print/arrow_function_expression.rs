@@ -176,6 +176,7 @@ impl<'a, 'b> FormatJsArrowFunctionExpression<'a, 'b> {
                         Expression::JSXElement(_) | Expression::JSXFragment(_) => true,
                         _ => {
                             is_multiline_template_starting_on_same_line(expression, f.source_text())
+                                || is_huggable_html_embed(expression, f)
                         }
                     });
 
@@ -364,6 +365,71 @@ pub fn is_multiline_template_starting_on_same_line(
 
     template.quasis.iter().any(|quasi| source_text.contains_newline(quasi.span))
         && !source_text.has_newline_before(start)
+}
+
+/// Returns `true` if the expression is an HTML embed template that should be hugged.
+///
+/// This covers both ``html`...` `` tagged templates and ``/* HTML */ `...` `` comment-annotated templates.
+/// It is needed when the source is single-line but HTML formatting introduces line breaks.
+/// Without this, `ExpandParent` emitted by the HTML formatter causes `will_break()` to return `true`,
+/// expanding the surrounding construct instead of hugging.
+///
+/// Prettier hugs HTML embed templates when the content has leading AND trailing whitespace,
+/// or when `htmlWhitespaceSensitivity` is `"ignore"`.
+/// In these cases, the template stays on the same line as the parent construct:
+/// - Call arguments: ``foo(html`<div>...</div>`)``
+/// - Arrow function body: ``const a = (b) => html`<div>...</div>` ``
+///
+/// When there is no leading+trailing whitespace,
+/// `hug: false` is set and the template is expanded (not hugged).
+///
+/// Prettier achieves this via `label({ embed: true, hug })` + `shouldExpandLastArg`.
+/// We replicate it by detecting the same conditions on the expression.
+pub fn is_huggable_html_embed(expression: &Expression<'_>, f: &Formatter<'_, '_>) -> bool {
+    let template = match expression {
+        Expression::TaggedTemplateExpression(tagged) => {
+            if !matches!(&tagged.tag, Expression::Identifier(id) if id.name.as_str() == "html") {
+                return false;
+            }
+            // Exclude cases where a line comment between tag and quasi forces a line break
+            // e.g., ``html // oops \n`...` ``
+            if f.source_text()
+                .contains_newline_between(tagged.tag.span().end, tagged.quasi.span.start)
+            {
+                return false;
+            }
+            &tagged.quasi
+        }
+        Expression::TemplateLiteral(template) => {
+            // Check for `/* HTML */` leading comment
+            let comments = f.comments().comments_before(template.span.start);
+            if !comments.last().is_some_and(|comment| {
+                comment.is_block() && f.source_text().text_for(&comment.content_span()) == " HTML "
+            }) {
+                return false;
+            }
+            template.as_ref()
+        }
+        _ => return false,
+    };
+
+    // Always hug when htmlWhitespaceSensitivity is "ignore"
+    if f.options().html_whitespace_sensitivity_ignore {
+        return true;
+    }
+
+    // Hug when the cooked content has both leading and trailing whitespace
+    let has_leading_ws = template
+        .quasis
+        .first()
+        .and_then(|q| q.value.cooked.as_ref())
+        .is_some_and(|s| s.starts_with(|c: char| c.is_ascii_whitespace()));
+    let has_trailing_ws = template
+        .quasis
+        .last()
+        .and_then(|q| q.value.cooked.as_ref())
+        .is_some_and(|s| s.ends_with(|c: char| c.is_ascii_whitespace()));
+    has_leading_ws && has_trailing_ws
 }
 
 struct ArrowChain<'a, 'b> {
@@ -678,7 +744,6 @@ fn format_signature<'a, 'b>(
     format_with(move |f| {
         let content = format_with(|f| {
             group(&format_args!(
-                maybe_space(!is_first_in_chain),
                 arrow.r#async().then_some("async "),
                 arrow.type_parameters(),
                 arrow.params(),
@@ -693,6 +758,7 @@ fn format_signature<'a, 'b>(
             if is_first_in_chain {
                 write!(f, format_head);
             } else {
+                write!(f, [space()]);
                 let mut buffer = RemoveSoftLinesBuffer::new(f);
                 write!(buffer, format_head);
             }

@@ -2,6 +2,7 @@ import { basename as pathBasename } from "node:path";
 
 import { getErrorMessage } from "./utils/utils.ts";
 import { DateNow, JSONStringify } from "./utils/globals.ts";
+import { getUnsupportedTypeScriptModuleLoadHintForError } from "./utils/node_version.ts";
 
 interface JsConfigResult {
   path: string;
@@ -147,7 +148,15 @@ export async function loadJsConfigs(paths: string[]): Promise<string> {
       if (result.status === "fulfilled") {
         successes.push(result.value);
       } else {
-        errors.push({ path: paths[i], error: getErrorMessage(result.reason) });
+        const path = paths[i];
+        const unsupportedNodeHint = getUnsupportedTypeScriptModuleLoadHintForError(
+          result.reason,
+          path,
+        );
+        errors.push({
+          path,
+          error: unsupportedNodeHint ?? getErrorMessage(result.reason),
+        });
       }
     }
 

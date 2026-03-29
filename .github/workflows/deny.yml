@@ -29,7 +29,7 @@ jobs:
     steps:
       - uses: taiki-e/checkout-action@83ed61bfbe2b8abbb3c66e8b65b1335484c70009 # v1.4.1
 
-      - uses: oxc-project/setup-rust@4f86b5d871ae7d24bc420e578be68964ab09e5cc # v1.0.15
+      - uses: oxc-project/setup-rust@23f38cfb0c04af97a055f76acee94d5be71c7c82 # v1.0.16
         with:
           restore-cache: false
           tools: cargo-deny

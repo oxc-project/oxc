@@ -17,7 +17,7 @@ use crate::{
         PointerDef, PointerKind, PrimitiveDef, Schema, StructDef, TypeDef, TypeId, VariantDef,
         VecDef, Visibility,
     },
-    utils::{FxIndexMap, FxIndexSet, ident_name},
+    utils::{FxIndexSet, ident_name},
 };
 
 use super::{
@@ -28,18 +28,15 @@ use super::{
 
 /// Parse [`Skeleton`]s into [`TypeDef`]s.
 pub fn parse(
-    skeletons: FxIndexMap<String, Skeleton>,
-    meta_skeletons: FxIndexMap<String, Skeleton>,
+    type_names: FxIndexSet<String>,
+    type_skeletons: IndexVec<TypeId, Skeleton>,
+    meta_names: FxIndexSet<String>,
+    meta_skeletons: IndexVec<MetaId, Skeleton>,
     files: IndexVec<FileId, File>,
     codegen: &Codegen,
 ) -> Schema {
-    // Split `skeletons` into an `IndexSet<String>` (type names) and `IndexVec<TypeId, Skeleton>` (skeletons)
-    let (type_names, skeletons_vec) = skeletons.into_iter().unzip();
-    // Split `meta_skeletons` into an `IndexSet<String>` (meta names) and `IndexVec<MetaId, Skeleton>` (skeletons)
-    let (meta_names, meta_skeletons_vec) = meta_skeletons.into_iter().unzip();
-
     let parser = Parser::new(type_names, meta_names, files, codegen);
-    parser.parse_all(skeletons_vec, meta_skeletons_vec)
+    parser.parse_all(type_skeletons, meta_skeletons)
 }
 
 /// Types parser.
@@ -258,7 +255,6 @@ impl<'c> Parser<'c> {
             "&str" => primitive("&str"),
             "Atom" => primitive("Atom"),
             "Ident" => primitive("Ident"),
-            "NonMaxU32" => primitive("NonMaxU32"),
             "NodeId" => primitive("NodeId"),
             // TODO: Remove the need for this by adding
             // `#[cfg_attr(target_pointer_width = "64", repr(align(8)))]` to all AST types
@@ -306,7 +302,7 @@ impl<'c> Parser<'c> {
 
     /// Parse [`StructSkeleton`] to yield a [`TypeDef`].
     fn parse_struct(&mut self, type_id: TypeId, skeleton: StructSkeleton) -> TypeDef {
-        let StructSkeleton { name, item, is_foreign, file_id } = skeleton;
+        let StructSkeleton { name, file_id, is_foreign, item, .. } = skeleton;
         let has_lifetime = check_generics(&item.generics, &name);
         let fields = self.parse_fields(&item.fields);
         let visibility = convert_visibility(&item.vis);
@@ -384,7 +380,7 @@ impl<'c> Parser<'c> {
 
     /// Parse [`EnumSkeleton`] to yield a [`TypeDef`].
     fn parse_enum(&mut self, type_id: TypeId, skeleton: EnumSkeleton) -> TypeDef {
-        let EnumSkeleton { name, item, inherits, is_foreign, file_id } = skeleton;
+        let EnumSkeleton { name, file_id, is_foreign, item, inherits, .. } = skeleton;
         let has_lifetime = check_generics(&item.generics, &name);
         let variants = item.variants.iter().map(|variant| self.parse_variant(variant)).collect();
         let inherits = inherits.into_iter().map(|name| self.type_id(&name)).collect();

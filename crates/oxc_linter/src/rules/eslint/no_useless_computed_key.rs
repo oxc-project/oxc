@@ -10,6 +10,7 @@ use crate::{
     AstNode,
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
+    utils::pad_fix_with_token_boundary,
 };
 
 fn no_useless_computed_key_diagnostic(span: Span, raw: Option<Atom>) -> OxcDiagnostic {
@@ -113,7 +114,7 @@ declare_oxc_lint!(
     NoUselessComputedKey,
     eslint,
     style,
-    pending,
+    conditional_fix,
     config = NoUselessComputedKey,
 );
 
@@ -131,6 +132,7 @@ impl Rule for NoUselessComputedKey {
                     check_computed_class_member(
                         ctx,
                         property.key.span(),
+                        property.span,
                         expr,
                         false,
                         &[],
@@ -142,7 +144,15 @@ impl Rule for NoUselessComputedKey {
                 if let Some(expr) =
                     binding_prop.key.as_expression().map(Expression::get_inner_expression)
                 {
-                    check_computed_class_member(ctx, binding_prop.span, expr, false, &[], &[]);
+                    check_computed_class_member(
+                        ctx,
+                        binding_prop.span,
+                        binding_prop.span,
+                        expr,
+                        false,
+                        &[],
+                        &[],
+                    );
                 }
             }
             AstKind::PropertyDefinition(prop_def)
@@ -154,6 +164,7 @@ impl Rule for NoUselessComputedKey {
                     check_computed_class_member(
                         ctx,
                         prop_def.key.span(),
+                        prop_def.span,
                         expr,
                         prop_def.r#static,
                         &["prototype", "constructor"],
@@ -170,6 +181,7 @@ impl Rule for NoUselessComputedKey {
                     check_computed_class_member(
                         ctx,
                         method_def.span,
+                        method_def.span,
                         expr,
                         method_def.r#static,
                         &["prototype"],
@@ -184,7 +196,8 @@ impl Rule for NoUselessComputedKey {
 
 fn check_computed_class_member(
     ctx: &LintContext<'_>,
-    span: Span,
+    diagnostic_span: Span,
+    member_span: Span,
     expr: &Expression,
     is_static: bool,
     allow_static: &[&str],
@@ -199,14 +212,58 @@ fn check_computed_class_member(
                 allow_non_static.contains(&key_name)
             };
             if !allowed {
-                ctx.diagnostic(no_useless_computed_key_diagnostic(span, lit.raw));
+                report_useless_computed_key(
+                    ctx,
+                    diagnostic_span,
+                    member_span,
+                    expr.span(),
+                    lit.raw,
+                );
             }
         }
         Expression::NumericLiteral(number_lit) => {
-            ctx.diagnostic(no_useless_computed_key_diagnostic(span, number_lit.raw));
+            report_useless_computed_key(
+                ctx,
+                diagnostic_span,
+                member_span,
+                expr.span(),
+                number_lit.raw,
+            );
         }
         _ => {}
     }
+}
+
+fn report_useless_computed_key(
+    ctx: &LintContext<'_>,
+    diagnostic_span: Span,
+    member_span: Span,
+    key_span: Span,
+    raw: Option<Atom>,
+) {
+    ctx.diagnostic_with_fix(no_useless_computed_key_diagnostic(diagnostic_span, raw), |fixer| {
+        let Some(raw) = raw else {
+            return fixer.noop();
+        };
+        let Some(computed_key_span) = get_computed_key_span(ctx, member_span, key_span) else {
+            return fixer.noop();
+        };
+        if ctx.has_comments_between(computed_key_span) {
+            return fixer.noop();
+        }
+
+        let mut replacement = raw.to_string();
+        pad_fix_with_token_boundary(ctx.source_text(), computed_key_span, &mut replacement);
+        fixer.replace(computed_key_span, replacement)
+    });
+}
+
+fn get_computed_key_span(ctx: &LintContext<'_>, member_span: Span, key_span: Span) -> Option<Span> {
+    let left_bracket =
+        member_span.start + ctx.find_prev_token_within(member_span.start, key_span.start, "[")?;
+    let right_bracket =
+        key_span.end + ctx.find_next_token_within(key_span.end, member_span.end, "]")?;
+    Some(Span::new(left_bracket, right_bracket + 1))
 }
 
 #[test]
@@ -345,7 +402,7 @@ fn test() {
         ("(class { ['prototype'] })", None),
     ];
 
-    let _fix = vec![
+    let fix = vec![
         ("({ ['0']: 0 })", "({ '0': 0 })", None),
         ("var { ['0']: a } = obj", "var { '0': a } = obj", None),
         ("({ ['0+1,234']: 0 })", "({ '0+1,234': 0 })", None),
@@ -426,5 +483,6 @@ fn test() {
     ];
 
     Tester::new(NoUselessComputedKey::NAME, NoUselessComputedKey::PLUGIN, pass, fail)
+        .expect_fix(fix)
         .test_and_snapshot();
 }

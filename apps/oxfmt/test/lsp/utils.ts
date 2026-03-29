@@ -41,7 +41,7 @@ export function createLspConnection() {
     // NOTE: Config and ignore files are searched from `workspaceFolders[].uri` upward
     // Or, provide a custom config path via `initializationOptions`
     async initialize(
-      workspaceFolders: WorkspaceFolder[],
+      workspaceFolders: WorkspaceFolder[] | null,
       capabilities: ClientCapabilities = {},
       initializationOptions?: unknown,
     ) {
@@ -112,6 +112,29 @@ export async function formatFixture(
   const fileUri = pathToFileURL(filePath).href;
 
   return await formatFixtureContent(fixturesDir, fixturePath, fileUri, languageId, clientOrConfig);
+}
+
+export async function formatSingleFileFixture(
+  fixturesDir: string,
+  fixturePath: string,
+  languageId: string,
+): Promise<string> {
+  const filePath = join(fixturesDir, fixturePath);
+  const fileUri = pathToFileURL(filePath).href;
+  const content = await fs.readFile(filePath, "utf-8");
+
+  const client = createLspConnection();
+  await client.initialize(null);
+  await client.didOpen(fileUri, languageId, content);
+  const edits = await client.format(fileUri);
+
+  return `${uriSnapshotHeader(fileUri, fixturesDir)}
+--- BEFORE ---------
+${content}
+--- AFTER ----------
+${applyEdits(content, edits, languageId)}
+--------------------
+`.trim();
 }
 
 export async function formatFixtureContent(

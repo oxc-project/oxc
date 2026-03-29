@@ -13,7 +13,7 @@ use super::{
 use crate::core::JsConfigLoaderCb;
 use crate::core::{ConfigResolver, SourceFormatter, resolve_editorconfig_path, utils};
 
-pub struct FormatRunner {
+pub struct CliRunner {
     options: FormatCommand,
     cwd: PathBuf,
     #[cfg(feature = "napi")]
@@ -22,8 +22,8 @@ pub struct FormatRunner {
     js_config_loader: Option<JsConfigLoaderCb>,
 }
 
-impl FormatRunner {
-    /// Creates a new FormatRunner instance.
+impl CliRunner {
+    /// Creates a new CliRunner instance.
     ///
     /// # Panics
     /// Panics if the current working directory cannot be determined.
@@ -71,7 +71,7 @@ impl FormatRunner {
         // If `napi` feature is disabled, there is no other mode.
         #[cfg_attr(not(feature = "napi"), expect(irrefutable_let_patterns))]
         let Mode::Cli(format_mode) = mode else {
-            unreachable!("`FormatRunner` should only be called with Mode::Cli");
+            unreachable!("`CliRunner` should only be called with Mode::Cli");
         };
         let num_of_threads = rayon::current_num_threads();
 

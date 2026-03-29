@@ -4,6 +4,24 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.42.0] - 2026-03-24
+
+### 🚀 Features
+
+- 416865a formatter,oxfmt: Add doc comments for `JsdocConfig` (#20644) (leaysgur)
+- 4fec907 formatter: Add JSDoc comment formatting support (#19828) (Dunqing)
+- c21c5a7 oxfmt: Support html-in-js substitution (#20193) (leaysgur)
+- c5aeae4 formatter,oxfmt: Support `/* LANG */` comment for gql|html-in-js (#20224) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 828b56a oxfmt: Re-export all nested types (#20636) (leaysgur)
+- c1b461b oxfmt/lsp: Revert #19977, prefer file extension over languageId for format strategy (#20623) (Sysix)
+- d35b25f formatter,oxfmt: Remove redundant space after soft_line_break_or_space (#20562) (leaysgur)
+- f8c452a formatter,oxfmt: Handle css-in-js comment inside template (#20452) (leaysgur)
+- 7c233f4 formatter,oxfmt: Handle nested `BinaryExpression` for tailwind trailing spaces (#20450) (leaysgur)
+- 71628e6 formatter,oxfmt: Sort imports should not flush Empty line (#20443) (leaysgur)
+
 ## [0.41.0] - 2026-03-16
 
 ### 🚀 Features

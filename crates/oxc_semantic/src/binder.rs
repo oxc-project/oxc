@@ -152,6 +152,37 @@ impl<'a> Binder<'a> for Function<'a> {
             let symbol_id = builder.declare_symbol(ident.span, ident.name, includes, excludes);
             ident.symbol_id.set(Some(symbol_id));
 
+            // Annex B.3.2.1: In sloppy mode, plain function declarations inside block
+            // scopes also create an implicit var-like binding in the enclosing function
+            // scope. Hoist to the var scope — same pattern as var hoisting (line 46).
+            let scope_flags = builder.current_scope_flags();
+            if is_declaration // function expressions are bound in their own (var) scope
+                && !self.r#async // Annex B only applies to plain functions
+                && !self.generator // not generators or async generators
+                && !builder.source_type.is_typescript() // Annex B is JavaScript-only
+                && !scope_flags.is_var() // already in a var scope, no hoisting needed
+                && !scope_flags.is_strict_mode()
+            // no Annex B in strict mode / modules
+            {
+                let block_scope_id = builder.current_scope_id;
+                let var_scope_id = builder
+                    .scoping
+                    .scope_ancestors(block_scope_id)
+                    .skip(1)
+                    .find(|&id| builder.scoping.scope_flags(id).is_var());
+                if let Some(var_scope_id) = var_scope_id
+                    && !builder.scoping.scope_has_binding(var_scope_id, ident.name)
+                {
+                    builder.scoping.move_binding(block_scope_id, var_scope_id, ident.name);
+                    builder.scoping.set_symbol_scope_id(symbol_id, var_scope_id);
+                    builder
+                        .hoisting_variables
+                        .entry(block_scope_id)
+                        .or_default()
+                        .insert(ident.name, symbol_id);
+                }
+            }
+
             // Save `@__NO_SIDE_EFFECTS__`
             if self.pure {
                 builder.scoping.no_side_effects.insert(symbol_id);

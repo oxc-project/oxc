@@ -16,7 +16,8 @@ A-cli:
 
 A-editor:
   - changed-files:
-      - any-glob-to-any-file: ["crates/oxc_language_server/**", "editors/**"]
+      - any-glob-to-any-file:
+          ["crates/oxc_language_server/**", "apps/oxlint/src/lsp/**", "apps/oxfmt/src/lsp/**"]
 
 A-formatter:
   - changed-files:

@@ -40,18 +40,6 @@ version = "1.0.0"
 --------------------"
 `;
 
-exports[`LSP formatting > basic formatting > should handle format/test.ts.txt 1`] = `
-"--- URI -----------
-file://<fixture>/format/test.ts.txt
---- BEFORE ---------
-const   x   =   1
-
---- AFTER ----------
-const x = 1;
-
---------------------"
-`;
-
 exports[`LSP formatting > basic formatting > should handle format/test.tsx 1`] = `
 "--- URI -----------
 file://<fixture>/format/test.tsx

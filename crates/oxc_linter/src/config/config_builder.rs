@@ -216,9 +216,10 @@ impl ConfigStoreBuilder {
             }
         }
 
-        // If external plugins are not enabled (language server), then skip loading JS plugins.
-        // This is so that a project can use JS plugins via `oxlint` CLI, and language server
-        // will just silently ignore them - rather than crashing.
+        // Only attempt to load external JS plugins when external plugins are enabled,
+        // i.e., when the external JS linter is available/initialized. If the store is
+        // disabled, configs that reference external plugins are accepted but the plugins
+        // themselves are not loaded, to avoid failing config parsing.
         if !external_plugins.is_empty() && external_plugin_store.is_enabled() {
             let Some(external_linter) = external_linter else {
                 #[expect(clippy::missing_panics_doc, reason = "infallible")]
@@ -462,8 +463,11 @@ impl ConfigStoreBuilder {
     }
 
     /// Builds a [`Config`] from the current state of the builder.
+    ///
     /// # Errors
-    /// Returns [`ConfigBuilderError::UnknownRules`] if there are rules that could not be matched.
+    ///
+    /// Returns [`ConfigBuilderError`] if the configured rules or overrides
+    /// cannot be resolved.
     pub fn build(
         mut self,
         external_plugin_store: &mut ExternalPluginStore,
@@ -1536,6 +1540,64 @@ mod test {
             no_const_assign_rule.is_none(),
             "no-const-assign should be disabled (off) by current config's override, not error from extended config"
         );
+    }
+
+    #[test]
+    fn test_unknown_builtin_rule_errors_in_root_config() {
+        let oxlintrc: Oxlintrc = serde_json::from_str(
+            r#"
+            {
+                "rules": {
+                    "no-console-typo": "error"
+                }
+            }
+            "#,
+        )
+        .unwrap();
+
+        let mut external_plugin_store = ExternalPluginStore::default();
+        let err = ConfigStoreBuilder::from_oxlintrc(
+            true,
+            oxlintrc,
+            None,
+            &mut external_plugin_store,
+            None,
+        )
+        .unwrap_err();
+
+        assert_eq!(err.to_string(), "Rule 'no-console-typo' not found in plugin 'eslint'");
+    }
+
+    #[test]
+    fn test_unknown_builtin_rule_errors_in_overrides() {
+        let oxlintrc: Oxlintrc = serde_json::from_str(
+            r#"
+            {
+                "overrides": [
+                    {
+                        "files": ["*.js"],
+                        "rules": {
+                            "no-console-typo": "error"
+                        }
+                    }
+                ]
+            }
+            "#,
+        )
+        .unwrap();
+
+        let mut external_plugin_store = ExternalPluginStore::default();
+        let builder = ConfigStoreBuilder::from_oxlintrc(
+            true,
+            oxlintrc,
+            None,
+            &mut external_plugin_store,
+            None,
+        )
+        .unwrap();
+        let err = builder.build(&mut external_plugin_store).unwrap_err();
+
+        assert_eq!(err.to_string(), "Rule 'no-console-typo' not found in plugin 'eslint'");
     }
 
     fn config_store_from_path(path: &str) -> Config {

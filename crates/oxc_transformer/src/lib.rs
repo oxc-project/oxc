@@ -11,7 +11,7 @@ use oxc_allocator::{Allocator, TakeIn, Vec as ArenaVec};
 use oxc_ast::{AstBuilder, ast::*};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::Scoping;
-use oxc_span::SPAN;
+use oxc_span::{GetSpan, SPAN};
 use oxc_traverse::{ReusableTraverseCtx, Traverse, traverse_mut_with_ctx};
 
 // Core
@@ -139,9 +139,15 @@ impl<'a> Transformer<'a> {
         self.state.source_type = program.source_type;
         self.state.source_text = program.source_text;
 
-        if program.source_type.is_jsx() {
+        if program.source_type.is_jsx()
+            && let Some(first_statement) = program.body.first()
+        {
+            // Only scan comments before the first statement for pragmas,
+            // since pragmas are file-level directives (aligned with TypeScript and SWC).
+            let leading_comments_end =
+                program.comments.partition_point(|c| c.span.start < first_statement.span().start);
             jsx::update_options_with_comments(
-                &program.comments,
+                &program.comments[..leading_comments_end],
                 &mut self.typescript,
                 &mut self.jsx,
                 &self.state,

@@ -70,13 +70,11 @@ const mixedQuery = gql\`
   }
 \`;
 
-const mixedTemplate = html\`
-  <div><h1>Title</h1></div>
-\`;
+const mixedTemplate = html\`<div><h1>Title</h1></div>\`;
 
 const mixedDocs = md\`
-  #Documentation
-  This is **important**.
+#Documentation
+This is **important**.
 \`;
 
 // Multi-line with blank lines - should preserve blank lines without trailing whitespace
@@ -281,11 +279,9 @@ export class AppComponent1 {}
 // Array form styles
 @Component({
   selector: "app-test",
-  template: \`
-    <ul>
-      <li>test</li>
-    </ul>
-  \`,
+  template: \`<ul>
+    <li>test</li>
+  </ul> \`,
   styles: [
     \`
       :host {
@@ -548,16 +544,12 @@ const component = html\`<button type="button" onclick="handleClick()">Click</but
 
 --- AFTER ----------
 // Tagged template literals with html tag
-const template = html\`
-  <div class="container">
-    <h1>Hello</h1>
-    <p>World</p>
-  </div>
-\`;
+const template = html\`<div class="container">
+  <h1>Hello</h1>
+  <p>World</p>
+</div>\`;
 
-const component = html\`
-  <button type="button" onclick="handleClick()">Click</button>
-\`;
+const component = html\`<button type="button" onclick="handleClick()">Click</button>\`;
 
 --------------------"
 `;
@@ -580,17 +572,18 @@ npm install package
 --- AFTER ----------
 // Tagged template literals with md and markdown tags
 const documentation = md\`
-  #Heading
-  This is **bold**.
-  -Item 1
-  -Item 2
+#Heading
+This is **bold**.
+-Item 1
+-Item 2
 \`;
 
 const readme = markdown\`
-  ##Installation
-  \\\`\\\`\\\`bash
-  npm install package
-  \\\`\\\`\\\`
+##Installation
+
+~~~bash
+npm install package
+~~~
 \`;
 
 --------------------"
@@ -827,16 +820,12 @@ const component = html\`<button type="button" onclick="handleClick()">Click</but
 
 --- AFTER ----------
 // Tagged template literals with html tag
-const template = html\`
-  <div class="container">
-    <h1>Hello</h1>
-    <p>World</p>
-  </div>
-\`;
+const template = html\`<div class="container">
+  <h1>Hello</h1>
+  <p>World</p>
+</div>\`;
 
-const component = html\`
-  <button type="button" onclick="handleClick()">Click</button>
-\`;
+const component = html\`<button type="button" onclick="handleClick()">Click</button>\`;
 
 --------------------
 
@@ -857,17 +846,18 @@ npm install package
 --- AFTER ----------
 // Tagged template literals with md and markdown tags
 const documentation = md\`
-  #Heading
-  This is **bold**.
-  -Item 1
-  -Item 2
+#Heading
+This is **bold**.
+-Item 1
+-Item 2
 \`;
 
 const readme = markdown\`
-  ##Installation
-  \\\`\\\`\\\`bash
-  npm install package
-  \\\`\\\`\\\`
+##Installation
+
+~~~bash
+npm install package
+~~~
 \`;
 
 --------------------
@@ -945,11 +935,9 @@ export class AppComponent1 {}
 // Array form styles
 @Component({
   selector: "app-test",
-  template: \`
-    <ul>
-      <li>test</li>
-    </ul>
-  \`,
+  template: \`<ul>
+    <li>test</li>
+  </ul> \`,
   styles: [
     \`
       :host {

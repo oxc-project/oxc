@@ -14,7 +14,6 @@ describe("LSP formatting", () => {
       ["format/test.toml", "toml"],
       ["format/formatted.ts", "typescript"],
       ["format/test.txt", "plaintext"],
-      ["format/test.ts.txt", "typescript"],
     ])("should handle %s", async (path, languageId) => {
       expect(await formatFixture(FIXTURES_DIR, path, languageId)).toMatchSnapshot();
     });

@@ -182,7 +182,7 @@ pub struct RegExpPattern<'a> {
     ///
     /// If `pattern` is defined, `pattern` and `text` must be in sync.
     /// i.e. If you alter the regexp by mutating `pattern`, you must regenerate `text` to match it,
-    /// using `format_atom!("{}", &pattern)`.
+    /// using `format_atom!(&allocator, "{pattern}")`.
     ///
     /// `oxc_codegen` ignores `pattern` field, and prints `text`.
     #[estree(rename = "pattern")]

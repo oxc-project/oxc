@@ -555,6 +555,7 @@ pub use crate::rules::unicorn::consistent_date_clone::ConsistentDateClone as Uni
 pub use crate::rules::unicorn::consistent_empty_array_spread::ConsistentEmptyArraySpread as UnicornConsistentEmptyArraySpread;
 pub use crate::rules::unicorn::consistent_existence_index_check::ConsistentExistenceIndexCheck as UnicornConsistentExistenceIndexCheck;
 pub use crate::rules::unicorn::consistent_function_scoping::ConsistentFunctionScoping as UnicornConsistentFunctionScoping;
+pub use crate::rules::unicorn::custom_error_definition::CustomErrorDefinition as UnicornCustomErrorDefinition;
 pub use crate::rules::unicorn::empty_brace_spaces::EmptyBraceSpaces as UnicornEmptyBraceSpaces;
 pub use crate::rules::unicorn::error_message::ErrorMessage as UnicornErrorMessage;
 pub use crate::rules::unicorn::escape_case::EscapeCase as UnicornEscapeCase;
@@ -680,15 +681,20 @@ pub use crate::rules::vitest::hoisted_apis_on_top::HoistedApisOnTop as VitestHoi
 pub use crate::rules::vitest::no_conditional_tests::NoConditionalTests as VitestNoConditionalTests;
 pub use crate::rules::vitest::no_import_node_test::NoImportNodeTest as VitestNoImportNodeTest;
 pub use crate::rules::vitest::no_importing_vitest_globals::NoImportingVitestGlobals as VitestNoImportingVitestGlobals;
+pub use crate::rules::vitest::prefer_called_exactly_once_with::PreferCalledExactlyOnceWith as VitestPreferCalledExactlyOnceWith;
 pub use crate::rules::vitest::prefer_called_once::PreferCalledOnce as VitestPreferCalledOnce;
 pub use crate::rules::vitest::prefer_called_times::PreferCalledTimes as VitestPreferCalledTimes;
 pub use crate::rules::vitest::prefer_describe_function_title::PreferDescribeFunctionTitle as VitestPreferDescribeFunctionTitle;
 pub use crate::rules::vitest::prefer_expect_type_of::PreferExpectTypeOf as VitestPreferExpectTypeOf;
 pub use crate::rules::vitest::prefer_import_in_mock::PreferImportInMock as VitestPreferImportInMock;
+pub use crate::rules::vitest::prefer_strict_boolean_matchers::PreferStrictBooleanMatchers as VitestPreferStrictBooleanMatchers;
 pub use crate::rules::vitest::prefer_to_be_falsy::PreferToBeFalsy as VitestPreferToBeFalsy;
 pub use crate::rules::vitest::prefer_to_be_object::PreferToBeObject as VitestPreferToBeObject;
 pub use crate::rules::vitest::prefer_to_be_truthy::PreferToBeTruthy as VitestPreferToBeTruthy;
+pub use crate::rules::vitest::require_awaited_expect_poll::RequireAwaitedExpectPoll as VitestRequireAwaitedExpectPoll;
 pub use crate::rules::vitest::require_local_test_context_for_concurrent_snapshots::RequireLocalTestContextForConcurrentSnapshots as VitestRequireLocalTestContextForConcurrentSnapshots;
+pub use crate::rules::vitest::require_mock_type_parameters::RequireMockTypeParameters as VitestRequireMockTypeParameters;
+pub use crate::rules::vitest::require_test_timeout::RequireTestTimeout as VitestRequireTestTimeout;
 pub use crate::rules::vitest::warn_todo::WarnTodo as VitestWarnTodo;
 pub use crate::rules::vue::define_emits_declaration::DefineEmitsDeclaration as VueDefineEmitsDeclaration;
 pub use crate::rules::vue::define_props_declaration::DefinePropsDeclaration as VueDefinePropsDeclaration;
@@ -1147,6 +1153,7 @@ pub enum RuleEnum {
     UnicornConsistentEmptyArraySpread(UnicornConsistentEmptyArraySpread),
     UnicornConsistentExistenceIndexCheck(UnicornConsistentExistenceIndexCheck),
     UnicornConsistentFunctionScoping(UnicornConsistentFunctionScoping),
+    UnicornCustomErrorDefinition(UnicornCustomErrorDefinition),
     UnicornEmptyBraceSpaces(UnicornEmptyBraceSpaces),
     UnicornErrorMessage(UnicornErrorMessage),
     UnicornEscapeCase(UnicornEscapeCase),
@@ -1384,17 +1391,22 @@ pub enum RuleEnum {
     VitestNoConditionalTests(VitestNoConditionalTests),
     VitestNoImportNodeTest(VitestNoImportNodeTest),
     VitestNoImportingVitestGlobals(VitestNoImportingVitestGlobals),
+    VitestPreferCalledExactlyOnceWith(VitestPreferCalledExactlyOnceWith),
     VitestPreferCalledOnce(VitestPreferCalledOnce),
     VitestPreferCalledTimes(VitestPreferCalledTimes),
     VitestPreferDescribeFunctionTitle(VitestPreferDescribeFunctionTitle),
     VitestPreferExpectTypeOf(VitestPreferExpectTypeOf),
     VitestPreferImportInMock(VitestPreferImportInMock),
+    VitestPreferStrictBooleanMatchers(VitestPreferStrictBooleanMatchers),
     VitestPreferToBeFalsy(VitestPreferToBeFalsy),
     VitestPreferToBeObject(VitestPreferToBeObject),
     VitestPreferToBeTruthy(VitestPreferToBeTruthy),
+    VitestRequireAwaitedExpectPoll(VitestRequireAwaitedExpectPoll),
     VitestRequireLocalTestContextForConcurrentSnapshots(
         VitestRequireLocalTestContextForConcurrentSnapshots,
     ),
+    VitestRequireMockTypeParameters(VitestRequireMockTypeParameters),
+    VitestRequireTestTimeout(VitestRequireTestTimeout),
     VitestWarnTodo(VitestWarnTodo),
     NodeGlobalRequire(NodeGlobalRequire),
     NodeHandleCallbackErr(NodeHandleCallbackErr),
@@ -1900,7 +1912,8 @@ const UNICORN_CONSISTENT_EXISTENCE_INDEX_CHECK_ID: usize =
     UNICORN_CONSISTENT_EMPTY_ARRAY_SPREAD_ID + 1usize;
 const UNICORN_CONSISTENT_FUNCTION_SCOPING_ID: usize =
     UNICORN_CONSISTENT_EXISTENCE_INDEX_CHECK_ID + 1usize;
-const UNICORN_EMPTY_BRACE_SPACES_ID: usize = UNICORN_CONSISTENT_FUNCTION_SCOPING_ID + 1usize;
+const UNICORN_CUSTOM_ERROR_DEFINITION_ID: usize = UNICORN_CONSISTENT_FUNCTION_SCOPING_ID + 1usize;
+const UNICORN_EMPTY_BRACE_SPACES_ID: usize = UNICORN_CUSTOM_ERROR_DEFINITION_ID + 1usize;
 const UNICORN_ERROR_MESSAGE_ID: usize = UNICORN_EMPTY_BRACE_SPACES_ID + 1usize;
 const UNICORN_ESCAPE_CASE_ID: usize = UNICORN_ERROR_MESSAGE_ID + 1usize;
 const UNICORN_EXPLICIT_LENGTH_CHECK_ID: usize = UNICORN_ESCAPE_CASE_ID + 1usize;
@@ -2167,18 +2180,24 @@ const VITEST_HOISTED_APIS_ON_TOP_ID: usize = VITEST_CONSISTENT_VITEST_VI_ID + 1u
 const VITEST_NO_CONDITIONAL_TESTS_ID: usize = VITEST_HOISTED_APIS_ON_TOP_ID + 1usize;
 const VITEST_NO_IMPORT_NODE_TEST_ID: usize = VITEST_NO_CONDITIONAL_TESTS_ID + 1usize;
 const VITEST_NO_IMPORTING_VITEST_GLOBALS_ID: usize = VITEST_NO_IMPORT_NODE_TEST_ID + 1usize;
-const VITEST_PREFER_CALLED_ONCE_ID: usize = VITEST_NO_IMPORTING_VITEST_GLOBALS_ID + 1usize;
+const VITEST_PREFER_CALLED_EXACTLY_ONCE_WITH_ID: usize =
+    VITEST_NO_IMPORTING_VITEST_GLOBALS_ID + 1usize;
+const VITEST_PREFER_CALLED_ONCE_ID: usize = VITEST_PREFER_CALLED_EXACTLY_ONCE_WITH_ID + 1usize;
 const VITEST_PREFER_CALLED_TIMES_ID: usize = VITEST_PREFER_CALLED_ONCE_ID + 1usize;
 const VITEST_PREFER_DESCRIBE_FUNCTION_TITLE_ID: usize = VITEST_PREFER_CALLED_TIMES_ID + 1usize;
 const VITEST_PREFER_EXPECT_TYPE_OF_ID: usize = VITEST_PREFER_DESCRIBE_FUNCTION_TITLE_ID + 1usize;
 const VITEST_PREFER_IMPORT_IN_MOCK_ID: usize = VITEST_PREFER_EXPECT_TYPE_OF_ID + 1usize;
-const VITEST_PREFER_TO_BE_FALSY_ID: usize = VITEST_PREFER_IMPORT_IN_MOCK_ID + 1usize;
+const VITEST_PREFER_STRICT_BOOLEAN_MATCHERS_ID: usize = VITEST_PREFER_IMPORT_IN_MOCK_ID + 1usize;
+const VITEST_PREFER_TO_BE_FALSY_ID: usize = VITEST_PREFER_STRICT_BOOLEAN_MATCHERS_ID + 1usize;
 const VITEST_PREFER_TO_BE_OBJECT_ID: usize = VITEST_PREFER_TO_BE_FALSY_ID + 1usize;
 const VITEST_PREFER_TO_BE_TRUTHY_ID: usize = VITEST_PREFER_TO_BE_OBJECT_ID + 1usize;
+const VITEST_REQUIRE_AWAITED_EXPECT_POLL_ID: usize = VITEST_PREFER_TO_BE_TRUTHY_ID + 1usize;
 const VITEST_REQUIRE_LOCAL_TEST_CONTEXT_FOR_CONCURRENT_SNAPSHOTS_ID: usize =
-    VITEST_PREFER_TO_BE_TRUTHY_ID + 1usize;
-const VITEST_WARN_TODO_ID: usize =
+    VITEST_REQUIRE_AWAITED_EXPECT_POLL_ID + 1usize;
+const VITEST_REQUIRE_MOCK_TYPE_PARAMETERS_ID: usize =
     VITEST_REQUIRE_LOCAL_TEST_CONTEXT_FOR_CONCURRENT_SNAPSHOTS_ID + 1usize;
+const VITEST_REQUIRE_TEST_TIMEOUT_ID: usize = VITEST_REQUIRE_MOCK_TYPE_PARAMETERS_ID + 1usize;
+const VITEST_WARN_TODO_ID: usize = VITEST_REQUIRE_TEST_TIMEOUT_ID + 1usize;
 const NODE_GLOBAL_REQUIRE_ID: usize = VITEST_WARN_TODO_ID + 1usize;
 const NODE_HANDLE_CALLBACK_ERR_ID: usize = NODE_GLOBAL_REQUIRE_ID + 1usize;
 const NODE_NO_EXPORTS_ASSIGN_ID: usize = NODE_HANDLE_CALLBACK_ERR_ID + 1usize;
@@ -2710,6 +2729,7 @@ impl RuleEnum {
                 UNICORN_CONSISTENT_EXISTENCE_INDEX_CHECK_ID
             }
             Self::UnicornConsistentFunctionScoping(_) => UNICORN_CONSISTENT_FUNCTION_SCOPING_ID,
+            Self::UnicornCustomErrorDefinition(_) => UNICORN_CUSTOM_ERROR_DEFINITION_ID,
             Self::UnicornEmptyBraceSpaces(_) => UNICORN_EMPTY_BRACE_SPACES_ID,
             Self::UnicornErrorMessage(_) => UNICORN_ERROR_MESSAGE_ID,
             Self::UnicornEscapeCase(_) => UNICORN_ESCAPE_CASE_ID,
@@ -2977,17 +2997,22 @@ impl RuleEnum {
             Self::VitestNoConditionalTests(_) => VITEST_NO_CONDITIONAL_TESTS_ID,
             Self::VitestNoImportNodeTest(_) => VITEST_NO_IMPORT_NODE_TEST_ID,
             Self::VitestNoImportingVitestGlobals(_) => VITEST_NO_IMPORTING_VITEST_GLOBALS_ID,
+            Self::VitestPreferCalledExactlyOnceWith(_) => VITEST_PREFER_CALLED_EXACTLY_ONCE_WITH_ID,
             Self::VitestPreferCalledOnce(_) => VITEST_PREFER_CALLED_ONCE_ID,
             Self::VitestPreferCalledTimes(_) => VITEST_PREFER_CALLED_TIMES_ID,
             Self::VitestPreferDescribeFunctionTitle(_) => VITEST_PREFER_DESCRIBE_FUNCTION_TITLE_ID,
             Self::VitestPreferExpectTypeOf(_) => VITEST_PREFER_EXPECT_TYPE_OF_ID,
             Self::VitestPreferImportInMock(_) => VITEST_PREFER_IMPORT_IN_MOCK_ID,
+            Self::VitestPreferStrictBooleanMatchers(_) => VITEST_PREFER_STRICT_BOOLEAN_MATCHERS_ID,
             Self::VitestPreferToBeFalsy(_) => VITEST_PREFER_TO_BE_FALSY_ID,
             Self::VitestPreferToBeObject(_) => VITEST_PREFER_TO_BE_OBJECT_ID,
             Self::VitestPreferToBeTruthy(_) => VITEST_PREFER_TO_BE_TRUTHY_ID,
+            Self::VitestRequireAwaitedExpectPoll(_) => VITEST_REQUIRE_AWAITED_EXPECT_POLL_ID,
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(_) => {
                 VITEST_REQUIRE_LOCAL_TEST_CONTEXT_FOR_CONCURRENT_SNAPSHOTS_ID
             }
+            Self::VitestRequireMockTypeParameters(_) => VITEST_REQUIRE_MOCK_TYPE_PARAMETERS_ID,
+            Self::VitestRequireTestTimeout(_) => VITEST_REQUIRE_TEST_TIMEOUT_ID,
             Self::VitestWarnTodo(_) => VITEST_WARN_TODO_ID,
             Self::NodeGlobalRequire(_) => NODE_GLOBAL_REQUIRE_ID,
             Self::NodeHandleCallbackErr(_) => NODE_HANDLE_CALLBACK_ERR_ID,
@@ -3515,6 +3540,7 @@ impl RuleEnum {
                 UnicornConsistentExistenceIndexCheck::NAME
             }
             Self::UnicornConsistentFunctionScoping(_) => UnicornConsistentFunctionScoping::NAME,
+            Self::UnicornCustomErrorDefinition(_) => UnicornCustomErrorDefinition::NAME,
             Self::UnicornEmptyBraceSpaces(_) => UnicornEmptyBraceSpaces::NAME,
             Self::UnicornErrorMessage(_) => UnicornErrorMessage::NAME,
             Self::UnicornEscapeCase(_) => UnicornEscapeCase::NAME,
@@ -3776,17 +3802,22 @@ impl RuleEnum {
             Self::VitestNoConditionalTests(_) => VitestNoConditionalTests::NAME,
             Self::VitestNoImportNodeTest(_) => VitestNoImportNodeTest::NAME,
             Self::VitestNoImportingVitestGlobals(_) => VitestNoImportingVitestGlobals::NAME,
+            Self::VitestPreferCalledExactlyOnceWith(_) => VitestPreferCalledExactlyOnceWith::NAME,
             Self::VitestPreferCalledOnce(_) => VitestPreferCalledOnce::NAME,
             Self::VitestPreferCalledTimes(_) => VitestPreferCalledTimes::NAME,
             Self::VitestPreferDescribeFunctionTitle(_) => VitestPreferDescribeFunctionTitle::NAME,
             Self::VitestPreferExpectTypeOf(_) => VitestPreferExpectTypeOf::NAME,
             Self::VitestPreferImportInMock(_) => VitestPreferImportInMock::NAME,
+            Self::VitestPreferStrictBooleanMatchers(_) => VitestPreferStrictBooleanMatchers::NAME,
             Self::VitestPreferToBeFalsy(_) => VitestPreferToBeFalsy::NAME,
             Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::NAME,
             Self::VitestPreferToBeTruthy(_) => VitestPreferToBeTruthy::NAME,
+            Self::VitestRequireAwaitedExpectPoll(_) => VitestRequireAwaitedExpectPoll::NAME,
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(_) => {
                 VitestRequireLocalTestContextForConcurrentSnapshots::NAME
             }
+            Self::VitestRequireMockTypeParameters(_) => VitestRequireMockTypeParameters::NAME,
+            Self::VitestRequireTestTimeout(_) => VitestRequireTestTimeout::NAME,
             Self::VitestWarnTodo(_) => VitestWarnTodo::NAME,
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::NAME,
             Self::NodeHandleCallbackErr(_) => NodeHandleCallbackErr::NAME,
@@ -4342,6 +4373,7 @@ impl RuleEnum {
                 UnicornConsistentExistenceIndexCheck::CATEGORY
             }
             Self::UnicornConsistentFunctionScoping(_) => UnicornConsistentFunctionScoping::CATEGORY,
+            Self::UnicornCustomErrorDefinition(_) => UnicornCustomErrorDefinition::CATEGORY,
             Self::UnicornEmptyBraceSpaces(_) => UnicornEmptyBraceSpaces::CATEGORY,
             Self::UnicornErrorMessage(_) => UnicornErrorMessage::CATEGORY,
             Self::UnicornEscapeCase(_) => UnicornEscapeCase::CATEGORY,
@@ -4617,6 +4649,9 @@ impl RuleEnum {
             Self::VitestNoConditionalTests(_) => VitestNoConditionalTests::CATEGORY,
             Self::VitestNoImportNodeTest(_) => VitestNoImportNodeTest::CATEGORY,
             Self::VitestNoImportingVitestGlobals(_) => VitestNoImportingVitestGlobals::CATEGORY,
+            Self::VitestPreferCalledExactlyOnceWith(_) => {
+                VitestPreferCalledExactlyOnceWith::CATEGORY
+            }
             Self::VitestPreferCalledOnce(_) => VitestPreferCalledOnce::CATEGORY,
             Self::VitestPreferCalledTimes(_) => VitestPreferCalledTimes::CATEGORY,
             Self::VitestPreferDescribeFunctionTitle(_) => {
@@ -4624,12 +4659,18 @@ impl RuleEnum {
             }
             Self::VitestPreferExpectTypeOf(_) => VitestPreferExpectTypeOf::CATEGORY,
             Self::VitestPreferImportInMock(_) => VitestPreferImportInMock::CATEGORY,
+            Self::VitestPreferStrictBooleanMatchers(_) => {
+                VitestPreferStrictBooleanMatchers::CATEGORY
+            }
             Self::VitestPreferToBeFalsy(_) => VitestPreferToBeFalsy::CATEGORY,
             Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::CATEGORY,
             Self::VitestPreferToBeTruthy(_) => VitestPreferToBeTruthy::CATEGORY,
+            Self::VitestRequireAwaitedExpectPoll(_) => VitestRequireAwaitedExpectPoll::CATEGORY,
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(_) => {
                 VitestRequireLocalTestContextForConcurrentSnapshots::CATEGORY
             }
+            Self::VitestRequireMockTypeParameters(_) => VitestRequireMockTypeParameters::CATEGORY,
+            Self::VitestRequireTestTimeout(_) => VitestRequireTestTimeout::CATEGORY,
             Self::VitestWarnTodo(_) => VitestWarnTodo::CATEGORY,
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::CATEGORY,
             Self::NodeHandleCallbackErr(_) => NodeHandleCallbackErr::CATEGORY,
@@ -5160,6 +5201,7 @@ impl RuleEnum {
                 UnicornConsistentExistenceIndexCheck::FIX
             }
             Self::UnicornConsistentFunctionScoping(_) => UnicornConsistentFunctionScoping::FIX,
+            Self::UnicornCustomErrorDefinition(_) => UnicornCustomErrorDefinition::FIX,
             Self::UnicornEmptyBraceSpaces(_) => UnicornEmptyBraceSpaces::FIX,
             Self::UnicornErrorMessage(_) => UnicornErrorMessage::FIX,
             Self::UnicornEscapeCase(_) => UnicornEscapeCase::FIX,
@@ -5421,17 +5463,22 @@ impl RuleEnum {
             Self::VitestNoConditionalTests(_) => VitestNoConditionalTests::FIX,
             Self::VitestNoImportNodeTest(_) => VitestNoImportNodeTest::FIX,
             Self::VitestNoImportingVitestGlobals(_) => VitestNoImportingVitestGlobals::FIX,
+            Self::VitestPreferCalledExactlyOnceWith(_) => VitestPreferCalledExactlyOnceWith::FIX,
             Self::VitestPreferCalledOnce(_) => VitestPreferCalledOnce::FIX,
             Self::VitestPreferCalledTimes(_) => VitestPreferCalledTimes::FIX,
             Self::VitestPreferDescribeFunctionTitle(_) => VitestPreferDescribeFunctionTitle::FIX,
             Self::VitestPreferExpectTypeOf(_) => VitestPreferExpectTypeOf::FIX,
             Self::VitestPreferImportInMock(_) => VitestPreferImportInMock::FIX,
+            Self::VitestPreferStrictBooleanMatchers(_) => VitestPreferStrictBooleanMatchers::FIX,
             Self::VitestPreferToBeFalsy(_) => VitestPreferToBeFalsy::FIX,
             Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::FIX,
             Self::VitestPreferToBeTruthy(_) => VitestPreferToBeTruthy::FIX,
+            Self::VitestRequireAwaitedExpectPoll(_) => VitestRequireAwaitedExpectPoll::FIX,
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(_) => {
                 VitestRequireLocalTestContextForConcurrentSnapshots::FIX
             }
+            Self::VitestRequireMockTypeParameters(_) => VitestRequireMockTypeParameters::FIX,
+            Self::VitestRequireTestTimeout(_) => VitestRequireTestTimeout::FIX,
             Self::VitestWarnTodo(_) => VitestWarnTodo::FIX,
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::FIX,
             Self::NodeHandleCallbackErr(_) => NodeHandleCallbackErr::FIX,
@@ -6068,6 +6115,7 @@ impl RuleEnum {
             Self::UnicornConsistentFunctionScoping(_) => {
                 UnicornConsistentFunctionScoping::documentation()
             }
+            Self::UnicornCustomErrorDefinition(_) => UnicornCustomErrorDefinition::documentation(),
             Self::UnicornEmptyBraceSpaces(_) => UnicornEmptyBraceSpaces::documentation(),
             Self::UnicornErrorMessage(_) => UnicornErrorMessage::documentation(),
             Self::UnicornEscapeCase(_) => UnicornEscapeCase::documentation(),
@@ -6415,6 +6463,9 @@ impl RuleEnum {
             Self::VitestNoImportingVitestGlobals(_) => {
                 VitestNoImportingVitestGlobals::documentation()
             }
+            Self::VitestPreferCalledExactlyOnceWith(_) => {
+                VitestPreferCalledExactlyOnceWith::documentation()
+            }
             Self::VitestPreferCalledOnce(_) => VitestPreferCalledOnce::documentation(),
             Self::VitestPreferCalledTimes(_) => VitestPreferCalledTimes::documentation(),
             Self::VitestPreferDescribeFunctionTitle(_) => {
@@ -6422,12 +6473,22 @@ impl RuleEnum {
             }
             Self::VitestPreferExpectTypeOf(_) => VitestPreferExpectTypeOf::documentation(),
             Self::VitestPreferImportInMock(_) => VitestPreferImportInMock::documentation(),
+            Self::VitestPreferStrictBooleanMatchers(_) => {
+                VitestPreferStrictBooleanMatchers::documentation()
+            }
             Self::VitestPreferToBeFalsy(_) => VitestPreferToBeFalsy::documentation(),
             Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::documentation(),
             Self::VitestPreferToBeTruthy(_) => VitestPreferToBeTruthy::documentation(),
+            Self::VitestRequireAwaitedExpectPoll(_) => {
+                VitestRequireAwaitedExpectPoll::documentation()
+            }
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(_) => {
                 VitestRequireLocalTestContextForConcurrentSnapshots::documentation()
             }
+            Self::VitestRequireMockTypeParameters(_) => {
+                VitestRequireMockTypeParameters::documentation()
+            }
+            Self::VitestRequireTestTimeout(_) => VitestRequireTestTimeout::documentation(),
             Self::VitestWarnTodo(_) => VitestWarnTodo::documentation(),
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::documentation(),
             Self::NodeHandleCallbackErr(_) => NodeHandleCallbackErr::documentation(),
@@ -7665,6 +7726,10 @@ impl RuleEnum {
                 UnicornConsistentFunctionScoping::config_schema(generator)
                     .or_else(|| UnicornConsistentFunctionScoping::schema(generator))
             }
+            Self::UnicornCustomErrorDefinition(_) => {
+                UnicornCustomErrorDefinition::config_schema(generator)
+                    .or_else(|| UnicornCustomErrorDefinition::schema(generator))
+            }
             Self::UnicornEmptyBraceSpaces(_) => UnicornEmptyBraceSpaces::config_schema(generator)
                 .or_else(|| UnicornEmptyBraceSpaces::schema(generator)),
             Self::UnicornErrorMessage(_) => UnicornErrorMessage::config_schema(generator)
@@ -8352,6 +8417,10 @@ impl RuleEnum {
                 VitestNoImportingVitestGlobals::config_schema(generator)
                     .or_else(|| VitestNoImportingVitestGlobals::schema(generator))
             }
+            Self::VitestPreferCalledExactlyOnceWith(_) => {
+                VitestPreferCalledExactlyOnceWith::config_schema(generator)
+                    .or_else(|| VitestPreferCalledExactlyOnceWith::schema(generator))
+            }
             Self::VitestPreferCalledOnce(_) => VitestPreferCalledOnce::config_schema(generator)
                 .or_else(|| VitestPreferCalledOnce::schema(generator)),
             Self::VitestPreferCalledTimes(_) => VitestPreferCalledTimes::config_schema(generator)
@@ -8364,18 +8433,32 @@ impl RuleEnum {
                 .or_else(|| VitestPreferExpectTypeOf::schema(generator)),
             Self::VitestPreferImportInMock(_) => VitestPreferImportInMock::config_schema(generator)
                 .or_else(|| VitestPreferImportInMock::schema(generator)),
+            Self::VitestPreferStrictBooleanMatchers(_) => {
+                VitestPreferStrictBooleanMatchers::config_schema(generator)
+                    .or_else(|| VitestPreferStrictBooleanMatchers::schema(generator))
+            }
             Self::VitestPreferToBeFalsy(_) => VitestPreferToBeFalsy::config_schema(generator)
                 .or_else(|| VitestPreferToBeFalsy::schema(generator)),
             Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::config_schema(generator)
                 .or_else(|| VitestPreferToBeObject::schema(generator)),
             Self::VitestPreferToBeTruthy(_) => VitestPreferToBeTruthy::config_schema(generator)
                 .or_else(|| VitestPreferToBeTruthy::schema(generator)),
+            Self::VitestRequireAwaitedExpectPoll(_) => {
+                VitestRequireAwaitedExpectPoll::config_schema(generator)
+                    .or_else(|| VitestRequireAwaitedExpectPoll::schema(generator))
+            }
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(_) => {
                 VitestRequireLocalTestContextForConcurrentSnapshots::config_schema(generator)
                     .or_else(|| {
                         VitestRequireLocalTestContextForConcurrentSnapshots::schema(generator)
                     })
             }
+            Self::VitestRequireMockTypeParameters(_) => {
+                VitestRequireMockTypeParameters::config_schema(generator)
+                    .or_else(|| VitestRequireMockTypeParameters::schema(generator))
+            }
+            Self::VitestRequireTestTimeout(_) => VitestRequireTestTimeout::config_schema(generator)
+                .or_else(|| VitestRequireTestTimeout::schema(generator)),
             Self::VitestWarnTodo(_) => VitestWarnTodo::config_schema(generator)
                 .or_else(|| VitestWarnTodo::schema(generator)),
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::config_schema(generator)
@@ -8874,6 +8957,7 @@ impl RuleEnum {
             Self::UnicornConsistentEmptyArraySpread(_) => "unicorn",
             Self::UnicornConsistentExistenceIndexCheck(_) => "unicorn",
             Self::UnicornConsistentFunctionScoping(_) => "unicorn",
+            Self::UnicornCustomErrorDefinition(_) => "unicorn",
             Self::UnicornEmptyBraceSpaces(_) => "unicorn",
             Self::UnicornErrorMessage(_) => "unicorn",
             Self::UnicornEscapeCase(_) => "unicorn",
@@ -9111,15 +9195,20 @@ impl RuleEnum {
             Self::VitestNoConditionalTests(_) => "vitest",
             Self::VitestNoImportNodeTest(_) => "vitest",
             Self::VitestNoImportingVitestGlobals(_) => "vitest",
+            Self::VitestPreferCalledExactlyOnceWith(_) => "vitest",
             Self::VitestPreferCalledOnce(_) => "vitest",
             Self::VitestPreferCalledTimes(_) => "vitest",
             Self::VitestPreferDescribeFunctionTitle(_) => "vitest",
             Self::VitestPreferExpectTypeOf(_) => "vitest",
             Self::VitestPreferImportInMock(_) => "vitest",
+            Self::VitestPreferStrictBooleanMatchers(_) => "vitest",
             Self::VitestPreferToBeFalsy(_) => "vitest",
             Self::VitestPreferToBeObject(_) => "vitest",
             Self::VitestPreferToBeTruthy(_) => "vitest",
+            Self::VitestRequireAwaitedExpectPoll(_) => "vitest",
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(_) => "vitest",
+            Self::VitestRequireMockTypeParameters(_) => "vitest",
+            Self::VitestRequireTestTimeout(_) => "vitest",
             Self::VitestWarnTodo(_) => "vitest",
             Self::NodeGlobalRequire(_) => "node",
             Self::NodeHandleCallbackErr(_) => "node",
@@ -10532,6 +10621,9 @@ impl RuleEnum {
                     UnicornConsistentFunctionScoping::from_configuration(value)?,
                 ))
             }
+            Self::UnicornCustomErrorDefinition(_) => Ok(Self::UnicornCustomErrorDefinition(
+                UnicornCustomErrorDefinition::from_configuration(value)?,
+            )),
             Self::UnicornEmptyBraceSpaces(_) => Ok(Self::UnicornEmptyBraceSpaces(
                 UnicornEmptyBraceSpaces::from_configuration(value)?,
             )),
@@ -11289,6 +11381,11 @@ impl RuleEnum {
             Self::VitestNoImportingVitestGlobals(_) => Ok(Self::VitestNoImportingVitestGlobals(
                 VitestNoImportingVitestGlobals::from_configuration(value)?,
             )),
+            Self::VitestPreferCalledExactlyOnceWith(_) => {
+                Ok(Self::VitestPreferCalledExactlyOnceWith(
+                    VitestPreferCalledExactlyOnceWith::from_configuration(value)?,
+                ))
+            }
             Self::VitestPreferCalledOnce(_) => {
                 Ok(Self::VitestPreferCalledOnce(VitestPreferCalledOnce::from_configuration(value)?))
             }
@@ -11306,6 +11403,11 @@ impl RuleEnum {
             Self::VitestPreferImportInMock(_) => Ok(Self::VitestPreferImportInMock(
                 VitestPreferImportInMock::from_configuration(value)?,
             )),
+            Self::VitestPreferStrictBooleanMatchers(_) => {
+                Ok(Self::VitestPreferStrictBooleanMatchers(
+                    VitestPreferStrictBooleanMatchers::from_configuration(value)?,
+                ))
+            }
             Self::VitestPreferToBeFalsy(_) => {
                 Ok(Self::VitestPreferToBeFalsy(VitestPreferToBeFalsy::from_configuration(value)?))
             }
@@ -11315,11 +11417,20 @@ impl RuleEnum {
             Self::VitestPreferToBeTruthy(_) => {
                 Ok(Self::VitestPreferToBeTruthy(VitestPreferToBeTruthy::from_configuration(value)?))
             }
+            Self::VitestRequireAwaitedExpectPoll(_) => Ok(Self::VitestRequireAwaitedExpectPoll(
+                VitestRequireAwaitedExpectPoll::from_configuration(value)?,
+            )),
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(_) => {
                 Ok(Self::VitestRequireLocalTestContextForConcurrentSnapshots(
                     VitestRequireLocalTestContextForConcurrentSnapshots::from_configuration(value)?,
                 ))
             }
+            Self::VitestRequireMockTypeParameters(_) => Ok(Self::VitestRequireMockTypeParameters(
+                VitestRequireMockTypeParameters::from_configuration(value)?,
+            )),
+            Self::VitestRequireTestTimeout(_) => Ok(Self::VitestRequireTestTimeout(
+                VitestRequireTestTimeout::from_configuration(value)?,
+            )),
             Self::VitestWarnTodo(_) => {
                 Ok(Self::VitestWarnTodo(VitestWarnTodo::from_configuration(value)?))
             }
@@ -11827,6 +11938,7 @@ impl RuleEnum {
             Self::UnicornConsistentEmptyArraySpread(rule) => rule.to_configuration(),
             Self::UnicornConsistentExistenceIndexCheck(rule) => rule.to_configuration(),
             Self::UnicornConsistentFunctionScoping(rule) => rule.to_configuration(),
+            Self::UnicornCustomErrorDefinition(rule) => rule.to_configuration(),
             Self::UnicornEmptyBraceSpaces(rule) => rule.to_configuration(),
             Self::UnicornErrorMessage(rule) => rule.to_configuration(),
             Self::UnicornEscapeCase(rule) => rule.to_configuration(),
@@ -12064,17 +12176,22 @@ impl RuleEnum {
             Self::VitestNoConditionalTests(rule) => rule.to_configuration(),
             Self::VitestNoImportNodeTest(rule) => rule.to_configuration(),
             Self::VitestNoImportingVitestGlobals(rule) => rule.to_configuration(),
+            Self::VitestPreferCalledExactlyOnceWith(rule) => rule.to_configuration(),
             Self::VitestPreferCalledOnce(rule) => rule.to_configuration(),
             Self::VitestPreferCalledTimes(rule) => rule.to_configuration(),
             Self::VitestPreferDescribeFunctionTitle(rule) => rule.to_configuration(),
             Self::VitestPreferExpectTypeOf(rule) => rule.to_configuration(),
             Self::VitestPreferImportInMock(rule) => rule.to_configuration(),
+            Self::VitestPreferStrictBooleanMatchers(rule) => rule.to_configuration(),
             Self::VitestPreferToBeFalsy(rule) => rule.to_configuration(),
             Self::VitestPreferToBeObject(rule) => rule.to_configuration(),
             Self::VitestPreferToBeTruthy(rule) => rule.to_configuration(),
+            Self::VitestRequireAwaitedExpectPoll(rule) => rule.to_configuration(),
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(rule) => {
                 rule.to_configuration()
             }
+            Self::VitestRequireMockTypeParameters(rule) => rule.to_configuration(),
+            Self::VitestRequireTestTimeout(rule) => rule.to_configuration(),
             Self::VitestWarnTodo(rule) => rule.to_configuration(),
             Self::NodeGlobalRequire(rule) => rule.to_configuration(),
             Self::NodeHandleCallbackErr(rule) => rule.to_configuration(),
@@ -12532,6 +12649,7 @@ impl RuleEnum {
             Self::UnicornConsistentEmptyArraySpread(rule) => rule.run(node, ctx),
             Self::UnicornConsistentExistenceIndexCheck(rule) => rule.run(node, ctx),
             Self::UnicornConsistentFunctionScoping(rule) => rule.run(node, ctx),
+            Self::UnicornCustomErrorDefinition(rule) => rule.run(node, ctx),
             Self::UnicornEmptyBraceSpaces(rule) => rule.run(node, ctx),
             Self::UnicornErrorMessage(rule) => rule.run(node, ctx),
             Self::UnicornEscapeCase(rule) => rule.run(node, ctx),
@@ -12769,15 +12887,20 @@ impl RuleEnum {
             Self::VitestNoConditionalTests(rule) => rule.run(node, ctx),
             Self::VitestNoImportNodeTest(rule) => rule.run(node, ctx),
             Self::VitestNoImportingVitestGlobals(rule) => rule.run(node, ctx),
+            Self::VitestPreferCalledExactlyOnceWith(rule) => rule.run(node, ctx),
             Self::VitestPreferCalledOnce(rule) => rule.run(node, ctx),
             Self::VitestPreferCalledTimes(rule) => rule.run(node, ctx),
             Self::VitestPreferDescribeFunctionTitle(rule) => rule.run(node, ctx),
             Self::VitestPreferExpectTypeOf(rule) => rule.run(node, ctx),
             Self::VitestPreferImportInMock(rule) => rule.run(node, ctx),
+            Self::VitestPreferStrictBooleanMatchers(rule) => rule.run(node, ctx),
             Self::VitestPreferToBeFalsy(rule) => rule.run(node, ctx),
             Self::VitestPreferToBeObject(rule) => rule.run(node, ctx),
             Self::VitestPreferToBeTruthy(rule) => rule.run(node, ctx),
+            Self::VitestRequireAwaitedExpectPoll(rule) => rule.run(node, ctx),
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(rule) => rule.run(node, ctx),
+            Self::VitestRequireMockTypeParameters(rule) => rule.run(node, ctx),
+            Self::VitestRequireTestTimeout(rule) => rule.run(node, ctx),
             Self::VitestWarnTodo(rule) => rule.run(node, ctx),
             Self::NodeGlobalRequire(rule) => rule.run(node, ctx),
             Self::NodeHandleCallbackErr(rule) => rule.run(node, ctx),
@@ -13235,6 +13358,7 @@ impl RuleEnum {
             Self::UnicornConsistentEmptyArraySpread(rule) => rule.run_once(ctx),
             Self::UnicornConsistentExistenceIndexCheck(rule) => rule.run_once(ctx),
             Self::UnicornConsistentFunctionScoping(rule) => rule.run_once(ctx),
+            Self::UnicornCustomErrorDefinition(rule) => rule.run_once(ctx),
             Self::UnicornEmptyBraceSpaces(rule) => rule.run_once(ctx),
             Self::UnicornErrorMessage(rule) => rule.run_once(ctx),
             Self::UnicornEscapeCase(rule) => rule.run_once(ctx),
@@ -13472,15 +13596,20 @@ impl RuleEnum {
             Self::VitestNoConditionalTests(rule) => rule.run_once(ctx),
             Self::VitestNoImportNodeTest(rule) => rule.run_once(ctx),
             Self::VitestNoImportingVitestGlobals(rule) => rule.run_once(ctx),
+            Self::VitestPreferCalledExactlyOnceWith(rule) => rule.run_once(ctx),
             Self::VitestPreferCalledOnce(rule) => rule.run_once(ctx),
             Self::VitestPreferCalledTimes(rule) => rule.run_once(ctx),
             Self::VitestPreferDescribeFunctionTitle(rule) => rule.run_once(ctx),
             Self::VitestPreferExpectTypeOf(rule) => rule.run_once(ctx),
             Self::VitestPreferImportInMock(rule) => rule.run_once(ctx),
+            Self::VitestPreferStrictBooleanMatchers(rule) => rule.run_once(ctx),
             Self::VitestPreferToBeFalsy(rule) => rule.run_once(ctx),
             Self::VitestPreferToBeObject(rule) => rule.run_once(ctx),
             Self::VitestPreferToBeTruthy(rule) => rule.run_once(ctx),
+            Self::VitestRequireAwaitedExpectPoll(rule) => rule.run_once(ctx),
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(rule) => rule.run_once(ctx),
+            Self::VitestRequireMockTypeParameters(rule) => rule.run_once(ctx),
+            Self::VitestRequireTestTimeout(rule) => rule.run_once(ctx),
             Self::VitestWarnTodo(rule) => rule.run_once(ctx),
             Self::NodeGlobalRequire(rule) => rule.run_once(ctx),
             Self::NodeHandleCallbackErr(rule) => rule.run_once(ctx),
@@ -14012,6 +14141,7 @@ impl RuleEnum {
                 rule.run_on_jest_node(jest_node, ctx)
             }
             Self::UnicornConsistentFunctionScoping(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::UnicornCustomErrorDefinition(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornEmptyBraceSpaces(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornErrorMessage(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornEscapeCase(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -14273,17 +14403,22 @@ impl RuleEnum {
             Self::VitestNoConditionalTests(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestNoImportNodeTest(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestNoImportingVitestGlobals(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestPreferCalledExactlyOnceWith(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferCalledOnce(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferCalledTimes(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferDescribeFunctionTitle(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferExpectTypeOf(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferImportInMock(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestPreferStrictBooleanMatchers(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferToBeFalsy(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferToBeObject(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferToBeTruthy(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestRequireAwaitedExpectPoll(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(rule) => {
                 rule.run_on_jest_node(jest_node, ctx)
             }
+            Self::VitestRequireMockTypeParameters(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestRequireTestTimeout(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestWarnTodo(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::NodeGlobalRequire(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::NodeHandleCallbackErr(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -14741,6 +14876,7 @@ impl RuleEnum {
             Self::UnicornConsistentEmptyArraySpread(rule) => rule.should_run(ctx),
             Self::UnicornConsistentExistenceIndexCheck(rule) => rule.should_run(ctx),
             Self::UnicornConsistentFunctionScoping(rule) => rule.should_run(ctx),
+            Self::UnicornCustomErrorDefinition(rule) => rule.should_run(ctx),
             Self::UnicornEmptyBraceSpaces(rule) => rule.should_run(ctx),
             Self::UnicornErrorMessage(rule) => rule.should_run(ctx),
             Self::UnicornEscapeCase(rule) => rule.should_run(ctx),
@@ -14978,15 +15114,20 @@ impl RuleEnum {
             Self::VitestNoConditionalTests(rule) => rule.should_run(ctx),
             Self::VitestNoImportNodeTest(rule) => rule.should_run(ctx),
             Self::VitestNoImportingVitestGlobals(rule) => rule.should_run(ctx),
+            Self::VitestPreferCalledExactlyOnceWith(rule) => rule.should_run(ctx),
             Self::VitestPreferCalledOnce(rule) => rule.should_run(ctx),
             Self::VitestPreferCalledTimes(rule) => rule.should_run(ctx),
             Self::VitestPreferDescribeFunctionTitle(rule) => rule.should_run(ctx),
             Self::VitestPreferExpectTypeOf(rule) => rule.should_run(ctx),
             Self::VitestPreferImportInMock(rule) => rule.should_run(ctx),
+            Self::VitestPreferStrictBooleanMatchers(rule) => rule.should_run(ctx),
             Self::VitestPreferToBeFalsy(rule) => rule.should_run(ctx),
             Self::VitestPreferToBeObject(rule) => rule.should_run(ctx),
             Self::VitestPreferToBeTruthy(rule) => rule.should_run(ctx),
+            Self::VitestRequireAwaitedExpectPoll(rule) => rule.should_run(ctx),
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(rule) => rule.should_run(ctx),
+            Self::VitestRequireMockTypeParameters(rule) => rule.should_run(ctx),
+            Self::VitestRequireTestTimeout(rule) => rule.should_run(ctx),
             Self::VitestWarnTodo(rule) => rule.should_run(ctx),
             Self::NodeGlobalRequire(rule) => rule.should_run(ctx),
             Self::NodeHandleCallbackErr(rule) => rule.should_run(ctx),
@@ -15622,6 +15763,7 @@ impl RuleEnum {
             Self::UnicornConsistentFunctionScoping(_) => {
                 UnicornConsistentFunctionScoping::IS_TSGOLINT_RULE
             }
+            Self::UnicornCustomErrorDefinition(_) => UnicornCustomErrorDefinition::IS_TSGOLINT_RULE,
             Self::UnicornEmptyBraceSpaces(_) => UnicornEmptyBraceSpaces::IS_TSGOLINT_RULE,
             Self::UnicornErrorMessage(_) => UnicornErrorMessage::IS_TSGOLINT_RULE,
             Self::UnicornEscapeCase(_) => UnicornEscapeCase::IS_TSGOLINT_RULE,
@@ -15969,6 +16111,9 @@ impl RuleEnum {
             Self::VitestNoImportingVitestGlobals(_) => {
                 VitestNoImportingVitestGlobals::IS_TSGOLINT_RULE
             }
+            Self::VitestPreferCalledExactlyOnceWith(_) => {
+                VitestPreferCalledExactlyOnceWith::IS_TSGOLINT_RULE
+            }
             Self::VitestPreferCalledOnce(_) => VitestPreferCalledOnce::IS_TSGOLINT_RULE,
             Self::VitestPreferCalledTimes(_) => VitestPreferCalledTimes::IS_TSGOLINT_RULE,
             Self::VitestPreferDescribeFunctionTitle(_) => {
@@ -15976,12 +16121,22 @@ impl RuleEnum {
             }
             Self::VitestPreferExpectTypeOf(_) => VitestPreferExpectTypeOf::IS_TSGOLINT_RULE,
             Self::VitestPreferImportInMock(_) => VitestPreferImportInMock::IS_TSGOLINT_RULE,
+            Self::VitestPreferStrictBooleanMatchers(_) => {
+                VitestPreferStrictBooleanMatchers::IS_TSGOLINT_RULE
+            }
             Self::VitestPreferToBeFalsy(_) => VitestPreferToBeFalsy::IS_TSGOLINT_RULE,
             Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::IS_TSGOLINT_RULE,
             Self::VitestPreferToBeTruthy(_) => VitestPreferToBeTruthy::IS_TSGOLINT_RULE,
+            Self::VitestRequireAwaitedExpectPoll(_) => {
+                VitestRequireAwaitedExpectPoll::IS_TSGOLINT_RULE
+            }
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(_) => {
                 VitestRequireLocalTestContextForConcurrentSnapshots::IS_TSGOLINT_RULE
             }
+            Self::VitestRequireMockTypeParameters(_) => {
+                VitestRequireMockTypeParameters::IS_TSGOLINT_RULE
+            }
+            Self::VitestRequireTestTimeout(_) => VitestRequireTestTimeout::IS_TSGOLINT_RULE,
             Self::VitestWarnTodo(_) => VitestWarnTodo::IS_TSGOLINT_RULE,
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::IS_TSGOLINT_RULE,
             Self::NodeHandleCallbackErr(_) => NodeHandleCallbackErr::IS_TSGOLINT_RULE,
@@ -16556,6 +16711,7 @@ impl RuleEnum {
             Self::UnicornConsistentFunctionScoping(_) => {
                 UnicornConsistentFunctionScoping::HAS_CONFIG
             }
+            Self::UnicornCustomErrorDefinition(_) => UnicornCustomErrorDefinition::HAS_CONFIG,
             Self::UnicornEmptyBraceSpaces(_) => UnicornEmptyBraceSpaces::HAS_CONFIG,
             Self::UnicornErrorMessage(_) => UnicornErrorMessage::HAS_CONFIG,
             Self::UnicornEscapeCase(_) => UnicornEscapeCase::HAS_CONFIG,
@@ -16841,6 +16997,9 @@ impl RuleEnum {
             Self::VitestNoConditionalTests(_) => VitestNoConditionalTests::HAS_CONFIG,
             Self::VitestNoImportNodeTest(_) => VitestNoImportNodeTest::HAS_CONFIG,
             Self::VitestNoImportingVitestGlobals(_) => VitestNoImportingVitestGlobals::HAS_CONFIG,
+            Self::VitestPreferCalledExactlyOnceWith(_) => {
+                VitestPreferCalledExactlyOnceWith::HAS_CONFIG
+            }
             Self::VitestPreferCalledOnce(_) => VitestPreferCalledOnce::HAS_CONFIG,
             Self::VitestPreferCalledTimes(_) => VitestPreferCalledTimes::HAS_CONFIG,
             Self::VitestPreferDescribeFunctionTitle(_) => {
@@ -16848,12 +17007,18 @@ impl RuleEnum {
             }
             Self::VitestPreferExpectTypeOf(_) => VitestPreferExpectTypeOf::HAS_CONFIG,
             Self::VitestPreferImportInMock(_) => VitestPreferImportInMock::HAS_CONFIG,
+            Self::VitestPreferStrictBooleanMatchers(_) => {
+                VitestPreferStrictBooleanMatchers::HAS_CONFIG
+            }
             Self::VitestPreferToBeFalsy(_) => VitestPreferToBeFalsy::HAS_CONFIG,
             Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::HAS_CONFIG,
             Self::VitestPreferToBeTruthy(_) => VitestPreferToBeTruthy::HAS_CONFIG,
+            Self::VitestRequireAwaitedExpectPoll(_) => VitestRequireAwaitedExpectPoll::HAS_CONFIG,
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(_) => {
                 VitestRequireLocalTestContextForConcurrentSnapshots::HAS_CONFIG
             }
+            Self::VitestRequireMockTypeParameters(_) => VitestRequireMockTypeParameters::HAS_CONFIG,
+            Self::VitestRequireTestTimeout(_) => VitestRequireTestTimeout::HAS_CONFIG,
             Self::VitestWarnTodo(_) => VitestWarnTodo::HAS_CONFIG,
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::HAS_CONFIG,
             Self::NodeHandleCallbackErr(_) => NodeHandleCallbackErr::HAS_CONFIG,
@@ -17313,6 +17478,7 @@ impl RuleEnum {
             Self::UnicornConsistentEmptyArraySpread(rule) => rule.types_info(),
             Self::UnicornConsistentExistenceIndexCheck(rule) => rule.types_info(),
             Self::UnicornConsistentFunctionScoping(rule) => rule.types_info(),
+            Self::UnicornCustomErrorDefinition(rule) => rule.types_info(),
             Self::UnicornEmptyBraceSpaces(rule) => rule.types_info(),
             Self::UnicornErrorMessage(rule) => rule.types_info(),
             Self::UnicornEscapeCase(rule) => rule.types_info(),
@@ -17550,15 +17716,20 @@ impl RuleEnum {
             Self::VitestNoConditionalTests(rule) => rule.types_info(),
             Self::VitestNoImportNodeTest(rule) => rule.types_info(),
             Self::VitestNoImportingVitestGlobals(rule) => rule.types_info(),
+            Self::VitestPreferCalledExactlyOnceWith(rule) => rule.types_info(),
             Self::VitestPreferCalledOnce(rule) => rule.types_info(),
             Self::VitestPreferCalledTimes(rule) => rule.types_info(),
             Self::VitestPreferDescribeFunctionTitle(rule) => rule.types_info(),
             Self::VitestPreferExpectTypeOf(rule) => rule.types_info(),
             Self::VitestPreferImportInMock(rule) => rule.types_info(),
+            Self::VitestPreferStrictBooleanMatchers(rule) => rule.types_info(),
             Self::VitestPreferToBeFalsy(rule) => rule.types_info(),
             Self::VitestPreferToBeObject(rule) => rule.types_info(),
             Self::VitestPreferToBeTruthy(rule) => rule.types_info(),
+            Self::VitestRequireAwaitedExpectPoll(rule) => rule.types_info(),
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(rule) => rule.types_info(),
+            Self::VitestRequireMockTypeParameters(rule) => rule.types_info(),
+            Self::VitestRequireTestTimeout(rule) => rule.types_info(),
             Self::VitestWarnTodo(rule) => rule.types_info(),
             Self::NodeGlobalRequire(rule) => rule.types_info(),
             Self::NodeHandleCallbackErr(rule) => rule.types_info(),
@@ -18016,6 +18187,7 @@ impl RuleEnum {
             Self::UnicornConsistentEmptyArraySpread(rule) => rule.run_info(),
             Self::UnicornConsistentExistenceIndexCheck(rule) => rule.run_info(),
             Self::UnicornConsistentFunctionScoping(rule) => rule.run_info(),
+            Self::UnicornCustomErrorDefinition(rule) => rule.run_info(),
             Self::UnicornEmptyBraceSpaces(rule) => rule.run_info(),
             Self::UnicornErrorMessage(rule) => rule.run_info(),
             Self::UnicornEscapeCase(rule) => rule.run_info(),
@@ -18253,15 +18425,20 @@ impl RuleEnum {
             Self::VitestNoConditionalTests(rule) => rule.run_info(),
             Self::VitestNoImportNodeTest(rule) => rule.run_info(),
             Self::VitestNoImportingVitestGlobals(rule) => rule.run_info(),
+            Self::VitestPreferCalledExactlyOnceWith(rule) => rule.run_info(),
             Self::VitestPreferCalledOnce(rule) => rule.run_info(),
             Self::VitestPreferCalledTimes(rule) => rule.run_info(),
             Self::VitestPreferDescribeFunctionTitle(rule) => rule.run_info(),
             Self::VitestPreferExpectTypeOf(rule) => rule.run_info(),
             Self::VitestPreferImportInMock(rule) => rule.run_info(),
+            Self::VitestPreferStrictBooleanMatchers(rule) => rule.run_info(),
             Self::VitestPreferToBeFalsy(rule) => rule.run_info(),
             Self::VitestPreferToBeObject(rule) => rule.run_info(),
             Self::VitestPreferToBeTruthy(rule) => rule.run_info(),
+            Self::VitestRequireAwaitedExpectPoll(rule) => rule.run_info(),
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(rule) => rule.run_info(),
+            Self::VitestRequireMockTypeParameters(rule) => rule.run_info(),
+            Self::VitestRequireTestTimeout(rule) => rule.run_info(),
             Self::VitestWarnTodo(rule) => rule.run_info(),
             Self::NodeGlobalRequire(rule) => rule.run_info(),
             Self::NodeHandleCallbackErr(rule) => rule.run_info(),
@@ -18811,6 +18988,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
             UnicornConsistentExistenceIndexCheck::default(),
         ),
         RuleEnum::UnicornConsistentFunctionScoping(UnicornConsistentFunctionScoping::default()),
+        RuleEnum::UnicornCustomErrorDefinition(UnicornCustomErrorDefinition::default()),
         RuleEnum::UnicornEmptyBraceSpaces(UnicornEmptyBraceSpaces::default()),
         RuleEnum::UnicornErrorMessage(UnicornErrorMessage::default()),
         RuleEnum::UnicornEscapeCase(UnicornEscapeCase::default()),
@@ -19072,17 +19250,22 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::VitestNoConditionalTests(VitestNoConditionalTests::default()),
         RuleEnum::VitestNoImportNodeTest(VitestNoImportNodeTest::default()),
         RuleEnum::VitestNoImportingVitestGlobals(VitestNoImportingVitestGlobals::default()),
+        RuleEnum::VitestPreferCalledExactlyOnceWith(VitestPreferCalledExactlyOnceWith::default()),
         RuleEnum::VitestPreferCalledOnce(VitestPreferCalledOnce::default()),
         RuleEnum::VitestPreferCalledTimes(VitestPreferCalledTimes::default()),
         RuleEnum::VitestPreferDescribeFunctionTitle(VitestPreferDescribeFunctionTitle::default()),
         RuleEnum::VitestPreferExpectTypeOf(VitestPreferExpectTypeOf::default()),
         RuleEnum::VitestPreferImportInMock(VitestPreferImportInMock::default()),
+        RuleEnum::VitestPreferStrictBooleanMatchers(VitestPreferStrictBooleanMatchers::default()),
         RuleEnum::VitestPreferToBeFalsy(VitestPreferToBeFalsy::default()),
         RuleEnum::VitestPreferToBeObject(VitestPreferToBeObject::default()),
         RuleEnum::VitestPreferToBeTruthy(VitestPreferToBeTruthy::default()),
+        RuleEnum::VitestRequireAwaitedExpectPoll(VitestRequireAwaitedExpectPoll::default()),
         RuleEnum::VitestRequireLocalTestContextForConcurrentSnapshots(
             VitestRequireLocalTestContextForConcurrentSnapshots::default(),
         ),
+        RuleEnum::VitestRequireMockTypeParameters(VitestRequireMockTypeParameters::default()),
+        RuleEnum::VitestRequireTestTimeout(VitestRequireTestTimeout::default()),
         RuleEnum::VitestWarnTodo(VitestWarnTodo::default()),
         RuleEnum::NodeGlobalRequire(NodeGlobalRequire::default()),
         RuleEnum::NodeHandleCallbackErr(NodeHandleCallbackErr::default()),

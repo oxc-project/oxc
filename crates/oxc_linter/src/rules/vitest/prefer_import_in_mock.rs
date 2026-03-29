@@ -44,7 +44,7 @@ impl Default for PreferImportInMockConfig {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This rule enforces using a dynamic `import()` in `vi.mock()`, which improves type information and IntelliSense for the mocked module.
+    /// This rule enforces using a dynamic `import()` in `vi.mock()` or `vi.doMock()`, which improves type information and IntelliSense for the mocked module.
     ///
     /// ### Why is this bad?
     ///
@@ -55,11 +55,13 @@ declare_oxc_lint!(
     /// Examples of **incorrect** code for this rule:
     /// ```js
     /// vi.mock('./path/to/module')
+    /// vi.doMock('./path/to/module')
     /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```js
     /// vi.mock(import('./path/to/module'))
+    /// vi.doMock(import('./path/to/module'))
     /// ```
     PreferImportInMock,
     vitest,
@@ -86,6 +88,8 @@ impl Rule for PreferImportInMock {
     }
 }
 
+const MOCK_METHODS: [&str; 2] = ["mock", "doMock"];
+
 impl PreferImportInMock {
     fn run<'a>(&self, possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
         let node = possible_jest_node.node;
@@ -94,7 +98,11 @@ impl PreferImportInMock {
             return;
         };
 
-        if call_expr.callee_name() != Some("mock") {
+        let Some(callee_name) = call_expr.callee_name() else {
+            return;
+        };
+
+        if !MOCK_METHODS.contains(&callee_name) {
             return;
         }
 
@@ -134,13 +142,9 @@ fn test() {
         (r#"vi.mock(import("node:fs/promises"))"#, None),
         (r#"vi.mock(import("./foo.js"), () => ({ Foo: vi.fn() }))"#, None),
         (r#"vi.mock(import("./foo.js"), { spy: true });"#, None),
-        (
-            "
-                    describe.each(['webpack', 'turbopack'])('DevAppRouteRouteMatcher %s', (bundler) => {})
-                    it.each([1])(\"matches the '$route.page' route specified with the provided files\", () => {})
-                  ",
-            None,
-        ),
+        (r#"vi.doMock(import("foo"))"#, None),
+        (r#"vi.doMock(import("node:fs/promises"))"#, None),
+        (r#"vi.doMock(import("./foo.js"), () => ({ Foo: vi.fn() }))"#, None),
         (r#"vi.mock(import("foo"))"#, None),
         (r#"vi.mock(import("node:fs/promises"))"#, None),
         (r#"vi.mock(import("./foo.js"), () => ({ Foo: vi.fn() }))"#, None),
@@ -158,6 +162,19 @@ fn test() {
             "
                     import { vi as renamedVi } from 'vitest';
                     renamedVi.mock('./foo.js', () => ({ Foo: vi.fn() }))
+                  ",
+            Some(serde_json::json!([ { "fixable": false, }, ])),
+        ),
+        ("vi.doMock('foo', () => {})", Some(serde_json::json!([ { "fixable": false, }, ]))),
+        (r#"vi.doMock("node:fs/promises")"#, Some(serde_json::json!([ { "fixable": false, }, ]))),
+        (
+            r#"vi.doMock("./foo.js", () => ({ Foo: vi.fn() }))"#,
+            Some(serde_json::json!([ { "fixable": false, }, ])),
+        ),
+        (
+            "
+                    import { vi as renamedVi } from 'vitest';
+                    renamedVi.doMock('./foo.js', () => ({ Foo: vi.fn() }))
                   ",
             Some(serde_json::json!([ { "fixable": false, }, ])),
         ),
@@ -188,6 +205,22 @@ fn test() {
             "
                     import { vi as renamedVi } from 'vitest';
                     renamedVi.mock(import('./foo.js'), () => ({ Foo: vi.fn() }))
+                  ",
+        ),
+        ("vi.doMock('foo', () => {})", "vi.doMock(import('foo'), () => {})"),
+        (r#"vi.doMock("node:fs/promises")"#, "vi.doMock(import('node:fs/promises'))"),
+        (
+            r#"vi.doMock("./foo.js", () => ({ Foo: vi.fn() }))"#,
+            "vi.doMock(import('./foo.js'), () => ({ Foo: vi.fn() }))",
+        ),
+        (
+            "
+                    import { vi as renamedVi } from 'vitest';
+                    renamedVi.doMock('./foo.js', () => ({ Foo: vi.fn() }))
+                  ",
+            "
+                    import { vi as renamedVi } from 'vitest';
+                    renamedVi.doMock(import('./foo.js'), () => ({ Foo: vi.fn() }))
                   ",
         ),
     ];

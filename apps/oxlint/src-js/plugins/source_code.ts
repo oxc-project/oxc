@@ -15,12 +15,12 @@ import { resetComments } from "./comments.ts";
 import * as commentMethods from "./comments_methods.ts";
 import { ecmaVersion } from "./context.ts";
 import * as locationMethods from "./location.ts";
-import { getNodeLoc, initLines, lines, lineStartIndices, resetLines } from "./location.ts";
+import { getNodeLoc, initLines, lines, lineStartIndices, resetLinesAndLocs } from "./location.ts";
 import { resetScopeManager, SCOPE_MANAGER } from "./scope.ts";
 import * as scopeMethods from "./scope.ts";
 import { resetTokens } from "./tokens.ts";
-import { tokens, tokensAndComments, initTokens, initTokensAndComments } from "./tokens.ts";
 import * as tokenMethods from "./tokens_methods.ts";
+import { getTokensAndComments, resetTokensAndComments } from "./tokens_and_comments.ts";
 import { debugAssertIsNonNull } from "../utils/asserts.ts";
 
 import type { Program } from "../generated/types.d.ts";
@@ -136,10 +136,11 @@ export function resetSourceAndAst(): void {
   sourceText = null;
   ast = null;
   resetBuffer();
-  resetLines();
+  resetLinesAndLocs();
   resetScopeManager();
   resetTokens();
   resetComments();
+  resetTokensAndComments();
 }
 
 /**
@@ -247,12 +248,7 @@ export const SOURCE_CODE = Object.freeze({
    */
   // This property is present in ESLint's `SourceCode`, but is undocumented
   get tokensAndComments(): (Token | Comment)[] {
-    if (tokensAndComments === null) {
-      if (tokens === null) initTokens();
-      initTokensAndComments();
-    }
-    debugAssertIsNonNull(tokensAndComments);
-    return tokensAndComments;
+    return getTokensAndComments();
   },
 
   /**

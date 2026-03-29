@@ -11,8 +11,9 @@ use serde::Deserialize;
 use crate::{
     AstNode,
     context::LintContext,
+    globals::HTML_TAG,
     rule::Rule,
-    utils::{get_element_type, has_jsx_prop_ignore_case, is_interactive_element},
+    utils::{get_element_type, has_jsx_prop_ignore_case, is_interactive_element, parse_jsx_value},
 };
 
 fn no_noninteractive_tabindex_diagnostic(span: Span) -> OxcDiagnostic {
@@ -124,15 +125,32 @@ impl Rule for NoNoninteractiveTabindex {
             return;
         };
 
-        let Some(JSXAttributeValue::StringLiteral(tabindex)) = &tabindex_attr.value else {
+        let Some(tabindex_value) = &tabindex_attr.value else {
             return;
         };
 
-        if tabindex.value == "-1" {
+        let Ok(tabindex) = parse_jsx_value(tabindex_value) else {
+            if matches!(tabindex_value, JSXAttributeValue::ExpressionContainer(_))
+                && !self.0.allow_expression_values
+            {
+                ctx.diagnostic(no_noninteractive_tabindex_diagnostic(tabindex_attr.span));
+            }
+            return;
+        };
+
+        if tabindex < 0.0 || tabindex.fract() != 0.0 {
             return;
         }
 
         let component = &get_element_type(ctx, jsx_el);
+
+        if self.0.tags.iter().any(|tag| tag == component.as_ref()) {
+            return;
+        }
+
+        if !HTML_TAG.contains(component.as_ref()) {
+            return;
+        }
 
         if is_interactive_element(component, jsx_el) {
             return;
@@ -145,20 +163,27 @@ impl Rule for NoNoninteractiveTabindex {
             return;
         };
 
-        if self.0.allow_expression_values {
-            return;
+        if let Some(role) = role_attr.value.as_ref() {
+            match role {
+                JSXAttributeValue::StringLiteral(role) => {
+                    let is_interactive_role =
+                        role.value.split_whitespace().next().is_some_and(|role| {
+                            INTERACTIVE_HTML_ROLES.contains(&role)
+                                || self.0.roles.iter().any(|allowed_role| allowed_role == role)
+                        });
+
+                    if is_interactive_role {
+                        return;
+                    }
+                }
+                JSXAttributeValue::ExpressionContainer(_) if self.0.allow_expression_values => {
+                    return;
+                }
+                _ => {}
+            }
         }
 
-        let Some(JSXAttributeValue::StringLiteral(role)) = &role_attr.value else {
-            ctx.diagnostic(no_noninteractive_tabindex_diagnostic(tabindex_attr.span));
-            return;
-        };
-
-        if !INTERACTIVE_HTML_ROLES.contains(&role.value.as_str())
-            && !self.0.roles.contains(&CompactStr::new(role.value.as_str()))
-        {
-            ctx.diagnostic(no_noninteractive_tabindex_diagnostic(tabindex_attr.span));
-        }
+        ctx.diagnostic(no_noninteractive_tabindex_diagnostic(tabindex_attr.span));
     }
 
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
@@ -219,6 +244,16 @@ fn test() {
         (r#"<div role="tabpanel" tabIndex="0" />"#, None, None),
         (r#"<div role={ROLE_BUTTON} onClick={() => {}} tabIndex="0" />;"#, None, None),
         (
+            r"<div tabIndex={someVar} />",
+            Some(serde_json::json!([{ "allowExpressionValues": true }])),
+            None,
+        ),
+        (
+            r"<div tabIndex={-1} />",
+            Some(serde_json::json!([{ "allowExpressionValues": false }])),
+            None,
+        ),
+        (
             r#"<div role={BUTTON} onClick={() => {}} tabIndex="0" />;"#,
             Some(serde_json::json!([{ "allowExpressionValues": true }])),
             None,
@@ -242,10 +277,10 @@ fn test() {
 
     let fail = vec![
         (r#"<div tabIndex="0" />"#, None, None),
-        // TODO: Fix the rule for these tests.
-        // (r#"<div role="article" tabIndex="0" />"#, None, None),
-        // (r"<article tabIndex={0} />", None, None),
-        // (r"<Article tabIndex={0} />", None, Some(settings())),
+        (r"<div tabIndex={0} />", None, None),
+        (r#"<div role="article" tabIndex="0" />"#, None, None),
+        (r"<article tabIndex={0} />", None, None),
+        (r"<Article tabIndex={0} />", None, Some(settings())),
         (r#"<article tabIndex="0" />"#, None, None),
         (
             r#"<div role="tabpanel" tabIndex="0" />"#,
@@ -264,6 +299,11 @@ fn test() {
         ),
         (
             r#"<div role={isButton ? "button" : "link"} onClick={() => {}} tabIndex="0" />;"#,
+            Some(serde_json::json!([{ "allowExpressionValues": false }])),
+            None,
+        ),
+        (
+            r"<div tabIndex={someVar} />",
             Some(serde_json::json!([{ "allowExpressionValues": false }])),
             None,
         ),

@@ -79,6 +79,18 @@ export interface Oxfmtrc {
    */
   insertFinalNewline?: boolean;
   /**
+   * Enable JSDoc comment formatting.
+   *
+   * When enabled, JSDoc comments are normalized and reformatted:
+   * tag aliases are canonicalized, descriptions are capitalized,
+   * long lines are wrapped, and short comments are collapsed to single-line.
+   *
+   * Pass an object (`jsdoc: {}`) to enable with defaults, or omit to disable.
+   *
+   * - Default: Disabled
+   */
+  jsdoc?: JsdocConfig;
+  /**
    * Use single quotes instead of double quotes in JSX.
    *
    * - Default: `false`
@@ -204,6 +216,82 @@ export interface Oxfmtrc {
   vueIndentScriptAndStyle?: boolean;
   [k: string]: unknown;
 }
+export interface JsdocConfig {
+  /**
+   * Append default values to `@param` descriptions (e.g. "Default is `value`").
+   *
+   * - Default: `true`
+   */
+  addDefaultToDescription?: boolean;
+  /**
+   * Add spaces inside JSDoc type braces: `{string}` → `{ string }`.
+   *
+   * - Default: `false`
+   */
+  bracketSpacing?: boolean;
+  /**
+   * Capitalize the first letter of tag descriptions.
+   *
+   * - Default: `true`
+   */
+  capitalizeDescriptions?: boolean;
+  /**
+   * How to format comment blocks.
+   *
+   * - `"singleLine"` — Convert to single-line `/** content * /` when possible.
+   * - `"multiline"` — Always use multi-line format.
+   * - `"keep"` — Preserve original formatting.
+   *
+   * - Default: `"singleLine"`
+   */
+  commentLineStrategy?: string;
+  /**
+   * Emit `@description` tag instead of inline description.
+   *
+   * - Default: `false`
+   */
+  descriptionTag?: boolean;
+  /**
+   * Add a trailing dot to the end of descriptions.
+   *
+   * - Default: `false`
+   */
+  descriptionWithDot?: boolean;
+  /**
+   * Preserve indentation in unparsable `@example` code.
+   *
+   * - Default: `false`
+   */
+  keepUnparsableExampleIndent?: boolean;
+  /**
+   * Strategy for wrapping description lines at print width.
+   *
+   * - `"greedy"` — Always re-wrap text to fit within print width.
+   * - `"balance"` — Preserve original line breaks if all lines fit within print width.
+   *
+   * - Default: `"greedy"`
+   */
+  lineWrappingStyle?: string;
+  /**
+   * Use fenced code blocks (```` ``` ````) instead of 4-space indentation for code without a language tag.
+   *
+   * - Default: `false`
+   */
+  preferCodeFences?: boolean;
+  /**
+   * Add a blank line between the last `@param` and `@returns`.
+   *
+   * - Default: `false`
+   */
+  separateReturnsFromParam?: boolean;
+  /**
+   * Add blank lines between different tag groups (e.g. between `@param` and `@returns`).
+   *
+   * - Default: `false`
+   */
+  separateTagGroups?: boolean;
+  [k: string]: unknown;
+}
 export interface OxfmtOverrideConfig {
   /**
    * Glob patterns to exclude from this override.
@@ -270,6 +358,18 @@ export interface FormatConfig {
    * - Overrides `.editorconfig.insert_final_newline`
    */
   insertFinalNewline?: boolean;
+  /**
+   * Enable JSDoc comment formatting.
+   *
+   * When enabled, JSDoc comments are normalized and reformatted:
+   * tag aliases are canonicalized, descriptions are capitalized,
+   * long lines are wrapped, and short comments are collapsed to single-line.
+   *
+   * Pass an object (`jsdoc: {}`) to enable with defaults, or omit to disable.
+   *
+   * - Default: Disabled
+   */
+  jsdoc?: JsdocConfig;
   /**
    * Use single quotes instead of double quotes in JSX.
    *
