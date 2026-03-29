@@ -165,7 +165,7 @@ declare_oxc_lint!(
     config = OnlyExportComponentsConfig,
 );
 
-static DEFAULT_REACT_HOCS: &[&str] = &["memo", "forwardRef"];
+static DEFAULT_REACT_HOCS: &[&str] = &["memo", "forwardRef", "lazy"];
 
 impl Rule for OnlyExportComponents {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
@@ -555,6 +555,18 @@ impl OnlyExportComponents {
                 if is_create_context {
                     return ExportType::ReactContext(span);
                 }
+
+                // For named exports the binding name already provides a
+                // stable component identity, so only the callee needs to be
+                // a recognized HOC. The argument shape (arrow function,
+                // identifier, etc.) does not matter.
+                if self.is_callee_hoc(&call_expr.callee)
+                    && !call_expr.arguments.is_empty()
+                    && Self::starts_with_ascii_upper(name)
+                {
+                    return ExportType::ReactComponent;
+                }
+                return ExportType::NonComponent(span);
             }
 
             let expr_without_ts = Self::skip_ts_expression(init_expr);
@@ -591,8 +603,8 @@ impl OnlyExportComponents {
         }
     }
 
-    fn is_hoc_call_expression(&self, call_expr: &CallExpression) -> bool {
-        let is_callee_hoc = match &call_expr.callee {
+    fn is_callee_hoc(&self, callee: &Expression) -> bool {
+        match callee {
             Expression::CallExpression(inner_call) => {
                 if let Expression::Identifier(ident) = &inner_call.callee {
                     ident.name == "connect"
@@ -609,9 +621,11 @@ impl OnlyExportComponents {
             }
             Expression::Identifier(ident) => self.is_react_hoc(&ident.name),
             _ => false,
-        };
+        }
+    }
 
-        if !is_callee_hoc {
+    fn is_hoc_call_expression(&self, call_expr: &CallExpression) -> bool {
+        if !self.is_callee_hoc(&call_expr.callee) {
             return false;
         }
 
@@ -768,6 +782,16 @@ fn test() {
             "export const MyComponent = () => {}; export default memo(forwardRef(MyComponent));",
             None,
         ),
+        // Named export with React.memo member expression HOC call
+        ("export const MyComponent = React.memo(function MyComponent() { return null; });", None),
+        // React.lazy with arrow function
+        ("export const Foo = lazy(() => import('./Foo')); export const Bar = () => null;", None),
+        (
+            "export const Foo = React.lazy(() => import('./Foo')); export const Bar = () => null;",
+            None,
+        ),
+        // Named HOC export with anonymous arrow function argument
+        ("export const Foo = React.memo(() => <div/>); export const Bar = () => null;", None),
     ];
 
     let fail = vec![
@@ -812,6 +836,20 @@ fn test() {
             None,
         ),
         ("const MyComponent = () => {}; export default observer(MyComponent);", None),
+        // Call expression initializer is not a constant or component (#20455)
+        (
+            "export const Route = createFileRoute('/example')({ component: RouteComponent }); function RouteComponent() { return <div>Hello</div>; }",
+            Some(serde_json::json!([{ "allowConstantExport": true }])),
+        ),
+        // Non-HOC call expression with uppercase name
+        ("export const Foo = someFunction(); export const Bar = () => {};", None),
+        // Anonymous default lazy export
+        ("export default lazy(() => import('./Foo'));", None),
+        // Lowercase name with HOC callee
+        (
+            "export const foo = React.lazy(() => import('./Foo')); export const Bar = () => null;",
+            None,
+        ),
     ];
 
     Tester::new(OnlyExportComponents::NAME, OnlyExportComponents::PLUGIN, pass, fail)
