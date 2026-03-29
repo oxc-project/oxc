@@ -59,17 +59,13 @@ impl Tool for FakeTool {
         "FakeTool"
     }
 
-    fn is_responsible_for_command(&self, command: &str) -> bool {
-        command == FAKE_COMMAND
-    }
-
     fn execute_command(
         &self,
         command: &str,
         arguments: Vec<serde_json::Value>,
     ) -> Result<Option<WorkspaceEdit>, ErrorCode> {
         if command != FAKE_COMMAND {
-            return Err(ErrorCode::MethodNotFound);
+            return Err(ErrorCode::InvalidParams);
         }
 
         if !arguments.is_empty() {
@@ -973,11 +969,11 @@ mod test_suite {
         let execute_command_request = execute_command_request("invalid.command", &[], 3);
         server.send_request(execute_command_request).await;
 
-        // Should not return an error, but a null result
+        // Should return an error
         let execute_command_response = server.recv_response().await;
-        assert!(execute_command_response.is_ok());
+        assert!(execute_command_response.is_error());
         assert_eq!(execute_command_response.id(), &Id::Number(3));
-        assert_eq!(execute_command_response.result().unwrap(), &json!(null));
+        assert_eq!(execute_command_response.error().unwrap().code, ErrorCode::InvalidParams);
 
         server.shutdown(4).await;
     }

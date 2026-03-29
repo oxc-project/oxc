@@ -542,13 +542,8 @@ impl Tool for ServerLinter {
         }
     }
 
-    /// Check if the linter should know about the given command
-    fn is_responsible_for_command(&self, command: &str) -> bool {
-        command == FIX_ALL_COMMAND_ID
-    }
-
     /// Tries to execute the given command with the provided arguments.
-    /// If the command is not recognized, returns `Ok(None)`.
+    /// If the command is not recognized, returns `Err(ErrorCode)`.
     /// If the command is recognized and executed it can return:
     /// - `Ok(Some(WorkspaceEdit))` if the command was executed successfully and produced a workspace edit.
     /// - `Ok(None)` if the command was executed successfully but did not produce any workspace edit.
@@ -561,7 +556,7 @@ impl Tool for ServerLinter {
         arguments: Vec<serde_json::Value>,
     ) -> Result<Option<WorkspaceEdit>, ErrorCode> {
         if command != FIX_ALL_COMMAND_ID {
-            return Ok(None);
+            return Err(ErrorCode::InvalidParams);
         }
 
         let args = FixAllCommandArgs::try_from(arguments).map_err(|_| ErrorCode::InvalidParams)?;

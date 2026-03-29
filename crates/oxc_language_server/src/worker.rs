@@ -374,10 +374,9 @@ impl WorkspaceWorker {
     }
 
     /// Execute a command for the workspace.
-    /// Currently, only the `oxc.fixAll` command is supported.
     ///
     /// # Errors
-    /// Returns `ErrorCode` when the command is found but could not be executed.
+    /// Returns `ErrorCode` when the command is not found or could not be executed.
     pub async fn execute_command(
         &self,
         command: &str,
@@ -387,10 +386,7 @@ impl WorkspaceWorker {
         let Some(tool) = tool_guard.as_ref() else {
             return Ok(None);
         };
-        if tool.is_responsible_for_command(command) {
-            return tool.execute_command(command, arguments);
-        }
-        Ok(None)
+        tool.execute_command(command, arguments)
     }
 }
 
@@ -427,8 +423,9 @@ mod tests {
     use std::str::FromStr;
 
     use std::sync::Arc;
-    use tower_lsp_server::ls_types::{
-        CodeActionContext, CodeActionOrCommand, FileChangeType, FileEvent, Range, Uri,
+    use tower_lsp_server::{
+        jsonrpc::ErrorCode,
+        ls_types::{CodeActionContext, CodeActionOrCommand, FileChangeType, FileEvent, Range, Uri},
     };
 
     use crate::{
@@ -501,8 +498,8 @@ mod tests {
 
         // Test command not found
         let result = worker.execute_command("unknown.command", vec![]).await;
-        assert!(result.is_ok());
-        assert!(result.ok().unwrap().is_none());
+        assert!(result.is_err());
+        assert_eq!(result.err().unwrap(), ErrorCode::InvalidParams);
 
         // Test command found but no arguments
         let result = worker.execute_command(FAKE_COMMAND, vec![]).await;
