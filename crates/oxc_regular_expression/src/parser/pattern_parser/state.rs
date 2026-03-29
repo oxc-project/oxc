@@ -1,4 +1,4 @@
-use oxc_span::Atom;
+use oxc_span::Str;
 use rustc_hash::FxHashSet;
 
 use crate::parser::reader::Reader;
@@ -13,7 +13,7 @@ pub struct State<'a> {
     pub named_capture_groups: bool,
     // Other states
     pub num_of_capturing_groups: u32,
-    pub capturing_group_names: FxHashSet<Atom<'a>>,
+    pub capturing_group_names: FxHashSet<Str<'a>>,
 }
 
 type DuplicatedNamedCapturingGroupOffsets = Vec<(u32, u32)>;
@@ -54,7 +54,7 @@ impl<'a> State<'a> {
 /// Returns: Result<(num_of_left_parens, capturing_group_names), duplicated_named_capturing_group_offsets>
 fn parse_capturing_groups<'a>(
     reader: &mut Reader<'a>,
-) -> Result<(u32, FxHashSet<Atom<'a>>), DuplicatedNamedCapturingGroupOffsets> {
+) -> Result<(u32, FxHashSet<Str<'a>>), DuplicatedNamedCapturingGroupOffsets> {
     // Count only normal CapturingGroup(named, unnamed)
     //   (?<name>...), (...)
     // IgnoreGroup, and LookaroundAssertions are ignored
@@ -64,7 +64,7 @@ fn parse_capturing_groups<'a>(
 
     // Track all named groups with their depth and alternative path
     let mut named_groups: Vec<NamedGroupInfo<'a>> = Vec::new();
-    let mut group_names: FxHashSet<Atom<'a>> = FxHashSet::default();
+    let mut group_names: FxHashSet<Str<'a>> = FxHashSet::default();
 
     // Track alternatives and depth
     let mut tracker = AlternativeTracker::new();
@@ -115,7 +115,7 @@ fn parse_capturing_groups<'a>(
                 let span_end = reader.offset();
 
                 if reader.eat('>') {
-                    let group_name = reader.atom(span_start, span_end);
+                    let group_name = reader.str(span_start, span_end);
                     let alternative_path = tracker.get_alternative_path();
 
                     // Check for duplicates with existing groups
@@ -209,7 +209,7 @@ impl AlternativeTracker {
 /// Tracks information about a named capturing group
 #[derive(Debug, Clone)]
 struct NamedGroupInfo<'a> {
-    name: Atom<'a>,
+    name: Str<'a>,
     span: (u32, u32),
     alternative_path: Vec<u32>,
 }

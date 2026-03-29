@@ -68,7 +68,7 @@
 //! * `Vec`: [`VecDef`]
 //! * `Cell`: [`CellDef`]
 //! * Primitive types: [`PrimitiveDef`] - e.g. `u32`, `&str`
-//! * Special types: [`PrimitiveDef`] - e.g. `Atom`
+//! * Special types: [`PrimitiveDef`] - e.g. `Str`
 //!
 //! The types are linked up to each other, so that all struct fields ([`FieldDef`]s) contain
 //! the [`TypeId`] of the type that field contains. Ditto enum variants ([`VariantDef`]s).

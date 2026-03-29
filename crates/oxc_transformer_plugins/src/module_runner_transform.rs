@@ -67,7 +67,7 @@ pub struct ModuleRunnerTransform<'a> {
     /// Import bindings used to determine which identifiers should be transformed.
     /// The key is a symbol id that belongs to the import binding.
     /// The value is a tuple of (Binding, Property).
-    import_bindings: FxHashMap<SymbolId, (BoundIdentifier<'a>, Option<Atom<'a>>)>,
+    import_bindings: FxHashMap<SymbolId, (BoundIdentifier<'a>, Option<Str<'a>>)>,
 
     // Collect deps and dynamic deps for Vite
     deps: FxHashSet<String>,
@@ -618,7 +618,7 @@ impl<'a> ModuleRunnerTransform<'a> {
         span: Span,
         binding: &BoundIdentifier<'a>,
         ident: BindingIdentifier<'a>,
-        key: Atom<'a>,
+        key: Str<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> ArrayExpressionElement<'a> {
         let BindingIdentifier { name, symbol_id, .. } = ident;
@@ -667,7 +667,7 @@ impl<'a> ModuleRunnerTransform<'a> {
         ctx: &TraverseCtx<'a>,
     ) -> Argument<'a> {
         let value = ctx.ast.expression_array(SPAN, elements);
-        let key = ctx.ast.property_key_static_identifier(SPAN, Atom::from("importedNames"));
+        let key = ctx.ast.property_key_static_identifier(SPAN, Str::from("importedNames"));
         let imported_names = ctx.ast.object_property_kind_object_property(
             SPAN,
             PropertyKind::Init,
@@ -819,7 +819,7 @@ fn create_compute_property_access<'a>(
     property: &str,
     ctx: &TraverseCtx<'a>,
 ) -> Expression<'a> {
-    let expression = ctx.ast.expression_string_literal(SPAN, ctx.ast.atom(property), None);
+    let expression = ctx.ast.expression_string_literal(SPAN, ctx.ast.str(property), None);
     Expression::from(ctx.ast.member_expression_computed(span, object, expression, false))
 }
 
@@ -829,7 +829,7 @@ pub fn create_member_callee<'a>(
     property: &'static str,
     ctx: &TraverseCtx<'a>,
 ) -> Expression<'a> {
-    let property = ctx.ast.identifier_name(SPAN, Atom::from(property));
+    let property = ctx.ast.identifier_name(SPAN, Str::from(property));
     Expression::from(ctx.ast.member_expression_static(SPAN, object, property, false))
 }
 
@@ -840,7 +840,7 @@ pub fn create_property_access<'a>(
     property: &str,
     ctx: &TraverseCtx<'a>,
 ) -> Expression<'a> {
-    let property = ctx.ast.identifier_name(SPAN, ctx.ast.atom(property));
+    let property = ctx.ast.identifier_name(SPAN, ctx.ast.str(property));
     Expression::from(ctx.ast.member_expression_static(span, object, property, false))
 }
 

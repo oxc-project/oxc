@@ -55,7 +55,7 @@ impl ESTree for NullLiteralRaw<'_> {
 #[estree(
     ts_type = "string",
     raw_deser = r#"
-        let value = DESER[Atom](POS_OFFSET.value);
+        let value = DESER[Str](POS_OFFSET.value);
         if (DESER[bool](POS_OFFSET.lone_surrogates)) {
             value = value.replace(/\uFFFD(.{4})/g, (_, hex) => String.fromCodePoint(parseInt(hex, 16)));
         }
@@ -98,7 +98,7 @@ impl StringLiteralValue<'_, '_> {
 #[estree(
     ts_type = "bigint",
     raw_deser = "
-        const bigint = DESER[Atom](POS_OFFSET.value);
+        const bigint = DESER[Str](POS_OFFSET.value);
         BigInt(bigint)
     "
 )]

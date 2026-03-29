@@ -3105,7 +3105,7 @@ impl<'a> AstNode<'a, Directive<'a>> {
     }
 
     #[inline]
-    pub fn directive(&self) -> Atom<'a> {
+    pub fn directive(&self) -> Str<'a> {
         self.inner.directive
     }
 
@@ -3126,7 +3126,7 @@ impl<'a> AstNode<'a, Hashbang<'a>> {
     }
 
     #[inline]
-    pub fn value(&self) -> Atom<'a> {
+    pub fn value(&self) -> Str<'a> {
         self.inner.value
     }
 
@@ -6330,7 +6330,7 @@ impl<'a> AstNode<'a, NumericLiteral<'a>> {
     }
 
     #[inline]
-    pub fn raw(&self) -> Option<Atom<'a>> {
+    pub fn raw(&self) -> Option<Str<'a>> {
         self.inner.raw
     }
 
@@ -6356,12 +6356,12 @@ impl<'a> AstNode<'a, StringLiteral<'a>> {
     }
 
     #[inline]
-    pub fn value(&self) -> Atom<'a> {
+    pub fn value(&self) -> Str<'a> {
         self.inner.value
     }
 
     #[inline]
-    pub fn raw(&self) -> Option<Atom<'a>> {
+    pub fn raw(&self) -> Option<Str<'a>> {
         self.inner.raw
     }
 
@@ -6387,12 +6387,12 @@ impl<'a> AstNode<'a, BigIntLiteral<'a>> {
     }
 
     #[inline]
-    pub fn value(&self) -> Atom<'a> {
+    pub fn value(&self) -> Str<'a> {
         self.inner.value
     }
 
     #[inline]
-    pub fn raw(&self) -> Option<Atom<'a>> {
+    pub fn raw(&self) -> Option<Str<'a>> {
         self.inner.raw
     }
 
@@ -6423,7 +6423,7 @@ impl<'a> AstNode<'a, RegExpLiteral<'a>> {
     }
 
     #[inline]
-    pub fn raw(&self) -> Option<Atom<'a>> {
+    pub fn raw(&self) -> Option<Str<'a>> {
         self.inner.raw
     }
 
@@ -7083,7 +7083,7 @@ impl<'a> AstNode<'a, JSXIdentifier<'a>> {
     }
 
     #[inline]
-    pub fn name(&self) -> Atom<'a> {
+    pub fn name(&self) -> Str<'a> {
         self.inner.name
     }
 
@@ -7173,12 +7173,12 @@ impl<'a> AstNode<'a, JSXText<'a>> {
     }
 
     #[inline]
-    pub fn value(&self) -> Atom<'a> {
+    pub fn value(&self) -> Str<'a> {
         self.inner.value
     }
 
     #[inline]
-    pub fn raw(&self) -> Option<Atom<'a>> {
+    pub fn raw(&self) -> Option<Str<'a>> {
         self.inner.raw
     }
 
@@ -9274,7 +9274,7 @@ impl<'a> AstNode<'a, TSIndexSignatureName<'a>> {
     }
 
     #[inline]
-    pub fn name(&self) -> Atom<'a> {
+    pub fn name(&self) -> Str<'a> {
         self.inner.name
     }
 

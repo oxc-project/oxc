@@ -8,7 +8,7 @@ use oxc::{
     allocator::{Allocator, FromIn, Vec},
     ast::ast::{Comment, Program},
     diagnostics::{LabeledSpan, NamedSource, OxcDiagnostic, Severity},
-    span::{Atom, Span, format_atom},
+    span::{Span, Str, format_str},
     syntax::module_record::{DynamicImport, ExportEntry, ImportEntry, ModuleRecord, NameSpan},
 };
 use oxc_ast_macros::ast;
@@ -63,10 +63,10 @@ impl RawTransferMetadata {
 #[estree(no_type, no_ts_def)]
 pub struct Error<'a> {
     pub severity: ErrorSeverity,
-    pub message: Atom<'a>,
+    pub message: Str<'a>,
     pub labels: Vec<'a, ErrorLabel<'a>>,
-    pub help_message: Option<Atom<'a>>,
-    pub codeframe: Atom<'a>,
+    pub help_message: Option<Str<'a>>,
+    pub codeframe: Str<'a>,
 }
 
 impl<'a> Error<'a> {
@@ -102,11 +102,11 @@ impl<'a> Error<'a> {
         );
 
         let severity = ErrorSeverity::from(diagnostic.severity);
-        let message = Atom::from_in(diagnostic.message.as_ref(), allocator);
+        let message = Str::from_in(diagnostic.message.as_ref(), allocator);
         let help_message =
-            diagnostic.help.as_ref().map(|help| Atom::from_in(help.as_ref(), allocator));
+            diagnostic.help.as_ref().map(|help| Str::from_in(help.as_ref(), allocator));
         let report = diagnostic.with_source_code(Arc::clone(named_source));
-        let codeframe = format_atom!(allocator, "{report:?}");
+        let codeframe = format_str!(allocator, "{report:?}");
 
         #[expect(clippy::inconsistent_struct_constructor)] // `#[ast]` macro re-orders struct fields
         Self { severity, message, labels, help_message, codeframe }
@@ -137,14 +137,14 @@ impl From<Severity> for ErrorSeverity {
 #[generate_derive(ESTree)]
 #[estree(no_type, no_ts_def)]
 pub struct ErrorLabel<'a> {
-    pub message: Option<Atom<'a>>,
+    pub message: Option<Str<'a>>,
     pub span: Span,
 }
 
 impl<'a> FromIn<'a, &LabeledSpan> for ErrorLabel<'a> {
     fn from_in(label: &LabeledSpan, allocator: &'a Allocator) -> Self {
         Self {
-            message: label.label().map(|message| Atom::from_in(message, allocator)),
+            message: label.label().map(|message| Str::from_in(message, allocator)),
             #[expect(clippy::cast_possible_truncation)]
             span: Span::sized(label.offset() as u32, label.len() as u32),
         }
@@ -156,7 +156,7 @@ impl<'a> FromIn<'a, &LabeledSpan> for ErrorLabel<'a> {
 // These types and the `From` impl mirror the implementation in `types.rs` and `convert.rs`.
 // However, a lot of the data can be left as is, because it's already in the arena,
 // and that's what raw transfer needs - unlike the other implementation which requires owned types.
-// In particular, there's no need to copy or convert the many `Atom`s in `ModuleRecord`.
+// In particular, there's no need to copy or convert the many `Str`s in `ModuleRecord`.
 
 #[ast]
 #[generate_derive(ESTree)]

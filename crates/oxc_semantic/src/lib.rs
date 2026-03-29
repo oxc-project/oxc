@@ -278,7 +278,7 @@ impl<'a> Semantic<'a> {
 mod tests {
     use oxc_allocator::Allocator;
     use oxc_ast::{AstKind, ast::VariableDeclarationKind};
-    use oxc_span::{Atom, Ident, SourceType};
+    use oxc_span::{Ident, SourceType, Str};
 
     use super::*;
 
@@ -364,7 +364,7 @@ mod tests {
     #[test]
     fn test_reference_resolutions_simple_read_write() {
         let alloc = Allocator::default();
-        let target_symbol_name = Atom::from("a");
+        let target_symbol_name = Str::from("a");
         let typescript = SourceType::ts();
         let sources = [
             // simple cases

@@ -281,7 +281,7 @@ impl ESTree for TSGlobalDeclarationId<'_, '_> {
         let ident = IdentifierName {
             span: self.0.global_span,
             node_id: Cell::new(NodeId::DUMMY),
-            name: Atom::from("global").into(),
+            name: Str::from("global").into(),
         };
         ident.serialize(serializer);
     }

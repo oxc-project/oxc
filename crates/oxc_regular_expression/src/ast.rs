@@ -2,7 +2,7 @@ use bitflags::bitflags;
 
 use oxc_allocator::{Box, CloneIn, GetAddress, Vec};
 use oxc_ast_macros::ast;
-use oxc_span::{Atom, ContentEq, Span};
+use oxc_span::{ContentEq, Span, Str};
 
 /// The root of the `PatternParser` result.
 #[ast]
@@ -169,8 +169,8 @@ pub struct UnicodePropertyEscape<'a> {
     pub negative: bool,
     /// `true` if `UnicodeSetsMode` and `name` matches unicode property of strings.
     pub strings: bool,
-    pub name: Atom<'a>,
-    pub value: Option<Atom<'a>>,
+    pub name: Str<'a>,
+    pub value: Option<Str<'a>>,
 }
 
 /// The `.`.
@@ -263,7 +263,7 @@ pub struct ClassString<'a> {
 pub struct CapturingGroup<'a> {
     pub span: Span,
     /// Group name to be referenced by [`NamedReference`].
-    pub name: Option<Atom<'a>>,
+    pub name: Option<Str<'a>>,
     pub body: Disjunction<'a>,
 }
 
@@ -323,7 +323,7 @@ pub struct IndexedReference {
 #[generate_derive(CloneIn, ContentEq)]
 pub struct NamedReference<'a> {
     pub span: Span,
-    pub name: Atom<'a>,
+    pub name: Str<'a>,
 }
 
 // See `oxc_ast/src/lib.rs` for the details

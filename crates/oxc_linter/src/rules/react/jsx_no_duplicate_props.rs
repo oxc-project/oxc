@@ -4,7 +4,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{Atom, Span};
+use oxc_span::{Span, Str};
 use rustc_hash::FxHashMap;
 
 use crate::{
@@ -64,7 +64,7 @@ impl Rule for JsxNoDuplicateProps {
             return;
         };
 
-        let mut props: FxHashMap<Atom, Span> = FxHashMap::default();
+        let mut props: FxHashMap<Str, Span> = FxHashMap::default();
 
         for attr in &jsx_opening_elem.attributes {
             let JSXAttributeItem::Attribute(jsx_attr) = attr else {

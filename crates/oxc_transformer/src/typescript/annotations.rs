@@ -2,7 +2,7 @@ use oxc_allocator::{TakeIn, Vec as ArenaVec};
 use oxc_ast::ast::*;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::{Reference, SymbolFlags};
-use oxc_span::{Atom, GetSpan, SPAN, Span};
+use oxc_span::{GetSpan, SPAN, Span, Str};
 use oxc_syntax::{
     operator::AssignmentOperator,
     reference::ReferenceFlags,
@@ -616,7 +616,7 @@ impl<'a> TypeScriptAnnotations<'a> {
 
 struct Assignment<'a> {
     span: Span,
-    name: Atom<'a>,
+    name: Str<'a>,
     symbol_id: SymbolId,
 }
 
