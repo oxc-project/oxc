@@ -1,0 +1,13 @@
+{
+  "version": "0.1.0",
+  "suppressions": {
+    "files/test.ts": {
+      "eslint/no-compare-neg-zero": {
+        "count": 1
+      },
+      "typescript-eslint/await-thenable": {
+        "count": 1
+      }
+    }
+  }
+}

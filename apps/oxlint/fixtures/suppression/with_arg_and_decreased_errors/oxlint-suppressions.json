@@ -1,0 +1,19 @@
+{
+  "version": "0.1.0",
+  "suppressions": {
+    "folder_a/test.ts": {
+      "eslint/no-console": {
+        "count": 3
+      },
+      "typescript-eslint/await-thenable": {
+        "count": 2
+      },
+      "typescript-eslint/array-type": {
+        "count": 3
+      },
+      "eslint/no-unused-vars": {
+        "count": 1
+      }
+    }
+  }
+}

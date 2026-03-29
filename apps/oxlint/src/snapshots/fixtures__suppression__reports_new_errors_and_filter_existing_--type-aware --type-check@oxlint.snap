@@ -1,0 +1,40 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --type-aware --type-check
+working directory: fixtures/suppression/reports_new_errors_and_filter_existing
+----------
+
+  x 1 new 'eslint/no-debugger' error appeared in folder_b/test.ts.
+  help: Update `oxlint-suppressions.json` file running `oxlint --suppress--all`
+
+  x typescript(TS2322): Type 'string' is not assignable to type 'number'.
+   ,-[folder_b/test.ts:1:7]
+ 1 | const foo: number = "42";
+   :       ^^^
+ 2 | debugger;
+   `----
+
+  ! eslint(no-debugger): `debugger` statement is not allowed
+   ,-[folder_b/test.ts:2:1]
+ 1 | const foo: number = "42";
+ 2 | debugger;
+   : ^^^^^^^^^
+ 3 | 
+   `----
+  help: Remove the debugger statement
+
+  x typescript(TS2584): Cannot find name 'console'. Do you need to change your target library? Try changing the 'lib' compiler option to include 'dom'.
+   ,-[folder_b/test.ts:5:3]
+ 4 | async function none() {
+ 5 |   console.log();
+   :   ^^^^^^^
+ 6 | }
+   `----
+
+Found 1 warning and 3 errors.
+Finished in <variable>ms on 2 files with 83 rules using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------

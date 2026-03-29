@@ -1,0 +1,10 @@
+{
+  "version": "0.1.0",
+  "suppressions": {
+    "files/test.ts": {
+      "eslint/no-unused-vars": {
+        "count": 2
+      }
+    }
+  }
+}

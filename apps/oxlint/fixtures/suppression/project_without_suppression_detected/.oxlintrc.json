@@ -1,0 +1,9 @@
+{
+  "plugins": ["eslint", "typescript"],
+  "rules": {
+    "no-console": "error",
+    "no-debugger": "error",
+    "typescript/await-thenable": "error",
+    "typescript/array-type": ["error", { "default": "array" }]
+  }
+}
