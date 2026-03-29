@@ -154,6 +154,15 @@ mod modifiers {
         }
 
         #[inline]
+        pub fn contains_accessibility(&self) -> bool {
+            self.kinds.intersects(ModifierKinds::new([
+                ModifierKind::Private,
+                ModifierKind::Protected,
+                ModifierKind::Public,
+            ]))
+        }
+
+        #[inline]
         pub fn accessibility(&self) -> Option<TSAccessibility> {
             self.kinds.accessibility()
         }
