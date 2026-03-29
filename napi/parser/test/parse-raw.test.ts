@@ -3,7 +3,7 @@
 import { mkdir, readdir, readFile, stat, writeFile } from "node:fs/promises";
 import { basename, join as pathJoin } from "node:path";
 import Tinypool from "tinypool";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 
 import { parse, parseSync } from "./parser.ts";
 import {

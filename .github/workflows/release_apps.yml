@@ -47,63 +47,63 @@ jobs:
         include:
           - os: windows-latest
             target: x86_64-pc-windows-msvc
-            build: pnpm run build-napi-release --target x86_64-pc-windows-msvc
+            build: vp run build-napi-release --target x86_64-pc-windows-msvc
 
           - os: windows-latest
             target: aarch64-pc-windows-msvc
-            build: pnpm run build-napi-release --target aarch64-pc-windows-msvc
+            build: vp run build-napi-release --target aarch64-pc-windows-msvc
 
           - os: windows-latest
             target: i686-pc-windows-msvc
-            build: pnpm run build-napi-release --target i686-pc-windows-msvc
+            build: vp run build-napi-release --target i686-pc-windows-msvc
 
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
-            build: pnpm run build-napi-release --target x86_64-unknown-linux-gnu --use-napi-cross
+            build: vp run build-napi-release --target x86_64-unknown-linux-gnu --use-napi-cross
 
           - os: ubuntu-latest
             target: aarch64-unknown-linux-gnu
-            build: pnpm run build-napi-release --target aarch64-unknown-linux-gnu --use-napi-cross
+            build: vp run build-napi-release --target aarch64-unknown-linux-gnu --use-napi-cross
 
           - os: ubuntu-latest
             target: armv7-unknown-linux-gnueabihf
-            build: pnpm run build-napi-release --target armv7-unknown-linux-gnueabihf --use-napi-cross
+            build: vp run build-napi-release --target armv7-unknown-linux-gnueabihf --use-napi-cross
 
           - os: ubuntu-latest
             target: x86_64-unknown-linux-musl
-            build: pnpm run build-napi-release --target x86_64-unknown-linux-musl -x
+            build: vp run build-napi-release --target x86_64-unknown-linux-musl -x
 
           - os: ubuntu-latest
             target: aarch64-unknown-linux-musl
-            build: pnpm run build-napi-release --target aarch64-unknown-linux-musl -x
+            build: vp run build-napi-release --target aarch64-unknown-linux-musl -x
 
           - os: ubuntu-latest
             target: armv7-unknown-linux-musleabihf
-            build: pnpm run build-napi-release --target armv7-unknown-linux-musleabihf -x
+            build: vp run build-napi-release --target armv7-unknown-linux-musleabihf -x
 
           - os: macos-latest
             target: x86_64-apple-darwin
-            build: pnpm run build-napi-release --target x86_64-apple-darwin
+            build: vp run build-napi-release --target x86_64-apple-darwin
 
           - os: macos-latest
             target: aarch64-apple-darwin
-            build: pnpm run build-napi-release --target aarch64-apple-darwin
+            build: vp run build-napi-release --target aarch64-apple-darwin
 
           - os: ubuntu-latest
             target: aarch64-linux-android
-            build: pnpm run build-napi-release --target aarch64-linux-android
+            build: vp run build-napi-release --target aarch64-linux-android
 
           - os: ubuntu-latest
             target: armv7-linux-androideabi
-            build: pnpm run build-napi-release --target armv7-linux-androideabi
+            build: vp run build-napi-release --target armv7-linux-androideabi
 
           - os: ubuntu-latest
             target: aarch64-unknown-linux-ohos
-            build: pnpm run build-napi-release --target aarch64-unknown-linux-ohos
+            build: vp run build-napi-release --target aarch64-unknown-linux-ohos
 
           - os: ubuntu-latest
             target: powerpc64le-unknown-linux-gnu
-            build: pnpm run build-napi-release --target powerpc64le-unknown-linux-gnu --use-napi-cross
+            build: vp run build-napi-release --target powerpc64le-unknown-linux-gnu --use-napi-cross
 
           - os: ubuntu-latest
             target: riscv64gc-unknown-linux-gnu
@@ -112,15 +112,15 @@ jobs:
               sudo apt-get install gcc-riscv64-linux-gnu g++-riscv64-linux-gnu -y
               export TARGET_CC=riscv64-linux-gnu-gcc
               export CXX=riscv64-linux-gnu-g++
-              pnpm run build-napi-release --target riscv64gc-unknown-linux-gnu
+              vp run build-napi-release --target riscv64gc-unknown-linux-gnu
 
           - os: ubuntu-latest
             target: riscv64gc-unknown-linux-musl
-            build: pnpm run build-napi-release --target riscv64gc-unknown-linux-musl -x
+            build: vp run build-napi-release --target riscv64gc-unknown-linux-musl -x
 
           - os: ubuntu-latest
             target: s390x-unknown-linux-gnu
-            build: export CFLAGS="-fuse-ld=lld" && pnpm run build-napi-release --target s390x-unknown-linux-gnu --use-napi-cross
+            build: export CFLAGS="-fuse-ld=lld" && vp run build-napi-release --target s390x-unknown-linux-gnu --use-napi-cross
 
     name: Build Oxlint ${{ matrix.target }}
     runs-on: ${{ matrix.os }}
@@ -237,7 +237,7 @@ jobs:
             sudo corepack enable
             pnpm install --ignore-scripts # postinstall: The current platform (freebsd) and architecture (x64) is not supported.
             cd apps/oxlint
-            pnpm run build-napi-release --target x86_64-unknown-freebsd
+            vp run build-napi-release --target x86_64-unknown-freebsd
             cd ../..
             cargo build --release -p oxlint --features allocator --target=x86_64-unknown-freebsd
             rm -rf node_modules
@@ -292,7 +292,7 @@ jobs:
 
       - name: Generate oxlint JS build
         working-directory: apps/oxlint
-        run: pnpm run build-js
+        run: vp run build-js
 
       - run: mkdir -p ${npm_dir}
 
@@ -340,63 +340,63 @@ jobs:
         include:
           - os: windows-latest
             target: x86_64-pc-windows-msvc
-            build: pnpm run build-napi-release --target x86_64-pc-windows-msvc
+            build: vp run build-napi-release --target x86_64-pc-windows-msvc
 
           - os: windows-latest
             target: aarch64-pc-windows-msvc
-            build: pnpm run build-napi-release --target aarch64-pc-windows-msvc
+            build: vp run build-napi-release --target aarch64-pc-windows-msvc
 
           - os: windows-latest
             target: i686-pc-windows-msvc
-            build: pnpm run build-napi-release --target i686-pc-windows-msvc
+            build: vp run build-napi-release --target i686-pc-windows-msvc
 
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
-            build: pnpm run build-napi-release --target x86_64-unknown-linux-gnu --use-napi-cross
+            build: vp run build-napi-release --target x86_64-unknown-linux-gnu --use-napi-cross
 
           - os: ubuntu-latest
             target: aarch64-unknown-linux-gnu
-            build: pnpm run build-napi-release --target aarch64-unknown-linux-gnu --use-napi-cross
+            build: vp run build-napi-release --target aarch64-unknown-linux-gnu --use-napi-cross
 
           - os: ubuntu-latest
             target: armv7-unknown-linux-gnueabihf
-            build: pnpm run build-napi-release --target armv7-unknown-linux-gnueabihf --use-napi-cross
+            build: vp run build-napi-release --target armv7-unknown-linux-gnueabihf --use-napi-cross
 
           - os: ubuntu-latest
             target: x86_64-unknown-linux-musl
-            build: pnpm run build-napi-release --target x86_64-unknown-linux-musl -x
+            build: vp run build-napi-release --target x86_64-unknown-linux-musl -x
 
           - os: ubuntu-latest
             target: aarch64-unknown-linux-musl
-            build: pnpm run build-napi-release --target aarch64-unknown-linux-musl -x
+            build: vp run build-napi-release --target aarch64-unknown-linux-musl -x
 
           - os: ubuntu-latest
             target: armv7-unknown-linux-musleabihf
-            build: pnpm run build-napi-release --target armv7-unknown-linux-musleabihf -x
+            build: vp run build-napi-release --target armv7-unknown-linux-musleabihf -x
 
           - os: macos-latest
             target: x86_64-apple-darwin
-            build: pnpm run build-napi-release --target x86_64-apple-darwin
+            build: vp run build-napi-release --target x86_64-apple-darwin
 
           - os: macos-latest
             target: aarch64-apple-darwin
-            build: pnpm run build-napi-release --target aarch64-apple-darwin
+            build: vp run build-napi-release --target aarch64-apple-darwin
 
           - os: ubuntu-latest
             target: aarch64-linux-android
-            build: pnpm run build-napi-release --target aarch64-linux-android
+            build: vp run build-napi-release --target aarch64-linux-android
 
           - os: ubuntu-latest
             target: armv7-linux-androideabi
-            build: pnpm run build-napi-release --target armv7-linux-androideabi
+            build: vp run build-napi-release --target armv7-linux-androideabi
 
           - os: ubuntu-latest
             target: aarch64-unknown-linux-ohos
-            build: pnpm run build-napi-release --target aarch64-unknown-linux-ohos
+            build: vp run build-napi-release --target aarch64-unknown-linux-ohos
 
           - os: ubuntu-latest
             target: powerpc64le-unknown-linux-gnu
-            build: pnpm run build-napi-release --target powerpc64le-unknown-linux-gnu --use-napi-cross
+            build: vp run build-napi-release --target powerpc64le-unknown-linux-gnu --use-napi-cross
 
           - os: ubuntu-latest
             target: riscv64gc-unknown-linux-gnu
@@ -405,15 +405,15 @@ jobs:
               sudo apt-get install gcc-riscv64-linux-gnu g++-riscv64-linux-gnu -y
               export TARGET_CC=riscv64-linux-gnu-gcc
               export CXX=riscv64-linux-gnu-g++
-              pnpm run build-napi-release --target riscv64gc-unknown-linux-gnu
+              vp run build-napi-release --target riscv64gc-unknown-linux-gnu
 
           - os: ubuntu-latest
             target: riscv64gc-unknown-linux-musl
-            build: pnpm run build-napi-release --target riscv64gc-unknown-linux-musl -x
+            build: vp run build-napi-release --target riscv64gc-unknown-linux-musl -x
 
           - os: ubuntu-latest
             target: s390x-unknown-linux-gnu
-            build: export CFLAGS="-fuse-ld=lld" && pnpm run build-napi-release --target s390x-unknown-linux-gnu --use-napi-cross
+            build: export CFLAGS="-fuse-ld=lld" && vp run build-napi-release --target s390x-unknown-linux-gnu --use-napi-cross
 
     name: Build Oxfmt ${{ matrix.target }}
     runs-on: ${{ matrix.os }}
@@ -530,7 +530,7 @@ jobs:
             sudo corepack enable
             pnpm install --ignore-scripts # postinstall: The current platform (freebsd) and architecture (x64) is not supported.
             cd apps/oxfmt
-            pnpm run build-napi-release --target x86_64-unknown-freebsd
+            vp run build-napi-release --target x86_64-unknown-freebsd
             cd ../..
             cargo build --release -p oxfmt --no-default-features --features allocator --target=x86_64-unknown-freebsd
             rm -rf node_modules
@@ -583,7 +583,7 @@ jobs:
 
       - name: Generate oxfmt JS build
         working-directory: apps/oxfmt
-        run: pnpm run build-js
+        run: vp run build-js
 
       - run: mkdir -p ${npm_dir}
 

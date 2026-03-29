@@ -3,7 +3,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { join as pathJoin, relative as pathRelative, sep as pathSep } from "node:path";
 
 import { execa } from "execa";
-import { expect as defaultExpect, type ExpectStatic } from "vitest";
+import { expect as defaultExpect, type ExpectStatic } from "vite-plus/test";
 
 const isWindows = pathSep === "\\";
 const normalizeSlashes = (path: string) => path.replaceAll("\\", "/");

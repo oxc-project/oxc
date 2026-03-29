@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 import { lintFixture } from "../utils";
 
 const FIXTURES_DIR = join(import.meta.dirname, "fixtures");

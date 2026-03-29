@@ -1,4 +1,4 @@
-import { configDefaults, defineConfig } from "vitest/config";
+import { configDefaults, defineConfig } from "vite-plus";
 
 const { env, platform } = process;
 const isEnabled = (envValue) => envValue === "true" || envValue === "1";

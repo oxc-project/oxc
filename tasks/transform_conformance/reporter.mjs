@@ -1,7 +1,7 @@
 // oxlint-disable no-console
 
 import { join as pathJoin } from "path";
-import { JsonReporter } from "vitest/node";
+import { JsonReporter } from "vite-plus/test/node";
 
 const currentDir = pathJoin(import.meta.dirname, "./"),
   rootDir = pathJoin(currentDir, "../../"),

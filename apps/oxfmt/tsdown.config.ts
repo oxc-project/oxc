@@ -1,4 +1,4 @@
-import { defineConfig } from "tsdown";
+import { defineConfig } from "vite-plus/pack";
 
 export default defineConfig({
   // Build all entry points together to share Prettier chunks

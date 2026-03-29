@@ -60,19 +60,19 @@
   },
   "scripts": {
     "build-dev": "napi build --esm --platform --js bindings.js --dts index.d.ts --output-dir src-js",
-    "build-test": "pnpm run build-dev --profile coverage",
-    "build": "pnpm run build-dev --features allocator --release",
+    "build-test": "vp run build-dev --profile coverage",
+    "build": "vp run build-dev --features allocator --release",
     "postbuild": "publint",
     "postbuild-dev": "node scripts/patch.js",
     "build-wasi": "napi build --target wasm32-wasip1-threads",
-    "build-wasm": "pnpm run build-wasm-dev --release",
-    "build-wasm-dev": "pnpm run build-dev --target wasm32-wasip1-threads",
+    "build-wasm": "vp run build-wasm-dev --release",
+    "build-wasm-dev": "vp run build-dev --target wasm32-wasip1-threads",
     "build-npm-dir": "rm -rf npm-dir && napi create-npm-dirs --npm-dir npm-dir && pnpm napi artifacts --npm-dir npm-dir --output-dir src-js",
     "build-browser-bundle": "node scripts/build-browser-bundle.js",
-    "test": "pnpm run test-node run",
-    "test-node": "vitest --dir ./test",
-    "test-browser": "vitest -c vitest.config.browser.ts",
-    "bench": "vitest bench --run ./bench.bench.js"
+    "test": "vp run test-node run",
+    "test-node": "vp test --dir ./test",
+    "test-browser": "vp test -c vitest.config.browser.ts",
+    "bench": "vp test bench --run ./bench.bench.js"
   },
   "dependencies": {
     "@oxc-project/types": "workspace:^"
@@ -83,13 +83,12 @@
     "@napi-rs/wasm-runtime": "catalog:",
     "@types/node": "catalog:",
     "@typescript-eslint/visitor-keys": "^8.54.0",
-    "@vitest/browser": "4.1.2",
-    "@vitest/browser-playwright": "4.1.2",
     "esbuild": "^0.27.0",
     "playwright": "^1.51.0",
     "publint": "catalog:",
     "tinypool": "^2.0.0",
-    "vitest": "catalog:"
+    "vitest": "catalog:",
+    "vite-plus": "catalog:"
   },
   "napi": {
     "binaryName": "parser",

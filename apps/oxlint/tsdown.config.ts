@@ -1,4 +1,4 @@
-import { defineConfig } from "tsdown";
+import { defineConfig } from "vite-plus/pack";
 // oxlint-disable-next-line typescript/ban-ts-comment
 // @ts-ignore - file is generated and not checked in to git
 import ruleNames from "./src-js/generated/plugin-eslint/rule_names.ts";

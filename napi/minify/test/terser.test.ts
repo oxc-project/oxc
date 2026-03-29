@@ -18,7 +18,7 @@
  * ```
  **/
 
-import { expect, test, vi } from "vitest";
+import { expect, test, vi } from "vite-plus/test";
 import { minifySync } from "../index";
 import { run_code } from "./sandbox";
 

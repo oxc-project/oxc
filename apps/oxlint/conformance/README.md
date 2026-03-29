@@ -17,19 +17,19 @@ Build Oxlint in conformance mode:
 ```sh
 cd apps/oxlint
 pnpm install
-pnpm run build-conformance
+vp run build-conformance
 ```
 
 Initialize plugin submodules:
 
 ```sh
-pnpm run init-conformance
+vp run init-conformance
 ```
 
 ## Run conformance tests
 
 ```sh
-pnpm run conformance
+vp run conformance
 ```
 
 ## Adding a plugin to conformance tests

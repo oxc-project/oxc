@@ -6,7 +6,7 @@
 // This test file runs in a separate process (via Vitest's `forks` pool) to ensure the
 // `globalThis.WeakMap` patch does not leak into other unit tests.
 
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 
 // Mock `SOURCE_CODE` to avoid pulling in heavy dependencies from `source_code.ts`.
 // The mock just needs to be a unique frozen object, same as the real `SOURCE_CODE`.

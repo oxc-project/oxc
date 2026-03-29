@@ -1,5 +1,5 @@
 import { join as pathJoin } from "node:path";
-import { describe, it } from "vitest";
+import { describe, it } from "vite-plus/test";
 import { PACKAGE_ROOT_PATH, getFixtures, testFixtureWithCommand } from "./utils.ts";
 
 import type { Fixture } from "./utils.ts";

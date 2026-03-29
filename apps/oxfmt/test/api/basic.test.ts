@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 import { format, defineConfig } from "../../dist/index.js";
 import type { FormatOptions } from "../../dist/index.js";
 

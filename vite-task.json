@@ -6,12 +6,12 @@
       "cacheable": true
     },
     "vp:fmt": {
-      "command": "pnpm run fmt",
+      "command": "vp run fmt",
       "cacheable": true
     },
     "vp:lint": {
       "dependsOn": ["vp:build-oxlint"],
-      "command": "pnpm run lint",
+      "command": "vp run lint",
       "cacheable": true
     },
     "vp:build-oxlint": {

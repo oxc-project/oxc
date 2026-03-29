@@ -17,11 +17,22 @@ catalog:
   json-schema-to-typescript: ^15.0.4
   publint: 0.3.18
   rolldown: 1.0.0-rc.12
-  tsdown: 0.21.7
-  vitest: 4.1.2
+  vitest: npm:@voidzero-dev/vite-plus-test@latest
+  vite: npm:@voidzero-dev/vite-plus-core@latest
+  vite-plus: latest
 
 onlyBuiltDependencies:
   - "@vscode/vsce-sign@2.0.8"
   - esbuild@0.25.11
 
 verifyDepsBeforeRun: install
+overrides:
+  vite: 'catalog:'
+  vitest: 'catalog:'
+peerDependencyRules:
+  allowAny:
+    - vite
+    - vitest
+  allowedVersions:
+    vite: '*'
+    vitest: '*'

@@ -3,9 +3,9 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "build": "pnpm run build-napi-release && pnpm run build-js",
+    "build": "vp run build-napi-release && vp run build-js",
 
-    "build-napi-release": "pnpm run build-napi --release --features allocator",
+    "build-napi-release": "vp run build-napi --release --features allocator",
 
     "build-js": "node scripts/build.js",
 

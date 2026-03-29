@@ -148,7 +148,7 @@ pnpm install --ignore-workspace
 
 # Build
 # (ignore errors, it's just typecheck fail)
-pnpm run bbf || true
+vp run bbf || true
 
 # The tests use `describe` and `it` from `node:test`, but we just need to use global `describe`,
 # and make `it` behave like `describe`

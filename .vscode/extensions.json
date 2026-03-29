@@ -1,11 +1,12 @@
 {
   "recommendations": [
-    "rust-lang.rust-analyzer", // official rust extension
-    "vadimcn.vscode-lldb", // for debugging
-    "tamasfe.even-better-toml", // toml syntax
-    "nefrob.vscode-just-syntax", // justfile syntax & task runner
-    "tekumara.typos-vscode", // spell checker
-    "EditorConfig.EditorConfig", // editorconfig
-    "oxc.oxc-vscode" // oxc linter and formatter
+    "rust-lang.rust-analyzer",
+    "vadimcn.vscode-lldb",
+    "tamasfe.even-better-toml",
+    "nefrob.vscode-just-syntax",
+    "tekumara.typos-vscode",
+    "EditorConfig.EditorConfig",
+    "oxc.oxc-vscode",
+    "VoidZero.vite-plus-extension-pack"
   ]
 }

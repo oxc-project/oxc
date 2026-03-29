@@ -166,7 +166,7 @@ oxlint-node-dev:
   pnpm -C apps/oxlint run build-dev
 
 watch-oxlint-node *args='':
-  just watch 'pnpm run -C apps/oxlint build-dev && node apps/oxlint/dist/cli.js --disable-nested-config {{args}}'
+  just watch 'vp run -C apps/oxlint build-dev && node apps/oxlint/dist/cli.js --disable-nested-config {{args}}'
 
 # Create a new lint rule for any plugin
 new-rule name plugin='eslint':
@@ -220,7 +220,7 @@ oxfmt-node-dev:
   pnpm -C apps/oxfmt run build-dev
 
 watch-oxfmt-node *args='':
-  just watch 'pnpm run -C apps/oxfmt build-dev && node apps/oxfmt/dist/cli.js {{args}}'
+  just watch 'vp run -C apps/oxfmt build-dev && node apps/oxfmt/dist/cli.js {{args}}'
 
 # ==================== TRANSFORMER ====================
 
@@ -273,7 +273,7 @@ watch-playground:
 
 # Generate website documentation, intended for updating the oxc.rs website.
 # Path should be the path to your clone of https://github.com/oxc-project/website
-# When testing changes to the website documentation, you may also want to run `pnpm run fmt`
+# When testing changes to the website documentation, you may also want to run `vp run fmt`
 # in the website directory.
 website path:
   cargo run -p website_linter rules --rules-json {{path}}/.vitepress/data/rules.json --rule-docs {{path}}/src/docs/guide/usage/linter/rules --git-ref $(git rev-parse HEAD) --rule-count {{path}}/src/docs/guide/usage

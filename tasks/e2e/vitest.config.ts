@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 
 import { transformSync } from "oxc-transform";
-import { defineConfig } from "vitest/config";
+import { defineConfig } from "vite-plus";
 
 export default defineConfig({
   test: {

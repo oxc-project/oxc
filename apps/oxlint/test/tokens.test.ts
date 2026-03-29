@@ -1,5 +1,5 @@
 import { join as pathJoin } from "node:path";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vite-plus/test";
 import {
   getTokens,
   getTokensBefore,

@@ -1,6 +1,6 @@
-import { playwright } from "@vitest/browser-playwright";
+import { playwright } from "vite-plus/test/browser-playwright";
 import path from "node:path";
-import { defineConfig } from "vitest/config";
+import { defineConfig } from "vite-plus";
 
 export default defineConfig({
   define: {
