@@ -10,6 +10,7 @@ let uint8,
   sourceText,
   sourceIsAscii,
   sourceStartPos,
+  firstNonAsciiPos,
   parent = null,
   getLoc;
 
@@ -42,6 +43,14 @@ function deserializeWith(buffer, sourceTextInput, sourceByteLen, getLocInput, de
   float64 = buffer.float64;
   sourceText = sourceTextInput;
   sourceIsAscii = sourceText.length === sourceByteLen;
+  if (!sourceIsAscii) {
+    firstNonAsciiPos = sourceByteLen;
+    for (let i = sourceStartPos, e = sourceStartPos + sourceByteLen; i < e; i++)
+      if (uint8[i] >= 128) {
+        firstNonAsciiPos = i - sourceStartPos;
+        break;
+      }
+  }
   getLoc = getLocInput;
   return deserialize(uint32[536870900]);
 }
@@ -5857,11 +5866,12 @@ function deserializeStr(pos) {
     len = uint32[pos32 + 2];
   if (len === 0) return "";
   pos = uint32[pos32];
-  if (sourceIsAscii && pos >= sourceStartPos) return sourceText.substr(pos - sourceStartPos, len);
-  // Longer strings use `TextDecoder`
-  // TODO: Find best switch-over point
+  if (pos >= sourceStartPos && (sourceIsAscii || pos - sourceStartPos + len <= firstNonAsciiPos))
+    return sourceText.substr(pos - sourceStartPos, len);
+  // Use `TextDecoder` for strings longer than 9 bytes.
+  // For shorter strings, the byte-by-byte loop below avoids native call overhead.
   let end = pos + len;
-  if (len > 50) return decodeStr(uint8.subarray(pos, end));
+  if (len > 9) return decodeStr(uint8.subarray(pos, end));
   // Shorter strings decode by hand to avoid native call
   let out = "",
     c;
