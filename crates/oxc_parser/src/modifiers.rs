@@ -153,17 +153,9 @@ mod modifiers {
             self.kinds.contains(ModifierKind::Override)
         }
 
+        #[inline]
         pub fn accessibility(&self) -> Option<TSAccessibility> {
-            if self.kinds.contains(ModifierKind::Public) {
-                return Some(TSAccessibility::Public);
-            }
-            if self.kinds.contains(ModifierKind::Protected) {
-                return Some(TSAccessibility::Protected);
-            }
-            if self.kinds.contains(ModifierKind::Private) {
-                return Some(TSAccessibility::Private);
-            }
-            None
+            self.kinds.accessibility()
         }
     }
 
@@ -387,6 +379,79 @@ mod modifier_kinds {
                 let kind = unsafe { ModifierKind::from_usize_unchecked(bit as usize) };
                 Some(kind)
             })
+        }
+
+        /// Get accessibility modifier as [`TSAccessibility`], if there is one.
+        ///
+        /// Implemented as branchless lookup into a static 8-byte table. Boils down to 4 instructions.
+        /// <https://godbolt.org/z/zc8WEs5o5>
+        #[inline]
+        pub fn accessibility(self) -> Option<TSAccessibility> {
+            // Check that `Private`, `Protected`, and `Public` have discriminants in a tightly packed range
+            // i.e. they are one after another
+            const MIN_DISCRIMINANT: usize = min(
+                min(ModifierKind::Private as usize, ModifierKind::Protected as usize),
+                ModifierKind::Public as usize,
+            );
+            const _: () = {
+                assert!(ModifierKind::Private as usize <= MIN_DISCRIMINANT + 2);
+                assert!(ModifierKind::Protected as usize <= MIN_DISCRIMINANT + 2);
+                assert!(ModifierKind::Public as usize <= MIN_DISCRIMINANT + 2);
+            };
+
+            const ACCESSIBILITY_KINDS: ModifierKinds = ModifierKinds::new([
+                ModifierKind::Private,
+                ModifierKind::Protected,
+                ModifierKind::Public,
+            ]);
+
+            // Lookup table mapping the 8 possible accessibility modifier combinations
+            // to their corresponding `Option<TSAccessibility>`.
+            // Priority when multiple are set (syntax error, but handled deterministically):
+            // Public > Protected > Private.
+            static LUT: [Option<TSAccessibility>; 8] = {
+                let combinations: [ModifierKinds; 8] = [
+                    ModifierKinds::none(),
+                    ModifierKinds::new([ModifierKind::Private]),
+                    ModifierKinds::new([ModifierKind::Protected]),
+                    ModifierKinds::new([ModifierKind::Public]),
+                    ModifierKinds::new([ModifierKind::Private, ModifierKind::Protected]),
+                    ModifierKinds::new([ModifierKind::Private, ModifierKind::Public]),
+                    ModifierKinds::new([ModifierKind::Protected, ModifierKind::Public]),
+                    ACCESSIBILITY_KINDS,
+                ];
+
+                let mut lut: [Option<TSAccessibility>; 8] = [None; 8];
+
+                let mut i = 0;
+                while i < lut.len() {
+                    let combination = combinations[i];
+                    let accessibility = match combination {
+                        _ if combination.contains(ModifierKind::Public) => {
+                            Some(TSAccessibility::Public)
+                        }
+                        _ if combination.contains(ModifierKind::Protected) => {
+                            Some(TSAccessibility::Protected)
+                        }
+                        _ if combination.contains(ModifierKind::Private) => {
+                            Some(TSAccessibility::Private)
+                        }
+                        _ => None,
+                    };
+                    let index = (combination.0 >> MIN_DISCRIMINANT) as usize;
+                    lut[index] = accessibility;
+                    i += 1;
+                }
+
+                lut
+            };
+
+            // Get only the accessibility modifiers
+            let access_kinds = self.intersection(ACCESSIBILITY_KINDS);
+            // Shift down to range 0..=7
+            let index = (access_kinds.0 >> MIN_DISCRIMINANT) as usize;
+            // Convert to `Option<TSAccessibility>` via the lookup table
+            LUT[index]
         }
     }
 
@@ -725,5 +790,87 @@ impl<C: Config> ParserImpl<'_, C> {
             }
             report(self, modifiers, allowed, strict, create_diagnostic);
         }
+    }
+}
+
+/// Get the minimum of two `usize`s.
+///
+/// Equivalent to `std::cmp::min` but can be used in const contexts.
+const fn min(a: usize, b: usize) -> usize {
+    if a < b { a } else { b }
+}
+
+#[cfg(test)]
+mod tests {
+    use oxc_ast::ast::TSAccessibility;
+
+    use super::{ModifierKind, ModifierKinds};
+
+    #[test]
+    fn accessibility_none() {
+        assert_eq!(ModifierKinds::none().accessibility(), None);
+    }
+
+    #[test]
+    fn accessibility_non_accessibility_modifiers() {
+        for kind in ModifierKind::VARIANTS {
+            if matches!(
+                kind,
+                ModifierKind::Private | ModifierKind::Protected | ModifierKind::Public
+            ) {
+                continue;
+            }
+            assert_eq!(ModifierKinds::new([kind]).accessibility(), None, "{kind}");
+        }
+    }
+
+    #[test]
+    fn accessibility_single() {
+        assert_eq!(
+            ModifierKinds::new([ModifierKind::Private]).accessibility(),
+            Some(TSAccessibility::Private),
+        );
+        assert_eq!(
+            ModifierKinds::new([ModifierKind::Protected]).accessibility(),
+            Some(TSAccessibility::Protected),
+        );
+        assert_eq!(
+            ModifierKinds::new([ModifierKind::Public]).accessibility(),
+            Some(TSAccessibility::Public),
+        );
+    }
+
+    #[test]
+    fn accessibility_with_other_modifiers() {
+        let kinds = ModifierKinds::new([ModifierKind::Static, ModifierKind::Public]);
+        assert_eq!(kinds.accessibility(), Some(TSAccessibility::Public));
+
+        let kinds = ModifierKinds::new([
+            ModifierKind::Async,
+            ModifierKind::Protected,
+            ModifierKind::Override,
+        ]);
+        assert_eq!(kinds.accessibility(), Some(TSAccessibility::Protected));
+    }
+
+    #[test]
+    fn accessibility_multiple_accessibility_modifiers() {
+        // Multiple accessibility modifiers is a syntax error, but the function should still
+        // return a deterministic result. Priority: Public > Protected > Private.
+        let kinds = ModifierKinds::new([ModifierKind::Private, ModifierKind::Protected]);
+        assert_eq!(kinds.accessibility(), Some(TSAccessibility::Protected));
+
+        let kinds = ModifierKinds::new([ModifierKind::Private, ModifierKind::Public]);
+        assert_eq!(kinds.accessibility(), Some(TSAccessibility::Public));
+
+        let kinds = ModifierKinds::new([ModifierKind::Protected, ModifierKind::Public]);
+        assert_eq!(kinds.accessibility(), Some(TSAccessibility::Public));
+
+        let kinds = ModifierKinds::new([
+            ModifierKind::Private,
+            ModifierKind::Protected,
+            ModifierKind::Public,
+        ]);
+        assert_eq!(kinds.accessibility(), Some(TSAccessibility::Public));
     }
 }
