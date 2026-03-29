@@ -12,7 +12,7 @@ use crate::{
 
 fn tabindex_no_positive_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Avoid positive integer values for `tabIndex`.")
-        .with_help("Change the `tabIndex` prop to a non-negative value")
+        .with_help("Change the `tabIndex` prop to a non-positive value.")
         .with_label(span)
 }
 

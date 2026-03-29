@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(no-array-for-each): Do not use `Array#forEach`
    ╭─[no_array_for_each.tsx:1:5]
  1 │ foo.forEach?.(element => bar(element))

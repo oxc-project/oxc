@@ -17,7 +17,7 @@ pub struct NoDuplicateCase;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow duplicate case labels
+    /// Disallow duplicate case labels.
     ///
     /// ### Why is this bad?
     ///

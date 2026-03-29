@@ -4,12 +4,12 @@ use std::{
 };
 
 use rustc_hash::{FxHashMap, FxHashSet};
-use schemars::{JsonSchema, schema_for};
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use oxc_diagnostics::OxcDiagnostic;
 
-use crate::{LintPlugins, utils::read_to_string};
+use crate::{AllowWarnDeny, LintPlugins, utils::read_to_string};
 
 use super::{
     categories::OxlintCategories,
@@ -21,17 +21,73 @@ use super::{
     settings::OxlintSettings,
 };
 
+/// Options for the linter.
+#[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
+#[serde(default, deny_unknown_fields, rename_all = "camelCase")]
+#[non_exhaustive]
+pub struct OxlintOptions {
+    /// Enable rules that require type information.
+    ///
+    /// Equivalent to passing `--type-aware` on the CLI.
+    ///
+    /// Note that this requires the `oxlint-tsgolint` package to be installed.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub type_aware: Option<bool>,
+    /// Enable experimental type checking (includes TypeScript compiler diagnostics).
+    ///
+    /// Equivalent to passing `--type-check` on the CLI.
+    ///
+    /// Note that this requires the `oxlint-tsgolint` package to be installed.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub type_check: Option<bool>,
+    /// Ensure warnings produce a non-zero exit code.
+    ///
+    /// Equivalent to passing `--deny-warnings` on the CLI.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub deny_warnings: Option<bool>,
+    /// Specify a warning threshold. Exits with an error status if warnings exceed this value.
+    ///
+    /// Equivalent to passing `--max-warnings` on the CLI.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub max_warnings: Option<usize>,
+    /// Report unused disable directives (e.g. `// oxlint-disable-line` or `// eslint-disable-line`).
+    ///
+    /// Equivalent to passing `--report-unused-disable-directives-severity` on the CLI.
+    /// CLI flags take precedence over this value when both are set.
+    /// Only supported in the root configuration file.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub report_unused_disable_directives: Option<AllowWarnDeny>,
+}
+
+impl OxlintOptions {
+    #[must_use]
+    pub fn is_empty(&self) -> bool {
+        self.type_aware.is_none()
+            && self.type_check.is_none()
+            && self.deny_warnings.is_none()
+            && self.max_warnings.is_none()
+            && self.report_unused_disable_directives.is_none()
+    }
+
+    #[must_use]
+    pub fn merge(&self, other: &OxlintOptions) -> Self {
+        Self {
+            type_aware: self.type_aware.or(other.type_aware),
+            type_check: self.type_check.or(other.type_check),
+            deny_warnings: self.deny_warnings.or(other.deny_warnings),
+            max_warnings: self.max_warnings.or(other.max_warnings),
+            report_unused_disable_directives: self
+                .report_unused_disable_directives
+                .or(other.report_unused_disable_directives),
+        }
+    }
+}
+
 /// Oxlint Configuration File
 ///
 /// This configuration is aligned with ESLint v8's configuration schema (`eslintrc.json`).
 ///
-/// Usage: `oxlint -c oxlintrc.json --import-plugin`
-///
-/// ::: danger NOTE
-///
-/// Only the `.json` format is supported. You can use comments in configuration files.
-///
-/// :::
+/// Usage: `oxlint -c oxlintrc.json`
 ///
 /// Example
 ///
@@ -48,6 +104,10 @@ use super::{
 ///     "foo": "readonly"
 ///   },
 ///   "settings": {
+///     "react": {
+///       "version": "18.2.0"
+///     },
+///     "custom": { "option": true }
 ///   },
 ///   "rules": {
 ///     "eqeqeq": "warn",
@@ -64,6 +124,41 @@ use super::{
 ///   ]
 ///  }
 /// ```
+///
+/// `oxlint.config.ts`
+///
+/// ```ts
+/// import { defineConfig } from "oxlint";
+///
+/// export default defineConfig({
+///   plugins: ["import", "typescript", "unicorn"],
+///   env: {
+///     "browser": true
+///   },
+///   globals: {
+///     "foo": "readonly"
+///   },
+///   settings: {
+///     react: {
+///       version: "18.2.0"
+///     },
+///     custom: { option: true }
+///   },
+///   rules: {
+///     "eqeqeq": "warn",
+///     "import/no-cycle": "error",
+///     "react/self-closing-comp": ["error", { "html": false }]
+///   },
+///   overrides: [
+///     {
+///       files: ["*.test.ts", "*.spec.ts"],
+///       rules: {
+///         "@typescript-eslint/no-explicit-any": "off"
+///       }
+///     }
+///   ]
+/// });
+/// ```
 #[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
 #[serde(default, deny_unknown_fields)]
 #[non_exhaustive]
@@ -78,10 +173,59 @@ pub struct Oxlintrc {
     /// NOTE: Setting the `plugins` field will overwrite the base set of plugins.
     /// The `plugins` array should reflect all of the plugins you want to use.
     pub plugins: Option<LintPlugins>,
-    /// JS plugins.
+    /// JS plugins, allows usage of ESLint plugins with Oxlint.
     ///
-    /// Note: JS plugins are experimental and not subject to semver.
-    /// They are not supported in language server at present.
+    /// Read more about JS plugins in
+    /// [the docs](https://oxc.rs/docs/guide/usage/linter/js-plugins.html).
+    ///
+    /// Note: JS plugins are in alpha and not subject to semver.
+    ///
+    /// Examples:
+    ///
+    /// Basic usage with a local plugin path.
+    ///
+    /// ```json
+    /// {
+    ///   "jsPlugins": ["./custom-plugin.js"],
+    ///   "rules": {
+    ///     "custom/rule-name": "warn"
+    ///   }
+    /// }
+    /// ```
+    ///
+    /// Basic usage with a TypeScript plugin and a local plugin path.
+    ///
+    /// TypeScript plugin files are supported in the following environments:
+    /// - Deno and Bun: TypeScript files are supported natively.
+    /// - Node.js >=22.18.0 and Node.js ^20.19.0: TypeScript files are supported natively with built-in
+    ///   type-stripping enabled by default.
+    ///
+    /// For older Node.js versions, TypeScript plugins are not supported. Please use JavaScript plugins or upgrade your Node version.
+    ///
+    /// ```json
+    /// {
+    ///   "jsPlugins": ["./custom-plugin.ts"],
+    ///   "rules": {
+    ///     "custom/rule-name": "warn"
+    ///   }
+    /// }
+    /// ```
+    ///
+    /// Using a built-in Rust plugin alongside a JS plugin with the same name
+    /// by giving the JS plugin an alias.
+    ///
+    /// ```json
+    /// {
+    ///   "plugins": ["import"],
+    ///   "jsPlugins": [
+    ///     { "name": "import-js", "specifier": "eslint-plugin-import" }
+    ///   ],
+    ///   "rules": {
+    ///     "import/no-cycle": "error",
+    ///     "import-js/no-unresolved": "warn"
+    ///   }
+    /// }
+    /// ```
     #[serde(rename = "jsPlugins", default, skip_serializing_if = "Option::is_none")]
     #[schemars(schema_with = "external_plugins_schema")]
     pub external_plugins: Option<FxHashSet<ExternalPluginEntry>>,
@@ -104,6 +248,9 @@ pub struct Oxlintrc {
     /// See [Oxlint Rules](https://oxc.rs/docs/guide/usage/linter/rules.html) for the list of
     /// rules.
     pub rules: OxlintRules,
+    /// Plugin-specific configuration for both built-in and custom plugins.
+    /// This includes settings for built-in plugins such as `react` and `jsdoc`
+    /// as well as configuring settings for JS custom plugins loaded via `jsPlugins`.
     pub settings: OxlintSettings,
     /// Environments enable and disable collections of global variables.
     pub env: OxlintEnv,
@@ -112,6 +259,9 @@ pub struct Oxlintrc {
     /// Add, remove, or otherwise reconfigure rules for specific files or groups of files.
     #[serde(skip_serializing_if = "OxlintOverrides::is_empty")]
     pub overrides: OxlintOverrides,
+    /// Oxlint config options.
+    #[serde(skip_serializing_if = "OxlintOptions::is_empty")]
+    pub options: OxlintOptions,
     /// Absolute path to the configuration file.
     #[serde(skip)]
     pub path: PathBuf,
@@ -124,6 +274,14 @@ pub struct Oxlintrc {
     /// overriding the previous ones.
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub extends: Vec<PathBuf>,
+    /// Extended configuration objects provided via `oxlint.config.ts`.
+    ///
+    /// This field is not deserialized from JSON config files and is not part of the public
+    /// configuration schema. It is populated by the JS config loader when `extends` contains
+    /// objects (imported configs).
+    #[serde(skip)]
+    #[schemars(skip)]
+    pub extends_configs: Vec<Oxlintrc>,
 }
 
 impl Oxlintrc {
@@ -156,7 +314,7 @@ impl Oxlintrc {
                 }
             };
             OxcDiagnostic::error(format!(
-                "Failed to parse eslint config {}.\n{err}",
+                "Failed to parse oxlint config {}.\n{err}",
                 path.display()
             ))
         })?;
@@ -168,28 +326,9 @@ impl Oxlintrc {
         config.path = path.to_path_buf();
 
         #[expect(clippy::missing_panics_doc)]
-        let config_dir = config.path.parent().unwrap();
-        if let Some(external_plugins) = &mut config.external_plugins {
-            *external_plugins = std::mem::take(external_plugins)
-                .into_iter()
-                .map(|mut entry| {
-                    entry.config_dir = config_dir.to_path_buf();
-                    entry
-                })
-                .collect();
-        }
-
-        for override_config in config.overrides.iter_mut() {
-            if let Some(external_plugins) = &mut override_config.external_plugins {
-                *external_plugins = std::mem::take(external_plugins)
-                    .into_iter()
-                    .map(|mut entry| {
-                        entry.config_dir = config_dir.to_path_buf();
-                        entry
-                    })
-                    .collect();
-            }
-        }
+        let config_dir =
+            config.path.parent().expect("config path should have a parent directory").to_path_buf();
+        config.set_config_dir(&config_dir);
 
         Ok(config)
     }
@@ -204,61 +343,6 @@ impl Oxlintrc {
         Self::deserialize(&json).map_err(|err| {
             OxcDiagnostic::error(format!("Failed to parse config with error {err:?}"))
         })
-    }
-
-    /// Generates the JSON schema for Oxlintrc configuration files.
-    ///
-    /// # Panics
-    /// Panics if the schema generation fails.
-    pub fn generate_schema_json() -> String {
-        let mut schema = schema_for!(Oxlintrc);
-
-        // Allow comments and trailing commas for vscode-json-languageservice
-        // NOTE: This is NOT part of standard JSON Schema specification
-        // https://github.com/microsoft/vscode-json-languageservice/blob/fb83547762901f32d8449d57e24666573016b10c/src/jsonLanguageTypes.ts#L151-L159
-        schema.schema.extensions.insert("allowComments".to_string(), serde_json::Value::Bool(true));
-        schema
-            .schema
-            .extensions
-            .insert("allowTrailingCommas".to_string(), serde_json::Value::Bool(true));
-
-        let mut json = serde_json::to_value(&schema).unwrap();
-
-        // Inject markdown descriptions for better editor support
-        Self::inject_markdown_descriptions(&mut json);
-
-        serde_json::to_string_pretty(&json).unwrap()
-    }
-
-    /// Recursively inject `markdownDescription` fields into the JSON schema.
-    /// This is a non-standard field that some editors (like VS Code) use to render
-    /// markdown in hover tooltips.
-    fn inject_markdown_descriptions(value: &mut serde_json::Value) {
-        match value {
-            serde_json::Value::Object(map) => {
-                // If this object has a `description` field, copy it to `markdownDescription`
-                if let Some(serde_json::Value::String(desc_str)) = map.get("description") {
-                    map.insert(
-                        "markdownDescription".to_string(),
-                        serde_json::Value::String(desc_str.clone()),
-                    );
-                }
-
-                // Recursively process all values in the object
-                for value in map.values_mut() {
-                    Self::inject_markdown_descriptions(value);
-                }
-            }
-            serde_json::Value::Array(items) => {
-                // Recursively process all items in the array
-                for item in items {
-                    Self::inject_markdown_descriptions(item);
-                }
-            }
-            _ => {
-                // Primitive values don't need processing
-            }
-        }
     }
 
     /// Merges two [Oxlintrc] files together.
@@ -314,6 +398,7 @@ impl Oxlintrc {
         };
 
         let schema = self.schema.clone().or(other.schema);
+        let options = self.options.merge(&other.options);
 
         Oxlintrc {
             schema,
@@ -325,9 +410,43 @@ impl Oxlintrc {
             env,
             globals,
             overrides,
+            options,
             path: self.path.clone(),
             ignore_patterns: self.ignore_patterns.clone(),
             extends: self.extends.clone(),
+            extends_configs: self.extends_configs.clone(),
+        }
+    }
+
+    /// Update the configuration directory for all external plugin entries in this config
+    /// and in its overrides. The underlying `HashSet` is rebuilt because `config_dir`
+    /// participates in the `Hash`/`Eq` implementation of each entry, so changing it
+    /// requires rehashing the set.
+    pub fn set_config_dir(&mut self, config_dir: &Path) {
+        if let Some(external_plugins) = &mut self.external_plugins {
+            *external_plugins = std::mem::take(external_plugins)
+                .into_iter()
+                .map(|mut entry| {
+                    entry.config_dir = config_dir.to_path_buf();
+                    entry
+                })
+                .collect();
+        }
+
+        for override_config in self.overrides.iter_mut() {
+            if let Some(external_plugins) = &mut override_config.external_plugins {
+                *external_plugins = std::mem::take(external_plugins)
+                    .into_iter()
+                    .map(|mut entry| {
+                        entry.config_dir = config_dir.to_path_buf();
+                        entry
+                    })
+                    .collect();
+            }
+        }
+
+        for config in &mut self.extends_configs {
+            config.set_config_dir(config_dir);
         }
     }
 }
@@ -355,6 +474,145 @@ mod test {
         assert_eq!(config.env, OxlintEnv::default());
         assert_eq!(config.path, PathBuf::default());
         assert_eq!(config.extends, Vec::<PathBuf>::default());
+        assert_eq!(config.options.type_aware, None);
+        assert_eq!(config.options.type_check, None);
+        assert_eq!(config.options.deny_warnings, None);
+        assert_eq!(config.options.max_warnings, None);
+        assert_eq!(config.options.report_unused_disable_directives, None);
+    }
+
+    #[test]
+    fn test_oxlintrc_options_deserialize() {
+        let config: Oxlintrc =
+            serde_json::from_value(json!({ "options": { "typeAware": true } })).unwrap();
+        assert_eq!(config.options.type_aware, Some(true));
+
+        let config: Oxlintrc =
+            serde_json::from_value(json!({ "options": { "typeAware": false } })).unwrap();
+        assert_eq!(config.options.type_aware, Some(false));
+
+        let config: Oxlintrc =
+            serde_json::from_value(json!({ "options": { "typeCheck": true } })).unwrap();
+        assert_eq!(config.options.type_check, Some(true));
+
+        let config: Oxlintrc =
+            serde_json::from_value(json!({ "options": { "typeCheck": false } })).unwrap();
+        assert_eq!(config.options.type_check, Some(false));
+
+        let config: Oxlintrc =
+            serde_json::from_value(json!({ "options": { "denyWarnings": true } })).unwrap();
+        assert_eq!(config.options.deny_warnings, Some(true));
+
+        let config: Oxlintrc =
+            serde_json::from_value(json!({ "options": { "denyWarnings": false } })).unwrap();
+        assert_eq!(config.options.deny_warnings, Some(false));
+
+        let config: Oxlintrc =
+            serde_json::from_value(json!({ "options": { "maxWarnings": 10 } })).unwrap();
+        assert_eq!(config.options.max_warnings, Some(10));
+
+        let config: Result<Oxlintrc, _> =
+            serde_json::from_value(json!({ "options": { "maxWarnings": -1 } }));
+        assert!(config.is_err());
+
+        let config: Oxlintrc = serde_json::from_value(
+            json!({ "options": { "reportUnusedDisableDirectives": "warn" } }),
+        )
+        .unwrap();
+        assert_eq!(config.options.report_unused_disable_directives, Some(AllowWarnDeny::Warn));
+
+        // error and deny
+
+        let config: Oxlintrc = serde_json::from_value(
+            json!({ "options": { "reportUnusedDisableDirectives": "error" } }),
+        )
+        .unwrap();
+        assert_eq!(config.options.report_unused_disable_directives, Some(AllowWarnDeny::Deny));
+
+        let config: Oxlintrc = serde_json::from_value(
+            json!({ "options": { "reportUnusedDisableDirectives": "deny" } }),
+        )
+        .unwrap();
+        assert_eq!(config.options.report_unused_disable_directives, Some(AllowWarnDeny::Deny));
+
+        // off and allow
+
+        let config: Oxlintrc = serde_json::from_value(
+            json!({ "options": { "reportUnusedDisableDirectives": "off" } }),
+        )
+        .unwrap();
+        assert_eq!(config.options.report_unused_disable_directives, Some(AllowWarnDeny::Allow));
+
+        let config: Oxlintrc = serde_json::from_value(
+            json!({ "options": { "reportUnusedDisableDirectives": "allow" } }),
+        )
+        .unwrap();
+        assert_eq!(config.options.report_unused_disable_directives, Some(AllowWarnDeny::Allow));
+    }
+
+    #[test]
+    fn test_oxlintrc_top_level_options_rejected() {
+        let config: Result<Oxlintrc, _> = serde_json::from_value(json!({ "typeAware": true }));
+        assert!(config.is_err());
+
+        let config: Result<Oxlintrc, _> = serde_json::from_value(json!({ "typeCheck": true }));
+        assert!(config.is_err());
+
+        let config: Result<Oxlintrc, _> = serde_json::from_value(json!({ "denyWarnings": true }));
+        assert!(config.is_err());
+
+        let config: Result<Oxlintrc, _> = serde_json::from_value(json!({ "maxWarnings": 1 }));
+        assert!(config.is_err());
+
+        let config: Result<Oxlintrc, _> =
+            serde_json::from_value(json!({ "reportUnusedDisableDirectives": "warn" }));
+        assert!(config.is_err());
+    }
+
+    #[test]
+    fn test_oxlintrc_merge_options() {
+        let mut root: Oxlintrc = serde_json::from_value(
+            json!({ "options": { "typeAware": true, "typeCheck": false, "denyWarnings": true, "maxWarnings": 1 } }),
+        )
+        .unwrap();
+        root.path = PathBuf::from("/root/.oxlintrc.json");
+
+        let mut base: Oxlintrc = serde_json::from_value(
+            json!({ "options": { "typeAware": false, "typeCheck": true, "denyWarnings": false, "maxWarnings": 10 } }),
+        )
+        .unwrap();
+        base.path = PathBuf::from("/root/base.json");
+
+        let merged = root.merge(base);
+        assert_eq!(merged.options.type_aware, Some(true));
+        assert_eq!(merged.options.type_check, Some(false));
+        assert_eq!(merged.options.deny_warnings, Some(true));
+        assert_eq!(merged.options.max_warnings, Some(1));
+
+        // root wins over base for reportUnusedDisableDirectives
+        let mut root: Oxlintrc = serde_json::from_value(
+            json!({ "options": { "reportUnusedDisableDirectives": "error" } }),
+        )
+        .unwrap();
+        root.path = PathBuf::from("/root/.oxlintrc.json");
+        let mut base: Oxlintrc = serde_json::from_value(
+            json!({ "options": { "reportUnusedDisableDirectives": "warn" } }),
+        )
+        .unwrap();
+        base.path = PathBuf::from("/root/base.json");
+        let merged = root.merge(base);
+        assert_eq!(merged.options.report_unused_disable_directives, Some(AllowWarnDeny::Deny));
+
+        // base value propagates when root does not set the field
+        let mut root: Oxlintrc = serde_json::from_value(json!({})).unwrap();
+        root.path = PathBuf::from("/root/.oxlintrc.json");
+        let mut base: Oxlintrc = serde_json::from_value(
+            json!({ "options": { "reportUnusedDisableDirectives": "warn" } }),
+        )
+        .unwrap();
+        base.path = PathBuf::from("/root/base.json");
+        let merged = root.merge(base);
+        assert_eq!(merged.options.report_unused_disable_directives, Some(AllowWarnDeny::Warn));
     }
 
     #[test]
@@ -507,5 +765,49 @@ mod test {
         let config2: Oxlintrc = serde_json::from_str(r#"{"$schema": "schema2.json"}"#).unwrap();
         let merged = config1.merge(config2);
         assert_eq!(merged.schema, Some("schema2.json".to_string()));
+    }
+
+    #[test]
+    fn test_set_config_dir() {
+        let mut config: Oxlintrc = serde_json::from_str(
+            r#"{
+                "jsPlugins": ["./plugin1.ts", { "name": "custom", "specifier": "./plugin2.ts" }],
+                "overrides": [{ "files": ["*.test.ts"], "jsPlugins": ["./override-plugin.ts"] }]
+            }"#,
+        )
+        .unwrap();
+
+        // Verify initial state - config_dir should be empty PathBuf
+        let top_level_plugins = config.external_plugins.as_ref().unwrap();
+        assert_eq!(top_level_plugins.len(), 2);
+        for entry in top_level_plugins {
+            assert_eq!(entry.config_dir, PathBuf::new());
+        }
+
+        let override_plugins =
+            config.overrides.iter().next().unwrap().external_plugins.as_ref().unwrap();
+        assert_eq!(override_plugins.len(), 1);
+        for entry in override_plugins {
+            assert_eq!(entry.config_dir, PathBuf::new());
+        }
+
+        // Call set_config_dir
+        let new_config_dir = PathBuf::from("/project/config");
+        config.set_config_dir(&new_config_dir);
+
+        // Assert that all top-level plugins have the new config_dir
+        let top_level_plugins = config.external_plugins.as_ref().unwrap();
+        assert_eq!(top_level_plugins.len(), 2);
+        for entry in top_level_plugins {
+            assert_eq!(entry.config_dir, new_config_dir);
+        }
+
+        // Assert that all override plugins have the new config_dir
+        let override_plugins =
+            config.overrides.iter().next().unwrap().external_plugins.as_ref().unwrap();
+        assert_eq!(override_plugins.len(), 1);
+        for entry in override_plugins {
+            assert_eq!(entry.config_dir, new_config_dir);
+        }
     }
 }

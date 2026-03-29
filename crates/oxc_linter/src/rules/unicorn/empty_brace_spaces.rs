@@ -29,12 +29,15 @@ declare_oxc_lint!(
     ///
     /// ### Examples
     ///
+    /// <!-- prettier-ignore-start -->
     /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// const a = {  };
     /// class A {
     /// }
     /// ```
+    ///
+    /// <!-- prettier-ignore-end -->
     ///
     /// Examples of **correct** code for this rule:
     /// ```javascript
@@ -321,25 +324,21 @@ fn test() {
     ];
 
     let fix = vec![
-        ("const a = {\n};", "const a = {};", None),
-        ("return {\n\n};", "return {};", None),
-        ("const x = () => {\n\n};", "const x = () => {};", None),
-        ("class A {\n}", "class A {}", None),
-        ("function a(){ }", "function a(){}", None),
-        ("do { }while(true)", "do {}while(true)", None),
-        ("class A {\nstatic { }\n}", "class A {\nstatic {}\n}", None),
-        ("class A {\nstatic{ }\n}", "class A {\nstatic {}\n}", None),
-        ("with (foo) {   }", "with (foo) {}", None),
-        ("\nif (true) {\n}", "\nif (true) {}", None),
-        ("\nif (true) {   }", "\nif (true) {}", None),
-        ("try{  }catch{  }", "try{}catch{}", None),
-        ("for(let i = 0; i <3; i += 1) {\n  }", "for(let i = 0; i <3; i += 1) {}", None),
-        ("try{console.log('Hello');}finally{ \n}", "try{console.log('Hello');}finally{}", None),
-        (
-            "try{\nconsole.log(\'test\');\n}catch{ }\n",
-            "try{\nconsole.log(\'test\');\n}catch{}\n",
-            None,
-        ),
+        ("const a = {\n};", "const a = {};"),
+        ("return {\n\n};", "return {};"),
+        ("const x = () => {\n\n};", "const x = () => {};"),
+        ("class A {\n}", "class A {}"),
+        ("function a(){ }", "function a(){}"),
+        ("do { }while(true)", "do {}while(true)"),
+        ("class A {\nstatic { }\n}", "class A {\nstatic {}\n}"),
+        ("class A {\nstatic{ }\n}", "class A {\nstatic {}\n}"),
+        ("with (foo) {   }", "with (foo) {}"),
+        ("\nif (true) {\n}", "\nif (true) {}"),
+        ("\nif (true) {   }", "\nif (true) {}"),
+        ("try{  }catch{  }", "try{}catch{}"),
+        ("for(let i = 0; i <3; i += 1) {\n  }", "for(let i = 0; i <3; i += 1) {}"),
+        ("try{console.log('Hello');}finally{ \n}", "try{console.log('Hello');}finally{}"),
+        ("try{\nconsole.log(\'test\');\n}catch{ }\n", "try{\nconsole.log(\'test\');\n}catch{}\n"),
     ];
 
     Tester::new(EmptyBraceSpaces::NAME, EmptyBraceSpaces::PLUGIN, pass, fail)

@@ -7,13 +7,20 @@ async fn main() -> CliRunResult {
     // Parse command line arguments from std::env::args()
     let command = lint_command().run();
 
+    // Both LSP and CLI use `tracing` for logging
+    init_tracing();
+
     // If --lsp flag is set, run the language server
     if command.lsp {
-        run_lsp().await;
+        run_lsp(
+            None,
+            #[cfg(feature = "napi")]
+            None,
+        )
+        .await;
         return CliRunResult::LintSucceeded;
     }
 
-    init_tracing();
     init_miette();
 
     command.handle_threads();

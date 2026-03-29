@@ -409,11 +409,11 @@ fn test_template() {
     test("let x = `$\\{y}`", "let x = `$\\{y}`;\n");
 
     test("await tag`x`", "await tag`x`;\n");
-    test("await (tag`x`)", "await tag`x`;\n");
+    test("await (tag`x`)", "await(tag`x`);\n");
     test("(await tag)`x`", "(await tag)`x`;\n");
 
     test("await tag`${x}`", "await tag`${x}`;\n");
-    test("await (tag`${x}`)", "await tag`${x}`;\n");
+    test("await (tag`${x}`)", "await(tag`${x}`);\n");
     test("(await tag)`${x}`", "(await tag)`${x}`;\n");
 
     test("new tag`x`", "new tag`x`();\n");

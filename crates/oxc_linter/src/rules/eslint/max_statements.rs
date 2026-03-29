@@ -200,7 +200,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for MaxStatements {
-    fn from_configuration(value: Value) -> Self {
+    fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
         let config = value.get(0);
         let max = if let Some(max) = config
             .and_then(Value::as_number)
@@ -224,7 +224,7 @@ impl Rule for MaxStatements {
             .and_then(Value::as_bool)
             .unwrap_or(false);
 
-        Self(Box::new(MaxStatementsConfig { max, ignore_top_level_functions }))
+        Ok(Self(Box::new(MaxStatementsConfig { max, ignore_top_level_functions })))
     }
 
     fn run_once(&self, ctx: &LintContext<'_>) {

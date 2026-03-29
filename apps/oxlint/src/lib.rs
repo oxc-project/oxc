@@ -2,9 +2,11 @@
 #![cfg_attr(not(feature = "napi"), allow(dead_code))]
 
 mod command;
+mod config_loader;
 mod init;
 mod lint;
 mod lsp;
+mod mode;
 mod output_formatter;
 mod result;
 mod walk;
@@ -21,9 +23,12 @@ pub mod cli {
 // Without this, `tasks/website` will not compile on Linux or Windows.
 // `tasks/website` depends on `oxlint` as a normal library, which causes linker errors if NAPI is enabled.
 #[cfg(feature = "napi")]
+mod js_config;
+#[cfg(feature = "napi")]
 mod run;
 #[cfg(feature = "napi")]
 pub use run::*;
+use rustc_hash::FxHashSet;
 
 // JS plugins are only supported on 64-bit little-endian platforms at present.
 // Note: `raw_transfer_constants` module will not compile on 32-bit systems.
@@ -38,6 +43,35 @@ mod js_plugins;
 // Use Mimalloc as the global allocator if `--features allocator` is enabled.
 // Mimalloc has better performance, but this is feature-gated because it's slow to compile.
 // `--features allocator` is only used in release builds.
-#[cfg(all(feature = "allocator", not(miri), not(target_family = "wasm")))]
+#[cfg(all(
+    feature = "allocator",
+    not(any(
+        target_arch = "arm",
+        target_arch = "riscv64",
+        miri,
+        target_os = "freebsd",
+        target_family = "wasm"
+    ))
+))]
 #[global_allocator]
 static GLOBAL: mimalloc_safe::MiMalloc = mimalloc_safe::MiMalloc;
+
+const DEFAULT_OXLINTRC_NAME: &str = ".oxlintrc.json";
+const DEFAULT_JSONC_OXLINTRC_NAME: &str = ".oxlintrc.jsonc";
+const DEFAULT_TS_OXLINTRC_NAME: &str = "oxlint.config.ts";
+/// Vite config file that may contain oxlint config under a `.lint` field.
+const VITE_CONFIG_NAME: &str = "vite.config.ts";
+
+/// Return a JSON blob containing metadata for all available oxlint rules.
+///
+/// This uses the internal JSON output formatter to generate the full list.
+///
+/// # Panics
+/// Panics if the JSON generation fails, which should never happen under normal circumstances.
+pub fn get_all_rules_json() -> String {
+    use crate::output_formatter::{OutputFormat, OutputFormatter};
+
+    OutputFormatter::new(OutputFormat::Json)
+        .all_rules(FxHashSet::default())
+        .expect("Failed to generate rules JSON")
+}

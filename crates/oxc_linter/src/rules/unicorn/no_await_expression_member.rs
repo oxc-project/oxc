@@ -131,46 +131,46 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        (r"const foo = await promise", None),
-        (r"const {foo: bar} = await promise", None),
-        (r"const foo = !await promise", None),
-        (r"const foo = typeof await promise", None),
-        (r"const foo = await notPromise.method()", None),
-        (r"const foo = foo[await promise]", None),
+        "const foo = await promise",
+        "const {foo: bar} = await promise",
+        "const foo = !await promise",
+        "const foo = typeof await promise",
+        "const foo = await notPromise.method()",
+        "const foo = foo[await promise]",
         // These await expression need parenthesized, but rarely used
-        (r"new (await promiseReturnsAClass)", None),
-        (r"(await promiseReturnsAFunction)()", None),
+        "new (await promiseReturnsAClass)",
+        "(await promiseReturnsAFunction)()",
         // typescript
-        (r"async function foo () {return (await promise) as string;}", None),
+        "async function foo () {return (await promise) as string;}",
     ];
 
     let fail = vec![
-        (r"(await promise)[0]", None),
-        (r"(await promise).property", None),
-        (r"const foo = (await promise).bar()", None),
-        (r"const foo = (await promise).bar?.()", None),
-        (r"const foo = (await promise)?.bar()", None),
-        (r"const firstElement = (await getArray())[0]", None),
-        (r"const secondElement = (await getArray())[1]", None),
-        (r"const thirdElement = (await getArray())[2]", None),
-        (r"const optionalFirstElement = (await getArray())?.[0]", None),
-        (r"const {propertyOfFirstElement} = (await getArray())[0]", None),
-        (r"const [firstElementOfFirstElement] = (await getArray())[0]", None),
-        (r"let foo, firstElement = (await getArray())[0]", None),
-        (r"var firstElement = (await getArray())[0], bar", None),
-        (r"const property = (await getObject()).property", None),
-        (r"const renamed = (await getObject()).property", None),
-        (r"const property = (await getObject())[property]", None),
-        (r"const property = (await getObject())?.property", None),
-        (r"const {propertyOfProperty} = (await getObject()).property", None),
-        (r"const {propertyOfProperty} = (await getObject()).propertyOfProperty", None),
-        (r"const [firstElementOfProperty] = (await getObject()).property", None),
-        (r"const [firstElementOfProperty] = (await getObject()).firstElementOfProperty", None),
-        (r"firstElement = (await getArray())[0]", None),
-        (r"property = (await getArray()).property", None),
+        "(await promise)[0]",
+        "(await promise).property",
+        "const foo = (await promise).bar()",
+        "const foo = (await promise).bar?.()",
+        "const foo = (await promise)?.bar()",
+        "const firstElement = (await getArray())[0]",
+        "const secondElement = (await getArray())[1]",
+        "const thirdElement = (await getArray())[2]",
+        "const optionalFirstElement = (await getArray())?.[0]",
+        "const {propertyOfFirstElement} = (await getArray())[0]",
+        "const [firstElementOfFirstElement] = (await getArray())[0]",
+        "let foo, firstElement = (await getArray())[0]",
+        "var firstElement = (await getArray())[0], bar",
+        "const property = (await getObject()).property",
+        "const renamed = (await getObject()).property",
+        "const property = (await getObject())[property]",
+        "const property = (await getObject())?.property",
+        "const {propertyOfProperty} = (await getObject()).property",
+        "const {propertyOfProperty} = (await getObject()).propertyOfProperty",
+        "const [firstElementOfProperty] = (await getObject()).property",
+        "const [firstElementOfProperty] = (await getObject()).firstElementOfProperty",
+        "firstElement = (await getArray())[0]",
+        "property = (await getArray()).property",
         // typescript
-        (r"const foo: Type = (await promise)[0]", None),
-        (r"const foo: Type | A = (await promise).foo", None),
+        "const foo: Type = (await promise)[0]",
+        "const foo: Type | A = (await promise).foo",
     ];
 
     let fix = vec![
@@ -194,6 +194,7 @@ fn test() {
     ];
 
     Tester::new(NoAwaitExpressionMember::NAME, NoAwaitExpressionMember::PLUGIN, pass, fail)
+        .change_rule_path_extension("mts")
         .expect_fix(fix)
         .test_and_snapshot();
 }

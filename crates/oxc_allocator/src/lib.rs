@@ -17,14 +17,14 @@
 //!
 //! * `serialize` - Enables serialization support for [`Box`] and [`Vec`] with `serde` and `oxc_estree`.
 //!
-//! * `pool` - Enables [`AllocatorPool`].
+//! * `pool` - Enables `AllocatorPool`.
 //!
-//! * `bitset` - Enables [`BitSet`].
+//! * `bitset` - Enables `BitSet`.
 //!
-//! * `from_raw_parts` - Adds [`Allocator::from_raw_parts`] method.
+//! * `from_raw_parts` - Adds `Allocator::from_raw_parts` method.
 //!   Usage of this feature is not advisable, and it will be removed as soon as we're able to.
 //!
-//! * `fixed_size` - Makes [`AllocatorPool`] create large fixed-size allocators, instead of
+//! * `fixed_size` - Makes `AllocatorPool` create large fixed-size allocators, instead of
 //!   flexibly-sized ones.
 //!   Only supported on 64-bit little-endian platforms at present.
 //!   Usage of this feature is not advisable, and it will be removed as soon as we're able to.
@@ -36,8 +36,6 @@
 //! * `disable_track_allocations` - Disables `track_allocations` feature.
 //!   Purpose is to prevent `--all-features` enabling allocation tracking.
 
-#![warn(missing_docs)]
-
 mod accessor;
 mod address;
 mod alloc;
@@ -46,12 +44,15 @@ mod allocator_api2;
 #[cfg(feature = "bitset")]
 mod bitset;
 mod boxed;
+pub(crate) mod bump;
+pub(crate) mod bumpalo_alloc;
 mod clone_in;
 mod convert;
 #[cfg(feature = "from_raw_parts")]
 mod from_raw_parts;
 pub mod hash_map;
 pub mod hash_set;
+pub mod ident_hasher;
 #[cfg(feature = "pool")]
 mod pool;
 mod string_builder;
@@ -71,6 +72,7 @@ pub use clone_in::CloneIn;
 pub use convert::{FromIn, IntoIn};
 pub use hash_map::HashMap;
 pub use hash_set::HashSet;
+pub use ident_hasher::{IdentBuildHasher, ident_hash, pack_len_hash};
 #[cfg(feature = "pool")]
 pub use pool::*;
 pub use string_builder::StringBuilder;

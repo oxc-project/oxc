@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(no-magic-array-flat-depth): Magic number for `Array.prototype.flat` depth is not allowed.
    ╭─[no_magic_array_flat_depth.tsx:1:12]
  1 │ array.flat(2)

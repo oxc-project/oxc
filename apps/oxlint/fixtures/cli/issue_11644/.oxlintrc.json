@@ -1,0 +1,11 @@
+{
+  "categories": {
+    "correctness": "off"
+  },
+  "plugins": [
+    "jsx-a11y",
+  ],
+  "rules": {
+    "jsx-a11y/label-has-associated-control": "warn"
+  }
+}

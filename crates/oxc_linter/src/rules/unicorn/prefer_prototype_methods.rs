@@ -8,7 +8,7 @@ use crate::{
     ast_util::is_method_call,
     context::LintContext,
     rule::Rule,
-    utils::{is_empty_array_expression, is_empty_object_expression},
+    utils::{is_empty_array_expression, is_empty_object_expression, pad_fix_with_token_boundary},
 };
 
 fn known_method(span: Span, obj_name: &str, method_name: &str) -> OxcDiagnostic {
@@ -116,16 +116,9 @@ impl Rule for PreferPrototypeMethods {
             ),
             |fixer| {
                 let span = object_expr.span();
-                let need_padding = span.start >= 1
-                    && ctx.source_text().as_bytes()[span.start as usize - 1].is_ascii_alphabetic();
-                fixer.replace(
-                    span,
-                    format!(
-                        "{}{}.prototype",
-                        if need_padding { " " } else { "" },
-                        constructor_name
-                    ),
-                )
+                let mut replacement = format!("{constructor_name}.prototype");
+                pad_fix_with_token_boundary(ctx.source_text(), span, &mut replacement);
+                fixer.replace(span, replacement)
             },
         );
     }
@@ -165,6 +158,16 @@ fn test() {
         "foo.bar.bind(bar)",
         "foo[{}].call(bar)",
         "Object.hasOwn(bar)",
+        "const foo = [].push.notApply(bar, elements);",
+        "const push = [].push.notBind(foo)",
+        "[].forEach.notCall(foo, () => {})",
+        // "/* globals foo: readonly */ foo.call(bar)",
+        "const toString = () => {}; toString.call(bar)",
+        // "/* globals toString: off */ toString.call(bar)",
+        "const _hasOwnProperty = globalThis.hasOwnProperty; _hasOwnProperty.call(bar)",
+        "const _globalThis = globalThis; globalThis[hasOwnProperty].call(bar)",
+        r#"const _ = globalThis, TO_STRING = "toString"; _[TO_STRING].call(bar)"#,
+        "const _ = [globalThis.toString]; _[0].call(bar)",
     ];
 
     let fail = vec![
@@ -191,96 +194,87 @@ fn test() {
         "[][Symbol.iterator].call(foo)", // TODO: Improve error message for this case.
         "const foo = [].at.call(bar)",
         "const foo = [].findLast.call(bar)",
+        // "/* globals hasOwnProperty: readonly */ hasOwnProperty.call(bar)",
+        // "/* globals toString: readonly */ toString.apply(bar, [])",
+        // "/* globals toString: readonly */ Reflect.apply(toString, baz, [])",
+        // TODO: Fix the rule so these tests pass.
+        // "globalThis.toString.call(bar)",
+        // "const _ = globalThis; _.hasOwnProperty.call(bar)",
+        // r#"const _ = globalThis; _["hasOwnProperty"].call(bar)"#,
+        // r#"const _ = globalThis; _["hasOwn" + "Property"].call(bar)"#,
+        // "Reflect.apply(globalThis.toString, baz, [])",
+        // "Reflect.apply(window.toString, baz, [])",
+        // "Reflect.apply(global.toString, baz, [])",
+        // "/* globals toString: readonly */ Reflect.apply(toString, baz, [])", // Inline globals are not supported.
+        // r#"Reflect.apply(globalThis["toString"], baz, [])"#,
     ];
 
     let fix = vec![
         (
             "const foo = [].push.apply(bar, elements);",
             "const foo = Array.prototype.push.apply(bar, elements);",
-            None,
         ),
-        ("const foo = [].slice.call(bar);", "const foo = Array.prototype.slice.call(bar);", None),
-        (
-            "const foo = {}.toString.call(bar);",
-            "const foo = Object.prototype.toString.call(bar);",
-            None,
-        ),
+        ("const foo = [].slice.call(bar);", "const foo = Array.prototype.slice.call(bar);"),
+        ("const foo = {}.toString.call(bar);", "const foo = Object.prototype.toString.call(bar);"),
         (
             r#"const foo = {}.hasOwnProperty.call(bar, "property");"#,
             r#"const foo = Object.prototype.hasOwnProperty.call(bar, "property");"#,
-            None,
         ),
         (
             r#"const foo = {}.propertyIsEnumerable.call(bar, "property");"#,
             r#"const foo = Object.prototype.propertyIsEnumerable.call(bar, "property");"#,
-            None,
         ),
-        ("[].forEach.call(foo, () => {})", "Array.prototype.forEach.call(foo, () => {})", None),
-        ("const push = [].push.bind(foo)", "const push = Array.prototype.push.bind(foo)", None),
-        ("const foo = [][method].call(foo)", "const foo = Array.prototype[method].call(foo)", None),
+        ("[].forEach.call(foo, () => {})", "Array.prototype.forEach.call(foo, () => {})"),
+        ("const push = [].push.bind(foo)", "const push = Array.prototype.push.bind(foo)"),
+        ("const foo = [][method].call(foo)", "const foo = Array.prototype[method].call(foo)"),
         (
             r#"const method = "realMethodName";const foo = [][method].call(foo)"#,
             r#"const method = "realMethodName";const foo = Array.prototype[method].call(foo)"#,
-            None,
         ),
         (
             "const array = Reflect.apply([].slice, foo, [])",
             "const array = Reflect.apply(Array.prototype.slice, foo, [])",
-            None,
         ),
-        ("Reflect.apply([].bar, baz, [])", "Reflect.apply(Array.prototype.bar, baz, [])", None),
+        ("Reflect.apply([].bar, baz, [])", "Reflect.apply(Array.prototype.bar, baz, [])"),
         (
             "const foo = ({}).toString.call(bar);",
             "const foo = (Object.prototype).toString.call(bar);",
-            None,
         ),
         (
             "const foo = ({}.toString).call(bar);",
             "const foo = (Object.prototype.toString).call(bar);",
-            None,
         ),
         (
             "const foo = ({}.toString.call)(bar);",
             "const foo = (Object.prototype.toString.call)(bar);",
-            None,
         ),
         (
             "function foo(){return[].slice.call(bar);}",
             "function foo(){return Array.prototype.slice.call(bar);}",
-            None,
         ),
         (
             "function foo(){return{}.toString.call(bar)}",
             "function foo(){return Object.prototype.toString.call(bar)}",
-            None,
         ),
         (
             "Reflect.apply({}[Symbol()], baz, [])",
             "Reflect.apply(Object.prototype[Symbol()], baz, [])",
-            None,
         ),
         (
             r#"Reflect.apply({}[Symbol("symbol description")], baz, [])"#,
             r#"Reflect.apply(Object.prototype[Symbol("symbol description")], baz, [])"#,
-            None,
         ),
         (
             "Reflect.apply([][Symbol()], baz, [])",
             "Reflect.apply(Array.prototype[Symbol()], baz, [])",
-            None,
         ),
         (
             r#"Reflect.apply({}[Symbol("symbol description")], baz, [])"#,
             r#"Reflect.apply(Object.prototype[Symbol("symbol description")], baz, [])"#,
-            None,
         ),
-        ("[][Symbol.iterator].call(foo)", "Array.prototype[Symbol.iterator].call(foo)", None),
-        ("const foo = [].at.call(bar)", "const foo = Array.prototype.at.call(bar)", None),
-        (
-            "const foo = [].findLast.call(bar)",
-            "const foo = Array.prototype.findLast.call(bar)",
-            None,
-        ),
+        ("[][Symbol.iterator].call(foo)", "Array.prototype[Symbol.iterator].call(foo)"),
+        ("const foo = [].at.call(bar)", "const foo = Array.prototype.at.call(bar)"),
+        ("const foo = [].findLast.call(bar)", "const foo = Array.prototype.findLast.call(bar)"),
     ];
 
     Tester::new(PreferPrototypeMethods::NAME, PreferPrototypeMethods::PLUGIN, pass, fail)

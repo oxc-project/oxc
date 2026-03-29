@@ -1,0 +1,127 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`sort_package_json > should not sort package.json when disabled 1`] = `
+"--- FILE -----------
+package.json
+--- BEFORE ---------
+{
+  "scripts": {
+    "test": "vitest",
+    "build": "tsc",
+    "dev": "vite"
+  },
+  "name": "fixture",
+  "devDependencies": {
+    "typescript": "5.0.0",
+    "vitest": "1.0.0"
+  },
+  "version": "1.0.0",
+  "dependencies": {
+    "react": "18.0.0"
+  }
+}
+
+--- AFTER ----------
+{
+  "scripts": {
+    "test": "vitest",
+    "build": "tsc",
+    "dev": "vite"
+  },
+  "name": "fixture",
+  "devDependencies": {
+    "typescript": "5.0.0",
+    "vitest": "1.0.0"
+  },
+  "version": "1.0.0",
+  "dependencies": {
+    "react": "18.0.0"
+  }
+}
+
+--------------------"
+`;
+
+exports[`sort_package_json > should sort package.json by default 1`] = `
+"--- FILE -----------
+package.json
+--- BEFORE ---------
+{
+  "scripts": {
+    "test": "vitest",
+    "build": "tsc",
+    "dev": "vite"
+  },
+  "name": "fixture",
+  "devDependencies": {
+    "typescript": "5.0.0",
+    "vitest": "1.0.0"
+  },
+  "version": "1.0.0",
+  "dependencies": {
+    "react": "18.0.0"
+  }
+}
+
+--- AFTER ----------
+{
+  "name": "fixture",
+  "version": "1.0.0",
+  "scripts": {
+    "test": "vitest",
+    "build": "tsc",
+    "dev": "vite"
+  },
+  "dependencies": {
+    "react": "18.0.0"
+  },
+  "devDependencies": {
+    "typescript": "5.0.0",
+    "vitest": "1.0.0"
+  }
+}
+
+--------------------"
+`;
+
+exports[`sort_package_json > should sort scripts when sortScripts is enabled 1`] = `
+"--- FILE -----------
+package.json
+--- BEFORE ---------
+{
+  "scripts": {
+    "test": "vitest",
+    "build": "tsc",
+    "dev": "vite"
+  },
+  "name": "fixture",
+  "devDependencies": {
+    "typescript": "5.0.0",
+    "vitest": "1.0.0"
+  },
+  "version": "1.0.0",
+  "dependencies": {
+    "react": "18.0.0"
+  }
+}
+
+--- AFTER ----------
+{
+  "name": "fixture",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "tsc",
+    "dev": "vite",
+    "test": "vitest"
+  },
+  "dependencies": {
+    "react": "18.0.0"
+  },
+  "devDependencies": {
+    "typescript": "5.0.0",
+    "vitest": "1.0.0"
+  }
+}
+
+--------------------"
+`;

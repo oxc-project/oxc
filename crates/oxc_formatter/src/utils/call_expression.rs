@@ -36,7 +36,7 @@ pub fn is_test_call_expression(call: &AstNode<CallExpression<'_>>) -> bool {
     match (args.next(), args.next(), args.next()) {
         (Some(argument), None, None) if arguments.len() == 1 => {
             if is_angular_test_wrapper(call) && {
-                if let AstNodes::CallExpression(call) = call.parent {
+                if let AstNodes::CallExpression(call) = call.parent() {
                     is_test_call_expression(call)
                 } else {
                     false
@@ -56,8 +56,11 @@ pub fn is_test_call_expression(call: &AstNode<CallExpression<'_>>) -> bool {
         }
 
         // it("description", ..)
-        // it(Test.name, ..)
-        (_, Some(second), third) if arguments.len() <= 3 && contains_a_test_pattern(callee) => {
+        (Some(first), Some(second), third)
+            if arguments.len() <= 3
+                && matches!(first, Argument::StringLiteral(_) | Argument::TemplateLiteral(_))
+                && contains_a_test_pattern(callee) =>
+        {
             // it('name', callback, duration)
             if !matches!(third, None | Some(Argument::NumericLiteral(_))) {
                 return false;
@@ -96,7 +99,7 @@ fn is_angular_test_wrapper_expression(expression: &Expression) -> bool {
     matches!(expression, Expression::CallExpression(call) if is_angular_test_wrapper(call))
 }
 
-fn is_angular_test_wrapper(call: &CallExpression) -> bool {
+pub fn is_angular_test_wrapper(call: &CallExpression) -> bool {
     matches!(&call.callee,
         Expression::Identifier(ident) if
         matches!(ident.name.as_str(), "async" | "inject" | "fakeAsync" | "waitForAsync")
@@ -151,50 +154,54 @@ pub fn callee_name_iterator<'b>(expr: &'b Expression<'_>) -> Option<impl Iterato
     None
 }
 
-/// This function checks if a call expressions has one of the following members:
-/// - `it`
-/// - `it.only`
-/// - `it.skip`
-/// - `describe`
-/// - `describe.only`
-/// - `describe.skip`
-/// - `test`
-/// - `test.only`
-/// - `test.skip`
-/// - `test.step`
-/// - `test.describe`
-/// - `test.describe.only`
-/// - `test.describe.parallel`
-/// - `test.describe.parallel.only`
-/// - `test.describe.serial`
-/// - `test.describe.serial.only`
-/// - `skip`
-/// - `xit`
-/// - `xdescribe`
-/// - `xtest`
-/// - `fit`
-/// - `fdescribe`
-/// - `ftest`
-/// - `Deno.test`
+/// This function checks if a call expression matches a test framework pattern:
 ///
-/// Based on this [article]
+/// ```text
+/// ├─ it[.only|skip|skipIf|runIf|concurrent|sequential|todo|fails]
+/// ├─ describe[.only|skip|skipIf|runIf|concurrent|sequential|shuffle|todo]
+/// ├─ test
+/// │  ├─ [.only|skip|skipIf|runIf|concurrent|sequential|todo|fails|extend|step|fixme]
+/// │  └─ .describe
+/// │     ├─ [.only|skip|fixme]
+/// │     ├─ .parallel[.only]
+/// │     └─ .serial[.only]
+/// ├─ bench[.only|skip|todo]
+/// ├─ skip|xit|xdescribe|xtest|fit|fdescribe|ftest
+/// └─ Deno.test
+/// ```
 ///
-/// [article]: https://craftinginterpreters.com/scanning-on-demand.html#tries-and-state-machines
+/// Implementation (trie-tree) is inspired by the article:
+/// <https://craftinginterpreters.com/scanning-on-demand.html#tries-and-state-machines>
 pub fn contains_a_test_pattern(expr: &Expression<'_>) -> bool {
     let Some(mut names) = callee_name_iterator(expr) else { return false };
 
     match names.next() {
-        Some("it" | "describe" | "Deno") => match names.next() {
+        Some("it") => match names.next() {
             None => true,
-            Some("only" | "skip" | "test") => names.next().is_none(),
+            Some(
+                "only" | "skip" | "skipIf" | "runIf" | "concurrent" | "sequential" | "todo"
+                | "fails",
+            ) => names.next().is_none(),
             _ => false,
         },
+        Some("describe") => match names.next() {
+            None => true,
+            Some(
+                "only" | "skip" | "skipIf" | "runIf" | "concurrent" | "sequential" | "shuffle"
+                | "todo",
+            ) => names.next().is_none(),
+            _ => false,
+        },
+        Some("Deno") => matches!(names.next(), Some("test")) && names.next().is_none(),
         Some("test") => match names.next() {
             None => true,
-            Some("only" | "skip" | "step") => names.next().is_none(),
+            Some(
+                "only" | "skip" | "skipIf" | "runIf" | "concurrent" | "sequential" | "todo"
+                | "fails" | "extend" | "step" | "fixme",
+            ) => names.next().is_none(),
             Some("describe") => match names.next() {
                 None => true,
-                Some("only") => names.next().is_none(),
+                Some("only" | "skip" | "fixme") => names.next().is_none(),
                 Some("parallel" | "serial") => match names.next() {
                     None => true,
                     Some("only") => names.next().is_none(),
@@ -202,6 +209,11 @@ pub fn contains_a_test_pattern(expr: &Expression<'_>) -> bool {
                 },
                 _ => false,
             },
+            _ => false,
+        },
+        Some("bench") => match names.next() {
+            None => true,
+            Some("only" | "skip" | "todo") => names.next().is_none(),
             _ => false,
         },
         Some("skip" | "xit" | "xdescribe" | "xtest" | "fit" | "fdescribe" | "ftest") => true,

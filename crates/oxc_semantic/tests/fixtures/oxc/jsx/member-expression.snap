@@ -5,7 +5,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/jsx/member-expression.jsx
 [
   {
     "children": [],
-    "flags": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(Top)",
     "id": 0,
     "node": "Program",
     "symbols": [
@@ -19,13 +19,15 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/jsx/member-expression.jsx
             "flags": "ReferenceFlags(Read)",
             "id": 0,
             "name": "A",
-            "node_id": 10
+            "node_id": 10,
+            "scope_id": 0
           },
           {
             "flags": "ReferenceFlags(Read)",
             "id": 1,
             "name": "A",
-            "node_id": 16
+            "node_id": 16,
+            "scope_id": 0
           }
         ]
       }

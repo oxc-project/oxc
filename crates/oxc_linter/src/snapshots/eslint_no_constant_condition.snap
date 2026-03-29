@@ -1,947 +1,1083 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(-2);
-   ·    ──
+   ·    ─┬
+   ·     ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(true);
-   ·    ────
+   ·    ──┬─
+   ·      ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(1);
-   ·    ─
+   ·    ┬
+   ·    ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if({});
-   ·    ──
+   ·    ─┬
+   ·     ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(0 < 1);
-   ·    ─────
+   ·    ──┬──
+   ·      ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(0 || 1);
-   ·    ──────
+   ·    ───┬──
+   ·       ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(a, 1);
-   ·    ────
+   ·    ──┬─
+   ·      ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(`foo`);
-   ·    ─────
+   ·    ──┬──
+   ·      ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(``);
-   ·    ──
+   ·    ─┬
+   ·     ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ ╭─▶ if(`\
- 2 │ ╰─▶ `);
+ 2 │ ├─▶ `);
+   · ╰──── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(`${'bar'}`);
-   ·    ──────────
+   ·    ─────┬────
+   ·         ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(`${'bar' + `foo`}`);
-   ·    ──────────────────
+   ·    ─────────┬────────
+   ·             ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(`foo${false || true}`);
-   ·    ─────────────────────
+   ·    ──────────┬──────────
+   ·              ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(`foo${0 || 1}`);
-   ·    ──────────────
+   ·    ───────┬──────
+   ·           ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(`foo${bar}`);
-   ·    ───────────
+   ·    ─────┬─────
+   ·         ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(`${bar}foo`);
-   ·    ───────────
+   ·    ─────┬─────
+   ·         ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(!(true || a));
-   ·    ────────────
+   ·    ──────┬─────
+   ·          ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(!(a && void b && c));
-   ·    ───────────────────
+   ·    ─────────┬─────────
+   ·             ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(0 || !(a && null));
-   ·    ─────────────────
+   ·    ────────┬────────
+   ·            ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(1 + !(a || true));
-   ·    ────────────────
+   ·    ────────┬───────
+   ·            ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(!(null && a) > 1);
-   ·    ────────────────
+   ·    ────────┬───────
+   ·            ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(+(!(a && 0)));
-   ·    ────────────
+   ·    ──────┬─────
+   ·          ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(!typeof a === 'string');
-   ·    ──────────────────────
+   ·    ───────────┬──────────
+   ·               ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(-('foo' || a));
-   ·    ─────────────
+   ·    ──────┬──────
+   ·          ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(+(void a && b) === ~(1 || c));
-   ·    ────────────────────────────
+   ·    ──────────────┬─────────────
+   ·                  ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(a ||= true);
-   ·    ──────────
+   ·    ─────┬────
+   ·         ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(a ||= 5);
-   ·    ───────
+   ·    ───┬───
+   ·       ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(a ||= 'foo' || b);
-   ·    ────────────────
+   ·    ────────┬───────
+   ·            ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(a ||= b || /regex/);
-   ·    ──────────────────
+   ·    ─────────┬────────
+   ·             ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(a ||= b ||= true);
-   ·    ────────────────
+   ·    ────────┬───────
+   ·            ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(a ||= b ||= c || 1);
-   ·    ──────────────────
+   ·    ─────────┬────────
+   ·             ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(!(a ||= true));
-   ·    ─────────────
+   ·    ──────┬──────
+   ·          ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(!(a ||= 'foo') === true);
-   ·    ───────────────────────
+   ·    ───────────┬───────────
+   ·               ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(!(a ||= 'foo') === false);
-   ·    ────────────────────────
+   ·    ────────────┬───────────
+   ·                ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(a || (b ||= true));
-   ·    ─────────────────
+   ·    ────────┬────────
+   ·            ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if((a ||= 1) || b);
-   ·    ──────────────
+   ·    ───────┬──────
+   ·           ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if((a ||= true) && true);
-   ·    ────────────────────
+   ·    ──────────┬─────────
+   ·              ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(true && (a ||= true));
-   ·    ────────────────────
+   ·    ──────────┬─────────
+   ·              ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(a &&= false);
-   ·    ───────────
+   ·    ─────┬─────
+   ·         ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(a &&= null);
-   ·    ──────────
+   ·    ─────┬────
+   ·         ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(a &&= void b);
-   ·    ────────────
+   ·    ──────┬─────
+   ·          ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(a &&= 0 && b);
-   ·    ────────────
+   ·    ──────┬─────
+   ·          ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(a &&= b && '');
-   ·    ─────────────
+   ·    ──────┬──────
+   ·          ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(a &&= b &&= false);
-   ·    ─────────────────
+   ·    ────────┬────────
+   ·            ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(a &&= b &&= c && false);
-   ·    ──────────────────────
+   ·    ───────────┬──────────
+   ·               ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(!(a &&= false));
-   ·    ──────────────
+   ·    ───────┬──────
+   ·           ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(!(a &&= 0) + 1);
-   ·    ──────────────
+   ·    ───────┬──────
+   ·           ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(a && (b &&= false));
-   ·    ──────────────────
+   ·    ─────────┬────────
+   ·             ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if((a &&= null) && b);
-   ·    ─────────────────
+   ·    ────────┬────────
+   ·            ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(false || (a &&= false));
-   ·    ──────────────────────
+   ·    ───────────┬──────────
+   ·               ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if((a &&= false) || false);
-   ·    ──────────────────────
+   ·    ───────────┬──────────
+   ·               ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:7]
  1 │ while(x = 1);
-   ·       ─────
+   ·       ──┬──
+   ·         ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(typeof x){}
-   ·    ────────
+   ·    ────┬───
+   ·        ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(typeof 'abc' === 'string'){}
-   ·    ─────────────────────────
+   ·    ────────────┬────────────
+   ·                ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(a = typeof b){}
-   ·    ────────────
+   ·    ──────┬─────
+   ·          ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(a, typeof b){}
-   ·    ───────────
+   ·    ─────┬─────
+   ·         ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(typeof 'a' == 'string' || typeof 'b' == 'string'){}
-   ·    ────────────────────────────────────────────────
+   ·    ────────────────────────┬───────────────────────
+   ·                            ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:7]
  1 │ while(typeof x){}
-   ·       ────────
+   ·       ────┬───
+   ·           ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(1 || void x);
-   ·    ───────────
+   ·    ─────┬─────
+   ·         ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(void x);
-   ·    ──────
+   ·    ───┬──
+   ·       ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(y = void x);
-   ·    ──────────
+   ·    ─────┬────
+   ·         ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(x, void x);
-   ·    ─────────
+   ·    ────┬────
+   ·        ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(void x === void y);
-   ·    ─────────────────
+   ·    ────────┬────────
+   ·            ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(void x && a);
-   ·    ───────────
+   ·    ─────┬─────
+   ·         ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(a && void x);
-   ·    ───────────
+   ·    ─────┬─────
+   ·         ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(false && abc==='str'){}
-   ·    ────────────────────
+   ·    ──────────┬─────────
+   ·              ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(true || abc==='str'){}
-   ·    ───────────────────
+   ·    ─────────┬─────────
+   ·             ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(1 || abc==='str'){}
-   ·    ────────────────
+   ·    ────────┬───────
+   ·            ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(abc==='str' || true){}
-   ·    ───────────────────
+   ·    ─────────┬─────────
+   ·             ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(abc==='str' || true || def ==='str'){}
-   ·    ───────────────────────────────────
+   ·    ─────────────────┬─────────────────
+   ·                     ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(false || true){}
-   ·    ─────────────
+   ·    ──────┬──────
+   ·          ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(typeof abc==='str' || true){}
-   ·    ──────────────────────────
+   ·    ─────────────┬────────────
+   ·                 ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if('str' || a){}
-   ·    ──────────
+   ·    ─────┬────
+   ·         ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if('str' || abc==='str'){}
-   ·    ────────────────────
+   ·    ──────────┬─────────
+   ·              ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if('str1' || 'str2'){}
-   ·    ────────────────
+   ·    ────────┬───────
+   ·            ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if('str1' && 'str2'){}
-   ·    ────────────────
+   ·    ────────┬───────
+   ·            ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(abc==='str' || 'str'){}
-   ·    ────────────────────
+   ·    ──────────┬─────────
+   ·              ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(a || 'str'){}
-   ·    ──────────
+   ·    ─────┬────
+   ·         ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if([a]) {}
-   ·    ───
+   ·    ─┬─
+   ·     ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if([]) {}
-   ·    ──
+   ·    ─┬
+   ·     ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(''+['a']) {}
-   ·    ────────
+   ·    ────┬───
+   ·        ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(''+[]) {}
-   ·    ─────
+   ·    ──┬──
+   ·      ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(+1) {}
-   ·    ──
+   ·    ─┬
+   ·     ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:5]
  1 │ if ([,] + ''){}
-   ·     ────────
+   ·     ────┬───
+   ·         ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(/foo/ui);
-   ·    ───────
+   ·    ───┬───
+   ·       ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(0n);
-   ·    ──
+   ·    ─┬
+   ·     ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(0b0n);
-   ·    ────
+   ·    ──┬─
+   ·      ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(0o0n);
-   ·    ────
+   ·    ──┬─
+   ·      ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(0x0n);
-   ·    ────
+   ·    ──┬─
+   ·      ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(0b1n);
-   ·    ────
+   ·    ──┬─
+   ·      ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(0o1n);
-   ·    ────
+   ·    ──┬─
+   ·      ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(0x1n);
-   ·    ────
+   ·    ──┬─
+   ·      ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(0x1n || foo);
-   ·    ───────────
+   ·    ─────┬─────
+   ·         ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(class {}) {}
-   ·    ────────
+   ·    ────┬───
+   ·        ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(new Foo()) {}
-   ·    ─────────
+   ·    ────┬────
+   ·        ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(new Boolean(foo)) {}
-   ·    ────────────────
+   ·    ────────┬───────
+   ·            ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(new String(foo)) {}
-   ·    ───────────────
+   ·    ───────┬───────
+   ·           ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(new Number(foo)) {}
-   ·    ───────────────
+   ·    ───────┬───────
+   ·           ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(`${[...['a']]}`) {}
-   ·    ───────────────
+   ·    ───────┬───────
+   ·           ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:5]
  1 │ if (undefined) {}
-   ·     ─────────
+   ·     ────┬────
+   ·         ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:5]
  1 │ if (Boolean(1)) {}
-   ·     ──────────
+   ·     ─────┬────
+   ·          ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:5]
  1 │ if (Boolean()) {}
-   ·     ─────────
+   ·     ────┬────
+   ·         ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:5]
  1 │ if (Boolean([a])) {}
-   ·     ────────────
+   ·     ──────┬─────
+   ·           ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:5]
  1 │ if (Boolean(1)) { function Boolean() {}}
-   ·     ──────────
+   ·     ─────┬────
+   ·          ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:1]
  1 │ true ? 1 : 2;
-   · ────
+   · ──┬─
+   ·   ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:1]
  1 │ 1 ? 1 : 2;
-   · ─
+   · ┬
+   · ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:5]
  1 │ q = 0 ? 1 : 2;
-   ·     ─
+   ·     ┬
+   ·     ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:1]
  1 │ (q = 0) ? 1 : 2;
-   · ───────
+   · ───┬───
+   ·    ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:1]
  1 │ `` ? 1 : 2;
-   · ──
+   · ─┬
+   ·  ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:1]
  1 │ `foo` ? 1 : 2;
-   · ─────
+   · ──┬──
+   ·   ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:1]
  1 │ `foo${bar}` ? 1 : 2;
-   · ───────────
+   · ─────┬─────
+   ·      ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:6]
  1 │ for(;true;);
-   ·      ────
+   ·      ──┬─
+   ·        ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:6]
  1 │ for(;``;);
-   ·      ──
+   ·      ─┬
+   ·       ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:6]
  1 │ for(;`foo`;);
-   ·      ─────
+   ·      ──┬──
+   ·        ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:6]
  1 │ for(;`foo${bar}`;);
-   ·      ───────────
+   ·      ─────┬─────
+   ·           ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:11]
  1 │ do{}while(true)
-   ·           ────
+   ·           ──┬─
+   ·             ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:11]
  1 │ do{}while('1')
-   ·           ───
+   ·           ─┬─
+   ·            ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:11]
  1 │ do{}while(0)
-   ·           ─
+   ·           ┬
+   ·           ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:11]
  1 │ do{}while(t = -2)
-   ·           ──────
+   ·           ───┬──
+   ·              ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:11]
  1 │ do{}while(``)
-   ·           ──
+   ·           ─┬
+   ·            ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:11]
  1 │ do{}while(`foo`)
-   ·           ─────
+   ·           ──┬──
+   ·             ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:11]
  1 │ do{}while(`foo${bar}`)
-   ·           ───────────
+   ·           ─────┬─────
+   ·                ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:7]
  1 │ while([]);
-   ·       ──
+   ·       ─┬
+   ·        ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:7]
  1 │ while(~!0);
-   ·       ───
+   ·       ─┬─
+   ·        ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:7]
  1 │ while(x = 1);
-   ·       ─────
+   ·       ──┬──
+   ·         ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:7]
  1 │ while(function(){});
-   ·       ────────────
+   ·       ──────┬─────
+   ·             ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:7]
  1 │ while(true);
-   ·       ────
+   ·       ──┬─
+   ·         ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:7]
  1 │ while(1);
-   ·       ─
+   ·       ┬
+   ·       ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:7]
  1 │ while(() => {});
-   ·       ────────
+   ·       ────┬───
+   ·           ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:7]
  1 │ while(`foo`);
-   ·       ─────
+   ·       ──┬──
+   ·         ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:7]
  1 │ while(``);
-   ·       ──
+   ·       ─┬
+   ·        ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:7]
  1 │ while(`${'foo'}`);
-   ·       ──────────
+   ·       ─────┬────
+   ·            ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:7]
  1 │ while(`${'foo' + 'bar'}`);
-   ·       ──────────────────
+   ·       ─────────┬────────
+   ·                ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:12]
  1 │ do{ }while(x = 1)
-   ·            ─────
+   ·            ──┬──
+   ·              ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:7]
  1 │ for (;true;) {};
-   ·       ────
+   ·       ──┬─
+   ·         ╰── this expression will always evaluate to the same value
    ╰────
-  help: Constant expression as a test condition is not allowed
+  help: Update the condition to not be constant, or remove the condition entirely

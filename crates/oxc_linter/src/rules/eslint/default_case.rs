@@ -1,11 +1,17 @@
 use lazy_regex::{Regex, RegexBuilder};
+use schemars::JsonSchema;
+use serde::Deserialize;
+
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use schemars::JsonSchema;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn default_case_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Require `default` cases in `switch` statements.")
@@ -13,11 +19,11 @@ fn default_case_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct DefaultCase(Box<DefaultCaseConfig>);
 
-#[derive(Debug, Default, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct DefaultCaseConfig {
     /// A regex pattern used to detect comments that mark the absence
     /// of a `default` case as intentional.
@@ -26,8 +32,6 @@ pub struct DefaultCaseConfig {
     ///
     /// Examples of **incorrect** code for this rule with the `{ "commentPattern": "^skip\\sdefault" }` option:
     /// ```js
-    /// /* default-case: ["error", { "commentPattern": "^skip\sdefault" }] */
-    ///
     /// switch (a) {
     ///   case 1:
     ///     break;
@@ -37,14 +41,13 @@ pub struct DefaultCaseConfig {
     ///
     /// Examples of **correct** code for this rule with the `{ "commentPattern": "^skip\\sdefault" }` option:
     /// ```js
-    /// /* default-case: ["error", { "commentPattern": "^skip\\sdefault" }] */
-    ///
     /// switch (a) {
     ///   case 1:
     ///     break;
     ///   // skip default
     /// }
     /// ```
+    #[serde(default, deserialize_with = "deserialize_comment_pattern")]
     comment_pattern: Option<Regex>,
 }
 
@@ -54,6 +57,18 @@ impl std::ops::Deref for DefaultCase {
     fn deref(&self) -> &Self::Target {
         &self.0
     }
+}
+
+fn deserialize_comment_pattern<'de, D>(deserializer: D) -> Result<Option<Regex>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    use serde::de::Error;
+
+    Option::<String>::deserialize(deserializer)?
+        .map(|pattern| RegexBuilder::new(&pattern).case_insensitive(true).build())
+        .transpose()
+        .map_err(D::Error::custom)
 }
 
 declare_oxc_lint!(
@@ -72,16 +87,16 @@ declare_oxc_lint!(
     /// no default case. The comment may be in any desired case, such as `// No Default`.
     ///
     /// Example configuration:
-    ///   ```json
-    ///   {
-    ///       "default-case": ["error", { "commentPattern": "^skip\\sdefault" }]
-    ///   }
-    ///   ```
+    /// ```json
+    /// {
+    ///     "default-case": ["error", { "commentPattern": "^skip\\sdefault" }]
+    /// }
+    /// ```
+    ///
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```js
-    /// /* default-case: ["error"] */
-    ///
     /// switch (foo) {
     ///   case 1:
     ///     break;
@@ -90,8 +105,6 @@ declare_oxc_lint!(
     ///
     /// Examples of **correct** code for this rule:
     /// ```js
-    /// /* default-case: ["error"] */
-    ///
     /// switch (a) {
     ///   case 1:
     ///     break;
@@ -112,15 +125,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for DefaultCase {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let comment_pattern = value
-            .get(0)
-            .and_then(|config| config.get("commentPattern"))
-            .and_then(serde_json::Value::as_str)
-            .and_then(|pattern| RegexBuilder::new(pattern).case_insensitive(true).build().ok());
-        let case_config = DefaultCaseConfig { comment_pattern };
-
-        Self(Box::new(case_config))
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

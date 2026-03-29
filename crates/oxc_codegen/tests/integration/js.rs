@@ -1,14 +1,18 @@
-use oxc_codegen::{CodegenOptions, IndentChar};
+use oxc_allocator::Allocator;
+use oxc_ast::AstBuilder;
+use oxc_codegen::{Codegen, CodegenOptions, IndentChar};
+use oxc_span::SPAN;
 
 use crate::tester::{
     test, test_minify, test_minify_same, test_options, test_same, test_same_ignore_parse_errors,
-    test_with_parse_options,
+    test_unambiguous, test_with_parse_options,
 };
 
 #[test]
 fn cases() {
     test_same_ignore_parse_errors("class C {\n\t@foo static accessor A = @bar class {};\n}\n");
     test_same_ignore_parse_errors("function foo(@foo x = @bar class {}) {}\n");
+    test_same_ignore_parse_errors("function foo(@foo ...rest) {}\n");
 }
 
 #[test]
@@ -26,11 +30,20 @@ fn module_decl() {
     test("import x from './foo.js' with {}", "import x from \"./foo.js\" with {};\n");
     test("import {} from './foo.js' with {}", "import {} from \"./foo.js\" with {};\n");
     test("export * from './foo.js' with {}", "export * from \"./foo.js\" with {};\n");
+    test(
+        "export { default } from './foo.js' with { type: 'json' }",
+        "export { default } from \"./foo.js\" with { type: \"json\" };\n",
+    );
+    test("export {} from './foo.js' with {}", "export {} from \"./foo.js\" with {};\n");
     test_minify("export { '☿' } from 'mod';", "export{\"☿\"}from\"mod\";");
     test_minify("export { '☿' as '☿' } from 'mod';", "export{\"☿\"}from\"mod\";");
     test_minify(
         "import x from './foo.custom' with { 'type': 'json' }",
         "import x from\"./foo.custom\"with{\"type\":\"json\"};",
+    );
+    test_minify(
+        "export { default } from './foo.js' with { type: 'json' }",
+        "export{default}from\"./foo.js\"with{type:\"json\"};",
     );
 }
 
@@ -430,14 +443,14 @@ fn pure_comment() {
     );
     test("const foo /* #__PURE__ */ = pureOperation();", "const foo = pureOperation();\n"); // INVALID: "=" not allowed after annotation
 
-    test("/* #__PURE__ */ function foo() {}\n", "function foo() {}\n");
+    test_same("/* #__PURE__ */ function foo() {}\n"); // INVALID: not before a call/new expression
 
     test("/* @__PURE__ */ (foo());", "/* @__PURE__ */ foo();\n");
     test("/* @__PURE__ */ (new Foo());\n", "/* @__PURE__ */ new Foo();\n");
-    test("/*#__PURE__*/ (foo(), bar());", "foo(), bar();\n"); // INVALID, there is a comma expression in the parentheses
+    test("/*#__PURE__*/ (foo(), bar());", "/*#__PURE__*/ foo(), bar();\n"); // INVALID, there is a comma expression in the parentheses
 
     test_same("/* @__PURE__ */ a.b().c.d();\n");
-    test("/* @__PURE__ */ a().b;", "a().b;\n"); // INVALID, it does not end with a call
+    test("/* @__PURE__ */ a().b;", "/* @__PURE__ */ a().b;\n"); // INVALID, it does not end with a call
     test_same("(/* @__PURE__ */ a()).b;\n");
 
     // More
@@ -689,5 +702,84 @@ fn indentation() {
         "let foo = 1;",
         "\tlet foo = 1;\n",
         CodegenOptions { initial_indent: 1, ..CodegenOptions::default() },
+    );
+}
+
+#[test]
+fn template_literal_escape_when_building_ast() {
+    use oxc_ast::ast::TemplateElementValue;
+
+    let allocator = Allocator::default();
+    let ast = AstBuilder::new(&allocator);
+
+    // Create a template literal with special characters that need escaping:
+    // backtick, ${, and backslash
+    // Pass escape_raw: true to automatically escape the raw field
+    let cooked = "hello`world${foo}\\bar";
+    let value = TemplateElementValue { raw: ast.atom(cooked), cooked: Some(ast.atom(cooked)) };
+    let element = ast.template_element(SPAN, value, true, true); // escape_raw: true
+    let quasis = ast.vec1(element);
+    let template_literal = ast.template_literal(SPAN, quasis, ast.vec());
+
+    let expr = ast.expression_template_literal(
+        SPAN,
+        template_literal.quasis,
+        template_literal.expressions,
+    );
+    let stmt = ast.statement_expression(SPAN, expr);
+    let program = ast.program(
+        SPAN,
+        oxc_span::SourceType::mjs(),
+        "",
+        ast.vec(),
+        None,
+        ast.vec(),
+        ast.vec1(stmt),
+    );
+
+    let result = Codegen::new().build(&program).code;
+    // The raw value should have been escaped by template_element with escape_raw: true
+    // backtick, ${, and backslash are all escaped
+    assert_eq!(result, "`hello\\`world\\${foo}\\\\bar`;\n");
+}
+
+/// ECMAScript Annex B.1.1 HTML-like Comments
+#[test]
+fn html_comments() {
+    test_unambiguous(
+        "<!-- HTML comment\nconsole.log(\"test\");\n",
+        "<!-- HTML comment\nconsole.log(\"test\");\n",
+    );
+    test_unambiguous(
+        "console.log(\"test\");\n--> HTML comment\n",
+        "console.log(\"test\");\n--> HTML comment\n",
+    );
+    test_unambiguous(
+        "const test = '<!-- Hello World! -->';\n",
+        "const test = \"<!-- Hello World! -->\";\n",
+    );
+    test_unambiguous(
+        "const test = 'a'; <!-- comment\nconsole.log('test');\n",
+        "const test = \"a\";\nconsole.log(\"test\");\n",
+    );
+    test_unambiguous("const x = 1;\n--> comment\n", "const x = 1;\n--> comment\n");
+    test_unambiguous(
+        "<!-- comment 1\nconst x = 1;\n<!-- comment 2\nconst y = 2;\n",
+        "<!-- comment 1\nconst x = 1;\n<!-- comment 2\nconst y = 2;\n",
+    );
+    // `<!--` comments out rest of line - everything after is a comment
+    test_unambiguous(
+        "const test = 'a'; <!-- Test --> console.log('not executed'); //\n",
+        "const test = \"a\";\n",
+    );
+    // Injection: `<!--` comments out rest of line, but code on NEXT line executes
+    test_unambiguous(
+        "const test = 'a'; <!--\nconsole.log('injection');\n",
+        "const test = \"a\";\nconsole.log(\"injection\");\n",
+    );
+    // `-->` at start of line is also a comment
+    test_unambiguous(
+        "const x = 1;\n--> comment\nconst y = 2;\n",
+        "const x = 1;\n--> comment\nconst y = 2;\n",
     );
 }

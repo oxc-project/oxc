@@ -9,7 +9,9 @@ use oxc_syntax::class::ElementKind;
 use crate::{context::LintContext, rule::Rule};
 
 fn no_unused_private_class_members_diagnostic(name: &str, span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("'{name}' is defined but never used.")).with_label(span)
+    OxcDiagnostic::warn(format!("'{name}' is defined but never used."))
+        .with_help("Remove the declaration or use it in the code.")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -18,7 +20,7 @@ pub struct NoUnusedPrivateClassMembers;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow unused private class members
+    /// Disallow unused private class members.
     ///
     /// ### Why is this bad?
     ///
@@ -195,6 +197,13 @@ fn is_read(current_node_id: NodeId, semantic: &Semantic) -> bool {
                     return true;
                 }
             }
+            (AstKind::PrivateFieldExpression(_), AstKind::LogicalExpression(logical_expr)) => {
+                // Reading the left side of a logical expression can affect control flow
+                // (e.g. `this.#flag && sideEffect()`), even when used as a statement.
+                if logical_expr.left.span().contains_inclusive(curr.span()) {
+                    return true;
+                }
+            }
             _ => {
                 return false;
             }
@@ -225,6 +234,7 @@ fn is_value_context(parent: &AstNode, child: &AstNode, semantic: &Semantic<'_>) 
         | AstKind::SpreadElement(_)
         | AstKind::AssignmentPattern(_)
         | AstKind::SwitchCase(_)
+        | AstKind::SwitchStatement(_)
         | AstKind::ThrowStatement(_)
         | AstKind::WhileStatement(_)
         | AstKind::DoWhileStatement(_)
@@ -310,89 +320,89 @@ fn test() {
         ",
         r"class Foo {}",
         r"class Foo {
-        	    publicMember = 42;
-        	}",
+                publicMember = 42;
+            }",
         r"class Foo {
-        	    #usedMember = 42;
-        	    method() {
-        	        return this.#usedMember;
-        	    }
-        	}",
+                #usedMember = 42;
+                method() {
+                    return this.#usedMember;
+                }
+            }",
         r"class Foo {
-        	    #usedMember = 42;
-        	    anotherMember = this.#usedMember;
-        	}",
+                #usedMember = 42;
+                anotherMember = this.#usedMember;
+            }",
         r"class Foo {
-        	    #usedMember = 42;
-        	    foo() {
-        	        anotherMember = this.#usedMember;
-        	    }
-        	}",
+                #usedMember = 42;
+                foo() {
+                    anotherMember = this.#usedMember;
+                }
+            }",
         r"class C {
-			    #usedMember;
+                #usedMember;
 
-			    foo() {
-			        bar(this.#usedMember += 1);
-			    }
-			}",
+                foo() {
+                    bar(this.#usedMember += 1);
+                }
+            }",
         r"class Foo {
-			    #usedMember = 42;
-			    method() {
-			        return someGlobalMethod(this.#usedMember);
-			    }
-			}",
+                #usedMember = 42;
+                method() {
+                    return someGlobalMethod(this.#usedMember);
+                }
+            }",
         r"class C {
-			    #usedInOuterClass;
+                #usedInOuterClass;
 
-			    foo() {
-			        return class {};
-			    }
+                foo() {
+                    return class {};
+                }
 
-			    bar() {
-			        return this.#usedInOuterClass;
-			    }
-			}",
+                bar() {
+                    return this.#usedInOuterClass;
+                }
+            }",
         r"class Foo {
-			    #usedInForInLoop;
-			    method() {
-			        for (const bar in this.#usedInForInLoop) {
+                #usedInForInLoop;
+                method() {
+                    for (const bar in this.#usedInForInLoop) {
 
-			        }
-			    }
-			}",
+                    }
+                }
+            }",
         r"class Foo {
-			    #usedInForOfLoop;
-			    method() {
-			        for (const bar of this.#usedInForOfLoop) {
+                #usedInForOfLoop;
+                method() {
+                    for (const bar of this.#usedInForOfLoop) {
 
-			        }
-			    }
-			}",
+                    }
+                }
+            }",
         r"class Foo {
-			    #usedInAssignmentPattern;
-			    method() {
-			        [bar = 1] = this.#usedInAssignmentPattern;
-			    }
-			}",
+                #usedInAssignmentPattern;
+                method() {
+                    [bar = 1] = this.#usedInAssignmentPattern;
+                }
+            }",
         r"class Foo {
-			    #usedInArrayPattern;
-			    method() {
-			        [bar] = this.#usedInArrayPattern;
-			    }
-			}",
+                #usedInArrayPattern;
+                method() {
+                    [bar] = this.#usedInArrayPattern;
+                }
+            }",
         r"class Foo {
-			    #usedInAssignmentPattern;
-			    method() {
-			        [bar] = this.#usedInAssignmentPattern;
-			    }
-			}",
+                #usedInAssignmentPattern;
+                method() {
+                    [bar] = this.#usedInAssignmentPattern;
+                }
+            }",
         r"class C {
-			    #usedInObjectAssignment;
+                #usedInObjectAssignment;
 
-			    method() {
-			        ({ [this.#usedInObjectAssignment]: a } = foo);
-			    }
-			}",
+                method() {
+                    ({ [this.#usedInObjectAssignment]: a } = foo);
+                }
+            }",
         r"class C {
             set #accessorWithSetterFirst(value) {
                 doSomething(value);
@@ -433,13 +443,13 @@ fn test() {
         //     }
         // }",
         r"class Foo {
-			    #usedMethod() {
-			        return 42;
-			    }
-			    anotherMethod() {
-			        return this.#usedMethod();
-			    }
-			}",
+                #usedMethod() {
+                    return 42;
+                }
+                anotherMethod() {
+                    return this.#usedMethod();
+                }
+            }",
         r"class C {
             set #x(value) {
                 doSomething(value);
@@ -493,6 +503,7 @@ fn test() {
         r"class Foo { #x; method(val) { switch(val) { case (a ? this.#x : b): break; } } }",
         r"class Foo { #x; method() { throw a ? this.#x : new Error(); } }",
         r"class Foo { #x; method() { while (a ? this.#x : b) {} } }",
+        r"class Bug { #flag = false; foo() { this.#flag && console.log('spam'); } }",
         r"class Foo { #a; #b; #c; method() { return this.#a ? this.#b : this.#c; } }",
         // Issue #15548: Private member used in logical expression on RHS of assignment
         r"class ExampleFoo { #foo = 0; foo(foo) { foo = foo ?? this.#foo; return foo; } }",
@@ -500,151 +511,152 @@ fn test() {
         r"class ExampleBar { #bar = 0; bar(bar) { bar = ++this.#bar; return bar; } }",
         r"class Test { #url: string; constructor(url: string) { this.#url = url; } open() { return new WebSocket(this.#url); } }",
         r"export class Foo { #fetch: typeof fetch; constructor() { this.#fetch = fetch; } async bar() { return (0, this.#fetch)('https://example.com'); } }",
+        r"export class StateMachine { #state = 'idle'; step() { switch (this.#state) { case 'idle': { this.#state = 'running'; break; } case 'running': { this.#state = 'done'; break; } } } }",
     ];
 
     let fail = vec![
         r"class Foo {
-			    #unusedMember = 5;
-			}",
+                #unusedMember = 5;
+            }",
         r"class First {}
-			class Second {
-			    #unusedMemberInSecondClass = 5;
-			}",
+            class Second {
+                #unusedMemberInSecondClass = 5;
+            }",
         r"class First {
-			    #unusedMemberInFirstClass = 5;
-			}
-			class Second {}",
+                #unusedMemberInFirstClass = 5;
+            }
+            class Second {}",
         r"class First {
-			    #firstUnusedMemberInSameClass = 5;
-			    #secondUnusedMemberInSameClass = 5;
-			}",
+                #firstUnusedMemberInSameClass = 5;
+                #secondUnusedMemberInSameClass = 5;
+            }",
         r"class Foo {
-			    #usedOnlyInWrite = 5;
-			    method() {
-			        this.#usedOnlyInWrite = 42;
-			    }
-			}",
+                #usedOnlyInWrite = 5;
+                method() {
+                    this.#usedOnlyInWrite = 42;
+                }
+            }",
         r"class Foo {
-			    #usedOnlyInWriteStatement = 5;
-			    method() {
-			        this.#usedOnlyInWriteStatement += 42;
-			    }
-			}",
+                #usedOnlyInWriteStatement = 5;
+                method() {
+                    this.#usedOnlyInWriteStatement += 42;
+                }
+            }",
         r"class C {
-			    #usedOnlyInIncrement;
+                #usedOnlyInIncrement;
 
-			    foo() {
-			        this.#usedOnlyInIncrement++;
-			    }
-			}",
+                foo() {
+                    this.#usedOnlyInIncrement++;
+                }
+            }",
         r"class C {
-			    #unusedInOuterClass;
+                #unusedInOuterClass;
 
-			    foo() {
-			        return class {
-			            #unusedInOuterClass;
+                foo() {
+                    return class {
+                        #unusedInOuterClass;
 
-			            bar() {
-			                return this.#unusedInOuterClass;
-			            }
-			        };
-			    }
-			}",
+                        bar() {
+                            return this.#unusedInOuterClass;
+                        }
+                    };
+                }
+            }",
         r"class C {
-			    #unusedOnlyInSecondNestedClass;
+                #unusedOnlyInSecondNestedClass;
 
-			    foo() {
-			        return class {
-			            #unusedOnlyInSecondNestedClass;
+                foo() {
+                    return class {
+                        #unusedOnlyInSecondNestedClass;
 
-			            bar() {
-			                return this.#unusedOnlyInSecondNestedClass;
-			            }
-			        };
-			    }
+                        bar() {
+                            return this.#unusedOnlyInSecondNestedClass;
+                        }
+                    };
+                }
 
-			    baz() {
-			        return this.#unusedOnlyInSecondNestedClass;
-			    }
+                baz() {
+                    return this.#unusedOnlyInSecondNestedClass;
+                }
 
-			    bar() {
-			        return class {
-			            #unusedOnlyInSecondNestedClass;
-			        }
-			    }
-			}",
+                bar() {
+                    return class {
+                        #unusedOnlyInSecondNestedClass;
+                    }
+                }
+            }",
         r"class Foo {
-			    #unusedMethod() {}
-			}",
+                #unusedMethod() {}
+            }",
         r"class Foo {
-			    #unusedMethod() {}
-			    #usedMethod() {
-			        return 42;
-			    }
-			    publicMethod() {
-			        return this.#usedMethod();
-			    }
-			}",
+                #unusedMethod() {}
+                #usedMethod() {
+                    return 42;
+                }
+                publicMethod() {
+                    return this.#usedMethod();
+                }
+            }",
         r"class Foo {
-			    set #unusedSetter(value) {}
-			}",
+                set #unusedSetter(value) {}
+            }",
         r"class Foo {
-			    #unusedForInLoop;
-			    method() {
-			        for (this.#unusedForInLoop in bar) {
+                #unusedForInLoop;
+                method() {
+                    for (this.#unusedForInLoop in bar) {
 
-			        }
-			    }
-			}",
+                    }
+                }
+            }",
         r"class Foo {
-			    #unusedForOfLoop;
-			    method() {
-			        for (this.#unusedForOfLoop of bar) {
+                #unusedForOfLoop;
+                method() {
+                    for (this.#unusedForOfLoop of bar) {
 
-			        }
-			    }
-			}",
+                    }
+                }
+            }",
         r"class Foo {
-			    #unusedInDestructuring;
-			    method() {
-			        ({ x: this.#unusedInDestructuring } = bar);
-			    }
-			}",
+                #unusedInDestructuring;
+                method() {
+                    ({ x: this.#unusedInDestructuring } = bar);
+                }
+            }",
         r"class Foo {
-			    #unusedInRestPattern;
-			    method() {
-			        [...this.#unusedInRestPattern] = bar;
-			    }
-			}",
+                #unusedInRestPattern;
+                method() {
+                    [...this.#unusedInRestPattern] = bar;
+                }
+            }",
         r"class Foo {
-			    #unusedInAssignmentPattern;
-			    method() {
-			        [this.#unusedInAssignmentPattern = 1] = bar;
-			    }
-			}",
+                #unusedInAssignmentPattern;
+                method() {
+                    [this.#unusedInAssignmentPattern = 1] = bar;
+                }
+            }",
         r"class Foo {
-			    #unusedInAssignmentPattern;
-			    method() {
-			        [this.#unusedInAssignmentPattern] = bar;
-			    }
-			}",
+                #unusedInAssignmentPattern;
+                method() {
+                    [this.#unusedInAssignmentPattern] = bar;
+                }
+            }",
         r"class C {
-			    #usedOnlyInTheSecondInnerClass;
+                #usedOnlyInTheSecondInnerClass;
 
-			    method(a) {
-			        return class {
-			            #usedOnlyInTheSecondInnerClass;
+                method(a) {
+                    return class {
+                        #usedOnlyInTheSecondInnerClass;
 
-			            method2(b) {
-			                foo = b.#usedOnlyInTheSecondInnerClass;
-			            }
+                        method2(b) {
+                            foo = b.#usedOnlyInTheSecondInnerClass;
+                        }
 
-			            method3(b) {
-			                foo = b.#usedOnlyInTheSecondInnerClass;
-			            }
-			        }
-			    }
-			}",
+                        method3(b) {
+                            foo = b.#usedOnlyInTheSecondInnerClass;
+                        }
+                    }
+                }
+            }",
         r"class Foo { #awaitedMember; async method() { await this.#awaitedMember; } }",
         r"class Foo { #unused; method() { Math.random() > 0.5 ? this.#unused : []; } }",
         r"class Foo { #x; #y; method(a, b, c) { a ? (b ? this.#x : c) : this.#y; } }",

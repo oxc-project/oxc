@@ -208,7 +208,7 @@ fn test() {
         "array.length === 0 && array.every(Boolean)",
         "(array.length === 0) + (array.every(Boolean))",
         "array.length === 1 || array.every(Boolean)",
-        "array.length === \"0\" || array.every(Boolean)",
+        r#"array.length === "0" || array.every(Boolean)"#,
         "array.length === 0. || array.every(Boolean)",
         "array.length === 0x0 || array.every(Boolean)",
         "array.length !== 0 || array.every(Boolean)",
@@ -226,7 +226,7 @@ fn test() {
         "array.length !== 0 || array.some(Boolean)",
         "(array.length !== 0) - (array.some(Boolean))",
         "array.length !== 1 && array.some(Boolean)",
-        "array.length !== \"0\" && array.some(Boolean)",
+        r#"array.length !== "0" && array.some(Boolean)"#,
         "array.length !== 0. && array.some(Boolean)",
         "array.length !== 0x0 && array.some(Boolean)",
         "array.length === 0 && array.some(Boolean)",
@@ -246,7 +246,7 @@ fn test() {
         "array.length > 0 || array.some(Boolean)",
         "(array.length > 0) - (array.some(Boolean))",
         "array.length > 1 && array.some(Boolean)",
-        "array.length > \"0\" && array.some(Boolean)",
+        r#"array.length > "0" && array.some(Boolean)"#,
         "array.length > 0. && array.some(Boolean)",
         "array.length > 0x0 && array.some(Boolean)",
         "array.length >= 0 && array.some(Boolean)",
@@ -260,19 +260,50 @@ fn test() {
         "array.length > 0 && array.notSome(Boolean)",
         "array.length > 0 && array[some](Boolean)",
         "array1.length > 0 && array2.some(Boolean)",
+        "if (
+                foo &&
+                array.length !== 0 &&
+                bar &&
+                array.some(Boolean)
+            ) {
+                // ...
+            }",
         "(foo && array.length === 0) || array.every(Boolean) && foo",
         "array.length === 0 || (array.every(Boolean) && foo)",
         "(foo || array.length > 0) && array.some(Boolean)",
         "array.length > 0 && (array.some(Boolean) || foo)",
-        "array.length === 0 || array.length === 0",
-        "array.some(Boolean) && array.some(Boolean)",
     ];
 
     let fail = vec![
         "array.length === 0 || array.every(Boolean)",
         "array.length > 0 && array.some(Boolean)",
         "array.length !== 0 && array.some(Boolean)",
+        // "((
+        //         ((
+        //             (( array )).length
+        //         )) === (( 0 ))
+        //         ||
+        //         ((
+        //             (( array )).every(Boolean)
+        //         ))
+        //     ))",
+        // "((
+        //         ((
+        //             (( array )).every(Boolean)
+        //         ))
+        //         ||
+        //         ((
+        //             (( array )).length
+        //         )) === (( 0 ))
+        //     ))",
         "if ((( array.length > 0 )) && array.some(Boolean));",
+        "if (
+                array.length !== 0 &&
+                array.some(Boolean) &&
+                foo
+            ) {
+                // ...
+            }",
         "(array.length === 0 || array.every(Boolean)) || foo",
         "foo || (array.length === 0 || array.every(Boolean))",
         "(array.length > 0 && array.some(Boolean)) && foo",
@@ -288,6 +319,31 @@ fn test() {
         "array.length > 0 && (array.some(Boolean) && foo)",
         "array.every(Boolean) || array.length === 0 || array.every(Boolean)",
         "array.length === 0 || array.every(Boolean) || array.length === 0",
+        "array1.every(Boolean)
+            || (( array1.length === 0 || array2.length === 0 )) // Both useless
+            || array2.every(Boolean)",
+        "function isUselessLengthCheckNode({node, operator, siblings}) {
+                return (
+                    (
+                        operator === '||' &&
+                        zeroLengthChecks.has(node) &&
+                        siblings.length > 0 &&
+                        siblings.some(condition =>
+                            arrayEveryCalls.has(condition) &&
+                            isSameReference(node.left.object, condition.callee.object)
+                        )
+                    ) ||
+                    (
+                        operator === '&&' &&
+                        nonZeroLengthChecks.has(node) &&
+                        siblings.length > 0 &&
+                        siblings.some(condition =>
+                            arraySomeCalls.has(condition) &&
+                            isSameReference(node.left.object, condition.callee.object)
+                        )
+                    )
+                );
+            }",
     ];
 
     Tester::new(NoUselessLengthCheck::NAME, NoUselessLengthCheck::PLUGIN, pass, fail)

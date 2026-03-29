@@ -1,0 +1,53 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Format js-in-markdown with prettier-plugin-oxfmt > should be disabled by \`embeddedLanguageFormatting: 'off'\` 1`] = `
+"\`\`\`js
+const x=1;
+const y=2;
+console.log(x+y);
+\`\`\`
+"
+`;
+
+exports[`Format js-in-markdown with prettier-plugin-oxfmt > should be disabled by prettier-ignore 1`] = `
+"# Markdown
+
+## Disabled
+
+<!-- prettier-ignore -->
+\`\`\`ts
+const x=1;
+const y=2;
+console.log(x+y);
+\`\`\`
+
+## Enabled
+
+\`\`\`jsx
+const X = () => (
+  <>
+    <div>JSX</div>
+    <hr />
+  </>
+);
+\`\`\`
+"
+`;
+
+exports[`Format js-in-markdown with prettier-plugin-oxfmt > should format .md w/o duplicating TS lines 1`] = `
+"# Markdown
+
+In Prettier, using \`typescript\` parser inside \`markdown\` parser duplicates lines after \`await { then }\`.
+
+\`\`\`ts
+await Promise.resolve("value");
+await {
+  then() {},
+};
+// This comment and below will be duplicated
+await getPromise();
+\`\`\`
+
+But we are not!
+"
+`;

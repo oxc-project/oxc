@@ -45,15 +45,14 @@
 //! See the [crate documentation](https://github.com/oxc-project/oxc/tree/main/crates/oxc_minifier) for more details.
 
 mod compressor;
-mod ctx;
+pub(crate) mod generated;
 mod keep_var;
+mod minifier_traverse;
 mod options;
 mod peephole;
 mod state;
 mod symbol_value;
-
-#[cfg(test)]
-mod tester;
+mod traverse_context;
 
 use oxc_allocator::Allocator;
 use oxc_ast::ast::Program;
@@ -66,6 +65,10 @@ use rustc_hash::FxHashMap;
 
 pub use oxc_mangler::{MangleOptions, MangleOptionsKeepNames};
 
+pub(crate) use crate::generated::traverse::Traverse;
+#[doc(hidden)]
+pub(crate) use crate::traverse_context::MinifierTraverseCtx as TraverseCtx;
+pub(crate) use crate::traverse_context::ReusableMinifierTraverseCtx as ReusableTraverseCtx;
 pub use crate::{compressor::Compressor, options::*};
 
 #[derive(Debug, Clone)]
@@ -139,11 +142,7 @@ impl<'a> Minifier {
             .options
             .mangle
             .map(|options| {
-                let mut semantic = SemanticBuilder::new()
-                    .with_stats(stats)
-                    .with_scope_tree_child_ids(true)
-                    .build(program)
-                    .semantic;
+                let mut semantic = SemanticBuilder::new().with_stats(stats).build(program).semantic;
                 let class_private_mappings = Mangler::default()
                     .with_options(options)
                     .build_with_semantic(&mut semantic, program);

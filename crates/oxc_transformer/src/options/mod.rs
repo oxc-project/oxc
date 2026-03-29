@@ -28,7 +28,7 @@ mod module;
 use babel::BabelOptions;
 pub use env::EnvOptions;
 pub use module::Module;
-pub use oxc_compat::{Engine, EngineTargets};
+pub use oxc_compat::{ESFeature, Engine, EngineTargets};
 pub use oxc_syntax::es_target::ESTarget;
 
 /// <https://babel.dev/docs/options>
@@ -66,6 +66,7 @@ pub struct TransformOptions {
     /// Plugins
     pub plugins: PluginsOptions,
 
+    /// Helper loading configuration for generated runtime helpers.
     pub helper_loader: HelperLoaderOptions,
 }
 

@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ typescript-eslint(no-unnecessary-parameter-property-assignment): Assignment of parameter property is unnecessary
    ╭─[no_unnecessary_parameter_property_assignment.tsx:4:13]
  3 │           constructor(public name: unknown) {

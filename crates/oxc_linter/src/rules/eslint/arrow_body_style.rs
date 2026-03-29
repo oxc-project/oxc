@@ -1,3 +1,5 @@
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use oxc_ast::{
@@ -13,17 +15,34 @@ use crate::{
     AstNode,
     context::LintContext,
     fixer::{RuleFix, RuleFixer},
-    rule::Rule,
+    rule::{Rule, TupleRuleConfig},
 };
 
-fn arrow_body_style_diagnostic(span: Span, msg: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(msg.to_string()).with_label(span)
+fn expected_block_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Expected block statement surrounding arrow body.")
+        .with_help("Surround the arrow body with braces and use a return statement.")
+        .with_label(span)
 }
 
-const EXPECTED_BLOCK_MSG: &str = "Expected block statement surrounding arrow body.";
-const UNEXPECTED_BLOCK_SINGLE_MSG: &str = "Unexpected block statement surrounding arrow body; move the returned value immediately after the `=>`.";
+fn unexpected_block_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Unexpected block statement surrounding arrow body.")
+        .with_help("Move the returned value to be immediately after the `=>`.")
+        .with_label(span)
+}
 
-#[derive(Debug, Default, PartialEq, Clone)]
+fn unexpected_empty_block_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Unexpected empty block statement surrounding arrow body.")
+        .with_help("Put a value of `undefined` immediately after the `=>`.")
+        .with_label(span)
+}
+
+/// Diagnostic that is emitted when we don't have a specific help message to provide
+fn unexpected_block_with_unknown_help_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Unexpected block statement surrounding arrow body.").with_label(span)
+}
+
+#[derive(Debug, Default, PartialEq, Clone, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "kebab-case")]
 enum Mode {
     #[default]
     AsNeeded,
@@ -31,19 +50,13 @@ enum Mode {
     Never,
 }
 
-impl Mode {
-    pub fn from(raw: &str) -> Self {
-        match raw {
-            "always" => Self::Always,
-            "never" => Self::Never,
-            _ => Self::AsNeeded,
-        }
-    }
-}
+#[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
+#[serde(default)]
+pub struct ArrowBodyStyle(Mode, ArrowBodyStyleConfig);
 
-#[derive(Debug, Default, Clone)]
-pub struct ArrowBodyStyle {
-    mode: Mode,
+#[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
+struct ArrowBodyStyleConfig {
     require_return_for_object_literal: bool,
 }
 
@@ -88,7 +101,7 @@ declare_oxc_lint!(
     ///
     /// ### Examples
     ///
-    /// #### `"never"` (default)
+    /// #### `"never"`
     ///
     /// Examples of **incorrect** code for this rule with the `never` option:
     /// ```js
@@ -129,7 +142,7 @@ declare_oxc_lint!(
     /// };
     /// ```
     ///
-    /// #### `"as-needed"`
+    /// #### `"as-needed"` (default)
     ///
     /// Examples of **incorrect** code for this rule with the `as-needed` option:
     /// ```js
@@ -162,7 +175,7 @@ declare_oxc_lint!(
     ///
     /// Examples of **incorrect** code for this rule with the `{ "requireReturnForObjectLiteral": true }` option:
     /// ```js
-    /// /* arrow-body-style: ["error", "as-needed", { "requireReturnForObjectLiteral": true }]*/
+    /// /* arrow-body-style: ["error", "as-needed", { "requireReturnForObjectLiteral": true }] */
     ///
     /// /* ✘ Bad: */
     /// const foo = () => ({});
@@ -171,7 +184,7 @@ declare_oxc_lint!(
     ///
     /// Examples of **correct** code for this rule with the `{ "requireReturnForObjectLiteral": true }` option:
     /// ```js
-    /// /* arrow-body-style: ["error", "as-needed", { "requireReturnForObjectLiteral": true }]*/
+    /// /* arrow-body-style: ["error", "as-needed", { "requireReturnForObjectLiteral": true }] */
     ///
     /// /* ✔ Good: */
     /// const foo = () => {};
@@ -181,19 +194,12 @@ declare_oxc_lint!(
     eslint,
     style,
     fix,
+    config = ArrowBodyStyle,
 );
 
 impl Rule for ArrowBodyStyle {
-    fn from_configuration(value: Value) -> Self {
-        let mode = value.get(0).and_then(Value::as_str).map(Mode::from).unwrap_or_default();
-
-        let require_return_for_object_literal = value
-            .get(1)
-            .and_then(|v| v.get("requireReturnForObjectLiteral"))
-            .and_then(Value::as_bool)
-            .unwrap_or(false);
-
-        Self { mode, require_return_for_object_literal }
+    fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<TupleRuleConfig<Self>>(value).map(TupleRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -218,22 +224,21 @@ impl ArrowBodyStyle {
         arrow_func_expr: &ArrowFunctionExpression<'a>,
         ctx: &LintContext<'a>,
     ) {
-        let body = &arrow_func_expr.body;
+        let ArrowBodyStyle(mode, config) = self;
         let inner_expr = arrow_func_expr.get_expression().map(Expression::get_inner_expression);
 
-        let should_report = self.mode == Mode::Always
-            || (self.mode == Mode::AsNeeded
-                && self.require_return_for_object_literal
+        let should_report = *mode == Mode::Always
+            || (*mode == Mode::AsNeeded
+                && config.require_return_for_object_literal
                 && matches!(inner_expr, Some(Expression::ObjectExpression(_))));
 
         if !should_report {
             return;
         }
 
-        ctx.diagnostic_with_fix(
-            arrow_body_style_diagnostic(body.span, EXPECTED_BLOCK_MSG),
-            |fixer| Self::fix_concise_to_block(arrow_func_expr, fixer, ctx),
-        );
+        ctx.diagnostic_with_fix(expected_block_diagnostic(arrow_func_expr.body.span), |fixer| {
+            Self::fix_concise_to_block(arrow_func_expr, fixer, ctx)
+        });
     }
 
     /// Handle block arrow body: `() => { ... }`
@@ -246,17 +251,15 @@ impl ArrowBodyStyle {
         node: &AstNode<'a>,
         ctx: &LintContext<'a>,
     ) {
+        let ArrowBodyStyle(mode, _config) = &self;
         let body = &arrow_func_expr.body;
 
-        match self.mode {
+        match mode {
             Mode::Never => {
                 // Mode::Never: report any block body
                 if body.statements.is_empty() {
                     // TODO: implement a fix for empty block bodies
-                    ctx.diagnostic(arrow_body_style_diagnostic(
-                        body.span,
-                        "Unexpected block statement surrounding arrow body; put a value of `undefined` immediately after the `=>`.",
-                    ));
+                    ctx.diagnostic(unexpected_empty_block_diagnostic(body.span));
                     return;
                 }
 
@@ -265,31 +268,19 @@ impl ArrowBodyStyle {
                     && let Statement::ReturnStatement(return_statement) = &body.statements[0]
                     && let Some(return_arg) = &return_statement.argument
                 {
-                    ctx.diagnostic_with_fix(
-                        arrow_body_style_diagnostic(body.span, UNEXPECTED_BLOCK_SINGLE_MSG),
-                        |fixer| {
-                            Self::fix_block_to_concise(
-                                arrow_func_expr,
-                                return_arg,
-                                node,
-                                fixer,
-                                ctx,
-                            )
-                        },
-                    );
+                    ctx.diagnostic_with_fix(unexpected_block_diagnostic(body.span), |fixer| {
+                        Self::fix_block_to_concise(arrow_func_expr, return_arg, node, fixer, ctx)
+                    });
                     return;
                 }
 
                 // Cannot auto-fix other cases
-                ctx.diagnostic(arrow_body_style_diagnostic(
-                    body.span,
-                    "Unexpected block statement surrounding arrow body.",
-                ));
+                ctx.diagnostic(unexpected_block_with_unknown_help_diagnostic(body.span));
             }
             Mode::AsNeeded if body.statements.len() == 1 => {
                 if let Statement::ReturnStatement(return_statement) = &body.statements[0] {
                     // Skip if requireReturnForObjectLiteral and returning an object
-                    if self.require_return_for_object_literal
+                    if self.1.require_return_for_object_literal
                         && matches!(
                             return_statement.argument,
                             Some(Expression::ObjectExpression(_))
@@ -301,25 +292,13 @@ impl ArrowBodyStyle {
                     // Cannot fix if return has no argument (undefined return)
                     let Some(return_arg) = &return_statement.argument else {
                         // TODO: implement a fix for undefined return
-                        ctx.diagnostic(arrow_body_style_diagnostic(
-                            body.span,
-                            UNEXPECTED_BLOCK_SINGLE_MSG,
-                        ));
+                        ctx.diagnostic(unexpected_block_diagnostic(body.span));
                         return;
                     };
 
-                    ctx.diagnostic_with_fix(
-                        arrow_body_style_diagnostic(body.span, UNEXPECTED_BLOCK_SINGLE_MSG),
-                        |fixer| {
-                            Self::fix_block_to_concise(
-                                arrow_func_expr,
-                                return_arg,
-                                node,
-                                fixer,
-                                ctx,
-                            )
-                        },
-                    );
+                    ctx.diagnostic_with_fix(unexpected_block_diagnostic(body.span), |fixer| {
+                        Self::fix_block_to_concise(arrow_func_expr, return_arg, node, fixer, ctx)
+                    });
                 }
             }
             _ => {}

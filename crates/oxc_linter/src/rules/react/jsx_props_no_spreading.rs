@@ -29,7 +29,7 @@ enum IgnoreEnforceOption {
 }
 
 #[derive(Debug, Clone, Default, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct JsxPropsNoSpreadingConfig {
     /// `html` set to `ignore` will ignore all html jsx tags like `div`, `img` etc. Default is set to `enforce`.
     html: IgnoreEnforceOption,
@@ -60,7 +60,7 @@ impl std::ops::Deref for JsxPropsNoSpreading {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow JSX prop spreading
+    /// Disallow JSX prop spreading.
     ///
     /// ### Why is this bad?
     ///
@@ -90,10 +90,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for JsxPropsNoSpreading {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        serde_json::from_value::<DefaultRuleConfig<JsxPropsNoSpreading>>(value)
-            .unwrap_or_default()
-            .into_inner()
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -179,107 +177,107 @@ fn test() {
     let pass = vec![
         (
             "
-			        const {one_prop, two_prop} = props;
-			        <App one_prop={one_prop} two_prop={two_prop}/>
-			      ",
+                    const {one_prop, two_prop} = props;
+                    <App one_prop={one_prop} two_prop={two_prop}/>
+                  ",
             None,
         ),
         (
             "
-			        const {one_prop, two_prop} = props;
-			        <div one_prop={one_prop} two_prop={two_prop}></div>
-			      ",
+                    const {one_prop, two_prop} = props;
+                    <div one_prop={one_prop} two_prop={two_prop}></div>
+                  ",
             None,
         ),
         (
             "
-			        const newProps = {...props};
-			        <App one_prop={newProps.one_prop} two_prop={newProps.two_prop} style={{...styles}}/>
-			      ",
+                    const newProps = {...props};
+                    <App one_prop={newProps.one_prop} two_prop={newProps.two_prop} style={{...styles}}/>
+                  ",
             None,
         ),
         (
             r#"
-			        const props = {src: "dummy.jpg", alt: "dummy"};
-			        <App>
-			           <Image {...props}/>
-			           <img {...props}/>
-			        </App>
-			      "#,
+                    const props = {src: "dummy.jpg", alt: "dummy"};
+                    <App>
+                       <Image {...props}/>
+                       <img {...props}/>
+                    </App>
+                  "#,
             Some(serde_json::json!([{ "exceptions": ["Image", "img"] }])),
         ),
         (
             r#"
-			        const props = {src: "dummy.jpg", alt: "dummy"};
-			        const { src, alt } = props;
-			        <App>
-			           <Image {...props}/>
-			           <img src={src} alt={alt}/>
-			        </App>
-			      "#,
+                    const props = {src: "dummy.jpg", alt: "dummy"};
+                    const { src, alt } = props;
+                    <App>
+                       <Image {...props}/>
+                       <img src={src} alt={alt}/>
+                    </App>
+                  "#,
             Some(serde_json::json!([{ "custom": "ignore" }])),
         ),
         (
             r#"
-			        const props = {src: "dummy.jpg", alt: "dummy"};
-			        const { src, alt } = props;
-			        <App>
-			           <Image {...props}/>
-			           <img {...props}/>
-			        </App>
-			      "#,
+                    const props = {src: "dummy.jpg", alt: "dummy"};
+                    const { src, alt } = props;
+                    <App>
+                       <Image {...props}/>
+                       <img {...props}/>
+                    </App>
+                  "#,
             Some(
                 serde_json::json!([{ "custom": "enforce", "html": "ignore", "exceptions": ["Image"] }]),
             ),
         ),
         (
             r#"
-			        const props = {src: "dummy.jpg", alt: "dummy"};
-			        const { src, alt } = props;
-			        <App>
-			           <img {...props}/>
-			           <Image src={src} alt={alt}/>
-			           <div {...someOtherProps}/>
-			        </App>
-			      "#,
+                    const props = {src: "dummy.jpg", alt: "dummy"};
+                    const { src, alt } = props;
+                    <App>
+                       <img {...props}/>
+                       <Image src={src} alt={alt}/>
+                       <div {...someOtherProps}/>
+                    </App>
+                  "#,
             Some(serde_json::json!([{ "html": "ignore" }])),
         ),
         (
             "
-			        <App>
-			          <Foo {...{ prop1, prop2, prop3 }} />
-			        </App>
-			      ",
+                    <App>
+                      <Foo {...{ prop1, prop2, prop3 }} />
+                    </App>
+                  ",
             Some(serde_json::json!([{ "explicitSpread": "ignore" }])),
         ),
         (
             "
-			        const props = {};
-			        <App>
-			           <components.Group {...props}/>
-			           <Nav.Item {...props}/>
-			        </App>
-			      ",
+                    const props = {};
+                    <App>
+                       <components.Group {...props}/>
+                       <Nav.Item {...props}/>
+                    </App>
+                  ",
             Some(serde_json::json!([{ "exceptions": ["components.Group", "Nav.Item"] }])),
         ),
         (
             "
-			        const props = {};
-			        <App>
-			           <components.Group {...props}/>
-			           <Nav.Item {...props}/>
-			        </App>
-			      ",
+                    const props = {};
+                    <App>
+                       <components.Group {...props}/>
+                       <Nav.Item {...props}/>
+                    </App>
+                  ",
             Some(serde_json::json!([{ "custom": "ignore" }])),
         ),
         (
             "
-			        const props = {};
-			        <App>
-			           <components.Group {...props}/>
-			           <Nav.Item {...props}/>
-			        </App>
-			      ",
+                    const props = {};
+                    <App>
+                       <components.Group {...props}/>
+                       <Nav.Item {...props}/>
+                    </App>
+                  ",
             Some(
                 serde_json::json!([        {          "custom": "enforce",          "html": "ignore",          "exceptions": ["components.Group", "Nav.Item"],        },      ]),
             ),
@@ -289,119 +287,119 @@ fn test() {
     let fail = vec![
         (
             "
-			        <App {...props}/>
-			      ",
+                    <App {...props}/>
+                  ",
             None,
         ),
         (
             "
-			        <div {...props}></div>
-			      ",
+                    <div {...props}></div>
+                  ",
             None,
         ),
         (
             "
-			        <App {...props} some_other_prop={some_other_prop}/>
-			      ",
+                    <App {...props} some_other_prop={some_other_prop}/>
+                  ",
             None,
         ),
         (
             r#"
-			        const props = {src: "dummy.jpg", alt: "dummy"};
-			        <App>
-			           <Image {...props}/>
-			           <span {...props}/>
-			        </App>
-			      "#,
+                    const props = {src: "dummy.jpg", alt: "dummy"};
+                    <App>
+                       <Image {...props}/>
+                       <span {...props}/>
+                    </App>
+                  "#,
             Some(serde_json::json!([{ "exceptions": ["Image", "img"] }])),
         ),
         (
             r#"
-			        const props = {src: "dummy.jpg", alt: "dummy"};
-			        const { src, alt } = props;
-			        <App>
-			           <Image {...props}/>
-			           <img {...props}/>
-			        </App>
-			      "#,
+                    const props = {src: "dummy.jpg", alt: "dummy"};
+                    const { src, alt } = props;
+                    <App>
+                       <Image {...props}/>
+                       <img {...props}/>
+                    </App>
+                  "#,
             Some(serde_json::json!([{ "custom": "ignore" }])),
         ),
         (
             r#"
-			        const props = {src: "dummy.jpg", alt: "dummy"};
-			        const { src, alt } = props;
-			        <App>
-			           <Image {...props}/>
-			           <img {...props}/>
-			        </App>
-			      "#,
+                    const props = {src: "dummy.jpg", alt: "dummy"};
+                    const { src, alt } = props;
+                    <App>
+                       <Image {...props}/>
+                       <img {...props}/>
+                    </App>
+                  "#,
             Some(serde_json::json!([{ "html": "ignore", "exceptions": ["Image", "img"] }])),
         ),
         (
             r#"
-			        const props = {src: "dummy.jpg", alt: "dummy"};
-			        const { src, alt } = props;
-			        <App>
-			           <Image {...props}/>
-			           <img {...props}/>
-			           <div {...props}/>
-			        </App>
-			      "#,
+                    const props = {src: "dummy.jpg", alt: "dummy"};
+                    const { src, alt } = props;
+                    <App>
+                       <Image {...props}/>
+                       <img {...props}/>
+                       <div {...props}/>
+                    </App>
+                  "#,
             Some(
                 serde_json::json!([{ "custom": "ignore", "html": "ignore", "exceptions": ["Image", "img"] }]),
             ),
         ),
         (
             r#"
-			        const props = {src: "dummy.jpg", alt: "dummy"};
-			        const { src, alt } = props;
-			        <App>
-			           <img {...props}/>
-			           <Image {...props}/>
-			        </App>
-			      "#,
+                    const props = {src: "dummy.jpg", alt: "dummy"};
+                    const { src, alt } = props;
+                    <App>
+                       <img {...props}/>
+                       <Image {...props}/>
+                    </App>
+                  "#,
             Some(serde_json::json!([{ "html": "ignore" }])),
         ),
         (
             "
-			        <App>
-			          <Foo {...{ prop1, prop2, prop3 }} />
-			        </App>
-			      ",
+                    <App>
+                      <Foo {...{ prop1, prop2, prop3 }} />
+                    </App>
+                  ",
             None,
         ),
         (
             "
-			        <App>
-			          <Foo {...{ prop1, ...rest }} />
-			        </App>
-			      ",
+                    <App>
+                      <Foo {...{ prop1, ...rest }} />
+                    </App>
+                  ",
             Some(serde_json::json!([{ "explicitSpread": "ignore" }])),
         ),
         (
             "
-			        <App>
-			          <Foo {...{ ...props }} />
-			        </App>
-			      ",
+                    <App>
+                      <Foo {...{ ...props }} />
+                    </App>
+                  ",
             Some(serde_json::json!([{ "explicitSpread": "ignore" }])),
         ),
         (
             "
-			        <App>
-			          <Foo {...props } />
-			        </App>
-			      ",
+                    <App>
+                      <Foo {...props } />
+                    </App>
+                  ",
             Some(serde_json::json!([{ "explicitSpread": "ignore" }])),
         ),
         (
             "
-			        const props = {};
-			        <App>
-			           <components.Group {...props}/>
-			           <Nav.Item {...props}/>
-			        </App>
-			      ",
+                    const props = {};
+                    <App>
+                       <components.Group {...props}/>
+                       <Nav.Item {...props}/>
+                    </App>
+                  ",
             Some(
                 serde_json::json!([{ "exceptions": ["components.DropdownIndicator", "Nav.Item"] }]),
             ),

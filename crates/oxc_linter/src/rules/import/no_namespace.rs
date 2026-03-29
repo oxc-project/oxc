@@ -22,7 +22,7 @@ fn no_namespace_diagnostic(span: Span) -> OxcDiagnostic {
 pub struct NoNamespace(Box<NoNamespaceConfig>);
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoNamespaceConfig {
     /// An array of glob strings for modules that should be ignored by the rule.
     /// For example, `["*.json"]` will ignore all JSON imports.
@@ -83,10 +83,8 @@ declare_oxc_lint!(
 
 /// <https://github.com/import-js/eslint-plugin-import/blob/v2.29.1/docs/rules/no-namespace.md>
 impl Rule for NoNamespace {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        serde_json::from_value::<DefaultRuleConfig<NoNamespace>>(value)
-            .unwrap_or_default()
-            .into_inner()
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run_once(&self, ctx: &LintContext<'_>) {

@@ -17,27 +17,35 @@ pub struct NoUnreadableArrayDestructuring;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow unreadable array destructuring
+    /// Disallows destructuring values from an array in ways that are difficult to read.
     ///
     /// ### Why is this bad?
     ///
-    /// Destructuring is very useful, but it can also make some code harder to read.
-    /// This rule prevents ignoring consecutive values when destructuring from an array.
+    /// Destructuring can be very useful, but it can also make some code harder to read.
+    /// This rule prevents ignoring consecutive values (e.g. `let [,,foo] = array`)
+    /// when destructuring from an array.
     ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// const [,, foo] = parts;
+    /// const [,,...rest] = parts;
     /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```javascript
     /// const [foo] = parts;
+    /// const foo = parts[3];
+    /// const rest = parts.slice(2);
+    ///
+    /// // One is fine
+    /// const [, foo] = parts;
     /// ```
     NoUnreadableArrayDestructuring,
     unicorn,
-    style
+    style,
+    pending
 );
 
 fn is_unreadable_array_destructuring<T, U>(elements: &Vec<Option<T>>, rest: Option<&U>) -> bool {
@@ -81,62 +89,62 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        (r" [, foo] = parts;", None),
-        (r" [foo] = parts;", None),
-        (r" [foo,,bar] = parts;", None),
-        (r" [foo,   ,     bar] = parts;", None),
-        (r" [foo,] = parts;", None),
-        (r" [foo,,] = parts;", None),
-        (r" [foo,, bar,, baz] = parts;", None),
-        (r"[,foo] = bar;", None),
-        (r"({parts: [,foo]} = bar);", None),
-        (r"function foo([, bar]) {}", None),
-        (r"function foo([bar]) {}", None),
-        (r"function foo([bar,,baz]) {}", None),
-        (r"function foo([bar,   ,     baz]) {}", None),
-        (r"function foo([bar,]) {}", None),
-        (r"function foo([bar,,]) {}", None),
-        (r"function foo([bar,, baz,, qux]) {}", None),
-        (r" [, ...rest] = parts;", None),
+        "const [, foo] = parts;",
+        "const [foo] = parts;",
+        "const [foo,,bar] = parts;",
+        "const [foo,   ,     bar] = parts;",
+        "const [foo,] = parts;",
+        "const [foo,,] = parts;",
+        "const [foo,, bar,, baz] = parts;",
+        "[,foo] = bar;",
+        "({parts: [,foo]} = bar);",
+        "function foo([, bar]) {}",
+        "function foo([bar]) {}",
+        "function foo([bar,,baz]) {}",
+        "function foo([bar,   ,     baz]) {}",
+        "function foo([bar,]) {}",
+        "function foo([bar,,]) {}",
+        "function foo([bar,, baz,, qux]) {}",
+        "const [, ...rest] = parts;",
         // This is stupid, but valid code
-        (r" [,,] = parts;", None),
+        "const [,,] = parts;",
     ];
 
     let fail = vec![
-        (r"const [,, foo] = parts;", None),
-        (r"const [foo,,, bar] = parts;", None),
-        (r"const [foo,,,] = parts;", None),
-        (r"const [foo, bar,, baz ,,, qux] = parts;", None),
-        (r"[,, foo] = bar;", None),
-        (r"({parts: [,, foo]} = bar);", None),
-        (r"function foo([,, bar]) {}", None),
-        (r"function foo([bar,,, baz]) {}", None),
-        (r"function foo([bar,,,]) {}", None),
-        (r"function foo([bar, baz,, qux ,,, quux]) {}", None),
-        (r"const [,,...rest] = parts;", None),
+        "const [,, foo] = parts;",
+        "const [foo,,, bar] = parts;",
+        "const [foo,,,] = parts;",
+        "const [foo, bar,, baz ,,, qux] = parts;",
+        "[,, foo] = bar;",
+        "({parts: [,, foo]} = bar);",
+        "function foo([,, bar]) {}",
+        "function foo([bar,,, baz]) {}",
+        "function foo([bar,,,]) {}",
+        "function foo([bar, baz,, qux ,,, quux]) {}",
+        "const [,,...rest] = parts;",
         // This is stupid, but valid code
-        (r"const [,,,] = parts;", None),
+        "const [,,,] = parts;",
         // Should add parentheses to array
-        (r"const [,,...rest] = new Array;", None),
-        (r"const [,,...rest] = (0, foo);", None),
-        (r"let [,,thirdElement] = new Array;", None),
-        (r"var [,,thirdElement] = (((0, foo)));", None),
+        "const [,,...rest] = new Array;",
+        "const [,,...rest] = (0, foo);",
+        "let [,,thirdElement] = new Array;",
+        "var [,,thirdElement] = (((0, foo)));",
+        "let [,,[,,thirdElementInThirdElement]] = foo",
         // Variable is not `Identifier`
-        (r"let [,,[,,thirdElementInThirdElement]] = foo", None),
-        (r"let [,,{propertyOfThirdElement}] = foo", None),
+        "let [,,{propertyOfThirdElement}] = foo",
         // Multiple declarations
-        (r"let [,,thirdElement] = foo, anotherVariable = bar;", None),
+        "let [,,thirdElement] = foo, anotherVariable = bar;",
         // Default value
-        (r"let [,,thirdElement = {}] = foo;", None),
-        (r"for (const [, , id] of shuffle(list)) {}", None),
+        "let [,,thirdElement = {}] = foo;",
+        "for (const [, , id] of shuffle(list)) {}",
         // Space after keyword
-        (r"let[,,thirdElement] = foo;", None),
-        (r"let[,,...thirdElement] = foo;", None),
-        (r"const[,,thirdElement] = foo;", None),
-        (r"const[,,...thirdElement] = foo;", None),
-        (r"var[,,thirdElement] = foo;", None),
-        (r"var[,,...thirdElement] = foo;", None),
-        (r"let[]=[],[,,thirdElement] = foo;", None),
+        "let[,,thirdElement] = foo;",
+        "let[,,...thirdElement] = foo;",
+        "const[,,thirdElement] = foo;",
+        "const[,,...thirdElement] = foo;",
+        "var[,,thirdElement] = foo;",
+        "var[,,...thirdElement] = foo;",
+        "let[]=[],[,,thirdElement] = foo;",
     ];
 
     Tester::new(

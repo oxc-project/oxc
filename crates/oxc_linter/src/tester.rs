@@ -553,7 +553,7 @@ impl Tester {
                 config
             );
         }
-        let rule = self.find_rule().from_configuration(rule_config.unwrap_or_default());
+        let rule = self.find_rule().from_configuration(rule_config.unwrap_or_default()).unwrap();
         let mut external_plugin_store = ExternalPluginStore::default();
         let linter = Linter::new(
             self.lint_options,
@@ -566,6 +566,7 @@ impl Tester {
                             Oxlintrc::deserialize(v).unwrap(),
                             None,
                             &mut external_plugin_store,
+                            None,
                         )
                         .unwrap()
                     })

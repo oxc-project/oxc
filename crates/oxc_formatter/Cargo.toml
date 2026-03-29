@@ -1,6 +1,6 @@
 [package]
 name = "oxc_formatter"
-version = "0.20.0"
+version = "0.42.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -16,32 +16,33 @@ description.workspace = true
 [lints]
 workspace = true
 
-[lib]
-doctest = false
-
 [dependencies]
 oxc_allocator = { workspace = true }
 oxc_ast = { workspace = true }
 oxc_data_structures = { workspace = true, features = ["stack", "code_buffer"] }
+oxc_jsdoc = { workspace = true }
 oxc_parser = { workspace = true }
 oxc_semantic = { workspace = true, optional = true }
 oxc_span = { workspace = true }
 oxc_syntax = { workspace = true }
 
 cow-utils = { workspace = true }
+fast-glob = { workspace = true }
+markdown = { workspace = true }
 natord = { workspace = true }
+nodejs-built-in-modules = { workspace = true }
+itoa = { workspace = true }
 phf = { workspace = true, features = ["macros"] }
 rustc-hash = { workspace = true }
-schemars = { workspace = true }
-serde = { workspace = true, features = ["derive"] }
-serde_json = { workspace = true }
+smallvec = { workspace = true }
 unicode-width = { workspace = true }
 
 [dev-dependencies]
 insta = { workspace = true }
+oxc_tasks_common = { workspace = true }
 pico-args = { workspace = true }
-project-root = { workspace = true }
 serde_json = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
 
 [build-dependencies]
 oxc_span = { workspace = true }
@@ -49,3 +50,6 @@ oxc_span = { workspace = true }
 [features]
 default = []
 detect_code_removal = ["dep:oxc_semantic"]
+
+[lib]
+doctest = false

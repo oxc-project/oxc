@@ -1,0 +1,206 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint-plugin-react(no-multi-comp): Declare only one React component per file. Found: HelloAgain
+   ╭─[no_multi_comp.tsx:4:11]
+ 3 │               }
+ 4 │ ╭─▶           function HelloAgain(props) {
+ 5 │ │               return <div>Hello again {props.name}</div>;
+ 6 │ ╰─▶           }
+   ╰────
+  help: Move this component to a separate file.
+
+  ⚠ eslint-plugin-react(no-multi-comp): Declare only one React component per file. Found: HelloJohn
+   ╭─[no_multi_comp.tsx:4:13]
+ 3 │                 }
+ 4 │ ╭─▶             class HelloJohn extends React.Component {
+ 5 │ │                 render() {
+ 6 │ │                   return <Hello name="John" />;
+ 7 │ │                 }
+ 8 │ ╰─▶             }
+   ╰────
+  help: Move this component to a separate file.
+
+  ⚠ eslint-plugin-react(no-multi-comp): Declare only one React component per file. Found: RenderHello2
+    ╭─[no_multi_comp.tsx:6:13]
+  5 │                 },
+  6 │ ╭─▶             RenderHello2(props) {
+  7 │ │                 let {name} = props;
+  8 │ │                 return <div>{name}</div>;
+  9 │ ╰─▶             }
+ 10 │               };
+    ╰────
+  help: Move this component to a separate file.
+
+  ⚠ eslint-plugin-react(no-multi-comp): Declare only one React component per file. Found: Foo
+   ╭─[no_multi_comp.tsx:6:20]
+ 5 │               exports.createSomeComponent = function createSomeComponent(opts) {
+ 6 │ ╭─▶             return function Foo() {
+ 7 │ │                 return <>{opts.a}</>
+ 8 │ ╰─▶             }
+ 9 │               }
+   ╰────
+  help: Move this component to a separate file.
+
+  ⚠ eslint-plugin-react(no-multi-comp): Declare only one React component per file. Found: UnnamedComponent
+   ╭─[no_multi_comp.tsx:4:13]
+ 3 │           }
+ 4 │             export default React.forwardRef((props, ref) => <div><StoreListItem {...props} forwardRef={ref} /></div>);
+   ·             ──────────────────────────────────────────────────────────────────────────────────────────────────────────
+   ╰────
+  help: Move this component to a separate file.
+
+  ⚠ eslint-plugin-react(no-multi-comp): Declare only one React component per file. Found: HelloComponent2
+   ╭─[no_multi_comp.tsx:4:17]
+ 3 │           }
+ 4 │           const HelloComponent2 = React.forwardRef((props, ref) => <div></div>);
+   ·                 ───────────────────────────────────────────────────────────────
+   ╰────
+  help: Move this component to a separate file.
+
+  ⚠ eslint-plugin-react(no-multi-comp): Declare only one React component per file. Found: HelloComponent2
+   ╭─[no_multi_comp.tsx:4:17]
+ 3 │           });
+ 4 │           const HelloComponent2 = React.forwardRef((props, ref) => <><HelloComponent></HelloComponent></>);
+   ·                 ──────────────────────────────────────────────────────────────────────────────────────────
+   ╰────
+  help: Move this component to a separate file.
+
+  ⚠ eslint-plugin-react(no-multi-comp): Declare only one React component per file. Found: HelloComponent2
+   ╭─[no_multi_comp.tsx:5:17]
+ 4 │           });
+ 5 │           const HelloComponent2 = forwardRef((props, ref) => <HelloComponent></HelloComponent>);
+   ·                 ───────────────────────────────────────────────────────────────────────────────
+   ╰────
+  help: Move this component to a separate file.
+
+  ⚠ eslint-plugin-react(no-multi-comp): Declare only one React component per file. Found: HelloComponent2
+   ╭─[no_multi_comp.tsx:5:17]
+ 4 │           };
+ 5 │           const HelloComponent2 = memo((props) => <HelloComponent></HelloComponent>);
+   ·                 ────────────────────────────────────────────────────────────────────
+   ╰────
+  help: Move this component to a separate file.
+
+  ⚠ eslint-plugin-react(no-multi-comp): Declare only one React component per file. Found: HelloComponent2
+   ╭─[no_multi_comp.tsx:5:17]
+ 4 │           });
+ 5 │           const HelloComponent2 = forwardRef((props, ref) => <HelloComponent></HelloComponent>);
+   ·                 ───────────────────────────────────────────────────────────────────────────────
+   ╰────
+  help: Move this component to a separate file.
+
+  ⚠ eslint-plugin-react(no-multi-comp): Declare only one React component per file. Found: HelloComponent2
+   ╭─[no_multi_comp.tsx:5:17]
+ 4 │           });
+ 5 │           const HelloComponent2 = memo((props) => <HelloComponent></HelloComponent>);
+   ·                 ────────────────────────────────────────────────────────────────────
+   ╰────
+  help: Move this component to a separate file.
+
+  ⚠ eslint-plugin-react(no-multi-comp): Declare only one React component per file. Found: HelloComponent2
+   ╭─[no_multi_comp.tsx:5:17]
+ 4 │           });
+ 5 │           const HelloComponent2 = memo((props) => <HelloComponent></HelloComponent>);
+   ·                 ────────────────────────────────────────────────────────────────────
+   ╰────
+  help: Move this component to a separate file.
+
+  ⚠ eslint-plugin-react(no-multi-comp): Declare only one React component per file. Found: HelloComponent2
+   ╭─[no_multi_comp.tsx:5:17]
+ 4 │           });
+ 5 │           const HelloComponent2 = forwardRef((props, ref) => <HelloComponent></HelloComponent>);
+   ·                 ───────────────────────────────────────────────────────────────────────────────
+   ╰────
+  help: Move this component to a separate file.
+
+  ⚠ eslint-plugin-react(no-multi-comp): Declare only one React component per file. Found: HelloComponent2
+   ╭─[no_multi_comp.tsx:5:17]
+ 4 │           });
+ 5 │           const HelloComponent2 = memo((props) => <HelloComponent></HelloComponent>);
+   ·                 ────────────────────────────────────────────────────────────────────
+   ╰────
+  help: Move this component to a separate file.
+
+  ⚠ eslint-plugin-react(no-multi-comp): Declare only one React component per file. Found: HelloComponent2
+   ╭─[no_multi_comp.tsx:5:17]
+ 4 │           });
+ 5 │           const HelloComponent2 = forwardRef((props, ref) => <HelloComponent></HelloComponent>);
+   ·                 ───────────────────────────────────────────────────────────────────────────────
+   ╰────
+  help: Move this component to a separate file.
+
+  ⚠ eslint-plugin-react(no-multi-comp): Declare only one React component per file. Found: HelloComponent2
+   ╭─[no_multi_comp.tsx:5:17]
+ 4 │           });
+ 5 │           const HelloComponent2 = forwardRef((props, ref) => <HelloComponent></HelloComponent>);
+   ·                 ───────────────────────────────────────────────────────────────────────────────
+   ╰────
+  help: Move this component to a separate file.
+
+  ⚠ eslint-plugin-react(no-multi-comp): Declare only one React component per file. Found: HelloComponent2
+   ╭─[no_multi_comp.tsx:5:17]
+ 4 │           });
+ 5 │           const HelloComponent2 = memo((props) => <HelloComponent></HelloComponent>);
+   ·                 ────────────────────────────────────────────────────────────────────
+   ╰────
+  help: Move this component to a separate file.
+
+  ⚠ eslint-plugin-react(no-multi-comp): Declare only one React component per file. Found: Bar
+   ╭─[no_multi_comp.tsx:3:24]
+ 2 │           export const Foo = memo(() => <div/>);
+ 3 │           export const Bar = forwardRef((props, ref) => <span ref={ref}/>);
+   ·                        ───────────────────────────────────────────────────
+   ╰────
+  help: Move this component to a separate file.
+
+  ⚠ eslint-plugin-react(no-multi-comp): Declare only one React component per file. Found: Bar
+   ╭─[no_multi_comp.tsx:5:11]
+ 4 │               }
+ 5 │ ╭─▶           class Bar extends Component {
+ 6 │ │               render() { return <span/>; }
+ 7 │ ╰─▶           }
+   ╰────
+  help: Move this component to a separate file.
+
+  ⚠ eslint-plugin-react(no-multi-comp): Declare only one React component per file. Found: Bar
+   ╭─[no_multi_comp.tsx:5:11]
+ 4 │               }
+ 5 │ ╭─▶           class Bar extends PureComponent {
+ 6 │ │               render() { return <span/>; }
+ 7 │ ╰─▶           }
+   ╰────
+  help: Move this component to a separate file.
+
+  ⚠ eslint-plugin-react(no-multi-comp): Declare only one React component per file. Found: UnnamedComponent
+   ╭─[no_multi_comp.tsx:3:11]
+ 2 │           const Foo = () => <div/>;
+ 3 │           export default memo(() => <span/>);
+   ·           ───────────────────────────────────
+   ╰────
+  help: Move this component to a separate file.
+
+  ⚠ eslint-plugin-react(no-multi-comp): Declare only one React component per file. Found: Bar
+   ╭─[no_multi_comp.tsx:4:24]
+ 3 │           }
+ 4 │           export const Bar = () => { return null; }
+   ·                        ────────────────────────────
+   ╰────
+  help: Move this component to a separate file.
+
+  ⚠ eslint-plugin-react(no-multi-comp): Declare only one React component per file. Found: Bar
+   ╭─[no_multi_comp.tsx:2:24]
+ 1 │ export const Foo = () => { return null; }
+ 2 │           export const Bar = () => { return null; }
+   ·                        ────────────────────────────
+   ╰────
+  help: Move this component to a separate file.
+
+  ⚠ eslint-plugin-react(no-multi-comp): Declare only one React component per file. Found: Bar
+   ╭─[no_multi_comp.tsx:2:24]
+ 1 │ export const Foo = () => null;
+ 2 │           export const Bar = () => null;
+   ·                        ────────────────
+   ╰────
+  help: Move this component to a separate file.

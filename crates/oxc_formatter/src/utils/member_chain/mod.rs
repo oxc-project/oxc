@@ -8,7 +8,7 @@ use crate::{
     JsLabels,
     ast_nodes::{AstNode, AstNodes},
     best_fitting,
-    formatter::{Buffer, Format, Formatter, prelude::*},
+    formatter::{Buffer, Comments, Format, Formatter, prelude::*},
     utils::{
         is_long_curried_call,
         member_chain::{
@@ -52,7 +52,7 @@ impl<'a, 'b> MemberChain<'a, 'b> {
 
         // Here we check if the first element of Groups::groups can be moved inside the head.
         // If so, then we extract it and concatenate it together with the head.
-        member_chain.maybe_merge_with_first_group(call_expression.parent, f);
+        member_chain.maybe_merge_with_first_group(call_expression.parent(), f);
 
         member_chain
     }
@@ -72,14 +72,10 @@ impl<'a, 'b> MemberChain<'a, 'b> {
             return false;
         };
 
-        let has_comment = first_group.members().first().is_some_and(|member| {
-            matches!(member, ChainMember::StaticMember(expression)
-                if f.context().comments().has_comment_in_range(
-                    expression.object().span().end,
-                    expression.property().span.start
-                )
-            )
-        });
+        let has_comment = first_group
+            .members()
+            .first()
+            .is_some_and(|member| Self::has_comment_in_member(member, f.comments()));
 
         if has_comment {
             return false;
@@ -179,15 +175,20 @@ impl<'a, 'b> MemberChain<'a, 'b> {
         self.head.members().iter().chain(self.tail.members())
     }
 
+    /// Check if a member has comments between object and property or end-of-line comments after it
+    fn has_comment_in_member(member: &ChainMember, comments: &Comments) -> bool {
+        matches!(
+            member,
+            ChainMember::StaticMember(member)
+                if comments.has_comment_in_range(member.object().span().end, member.property().span.start) || comments.has_end_of_line_comment_after(member.span.end)
+        )
+    }
+
     fn has_comment(&self, f: &Formatter<'_, 'a>) -> bool {
         let comments = f.comments();
 
         for member in self.members() {
-            if matches!(
-                member,
-                ChainMember::StaticMember(member)
-                    if comments.has_comment_in_range(member.object().span().end, member.property().span.start)
-            ) {
+            if Self::has_comment_in_member(member, comments) {
                 return true;
             }
         }
@@ -391,8 +392,8 @@ pub fn is_member_call_chain<'a>(
     MemberChain::from_call_expression(expression, f).tail.is_member_call_chain()
 }
 
-fn has_short_name(name: &Atom, tab_width: u8) -> bool {
-    name.as_str().len() <= tab_width as usize
+fn has_short_name(name: &str, tab_width: u8) -> bool {
+    name.len() <= tab_width as usize
 }
 
 fn chain_members_iter<'a, 'b>(

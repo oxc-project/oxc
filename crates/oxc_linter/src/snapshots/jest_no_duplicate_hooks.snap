@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-jest(no-duplicate-hooks): Duplicate "beforeEach" in describe block.
    ╭─[no_duplicate_hooks.tsx:4:21]
  3 │                     beforeEach(() => {});

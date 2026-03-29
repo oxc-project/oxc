@@ -63,7 +63,7 @@ just fmt          # Format code (run after modifications)
 just test         # Run unit/integration tests
 just conformance  # Run conformance tests
 just ready        # Run all checks (use after commits)
-
+cargo lintgen     # Regenerate linter rules enum and impls after adding/modifying rules
 # Crate-specific updates
 just ast          # Update generated files (oxc_ast changes)
 just minsize      # Update size snapshots (oxc_minifier changes)
@@ -263,6 +263,15 @@ Git submodules managed via `just submodules`:
 
 Run all conformance tests with `cargo coverage` or `just conformance`.
 
+### Searching Test Suites
+
+These test suites are pre-cloned and ready to search:
+
+- **Test262** (`tasks/coverage/test262/`) - ECMAScript spec compliance
+- **Babel** (`tasks/coverage/babel/`) - Parsing and transformation edge cases
+- **TypeScript** (`tasks/coverage/typescript/`) - TypeScript syntax and semantics
+- **Prettier** (`tasks/prettier_conformance/prettier/`) - Formatting expectations
+
 ### Snapshot Testing
 
 - Uses `insta` crate for snapshot testing
@@ -312,4 +321,4 @@ Tests are TypeScript files in each package's `test/` directory.
 
 ---
 
-For human contributors see `CONTRIBUTING.md` and [oxc.rs](https://oxc.rs)
+For human contributors see `CONTRIBUTING.md` and [oxc.rs](https://oxc.rs/docs/contribute/introduction.html)

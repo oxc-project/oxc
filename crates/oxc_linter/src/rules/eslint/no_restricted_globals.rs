@@ -15,7 +15,9 @@ fn no_restricted_globals(global_name: &str, suffix: &str, span: Span) -> OxcDiag
         format!("Unexpected use of '{global_name}'. {suffix}")
     };
 
-    OxcDiagnostic::warn(warn_text).with_label(span)
+    OxcDiagnostic::warn(warn_text)
+        .with_help("Use a local variable or function parameter instead of the restricted global.")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone, JsonSchema)]
@@ -41,7 +43,7 @@ declare_oxc_lint!(
     /// `event`, but using this variable has been considered as a bad practice for a long time. Restricting
     /// this will make sure this variable isn't used in browser code.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// If we have options:
     ///
@@ -63,7 +65,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoRestrictedGlobals {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let list = match value {
             Value::Array(arr) => arr.iter().fold(FxHashMap::default(), |mut acc, v| match v {
                 // "no-restricted-globals": ["error", "event"]
@@ -83,7 +85,7 @@ impl Rule for NoRestrictedGlobals {
             _ => FxHashMap::default(),
         };
 
-        Self { restricted_globals: Box::new(list) }
+        Ok(Self { restricted_globals: Box::new(list) })
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -92,7 +94,7 @@ impl Rule for NoRestrictedGlobals {
                 return;
             };
 
-            if ctx.scoping().root_unresolved_references().contains_key(ident.name.as_str()) {
+            if ctx.scoping().root_unresolved_references().contains_key(&ident.name) {
                 let reference = ctx.scoping().get_reference(ident.reference_id());
                 if !reference.is_type() {
                     ctx.diagnostic(no_restricted_globals(&ident.name, message, ident.span));

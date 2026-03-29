@@ -36,7 +36,7 @@ fn duplicate_returns_diagnostic(span: Span) -> OxcDiagnostic {
 pub struct RequireReturns(Box<RequireReturnsConfig>);
 
 #[derive(Debug, Clone, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 struct RequireReturnsConfig {
     /// Tags that exempt functions from requiring `@returns`.
     exempted_by: Vec<String>,
@@ -94,14 +94,13 @@ declare_oxc_lint!(
     RequireReturns,
     jsdoc,
     pedantic,
+    pending,
     config = RequireReturnsConfig,
 );
 
 impl Rule for RequireReturns {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        serde_json::from_value::<DefaultRuleConfig<RequireReturns>>(value)
-            .unwrap_or_default()
-            .into_inner()
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run_once(&self, ctx: &LintContext) {
@@ -316,6 +315,36 @@ fn test() {
 			            return foo;
 			          }
 			      ",
+            None,
+            None,
+        ),
+        (
+            "
+			          /**
+			           * @param md
+			           */
+			          const component = (md) => {
+			            md.renderer.rules.fence = (...args) => {
+			              const [tokens, index] = args;
+			              return tokens[index];
+			            };
+			          };
+			      ",
+            None,
+            None,
+        ),
+        (
+            "
+                      /**
+                       * Random float in [min, max).
+                       * @param {number} min - Minimum float value.
+                       * @param {number} max - Maximum float value.
+                       * @returns {number} Random float in [min, max).
+                       */
+                      function randomRange(min, max) {
+                        return min + Math.random() * (max - min);
+                      }
+                  ",
             None,
             None,
         ),

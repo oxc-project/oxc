@@ -97,11 +97,12 @@ declare_oxc_lint!(
     ValidExpect,
     jest,
     correctness,
+    pending,
     config = ValidExpectConfig,
 );
 
 impl Rule for ValidExpect {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let default_async_matchers = vec![String::from("toResolve"), String::from("toReject")];
         let config = value.get(0);
 
@@ -128,7 +129,7 @@ impl Rule for ValidExpect {
             .and_then(serde_json::Value::as_bool)
             .unwrap_or(false);
 
-        Self(Box::new(ValidExpectConfig { async_matchers, min_args, max_args, always_await }))
+        Ok(Self(Box::new(ValidExpectConfig { async_matchers, min_args, max_args, always_await })))
     }
 
     fn run_on_jest_node<'a, 'b>(

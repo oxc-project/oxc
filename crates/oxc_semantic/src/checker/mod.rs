@@ -7,13 +7,20 @@ mod typescript;
 use javascript as js;
 use typescript as ts;
 
-pub use javascript::is_function_part_of_if_statement;
+pub use javascript::is_function_decl_part_of_if_statement;
 
+/// Perform syntax error checking for the given AST node.
+///
+/// Must be inlined along with `SemanticBuilder::leave_node` so the compiler can see the
+/// concrete `AstKind` variant at each call site and eliminate non-matching arms.
+#[expect(clippy::inline_always, reason = "enables compile-time match elimination, see doc comment")]
+#[inline(always)]
 pub fn check<'a>(kind: AstKind<'a>, ctx: &SemanticBuilder<'a>) {
     match kind {
         AstKind::Program(program) => {
             js::check_duplicate_class_elements(ctx);
             js::check_unresolved_exports(program, ctx);
+            js::check_import_value_redeclarations(ctx);
             ts::check_ts_export_assignment_in_program(program, ctx);
         }
         AstKind::BindingIdentifier(ident) => {
@@ -54,6 +61,7 @@ pub fn check<'a>(kind: AstKind<'a>, ctx: &SemanticBuilder<'a>) {
         }
         AstKind::ForOfStatement(stmt) => {
             js::check_function_declaration(&stmt.body, false, ctx);
+            js::check_for_of_statement(stmt, ctx);
             js::check_for_statement_left(&stmt.left, false, ctx);
             ts::check_for_statement_left(&stmt.left, false, ctx);
         }
@@ -81,6 +89,9 @@ pub fn check<'a>(kind: AstKind<'a>, ctx: &SemanticBuilder<'a>) {
         AstKind::MethodDefinition(method) => {
             ts::check_method_definition(method, ctx);
         }
+        AstKind::PropertyDefinition(prop) => {
+            ts::check_property_definition(prop, ctx);
+        }
         AstKind::ObjectProperty(prop) => {
             ts::check_object_property(prop, ctx);
         }
@@ -96,6 +107,9 @@ pub fn check<'a>(kind: AstKind<'a>, ctx: &SemanticBuilder<'a>) {
         AstKind::ObjectExpression(expr) => js::check_object_expression(expr, ctx),
         AstKind::UnaryExpression(expr) => js::check_unary_expression(expr, ctx),
         AstKind::YieldExpression(expr) => js::check_yield_expression(expr, ctx),
+        AstKind::VariableDeclaration(decl) => {
+            js::check_variable_declaration(decl, ctx);
+        }
         AstKind::VariableDeclarator(decl) => {
             if !ctx.source_type.is_typescript() {
                 js::check_variable_declarator_redeclaration(decl, ctx);
@@ -108,6 +122,7 @@ pub fn check<'a>(kind: AstKind<'a>, ctx: &SemanticBuilder<'a>) {
         AstKind::TSGlobalDeclaration(decl) => ts::check_ts_global_declaration(decl, ctx),
         AstKind::TSEnumDeclaration(decl) => ts::check_ts_enum_declaration(decl, ctx),
         AstKind::TSTypeAliasDeclaration(decl) => ts::check_ts_type_alias_declaration(decl, ctx),
+        AstKind::TSInferType(infer_type) => ts::check_ts_infer_type(infer_type, ctx),
         AstKind::TSImportEqualsDeclaration(decl) => {
             ts::check_ts_import_equals_declaration(decl, ctx);
         }

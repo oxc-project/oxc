@@ -17,7 +17,7 @@ pub struct NoDebugger;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Checks for usage of the `debugger` statement
+    /// Checks for usage of the `debugger` statement.
     ///
     /// ### Why is this bad?
     ///
@@ -84,16 +84,16 @@ impl Rule for NoDebugger {
 fn test() {
     use crate::tester::Tester;
 
-    let pass = vec![("var test = { debugger: 1 }; test.debugger;", None)];
+    let pass = vec!["var test = { debugger: 1 }; test.debugger;"];
 
-    let fail = vec![("if (foo) debugger", None)];
+    let fail = vec!["if (foo) debugger"];
     let fix = vec![
-        ("let x; debugger; let y;", "let x;  let y;", None),
-        ("if (foo) debugger", "if (foo) {}", None),
-        ("for (;;) debugger", "for (;;) {}", None),
-        ("while (i > 0) debugger", "while (i > 0) {}", None),
-        ("if (foo) { debugger; }", "if (foo) {  }", None),
-        ("if (foo) { debugger }", "if (foo) {  }", None),
+        ("let x; debugger; let y;", "let x;  let y;"),
+        ("if (foo) debugger", "if (foo) {}"),
+        ("for (;;) debugger", "for (;;) {}"),
+        ("while (i > 0) debugger", "while (i > 0) {}"),
+        ("if (foo) { debugger; }", "if (foo) {  }"),
+        ("if (foo) { debugger }", "if (foo) {  }"),
     ];
 
     Tester::new(NoDebugger::NAME, NoDebugger::PLUGIN, pass, fail)

@@ -160,12 +160,16 @@ impl<'a> IsolatedDeclarations<'a> {
             self.error(parameter_must_have_explicit_type(rest.span));
         }
 
-        self.ast.alloc_formal_parameters(
-            params.span,
-            FormalParameterKind::Signature,
-            items,
-            params.rest.clone_in(self.ast.allocator),
-        )
+        let rest = params.rest.as_ref().map(|rest| {
+            let mut rest = rest.clone_in(self.ast.allocator);
+            FormalParameterBindingPattern::remove_assignments_from_kind(
+                self.ast,
+                &mut rest.rest.argument,
+            );
+            rest
+        });
+
+        self.ast.alloc_formal_parameters(params.span, FormalParameterKind::Signature, items, rest)
     }
 }
 

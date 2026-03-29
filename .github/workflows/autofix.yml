@@ -5,9 +5,8 @@ permissions: {}
 on:
   pull_request:
     types: [opened, synchronize]
-    paths-ignore:
-      - "!.github/workflows/ci.yml"
-      - "!.github/actions/clone-submodules/action.yml"
+    branches-ignore:
+      - "**/graphite-base/**"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref_name }}-${{ github.event.pull_request.number || github.sha }}
@@ -17,15 +16,15 @@ jobs:
   autofix:
     runs-on: ubuntu-latest
     steps:
-      - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
+      - uses: taiki-e/checkout-action@83ed61bfbe2b8abbb3c66e8b65b1335484c70009 # v1.4.1
 
-      - uses: oxc-project/setup-node@8958a8e040102244b619c4a94fccb657a44b1c21 # v1.0.6
+      - uses: oxc-project/setup-node@4c26e7cb3605b6bdef5450dacd02c434b10fd8ba # v1.2.0
 
-      - uses: oxc-project/setup-rust@c8224157c0bf235aabc633e8cd50d344f087a7de # v1.0.12
+      - uses: oxc-project/setup-rust@23f38cfb0c04af97a055f76acee94d5be71c7c82 # v1.0.16
         with:
           restore-cache: true
           cache-key: warm
-          tools: just,cargo-shear@1.9.0
+          tools: just,cargo-shear@1.11.2
           components: rustfmt
 
       - name: cargo-shear
@@ -37,11 +36,11 @@ jobs:
           fi
 
       - name: Check and update lock file
-        run: cargo check --workspace --all-features --all-targets
+        run: cargo check --all-features --all-targets
         if: ${{ steps.shear.outputs.shear == 'true' }}
 
       - run: just fmt
 
-      - uses: autofix-ci/action@635ffb0c9798bd160680f18fd73371e355b85f27 # v1.3.2
+      - uses: autofix-ci/action@7a166d7532b277f34e16238930461bf77f9d7ed8 # v1.3.3
         with:
           fail-fast: false

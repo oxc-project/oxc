@@ -19,9 +19,9 @@ use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet, FxHasher};
 use self_cell::self_cell;
 use smallvec::SmallVec;
 
-use oxc_allocator::{Allocator, AllocatorGuard, AllocatorPool};
+use oxc_allocator::{Allocator, AllocatorGuard, AllocatorPool, Box as ArenaBox};
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, Error, OxcDiagnostic};
-use oxc_parser::{ParseOptions, Parser};
+use oxc_parser::{ParseOptions, Parser, Token, config::RuntimeParserConfig};
 use oxc_resolver::Resolver;
 use oxc_semantic::{Semantic, SemanticBuilder};
 use oxc_span::{CompactStr, SourceType, VALID_EXTENSIONS};
@@ -127,6 +127,9 @@ struct SectionContent<'a> {
     /// None if section parsing failed. The corresponding item with the same index in
     /// `ProcessedModule.section_module_records` would be `Err(Vec<OxcDiagnostic>)`.
     semantic: Option<Semantic<'a>>,
+    /// Parser tokens for the section.
+    /// Empty if section parsing failed, or if token collection was not requested (no JS plugins).
+    parser_tokens: ArenaBox<'a, [Token]>,
 }
 
 /// A module with its source text and semantic, ready to be linted.
@@ -164,7 +167,7 @@ pub trait RuntimeFileSystem {
     /// # Errors
     /// When no valid path is provided or the content is not valid UTF-8 Stream
     fn read_to_arena_str<'a>(
-        &'a self,
+        &self,
         path: &Path,
         allocator: &'a Allocator,
     ) -> Result<&'a str, std::io::Error>;
@@ -244,9 +247,7 @@ impl Runtime {
         #[cfg(not(all(target_pointer_width = "64", target_endian = "little")))]
         let allocator_pool = AllocatorPool::new(thread_count);
 
-        let resolver = options.cross_module.then(|| {
-            Self::get_resolver(options.tsconfig.or_else(|| Some(options.cwd.join("tsconfig.json"))))
-        });
+        let resolver = options.cross_module.then(|| Self::get_resolver(options.tsconfig));
 
         Self {
             allocator_pool,
@@ -285,12 +286,14 @@ impl Runtime {
         use oxc_resolver::{
             ResolveOptions, TsconfigDiscovery, TsconfigOptions, TsconfigReferences,
         };
-        let tsconfig = tsconfig_path.and_then(|path| {
-            path.is_file().then_some(TsconfigDiscovery::Manual(TsconfigOptions {
+        let tsconfig = match tsconfig_path {
+            Some(path) if path.is_file() => Some(TsconfigDiscovery::Manual(TsconfigOptions {
                 config_file: path,
                 references: TsconfigReferences::Auto,
-            }))
-        });
+            })),
+            Some(_) => None, // Path provided but file doesn't exist
+            None => Some(TsconfigDiscovery::Auto),
+        };
         let extension_alias = tsconfig.as_ref().map_or_else(Vec::new, |_| {
             vec![
                 (".js".into(), vec![".js".into(), ".ts".into()]),
@@ -309,7 +312,7 @@ impl Runtime {
     }
 
     fn get_source_type_and_text<'a>(
-        file_system: &'a (dyn RuntimeFileSystem + Sync + Send),
+        file_system: &(dyn RuntimeFileSystem + Sync + Send),
         path: &Path,
         ext: &str,
         allocator: &'a Allocator,
@@ -394,7 +397,9 @@ impl Runtime {
 
         // Create a sorted copy of paths for processing
         let mut sorted_paths: Vec<_> = paths.iter().cloned().collect();
-        sorted_paths.par_sort_unstable_by(|a, b| Path::new(b).cmp(Path::new(a)));
+        // Sort by path length descending - longer paths tend to be deeper in the directory tree.
+        // This achieves the "deeper paths first" heuristic described above in O(1) per comparison.
+        sorted_paths.par_sort_unstable_by(|a, b| b.len().cmp(&a.len()));
 
         // The general idea is processing `sorted_paths` and their dependencies in groups. We start from a group of modules
         // in `sorted_paths` that is small enough to hold in memory but big enough to make use of the rayon thread pool.
@@ -617,6 +622,7 @@ impl Runtime {
                                         Arc::clone(&module_record),
                                         section.source.start,
                                         section.source.framework_options,
+                                        section.parser_tokens,
                                     ))
                                 }
                                 Err(messages) => {
@@ -736,6 +742,7 @@ impl Runtime {
                                         Arc::clone(&module_record),
                                         section.source.start,
                                         section.source.framework_options,
+                                        section.parser_tokens,
                                     ))
                                 }
                                 Err(diagnostics) => {
@@ -809,7 +816,8 @@ impl Runtime {
                                     section.semantic.unwrap(),
                                     Arc::clone(&module_record),
                                     section.source.start,
-                                    section.source.framework_options
+                                    section.source.framework_options,
+                                    section.parser_tokens,
                                 )),
                                 Err(errors) => {
                                     if !errors.is_empty() {
@@ -847,7 +855,7 @@ impl Runtime {
 
     fn process_path<'a>(
         &'a self,
-        file_system: &'a (dyn RuntimeFileSystem + Sync + Send),
+        file_system: &(dyn RuntimeFileSystem + Sync + Send),
         paths: &IndexSet<Arc<OsStr>, FxBuildHasher>,
         path: &Arc<OsStr>,
         check_syntax_errors: bool,
@@ -861,7 +869,7 @@ impl Runtime {
 
     fn process_path_to_module<'a>(
         &'a self,
-        file_system: &'a (dyn RuntimeFileSystem + Sync + Send),
+        file_system: &(dyn RuntimeFileSystem + Sync + Send),
         paths: &IndexSet<Arc<OsStr>, FxBuildHasher>,
         path: &Arc<OsStr>,
         check_syntax_errors: bool,
@@ -971,12 +979,13 @@ impl Runtime {
                 section_source.source_type,
                 check_syntax_errors,
             ) {
-                Ok((record, semantic)) => {
+                Ok((record, semantic, parser_tokens)) => {
                     section_module_records.push(Ok(record));
                     if let Some(sections) = &mut out_sections {
                         sections.push(SectionContent {
                             source: section_source,
                             semantic: Some(semantic),
+                            parser_tokens,
                         });
                     }
                 }
@@ -997,7 +1006,11 @@ impl Runtime {
 
                     section_module_records.push(Err(err));
                     if let Some(sections) = &mut out_sections {
-                        sections.push(SectionContent { source: section_source, semantic: None });
+                        sections.push(SectionContent {
+                            source: section_source,
+                            semantic: None,
+                            parser_tokens: ArenaBox::new_empty_boxed_slice(),
+                        });
                     }
                 }
             }
@@ -1005,6 +1018,7 @@ impl Runtime {
         section_module_records
     }
 
+    #[expect(clippy::type_complexity)]
     fn process_source_section<'a>(
         &self,
         path: &Path,
@@ -1012,13 +1026,16 @@ impl Runtime {
         source_text: &'a str,
         source_type: SourceType,
         check_syntax_errors: bool,
-    ) -> Result<(ResolvedModuleRecord, Semantic<'a>), Vec<OxcDiagnostic>> {
+    ) -> Result<(ResolvedModuleRecord, Semantic<'a>, ArenaBox<'a, [Token]>), Vec<OxcDiagnostic>>
+    {
+        let collect_tokens = self.linter.has_external_linter();
         let ret = Parser::new(allocator, source_text, source_type)
             .with_options(ParseOptions {
                 parse_regular_expression: true,
                 allow_return_outside_function: true,
                 ..ParseOptions::default()
             })
+            .with_config(RuntimeParserConfig::new(collect_tokens))
             .parse();
 
         if !ret.errors.is_empty() {
@@ -1027,7 +1044,6 @@ impl Runtime {
 
         let semantic_ret = SemanticBuilder::new()
             .with_cfg(true)
-            .with_scope_tree_child_ids(true)
             .with_check_syntax_error(check_syntax_errors)
             .build(allocator.alloc(ret.program));
 
@@ -1040,17 +1056,18 @@ impl Runtime {
 
         let module_record = Arc::new(ModuleRecord::new(path, &ret.module_record, &semantic));
 
+        let tokens = ret.tokens.into_boxed_slice();
+
         let mut resolved_module_requests: Vec<ResolvedModuleRequest> = vec![];
 
         // If import plugin is enabled.
         if let Some(resolver) = &self.resolver {
             // Retrieve all dependent modules from this module.
-            let dir = path.parent().unwrap();
             resolved_module_requests = module_record
                 .requested_modules
                 .keys()
                 .filter_map(|specifier| {
-                    let resolution = resolver.resolve(dir, specifier).ok()?;
+                    let resolution = resolver.resolve_file(path, specifier).ok()?;
                     Some(ResolvedModuleRequest {
                         specifier: specifier.clone(),
                         resolved_requested_path: Arc::<OsStr>::from(resolution.path().as_os_str()),
@@ -1058,6 +1075,6 @@ impl Runtime {
                 })
                 .collect();
         }
-        Ok((ResolvedModuleRecord { module_record, resolved_module_requests }, semantic))
+        Ok((ResolvedModuleRecord { module_record, resolved_module_requests }, semantic, tokens))
     }
 }

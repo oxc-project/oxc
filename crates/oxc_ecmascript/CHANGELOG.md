@@ -4,6 +4,56 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.121.0] - 2026-03-19
+
+### 🐛 Bug Fixes
+
+- 4ae3f3f ecmascript: Apply coercion-is-pure assumption to constructor side-effect detection (#20420) (Dunqing)
+- efeba28 ecmascript: Add argument validation for NewExpression side-effect detection (#20395) (Dunqing)
+
+## [0.120.0] - 2026-03-16
+
+### 🐛 Bug Fixes
+
+- edb8677 ecmascript: Treat collection constructor with variable arg as side-effectful (#20383) (Dunqing)
+- e62524d minifier: Treat object spread of getters as having side effects (#20380) (Boshen)
+
+## [0.119.0] - 2026-03-14
+
+### 🚀 Features
+
+- e7163b6 ecmascript: Add known-globals to side-effect-free property reads (#20212) (Dunqing)
+- 139ab68 ecmascript: Add `property_write_side_effects` to `MayHaveSideEffectsContext` (#20217) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- 5c97b14 minifier: Recognize object spread of object literals as side-effect-free (#20299) (Boshen)
+- ade14d4 ecmascript: Enhance side-effect detection for classes, TypedArrays, computed members, and spread (#20213) (Dunqing)
+
+## [0.116.0] - 2026-03-02
+
+### 🐛 Bug Fixes
+
+- a35063e minifier: Preserve side effects for meta property url reads (#19668) (Boshen)
+
+## [0.113.0] - 2026-02-10
+
+### 🐛 Bug Fixes
+
+- 110c300 oxc_ecmascript: `+[false]` and `+[true]` should evaluate to `NaN` (#19174) (copilot-swe-agent)
+
+## [0.109.0] - 2026-01-19
+
+### 🐛 Bug Fixes
+
+- 38e4b53 minifier: Validate RegExp patterns before marking as pure (#18125) (Boshen)
+
+## [0.107.0] - 2026-01-05
+
+### 🐛 Bug Fixes
+
+- 1044116 ecmascript: Mark `new Symbol` as non side-effect free (#17568) (camc314)
+
 ## [0.102.0] - 2025-12-08
 
 ### 🚀 Features

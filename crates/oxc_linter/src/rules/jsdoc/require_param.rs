@@ -100,16 +100,17 @@ declare_oxc_lint!(
     RequireParam,
     jsdoc,
     pedantic,
+    pending,
     config = RequireParamConfig,
 );
 
 impl Rule for RequireParam {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        value
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        Ok(value
             .as_array()
             .and_then(|arr| arr.first())
             .and_then(|value| serde_json::from_value(value.clone()).ok())
-            .map_or_else(Self::default, |value| Self(Box::new(value)))
+            .map_or_else(Self::default, |value| Self(Box::new(value))))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -334,6 +335,37 @@ fn test() {
 
 			          }
 			      ", None, None),
+        (
+            "
+                      /**
+                       * @param md
+                       */
+                      const component = (md) => {
+                        md.renderer.rules.fence = (...args) => {
+                          const [tokens, index] = args;
+                          return tokens[index];
+                        };
+                      };
+                  ",
+            None,
+            None,
+        ),
+        (
+            "
+                      /**
+                       * Random float in [min, max).
+                       * @param {number} min - Minimum float value.
+                       * @param {number} max - Maximum float value.
+                       * @returns {number} Random float in [min, max).
+                       */
+                      function randomRange(min, max) {
+                        return min + Math.random() * (max - min);
+                      }
+                  ",
+            None,
+            None,
+        ),
+
 ("
 			          /**
 			           * @param root0
@@ -771,7 +803,21 @@ fn test() {
              * @type {import('node:module').ResolveHook}
              */
             async function resolveJSONC(specifier, ctx, nextResolve) {}
-        ", None, None)
+        ", None, None),
+        (
+            r#"
+			      /**
+			       * A shiki transformer.
+			       */
+			      const shikiTransformer: ShikiTransformer = {
+			        name: "example",
+			        tokens(tokens) {
+			        }
+			      };
+			      "#,
+            None,
+            None,
+        ),
     ];
 
     let fail = vec![
@@ -1395,6 +1441,21 @@ fn test() {
 			        /** Foo. */
 			        function foo(a, b, c) {}
 			      ",
+            None,
+            None,
+        ),
+        // https://github.com/oxc-project/oxc/issues/19139#issuecomment-3875380106
+        (
+            r#"
+			const shikiTransformer: ShikiTransformer = {
+				name: "example",
+				/**
+				 * A shiki transformer.
+				 */
+			        tokens(tokens) {
+			        }
+			      };
+			      "#,
             None,
             None,
         ),

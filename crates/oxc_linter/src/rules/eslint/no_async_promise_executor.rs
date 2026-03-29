@@ -9,7 +9,9 @@ use oxc_span::Span;
 use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_async_promise_executor_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Promise executor functions should not be `async`.").with_label(span)
+    OxcDiagnostic::warn("Promise executor functions should not be `async`.")
+        .with_help("Remove the `async` keyword from the Promise executor function.")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -110,15 +112,15 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        ("new Promise((resolve, reject) => {})", None),
-        ("new Promise((resolve, reject) => {}, async function unrelated() {})", None),
-        ("new Foo(async (resolve, reject) => {})", None),
+        "new Promise((resolve, reject) => {})",
+        "new Promise((resolve, reject) => {}, async function unrelated() {})",
+        "new Foo(async (resolve, reject) => {})",
     ];
 
     let fail = vec![
-        ("new Promise(async function foo(resolve, reject) {})", None),
-        ("new Promise(async (resolve, reject) => {})", None),
-        ("new Promise(((((async () => {})))))", None),
+        "new Promise(async function foo(resolve, reject) {})",
+        "new Promise(async (resolve, reject) => {})",
+        "new Promise(((((async () => {})))))",
     ];
 
     Tester::new(NoAsyncPromiseExecutor::NAME, NoAsyncPromiseExecutor::PLUGIN, pass, fail)

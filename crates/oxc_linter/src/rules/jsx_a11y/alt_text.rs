@@ -140,7 +140,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for AltText {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let mut alt_text = AltTextConfig::default();
         if let Some(config) = value.get(0) {
             if let Some(elements) = config.get("elements").and_then(|v| v.as_array()) {
@@ -171,7 +171,7 @@ impl Rule for AltText {
             }
         }
 
-        Self(Box::new(alt_text))
+        Ok(Self(Box::new(alt_text)))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

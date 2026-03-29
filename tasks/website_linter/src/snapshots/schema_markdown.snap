@@ -10,13 +10,7 @@ search: false
 
 This configuration is aligned with ESLint v8's configuration schema (`eslintrc.json`).
 
-Usage: `oxlint -c oxlintrc.json --import-plugin`
-
-::: danger NOTE
-
-Only the `.json` format is supported. You can use comments in configuration files.
-
-:::
+Usage: `oxlint -c oxlintrc.json`
 
 Example
 
@@ -36,7 +30,14 @@ Example
   "globals": {
     "foo": "readonly"
   },
-  "settings": {},
+  "settings": {
+    "react": {
+      "version": "18.2.0"
+    },
+    "custom": {
+      "option": true
+    }
+  },
   "rules": {
     "eqeqeq": "warn",
     "import/no-cycle": "error",
@@ -61,10 +62,45 @@ Example
 }
 ```
 
+`oxlint.config.ts`
+
+```ts
+import { defineConfig } from "oxlint";
+
+export default defineConfig({
+plugins: ["import", "typescript", "unicorn"],
+env: {
+"browser": true
+},
+globals: {
+"foo": "readonly"
+},
+settings: {
+react: {
+version: "18.2.0"
+},
+custom: { option: true }
+},
+rules: {
+"eqeqeq": "warn",
+"import/no-cycle": "error",
+"react/self-closing-comp": ["error", { "html": false }]
+},
+overrides: [
+{
+files: ["*.test.ts", "*.spec.ts"],
+rules: {
+"@typescript-eslint/no-explicit-any": "off"
+}
+}
+]
+});
+```
+
 
 ## $schema
 
-type: `string | null`
+type: `string`
 
 
 Schema URI for editor tooling.
@@ -206,13 +242,62 @@ Globs to ignore during linting. These are resolved from the configuration file p
 
 ## jsPlugins
 
-type: `array | null`
+type: `array`
 
 
-JS plugins.
+JS plugins, allows usage of ESLint plugins with Oxlint.
 
-Note: JS plugins are experimental and not subject to semver.
-They are not supported in language server at present.
+Read more about JS plugins in
+[the docs](https://oxc.rs/docs/guide/usage/linter/js-plugins.html).
+
+Note: JS plugins are in alpha and not subject to semver.
+
+Examples:
+
+Basic usage with a local plugin path.
+
+```json
+{
+"jsPlugins": ["./custom-plugin.js"],
+"rules": {
+"custom/rule-name": "warn"
+}
+}
+```
+
+Basic usage with a TypeScript plugin and a local plugin path.
+
+TypeScript plugin files are supported in the following environments:
+- Deno and Bun: TypeScript files are supported natively.
+- Node.js >=22.18.0 and Node.js ^20.19.0: TypeScript files are supported natively with built-in
+type-stripping enabled by default.
+
+For older Node.js versions, TypeScript plugins are not supported. Please use JavaScript plugins or upgrade your Node version.
+
+```json
+{
+"jsPlugins": ["./custom-plugin.ts"],
+"rules": {
+"custom/rule-name": "warn"
+}
+}
+```
+
+Using a built-in Rust plugin alongside a JS plugin with the same name
+by giving the JS plugin an alias.
+
+```json
+{
+"plugins": ["import"],
+"jsPlugins": [
+{ "name": "import-js", "specifier": "eslint-plugin-import" }
+],
+"rules": {
+"import/no-cycle": "error",
+"import-js/no-unresolved": "warn"
+}
+}
+```
 
 
 ### jsPlugins[n]
@@ -233,7 +318,7 @@ Custom name/alias for the plugin.
 Note: The following plugin names are reserved because they are implemented natively in Rust within oxlint and cannot be used for JS plugins:
 - react (includes react-hooks)
 - unicorn
-- typescript
+- typescript (includes @typescript-eslint)
 - oxc
 - import (includes import-x)
 - jsdoc
@@ -244,7 +329,6 @@ Note: The following plugin names are reserved because they are implemented nativ
 - react-perf
 - promise
 - node
-- regex
 - vue
 - eslint
 
@@ -257,6 +341,69 @@ type: `string`
 
 
 Path or package name of the plugin
+
+
+## options
+
+type: `object`
+
+
+Options for the linter.
+
+
+### options.denyWarnings
+
+type: `boolean`
+
+
+Ensure warnings produce a non-zero exit code.
+
+Equivalent to passing `--deny-warnings` on the CLI.
+
+
+### options.maxWarnings
+
+type: `integer`
+
+
+Specify a warning threshold. Exits with an error status if warnings exceed this value.
+
+Equivalent to passing `--max-warnings` on the CLI.
+
+
+### options.reportUnusedDisableDirectives
+
+
+
+Report unused disable directives (e.g. `// oxlint-disable-line` or `// eslint-disable-line`).
+
+Equivalent to passing `--report-unused-disable-directives-severity` on the CLI.
+CLI flags take precedence over this value when both are set.
+Only supported in the root configuration file.
+
+
+### options.typeAware
+
+type: `boolean`
+
+
+Enable rules that require type information.
+
+Equivalent to passing `--type-aware` on the CLI.
+
+Note that this requires the `oxlint-tsgolint` package to be installed.
+
+
+### options.typeCheck
+
+type: `boolean`
+
+
+Enable experimental type checking (includes TypeScript compiler diagnostics).
+
+Equivalent to passing `--type-check` on the CLI.
+
+Note that this requires the `oxlint-tsgolint` package to be installed.
 
 
 ## overrides
@@ -277,7 +424,7 @@ type: `object`
 
 #### overrides[n].env
 
-type: `object | null`
+type: `object`
 
 
 Environments enable and disable collections of global variables.
@@ -293,7 +440,7 @@ A set of glob patterns.
 
 #### overrides[n].globals
 
-type: `object | null`
+type: `object`
 
 
 Enabled or disabled specific global variables.
@@ -301,13 +448,15 @@ Enabled or disabled specific global variables.
 
 #### overrides[n].jsPlugins
 
-type: `array | null`
+type: `array`
 
 
-JS plugins for this override.
+JS plugins for this override, allows usage of ESLint plugins with Oxlint.
 
-Note: JS plugins are experimental and not subject to semver.
-They are not supported in language server at present.
+Read more about JS plugins in
+[the docs](https://oxc.rs/docs/guide/usage/linter/js-plugins.html).
+
+Note: JS plugins are in alpha and not subject to semver.
 
 
 ##### overrides[n].jsPlugins[n]
@@ -328,7 +477,7 @@ Custom name/alias for the plugin.
 Note: The following plugin names are reserved because they are implemented natively in Rust within oxlint and cannot be used for JS plugins:
 - react (includes react-hooks)
 - unicorn
-- typescript
+- typescript (includes @typescript-eslint)
 - oxc
 - import (includes import-x)
 - jsdoc
@@ -339,7 +488,6 @@ Note: The following plugin names are reserved because they are implemented nativ
 - react-perf
 - promise
 - node
-- regex
 - vue
 - eslint
 
@@ -356,7 +504,7 @@ Path or package name of the plugin
 
 #### overrides[n].plugins
 
-type: `array | null`
+type: `array`
 
 default: `null`
 
@@ -366,7 +514,7 @@ omitted, the base config's plugins are used.
 
 ##### overrides[n].plugins[n]
 
-type: `string`
+type: `"eslint" | "react" | "unicorn" | "typescript" | "oxc" | "import" | "jsdoc" | "jest" | "vitest" | "jsx-a11y" | "nextjs" | "react-perf" | "promise" | "node" | "vue"`
 
 
 
@@ -382,7 +530,7 @@ See [Oxlint Rules](https://oxc.rs/docs/guide/usage/linter/rules.html)
 
 ## plugins
 
-type: `array | null`
+type: `array`
 
 default: `null`
 
@@ -396,7 +544,7 @@ The `plugins` array should reflect all of the plugins you want to use.
 
 ### plugins[n]
 
-type: `string`
+type: `"eslint" | "react" | "unicorn" | "typescript" | "oxc" | "import" | "jsdoc" | "jest" | "vitest" | "jsx-a11y" | "nextjs" | "react-perf" | "promise" | "node" | "vue"`
 
 
 
@@ -587,7 +735,7 @@ Example:
 
 #### settings.jsx-a11y.polymorphicPropName
 
-type: `string | null`
+type: `string`
 
 
 An optional setting that define the prop your code uses to create polymorphic components.
@@ -636,6 +784,27 @@ type: `object`
 Configure React plugin rules.
 
 Derived from [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react#configuration-legacy-eslintrc-)
+
+
+#### settings.react.componentWrapperFunctions
+
+type: `string[]`
+
+default: `[]`
+
+Functions that wrap React components and should be treated as HOCs.
+
+Example:
+
+```jsonc
+{
+"settings": {
+"react": {
+"componentWrapperFunctions": ["observer", "withRouter"]
+}
+}
+}
+```
 
 
 #### settings.react.formComponents
@@ -743,7 +912,7 @@ type: `string`
 
 #### settings.react.version
 
-type: `string | null`
+type: `string`
 
 default: `null`
 

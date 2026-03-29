@@ -12,6 +12,10 @@ workspace = true
 test = false
 doctest = false
 
+[[bin]]
+name = "oxc_compat_data"
+test = false
+
 [dependencies]
 oxc_tasks_common = { workspace = true }
 oxc_transformer = { workspace = true }

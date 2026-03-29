@@ -7,10 +7,15 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::IsGlobalReference;
-use oxc_span::{CompactStr, Span};
+use oxc_span::{CompactStr, Span, ident::REQUIRE};
 use schemars::JsonSchema;
+use serde::Deserialize;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn no_require_imports_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Expected \"import\" statement instead of \"require\" call")
@@ -18,11 +23,11 @@ fn no_require_imports_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct NoRequireImports(Box<NoRequireImportsConfig>);
 
-#[derive(Debug, Default, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoRequireImportsConfig {
     /// These strings will be compiled into regular expressions with the u flag and be used to test against the imported path.
     /// A common use case is to allow importing `package.json`. This is because `package.json` commonly lives outside of the TS root directory,
@@ -119,67 +124,41 @@ fn match_argument_value_with_regex(allow: &[CompactStr], argument_value: &str) -
 }
 
 impl Rule for NoRequireImports {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let obj = value.get(0);
-        Self(Box::new(NoRequireImportsConfig {
-            allow: obj
-                .and_then(|v| v.get("allow"))
-                .and_then(serde_json::Value::as_array)
-                .map(|v| {
-                    v.iter().filter_map(serde_json::Value::as_str).map(CompactStr::from).collect()
-                })
-                .unwrap_or_default(),
-            allow_as_import: obj
-                .and_then(|v| v.get("allowAsImport"))
-                .and_then(serde_json::Value::as_bool)
-                .unwrap_or(false),
-        }))
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::CallExpression(call_expr) => {
-                if node.scope_id() != ctx.scoping().root_scope_id()
-                    && let Some(id) = call_expr.callee.get_identifier_reference()
-                    && !id.is_global_reference_name("require", ctx.scoping())
+                let Some(id) = call_expr.callee.get_identifier_reference() else {
+                    return;
+                };
+
+                if id.name != REQUIRE || !id.is_global_reference_name(REQUIRE, ctx.scoping()) {
+                    return;
+                }
+
+                // Check `allow` patterns against static string/template literal arguments
+                if !self.allow.is_empty()
+                    && let Some(argument) = call_expr.arguments.first()
                 {
-                    return;
-                }
-
-                if !call_expr.is_require_call() {
-                    return;
-                }
-
-                if !self.allow.is_empty() {
-                    let Some(argument) = call_expr.arguments.first() else {
-                        return;
-                    };
-
                     match argument {
                         Argument::TemplateLiteral(template_literal) => {
                             let Some(quasi) = template_literal.quasis.first() else {
                                 return;
                             };
-
                             if match_argument_value_with_regex(&self.allow, &quasi.value.raw) {
                                 return;
                             }
-
-                            ctx.diagnostic(no_require_imports_diagnostic(quasi.span));
                         }
                         Argument::StringLiteral(string_literal) => {
                             if match_argument_value_with_regex(&self.allow, &string_literal.value) {
                                 return;
                             }
-
-                            ctx.diagnostic(no_require_imports_diagnostic(string_literal.span));
                         }
                         _ => {}
                     }
-                }
-
-                if ctx.scoping().find_binding(ctx.scoping().root_scope_id(), "require").is_some() {
-                    return;
                 }
 
                 ctx.diagnostic(no_require_imports_diagnostic(call_expr.span));
@@ -190,19 +169,16 @@ impl Rule for NoRequireImports {
                         return;
                     }
 
-                    if !self.allow.is_empty() {
-                        if match_argument_value_with_regex(&self.allow, &mod_ref.expression.value) {
-                            return;
-                        }
-
-                        ctx.diagnostic(no_require_imports_diagnostic(mod_ref.span));
+                    if !self.allow.is_empty()
+                        && match_argument_value_with_regex(&self.allow, &mod_ref.expression.value)
+                    {
+                        return;
                     }
 
                     ctx.diagnostic(no_require_imports_diagnostic(decl.span));
                 }
-                TSModuleReference::IdentifierReference(_)
-                | TSModuleReference::QualifiedName(_)
-                | TSModuleReference::ThisExpression(_) => {}
+                TSModuleReference::IdentifierReference(_) | TSModuleReference::QualifiedName(_) => {
+                }
             },
             _ => {}
         }
@@ -223,10 +199,27 @@ fn test() {
         ("var lib3 = load?.('not_an_import');", None),
         (
             "
-			import { createRequire } from 'module';
-			const require = createRequire();
-			require('remark-preset-prettier');
-			    ",
+            import { createRequire } from 'module';
+            const require = createRequire();
+            require(someModule);
+                ",
+            None,
+        ),
+        (
+            "
+            function foo() {
+                let require = bazz;
+                require(someModule);
+            }
+                ",
+            None,
+        ),
+        (
+            "
+            import { createRequire } from 'module';
+            const require = createRequire();
+            require('remark-preset-prettier');
+                ",
             None,
         ),
         (
@@ -260,60 +253,60 @@ fn test() {
         ("import foo = require('foo');", Some(serde_json::json!([{ "allowAsImport": true }]))),
         (
             "
-			let require = bazz;
-			trick(require('foo'));
-			      ",
+            let require = bazz;
+            trick(require('foo'));
+                  ",
             Some(serde_json::json!([{ "allowAsImport": true }])),
         ),
         (
             "
-			let require = bazz;
-			const foo = require('./foo.json') as Foo;
-			      ",
+            let require = bazz;
+            const foo = require('./foo.json') as Foo;
+                  ",
             Some(serde_json::json!([{ "allowAsImport": true }])),
         ),
         (
             "
-			let require = bazz;
-			const foo: Foo = require('./foo.json').default;
-			      ",
+            let require = bazz;
+            const foo: Foo = require('./foo.json').default;
+                  ",
             Some(serde_json::json!([{ "allowAsImport": true }])),
         ),
         (
             "
-			let require = bazz;
-			const foo = <Foo>require('./foo.json');
-			      ",
+            let require = bazz;
+            const foo = <Foo>require('./foo.json');
+                  ",
             Some(serde_json::json!([{ "allowAsImport": true }])),
         ),
         (
             "
-			let require = bazz;
-			const configValidator = new Validator(require('./a.json'));
-			configValidator.addSchema(require('./a.json'));
-			      ",
+            let require = bazz;
+            const configValidator = new Validator(require('./a.json'));
+            configValidator.addSchema(require('./a.json'));
+                  ",
             Some(serde_json::json!([{ "allowAsImport": true }])),
         ),
         (
             "
-			let require = bazz;
-			require('foo');
-			      ",
+            let require = bazz;
+            require('foo');
+                  ",
             Some(serde_json::json!([{ "allowAsImport": true }])),
         ),
         (
             "
-			let require = bazz;
-			require?.('foo');
-			      ",
+            let require = bazz;
+            require?.('foo');
+                  ",
             Some(serde_json::json!([{ "allowAsImport": true }])),
         ),
         (
             "
-			import { createRequire } from 'module';
-			const require = createRequire();
-			require('remark-preset-prettier');
-			      ",
+            import { createRequire } from 'module';
+            const require = createRequire();
+            require('remark-preset-prettier');
+                  ",
             Some(serde_json::json!([{ "allowAsImport": true }])),
         ),
     ];
@@ -323,9 +316,9 @@ fn test() {
         ("let lib2 = require('lib2');", None),
         (
             "
-			var lib5 = require('lib5'),
-			  lib6 = require('lib6');
-			      ",
+            var lib5 = require('lib5'),
+              lib6 = require('lib6');
+                  ",
             None,
         ),
         ("import lib8 = require('lib8');", None),
@@ -333,9 +326,9 @@ fn test() {
         ("let lib2 = require?.('lib2');", None),
         (
             "
-			var lib5 = require?.('lib5'),
-			  lib6 = require?.('lib6');
-			      ",
+            var lib5 = require?.('lib5'),
+              lib6 = require?.('lib6');
+                  ",
             None,
         ),
         ("const pkg = require('./package.json');", None),
@@ -376,9 +369,9 @@ fn test() {
         ),
         (
             "
-			const configValidator = new Validator(require('./a.json'));
-			configValidator.addSchema(require('./a.json'));
-			      ",
+            const configValidator = new Validator(require('./a.json'));
+            configValidator.addSchema(require('./a.json'));
+                  ",
             Some(serde_json::json!([{ "allowAsImport": true }])),
         ),
         ("require('foo');", Some(serde_json::json!([{ "allowAsImport": true }]))),
@@ -387,6 +380,24 @@ fn test() {
         (
             r"function foo() {
             require('foo')
+            }",
+            None,
+        ),
+        ("const m = require(someVariable);", None),
+        ("const m = require(path.join(dir, file));", None),
+        (
+            r"class Foo {
+            require(module: string) {
+                return require(module);
+            }
+            }",
+            None,
+        ),
+        (
+            r"class Foo {
+            require(module: string) {
+                return require('foo');
+            }
             }",
             None,
         ),

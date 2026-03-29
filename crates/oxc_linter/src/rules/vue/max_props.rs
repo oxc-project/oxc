@@ -11,24 +11,30 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
 use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
+use serde::Deserialize;
 use serde_json::Value;
 
 use crate::{
-    AstNode, ast_util::get_declaration_from_reference_id, context::LintContext,
-    frameworks::FrameworkOptions, rule::Rule,
+    AstNode,
+    ast_util::get_declaration_from_reference_id,
+    context::LintContext,
+    frameworks::FrameworkOptions,
+    rule::{DefaultRuleConfig, Rule},
 };
 
 fn max_props_diagnostic(span: Span, cur: usize, limit: usize) -> OxcDiagnostic {
-    let msg = format!("Component has too many props ({cur}). Maximum allowed is {limit}.");
+    let msg = format!("This component has too many props ({cur}). Maximum allowed is {limit}.");
     OxcDiagnostic::warn(msg)
-        .with_help("Consider refactoring the component by reducing the number of props.")
+        .with_help(
+            "Consider refactoring the component to reduce the number of props that are needed.",
+        )
         .with_label(span)
 }
 
-#[derive(Debug, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[derive(Debug, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct MaxProps {
-    /// The maximum number of props allowed in a Vue Single File Component (SFC).
+    /// The maximum number of props allowed in a Vue SFC.
     max_props: usize,
 }
 
@@ -41,16 +47,20 @@ impl Default for MaxProps {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Enforce maximum number of props in Vue component.
+    /// Enforce a maximum number of props defined for a given Vue component.
     ///
     /// ### Why is this bad?
     ///
-    /// This rule enforces a maximum number of props in a Vue SFC,
-    /// in order to aid in maintainability and reduce complexity.
+    /// A large number of props on a component can indicate that it is trying
+    /// to do too much and may be difficult to maintain or understand.
+    ///
+    /// By limiting the number of props, developers are encouraged to avoid
+    /// overly complex components and instead create smaller, more focused
+    /// components that are easier to reason about.
     ///
     /// ### Examples
     ///
-    /// Examples of **incorrect** code for this rule with the default `{ maxProps: 1 }` option:
+    /// Examples of **incorrect** code for this rule with the default `{ "maxProps": 1 }` option:
     /// ```js
     /// <script setup>
     /// defineProps({
@@ -60,7 +70,7 @@ declare_oxc_lint!(
     /// </script>
     /// ```
     ///
-    /// Examples of **correct** code for this rule with the default `{ maxProps: 1 }` option:
+    /// Examples of **correct** code for this rule with the default `{ "maxProps": 1 }` option:
     /// ```js
     /// <script setup>
     /// defineProps({
@@ -75,15 +85,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for MaxProps {
-    #[expect(clippy::cast_possible_truncation)]
-    fn from_configuration(value: Value) -> Self {
-        Self {
-            max_props: value
-                .get(0)
-                .and_then(|v| v.get("maxProps"))
-                .and_then(Value::as_u64)
-                .map_or(1, |n| n as usize),
-        }
+    fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

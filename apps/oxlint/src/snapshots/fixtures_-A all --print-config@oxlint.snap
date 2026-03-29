@@ -25,7 +25,8 @@ working directory: fixtures
     "react": {
       "formComponents": [],
       "linkComponents": [],
-      "version": null
+      "version": null,
+      "componentWrapperFunctions": []
     },
     "jsdoc": {
       "ignorePrivate": false,

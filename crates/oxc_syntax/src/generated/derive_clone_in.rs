@@ -1,7 +1,9 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
 // To edit this generated file you have to edit `tasks/ast_tools/src/derives/clone_in.rs`.
 
-#![allow(unused_variables, clippy::default_trait_access, clippy::inline_always)]
+#![allow(unused_imports, unused_variables, clippy::default_trait_access, clippy::inline_always)]
+
+use std::cell::Cell;
 
 use oxc_allocator::{Allocator, CloneIn};
 

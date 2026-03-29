@@ -1,8 +1,9 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(prefer-class-fields): Prefer class field declaration over `this` assignment in constructor for static values.
-   ╭─[prefer_class_fields.tsx:3:6]
+   ╭─[prefer_class_fields.tsx:3:21]
  2 │                 constructor() {
  3 │                     this.bar = 1;
    ·                     ────────────
@@ -11,7 +12,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Declare static values as class fields instead of assigning them to `this` in the constructor.
 
   ⚠ eslint-plugin-unicorn(prefer-class-fields): Prefer class field declaration over `this` assignment in constructor for static values.
-   ╭─[prefer_class_fields.tsx:4:6]
+   ╭─[prefer_class_fields.tsx:4:21]
  3 │                     ;
  4 │                     this.bar = 1;
    ·                     ────────────
@@ -20,7 +21,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Declare static values as class fields instead of assigning them to `this` in the constructor.
 
   ⚠ eslint-plugin-unicorn(prefer-class-fields): Prefer class field declaration over `this` assignment in constructor for static values.
-   ╭─[prefer_class_fields.tsx:3:6]
+   ╭─[prefer_class_fields.tsx:3:21]
  2 │                 constructor() {
  3 │                     this.bar = 1;
    ·                     ────────────
@@ -29,7 +30,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Declare static values as class fields instead of assigning them to `this` in the constructor.
 
   ⚠ eslint-plugin-unicorn(prefer-class-fields): Prefer class field declaration over `this` assignment in constructor for static values.
-   ╭─[prefer_class_fields.tsx:3:6]
+   ╭─[prefer_class_fields.tsx:3:21]
  2 │                 constructor() {
  3 │                     this.bar = 1;
    ·                     ────────────
@@ -38,7 +39,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Declare static values as class fields instead of assigning them to `this` in the constructor.
 
   ⚠ eslint-plugin-unicorn(prefer-class-fields): Prefer class field declaration over `this` assignment in constructor for static values.
-   ╭─[prefer_class_fields.tsx:4:6]
+   ╭─[prefer_class_fields.tsx:4:21]
  3 │                 constructor() {
  4 │                     this.bar = 1;
    ·                     ────────────
@@ -47,7 +48,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Declare static values as class fields instead of assigning them to `this` in the constructor.
 
   ⚠ eslint-plugin-unicorn(prefer-class-fields): Prefer class field declaration over `this` assignment in constructor for static values.
-   ╭─[prefer_class_fields.tsx:4:6]
+   ╭─[prefer_class_fields.tsx:4:21]
  3 │                 constructor() {
  4 │                     this.#bar = 1;
    ·                     ─────────────
@@ -56,7 +57,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Declare static values as class fields instead of assigning them to `this` in the constructor.
 
   ⚠ eslint-plugin-unicorn(prefer-class-fields): Encountered same-named class field declaration and `this` assignment in constructor.
-   ╭─[prefer_class_fields.tsx:4:6]
+   ╭─[prefer_class_fields.tsx:4:21]
  3 │                 constructor() {
  4 │                     this.bar = 1;
    ·                     ────────────
@@ -65,7 +66,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace the class field declaration with the value from `this` assignment.
 
   ⚠ eslint-plugin-unicorn(prefer-class-fields): Encountered same-named class field declaration and `this` assignment in constructor.
-   ╭─[prefer_class_fields.tsx:4:6]
+   ╭─[prefer_class_fields.tsx:4:21]
  3 │                 constructor() {
  4 │                     this.#bar = 1;
    ·                     ─────────────
@@ -74,7 +75,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace the class field declaration with the value from `this` assignment.
 
   ⚠ eslint-plugin-unicorn(prefer-class-fields): Prefer class field declaration over `this` assignment in constructor for static values.
-   ╭─[prefer_class_fields.tsx:4:6]
+   ╭─[prefer_class_fields.tsx:4:21]
  3 │                 constructor() {
  4 │                     this.bar = 1;
    ·                     ────────────
@@ -83,7 +84,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Declare static values as class fields instead of assigning them to `this` in the constructor.
 
   ⚠ eslint-plugin-unicorn(prefer-class-fields): Prefer class field declaration over `this` assignment in constructor for static values.
-   ╭─[prefer_class_fields.tsx:4:6]
+   ╭─[prefer_class_fields.tsx:4:21]
  3 │                 constructor() {
  4 │                     this.bar = 1;
    ·                     ────────────
@@ -92,7 +93,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Declare static values as class fields instead of assigning them to `this` in the constructor.
 
   ⚠ eslint-plugin-unicorn(prefer-class-fields): Prefer class field declaration over `this` assignment in constructor for static values.
-   ╭─[prefer_class_fields.tsx:4:6]
+   ╭─[prefer_class_fields.tsx:4:21]
  3 │                 constructor() {
  4 │                     this.bar = 1;
    ·                     ────────────
@@ -101,7 +102,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Declare static values as class fields instead of assigning them to `this` in the constructor.
 
   ⚠ eslint-plugin-unicorn(prefer-class-fields): Prefer class field declaration over `this` assignment in constructor for static values.
-   ╭─[prefer_class_fields.tsx:4:6]
+   ╭─[prefer_class_fields.tsx:4:21]
  3 │                 constructor() {
  4 │                     this.bar = 1;
    ·                     ────────────
@@ -110,7 +111,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Declare static values as class fields instead of assigning them to `this` in the constructor.
 
   ⚠ eslint-plugin-unicorn(prefer-class-fields): Prefer class field declaration over `this` assignment in constructor for static values.
-   ╭─[prefer_class_fields.tsx:4:6]
+   ╭─[prefer_class_fields.tsx:4:21]
  3 │                 constructor() {
  4 │                     this.bar = 1;
    ·                     ────────────
@@ -119,7 +120,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Declare static values as class fields instead of assigning them to `this` in the constructor.
 
   ⚠ eslint-plugin-unicorn(prefer-class-fields): Prefer class field declaration over `this` assignment in constructor for static values.
-   ╭─[prefer_class_fields.tsx:4:6]
+   ╭─[prefer_class_fields.tsx:4:21]
  3 │                 constructor() {
  4 │                     this.bar = 1;
    ·                     ────────────
@@ -128,7 +129,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Declare static values as class fields instead of assigning them to `this` in the constructor.
 
   ⚠ eslint-plugin-unicorn(prefer-class-fields): Prefer class field declaration over `this` assignment in constructor for static values.
-   ╭─[prefer_class_fields.tsx:3:5]
+   ╭─[prefer_class_fields.tsx:3:17]
  2 │             constructor() {
  3 │                 this.bar = 1;
    ·                 ────────────
@@ -137,7 +138,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Declare static values as class fields instead of assigning them to `this` in the constructor.
 
   ⚠ eslint-plugin-unicorn(prefer-class-fields): Prefer class field declaration over `this` assignment in constructor for static values.
-   ╭─[prefer_class_fields.tsx:3:5]
+   ╭─[prefer_class_fields.tsx:3:17]
  2 │             constructor() {
  3 │                 this.bar = 1;
    ·                 ────────────
@@ -146,7 +147,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Declare static values as class fields instead of assigning them to `this` in the constructor.
 
   ⚠ eslint-plugin-unicorn(prefer-class-fields): Prefer class field declaration over `this` assignment in constructor for static values.
-   ╭─[prefer_class_fields.tsx:3:5]
+   ╭─[prefer_class_fields.tsx:3:17]
  2 │             constructor() {
  3 │                 this.bar = 1;
    ·                 ────────────
@@ -155,7 +156,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Declare static values as class fields instead of assigning them to `this` in the constructor.
 
   ⚠ eslint-plugin-unicorn(prefer-class-fields): Prefer class field declaration over `this` assignment in constructor for static values.
-   ╭─[prefer_class_fields.tsx:3:6]
+   ╭─[prefer_class_fields.tsx:3:21]
  2 │                 constructor(message: string) {
  3 │                     this.name = "MyError";
    ·                     ─────────────────────
@@ -164,7 +165,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Declare static values as class fields instead of assigning them to `this` in the constructor.
 
   ⚠ eslint-plugin-unicorn(prefer-class-fields): Prefer class field declaration over `this` assignment in constructor for static values.
-   ╭─[prefer_class_fields.tsx:4:6]
+   ╭─[prefer_class_fields.tsx:4:21]
  3 │                 constructor(message: string) {
  4 │                     this.name = "MyError";
    ·                     ─────────────────────

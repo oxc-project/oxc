@@ -1,5 +1,6 @@
 use std::{iter, ops::ControlFlow};
 
+use crate::generated::ancestor::Ancestor;
 use oxc_allocator::{Box, TakeIn, Vec};
 use oxc_ast::ast::*;
 use oxc_ast_visit::Visit;
@@ -9,9 +10,8 @@ use oxc_ecmascript::{
 };
 use oxc_semantic::ScopeFlags;
 use oxc_span::{ContentEq, GetSpan};
-use oxc_traverse::Ancestor;
 
-use crate::{ctx::Ctx, keep_var::KeepVar};
+use crate::{TraverseCtx, keep_var::KeepVar};
 
 use super::PeepholeOptimizations;
 
@@ -33,7 +33,7 @@ impl<'a> PeepholeOptimizations {
     ///
     /// ## MinimizeExitPoints:
     /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/MinimizeExitPoints.java>
-    pub fn minimize_statements(stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut Ctx<'a, '_>) {
+    pub fn minimize_statements(stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
         let mut old_stmts = stmts.take_in(ctx.ast);
         let mut is_control_flow_dead = false;
         let mut keep_var = KeepVar::new(ctx.ast);
@@ -299,7 +299,7 @@ impl<'a> PeepholeOptimizations {
         result: &mut Vec<'a, Statement<'a>>,
         is_control_flow_dead: &mut bool,
 
-        ctx: &mut Ctx<'a, '_>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> ControlFlow<()> {
         match stmt {
             Statement::EmptyStatement(_) => (),
@@ -349,7 +349,7 @@ impl<'a> PeepholeOptimizations {
     fn join_sequence(
         a: &mut Expression<'a>,
         b: &mut Expression<'a>,
-        ctx: &Ctx<'a, '_>,
+        ctx: &TraverseCtx<'a>,
     ) -> Expression<'a> {
         let a = a.take_in(ctx.ast);
         let b = b.take_in(ctx.ast);
@@ -384,7 +384,7 @@ impl<'a> PeepholeOptimizations {
         mut var_decl: Box<'a, VariableDeclaration<'a>>,
         result: &mut Vec<'a, Statement<'a>>,
 
-        ctx: &mut Ctx<'a, '_>,
+        ctx: &mut TraverseCtx<'a>,
     ) {
         if let Some(first_decl) = var_decl.declarations.first_mut()
             && let Some(first_decl_init) = first_decl.init.as_mut()
@@ -420,7 +420,7 @@ impl<'a> PeepholeOptimizations {
         {
             ctx.state.changed = true;
         }
-        let VariableDeclaration { span, kind, declarations, declare } = var_decl.unbox();
+        let VariableDeclaration { span, kind, declarations, declare, .. } = var_decl.unbox();
         for mut decl in declarations {
             if Self::should_remove_unused_declarator(&decl, ctx) {
                 ctx.state.changed = true;
@@ -447,7 +447,7 @@ impl<'a> PeepholeOptimizations {
         mut expr_stmt: Box<'a, ExpressionStatement<'a>>,
         result: &mut Vec<'a, Statement<'a>>,
 
-        ctx: &mut Ctx<'a, '_>,
+        ctx: &mut TraverseCtx<'a>,
     ) {
         let changed = Self::substitute_single_use_symbol_in_statement(
             &mut expr_stmt.expression,
@@ -523,7 +523,7 @@ impl<'a> PeepholeOptimizations {
     fn merge_assignment_to_declaration(
         assign_expr: &mut AssignmentExpression<'a>,
         result: &mut Vec<'a, Statement<'a>>,
-        ctx: &Ctx<'a, '_>,
+        ctx: &TraverseCtx<'a>,
     ) -> bool {
         if assign_expr.operator != AssignmentOperator::Assign {
             return false;
@@ -576,7 +576,7 @@ impl<'a> PeepholeOptimizations {
         mut switch_stmt: Box<'a, SwitchStatement<'a>>,
         result: &mut Vec<'a, Statement<'a>>,
 
-        ctx: &mut Ctx<'a, '_>,
+        ctx: &mut TraverseCtx<'a>,
     ) {
         let changed = Self::substitute_single_use_symbol_in_statement(
             &mut switch_stmt.discriminant,
@@ -597,6 +597,37 @@ impl<'a> PeepholeOptimizations {
             result.pop();
             ctx.state.changed = true;
         }
+
+        // Prune empty case clauses before a trailing default
+        // e.g., `switch (x) { case 0: foo(); break; case 1: default: bar() }`
+        // => `switch (x) { case 0: foo(); break; default: bar() }`
+        // https://github.com/evanw/esbuild/commit/add452ed51333953dd38a26f28a775bb220ea2e9
+        if let Some(last_case) = switch_stmt.cases.last()
+            && last_case.test.is_none()
+        {
+            let default_idx = switch_stmt.cases.len() - 1;
+            let mut first_empty_idx = default_idx;
+            // Iterate backward through preceding cases
+            while first_empty_idx > 0 {
+                let case = &switch_stmt.cases[first_empty_idx - 1];
+                // Only remove empty cases with primitive literal tests
+                if case.consequent.is_empty()
+                    && case.test.as_ref().is_some_and(Expression::is_literal)
+                {
+                    first_empty_idx -= 1;
+                } else {
+                    break;
+                }
+            }
+            // If we found cases to remove, keep cases [0..first_empty_idx] + [default]
+            if first_empty_idx < default_idx {
+                let default_case = switch_stmt.cases.pop().unwrap();
+                switch_stmt.cases.truncate(first_empty_idx);
+                switch_stmt.cases.push(default_case);
+                ctx.state.changed = true;
+            }
+        }
+
         result.push(Statement::SwitchStatement(switch_stmt));
     }
 
@@ -606,7 +637,7 @@ impl<'a> PeepholeOptimizations {
         mut if_stmt: Box<'a, IfStatement<'a>>,
         result: &mut Vec<'a, Statement<'a>>,
 
-        ctx: &mut Ctx<'a, '_>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> ControlFlow<()> {
         let changed =
             Self::substitute_single_use_symbol_in_statement(&mut if_stmt.test, result, ctx, false);
@@ -759,7 +790,7 @@ impl<'a> PeepholeOptimizations {
         result: &mut Vec<'a, Statement<'a>>,
         is_control_flow_dead: &mut bool,
 
-        ctx: &mut Ctx<'a, '_>,
+        ctx: &mut TraverseCtx<'a>,
     ) {
         if let Some(ret_argument_expr) = &mut ret_stmt.argument {
             let changed = Self::substitute_single_use_symbol_in_statement(
@@ -815,7 +846,7 @@ impl<'a> PeepholeOptimizations {
         result: &mut Vec<'a, Statement<'a>>,
         is_control_flow_dead: &mut bool,
 
-        ctx: &mut Ctx<'a, '_>,
+        ctx: &mut TraverseCtx<'a>,
     ) {
         let changed = Self::substitute_single_use_symbol_in_statement(
             &mut throw_stmt.argument,
@@ -844,7 +875,7 @@ impl<'a> PeepholeOptimizations {
         mut for_stmt: Box<'a, ForStatement<'a>>,
         result: &mut Vec<'a, Statement<'a>>,
 
-        ctx: &mut Ctx<'a, '_>,
+        ctx: &mut TraverseCtx<'a>,
     ) {
         if let Some(init) = &mut for_stmt.init {
             match init {
@@ -945,7 +976,7 @@ impl<'a> PeepholeOptimizations {
         mut for_in_stmt: Box<'a, ForInStatement<'a>>,
         result: &mut Vec<'a, Statement<'a>>,
 
-        ctx: &mut Ctx<'a, '_>,
+        ctx: &mut TraverseCtx<'a>,
     ) {
         // Annex B.3.5 allows initializers in non-strict mode
         // <https://tc39.es/ecma262/multipage/additional-ecmascript-features-for-web-browsers.html#sec-initializers-in-forin-statement-heads>
@@ -988,7 +1019,14 @@ impl<'a> PeepholeOptimizations {
                             false
                         }
                     };
-                    if !has_side_effectful_initializer {
+                    // Only allow inlining when the for-in variable is declared with `var`.
+                    // Block-scoped declarations (let/const) can cause variable shadowing issues
+                    // where the inlined expression might reference a variable with the same name
+                    // as the for-in variable, but after inlining, it would incorrectly refer to
+                    // the shadowed for-in variable instead.
+                    // See: https://github.com/oxc-project/oxc/issues/18650
+                    let is_block_scoped = matches!(&for_in_stmt.left, ForStatementLeft::VariableDeclaration(var_decl) if !var_decl.kind.is_var());
+                    if !has_side_effectful_initializer && !is_block_scoped {
                         let a = &mut prev_expr_stmt.expression;
                         for_in_stmt.right = Self::join_sequence(a, &mut for_in_stmt.right, ctx);
                         result.pop();
@@ -1031,7 +1069,7 @@ impl<'a> PeepholeOptimizations {
     fn handle_for_of_statement(
         mut for_of_stmt: Box<'a, ForOfStatement<'a>>,
         result: &mut Vec<'a, Statement<'a>>,
-        ctx: &mut Ctx<'a, '_>,
+        ctx: &mut TraverseCtx<'a>,
     ) {
         let is_block_scoped_decl = matches!(&for_of_stmt.left, ForStatementLeft::VariableDeclaration(var_decl) if !var_decl.kind.is_var());
         let changed = Self::substitute_single_use_symbol_in_statement(
@@ -1076,7 +1114,7 @@ impl<'a> PeepholeOptimizations {
     fn handle_block(
         result: &mut Vec<'a, Statement<'a>>,
         block_stmt: Box<'a, BlockStatement<'a>>,
-        ctx: &mut Ctx<'a, '_>,
+        ctx: &mut TraverseCtx<'a>,
     ) {
         let keep_block = block_stmt.body.iter().any(Self::statement_cares_about_scope);
         if keep_block {
@@ -1128,7 +1166,7 @@ impl<'a> PeepholeOptimizations {
     fn substitute_single_use_symbol_in_statement(
         expr_in_stmt: &mut Expression<'a>,
         stmts: &mut Vec<'a, Statement<'a>>,
-        ctx: &Ctx<'a, '_>,
+        ctx: &TraverseCtx<'a>,
         non_scoped_literal_only: bool,
     ) -> bool {
         if Self::keep_top_level_var_in_script_mode(ctx)
@@ -1166,7 +1204,7 @@ impl<'a> PeepholeOptimizations {
     fn substitute_single_use_symbol_within_declaration(
         kind: VariableDeclarationKind,
         declarations: &mut Vec<'a, VariableDeclarator<'a>>,
-        ctx: &Ctx<'a, '_>,
+        ctx: &TraverseCtx<'a>,
     ) -> bool {
         if Self::keep_top_level_var_in_script_mode(ctx)
             || ctx.current_scope_flags().contains_direct_eval()
@@ -1202,7 +1240,7 @@ impl<'a> PeepholeOptimizations {
     fn substitute_single_use_symbol_in_expression_from_declarators(
         target_expr: &mut Expression<'a>,
         declarators: &mut [VariableDeclarator<'a>],
-        ctx: &Ctx<'a, '_>,
+        ctx: &TraverseCtx<'a>,
         non_scoped_literal_only: bool,
     ) -> usize {
         let last_non_inlined_index = declarators.iter_mut().rposition(|prev_decl| {
@@ -1259,7 +1297,7 @@ impl<'a> PeepholeOptimizations {
         search_for: &str,
         replacement: &mut Expression<'a>,
         replacement_has_side_effect: bool,
-        ctx: &Ctx<'a, '_>,
+        ctx: &TraverseCtx<'a>,
     ) -> Option<bool> {
         match target_expr {
             Expression::Identifier(id) => {
@@ -1682,33 +1720,8 @@ impl<'a> PeepholeOptimizations {
             Expression::ObjectExpression(obj_expr) => {
                 for prop in &mut obj_expr.properties {
                     match prop {
-                        ObjectPropertyKind::ObjectProperty(prop) => match prop.key {
-                            PropertyKey::StaticIdentifier(_)
-                            | PropertyKey::PrivateIdentifier(_) => {
-                                if let Some(changed) =
-                                    Self::substitute_single_use_symbol_in_expression(
-                                        &mut prop.value,
-                                        search_for,
-                                        replacement,
-                                        replacement_has_side_effect,
-                                        ctx,
-                                    )
-                                {
-                                    if prop.shorthand && prop.key.is_specific_id("__proto__") {
-                                        // { __proto__ } -> { ['__proto__']: value }
-                                        prop.computed = true;
-                                        prop.key =
-                                            PropertyKey::from(ctx.ast.expression_string_literal(
-                                                prop.key.span(),
-                                                "__proto__",
-                                                None,
-                                            ));
-                                    }
-                                    prop.shorthand = false;
-                                    return Some(changed);
-                                }
-                            }
-                            match_expression!(PropertyKey) => {
+                        ObjectPropertyKind::ObjectProperty(prop) => {
+                            if prop.computed {
                                 if let Some(changed) =
                                     Self::substitute_single_use_symbol_in_expression(
                                         prop.key.to_expression_mut(),
@@ -1723,7 +1736,28 @@ impl<'a> PeepholeOptimizations {
                                 // Stop now because computed keys have side effects
                                 return Some(false);
                             }
-                        },
+
+                            if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
+                                &mut prop.value,
+                                search_for,
+                                replacement,
+                                replacement_has_side_effect,
+                                ctx,
+                            ) {
+                                if prop.shorthand && prop.key.is_specific_id("__proto__") {
+                                    // { __proto__ } -> { ['__proto__']: value }
+                                    prop.computed = true;
+                                    prop.key =
+                                        PropertyKey::from(ctx.ast.expression_string_literal(
+                                            prop.key.span(),
+                                            "__proto__",
+                                            None,
+                                        ));
+                                }
+                                prop.shorthand = false;
+                                return Some(changed);
+                            }
+                        }
                         ObjectPropertyKind::SpreadProperty(prop) => {
                             if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
                                 &mut prop.argument,
@@ -1830,43 +1864,5 @@ impl<'a> PeepholeOptimizations {
 
         // Otherwise we should stop trying to substitute past this point
         Some(false)
-    }
-}
-
-#[cfg(test)]
-mod test {
-    use crate::tester::test;
-
-    #[test]
-    fn test_for_variable_declaration() {
-        test(
-            "function _() { var x; for (var i = 0; i < 10; i++) console.log(i) }",
-            "function _() { for (var x, i = 0; i < 10; i++) console.log(i) }",
-        );
-        test(
-            "function _() { var x = 1; for (var i = 0; i < 10; i++) console.log(i) }",
-            "function _() { for (var x = 1, i = 0; i < 10; i++) console.log(i) }",
-        );
-        // this is fine because `let j` inside the block cannot be referenced from `var i = j`
-        test(
-            "function _() { var x = function () { return console.log(j), 1 }; for (var i = 0; i < 10; i++) { let j = k; console.log(i, j, j) } }",
-            "function _() { for (var x = function () { return console.log(j), 1 }, i = 0; i < 10; i++) { let j = k; console.log(i, j, j) } }",
-        );
-        // this is fine because `let j` inside the block cannot be referenced from `var i = j`
-        test(
-            "function _() { var x = j; for (var i = 0; i < 10; i++) { let j = k; console.log(i, j, j) } }",
-            "function _() { for (var x = j, i = 0; i < 10; i++) { let j = k; console.log(i, j, j) } }",
-        );
-    }
-
-    #[test]
-    fn test_for_continue_in_for() {
-        test("for( a of b ){ if(c) { continue; } d() }", "for ( a of b ) c || d();");
-        test("for( a in b ){ if(c) { continue; } d() }", "for ( a in b ) c || d();");
-        test("for( ; ; ){ if(c) { continue; } d() }", "for ( ; ; ) c || d();");
-
-        test("for( a of b ){ c(); continue; }", "for ( a of b ) c();");
-        test("for( a in b ){ c(); continue; }", "for ( a in b ) c();");
-        test("for( ; ; ){ c(); continue; }", "for ( ; ; ) c();");
     }
 }

@@ -96,18 +96,18 @@ declare_oxc_lint!(
 );
 
 impl Rule for MaxDepth {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         if let Some(max) = value
             .get(0)
             .and_then(Value::as_number)
             .and_then(serde_json::Number::as_u64)
             .and_then(|v| usize::try_from(v).ok())
         {
-            MaxDepth { max }
+            Ok(MaxDepth { max })
         } else {
-            serde_json::from_value::<DefaultRuleConfig<MaxDepth>>(value)
+            Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
                 .unwrap_or_default()
-                .into_inner()
+                .into_inner())
         }
     }
 

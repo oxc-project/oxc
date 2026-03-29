@@ -168,7 +168,7 @@ impl Default for JsxHandlerNamesConfig {
 }
 
 impl Rule for JsxHandlerNames {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let mut check_inline_functions = false;
         let mut check_local_variables = false;
         let mut event_handler_prop_prefixes = DEFAULT_HANDLER_PROP_PREFIX;
@@ -212,7 +212,7 @@ impl Rule for JsxHandlerNames {
             build_event_handler_regex(event_handler_prefixes, event_handler_prop_prefixes);
         let event_handler_prop_regex = build_event_handler_prop_regex(event_handler_prop_prefixes);
 
-        Self(Box::new(JsxHandlerNamesConfig {
+        Ok(Self(Box::new(JsxHandlerNamesConfig {
             check_inline_functions,
             check_local_variables,
             event_handler_prop_prefixes: CompactStr::from(event_handler_prop_prefixes),
@@ -220,7 +220,7 @@ impl Rule for JsxHandlerNames {
             ignore_component_names,
             event_handler_regex,
             event_handler_prop_regex,
-        }))
+        })))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

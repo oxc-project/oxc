@@ -2,13 +2,17 @@ use std::cell::LazyCell;
 
 use lazy_regex::{Regex, RegexBuilder};
 use schemars::JsonSchema;
+use serde::Deserialize;
 
 use oxc_ast::{AstKind, Comment};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn no_inline_comments_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected comment inline with code")
@@ -16,11 +20,11 @@ fn no_inline_comments_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct NoInlineComments(Box<NoInlineCommentsConfig>);
 
-#[derive(Debug, Default, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoInlineCommentsConfig {
     /// A regex pattern to ignore certain inline comments.
     ///
@@ -32,6 +36,7 @@ pub struct NoInlineCommentsConfig {
     ///     "no-inline-comments": ["error", { "ignorePattern": "webpackChunkName" }]
     /// }
     /// ```
+    #[serde(default, deserialize_with = "deserialize_ignore_pattern")]
     ignore_pattern: Option<Regex>,
 }
 
@@ -41,6 +46,18 @@ impl std::ops::Deref for NoInlineComments {
     fn deref(&self) -> &Self::Target {
         &self.0
     }
+}
+
+fn deserialize_ignore_pattern<'de, D>(deserializer: D) -> Result<Option<Regex>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    use serde::de::Error;
+
+    Option::<String>::deserialize(deserializer)?
+        .map(|pattern| RegexBuilder::new(&pattern).build())
+        .transpose()
+        .map_err(D::Error::custom)
 }
 
 declare_oxc_lint!(
@@ -77,15 +94,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoInlineComments {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let ignore_pattern = value
-            .get(0)
-            .and_then(|config| config.get("ignorePattern"))
-            .and_then(serde_json::Value::as_str)
-            .and_then(|pattern| RegexBuilder::new(pattern).build().ok());
-        let config = NoInlineCommentsConfig { ignore_pattern };
-
-        Self(Box::new(config))
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run_once(&self, ctx: &LintContext) {

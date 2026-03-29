@@ -90,16 +90,16 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoRestrictedJestMethods {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let restricted_jest_methods = &value
             .get(0)
             .and_then(serde_json::Value::as_object)
             .map(Self::compile_restricted_jest_methods)
             .unwrap_or_default();
 
-        Self(Box::new(NoRestrictedJestMethodsConfig {
+        Ok(Self(Box::new(NoRestrictedJestMethodsConfig {
             restricted_jest_methods: restricted_jest_methods.clone(),
-        }))
+        })))
     }
 
     fn run_on_jest_node<'a, 'c>(

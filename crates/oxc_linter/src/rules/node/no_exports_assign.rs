@@ -5,7 +5,10 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::IsGlobalReference;
-use oxc_span::{GetSpan, Span};
+use oxc_span::{
+    GetSpan, Span,
+    ident::{EXPORTS, MODULE},
+};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -19,7 +22,7 @@ fn is_exports(node: &AssignmentTarget, ctx: &LintContext) -> bool {
     let AssignmentTarget::AssignmentTargetIdentifier(id) = node else {
         return false;
     };
-    id.is_global_reference_name("exports", ctx.scoping())
+    id.is_global_reference_name(EXPORTS, ctx.scoping())
 }
 
 fn is_module_exports(expr: Option<&MemberExpression>, ctx: &LintContext) -> bool {
@@ -32,7 +35,7 @@ fn is_module_exports(expr: Option<&MemberExpression>, ctx: &LintContext) -> bool
     };
 
     mem_expr.static_property_name() == Some("exports")
-        && obj_id.is_global_reference_name("module", ctx.scoping())
+        && obj_id.is_global_reference_name(MODULE, ctx.scoping())
 }
 
 #[derive(Debug, Default, Clone)]

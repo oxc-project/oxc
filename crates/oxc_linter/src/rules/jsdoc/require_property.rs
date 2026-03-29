@@ -40,7 +40,7 @@ declare_oxc_lint!(
     ///  */
     ///
     /// /**
-    ///  * @namespace {Object} SomeNamesoace
+    ///  * @namespace {Object} SomeNamespace
     ///  */
     /// ```
     ///
@@ -58,7 +58,8 @@ declare_oxc_lint!(
     /// ```
     RequireProperty,
     jsdoc,
-    correctness
+    correctness,
+    pending
 );
 
 impl Rule for RequireProperty {

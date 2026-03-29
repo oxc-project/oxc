@@ -10,6 +10,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, GetSpan, Span};
 use rustc_hash::FxHashMap;
+use serde_json::Value;
 
 use crate::{
     context::LintContext,
@@ -73,7 +74,7 @@ pub struct ValidTitleConfig {
     /// A list of disallowed words, which will not be allowed in titles.
     disallowed_words: Vec<CompactStr>,
     /// Whether to ignore leading and trailing spaces in titles.
-    ignore_space: bool,
+    ignore_spaces: bool,
     /// Patterns for titles that must not match.
     must_not_match_patterns: FxHashMap<MatchKind, CompiledMatcherAndMessage>,
     /// Patterns for titles that must be matched for the title to be valid.
@@ -139,11 +140,14 @@ declare_oxc_lint!(
     ValidTitle,
     jest,
     correctness,
-    conditional_fix
+    conditional_fix,
+    // TODO: Replace this with an actual config struct. This is a dummy value to
+    // indicate that this rule has configuration and avoid errors.
+    config = Value,
 );
 
 impl Rule for ValidTitle {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let config = value.get(0);
         let get_as_bool = |name: &str| -> bool {
             config
@@ -155,7 +159,7 @@ impl Rule for ValidTitle {
         let ignore_type_of_test_name = get_as_bool("ignoreTypeOfTestName");
         let ignore_type_of_describe_name = get_as_bool("ignoreTypeOfDescribeName");
         let allow_arguments = get_as_bool("allowArguments");
-        let ignore_space = get_as_bool("ignoreSpaces");
+        let ignore_spaces = get_as_bool("ignoreSpaces");
         let disallowed_words = config
             .and_then(|v| v.get("disallowedWords"))
             .and_then(|v| v.as_array())
@@ -169,15 +173,16 @@ impl Rule for ValidTitle {
             .and_then(|v| v.get("mustMatch"))
             .and_then(compile_matcher_patterns)
             .unwrap_or_default();
-        Self(Box::new(ValidTitleConfig {
+
+        Ok(Self(Box::new(ValidTitleConfig {
             ignore_type_of_test_name,
             ignore_type_of_describe_name,
             allow_arguments,
             disallowed_words,
-            ignore_space,
+            ignore_spaces,
             must_not_match_patterns,
             must_match_patterns,
-        }))
+        })))
     }
 
     fn run_on_jest_node<'a, 'c>(
@@ -415,7 +420,7 @@ fn validate_title(
     }
 
     let trimmed_title = title.trim();
-    if !valid_title.ignore_space && trimmed_title != title {
+    if !valid_title.ignore_spaces && trimmed_title != title {
         ctx.diagnostic_with_fix(accidental_space_diagnostic(span), |fixer| {
             let inner_span = span.shrink(1);
             let raw_text = fixer.source_range(inner_span);

@@ -8,13 +8,13 @@ use crate::{
         prelude::{FormatElements, format_once, line_suffix_boundary, *},
         trivia::FormatTrailingComments,
     },
+    print::{BinaryLikeExpression, FormatJsArrowFunctionExpressionOptions, FormatWrite},
     utils::{
         format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
         member_chain::is_member_call_chain,
         object::{format_property_key, write_member_name},
     },
     write,
-    write::{BinaryLikeExpression, FormatJsArrowFunctionExpressionOptions, FormatWrite},
 };
 
 use super::string::{FormatLiteralStringToken, StringLiteralParentKind};
@@ -26,6 +26,7 @@ pub enum AssignmentLike<'a, 'b> {
     ObjectProperty(&'b AstNode<'a, ObjectProperty<'a>>),
     BindingProperty(&'b AstNode<'a, BindingProperty<'a>>),
     PropertyDefinition(&'b AstNode<'a, PropertyDefinition<'a>>),
+    AccessorProperty(&'b AstNode<'a, AccessorProperty<'a>>),
     TSTypeAliasDeclaration(&'b AstNode<'a, TSTypeAliasDeclaration<'a>>),
 }
 
@@ -291,6 +292,40 @@ impl<'a> AssignmentLike<'a, '_> {
 
                 false // Class properties don't use "short" key logic
             }
+            AssignmentLike::AccessorProperty(property) => {
+                write!(f, [property.decorators()]);
+
+                if let Some(accessibility) = property.accessibility {
+                    write!(f, [accessibility.as_str(), space()]);
+                }
+                if property.r#static {
+                    write!(f, ["static", space()]);
+                }
+                if property.r#type.is_abstract() {
+                    write!(f, ["abstract", space()]);
+                }
+                if property.r#override {
+                    write!(f, ["override", space()]);
+                }
+                write!(f, ["accessor", space()]);
+
+                // Write the property key
+                if property.computed {
+                    write!(f, ["[", property.key(), "]"]);
+                } else {
+                    format_property_key(property.key(), f);
+                }
+
+                // Write definite and type annotation
+                if property.definite {
+                    write!(f, "!");
+                }
+                if let Some(type_annotation) = property.type_annotation() {
+                    write!(f, type_annotation);
+                }
+
+                false // Class properties don't use "short" key logic
+            }
             AssignmentLike::TSTypeAliasDeclaration(declaration) => {
                 write!(f, [declaration.declare.then_some("declare "), "type "]);
 
@@ -310,6 +345,29 @@ impl<'a> AssignmentLike<'a, '_> {
                     matches!(&declaration.type_annotation, TSType::TSTypeLiteral(_)),
                     f,
                 );
+
+                // For single-element union/intersection types (e.g., `type A = /*1*/ | C`),
+                // Prettier relocates the single leading comment to after the identifier,
+                // producing `type A /*1*/ = C;`. Skip complex nested cases.
+                let type_span = match &declaration.type_annotation {
+                    TSType::TSUnionType(u) if u.types.len() == 1 => (!matches!(
+                        u.types.first().unwrap(),
+                        TSType::TSParenthesizedType(_) | TSType::TSUnionType(_)
+                    ))
+                    .then_some(u.span),
+                    TSType::TSIntersectionType(i) if i.types.len() == 1 => (!matches!(
+                        i.types.first().unwrap(),
+                        TSType::TSParenthesizedType(_) | TSType::TSIntersectionType(_)
+                    ))
+                    .then_some(i.span),
+                    _ => None,
+                };
+                if let Some(span) = type_span {
+                    let comments = f.context().comments().comments_before(span.start);
+                    if comments.len() == 1 {
+                        write!(f, [FormatTrailingComments::Comments(comments)]);
+                    }
+                }
 
                 false
             }
@@ -339,6 +397,10 @@ impl<'a> AssignmentLike<'a, '_> {
                 debug_assert!(property_class_member.value().is_some());
                 write!(f, [space(), "="]);
             }
+            Self::AccessorProperty(property) => {
+                debug_assert!(property.value().is_some());
+                write!(f, [space(), "="]);
+            }
             Self::TSTypeAliasDeclaration(_) => {
                 write!(f, [space(), "="]);
             }
@@ -364,6 +426,9 @@ impl<'a> AssignmentLike<'a, '_> {
             Self::PropertyDefinition(property) => {
                 write!(f, [with_assignment_layout(property.value().unwrap(), Some(layout))]);
             }
+            Self::AccessorProperty(property) => {
+                write!(f, [with_assignment_layout(property.value().unwrap(), Some(layout))]);
+            }
             Self::TSTypeAliasDeclaration(declaration) => {
                 if let AstNodes::TSUnionType(union) = declaration.type_annotation().as_ast_nodes() {
                     union.write(f);
@@ -381,7 +446,7 @@ impl<'a> AssignmentLike<'a, '_> {
         &self,
         is_left_short: bool,
         left_may_break: bool,
-        f: &Formatter<'_, 'a>,
+        f: &mut Formatter<'_, 'a>,
     ) -> AssignmentLikeLayout {
         let right_expression = self.get_right_expression();
         if let Some(expr) = right_expression {
@@ -439,6 +504,7 @@ impl<'a> AssignmentLike<'a, '_> {
             AssignmentLike::PropertyDefinition(property_class_member) => {
                 property_class_member.value()
             }
+            AssignmentLike::AccessorProperty(property) => property.value(),
             AssignmentLike::BindingProperty(_) | AssignmentLike::TSTypeAliasDeclaration(_) => None,
         }
     }
@@ -450,6 +516,7 @@ impl<'a> AssignmentLike<'a, '_> {
             Self::AssignmentExpression(_) | Self::TSTypeAliasDeclaration(_) => false,
             Self::VariableDeclarator(declarator) => declarator.init.is_none(),
             Self::PropertyDefinition(property) => property.value().is_none(),
+            Self::AccessorProperty(property) => property.value().is_none(),
             Self::BindingProperty(property) => {
                 // Treats binding property has a left-hand side only
                 // when the value is an assignment pattern,
@@ -477,13 +544,13 @@ impl<'a> AssignmentLike<'a, '_> {
             // First, we check if the current node is an assignment expression
             if let Self::AssignmentExpression(assignment) = self {
                 // Then we check if the parent is assignment expression or variable declarator
-                let parent = assignment.parent;
+                let parent = assignment.parent();
                 // Determine if the chain is eligible based on the following checks:
                 // 1. For variable declarators: only continue if this isn't the final assignment in the chain
                 (matches!(parent, AstNodes::VariableDeclarator(_)) && !right_is_tail) ||
                 // 2. For assignment expressions: continue unless this is the final assignment in an expression statement
                 matches!(parent, AstNodes::AssignmentExpression(parent_assignment)
-                    if !right_is_tail || !matches!(parent_assignment.parent, AstNodes::ExpressionStatement(_))
+                    if !right_is_tail || !matches!(parent_assignment.parent(), AstNodes::ExpressionStatement(_))
                 )
             } else {
                 false
@@ -543,7 +610,7 @@ impl<'a> AssignmentLike<'a, '_> {
         &self,
         right_expression: Option<&AstNode<'a, Expression<'a>>>,
         is_left_short: bool,
-        f: &Formatter<'_, 'a>,
+        f: &mut Formatter<'_, 'a>,
     ) -> bool {
         let comments = f.context().comments();
         if let Some(right_expression) = right_expression {
@@ -628,6 +695,7 @@ impl<'a> AssignmentLike<'a, '_> {
             AssignmentLike::ObjectProperty(_)
             | AssignmentLike::BindingProperty(_)
             | AssignmentLike::PropertyDefinition(_)
+            | AssignmentLike::AccessorProperty(_)
             | AssignmentLike::TSTypeAliasDeclaration(_) => false,
         }
     }
@@ -639,7 +707,7 @@ impl<'a> AssignmentLike<'a, '_> {
 fn should_break_after_operator<'a>(
     right: &AstNode<'a, Expression<'a>>,
     is_left_short: bool,
-    f: &Formatter<'_, 'a>,
+    f: &mut Formatter<'_, 'a>,
 ) -> bool {
     if right.is_jsx() {
         return false;
@@ -851,7 +919,7 @@ impl<'a> Format<'a> for WithAssignmentLayout<'a, '_> {
 /// [Prettier applies]: <https://github.com/prettier/prettier/blob/a043ac0d733c4d53f980aa73807a63fc914f23bd/src/language-js/print/assignment.js#L329>
 fn is_poorly_breakable_member_or_call_chain<'a>(
     expression: &AstNode<'a, Expression<'a>>,
-    f: &Formatter<'_, 'a>,
+    f: &mut Formatter<'_, 'a>,
 ) -> bool {
     let threshold = f.options().line_width.value() / 4;
 
@@ -934,10 +1002,9 @@ fn is_poorly_breakable_member_or_call_chain<'a>(
             return false;
         }
 
-        let is_breakable_type_arguments = match &call_expression.type_arguments {
-            Some(type_arguments) => is_complex_type_arguments(type_arguments),
-            None => false,
-        };
+        let is_breakable_type_arguments = call_expression
+            .type_arguments()
+            .is_some_and(|type_arguments| is_complex_type_arguments(type_arguments, f));
 
         if is_breakable_type_arguments {
             return false;
@@ -989,38 +1056,31 @@ fn is_short_argument(argument: &Expression, threshold: u16, f: &Formatter) -> bo
     }
 }
 
-/// This function checks if `TSTypeArguments` is complex
-/// We need it to decide if `CallExpression` with the type arguments is breakable or not
-/// If the type arguments is complex the function call is breakable
-/// [Prettier applies]: <https://github.com/prettier/prettier/blob/a043ac0d733c4d53f980aa73807a63fc914f23bd/src/language-js/print/assignment.js#L432>
-fn is_complex_type_arguments(type_arguments: &TSTypeParameterInstantiation) -> bool {
-    let ts_type_argument_list = &type_arguments.params;
-
-    if ts_type_argument_list.len() > 1 {
+/// This function checks if `TSTypeArguments` is complex.
+/// We need it to decide if `CallExpression` with the type arguments is breakable or not.
+/// If the type arguments is complex the function call is breakable.
+///
+/// <https://github.com/prettier/prettier/blob/a043ac0d733c4d53f980aa73807a63fc914f23bd/src/language-js/print/assignment.js#L432-L459>
+fn is_complex_type_arguments<'a>(
+    type_arguments: &AstNode<'a, TSTypeParameterInstantiation<'a>>,
+    f: &mut Formatter<'_, 'a>,
+) -> bool {
+    let params = &type_arguments.params;
+    if params.len() > 1 {
         return true;
     }
 
-    let is_first_argument_complex = ts_type_argument_list.first().is_some_and(|first_argument| {
+    if params.first().is_some_and(|param| {
         matches!(
-            first_argument,
-            TSType::TSUnionType(_)
-                | TSType::TSIntersectionType(_)
-                | TSType::TSTypeLiteral(_)
-                // TODO: This is not part of Prettier's logic, but it makes sense to consider mapped types as
-                // complex because it is the same as type literals in terms of structure.
-                // NOTE: Once the `will_break` logic is added, this will have to be revisited.
-                | TSType::TSMappedType(_)
+            param,
+            TSType::TSUnionType(_) | TSType::TSIntersectionType(_) | TSType::TSTypeLiteral(_)
         )
-    });
-
-    if is_first_argument_complex {
+    }) {
         return true;
     }
 
-    // TODO: add here will_break logic
-    // https://github.com/prettier/prettier/blob/a043ac0d733c4d53f980aa73807a63fc914f23bd/src/language-js/print/assignment.js#L454
-
-    false
+    // Prettier: `willBreak(print(typeArgsKeyName))`
+    f.speculate_will_break(type_arguments)
 }
 
 /// [Prettier applies]: <https://github.com/prettier/prettier/blob/fde0b49d7866e203ca748c306808a87b7c15548f/src/language-js/print/assignment.js#L278>

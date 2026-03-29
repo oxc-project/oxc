@@ -8,7 +8,7 @@ use crate::rule::{DefaultRuleConfig, Rule};
 pub struct StrictBooleanExpressions(Box<StrictBooleanExpressionsConfig>);
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct StrictBooleanExpressionsConfig {
     /// Whether to allow `any` type in boolean contexts.
     pub allow_any: bool,
@@ -26,9 +26,6 @@ pub struct StrictBooleanExpressionsConfig {
     pub allow_string: bool,
     /// Whether to allow number types in boolean contexts (checks for non-zero numbers).
     pub allow_number: bool,
-    /// Whether to allow this rule to run without `strictNullChecks` enabled.
-    /// This is not recommended as the rule may produce incorrect results.
-    pub allow_rule_to_run_without_strict_null_checks_i_know_what_i_am_doing: bool,
 }
 
 impl Default for StrictBooleanExpressionsConfig {
@@ -42,7 +39,6 @@ impl Default for StrictBooleanExpressionsConfig {
             allow_nullable_object: true,
             allow_string: true,
             allow_number: true,
-            allow_rule_to_run_without_strict_null_checks_i_know_what_i_am_doing: false,
         }
     }
 }
@@ -127,10 +123,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for StrictBooleanExpressions {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        serde_json::from_value::<DefaultRuleConfig<StrictBooleanExpressions>>(value)
-            .unwrap_or_default()
-            .into_inner()
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn to_configuration(&self) -> Option<Result<serde_json::Value, serde_json::Error>> {

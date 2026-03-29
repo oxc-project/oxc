@@ -125,14 +125,14 @@ declare_oxc_lint!(
 const MODIFIER_NAME: [&str; 3] = ["not", "rejects", "resolves"];
 
 impl Rule for NoRestrictedMatchers {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let restricted_matchers = value
             .get(0)
             .and_then(serde_json::Value::as_object)
             .map(Self::compile_restricted_matchers)
             .unwrap_or_default();
 
-        Self(Box::new(NoRestrictedMatchersConfig { restricted_matchers }))
+        Ok(Self(Box::new(NoRestrictedMatchersConfig { restricted_matchers })))
     }
 
     fn run_on_jest_node<'a, 'c>(

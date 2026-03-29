@@ -76,7 +76,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for MediaHasCaption {
-    fn from_configuration(value: Value) -> Self {
+    fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
         let mut config = MediaHasCaptionConfig::default();
 
         if let Some(arr) = value.as_array() {
@@ -104,7 +104,7 @@ impl Rule for MediaHasCaption {
             }
         }
 
-        Self(Box::new(config))
+        Ok(Self(Box::new(config)))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

@@ -1,0 +1,5741 @@
+// Auto-generated code, DO NOT EDIT DIRECTLY!
+// To edit this generated file you have to edit `tasks/ast_tools/src/generators/minifier_traverse/mod.rs`.
+
+#![expect(
+    clippy::semicolon_if_nothing_returned,
+    clippy::ptr_as_ptr,
+    clippy::ref_as_ptr,
+    clippy::cast_ptr_alignment,
+    clippy::borrow_as_ptr,
+    clippy::match_same_arms,
+    unsafe_op_in_unsafe_fn
+)]
+
+use std::{cell::Cell, marker::PhantomData};
+
+use oxc_allocator::Vec;
+use oxc_ast::ast::*;
+use oxc_syntax::scope::ScopeId;
+
+use crate::{
+    Traverse, TraverseCtx,
+    generated::ancestor::{self, Ancestor, AncestorType},
+};
+
+/// Walk AST with `Traverse` impl.
+///
+/// # SAFETY
+/// * `program` must be a pointer to a valid `Program` which has lifetime `'a`
+///   (`Program<'a>`).
+/// * `ctx` must contain a `TraverseAncestry<'a>` with single `Ancestor::None` on its stack.
+#[inline]
+pub unsafe fn walk_ast<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    program: *mut Program<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    walk_program(traverser, program, ctx);
+}
+
+unsafe fn walk_program<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut Program<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_program(&mut *node, ctx);
+    let previous_scope_id = ctx.current_scope_id();
+    let current_scope_id = (*((node as *mut u8).add(ancestor::OFFSET_PROGRAM_SCOPE_ID)
+        as *mut Cell<Option<ScopeId>>))
+        .get()
+        .unwrap();
+    ctx.set_current_scope_id(current_scope_id);
+    let previous_hoist_scope_id = ctx.current_hoist_scope_id();
+    ctx.set_current_hoist_scope_id(current_scope_id);
+    let previous_block_scope_id = ctx.current_block_scope_id();
+    ctx.set_current_block_scope_id(current_scope_id);
+    let pop_token = ctx
+        .push_stack(Ancestor::ProgramHashbang(ancestor::ProgramWithoutHashbang(node, PhantomData)));
+    if let Some(field) =
+        &mut *((node as *mut u8).add(ancestor::OFFSET_PROGRAM_HASHBANG) as *mut Option<Hashbang>)
+    {
+        walk_hashbang(traverser, field as *mut _, ctx);
+    }
+    ctx.retag_stack(AncestorType::ProgramDirectives);
+    for item in
+        &mut *((node as *mut u8).add(ancestor::OFFSET_PROGRAM_DIRECTIVES) as *mut Vec<Directive>)
+    {
+        walk_directive(traverser, item as *mut _, ctx);
+    }
+    ctx.retag_stack(AncestorType::ProgramBody);
+    walk_statements(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_PROGRAM_BODY) as *mut Vec<Statement>,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    ctx.set_current_scope_id(previous_scope_id);
+    ctx.set_current_hoist_scope_id(previous_hoist_scope_id);
+    ctx.set_current_block_scope_id(previous_block_scope_id);
+    traverser.exit_program(&mut *node, ctx);
+}
+
+unsafe fn walk_expression<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut Expression<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_expression(&mut *node, ctx);
+    match &mut *node {
+        Expression::BooleanLiteral(node) => {
+            walk_boolean_literal(traverser, (&mut **node) as *mut _, ctx)
+        }
+        Expression::NullLiteral(node) => walk_null_literal(traverser, (&mut **node) as *mut _, ctx),
+        Expression::NumericLiteral(node) => {
+            walk_numeric_literal(traverser, (&mut **node) as *mut _, ctx)
+        }
+        Expression::BigIntLiteral(node) => {
+            walk_big_int_literal(traverser, (&mut **node) as *mut _, ctx)
+        }
+        Expression::RegExpLiteral(node) => {
+            walk_reg_exp_literal(traverser, (&mut **node) as *mut _, ctx)
+        }
+        Expression::StringLiteral(node) => {
+            walk_string_literal(traverser, (&mut **node) as *mut _, ctx)
+        }
+        Expression::TemplateLiteral(node) => {
+            walk_template_literal(traverser, (&mut **node) as *mut _, ctx)
+        }
+        Expression::Identifier(node) => {
+            walk_identifier_reference(traverser, (&mut **node) as *mut _, ctx)
+        }
+        Expression::MetaProperty(node) => {
+            walk_meta_property(traverser, (&mut **node) as *mut _, ctx)
+        }
+        Expression::Super(node) => walk_super(traverser, (&mut **node) as *mut _, ctx),
+        Expression::ArrayExpression(node) => {
+            walk_array_expression(traverser, (&mut **node) as *mut _, ctx)
+        }
+        Expression::ArrowFunctionExpression(node) => {
+            walk_arrow_function_expression(traverser, (&mut **node) as *mut _, ctx)
+        }
+        Expression::AssignmentExpression(node) => {
+            walk_assignment_expression(traverser, (&mut **node) as *mut _, ctx)
+        }
+        Expression::AwaitExpression(node) => {
+            walk_await_expression(traverser, (&mut **node) as *mut _, ctx)
+        }
+        Expression::BinaryExpression(node) => {
+            walk_binary_expression(traverser, (&mut **node) as *mut _, ctx)
+        }
+        Expression::CallExpression(node) => {
+            walk_call_expression(traverser, (&mut **node) as *mut _, ctx)
+        }
+        Expression::ChainExpression(node) => {
+            walk_chain_expression(traverser, (&mut **node) as *mut _, ctx)
+        }
+        Expression::ClassExpression(node) => walk_class(traverser, (&mut **node) as *mut _, ctx),
+        Expression::ConditionalExpression(node) => {
+            walk_conditional_expression(traverser, (&mut **node) as *mut _, ctx)
+        }
+        Expression::FunctionExpression(node) => {
+            walk_function(traverser, (&mut **node) as *mut _, ctx)
+        }
+        Expression::ImportExpression(node) => {
+            walk_import_expression(traverser, (&mut **node) as *mut _, ctx)
+        }
+        Expression::LogicalExpression(node) => {
+            walk_logical_expression(traverser, (&mut **node) as *mut _, ctx)
+        }
+        Expression::NewExpression(node) => {
+            walk_new_expression(traverser, (&mut **node) as *mut _, ctx)
+        }
+        Expression::ObjectExpression(node) => {
+            walk_object_expression(traverser, (&mut **node) as *mut _, ctx)
+        }
+        Expression::ParenthesizedExpression(node) => {
+            walk_parenthesized_expression(traverser, (&mut **node) as *mut _, ctx)
+        }
+        Expression::SequenceExpression(node) => {
+            walk_sequence_expression(traverser, (&mut **node) as *mut _, ctx)
+        }
+        Expression::TaggedTemplateExpression(node) => {
+            walk_tagged_template_expression(traverser, (&mut **node) as *mut _, ctx)
+        }
+        Expression::ThisExpression(node) => {
+            walk_this_expression(traverser, (&mut **node) as *mut _, ctx)
+        }
+        Expression::UnaryExpression(node) => {
+            walk_unary_expression(traverser, (&mut **node) as *mut _, ctx)
+        }
+        Expression::UpdateExpression(node) => {
+            walk_update_expression(traverser, (&mut **node) as *mut _, ctx)
+        }
+        Expression::YieldExpression(node) => {
+            walk_yield_expression(traverser, (&mut **node) as *mut _, ctx)
+        }
+        Expression::PrivateInExpression(node) => {
+            walk_private_in_expression(traverser, (&mut **node) as *mut _, ctx)
+        }
+        Expression::JSXElement(node) => walk_jsx_element(traverser, (&mut **node) as *mut _, ctx),
+        Expression::JSXFragment(node) => walk_jsx_fragment(traverser, (&mut **node) as *mut _, ctx),
+        Expression::TSAsExpression(node) => {
+            walk_ts_as_expression(traverser, (&mut **node) as *mut _, ctx)
+        }
+        Expression::TSSatisfiesExpression(node) => {
+            walk_ts_satisfies_expression(traverser, (&mut **node) as *mut _, ctx)
+        }
+        Expression::TSTypeAssertion(node) => {
+            walk_ts_type_assertion(traverser, (&mut **node) as *mut _, ctx)
+        }
+        Expression::TSNonNullExpression(node) => {
+            walk_ts_non_null_expression(traverser, (&mut **node) as *mut _, ctx)
+        }
+        Expression::TSInstantiationExpression(node) => {
+            walk_ts_instantiation_expression(traverser, (&mut **node) as *mut _, ctx)
+        }
+        Expression::V8IntrinsicExpression(node) => {
+            walk_v8_intrinsic_expression(traverser, (&mut **node) as *mut _, ctx)
+        }
+        Expression::ComputedMemberExpression(_)
+        | Expression::StaticMemberExpression(_)
+        | Expression::PrivateFieldExpression(_) => {
+            walk_member_expression(traverser, node as *mut _, ctx)
+        }
+    }
+    traverser.exit_expression(&mut *node, ctx);
+}
+
+unsafe fn walk_identifier_name<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut IdentifierName<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_identifier_name(&mut *node, ctx);
+    traverser.exit_identifier_name(&mut *node, ctx);
+}
+
+unsafe fn walk_identifier_reference<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut IdentifierReference<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_identifier_reference(&mut *node, ctx);
+    traverser.exit_identifier_reference(&mut *node, ctx);
+}
+
+unsafe fn walk_binding_identifier<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut BindingIdentifier<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_binding_identifier(&mut *node, ctx);
+    traverser.exit_binding_identifier(&mut *node, ctx);
+}
+
+unsafe fn walk_label_identifier<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut LabelIdentifier<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_label_identifier(&mut *node, ctx);
+    traverser.exit_label_identifier(&mut *node, ctx);
+}
+
+unsafe fn walk_this_expression<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut ThisExpression,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_this_expression(&mut *node, ctx);
+    traverser.exit_this_expression(&mut *node, ctx);
+}
+
+unsafe fn walk_array_expression<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut ArrayExpression<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_array_expression(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::ArrayExpressionElements(
+        ancestor::ArrayExpressionWithoutElements(node, PhantomData),
+    ));
+    for item in &mut *((node as *mut u8).add(ancestor::OFFSET_ARRAY_EXPRESSION_ELEMENTS)
+        as *mut Vec<ArrayExpressionElement>)
+    {
+        walk_array_expression_element(traverser, item as *mut _, ctx);
+    }
+    ctx.pop_stack(pop_token);
+    traverser.exit_array_expression(&mut *node, ctx);
+}
+
+unsafe fn walk_array_expression_element<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut ArrayExpressionElement<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_array_expression_element(&mut *node, ctx);
+    match &mut *node {
+        ArrayExpressionElement::SpreadElement(node) => {
+            walk_spread_element(traverser, (&mut **node) as *mut _, ctx)
+        }
+        ArrayExpressionElement::Elision(node) => walk_elision(traverser, node as *mut _, ctx),
+        ArrayExpressionElement::BooleanLiteral(_)
+        | ArrayExpressionElement::NullLiteral(_)
+        | ArrayExpressionElement::NumericLiteral(_)
+        | ArrayExpressionElement::BigIntLiteral(_)
+        | ArrayExpressionElement::RegExpLiteral(_)
+        | ArrayExpressionElement::StringLiteral(_)
+        | ArrayExpressionElement::TemplateLiteral(_)
+        | ArrayExpressionElement::Identifier(_)
+        | ArrayExpressionElement::MetaProperty(_)
+        | ArrayExpressionElement::Super(_)
+        | ArrayExpressionElement::ArrayExpression(_)
+        | ArrayExpressionElement::ArrowFunctionExpression(_)
+        | ArrayExpressionElement::AssignmentExpression(_)
+        | ArrayExpressionElement::AwaitExpression(_)
+        | ArrayExpressionElement::BinaryExpression(_)
+        | ArrayExpressionElement::CallExpression(_)
+        | ArrayExpressionElement::ChainExpression(_)
+        | ArrayExpressionElement::ClassExpression(_)
+        | ArrayExpressionElement::ConditionalExpression(_)
+        | ArrayExpressionElement::FunctionExpression(_)
+        | ArrayExpressionElement::ImportExpression(_)
+        | ArrayExpressionElement::LogicalExpression(_)
+        | ArrayExpressionElement::NewExpression(_)
+        | ArrayExpressionElement::ObjectExpression(_)
+        | ArrayExpressionElement::ParenthesizedExpression(_)
+        | ArrayExpressionElement::SequenceExpression(_)
+        | ArrayExpressionElement::TaggedTemplateExpression(_)
+        | ArrayExpressionElement::ThisExpression(_)
+        | ArrayExpressionElement::UnaryExpression(_)
+        | ArrayExpressionElement::UpdateExpression(_)
+        | ArrayExpressionElement::YieldExpression(_)
+        | ArrayExpressionElement::PrivateInExpression(_)
+        | ArrayExpressionElement::JSXElement(_)
+        | ArrayExpressionElement::JSXFragment(_)
+        | ArrayExpressionElement::TSAsExpression(_)
+        | ArrayExpressionElement::TSSatisfiesExpression(_)
+        | ArrayExpressionElement::TSTypeAssertion(_)
+        | ArrayExpressionElement::TSNonNullExpression(_)
+        | ArrayExpressionElement::TSInstantiationExpression(_)
+        | ArrayExpressionElement::V8IntrinsicExpression(_)
+        | ArrayExpressionElement::ComputedMemberExpression(_)
+        | ArrayExpressionElement::StaticMemberExpression(_)
+        | ArrayExpressionElement::PrivateFieldExpression(_) => {
+            walk_expression(traverser, node as *mut _, ctx)
+        }
+    }
+    traverser.exit_array_expression_element(&mut *node, ctx);
+}
+
+unsafe fn walk_elision<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut Elision,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_elision(&mut *node, ctx);
+    traverser.exit_elision(&mut *node, ctx);
+}
+
+unsafe fn walk_object_expression<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut ObjectExpression<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_object_expression(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::ObjectExpressionProperties(
+        ancestor::ObjectExpressionWithoutProperties(node, PhantomData),
+    ));
+    for item in &mut *((node as *mut u8).add(ancestor::OFFSET_OBJECT_EXPRESSION_PROPERTIES)
+        as *mut Vec<ObjectPropertyKind>)
+    {
+        walk_object_property_kind(traverser, item as *mut _, ctx);
+    }
+    ctx.pop_stack(pop_token);
+    traverser.exit_object_expression(&mut *node, ctx);
+}
+
+unsafe fn walk_object_property_kind<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut ObjectPropertyKind<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_object_property_kind(&mut *node, ctx);
+    match &mut *node {
+        ObjectPropertyKind::ObjectProperty(node) => {
+            walk_object_property(traverser, (&mut **node) as *mut _, ctx)
+        }
+        ObjectPropertyKind::SpreadProperty(node) => {
+            walk_spread_element(traverser, (&mut **node) as *mut _, ctx)
+        }
+    }
+    traverser.exit_object_property_kind(&mut *node, ctx);
+}
+
+unsafe fn walk_object_property<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut ObjectProperty<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_object_property(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::ObjectPropertyKey(
+        ancestor::ObjectPropertyWithoutKey(node, PhantomData),
+    ));
+    walk_property_key(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_OBJECT_PROPERTY_KEY) as *mut PropertyKey,
+        ctx,
+    );
+    ctx.retag_stack(AncestorType::ObjectPropertyValue);
+    walk_expression(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_OBJECT_PROPERTY_VALUE) as *mut Expression,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_object_property(&mut *node, ctx);
+}
+
+unsafe fn walk_property_key<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut PropertyKey<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_property_key(&mut *node, ctx);
+    match &mut *node {
+        PropertyKey::StaticIdentifier(node) => {
+            walk_identifier_name(traverser, (&mut **node) as *mut _, ctx)
+        }
+        PropertyKey::PrivateIdentifier(node) => {
+            walk_private_identifier(traverser, (&mut **node) as *mut _, ctx)
+        }
+        PropertyKey::BooleanLiteral(_)
+        | PropertyKey::NullLiteral(_)
+        | PropertyKey::NumericLiteral(_)
+        | PropertyKey::BigIntLiteral(_)
+        | PropertyKey::RegExpLiteral(_)
+        | PropertyKey::StringLiteral(_)
+        | PropertyKey::TemplateLiteral(_)
+        | PropertyKey::Identifier(_)
+        | PropertyKey::MetaProperty(_)
+        | PropertyKey::Super(_)
+        | PropertyKey::ArrayExpression(_)
+        | PropertyKey::ArrowFunctionExpression(_)
+        | PropertyKey::AssignmentExpression(_)
+        | PropertyKey::AwaitExpression(_)
+        | PropertyKey::BinaryExpression(_)
+        | PropertyKey::CallExpression(_)
+        | PropertyKey::ChainExpression(_)
+        | PropertyKey::ClassExpression(_)
+        | PropertyKey::ConditionalExpression(_)
+        | PropertyKey::FunctionExpression(_)
+        | PropertyKey::ImportExpression(_)
+        | PropertyKey::LogicalExpression(_)
+        | PropertyKey::NewExpression(_)
+        | PropertyKey::ObjectExpression(_)
+        | PropertyKey::ParenthesizedExpression(_)
+        | PropertyKey::SequenceExpression(_)
+        | PropertyKey::TaggedTemplateExpression(_)
+        | PropertyKey::ThisExpression(_)
+        | PropertyKey::UnaryExpression(_)
+        | PropertyKey::UpdateExpression(_)
+        | PropertyKey::YieldExpression(_)
+        | PropertyKey::PrivateInExpression(_)
+        | PropertyKey::JSXElement(_)
+        | PropertyKey::JSXFragment(_)
+        | PropertyKey::TSAsExpression(_)
+        | PropertyKey::TSSatisfiesExpression(_)
+        | PropertyKey::TSTypeAssertion(_)
+        | PropertyKey::TSNonNullExpression(_)
+        | PropertyKey::TSInstantiationExpression(_)
+        | PropertyKey::V8IntrinsicExpression(_)
+        | PropertyKey::ComputedMemberExpression(_)
+        | PropertyKey::StaticMemberExpression(_)
+        | PropertyKey::PrivateFieldExpression(_) => walk_expression(traverser, node as *mut _, ctx),
+    }
+    traverser.exit_property_key(&mut *node, ctx);
+}
+
+unsafe fn walk_template_literal<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TemplateLiteral<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_template_literal(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::TemplateLiteralQuasis(
+        ancestor::TemplateLiteralWithoutQuasis(node, PhantomData),
+    ));
+    for item in &mut *((node as *mut u8).add(ancestor::OFFSET_TEMPLATE_LITERAL_QUASIS)
+        as *mut Vec<TemplateElement>)
+    {
+        walk_template_element(traverser, item as *mut _, ctx);
+    }
+    ctx.retag_stack(AncestorType::TemplateLiteralExpressions);
+    for item in &mut *((node as *mut u8).add(ancestor::OFFSET_TEMPLATE_LITERAL_EXPRESSIONS)
+        as *mut Vec<Expression>)
+    {
+        walk_expression(traverser, item as *mut _, ctx);
+    }
+    ctx.pop_stack(pop_token);
+    traverser.exit_template_literal(&mut *node, ctx);
+}
+
+unsafe fn walk_tagged_template_expression<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TaggedTemplateExpression<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_tagged_template_expression(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::TaggedTemplateExpressionTag(
+        ancestor::TaggedTemplateExpressionWithoutTag(node, PhantomData),
+    ));
+    walk_expression(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TAGGED_TEMPLATE_EXPRESSION_TAG) as *mut Expression,
+        ctx,
+    );
+    if let Some(field) = &mut *((node as *mut u8)
+        .add(ancestor::OFFSET_TAGGED_TEMPLATE_EXPRESSION_TYPE_ARGUMENTS)
+        as *mut Option<Box<TSTypeParameterInstantiation>>)
+    {
+        ctx.retag_stack(AncestorType::TaggedTemplateExpressionTypeArguments);
+        walk_ts_type_parameter_instantiation(traverser, (&mut **field) as *mut _, ctx);
+    }
+    ctx.retag_stack(AncestorType::TaggedTemplateExpressionQuasi);
+    walk_template_literal(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TAGGED_TEMPLATE_EXPRESSION_QUASI)
+            as *mut TemplateLiteral,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_tagged_template_expression(&mut *node, ctx);
+}
+
+unsafe fn walk_template_element<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TemplateElement<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_template_element(&mut *node, ctx);
+    traverser.exit_template_element(&mut *node, ctx);
+}
+
+unsafe fn walk_member_expression<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut MemberExpression<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_member_expression(&mut *node, ctx);
+    match &mut *node {
+        MemberExpression::ComputedMemberExpression(node) => {
+            walk_computed_member_expression(traverser, (&mut **node) as *mut _, ctx)
+        }
+        MemberExpression::StaticMemberExpression(node) => {
+            walk_static_member_expression(traverser, (&mut **node) as *mut _, ctx)
+        }
+        MemberExpression::PrivateFieldExpression(node) => {
+            walk_private_field_expression(traverser, (&mut **node) as *mut _, ctx)
+        }
+    }
+    traverser.exit_member_expression(&mut *node, ctx);
+}
+
+unsafe fn walk_computed_member_expression<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut ComputedMemberExpression<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_computed_member_expression(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::ComputedMemberExpressionObject(
+        ancestor::ComputedMemberExpressionWithoutObject(node, PhantomData),
+    ));
+    walk_expression(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_COMPUTED_MEMBER_EXPRESSION_OBJECT)
+            as *mut Expression,
+        ctx,
+    );
+    ctx.retag_stack(AncestorType::ComputedMemberExpressionExpression);
+    walk_expression(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_COMPUTED_MEMBER_EXPRESSION_EXPRESSION)
+            as *mut Expression,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_computed_member_expression(&mut *node, ctx);
+}
+
+unsafe fn walk_static_member_expression<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut StaticMemberExpression<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_static_member_expression(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::StaticMemberExpressionObject(
+        ancestor::StaticMemberExpressionWithoutObject(node, PhantomData),
+    ));
+    walk_expression(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_STATIC_MEMBER_EXPRESSION_OBJECT) as *mut Expression,
+        ctx,
+    );
+    ctx.retag_stack(AncestorType::StaticMemberExpressionProperty);
+    walk_identifier_name(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_STATIC_MEMBER_EXPRESSION_PROPERTY)
+            as *mut IdentifierName,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_static_member_expression(&mut *node, ctx);
+}
+
+unsafe fn walk_private_field_expression<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut PrivateFieldExpression<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_private_field_expression(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::PrivateFieldExpressionObject(
+        ancestor::PrivateFieldExpressionWithoutObject(node, PhantomData),
+    ));
+    walk_expression(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_PRIVATE_FIELD_EXPRESSION_OBJECT) as *mut Expression,
+        ctx,
+    );
+    ctx.retag_stack(AncestorType::PrivateFieldExpressionField);
+    walk_private_identifier(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_PRIVATE_FIELD_EXPRESSION_FIELD)
+            as *mut PrivateIdentifier,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_private_field_expression(&mut *node, ctx);
+}
+
+unsafe fn walk_call_expression<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut CallExpression<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_call_expression(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::CallExpressionCallee(
+        ancestor::CallExpressionWithoutCallee(node, PhantomData),
+    ));
+    walk_expression(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_CALL_EXPRESSION_CALLEE) as *mut Expression,
+        ctx,
+    );
+    if let Some(field) = &mut *((node as *mut u8)
+        .add(ancestor::OFFSET_CALL_EXPRESSION_TYPE_ARGUMENTS)
+        as *mut Option<Box<TSTypeParameterInstantiation>>)
+    {
+        ctx.retag_stack(AncestorType::CallExpressionTypeArguments);
+        walk_ts_type_parameter_instantiation(traverser, (&mut **field) as *mut _, ctx);
+    }
+    ctx.retag_stack(AncestorType::CallExpressionArguments);
+    for item in &mut *((node as *mut u8).add(ancestor::OFFSET_CALL_EXPRESSION_ARGUMENTS)
+        as *mut Vec<Argument>)
+    {
+        walk_argument(traverser, item as *mut _, ctx);
+    }
+    ctx.pop_stack(pop_token);
+    traverser.exit_call_expression(&mut *node, ctx);
+}
+
+unsafe fn walk_new_expression<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut NewExpression<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_new_expression(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::NewExpressionCallee(
+        ancestor::NewExpressionWithoutCallee(node, PhantomData),
+    ));
+    walk_expression(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_NEW_EXPRESSION_CALLEE) as *mut Expression,
+        ctx,
+    );
+    if let Some(field) = &mut *((node as *mut u8)
+        .add(ancestor::OFFSET_NEW_EXPRESSION_TYPE_ARGUMENTS)
+        as *mut Option<Box<TSTypeParameterInstantiation>>)
+    {
+        ctx.retag_stack(AncestorType::NewExpressionTypeArguments);
+        walk_ts_type_parameter_instantiation(traverser, (&mut **field) as *mut _, ctx);
+    }
+    ctx.retag_stack(AncestorType::NewExpressionArguments);
+    for item in &mut *((node as *mut u8).add(ancestor::OFFSET_NEW_EXPRESSION_ARGUMENTS)
+        as *mut Vec<Argument>)
+    {
+        walk_argument(traverser, item as *mut _, ctx);
+    }
+    ctx.pop_stack(pop_token);
+    traverser.exit_new_expression(&mut *node, ctx);
+}
+
+unsafe fn walk_meta_property<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut MetaProperty<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_meta_property(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::MetaPropertyMeta(ancestor::MetaPropertyWithoutMeta(
+        node,
+        PhantomData,
+    )));
+    walk_identifier_name(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_META_PROPERTY_META) as *mut IdentifierName,
+        ctx,
+    );
+    ctx.retag_stack(AncestorType::MetaPropertyProperty);
+    walk_identifier_name(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_META_PROPERTY_PROPERTY) as *mut IdentifierName,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_meta_property(&mut *node, ctx);
+}
+
+unsafe fn walk_spread_element<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut SpreadElement<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_spread_element(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::SpreadElementArgument(
+        ancestor::SpreadElementWithoutArgument(node, PhantomData),
+    ));
+    walk_expression(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_SPREAD_ELEMENT_ARGUMENT) as *mut Expression,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_spread_element(&mut *node, ctx);
+}
+
+unsafe fn walk_argument<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut Argument<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_argument(&mut *node, ctx);
+    match &mut *node {
+        Argument::SpreadElement(node) => {
+            walk_spread_element(traverser, (&mut **node) as *mut _, ctx)
+        }
+        Argument::BooleanLiteral(_)
+        | Argument::NullLiteral(_)
+        | Argument::NumericLiteral(_)
+        | Argument::BigIntLiteral(_)
+        | Argument::RegExpLiteral(_)
+        | Argument::StringLiteral(_)
+        | Argument::TemplateLiteral(_)
+        | Argument::Identifier(_)
+        | Argument::MetaProperty(_)
+        | Argument::Super(_)
+        | Argument::ArrayExpression(_)
+        | Argument::ArrowFunctionExpression(_)
+        | Argument::AssignmentExpression(_)
+        | Argument::AwaitExpression(_)
+        | Argument::BinaryExpression(_)
+        | Argument::CallExpression(_)
+        | Argument::ChainExpression(_)
+        | Argument::ClassExpression(_)
+        | Argument::ConditionalExpression(_)
+        | Argument::FunctionExpression(_)
+        | Argument::ImportExpression(_)
+        | Argument::LogicalExpression(_)
+        | Argument::NewExpression(_)
+        | Argument::ObjectExpression(_)
+        | Argument::ParenthesizedExpression(_)
+        | Argument::SequenceExpression(_)
+        | Argument::TaggedTemplateExpression(_)
+        | Argument::ThisExpression(_)
+        | Argument::UnaryExpression(_)
+        | Argument::UpdateExpression(_)
+        | Argument::YieldExpression(_)
+        | Argument::PrivateInExpression(_)
+        | Argument::JSXElement(_)
+        | Argument::JSXFragment(_)
+        | Argument::TSAsExpression(_)
+        | Argument::TSSatisfiesExpression(_)
+        | Argument::TSTypeAssertion(_)
+        | Argument::TSNonNullExpression(_)
+        | Argument::TSInstantiationExpression(_)
+        | Argument::V8IntrinsicExpression(_)
+        | Argument::ComputedMemberExpression(_)
+        | Argument::StaticMemberExpression(_)
+        | Argument::PrivateFieldExpression(_) => walk_expression(traverser, node as *mut _, ctx),
+    }
+    traverser.exit_argument(&mut *node, ctx);
+}
+
+unsafe fn walk_update_expression<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut UpdateExpression<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_update_expression(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::UpdateExpressionArgument(
+        ancestor::UpdateExpressionWithoutArgument(node, PhantomData),
+    ));
+    walk_simple_assignment_target(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_UPDATE_EXPRESSION_ARGUMENT)
+            as *mut SimpleAssignmentTarget,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_update_expression(&mut *node, ctx);
+}
+
+unsafe fn walk_unary_expression<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut UnaryExpression<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_unary_expression(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::UnaryExpressionArgument(
+        ancestor::UnaryExpressionWithoutArgument(node, PhantomData),
+    ));
+    walk_expression(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_UNARY_EXPRESSION_ARGUMENT) as *mut Expression,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_unary_expression(&mut *node, ctx);
+}
+
+unsafe fn walk_binary_expression<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut BinaryExpression<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_binary_expression(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::BinaryExpressionLeft(
+        ancestor::BinaryExpressionWithoutLeft(node, PhantomData),
+    ));
+    walk_expression(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_BINARY_EXPRESSION_LEFT) as *mut Expression,
+        ctx,
+    );
+    ctx.retag_stack(AncestorType::BinaryExpressionRight);
+    walk_expression(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_BINARY_EXPRESSION_RIGHT) as *mut Expression,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_binary_expression(&mut *node, ctx);
+}
+
+unsafe fn walk_private_in_expression<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut PrivateInExpression<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_private_in_expression(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::PrivateInExpressionLeft(
+        ancestor::PrivateInExpressionWithoutLeft(node, PhantomData),
+    ));
+    walk_private_identifier(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_PRIVATE_IN_EXPRESSION_LEFT)
+            as *mut PrivateIdentifier,
+        ctx,
+    );
+    ctx.retag_stack(AncestorType::PrivateInExpressionRight);
+    walk_expression(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_PRIVATE_IN_EXPRESSION_RIGHT) as *mut Expression,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_private_in_expression(&mut *node, ctx);
+}
+
+unsafe fn walk_logical_expression<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut LogicalExpression<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_logical_expression(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::LogicalExpressionLeft(
+        ancestor::LogicalExpressionWithoutLeft(node, PhantomData),
+    ));
+    walk_expression(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_LOGICAL_EXPRESSION_LEFT) as *mut Expression,
+        ctx,
+    );
+    ctx.retag_stack(AncestorType::LogicalExpressionRight);
+    walk_expression(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_LOGICAL_EXPRESSION_RIGHT) as *mut Expression,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_logical_expression(&mut *node, ctx);
+}
+
+unsafe fn walk_conditional_expression<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut ConditionalExpression<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_conditional_expression(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::ConditionalExpressionTest(
+        ancestor::ConditionalExpressionWithoutTest(node, PhantomData),
+    ));
+    walk_expression(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_CONDITIONAL_EXPRESSION_TEST) as *mut Expression,
+        ctx,
+    );
+    ctx.retag_stack(AncestorType::ConditionalExpressionConsequent);
+    walk_expression(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_CONDITIONAL_EXPRESSION_CONSEQUENT)
+            as *mut Expression,
+        ctx,
+    );
+    ctx.retag_stack(AncestorType::ConditionalExpressionAlternate);
+    walk_expression(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_CONDITIONAL_EXPRESSION_ALTERNATE) as *mut Expression,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_conditional_expression(&mut *node, ctx);
+}
+
+unsafe fn walk_assignment_expression<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut AssignmentExpression<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_assignment_expression(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::AssignmentExpressionLeft(
+        ancestor::AssignmentExpressionWithoutLeft(node, PhantomData),
+    ));
+    walk_assignment_target(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_ASSIGNMENT_EXPRESSION_LEFT) as *mut AssignmentTarget,
+        ctx,
+    );
+    ctx.retag_stack(AncestorType::AssignmentExpressionRight);
+    walk_expression(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_ASSIGNMENT_EXPRESSION_RIGHT) as *mut Expression,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_assignment_expression(&mut *node, ctx);
+}
+
+unsafe fn walk_assignment_target<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut AssignmentTarget<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_assignment_target(&mut *node, ctx);
+    match &mut *node {
+        AssignmentTarget::AssignmentTargetIdentifier(_)
+        | AssignmentTarget::TSAsExpression(_)
+        | AssignmentTarget::TSSatisfiesExpression(_)
+        | AssignmentTarget::TSNonNullExpression(_)
+        | AssignmentTarget::TSTypeAssertion(_)
+        | AssignmentTarget::ComputedMemberExpression(_)
+        | AssignmentTarget::StaticMemberExpression(_)
+        | AssignmentTarget::PrivateFieldExpression(_) => {
+            walk_simple_assignment_target(traverser, node as *mut _, ctx)
+        }
+        AssignmentTarget::ArrayAssignmentTarget(_)
+        | AssignmentTarget::ObjectAssignmentTarget(_) => {
+            walk_assignment_target_pattern(traverser, node as *mut _, ctx)
+        }
+    }
+    traverser.exit_assignment_target(&mut *node, ctx);
+}
+
+unsafe fn walk_simple_assignment_target<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut SimpleAssignmentTarget<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_simple_assignment_target(&mut *node, ctx);
+    match &mut *node {
+        SimpleAssignmentTarget::AssignmentTargetIdentifier(node) => {
+            walk_identifier_reference(traverser, (&mut **node) as *mut _, ctx)
+        }
+        SimpleAssignmentTarget::TSAsExpression(node) => {
+            walk_ts_as_expression(traverser, (&mut **node) as *mut _, ctx)
+        }
+        SimpleAssignmentTarget::TSSatisfiesExpression(node) => {
+            walk_ts_satisfies_expression(traverser, (&mut **node) as *mut _, ctx)
+        }
+        SimpleAssignmentTarget::TSNonNullExpression(node) => {
+            walk_ts_non_null_expression(traverser, (&mut **node) as *mut _, ctx)
+        }
+        SimpleAssignmentTarget::TSTypeAssertion(node) => {
+            walk_ts_type_assertion(traverser, (&mut **node) as *mut _, ctx)
+        }
+        SimpleAssignmentTarget::ComputedMemberExpression(_)
+        | SimpleAssignmentTarget::StaticMemberExpression(_)
+        | SimpleAssignmentTarget::PrivateFieldExpression(_) => {
+            walk_member_expression(traverser, node as *mut _, ctx)
+        }
+    }
+    traverser.exit_simple_assignment_target(&mut *node, ctx);
+}
+
+unsafe fn walk_assignment_target_pattern<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut AssignmentTargetPattern<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_assignment_target_pattern(&mut *node, ctx);
+    match &mut *node {
+        AssignmentTargetPattern::ArrayAssignmentTarget(node) => {
+            walk_array_assignment_target(traverser, (&mut **node) as *mut _, ctx)
+        }
+        AssignmentTargetPattern::ObjectAssignmentTarget(node) => {
+            walk_object_assignment_target(traverser, (&mut **node) as *mut _, ctx)
+        }
+    }
+    traverser.exit_assignment_target_pattern(&mut *node, ctx);
+}
+
+unsafe fn walk_array_assignment_target<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut ArrayAssignmentTarget<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_array_assignment_target(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::ArrayAssignmentTargetElements(
+        ancestor::ArrayAssignmentTargetWithoutElements(node, PhantomData),
+    ));
+    for item in (*((node as *mut u8).add(ancestor::OFFSET_ARRAY_ASSIGNMENT_TARGET_ELEMENTS)
+        as *mut Vec<Option<AssignmentTargetMaybeDefault>>))
+        .iter_mut()
+        .flatten()
+    {
+        walk_assignment_target_maybe_default(traverser, item as *mut _, ctx);
+    }
+    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_ARRAY_ASSIGNMENT_TARGET_REST)
+        as *mut Option<Box<AssignmentTargetRest>>)
+    {
+        ctx.retag_stack(AncestorType::ArrayAssignmentTargetRest);
+        walk_assignment_target_rest(traverser, (&mut **field) as *mut _, ctx);
+    }
+    ctx.pop_stack(pop_token);
+    traverser.exit_array_assignment_target(&mut *node, ctx);
+}
+
+unsafe fn walk_object_assignment_target<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut ObjectAssignmentTarget<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_object_assignment_target(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::ObjectAssignmentTargetProperties(
+        ancestor::ObjectAssignmentTargetWithoutProperties(node, PhantomData),
+    ));
+    for item in &mut *((node as *mut u8).add(ancestor::OFFSET_OBJECT_ASSIGNMENT_TARGET_PROPERTIES)
+        as *mut Vec<AssignmentTargetProperty>)
+    {
+        walk_assignment_target_property(traverser, item as *mut _, ctx);
+    }
+    if let Some(field) = &mut *((node as *mut u8)
+        .add(ancestor::OFFSET_OBJECT_ASSIGNMENT_TARGET_REST)
+        as *mut Option<Box<AssignmentTargetRest>>)
+    {
+        ctx.retag_stack(AncestorType::ObjectAssignmentTargetRest);
+        walk_assignment_target_rest(traverser, (&mut **field) as *mut _, ctx);
+    }
+    ctx.pop_stack(pop_token);
+    traverser.exit_object_assignment_target(&mut *node, ctx);
+}
+
+unsafe fn walk_assignment_target_rest<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut AssignmentTargetRest<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_assignment_target_rest(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::AssignmentTargetRestTarget(
+        ancestor::AssignmentTargetRestWithoutTarget(node, PhantomData),
+    ));
+    walk_assignment_target(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_ASSIGNMENT_TARGET_REST_TARGET)
+            as *mut AssignmentTarget,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_assignment_target_rest(&mut *node, ctx);
+}
+
+unsafe fn walk_assignment_target_maybe_default<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut AssignmentTargetMaybeDefault<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_assignment_target_maybe_default(&mut *node, ctx);
+    match &mut *node {
+        AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(node) => {
+            walk_assignment_target_with_default(traverser, (&mut **node) as *mut _, ctx)
+        }
+        AssignmentTargetMaybeDefault::AssignmentTargetIdentifier(_)
+        | AssignmentTargetMaybeDefault::TSAsExpression(_)
+        | AssignmentTargetMaybeDefault::TSSatisfiesExpression(_)
+        | AssignmentTargetMaybeDefault::TSNonNullExpression(_)
+        | AssignmentTargetMaybeDefault::TSTypeAssertion(_)
+        | AssignmentTargetMaybeDefault::ArrayAssignmentTarget(_)
+        | AssignmentTargetMaybeDefault::ObjectAssignmentTarget(_)
+        | AssignmentTargetMaybeDefault::ComputedMemberExpression(_)
+        | AssignmentTargetMaybeDefault::StaticMemberExpression(_)
+        | AssignmentTargetMaybeDefault::PrivateFieldExpression(_) => {
+            walk_assignment_target(traverser, node as *mut _, ctx)
+        }
+    }
+    traverser.exit_assignment_target_maybe_default(&mut *node, ctx);
+}
+
+unsafe fn walk_assignment_target_with_default<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut AssignmentTargetWithDefault<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_assignment_target_with_default(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::AssignmentTargetWithDefaultBinding(
+        ancestor::AssignmentTargetWithDefaultWithoutBinding(node, PhantomData),
+    ));
+    walk_assignment_target(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_ASSIGNMENT_TARGET_WITH_DEFAULT_BINDING)
+            as *mut AssignmentTarget,
+        ctx,
+    );
+    ctx.retag_stack(AncestorType::AssignmentTargetWithDefaultInit);
+    walk_expression(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_ASSIGNMENT_TARGET_WITH_DEFAULT_INIT)
+            as *mut Expression,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_assignment_target_with_default(&mut *node, ctx);
+}
+
+unsafe fn walk_assignment_target_property<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut AssignmentTargetProperty<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_assignment_target_property(&mut *node, ctx);
+    match &mut *node {
+        AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(node) => {
+            walk_assignment_target_property_identifier(traverser, (&mut **node) as *mut _, ctx)
+        }
+        AssignmentTargetProperty::AssignmentTargetPropertyProperty(node) => {
+            walk_assignment_target_property_property(traverser, (&mut **node) as *mut _, ctx)
+        }
+    }
+    traverser.exit_assignment_target_property(&mut *node, ctx);
+}
+
+unsafe fn walk_assignment_target_property_identifier<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut AssignmentTargetPropertyIdentifier<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_assignment_target_property_identifier(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::AssignmentTargetPropertyIdentifierBinding(
+        ancestor::AssignmentTargetPropertyIdentifierWithoutBinding(node, PhantomData),
+    ));
+    walk_identifier_reference(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_ASSIGNMENT_TARGET_PROPERTY_IDENTIFIER_BINDING)
+            as *mut IdentifierReference,
+        ctx,
+    );
+    if let Some(field) = &mut *((node as *mut u8)
+        .add(ancestor::OFFSET_ASSIGNMENT_TARGET_PROPERTY_IDENTIFIER_INIT)
+        as *mut Option<Expression>)
+    {
+        ctx.retag_stack(AncestorType::AssignmentTargetPropertyIdentifierInit);
+        walk_expression(traverser, field as *mut _, ctx);
+    }
+    ctx.pop_stack(pop_token);
+    traverser.exit_assignment_target_property_identifier(&mut *node, ctx);
+}
+
+unsafe fn walk_assignment_target_property_property<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut AssignmentTargetPropertyProperty<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_assignment_target_property_property(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::AssignmentTargetPropertyPropertyName(
+        ancestor::AssignmentTargetPropertyPropertyWithoutName(node, PhantomData),
+    ));
+    walk_property_key(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_ASSIGNMENT_TARGET_PROPERTY_PROPERTY_NAME)
+            as *mut PropertyKey,
+        ctx,
+    );
+    ctx.retag_stack(AncestorType::AssignmentTargetPropertyPropertyBinding);
+    walk_assignment_target_maybe_default(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_ASSIGNMENT_TARGET_PROPERTY_PROPERTY_BINDING)
+            as *mut AssignmentTargetMaybeDefault,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_assignment_target_property_property(&mut *node, ctx);
+}
+
+unsafe fn walk_sequence_expression<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut SequenceExpression<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_sequence_expression(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::SequenceExpressionExpressions(
+        ancestor::SequenceExpressionWithoutExpressions(node, PhantomData),
+    ));
+    for item in &mut *((node as *mut u8).add(ancestor::OFFSET_SEQUENCE_EXPRESSION_EXPRESSIONS)
+        as *mut Vec<Expression>)
+    {
+        walk_expression(traverser, item as *mut _, ctx);
+    }
+    ctx.pop_stack(pop_token);
+    traverser.exit_sequence_expression(&mut *node, ctx);
+}
+
+unsafe fn walk_super<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut Super,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_super(&mut *node, ctx);
+    traverser.exit_super(&mut *node, ctx);
+}
+
+unsafe fn walk_await_expression<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut AwaitExpression<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_await_expression(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::AwaitExpressionArgument(
+        ancestor::AwaitExpressionWithoutArgument(node, PhantomData),
+    ));
+    walk_expression(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_AWAIT_EXPRESSION_ARGUMENT) as *mut Expression,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_await_expression(&mut *node, ctx);
+}
+
+unsafe fn walk_chain_expression<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut ChainExpression<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_chain_expression(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::ChainExpressionExpression(
+        ancestor::ChainExpressionWithoutExpression(node, PhantomData),
+    ));
+    walk_chain_element(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_CHAIN_EXPRESSION_EXPRESSION) as *mut ChainElement,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_chain_expression(&mut *node, ctx);
+}
+
+unsafe fn walk_chain_element<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut ChainElement<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_chain_element(&mut *node, ctx);
+    match &mut *node {
+        ChainElement::CallExpression(node) => {
+            walk_call_expression(traverser, (&mut **node) as *mut _, ctx)
+        }
+        ChainElement::TSNonNullExpression(node) => {
+            walk_ts_non_null_expression(traverser, (&mut **node) as *mut _, ctx)
+        }
+        ChainElement::ComputedMemberExpression(_)
+        | ChainElement::StaticMemberExpression(_)
+        | ChainElement::PrivateFieldExpression(_) => {
+            walk_member_expression(traverser, node as *mut _, ctx)
+        }
+    }
+    traverser.exit_chain_element(&mut *node, ctx);
+}
+
+unsafe fn walk_parenthesized_expression<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut ParenthesizedExpression<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_parenthesized_expression(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::ParenthesizedExpressionExpression(
+        ancestor::ParenthesizedExpressionWithoutExpression(node, PhantomData),
+    ));
+    walk_expression(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_PARENTHESIZED_EXPRESSION_EXPRESSION)
+            as *mut Expression,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_parenthesized_expression(&mut *node, ctx);
+}
+
+unsafe fn walk_statement<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut Statement<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_statement(&mut *node, ctx);
+    match &mut *node {
+        Statement::BlockStatement(node) => {
+            walk_block_statement(traverser, (&mut **node) as *mut _, ctx)
+        }
+        Statement::BreakStatement(node) => {
+            walk_break_statement(traverser, (&mut **node) as *mut _, ctx)
+        }
+        Statement::ContinueStatement(node) => {
+            walk_continue_statement(traverser, (&mut **node) as *mut _, ctx)
+        }
+        Statement::DebuggerStatement(node) => {
+            walk_debugger_statement(traverser, (&mut **node) as *mut _, ctx)
+        }
+        Statement::DoWhileStatement(node) => {
+            walk_do_while_statement(traverser, (&mut **node) as *mut _, ctx)
+        }
+        Statement::EmptyStatement(node) => {
+            walk_empty_statement(traverser, (&mut **node) as *mut _, ctx)
+        }
+        Statement::ExpressionStatement(node) => {
+            walk_expression_statement(traverser, (&mut **node) as *mut _, ctx)
+        }
+        Statement::ForInStatement(node) => {
+            walk_for_in_statement(traverser, (&mut **node) as *mut _, ctx)
+        }
+        Statement::ForOfStatement(node) => {
+            walk_for_of_statement(traverser, (&mut **node) as *mut _, ctx)
+        }
+        Statement::ForStatement(node) => {
+            walk_for_statement(traverser, (&mut **node) as *mut _, ctx)
+        }
+        Statement::IfStatement(node) => walk_if_statement(traverser, (&mut **node) as *mut _, ctx),
+        Statement::LabeledStatement(node) => {
+            walk_labeled_statement(traverser, (&mut **node) as *mut _, ctx)
+        }
+        Statement::ReturnStatement(node) => {
+            walk_return_statement(traverser, (&mut **node) as *mut _, ctx)
+        }
+        Statement::SwitchStatement(node) => {
+            walk_switch_statement(traverser, (&mut **node) as *mut _, ctx)
+        }
+        Statement::ThrowStatement(node) => {
+            walk_throw_statement(traverser, (&mut **node) as *mut _, ctx)
+        }
+        Statement::TryStatement(node) => {
+            walk_try_statement(traverser, (&mut **node) as *mut _, ctx)
+        }
+        Statement::WhileStatement(node) => {
+            walk_while_statement(traverser, (&mut **node) as *mut _, ctx)
+        }
+        Statement::WithStatement(node) => {
+            walk_with_statement(traverser, (&mut **node) as *mut _, ctx)
+        }
+        Statement::VariableDeclaration(_)
+        | Statement::FunctionDeclaration(_)
+        | Statement::ClassDeclaration(_)
+        | Statement::TSTypeAliasDeclaration(_)
+        | Statement::TSInterfaceDeclaration(_)
+        | Statement::TSEnumDeclaration(_)
+        | Statement::TSModuleDeclaration(_)
+        | Statement::TSGlobalDeclaration(_)
+        | Statement::TSImportEqualsDeclaration(_) => {
+            walk_declaration(traverser, node as *mut _, ctx)
+        }
+        Statement::ImportDeclaration(_)
+        | Statement::ExportAllDeclaration(_)
+        | Statement::ExportDefaultDeclaration(_)
+        | Statement::ExportNamedDeclaration(_)
+        | Statement::TSExportAssignment(_)
+        | Statement::TSNamespaceExportDeclaration(_) => {
+            walk_module_declaration(traverser, node as *mut _, ctx)
+        }
+    }
+    traverser.exit_statement(&mut *node, ctx);
+}
+
+unsafe fn walk_directive<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut Directive<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_directive(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::DirectiveExpression(
+        ancestor::DirectiveWithoutExpression(node, PhantomData),
+    ));
+    walk_string_literal(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_DIRECTIVE_EXPRESSION) as *mut StringLiteral,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_directive(&mut *node, ctx);
+}
+
+unsafe fn walk_hashbang<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut Hashbang<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_hashbang(&mut *node, ctx);
+    traverser.exit_hashbang(&mut *node, ctx);
+}
+
+unsafe fn walk_block_statement<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut BlockStatement<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_block_statement(&mut *node, ctx);
+    let previous_scope_id = ctx.current_scope_id();
+    let current_scope_id = (*((node as *mut u8).add(ancestor::OFFSET_BLOCK_STATEMENT_SCOPE_ID)
+        as *mut Cell<Option<ScopeId>>))
+        .get()
+        .unwrap();
+    ctx.set_current_scope_id(current_scope_id);
+    let previous_block_scope_id = ctx.current_block_scope_id();
+    ctx.set_current_block_scope_id(current_scope_id);
+    let pop_token = ctx.push_stack(Ancestor::BlockStatementBody(
+        ancestor::BlockStatementWithoutBody(node, PhantomData),
+    ));
+    walk_statements(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_BLOCK_STATEMENT_BODY) as *mut Vec<Statement>,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    ctx.set_current_scope_id(previous_scope_id);
+    ctx.set_current_block_scope_id(previous_block_scope_id);
+    traverser.exit_block_statement(&mut *node, ctx);
+}
+
+unsafe fn walk_declaration<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut Declaration<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_declaration(&mut *node, ctx);
+    match &mut *node {
+        Declaration::VariableDeclaration(node) => {
+            walk_variable_declaration(traverser, (&mut **node) as *mut _, ctx)
+        }
+        Declaration::FunctionDeclaration(node) => {
+            walk_function(traverser, (&mut **node) as *mut _, ctx)
+        }
+        Declaration::ClassDeclaration(node) => walk_class(traverser, (&mut **node) as *mut _, ctx),
+        Declaration::TSTypeAliasDeclaration(node) => {
+            walk_ts_type_alias_declaration(traverser, (&mut **node) as *mut _, ctx)
+        }
+        Declaration::TSInterfaceDeclaration(node) => {
+            walk_ts_interface_declaration(traverser, (&mut **node) as *mut _, ctx)
+        }
+        Declaration::TSEnumDeclaration(node) => {
+            walk_ts_enum_declaration(traverser, (&mut **node) as *mut _, ctx)
+        }
+        Declaration::TSModuleDeclaration(node) => {
+            walk_ts_module_declaration(traverser, (&mut **node) as *mut _, ctx)
+        }
+        Declaration::TSGlobalDeclaration(node) => {
+            walk_ts_global_declaration(traverser, (&mut **node) as *mut _, ctx)
+        }
+        Declaration::TSImportEqualsDeclaration(node) => {
+            walk_ts_import_equals_declaration(traverser, (&mut **node) as *mut _, ctx)
+        }
+    }
+    traverser.exit_declaration(&mut *node, ctx);
+}
+
+unsafe fn walk_variable_declaration<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut VariableDeclaration<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_variable_declaration(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::VariableDeclarationDeclarations(
+        ancestor::VariableDeclarationWithoutDeclarations(node, PhantomData),
+    ));
+    for item in &mut *((node as *mut u8).add(ancestor::OFFSET_VARIABLE_DECLARATION_DECLARATIONS)
+        as *mut Vec<VariableDeclarator>)
+    {
+        walk_variable_declarator(traverser, item as *mut _, ctx);
+    }
+    ctx.pop_stack(pop_token);
+    traverser.exit_variable_declaration(&mut *node, ctx);
+}
+
+unsafe fn walk_variable_declarator<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut VariableDeclarator<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_variable_declarator(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::VariableDeclaratorId(
+        ancestor::VariableDeclaratorWithoutId(node, PhantomData),
+    ));
+    walk_binding_pattern(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_VARIABLE_DECLARATOR_ID) as *mut BindingPattern,
+        ctx,
+    );
+    if let Some(field) = &mut *((node as *mut u8)
+        .add(ancestor::OFFSET_VARIABLE_DECLARATOR_TYPE_ANNOTATION)
+        as *mut Option<Box<TSTypeAnnotation>>)
+    {
+        ctx.retag_stack(AncestorType::VariableDeclaratorTypeAnnotation);
+        walk_ts_type_annotation(traverser, (&mut **field) as *mut _, ctx);
+    }
+    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_VARIABLE_DECLARATOR_INIT)
+        as *mut Option<Expression>)
+    {
+        ctx.retag_stack(AncestorType::VariableDeclaratorInit);
+        walk_expression(traverser, field as *mut _, ctx);
+    }
+    ctx.pop_stack(pop_token);
+    traverser.exit_variable_declarator(&mut *node, ctx);
+}
+
+unsafe fn walk_empty_statement<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut EmptyStatement,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_empty_statement(&mut *node, ctx);
+    traverser.exit_empty_statement(&mut *node, ctx);
+}
+
+unsafe fn walk_expression_statement<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut ExpressionStatement<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_expression_statement(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::ExpressionStatementExpression(
+        ancestor::ExpressionStatementWithoutExpression(node, PhantomData),
+    ));
+    walk_expression(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_EXPRESSION_STATEMENT_EXPRESSION) as *mut Expression,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_expression_statement(&mut *node, ctx);
+}
+
+unsafe fn walk_if_statement<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut IfStatement<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_if_statement(&mut *node, ctx);
+    let pop_token = ctx
+        .push_stack(Ancestor::IfStatementTest(ancestor::IfStatementWithoutTest(node, PhantomData)));
+    walk_expression(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_IF_STATEMENT_TEST) as *mut Expression,
+        ctx,
+    );
+    ctx.retag_stack(AncestorType::IfStatementConsequent);
+    walk_statement(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_IF_STATEMENT_CONSEQUENT) as *mut Statement,
+        ctx,
+    );
+    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_IF_STATEMENT_ALTERNATE)
+        as *mut Option<Statement>)
+    {
+        ctx.retag_stack(AncestorType::IfStatementAlternate);
+        walk_statement(traverser, field as *mut _, ctx);
+    }
+    ctx.pop_stack(pop_token);
+    traverser.exit_if_statement(&mut *node, ctx);
+}
+
+unsafe fn walk_do_while_statement<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut DoWhileStatement<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_do_while_statement(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::DoWhileStatementBody(
+        ancestor::DoWhileStatementWithoutBody(node, PhantomData),
+    ));
+    walk_statement(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_DO_WHILE_STATEMENT_BODY) as *mut Statement,
+        ctx,
+    );
+    ctx.retag_stack(AncestorType::DoWhileStatementTest);
+    walk_expression(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_DO_WHILE_STATEMENT_TEST) as *mut Expression,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_do_while_statement(&mut *node, ctx);
+}
+
+unsafe fn walk_while_statement<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut WhileStatement<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_while_statement(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::WhileStatementTest(
+        ancestor::WhileStatementWithoutTest(node, PhantomData),
+    ));
+    walk_expression(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_WHILE_STATEMENT_TEST) as *mut Expression,
+        ctx,
+    );
+    ctx.retag_stack(AncestorType::WhileStatementBody);
+    walk_statement(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_WHILE_STATEMENT_BODY) as *mut Statement,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_while_statement(&mut *node, ctx);
+}
+
+unsafe fn walk_for_statement<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut ForStatement<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_for_statement(&mut *node, ctx);
+    let previous_scope_id = ctx.current_scope_id();
+    let current_scope_id = (*((node as *mut u8).add(ancestor::OFFSET_FOR_STATEMENT_SCOPE_ID)
+        as *mut Cell<Option<ScopeId>>))
+        .get()
+        .unwrap();
+    ctx.set_current_scope_id(current_scope_id);
+    let pop_token = ctx.push_stack(Ancestor::ForStatementInit(ancestor::ForStatementWithoutInit(
+        node,
+        PhantomData,
+    )));
+    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_FOR_STATEMENT_INIT)
+        as *mut Option<ForStatementInit>)
+    {
+        walk_for_statement_init(traverser, field as *mut _, ctx);
+    }
+    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_FOR_STATEMENT_TEST)
+        as *mut Option<Expression>)
+    {
+        ctx.retag_stack(AncestorType::ForStatementTest);
+        walk_expression(traverser, field as *mut _, ctx);
+    }
+    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_FOR_STATEMENT_UPDATE)
+        as *mut Option<Expression>)
+    {
+        ctx.retag_stack(AncestorType::ForStatementUpdate);
+        walk_expression(traverser, field as *mut _, ctx);
+    }
+    ctx.retag_stack(AncestorType::ForStatementBody);
+    walk_statement(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_FOR_STATEMENT_BODY) as *mut Statement,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    ctx.set_current_scope_id(previous_scope_id);
+    traverser.exit_for_statement(&mut *node, ctx);
+}
+
+unsafe fn walk_for_statement_init<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut ForStatementInit<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_for_statement_init(&mut *node, ctx);
+    match &mut *node {
+        ForStatementInit::VariableDeclaration(node) => {
+            walk_variable_declaration(traverser, (&mut **node) as *mut _, ctx)
+        }
+        ForStatementInit::BooleanLiteral(_)
+        | ForStatementInit::NullLiteral(_)
+        | ForStatementInit::NumericLiteral(_)
+        | ForStatementInit::BigIntLiteral(_)
+        | ForStatementInit::RegExpLiteral(_)
+        | ForStatementInit::StringLiteral(_)
+        | ForStatementInit::TemplateLiteral(_)
+        | ForStatementInit::Identifier(_)
+        | ForStatementInit::MetaProperty(_)
+        | ForStatementInit::Super(_)
+        | ForStatementInit::ArrayExpression(_)
+        | ForStatementInit::ArrowFunctionExpression(_)
+        | ForStatementInit::AssignmentExpression(_)
+        | ForStatementInit::AwaitExpression(_)
+        | ForStatementInit::BinaryExpression(_)
+        | ForStatementInit::CallExpression(_)
+        | ForStatementInit::ChainExpression(_)
+        | ForStatementInit::ClassExpression(_)
+        | ForStatementInit::ConditionalExpression(_)
+        | ForStatementInit::FunctionExpression(_)
+        | ForStatementInit::ImportExpression(_)
+        | ForStatementInit::LogicalExpression(_)
+        | ForStatementInit::NewExpression(_)
+        | ForStatementInit::ObjectExpression(_)
+        | ForStatementInit::ParenthesizedExpression(_)
+        | ForStatementInit::SequenceExpression(_)
+        | ForStatementInit::TaggedTemplateExpression(_)
+        | ForStatementInit::ThisExpression(_)
+        | ForStatementInit::UnaryExpression(_)
+        | ForStatementInit::UpdateExpression(_)
+        | ForStatementInit::YieldExpression(_)
+        | ForStatementInit::PrivateInExpression(_)
+        | ForStatementInit::JSXElement(_)
+        | ForStatementInit::JSXFragment(_)
+        | ForStatementInit::TSAsExpression(_)
+        | ForStatementInit::TSSatisfiesExpression(_)
+        | ForStatementInit::TSTypeAssertion(_)
+        | ForStatementInit::TSNonNullExpression(_)
+        | ForStatementInit::TSInstantiationExpression(_)
+        | ForStatementInit::V8IntrinsicExpression(_)
+        | ForStatementInit::ComputedMemberExpression(_)
+        | ForStatementInit::StaticMemberExpression(_)
+        | ForStatementInit::PrivateFieldExpression(_) => {
+            walk_expression(traverser, node as *mut _, ctx)
+        }
+    }
+    traverser.exit_for_statement_init(&mut *node, ctx);
+}
+
+unsafe fn walk_for_in_statement<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut ForInStatement<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_for_in_statement(&mut *node, ctx);
+    let previous_scope_id = ctx.current_scope_id();
+    let current_scope_id = (*((node as *mut u8).add(ancestor::OFFSET_FOR_IN_STATEMENT_SCOPE_ID)
+        as *mut Cell<Option<ScopeId>>))
+        .get()
+        .unwrap();
+    ctx.set_current_scope_id(current_scope_id);
+    let pop_token = ctx.push_stack(Ancestor::ForInStatementLeft(
+        ancestor::ForInStatementWithoutLeft(node, PhantomData),
+    ));
+    walk_for_statement_left(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_FOR_IN_STATEMENT_LEFT) as *mut ForStatementLeft,
+        ctx,
+    );
+    ctx.retag_stack(AncestorType::ForInStatementRight);
+    walk_expression(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_FOR_IN_STATEMENT_RIGHT) as *mut Expression,
+        ctx,
+    );
+    ctx.retag_stack(AncestorType::ForInStatementBody);
+    walk_statement(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_FOR_IN_STATEMENT_BODY) as *mut Statement,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    ctx.set_current_scope_id(previous_scope_id);
+    traverser.exit_for_in_statement(&mut *node, ctx);
+}
+
+unsafe fn walk_for_statement_left<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut ForStatementLeft<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_for_statement_left(&mut *node, ctx);
+    match &mut *node {
+        ForStatementLeft::VariableDeclaration(node) => {
+            walk_variable_declaration(traverser, (&mut **node) as *mut _, ctx)
+        }
+        ForStatementLeft::AssignmentTargetIdentifier(_)
+        | ForStatementLeft::TSAsExpression(_)
+        | ForStatementLeft::TSSatisfiesExpression(_)
+        | ForStatementLeft::TSNonNullExpression(_)
+        | ForStatementLeft::TSTypeAssertion(_)
+        | ForStatementLeft::ArrayAssignmentTarget(_)
+        | ForStatementLeft::ObjectAssignmentTarget(_)
+        | ForStatementLeft::ComputedMemberExpression(_)
+        | ForStatementLeft::StaticMemberExpression(_)
+        | ForStatementLeft::PrivateFieldExpression(_) => {
+            walk_assignment_target(traverser, node as *mut _, ctx)
+        }
+    }
+    traverser.exit_for_statement_left(&mut *node, ctx);
+}
+
+unsafe fn walk_for_of_statement<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut ForOfStatement<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_for_of_statement(&mut *node, ctx);
+    let previous_scope_id = ctx.current_scope_id();
+    let current_scope_id = (*((node as *mut u8).add(ancestor::OFFSET_FOR_OF_STATEMENT_SCOPE_ID)
+        as *mut Cell<Option<ScopeId>>))
+        .get()
+        .unwrap();
+    ctx.set_current_scope_id(current_scope_id);
+    let pop_token = ctx.push_stack(Ancestor::ForOfStatementLeft(
+        ancestor::ForOfStatementWithoutLeft(node, PhantomData),
+    ));
+    walk_for_statement_left(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_FOR_OF_STATEMENT_LEFT) as *mut ForStatementLeft,
+        ctx,
+    );
+    ctx.retag_stack(AncestorType::ForOfStatementRight);
+    walk_expression(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_FOR_OF_STATEMENT_RIGHT) as *mut Expression,
+        ctx,
+    );
+    ctx.retag_stack(AncestorType::ForOfStatementBody);
+    walk_statement(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_FOR_OF_STATEMENT_BODY) as *mut Statement,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    ctx.set_current_scope_id(previous_scope_id);
+    traverser.exit_for_of_statement(&mut *node, ctx);
+}
+
+unsafe fn walk_continue_statement<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut ContinueStatement<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_continue_statement(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::ContinueStatementLabel(
+        ancestor::ContinueStatementWithoutLabel(node, PhantomData),
+    ));
+    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_CONTINUE_STATEMENT_LABEL)
+        as *mut Option<LabelIdentifier>)
+    {
+        walk_label_identifier(traverser, field as *mut _, ctx);
+    }
+    ctx.pop_stack(pop_token);
+    traverser.exit_continue_statement(&mut *node, ctx);
+}
+
+unsafe fn walk_break_statement<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut BreakStatement<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_break_statement(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::BreakStatementLabel(
+        ancestor::BreakStatementWithoutLabel(node, PhantomData),
+    ));
+    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_BREAK_STATEMENT_LABEL)
+        as *mut Option<LabelIdentifier>)
+    {
+        walk_label_identifier(traverser, field as *mut _, ctx);
+    }
+    ctx.pop_stack(pop_token);
+    traverser.exit_break_statement(&mut *node, ctx);
+}
+
+unsafe fn walk_return_statement<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut ReturnStatement<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_return_statement(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::ReturnStatementArgument(
+        ancestor::ReturnStatementWithoutArgument(node, PhantomData),
+    ));
+    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_RETURN_STATEMENT_ARGUMENT)
+        as *mut Option<Expression>)
+    {
+        walk_expression(traverser, field as *mut _, ctx);
+    }
+    ctx.pop_stack(pop_token);
+    traverser.exit_return_statement(&mut *node, ctx);
+}
+
+unsafe fn walk_with_statement<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut WithStatement<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_with_statement(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::WithStatementObject(
+        ancestor::WithStatementWithoutObject(node, PhantomData),
+    ));
+    walk_expression(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_WITH_STATEMENT_OBJECT) as *mut Expression,
+        ctx,
+    );
+    let previous_scope_id = ctx.current_scope_id();
+    let current_scope_id = (*((node as *mut u8).add(ancestor::OFFSET_WITH_STATEMENT_SCOPE_ID)
+        as *mut Cell<Option<ScopeId>>))
+        .get()
+        .unwrap();
+    ctx.set_current_scope_id(current_scope_id);
+    ctx.retag_stack(AncestorType::WithStatementBody);
+    walk_statement(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_WITH_STATEMENT_BODY) as *mut Statement,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    ctx.set_current_scope_id(previous_scope_id);
+    traverser.exit_with_statement(&mut *node, ctx);
+}
+
+unsafe fn walk_switch_statement<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut SwitchStatement<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_switch_statement(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::SwitchStatementDiscriminant(
+        ancestor::SwitchStatementWithoutDiscriminant(node, PhantomData),
+    ));
+    walk_expression(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_SWITCH_STATEMENT_DISCRIMINANT) as *mut Expression,
+        ctx,
+    );
+    let previous_scope_id = ctx.current_scope_id();
+    let current_scope_id = (*((node as *mut u8).add(ancestor::OFFSET_SWITCH_STATEMENT_SCOPE_ID)
+        as *mut Cell<Option<ScopeId>>))
+        .get()
+        .unwrap();
+    ctx.set_current_scope_id(current_scope_id);
+    ctx.retag_stack(AncestorType::SwitchStatementCases);
+    for item in &mut *((node as *mut u8).add(ancestor::OFFSET_SWITCH_STATEMENT_CASES)
+        as *mut Vec<SwitchCase>)
+    {
+        walk_switch_case(traverser, item as *mut _, ctx);
+    }
+    ctx.pop_stack(pop_token);
+    ctx.set_current_scope_id(previous_scope_id);
+    traverser.exit_switch_statement(&mut *node, ctx);
+}
+
+unsafe fn walk_switch_case<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut SwitchCase<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_switch_case(&mut *node, ctx);
+    let pop_token = ctx
+        .push_stack(Ancestor::SwitchCaseTest(ancestor::SwitchCaseWithoutTest(node, PhantomData)));
+    if let Some(field) =
+        &mut *((node as *mut u8).add(ancestor::OFFSET_SWITCH_CASE_TEST) as *mut Option<Expression>)
+    {
+        walk_expression(traverser, field as *mut _, ctx);
+    }
+    ctx.retag_stack(AncestorType::SwitchCaseConsequent);
+    walk_statements(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_SWITCH_CASE_CONSEQUENT) as *mut Vec<Statement>,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_switch_case(&mut *node, ctx);
+}
+
+unsafe fn walk_labeled_statement<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut LabeledStatement<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_labeled_statement(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::LabeledStatementLabel(
+        ancestor::LabeledStatementWithoutLabel(node, PhantomData),
+    ));
+    walk_label_identifier(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_LABELED_STATEMENT_LABEL) as *mut LabelIdentifier,
+        ctx,
+    );
+    ctx.retag_stack(AncestorType::LabeledStatementBody);
+    walk_statement(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_LABELED_STATEMENT_BODY) as *mut Statement,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_labeled_statement(&mut *node, ctx);
+}
+
+unsafe fn walk_throw_statement<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut ThrowStatement<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_throw_statement(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::ThrowStatementArgument(
+        ancestor::ThrowStatementWithoutArgument(node, PhantomData),
+    ));
+    walk_expression(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_THROW_STATEMENT_ARGUMENT) as *mut Expression,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_throw_statement(&mut *node, ctx);
+}
+
+unsafe fn walk_try_statement<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TryStatement<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_try_statement(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::TryStatementBlock(
+        ancestor::TryStatementWithoutBlock(node, PhantomData),
+    ));
+    walk_block_statement(
+        traverser,
+        (&mut **((node as *mut u8).add(ancestor::OFFSET_TRY_STATEMENT_BLOCK)
+            as *mut Box<BlockStatement>)) as *mut _,
+        ctx,
+    );
+    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_TRY_STATEMENT_HANDLER)
+        as *mut Option<Box<CatchClause>>)
+    {
+        ctx.retag_stack(AncestorType::TryStatementHandler);
+        walk_catch_clause(traverser, (&mut **field) as *mut _, ctx);
+    }
+    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_TRY_STATEMENT_FINALIZER)
+        as *mut Option<Box<BlockStatement>>)
+    {
+        ctx.retag_stack(AncestorType::TryStatementFinalizer);
+        walk_block_statement(traverser, (&mut **field) as *mut _, ctx);
+    }
+    ctx.pop_stack(pop_token);
+    traverser.exit_try_statement(&mut *node, ctx);
+}
+
+unsafe fn walk_catch_clause<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut CatchClause<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_catch_clause(&mut *node, ctx);
+    let previous_scope_id = ctx.current_scope_id();
+    let current_scope_id = (*((node as *mut u8).add(ancestor::OFFSET_CATCH_CLAUSE_SCOPE_ID)
+        as *mut Cell<Option<ScopeId>>))
+        .get()
+        .unwrap();
+    ctx.set_current_scope_id(current_scope_id);
+    let pop_token = ctx.push_stack(Ancestor::CatchClauseParam(ancestor::CatchClauseWithoutParam(
+        node,
+        PhantomData,
+    )));
+    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_CATCH_CLAUSE_PARAM)
+        as *mut Option<CatchParameter>)
+    {
+        walk_catch_parameter(traverser, field as *mut _, ctx);
+    }
+    ctx.retag_stack(AncestorType::CatchClauseBody);
+    walk_block_statement(
+        traverser,
+        (&mut **((node as *mut u8).add(ancestor::OFFSET_CATCH_CLAUSE_BODY)
+            as *mut Box<BlockStatement>)) as *mut _,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    ctx.set_current_scope_id(previous_scope_id);
+    traverser.exit_catch_clause(&mut *node, ctx);
+}
+
+unsafe fn walk_catch_parameter<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut CatchParameter<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_catch_parameter(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::CatchParameterPattern(
+        ancestor::CatchParameterWithoutPattern(node, PhantomData),
+    ));
+    walk_binding_pattern(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_CATCH_PARAMETER_PATTERN) as *mut BindingPattern,
+        ctx,
+    );
+    if let Some(field) = &mut *((node as *mut u8)
+        .add(ancestor::OFFSET_CATCH_PARAMETER_TYPE_ANNOTATION)
+        as *mut Option<Box<TSTypeAnnotation>>)
+    {
+        ctx.retag_stack(AncestorType::CatchParameterTypeAnnotation);
+        walk_ts_type_annotation(traverser, (&mut **field) as *mut _, ctx);
+    }
+    ctx.pop_stack(pop_token);
+    traverser.exit_catch_parameter(&mut *node, ctx);
+}
+
+unsafe fn walk_debugger_statement<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut DebuggerStatement,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_debugger_statement(&mut *node, ctx);
+    traverser.exit_debugger_statement(&mut *node, ctx);
+}
+
+unsafe fn walk_binding_pattern<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut BindingPattern<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_binding_pattern(&mut *node, ctx);
+    match &mut *node {
+        BindingPattern::BindingIdentifier(node) => {
+            walk_binding_identifier(traverser, (&mut **node) as *mut _, ctx)
+        }
+        BindingPattern::ObjectPattern(node) => {
+            walk_object_pattern(traverser, (&mut **node) as *mut _, ctx)
+        }
+        BindingPattern::ArrayPattern(node) => {
+            walk_array_pattern(traverser, (&mut **node) as *mut _, ctx)
+        }
+        BindingPattern::AssignmentPattern(node) => {
+            walk_assignment_pattern(traverser, (&mut **node) as *mut _, ctx)
+        }
+    }
+    traverser.exit_binding_pattern(&mut *node, ctx);
+}
+
+unsafe fn walk_assignment_pattern<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut AssignmentPattern<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_assignment_pattern(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::AssignmentPatternLeft(
+        ancestor::AssignmentPatternWithoutLeft(node, PhantomData),
+    ));
+    walk_binding_pattern(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_ASSIGNMENT_PATTERN_LEFT) as *mut BindingPattern,
+        ctx,
+    );
+    ctx.retag_stack(AncestorType::AssignmentPatternRight);
+    walk_expression(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_ASSIGNMENT_PATTERN_RIGHT) as *mut Expression,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_assignment_pattern(&mut *node, ctx);
+}
+
+unsafe fn walk_object_pattern<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut ObjectPattern<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_object_pattern(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::ObjectPatternProperties(
+        ancestor::ObjectPatternWithoutProperties(node, PhantomData),
+    ));
+    for item in &mut *((node as *mut u8).add(ancestor::OFFSET_OBJECT_PATTERN_PROPERTIES)
+        as *mut Vec<BindingProperty>)
+    {
+        walk_binding_property(traverser, item as *mut _, ctx);
+    }
+    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_OBJECT_PATTERN_REST)
+        as *mut Option<Box<BindingRestElement>>)
+    {
+        ctx.retag_stack(AncestorType::ObjectPatternRest);
+        walk_binding_rest_element(traverser, (&mut **field) as *mut _, ctx);
+    }
+    ctx.pop_stack(pop_token);
+    traverser.exit_object_pattern(&mut *node, ctx);
+}
+
+unsafe fn walk_binding_property<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut BindingProperty<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_binding_property(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::BindingPropertyKey(
+        ancestor::BindingPropertyWithoutKey(node, PhantomData),
+    ));
+    walk_property_key(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_BINDING_PROPERTY_KEY) as *mut PropertyKey,
+        ctx,
+    );
+    ctx.retag_stack(AncestorType::BindingPropertyValue);
+    walk_binding_pattern(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_BINDING_PROPERTY_VALUE) as *mut BindingPattern,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_binding_property(&mut *node, ctx);
+}
+
+unsafe fn walk_array_pattern<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut ArrayPattern<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_array_pattern(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::ArrayPatternElements(
+        ancestor::ArrayPatternWithoutElements(node, PhantomData),
+    ));
+    for item in (*((node as *mut u8).add(ancestor::OFFSET_ARRAY_PATTERN_ELEMENTS)
+        as *mut Vec<Option<BindingPattern>>))
+        .iter_mut()
+        .flatten()
+    {
+        walk_binding_pattern(traverser, item as *mut _, ctx);
+    }
+    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_ARRAY_PATTERN_REST)
+        as *mut Option<Box<BindingRestElement>>)
+    {
+        ctx.retag_stack(AncestorType::ArrayPatternRest);
+        walk_binding_rest_element(traverser, (&mut **field) as *mut _, ctx);
+    }
+    ctx.pop_stack(pop_token);
+    traverser.exit_array_pattern(&mut *node, ctx);
+}
+
+unsafe fn walk_binding_rest_element<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut BindingRestElement<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_binding_rest_element(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::BindingRestElementArgument(
+        ancestor::BindingRestElementWithoutArgument(node, PhantomData),
+    ));
+    walk_binding_pattern(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_BINDING_REST_ELEMENT_ARGUMENT)
+            as *mut BindingPattern,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_binding_rest_element(&mut *node, ctx);
+}
+
+unsafe fn walk_function<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut Function<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_function(&mut *node, ctx);
+    let previous_scope_id = ctx.current_scope_id();
+    let current_scope_id = (*((node as *mut u8).add(ancestor::OFFSET_FUNCTION_SCOPE_ID)
+        as *mut Cell<Option<ScopeId>>))
+        .get()
+        .unwrap();
+    ctx.set_current_scope_id(current_scope_id);
+    let previous_hoist_scope_id = ctx.current_hoist_scope_id();
+    ctx.set_current_hoist_scope_id(current_scope_id);
+    let previous_block_scope_id = ctx.current_block_scope_id();
+    ctx.set_current_block_scope_id(current_scope_id);
+    let pop_token =
+        ctx.push_stack(Ancestor::FunctionId(ancestor::FunctionWithoutId(node, PhantomData)));
+    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_FUNCTION_ID)
+        as *mut Option<BindingIdentifier>)
+    {
+        walk_binding_identifier(traverser, field as *mut _, ctx);
+    }
+    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_FUNCTION_TYPE_PARAMETERS)
+        as *mut Option<Box<TSTypeParameterDeclaration>>)
+    {
+        ctx.retag_stack(AncestorType::FunctionTypeParameters);
+        walk_ts_type_parameter_declaration(traverser, (&mut **field) as *mut _, ctx);
+    }
+    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_FUNCTION_THIS_PARAM)
+        as *mut Option<Box<TSThisParameter>>)
+    {
+        ctx.retag_stack(AncestorType::FunctionThisParam);
+        walk_ts_this_parameter(traverser, (&mut **field) as *mut _, ctx);
+    }
+    ctx.retag_stack(AncestorType::FunctionParams);
+    walk_formal_parameters(
+        traverser,
+        (&mut **((node as *mut u8).add(ancestor::OFFSET_FUNCTION_PARAMS)
+            as *mut Box<FormalParameters>)) as *mut _,
+        ctx,
+    );
+    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_FUNCTION_RETURN_TYPE)
+        as *mut Option<Box<TSTypeAnnotation>>)
+    {
+        ctx.retag_stack(AncestorType::FunctionReturnType);
+        walk_ts_type_annotation(traverser, (&mut **field) as *mut _, ctx);
+    }
+    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_FUNCTION_BODY)
+        as *mut Option<Box<FunctionBody>>)
+    {
+        ctx.retag_stack(AncestorType::FunctionBody);
+        walk_function_body(traverser, (&mut **field) as *mut _, ctx);
+    }
+    ctx.pop_stack(pop_token);
+    ctx.set_current_scope_id(previous_scope_id);
+    ctx.set_current_hoist_scope_id(previous_hoist_scope_id);
+    ctx.set_current_block_scope_id(previous_block_scope_id);
+    traverser.exit_function(&mut *node, ctx);
+}
+
+unsafe fn walk_formal_parameters<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut FormalParameters<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_formal_parameters(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::FormalParametersItems(
+        ancestor::FormalParametersWithoutItems(node, PhantomData),
+    ));
+    for item in &mut *((node as *mut u8).add(ancestor::OFFSET_FORMAL_PARAMETERS_ITEMS)
+        as *mut Vec<FormalParameter>)
+    {
+        walk_formal_parameter(traverser, item as *mut _, ctx);
+    }
+    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_FORMAL_PARAMETERS_REST)
+        as *mut Option<Box<FormalParameterRest>>)
+    {
+        ctx.retag_stack(AncestorType::FormalParametersRest);
+        walk_formal_parameter_rest(traverser, (&mut **field) as *mut _, ctx);
+    }
+    ctx.pop_stack(pop_token);
+    traverser.exit_formal_parameters(&mut *node, ctx);
+}
+
+unsafe fn walk_formal_parameter<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut FormalParameter<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_formal_parameter(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::FormalParameterDecorators(
+        ancestor::FormalParameterWithoutDecorators(node, PhantomData),
+    ));
+    for item in &mut *((node as *mut u8).add(ancestor::OFFSET_FORMAL_PARAMETER_DECORATORS)
+        as *mut Vec<Decorator>)
+    {
+        walk_decorator(traverser, item as *mut _, ctx);
+    }
+    ctx.retag_stack(AncestorType::FormalParameterPattern);
+    walk_binding_pattern(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_FORMAL_PARAMETER_PATTERN) as *mut BindingPattern,
+        ctx,
+    );
+    if let Some(field) = &mut *((node as *mut u8)
+        .add(ancestor::OFFSET_FORMAL_PARAMETER_TYPE_ANNOTATION)
+        as *mut Option<Box<TSTypeAnnotation>>)
+    {
+        ctx.retag_stack(AncestorType::FormalParameterTypeAnnotation);
+        walk_ts_type_annotation(traverser, (&mut **field) as *mut _, ctx);
+    }
+    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_FORMAL_PARAMETER_INITIALIZER)
+        as *mut Option<Box<Expression>>)
+    {
+        ctx.retag_stack(AncestorType::FormalParameterInitializer);
+        walk_expression(traverser, (&mut **field) as *mut _, ctx);
+    }
+    ctx.pop_stack(pop_token);
+    traverser.exit_formal_parameter(&mut *node, ctx);
+}
+
+unsafe fn walk_formal_parameter_rest<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut FormalParameterRest<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_formal_parameter_rest(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::FormalParameterRestDecorators(
+        ancestor::FormalParameterRestWithoutDecorators(node, PhantomData),
+    ));
+    for item in &mut *((node as *mut u8).add(ancestor::OFFSET_FORMAL_PARAMETER_REST_DECORATORS)
+        as *mut Vec<Decorator>)
+    {
+        walk_decorator(traverser, item as *mut _, ctx);
+    }
+    ctx.retag_stack(AncestorType::FormalParameterRestRest);
+    walk_binding_rest_element(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_FORMAL_PARAMETER_REST_REST)
+            as *mut BindingRestElement,
+        ctx,
+    );
+    if let Some(field) = &mut *((node as *mut u8)
+        .add(ancestor::OFFSET_FORMAL_PARAMETER_REST_TYPE_ANNOTATION)
+        as *mut Option<Box<TSTypeAnnotation>>)
+    {
+        ctx.retag_stack(AncestorType::FormalParameterRestTypeAnnotation);
+        walk_ts_type_annotation(traverser, (&mut **field) as *mut _, ctx);
+    }
+    ctx.pop_stack(pop_token);
+    traverser.exit_formal_parameter_rest(&mut *node, ctx);
+}
+
+unsafe fn walk_function_body<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut FunctionBody<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_function_body(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::FunctionBodyDirectives(
+        ancestor::FunctionBodyWithoutDirectives(node, PhantomData),
+    ));
+    for item in &mut *((node as *mut u8).add(ancestor::OFFSET_FUNCTION_BODY_DIRECTIVES)
+        as *mut Vec<Directive>)
+    {
+        walk_directive(traverser, item as *mut _, ctx);
+    }
+    ctx.retag_stack(AncestorType::FunctionBodyStatements);
+    walk_statements(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_FUNCTION_BODY_STATEMENTS) as *mut Vec<Statement>,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_function_body(&mut *node, ctx);
+}
+
+unsafe fn walk_arrow_function_expression<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut ArrowFunctionExpression<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_arrow_function_expression(&mut *node, ctx);
+    let previous_scope_id = ctx.current_scope_id();
+    let current_scope_id = (*((node as *mut u8)
+        .add(ancestor::OFFSET_ARROW_FUNCTION_EXPRESSION_SCOPE_ID)
+        as *mut Cell<Option<ScopeId>>))
+        .get()
+        .unwrap();
+    ctx.set_current_scope_id(current_scope_id);
+    let previous_hoist_scope_id = ctx.current_hoist_scope_id();
+    ctx.set_current_hoist_scope_id(current_scope_id);
+    let previous_block_scope_id = ctx.current_block_scope_id();
+    ctx.set_current_block_scope_id(current_scope_id);
+    let pop_token = ctx.push_stack(Ancestor::ArrowFunctionExpressionTypeParameters(
+        ancestor::ArrowFunctionExpressionWithoutTypeParameters(node, PhantomData),
+    ));
+    if let Some(field) = &mut *((node as *mut u8)
+        .add(ancestor::OFFSET_ARROW_FUNCTION_EXPRESSION_TYPE_PARAMETERS)
+        as *mut Option<Box<TSTypeParameterDeclaration>>)
+    {
+        walk_ts_type_parameter_declaration(traverser, (&mut **field) as *mut _, ctx);
+    }
+    ctx.retag_stack(AncestorType::ArrowFunctionExpressionParams);
+    walk_formal_parameters(
+        traverser,
+        (&mut **((node as *mut u8).add(ancestor::OFFSET_ARROW_FUNCTION_EXPRESSION_PARAMS)
+            as *mut Box<FormalParameters>)) as *mut _,
+        ctx,
+    );
+    if let Some(field) = &mut *((node as *mut u8)
+        .add(ancestor::OFFSET_ARROW_FUNCTION_EXPRESSION_RETURN_TYPE)
+        as *mut Option<Box<TSTypeAnnotation>>)
+    {
+        ctx.retag_stack(AncestorType::ArrowFunctionExpressionReturnType);
+        walk_ts_type_annotation(traverser, (&mut **field) as *mut _, ctx);
+    }
+    ctx.retag_stack(AncestorType::ArrowFunctionExpressionBody);
+    walk_function_body(
+        traverser,
+        (&mut **((node as *mut u8).add(ancestor::OFFSET_ARROW_FUNCTION_EXPRESSION_BODY)
+            as *mut Box<FunctionBody>)) as *mut _,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    ctx.set_current_scope_id(previous_scope_id);
+    ctx.set_current_hoist_scope_id(previous_hoist_scope_id);
+    ctx.set_current_block_scope_id(previous_block_scope_id);
+    traverser.exit_arrow_function_expression(&mut *node, ctx);
+}
+
+unsafe fn walk_yield_expression<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut YieldExpression<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_yield_expression(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::YieldExpressionArgument(
+        ancestor::YieldExpressionWithoutArgument(node, PhantomData),
+    ));
+    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_YIELD_EXPRESSION_ARGUMENT)
+        as *mut Option<Expression>)
+    {
+        walk_expression(traverser, field as *mut _, ctx);
+    }
+    ctx.pop_stack(pop_token);
+    traverser.exit_yield_expression(&mut *node, ctx);
+}
+
+unsafe fn walk_class<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut Class<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_class(&mut *node, ctx);
+    let pop_token = ctx
+        .push_stack(Ancestor::ClassDecorators(ancestor::ClassWithoutDecorators(node, PhantomData)));
+    for item in
+        &mut *((node as *mut u8).add(ancestor::OFFSET_CLASS_DECORATORS) as *mut Vec<Decorator>)
+    {
+        walk_decorator(traverser, item as *mut _, ctx);
+    }
+    if let Some(field) =
+        &mut *((node as *mut u8).add(ancestor::OFFSET_CLASS_ID) as *mut Option<BindingIdentifier>)
+    {
+        ctx.retag_stack(AncestorType::ClassId);
+        walk_binding_identifier(traverser, field as *mut _, ctx);
+    }
+    let previous_scope_id = ctx.current_scope_id();
+    let current_scope_id = (*((node as *mut u8).add(ancestor::OFFSET_CLASS_SCOPE_ID)
+        as *mut Cell<Option<ScopeId>>))
+        .get()
+        .unwrap();
+    ctx.set_current_scope_id(current_scope_id);
+    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_CLASS_TYPE_PARAMETERS)
+        as *mut Option<Box<TSTypeParameterDeclaration>>)
+    {
+        ctx.retag_stack(AncestorType::ClassTypeParameters);
+        walk_ts_type_parameter_declaration(traverser, (&mut **field) as *mut _, ctx);
+    }
+    if let Some(field) =
+        &mut *((node as *mut u8).add(ancestor::OFFSET_CLASS_SUPER_CLASS) as *mut Option<Expression>)
+    {
+        ctx.retag_stack(AncestorType::ClassSuperClass);
+        walk_expression(traverser, field as *mut _, ctx);
+    }
+    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_CLASS_SUPER_TYPE_ARGUMENTS)
+        as *mut Option<Box<TSTypeParameterInstantiation>>)
+    {
+        ctx.retag_stack(AncestorType::ClassSuperTypeArguments);
+        walk_ts_type_parameter_instantiation(traverser, (&mut **field) as *mut _, ctx);
+    }
+    ctx.retag_stack(AncestorType::ClassImplements);
+    for item in &mut *((node as *mut u8).add(ancestor::OFFSET_CLASS_IMPLEMENTS)
+        as *mut Vec<TSClassImplements>)
+    {
+        walk_ts_class_implements(traverser, item as *mut _, ctx);
+    }
+    ctx.retag_stack(AncestorType::ClassBody);
+    walk_class_body(
+        traverser,
+        (&mut **((node as *mut u8).add(ancestor::OFFSET_CLASS_BODY) as *mut Box<ClassBody>))
+            as *mut _,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    ctx.set_current_scope_id(previous_scope_id);
+    traverser.exit_class(&mut *node, ctx);
+}
+
+unsafe fn walk_class_body<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut ClassBody<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_class_body(&mut *node, ctx);
+    let pop_token =
+        ctx.push_stack(Ancestor::ClassBodyBody(ancestor::ClassBodyWithoutBody(node, PhantomData)));
+    for item in
+        &mut *((node as *mut u8).add(ancestor::OFFSET_CLASS_BODY_BODY) as *mut Vec<ClassElement>)
+    {
+        walk_class_element(traverser, item as *mut _, ctx);
+    }
+    ctx.pop_stack(pop_token);
+    traverser.exit_class_body(&mut *node, ctx);
+}
+
+unsafe fn walk_class_element<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut ClassElement<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_class_element(&mut *node, ctx);
+    match &mut *node {
+        ClassElement::StaticBlock(node) => {
+            walk_static_block(traverser, (&mut **node) as *mut _, ctx)
+        }
+        ClassElement::MethodDefinition(node) => {
+            walk_method_definition(traverser, (&mut **node) as *mut _, ctx)
+        }
+        ClassElement::PropertyDefinition(node) => {
+            walk_property_definition(traverser, (&mut **node) as *mut _, ctx)
+        }
+        ClassElement::AccessorProperty(node) => {
+            walk_accessor_property(traverser, (&mut **node) as *mut _, ctx)
+        }
+        ClassElement::TSIndexSignature(node) => {
+            walk_ts_index_signature(traverser, (&mut **node) as *mut _, ctx)
+        }
+    }
+    traverser.exit_class_element(&mut *node, ctx);
+}
+
+unsafe fn walk_method_definition<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut MethodDefinition<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_method_definition(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::MethodDefinitionDecorators(
+        ancestor::MethodDefinitionWithoutDecorators(node, PhantomData),
+    ));
+    for item in &mut *((node as *mut u8).add(ancestor::OFFSET_METHOD_DEFINITION_DECORATORS)
+        as *mut Vec<Decorator>)
+    {
+        walk_decorator(traverser, item as *mut _, ctx);
+    }
+    ctx.retag_stack(AncestorType::MethodDefinitionKey);
+    walk_property_key(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_METHOD_DEFINITION_KEY) as *mut PropertyKey,
+        ctx,
+    );
+    ctx.retag_stack(AncestorType::MethodDefinitionValue);
+    walk_function(
+        traverser,
+        (&mut **((node as *mut u8).add(ancestor::OFFSET_METHOD_DEFINITION_VALUE)
+            as *mut Box<Function>)) as *mut _,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_method_definition(&mut *node, ctx);
+}
+
+unsafe fn walk_property_definition<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut PropertyDefinition<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_property_definition(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::PropertyDefinitionDecorators(
+        ancestor::PropertyDefinitionWithoutDecorators(node, PhantomData),
+    ));
+    for item in &mut *((node as *mut u8).add(ancestor::OFFSET_PROPERTY_DEFINITION_DECORATORS)
+        as *mut Vec<Decorator>)
+    {
+        walk_decorator(traverser, item as *mut _, ctx);
+    }
+    ctx.retag_stack(AncestorType::PropertyDefinitionKey);
+    walk_property_key(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_PROPERTY_DEFINITION_KEY) as *mut PropertyKey,
+        ctx,
+    );
+    if let Some(field) = &mut *((node as *mut u8)
+        .add(ancestor::OFFSET_PROPERTY_DEFINITION_TYPE_ANNOTATION)
+        as *mut Option<Box<TSTypeAnnotation>>)
+    {
+        ctx.retag_stack(AncestorType::PropertyDefinitionTypeAnnotation);
+        walk_ts_type_annotation(traverser, (&mut **field) as *mut _, ctx);
+    }
+    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_PROPERTY_DEFINITION_VALUE)
+        as *mut Option<Expression>)
+    {
+        ctx.retag_stack(AncestorType::PropertyDefinitionValue);
+        walk_expression(traverser, field as *mut _, ctx);
+    }
+    ctx.pop_stack(pop_token);
+    traverser.exit_property_definition(&mut *node, ctx);
+}
+
+unsafe fn walk_private_identifier<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut PrivateIdentifier<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_private_identifier(&mut *node, ctx);
+    traverser.exit_private_identifier(&mut *node, ctx);
+}
+
+unsafe fn walk_static_block<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut StaticBlock<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_static_block(&mut *node, ctx);
+    let previous_scope_id = ctx.current_scope_id();
+    let current_scope_id = (*((node as *mut u8).add(ancestor::OFFSET_STATIC_BLOCK_SCOPE_ID)
+        as *mut Cell<Option<ScopeId>>))
+        .get()
+        .unwrap();
+    ctx.set_current_scope_id(current_scope_id);
+    let previous_hoist_scope_id = ctx.current_hoist_scope_id();
+    ctx.set_current_hoist_scope_id(current_scope_id);
+    let previous_block_scope_id = ctx.current_block_scope_id();
+    ctx.set_current_block_scope_id(current_scope_id);
+    let pop_token = ctx
+        .push_stack(Ancestor::StaticBlockBody(ancestor::StaticBlockWithoutBody(node, PhantomData)));
+    walk_statements(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_STATIC_BLOCK_BODY) as *mut Vec<Statement>,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    ctx.set_current_scope_id(previous_scope_id);
+    ctx.set_current_hoist_scope_id(previous_hoist_scope_id);
+    ctx.set_current_block_scope_id(previous_block_scope_id);
+    traverser.exit_static_block(&mut *node, ctx);
+}
+
+unsafe fn walk_module_declaration<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut ModuleDeclaration<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_module_declaration(&mut *node, ctx);
+    match &mut *node {
+        ModuleDeclaration::ImportDeclaration(node) => {
+            walk_import_declaration(traverser, (&mut **node) as *mut _, ctx)
+        }
+        ModuleDeclaration::ExportAllDeclaration(node) => {
+            walk_export_all_declaration(traverser, (&mut **node) as *mut _, ctx)
+        }
+        ModuleDeclaration::ExportDefaultDeclaration(node) => {
+            walk_export_default_declaration(traverser, (&mut **node) as *mut _, ctx)
+        }
+        ModuleDeclaration::ExportNamedDeclaration(node) => {
+            walk_export_named_declaration(traverser, (&mut **node) as *mut _, ctx)
+        }
+        ModuleDeclaration::TSExportAssignment(node) => {
+            walk_ts_export_assignment(traverser, (&mut **node) as *mut _, ctx)
+        }
+        ModuleDeclaration::TSNamespaceExportDeclaration(node) => {
+            walk_ts_namespace_export_declaration(traverser, (&mut **node) as *mut _, ctx)
+        }
+    }
+    traverser.exit_module_declaration(&mut *node, ctx);
+}
+
+unsafe fn walk_accessor_property<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut AccessorProperty<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_accessor_property(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::AccessorPropertyDecorators(
+        ancestor::AccessorPropertyWithoutDecorators(node, PhantomData),
+    ));
+    for item in &mut *((node as *mut u8).add(ancestor::OFFSET_ACCESSOR_PROPERTY_DECORATORS)
+        as *mut Vec<Decorator>)
+    {
+        walk_decorator(traverser, item as *mut _, ctx);
+    }
+    ctx.retag_stack(AncestorType::AccessorPropertyKey);
+    walk_property_key(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_ACCESSOR_PROPERTY_KEY) as *mut PropertyKey,
+        ctx,
+    );
+    if let Some(field) = &mut *((node as *mut u8)
+        .add(ancestor::OFFSET_ACCESSOR_PROPERTY_TYPE_ANNOTATION)
+        as *mut Option<Box<TSTypeAnnotation>>)
+    {
+        ctx.retag_stack(AncestorType::AccessorPropertyTypeAnnotation);
+        walk_ts_type_annotation(traverser, (&mut **field) as *mut _, ctx);
+    }
+    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_ACCESSOR_PROPERTY_VALUE)
+        as *mut Option<Expression>)
+    {
+        ctx.retag_stack(AncestorType::AccessorPropertyValue);
+        walk_expression(traverser, field as *mut _, ctx);
+    }
+    ctx.pop_stack(pop_token);
+    traverser.exit_accessor_property(&mut *node, ctx);
+}
+
+unsafe fn walk_import_expression<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut ImportExpression<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_import_expression(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::ImportExpressionSource(
+        ancestor::ImportExpressionWithoutSource(node, PhantomData),
+    ));
+    walk_expression(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_IMPORT_EXPRESSION_SOURCE) as *mut Expression,
+        ctx,
+    );
+    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_IMPORT_EXPRESSION_OPTIONS)
+        as *mut Option<Expression>)
+    {
+        ctx.retag_stack(AncestorType::ImportExpressionOptions);
+        walk_expression(traverser, field as *mut _, ctx);
+    }
+    ctx.pop_stack(pop_token);
+    traverser.exit_import_expression(&mut *node, ctx);
+}
+
+unsafe fn walk_import_declaration<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut ImportDeclaration<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_import_declaration(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::ImportDeclarationSpecifiers(
+        ancestor::ImportDeclarationWithoutSpecifiers(node, PhantomData),
+    ));
+    if let Some(field) = &mut *((node as *mut u8)
+        .add(ancestor::OFFSET_IMPORT_DECLARATION_SPECIFIERS)
+        as *mut Option<Vec<ImportDeclarationSpecifier>>)
+    {
+        for item in field.iter_mut() {
+            walk_import_declaration_specifier(traverser, item as *mut _, ctx);
+        }
+    }
+    ctx.retag_stack(AncestorType::ImportDeclarationSource);
+    walk_string_literal(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_IMPORT_DECLARATION_SOURCE) as *mut StringLiteral,
+        ctx,
+    );
+    if let Some(field) = &mut *((node as *mut u8)
+        .add(ancestor::OFFSET_IMPORT_DECLARATION_WITH_CLAUSE)
+        as *mut Option<Box<WithClause>>)
+    {
+        ctx.retag_stack(AncestorType::ImportDeclarationWithClause);
+        walk_with_clause(traverser, (&mut **field) as *mut _, ctx);
+    }
+    ctx.pop_stack(pop_token);
+    traverser.exit_import_declaration(&mut *node, ctx);
+}
+
+unsafe fn walk_import_declaration_specifier<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut ImportDeclarationSpecifier<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_import_declaration_specifier(&mut *node, ctx);
+    match &mut *node {
+        ImportDeclarationSpecifier::ImportSpecifier(node) => {
+            walk_import_specifier(traverser, (&mut **node) as *mut _, ctx)
+        }
+        ImportDeclarationSpecifier::ImportDefaultSpecifier(node) => {
+            walk_import_default_specifier(traverser, (&mut **node) as *mut _, ctx)
+        }
+        ImportDeclarationSpecifier::ImportNamespaceSpecifier(node) => {
+            walk_import_namespace_specifier(traverser, (&mut **node) as *mut _, ctx)
+        }
+    }
+    traverser.exit_import_declaration_specifier(&mut *node, ctx);
+}
+
+unsafe fn walk_import_specifier<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut ImportSpecifier<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_import_specifier(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::ImportSpecifierImported(
+        ancestor::ImportSpecifierWithoutImported(node, PhantomData),
+    ));
+    walk_module_export_name(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_IMPORT_SPECIFIER_IMPORTED) as *mut ModuleExportName,
+        ctx,
+    );
+    ctx.retag_stack(AncestorType::ImportSpecifierLocal);
+    walk_binding_identifier(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_IMPORT_SPECIFIER_LOCAL) as *mut BindingIdentifier,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_import_specifier(&mut *node, ctx);
+}
+
+unsafe fn walk_import_default_specifier<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut ImportDefaultSpecifier<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_import_default_specifier(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::ImportDefaultSpecifierLocal(
+        ancestor::ImportDefaultSpecifierWithoutLocal(node, PhantomData),
+    ));
+    walk_binding_identifier(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_IMPORT_DEFAULT_SPECIFIER_LOCAL)
+            as *mut BindingIdentifier,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_import_default_specifier(&mut *node, ctx);
+}
+
+unsafe fn walk_import_namespace_specifier<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut ImportNamespaceSpecifier<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_import_namespace_specifier(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::ImportNamespaceSpecifierLocal(
+        ancestor::ImportNamespaceSpecifierWithoutLocal(node, PhantomData),
+    ));
+    walk_binding_identifier(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_IMPORT_NAMESPACE_SPECIFIER_LOCAL)
+            as *mut BindingIdentifier,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_import_namespace_specifier(&mut *node, ctx);
+}
+
+unsafe fn walk_with_clause<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut WithClause<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_with_clause(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::WithClauseWithEntries(
+        ancestor::WithClauseWithoutWithEntries(node, PhantomData),
+    ));
+    for item in &mut *((node as *mut u8).add(ancestor::OFFSET_WITH_CLAUSE_WITH_ENTRIES)
+        as *mut Vec<ImportAttribute>)
+    {
+        walk_import_attribute(traverser, item as *mut _, ctx);
+    }
+    ctx.pop_stack(pop_token);
+    traverser.exit_with_clause(&mut *node, ctx);
+}
+
+unsafe fn walk_import_attribute<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut ImportAttribute<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_import_attribute(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::ImportAttributeKey(
+        ancestor::ImportAttributeWithoutKey(node, PhantomData),
+    ));
+    walk_import_attribute_key(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_IMPORT_ATTRIBUTE_KEY) as *mut ImportAttributeKey,
+        ctx,
+    );
+    ctx.retag_stack(AncestorType::ImportAttributeValue);
+    walk_string_literal(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_IMPORT_ATTRIBUTE_VALUE) as *mut StringLiteral,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_import_attribute(&mut *node, ctx);
+}
+
+unsafe fn walk_import_attribute_key<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut ImportAttributeKey<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_import_attribute_key(&mut *node, ctx);
+    match &mut *node {
+        ImportAttributeKey::Identifier(node) => {
+            walk_identifier_name(traverser, node as *mut _, ctx)
+        }
+        ImportAttributeKey::StringLiteral(node) => {
+            walk_string_literal(traverser, node as *mut _, ctx)
+        }
+    }
+    traverser.exit_import_attribute_key(&mut *node, ctx);
+}
+
+unsafe fn walk_export_named_declaration<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut ExportNamedDeclaration<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_export_named_declaration(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::ExportNamedDeclarationDeclaration(
+        ancestor::ExportNamedDeclarationWithoutDeclaration(node, PhantomData),
+    ));
+    if let Some(field) = &mut *((node as *mut u8)
+        .add(ancestor::OFFSET_EXPORT_NAMED_DECLARATION_DECLARATION)
+        as *mut Option<Declaration>)
+    {
+        walk_declaration(traverser, field as *mut _, ctx);
+    }
+    ctx.retag_stack(AncestorType::ExportNamedDeclarationSpecifiers);
+    for item in &mut *((node as *mut u8).add(ancestor::OFFSET_EXPORT_NAMED_DECLARATION_SPECIFIERS)
+        as *mut Vec<ExportSpecifier>)
+    {
+        walk_export_specifier(traverser, item as *mut _, ctx);
+    }
+    if let Some(field) = &mut *((node as *mut u8)
+        .add(ancestor::OFFSET_EXPORT_NAMED_DECLARATION_SOURCE)
+        as *mut Option<StringLiteral>)
+    {
+        ctx.retag_stack(AncestorType::ExportNamedDeclarationSource);
+        walk_string_literal(traverser, field as *mut _, ctx);
+    }
+    if let Some(field) = &mut *((node as *mut u8)
+        .add(ancestor::OFFSET_EXPORT_NAMED_DECLARATION_WITH_CLAUSE)
+        as *mut Option<Box<WithClause>>)
+    {
+        ctx.retag_stack(AncestorType::ExportNamedDeclarationWithClause);
+        walk_with_clause(traverser, (&mut **field) as *mut _, ctx);
+    }
+    ctx.pop_stack(pop_token);
+    traverser.exit_export_named_declaration(&mut *node, ctx);
+}
+
+unsafe fn walk_export_default_declaration<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut ExportDefaultDeclaration<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_export_default_declaration(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::ExportDefaultDeclarationDeclaration(
+        ancestor::ExportDefaultDeclarationWithoutDeclaration(node, PhantomData),
+    ));
+    walk_export_default_declaration_kind(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_EXPORT_DEFAULT_DECLARATION_DECLARATION)
+            as *mut ExportDefaultDeclarationKind,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_export_default_declaration(&mut *node, ctx);
+}
+
+unsafe fn walk_export_all_declaration<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut ExportAllDeclaration<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_export_all_declaration(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::ExportAllDeclarationExported(
+        ancestor::ExportAllDeclarationWithoutExported(node, PhantomData),
+    ));
+    if let Some(field) = &mut *((node as *mut u8)
+        .add(ancestor::OFFSET_EXPORT_ALL_DECLARATION_EXPORTED)
+        as *mut Option<ModuleExportName>)
+    {
+        walk_module_export_name(traverser, field as *mut _, ctx);
+    }
+    ctx.retag_stack(AncestorType::ExportAllDeclarationSource);
+    walk_string_literal(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_EXPORT_ALL_DECLARATION_SOURCE) as *mut StringLiteral,
+        ctx,
+    );
+    if let Some(field) = &mut *((node as *mut u8)
+        .add(ancestor::OFFSET_EXPORT_ALL_DECLARATION_WITH_CLAUSE)
+        as *mut Option<Box<WithClause>>)
+    {
+        ctx.retag_stack(AncestorType::ExportAllDeclarationWithClause);
+        walk_with_clause(traverser, (&mut **field) as *mut _, ctx);
+    }
+    ctx.pop_stack(pop_token);
+    traverser.exit_export_all_declaration(&mut *node, ctx);
+}
+
+unsafe fn walk_export_specifier<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut ExportSpecifier<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_export_specifier(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::ExportSpecifierLocal(
+        ancestor::ExportSpecifierWithoutLocal(node, PhantomData),
+    ));
+    walk_module_export_name(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_EXPORT_SPECIFIER_LOCAL) as *mut ModuleExportName,
+        ctx,
+    );
+    ctx.retag_stack(AncestorType::ExportSpecifierExported);
+    walk_module_export_name(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_EXPORT_SPECIFIER_EXPORTED) as *mut ModuleExportName,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_export_specifier(&mut *node, ctx);
+}
+
+unsafe fn walk_export_default_declaration_kind<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut ExportDefaultDeclarationKind<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_export_default_declaration_kind(&mut *node, ctx);
+    match &mut *node {
+        ExportDefaultDeclarationKind::FunctionDeclaration(node) => {
+            walk_function(traverser, (&mut **node) as *mut _, ctx)
+        }
+        ExportDefaultDeclarationKind::ClassDeclaration(node) => {
+            walk_class(traverser, (&mut **node) as *mut _, ctx)
+        }
+        ExportDefaultDeclarationKind::TSInterfaceDeclaration(node) => {
+            walk_ts_interface_declaration(traverser, (&mut **node) as *mut _, ctx)
+        }
+        ExportDefaultDeclarationKind::BooleanLiteral(_)
+        | ExportDefaultDeclarationKind::NullLiteral(_)
+        | ExportDefaultDeclarationKind::NumericLiteral(_)
+        | ExportDefaultDeclarationKind::BigIntLiteral(_)
+        | ExportDefaultDeclarationKind::RegExpLiteral(_)
+        | ExportDefaultDeclarationKind::StringLiteral(_)
+        | ExportDefaultDeclarationKind::TemplateLiteral(_)
+        | ExportDefaultDeclarationKind::Identifier(_)
+        | ExportDefaultDeclarationKind::MetaProperty(_)
+        | ExportDefaultDeclarationKind::Super(_)
+        | ExportDefaultDeclarationKind::ArrayExpression(_)
+        | ExportDefaultDeclarationKind::ArrowFunctionExpression(_)
+        | ExportDefaultDeclarationKind::AssignmentExpression(_)
+        | ExportDefaultDeclarationKind::AwaitExpression(_)
+        | ExportDefaultDeclarationKind::BinaryExpression(_)
+        | ExportDefaultDeclarationKind::CallExpression(_)
+        | ExportDefaultDeclarationKind::ChainExpression(_)
+        | ExportDefaultDeclarationKind::ClassExpression(_)
+        | ExportDefaultDeclarationKind::ConditionalExpression(_)
+        | ExportDefaultDeclarationKind::FunctionExpression(_)
+        | ExportDefaultDeclarationKind::ImportExpression(_)
+        | ExportDefaultDeclarationKind::LogicalExpression(_)
+        | ExportDefaultDeclarationKind::NewExpression(_)
+        | ExportDefaultDeclarationKind::ObjectExpression(_)
+        | ExportDefaultDeclarationKind::ParenthesizedExpression(_)
+        | ExportDefaultDeclarationKind::SequenceExpression(_)
+        | ExportDefaultDeclarationKind::TaggedTemplateExpression(_)
+        | ExportDefaultDeclarationKind::ThisExpression(_)
+        | ExportDefaultDeclarationKind::UnaryExpression(_)
+        | ExportDefaultDeclarationKind::UpdateExpression(_)
+        | ExportDefaultDeclarationKind::YieldExpression(_)
+        | ExportDefaultDeclarationKind::PrivateInExpression(_)
+        | ExportDefaultDeclarationKind::JSXElement(_)
+        | ExportDefaultDeclarationKind::JSXFragment(_)
+        | ExportDefaultDeclarationKind::TSAsExpression(_)
+        | ExportDefaultDeclarationKind::TSSatisfiesExpression(_)
+        | ExportDefaultDeclarationKind::TSTypeAssertion(_)
+        | ExportDefaultDeclarationKind::TSNonNullExpression(_)
+        | ExportDefaultDeclarationKind::TSInstantiationExpression(_)
+        | ExportDefaultDeclarationKind::V8IntrinsicExpression(_)
+        | ExportDefaultDeclarationKind::ComputedMemberExpression(_)
+        | ExportDefaultDeclarationKind::StaticMemberExpression(_)
+        | ExportDefaultDeclarationKind::PrivateFieldExpression(_) => {
+            walk_expression(traverser, node as *mut _, ctx)
+        }
+    }
+    traverser.exit_export_default_declaration_kind(&mut *node, ctx);
+}
+
+unsafe fn walk_module_export_name<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut ModuleExportName<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_module_export_name(&mut *node, ctx);
+    match &mut *node {
+        ModuleExportName::IdentifierName(node) => {
+            walk_identifier_name(traverser, node as *mut _, ctx)
+        }
+        ModuleExportName::IdentifierReference(node) => {
+            walk_identifier_reference(traverser, node as *mut _, ctx)
+        }
+        ModuleExportName::StringLiteral(node) => {
+            walk_string_literal(traverser, node as *mut _, ctx)
+        }
+    }
+    traverser.exit_module_export_name(&mut *node, ctx);
+}
+
+unsafe fn walk_v8_intrinsic_expression<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut V8IntrinsicExpression<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_v8_intrinsic_expression(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::V8IntrinsicExpressionName(
+        ancestor::V8IntrinsicExpressionWithoutName(node, PhantomData),
+    ));
+    walk_identifier_name(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_V8_INTRINSIC_EXPRESSION_NAME) as *mut IdentifierName,
+        ctx,
+    );
+    ctx.retag_stack(AncestorType::V8IntrinsicExpressionArguments);
+    for item in &mut *((node as *mut u8).add(ancestor::OFFSET_V8_INTRINSIC_EXPRESSION_ARGUMENTS)
+        as *mut Vec<Argument>)
+    {
+        walk_argument(traverser, item as *mut _, ctx);
+    }
+    ctx.pop_stack(pop_token);
+    traverser.exit_v8_intrinsic_expression(&mut *node, ctx);
+}
+
+unsafe fn walk_boolean_literal<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut BooleanLiteral,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_boolean_literal(&mut *node, ctx);
+    traverser.exit_boolean_literal(&mut *node, ctx);
+}
+
+unsafe fn walk_null_literal<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut NullLiteral,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_null_literal(&mut *node, ctx);
+    traverser.exit_null_literal(&mut *node, ctx);
+}
+
+unsafe fn walk_numeric_literal<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut NumericLiteral<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_numeric_literal(&mut *node, ctx);
+    traverser.exit_numeric_literal(&mut *node, ctx);
+}
+
+unsafe fn walk_string_literal<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut StringLiteral<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_string_literal(&mut *node, ctx);
+    traverser.exit_string_literal(&mut *node, ctx);
+}
+
+unsafe fn walk_big_int_literal<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut BigIntLiteral<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_big_int_literal(&mut *node, ctx);
+    traverser.exit_big_int_literal(&mut *node, ctx);
+}
+
+unsafe fn walk_reg_exp_literal<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut RegExpLiteral<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_reg_exp_literal(&mut *node, ctx);
+    traverser.exit_reg_exp_literal(&mut *node, ctx);
+}
+
+unsafe fn walk_jsx_element<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut JSXElement<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_jsx_element(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::JSXElementOpeningElement(
+        ancestor::JSXElementWithoutOpeningElement(node, PhantomData),
+    ));
+    walk_jsx_opening_element(
+        traverser,
+        (&mut **((node as *mut u8).add(ancestor::OFFSET_JSX_ELEMENT_OPENING_ELEMENT)
+            as *mut Box<JSXOpeningElement>)) as *mut _,
+        ctx,
+    );
+    ctx.retag_stack(AncestorType::JSXElementChildren);
+    for item in
+        &mut *((node as *mut u8).add(ancestor::OFFSET_JSX_ELEMENT_CHILDREN) as *mut Vec<JSXChild>)
+    {
+        walk_jsx_child(traverser, item as *mut _, ctx);
+    }
+    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_JSX_ELEMENT_CLOSING_ELEMENT)
+        as *mut Option<Box<JSXClosingElement>>)
+    {
+        ctx.retag_stack(AncestorType::JSXElementClosingElement);
+        walk_jsx_closing_element(traverser, (&mut **field) as *mut _, ctx);
+    }
+    ctx.pop_stack(pop_token);
+    traverser.exit_jsx_element(&mut *node, ctx);
+}
+
+unsafe fn walk_jsx_opening_element<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut JSXOpeningElement<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_jsx_opening_element(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::JSXOpeningElementName(
+        ancestor::JSXOpeningElementWithoutName(node, PhantomData),
+    ));
+    walk_jsx_element_name(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_JSX_OPENING_ELEMENT_NAME) as *mut JSXElementName,
+        ctx,
+    );
+    if let Some(field) = &mut *((node as *mut u8)
+        .add(ancestor::OFFSET_JSX_OPENING_ELEMENT_TYPE_ARGUMENTS)
+        as *mut Option<Box<TSTypeParameterInstantiation>>)
+    {
+        ctx.retag_stack(AncestorType::JSXOpeningElementTypeArguments);
+        walk_ts_type_parameter_instantiation(traverser, (&mut **field) as *mut _, ctx);
+    }
+    ctx.retag_stack(AncestorType::JSXOpeningElementAttributes);
+    for item in &mut *((node as *mut u8).add(ancestor::OFFSET_JSX_OPENING_ELEMENT_ATTRIBUTES)
+        as *mut Vec<JSXAttributeItem>)
+    {
+        walk_jsx_attribute_item(traverser, item as *mut _, ctx);
+    }
+    ctx.pop_stack(pop_token);
+    traverser.exit_jsx_opening_element(&mut *node, ctx);
+}
+
+unsafe fn walk_jsx_closing_element<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut JSXClosingElement<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_jsx_closing_element(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::JSXClosingElementName(
+        ancestor::JSXClosingElementWithoutName(node, PhantomData),
+    ));
+    walk_jsx_element_name(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_JSX_CLOSING_ELEMENT_NAME) as *mut JSXElementName,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_jsx_closing_element(&mut *node, ctx);
+}
+
+unsafe fn walk_jsx_fragment<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut JSXFragment<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_jsx_fragment(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::JSXFragmentOpeningFragment(
+        ancestor::JSXFragmentWithoutOpeningFragment(node, PhantomData),
+    ));
+    walk_jsx_opening_fragment(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_JSX_FRAGMENT_OPENING_FRAGMENT)
+            as *mut JSXOpeningFragment,
+        ctx,
+    );
+    ctx.retag_stack(AncestorType::JSXFragmentChildren);
+    for item in
+        &mut *((node as *mut u8).add(ancestor::OFFSET_JSX_FRAGMENT_CHILDREN) as *mut Vec<JSXChild>)
+    {
+        walk_jsx_child(traverser, item as *mut _, ctx);
+    }
+    ctx.retag_stack(AncestorType::JSXFragmentClosingFragment);
+    walk_jsx_closing_fragment(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_JSX_FRAGMENT_CLOSING_FRAGMENT)
+            as *mut JSXClosingFragment,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_jsx_fragment(&mut *node, ctx);
+}
+
+unsafe fn walk_jsx_opening_fragment<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut JSXOpeningFragment,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_jsx_opening_fragment(&mut *node, ctx);
+    traverser.exit_jsx_opening_fragment(&mut *node, ctx);
+}
+
+unsafe fn walk_jsx_closing_fragment<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut JSXClosingFragment,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_jsx_closing_fragment(&mut *node, ctx);
+    traverser.exit_jsx_closing_fragment(&mut *node, ctx);
+}
+
+unsafe fn walk_jsx_element_name<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut JSXElementName<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_jsx_element_name(&mut *node, ctx);
+    match &mut *node {
+        JSXElementName::Identifier(node) => {
+            walk_jsx_identifier(traverser, (&mut **node) as *mut _, ctx)
+        }
+        JSXElementName::IdentifierReference(node) => {
+            walk_identifier_reference(traverser, (&mut **node) as *mut _, ctx)
+        }
+        JSXElementName::NamespacedName(node) => {
+            walk_jsx_namespaced_name(traverser, (&mut **node) as *mut _, ctx)
+        }
+        JSXElementName::MemberExpression(node) => {
+            walk_jsx_member_expression(traverser, (&mut **node) as *mut _, ctx)
+        }
+        JSXElementName::ThisExpression(node) => {
+            walk_this_expression(traverser, (&mut **node) as *mut _, ctx)
+        }
+    }
+    traverser.exit_jsx_element_name(&mut *node, ctx);
+}
+
+unsafe fn walk_jsx_namespaced_name<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut JSXNamespacedName<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_jsx_namespaced_name(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::JSXNamespacedNameNamespace(
+        ancestor::JSXNamespacedNameWithoutNamespace(node, PhantomData),
+    ));
+    walk_jsx_identifier(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_JSX_NAMESPACED_NAME_NAMESPACE) as *mut JSXIdentifier,
+        ctx,
+    );
+    ctx.retag_stack(AncestorType::JSXNamespacedNameName);
+    walk_jsx_identifier(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_JSX_NAMESPACED_NAME_NAME) as *mut JSXIdentifier,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_jsx_namespaced_name(&mut *node, ctx);
+}
+
+unsafe fn walk_jsx_member_expression<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut JSXMemberExpression<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_jsx_member_expression(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::JSXMemberExpressionObject(
+        ancestor::JSXMemberExpressionWithoutObject(node, PhantomData),
+    ));
+    walk_jsx_member_expression_object(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_JSX_MEMBER_EXPRESSION_OBJECT)
+            as *mut JSXMemberExpressionObject,
+        ctx,
+    );
+    ctx.retag_stack(AncestorType::JSXMemberExpressionProperty);
+    walk_jsx_identifier(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_JSX_MEMBER_EXPRESSION_PROPERTY)
+            as *mut JSXIdentifier,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_jsx_member_expression(&mut *node, ctx);
+}
+
+unsafe fn walk_jsx_member_expression_object<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut JSXMemberExpressionObject<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_jsx_member_expression_object(&mut *node, ctx);
+    match &mut *node {
+        JSXMemberExpressionObject::IdentifierReference(node) => {
+            walk_identifier_reference(traverser, (&mut **node) as *mut _, ctx)
+        }
+        JSXMemberExpressionObject::MemberExpression(node) => {
+            walk_jsx_member_expression(traverser, (&mut **node) as *mut _, ctx)
+        }
+        JSXMemberExpressionObject::ThisExpression(node) => {
+            walk_this_expression(traverser, (&mut **node) as *mut _, ctx)
+        }
+    }
+    traverser.exit_jsx_member_expression_object(&mut *node, ctx);
+}
+
+unsafe fn walk_jsx_expression_container<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut JSXExpressionContainer<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_jsx_expression_container(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::JSXExpressionContainerExpression(
+        ancestor::JSXExpressionContainerWithoutExpression(node, PhantomData),
+    ));
+    walk_jsx_expression(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_JSX_EXPRESSION_CONTAINER_EXPRESSION)
+            as *mut JSXExpression,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_jsx_expression_container(&mut *node, ctx);
+}
+
+unsafe fn walk_jsx_expression<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut JSXExpression<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_jsx_expression(&mut *node, ctx);
+    match &mut *node {
+        JSXExpression::EmptyExpression(node) => {
+            walk_jsx_empty_expression(traverser, node as *mut _, ctx)
+        }
+        JSXExpression::BooleanLiteral(_)
+        | JSXExpression::NullLiteral(_)
+        | JSXExpression::NumericLiteral(_)
+        | JSXExpression::BigIntLiteral(_)
+        | JSXExpression::RegExpLiteral(_)
+        | JSXExpression::StringLiteral(_)
+        | JSXExpression::TemplateLiteral(_)
+        | JSXExpression::Identifier(_)
+        | JSXExpression::MetaProperty(_)
+        | JSXExpression::Super(_)
+        | JSXExpression::ArrayExpression(_)
+        | JSXExpression::ArrowFunctionExpression(_)
+        | JSXExpression::AssignmentExpression(_)
+        | JSXExpression::AwaitExpression(_)
+        | JSXExpression::BinaryExpression(_)
+        | JSXExpression::CallExpression(_)
+        | JSXExpression::ChainExpression(_)
+        | JSXExpression::ClassExpression(_)
+        | JSXExpression::ConditionalExpression(_)
+        | JSXExpression::FunctionExpression(_)
+        | JSXExpression::ImportExpression(_)
+        | JSXExpression::LogicalExpression(_)
+        | JSXExpression::NewExpression(_)
+        | JSXExpression::ObjectExpression(_)
+        | JSXExpression::ParenthesizedExpression(_)
+        | JSXExpression::SequenceExpression(_)
+        | JSXExpression::TaggedTemplateExpression(_)
+        | JSXExpression::ThisExpression(_)
+        | JSXExpression::UnaryExpression(_)
+        | JSXExpression::UpdateExpression(_)
+        | JSXExpression::YieldExpression(_)
+        | JSXExpression::PrivateInExpression(_)
+        | JSXExpression::JSXElement(_)
+        | JSXExpression::JSXFragment(_)
+        | JSXExpression::TSAsExpression(_)
+        | JSXExpression::TSSatisfiesExpression(_)
+        | JSXExpression::TSTypeAssertion(_)
+        | JSXExpression::TSNonNullExpression(_)
+        | JSXExpression::TSInstantiationExpression(_)
+        | JSXExpression::V8IntrinsicExpression(_)
+        | JSXExpression::ComputedMemberExpression(_)
+        | JSXExpression::StaticMemberExpression(_)
+        | JSXExpression::PrivateFieldExpression(_) => {
+            walk_expression(traverser, node as *mut _, ctx)
+        }
+    }
+    traverser.exit_jsx_expression(&mut *node, ctx);
+}
+
+unsafe fn walk_jsx_empty_expression<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut JSXEmptyExpression,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_jsx_empty_expression(&mut *node, ctx);
+    traverser.exit_jsx_empty_expression(&mut *node, ctx);
+}
+
+unsafe fn walk_jsx_attribute_item<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut JSXAttributeItem<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_jsx_attribute_item(&mut *node, ctx);
+    match &mut *node {
+        JSXAttributeItem::Attribute(node) => {
+            walk_jsx_attribute(traverser, (&mut **node) as *mut _, ctx)
+        }
+        JSXAttributeItem::SpreadAttribute(node) => {
+            walk_jsx_spread_attribute(traverser, (&mut **node) as *mut _, ctx)
+        }
+    }
+    traverser.exit_jsx_attribute_item(&mut *node, ctx);
+}
+
+unsafe fn walk_jsx_attribute<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut JSXAttribute<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_jsx_attribute(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::JSXAttributeName(ancestor::JSXAttributeWithoutName(
+        node,
+        PhantomData,
+    )));
+    walk_jsx_attribute_name(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_JSX_ATTRIBUTE_NAME) as *mut JSXAttributeName,
+        ctx,
+    );
+    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_JSX_ATTRIBUTE_VALUE)
+        as *mut Option<JSXAttributeValue>)
+    {
+        ctx.retag_stack(AncestorType::JSXAttributeValue);
+        walk_jsx_attribute_value(traverser, field as *mut _, ctx);
+    }
+    ctx.pop_stack(pop_token);
+    traverser.exit_jsx_attribute(&mut *node, ctx);
+}
+
+unsafe fn walk_jsx_spread_attribute<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut JSXSpreadAttribute<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_jsx_spread_attribute(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::JSXSpreadAttributeArgument(
+        ancestor::JSXSpreadAttributeWithoutArgument(node, PhantomData),
+    ));
+    walk_expression(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_JSX_SPREAD_ATTRIBUTE_ARGUMENT) as *mut Expression,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_jsx_spread_attribute(&mut *node, ctx);
+}
+
+unsafe fn walk_jsx_attribute_name<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut JSXAttributeName<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_jsx_attribute_name(&mut *node, ctx);
+    match &mut *node {
+        JSXAttributeName::Identifier(node) => {
+            walk_jsx_identifier(traverser, (&mut **node) as *mut _, ctx)
+        }
+        JSXAttributeName::NamespacedName(node) => {
+            walk_jsx_namespaced_name(traverser, (&mut **node) as *mut _, ctx)
+        }
+    }
+    traverser.exit_jsx_attribute_name(&mut *node, ctx);
+}
+
+unsafe fn walk_jsx_attribute_value<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut JSXAttributeValue<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_jsx_attribute_value(&mut *node, ctx);
+    match &mut *node {
+        JSXAttributeValue::StringLiteral(node) => {
+            walk_string_literal(traverser, (&mut **node) as *mut _, ctx)
+        }
+        JSXAttributeValue::ExpressionContainer(node) => {
+            walk_jsx_expression_container(traverser, (&mut **node) as *mut _, ctx)
+        }
+        JSXAttributeValue::Element(node) => {
+            walk_jsx_element(traverser, (&mut **node) as *mut _, ctx)
+        }
+        JSXAttributeValue::Fragment(node) => {
+            walk_jsx_fragment(traverser, (&mut **node) as *mut _, ctx)
+        }
+    }
+    traverser.exit_jsx_attribute_value(&mut *node, ctx);
+}
+
+unsafe fn walk_jsx_identifier<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut JSXIdentifier<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_jsx_identifier(&mut *node, ctx);
+    traverser.exit_jsx_identifier(&mut *node, ctx);
+}
+
+unsafe fn walk_jsx_child<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut JSXChild<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_jsx_child(&mut *node, ctx);
+    match &mut *node {
+        JSXChild::Text(node) => walk_jsx_text(traverser, (&mut **node) as *mut _, ctx),
+        JSXChild::Element(node) => walk_jsx_element(traverser, (&mut **node) as *mut _, ctx),
+        JSXChild::Fragment(node) => walk_jsx_fragment(traverser, (&mut **node) as *mut _, ctx),
+        JSXChild::ExpressionContainer(node) => {
+            walk_jsx_expression_container(traverser, (&mut **node) as *mut _, ctx)
+        }
+        JSXChild::Spread(node) => walk_jsx_spread_child(traverser, (&mut **node) as *mut _, ctx),
+    }
+    traverser.exit_jsx_child(&mut *node, ctx);
+}
+
+unsafe fn walk_jsx_spread_child<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut JSXSpreadChild<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_jsx_spread_child(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::JSXSpreadChildExpression(
+        ancestor::JSXSpreadChildWithoutExpression(node, PhantomData),
+    ));
+    walk_expression(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_JSX_SPREAD_CHILD_EXPRESSION) as *mut Expression,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_jsx_spread_child(&mut *node, ctx);
+}
+
+unsafe fn walk_jsx_text<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut JSXText<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_jsx_text(&mut *node, ctx);
+    traverser.exit_jsx_text(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_this_parameter<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSThisParameter<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_this_parameter(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::TSThisParameterTypeAnnotation(
+        ancestor::TSThisParameterWithoutTypeAnnotation(node, PhantomData),
+    ));
+    if let Some(field) = &mut *((node as *mut u8)
+        .add(ancestor::OFFSET_TS_THIS_PARAMETER_TYPE_ANNOTATION)
+        as *mut Option<Box<TSTypeAnnotation>>)
+    {
+        walk_ts_type_annotation(traverser, (&mut **field) as *mut _, ctx);
+    }
+    ctx.pop_stack(pop_token);
+    traverser.exit_ts_this_parameter(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_enum_declaration<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSEnumDeclaration<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_enum_declaration(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::TSEnumDeclarationId(
+        ancestor::TSEnumDeclarationWithoutId(node, PhantomData),
+    ));
+    walk_binding_identifier(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_ENUM_DECLARATION_ID) as *mut BindingIdentifier,
+        ctx,
+    );
+    ctx.retag_stack(AncestorType::TSEnumDeclarationBody);
+    walk_ts_enum_body(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_ENUM_DECLARATION_BODY) as *mut TSEnumBody,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_ts_enum_declaration(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_enum_body<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSEnumBody<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_enum_body(&mut *node, ctx);
+    let previous_scope_id = ctx.current_scope_id();
+    let current_scope_id = (*((node as *mut u8).add(ancestor::OFFSET_TS_ENUM_BODY_SCOPE_ID)
+        as *mut Cell<Option<ScopeId>>))
+        .get()
+        .unwrap();
+    ctx.set_current_scope_id(current_scope_id);
+    let pop_token = ctx.push_stack(Ancestor::TSEnumBodyMembers(
+        ancestor::TSEnumBodyWithoutMembers(node, PhantomData),
+    ));
+    for item in &mut *((node as *mut u8).add(ancestor::OFFSET_TS_ENUM_BODY_MEMBERS)
+        as *mut Vec<TSEnumMember>)
+    {
+        walk_ts_enum_member(traverser, item as *mut _, ctx);
+    }
+    ctx.pop_stack(pop_token);
+    ctx.set_current_scope_id(previous_scope_id);
+    traverser.exit_ts_enum_body(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_enum_member<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSEnumMember<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_enum_member(&mut *node, ctx);
+    let pop_token = ctx
+        .push_stack(Ancestor::TSEnumMemberId(ancestor::TSEnumMemberWithoutId(node, PhantomData)));
+    walk_ts_enum_member_name(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_ENUM_MEMBER_ID) as *mut TSEnumMemberName,
+        ctx,
+    );
+    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_TS_ENUM_MEMBER_INITIALIZER)
+        as *mut Option<Expression>)
+    {
+        ctx.retag_stack(AncestorType::TSEnumMemberInitializer);
+        walk_expression(traverser, field as *mut _, ctx);
+    }
+    ctx.pop_stack(pop_token);
+    traverser.exit_ts_enum_member(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_enum_member_name<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSEnumMemberName<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_enum_member_name(&mut *node, ctx);
+    match &mut *node {
+        TSEnumMemberName::Identifier(node) => {
+            walk_identifier_name(traverser, (&mut **node) as *mut _, ctx)
+        }
+        TSEnumMemberName::String(node) => {
+            walk_string_literal(traverser, (&mut **node) as *mut _, ctx)
+        }
+        TSEnumMemberName::ComputedString(node) => {
+            walk_string_literal(traverser, (&mut **node) as *mut _, ctx)
+        }
+        TSEnumMemberName::ComputedTemplateString(node) => {
+            walk_template_literal(traverser, (&mut **node) as *mut _, ctx)
+        }
+    }
+    traverser.exit_ts_enum_member_name(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_type_annotation<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSTypeAnnotation<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_type_annotation(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::TSTypeAnnotationTypeAnnotation(
+        ancestor::TSTypeAnnotationWithoutTypeAnnotation(node, PhantomData),
+    ));
+    walk_ts_type(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_TYPE_ANNOTATION_TYPE_ANNOTATION) as *mut TSType,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_ts_type_annotation(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_literal_type<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSLiteralType<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_literal_type(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::TSLiteralTypeLiteral(
+        ancestor::TSLiteralTypeWithoutLiteral(node, PhantomData),
+    ));
+    walk_ts_literal(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_LITERAL_TYPE_LITERAL) as *mut TSLiteral,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_ts_literal_type(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_literal<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSLiteral<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_literal(&mut *node, ctx);
+    match &mut *node {
+        TSLiteral::BooleanLiteral(node) => {
+            walk_boolean_literal(traverser, (&mut **node) as *mut _, ctx)
+        }
+        TSLiteral::NumericLiteral(node) => {
+            walk_numeric_literal(traverser, (&mut **node) as *mut _, ctx)
+        }
+        TSLiteral::BigIntLiteral(node) => {
+            walk_big_int_literal(traverser, (&mut **node) as *mut _, ctx)
+        }
+        TSLiteral::StringLiteral(node) => {
+            walk_string_literal(traverser, (&mut **node) as *mut _, ctx)
+        }
+        TSLiteral::TemplateLiteral(node) => {
+            walk_template_literal(traverser, (&mut **node) as *mut _, ctx)
+        }
+        TSLiteral::UnaryExpression(node) => {
+            walk_unary_expression(traverser, (&mut **node) as *mut _, ctx)
+        }
+    }
+    traverser.exit_ts_literal(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_type<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSType<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_type(&mut *node, ctx);
+    match &mut *node {
+        TSType::TSAnyKeyword(node) => walk_ts_any_keyword(traverser, (&mut **node) as *mut _, ctx),
+        TSType::TSBigIntKeyword(node) => {
+            walk_ts_big_int_keyword(traverser, (&mut **node) as *mut _, ctx)
+        }
+        TSType::TSBooleanKeyword(node) => {
+            walk_ts_boolean_keyword(traverser, (&mut **node) as *mut _, ctx)
+        }
+        TSType::TSIntrinsicKeyword(node) => {
+            walk_ts_intrinsic_keyword(traverser, (&mut **node) as *mut _, ctx)
+        }
+        TSType::TSNeverKeyword(node) => {
+            walk_ts_never_keyword(traverser, (&mut **node) as *mut _, ctx)
+        }
+        TSType::TSNullKeyword(node) => {
+            walk_ts_null_keyword(traverser, (&mut **node) as *mut _, ctx)
+        }
+        TSType::TSNumberKeyword(node) => {
+            walk_ts_number_keyword(traverser, (&mut **node) as *mut _, ctx)
+        }
+        TSType::TSObjectKeyword(node) => {
+            walk_ts_object_keyword(traverser, (&mut **node) as *mut _, ctx)
+        }
+        TSType::TSStringKeyword(node) => {
+            walk_ts_string_keyword(traverser, (&mut **node) as *mut _, ctx)
+        }
+        TSType::TSSymbolKeyword(node) => {
+            walk_ts_symbol_keyword(traverser, (&mut **node) as *mut _, ctx)
+        }
+        TSType::TSUndefinedKeyword(node) => {
+            walk_ts_undefined_keyword(traverser, (&mut **node) as *mut _, ctx)
+        }
+        TSType::TSUnknownKeyword(node) => {
+            walk_ts_unknown_keyword(traverser, (&mut **node) as *mut _, ctx)
+        }
+        TSType::TSVoidKeyword(node) => {
+            walk_ts_void_keyword(traverser, (&mut **node) as *mut _, ctx)
+        }
+        TSType::TSArrayType(node) => walk_ts_array_type(traverser, (&mut **node) as *mut _, ctx),
+        TSType::TSConditionalType(node) => {
+            walk_ts_conditional_type(traverser, (&mut **node) as *mut _, ctx)
+        }
+        TSType::TSConstructorType(node) => {
+            walk_ts_constructor_type(traverser, (&mut **node) as *mut _, ctx)
+        }
+        TSType::TSFunctionType(node) => {
+            walk_ts_function_type(traverser, (&mut **node) as *mut _, ctx)
+        }
+        TSType::TSImportType(node) => walk_ts_import_type(traverser, (&mut **node) as *mut _, ctx),
+        TSType::TSIndexedAccessType(node) => {
+            walk_ts_indexed_access_type(traverser, (&mut **node) as *mut _, ctx)
+        }
+        TSType::TSInferType(node) => walk_ts_infer_type(traverser, (&mut **node) as *mut _, ctx),
+        TSType::TSIntersectionType(node) => {
+            walk_ts_intersection_type(traverser, (&mut **node) as *mut _, ctx)
+        }
+        TSType::TSLiteralType(node) => {
+            walk_ts_literal_type(traverser, (&mut **node) as *mut _, ctx)
+        }
+        TSType::TSMappedType(node) => walk_ts_mapped_type(traverser, (&mut **node) as *mut _, ctx),
+        TSType::TSNamedTupleMember(node) => {
+            walk_ts_named_tuple_member(traverser, (&mut **node) as *mut _, ctx)
+        }
+        TSType::TSTemplateLiteralType(node) => {
+            walk_ts_template_literal_type(traverser, (&mut **node) as *mut _, ctx)
+        }
+        TSType::TSThisType(node) => walk_ts_this_type(traverser, (&mut **node) as *mut _, ctx),
+        TSType::TSTupleType(node) => walk_ts_tuple_type(traverser, (&mut **node) as *mut _, ctx),
+        TSType::TSTypeLiteral(node) => {
+            walk_ts_type_literal(traverser, (&mut **node) as *mut _, ctx)
+        }
+        TSType::TSTypeOperatorType(node) => {
+            walk_ts_type_operator(traverser, (&mut **node) as *mut _, ctx)
+        }
+        TSType::TSTypePredicate(node) => {
+            walk_ts_type_predicate(traverser, (&mut **node) as *mut _, ctx)
+        }
+        TSType::TSTypeQuery(node) => walk_ts_type_query(traverser, (&mut **node) as *mut _, ctx),
+        TSType::TSTypeReference(node) => {
+            walk_ts_type_reference(traverser, (&mut **node) as *mut _, ctx)
+        }
+        TSType::TSUnionType(node) => walk_ts_union_type(traverser, (&mut **node) as *mut _, ctx),
+        TSType::TSParenthesizedType(node) => {
+            walk_ts_parenthesized_type(traverser, (&mut **node) as *mut _, ctx)
+        }
+        TSType::JSDocNullableType(node) => {
+            walk_js_doc_nullable_type(traverser, (&mut **node) as *mut _, ctx)
+        }
+        TSType::JSDocNonNullableType(node) => {
+            walk_js_doc_non_nullable_type(traverser, (&mut **node) as *mut _, ctx)
+        }
+        TSType::JSDocUnknownType(node) => {
+            walk_js_doc_unknown_type(traverser, (&mut **node) as *mut _, ctx)
+        }
+    }
+    traverser.exit_ts_type(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_conditional_type<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSConditionalType<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_conditional_type(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::TSConditionalTypeCheckType(
+        ancestor::TSConditionalTypeWithoutCheckType(node, PhantomData),
+    ));
+    walk_ts_type(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_CONDITIONAL_TYPE_CHECK_TYPE) as *mut TSType,
+        ctx,
+    );
+    let previous_scope_id = ctx.current_scope_id();
+    let current_scope_id = (*((node as *mut u8).add(ancestor::OFFSET_TS_CONDITIONAL_TYPE_SCOPE_ID)
+        as *mut Cell<Option<ScopeId>>))
+        .get()
+        .unwrap();
+    ctx.set_current_scope_id(current_scope_id);
+    ctx.retag_stack(AncestorType::TSConditionalTypeExtendsType);
+    walk_ts_type(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_CONDITIONAL_TYPE_EXTENDS_TYPE) as *mut TSType,
+        ctx,
+    );
+    ctx.retag_stack(AncestorType::TSConditionalTypeTrueType);
+    walk_ts_type(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_CONDITIONAL_TYPE_TRUE_TYPE) as *mut TSType,
+        ctx,
+    );
+    ctx.set_current_scope_id(previous_scope_id);
+    ctx.retag_stack(AncestorType::TSConditionalTypeFalseType);
+    walk_ts_type(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_CONDITIONAL_TYPE_FALSE_TYPE) as *mut TSType,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_ts_conditional_type(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_union_type<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSUnionType<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_union_type(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::TSUnionTypeTypes(ancestor::TSUnionTypeWithoutTypes(
+        node,
+        PhantomData,
+    )));
+    for item in
+        &mut *((node as *mut u8).add(ancestor::OFFSET_TS_UNION_TYPE_TYPES) as *mut Vec<TSType>)
+    {
+        walk_ts_type(traverser, item as *mut _, ctx);
+    }
+    ctx.pop_stack(pop_token);
+    traverser.exit_ts_union_type(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_intersection_type<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSIntersectionType<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_intersection_type(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::TSIntersectionTypeTypes(
+        ancestor::TSIntersectionTypeWithoutTypes(node, PhantomData),
+    ));
+    for item in &mut *((node as *mut u8).add(ancestor::OFFSET_TS_INTERSECTION_TYPE_TYPES)
+        as *mut Vec<TSType>)
+    {
+        walk_ts_type(traverser, item as *mut _, ctx);
+    }
+    ctx.pop_stack(pop_token);
+    traverser.exit_ts_intersection_type(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_parenthesized_type<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSParenthesizedType<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_parenthesized_type(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::TSParenthesizedTypeTypeAnnotation(
+        ancestor::TSParenthesizedTypeWithoutTypeAnnotation(node, PhantomData),
+    ));
+    walk_ts_type(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_PARENTHESIZED_TYPE_TYPE_ANNOTATION)
+            as *mut TSType,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_ts_parenthesized_type(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_type_operator<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSTypeOperator<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_type_operator(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::TSTypeOperatorTypeAnnotation(
+        ancestor::TSTypeOperatorWithoutTypeAnnotation(node, PhantomData),
+    ));
+    walk_ts_type(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_TYPE_OPERATOR_TYPE_ANNOTATION) as *mut TSType,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_ts_type_operator(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_array_type<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSArrayType<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_array_type(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::TSArrayTypeElementType(
+        ancestor::TSArrayTypeWithoutElementType(node, PhantomData),
+    ));
+    walk_ts_type(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_ARRAY_TYPE_ELEMENT_TYPE) as *mut TSType,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_ts_array_type(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_indexed_access_type<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSIndexedAccessType<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_indexed_access_type(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::TSIndexedAccessTypeObjectType(
+        ancestor::TSIndexedAccessTypeWithoutObjectType(node, PhantomData),
+    ));
+    walk_ts_type(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_INDEXED_ACCESS_TYPE_OBJECT_TYPE) as *mut TSType,
+        ctx,
+    );
+    ctx.retag_stack(AncestorType::TSIndexedAccessTypeIndexType);
+    walk_ts_type(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_INDEXED_ACCESS_TYPE_INDEX_TYPE) as *mut TSType,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_ts_indexed_access_type(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_tuple_type<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSTupleType<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_tuple_type(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::TSTupleTypeElementTypes(
+        ancestor::TSTupleTypeWithoutElementTypes(node, PhantomData),
+    ));
+    for item in &mut *((node as *mut u8).add(ancestor::OFFSET_TS_TUPLE_TYPE_ELEMENT_TYPES)
+        as *mut Vec<TSTupleElement>)
+    {
+        walk_ts_tuple_element(traverser, item as *mut _, ctx);
+    }
+    ctx.pop_stack(pop_token);
+    traverser.exit_ts_tuple_type(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_named_tuple_member<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSNamedTupleMember<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_named_tuple_member(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::TSNamedTupleMemberLabel(
+        ancestor::TSNamedTupleMemberWithoutLabel(node, PhantomData),
+    ));
+    walk_identifier_name(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_NAMED_TUPLE_MEMBER_LABEL) as *mut IdentifierName,
+        ctx,
+    );
+    ctx.retag_stack(AncestorType::TSNamedTupleMemberElementType);
+    walk_ts_tuple_element(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_NAMED_TUPLE_MEMBER_ELEMENT_TYPE)
+            as *mut TSTupleElement,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_ts_named_tuple_member(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_optional_type<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSOptionalType<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_optional_type(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::TSOptionalTypeTypeAnnotation(
+        ancestor::TSOptionalTypeWithoutTypeAnnotation(node, PhantomData),
+    ));
+    walk_ts_type(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_OPTIONAL_TYPE_TYPE_ANNOTATION) as *mut TSType,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_ts_optional_type(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_rest_type<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSRestType<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_rest_type(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::TSRestTypeTypeAnnotation(
+        ancestor::TSRestTypeWithoutTypeAnnotation(node, PhantomData),
+    ));
+    walk_ts_type(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_REST_TYPE_TYPE_ANNOTATION) as *mut TSType,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_ts_rest_type(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_tuple_element<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSTupleElement<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_tuple_element(&mut *node, ctx);
+    match &mut *node {
+        TSTupleElement::TSOptionalType(node) => {
+            walk_ts_optional_type(traverser, (&mut **node) as *mut _, ctx)
+        }
+        TSTupleElement::TSRestType(node) => {
+            walk_ts_rest_type(traverser, (&mut **node) as *mut _, ctx)
+        }
+        TSTupleElement::TSAnyKeyword(_)
+        | TSTupleElement::TSBigIntKeyword(_)
+        | TSTupleElement::TSBooleanKeyword(_)
+        | TSTupleElement::TSIntrinsicKeyword(_)
+        | TSTupleElement::TSNeverKeyword(_)
+        | TSTupleElement::TSNullKeyword(_)
+        | TSTupleElement::TSNumberKeyword(_)
+        | TSTupleElement::TSObjectKeyword(_)
+        | TSTupleElement::TSStringKeyword(_)
+        | TSTupleElement::TSSymbolKeyword(_)
+        | TSTupleElement::TSUndefinedKeyword(_)
+        | TSTupleElement::TSUnknownKeyword(_)
+        | TSTupleElement::TSVoidKeyword(_)
+        | TSTupleElement::TSArrayType(_)
+        | TSTupleElement::TSConditionalType(_)
+        | TSTupleElement::TSConstructorType(_)
+        | TSTupleElement::TSFunctionType(_)
+        | TSTupleElement::TSImportType(_)
+        | TSTupleElement::TSIndexedAccessType(_)
+        | TSTupleElement::TSInferType(_)
+        | TSTupleElement::TSIntersectionType(_)
+        | TSTupleElement::TSLiteralType(_)
+        | TSTupleElement::TSMappedType(_)
+        | TSTupleElement::TSNamedTupleMember(_)
+        | TSTupleElement::TSTemplateLiteralType(_)
+        | TSTupleElement::TSThisType(_)
+        | TSTupleElement::TSTupleType(_)
+        | TSTupleElement::TSTypeLiteral(_)
+        | TSTupleElement::TSTypeOperatorType(_)
+        | TSTupleElement::TSTypePredicate(_)
+        | TSTupleElement::TSTypeQuery(_)
+        | TSTupleElement::TSTypeReference(_)
+        | TSTupleElement::TSUnionType(_)
+        | TSTupleElement::TSParenthesizedType(_)
+        | TSTupleElement::JSDocNullableType(_)
+        | TSTupleElement::JSDocNonNullableType(_)
+        | TSTupleElement::JSDocUnknownType(_) => walk_ts_type(traverser, node as *mut _, ctx),
+    }
+    traverser.exit_ts_tuple_element(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_any_keyword<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSAnyKeyword,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_any_keyword(&mut *node, ctx);
+    traverser.exit_ts_any_keyword(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_string_keyword<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSStringKeyword,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_string_keyword(&mut *node, ctx);
+    traverser.exit_ts_string_keyword(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_boolean_keyword<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSBooleanKeyword,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_boolean_keyword(&mut *node, ctx);
+    traverser.exit_ts_boolean_keyword(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_number_keyword<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSNumberKeyword,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_number_keyword(&mut *node, ctx);
+    traverser.exit_ts_number_keyword(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_never_keyword<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSNeverKeyword,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_never_keyword(&mut *node, ctx);
+    traverser.exit_ts_never_keyword(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_intrinsic_keyword<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSIntrinsicKeyword,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_intrinsic_keyword(&mut *node, ctx);
+    traverser.exit_ts_intrinsic_keyword(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_unknown_keyword<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSUnknownKeyword,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_unknown_keyword(&mut *node, ctx);
+    traverser.exit_ts_unknown_keyword(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_null_keyword<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSNullKeyword,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_null_keyword(&mut *node, ctx);
+    traverser.exit_ts_null_keyword(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_undefined_keyword<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSUndefinedKeyword,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_undefined_keyword(&mut *node, ctx);
+    traverser.exit_ts_undefined_keyword(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_void_keyword<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSVoidKeyword,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_void_keyword(&mut *node, ctx);
+    traverser.exit_ts_void_keyword(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_symbol_keyword<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSSymbolKeyword,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_symbol_keyword(&mut *node, ctx);
+    traverser.exit_ts_symbol_keyword(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_this_type<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSThisType,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_this_type(&mut *node, ctx);
+    traverser.exit_ts_this_type(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_object_keyword<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSObjectKeyword,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_object_keyword(&mut *node, ctx);
+    traverser.exit_ts_object_keyword(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_big_int_keyword<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSBigIntKeyword,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_big_int_keyword(&mut *node, ctx);
+    traverser.exit_ts_big_int_keyword(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_type_reference<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSTypeReference<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_type_reference(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::TSTypeReferenceTypeName(
+        ancestor::TSTypeReferenceWithoutTypeName(node, PhantomData),
+    ));
+    walk_ts_type_name(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_TYPE_REFERENCE_TYPE_NAME) as *mut TSTypeName,
+        ctx,
+    );
+    if let Some(field) = &mut *((node as *mut u8)
+        .add(ancestor::OFFSET_TS_TYPE_REFERENCE_TYPE_ARGUMENTS)
+        as *mut Option<Box<TSTypeParameterInstantiation>>)
+    {
+        ctx.retag_stack(AncestorType::TSTypeReferenceTypeArguments);
+        walk_ts_type_parameter_instantiation(traverser, (&mut **field) as *mut _, ctx);
+    }
+    ctx.pop_stack(pop_token);
+    traverser.exit_ts_type_reference(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_type_name<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSTypeName<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_type_name(&mut *node, ctx);
+    match &mut *node {
+        TSTypeName::IdentifierReference(node) => {
+            walk_identifier_reference(traverser, (&mut **node) as *mut _, ctx)
+        }
+        TSTypeName::QualifiedName(node) => {
+            walk_ts_qualified_name(traverser, (&mut **node) as *mut _, ctx)
+        }
+        TSTypeName::ThisExpression(node) => {
+            walk_this_expression(traverser, (&mut **node) as *mut _, ctx)
+        }
+    }
+    traverser.exit_ts_type_name(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_qualified_name<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSQualifiedName<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_qualified_name(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::TSQualifiedNameLeft(
+        ancestor::TSQualifiedNameWithoutLeft(node, PhantomData),
+    ));
+    walk_ts_type_name(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_QUALIFIED_NAME_LEFT) as *mut TSTypeName,
+        ctx,
+    );
+    ctx.retag_stack(AncestorType::TSQualifiedNameRight);
+    walk_identifier_name(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_QUALIFIED_NAME_RIGHT) as *mut IdentifierName,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_ts_qualified_name(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_type_parameter_instantiation<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSTypeParameterInstantiation<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_type_parameter_instantiation(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::TSTypeParameterInstantiationParams(
+        ancestor::TSTypeParameterInstantiationWithoutParams(node, PhantomData),
+    ));
+    for item in &mut *((node as *mut u8)
+        .add(ancestor::OFFSET_TS_TYPE_PARAMETER_INSTANTIATION_PARAMS)
+        as *mut Vec<TSType>)
+    {
+        walk_ts_type(traverser, item as *mut _, ctx);
+    }
+    ctx.pop_stack(pop_token);
+    traverser.exit_ts_type_parameter_instantiation(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_type_parameter<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSTypeParameter<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_type_parameter(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::TSTypeParameterName(
+        ancestor::TSTypeParameterWithoutName(node, PhantomData),
+    ));
+    walk_binding_identifier(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_TYPE_PARAMETER_NAME) as *mut BindingIdentifier,
+        ctx,
+    );
+    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_TS_TYPE_PARAMETER_CONSTRAINT)
+        as *mut Option<TSType>)
+    {
+        ctx.retag_stack(AncestorType::TSTypeParameterConstraint);
+        walk_ts_type(traverser, field as *mut _, ctx);
+    }
+    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_TS_TYPE_PARAMETER_DEFAULT)
+        as *mut Option<TSType>)
+    {
+        ctx.retag_stack(AncestorType::TSTypeParameterDefault);
+        walk_ts_type(traverser, field as *mut _, ctx);
+    }
+    ctx.pop_stack(pop_token);
+    traverser.exit_ts_type_parameter(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_type_parameter_declaration<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSTypeParameterDeclaration<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_type_parameter_declaration(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::TSTypeParameterDeclarationParams(
+        ancestor::TSTypeParameterDeclarationWithoutParams(node, PhantomData),
+    ));
+    for item in &mut *((node as *mut u8).add(ancestor::OFFSET_TS_TYPE_PARAMETER_DECLARATION_PARAMS)
+        as *mut Vec<TSTypeParameter>)
+    {
+        walk_ts_type_parameter(traverser, item as *mut _, ctx);
+    }
+    ctx.pop_stack(pop_token);
+    traverser.exit_ts_type_parameter_declaration(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_type_alias_declaration<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSTypeAliasDeclaration<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_type_alias_declaration(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::TSTypeAliasDeclarationId(
+        ancestor::TSTypeAliasDeclarationWithoutId(node, PhantomData),
+    ));
+    walk_binding_identifier(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_TYPE_ALIAS_DECLARATION_ID)
+            as *mut BindingIdentifier,
+        ctx,
+    );
+    let previous_scope_id = ctx.current_scope_id();
+    let current_scope_id = (*((node as *mut u8)
+        .add(ancestor::OFFSET_TS_TYPE_ALIAS_DECLARATION_SCOPE_ID)
+        as *mut Cell<Option<ScopeId>>))
+        .get()
+        .unwrap();
+    ctx.set_current_scope_id(current_scope_id);
+    if let Some(field) = &mut *((node as *mut u8)
+        .add(ancestor::OFFSET_TS_TYPE_ALIAS_DECLARATION_TYPE_PARAMETERS)
+        as *mut Option<Box<TSTypeParameterDeclaration>>)
+    {
+        ctx.retag_stack(AncestorType::TSTypeAliasDeclarationTypeParameters);
+        walk_ts_type_parameter_declaration(traverser, (&mut **field) as *mut _, ctx);
+    }
+    ctx.retag_stack(AncestorType::TSTypeAliasDeclarationTypeAnnotation);
+    walk_ts_type(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_TYPE_ALIAS_DECLARATION_TYPE_ANNOTATION)
+            as *mut TSType,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    ctx.set_current_scope_id(previous_scope_id);
+    traverser.exit_ts_type_alias_declaration(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_class_implements<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSClassImplements<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_class_implements(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::TSClassImplementsExpression(
+        ancestor::TSClassImplementsWithoutExpression(node, PhantomData),
+    ));
+    walk_ts_type_name(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_CLASS_IMPLEMENTS_EXPRESSION) as *mut TSTypeName,
+        ctx,
+    );
+    if let Some(field) = &mut *((node as *mut u8)
+        .add(ancestor::OFFSET_TS_CLASS_IMPLEMENTS_TYPE_ARGUMENTS)
+        as *mut Option<Box<TSTypeParameterInstantiation>>)
+    {
+        ctx.retag_stack(AncestorType::TSClassImplementsTypeArguments);
+        walk_ts_type_parameter_instantiation(traverser, (&mut **field) as *mut _, ctx);
+    }
+    ctx.pop_stack(pop_token);
+    traverser.exit_ts_class_implements(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_interface_declaration<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSInterfaceDeclaration<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_interface_declaration(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::TSInterfaceDeclarationId(
+        ancestor::TSInterfaceDeclarationWithoutId(node, PhantomData),
+    ));
+    walk_binding_identifier(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_INTERFACE_DECLARATION_ID)
+            as *mut BindingIdentifier,
+        ctx,
+    );
+    let previous_scope_id = ctx.current_scope_id();
+    let current_scope_id = (*((node as *mut u8)
+        .add(ancestor::OFFSET_TS_INTERFACE_DECLARATION_SCOPE_ID)
+        as *mut Cell<Option<ScopeId>>))
+        .get()
+        .unwrap();
+    ctx.set_current_scope_id(current_scope_id);
+    if let Some(field) = &mut *((node as *mut u8)
+        .add(ancestor::OFFSET_TS_INTERFACE_DECLARATION_TYPE_PARAMETERS)
+        as *mut Option<Box<TSTypeParameterDeclaration>>)
+    {
+        ctx.retag_stack(AncestorType::TSInterfaceDeclarationTypeParameters);
+        walk_ts_type_parameter_declaration(traverser, (&mut **field) as *mut _, ctx);
+    }
+    ctx.retag_stack(AncestorType::TSInterfaceDeclarationExtends);
+    for item in &mut *((node as *mut u8).add(ancestor::OFFSET_TS_INTERFACE_DECLARATION_EXTENDS)
+        as *mut Vec<TSInterfaceHeritage>)
+    {
+        walk_ts_interface_heritage(traverser, item as *mut _, ctx);
+    }
+    ctx.retag_stack(AncestorType::TSInterfaceDeclarationBody);
+    walk_ts_interface_body(
+        traverser,
+        (&mut **((node as *mut u8).add(ancestor::OFFSET_TS_INTERFACE_DECLARATION_BODY)
+            as *mut Box<TSInterfaceBody>)) as *mut _,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    ctx.set_current_scope_id(previous_scope_id);
+    traverser.exit_ts_interface_declaration(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_interface_body<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSInterfaceBody<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_interface_body(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::TSInterfaceBodyBody(
+        ancestor::TSInterfaceBodyWithoutBody(node, PhantomData),
+    ));
+    for item in &mut *((node as *mut u8).add(ancestor::OFFSET_TS_INTERFACE_BODY_BODY)
+        as *mut Vec<TSSignature>)
+    {
+        walk_ts_signature(traverser, item as *mut _, ctx);
+    }
+    ctx.pop_stack(pop_token);
+    traverser.exit_ts_interface_body(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_property_signature<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSPropertySignature<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_property_signature(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::TSPropertySignatureKey(
+        ancestor::TSPropertySignatureWithoutKey(node, PhantomData),
+    ));
+    walk_property_key(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_PROPERTY_SIGNATURE_KEY) as *mut PropertyKey,
+        ctx,
+    );
+    if let Some(field) = &mut *((node as *mut u8)
+        .add(ancestor::OFFSET_TS_PROPERTY_SIGNATURE_TYPE_ANNOTATION)
+        as *mut Option<Box<TSTypeAnnotation>>)
+    {
+        ctx.retag_stack(AncestorType::TSPropertySignatureTypeAnnotation);
+        walk_ts_type_annotation(traverser, (&mut **field) as *mut _, ctx);
+    }
+    ctx.pop_stack(pop_token);
+    traverser.exit_ts_property_signature(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_signature<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSSignature<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_signature(&mut *node, ctx);
+    match &mut *node {
+        TSSignature::TSIndexSignature(node) => {
+            walk_ts_index_signature(traverser, (&mut **node) as *mut _, ctx)
+        }
+        TSSignature::TSPropertySignature(node) => {
+            walk_ts_property_signature(traverser, (&mut **node) as *mut _, ctx)
+        }
+        TSSignature::TSCallSignatureDeclaration(node) => {
+            walk_ts_call_signature_declaration(traverser, (&mut **node) as *mut _, ctx)
+        }
+        TSSignature::TSConstructSignatureDeclaration(node) => {
+            walk_ts_construct_signature_declaration(traverser, (&mut **node) as *mut _, ctx)
+        }
+        TSSignature::TSMethodSignature(node) => {
+            walk_ts_method_signature(traverser, (&mut **node) as *mut _, ctx)
+        }
+    }
+    traverser.exit_ts_signature(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_index_signature<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSIndexSignature<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_index_signature(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::TSIndexSignatureParameters(
+        ancestor::TSIndexSignatureWithoutParameters(node, PhantomData),
+    ));
+    for item in &mut *((node as *mut u8).add(ancestor::OFFSET_TS_INDEX_SIGNATURE_PARAMETERS)
+        as *mut Vec<TSIndexSignatureName>)
+    {
+        walk_ts_index_signature_name(traverser, item as *mut _, ctx);
+    }
+    ctx.retag_stack(AncestorType::TSIndexSignatureTypeAnnotation);
+    walk_ts_type_annotation(
+        traverser,
+        (&mut **((node as *mut u8).add(ancestor::OFFSET_TS_INDEX_SIGNATURE_TYPE_ANNOTATION)
+            as *mut Box<TSTypeAnnotation>)) as *mut _,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_ts_index_signature(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_call_signature_declaration<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSCallSignatureDeclaration<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_call_signature_declaration(&mut *node, ctx);
+    let previous_scope_id = ctx.current_scope_id();
+    let current_scope_id = (*((node as *mut u8)
+        .add(ancestor::OFFSET_TS_CALL_SIGNATURE_DECLARATION_SCOPE_ID)
+        as *mut Cell<Option<ScopeId>>))
+        .get()
+        .unwrap();
+    ctx.set_current_scope_id(current_scope_id);
+    let pop_token = ctx.push_stack(Ancestor::TSCallSignatureDeclarationTypeParameters(
+        ancestor::TSCallSignatureDeclarationWithoutTypeParameters(node, PhantomData),
+    ));
+    if let Some(field) = &mut *((node as *mut u8)
+        .add(ancestor::OFFSET_TS_CALL_SIGNATURE_DECLARATION_TYPE_PARAMETERS)
+        as *mut Option<Box<TSTypeParameterDeclaration>>)
+    {
+        walk_ts_type_parameter_declaration(traverser, (&mut **field) as *mut _, ctx);
+    }
+    if let Some(field) = &mut *((node as *mut u8)
+        .add(ancestor::OFFSET_TS_CALL_SIGNATURE_DECLARATION_THIS_PARAM)
+        as *mut Option<Box<TSThisParameter>>)
+    {
+        ctx.retag_stack(AncestorType::TSCallSignatureDeclarationThisParam);
+        walk_ts_this_parameter(traverser, (&mut **field) as *mut _, ctx);
+    }
+    ctx.retag_stack(AncestorType::TSCallSignatureDeclarationParams);
+    walk_formal_parameters(
+        traverser,
+        (&mut **((node as *mut u8).add(ancestor::OFFSET_TS_CALL_SIGNATURE_DECLARATION_PARAMS)
+            as *mut Box<FormalParameters>)) as *mut _,
+        ctx,
+    );
+    if let Some(field) = &mut *((node as *mut u8)
+        .add(ancestor::OFFSET_TS_CALL_SIGNATURE_DECLARATION_RETURN_TYPE)
+        as *mut Option<Box<TSTypeAnnotation>>)
+    {
+        ctx.retag_stack(AncestorType::TSCallSignatureDeclarationReturnType);
+        walk_ts_type_annotation(traverser, (&mut **field) as *mut _, ctx);
+    }
+    ctx.pop_stack(pop_token);
+    ctx.set_current_scope_id(previous_scope_id);
+    traverser.exit_ts_call_signature_declaration(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_method_signature<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSMethodSignature<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_method_signature(&mut *node, ctx);
+    let previous_scope_id = ctx.current_scope_id();
+    let current_scope_id = (*((node as *mut u8).add(ancestor::OFFSET_TS_METHOD_SIGNATURE_SCOPE_ID)
+        as *mut Cell<Option<ScopeId>>))
+        .get()
+        .unwrap();
+    ctx.set_current_scope_id(current_scope_id);
+    let pop_token = ctx.push_stack(Ancestor::TSMethodSignatureKey(
+        ancestor::TSMethodSignatureWithoutKey(node, PhantomData),
+    ));
+    walk_property_key(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_METHOD_SIGNATURE_KEY) as *mut PropertyKey,
+        ctx,
+    );
+    if let Some(field) = &mut *((node as *mut u8)
+        .add(ancestor::OFFSET_TS_METHOD_SIGNATURE_TYPE_PARAMETERS)
+        as *mut Option<Box<TSTypeParameterDeclaration>>)
+    {
+        ctx.retag_stack(AncestorType::TSMethodSignatureTypeParameters);
+        walk_ts_type_parameter_declaration(traverser, (&mut **field) as *mut _, ctx);
+    }
+    if let Some(field) = &mut *((node as *mut u8)
+        .add(ancestor::OFFSET_TS_METHOD_SIGNATURE_THIS_PARAM)
+        as *mut Option<Box<TSThisParameter>>)
+    {
+        ctx.retag_stack(AncestorType::TSMethodSignatureThisParam);
+        walk_ts_this_parameter(traverser, (&mut **field) as *mut _, ctx);
+    }
+    ctx.retag_stack(AncestorType::TSMethodSignatureParams);
+    walk_formal_parameters(
+        traverser,
+        (&mut **((node as *mut u8).add(ancestor::OFFSET_TS_METHOD_SIGNATURE_PARAMS)
+            as *mut Box<FormalParameters>)) as *mut _,
+        ctx,
+    );
+    if let Some(field) = &mut *((node as *mut u8)
+        .add(ancestor::OFFSET_TS_METHOD_SIGNATURE_RETURN_TYPE)
+        as *mut Option<Box<TSTypeAnnotation>>)
+    {
+        ctx.retag_stack(AncestorType::TSMethodSignatureReturnType);
+        walk_ts_type_annotation(traverser, (&mut **field) as *mut _, ctx);
+    }
+    ctx.pop_stack(pop_token);
+    ctx.set_current_scope_id(previous_scope_id);
+    traverser.exit_ts_method_signature(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_construct_signature_declaration<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSConstructSignatureDeclaration<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_construct_signature_declaration(&mut *node, ctx);
+    let previous_scope_id = ctx.current_scope_id();
+    let current_scope_id = (*((node as *mut u8)
+        .add(ancestor::OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_SCOPE_ID)
+        as *mut Cell<Option<ScopeId>>))
+        .get()
+        .unwrap();
+    ctx.set_current_scope_id(current_scope_id);
+    let pop_token = ctx.push_stack(Ancestor::TSConstructSignatureDeclarationTypeParameters(
+        ancestor::TSConstructSignatureDeclarationWithoutTypeParameters(node, PhantomData),
+    ));
+    if let Some(field) = &mut *((node as *mut u8)
+        .add(ancestor::OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_TYPE_PARAMETERS)
+        as *mut Option<Box<TSTypeParameterDeclaration>>)
+    {
+        walk_ts_type_parameter_declaration(traverser, (&mut **field) as *mut _, ctx);
+    }
+    ctx.retag_stack(AncestorType::TSConstructSignatureDeclarationParams);
+    walk_formal_parameters(
+        traverser,
+        (&mut **((node as *mut u8).add(ancestor::OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_PARAMS)
+            as *mut Box<FormalParameters>)) as *mut _,
+        ctx,
+    );
+    if let Some(field) = &mut *((node as *mut u8)
+        .add(ancestor::OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_RETURN_TYPE)
+        as *mut Option<Box<TSTypeAnnotation>>)
+    {
+        ctx.retag_stack(AncestorType::TSConstructSignatureDeclarationReturnType);
+        walk_ts_type_annotation(traverser, (&mut **field) as *mut _, ctx);
+    }
+    ctx.pop_stack(pop_token);
+    ctx.set_current_scope_id(previous_scope_id);
+    traverser.exit_ts_construct_signature_declaration(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_index_signature_name<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSIndexSignatureName<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_index_signature_name(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::TSIndexSignatureNameTypeAnnotation(
+        ancestor::TSIndexSignatureNameWithoutTypeAnnotation(node, PhantomData),
+    ));
+    walk_ts_type_annotation(
+        traverser,
+        (&mut **((node as *mut u8).add(ancestor::OFFSET_TS_INDEX_SIGNATURE_NAME_TYPE_ANNOTATION)
+            as *mut Box<TSTypeAnnotation>)) as *mut _,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_ts_index_signature_name(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_interface_heritage<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSInterfaceHeritage<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_interface_heritage(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::TSInterfaceHeritageExpression(
+        ancestor::TSInterfaceHeritageWithoutExpression(node, PhantomData),
+    ));
+    walk_expression(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_INTERFACE_HERITAGE_EXPRESSION) as *mut Expression,
+        ctx,
+    );
+    if let Some(field) = &mut *((node as *mut u8)
+        .add(ancestor::OFFSET_TS_INTERFACE_HERITAGE_TYPE_ARGUMENTS)
+        as *mut Option<Box<TSTypeParameterInstantiation>>)
+    {
+        ctx.retag_stack(AncestorType::TSInterfaceHeritageTypeArguments);
+        walk_ts_type_parameter_instantiation(traverser, (&mut **field) as *mut _, ctx);
+    }
+    ctx.pop_stack(pop_token);
+    traverser.exit_ts_interface_heritage(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_type_predicate<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSTypePredicate<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_type_predicate(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::TSTypePredicateParameterName(
+        ancestor::TSTypePredicateWithoutParameterName(node, PhantomData),
+    ));
+    walk_ts_type_predicate_name(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_TYPE_PREDICATE_PARAMETER_NAME)
+            as *mut TSTypePredicateName,
+        ctx,
+    );
+    if let Some(field) = &mut *((node as *mut u8)
+        .add(ancestor::OFFSET_TS_TYPE_PREDICATE_TYPE_ANNOTATION)
+        as *mut Option<Box<TSTypeAnnotation>>)
+    {
+        ctx.retag_stack(AncestorType::TSTypePredicateTypeAnnotation);
+        walk_ts_type_annotation(traverser, (&mut **field) as *mut _, ctx);
+    }
+    ctx.pop_stack(pop_token);
+    traverser.exit_ts_type_predicate(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_type_predicate_name<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSTypePredicateName<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_type_predicate_name(&mut *node, ctx);
+    match &mut *node {
+        TSTypePredicateName::Identifier(node) => {
+            walk_identifier_name(traverser, (&mut **node) as *mut _, ctx)
+        }
+        TSTypePredicateName::This(node) => walk_ts_this_type(traverser, node as *mut _, ctx),
+    }
+    traverser.exit_ts_type_predicate_name(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_module_declaration<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSModuleDeclaration<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_module_declaration(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::TSModuleDeclarationId(
+        ancestor::TSModuleDeclarationWithoutId(node, PhantomData),
+    ));
+    walk_ts_module_declaration_name(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_MODULE_DECLARATION_ID)
+            as *mut TSModuleDeclarationName,
+        ctx,
+    );
+    let previous_scope_id = ctx.current_scope_id();
+    let current_scope_id =
+        (*((node as *mut u8).add(ancestor::OFFSET_TS_MODULE_DECLARATION_SCOPE_ID)
+            as *mut Cell<Option<ScopeId>>))
+            .get()
+            .unwrap();
+    ctx.set_current_scope_id(current_scope_id);
+    let previous_hoist_scope_id = ctx.current_hoist_scope_id();
+    ctx.set_current_hoist_scope_id(current_scope_id);
+    let previous_block_scope_id = ctx.current_block_scope_id();
+    ctx.set_current_block_scope_id(current_scope_id);
+    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_TS_MODULE_DECLARATION_BODY)
+        as *mut Option<TSModuleDeclarationBody>)
+    {
+        ctx.retag_stack(AncestorType::TSModuleDeclarationBody);
+        walk_ts_module_declaration_body(traverser, field as *mut _, ctx);
+    }
+    ctx.pop_stack(pop_token);
+    ctx.set_current_scope_id(previous_scope_id);
+    ctx.set_current_hoist_scope_id(previous_hoist_scope_id);
+    ctx.set_current_block_scope_id(previous_block_scope_id);
+    traverser.exit_ts_module_declaration(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_module_declaration_name<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSModuleDeclarationName<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_module_declaration_name(&mut *node, ctx);
+    match &mut *node {
+        TSModuleDeclarationName::Identifier(node) => {
+            walk_binding_identifier(traverser, node as *mut _, ctx)
+        }
+        TSModuleDeclarationName::StringLiteral(node) => {
+            walk_string_literal(traverser, node as *mut _, ctx)
+        }
+    }
+    traverser.exit_ts_module_declaration_name(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_module_declaration_body<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSModuleDeclarationBody<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_module_declaration_body(&mut *node, ctx);
+    match &mut *node {
+        TSModuleDeclarationBody::TSModuleDeclaration(node) => {
+            walk_ts_module_declaration(traverser, (&mut **node) as *mut _, ctx)
+        }
+        TSModuleDeclarationBody::TSModuleBlock(node) => {
+            walk_ts_module_block(traverser, (&mut **node) as *mut _, ctx)
+        }
+    }
+    traverser.exit_ts_module_declaration_body(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_global_declaration<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSGlobalDeclaration<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_global_declaration(&mut *node, ctx);
+    let previous_scope_id = ctx.current_scope_id();
+    let current_scope_id =
+        (*((node as *mut u8).add(ancestor::OFFSET_TS_GLOBAL_DECLARATION_SCOPE_ID)
+            as *mut Cell<Option<ScopeId>>))
+            .get()
+            .unwrap();
+    ctx.set_current_scope_id(current_scope_id);
+    let previous_hoist_scope_id = ctx.current_hoist_scope_id();
+    ctx.set_current_hoist_scope_id(current_scope_id);
+    let previous_block_scope_id = ctx.current_block_scope_id();
+    ctx.set_current_block_scope_id(current_scope_id);
+    let pop_token = ctx.push_stack(Ancestor::TSGlobalDeclarationBody(
+        ancestor::TSGlobalDeclarationWithoutBody(node, PhantomData),
+    ));
+    walk_ts_module_block(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_GLOBAL_DECLARATION_BODY) as *mut TSModuleBlock,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    ctx.set_current_scope_id(previous_scope_id);
+    ctx.set_current_hoist_scope_id(previous_hoist_scope_id);
+    ctx.set_current_block_scope_id(previous_block_scope_id);
+    traverser.exit_ts_global_declaration(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_module_block<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSModuleBlock<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_module_block(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::TSModuleBlockDirectives(
+        ancestor::TSModuleBlockWithoutDirectives(node, PhantomData),
+    ));
+    for item in &mut *((node as *mut u8).add(ancestor::OFFSET_TS_MODULE_BLOCK_DIRECTIVES)
+        as *mut Vec<Directive>)
+    {
+        walk_directive(traverser, item as *mut _, ctx);
+    }
+    ctx.retag_stack(AncestorType::TSModuleBlockBody);
+    walk_statements(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_MODULE_BLOCK_BODY) as *mut Vec<Statement>,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_ts_module_block(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_type_literal<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSTypeLiteral<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_type_literal(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::TSTypeLiteralMembers(
+        ancestor::TSTypeLiteralWithoutMembers(node, PhantomData),
+    ));
+    for item in &mut *((node as *mut u8).add(ancestor::OFFSET_TS_TYPE_LITERAL_MEMBERS)
+        as *mut Vec<TSSignature>)
+    {
+        walk_ts_signature(traverser, item as *mut _, ctx);
+    }
+    ctx.pop_stack(pop_token);
+    traverser.exit_ts_type_literal(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_infer_type<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSInferType<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_infer_type(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::TSInferTypeTypeParameter(
+        ancestor::TSInferTypeWithoutTypeParameter(node, PhantomData),
+    ));
+    walk_ts_type_parameter(
+        traverser,
+        (&mut **((node as *mut u8).add(ancestor::OFFSET_TS_INFER_TYPE_TYPE_PARAMETER)
+            as *mut Box<TSTypeParameter>)) as *mut _,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_ts_infer_type(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_type_query<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSTypeQuery<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_type_query(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::TSTypeQueryExprName(
+        ancestor::TSTypeQueryWithoutExprName(node, PhantomData),
+    ));
+    walk_ts_type_query_expr_name(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_TYPE_QUERY_EXPR_NAME) as *mut TSTypeQueryExprName,
+        ctx,
+    );
+    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_TS_TYPE_QUERY_TYPE_ARGUMENTS)
+        as *mut Option<Box<TSTypeParameterInstantiation>>)
+    {
+        ctx.retag_stack(AncestorType::TSTypeQueryTypeArguments);
+        walk_ts_type_parameter_instantiation(traverser, (&mut **field) as *mut _, ctx);
+    }
+    ctx.pop_stack(pop_token);
+    traverser.exit_ts_type_query(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_type_query_expr_name<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSTypeQueryExprName<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_type_query_expr_name(&mut *node, ctx);
+    match &mut *node {
+        TSTypeQueryExprName::TSImportType(node) => {
+            walk_ts_import_type(traverser, (&mut **node) as *mut _, ctx)
+        }
+        TSTypeQueryExprName::IdentifierReference(_)
+        | TSTypeQueryExprName::QualifiedName(_)
+        | TSTypeQueryExprName::ThisExpression(_) => {
+            walk_ts_type_name(traverser, node as *mut _, ctx)
+        }
+    }
+    traverser.exit_ts_type_query_expr_name(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_import_type<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSImportType<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_import_type(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::TSImportTypeSource(
+        ancestor::TSImportTypeWithoutSource(node, PhantomData),
+    ));
+    walk_string_literal(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_IMPORT_TYPE_SOURCE) as *mut StringLiteral,
+        ctx,
+    );
+    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_TS_IMPORT_TYPE_OPTIONS)
+        as *mut Option<Box<ObjectExpression>>)
+    {
+        ctx.retag_stack(AncestorType::TSImportTypeOptions);
+        walk_object_expression(traverser, (&mut **field) as *mut _, ctx);
+    }
+    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_TS_IMPORT_TYPE_QUALIFIER)
+        as *mut Option<TSImportTypeQualifier>)
+    {
+        ctx.retag_stack(AncestorType::TSImportTypeQualifier);
+        walk_ts_import_type_qualifier(traverser, field as *mut _, ctx);
+    }
+    if let Some(field) = &mut *((node as *mut u8)
+        .add(ancestor::OFFSET_TS_IMPORT_TYPE_TYPE_ARGUMENTS)
+        as *mut Option<Box<TSTypeParameterInstantiation>>)
+    {
+        ctx.retag_stack(AncestorType::TSImportTypeTypeArguments);
+        walk_ts_type_parameter_instantiation(traverser, (&mut **field) as *mut _, ctx);
+    }
+    ctx.pop_stack(pop_token);
+    traverser.exit_ts_import_type(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_import_type_qualifier<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSImportTypeQualifier<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_import_type_qualifier(&mut *node, ctx);
+    match &mut *node {
+        TSImportTypeQualifier::Identifier(node) => {
+            walk_identifier_name(traverser, (&mut **node) as *mut _, ctx)
+        }
+        TSImportTypeQualifier::QualifiedName(node) => {
+            walk_ts_import_type_qualified_name(traverser, (&mut **node) as *mut _, ctx)
+        }
+    }
+    traverser.exit_ts_import_type_qualifier(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_import_type_qualified_name<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSImportTypeQualifiedName<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_import_type_qualified_name(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::TSImportTypeQualifiedNameLeft(
+        ancestor::TSImportTypeQualifiedNameWithoutLeft(node, PhantomData),
+    ));
+    walk_ts_import_type_qualifier(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_IMPORT_TYPE_QUALIFIED_NAME_LEFT)
+            as *mut TSImportTypeQualifier,
+        ctx,
+    );
+    ctx.retag_stack(AncestorType::TSImportTypeQualifiedNameRight);
+    walk_identifier_name(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_IMPORT_TYPE_QUALIFIED_NAME_RIGHT)
+            as *mut IdentifierName,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_ts_import_type_qualified_name(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_function_type<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSFunctionType<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_function_type(&mut *node, ctx);
+    let previous_scope_id = ctx.current_scope_id();
+    let current_scope_id = (*((node as *mut u8).add(ancestor::OFFSET_TS_FUNCTION_TYPE_SCOPE_ID)
+        as *mut Cell<Option<ScopeId>>))
+        .get()
+        .unwrap();
+    ctx.set_current_scope_id(current_scope_id);
+    let pop_token = ctx.push_stack(Ancestor::TSFunctionTypeTypeParameters(
+        ancestor::TSFunctionTypeWithoutTypeParameters(node, PhantomData),
+    ));
+    if let Some(field) = &mut *((node as *mut u8)
+        .add(ancestor::OFFSET_TS_FUNCTION_TYPE_TYPE_PARAMETERS)
+        as *mut Option<Box<TSTypeParameterDeclaration>>)
+    {
+        walk_ts_type_parameter_declaration(traverser, (&mut **field) as *mut _, ctx);
+    }
+    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_TS_FUNCTION_TYPE_THIS_PARAM)
+        as *mut Option<Box<TSThisParameter>>)
+    {
+        ctx.retag_stack(AncestorType::TSFunctionTypeThisParam);
+        walk_ts_this_parameter(traverser, (&mut **field) as *mut _, ctx);
+    }
+    ctx.retag_stack(AncestorType::TSFunctionTypeParams);
+    walk_formal_parameters(
+        traverser,
+        (&mut **((node as *mut u8).add(ancestor::OFFSET_TS_FUNCTION_TYPE_PARAMS)
+            as *mut Box<FormalParameters>)) as *mut _,
+        ctx,
+    );
+    ctx.retag_stack(AncestorType::TSFunctionTypeReturnType);
+    walk_ts_type_annotation(
+        traverser,
+        (&mut **((node as *mut u8).add(ancestor::OFFSET_TS_FUNCTION_TYPE_RETURN_TYPE)
+            as *mut Box<TSTypeAnnotation>)) as *mut _,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    ctx.set_current_scope_id(previous_scope_id);
+    traverser.exit_ts_function_type(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_constructor_type<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSConstructorType<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_constructor_type(&mut *node, ctx);
+    let previous_scope_id = ctx.current_scope_id();
+    let current_scope_id = (*((node as *mut u8).add(ancestor::OFFSET_TS_CONSTRUCTOR_TYPE_SCOPE_ID)
+        as *mut Cell<Option<ScopeId>>))
+        .get()
+        .unwrap();
+    ctx.set_current_scope_id(current_scope_id);
+    let pop_token = ctx.push_stack(Ancestor::TSConstructorTypeTypeParameters(
+        ancestor::TSConstructorTypeWithoutTypeParameters(node, PhantomData),
+    ));
+    if let Some(field) = &mut *((node as *mut u8)
+        .add(ancestor::OFFSET_TS_CONSTRUCTOR_TYPE_TYPE_PARAMETERS)
+        as *mut Option<Box<TSTypeParameterDeclaration>>)
+    {
+        walk_ts_type_parameter_declaration(traverser, (&mut **field) as *mut _, ctx);
+    }
+    ctx.retag_stack(AncestorType::TSConstructorTypeParams);
+    walk_formal_parameters(
+        traverser,
+        (&mut **((node as *mut u8).add(ancestor::OFFSET_TS_CONSTRUCTOR_TYPE_PARAMS)
+            as *mut Box<FormalParameters>)) as *mut _,
+        ctx,
+    );
+    ctx.retag_stack(AncestorType::TSConstructorTypeReturnType);
+    walk_ts_type_annotation(
+        traverser,
+        (&mut **((node as *mut u8).add(ancestor::OFFSET_TS_CONSTRUCTOR_TYPE_RETURN_TYPE)
+            as *mut Box<TSTypeAnnotation>)) as *mut _,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    ctx.set_current_scope_id(previous_scope_id);
+    traverser.exit_ts_constructor_type(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_mapped_type<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSMappedType<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_mapped_type(&mut *node, ctx);
+    let previous_scope_id = ctx.current_scope_id();
+    let current_scope_id = (*((node as *mut u8).add(ancestor::OFFSET_TS_MAPPED_TYPE_SCOPE_ID)
+        as *mut Cell<Option<ScopeId>>))
+        .get()
+        .unwrap();
+    ctx.set_current_scope_id(current_scope_id);
+    let pop_token = ctx
+        .push_stack(Ancestor::TSMappedTypeKey(ancestor::TSMappedTypeWithoutKey(node, PhantomData)));
+    walk_binding_identifier(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_MAPPED_TYPE_KEY) as *mut BindingIdentifier,
+        ctx,
+    );
+    ctx.retag_stack(AncestorType::TSMappedTypeConstraint);
+    walk_ts_type(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_MAPPED_TYPE_CONSTRAINT) as *mut TSType,
+        ctx,
+    );
+    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_TS_MAPPED_TYPE_NAME_TYPE)
+        as *mut Option<TSType>)
+    {
+        ctx.retag_stack(AncestorType::TSMappedTypeNameType);
+        walk_ts_type(traverser, field as *mut _, ctx);
+    }
+    if let Some(field) = &mut *((node as *mut u8)
+        .add(ancestor::OFFSET_TS_MAPPED_TYPE_TYPE_ANNOTATION)
+        as *mut Option<TSType>)
+    {
+        ctx.retag_stack(AncestorType::TSMappedTypeTypeAnnotation);
+        walk_ts_type(traverser, field as *mut _, ctx);
+    }
+    ctx.pop_stack(pop_token);
+    ctx.set_current_scope_id(previous_scope_id);
+    traverser.exit_ts_mapped_type(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_template_literal_type<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSTemplateLiteralType<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_template_literal_type(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::TSTemplateLiteralTypeQuasis(
+        ancestor::TSTemplateLiteralTypeWithoutQuasis(node, PhantomData),
+    ));
+    for item in &mut *((node as *mut u8).add(ancestor::OFFSET_TS_TEMPLATE_LITERAL_TYPE_QUASIS)
+        as *mut Vec<TemplateElement>)
+    {
+        walk_template_element(traverser, item as *mut _, ctx);
+    }
+    ctx.retag_stack(AncestorType::TSTemplateLiteralTypeTypes);
+    for item in &mut *((node as *mut u8).add(ancestor::OFFSET_TS_TEMPLATE_LITERAL_TYPE_TYPES)
+        as *mut Vec<TSType>)
+    {
+        walk_ts_type(traverser, item as *mut _, ctx);
+    }
+    ctx.pop_stack(pop_token);
+    traverser.exit_ts_template_literal_type(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_as_expression<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSAsExpression<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_as_expression(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::TSAsExpressionExpression(
+        ancestor::TSAsExpressionWithoutExpression(node, PhantomData),
+    ));
+    walk_expression(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_AS_EXPRESSION_EXPRESSION) as *mut Expression,
+        ctx,
+    );
+    ctx.retag_stack(AncestorType::TSAsExpressionTypeAnnotation);
+    walk_ts_type(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_AS_EXPRESSION_TYPE_ANNOTATION) as *mut TSType,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_ts_as_expression(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_satisfies_expression<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSSatisfiesExpression<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_satisfies_expression(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::TSSatisfiesExpressionExpression(
+        ancestor::TSSatisfiesExpressionWithoutExpression(node, PhantomData),
+    ));
+    walk_expression(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_SATISFIES_EXPRESSION_EXPRESSION)
+            as *mut Expression,
+        ctx,
+    );
+    ctx.retag_stack(AncestorType::TSSatisfiesExpressionTypeAnnotation);
+    walk_ts_type(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_SATISFIES_EXPRESSION_TYPE_ANNOTATION)
+            as *mut TSType,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_ts_satisfies_expression(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_type_assertion<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSTypeAssertion<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_type_assertion(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::TSTypeAssertionTypeAnnotation(
+        ancestor::TSTypeAssertionWithoutTypeAnnotation(node, PhantomData),
+    ));
+    walk_ts_type(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_TYPE_ASSERTION_TYPE_ANNOTATION) as *mut TSType,
+        ctx,
+    );
+    ctx.retag_stack(AncestorType::TSTypeAssertionExpression);
+    walk_expression(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_TYPE_ASSERTION_EXPRESSION) as *mut Expression,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_ts_type_assertion(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_import_equals_declaration<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSImportEqualsDeclaration<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_import_equals_declaration(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::TSImportEqualsDeclarationId(
+        ancestor::TSImportEqualsDeclarationWithoutId(node, PhantomData),
+    ));
+    walk_binding_identifier(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_IMPORT_EQUALS_DECLARATION_ID)
+            as *mut BindingIdentifier,
+        ctx,
+    );
+    ctx.retag_stack(AncestorType::TSImportEqualsDeclarationModuleReference);
+    walk_ts_module_reference(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_IMPORT_EQUALS_DECLARATION_MODULE_REFERENCE)
+            as *mut TSModuleReference,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_ts_import_equals_declaration(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_module_reference<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSModuleReference<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_module_reference(&mut *node, ctx);
+    match &mut *node {
+        TSModuleReference::ExternalModuleReference(node) => {
+            walk_ts_external_module_reference(traverser, (&mut **node) as *mut _, ctx)
+        }
+        TSModuleReference::IdentifierReference(node) => {
+            walk_identifier_reference(traverser, (&mut **node) as *mut _, ctx)
+        }
+        TSModuleReference::QualifiedName(node) => {
+            walk_ts_qualified_name(traverser, (&mut **node) as *mut _, ctx)
+        }
+    }
+    traverser.exit_ts_module_reference(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_external_module_reference<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSExternalModuleReference<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_external_module_reference(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::TSExternalModuleReferenceExpression(
+        ancestor::TSExternalModuleReferenceWithoutExpression(node, PhantomData),
+    ));
+    walk_string_literal(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_EXTERNAL_MODULE_REFERENCE_EXPRESSION)
+            as *mut StringLiteral,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_ts_external_module_reference(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_non_null_expression<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSNonNullExpression<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_non_null_expression(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::TSNonNullExpressionExpression(
+        ancestor::TSNonNullExpressionWithoutExpression(node, PhantomData),
+    ));
+    walk_expression(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_NON_NULL_EXPRESSION_EXPRESSION)
+            as *mut Expression,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_ts_non_null_expression(&mut *node, ctx);
+}
+
+unsafe fn walk_decorator<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut Decorator<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_decorator(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::DecoratorExpression(
+        ancestor::DecoratorWithoutExpression(node, PhantomData),
+    ));
+    walk_expression(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_DECORATOR_EXPRESSION) as *mut Expression,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_decorator(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_export_assignment<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSExportAssignment<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_export_assignment(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::TSExportAssignmentExpression(
+        ancestor::TSExportAssignmentWithoutExpression(node, PhantomData),
+    ));
+    walk_expression(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_EXPORT_ASSIGNMENT_EXPRESSION) as *mut Expression,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_ts_export_assignment(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_namespace_export_declaration<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSNamespaceExportDeclaration<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_namespace_export_declaration(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::TSNamespaceExportDeclarationId(
+        ancestor::TSNamespaceExportDeclarationWithoutId(node, PhantomData),
+    ));
+    walk_identifier_name(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_NAMESPACE_EXPORT_DECLARATION_ID)
+            as *mut IdentifierName,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_ts_namespace_export_declaration(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_instantiation_expression<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSInstantiationExpression<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_instantiation_expression(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::TSInstantiationExpressionExpression(
+        ancestor::TSInstantiationExpressionWithoutExpression(node, PhantomData),
+    ));
+    walk_expression(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_INSTANTIATION_EXPRESSION_EXPRESSION)
+            as *mut Expression,
+        ctx,
+    );
+    ctx.retag_stack(AncestorType::TSInstantiationExpressionTypeArguments);
+    walk_ts_type_parameter_instantiation(
+        traverser,
+        (&mut **((node as *mut u8).add(ancestor::OFFSET_TS_INSTANTIATION_EXPRESSION_TYPE_ARGUMENTS)
+            as *mut Box<TSTypeParameterInstantiation>)) as *mut _,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_ts_instantiation_expression(&mut *node, ctx);
+}
+
+unsafe fn walk_js_doc_nullable_type<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut JSDocNullableType<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_js_doc_nullable_type(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::JSDocNullableTypeTypeAnnotation(
+        ancestor::JSDocNullableTypeWithoutTypeAnnotation(node, PhantomData),
+    ));
+    walk_ts_type(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_JS_DOC_NULLABLE_TYPE_TYPE_ANNOTATION) as *mut TSType,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_js_doc_nullable_type(&mut *node, ctx);
+}
+
+unsafe fn walk_js_doc_non_nullable_type<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut JSDocNonNullableType<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_js_doc_non_nullable_type(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::JSDocNonNullableTypeTypeAnnotation(
+        ancestor::JSDocNonNullableTypeWithoutTypeAnnotation(node, PhantomData),
+    ));
+    walk_ts_type(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_JS_DOC_NON_NULLABLE_TYPE_TYPE_ANNOTATION)
+            as *mut TSType,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_js_doc_non_nullable_type(&mut *node, ctx);
+}
+
+unsafe fn walk_js_doc_unknown_type<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut JSDocUnknownType,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_js_doc_unknown_type(&mut *node, ctx);
+    traverser.exit_js_doc_unknown_type(&mut *node, ctx);
+}
+
+unsafe fn walk_statements<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    stmts: *mut Vec<'a, Statement<'a>>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_statements(&mut *stmts, ctx);
+    for stmt in &mut *stmts {
+        walk_statement(traverser, stmt, ctx);
+    }
+    traverser.exit_statements(&mut *stmts, ctx);
+}

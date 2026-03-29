@@ -37,7 +37,7 @@ enum NoCondAssignConfig {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow assignment operators in conditional expressions
+    /// Disallow assignment operators in conditional expressions.
     ///
     /// ### Why is this bad?
     ///
@@ -72,10 +72,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoCondAssign {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        serde_json::from_value::<DefaultRuleConfig<NoCondAssign>>(value)
-            .unwrap_or_default()
-            .into_inner()
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

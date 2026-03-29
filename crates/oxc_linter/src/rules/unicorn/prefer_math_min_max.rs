@@ -190,66 +190,37 @@ fn test() {
     ];
 
     let fix = vec![
-        (r"const foo = height < 100 ? height : 100;", r"const foo = Math.min(height, 100);", None),
-        (
-            r"const foo = height <= -100 ? height : -100;",
-            r"const foo = Math.min(height, -100);",
-            None,
-        ),
+        (r"const foo = height < 100 ? height : 100;", r"const foo = Math.min(height, 100);"),
+        (r"const foo = height <= -100 ? height : -100;", r"const foo = Math.min(height, -100);"),
         (
             r"const foo = 150.34 < height ? 150.34 : height;",
             r"const foo = Math.min(150.34, height);",
-            None,
         ),
-        (
-            r"const foo = -0.34 <= height ? -0.34 : height;",
-            r"const foo = Math.min(-0.34, height);",
-            None,
-        ),
-        (
-            r"const foo = height > 10e3 ? 10e3 : height;",
-            r"const foo = Math.min(10e3, height);",
-            None,
-        ),
-        (
-            r"const foo = height >= -10e3 ? -10e3 : height;",
-            r"const foo = Math.min(-10e3, height);",
-            None,
-        ),
-        (
-            r"const foo = 10e3 > height ? height : 10e3;",
-            r"const foo = Math.min(height, 10e3);",
-            None,
-        ),
-        (
-            r"const foo = 10e3 >= height ? height : 10e3;",
-            r"const foo = Math.min(height, 10e3);",
-            None,
-        ),
-        ("return height > 100 ? height : 100;", "return Math.max(height, 100);", None),
-        ("return height >= 50 ? height : 50;", "return Math.max(height, 50);", None),
+        (r"const foo = -0.34 <= height ? -0.34 : height;", r"const foo = Math.min(-0.34, height);"),
+        (r"const foo = height > 10e3 ? 10e3 : height;", r"const foo = Math.min(10e3, height);"),
+        (r"const foo = height >= -10e3 ? -10e3 : height;", r"const foo = Math.min(-10e3, height);"),
+        (r"const foo = 10e3 > height ? height : 10e3;", r"const foo = Math.min(height, 10e3);"),
+        (r"const foo = 10e3 >= height ? height : 10e3;", r"const foo = Math.min(height, 10e3);"),
+        ("return height > 100 ? height : 100;", "return Math.max(height, 100);"),
+        ("return height >= 50 ? height : 50;", "return Math.max(height, 50);"),
         (
             "return (10e3 > height ? 10e3 : height) || 200;",
             "return (Math.max(10e3, height)) || 200;",
-            None,
         ),
         (
             "return (-10e3 >= height ? -10e3 : height) || 200;",
             "return (Math.max(-10e3, height)) || 200;",
-            None,
         ),
         (
             "return (height < 2.99 ? 2.99 : height) || 0.99;",
             "return (Math.max(2.99, height)) || 0.99;",
-            None,
         ),
         (
             "return (height <= -0.99 ? -0.99 : height) || -3.99;",
             "return (Math.max(-0.99, height)) || -3.99;",
-            None,
         ),
-        ("return 10e6 < height ? height : 10e6;", "return Math.max(height, 10e6);", None),
-        ("return -10e4 <= height ? height : -10e4;", "return Math.max(height, -10e4);", None),
+        ("return 10e6 < height ? height : 10e6;", "return Math.max(height, 10e6);"),
+        ("return -10e4 <= height ? height : -10e4;", "return Math.max(height, -10e4);"),
     ];
 
     Tester::new(PreferMathMinMax::NAME, PreferMathMinMax::PLUGIN, pass, fail)

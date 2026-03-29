@@ -3,28 +3,38 @@
 mod ast_nodes;
 #[cfg(feature = "detect_code_removal")]
 mod detect_code_removal;
-mod embedded_formatter;
+mod external_formatter;
 mod formatter;
 mod ir_transform;
 mod options;
-pub mod oxfmtrc;
 mod parentheses;
+mod print;
 mod service;
 mod utils;
-mod write;
 
 use oxc_allocator::Allocator;
+use oxc_ast::Comment;
 use oxc_ast::ast::*;
+use oxc_span::SourceType;
 
-pub use crate::embedded_formatter::{EmbeddedFormatter, EmbeddedFormatterCallback};
+pub use crate::ast_nodes::{AstNode, AstNodes};
+pub use crate::external_formatter::{
+    EmbeddedDocFormatterCallback, EmbeddedDocResult, EmbeddedFormatterCallback, ExternalCallbacks,
+    TailwindCallback,
+};
+pub use crate::formatter::format_element::tag::{
+    Align, Condition, DedentMode, Group, GroupMode, Tag,
+};
+pub use crate::formatter::format_element::{
+    BestFittingElement, FormatElement, LineMode, PrintMode, TextWidth,
+};
+pub use crate::formatter::{Format, Formatted};
+pub use crate::formatter::{GroupId, UniqueGroupIdBuilder};
 pub use crate::ir_transform::options::*;
 pub use crate::options::*;
+pub use crate::print::{FormatVueBindingParams, FormatVueScriptGeneric};
 pub use crate::service::*;
-use crate::{
-    ast_nodes::{AstNode, AstNodes},
-    formatter::{FormatContext, Formatted},
-    ir_transform::SortImportsTransform,
-};
+use crate::{formatter::FormatContext, ir_transform::SortImportsTransform};
 #[cfg(feature = "detect_code_removal")]
 pub use detect_code_removal::detect_code_removal;
 
@@ -48,25 +58,16 @@ impl<'a> Formatter<'a> {
 
     #[inline]
     pub fn format(self, program: &'a Program<'a>) -> Formatted<'a> {
-        self.format_impl(program, None)
+        self.format_with_external_callbacks(program, None)
     }
 
     #[inline]
-    pub fn format_with_embedded(
+    pub fn format_with_external_callbacks(
         self,
         program: &'a Program<'a>,
-        embedded_formatter: EmbeddedFormatter,
+        external_callbacks: Option<ExternalCallbacks>,
     ) -> Formatted<'a> {
-        self.format_impl(program, Some(embedded_formatter))
-    }
-
-    pub fn format_impl(
-        self,
-        program: &'a Program<'a>,
-        embedded_formatter: Option<EmbeddedFormatter>,
-    ) -> Formatted<'a> {
-        let parent = self.allocator.alloc(AstNodes::Dummy());
-        let program_node = AstNode::new(program, parent, self.allocator);
+        let program_node = AstNode::new(program, AstNodes::Dummy(), self.allocator);
 
         let context = FormatContext::new(
             program.source_text,
@@ -74,7 +75,7 @@ impl<'a> Formatter<'a> {
             &program.comments,
             self.allocator,
             self.options,
-            embedded_formatter,
+            external_callbacks,
         );
 
         let mut formatted = formatter::format(
@@ -84,17 +85,45 @@ impl<'a> Formatter<'a> {
 
         // Basic formatting and `document.propagate_expand()` are already done here.
         // Now apply additional transforms if enabled.
-        if let Some(sort_imports_options) = &formatted.context().options().experimental_sort_imports
-            && let Some(transformed_document) = SortImportsTransform::transform(
+        if let Some(sort_imports_options) = &formatted.context().options().sort_imports
+            && let Some(transformed_elements) = SortImportsTransform::transform(
                 formatted.document(),
                 sort_imports_options,
                 self.allocator,
             )
         {
-            *formatted.document_mut() = transformed_document;
+            formatted.document_mut().replace_elements(transformed_elements);
         }
 
         formatted
+    }
+
+    /// Formats an arbitrary value that implements `Format` and returns the `Formatted` IR.
+    ///
+    /// Unlike `format()` which requires a full `Program`,
+    /// this method accepts any value that implements `Format`.
+    /// This enables fragment formatting for embedded contexts like:
+    /// - Vue: `v-for`, `v-slot`, and `<script generic="...">`
+    /// - etc...
+    ///
+    /// `SortImportsTransform` is skipped since it only applies to whole `Program` formatting.
+    pub fn format_node<F: formatter::Format<'a>>(
+        self,
+        node: &F,
+        source_text: &'a str,
+        source_type: SourceType,
+        comments: &'a [Comment],
+        external_callbacks: Option<ExternalCallbacks>,
+    ) -> Formatted<'a> {
+        let context = FormatContext::new(
+            source_text,
+            source_type,
+            comments,
+            self.allocator,
+            self.options,
+            external_callbacks,
+        );
+        formatter::format(context, formatter::Arguments::new(&[formatter::Argument::new(node)]))
     }
 }
 
@@ -103,6 +132,10 @@ pub(crate) enum JsLabels {
     MemberChain,
     /// For `ir_transform/sort_imports`
     ImportDeclaration,
+    /// For `ir_transform/sort_imports`
+    /// Marks `alignable_comment` (Block comment where each line starts with `*`)
+    /// to distinguish from other text content like template literals that may contain `/*`.
+    AlignableBlockComment,
 }
 
 impl Label for JsLabels {
@@ -114,6 +147,7 @@ impl Label for JsLabels {
         match self {
             Self::MemberChain => "MemberChain",
             Self::ImportDeclaration => "ImportDeclaration",
+            Self::AlignableBlockComment => "AlignableBlockComment",
         }
     }
 }

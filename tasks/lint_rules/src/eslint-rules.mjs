@@ -63,14 +63,18 @@ const { rules: pluginNextAllRules } = pluginNext;
 const { configs: pluginVitestConfigs, rules: pluginVitestRules } = pluginVitest;
 const { configs: pluginVueConfigs, rules: pluginVueRules } = pluginVue;
 
-/** @param {import("eslint").Linter} linter */
-const loadPluginTypeScriptRules = (linter) => {
-  // We want to list all rules but not support type-checked rules
-  const pluginTypeScriptDisableTypeCheckedRules = new Map(
-    Object.entries(pluginTypeScriptConfigs["disable-type-checked"].rules),
-  );
+export const typescriptTypeCheckRules = new Map(
+  Object.entries(pluginTypeScriptConfigs["disable-type-checked"].rules),
+);
+
+/**
+ * @param {import("eslint").Linter} linter
+ * @param {boolean} includeTypeCheckRules
+ * @returns {void}
+ */
+const loadPluginTypeScriptRules = (linter, includeTypeCheckRules = false) => {
   for (const [name, rule] of Object.entries(pluginTypeScriptAllRules)) {
-    if (pluginTypeScriptDisableTypeCheckedRules.has(`@typescript-eslint/${name}`)) {
+    if (!includeTypeCheckRules && typescriptTypeCheckRules.has(`@typescript-eslint/${name}`)) {
       continue;
     }
 
@@ -309,9 +313,13 @@ export const createESLintLinter = () =>
     configType: "eslintrc",
   });
 
-/** @param {import("eslint").Linter} linter */
-export const loadTargetPluginRules = (linter) => {
-  loadPluginTypeScriptRules(linter);
+/**
+ * @param {import("eslint").Linter} linter
+ * @param {boolean} includeTypeCheckRules
+ * @returns {void}
+ */
+export const loadTargetPluginRules = (linter, includeTypeCheckRules = false) => {
+  loadPluginTypeScriptRules(linter, includeTypeCheckRules);
   loadPluginNRules(linter);
   loadPluginUnicornRules(linter);
   loadPluginJSDocRules(linter);

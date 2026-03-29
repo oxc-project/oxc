@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "lib": ["ESNext"],
     "module": "Preserve",
     "moduleResolution": "Bundler",
     "noEmit": true,
@@ -7,6 +8,6 @@
     "strict": true,
     "skipLibCheck": true
   },
-  "include": ["src-js", "test/**/*.ts"],
-  "exclude": ["test/fixtures"]
+  "include": ["scripts", "conformance/*.ts", "src-js", "test/**/*.ts"],
+  "exclude": ["test/**/fixtures"]
 }

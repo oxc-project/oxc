@@ -32,7 +32,7 @@ fn no_standalone_expect_diagnostic(span: Span) -> OxcDiagnostic {
 pub struct NoStandaloneExpect(Box<NoStandaloneExpectConfig>);
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoStandaloneExpectConfig {
     /// An array of function names that should also be treated as test blocks.
     additional_test_block_functions: Vec<CompactStr>,
@@ -89,10 +89,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoStandaloneExpect {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        serde_json::from_value::<DefaultRuleConfig<NoStandaloneExpect>>(value)
-            .unwrap_or_default()
-            .into_inner()
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run_once(&self, ctx: &LintContext<'_>) {
@@ -239,6 +237,16 @@ fn is_var_declarator_or_test_block<'a>(
             let node_name = get_node_name(&call_expr.callee);
             if additional_test_block_functions.contains(&node_name) {
                 return true;
+            }
+
+            let parent = ctx.nodes().parent_node(node.id());
+            if matches!(parent.kind(), AstKind::CallExpression(_)) {
+                return is_var_declarator_or_test_block(
+                    parent,
+                    additional_test_block_functions,
+                    id_nodes_mapping,
+                    ctx,
+                );
             }
         }
         AstKind::ArrayExpression(_) | AstKind::ObjectExpression(_) => {

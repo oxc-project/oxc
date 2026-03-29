@@ -1,0 +1,10 @@
+{
+  "jsPlugins": ["./plugin.ts"],
+  "categories": {
+    "correctness": "off"
+  },
+  "rules": {
+    "fixable-boolean-plugin/no-debugger-true": "error",
+    "fixable-boolean-plugin/no-console-false": "error"
+  }
+}

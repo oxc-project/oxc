@@ -95,7 +95,7 @@ declare_oxc_lint!(
     /// ### Examples
     ///
     /// ```javascript
-    /// /*eslint jest/consistent-test-it: ["error", {"fn": "test"}]*/
+    /// /* jest/consistent-test-it: ["error", {"fn": "test"}] */
     /// test('foo'); // valid
     /// test.only('foo'); // valid
     ///
@@ -104,7 +104,7 @@ declare_oxc_lint!(
     /// ```
     ///
     /// ```javascript
-    /// /*eslint jest/consistent-test-it: ["error", {"fn": "it"}]*/
+    /// /* jest/consistent-test-it: ["error", {"fn": "it"}] */
     /// it('foo'); // valid
     /// it.only('foo'); // valid
     /// test('foo'); // invalid
@@ -112,7 +112,7 @@ declare_oxc_lint!(
     /// ```
     ///
     /// ```javascript
-    /// /*eslint jest/consistent-test-it: ["error", {"fn": "it", "withinDescribe": "test"}]*/
+    /// /* jest/consistent-test-it: ["error", {"fn": "it", "withinDescribe": "test"}] */
     /// it('foo'); // valid
     /// describe('foo', function () {
     ///     test('bar'); // valid
@@ -142,9 +142,9 @@ declare_oxc_lint!(
 );
 
 impl Rule for ConsistentTestIt {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         if value.is_null() {
-            return Self::default();
+            return Ok(Self::default());
         }
 
         let config_value = value.get(0).unwrap_or(&value);
@@ -157,7 +157,7 @@ impl Rule for ConsistentTestIt {
             config.within_describe = config.r#fn;
         }
 
-        Self(Box::new(config))
+        Ok(Self(Box::new(config)))
     }
 
     fn run_once(&self, ctx: &LintContext) {

@@ -2,7 +2,10 @@ pub mod return_checker;
 
 use std::borrow::Cow;
 
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{
+    AstKind,
+    ast::{Expression, FunctionBody, Statement},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -10,7 +13,7 @@ use schemars::JsonSchema;
 use serde::Deserialize;
 use serde_json::Value;
 
-use self::return_checker::{StatementReturnStatus, check_function_body};
+use self::return_checker::{StatementReturnStatus, check_function_body, is_void_arrow_return};
 use crate::{
     AstNode,
     ast_util::{get_enclosing_function, outermost_paren},
@@ -18,36 +21,117 @@ use crate::{
     rule::{DefaultRuleConfig, Rule},
 };
 
-fn expect_return(method_name: &str, span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Missing return on some path for array method {method_name:?}"))
-        .with_help(format!(
-            "Array method {method_name:?} needs to have valid return on all code paths"
-        ))
-        .with_label(span)
+#[derive(Debug, Clone, Copy)]
+enum MissingReturnHint {
+    SwitchWithoutDefault,
+    IfWithoutElse,
 }
 
-fn expect_no_return(method_name: &str, span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Unexpected return for array method {method_name:?}"))
+fn guess_missing_return_hint(
+    function_body: &FunctionBody<'_>,
+) -> Option<(Span, MissingReturnHint)> {
+    let last_statement = function_body.statements.last()?;
+    match last_statement {
+        Statement::SwitchStatement(stmt) => {
+            let has_default = stmt.cases.iter().any(oxc_ast::ast::SwitchCase::is_default_case);
+            (!has_default).then_some((stmt.span, MissingReturnHint::SwitchWithoutDefault))
+        }
+        Statement::IfStatement(stmt) => {
+            (stmt.alternate.is_none()).then_some((stmt.span, MissingReturnHint::IfWithoutElse))
+        }
+        _ => None,
+    }
+}
+
+fn expect_return(
+    method_name: &str,
+    array_method_span: Span,
+    function_body: &FunctionBody<'_>,
+    allow_implicit: bool,
+) -> OxcDiagnostic {
+    let (span, hint) = guess_missing_return_hint(function_body)
+        .map_or((function_body.span, None), |(span, hint)| (span, Some(hint)));
+
+    let value_requirement = if allow_implicit {
+        ""
+    } else {
+        "\nReturn a value on each path (or enable `allowImplicit` to allow `return;`)."
+    };
+
+    let (message, help) = match hint {
+        Some(MissingReturnHint::SwitchWithoutDefault) => (
+            format!(
+                "Callback for array method {method_name:?} may fall through a `switch` without returning"
+            ),
+            format!(
+                "This `switch` has no `default` case, so the callback may reach the end without a `return`. Add a `default` that returns/throws, or add a final `return` after the `switch`.{value_requirement}"
+            ),
+        ),
+        Some(MissingReturnHint::IfWithoutElse) => (
+            format!(
+                "Callback for array method {method_name:?} may reach the end of an `if` without returning"
+            ),
+            format!(
+                "This `if` has no `else` branch, so the callback may reach the end without a `return`. Add an `else`, or add a final `return`/`throw` after the `if`.{value_requirement}"
+            ),
+        ),
+        None => (
+            format!("Callback for array method {method_name:?} does not return on all code paths"),
+            format!(
+                "{method_name:?} uses the callback's return value. Add a `return` on every possible code path.{value_requirement}"
+            ),
+        ),
+    };
+
+    let mut diagnostic = OxcDiagnostic::warn(message).with_help(help).with_label(span);
+    if allow_implicit {
+        diagnostic = diagnostic.with_note("With `allowImplicit`, callbacks that don't explicitly return a value are considered to return `undefined`.");
+    }
+    if hint.is_some() {
+        diagnostic = diagnostic
+            .and_label(array_method_span.label(format!("{method_name:?} is called here.")));
+    }
+
+    diagnostic
+}
+
+fn expect_no_return(method_name: &str, call_span: Span, return_span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Unexpected return value in callback for {method_name:?}"))
         .with_help(format!(
-            "Array method {method_name:?} expects no useless return from the function"
+            "{method_name:?} ignores the callback's return value. Remove the returned value (use `return;` or no `return`), or use `map`/`flatMap` if you meant to produce a new array."
         ))
-        .with_label(span)
+        .with_labels([
+            call_span.label(format!("{method_name:?} is called here.")),
+            return_span.label("This returned value is ignored."),
+        ])
+}
+
+fn expect_void_return(method_name: &str, call_span: Span, return_span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Unexpected return value in callback for {method_name:?}"))
+        .with_help("Expected the return expression to be started with `void`")
+        .with_labels([
+            call_span.label(format!("{method_name:?} is called here.")),
+            return_span.label("Prepend `void` to the expression."),
+        ])
 }
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct ArrayCallbackReturn {
     /// When set to true, rule will also report forEach callbacks that return a value.
     check_for_each: bool,
     /// When set to true, allows callbacks of methods that require a return value to
     /// implicitly return undefined with a return statement containing no expression.
     allow_implicit: bool,
+    /// When set to true, rule will not report the return value with a void operator.
+    /// Works only if `checkForEach` option is set to true.
+    allow_void: bool,
 }
 
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Enforce return statements in callbacks of array methods
+    /// Enforce return statements in callbacks of array methods.
     ///
     /// ### Why is this bad?
     ///
@@ -77,26 +161,31 @@ declare_oxc_lint!(
     ArrayCallbackReturn,
     eslint,
     pedantic,
+    pending,
     config = ArrayCallbackReturn
 );
 
 impl Rule for ArrayCallbackReturn {
-    fn from_configuration(value: Value) -> Self {
-        serde_json::from_value::<DefaultRuleConfig<ArrayCallbackReturn>>(value)
-            .unwrap_or_default()
-            .into_inner()
+    fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let (function_body, always_explicit_return) = match node.kind() {
+        let (function_body, always_explicit_return, is_async_empty) = match node.kind() {
             // Async, generator, and single expression arrow functions
             // always have explicit return value
-            AstKind::ArrowFunctionExpression(arrow) => {
-                (&arrow.body, arrow.r#async || arrow.expression)
-            }
+            AstKind::ArrowFunctionExpression(arrow) => (
+                &arrow.body,
+                arrow.r#async || arrow.expression,
+                arrow.r#async && arrow.body.statements.is_empty(),
+            ),
             AstKind::Function(function) => {
                 if let Some(body) = &function.body {
-                    (body, function.r#async || function.generator)
+                    (
+                        body,
+                        function.r#async || function.generator,
+                        function.r#async && body.statements.is_empty(),
+                    )
                 } else {
                     return;
                 }
@@ -105,36 +194,83 @@ impl Rule for ArrayCallbackReturn {
         };
 
         // Filter on target methods on Arrays
-        if let Some(array_method) = get_array_method_name(node, ctx) {
+        if let Some((array_method_span, array_method)) = get_array_method_info(node, ctx) {
             let return_status = if always_explicit_return {
                 StatementReturnStatus::AlwaysExplicit
             } else {
-                check_function_body(function_body)
+                check_function_body(node.id(), ctx.semantic())
             };
 
-            match (array_method, self.check_for_each, self.allow_implicit) {
-                ("forEach", false, _) => (),
-                ("forEach", true, _) => {
+            match (array_method, self.check_for_each, self.allow_void, self.allow_implicit) {
+                ("forEach", false, _, _) => (),
+                ("forEach", true, false, _) => {
                     if return_status.may_return_explicit() {
+                        let return_spans = return_checker::get_explicit_return_spans(function_body)
+                            .into_iter()
+                            .next()
+                            .unwrap_or_else(|| function_body.span());
+
                         ctx.diagnostic(expect_no_return(
                             &full_array_method_name(array_method),
-                            function_body.span,
+                            array_method_span,
+                            return_spans,
                         ));
                     }
                 }
-                (_, _, true) => {
+                ("forEach", true, true, _) => {
+                    if !return_status.may_return_explicit() {
+                        return;
+                    }
+
+                    if is_void_arrow_return(&function_body.statements) {
+                        return;
+                    }
+
+                    let (return_spans, has_void) =
+                        return_checker::get_no_voided_return_spans(function_body, self.allow_void);
+
+                    if has_void && return_spans.is_empty() {
+                        return;
+                    }
+
+                    let diagnostic_span =
+                        return_spans.into_iter().next().unwrap_or_else(|| function_body.span());
+                    ctx.diagnostic(expect_void_return(
+                        &full_array_method_name(array_method),
+                        array_method_span,
+                        diagnostic_span,
+                    ));
+                }
+                ("fromAsync", _, _, false) => {
+                    if !return_status.must_return()
+                        || return_status.may_return_implicit()
+                        || is_async_empty
+                    {
+                        ctx.diagnostic(expect_return(
+                            &full_array_method_name(array_method),
+                            array_method_span,
+                            function_body,
+                            self.allow_implicit,
+                        ));
+                    }
+                }
+                (_, _, _, true) => {
                     if !return_status.must_return() {
                         ctx.diagnostic(expect_return(
                             &full_array_method_name(array_method),
-                            function_body.span,
+                            array_method_span,
+                            function_body,
+                            self.allow_implicit,
                         ));
                     }
                 }
-                (_, _, false) => {
+                (_, _, _, false) => {
                     if !return_status.must_return() || return_status.may_return_implicit() {
                         ctx.diagnostic(expect_return(
                             &full_array_method_name(array_method),
-                            function_body.span,
+                            array_method_span,
+                            function_body,
+                            self.allow_implicit,
                         ));
                     }
                 }
@@ -146,7 +282,10 @@ impl Rule for ArrayCallbackReturn {
 /// Code ported from [eslint](https://github.com/eslint/eslint/blob/v9.9.1/lib/rules/array-callback-return.js)
 /// We're currently on a `Function` or `ArrowFunctionExpression`, findout if it is an argument
 /// to the target array methods we're interested in.
-pub fn get_array_method_name<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> Option<&'a str> {
+pub fn get_array_method_info<'a>(
+    node: &AstNode<'a>,
+    ctx: &LintContext<'a>,
+) -> Option<(Span, &'a str)> {
     let mut current_node = node;
     loop {
         let parent = ctx.nodes().parent_node(current_node.id());
@@ -199,12 +338,23 @@ pub fn get_array_method_name<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> O
                         && let Some(call_arg) = call.arguments[1].as_expression()
                         && call_arg.span() == current_node.kind().span()
                     {
-                        return Some("from");
+                        return Some((callee.span(), "from"));
+                    }
+                }
+
+                // Array.fromAsync
+                if callee.is_specific_member_access("Array", "fromAsync") {
+                    // Check that current node is parent's second argument
+                    if call.arguments.len() == 2
+                        && let Some(call_arg) = call.arguments[1].as_expression()
+                        && call_arg.span() == current_node.kind().span()
+                    {
+                        return Some((callee.span(), "fromAsync"));
                     }
                 }
 
                 // "methods",
-                let array_method = callee.static_property_name()?;
+                let (array_method_span, array_method) = callee.static_property_info()?;
 
                 if TARGET_METHODS.contains(&array_method)
                     // Check that current node is parent's first argument
@@ -214,7 +364,7 @@ pub fn get_array_method_name<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> O
                             .as_expression()
                             .is_some_and(|arg| arg.span() == current_node.kind().span())
                 {
-                    return Some(array_method);
+                    return Some((array_method_span, array_method));
                 }
 
                 return None;
@@ -247,6 +397,7 @@ const TARGET_METHODS: [&str; 14] = [
 fn full_array_method_name(array_method: &str) -> Cow<'static, str> {
     match array_method {
         "from" => Cow::Borrowed("Array.from"),
+        "fromAsync" => Cow::Borrowed("Array.fromAsync"),
         s => Cow::Owned(format!("Array.prototype.{s}")),
     }
 }
@@ -414,6 +565,26 @@ fn test() {
             "foo.every(function() { return; })",
             Some(serde_json::json!([{"allowImplicit": true, "checkForEach": true}])),
         ),
+        (
+            "foo.forEach((x) => void x)",
+            Some(serde_json::json!([{"allowVoid": true, "checkForEach": true}])),
+        ),
+        (
+            "foo.forEach((x) => void bar(x))",
+            Some(serde_json::json!([{"allowVoid": true, "checkForEach": true}])),
+        ),
+        (
+            "foo.forEach(function (x) { return void bar(x); })",
+            Some(serde_json::json!([{"allowVoid": true, "checkForEach": true}])),
+        ),
+        (
+            "foo.forEach((x) => { return void bar(x); })",
+            Some(serde_json::json!([{"allowVoid": true, "checkForEach": true}])),
+        ),
+        (
+            "foo.forEach((x) => { if (a === b) { return void a; } bar(x) })",
+            Some(serde_json::json!([{"allowVoid": true, "checkForEach": true}])),
+        ),
         ("Arrow.from(x, function() {})", None),
         ("foo.abc(function() {})", None),
         ("every(function() {})", None),
@@ -426,6 +597,16 @@ fn test() {
             "array.map((node) => { if (isTaskNode(node)) { return someObj; } else if (isOtherNode(node)) { return otherObj; } else { throw new Error('Unsupported'); } })",
             None,
         ),
+        ("Array.fromAsync(x, function() { return true; })", None),
+        ("Array.fromAsync(x, async function() { return true; })", None),
+        (
+            "Array.fromAsync(x, function() { return; })",
+            Some(serde_json::json!([{"allowImplicit": true}])),
+        ),
+        ("Array.fromAsync(x, async () => true)", None),
+        ("Array.fromAsync(x, function * () {})", None),
+        ("Float64Array.fromAsync(x, function() {})", None),
+        ("Array.fromAsync(function() {})", None),
     ];
 
     let fail = vec![
@@ -449,6 +630,22 @@ fn test() {
         ("foo.flatMap(function foo() {})", None),
         ("foo.map(function() {})", None),
         ("foo.map(function foo() {})", None),
+        (
+            r#"const fruits = [{ name: "apple" }, { name: "banana" }] as const;
+
+const _test = fruits.map((fruit) => {
+  switch (fruit.name) {
+    case "apple": {
+      return "a"
+    }
+
+    case "banana": {
+      return "b"
+    }
+  }
+});"#,
+            None,
+        ),
         ("foo.reduce(function() {})", None),
         ("foo.reduce(function foo() {})", None),
         ("foo.reduceRight(function() {})", None),
@@ -468,6 +665,7 @@ fn test() {
         ("foo.every(() => {})", None),
         ("foo.every(function() { if (a) return true; })", None),
         ("foo.every(function cb() { if (a) return true; })", None),
+        ("foo.map(() => { while (true) { if (a) break; return 1; } })", None),
         ("foo.every(function() { switch (a) { case 0: break; default: return true; } })", None),
         ("foo.every(function foo() { switch (a) { case 0: break; default: return true; } })", None),
         ("foo.every(function() { try { bar(); } catch (err) { return true; } })", None),
@@ -511,6 +709,42 @@ fn test() {
             Some(serde_json::json!([{"allowImplicit": true, "checkForEach": true}])),
         ),
         (
+            "foo.forEach(x => !x)",
+            Some(serde_json::json!([{"allowImplicit": true, "checkForEach": true}])),
+        ),
+        (
+            "foo.forEach(x => (x))",
+            Some(serde_json::json!([{"allowImplicit": true, "checkForEach": true}])),
+        ),
+        (
+            "foo.forEach((x) => { return x; })",
+            Some(serde_json::json!([{"allowImplicit": true, "checkForEach": true}])),
+        ),
+        (
+            "foo.forEach((x) => { return !x; })",
+            Some(serde_json::json!([{"allowImplicit": true, "checkForEach": true}])),
+        ),
+        (
+            "foo.forEach((x) => { return(x); })",
+            Some(serde_json::json!([{"allowImplicit": true, "checkForEach": true}])),
+        ),
+        (
+            "foo.forEach((x) => { return (x + 1); })",
+            Some(serde_json::json!([{"allowImplicit": true, "checkForEach": true}])),
+        ),
+        (
+            "foo.forEach((x) => { if (a === b) { return x; } })",
+            Some(serde_json::json!([{"allowImplicit": true, "checkForEach": true}])),
+        ),
+        (
+            "foo.forEach((x) => { if (a === b) { return !x; } })",
+            Some(serde_json::json!([{"allowImplicit": true, "checkForEach": true}])),
+        ),
+        (
+            "foo.forEach((x) => { if (a === b) { return (x + a); } })",
+            Some(serde_json::json!([{"allowImplicit": true, "checkForEach": true}])),
+        ),
+        (
             "foo.forEach(function(x) { if (a == b) {return x;}})",
             Some(serde_json::json!([{"allowImplicit": true, "checkForEach": true}])),
         ),
@@ -532,10 +766,6 @@ fn test() {
         ),
         (
             "foo.forEach(function(x) { if (a == b) {return undefined;}})",
-            Some(serde_json::json!([{"checkForEach": true}])),
-        ),
-        (
-            "foo.forEach(function bar(x) { return x;})",
             Some(serde_json::json!([{"checkForEach": true}])),
         ),
         (
@@ -577,6 +807,17 @@ fn test() {
             "foo.forEach((bar) => { if (bar) { return; } else { return bar ; } })",
             Some(serde_json::json!([{"checkForEach": true}])),
         ),
+        ("foo.forEach(x => (x))", Some(serde_json::json!([{"checkForEach": true}]))),
+        ("foo.forEach((x) => void x)", Some(serde_json::json!([{"checkForEach": true}]))),
+        ("foo.forEach((x) => void bar(x))", Some(serde_json::json!([{"checkForEach": true}]))),
+        (
+            "foo.forEach((x) => { return void bar(x); })",
+            Some(serde_json::json!([{"checkForEach": true}])),
+        ),
+        (
+            "foo.forEach((x) => { if (a === b) { return void a; } bar(x) })",
+            Some(serde_json::json!([{"checkForEach": true}])),
+        ),
         ("foo.filter(function(){})", None),
         ("foo.filter(function (){})", None),
         ("foo.filter(function\n(){})", None),
@@ -590,11 +831,63 @@ fn test() {
             "foo.forEach(function () { \nif (baz) return bar\nelse return\n })",
             Some(serde_json::json!([{"checkForEach": true}])),
         ),
+        (
+            r"Array.fromAsync(x,
+            async	function \\u0066oo // bar
+               () {})",
+            None,
+        ),
         ("foo?.filter(() => { console.log('hello') })", None),
         ("(foo?.filter)(() => { console.log('hello') })", None),
         ("Array?.from([], () => { console.log('hello') })", None),
         ("(Array?.from)([], () => { console.log('hello') })", None),
         ("foo?.filter((function() { return () => { console.log('hello') } })?.())", None),
+        ("Array.fromAsync(x, function() {})", None),
+        ("Array.fromAsync(x, function() {})", Some(serde_json::json!([{"allowImplicit": true}]))),
+        ("Array.fromAsync(x, () => {})", None),
+        ("Array.fromAsync(x, function foo() {})", None),
+        ("Array.fromAsync(x, async function() {})", None),
+        ("Array.fromAsync(x, async () => {})", None),
+        (
+            "foo.forEach(x => x);",
+            Some(serde_json::json!([{"allowVoid": true, "checkForEach": true}])),
+        ),
+        (
+            "foo.forEach(x => !x);",
+            Some(serde_json::json!([{"allowVoid": true, "checkForEach": true}])),
+        ),
+        (
+            "foo.forEach(x => (x));",
+            Some(serde_json::json!([{"allowVoid": true, "checkForEach": true}])),
+        ),
+        (
+            "foo.forEach(x => { return x; });",
+            Some(serde_json::json!([{"allowVoid": true, "checkForEach": true}])),
+        ),
+        (
+            "foo.forEach(x => { return !x; });",
+            Some(serde_json::json!([{"allowVoid": true, "checkForEach": true}])),
+        ),
+        (
+            "foo.forEach(x => { return (x); });",
+            Some(serde_json::json!([{"allowVoid": true, "checkForEach": true}])),
+        ),
+        (
+            "foo.forEach(x => { return x + 1; });",
+            Some(serde_json::json!([{"allowVoid": true, "checkForEach": true}])),
+        ),
+        (
+            "foo.forEach(x => { if (a === b) { return x; } });",
+            Some(serde_json::json!([{"allowVoid": true, "checkForEach": true}])),
+        ),
+        (
+            "foo.forEach(x => { if (a === b) { return !x; } });",
+            Some(serde_json::json!([{"allowVoid": true, "checkForEach": true}])),
+        ),
+        (
+            "foo.forEach(x => { if (a === b) { return (x + a); } });",
+            Some(serde_json::json!([{"allowVoid": true, "checkForEach": true}])),
+        ),
     ];
 
     Tester::new(ArrayCallbackReturn::NAME, ArrayCallbackReturn::PLUGIN, pass, fail)

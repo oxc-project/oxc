@@ -7,7 +7,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/decorators/para
     "children": [
       {
         "children": [],
-        "flags": "ScopeFlags(StrictMode | Function)",
+        "flags": "ScopeFlags(Function)",
         "id": 1,
         "node": "Function(decorator)",
         "symbols": []
@@ -43,7 +43,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/decorators/para
         "symbols": []
       }
     ],
-    "flags": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(Top)",
     "id": 0,
     "node": "Program",
     "symbols": [
@@ -57,13 +57,15 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/decorators/para
             "flags": "ReferenceFlags(Read)",
             "id": 0,
             "name": "decorator",
-            "node_id": 14
+            "node_id": 14,
+            "scope_id": 3
           },
           {
             "flags": "ReferenceFlags(Read)",
             "id": 1,
             "name": "decorator",
-            "node_id": 18
+            "node_id": 18,
+            "scope_id": 3
           }
         ]
       },

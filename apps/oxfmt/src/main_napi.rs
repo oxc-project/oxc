@@ -1,5 +1,5 @@
 use std::ffi::OsString;
-use std::path::PathBuf;
+use std::sync::Arc;
 
 use napi_derive::napi;
 
@@ -7,10 +7,12 @@ use oxc_napi::OxcError;
 use serde_json::Value;
 
 use crate::{
-    cli::{FormatRunner, Mode, format_command, init_miette, init_rayon, init_tracing},
+    api::{format_api, text_to_doc_api},
+    cli::{CliRunner, MigrateSource, Mode, format_command, init_miette, init_rayon},
     core::{
-        ConfigResolver, ExternalFormatter, FormatFileStrategy, FormatResult as CoreFormatResult,
-        JsFormatEmbeddedCb, JsFormatFileCb, JsInitExternalFormatterCb, SourceFormatter,
+        ExternalFormatter, JsFormatEmbeddedCb, JsFormatEmbeddedDocCb, JsFormatFileCb,
+        JsInitExternalFormatterCb, JsLoadJsConfigCb, JsSortTailwindClassesCb,
+        create_js_config_loader, utils,
     },
     lsp::run_lsp,
     stdin::StdinRunner,
@@ -21,9 +23,11 @@ use crate::{
 ///
 /// JS side passes in:
 /// 1. `args`: Command line arguments (process.argv.slice(2))
-/// 2. `init_external_formatter_cb`: Callback to initialize external formatter
-/// 3. `format_embedded_cb`: Callback to format embedded code in templates
+/// 2. `load_js_config_cb`: Callback to load JS/TS config files
+/// 3. `init_external_formatter_cb`: Callback to initialize external formatter
 /// 4. `format_file_cb`: Callback to format files
+/// 5. `format_embedded_cb`: Callback to format embedded code in templates
+/// 6. `sort_tailwindcss_classes_cb`: Callback to sort Tailwind classes
 ///
 /// Returns a tuple of `[mode, exitCode]`:
 /// - `mode`: If main logic will run in JS side, use this to indicate which mode
@@ -33,21 +37,26 @@ use crate::{
 #[napi]
 pub async fn run_cli(
     args: Vec<String>,
+    #[napi(ts_arg_type = "(path: string) => Promise<any>")] load_js_config_cb: JsLoadJsConfigCb,
     #[napi(ts_arg_type = "(numThreads: number) => Promise<string[]>")]
     init_external_formatter_cb: JsInitExternalFormatterCb,
-    #[napi(
-        ts_arg_type = "(options: Record<string, any>, tagName: string, code: string) => Promise<string>"
-    )]
+    #[napi(ts_arg_type = "(options: Record<string, any>, code: string) => Promise<string>")]
+    format_file_cb: JsFormatFileCb,
+    #[napi(ts_arg_type = "(options: Record<string, any>, code: string) => Promise<string | null>")]
     format_embedded_cb: JsFormatEmbeddedCb,
     #[napi(
-        ts_arg_type = "(options: Record<string, any>, parserName: string, fileName: string, code: string) => Promise<string>"
+        ts_arg_type = "(options: Record<string, any>, texts: string[]) => Promise<string[] | null>"
     )]
-    format_file_cb: JsFormatFileCb,
+    format_embedded_doc_cb: JsFormatEmbeddedDocCb,
+    #[napi(
+        ts_arg_type = "(options: Record<string, any>, classes: string[]) => Promise<string[] | null>"
+    )]
+    sort_tailwindcss_classes_cb: JsSortTailwindClassesCb,
 ) -> (String, Option<u8>) {
-    // Convert String args to OsString for compatibility with bpaf
+    // Convert `String` args to `OsString` for compatibility with `bpaf`
     let args: Vec<OsString> = args.into_iter().map(OsString::from).collect();
 
-    // Use `run_inner()` to report errors instead of panicking.
+    // Use `run_inner()` to report errors instead of panicking
     let command = match format_command().run_inner(&*args) {
         Ok(cmd) => cmd,
         Err(e) => {
@@ -58,45 +67,70 @@ pub async fn run_cli(
         }
     };
 
+    // Early return for modes that handle everything in JS side
     match command.mode {
-        Mode::Init => ("init".to_string(), None),
-        Mode::Migrate(_) => ("migrate:prettier".to_string(), None),
+        Mode::Init => {
+            return ("init".to_string(), None);
+        }
+        Mode::Migrate(source) => {
+            let mode_str = match source {
+                MigrateSource::Prettier => "migrate:prettier",
+                MigrateSource::Biome => "migrate:biome",
+            };
+            return (mode_str.to_string(), None);
+        }
+        _ => {}
+    }
+
+    // Otherwise, handle modes that require Rust side processing
+
+    let external_formatter = ExternalFormatter::new(
+        init_external_formatter_cb,
+        format_file_cb,
+        format_embedded_cb,
+        format_embedded_doc_cb,
+        sort_tailwindcss_classes_cb,
+    );
+    let js_config_loader = create_js_config_loader(load_js_config_cb);
+
+    utils::init_tracing();
+    let result = match command.mode {
         Mode::Lsp => {
-            run_lsp().await;
+            run_lsp(js_config_loader, external_formatter.clone()).await;
+
             ("lsp".to_string(), Some(0))
         }
         Mode::Stdin(_) => {
-            init_tracing();
             init_miette();
 
-            let result = StdinRunner::new(command)
-                // Create external formatter from JS callback
-                .with_external_formatter(Some(ExternalFormatter::new(
-                    init_external_formatter_cb,
-                    format_embedded_cb,
-                    format_file_cb,
-                )))
-                .run();
+            let result = StdinRunner::new(
+                command,
+                Arc::clone(&js_config_loader),
+                external_formatter.clone(),
+            )
+            .run();
 
             ("stdin".to_string(), Some(result.exit_code()))
         }
         Mode::Cli(_) => {
-            init_tracing();
             init_miette();
             init_rayon(command.runtime_options.threads);
 
-            let result = FormatRunner::new(command)
-                // Create external formatter from JS callback
-                .with_external_formatter(Some(ExternalFormatter::new(
-                    init_external_formatter_cb,
-                    format_embedded_cb,
-                    format_file_cb,
-                )))
+            let result = CliRunner::new(command)
+                .with_external_formatter(Some(external_formatter.clone()))
+                .with_js_config_loader(Arc::clone(&js_config_loader))
                 .run();
 
             ("cli".to_string(), Some(result.exit_code()))
         }
-    }
+        _ => unreachable!("All other modes must have been handled above match arm"),
+    };
+
+    // Explicitly drop ThreadsafeFunctions before returning to prevent
+    // use-after-free during V8 cleanup (Node.js issue with TSFN cleanup timing)
+    external_formatter.cleanup();
+
+    result
 }
 
 // ---
@@ -112,6 +146,9 @@ pub struct FormatResult {
 /// NAPI based format API entry point.
 ///
 /// Since it internally uses `await prettier.format()` in JS side, `formatSync()` cannot be provided.
+///
+/// # Panics
+/// Panics if the current working directory cannot be determined.
 #[expect(clippy::allow_attributes)]
 #[allow(clippy::trailing_empty_array, clippy::unused_async)] // https://github.com/napi-rs/napi-rs/issues/2758
 #[napi]
@@ -121,66 +158,73 @@ pub async fn format(
     options: Option<Value>,
     #[napi(ts_arg_type = "(numThreads: number) => Promise<string[]>")]
     init_external_formatter_cb: JsInitExternalFormatterCb,
-    #[napi(
-        ts_arg_type = "(options: Record<string, any>, tagName: string, code: string) => Promise<string>"
-    )]
+    #[napi(ts_arg_type = "(options: Record<string, any>, code: string) => Promise<string>")]
+    format_file_cb: JsFormatFileCb,
+    #[napi(ts_arg_type = "(options: Record<string, any>, code: string) => Promise<string | null>")]
     format_embedded_cb: JsFormatEmbeddedCb,
     #[napi(
-        ts_arg_type = "(options: Record<string, any>, parserName: string, fileName: string, code: string) => Promise<string>"
+        ts_arg_type = "(options: Record<string, any>, texts: string[]) => Promise<string[] | null>"
     )]
-    format_file_cb: JsFormatFileCb,
+    format_embedded_doc_cb: JsFormatEmbeddedDocCb,
+    #[napi(
+        ts_arg_type = "(options: Record<string, any>, classes: string[]) => Promise<string[] | null>"
+    )]
+    sort_tailwind_classes_cb: JsSortTailwindClassesCb,
 ) -> FormatResult {
-    let num_of_threads = 1;
+    let format_api::ApiFormatResult { code, errors } = format_api::run(
+        &filename,
+        source_text,
+        options,
+        init_external_formatter_cb,
+        format_file_cb,
+        format_embedded_cb,
+        format_embedded_doc_cb,
+        sort_tailwind_classes_cb,
+    );
 
-    let external_formatter =
-        ExternalFormatter::new(init_external_formatter_cb, format_embedded_cb, format_file_cb);
+    FormatResult { code, errors }
+}
 
-    // Create resolver from options and resolve format options
-    let mut config_resolver = ConfigResolver::from_value(options.unwrap_or_default());
-    match config_resolver.build_and_validate() {
-        Ok(_) => {}
-        Err(err) => {
-            return FormatResult {
-                code: source_text,
-                errors: vec![OxcError::new(format!("Failed to parse configuration: {err}"))],
-            };
-        }
-    }
+// ---
 
-    // Use `block_in_place()` to avoid nested async runtime access
-    match tokio::task::block_in_place(|| external_formatter.init(num_of_threads)) {
-        // TODO: Plugins support
-        Ok(_) => {}
-        Err(err) => {
-            return FormatResult {
-                code: source_text,
-                errors: vec![OxcError::new(format!("Failed to setup external formatter: {err}"))],
-            };
-        }
-    }
+/// NAPI based `textToDoc` API entry point for `prettier-plugin-oxfmt`.
+///
+/// This API is specialized for JS/TS snippets embedded in non-JS files.
+/// Unlike `format()`, it is called only for js-in-xxx `textToDoc()` flow.
+#[expect(clippy::allow_attributes)]
+#[allow(clippy::trailing_empty_array, clippy::unused_async)] // https://github.com/napi-rs/napi-rs/issues/2758
+#[napi]
+pub async fn js_text_to_doc(
+    source_ext: String,
+    source_text: String,
+    oxfmt_plugin_options_json: String,
+    parent_context: String,
+    #[napi(ts_arg_type = "(numThreads: number) => Promise<string[]>")]
+    init_external_formatter_cb: JsInitExternalFormatterCb,
+    #[napi(ts_arg_type = "(options: Record<string, any>, code: string) => Promise<string>")]
+    format_file_cb: JsFormatFileCb,
+    #[napi(ts_arg_type = "(options: Record<string, any>, code: string) => Promise<string | null>")]
+    format_embedded_cb: JsFormatEmbeddedCb,
+    #[napi(
+        ts_arg_type = "(options: Record<string, any>, texts: string[]) => Promise<string[] | null>"
+    )]
+    format_embedded_doc_cb: JsFormatEmbeddedDocCb,
+    #[napi(
+        ts_arg_type = "(options: Record<string, any>, classes: string[]) => Promise<string[] | null>"
+    )]
+    sort_tailwind_classes_cb: JsSortTailwindClassesCb,
+) -> Option<String> {
+    utils::init_tracing();
 
-    // Determine format strategy from file path
-    let Ok(strategy) = FormatFileStrategy::try_from(PathBuf::from(&filename)) else {
-        return FormatResult {
-            code: source_text,
-            errors: vec![OxcError::new(format!("Unsupported file type: {filename}"))],
-        };
-    };
-
-    let resolved_options = config_resolver.resolve(&strategy);
-
-    // Create formatter and format
-    let formatter =
-        SourceFormatter::new(num_of_threads).with_external_formatter(Some(external_formatter));
-
-    // Use `block_in_place()` to avoid nested async runtime access
-    match tokio::task::block_in_place(|| {
-        formatter.format(&strategy, &source_text, resolved_options)
-    }) {
-        CoreFormatResult::Success { code, .. } => FormatResult { code, errors: vec![] },
-        CoreFormatResult::Error(diagnostics) => {
-            let errors = OxcError::from_diagnostics(&filename, &source_text, diagnostics);
-            FormatResult { code: source_text, errors }
-        }
-    }
+    text_to_doc_api::run(
+        &source_ext,
+        &source_text,
+        &oxfmt_plugin_options_json,
+        &parent_context,
+        init_external_formatter_cb,
+        format_file_cb,
+        format_embedded_cb,
+        format_embedded_doc_cb,
+        sort_tailwind_classes_cb,
+    )
 }

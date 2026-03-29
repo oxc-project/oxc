@@ -9,8 +9,13 @@ use oxc_span::Span;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
-fn no_wrapper_object_types(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Do not use wrapper object types.").with_label(span)
+fn no_wrapper_object_types(ident_name: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Do not use wrapper object types.")
+        .with_note(format!(
+            "`{ident_name}` is a boxed object type, not a primitive. Boxed types have object semantics (identity/truthiness) that can be surprising. Use `{}` for values, and in `extends`/`implements` use an interface/object shape instead.",
+            ident_name.cow_to_ascii_lowercase()
+        ))
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -90,11 +95,11 @@ impl Rule for NoWrapperObjectTypes {
             let can_fix = matches!(node.kind(), AstKind::TSTypeReference(_));
 
             if can_fix {
-                ctx.diagnostic_with_fix(no_wrapper_object_types(ident_span), |fixer| {
+                ctx.diagnostic_with_fix(no_wrapper_object_types(ident_name, ident_span), |fixer| {
                     fixer.replace(ident_span, ident_name.cow_to_ascii_lowercase().to_string())
                 });
             } else {
-                ctx.diagnostic(no_wrapper_object_types(ident_span));
+                ctx.diagnostic(no_wrapper_object_types(ident_name, ident_span));
             }
         }
     }
@@ -151,17 +156,17 @@ fn test() {
         "type Void = {};",
         "class MyClass extends Number {}",
         "
-        	      type Number = 0 | 1;
-        	      let value: Number;
-        	    ",
+                  type Number = 0 | 1;
+                  let value: Number;
+                ",
         "
-        	      type Bigint = 0 | 1;
-        	      let value: Bigint;
-        	    ",
+                  type Bigint = 0 | 1;
+                  let value: Bigint;
+                ",
         "
-        	      type T<Symbol> = Symbol;
-        	      type U<UU> = UU extends T<infer Function> ? Function : never;
-        	    ",
+                  type T<Symbol> = Symbol;
+                  type U<UU> = UU extends T<infer Function> ? Function : never;
+                ",
     ];
 
     let fail = vec![
@@ -182,18 +187,18 @@ fn test() {
     ];
 
     let fix = vec![
-        ("let value: BigInt;", "let value: bigint;", None),
-        ("let value: Boolean;", "let value: boolean;", None),
-        ("let value: Number;", "let value: number;", None),
-        ("let value: Object;", "let value: object;", None),
-        ("let value: String;", "let value: string;", None),
-        ("let value: Symbol;", "let value: symbol;", None),
-        ("let value: Number | Symbol;", "let value: number | symbol;", None),
-        ("let value: { property: Number };", "let value: { property: number };", None),
-        ("0 as Number;", "0 as number;", None),
-        ("type MyType = Number;", "type MyType = number;", None),
-        ("type MyType = [Number];", "type MyType = [number];", None),
-        ("type MyType = Number & String;", "type MyType = number & string;", None),
+        ("let value: BigInt;", "let value: bigint;"),
+        ("let value: Boolean;", "let value: boolean;"),
+        ("let value: Number;", "let value: number;"),
+        ("let value: Object;", "let value: object;"),
+        ("let value: String;", "let value: string;"),
+        ("let value: Symbol;", "let value: symbol;"),
+        ("let value: Number | Symbol;", "let value: number | symbol;"),
+        ("let value: { property: Number };", "let value: { property: number };"),
+        ("0 as Number;", "0 as number;"),
+        ("type MyType = Number;", "type MyType = number;"),
+        ("type MyType = [Number];", "type MyType = [number];"),
+        ("type MyType = Number & String;", "type MyType = number & string;"),
     ];
 
     Tester::new(NoWrapperObjectTypes::NAME, NoWrapperObjectTypes::PLUGIN, pass, fail)

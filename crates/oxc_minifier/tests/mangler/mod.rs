@@ -6,9 +6,12 @@ use oxc_mangler::{MangleOptions, MangleOptionsKeepNames, Mangler};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 
-fn mangle(source_text: &str, options: MangleOptions) -> String {
+fn mangle_with_source_type(
+    source_text: &str,
+    options: MangleOptions,
+    source_type: SourceType,
+) -> String {
     let allocator = Allocator::default();
-    let source_type = SourceType::mjs();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     assert!(ret.errors.is_empty(), "Parser errors: {:?}", ret.errors);
     let program = ret.program;
@@ -20,12 +23,87 @@ fn mangle(source_text: &str, options: MangleOptions) -> String {
         .code
 }
 
+fn mangle(source_text: &str, options: MangleOptions) -> String {
+    mangle_with_source_type(source_text, options, SourceType::mjs().with_unambiguous(true))
+}
+
+fn mangle_script(source_text: &str, options: MangleOptions) -> String {
+    mangle_with_source_type(source_text, options, SourceType::script())
+}
+
+fn test(source_text: &str, expected: &str, options: MangleOptions) {
+    let mangled = mangle(source_text, options);
+    let expected = {
+        let allocator = Allocator::default();
+        let source_type = SourceType::mjs().with_unambiguous(true);
+        let ret = Parser::new(&allocator, expected, source_type).parse();
+        assert!(ret.errors.is_empty(), "Parser errors: {:?}", ret.errors);
+        Codegen::new().build(&ret.program).code
+    };
+    assert_eq!(
+        mangled, expected,
+        "\nfor source\n{source_text}\nexpect\n{expected}\ngot\n{mangled}"
+    );
+}
+
 #[test]
 fn direct_eval() {
-    let source_text = "function foo() { let NO_MANGLE; eval('') }";
     let options = MangleOptions::default();
+
+    // Symbols in scopes with direct eval should NOT be mangled
+    let source_text = "function foo() { let NO_MANGLE; eval('') }";
     let mangled = mangle(source_text, options);
     assert_eq!(mangled, "function foo() {\n\tlet NO_MANGLE;\n\teval(\"\");\n}\n");
+
+    // Nested direct eval: parent scope also should not mangle
+    let source_text = "function foo() { let NO_MANGLE; function bar() { eval('') } }";
+    let mangled = mangle(source_text, options);
+    assert_eq!(
+        mangled,
+        "function foo() {\n\tlet NO_MANGLE;\n\tfunction bar() {\n\t\teval(\"\");\n\t}\n}\n"
+    );
+
+    // Sibling scope without direct eval should be mangled
+    let source_text =
+        "function foo() { let NO_MANGLE; eval('') } function bar() { let SHOULD_MANGLE; }";
+    let mangled = mangle(source_text, options);
+    // SHOULD_MANGLE gets mangled (to some short name), NO_MANGLE stays as is
+    assert!(mangled.contains("NO_MANGLE"));
+    assert!(!mangled.contains("SHOULD_MANGLE"));
+
+    // Child function scope without direct eval CAN be mangled (eval in parent cannot access child function locals)
+    let source_text = "function foo() { eval(''); function bar() { let CAN_MANGLE; } }";
+    let mangled = mangle(source_text, options);
+    assert!(!mangled.contains("CAN_MANGLE"));
+
+    // Indirect eval should still allow mangling
+    let source_text = "function foo() { let SHOULD_MANGLE; (0, eval)('') }";
+    let mangled = mangle(source_text, options);
+    assert!(!mangled.contains("SHOULD_MANGLE"));
+
+    test(
+        r#"var e = () => {}; var foo = (bar) => e(bar); var pt = (() => { eval("") })();"#,
+        r#"var e = () => {}; var foo = (t) => e(t); var pt = (() => { eval(""); })();"#,
+        MangleOptions::default(),
+    );
+
+    test(
+        r#"var e = () => {}; var foo = (bar) => e(bar); var pt = (() => { eval("") })();"#,
+        r#"var e = () => {}; var foo = (t) => e(t); var pt = (() => { eval(""); })();"#,
+        MangleOptions { top_level: Some(true), ..MangleOptions::default() },
+    );
+
+    test(
+        r"function outer() { let e = 1; eval(''); function inner() { let longNameToMangle = 2; console.log(e); } }",
+        r#"function outer() { let e = 1; eval(""); function inner() { let t = 2; console.log(e); } }"#,
+        MangleOptions::default(),
+    );
+
+    test(
+        r"function evalScope() { let x = 1; eval(''); } function siblingScope() { let longName = 2; console.log(longName); }",
+        r#"function evalScope() {let x = 1; eval(""); } function siblingScope() { let e = 2; console.log(e); }"#,
+        MangleOptions::default(),
+    );
 }
 
 #[test]
@@ -91,7 +169,7 @@ fn mangler() {
         w
     });
     top_level_cases.into_iter().fold(&mut snapshot, |w, case| {
-        let options = MangleOptions { top_level: true, ..MangleOptions::default() };
+        let options = MangleOptions { top_level: Some(true), ..MangleOptions::default() };
         write!(w, "{case}\n{}\n", mangle(case, options)).unwrap();
         w
     });
@@ -138,5 +216,42 @@ fn private_member_mangling() {
 
     insta::with_settings!({ prepend_module_to_snapshot => false, omit_expression => true }, {
         insta::assert_snapshot!("private_member_mangling", snapshot);
+    });
+}
+
+/// Annex B.3.2.1: In sloppy mode, function declarations inside blocks have var-like hoisting.
+/// The mangler must not assign the same name to such a function and an outer `var` binding.
+#[test]
+fn annex_b_block_scoped_function() {
+    let cases = [
+        // Core bug: var + block function in if statement (vitejs/vite#22009)
+        "function _() { var x = 1; if (true) { function y() {} } use(x); }",
+        // var + block function in try block (oxc-project/oxc#14316)
+        "function _() { var x = 1; try { function y() {} } finally {} use(x); }",
+        // var + block function in plain block
+        "function _() { var x = 1; { function y() {} } use(x); }",
+        // Parameter + block function
+        "function _(x) { if (true) { function y() {} } use(x); }",
+        // Deeply nested blocks
+        "function _() { var x = 1; { { if (true) { function y() {} } } } use(x); }",
+        // Multiple block functions in same scope
+        "function _() { var x = 1; if (true) { function y() {} function z() {} } use(x); }",
+        // Block function referencing outer var
+        "function _() { var x = 1; if (true) { function y() { return x; } } use(x); }",
+        // Annex B function reuses name from sibling function scope (hoisting enables this)
+        "function _() { function foo() { var x; use(x); } function bar() { if (true) { function baz() {} use(baz); } } }",
+        // typeof must not be replaced with a constant (reviewer request)
+        "console.log(typeof foo); if (true) { function foo() { return 1; } }",
+    ];
+
+    let mut snapshot = String::new();
+    cases.into_iter().fold(&mut snapshot, |w, case| {
+        let options = MangleOptions::default();
+        write!(w, "{case}\n{}\n", mangle_script(case, options)).unwrap();
+        w
+    });
+
+    insta::with_settings!({ prepend_module_to_snapshot => false, omit_expression => true }, {
+        insta::assert_snapshot!("annex_b_block_scoped_function", snapshot);
     });
 }

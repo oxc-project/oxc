@@ -9,6 +9,14 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Consider removing this declaration.
 
+  ⚠ eslint(no-unused-vars): Function 'foox' is declared but never used.
+   ╭─[no_unused_vars.tsx:1:24]
+ 1 │ (function() { function foox() { if (true) { return foox(); } } }())
+   ·                        ──┬─
+   ·                          ╰── 'foox' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
   ⚠ eslint(no-unused-vars): Variable 'a' is declared but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:5]
  1 │ var a=10
@@ -1424,7 +1432,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ const [ a, _b ] = items;
    ·            ─┬
    ·             ╰── '_b' is declared here
- 2 │             console.log(a+_b);
+ 2 │              console.log(a+_b);
    ╰────
   help: Consider renaming this variable.
 

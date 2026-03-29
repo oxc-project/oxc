@@ -1,0 +1,74 @@
+---
+source: crates/oxc_semantic/tests/main.rs
+input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaration/qualified-name-shadowing-enum.ts
+---
+[
+  {
+    "children": [
+      {
+        "children": [],
+        "flags": "ScopeFlags(0x0)",
+        "id": 1,
+        "node": "TSEnumBody",
+        "symbols": [
+          {
+            "flags": "SymbolFlags(EnumMember)",
+            "id": 1,
+            "name": "Active",
+            "node": "TSEnumMember",
+            "references": []
+          },
+          {
+            "flags": "SymbolFlags(EnumMember)",
+            "id": 2,
+            "name": "Inactive",
+            "node": "TSEnumMember",
+            "references": []
+          }
+        ]
+      },
+      {
+        "children": [],
+        "flags": "ScopeFlags(0x0)",
+        "id": 2,
+        "node": "TSTypeAliasDeclaration",
+        "symbols": [
+          {
+            "flags": "SymbolFlags(TypeParameter)",
+            "id": 4,
+            "name": "Status",
+            "node": "TSTypeParameter(Status)",
+            "references": []
+          }
+        ]
+      }
+    ],
+    "flags": "ScopeFlags(Top)",
+    "id": 0,
+    "node": "Program",
+    "symbols": [
+      {
+        "flags": "SymbolFlags(RegularEnum)",
+        "id": 0,
+        "name": "Status",
+        "node": "TSEnumDeclaration(Status)",
+        "references": [
+          {
+            "flags": "ReferenceFlags(Type)",
+            "id": 0,
+            "name": "Status",
+            "node_id": 17,
+            "scope_id": 2
+          }
+        ]
+      },
+      {
+        "flags": "SymbolFlags(TypeAlias)",
+        "id": 3,
+        "name": "Test",
+        "node": "TSTypeAliasDeclaration",
+        "references": []
+      }
+    ]
+  }
+]

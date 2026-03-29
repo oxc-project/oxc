@@ -17,13 +17,19 @@ pub struct TriviaBuilder {
     /// index of processed comments
     processed: usize,
 
-    /// Saw a newline before this position
+    /// Saw a newline before this position (since last token).
+    /// Used to determine if comments are trailing comments of the previous token.
     saw_newline: bool,
+
+    /// Saw a newline before this position (since last comment or token).
+    /// Used to set `preceded_by_newline` on comments.
+    saw_newline_for_comment: bool,
 
     /// Previous token kind, used to indicates comments are trailing from what kind
     previous_kind: Kind,
 
-    pub(super) has_pure_comment: bool,
+    /// Index of the pure comment in `comments` vec, or `None` if no pure comment for the current token.
+    pub(super) pure_comment: Option<usize>,
 
     pub(super) has_no_side_effects_comment: bool,
 }
@@ -35,20 +41,35 @@ impl Default for TriviaBuilder {
             irregular_whitespaces: vec![],
             processed: 0,
             saw_newline: true,
+            saw_newline_for_comment: true,
             previous_kind: Kind::Undetermined,
-            has_pure_comment: false,
+            pure_comment: None,
             has_no_side_effects_comment: false,
         }
     }
 }
 
 impl TriviaBuilder {
-    pub fn previous_token_has_pure_comment(&self) -> bool {
-        self.has_pure_comment
+    pub fn previous_token_has_pure_comment(&self) -> Option<usize> {
+        self.pure_comment
     }
 
     pub fn previous_token_has_no_side_effects_comment(&self) -> bool {
         self.has_no_side_effects_comment
+    }
+
+    pub fn mark_pure_comment_not_applied(&mut self, index: usize) {
+        if let Some(comment) = self.comments.get_mut(index) {
+            debug_assert!(comment.is_pure());
+            comment.content = CommentContent::PureNotApplied;
+        }
+    }
+
+    /// Mark the current token's pure comment (if any) as not applied.
+    pub fn mark_current_pure_comment_not_applied(&mut self) {
+        if let Some(index) = self.pure_comment {
+            self.mark_pure_comment_not_applied(index);
+        }
     }
 
     pub fn add_irregular_whitespace(&mut self, start: u32, end: u32) {
@@ -81,6 +102,7 @@ impl TriviaBuilder {
             }
         }
         self.saw_newline = true;
+        self.saw_newline_for_comment = true;
     }
 
     pub fn handle_token(&mut self, token: Token) {
@@ -95,6 +117,7 @@ impl TriviaBuilder {
             self.processed = len;
         }
         self.saw_newline = false;
+        self.saw_newline_for_comment = false;
     }
 
     /// Determines if the current line comment should be treated as a trailing comment.
@@ -137,7 +160,9 @@ impl TriviaBuilder {
         }
 
         // This newly added comment may be preceded by a newline.
-        comment.set_preceded_by_newline(self.saw_newline);
+        // Use `saw_newline_for_comment` which tracks newlines since the last comment or token,
+        // not just since the last token.
+        comment.set_preceded_by_newline(self.saw_newline_for_comment);
         if comment.is_line() {
             // A line comment is always followed by a newline. This is never set in `handle_newline`.
             comment.set_followed_by_newline(true);
@@ -145,6 +170,11 @@ impl TriviaBuilder {
                 self.processed = self.comments.len() + 1; // +1 to include this comment.
             }
             self.saw_newline = true;
+            self.saw_newline_for_comment = true;
+        } else {
+            // Block comments don't end with a newline, so reset saw_newline_for_comment.
+            // If there's a newline after the block comment, `handle_newline` will set it back to true.
+            self.saw_newline_for_comment = false;
         }
 
         self.comments.push(comment);
@@ -253,7 +283,7 @@ impl TriviaBuilder {
             let rest = &bytes[start + 2..];
             if rest.starts_with(b"PURE__") {
                 comment.content = CommentContent::Pure;
-                self.has_pure_comment = true;
+                self.pure_comment = Some(self.comments.len()); // will be pushed next
                 return;
             } else if rest.starts_with(b"NO_SIDE_EFFECTS__") {
                 comment.content = CommentContent::NoSideEffects;
@@ -508,6 +538,40 @@ token /* Trailing 1 */
             },
         ];
         assert_eq!(comments, expected);
+    }
+
+    #[test]
+    fn pure_comment_not_applied() {
+        let cases = [
+            "/* #__PURE__ */ React.createElement;",
+            "/* @__PURE__ */ someVariable;",
+            "/* #__PURE__ */ 42;",
+            "!/* #__PURE__ */ x;",
+            // Non-expression statements
+            "/* #__PURE__ */ function foo() {}",
+            "/* #__PURE__ */ class Foo {}",
+            "/* #__PURE__ */ var x = foo();",
+            // Pure comment before `=` in variable declarator
+            "const foo /* #__PURE__ */ = pureOperation();",
+        ];
+        for source_text in cases {
+            let comments = get_comments(source_text);
+            assert_eq!(comments[0].content, CommentContent::PureNotApplied, "{source_text}");
+        }
+    }
+
+    #[test]
+    fn pure_comment_not_applied_marks_correct_comment() {
+        // The first pure comment is invalid (before `foo`), the second is valid (before `bar()`).
+        // `mark_pure_comment_not_applied` must retag the first comment, not the second.
+        let source_text = "/*#__PURE__*/ foo + /*#__PURE__*/ bar()";
+        let comments = get_comments(source_text);
+        assert_eq!(
+            comments[0].content,
+            CommentContent::PureNotApplied,
+            "first comment should be PureNotApplied"
+        );
+        assert_eq!(comments[1].content, CommentContent::Pure, "second comment should remain Pure");
     }
 
     #[test]

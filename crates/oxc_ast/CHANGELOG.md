@@ -4,6 +4,86 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.122.0] - 2026-03-23
+
+### 🚀 Features
+
+- 76cd0b1 ast: Add method to retrieve `SymbolId`s from BindingPattern (#20532) (camc314)
+
+### ⚡ Performance
+
+- 89946e1 ast: Mark `AstKind::address` as `#[inline]` (#20586) (overlookmotel)
+- 3420abb ast: Mark `AstKind::span` as `#[inline]` (#20585) (overlookmotel)
+- c6ea0a0 ast: Place `NodeId` field after `Span` in structs (#20584) (overlookmotel)
+- d176ecc napi/parser, oxlint/plugins: Shorten deserializer for `WithClause` (#20575) (overlookmotel)
+
+## [0.120.0] - 2026-03-16
+
+### 🐛 Bug Fixes
+
+- f8fbd6e linter/plugins: Remove `hashbang` property from AST (#20365) (overlookmotel)
+
+### ⚡ Performance
+
+- 9cd612f linter/plugins: Recycle comment objects (#20362) (overlookmotel)
+
+## [0.114.0] - 2026-02-16
+
+### 🚀 Features
+
+- 429d876 semantic: Assign ast node ids during semantic build (#19263) (Boshen)
+- ebb80b3 ast: Add `node_id` field to all AST struct nodes (#18138) (Boshen)
+
+### 📚 Documentation
+
+- 569aa61 rust: Add missing rustdocs and remove missing_docs lint attrs (#19306) (Boshen)
+
+## [0.113.0] - 2026-02-10
+
+### 🚀 Features
+
+- 18320c6 span: Store file extension in `SourceType` (#18893) (Boshen)
+
+### 🐛 Bug Fixes
+
+- 57917ee parser: Parse decorators on rest parameters (#18938) (Boshen)
+
+### ⚡ Performance
+
+- ed8c054 oxc_str: Add precomputed hash to Ident for fast HashMap lookups (#19143) (Boshen)
+
+## [0.111.0] - 2026-01-26
+
+### 💥 BREAKING CHANGES
+
+- 777fc40 ast: [**BREAKING**] Add `Ident` type (#18354) (Boshen)
+
+### 🚀 Features
+
+- 2ef5647 ast: Add escape_raw parameter to template_element builders (#18121) (Boshen)
+
+### 🐛 Bug Fixes
+
+- c205b0d ast: Remove `ThisExpression` from `TSModuleReference` (#18489) (Boshen)
+
+## [0.109.0] - 2026-01-19
+
+### 💥 BREAKING CHANGES
+
+- 9135b0b ast: [**BREAKING**] Move scope from `TSEnumDeclaration` to `TSEnumBody` (#18058) (Boshen)
+
+## [0.108.0] - 2026-01-12
+
+### ⚡ Performance
+
+- d5979dc minifier: Do not allocate when checking to convert `const` to `let` (#17730) (camchenry)
+
+## [0.106.0] - 2025-12-29
+
+### 📚 Documentation
+
+- 1005c0a ast: Fix docs for AssignmentPattern in BindingPattern enum (#17309) (camc314)
+
 ## [0.105.0] - 2025-12-22
 
 ### 🐛 Bug Fixes

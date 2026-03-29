@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-promise(no-promise-in-callback): Avoid using promises inside of callbacks.
    ╭─[no_promise_in_callback.tsx:1:19]
  1 │ a(function(err) { doThing().then(a) })

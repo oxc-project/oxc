@@ -17,12 +17,12 @@ pub struct RequireNumberToFixedDigitsArgument;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Enforce using the digits argument with Number.toFixed()
+    /// Enforce using the digits argument with `Number#toFixed()`.
     ///
     /// ### Why is this bad?
     ///
-    /// It's better to make it clear what the value of the digits argument is when calling Number.toFixed(),
-    /// instead of relying on the default value of 0.
+    /// It's better to make it clear what the value of the digits argument is when calling `Number#toFixed()`,
+    /// instead of relying on the default value of `0`.
     ///
     /// ### Examples
     ///
@@ -99,8 +99,7 @@ fn test() {
         "number.toFixed(2)",
         "number.toFixed(1,2,3)",
         "number[toFixed]()",
-        "number[\"toFixed\"]()",
-        "number?.toFixed()",
+        r#"number["toFixed"]()"#,
         "number.toFixed?.()",
         "number.notToFixed();",
         "new BigNumber(1).toFixed()",
@@ -109,6 +108,7 @@ fn test() {
 
     let fail = vec![
         "const string = number.toFixed();",
+        // r#"const string = number?.toFixed() ?? "";"#,
         "const string = number.toFixed( /* comment */ );",
         "Number(1).toFixed()",
         "const bigNumber = new BigNumber(1); const string = bigNumber.toFixed();",

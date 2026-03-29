@@ -1,0 +1,24 @@
+{
+  "tabWidth": 2,
+  "semi": true,
+  "overrides": [
+    {
+      "files": ["src/**/*.js"],
+      "options": {
+        "tabWidth": 4
+      }
+    },
+    {
+      "files": ["src/**/*_test.js"],
+      "options": {
+        "semi": false
+      }
+    },
+    {
+      "files": ["src/deep/**/*.js"],
+      "options": {
+        "tabWidth": 6
+      }
+    }
+  ]
+}

@@ -44,6 +44,8 @@
 mod expression;
 mod ts_type;
 
+pub use expression::chain_expression_needs_parens;
+
 use crate::formatter::Formatter;
 
 /// Node that may be parenthesized to ensure it forms valid syntax or to improve readability

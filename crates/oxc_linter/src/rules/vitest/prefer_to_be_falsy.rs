@@ -84,25 +84,20 @@ fn test() {
     ];
 
     let fix = vec![
-        ("expect(true).toBe(false);", "expect(true).toBeFalsy();", None),
-        ("expect(wasSuccessful).toEqual(false);", "expect(wasSuccessful).toBeFalsy();", None),
+        ("expect(true).toBe(false);", "expect(true).toBeFalsy();"),
+        ("expect(wasSuccessful).toEqual(false);", "expect(wasSuccessful).toBeFalsy();"),
         (
             "expect(fs.existsSync('/path/to/file')).toStrictEqual(false);",
             "expect(fs.existsSync('/path/to/file')).toBeFalsy();",
-            None,
         ),
-        (r#"expect("a string").not.toBe(false);"#, r#"expect("a string").not.toBeFalsy();"#, None),
-        (
-            r#"expect("a string").not.toEqual(false);"#,
-            r#"expect("a string").not.toBeFalsy();"#,
-            None,
-        ),
+        (r#"expect("a string").not.toBe(false);"#, r#"expect("a string").not.toBeFalsy();"#),
+        (r#"expect("a string").not.toEqual(false);"#, r#"expect("a string").not.toBeFalsy();"#),
         (
             r#"expectTypeOf("a string").not.toEqual(false);"#,
             r#"expectTypeOf("a string").not.toBeFalsy();"#,
-            None,
         ),
     ];
+
     Tester::new(PreferToBeFalsy::NAME, PreferToBeFalsy::PLUGIN, pass, fail)
         .expect_fix(fix)
         .with_vitest_plugin(true)

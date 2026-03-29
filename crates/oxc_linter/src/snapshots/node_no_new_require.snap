@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-node(no-new-require): Unexpected use of `new` operator with `require`
    ╭─[no_new_require.tsx:1:17]
  1 │ var appHeader = new require('app-header')

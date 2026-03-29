@@ -139,7 +139,7 @@ impl Rule for JsxNoScriptUrl {
         }
     }
 
-    fn from_configuration(value: Value) -> Self {
+    fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
         let mut components: FxHashMap<String, Vec<String>> = FxHashMap::default();
         match value.get(0).and_then(Value::as_array) {
             Some(arr) => {
@@ -155,19 +155,19 @@ impl Rule for JsxNoScriptUrl {
                         });
                     components.insert(name, props);
                 }
-                Self(Box::new(JsxNoScriptUrlConfig {
+                Ok(Self(Box::new(JsxNoScriptUrlConfig {
                     include_from_settings: value.get(1).is_some_and(|conf| {
                         conf.get("includeFromSettings").and_then(Value::as_bool).is_some_and(|v| v)
                     }),
                     components,
-                }))
+                })))
             }
-            _ => Self(Box::new(JsxNoScriptUrlConfig {
+            _ => Ok(Self(Box::new(JsxNoScriptUrlConfig {
                 include_from_settings: value.get(0).is_some_and(|conf| {
                     conf.get("includeFromSettings").and_then(Value::as_bool).is_some_and(|v| v)
                 }),
                 components: FxHashMap::default(),
-            })),
+            }))),
         }
     }
 

@@ -21,7 +21,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/declarati
         "symbols": []
       }
     ],
-    "flags": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(Top)",
     "id": 0,
     "node": "Program",
     "symbols": [
@@ -35,7 +35,8 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/declarati
             "flags": "ReferenceFlags(Read)",
             "id": 0,
             "name": "outer1",
-            "node_id": 13
+            "node_id": 13,
+            "scope_id": 1
           }
         ]
       },
@@ -49,7 +50,8 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/declarati
             "flags": "ReferenceFlags(Read)",
             "id": 1,
             "name": "outer2",
-            "node_id": 16
+            "node_id": 16,
+            "scope_id": 1
           }
         ]
       },

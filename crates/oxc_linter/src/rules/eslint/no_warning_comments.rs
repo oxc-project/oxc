@@ -4,6 +4,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use rustc_hash::FxHashSet;
+use serde_json::Value;
 
 use crate::{context::LintContext, rule::Rule};
 
@@ -122,11 +123,14 @@ declare_oxc_lint!(
     /// Useful for ignoring common comment decorations like `*` in JSDoc-style comments.
     NoWarningComments,
     eslint,
-    pedantic
+    pedantic,
+    // TODO: Replace this with an actual config struct. This is a dummy value to
+    // indicate that this rule has configuration and avoid errors.
+    config = Value,
 );
 
 impl Rule for NoWarningComments {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let config = value.get(0);
 
         let terms = config.and_then(|v| v.get("terms")).and_then(|v| v.as_array()).map_or_else(
@@ -158,7 +162,7 @@ impl Rule for NoWarningComments {
             })
             .unwrap_or_default();
 
-        Self::new(&terms, &location, &decoration)
+        Ok(Self::new(&terms, &location, &decoration))
     }
 
     fn run_once(&self, ctx: &LintContext) {

@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 54/54 (100.00%)
-Positive Passed: 54/54 (100.00%)
-Negative Passed: 122/122 (100.00%)
+AST Parsed     : 65/65 (100.00%)
+Positive Passed: 65/65 (100.00%)
+Negative Passed: 136/136 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval.ts:1:10]
@@ -50,6 +50,44 @@ Negative Passed: 122/122 (100.00%)
  8 │ 
    ╰────
 
+  × Cannot use await in class static initialization block
+   ╭─[misc/fail/await-expr-in-block-in-class-static-block.mjs:4:7]
+ 3 │     {
+ 4 │       await foo;
+   ·       ─────
+ 5 │     }
+   ╰────
+
+  × Cannot use export statement outside a module
+   ╭─[misc/fail/commonjs-export-statement.cjs:2:1]
+ 1 │ // CommonJS does NOT allow export statements (use module.exports instead)
+ 2 │ export const foo = 1;
+   · ──────
+   ╰────
+
+  × Unexpected import.meta expression
+   ╭─[misc/fail/commonjs-import-meta.cjs:2:1]
+ 1 │ // CommonJS does NOT allow import.meta (only ES modules do)
+ 2 │ import.meta;
+   · ───────────
+   ╰────
+  help: import.meta is only allowed in module code
+
+  × Cannot use import statement outside a module
+   ╭─[misc/fail/commonjs-import-statement.cjs:2:1]
+ 1 │ // CommonJS does NOT allow import statements (use require instead)
+ 2 │ import foo from 'foo';
+   · ──────
+   ╰────
+
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[misc/fail/commonjs-top-level-await.cjs:2:1]
+ 1 │ // CommonJS does NOT allow top-level await (only ES modules do)
+ 2 │ await Promise.resolve();
+   · ─────
+   ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
+
   × Encountered diff marker
     ╭─[misc/fail/diff-markers.js:10:1]
   9 │ function test() {
@@ -95,6 +133,19 @@ Negative Passed: 122/122 (100.00%)
    · ───────────
    ╰────
   help: If you want to use `export =`, remove other `export`s and put all of them to the right hand value of `export =`. If you want to use `export`s, remove `export =` statement.
+
+  × HTML comments are not allowed in modules
+   ╭─[misc/fail/html-comment-in-module.mjs:1:1]
+ 1 │ <!-- comment
+   · ────
+   ╰────
+
+  × HTML comments are not allowed in modules
+   ╭─[misc/fail/html-comment-with-esm.js:1:1]
+ 1 │ <!-- comment
+   · ────
+ 2 │ import foo from "bar";
+   ╰────
 
   × Expected `,` or `]` but found `const`
    ╭─[misc/fail/imbalanced-array-expr.js:2:1]
@@ -211,6 +262,13 @@ Negative Passed: 122/122 (100.00%)
    ·                  ╰── `from` expected
    ╰────
 
+  × Identifier expected. 'this' is a reserved word that cannot be used here.
+   ╭─[misc/fail/import-equals-this.ts:2:12]
+ 1 │ // `this` is not valid in import equals declaration
+ 2 │ import x = this;
+   ·            ────
+   ╰────
+
   × Expected `from` but found `string`
    ╭─[misc/fail/import-from-str.js:1:13]
  1 │ import from 'module';
@@ -230,6 +288,20 @@ Negative Passed: 122/122 (100.00%)
  1 │ import source 'module';
    ·               ────┬───
    ·                   ╰── `from` expected
+   ╰────
+
+  × TS(1363): A type-only import can specify a default import or named bindings, but not both.
+   ╭─[misc/fail/import-type-mixed-empty.ts:3:13]
+ 2 │ // TS1363: A type-only import can specify a default import or named bindings, but not both.
+ 3 │ import type foo, {} from 'bar';
+   ·             ───
+   ╰────
+
+  × TS(1363): A type-only import can specify a default import or named bindings, but not both.
+   ╭─[misc/fail/import-type-mixed-star.ts:3:13]
+ 2 │ // TS1363: A type-only import can specify a default import or named bindings, but not both.
+ 3 │ import type A, * as NS from 'mod';
+   ·             ─
    ╰────
 
   × TS(1141): String literal expected.
@@ -380,6 +452,15 @@ Negative Passed: 122/122 (100.00%)
    ·                      │               ╰── It can not be redeclared here
    ·                      ╰── `b` has already been declared here
    ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[misc/fail/oxc-10503.ts:4:6]
+ 3 │ 
+ 4 │ await using
+   ·      ▲
+ 5 │ foo = bar();
+   ╰────
+  help: Try inserting a semicolon here
 
   × Unexpected token
    ╭─[misc/fail/oxc-10638.js:2:1]
@@ -660,6 +741,14 @@ Negative Passed: 122/122 (100.00%)
    ╰────
   help: Allowed modifiers are: private, protected, public, static, abstract, override, async
 
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+   ╭─[misc/fail/oxc-11713-24.ts:2:20]
+ 1 │ class Foo {
+ 2 │   declare method() {}
+   ·                    ▲
+ 3 │ }
+   ╰────
+
   × TS(1024): 'readonly' modifier can only appear on a property declaration or index signature.
    ╭─[misc/fail/oxc-11713-25.ts:2:3]
  1 │ class Foo {
@@ -811,7 +900,7 @@ Negative Passed: 122/122 (100.00%)
    ·      ─
    ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
    ╭─[misc/fail/oxc-13284-1.js:2:1]
  1 │ // `super()` not in a class or object method
  2 │ super();
@@ -819,7 +908,7 @@ Negative Passed: 122/122 (100.00%)
  3 │ () => () => 123 + super();
    ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
    ╭─[misc/fail/oxc-13284-1.js:3:19]
  2 │ super();
  3 │ () => () => 123 + super();
@@ -827,7 +916,7 @@ Negative Passed: 122/122 (100.00%)
  4 │ if (true) { while (false) { { super(); } } }
    ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
    ╭─[misc/fail/oxc-13284-1.js:4:31]
  3 │ () => () => 123 + super();
  4 │ if (true) { while (false) { { super(); } } }
@@ -835,7 +924,7 @@ Negative Passed: 122/122 (100.00%)
  5 │ () => (arg = super()) => {
    ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
    ╭─[misc/fail/oxc-13284-1.js:5:14]
  4 │ if (true) { while (false) { { super(); } } }
  5 │ () => (arg = super()) => {
@@ -843,7 +932,7 @@ Negative Passed: 122/122 (100.00%)
  6 │   super();
    ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
    ╭─[misc/fail/oxc-13284-1.js:6:3]
  5 │ () => (arg = super()) => {
  6 │   super();
@@ -851,7 +940,7 @@ Negative Passed: 122/122 (100.00%)
  7 │   () => () => 123 + super();
    ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
    ╭─[misc/fail/oxc-13284-1.js:7:21]
  6 │   super();
  7 │   () => () => 123 + super();
@@ -859,7 +948,7 @@ Negative Passed: 122/122 (100.00%)
  8 │   if (true) { while (false) { { super(); } } }
    ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
    ╭─[misc/fail/oxc-13284-1.js:8:33]
  7 │   () => () => 123 + super();
  8 │   if (true) { while (false) { { super(); } } }
@@ -867,7 +956,7 @@ Negative Passed: 122/122 (100.00%)
  9 │ };
    ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[misc/fail/oxc-13284-1.js:12:18]
  11 │ // `super()` in a function
  12 │ function f(arg = super()) {
@@ -875,7 +964,7 @@ Negative Passed: 122/122 (100.00%)
  13 │   super();
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[misc/fail/oxc-13284-1.js:13:3]
  12 │ function f(arg = super()) {
  13 │   super();
@@ -883,7 +972,7 @@ Negative Passed: 122/122 (100.00%)
  14 │   () => () => 123 + super();
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[misc/fail/oxc-13284-1.js:14:21]
  13 │   super();
  14 │   () => () => 123 + super();
@@ -891,7 +980,7 @@ Negative Passed: 122/122 (100.00%)
  15 │   if (true) { while (false) { { super(); } } }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[misc/fail/oxc-13284-1.js:15:33]
  14 │   () => () => 123 + super();
  15 │   if (true) { while (false) { { super(); } } }
@@ -899,7 +988,7 @@ Negative Passed: 122/122 (100.00%)
  16 │ }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[misc/fail/oxc-13284-1.js:17:20]
  16 │ }
  17 │ f = function(arg = super()) {
@@ -907,7 +996,7 @@ Negative Passed: 122/122 (100.00%)
  18 │   super();
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[misc/fail/oxc-13284-1.js:18:3]
  17 │ f = function(arg = super()) {
  18 │   super();
@@ -915,7 +1004,7 @@ Negative Passed: 122/122 (100.00%)
  19 │   () => () => 123 + super();
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[misc/fail/oxc-13284-1.js:19:21]
  18 │   super();
  19 │   () => () => 123 + super();
@@ -923,7 +1012,7 @@ Negative Passed: 122/122 (100.00%)
  20 │   if (true) { while (false) { { super(); } } }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[misc/fail/oxc-13284-1.js:20:33]
  19 │   () => () => 123 + super();
  20 │   if (true) { while (false) { { super(); } } }
@@ -1011,7 +1100,7 @@ Negative Passed: 122/122 (100.00%)
     ╰────
   help: either remove this super, or extend the class
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[misc/fail/oxc-13284-1.js:34:10]
  33 │ class B extends Super {
  34 │   prop = super();
@@ -1019,7 +1108,7 @@ Negative Passed: 122/122 (100.00%)
  35 │   static prop = () => (arg = super()) => 123 + super();
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[misc/fail/oxc-13284-1.js:35:30]
  34 │   prop = super();
  35 │   static prop = () => (arg = super()) => 123 + super();
@@ -1027,7 +1116,7 @@ Negative Passed: 122/122 (100.00%)
  36 │ 
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[misc/fail/oxc-13284-1.js:35:48]
  34 │   prop = super();
  35 │   static prop = () => (arg = super()) => 123 + super();
@@ -1035,7 +1124,7 @@ Negative Passed: 122/122 (100.00%)
  36 │ 
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[misc/fail/oxc-13284-1.js:37:21]
  36 │ 
  37 │   accessor access = super();
@@ -1043,7 +1132,7 @@ Negative Passed: 122/122 (100.00%)
  38 │   static accessor access = () => () => 123 + super();
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[misc/fail/oxc-13284-1.js:38:46]
  37 │   accessor access = super();
  38 │   static accessor access = () => () => 123 + super();
@@ -1051,7 +1140,7 @@ Negative Passed: 122/122 (100.00%)
  39 │ }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[misc/fail/oxc-13284-1.js:43:16]
  42 │ class C extends Super {
  43 │   method(arg = super()) {
@@ -1059,7 +1148,7 @@ Negative Passed: 122/122 (100.00%)
  44 │     super();
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[misc/fail/oxc-13284-1.js:44:5]
  43 │   method(arg = super()) {
  44 │     super();
@@ -1067,7 +1156,7 @@ Negative Passed: 122/122 (100.00%)
  45 │     () => (arg = super()) => 123 + super();
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[misc/fail/oxc-13284-1.js:45:18]
  44 │     super();
  45 │     () => (arg = super()) => 123 + super();
@@ -1075,7 +1164,7 @@ Negative Passed: 122/122 (100.00%)
  46 │     if (true) { while (false) { { super(); } } }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[misc/fail/oxc-13284-1.js:45:36]
  44 │     super();
  45 │     () => (arg = super()) => 123 + super();
@@ -1083,7 +1172,7 @@ Negative Passed: 122/122 (100.00%)
  46 │     if (true) { while (false) { { super(); } } }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[misc/fail/oxc-13284-1.js:46:35]
  45 │     () => (arg = super()) => 123 + super();
  46 │     if (true) { while (false) { { super(); } } }
@@ -1091,7 +1180,7 @@ Negative Passed: 122/122 (100.00%)
  47 │   }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[misc/fail/oxc-13284-1.js:49:23]
  48 │ 
  49 │   static method(arg = super()) {
@@ -1099,7 +1188,7 @@ Negative Passed: 122/122 (100.00%)
  50 │     super();
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[misc/fail/oxc-13284-1.js:50:5]
  49 │   static method(arg = super()) {
  50 │     super();
@@ -1107,7 +1196,7 @@ Negative Passed: 122/122 (100.00%)
  51 │     () => (arg = super()) => 123 + super();
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[misc/fail/oxc-13284-1.js:51:18]
  50 │     super();
  51 │     () => (arg = super()) => 123 + super();
@@ -1115,7 +1204,7 @@ Negative Passed: 122/122 (100.00%)
  52 │     if (true) { while (false) { { super(); } } }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[misc/fail/oxc-13284-1.js:51:36]
  50 │     super();
  51 │     () => (arg = super()) => 123 + super();
@@ -1123,7 +1212,7 @@ Negative Passed: 122/122 (100.00%)
  52 │     if (true) { while (false) { { super(); } } }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[misc/fail/oxc-13284-1.js:52:35]
  51 │     () => (arg = super()) => 123 + super();
  52 │     if (true) { while (false) { { super(); } } }
@@ -1131,7 +1220,7 @@ Negative Passed: 122/122 (100.00%)
  53 │   }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[misc/fail/oxc-13284-1.js:55:15]
  54 │ 
  55 │   ['x'](arg = super()) {
@@ -1139,7 +1228,7 @@ Negative Passed: 122/122 (100.00%)
  56 │     super();
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[misc/fail/oxc-13284-1.js:56:5]
  55 │   ['x'](arg = super()) {
  56 │     super();
@@ -1147,7 +1236,7 @@ Negative Passed: 122/122 (100.00%)
  57 │     () => (arg = super()) => 123 + super();
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[misc/fail/oxc-13284-1.js:57:18]
  56 │     super();
  57 │     () => (arg = super()) => 123 + super();
@@ -1155,7 +1244,7 @@ Negative Passed: 122/122 (100.00%)
  58 │     if (true) { while (false) { { super(); } } }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[misc/fail/oxc-13284-1.js:57:36]
  56 │     super();
  57 │     () => (arg = super()) => 123 + super();
@@ -1163,7 +1252,7 @@ Negative Passed: 122/122 (100.00%)
  58 │     if (true) { while (false) { { super(); } } }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[misc/fail/oxc-13284-1.js:58:35]
  57 │     () => (arg = super()) => 123 + super();
  58 │     if (true) { while (false) { { super(); } } }
@@ -1171,7 +1260,7 @@ Negative Passed: 122/122 (100.00%)
  59 │   }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[misc/fail/oxc-13284-1.js:61:22]
  60 │ 
  61 │   static ['x'](arg = super()) {
@@ -1179,7 +1268,7 @@ Negative Passed: 122/122 (100.00%)
  62 │     super();
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[misc/fail/oxc-13284-1.js:62:5]
  61 │   static ['x'](arg = super()) {
  62 │     super();
@@ -1187,7 +1276,7 @@ Negative Passed: 122/122 (100.00%)
  63 │     () => (arg = super()) => 123 + super();
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[misc/fail/oxc-13284-1.js:63:18]
  62 │     super();
  63 │     () => (arg = super()) => 123 + super();
@@ -1195,7 +1284,7 @@ Negative Passed: 122/122 (100.00%)
  64 │     if (true) { while (false) { { super(); } } }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[misc/fail/oxc-13284-1.js:63:36]
  62 │     super();
  63 │     () => (arg = super()) => 123 + super();
@@ -1203,7 +1292,7 @@ Negative Passed: 122/122 (100.00%)
  64 │     if (true) { while (false) { { super(); } } }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[misc/fail/oxc-13284-1.js:64:35]
  63 │     () => (arg = super()) => 123 + super();
  64 │     if (true) { while (false) { { super(); } } }
@@ -1211,7 +1300,7 @@ Negative Passed: 122/122 (100.00%)
  65 │   }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[misc/fail/oxc-13284-1.js:68:5]
  67 │   get y() {
  68 │     super();
@@ -1219,7 +1308,7 @@ Negative Passed: 122/122 (100.00%)
  69 │     () => (arg = super()) => 123 + super();
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[misc/fail/oxc-13284-1.js:69:18]
  68 │     super();
  69 │     () => (arg = super()) => 123 + super();
@@ -1227,7 +1316,7 @@ Negative Passed: 122/122 (100.00%)
  70 │     if (true) { while (false) { { super(); } } }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[misc/fail/oxc-13284-1.js:69:36]
  68 │     super();
  69 │     () => (arg = super()) => 123 + super();
@@ -1235,7 +1324,7 @@ Negative Passed: 122/122 (100.00%)
  70 │     if (true) { while (false) { { super(); } } }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[misc/fail/oxc-13284-1.js:70:35]
  69 │     () => (arg = super()) => 123 + super();
  70 │     if (true) { while (false) { { super(); } } }
@@ -1243,7 +1332,7 @@ Negative Passed: 122/122 (100.00%)
  71 │   }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[misc/fail/oxc-13284-1.js:73:15]
  72 │ 
  73 │   set y(arg = super()) {
@@ -1251,7 +1340,7 @@ Negative Passed: 122/122 (100.00%)
  74 │     super();
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[misc/fail/oxc-13284-1.js:74:5]
  73 │   set y(arg = super()) {
  74 │     super();
@@ -1259,7 +1348,7 @@ Negative Passed: 122/122 (100.00%)
  75 │     () => (arg = super()) => 123 + super();
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[misc/fail/oxc-13284-1.js:75:18]
  74 │     super();
  75 │     () => (arg = super()) => 123 + super();
@@ -1267,7 +1356,7 @@ Negative Passed: 122/122 (100.00%)
  76 │     if (true) { while (false) { { super(); } } }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[misc/fail/oxc-13284-1.js:75:36]
  74 │     super();
  75 │     () => (arg = super()) => 123 + super();
@@ -1275,7 +1364,7 @@ Negative Passed: 122/122 (100.00%)
  76 │     if (true) { while (false) { { super(); } } }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[misc/fail/oxc-13284-1.js:76:35]
  75 │     () => (arg = super()) => 123 + super();
  76 │     if (true) { while (false) { { super(); } } }
@@ -1283,7 +1372,7 @@ Negative Passed: 122/122 (100.00%)
  77 │   }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[misc/fail/oxc-13284-1.js:80:5]
  79 │   static get y() {
  80 │     super();
@@ -1291,7 +1380,7 @@ Negative Passed: 122/122 (100.00%)
  81 │     () => (arg = super()) => 123 + super();
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[misc/fail/oxc-13284-1.js:81:18]
  80 │     super();
  81 │     () => (arg = super()) => 123 + super();
@@ -1299,7 +1388,7 @@ Negative Passed: 122/122 (100.00%)
  82 │     if (true) { while (false) { { super(); } } }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[misc/fail/oxc-13284-1.js:81:36]
  80 │     super();
  81 │     () => (arg = super()) => 123 + super();
@@ -1307,7 +1396,7 @@ Negative Passed: 122/122 (100.00%)
  82 │     if (true) { while (false) { { super(); } } }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[misc/fail/oxc-13284-1.js:82:35]
  81 │     () => (arg = super()) => 123 + super();
  82 │     if (true) { while (false) { { super(); } } }
@@ -1315,7 +1404,7 @@ Negative Passed: 122/122 (100.00%)
  83 │   }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[misc/fail/oxc-13284-1.js:85:22]
  84 │ 
  85 │   static set y(arg = super()) {
@@ -1323,7 +1412,7 @@ Negative Passed: 122/122 (100.00%)
  86 │     super();
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[misc/fail/oxc-13284-1.js:86:5]
  85 │   static set y(arg = super()) {
  86 │     super();
@@ -1331,7 +1420,7 @@ Negative Passed: 122/122 (100.00%)
  87 │     () => (arg = super()) => 123 + super();
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[misc/fail/oxc-13284-1.js:87:18]
  86 │     super();
  87 │     () => (arg = super()) => 123 + super();
@@ -1339,7 +1428,7 @@ Negative Passed: 122/122 (100.00%)
  88 │     if (true) { while (false) { { super(); } } }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[misc/fail/oxc-13284-1.js:87:36]
  86 │     super();
  87 │     () => (arg = super()) => 123 + super();
@@ -1347,7 +1436,7 @@ Negative Passed: 122/122 (100.00%)
  88 │     if (true) { while (false) { { super(); } } }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[misc/fail/oxc-13284-1.js:88:35]
  87 │     () => (arg = super()) => 123 + super();
  88 │     if (true) { while (false) { { super(); } } }
@@ -1355,7 +1444,7 @@ Negative Passed: 122/122 (100.00%)
  89 │   }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[misc/fail/oxc-13284-1.js:95:5]
  94 │   static {
  95 │     super();
@@ -1363,7 +1452,7 @@ Negative Passed: 122/122 (100.00%)
  96 │     () => (arg = super()) => 123 + super();
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[misc/fail/oxc-13284-1.js:96:18]
  95 │     super();
  96 │     () => (arg = super()) => 123 + super();
@@ -1371,7 +1460,7 @@ Negative Passed: 122/122 (100.00%)
  97 │     if (true) { while (false) { { super(); } } }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[misc/fail/oxc-13284-1.js:96:36]
  95 │     super();
  96 │     () => (arg = super()) => 123 + super();
@@ -1379,7 +1468,7 @@ Negative Passed: 122/122 (100.00%)
  97 │     if (true) { while (false) { { super(); } } }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[misc/fail/oxc-13284-1.js:97:35]
  96 │     () => (arg = super()) => 123 + super();
  97 │     if (true) { while (false) { { super(); } } }
@@ -1387,7 +1476,7 @@ Negative Passed: 122/122 (100.00%)
  98 │   }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:104:26]
  103 │   constructor() {
  104 │     function inner(arg = super()) {
@@ -1395,7 +1484,7 @@ Negative Passed: 122/122 (100.00%)
  105 │       super();
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:105:7]
  104 │     function inner(arg = super()) {
  105 │       super();
@@ -1403,7 +1492,7 @@ Negative Passed: 122/122 (100.00%)
  106 │       () => (arg = super()) => 123 + super();
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:106:20]
  105 │       super();
  106 │       () => (arg = super()) => 123 + super();
@@ -1411,7 +1500,7 @@ Negative Passed: 122/122 (100.00%)
  107 │       if (true) { while (false) { { super(); } } }
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:106:38]
  105 │       super();
  106 │       () => (arg = super()) => 123 + super();
@@ -1419,7 +1508,7 @@ Negative Passed: 122/122 (100.00%)
  107 │       if (true) { while (false) { { super(); } } }
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:107:37]
  106 │       () => (arg = super()) => 123 + super();
  107 │       if (true) { while (false) { { super(); } } }
@@ -1427,7 +1516,7 @@ Negative Passed: 122/122 (100.00%)
  108 │     }
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:109:30]
  108 │     }
  109 │     f = () => function(arg = super()) {
@@ -1435,7 +1524,7 @@ Negative Passed: 122/122 (100.00%)
  110 │       super();
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:110:7]
  109 │     f = () => function(arg = super()) {
  110 │       super();
@@ -1443,7 +1532,7 @@ Negative Passed: 122/122 (100.00%)
  111 │       () => (arg = super()) => 123 + super();
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:111:20]
  110 │       super();
  111 │       () => (arg = super()) => 123 + super();
@@ -1451,7 +1540,7 @@ Negative Passed: 122/122 (100.00%)
  112 │       if (true) { while (false) { { super(); } } }
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:111:38]
  110 │       super();
  111 │       () => (arg = super()) => 123 + super();
@@ -1459,7 +1548,7 @@ Negative Passed: 122/122 (100.00%)
  112 │       if (true) { while (false) { { super(); } } }
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:112:37]
  111 │       () => (arg = super()) => 123 + super();
  112 │       if (true) { while (false) { { super(); } } }
@@ -1467,7 +1556,7 @@ Negative Passed: 122/122 (100.00%)
  113 │     };
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:115:20]
  114 │     obj = {
  115 │       method(arg = super()) {
@@ -1475,7 +1564,7 @@ Negative Passed: 122/122 (100.00%)
  116 │         super();
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:116:9]
  115 │       method(arg = super()) {
  116 │         super();
@@ -1483,7 +1572,7 @@ Negative Passed: 122/122 (100.00%)
  117 │         () => (arg = super()) => 123 + super();
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:117:22]
  116 │         super();
  117 │         () => (arg = super()) => 123 + super();
@@ -1491,7 +1580,7 @@ Negative Passed: 122/122 (100.00%)
  118 │         if (true) { while (false) { { super(); } } }
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:117:40]
  116 │         super();
  117 │         () => (arg = super()) => 123 + super();
@@ -1499,7 +1588,7 @@ Negative Passed: 122/122 (100.00%)
  118 │         if (true) { while (false) { { super(); } } }
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:118:39]
  117 │         () => (arg = super()) => 123 + super();
  118 │         if (true) { while (false) { { super(); } } }
@@ -1507,7 +1596,7 @@ Negative Passed: 122/122 (100.00%)
  119 │       },
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:120:19]
  119 │       },
  120 │       set x(arg = super()) {
@@ -1515,7 +1604,7 @@ Negative Passed: 122/122 (100.00%)
  121 │         super();
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:121:9]
  120 │       set x(arg = super()) {
  121 │         super();
@@ -1523,7 +1612,7 @@ Negative Passed: 122/122 (100.00%)
  122 │         () => (arg = super()) => 123 + super();
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:122:22]
  121 │         super();
  122 │         () => (arg = super()) => 123 + super();
@@ -1531,7 +1620,7 @@ Negative Passed: 122/122 (100.00%)
  123 │         if (true) { while (false) { { super(); } } }
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:122:40]
  121 │         super();
  122 │         () => (arg = super()) => 123 + super();
@@ -1539,7 +1628,7 @@ Negative Passed: 122/122 (100.00%)
  123 │         if (true) { while (false) { { super(); } } }
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:123:39]
  122 │         () => (arg = super()) => 123 + super();
  123 │         if (true) { while (false) { { super(); } } }
@@ -1547,7 +1636,7 @@ Negative Passed: 122/122 (100.00%)
  124 │       },
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:131:4]
  130 │ class F extends Super {
  131 │   [super()] = 1;
@@ -1555,7 +1644,7 @@ Negative Passed: 122/122 (100.00%)
  132 │   static [(arg = super()) => super()] = 2;
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:132:18]
  131 │   [super()] = 1;
  132 │   static [(arg = super()) => super()] = 2;
@@ -1563,7 +1652,7 @@ Negative Passed: 122/122 (100.00%)
  133 │   accessor [123 + super()] = 3;
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:132:30]
  131 │   [super()] = 1;
  132 │   static [(arg = super()) => super()] = 2;
@@ -1571,7 +1660,7 @@ Negative Passed: 122/122 (100.00%)
  133 │   accessor [123 + super()] = 3;
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:133:19]
  132 │   static [(arg = super()) => super()] = 2;
  133 │   accessor [123 + super()] = 3;
@@ -1579,7 +1668,7 @@ Negative Passed: 122/122 (100.00%)
  134 │   static accessor [() => (arg = super()) => 123 + super()] = 4;
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:134:33]
  133 │   accessor [123 + super()] = 3;
  134 │   static accessor [() => (arg = super()) => 123 + super()] = 4;
@@ -1587,7 +1676,7 @@ Negative Passed: 122/122 (100.00%)
  135 │   [super()]() {};
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:134:51]
  133 │   accessor [123 + super()] = 3;
  134 │   static accessor [() => (arg = super()) => 123 + super()] = 4;
@@ -1595,7 +1684,7 @@ Negative Passed: 122/122 (100.00%)
  135 │   [super()]() {};
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:135:4]
  134 │   static accessor [() => (arg = super()) => 123 + super()] = 4;
  135 │   [super()]() {};
@@ -1603,7 +1692,7 @@ Negative Passed: 122/122 (100.00%)
  136 │   static [() => super()]() {};
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:136:17]
  135 │   [super()]() {};
  136 │   static [() => super()]() {};
@@ -1611,7 +1700,7 @@ Negative Passed: 122/122 (100.00%)
  137 │   get [super()]() {};
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:137:8]
  136 │   static [() => super()]() {};
  137 │   get [super()]() {};
@@ -1619,7 +1708,7 @@ Negative Passed: 122/122 (100.00%)
  138 │   static get [() => super()]() {};
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:138:21]
  137 │   get [super()]() {};
  138 │   static get [() => super()]() {};
@@ -1627,7 +1716,7 @@ Negative Passed: 122/122 (100.00%)
  139 │   set [super()](v) {};
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:139:8]
  138 │   static get [() => super()]() {};
  139 │   set [super()](v) {};
@@ -1635,7 +1724,7 @@ Negative Passed: 122/122 (100.00%)
  140 │   static set [() => () => 123 + super()](v) {};
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:140:33]
  139 │   set [super()](v) {};
  140 │   static set [() => () => 123 + super()](v) {};
@@ -1643,7 +1732,7 @@ Negative Passed: 122/122 (100.00%)
  141 │ }
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:144:17]
  143 │ // `super()` in class extends
  144 │ class G extends super() {}
@@ -1651,7 +1740,7 @@ Negative Passed: 122/122 (100.00%)
  145 │ class H extends (() => () => 123 + super()) {}
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:145:36]
  144 │ class G extends super() {}
  145 │ class H extends (() => () => 123 + super()) {}
@@ -1659,7 +1748,7 @@ Negative Passed: 122/122 (100.00%)
  146 │ 
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:148:2]
  147 │ // `super()` in class decorators
  148 │ @super()
@@ -1667,7 +1756,7 @@ Negative Passed: 122/122 (100.00%)
  149 │ class I extends Super {
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:150:4]
  149 │ class I extends Super {
  150 │   @super() prop = 1;
@@ -1675,7 +1764,7 @@ Negative Passed: 122/122 (100.00%)
  151 │   @super() static prop = 2;
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:151:4]
  150 │   @super() prop = 1;
  151 │   @super() static prop = 2;
@@ -1683,7 +1772,7 @@ Negative Passed: 122/122 (100.00%)
  152 │   @super() accessor access = 3;
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:152:4]
  151 │   @super() static prop = 2;
  152 │   @super() accessor access = 3;
@@ -1691,7 +1780,7 @@ Negative Passed: 122/122 (100.00%)
  153 │   @super() static accessor access = 4;
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:153:4]
  152 │   @super() accessor access = 3;
  153 │   @super() static accessor access = 4;
@@ -1699,7 +1788,7 @@ Negative Passed: 122/122 (100.00%)
  154 │   @super() method() {}
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:154:4]
  153 │   @super() static accessor access = 4;
  154 │   @super() method() {}
@@ -1707,7 +1796,7 @@ Negative Passed: 122/122 (100.00%)
  155 │ }
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:161:14]
  160 │     class Inner {
  161 │       prop = super();
@@ -1715,7 +1804,7 @@ Negative Passed: 122/122 (100.00%)
  162 │       static prop = (arg = super()) => 123 + super();
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:162:28]
  161 │       prop = super();
  162 │       static prop = (arg = super()) => 123 + super();
@@ -1723,7 +1812,7 @@ Negative Passed: 122/122 (100.00%)
  163 │       accessor access = super();
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:162:46]
  161 │       prop = super();
  162 │       static prop = (arg = super()) => 123 + super();
@@ -1731,7 +1820,7 @@ Negative Passed: 122/122 (100.00%)
  163 │       accessor access = super();
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:163:25]
  162 │       static prop = (arg = super()) => 123 + super();
  163 │       accessor access = super();
@@ -1739,7 +1828,7 @@ Negative Passed: 122/122 (100.00%)
  164 │       static accessor access = (arg = super()) => 123 + super();
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:164:39]
  163 │       accessor access = super();
  164 │       static accessor access = (arg = super()) => 123 + super();
@@ -1747,7 +1836,7 @@ Negative Passed: 122/122 (100.00%)
  165 │       method() { super(); }
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:164:57]
  163 │       accessor access = super();
  164 │       static accessor access = (arg = super()) => 123 + super();
@@ -1755,7 +1844,7 @@ Negative Passed: 122/122 (100.00%)
  165 │       method() { super(); }
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:165:18]
  164 │       static accessor access = (arg = super()) => 123 + super();
  165 │       method() { super(); }
@@ -1763,7 +1852,7 @@ Negative Passed: 122/122 (100.00%)
  166 │       static method() { (arg = super()) => 123 + super(); }
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:166:32]
  165 │       method() { super(); }
  166 │       static method() { (arg = super()) => 123 + super(); }
@@ -1771,7 +1860,7 @@ Negative Passed: 122/122 (100.00%)
  167 │       get x() { super(); }
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:166:50]
  165 │       method() { super(); }
  166 │       static method() { (arg = super()) => 123 + super(); }
@@ -1779,7 +1868,7 @@ Negative Passed: 122/122 (100.00%)
  167 │       get x() { super(); }
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:167:17]
  166 │       static method() { (arg = super()) => 123 + super(); }
  167 │       get x() { super(); }
@@ -1787,7 +1876,7 @@ Negative Passed: 122/122 (100.00%)
  168 │       static get y() { (arg = super()) => 123 + super(); }
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:168:31]
  167 │       get x() { super(); }
  168 │       static get y() { (arg = super()) => 123 + super(); }
@@ -1795,7 +1884,7 @@ Negative Passed: 122/122 (100.00%)
  169 │       set x(v) { super(); }
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:168:49]
  167 │       get x() { super(); }
  168 │       static get y() { (arg = super()) => 123 + super(); }
@@ -1803,7 +1892,7 @@ Negative Passed: 122/122 (100.00%)
  169 │       set x(v) { super(); }
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:169:18]
  168 │       static get y() { (arg = super()) => 123 + super(); }
  169 │       set x(v) { super(); }
@@ -1811,7 +1900,7 @@ Negative Passed: 122/122 (100.00%)
  170 │       static set y(v) { (arg = super()) => 123 + super(); }
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:170:32]
  169 │       set x(v) { super(); }
  170 │       static set y(v) { (arg = super()) => 123 + super(); }
@@ -1819,7 +1908,7 @@ Negative Passed: 122/122 (100.00%)
  171 │       static { super(); }
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:170:50]
  169 │       set x(v) { super(); }
  170 │       static set y(v) { (arg = super()) => 123 + super(); }
@@ -1827,7 +1916,7 @@ Negative Passed: 122/122 (100.00%)
  171 │       static { super(); }
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:171:16]
  170 │       static set y(v) { (arg = super()) => 123 + super(); }
  171 │       static { super(); }
@@ -1835,7 +1924,7 @@ Negative Passed: 122/122 (100.00%)
  172 │     }
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:179:6]
  178 │   prop = class Inner {
  179 │     [super()] = 1;
@@ -1843,7 +1932,7 @@ Negative Passed: 122/122 (100.00%)
  180 │     static [(arg = super()) => super()] = 2;
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:180:20]
  179 │     [super()] = 1;
  180 │     static [(arg = super()) => super()] = 2;
@@ -1851,7 +1940,7 @@ Negative Passed: 122/122 (100.00%)
  181 │     accessor [123 + super()] = 3;
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:180:32]
  179 │     [super()] = 1;
  180 │     static [(arg = super()) => super()] = 2;
@@ -1859,7 +1948,7 @@ Negative Passed: 122/122 (100.00%)
  181 │     accessor [123 + super()] = 3;
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:181:21]
  180 │     static [(arg = super()) => super()] = 2;
  181 │     accessor [123 + super()] = 3;
@@ -1867,7 +1956,7 @@ Negative Passed: 122/122 (100.00%)
  182 │     static accessor [() => (arg = super()) => 123 + super()] = 4;
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:182:35]
  181 │     accessor [123 + super()] = 3;
  182 │     static accessor [() => (arg = super()) => 123 + super()] = 4;
@@ -1875,7 +1964,7 @@ Negative Passed: 122/122 (100.00%)
  183 │     [super()]() {};
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:182:53]
  181 │     accessor [123 + super()] = 3;
  182 │     static accessor [() => (arg = super()) => 123 + super()] = 4;
@@ -1883,7 +1972,7 @@ Negative Passed: 122/122 (100.00%)
  183 │     [super()]() {};
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:183:6]
  182 │     static accessor [() => (arg = super()) => 123 + super()] = 4;
  183 │     [super()]() {};
@@ -1891,7 +1980,7 @@ Negative Passed: 122/122 (100.00%)
  184 │     static [() => super()]() {};
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:184:19]
  183 │     [super()]() {};
  184 │     static [() => super()]() {};
@@ -1899,7 +1988,7 @@ Negative Passed: 122/122 (100.00%)
  185 │     get [super()]() {};
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:185:10]
  184 │     static [() => super()]() {};
  185 │     get [super()]() {};
@@ -1907,7 +1996,7 @@ Negative Passed: 122/122 (100.00%)
  186 │     static get [() => super()]() {};
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:186:23]
  185 │     get [super()]() {};
  186 │     static get [() => super()]() {};
@@ -1915,7 +2004,7 @@ Negative Passed: 122/122 (100.00%)
  187 │     set [super()](v) {};
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:187:10]
  186 │     static get [() => super()]() {};
  187 │     set [super()](v) {};
@@ -1923,7 +2012,7 @@ Negative Passed: 122/122 (100.00%)
  188 │     static set [() => () => 123 + super()](v) {};
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:188:35]
  187 │     set [super()](v) {};
  188 │     static set [() => () => 123 + super()](v) {};
@@ -1931,7 +2020,7 @@ Negative Passed: 122/122 (100.00%)
  189 │   };
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:196:8]
  195 │     class Inner {
  196 │       [super()] = 1;
@@ -1939,7 +2028,7 @@ Negative Passed: 122/122 (100.00%)
  197 │       static [(arg = super()) => super()] = 2;
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:197:22]
  196 │       [super()] = 1;
  197 │       static [(arg = super()) => super()] = 2;
@@ -1947,7 +2036,7 @@ Negative Passed: 122/122 (100.00%)
  198 │       accessor [123 + super()] = 3;
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:197:34]
  196 │       [super()] = 1;
  197 │       static [(arg = super()) => super()] = 2;
@@ -1955,7 +2044,7 @@ Negative Passed: 122/122 (100.00%)
  198 │       accessor [123 + super()] = 3;
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:198:23]
  197 │       static [(arg = super()) => super()] = 2;
  198 │       accessor [123 + super()] = 3;
@@ -1963,7 +2052,7 @@ Negative Passed: 122/122 (100.00%)
  199 │       static accessor [() => (arg = super()) => 123 + super()] = 4;
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:199:37]
  198 │       accessor [123 + super()] = 3;
  199 │       static accessor [() => (arg = super()) => 123 + super()] = 4;
@@ -1971,7 +2060,7 @@ Negative Passed: 122/122 (100.00%)
  200 │       [super()]() {};
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:199:55]
  198 │       accessor [123 + super()] = 3;
  199 │       static accessor [() => (arg = super()) => 123 + super()] = 4;
@@ -1979,7 +2068,7 @@ Negative Passed: 122/122 (100.00%)
  200 │       [super()]() {};
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:200:8]
  199 │       static accessor [() => (arg = super()) => 123 + super()] = 4;
  200 │       [super()]() {};
@@ -1987,7 +2076,7 @@ Negative Passed: 122/122 (100.00%)
  201 │       static [() => super()]() {};
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:201:21]
  200 │       [super()]() {};
  201 │       static [() => super()]() {};
@@ -1995,7 +2084,7 @@ Negative Passed: 122/122 (100.00%)
  202 │       get [super()]() {};
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:202:12]
  201 │       static [() => super()]() {};
  202 │       get [super()]() {};
@@ -2003,7 +2092,7 @@ Negative Passed: 122/122 (100.00%)
  203 │       static get [() => super()]() {};
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:203:25]
  202 │       get [super()]() {};
  203 │       static get [() => super()]() {};
@@ -2011,7 +2100,7 @@ Negative Passed: 122/122 (100.00%)
  204 │       set [super()](v) {};
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:204:12]
  203 │       static get [() => super()]() {};
  204 │       set [super()](v) {};
@@ -2019,7 +2108,7 @@ Negative Passed: 122/122 (100.00%)
  205 │       static set [() => () => 123 + super()](v) {};
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:205:37]
  204 │       set [super()](v) {};
  205 │       static set [() => () => 123 + super()](v) {};
@@ -2027,7 +2116,7 @@ Negative Passed: 122/122 (100.00%)
  206 │     }
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:212:31]
  211 │ class M extends Super {
  212 │   prop1 = class Inner extends super() {};
@@ -2035,7 +2124,7 @@ Negative Passed: 122/122 (100.00%)
  213 │   prop2 = class Inner extends (() => (arg = super()) => 123 + super()) {};
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:213:45]
  212 │   prop1 = class Inner extends super() {};
  213 │   prop2 = class Inner extends (() => (arg = super()) => 123 + super()) {};
@@ -2043,7 +2132,7 @@ Negative Passed: 122/122 (100.00%)
  214 │ }
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:213:63]
  212 │   prop1 = class Inner extends super() {};
  213 │   prop2 = class Inner extends (() => (arg = super()) => 123 + super()) {};
@@ -2051,7 +2140,7 @@ Negative Passed: 122/122 (100.00%)
  214 │ }
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:219:26]
  218 │   method() {
  219 │     class Inner1 extends super() {};
@@ -2059,7 +2148,7 @@ Negative Passed: 122/122 (100.00%)
  220 │     class Inner2 extends (() => (arg = super()) => 123 + super()) {};
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:220:40]
  219 │     class Inner1 extends super() {};
  220 │     class Inner2 extends (() => (arg = super()) => 123 + super()) {};
@@ -2067,7 +2156,7 @@ Negative Passed: 122/122 (100.00%)
  221 │   }
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:220:58]
  219 │     class Inner1 extends super() {};
  220 │     class Inner2 extends (() => (arg = super()) => 123 + super()) {};
@@ -2075,7 +2164,7 @@ Negative Passed: 122/122 (100.00%)
  221 │   }
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:226:11]
  225 │ class O extends Super {
  226 │   prop = @super() class Inner extends Super {
@@ -2083,7 +2172,7 @@ Negative Passed: 122/122 (100.00%)
  227 │     @super() prop = 1;
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:227:6]
  226 │   prop = @super() class Inner extends Super {
  227 │     @super() prop = 1;
@@ -2091,7 +2180,7 @@ Negative Passed: 122/122 (100.00%)
  228 │     @super() static prop = 2;
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:228:6]
  227 │     @super() prop = 1;
  228 │     @super() static prop = 2;
@@ -2099,7 +2188,7 @@ Negative Passed: 122/122 (100.00%)
  229 │     @super() accessor access = 3;
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:229:6]
  228 │     @super() static prop = 2;
  229 │     @super() accessor access = 3;
@@ -2107,7 +2196,7 @@ Negative Passed: 122/122 (100.00%)
  230 │     @super() static accessor access = 4;
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:230:6]
  229 │     @super() accessor access = 3;
  230 │     @super() static accessor access = 4;
@@ -2115,7 +2204,7 @@ Negative Passed: 122/122 (100.00%)
  231 │     @super() method() {}
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:231:6]
  230 │     @super() static accessor access = 4;
  231 │     @super() method() {}
@@ -2123,7 +2212,7 @@ Negative Passed: 122/122 (100.00%)
  232 │   };
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:238:6]
  237 │   method() {
  238 │     @super()
@@ -2131,7 +2220,7 @@ Negative Passed: 122/122 (100.00%)
  239 │     class Inner extends Super {
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:240:8]
  239 │     class Inner extends Super {
  240 │       @super() prop = 1;
@@ -2139,7 +2228,7 @@ Negative Passed: 122/122 (100.00%)
  241 │       @super() static prop = 2;
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:241:8]
  240 │       @super() prop = 1;
  241 │       @super() static prop = 2;
@@ -2147,7 +2236,7 @@ Negative Passed: 122/122 (100.00%)
  242 │       @super() accessor access = 3;
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:242:8]
  241 │       @super() static prop = 2;
  242 │       @super() accessor access = 3;
@@ -2155,7 +2244,7 @@ Negative Passed: 122/122 (100.00%)
  243 │       @super() static accessor access = 4;
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:243:8]
  242 │       @super() accessor access = 3;
  243 │       @super() static accessor access = 4;
@@ -2163,7 +2252,7 @@ Negative Passed: 122/122 (100.00%)
  244 │       @super() method() {}
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:244:8]
  243 │       @super() static accessor access = 4;
  244 │       @super() method() {}
@@ -2171,7 +2260,7 @@ Negative Passed: 122/122 (100.00%)
  245 │     }
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:257:16]
  256 │             class C {
  257 │               [super()]() {}
@@ -2179,7 +2268,7 @@ Negative Passed: 122/122 (100.00%)
  258 │             }
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:264:53]
  263 │ 
  264 │     class D extends class E extends class F extends super() {} {} {}
@@ -2187,7 +2276,7 @@ Negative Passed: 122/122 (100.00%)
  265 │ 
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:271:16]
  270 │             class I {
  271 │               @super()
@@ -2195,7 +2284,7 @@ Negative Passed: 122/122 (100.00%)
  272 │               method() {}
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:286:5]
  285 │   method() {
  286 │     super();
@@ -2203,7 +2292,7 @@ Negative Passed: 122/122 (100.00%)
  287 │     () => (arg = super()) => 123 + super();
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:287:18]
  286 │     super();
  287 │     () => (arg = super()) => 123 + super();
@@ -2211,7 +2300,7 @@ Negative Passed: 122/122 (100.00%)
  288 │     if (true) { while (false) { { super(); } } }
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:287:36]
  286 │     super();
  287 │     () => (arg = super()) => 123 + super();
@@ -2219,7 +2308,7 @@ Negative Passed: 122/122 (100.00%)
  288 │     if (true) { while (false) { { super(); } } }
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:288:35]
  287 │     () => (arg = super()) => 123 + super();
  288 │     if (true) { while (false) { { super(); } } }
@@ -2227,7 +2316,7 @@ Negative Passed: 122/122 (100.00%)
  289 │   },
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:291:5]
  290 │   ['x']() {
  291 │     super();
@@ -2235,7 +2324,7 @@ Negative Passed: 122/122 (100.00%)
  292 │     () => (arg = super()) => 123 + super();
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:292:18]
  291 │     super();
  292 │     () => (arg = super()) => 123 + super();
@@ -2243,7 +2332,7 @@ Negative Passed: 122/122 (100.00%)
  293 │     if (true) { while (false) { { super(); } } }
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:292:36]
  291 │     super();
  292 │     () => (arg = super()) => 123 + super();
@@ -2251,7 +2340,7 @@ Negative Passed: 122/122 (100.00%)
  293 │     if (true) { while (false) { { super(); } } }
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:293:35]
  292 │     () => (arg = super()) => 123 + super();
  293 │     if (true) { while (false) { { super(); } } }
@@ -2259,7 +2348,7 @@ Negative Passed: 122/122 (100.00%)
  294 │   },
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:296:5]
  295 │   get x() {
  296 │     super();
@@ -2267,7 +2356,7 @@ Negative Passed: 122/122 (100.00%)
  297 │     () => (arg = super()) => 123 + super();
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:297:18]
  296 │     super();
  297 │     () => (arg = super()) => 123 + super();
@@ -2275,7 +2364,7 @@ Negative Passed: 122/122 (100.00%)
  298 │     if (true) { while (false) { { super(); } } }
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:297:36]
  296 │     super();
  297 │     () => (arg = super()) => 123 + super();
@@ -2283,7 +2372,7 @@ Negative Passed: 122/122 (100.00%)
  298 │     if (true) { while (false) { { super(); } } }
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:298:35]
  297 │     () => (arg = super()) => 123 + super();
  298 │     if (true) { while (false) { { super(); } } }
@@ -2291,7 +2380,7 @@ Negative Passed: 122/122 (100.00%)
  299 │   },
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:301:5]
  300 │   set x(v) {
  301 │     super();
@@ -2299,7 +2388,7 @@ Negative Passed: 122/122 (100.00%)
  302 │     () => (arg = super()) => 123 + super();
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:302:18]
  301 │     super();
  302 │     () => (arg = super()) => 123 + super();
@@ -2307,7 +2396,7 @@ Negative Passed: 122/122 (100.00%)
  303 │     if (true) { while (false) { { super(); } } }
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:302:36]
  301 │     super();
  302 │     () => (arg = super()) => 123 + super();
@@ -2315,7 +2404,7 @@ Negative Passed: 122/122 (100.00%)
  303 │     if (true) { while (false) { { super(); } } }
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
      ╭─[misc/fail/oxc-13284-1.js:303:35]
  302 │     () => (arg = super()) => 123 + super();
  303 │     if (true) { while (false) { { super(); } } }
@@ -3107,7 +3196,7 @@ Negative Passed: 122/122 (100.00%)
  144 │   },
      ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
    ╭─[misc/fail/oxc-13284.ts:6:46]
  5 │ class C extends Super {
  6 │   [keys: string]: typeof import('x', { with: super() }).y;
@@ -3115,7 +3204,7 @@ Negative Passed: 122/122 (100.00%)
  7 │ }
    ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[misc/fail/oxc-13284.ts:10:37]
   9 │ class D extends Super {
  10 │   [keys: typeof import('x', { with: super() }).y]: string;
@@ -3123,7 +3212,7 @@ Negative Passed: 122/122 (100.00%)
  11 │ }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[misc/fail/oxc-13284.ts:16:50]
  15 │     class Inner {
  16 │       [keys: string]: typeof import('x', { with: super() }).y;
@@ -3341,6 +3430,28 @@ Negative Passed: 122/122 (100.00%)
  1 │ 1<(V=82<<t-j0<(V=$<LBI<(V=ut<I<(V=$<LBI<(V=uIV=82<<t-j0<(V=$<LBI<(V=ut<I<(V=$<LBI<(V<II>
    ╰────
 
+  × Identifier `f` has already been declared
+   ╭─[misc/fail/oxc-18231.mjs:1:10]
+ 1 │ function f() {}
+   ·          ┬
+   ·          ╰── `f` has already been declared here
+ 2 │ function f() {}
+   ·          ┬
+   ·          ╰── It can not be redeclared here
+ 3 │ 
+   ╰────
+
+  × Identifier `g` has already been declared
+   ╭─[misc/fail/oxc-18231.mjs:4:5]
+ 3 │ 
+ 4 │ var g;
+   ·     ┬
+   ·     ╰── `g` has already been declared here
+ 5 │ function g() {}
+   ·          ┬
+   ·          ╰── It can not be redeclared here
+   ╰────
+
   × Expected `(` but found `:`
    ╭─[misc/fail/oxc-1942-1.ts:2:8]
  1 │ class Foo {
@@ -3431,6 +3542,38 @@ Negative Passed: 122/122 (100.00%)
    ·     ─────────
    ╰────
 
+  × Expected 'with' in import type options
+    ╭─[misc/fail/oxc-2394.ts:20:22]
+ 19 │ export type LocalInterface =
+ 20 │     & import("pkg", {"resolution-mode": "require"}).RequireInterface
+    ·                      ─────────────────
+ 21 │     & import("pkg", {"resolution-mode": "import"}).ImportInterface;
+    ╰────
+
+  × Expected 'with' in import type options
+    ╭─[misc/fail/oxc-2394.ts:21:22]
+ 20 │     & import("pkg", {"resolution-mode": "require"}).RequireInterface
+ 21 │     & import("pkg", {"resolution-mode": "import"}).ImportInterface;
+    ·                      ─────────────────
+ 22 │ 
+    ╰────
+
+  × Expected 'with' in import type options
+    ╭─[misc/fail/oxc-2394.ts:23:49]
+ 22 │ 
+ 23 │ export const a = (null as any as import("pkg", {"resolution-mode": "require"}).RequireInterface);
+    ·                                                 ─────────────────
+ 24 │ export const b = (null as any as import("pkg", {"resolution-mode": "import"}).ImportInterface);
+    ╰────
+
+  × Expected 'with' in import type options
+    ╭─[misc/fail/oxc-2394.ts:24:49]
+ 23 │ export const a = (null as any as import("pkg", {"resolution-mode": "require"}).RequireInterface);
+ 24 │ export const b = (null as any as import("pkg", {"resolution-mode": "import"}).ImportInterface);
+    ·                                                 ─────────────────
+ 25 │ 
+    ╰────
+
   × Expected `{` but found `[`
     ╭─[misc/fail/oxc-2394.ts:38:21]
  37 │ export type LocalInterface =
@@ -3511,7 +3654,7 @@ Negative Passed: 122/122 (100.00%)
    ╰────
   help: No modifiers are allowed here.
 
-  × TS(8037): Type assertion expressions can only be used in TypeScript files.
+  × TS(8016): Type assertion expressions can only be used in TypeScript files.
    ╭─[misc/fail/oxc-4111-1.js:1:1]
  1 │ funtransientction as longciiConÞr>ol(cde) {
    · ─────────────────────────────────
@@ -3625,7 +3768,7 @@ Negative Passed: 122/122 (100.00%)
  3 │ }
    ╰────
 
-  × Private field 'x' must be declared in an enclosing class
+  × Private field '#x' must be declared in an enclosing class
    ╭─[misc/fail/oxc-7582.js:4:9]
  3 │   method() {
  4 │     obj.#x;
@@ -3663,6 +3806,22 @@ Negative Passed: 122/122 (100.00%)
  3 │ }
    ╰────
   help: Add an identifier after '?.'
+
+  × 'using' declarations are not allowed at the top level of a script
+   ╭─[misc/fail/script-top-level-using.js:2:1]
+ 1 │ // 'using' is not allowed at top level in scripts
+ 2 │ using x = {};
+   · ─────────────
+   ╰────
+  help: Wrap this code in a block or use a module
+
+  × Cannot use 'for await' in class static initialization block
+   ╭─[misc/fail/semantic-for-await-in-block-in-static-block.mjs:4:7]
+ 3 │     {
+ 4 │       for await (const x of y) {}
+   ·       ───────────────────────────
+ 5 │     }
+   ╰────
 
   × Expected switch clause
    ╭─[misc/fail/switch-invalid-clause.js:2:3]

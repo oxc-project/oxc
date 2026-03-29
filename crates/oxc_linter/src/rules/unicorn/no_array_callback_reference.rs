@@ -6,7 +6,9 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{AstNode, ast_util::is_method_call, context::LintContext, rule::Rule};
+use crate::{
+    AstNode, ast_util::is_method_call, context::LintContext, rule::Rule, utils::is_import_symbol,
+};
 
 fn no_array_callback_reference_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Avoid passing a function reference directly to iterator methods")
@@ -22,7 +24,7 @@ pub struct NoArrayCallbackReference;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Prevents passing a function reference directly to iterator methods
+    /// Prevents passing a function reference directly to iterator methods.
     ///
     /// ### Why is this bad?
     ///
@@ -94,7 +96,7 @@ impl Rule for NoArrayCallbackReference {
             }
 
             let object = member_expr.object();
-            if is_ignored_object(object) {
+            if is_ignored_object(object, ctx) {
                 return;
             }
 
@@ -196,9 +198,13 @@ fn is_allowed_builtin(name: &str) -> bool {
     )
 }
 
-fn is_ignored_object(expr: &Expression) -> bool {
+fn is_ignored_object(expr: &Expression, ctx: &LintContext<'_>) -> bool {
     match expr {
         Expression::Identifier(ident) => {
+            if is_import_symbol(ident, "effect", "Effect", ctx) {
+                return true;
+            }
+
             matches!(
                 ident.name.as_str(),
                 "Promise"
@@ -279,25 +285,26 @@ fn test() {
         "foo.map(function bar() {})",
         "foo.map(function (a) {}.bind(bar))",
         "async function foo() {
-				const clientId = 20
-				const client = await oidc.Client.find(clientId)
-			}",
+                const clientId = 20
+                const client = await oidc.Client.find(clientId)
+            }",
         "const results = collection
-				.find({
-					$and: [cursorQuery, params.query]
-				}, {
-					projection: params.projection
-				})
-				.sort($sort)
-				.limit(params.limit + 1)
-				.toArray()",
+                .find({
+                    $and: [cursorQuery, params.query]
+                }, {
+                    projection: params.projection
+                })
+                .sort($sort)
+                .limit(params.limit + 1)
+                .toArray()",
         "const EventsStore = types.model('EventsStore', {
-				events: types.optional(types.map(Event), {}),
-			})",
+                events: types.optional(types.map(Event), {}),
+            })",
         "foo.map(_ ? () => {} : _ ? () => {} : () => {})",
         "foo.reduce(_ ? () => {} : _ ? () => {} : () => {})",
         "foo.every(_ ? Boolean : _ ? Boolean : Boolean)",
         "foo.map(_ ? String : _ ? Number : Boolean)",
+        r#"import { Effect as E } from "effect"; const foo = "boo"; E.some(foo)"#,
     ];
 
     let fail = vec![
@@ -306,29 +313,29 @@ fn test() {
         "foo.map(lib.fn)",
         "foo.reduce(lib.fn)",
         "foo.map(
-				_
-					? String // This one should be ignored
-					: callback
-			);",
+                _
+                    ? String // This one should be ignored
+                    : callback
+            );",
         "foo.forEach(
-				_
-					? callbackA
-					: _
-							? callbackB
-							: callbackC
-			);",
+                _
+                    ? callbackA
+                    : _
+                            ? callbackB
+                            : callbackC
+            );",
         "async function * foo () {
-				foo.map((0, bar));
-				foo.map(yield bar);
-				foo.map(yield* bar);
-				foo.map(() => bar);
-				foo.map(bar &&= baz);
-				foo.map(bar || baz);
-				foo.map(bar + bar);
-				foo.map(+ bar);
-				foo.map(++ bar);
-				foo.map(new Function(''));
-			}",
+                foo.map((0, bar));
+                foo.map(yield bar);
+                foo.map(yield* bar);
+                foo.map(() => bar);
+                foo.map(bar &&= baz);
+                foo.map(bar || baz);
+                foo.map(bar + bar);
+                foo.map(+ bar);
+                foo.map(++ bar);
+                foo.map(new Function(''));
+            }",
     ];
 
     Tester::new(NoArrayCallbackReference::NAME, NoArrayCallbackReference::PLUGIN, pass, fail)

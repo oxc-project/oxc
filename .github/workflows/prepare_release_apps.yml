@@ -14,6 +14,7 @@ concurrency:
 
 jobs:
   prepare:
+    if: github.repository == 'oxc-project/oxc'
     name: Prepare Release
     runs-on: ubuntu-latest
     outputs:
@@ -21,12 +22,12 @@ jobs:
       oxlint_version: ${{ steps.run.outputs.OXLINT_VERSION }}
       oxfmt_version: ${{ steps.run.outputs.OXFMT_VERSION }}
     steps:
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
           persist-credentials: false
 
-      - uses: oxc-project/setup-rust@c8224157c0bf235aabc633e8cd50d344f087a7de # v1.0.12
+      - uses: oxc-project/setup-rust@23f38cfb0c04af97a055f76acee94d5be71c7c82 # v1.0.16
         with:
           cache-key: warm
           tools: cargo-release-oxc
@@ -45,7 +46,7 @@ jobs:
             cat ./target/OXFMT_CHANGELOG
           } > ./target/PR_BODY.md
 
-      - uses: oxc-project/setup-node@8958a8e040102244b619c4a94fccb657a44b1c21 # v1.0.6
+      - uses: oxc-project/setup-node@4c26e7cb3605b6bdef5450dacd02c434b10fd8ba # v1.2.0
 
       - name: Rebuild NAPI bindings
         run: |
@@ -55,7 +56,7 @@ jobs:
       - name: Update Cargo.lock
         run: cargo check
 
-      - uses: peter-evans/create-pull-request@98357b18bf14b5342f975ff684046ec3b2a07725 # v8.0.0
+      - uses: peter-evans/create-pull-request@c0f553fe549906ede9cf27b5156039d195d2ece0 # v8.1.0
         id: pr
         with:
           # bot account with PAT required for triggering workflow runs
@@ -72,50 +73,58 @@ jobs:
   ecosystem-ci:
     needs: prepare
     name: Trigger Ecosystem CI
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     permissions:
       pull-requests: write
       contents: write
     steps:
-      - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
+      - uses: taiki-e/checkout-action@83ed61bfbe2b8abbb3c66e8b65b1335484c70009 # v1.4.1
 
       - uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9 # v5.0.0
-        id: comment
+        id: comment-oxlint
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           issue-number: ${{ needs.prepare.outputs.pull-request-number }}
           body: |
-            Triggering Ecosystem CI
-            oxlint https://github.com/oxc-project/oxc-ecosystem-ci/actions/workflows/oxlint-ci.yml
-            oxfmt https://github.com/oxc-project/oxc-ecosystem-ci/actions/workflows/oxfmt-ci.yml
+            Triggering Oxlint Ecosystem CI
+            https://github.com/oxc-project/oxc-ecosystem-ci/actions/workflows/oxlint-ci.yml
 
-      - uses: benc-uk/workflow-dispatch@e2e5e9a103e331dad343f381a29e654aea3cf8fc # v1.2.4
+      - uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9 # v5.0.0
+        id: comment-oxfmt
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          issue-number: ${{ needs.prepare.outputs.pull-request-number }}
+          body: |
+            Triggering Oxfmt Ecosystem CI
+            https://github.com/oxc-project/oxc-ecosystem-ci/actions/workflows/oxfmt-ci.yml
+
+      - uses: benc-uk/workflow-dispatch@7a027648b88c2413826b6ddd6c76114894dc5ec4 # v1.3.1
         with:
           repo: oxc-project/oxc-ecosystem-ci
           workflow: oxlint-ci.yml
           token: ${{ secrets.OXC_BOT_PAT }}
           ref: main
-          inputs: '{ "issue-number": "${{ needs.prepare.outputs.pull-request-number }}", "comment-id": "${{ steps.comment.outputs.comment-id }}" }'
+          inputs: '{ "issue-number": "${{ needs.prepare.outputs.pull-request-number }}", "comment-id": "${{ steps.comment-oxlint.outputs.comment-id }}" }'
 
-      - uses: benc-uk/workflow-dispatch@e2e5e9a103e331dad343f381a29e654aea3cf8fc # v1.2.4
+      - uses: benc-uk/workflow-dispatch@7a027648b88c2413826b6ddd6c76114894dc5ec4 # v1.3.1
         with:
           repo: oxc-project/oxc-ecosystem-ci
           workflow: oxfmt-ci.yml
           token: ${{ secrets.OXC_BOT_PAT }}
           ref: main
-          inputs: '{ "issue-number": "${{ needs.prepare.outputs.pull-request-number }}", "comment-id": "${{ steps.comment.outputs.comment-id }}" }'
+          inputs: '{ "issue-number": "${{ needs.prepare.outputs.pull-request-number }}", "comment-id": "${{ steps.comment-oxfmt.outputs.comment-id }}" }'
 
   website:
     needs: prepare
     name: Update oxc.rs
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     permissions:
       actions: write
     steps:
-      - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
-      - uses: benc-uk/workflow-dispatch@e2e5e9a103e331dad343f381a29e654aea3cf8fc # v1.2.4
+      - uses: taiki-e/checkout-action@83ed61bfbe2b8abbb3c66e8b65b1335484c70009 # v1.4.1
+      - uses: benc-uk/workflow-dispatch@7a027648b88c2413826b6ddd6c76114894dc5ec4 # v1.3.1
         with:
-          repo: oxc-project/oxc-project.github.io
+          repo: oxc-project/website
           workflow: release.yml
           token: ${{ secrets.OXC_BOT_PAT }}
           ref: main

@@ -1,0 +1,93 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint(no-unmodified-loop-condition): 'foo' is not modified in this loop.
+   ╭─[no_unmodified_loop_condition.tsx:1:21]
+ 1 │ var foo = 0; while (foo) { } foo = 1;
+   ·                     ───
+   ╰────
+
+  ⚠ eslint(no-unmodified-loop-condition): 'foo' is not modified in this loop.
+   ╭─[no_unmodified_loop_condition.tsx:1:22]
+ 1 │ var foo = 0; while (!foo) { } foo = 1;
+   ·                      ───
+   ╰────
+
+  ⚠ eslint(no-unmodified-loop-condition): 'foo' is not modified in this loop.
+   ╭─[no_unmodified_loop_condition.tsx:1:21]
+ 1 │ var foo = 0; while (foo != null) { } foo = 1;
+   ·                     ───
+   ╰────
+
+  ⚠ eslint(no-unmodified-loop-condition): 'foo' is not modified in this loop.
+   ╭─[no_unmodified_loop_condition.tsx:1:30]
+ 1 │ var foo = 0, bar = 9; while (foo < bar) { } foo = 1;
+   ·                              ───
+   ╰────
+
+  ⚠ eslint(no-unmodified-loop-condition): 'bar' is not modified in this loop.
+   ╭─[no_unmodified_loop_condition.tsx:1:36]
+ 1 │ var foo = 0, bar = 9; while (foo < bar) { } foo = 1;
+   ·                                    ───
+   ╰────
+
+  ⚠ eslint(no-unmodified-loop-condition): 'foo' is not modified in this loop.
+   ╭─[no_unmodified_loop_condition.tsx:1:30]
+ 1 │ var foo = 0, bar = 0; while (foo && bar) { ++bar; } foo = 1;
+   ·                              ───
+   ╰────
+
+  ⚠ eslint(no-unmodified-loop-condition): 'bar' is not modified in this loop.
+   ╭─[no_unmodified_loop_condition.tsx:1:37]
+ 1 │ var foo = 0, bar = 0; while (foo && bar) { ++foo; } foo = 1;
+   ·                                     ───
+   ╰────
+
+  ⚠ eslint(no-unmodified-loop-condition): 'b' is not modified in this loop.
+   ╭─[no_unmodified_loop_condition.tsx:1:30]
+ 1 │ var a, b, c; while (a < c && b < c) { ++a; } foo = 1;
+   ·                              ─
+   ╰────
+
+  ⚠ eslint(no-unmodified-loop-condition): 'c' is not modified in this loop.
+   ╭─[no_unmodified_loop_condition.tsx:1:34]
+ 1 │ var a, b, c; while (a < c && b < c) { ++a; } foo = 1;
+   ·                                  ─
+   ╰────
+
+  ⚠ eslint(no-unmodified-loop-condition): 'foo' is not modified in this loop.
+   ╭─[no_unmodified_loop_condition.tsx:1:21]
+ 1 │ var foo = 0; while (foo ? 1 : 0) { } foo = 1;
+   ·                     ───
+   ╰────
+
+  ⚠ eslint(no-unmodified-loop-condition): 'foo' is not modified in this loop.
+   ╭─[no_unmodified_loop_condition.tsx:1:21]
+ 1 │ var foo = 0; while (foo) { update(); } function update(foo) { ++foo; }
+   ·                     ───
+   ╰────
+
+  ⚠ eslint(no-unmodified-loop-condition): 'foo' is not modified in this loop.
+   ╭─[no_unmodified_loop_condition.tsx:1:21]
+ 1 │ var foo = 0; while (foo < 10) { function update() { foo++; } }
+   ·                     ───
+   ╰────
+
+  ⚠ eslint(no-unmodified-loop-condition): 'foo' is not modified in this loop.
+   ╭─[no_unmodified_loop_condition.tsx:1:21]
+ 1 │ var foo = 0; while (foo < 10) { const fn = update; } function update() { foo++; }
+   ·                     ───
+   ╰────
+
+  ⚠ eslint(no-unmodified-loop-condition): 'foo' is not modified in this loop.
+   ╭─[no_unmodified_loop_condition.tsx:1:24]
+ 1 │ var foo; do { } while (foo);
+   ·                        ───
+   ╰────
+
+  ⚠ eslint(no-unmodified-loop-condition): 'foo' is not modified in this loop.
+   ╭─[no_unmodified_loop_condition.tsx:1:19]
+ 1 │ for (var foo = 0; foo < 10; ) { } foo = 1;
+   ·                   ───
+   ╰────

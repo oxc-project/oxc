@@ -99,19 +99,16 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        ("<App />;", None),
-        ("<div className=\"bar\"></div>;", None),
-        ("React.createElement(\"div\", { className: \"bar\" });", None),
+        "<App />;",
+        "<div className=\"bar\"></div>;",
+        "React.createElement(\"div\", { className: \"bar\" });",
     ];
 
     let fail = vec![
-        ("<div dangerouslySetInnerHTML={{ __html: \"\" }}></div>;", None),
-        ("<button dangerouslySetInnerHTML={{ __html: \"baz\" }}>Foo</button>;", None),
-        ("React.createElement(\"div\", { dangerouslySetInnerHTML: { __html: \"\" } });", None),
-        (
-            "React.createElement(\"button\", { dangerouslySetInnerHTML: { __html: \"baz\" } }, \"Foo\");",
-            None,
-        ),
+        "<div dangerouslySetInnerHTML={{ __html: \"\" }}></div>;",
+        "<button dangerouslySetInnerHTML={{ __html: \"baz\" }}>Foo</button>;",
+        "React.createElement(\"div\", { dangerouslySetInnerHTML: { __html: \"\" } });",
+        "React.createElement(\"button\", { dangerouslySetInnerHTML: { __html: \"baz\" } }, \"Foo\");",
     ];
 
     Tester::new(NoDanger::NAME, NoDanger::PLUGIN, pass, fail).test_and_snapshot();

@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-import-assign): Do not assign to imported bindings
    ╭─[no_import_assign.tsx:1:25]
  1 │ import mod1 from 'mod'; mod1 = 0

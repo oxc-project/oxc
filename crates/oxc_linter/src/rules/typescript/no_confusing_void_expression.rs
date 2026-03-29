@@ -8,7 +8,7 @@ use crate::rule::{DefaultRuleConfig, Rule};
 pub struct NoConfusingVoidExpression(Box<NoConfusingVoidExpressionConfig>);
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema, Default)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoConfusingVoidExpressionConfig {
     /// Whether to ignore arrow function shorthand that returns void.
     /// When true, allows expressions like `() => someVoidFunction()`.
@@ -28,7 +28,7 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// The void operator is useful when you want to execute an expression while evaluating to undefined. However, it can be confusing when used in places where the return value is meaningful, particularly in arrow functions and conditional expressions.
+    /// The void operator is useful when you want to execute an expression while evaluating to `undefined`. However, it can be confusing when used in places where the return value is meaningful, particularly in arrow functions and conditional expressions.
     ///
     /// ### Examples
     ///
@@ -68,15 +68,13 @@ declare_oxc_lint!(
     NoConfusingVoidExpression(tsgolint),
     typescript,
     pedantic,
-    pending,
+    fix_suggestion,
     config = NoConfusingVoidExpressionConfig,
 );
 
 impl Rule for NoConfusingVoidExpression {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        serde_json::from_value::<DefaultRuleConfig<NoConfusingVoidExpression>>(value)
-            .unwrap_or_default()
-            .into_inner()
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn to_configuration(&self) -> Option<Result<serde_json::Value, serde_json::Error>> {

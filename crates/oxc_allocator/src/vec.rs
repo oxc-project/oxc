@@ -14,14 +14,13 @@ use std::{
     slice::SliceIndex,
 };
 
-use bumpalo::Bump;
 #[cfg(any(feature = "serialize", test))]
 use serde::{Serialize, Serializer as SerdeSerializer};
 
 #[cfg(any(feature = "serialize", test))]
 use oxc_estree::{ConcatElement, ESTree, SequenceSerializer, Serializer as ESTreeSerializer};
 
-use crate::{Allocator, Box, vec2::Vec as InnerVecGeneric};
+use crate::{Allocator, Box, bump::Bump, vec2::Vec as InnerVecGeneric};
 
 type InnerVec<'a, T> = InnerVecGeneric<'a, T, Bump>;
 
@@ -212,6 +211,25 @@ impl<'alloc, T> Vec<'alloc, T> {
     #[inline]
     pub fn into_bump_slice(self) -> &'alloc [T] {
         self.0.into_bump_slice()
+    }
+
+    /// Converts [`Vec<T>`] into [`&'alloc mut [T]`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use oxc_allocator::{Allocator, Vec};
+    ///
+    /// let allocator = Allocator::default();
+    ///
+    /// let vec = Vec::from_iter_in([1, 2, 3], &allocator);
+    /// let slice = vec.into_bump_slice_mut();
+    /// slice[0] = 4;
+    /// assert_eq!(slice, [4, 2, 3]);
+    /// ```
+    #[inline]
+    pub fn into_bump_slice_mut(self) -> &'alloc mut [T] {
+        self.0.into_bump_slice_mut()
     }
 }
 

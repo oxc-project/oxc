@@ -12,7 +12,7 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// When using the delete operator on an array, the element is not actually removed, but instead the array slot is turned into undefined. This is usually not the intended behavior. Instead, you should use methods like Array.prototype.splice() to properly remove elements from an array.
+    /// When using the delete operator on an array, the element is not actually removed, but instead the array slot is turned into `undefined`. This is usually not the intended behavior. Instead, you should use methods like `Array.prototype.splice()` to properly remove elements from an array.
     ///
     /// ### Examples
     ///
@@ -37,7 +37,7 @@ declare_oxc_lint!(
     NoArrayDelete(tsgolint),
     typescript,
     correctness,
-    pending,
+    suggestion,
 );
 
 impl Rule for NoArrayDelete {}

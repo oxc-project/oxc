@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-jest(no-interpolation-in-snapshots): Do not use string interpolation inside of snapshots
    ╭─[no_interpolation_in_snapshots.tsx:1:41]
  1 │ expect(something).toMatchInlineSnapshot(`${interpolated}`);

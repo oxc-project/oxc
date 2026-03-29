@@ -10,7 +10,9 @@
   |   true,
   |   {
   |     "toBe": false,
-  |     "notToBe": true
+  |     "notToBe": true,
+  |     "inf": "<Infinity>",
+  |     "negInf": "<-Infinity>"
   |   },
   |   {
   |     "deep": [
@@ -58,7 +60,9 @@
   |       },
   |       "fromDefault": 3
   |     },
-  |     "fromDefault": 1
+  |     "fromDefault": 1,
+  |     "inf": "<Infinity>",
+  |     "negInf": "<-Infinity>"
   |   },
   |   15,
   |   true,
@@ -149,7 +153,9 @@
   |   true,
   |   {
   |     "toBe": false,
-  |     "notToBe": true
+  |     "notToBe": true,
+  |     "inf": "<Infinity>",
+  |     "negInf": "<-Infinity>"
   |   },
   |   {
   |     "deep": [
@@ -190,7 +196,9 @@
   |     "nested": {
   |       "fromDefault": 3,
   |       "overrideDefault": 4
-  |     }
+  |     },
+  |     "inf": "<Infinity>",
+  |     "negInf": "<-Infinity>"
   |   },
   |   {
   |     "fromConfig": 22,
@@ -268,11 +276,9 @@
    `----
 
 Found 0 warnings and 16 errors.
-Finished in Xms on 2 files using X threads.
+Finished in Xms on 2 files with 8 rules using X threads.
 ```
 
 # stderr
 ```
-WARNING: JS plugins are experimental and not subject to semver.
-Breaking changes are possible while JS plugins support is under development.
 ```

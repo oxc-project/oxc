@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-react(jsx-no-undef): 'App' is not defined.
    ╭─[jsx_no_undef.tsx:1:26]
  1 │ var React; React.render(<App />);

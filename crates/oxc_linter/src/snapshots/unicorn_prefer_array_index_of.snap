@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(prefer-array-index-of): Prefer `indexOf` over `findIndex` for simple equality checks
    ╭─[prefer_array_index_of.tsx:1:8]
  1 │ values.findIndex(x => x === "foo")

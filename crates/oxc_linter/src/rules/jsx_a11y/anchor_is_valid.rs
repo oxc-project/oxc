@@ -126,11 +126,11 @@ declare_oxc_lint!(
 );
 
 impl Rule for AnchorIsValid {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let Some(valid_hrefs) = value.get("validHrefs").and_then(Value::as_array) else {
-            return Self::default();
+            return Ok(Self::default());
         };
-        Self(Box::new(valid_hrefs.iter().collect()))
+        Ok(Self(Box::new(valid_hrefs.iter().collect())))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

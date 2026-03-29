@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-react(no-children-prop): Avoid passing children using a prop.
    ╭─[no_children_prop.tsx:1:6]
  1 │ <div children />;

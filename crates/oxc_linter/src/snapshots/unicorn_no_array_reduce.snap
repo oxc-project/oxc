@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(no-array-reduce): Don't use `Array#reduce()` and `Array#reduceRight()`, use `for` loops instead.
    ╭─[no_array_reduce.tsx:1:7]
  1 │ array.reduce((str, item) => str += item, "")
@@ -9,7 +10,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Refactor your code to use `for` loops instead.
 
   ⚠ eslint-plugin-unicorn(no-array-reduce): Don't use `Array#reduce()` and `Array#reduceRight()`, use `for` loops instead.
-   ╭─[no_array_reduce.tsx:2:10]
+   ╭─[no_array_reduce.tsx:2:19]
  1 │ 
  2 │             array.reduce((obj, item) => {
    ·                   ──────
@@ -25,7 +26,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Refactor your code to use `for` loops instead.
 
   ⚠ eslint-plugin-unicorn(no-array-reduce): Don't use `Array#reduce()` and `Array#reduceRight()`, use `for` loops instead.
-   ╭─[no_array_reduce.tsx:3:20]
+   ╭─[no_array_reduce.tsx:3:29]
  2 │             const hyphenate = (str, char) => `${str}-${char}`;
  3 │             ["a", "b", "c"].reduce(hyphenate);
    ·                             ──────
@@ -97,7 +98,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Refactor your code to use `for` loops instead.
 
   ⚠ eslint-plugin-unicorn(no-array-reduce): Don't use `Array#reduce()` and `Array#reduceRight()`, use `for` loops instead.
-   ╭─[no_array_reduce.tsx:2:10]
+   ╭─[no_array_reduce.tsx:2:19]
  1 │ 
  2 │             array.reduce((total, item) => {
    ·                   ──────
@@ -148,7 +149,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Refactor your code to use `for` loops instead.
 
   ⚠ eslint-plugin-unicorn(no-array-reduce): Don't use `Array#reduce()` and `Array#reduceRight()`, use `for` loops instead.
-   ╭─[no_array_reduce.tsx:2:11]
+   ╭─[no_array_reduce.tsx:2:23]
  1 │ 
  2 │                 array.reduce((total, item) => {
    ·                       ──────
@@ -164,7 +165,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Refactor your code to use `for` loops instead.
 
   ⚠ eslint-plugin-unicorn(no-array-reduce): Don't use `Array#reduce()` and `Array#reduceRight()`, use `for` loops instead.
-   ╭─[no_array_reduce.tsx:2:10]
+   ╭─[no_array_reduce.tsx:2:19]
  1 │ 
  2 │             array.reduceRight((obj, item) => {
    ·                   ───────────
@@ -180,7 +181,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Refactor your code to use `for` loops instead.
 
   ⚠ eslint-plugin-unicorn(no-array-reduce): Don't use `Array#reduce()` and `Array#reduceRight()`, use `for` loops instead.
-   ╭─[no_array_reduce.tsx:3:20]
+   ╭─[no_array_reduce.tsx:3:29]
  2 │             const hyphenate = (str, char) => `${str}-${char}`;
  3 │             ["a", "b", "c"].reduceRight(hyphenate);
    ·                             ───────────
@@ -252,7 +253,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Refactor your code to use `for` loops instead.
 
   ⚠ eslint-plugin-unicorn(no-array-reduce): Don't use `Array#reduce()` and `Array#reduceRight()`, use `for` loops instead.
-   ╭─[no_array_reduce.tsx:2:10]
+   ╭─[no_array_reduce.tsx:2:19]
  1 │ 
  2 │             array.reduceRight((total, item) => {
    ·                   ───────────
@@ -303,7 +304,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Refactor your code to use `for` loops instead.
 
   ⚠ eslint-plugin-unicorn(no-array-reduce): Don't use `Array#reduce()` and `Array#reduceRight()`, use `for` loops instead.
-   ╭─[no_array_reduce.tsx:2:11]
+   ╭─[no_array_reduce.tsx:2:23]
  1 │ 
  2 │                 array.reduceRight((total, item) => {
    ·                       ───────────

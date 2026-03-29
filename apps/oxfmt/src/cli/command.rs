@@ -4,10 +4,7 @@ use bpaf::{Bpaf, Parser};
 #[cfg(feature = "napi")]
 use cow_utils::CowUtils;
 
-const VERSION: &str = match option_env!("OXC_VERSION") {
-    Some(v) => v,
-    None => "dev",
-};
+const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[expect(clippy::ptr_arg)]
 fn validate_paths(paths: &Vec<PathBuf>) -> bool {
@@ -31,9 +28,11 @@ pub struct FormatCommand {
     pub ignore_options: IgnoreOptions,
     #[bpaf(external)]
     pub runtime_options: RuntimeOptions,
-    /// Single file, single path or list of paths.
+    /// Single file, path or list of paths.
+    /// Glob patterns are also supported.
+    /// (Be sure to quote them, otherwise your shell may expand them before passing.)
+    /// Exclude patterns with `!` prefix like `'!**/fixtures/*.js'` are also supported.
     /// If not provided, current working directory is used.
-    /// Glob is supported only for exclude patterns like `'!**/fixtures/*.js'`.
     // `bpaf(fallback)` seems to have issues with `many` or `positional`,
     // so we implement the fallback behavior in code instead.
     #[bpaf(positional("PATH"), many, guard(validate_paths, PATHS_ERROR_MESSAGE))]
@@ -73,11 +72,12 @@ fn mode() -> impl bpaf::Parser<Mode> {
             .req_flag(Mode::Init)
             .hide_usage();
         let migrate = bpaf::long("migrate")
-            .help("Migrate configuration to `.oxfmtrc.json` from specified source\nAvailable sources: prettier")
+            .help("Migrate configuration to `.oxfmtrc.json` from specified source\nAvailable sources: prettier, biome")
             .argument::<String>("SOURCE")
             .parse(|s| match s.cow_to_lowercase().as_ref() {
                 "prettier" => Ok(Mode::Migrate(MigrateSource::Prettier)),
-                _ => Err(format!("Unknown migration source: {s}. Supported: prettier.")),
+                "biome" => Ok(Mode::Migrate(MigrateSource::Biome)),
+                _ => Err(format!("Unknown migration source: {s}. Supported: prettier, biome.")),
             })
             .hide_usage();
         let lsp = bpaf::long("lsp")
@@ -134,6 +134,8 @@ fn output_mode() -> impl bpaf::Parser<OutputMode> {
 pub enum MigrateSource {
     /// Migrate from Prettier configuration
     Prettier,
+    /// Migrate from Biome configuration
+    Biome,
 }
 
 // ---
@@ -141,7 +143,7 @@ pub enum MigrateSource {
 /// Config Options
 #[derive(Debug, Clone, Bpaf)]
 pub struct ConfigOptions {
-    /// Path to the configuration file
+    /// Path to the configuration file (.json, .jsonc, .ts, .mts, .cts, .js, .mjs, .cjs)
     #[bpaf(short, long, argument("PATH"))]
     pub config: Option<PathBuf>,
 }

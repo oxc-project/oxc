@@ -66,7 +66,6 @@ impl FormatService {
             // Resolve options for this specific file entry
             let resolved_options = self.config_resolver.resolve(&entry);
 
-            tracing::debug!("Format {}", path.strip_prefix(&self.cwd).unwrap().display());
             let (code, is_changed) =
                 match self.formatter.format(&entry, &source_text, resolved_options) {
                     FormatResult::Success { code, is_changed } => (code, is_changed),

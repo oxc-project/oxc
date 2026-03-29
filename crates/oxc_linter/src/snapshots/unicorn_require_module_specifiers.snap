@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(require-module-specifiers): Empty import specifier is not allowed
    ╭─[require_module_specifiers.tsx:1:8]
  1 │ import {} from "foo";
@@ -61,20 +62,6 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[require_module_specifiers.tsx:1:12]
  1 │ import type{}from"foo"
    ·            ──
-   ╰────
-  help: Remove empty braces
-
-  ⚠ eslint-plugin-unicorn(require-module-specifiers): Empty import specifier is not allowed
-   ╭─[require_module_specifiers.tsx:1:18]
- 1 │ import type foo, {} from "foo"
-   ·                  ──
-   ╰────
-  help: Remove empty braces
-
-  ⚠ eslint-plugin-unicorn(require-module-specifiers): Empty import specifier is not allowed
-   ╭─[require_module_specifiers.tsx:1:17]
- 1 │ import type foo,{}from "foo"
-   ·                 ──
    ╰────
   help: Remove empty braces
 

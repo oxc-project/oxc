@@ -31,11 +31,12 @@ enum TypeOptions {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Prefer negative index over `.length` - index when possible
+    /// Prefer using a negative index over `.length - index` when possible.
     ///
     /// ### Why is this bad?
     ///
-    /// Conciseness and readability
+    /// Using a negative index with `at` or `slice` is generally more readable
+    /// and concise than using `.length - index`.
     ///
     /// ### Examples
     ///
@@ -303,6 +304,8 @@ fn test() {
         "foo.slice(foo.length - 1 / 1)",
         "[1, 2, 3].slice([1, 2, 3].length - 1)",
         "foo[bar++].slice(foo[bar++].length - 1)",
+        // "foo[a + b].slice(foo[a + b].length - 1)",
+        // "foo[`${bar}`].slice(foo[`${bar}`].length - 1)",
         "function foo() {return [].slice.apply(arguments);}",
         "String.prototype.toSpliced.call(foo, foo.length - 1)",
         "String.prototype.with.call(foo, foo.length - 1)",
@@ -426,6 +429,9 @@ fn test() {
         r#"foo[`bar`].slice(foo["bar"].length - 1)"#,
         r#"foo[1].slice(foo["1"].length - 1)"#,
         r#"foo['bar'].slice(foo["bar"].length - 1)"#,
+        "foo.at(foo.length - 1);
+			Array.prototype.at.call(foo, foo.length - 2);
+			Array.prototype.at.apply(foo, [foo.length - 3]);",
         "foo.toSpliced(foo.length - 3, foo.length - 6)",
         "Array.prototype.toSpliced.call(foo, foo.length - 3, foo.length - 6)",
         "[].toSpliced.call(foo, foo.length - 3, foo.length - 6)",

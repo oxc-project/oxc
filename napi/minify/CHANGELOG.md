@@ -4,6 +4,49 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.119.0] - 2026-03-14
+
+### 🚀 Features
+
+- e7163b6 ecmascript: Add known-globals to side-effect-free property reads (#20212) (Dunqing)
+
+## [0.117.0] - 2026-03-09
+
+### 🐛 Bug Fixes
+
+- ee0491e apps,napi: Explicitly specify libs in tsconfigs (#20071) (camc314)
+
+### ⚡ Performance
+
+- 2baa5fb napi: Unify build-test profile to coverage for cache sharing (#20090) (Boshen)
+
+## [0.113.0] - 2026-02-10
+
+### 💥 BREAKING CHANGES
+
+- 2bf7293 mangler: [**BREAKING**] Enable `top_level` by default for modules and commonjs (#18278) (sapphi-red)
+
+### 🐛 Bug Fixes
+
+- 487601b napi: Disable mimalloc on Windows to fix worker_threads crash (#18923) (Boshen)
+
+## [0.111.0] - 2026-01-26
+
+### 💥 BREAKING CHANGES
+
+- af0ca46 span: [**BREAKING**] Use `ModuleKind::CommonJS` for `SourceType::cjs()` (#18276) (sapphi-red)
+
+### 📚 Documentation
+
+- 8ccd853 npm: Update package homepage URLs and add keywords (#18509) (Boshen)
+
+## [0.106.0] - 2025-12-29
+
+### 🚀 Features
+
+- e031056 codegen: Add `sourcemap` feature flag (#17305) (Boshen)
+- 8e4409a minifier: Add `invalid_import_side_effects` option (#17300) (sapphi-red)
+
 ## [0.102.0] - 2025-12-08
 
 ### 💥 BREAKING CHANGES

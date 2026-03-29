@@ -3,19 +3,23 @@ use oxc_ast::ast::*;
 use oxc_ecmascript::constant_evaluation::DetermineValueType;
 use oxc_span::GetSpan;
 
-use crate::ctx::Ctx;
+use crate::TraverseCtx;
 
 use super::PeepholeOptimizations;
 
 impl<'a> PeepholeOptimizations {
-    pub fn minimize_not(span: Span, expr: Expression<'a>, ctx: &mut Ctx<'a, '_>) -> Expression<'a> {
+    pub fn minimize_not(
+        span: Span,
+        expr: Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Expression<'a> {
         let mut unary = ctx.ast.expression_unary(span, UnaryOperator::LogicalNot, expr);
         Self::minimize_unary(&mut unary, ctx);
         unary
     }
 
     /// `MaybeSimplifyNot`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_ast_helpers.go#L73>
-    pub fn minimize_unary(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn minimize_unary(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::UnaryExpression(e) = expr else { return };
         if !e.operator.is_not() {
             return;
@@ -50,39 +54,5 @@ impl<'a> PeepholeOptimizations {
             }
             _ => {}
         }
-    }
-}
-
-#[cfg(test)]
-mod test {
-    use crate::tester::{test, test_same};
-
-    #[test]
-    fn minimize_duplicate_nots() {
-        test("!x", "x");
-        test("!!x", "x");
-        test("!!!x", "x");
-        test("!!!!x", "x");
-        test("!!!(x && y)", "x && y");
-        test("var k = () => { !!x; }", "var k = () => { x }");
-
-        test_same("var k = !!x;");
-        test_same("function k () { return !!x; }");
-        test("var k = () => { return !!x; }", "var k = () => !!x");
-        test_same("var k = () => !!x;");
-    }
-
-    #[test]
-    fn minimize_nots_with_binary_expressions() {
-        test("!(x === undefined)", "x");
-        test("!(typeof(x) === 'undefined')", "");
-        test("!(typeof(x()) === 'undefined')", "x()");
-        test("!(x === void 0)", "x");
-        test("!!delete x.y", "delete x.y");
-        test("!!!delete x.y", "delete x.y");
-        test("!!!!delete x.y", "delete x.y");
-        test("var k = !!(foo instanceof bar)", "var k = foo instanceof bar");
-        test("!(a === 1 ? void 0 : a.b)", "a !== 1 && a.b;");
-        test("!(a, b)", "a, b");
     }
 }

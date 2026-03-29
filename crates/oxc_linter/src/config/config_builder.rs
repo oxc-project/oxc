@@ -18,9 +18,10 @@ use crate::{
         external_plugins::ExternalPluginEntry,
         overrides::OxlintOverride,
         plugins::{LintPlugins, is_normal_plugin_name, normalize_plugin_name},
+        rules::OverrideRulesError,
     },
     external_linter::ExternalLinter,
-    external_plugin_store::{ExternalOptionsId, ExternalRuleId, ExternalRuleLookupError},
+    external_plugin_store::{ExternalOptionsId, ExternalRuleId},
     rules::RULES,
 };
 
@@ -102,17 +103,69 @@ impl ConfigStoreBuilder {
         oxlintrc: Oxlintrc,
         external_linter: Option<&ExternalLinter>,
         external_plugin_store: &mut ExternalPluginStore,
+        workspace_uri: Option<&str>,
     ) -> Result<Self, ConfigBuilderError> {
         // TODO: this can be cached to avoid re-computing the same oxlintrc
+        fn is_relative_plugin_specifier(specifier: &str) -> bool {
+            specifier == "."
+                || specifier == ".."
+                || specifier.starts_with("./")
+                || specifier.starts_with("../")
+                || specifier.starts_with(".\\")
+                || specifier.starts_with("..\\")
+        }
+
+        fn check_no_relative_js_plugins_in_extends(
+            config: &Oxlintrc,
+        ) -> Result<(), ConfigBuilderError> {
+            if let Some(external_plugins) = &config.external_plugins {
+                for entry in external_plugins {
+                    if is_relative_plugin_specifier(&entry.specifier) {
+                        return Err(ConfigBuilderError::RelativeExternalPluginSpecifierInExtends {
+                            plugin_specifier: entry.specifier.clone(),
+                        });
+                    }
+                }
+            }
+
+            for r#override in &config.overrides {
+                if let Some(external_plugins) = &r#override.external_plugins {
+                    for entry in external_plugins {
+                        if is_relative_plugin_specifier(&entry.specifier) {
+                            return Err(
+                                ConfigBuilderError::RelativeExternalPluginSpecifierInExtends {
+                                    plugin_specifier: entry.specifier.clone(),
+                                },
+                            );
+                        }
+                    }
+                }
+            }
+
+            Ok(())
+        }
+
         fn resolve_oxlintrc_config(
             config: Oxlintrc,
+            in_object_extends: bool,
         ) -> Result<(Oxlintrc, Vec<PathBuf>), ConfigBuilderError> {
+            if in_object_extends {
+                check_no_relative_js_plugins_in_extends(&config)?;
+            }
+
             let path = config.path.clone();
             let root_path = path.parent();
             let extends = config.extends.clone();
+            let extends_configs = config.extends_configs.clone();
             let mut extended_paths = Vec::new();
 
             let mut oxlintrc = config;
+
+            for config in extends_configs.into_iter().rev() {
+                let (extends, extends_paths) = resolve_oxlintrc_config(config, true)?;
+                oxlintrc = oxlintrc.merge(extends);
+                extended_paths.extend(extends_paths);
+            }
 
             for path in extends.iter().rev() {
                 if path.starts_with("eslint:") || path.starts_with("plugin:") {
@@ -139,7 +192,7 @@ impl ConfigStoreBuilder {
 
                 extended_paths.push(path.clone());
 
-                let (extends, extends_paths) = resolve_oxlintrc_config(extends_oxlintrc)?;
+                let (extends, extends_paths) = resolve_oxlintrc_config(extends_oxlintrc, false)?;
 
                 oxlintrc = oxlintrc.merge(extends);
                 extended_paths.extend(extends_paths);
@@ -148,7 +201,7 @@ impl ConfigStoreBuilder {
             Ok((oxlintrc, extended_paths))
         }
 
-        let (oxlintrc, extended_paths) = resolve_oxlintrc_config(oxlintrc)?;
+        let (oxlintrc, extended_paths) = resolve_oxlintrc_config(oxlintrc, false)?;
 
         // Collect external plugins from both base config and overrides
         let mut external_plugins: FxHashSet<&ExternalPluginEntry> = FxHashSet::default();
@@ -188,6 +241,7 @@ impl ConfigStoreBuilder {
                     external_linter,
                     &resolver,
                     external_plugin_store,
+                    workspace_uri,
                 )?;
             }
         }
@@ -209,6 +263,7 @@ impl ConfigStoreBuilder {
             env: oxlintrc.env,
             globals: oxlintrc.globals,
             path: Some(oxlintrc.path),
+            options: oxlintrc.options,
         };
 
         let mut builder = Self {
@@ -227,15 +282,12 @@ impl ConfigStoreBuilder {
         {
             let all_rules = builder.get_all_rules();
 
-            oxlintrc
-                .rules
-                .override_rules(
-                    &mut builder.rules,
-                    &mut builder.external_rules,
-                    &all_rules,
-                    external_plugin_store,
-                )
-                .map_err(ConfigBuilderError::ExternalRuleLookupError)?;
+            oxlintrc.rules.override_rules(
+                &mut builder.rules,
+                &mut builder.external_rules,
+                &all_rules,
+                external_plugin_store,
+            )?;
         }
 
         Ok(builder)
@@ -278,6 +330,31 @@ impl ConfigStoreBuilder {
     #[inline]
     pub fn plugins(&self) -> LintPlugins {
         self.config.plugins
+    }
+
+    #[inline]
+    pub fn type_aware(&self) -> Option<bool> {
+        self.config.options.type_aware
+    }
+
+    #[inline]
+    pub fn type_check(&self) -> Option<bool> {
+        self.config.options.type_check
+    }
+
+    #[inline]
+    pub fn deny_warnings(&self) -> Option<bool> {
+        self.config.options.deny_warnings
+    }
+
+    #[inline]
+    pub fn max_warnings(&self) -> Option<usize> {
+        self.config.options.max_warnings
+    }
+
+    #[inline]
+    pub fn report_unused_disable_directives(&self) -> Option<AllowWarnDeny> {
+        self.config.options.report_unused_disable_directives
     }
 
     #[cfg(test)]
@@ -385,8 +462,11 @@ impl ConfigStoreBuilder {
     }
 
     /// Builds a [`Config`] from the current state of the builder.
+    ///
     /// # Errors
-    /// Returns [`ConfigBuilderError::UnknownRules`] if there are rules that could not be matched.
+    ///
+    /// Returns [`ConfigBuilderError`] if the configured rules or overrides
+    /// cannot be resolved.
     pub fn build(
         mut self,
         external_plugin_store: &mut ExternalPluginStore,
@@ -402,9 +482,7 @@ impl ConfigStoreBuilder {
         }
 
         let overrides = std::mem::take(&mut self.overrides);
-        let resolved_overrides = self
-            .resolve_overrides(overrides, external_plugin_store)
-            .map_err(ConfigBuilderError::ExternalRuleLookupError)?;
+        let resolved_overrides = self.resolve_overrides(overrides, external_plugin_store)?;
 
         let mut rules: Vec<_> = self
             .rules
@@ -432,7 +510,7 @@ impl ConfigStoreBuilder {
         &self,
         overrides: OxlintOverrides,
         external_plugin_store: &mut ExternalPluginStore,
-    ) -> Result<ResolvedOxlintOverrides, ExternalRuleLookupError> {
+    ) -> Result<ResolvedOxlintOverrides, Vec<OverrideRulesError>> {
         let resolved = overrides
             .into_iter()
             .map(|override_config| {
@@ -459,7 +537,7 @@ impl ConfigStoreBuilder {
                         .map(|(rule_id, (options_id, severity))| (rule_id, options_id, severity)),
                 );
 
-                Ok(ResolvedOxlintOverride {
+                Ok::<_, Vec<OverrideRulesError>>(ResolvedOxlintOverride {
                     files: override_config.files,
                     env: override_config.env,
                     globals: override_config.globals,
@@ -528,15 +606,8 @@ impl ConfigStoreBuilder {
         external_linter: &ExternalLinter,
         resolver: &Resolver,
         external_plugin_store: &mut ExternalPluginStore,
+        workspace_uri: Option<&str>,
     ) -> Result<(), ConfigBuilderError> {
-        // Print warning on 1st attempt to load a plugin
-        #[expect(clippy::print_stderr)]
-        if external_plugin_store.is_empty() {
-            eprintln!(
-                "WARNING: JS plugins are experimental and not subject to semver.\nBreaking changes are possible while JS plugins support is under development."
-            );
-        }
-
         // Resolve the specifier relative to the config directory
         let resolved = resolver.resolve(resolve_dir, plugin_specifier).map_err(|e| {
             ConfigBuilderError::PluginLoadFailed {
@@ -578,15 +649,28 @@ impl ConfigStoreBuilder {
             None
         };
 
+        if let Some(plugin_name) = &plugin_name
+            && LintPlugins::try_from(plugin_name.as_str()).is_ok()
+        {
+            return Err(ConfigBuilderError::ReservedExternalPluginName {
+                plugin_name: plugin_name.clone(),
+            });
+        }
+
         // Convert path to a `file://...` URL, as required by `import(...)` on JS side.
         // Note: `unwrap()` here is infallible as `plugin_path` is an absolute path.
-        let plugin_url = Url::from_file_path(&plugin_path).unwrap().as_str().to_string();
+        let plugin_url = String::from(Url::from_file_path(&plugin_path).unwrap());
 
-        let result = (external_linter.load_plugin)(plugin_url, plugin_name, alias.is_some())
-            .map_err(|error| ConfigBuilderError::PluginLoadFailed {
-                plugin_specifier: plugin_specifier.to_string(),
-                error,
-            })?;
+        let result = (external_linter.load_plugin)(
+            plugin_url,
+            plugin_name,
+            alias.is_some(),
+            workspace_uri.map(String::from),
+        )
+        .map_err(|error| ConfigBuilderError::PluginLoadFailed {
+            plugin_specifier: plugin_specifier.to_string(),
+            error,
+        })?;
         let plugin_name = result.name;
 
         if LintPlugins::try_from(plugin_name.as_str()).is_err() {
@@ -598,6 +682,14 @@ impl ConfigStoreBuilder {
             );
             Ok(())
         } else {
+            // TODO: If a plugin with a reserved name reaches this point, it has already been
+            // loaded on the JS/NAPI side but is not registered in `ExternalPluginStore` on
+            // the Rust side. This leaves the NAPI-side rule list longer than the Rust-side
+            // rule list, so a later call to `register_plugin` can hit the offset assertion
+            // because the expected rule count no longer matches. Consider explicitly
+            // unloading or rolling back the plugin here to keep both sides in sync. We
+            // currently avoid this situation in practice by checking for reserved names
+            // before calling `load_plugin` above.
             Err(ConfigBuilderError::ReservedExternalPluginName { plugin_name })
         }
     }
@@ -636,12 +728,22 @@ pub enum ConfigBuilderError {
         plugin_specifier: String,
         error: String,
     },
-    ExternalRuleLookupError(ExternalRuleLookupError),
     NoExternalLinterConfigured {
         plugin_specifier: String,
     },
     ReservedExternalPluginName {
         plugin_name: String,
+    },
+    /// A JS config extended via `extends` contained a relative JS plugin specifier.
+    ///
+    /// Without origin metadata, relative specifiers are ambiguous and therefore disallowed.
+    RelativeExternalPluginSpecifierInExtends {
+        plugin_specifier: String,
+    },
+    /// Multiple errors parsing rule configuration options
+    RuleConfigurationErrors {
+        /// The errors that occurred
+        errors: Vec<OverrideRulesError>,
     },
 }
 
@@ -693,12 +795,36 @@ impl Display for ConfigBuilderError {
                 )?;
                 Ok(())
             }
-            ConfigBuilderError::ExternalRuleLookupError(e) => std::fmt::Display::fmt(&e, f),
+            ConfigBuilderError::RelativeExternalPluginSpecifierInExtends { plugin_specifier } => {
+                write!(
+                    f,
+                    "Relative JS plugin specifiers are not supported in configs provided via `extends` in `oxlint.config.ts`.\n\
+                     \n\
+                     Found: {plugin_specifier:?}\n\
+                     \n\
+                     Use a package name (e.g. \"eslint-plugin-foo\") or an absolute path instead."
+                )
+            }
+            ConfigBuilderError::RuleConfigurationErrors { errors } => {
+                for (i, error) in errors.iter().enumerate() {
+                    if i > 0 {
+                        f.write_str("\n\n")?;
+                    }
+                    write!(f, "{error}")?;
+                }
+                Ok(())
+            }
         }
     }
 }
 
 impl std::error::Error for ConfigBuilderError {}
+
+impl From<Vec<OverrideRulesError>> for ConfigBuilderError {
+    fn from(errors: Vec<OverrideRulesError>) -> Self {
+        ConfigBuilderError::RuleConfigurationErrors { errors }
+    }
+}
 
 #[cfg(test)]
 mod test {
@@ -783,6 +909,7 @@ mod test {
             assert_eq!(*severity, AllowWarnDeny::Deny);
         }
     }
+
     // turn on a rule that isn't configured yet and set it to "warn"
     // note that this is an eslint rule, a plugin that's already turned on.
     #[test]
@@ -969,8 +1096,14 @@ mod test {
         .unwrap();
         let builder = {
             let mut external_plugin_store = ExternalPluginStore::default();
-            ConfigStoreBuilder::from_oxlintrc(false, oxlintrc, None, &mut external_plugin_store)
-                .unwrap()
+            ConfigStoreBuilder::from_oxlintrc(
+                false,
+                oxlintrc,
+                None,
+                &mut external_plugin_store,
+                None,
+            )
+            .unwrap()
         };
         for (rule, severity) in &builder.rules {
             let name = rule.name();
@@ -1150,6 +1283,7 @@ mod test {
                 .unwrap(),
                 None,
                 &mut external_plugin_store,
+                None,
             )
         };
         let err = invalid_config.unwrap_err();
@@ -1259,6 +1393,96 @@ mod test {
     }
 
     #[test]
+    fn test_extends_options() {
+        let config = config_store_from_str(
+            r#"{ "extends": ["fixtures/extends_config/options/type_aware_true.json"] }"#,
+        );
+        assert_eq!(config.base.config.options.type_aware, Some(true));
+
+        let config = config_store_from_str(
+            r#"
+            {
+                "extends": ["fixtures/extends_config/options/type_aware_true.json"],
+                "options": {"typeAware": false }
+            }
+            "#,
+        );
+        assert_eq!(config.base.config.options.type_aware, Some(false));
+
+        let config = config_store_from_str(
+            r#"{ "extends": ["fixtures/extends_config/options/type_aware_false.json"] }"#,
+        );
+        assert_eq!(config.base.config.options.type_aware, Some(false));
+
+        let config = config_store_from_str(
+            r#"{ "extends": ["fixtures/extends_config/options/type_check_true.json"] }"#,
+        );
+        assert_eq!(config.base.config.options.type_check, Some(true));
+
+        let config = config_store_from_str(
+            r#"
+            {
+                "extends": ["fixtures/extends_config/options/type_check_true.json"],
+                "options": {"typeCheck": false }
+            }
+            "#,
+        );
+        assert_eq!(config.base.config.options.type_check, Some(false));
+
+        let config = config_store_from_str(
+            r#"{ "extends": ["fixtures/extends_config/options/type_check_false.json"] }"#,
+        );
+        assert_eq!(config.base.config.options.type_check, Some(false));
+
+        let config =
+            config_store_from_str(r#"{ "options": {"reportUnusedDisableDirectives": "error" } }"#);
+        assert_eq!(
+            config.base.config.options.report_unused_disable_directives,
+            Some(AllowWarnDeny::Deny)
+        );
+
+        let config = config_store_from_str(
+            r#"{ "extends": ["fixtures/extends_config/options/deny_warnings_true.json"] }"#,
+        );
+        assert_eq!(config.base.config.options.deny_warnings, Some(true));
+
+        let config = config_store_from_str(
+            r#"
+            {
+                "extends": ["fixtures/extends_config/options/deny_warnings_true.json"],
+                "options": {"denyWarnings": false }
+            }
+            "#,
+        );
+        assert_eq!(config.base.config.options.deny_warnings, Some(false));
+
+        let config = config_store_from_str(
+            r#"{ "extends": ["fixtures/extends_config/options/deny_warnings_false.json"] }"#,
+        );
+        assert_eq!(config.base.config.options.deny_warnings, Some(false));
+
+        let config = config_store_from_str(
+            r#"{ "extends": ["fixtures/extends_config/options/max_warnings_10.json"] }"#,
+        );
+        assert_eq!(config.base.config.options.max_warnings, Some(10));
+
+        let config = config_store_from_str(
+            r#"
+            {
+                "extends": ["fixtures/extends_config/options/max_warnings_10.json"],
+                "options": {"maxWarnings": 1 }
+            }
+            "#,
+        );
+        assert_eq!(config.base.config.options.max_warnings, Some(1));
+
+        let config = config_store_from_str(
+            r#"{ "extends": ["fixtures/extends_config/options/max_warnings_0.json"] }"#,
+        );
+        assert_eq!(config.base.config.options.max_warnings, Some(0));
+    }
+
+    #[test]
     fn test_not_extends_named_configs() {
         // For now, test that extending named configs is just ignored
         let config = config_store_from_str(
@@ -1296,6 +1520,7 @@ mod test {
             current_oxlintrc,
             None,
             &mut external_plugin_store,
+            None,
         )
         .unwrap();
 
@@ -1316,6 +1541,64 @@ mod test {
         );
     }
 
+    #[test]
+    fn test_unknown_builtin_rule_errors_in_root_config() {
+        let oxlintrc: Oxlintrc = serde_json::from_str(
+            r#"
+            {
+                "rules": {
+                    "no-console-typo": "error"
+                }
+            }
+            "#,
+        )
+        .unwrap();
+
+        let mut external_plugin_store = ExternalPluginStore::default();
+        let err = ConfigStoreBuilder::from_oxlintrc(
+            true,
+            oxlintrc,
+            None,
+            &mut external_plugin_store,
+            None,
+        )
+        .unwrap_err();
+
+        assert_eq!(err.to_string(), "Rule 'no-console-typo' not found in plugin 'eslint'");
+    }
+
+    #[test]
+    fn test_unknown_builtin_rule_errors_in_overrides() {
+        let oxlintrc: Oxlintrc = serde_json::from_str(
+            r#"
+            {
+                "overrides": [
+                    {
+                        "files": ["*.js"],
+                        "rules": {
+                            "no-console-typo": "error"
+                        }
+                    }
+                ]
+            }
+            "#,
+        )
+        .unwrap();
+
+        let mut external_plugin_store = ExternalPluginStore::default();
+        let builder = ConfigStoreBuilder::from_oxlintrc(
+            true,
+            oxlintrc,
+            None,
+            &mut external_plugin_store,
+            None,
+        )
+        .unwrap();
+        let err = builder.build(&mut external_plugin_store).unwrap_err();
+
+        assert_eq!(err.to_string(), "Rule 'no-console-typo' not found in plugin 'eslint'");
+    }
+
     fn config_store_from_path(path: &str) -> Config {
         let mut external_plugin_store = ExternalPluginStore::default();
         ConfigStoreBuilder::from_oxlintrc(
@@ -1323,6 +1606,7 @@ mod test {
             Oxlintrc::from_file(&PathBuf::from(path)).unwrap(),
             None,
             &mut external_plugin_store,
+            None,
         )
         .unwrap()
         .build(&mut external_plugin_store)
@@ -1336,6 +1620,7 @@ mod test {
             serde_json::from_str(s).unwrap(),
             None,
             &mut external_plugin_store,
+            None,
         )
         .unwrap()
         .build(&mut external_plugin_store)

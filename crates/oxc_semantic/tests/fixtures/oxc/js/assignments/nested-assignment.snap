@@ -5,7 +5,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/assignments/nested-assignm
 [
   {
     "children": [],
-    "flags": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(Top)",
     "id": 0,
     "node": "Program",
     "symbols": [
@@ -19,25 +19,29 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/assignments/nested-assignm
             "flags": "ReferenceFlags(Write)",
             "id": 0,
             "name": "y",
-            "node_id": 9
+            "node_id": 9,
+            "scope_id": 0
           },
           {
             "flags": "ReferenceFlags(Write)",
             "id": 1,
             "name": "y",
-            "node_id": 19
+            "node_id": 19,
+            "scope_id": 0
           },
           {
             "flags": "ReferenceFlags(Write)",
             "id": 2,
             "name": "y",
-            "node_id": 30
+            "node_id": 30,
+            "scope_id": 0
           },
           {
             "flags": "ReferenceFlags(Read)",
             "id": 4,
             "name": "y",
-            "node_id": 37
+            "node_id": 37,
+            "scope_id": 0
           }
         ]
       }

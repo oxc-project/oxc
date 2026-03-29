@@ -18,13 +18,13 @@ function foo(e) {
 
 var x; function foo(a) { ({ x } = y) }
 var x;
-function foo(t) {
+function foo(e) {
 	({x} = y);
 }
 
 import { x } from 's'; export { x }
-import { x } from "s";
-export { x };
+import { x as e } from "s";
+export { e as x };
 
 Object.defineProperty(exports, '__esModule', { value: true })
 Object.defineProperty(exports, "__esModule", { value: true });

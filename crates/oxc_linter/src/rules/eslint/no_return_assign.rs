@@ -59,7 +59,7 @@ declare_oxc_lint!(
     NoReturnAssign,
     eslint,
     style,
-    pending, // TODO: add a suggestion
+    none,
     config = NoReturnAssignMode,
 );
 
@@ -72,10 +72,8 @@ fn is_sentinel_node(ast_kind: AstKind) -> bool {
 }
 
 impl Rule for NoReturnAssign {
-    fn from_configuration(value: Value) -> Self {
-        serde_json::from_value::<DefaultRuleConfig<NoReturnAssign>>(value)
-            .unwrap_or_default()
-            .into_inner()
+    fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -146,16 +144,16 @@ fn test() {
         ("const foo = (a,b,c) => ((a = b), c)", None),
         (
             "function foo(){
-			            return (a = b)
-			        }",
+                        return (a = b)
+                    }",
             None,
         ),
         (
             "function bar(){
-			            return function foo(){
-			                return (a = b) && c
-			            }
-			        }",
+                        return function foo(){
+                            return (a = b) && c
+                        }
+                    }",
             None,
         ),
         ("const foo = (a) => (b) => (a = b)", None), // { "ecmaVersion": 6 }
@@ -179,46 +177,65 @@ fn test() {
         ),
         (
             "function foo(){
-			                return a = b
-			            }",
+                            return a = b
+                        }",
             None,
         ),
         (
             "function doSomething() {
-			                return foo = bar && foo > 0;
-			            }",
+                            return foo = bar && foo > 0;
+                        }",
             None,
         ),
         (
             "function doSomething() {
-			                return foo = function(){
-			                    return (bar = bar1)
-			                }
-			            }",
+                            return foo = function(){
+                                return (bar = bar1)
+                            }
+                        }",
             None,
         ),
         (
             "function doSomething() {
-			                return foo = () => a
-			            }",
+                            return foo = () => a
+                        }",
             None,
         ), // { "ecmaVersion": 6 },
         (
             "function doSomething() {
-			                return () => a = () => b
-			            }",
+                            return () => a = () => b
+                        }",
             None,
         ), // { "ecmaVersion": 6 },
         (
             "function foo(a){
-			                return function bar(b){
-			                    return a = b
-			                }
-			            }",
+                            return function bar(b){
+                                return a = b
+                            }
+                        }",
             None,
         ),
         ("const foo = (a) => (b) => a = b", None), // { "ecmaVersion": 6 }
     ];
 
     Tester::new(NoReturnAssign::NAME, NoReturnAssign::PLUGIN, pass, fail).test_and_snapshot();
+}
+
+#[test]
+fn invalid_configs_error_in_from_configuration() {
+    // An array with an object should produce an error, since the rule only accepts a string.
+    let invalid = serde_json::json!([{ "foo": "bar" }]);
+    assert!(NoReturnAssign::from_configuration(invalid).is_err());
+
+    // String that isn't one of the allowed options should produce an error
+    let invalid = serde_json::json!(["foobar"]);
+    assert!(NoReturnAssign::from_configuration(invalid).is_err());
+    let invalid = serde_json::json!(["ExceptParens"]);
+    assert!(NoReturnAssign::from_configuration(invalid).is_err());
+    let invalid = serde_json::json!(["Always"]);
+    assert!(NoReturnAssign::from_configuration(invalid).is_err());
+
+    // Valid configs should not produce an error
+    let valid = serde_json::json!(["except-parens"]);
+    assert!(NoReturnAssign::from_configuration(valid).is_ok());
 }

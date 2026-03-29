@@ -1,10 +1,18 @@
 use oxc_ast::ast::*;
 
 use crate::{
-    ToBigInt, ToIntegerIndex, constant_evaluation::DetermineValueType, to_numeric::ToNumeric,
-    to_primitive::ToPrimitive,
+    ToBigInt, ToIntegerIndex,
+    constant_evaluation::{DetermineValueType, ValueType},
+    to_numeric::ToNumeric,
+    to_primitive::{ToPrimitive, ToPrimitiveResult},
 };
 
+use super::known_globals::{
+    is_error_constructor, is_known_global_constructor, is_known_global_identifier,
+    is_known_global_property, is_known_global_property_deep, is_pure_callable_constructor,
+    is_pure_collection_constructor, is_pure_global_function, is_pure_global_method_call,
+    is_typed_array_constructor, is_unconditionally_pure_constructor, is_valid_regexp,
+};
 use super::{MayHaveSideEffects, PropertyReadSideEffects, context::MayHaveSideEffectsContext};
 
 impl<'a> MayHaveSideEffects<'a> for Expression<'a> {
@@ -49,7 +57,13 @@ impl<'a> MayHaveSideEffects<'a> for Expression<'a> {
             }
             Expression::ArrayExpression(e) => e.may_have_side_effects(ctx),
             Expression::ClassExpression(e) => e.may_have_side_effects(ctx),
-            // NOTE: private in can throw `TypeError`
+            Expression::PrivateInExpression(e) => {
+                if e.right.may_have_side_effects(ctx) {
+                    return true;
+                }
+                // `#x in y` throws when `y` is not an object.
+                !e.right.value_type(ctx).is_object()
+            }
             Expression::ChainExpression(e) => e.expression.may_have_side_effects(ctx),
             match_member_expression!(Expression) => {
                 self.to_member_expression().may_have_side_effects(ctx)
@@ -57,6 +71,8 @@ impl<'a> MayHaveSideEffects<'a> for Expression<'a> {
             Expression::CallExpression(e) => e.may_have_side_effects(ctx),
             Expression::NewExpression(e) => e.may_have_side_effects(ctx),
             Expression::TaggedTemplateExpression(e) => e.may_have_side_effects(ctx),
+            Expression::AssignmentExpression(e) => e.may_have_side_effects(ctx),
+            Expression::UpdateExpression(e) => e.may_have_side_effects(ctx),
             _ => true,
         }
     }
@@ -69,7 +85,11 @@ impl<'a> MayHaveSideEffects<'a> for IdentifierReference<'a> {
             // Reading global variables may have a side effect.
             // NOTE: It should also return true when the reference might refer to a reference value created by a with statement
             // NOTE: we ignore TDZ errors
-            _ => ctx.unknown_global_side_effects() && ctx.is_global_reference(self),
+            _ => {
+                ctx.unknown_global_side_effects()
+                    && ctx.is_global_reference(self)
+                    && !is_known_global_identifier(self.name.as_str())
+            }
         }
     }
 }
@@ -221,86 +241,6 @@ impl<'a> MayHaveSideEffects<'a> for BinaryExpression<'a> {
     }
 }
 
-fn is_pure_regexp(name: &str, args: &[Argument<'_>]) -> bool {
-    name == "RegExp"
-        && match args.len() {
-            0 | 1 => true,
-            2 => args[1].as_expression().is_some_and(|e| {
-                matches!(e, Expression::Identifier(_) | Expression::StringLiteral(_))
-            }),
-            _ => false,
-        }
-}
-
-#[rustfmt::skip]
-fn is_pure_global_function(name: &str) -> bool {
-    matches!(name, "decodeURI" | "decodeURIComponent" | "encodeURI" | "encodeURIComponent"
-            | "escape" | "isFinite" | "isNaN" | "parseFloat" | "parseInt")
-}
-
-#[rustfmt::skip]
-fn is_pure_call(name: &str) -> bool {
-    matches!(name, "Date" | "Boolean" | "Error" | "EvalError" | "RangeError" | "ReferenceError"
-            | "SyntaxError" | "TypeError" | "URIError" | "Number" | "Object" | "String" | "Symbol")
-}
-
-#[rustfmt::skip]
-fn is_pure_constructor(name: &str) -> bool {
-    matches!(name, "Set" | "Map" | "WeakSet" | "WeakMap" | "ArrayBuffer" | "Date"
-            | "Boolean" | "Error" | "EvalError" | "RangeError" | "ReferenceError"
-            | "SyntaxError" | "TypeError" | "URIError" | "Number" | "Object" | "String" | "Symbol")
-}
-
-/// Whether the name matches any known global constructors.
-///
-/// <https://tc39.es/ecma262/multipage/global-object.html#sec-constructor-properties-of-the-global-object>
-fn is_known_global_constructor(name: &str) -> bool {
-    // technically, we need to exclude the constructors that are not supported by the target
-    matches!(
-        name,
-        "AggregateError"
-            | "Array"
-            | "ArrayBuffer"
-            | "BigInt"
-            | "BigInt64Array"
-            | "BitUint64Array"
-            | "Boolean"
-            | "DataView"
-            | "Date"
-            | "Error"
-            | "EvalError"
-            | "FinalizationRegistry"
-            | "Float32Array"
-            | "Float64Array"
-            | "Function"
-            | "Int8Array"
-            | "Int16Array"
-            | "Int32Array"
-            | "Iterator"
-            | "Map"
-            | "Number"
-            | "Object"
-            | "Promise"
-            | "Proxy"
-            | "RangeError"
-            | "ReferenceError"
-            | "RegExp"
-            | "Set"
-            | "SharedArrayBuffer"
-            | "String"
-            | "Symbol"
-            | "SyntaxError"
-            | "TypeError"
-            | "Uint8Array"
-            | "Uint8ClampedArray"
-            | "Uint16Array"
-            | "Uint32Array"
-            | "URIError"
-            | "WeakMap"
-            | "WeakSet"
-    )
-}
-
 impl<'a> MayHaveSideEffects<'a> for LogicalExpression<'a> {
     fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
         if self.left.may_have_side_effects(ctx) {
@@ -356,12 +296,28 @@ impl<'a> MayHaveSideEffects<'a> for ObjectPropertyKind<'a> {
     fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
         match self {
             ObjectPropertyKind::ObjectProperty(o) => o.may_have_side_effects(ctx),
-            ObjectPropertyKind::SpreadProperty(e) => match &e.argument {
-                Expression::ArrayExpression(arr) => arr.may_have_side_effects(ctx),
-                Expression::StringLiteral(_) => false,
-                Expression::TemplateLiteral(t) => t.may_have_side_effects(ctx),
-                _ => true,
-            },
+            ObjectPropertyKind::SpreadProperty(e) => {
+                if ctx.property_read_side_effects() == PropertyReadSideEffects::None {
+                    e.argument.may_have_side_effects(ctx)
+                } else {
+                    match &e.argument {
+                        Expression::ArrayExpression(arr) => arr.may_have_side_effects(ctx),
+                        Expression::ObjectExpression(obj) => {
+                            obj.properties.iter().any(|property| match property {
+                                ObjectPropertyKind::ObjectProperty(p) => {
+                                    p.kind == PropertyKind::Get || p.may_have_side_effects(ctx)
+                                }
+                                ObjectPropertyKind::SpreadProperty(e) => {
+                                    e.argument.may_have_side_effects(ctx)
+                                }
+                            })
+                        }
+                        Expression::StringLiteral(_) => false,
+                        Expression::TemplateLiteral(t) => t.may_have_side_effects(ctx),
+                        _ => true,
+                    }
+                }
+            }
         }
     }
 }
@@ -416,7 +372,9 @@ impl<'a> MayHaveSideEffects<'a> for ClassElement<'a> {
                 block.body.iter().any(|stmt| stmt.may_have_side_effects(ctx))
             }
             ClassElement::MethodDefinition(e) => {
-                !e.decorators.is_empty() || e.key.may_have_side_effects(ctx)
+                !e.decorators.is_empty()
+                    || e.key.may_have_side_effects(ctx)
+                    || e.value.params.items.iter().any(|item| !item.decorators.is_empty())
             }
             ClassElement::PropertyDefinition(e) => {
                 !e.decorators.is_empty()
@@ -425,7 +383,9 @@ impl<'a> MayHaveSideEffects<'a> for ClassElement<'a> {
                         && e.value.as_ref().is_some_and(|v| v.may_have_side_effects(ctx)))
             }
             ClassElement::AccessorProperty(e) => {
-                !e.decorators.is_empty() || e.key.may_have_side_effects(ctx)
+                !e.decorators.is_empty()
+                    || e.key.may_have_side_effects(ctx)
+                    || e.value.as_ref().is_some_and(|init| init.may_have_side_effects(ctx))
             }
             ClassElement::TSIndexSignature(_) => false,
         }
@@ -482,7 +442,17 @@ impl<'a> MayHaveSideEffects<'a> for ComputedMemberExpression<'a> {
                     !integer_index_property_access_may_have_side_effects(&self.object, b, ctx)
                 })
             }
-            _ => true,
+            _ => {
+                // Non-literal keys (e.g. `obj[expr]`) may trigger toString/valueOf on the key,
+                // which is a side effect. But if property read side effects are disabled,
+                // only check the key expression and object for their own side effects.
+                if ctx.property_read_side_effects() == PropertyReadSideEffects::None {
+                    self.expression.may_have_side_effects(ctx)
+                        || self.object.may_have_side_effects(ctx)
+                } else {
+                    true
+                }
+            }
         }
     }
 }
@@ -496,6 +466,27 @@ fn property_access_may_have_side_effects<'a>(
         return true;
     }
     if ctx.property_read_side_effects() == PropertyReadSideEffects::None {
+        return false;
+    }
+
+    // Check known global property reads (e.g. Math.PI, console.log)
+    if let Expression::Identifier(ident) = object
+        && ctx.is_global_reference(ident)
+        && is_known_global_property(ident.name.as_str(), property)
+    {
+        return false;
+    }
+
+    // Check known 3-level chains (e.g. Object.prototype.hasOwnProperty)
+    if let Expression::StaticMemberExpression(member) = object
+        && let Expression::Identifier(ident) = &member.object
+        && ctx.is_global_reference(ident)
+        && is_known_global_property_deep(
+            ident.name.as_str(),
+            member.property.name.as_str(),
+            property,
+        )
+    {
         return false;
     }
 
@@ -549,12 +540,44 @@ impl<'a> MayHaveSideEffects<'a> for CallExpression<'a> {
 
         if let Expression::Identifier(ident) = &self.callee
             && ctx.is_global_reference(ident)
-            && let name = ident.name.as_str()
-            && (is_pure_global_function(name)
-                || is_pure_call(name)
-                || is_pure_regexp(name, &self.arguments))
         {
-            return self.arguments.iter().any(|e| e.may_have_side_effects(ctx));
+            let name = ident.name.as_str();
+            // Number(Symbol()) throws (ToNumeric), Symbol(Symbol()) throws (ToString),
+            // Error(Symbol()) throws (ToString). ToPrimitive on objects assumed pure.
+            if name == "Number" || name == "Symbol" || is_error_constructor(name) {
+                if self.arguments.iter().any(|e| e.may_have_side_effects(ctx)) {
+                    return true;
+                }
+                return self.arguments.first().is_some_and(|arg| {
+                    arg.as_expression()
+                        .is_none_or(|expr| expr.to_primitive(ctx).is_symbol() != Some(false))
+                });
+            }
+            if name == "BigInt" {
+                if self.arguments.iter().any(|e| e.may_have_side_effects(ctx)) {
+                    return true;
+                }
+                // BigInt(value) throws for missing/invalid values and can execute user code during ToPrimitive.
+                let Some(expr) = self.arguments.first().and_then(Argument::as_expression) else {
+                    return true;
+                };
+                if matches!(
+                    expr.to_primitive(ctx),
+                    ToPrimitiveResult::Undetermined
+                        | ToPrimitiveResult::Undefined
+                        | ToPrimitiveResult::Null
+                        | ToPrimitiveResult::Symbol
+                ) {
+                    return true;
+                }
+                return expr.to_big_int(ctx).is_none();
+            }
+            if is_pure_global_function(name)
+                || is_pure_callable_constructor(name)
+                || (name == "RegExp" && is_valid_regexp(&self.arguments))
+            {
+                return self.arguments.iter().any(|e| e.may_have_side_effects(ctx));
+            }
         }
 
         let (object, name) = match &self.callee {
@@ -577,31 +600,49 @@ impl<'a> MayHaveSideEffects<'a> for CallExpression<'a> {
             return true;
         }
 
-        #[rustfmt::skip]
-        let is_global = match object.name.as_str() {
-            "Array" => matches!(name, "isArray" | "of"),
-            "ArrayBuffer" => name == "isView",
-            "Date" => matches!(name, "now" | "parse" | "UTC"),
-            "Math" => matches!(name, "abs" | "acos" | "acosh" | "asin" | "asinh" | "atan" | "atan2" | "atanh"
-                    | "cbrt" | "ceil" | "clz32" | "cos" | "cosh" | "exp" | "expm1" | "floor" | "fround" | "hypot"
-                    | "imul" | "log" | "log10" | "log1p" | "log2" | "max" | "min" | "pow" | "random" | "round"
-                    | "sign" | "sin" | "sinh" | "sqrt" | "tan" | "tanh" | "trunc"),
-            "Number" => matches!(name, "isFinite" | "isInteger" | "isNaN" | "isSafeInteger" | "parseFloat" | "parseInt"),
-            "Object" => matches!(name, "create" | "getOwnPropertyDescriptor" | "getOwnPropertyDescriptors" | "getOwnPropertyNames"
-                    | "getOwnPropertySymbols" | "getPrototypeOf" | "hasOwn" | "is" | "isExtensible" | "isFrozen" | "isSealed" | "keys"),
-            "String" => matches!(name, "fromCharCode" | "fromCodePoint" | "raw"),
-            "Symbol" => matches!(name, "for" | "keyFor"),
-            "URL" => name == "canParse",
-            "Float32Array" | "Float64Array" | "Int16Array" | "Int32Array" | "Int8Array" | "Uint16Array" | "Uint32Array" | "Uint8Array" | "Uint8ClampedArray" => name == "of",
-            _ => false,
-        };
-
-        if is_global {
+        if is_pure_global_method_call(object.name.as_str(), name) {
             return self.arguments.iter().any(|e| e.may_have_side_effects(ctx));
         }
 
         true
     }
+}
+
+/// Check that the first argument won't produce a Symbol from `ToPrimitive`.
+///
+/// Per the "Coercion Methods Are Pure" assumption, calling `ToPrimitive` on objects
+/// is side-effect-free. However, `ToString(Symbol)` / `ToNumber(Symbol)` still throws
+/// TypeError per spec, so we must verify the argument won't produce a Symbol value.
+///
+/// Used for `new String(arg)`, `new Number(arg)`, Error constructors.
+fn new_expr_first_arg_may_be_symbol<'a>(
+    expr: &NewExpression<'a>,
+    ctx: &impl MayHaveSideEffectsContext<'a>,
+) -> bool {
+    if expr.arguments.iter().any(|e| e.may_have_side_effects(ctx)) {
+        return true;
+    }
+    expr.arguments.first().is_some_and(|arg| {
+        arg.as_expression().is_none_or(|e| e.to_primitive(ctx).is_symbol() != Some(false))
+    })
+}
+
+/// Check that the first argument won't produce a Symbol or BigInt from `ToPrimitive`.
+///
+/// Like [`new_expr_first_arg_may_be_symbol`], but also checks for BigInt because
+/// `ToNumber(BigInt)` throws TypeError. Used for `new Date(arg)`, `new ArrayBuffer(arg)`.
+/// (`new String(0n)` and `new Number(0n)` do NOT throw — BigInt→String works and
+/// Number constructor converts BigInt→Number.)
+fn new_expr_first_arg_may_be_symbol_or_bigint<'a>(
+    expr: &NewExpression<'a>,
+    ctx: &impl MayHaveSideEffectsContext<'a>,
+) -> bool {
+    if expr.arguments.iter().any(|e| e.may_have_side_effects(ctx)) {
+        return true;
+    }
+    expr.arguments.first().is_some_and(|arg| {
+        arg.as_expression().is_none_or(|e| e.to_primitive(ctx).is_symbol_or_bigint() != Some(false))
+    })
 }
 
 // `[ValueProperties]: PURE` in <https://github.com/rollup/rollup/blob/master/src/ast/nodes/shared/knownGlobals.ts>
@@ -612,10 +653,53 @@ impl<'a> MayHaveSideEffects<'a> for NewExpression<'a> {
         }
         if let Expression::Identifier(ident) = &self.callee
             && ctx.is_global_reference(ident)
-            && let name = ident.name.as_str()
-            && (is_pure_constructor(name) || is_pure_regexp(name, &self.arguments))
         {
-            return self.arguments.iter().any(|e| e.may_have_side_effects(ctx));
+            let name = ident.name.as_str();
+
+            match name {
+                // new String(arg): ToString(Symbol) throws TypeError.
+                // new Number(arg): ToNumeric(Symbol) throws TypeError.
+                // (BigInt is fine: ToString(BigInt) works, Number converts BigInt→Number.)
+                "String" | "Number" => {
+                    return new_expr_first_arg_may_be_symbol(self, ctx);
+                }
+                // new Date(arg): ToPrimitive then ToNumber — both Symbol and BigInt throw.
+                // new ArrayBuffer(arg): ToIndex → ToNumber — same.
+                "Date" | "ArrayBuffer" => {
+                    return new_expr_first_arg_may_be_symbol_or_bigint(self, ctx);
+                }
+                // Error constructors: ToString(msg) throws on Symbol.
+                _ if is_error_constructor(name) => {
+                    return new_expr_first_arg_may_be_symbol(self, ctx);
+                }
+                _ if is_typed_array_constructor(name) => {
+                    // TypedArray constructors: 0 args safe; with object arg calls @@iterator,
+                    // with BigInt arg ToNumber throws.
+                    // Only known safe primitive value types are accepted.
+                    if self.arguments.iter().any(|e| e.may_have_side_effects(ctx)) {
+                        return true;
+                    }
+                    return self.arguments.first().is_some_and(|arg| {
+                        arg.as_expression().is_none_or(|e| {
+                            !matches!(
+                                e.value_type(ctx),
+                                ValueType::Number
+                                    | ValueType::String
+                                    | ValueType::Boolean
+                                    | ValueType::Null
+                                    | ValueType::Undefined
+                            )
+                        })
+                    });
+                }
+                _ if is_unconditionally_pure_constructor(name)
+                    || (name == "RegExp" && is_valid_regexp(&self.arguments))
+                    || is_pure_collection_constructor(name, &self.arguments, ctx) =>
+                {
+                    return self.arguments.iter().any(|e| e.may_have_side_effects(ctx));
+                }
+                _ => {}
+            }
         }
         true
     }
@@ -778,4 +862,60 @@ fn is_side_effect_free_unbound_identifier_ref<'a>(
     }
 
     false
+}
+
+impl<'a> MayHaveSideEffects<'a> for AssignmentExpression<'a> {
+    fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
+        if ctx.property_write_side_effects() {
+            return true;
+        }
+        // Only simple assignments (`=`) benefit from property_write_side_effects: false.
+        // Compound assignments (`+=`, `-=`, etc.) always have side effects because:
+        // 1. They perform an implicit property read (GetValue) which can invoke getters/proxies
+        // 2. The operation itself performs ToPrimitive/ToNumeric coercion which can invoke
+        //    user code (valueOf/toString) or throw (e.g. Symbol)
+        if self.operator != AssignmentOperator::Assign {
+            return true;
+        }
+        // When property_write_side_effects is false, member expression writes are considered free.
+        // Other writes (to variables, destructuring targets) still have side effects.
+        match &self.left {
+            AssignmentTarget::StaticMemberExpression(e) => {
+                e.object.may_have_side_effects(ctx) || self.right.may_have_side_effects(ctx)
+            }
+            AssignmentTarget::ComputedMemberExpression(e) => {
+                e.object.may_have_side_effects(ctx)
+                    || e.expression.may_have_side_effects(ctx)
+                    || self.right.may_have_side_effects(ctx)
+            }
+            AssignmentTarget::PrivateFieldExpression(e) => {
+                e.object.may_have_side_effects(ctx) || self.right.may_have_side_effects(ctx)
+            }
+            _ => true,
+        }
+    }
+}
+
+impl<'a> MayHaveSideEffects<'a> for UpdateExpression<'a> {
+    fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
+        if ctx.property_write_side_effects() {
+            return true;
+        }
+        // When property_write_side_effects is false, member expression updates
+        // (e.g. obj.prop++, obj[key]--) are treated like property writes.
+        // The update operation (ToNumeric + PutValue) is considered side-effect-free,
+        // but the object/key evaluation may still have side effects.
+        match &self.argument {
+            SimpleAssignmentTarget::StaticMemberExpression(e) => {
+                e.object.may_have_side_effects(ctx)
+            }
+            SimpleAssignmentTarget::ComputedMemberExpression(e) => {
+                e.object.may_have_side_effects(ctx) || e.expression.may_have_side_effects(ctx)
+            }
+            SimpleAssignmentTarget::PrivateFieldExpression(e) => {
+                e.object.may_have_side_effects(ctx)
+            }
+            _ => true,
+        }
+    }
 }

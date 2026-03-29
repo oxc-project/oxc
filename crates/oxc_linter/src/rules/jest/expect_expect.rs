@@ -105,7 +105,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for ExpectExpect {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let default_assert_function_names_jest = vec!["expect".into()];
         let default_assert_function_names_vitest =
             vec!["expect".into(), "expectTypeOf".into(), "assert".into(), "assertType".into()];
@@ -132,11 +132,11 @@ impl Rule for ExpectExpect {
             .map(|v| v.iter().filter_map(serde_json::Value::as_str).map(CompactStr::from).collect())
             .unwrap_or_default();
 
-        Self(Box::new(ExpectExpectConfig {
+        Ok(Self(Box::new(ExpectExpectConfig {
             assert_function_names_jest,
             assert_function_names_vitest,
             additional_test_block_functions,
-        }))
+        })))
     }
 
     fn run_on_jest_node<'a, 'c>(
@@ -368,28 +368,28 @@ fn test() {
         ("test('verifies expect method call', () => new Foo().expect(123));", Some(serde_json::json!([{ "assertFunctionNames": ["Foo.expect"] }]))),
         (
             "
-        	test('verifies deep expect method call', () => {
-        	tester.foo().expect(123);
-        	});
+            test('verifies deep expect method call', () => {
+            tester.foo().expect(123);
+            });
         ",
             Some(serde_json::json!([{ "assertFunctionNames": ["tester.foo.expect"] }])),
         ),
         (
             "
-        	test('verifies chained expect method call', () => {
-        	tester
-        		.foo()
-        		.bar()
-        		.expect(456);
-        	});
+            test('verifies chained expect method call', () => {
+            tester
+                .foo()
+                .bar()
+                .expect(456);
+            });
         ",
             Some(serde_json::json!([{ "assertFunctionNames": ["tester.foo.bar.expect"] }])),
         ),
         (
             "
-        	test('verifies the function call', () => {
-        	td.verify(someFunctionCall())
-        	})
+            test('verifies the function call', () => {
+            td.verify(someFunctionCall())
+            })
         ",
             Some(serde_json::json!([{ "assertFunctionNames": ["td.verify"] }])),
         ),
@@ -423,36 +423,36 @@ fn test() {
         ("test('should pass', () => request.get().foo().expect(456));", Some(serde_json::json!([{ "assertFunctionNames": ["request.**.e*e*t"] }]))),
         (
             "
-        	import { test } from '@jest/globals';
+            import { test } from '@jest/globals';
 
-        	test('should pass', () => {
-        	expect(true).toBeDefined();
-        	foo(true).toBe(true);
-        	});
+            test('should pass', () => {
+            expect(true).toBeDefined();
+            foo(true).toBe(true);
+            });
         ",
             Some(serde_json::json!([{ "assertFunctionNames": ["expect", "foo"] }])),
         ),
         (
             "
-        	import { test as checkThat } from '@jest/globals';
+            import { test as checkThat } from '@jest/globals';
 
-        	checkThat('this passes', () => {
-        	expect(true).toBeDefined();
-        	foo(true).toBe(true);
-        	});
+            checkThat('this passes', () => {
+            expect(true).toBeDefined();
+            foo(true).toBe(true);
+            });
         ",
             Some(serde_json::json!([{ "assertFunctionNames": ["expect", "foo"] }])),
         ),
         (
             "
-        	const { test } = require('@jest/globals');
+            const { test } = require('@jest/globals');
 
-        	test('verifies chained expect method call', () => {
-        	tester
-        		.foo()
-        		.bar()
-        		.expect(456);
-        	});
+            test('verifies chained expect method call', () => {
+            tester
+                .foo()
+                .bar()
+                .expect(456);
+            });
         ",
             Some(serde_json::json!([{ "assertFunctionNames": ["tester.foo.bar.expect"] }])),
         ),
@@ -557,21 +557,21 @@ fn test() {
         ),
         (
             "
-        	import { test as checkThat } from '@jest/globals';
+            import { test as checkThat } from '@jest/globals';
 
-        	checkThat('this passes', () => {
-        	// ...
-        	});
+            checkThat('this passes', () => {
+            // ...
+            });
         ",
             Some(serde_json::json!([{ "assertFunctionNames": ["expect", "foo"] }])),
         ),
         (
             "
-        	import { test as checkThat } from '@jest/globals';
+            import { test as checkThat } from '@jest/globals';
 
-        	checkThat.skip('this passes', () => {
-        	// ...
-        	});
+            checkThat.skip('this passes', () => {
+            // ...
+            });
         ",
             None,
         ),

@@ -1,13 +1,31 @@
 use oxc_codegen::CodegenOptions;
+use oxc_parser::ParseOptions;
 
 use crate::{
     snapshot, snapshot_options,
-    tester::{test_same, test_tsx},
+    tester::{test_idempotency, test_same, test_tsx, test_with_parse_options},
 };
 
 #[test]
 fn cases() {
     test_same("({ foo(): string {} });\n");
+    test_same("({ method(this: Foo): void {} });\n");
+    test_same("({ methodWithParam(this: Foo, bar: string): void {} });\n");
+    test_same("type T = (A | B)[];\n");
+    test_same("type T = (A & B)[];\n");
+    test_same("type T = (keyof A)[];\n");
+    test_same("type T = (() => A)[];\n");
+    test_same("type T = (new () => A)[];\n");
+    test_same("type T = (A extends B ? C : D)[];\n");
+    test_same("type T = (A | B)[K];\n");
+    test_same("type T = (A & B)[K];\n");
+    test_same("type T = (keyof A)[K];\n");
+    test_same("type T = (A extends B ? C : D)[K];\n");
+    test_same("type T = A extends (B extends C ? D : E) ? F : G;\n");
+    test_same("type T = (A extends B ? C : D) extends E ? F : G;\n");
+    test_same("type T = A & (B extends C ? D : E);\n");
+    test_same("type T = (A | B) & C;\n");
+    test_same("declare interface A {}\n");
     test_same("interface I<in out T,> {}\n");
     test_same("function F<const in out T,>() {}\n");
     test_same("class C {\n\tp = await(0);\n}\n");
@@ -15,7 +33,18 @@ fn cases() {
         "class Foo {\n\t#name: string;\n\tf() {\n\t\t#name in other && this.#name === other.#name;\n\t}\n}\n",
     );
     test_same("class B {\n\tconstructor(override readonly a: number) {}\n}\n");
+    test_same("class C extends B {\n\toverride show(): void;\n\toverride hide(): void;\n}\n");
+    test_same("class D extends B {\n\toverride readonly x: number;\n}\n");
+    test_same(
+        "declare namespace ns {\n\tclass Foo {}\n\tenum Bar {}\n\ttype Baz = undefined;\n}\n",
+    );
+    test_same("class E {\n\tsubscribe!: string;\n}\n");
+    test_same("class F {\n\taccessor value!: string;\n}\n");
+    test_same("class E {\n\tstatic [key: string]: string;\n}\n");
     test_same("export { type as as };\n");
+    test_same("import type from = require(\"./a\");\n");
+    test_same("try {} catch (e: unknown) {} finally {}\n");
+    test_same("const Bar = class<T,> {};\n");
 }
 
 #[test]
@@ -28,6 +57,7 @@ fn decorators() {
 fn tsx() {
     test_tsx("<T,>() => {}", "<T,>() => {};\n");
     test_tsx("<T, B>() => {}", "<\n\tT,\n\tB\n>() => {};\n");
+    test_tsx("<Foo<T> />", "<Foo<T> />;\n");
 }
 
 #[test]
@@ -142,4 +172,55 @@ export import b = require("b");
 
     snapshot("ts", &cases);
     snapshot_options("minify", &cases, &CodegenOptions::minify());
+}
+
+#[test]
+fn ts_as_expression_in_binary_expr() {
+    test_idempotency("key in (that as object)");
+    test_idempotency("'foo' in (x as Record<string, unknown>)");
+    test_idempotency("(x as object) instanceof Map");
+    test_idempotency("'foo' in ((x as object) as Record<string, unknown>)");
+    test_idempotency(
+        "!(typeof that === 'object' && 'keys' in that && typeof (that as object & { keys: unknown }).keys === 'function')",
+    );
+}
+
+#[test]
+fn ts_satisfies_expression() {
+    test_idempotency("d = x satisfies y");
+    test_idempotency("const Foo = (() => {})() satisfies X");
+    test_idempotency("const Bar = (x as Y) satisfies Z");
+    test_idempotency("(x satisfies Y).foo");
+    test_idempotency("(x satisfies Y)[0]");
+    test_idempotency("(x satisfies Y)()");
+    test_idempotency("x satisfies Y || z");
+    test_idempotency("x satisfies Y && z");
+    test_idempotency("x satisfies Y === z");
+}
+
+#[test]
+fn type_codegen_with_preserve_parens_off() {
+    let parse_options = ParseOptions { preserve_parens: false, ..Default::default() };
+
+    test_with_parse_options(
+        "type T = keyof (EventMap & Extra);",
+        "type T = keyof (EventMap & Extra);\n",
+        parse_options,
+    );
+    test_with_parse_options(
+        "type T = [(Anno | undefined)?];",
+        "type T = [(Anno | undefined)?];\n",
+        parse_options,
+    );
+    test_with_parse_options("const foo = (a ?? b)!;", "const foo = (a ?? b)!;\n", parse_options);
+    test_with_parse_options(
+        "type T = (Out & (Step extends A ? B : C)) & (Step extends D ? E : F);",
+        "type T = (Out & (Step extends A ? B : C)) & (Step extends D ? E : F);\n",
+        parse_options,
+    );
+    test_with_parse_options(
+        "type T = ({ [K in keyof Obj]: Obj[K] } & { a: 1 }) & { b: 2 };",
+        "type T = ({ [K in keyof Obj] : Obj[K] } & {\n\ta: 1;\n}) & {\n\tb: 2;\n};\n",
+        parse_options,
+    );
 }

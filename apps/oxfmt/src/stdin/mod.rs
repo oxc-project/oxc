@@ -6,15 +6,15 @@ use std::{
 
 use crate::cli::{CliRunResult, FormatCommand, Mode};
 use crate::core::{
-    ConfigResolver, ExternalFormatter, FormatFileStrategy, FormatResult, SourceFormatter,
-    resolve_editorconfig_path, resolve_oxfmtrc_path, utils,
+    ConfigResolver, ExternalFormatter, FormatFileStrategy, FormatResult, JsConfigLoaderCb,
+    SourceFormatter, resolve_editorconfig_path, utils,
 };
 
-#[derive(Debug)]
 pub struct StdinRunner {
     options: FormatCommand,
     cwd: PathBuf,
-    external_formatter: Option<ExternalFormatter>,
+    js_config_loader: JsConfigLoaderCb,
+    external_formatter: ExternalFormatter,
 }
 
 impl StdinRunner {
@@ -22,21 +22,17 @@ impl StdinRunner {
     ///
     /// # Panics
     /// Panics if the current working directory cannot be determined.
-    pub fn new(options: FormatCommand) -> Self {
+    pub fn new(
+        options: FormatCommand,
+        js_config_loader: JsConfigLoaderCb,
+        external_formatter: ExternalFormatter,
+    ) -> Self {
         Self {
             options,
             cwd: env::current_dir().expect("Failed to get current working directory"),
-            external_formatter: None,
+            js_config_loader,
+            external_formatter,
         }
-    }
-
-    #[must_use]
-    pub fn with_external_formatter(
-        mut self,
-        external_formatter: Option<ExternalFormatter>,
-    ) -> Self {
-        self.external_formatter = external_formatter;
-        self
     }
 
     pub fn run(self) -> CliRunResult {
@@ -49,9 +45,6 @@ impl StdinRunner {
         let Mode::Stdin(filepath) = mode else {
             unreachable!("`StdinRunner::run()` called with non-Stdin mode");
         };
-        let Some(external_formatter) = self.external_formatter else {
-            unreachable!("`StdinRunner::run()` called without `external_formatter`");
-        };
         // Single threaded for stdin formatting
         let num_of_threads = 1;
 
@@ -63,12 +56,12 @@ impl StdinRunner {
         }
 
         // Load config
-        let oxfmtrc_path = resolve_oxfmtrc_path(&cwd, config_options.config.as_deref());
         let editorconfig_path = resolve_editorconfig_path(&cwd);
-        let mut config_resolver = match ConfigResolver::from_config_paths(
+        let mut config_resolver = match ConfigResolver::from_config(
             &cwd,
-            oxfmtrc_path.as_deref(),
+            config_options.config.as_deref(),
             editorconfig_path.as_deref(),
+            Some(&self.js_config_loader),
         ) {
             Ok(r) => r,
             Err(err) => {
@@ -88,7 +81,7 @@ impl StdinRunner {
         }
 
         // Use `block_in_place()` to avoid nested async runtime access
-        match tokio::task::block_in_place(|| external_formatter.init(num_of_threads)) {
+        match tokio::task::block_in_place(|| self.external_formatter.init(num_of_threads)) {
             // TODO: Plugins support
             Ok(_) => {}
             Err(err) => {
@@ -101,7 +94,9 @@ impl StdinRunner {
         }
 
         // Determine format strategy from filepath
-        let Ok(strategy) = FormatFileStrategy::try_from(filepath) else {
+        let Ok(strategy) =
+            FormatFileStrategy::try_from(filepath).map(|s| s.resolve_relative_path(&cwd))
+        else {
             utils::print_and_flush(stderr, "Unsupported file type for stdin-filepath\n");
             return CliRunResult::InvalidOptionConfig;
         };
@@ -110,8 +105,8 @@ impl StdinRunner {
         let resolved_options = config_resolver.resolve(&strategy);
 
         // Create formatter and format
-        let source_formatter =
-            SourceFormatter::new(num_of_threads).with_external_formatter(Some(external_formatter));
+        let source_formatter = SourceFormatter::new(num_of_threads)
+            .with_external_formatter(Some(self.external_formatter));
 
         // Use `block_in_place()` to avoid nested async runtime access
         match tokio::task::block_in_place(|| {

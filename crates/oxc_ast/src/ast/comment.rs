@@ -1,4 +1,3 @@
-#![warn(missing_docs)]
 use bitflags::bitflags;
 
 use oxc_allocator::{Allocator, CloneIn};
@@ -72,23 +71,27 @@ pub enum CommentContent {
     /// <https://github.com/javascript-compiler-hints/compiler-notations-spec>
     Pure = 4,
 
+    /// `/* #__PURE__ */` that could not be applied (not before a call/new expression)
+    /// <https://github.com/oxc-project/oxc/issues/20334>
+    PureNotApplied = 5,
+
     /// `/* #__NO_SIDE_EFFECTS__ */`
-    NoSideEffects = 5,
+    NoSideEffects = 6,
 
     /// Webpack magic comment
     /// e.g. `/* webpackChunkName */`
     /// <https://webpack.js.org/api/module-methods/#magic-comments>
-    Webpack = 6,
+    Webpack = 7,
 
     /// Vite comment
     /// e.g. `/* @vite-ignore */`
     /// <https://github.com/search?q=repo%3Avitejs%2Fvite%20vite-ignore&type=code>
-    Vite = 7,
+    Vite = 8,
 
     /// Code Coverage Ignore
     /// `v8 ignore`, `c8 ignore`, `node:coverage`, `istanbul ignore`
     /// <https://github.com/oxc-project/oxc/issues/10091>
-    CoverageIgnore = 8,
+    CoverageIgnore = 9,
 }
 
 bitflags! {

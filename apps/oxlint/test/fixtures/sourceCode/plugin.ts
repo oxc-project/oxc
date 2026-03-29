@@ -1,6 +1,6 @@
 import assert from "node:assert";
 
-import type { ESTree, Node, Plugin, Rule } from "#oxlint";
+import type { ESTree, Node, Plugin, Rule } from "#oxlint/plugins";
 
 type Program = ESTree.Program;
 
@@ -38,6 +38,9 @@ const createRule: Rule = {
     assert.strictEqual(stmt.type, "VariableDeclaration");
     const { id } = stmt.declarations[0];
     assert.strictEqual(id.type, "Identifier");
+
+    // Check AST has no `hashbang` property
+    assert.strictEqual("hashbang" in ast, false);
 
     context.report({
       message:

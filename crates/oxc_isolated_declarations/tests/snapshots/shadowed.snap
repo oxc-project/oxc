@@ -5,7 +5,6 @@ input_file: crates/oxc_isolated_declarations/tests/fixtures/shadowed.ts
 ```
 ==================== .D.TS ====================
 
-// Shadowed
 export type Foo = {};
 export type Bar = {
 	foo: Foo;
@@ -17,9 +16,6 @@ declare namespace Module {
 	const x = 1;
 }
 export type ModuleType = Module;
-// https://github.com/oxc-project/oxc/issues/10996
-// Variable emit should not be dropped when variable is shadowed as a type name
-// and the type is part of a class implements interface
 export interface Thing<T> {}
 declare const Test1: "test1";
 export type Test1 = typeof Test1;

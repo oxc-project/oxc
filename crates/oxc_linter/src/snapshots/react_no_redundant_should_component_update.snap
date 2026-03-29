@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-react(no-redundant-should-component-update): Foo does not need `shouldComponentUpdate` when extending `React.PureComponent`.
    ╭─[no_redundant_should_component_update.tsx:3:14]
  2 │                     class Foo extends React.PureComponent {

@@ -10,7 +10,12 @@ fn test_script_same(source_text: &str) {
 
 #[track_caller]
 fn test_script(source_text: &str, expected: &str) {
-    test_options_source_type(source_text, expected, SourceType::cjs(), &default_options());
+    test_options_source_type(
+        source_text,
+        expected,
+        SourceType::cjs().with_script(true),
+        &default_options(),
+    );
 }
 
 #[track_caller]
@@ -27,6 +32,17 @@ fn test_inline_single_use_variable() {
     test_same("function wrapper(arg0, arg1) {using x = foo; return x}");
     test_same("async function wrapper(arg0, arg1) { await using x = foo; return x}");
     test_same("function wrapper(arg0) { eval('x'); var x = arg0; return x }");
+
+    test("{ let _; eval('_ = () => 1'); _() }", "{ let _; eval('_ = () => 1'), _() }");
+    test("{ let x = 1; eval('x = 2'); log(x) }", "{ let x = 1; eval('x = 2'), log(x) }");
+    test(
+        "function f() { let x; eval('x = 1'); return x }",
+        "function f() { let x; return eval('x = 1'), x }",
+    );
+    test(
+        "function f() { { let y; var x; } eval('x = 1'); return x }",
+        "function f() { { let y; var x; } return eval('x = 1'), x }",
+    );
 
     test(
         "
@@ -313,6 +329,10 @@ fn keep_exposed_variables() {
     test("var x = foo; x()", "foo()");
     test_script_same("var x = foo; x()");
     test_script("{ let x = foo; x() }", "foo()");
+    test(
+        "var b = 'b', l = { '-a': 'a', b }; export { l }",
+        "var l = { '-a': 'a', b: 'b' }; export { l }",
+    );
 }
 
 #[test]
@@ -323,32 +343,29 @@ fn keep_names() {
     );
     test_keep_names(
         "var x = function() {}; var y = x; console.log(y.name)",
-        "var x = function() {}, y = x; console.log(y.name)",
+        "var x = function() {}; console.log(x.name)",
     );
     test_keep_names(
         "var x = (function() {}); var y = x; console.log(y.name)",
-        "var x = (function() {}), y = x; console.log(y.name)",
+        "var x = (function() {}); console.log(x.name)",
     );
     test_keep_names(
         "var x = function foo() {}; var y = x; console.log(y.name)",
         "console.log(function foo() {}.name)",
     );
 
-    test(
-        "var x = class {}; var y = x; console.log(y.name)",
-        "var y = class {}; console.log(y.name)",
-    );
+    test("var x = class {}; var y = x; console.log(y.name)", "console.log(class {}.name)");
     test_keep_names(
         "var x = class {}; var y = x; console.log(y.name)",
-        "var x = class {}, y = x; console.log(y.name)",
+        "var x = class {}; console.log(x.name)",
     );
     test_keep_names(
         "var x = (class {}); var y = x; console.log(y.name)",
-        "var x = (class {}), y = x; console.log(y.name)",
+        "var x = (class {}); console.log(x.name)",
     );
     test_keep_names(
         "var x = class Foo {}; var y = x; console.log(y.name)",
-        "var y = class Foo {}; console.log(y.name)",
+        "console.log(class Foo {}.name)",
     );
 }
 

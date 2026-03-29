@@ -60,39 +60,45 @@ pub struct FilenameCaseConfigJson {
     ///
     /// You can set the `cases` option like this:
     /// ```json
-    /// "unicorn/filename-case": [
-    ///   "error",
-    ///   {
-    ///     "cases": {
-    ///       "camelCase": true,
-    ///       "pascalCase": true
+    /// {
+    ///   "unicorn/filename-case": [
+    ///     "error",
+    ///     {
+    ///       "cases": {
+    ///         "camelCase": true,
+    ///         "pascalCase": true
+    ///       }
     ///     }
-    ///   }
-    /// ]
+    ///   ]
+    /// }
     /// ```
     cases: FilenameCaseConfigJsonCases,
     /// The case style to enforce for filenames.
     ///
     /// You can set the `case` option like this:
     /// ```json
-    /// "unicorn/filename-case": [
-    ///   "error",
-    ///   {
-    ///     "case": "kebabCase"
-    ///   }
-    /// ]
+    /// {
+    ///   "unicorn/filename-case": [
+    ///     "error",
+    ///     {
+    ///       "case": "kebabCase"
+    ///     }
+    ///   ]
+    /// }
     /// ```
     case: FilenameCaseJsonOptions,
     /// A regular expression pattern for filenames to ignore.
     ///
     /// You can set the `ignore` option like this:
     /// ```json
-    /// "unicorn/filename-case": [
-    ///   "error",
-    ///   {
-    ///     "ignore": "^foo.*$"
-    ///   }
-    /// ]
+    /// {
+    ///   "unicorn/filename-case": [
+    ///     "error",
+    ///     {
+    ///       "ignore": "^foo.*$"
+    ///     }
+    ///   ]
+    /// }
     /// ```
     ignore: Option<Regex>,
     /// Whether to treat additional, `.`-separated parts of a filename as
@@ -190,7 +196,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for FilenameCase {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let mut config =
             FilenameCaseConfig { multiple_file_extensions: true, ..Default::default() };
 
@@ -211,7 +217,7 @@ impl Rule for FilenameCase {
                     "pascalCase" => config.pascal_case = true,
                     _ => config.kebab_case = true,
                 }
-                return Self(Box::new(config));
+                return Ok(Self(Box::new(config)));
             }
 
             if let Some(Value::Object(map)) = value.get("cases") {
@@ -224,12 +230,12 @@ impl Rule for FilenameCase {
                         _ => (),
                     }
                 }
-                return Self(Box::new(config));
+                return Ok(Self(Box::new(config)));
             }
         }
 
         config.kebab_case = true;
-        Self(Box::new(config))
+        Ok(Self(Box::new(config)))
     }
 
     fn run_once<'a>(&self, ctx: &LintContext<'_>) {

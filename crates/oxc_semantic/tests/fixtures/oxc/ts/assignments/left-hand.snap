@@ -5,7 +5,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/ts/assignments/left-hand.ts
 [
   {
     "children": [],
-    "flags": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(Top)",
     "id": 0,
     "node": "Program",
     "symbols": [
@@ -19,49 +19,57 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/ts/assignments/left-hand.ts
             "flags": "ReferenceFlags(Read | Write)",
             "id": 0,
             "name": "Foo",
-            "node_id": 10
+            "node_id": 10,
+            "scope_id": 0
           },
           {
             "flags": "ReferenceFlags(Write)",
             "id": 1,
             "name": "Foo",
-            "node_id": 16
+            "node_id": 16,
+            "scope_id": 0
           },
           {
             "flags": "ReferenceFlags(Write)",
             "id": 2,
             "name": "Foo",
-            "node_id": 21
+            "node_id": 21,
+            "scope_id": 0
           },
           {
             "flags": "ReferenceFlags(Write)",
             "id": 3,
             "name": "Foo",
-            "node_id": 27
+            "node_id": 27,
+            "scope_id": 0
           },
           {
             "flags": "ReferenceFlags(Read)",
             "id": 4,
             "name": "Foo",
-            "node_id": 34
+            "node_id": 34,
+            "scope_id": 0
           },
           {
             "flags": "ReferenceFlags(Read)",
             "id": 5,
             "name": "Foo",
-            "node_id": 42
+            "node_id": 42,
+            "scope_id": 0
           },
           {
             "flags": "ReferenceFlags(Read)",
             "id": 6,
             "name": "Foo",
-            "node_id": 49
+            "node_id": 49,
+            "scope_id": 0
           },
           {
             "flags": "ReferenceFlags(Read)",
             "id": 7,
             "name": "Foo",
-            "node_id": 57
+            "node_id": 57,
+            "scope_id": 0
           }
         ]
       }

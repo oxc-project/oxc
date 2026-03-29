@@ -1,7 +1,7 @@
 use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -10,6 +10,7 @@ use crate::{
     AstNode,
     ast_util::get_declaration_of_variable,
     context::LintContext,
+    fixer::{RuleFix, RuleFixer},
     rule::{DefaultRuleConfig, Rule},
 };
 
@@ -19,7 +20,7 @@ fn no_typeof_undefined_diagnostic(span: Span) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoTypeofUndefined {
     /// If set to `true`, also report `typeof x === "undefined"` when `x` may be a global
     /// variable that is not declared (commonly checked via `typeof foo === "undefined"`).
@@ -49,7 +50,7 @@ declare_oxc_lint!(
     NoTypeofUndefined,
     unicorn,
     pedantic,
-    pending,
+    fix_or_suggestion,
     config = NoTypeofUndefined,
 );
 
@@ -77,21 +78,32 @@ impl Rule for NoTypeofUndefined {
             return;
         }
 
-        if !self.check_global_variables && is_global_variable(&unary_expr.argument, ctx) {
-            return;
-        }
-
         if !bin_expr.right.is_specific_string_literal("undefined") {
             return;
         }
 
-        ctx.diagnostic(no_typeof_undefined_diagnostic(bin_expr.span));
+        let is_global_variable = is_global_variable(&unary_expr.argument, ctx);
+
+        if !self.check_global_variables && is_global_variable {
+            return;
+        }
+
+        if is_global_variable {
+            ctx.diagnostic_with_suggestion(
+                no_typeof_undefined_diagnostic(bin_expr.span),
+                |fixer| {
+                    generate_fix(fixer, &unary_expr.argument, bin_expr.operator, bin_expr.span, ctx)
+                },
+            );
+        } else {
+            ctx.diagnostic_with_fix(no_typeof_undefined_diagnostic(bin_expr.span), |fixer| {
+                generate_fix(fixer, &unary_expr.argument, bin_expr.operator, bin_expr.span, ctx)
+            });
+        }
     }
 
-    fn from_configuration(value: serde_json::Value) -> Self {
-        serde_json::from_value::<DefaultRuleConfig<NoTypeofUndefined>>(value)
-            .unwrap_or_default()
-            .into_inner()
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 }
 
@@ -101,6 +113,22 @@ fn is_global_variable<'a>(ident: &Expression<'a>, ctx: &LintContext<'a>) -> bool
     };
 
     get_declaration_of_variable(ident, ctx).is_none()
+}
+
+fn generate_fix<'a>(
+    fixer: RuleFixer<'_, 'a>,
+    argument: &Expression<'a>,
+    operator: BinaryOperator,
+    span: Span,
+    ctx: &LintContext<'a>,
+) -> RuleFix {
+    let argument_text = ctx.source_range(argument.span());
+    let op = match operator {
+        BinaryOperator::StrictEquality | BinaryOperator::Equality => "===",
+        BinaryOperator::StrictInequality | BinaryOperator::Inequality => "!==",
+        _ => unreachable!(),
+    };
+    fixer.replace(span, format!("{argument_text} {op} undefined"))
 }
 
 #[test]
@@ -152,5 +180,24 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoTypeofUndefined::NAME, NoTypeofUndefined::PLUGIN, pass, fail).test_and_snapshot();
+    let fix = vec![
+        (r#"typeof a.b === "undefined""#, r"a.b === undefined", None),
+        (r#"typeof a.b !== "undefined""#, r"a.b !== undefined", None),
+        (r#"typeof a.b == "undefined""#, r"a.b === undefined", None),
+        (r#"typeof a.b != "undefined""#, r"a.b !== undefined", None),
+        (r"typeof a.b == 'undefined'", r"a.b === undefined", None),
+        (r#"let foo; typeof foo === "undefined""#, r"let foo; foo === undefined", None),
+        (r#"const foo = 1; typeof foo === "undefined""#, r"const foo = 1; foo === undefined", None),
+        (r#"var foo; typeof foo === "undefined""#, r"var foo; foo === undefined", None),
+        (r#"typeof foo.bar === "undefined""#, r"foo.bar === undefined", None),
+        (
+            r#"typeof foo === "undefined""#,
+            r"foo === undefined",
+            Some(serde_json::json!([{ "checkGlobalVariables": true }])),
+        ),
+    ];
+
+    Tester::new(NoTypeofUndefined::NAME, NoTypeofUndefined::PLUGIN, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

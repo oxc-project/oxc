@@ -1,9 +1,9 @@
-use crate::ctx::Ctx;
+use crate::TraverseCtx;
 use oxc_allocator::TakeIn;
 use oxc_ast::{NONE, ast::*};
 use oxc_compat::ESFeature;
 use oxc_ecmascript::{
-    constant_evaluation::{ConstantEvaluation, ConstantValue},
+    constant_evaluation::{ConstantEvaluation, ConstantValue, DetermineValueType},
     side_effects::MayHaveSideEffects,
 };
 use oxc_span::{ContentEq, GetSpan};
@@ -16,7 +16,7 @@ impl<'a> PeepholeOptimizations {
         test: Expression<'a>,
         consequent: Expression<'a>,
         alternate: Expression<'a>,
-        ctx: &mut Ctx<'a, '_>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let mut cond_expr = ctx.ast.conditional_expression(span, test, consequent, alternate);
         Self::minimize_conditional_expression(&mut cond_expr, ctx)
@@ -26,7 +26,7 @@ impl<'a> PeepholeOptimizations {
     /// `MangleIfExpr`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_ast_helpers.go#L2745>
     pub fn minimize_conditional_expression(
         expr: &mut ConditionalExpression<'a>,
-        ctx: &mut Ctx<'a, '_>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
         match &mut expr.test {
             // "(a, b) ? c : d" => "a, b ? c : d"
@@ -395,6 +395,60 @@ impl<'a> PeepholeOptimizations {
             _ => {}
         }
 
+        // "a ? 1 : 0" => "+a" (if a is boolean) or "+!!a" (if no parens needed)
+        // "a ? 0 : 1" => "+!a" (if no parens needed)
+        match (
+            expr.consequent
+                .evaluate_value(ctx)
+                .and_then(ConstantValue::into_number)
+                .filter(|_| !expr.consequent.may_have_side_effects(ctx)),
+            expr.alternate
+                .evaluate_value(ctx)
+                .and_then(ConstantValue::into_number)
+                .filter(|_| !expr.alternate.may_have_side_effects(ctx)),
+        ) {
+            (Some(1.0), Some(0.0)) => {
+                // "a ? 1 : 0"
+                let is_boolean = expr.test.value_type(ctx).is_boolean();
+                let needs_parens = Self::test_needs_parens(&expr.test);
+                if is_boolean {
+                    // Known boolean: +a (saves 3 chars: "a?1:0" => "+a")
+                    let test = expr.test.take_in(ctx.ast);
+                    return Some(ctx.ast.expression_unary(
+                        expr.span,
+                        UnaryOperator::UnaryPlus,
+                        test,
+                    ));
+                }
+                // Unknown type: +!!a (saves 1 char: "a?1:0" => "+!!a")
+                // But skip if parens would be needed (e.g., "a+b?1:0" => "+!!(a+b)" is longer)
+                if !needs_parens {
+                    let test = expr.test.take_in(ctx.ast);
+                    let test = Self::minimize_not(expr.span, test, ctx);
+                    let test = Self::minimize_not(expr.span, test, ctx);
+                    return Some(ctx.ast.expression_unary(
+                        expr.span,
+                        UnaryOperator::UnaryPlus,
+                        test,
+                    ));
+                }
+            }
+            (Some(0.0), Some(1.0)) => {
+                // "a ? 0 : 1" => "+!a"
+                // Skip if parens would be needed (e.g., "a+b?0:1" => "+!(a+b)" is same length)
+                if !Self::test_needs_parens(&expr.test) {
+                    let test = expr.test.take_in(ctx.ast);
+                    let test = Self::minimize_not(expr.span, test, ctx);
+                    return Some(ctx.ast.expression_unary(
+                        expr.span,
+                        UnaryOperator::UnaryPlus,
+                        test,
+                    ));
+                }
+            }
+            _ => {}
+        }
+
         if ctx.expr_eq(&expr.alternate, &expr.consequent) {
             // "/* @__PURE__ */ a() ? b : b" => "b"
             if !expr.test.may_have_side_effects(ctx) {
@@ -416,7 +470,7 @@ impl<'a> PeepholeOptimizations {
     /// - `x ? a = 0 : a = 1` -> `a = x ? 0 : 1`
     fn try_merge_conditional_expression_inside(
         expr: &mut ConditionalExpression<'a>,
-        ctx: &mut Ctx<'a, '_>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
         let (
             Expression::AssignmentExpression(consequent),
@@ -461,7 +515,7 @@ impl<'a> PeepholeOptimizations {
         target_id_name: &str,
         expr_to_inject: &mut Expression<'a>,
         expr: &mut Expression<'a>,
-        ctx: &mut Ctx<'a, '_>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> bool {
         if Self::inject_optional_chaining_if_matched_inner(
             target_id_name,
@@ -486,7 +540,7 @@ impl<'a> PeepholeOptimizations {
         target_id_name: &str,
         expr_to_inject: &mut Expression<'a>,
         expr: &mut Expression<'a>,
-        ctx: &mut Ctx<'a, '_>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> bool {
         match expr {
             Expression::StaticMemberExpression(e) => {
@@ -586,99 +640,18 @@ impl<'a> PeepholeOptimizations {
         }
         false
     }
-}
 
-#[cfg(test)]
-mod test {
-    use crate::tester::{test, test_same, test_target};
-
-    #[test]
-    fn test_minimize_expr_condition() {
-        test("(x ? true : false) && y()", "x && y()");
-        test("(x ? false : true) && y()", "!x && y()");
-        test("(x ? true : y) && y()", "(x || y) && y();");
-        test("(x ? y : false) && y()", "(x && y) && y()");
-        test("var x; (x && true) && y()", "var x; x && y()");
-        test("var x; (x && false) && y()", "var x");
-        test("(x && true) && y()", "x && y()");
-        test("(x && false) && y()", "x");
-        test("var x; (x || true) && y()", "var x; y()");
-        test("var x; (x || false) && y()", "var x; x && y()");
-
-        test("(x || true) && y()", "x, y()");
-        test("(x || false) && y()", "x && y()");
-
-        test("let x = foo ? true : false", "let x = !!foo");
-        test("let x = foo ? true : bar", "let x = foo ? !0 : bar");
-        test("let x = foo ? bar : false", "let x = foo ? bar : !1");
-        test("function x () { return a ? true : false }", "function x() { return !!a }");
-        test("function x () { return a ? false : true }", "function x() { return !a }");
-        test("function x () { return a ? true : b }", "function x() { return a ? !0 : b }");
-        // can't be minified e.g. `a = ''` would return `''`
-        test("function x() { return a && true }", "function x() { return a && !0 }");
-
-        test("foo ? bar : bar", "foo, bar");
-        test_same("foo ? bar : baz");
-        test("foo() ? bar : bar", "foo(), bar");
-
-        test_same("var k = () => !!x;");
-    }
-
-    #[test]
-    fn minimize_conditional_exprs() {
-        test("(a, b) ? c : d", "a, b ? c : d");
-        test("!a ? b : c", "a ? c : b");
-        test("/* @__PURE__ */ a() ? b : b", "b");
-        test("a ? b : b", "a, b");
-        test("a ? true : false", "a");
-        test("a ? false : true", "a");
-        test("a ? a : b", "a || b");
-        test("a ? b : a", "a && b");
-        test("a ? b ? c : d : d", "a && b ? c : d");
-        test("a ? b : c ? b : d", "a || c ? b : d");
-        test("a ? c : (b, c)", "(a || b), c");
-        test("a ? (b, c) : c", "(a && b), c");
-        test("a ? b || c : c", "(a && b) || c");
-        test("a ? c : b && c", "(a || b) && c");
-        test("var a, b; a ? b(c, d) : b(e, d)", "var a, b; b(a ? c : e, d)");
-        test("var a, b; a ? b(...c) : b(...e)", "var a, b; b(...a ? c : e)");
-        test("var a, b; a ? b(c) : b(e)", "var a, b; b(a ? c : e)");
-        test("var a, b; a ? b() : b()", "var a, b; b()");
-        test("var a, b; a === 0 ? b(c) : b(e)", "var a, b; b(a === 0 ? c : e)");
-        test_same("var a; a === 0 ? b(c) : b(e)"); // accessing global `b` may assign a different value to `a`
-        test_same("var b; a === 0 ? b(c) : b(e)"); // accessing global `a` may assign a different value to `b`
-        test_same("a === 0 ? b(c) : b(e)"); // accessing global `a`, `b` may have a side effect
-        test("a() != null ? a() : b", "a() == null ? b : a()");
-        test("var a; a != null ? a : b", "var a; a ?? b");
-        test("var a; (a = _a) != null ? a : b", "var a; (a = _a) ?? b");
-        test("v = a != null ? a : b", "v = a == null ? b : a"); // accessing global `a` may have a getter with side effects
-        test_target("var a; v = a != null ? a : b", "var a; v = a == null ? b : a", "chrome79");
-        test("var a; v = a != null ? a.b.c[d](e) : undefined", "var a; v = a?.b.c[d](e)");
-        test(
-            "var a; v = (a = _a) != null ? a.b.c[d](e) : undefined",
-            "var a; v = (a = _a)?.b.c[d](e)",
-        );
-        test("v = a != null ? a.b.c[d](e) : undefined", "v = a == null ? void 0 : a.b.c[d](e)"); // accessing global `a` may have a getter with side effects
-        test(
-            "var a, undefined = 1; v = a != null ? a.b.c[d](e) : undefined",
-            "var a; v = a == null ? 1 : a.b.c[d](e)",
-        );
-        test_target(
-            "var a; v = a != null ? a.b.c[d](e) : undefined",
-            "var a; v = a == null ? void 0 : a.b.c[d](e)",
-            "chrome79",
-        );
-        test("v = cmp !== 0 ? cmp : (bar, cmp);", "v = (cmp === 0 && bar, cmp);");
-        test("v = cmp === 0 ? cmp : (bar, cmp);", "v = (cmp === 0 || bar, cmp);");
-        test("v = cmp !== 0 ? (bar, cmp) : cmp;", "v = (cmp === 0 || bar, cmp);");
-        test("v = cmp === 0 ? (bar, cmp) : cmp;", "v = (cmp === 0 && bar, cmp);");
-    }
-
-    #[test]
-    fn compress_conditional() {
-        test("foo ? foo : bar", "foo || bar");
-        test("foo ? bar : foo", "foo && bar");
-        test_same("x.y ? x.y : bar");
-        test_same("x.y ? bar : x.y");
+    /// Returns `true` if the expression would need parentheses when used as a unary operand.
+    /// Binary and conditional expressions need wrapping; identifiers, calls, unary, etc. do not.
+    fn test_needs_parens(expr: &Expression<'_>) -> bool {
+        matches!(
+            expr,
+            Expression::BinaryExpression(_)
+                | Expression::LogicalExpression(_)
+                | Expression::ConditionalExpression(_)
+                | Expression::AssignmentExpression(_)
+                | Expression::SequenceExpression(_)
+                | Expression::YieldExpression(_)
+        )
     }
 }

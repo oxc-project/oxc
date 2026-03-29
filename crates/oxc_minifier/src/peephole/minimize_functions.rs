@@ -1,12 +1,13 @@
-use crate::ctx::Ctx;
 use crate::peephole::PeepholeOptimizations;
 use oxc_allocator::TakeIn;
 use oxc_ast::ast::{Argument, Expression, Function};
 
+use crate::TraverseCtx;
+
 impl<'a> PeepholeOptimizations {
     fn convert_function_expression_to_arrow_function_expression(
         func_expr: &mut Function<'a>,
-        ctx: &Ctx<'a, '_>,
+        ctx: &TraverseCtx<'a>,
     ) -> Expression<'a> {
         if let Some(scope) = func_expr.scope_id.take() {
             ctx.ast.expression_arrow_function_with_scope_id_and_pure_and_pife(
@@ -38,7 +39,7 @@ impl<'a> PeepholeOptimizations {
     /// - (function () {}).call(this, a, b); -> (() => {})(a, b))
     pub fn substitute_function_call_this_for_arrow_function(
         e: &mut Expression<'a>,
-        ctx: &mut Ctx<'a, '_>,
+        ctx: &mut TraverseCtx<'a>,
     ) {
         let Expression::CallExpression(call_expr) = e else { return };
 
@@ -60,32 +61,5 @@ impl<'a> PeepholeOptimizations {
                 Self::convert_function_expression_to_arrow_function_expression(func_expr, ctx);
             call_expr.arguments.remove(0);
         }
-    }
-}
-
-#[cfg(test)]
-mod test {
-    use crate::tester::{test, test_same};
-
-    #[test]
-    fn simplify_call_this_expression() {
-        test("(function () {}.call(this));", "");
-        test("(function () { fn(); }.call(this));", "fn();");
-        test("(function () { fn(); }.call(this, 2));", "(()=>{fn();})(2);");
-        test("(function () {}.call(this));", "");
-        test("var x = (function () { return true; }.call(this));", "var x = !0;");
-        test(
-            "var x = (function () { foo() }).call(this, a, b);",
-            "var x = (() => { foo() })(a, b)",
-        );
-        test_same("(function () {}).call(foo)");
-        test_same("(function () {}).call(test())");
-        test_same("(function () { foo() }).call(test)");
-        test_same("(function* () {foo()}).call(this)");
-        test_same("(async function () {foo()}).call(this)");
-        test("(function* test () {foo()}).call(this)", "(function* () {foo()}).call(this)");
-        test("(function* test () {}).call(this)", "(function* () {}).call(this)");
-        test("(async function test(){foo()}).call(this)", "(async function (){foo()}).call(this)");
-        test_same("(function test() {console.log(test.name)}).call(this)");
     }
 }

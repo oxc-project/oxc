@@ -22,11 +22,14 @@ use serde_json::Value;
 use crate::{context::LintContext, rule::Rule};
 
 fn assignment_to_param_diagnostic(name: &str, span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Assignment to function parameter '{name}'.")).with_label(span)
+    OxcDiagnostic::warn(format!("Assignment to function parameter '{name}'."))
+        .with_help("Consider using a different variable to avoid unintended side effects on the parameter.")
+        .with_label(span)
 }
 
 fn assignment_to_param_property_diagnostic(name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Assignment to property of function parameter '{name}'."))
+        .with_help("Consider using a different variable to avoid unintended side effects on the parameter's properties.")
         .with_label(span)
 }
 
@@ -86,18 +89,18 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoParamReassign {
-    fn from_configuration(value: Value) -> Self {
+    fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
         let mut rule = Self::default();
         let config = &mut *rule.0;
-        let Value::Array(array) = value else { return rule };
-        let Some(Value::Object(options)) = array.first() else { return rule };
+        let Value::Array(array) = value else { return Ok(rule) };
+        let Some(Value::Object(options)) = array.first() else { return Ok(rule) };
 
         if let Some(Value::Bool(props)) = options.get("props") {
             config.props = *props;
         }
 
         if !config.props {
-            return rule;
+            return Ok(rule);
         }
 
         if let Some(Value::Array(items)) = options.get("ignorePropertyModificationsFor") {
@@ -118,7 +121,7 @@ impl Rule for NoParamReassign {
             }
         }
 
-        rule
+        Ok(rule)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

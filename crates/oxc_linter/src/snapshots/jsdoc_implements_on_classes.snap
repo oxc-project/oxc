@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-jsdoc(implements-on-classes): `@implements` used on a non-constructor function
    ╭─[implements_on_classes.tsx:3:13]
  2 │                   /**

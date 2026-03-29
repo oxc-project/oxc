@@ -29,10 +29,11 @@ use oxc::{
     transformer::{TransformOptions, Transformer},
 };
 use oxc_formatter::{
-    ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, Expand, FormatOptions,
-    Formatter, IndentStyle, IndentWidth, LineEnding, LineWidth, QuoteProperties, QuoteStyle,
-    Semicolons, SortImportsOptions, SortOrder, TrailingCommas, default_groups,
-    default_internal_patterns, get_parse_options,
+    ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, CustomGroupDefinition,
+    Expand, FormatOptions, Formatter, GroupEntry, ImportModifier, ImportSelector, IndentStyle,
+    IndentWidth, LineEnding, LineWidth, QuoteProperties, QuoteStyle, Semicolons,
+    SortImportsOptions, SortOrder, TrailingCommas, default_groups, default_internal_patterns,
+    get_parse_options,
 };
 use oxc_linter::{
     ConfigStore, ConfigStoreBuilder, ContextSubHost, ExternalPluginStore, LintOptions, Linter,
@@ -337,7 +338,7 @@ impl Oxc {
         };
         let mangle = if options.run.mangle {
             options.mangle.map(|o| MangleOptions {
-                top_level: o.top_level,
+                top_level: Some(o.top_level),
                 keep_names: MangleOptionsKeepNames { function: o.keep_names, class: o.keep_names },
                 debug: false,
             })
@@ -392,15 +393,14 @@ impl Oxc {
             let mut external_plugin_store = ExternalPluginStore::default();
             let semantic_ret = SemanticBuilder::new().with_cfg(true).build(program);
             let semantic = semantic_ret.semantic;
-            let lint_config = if linter_options.config.is_some() {
-                let oxlintrc =
-                    Oxlintrc::from_string(&linter_options.config.as_ref().unwrap().clone())
-                        .unwrap_or_default();
+            let lint_config = if let Some(config) = &linter_options.config {
+                let oxlintrc = Oxlintrc::from_string(config).unwrap_or_default();
                 let config_builder = ConfigStoreBuilder::from_oxlintrc(
                     false,
                     oxlintrc,
                     None,
                     &mut external_plugin_store,
+                    None,
                 )
                 .unwrap_or_default();
                 config_builder.build(&mut external_plugin_store)
@@ -510,14 +510,77 @@ impl Oxc {
             }
         }
 
-        if let Some(ref sort_imports_config) = options.experimental_sort_imports {
+        if let Some(ref sort_imports_config) = options.sort_imports {
             let order = sort_imports_config
                 .order
                 .as_ref()
                 .and_then(|o| o.parse::<SortOrder>().ok())
                 .unwrap_or_default();
 
-            format_options.experimental_sort_imports = Some(SortImportsOptions {
+            let custom_groups = sort_imports_config
+                .custom_groups
+                .as_ref()
+                .map(|cgs| {
+                    cgs.iter()
+                        .filter_map(|cg| {
+                            let group_name = cg.group_name.clone()?;
+                            Some(CustomGroupDefinition {
+                                group_name,
+                                element_name_pattern: cg
+                                    .element_name_pattern
+                                    .clone()
+                                    .unwrap_or_default(),
+                                selector: cg
+                                    .selector
+                                    .as_ref()
+                                    .and_then(|s| ImportSelector::parse(s)),
+                                modifiers: cg.modifiers.as_ref().map_or_else(Vec::new, |mods| {
+                                    mods.iter().filter_map(|m| ImportModifier::parse(m)).collect()
+                                }),
+                            })
+                        })
+                        .collect()
+                })
+                .unwrap_or_default();
+
+            // Parse groups with inline newlinesBetween markers, matching oxfmtrc format
+            let (groups, newline_boundary_overrides) =
+                sort_imports_config.groups.as_ref().map_or_else(
+                    || (default_groups(), vec![]),
+                    |items| {
+                        let mut groups = Vec::new();
+                        let mut newline_boundary_overrides: Vec<Option<bool>> = Vec::new();
+                        let mut pending_override: Option<bool> = None;
+
+                        for item in items {
+                            if let Either::B(Either::B(marker)) = item {
+                                // { newlinesBetween: bool } marker
+                                if let Some(v) = marker.newlines_between {
+                                    pending_override = Some(v);
+                                }
+                            } else {
+                                // String or Vec<String> → group entries
+                                if !groups.is_empty() {
+                                    newline_boundary_overrides.push(pending_override.take());
+                                }
+                                let names: Vec<&str> = match item {
+                                    Either::A(s) => vec![s.as_str()],
+                                    Either::B(Either::A(v)) => {
+                                        v.iter().map(String::as_str).collect()
+                                    }
+                                    Either::B(Either::B(_)) => unreachable!(),
+                                };
+                                groups.push(
+                                    names.iter().map(|name| GroupEntry::parse(name)).collect(),
+                                );
+                            }
+                        }
+
+                        (groups, newline_boundary_overrides)
+                    },
+                );
+
+            format_options.sort_imports = Some(SortImportsOptions {
                 partition_by_newline: sort_imports_config.partition_by_newline.unwrap_or(false),
                 partition_by_comment: sort_imports_config.partition_by_comment.unwrap_or(false),
                 sort_side_effects: sort_imports_config.sort_side_effects.unwrap_or(false),
@@ -528,7 +591,9 @@ impl Oxc {
                     .internal_pattern
                     .clone()
                     .unwrap_or_else(default_internal_patterns),
-                groups: sort_imports_config.groups.clone().unwrap_or_else(default_groups),
+                groups,
+                custom_groups,
+                newline_boundary_overrides,
             });
         }
 
@@ -552,12 +617,11 @@ impl Oxc {
             let formatter = Formatter::new(&allocator, format_options);
             let formatted = formatter.format(&ret.program);
             if run_options.formatter {
+                self.formatter_ir_text = formatted.document().to_string();
                 self.formatter_formatted_text = match formatted.print() {
                     Ok(printer) => printer.into_code(),
                     Err(err) => err.to_string(),
                 };
-
-                self.formatter_ir_text = formatted.into_document().to_string();
             }
         }
     }

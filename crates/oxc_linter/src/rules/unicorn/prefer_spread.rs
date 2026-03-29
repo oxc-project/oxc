@@ -116,6 +116,10 @@ fn check_unicorn_prefer_spread<'a>(
                 return;
             }
 
+            if is_typed_array_or_buffer_construction(member_expr_obj) {
+                return;
+            }
+
             if let Expression::Identifier(ident) = member_expr_obj
                 && IGNORED_SLICE_CALLEE.contains(&ident.name.as_str())
             {
@@ -194,6 +198,31 @@ fn check_unicorn_prefer_spread<'a>(
 }
 
 const IGNORED_SLICE_CALLEE: [&str; 5] = ["arrayBuffer", "blob", "buffer", "file", "this"];
+
+/// Check if an expression is `new TypedArray(...)`, `new ArrayBuffer(...)`,
+/// or `new SharedArrayBuffer(...)`. Spreading these either fails (ArrayBuffer
+/// has no iterator) or changes the type (TypedArray → number[]).
+fn is_typed_array_or_buffer_construction(expr: &Expression) -> bool {
+    let Expression::NewExpression(new_expr) = expr else { return false };
+    let Expression::Identifier(ident) = &new_expr.callee else { return false };
+    matches!(
+        ident.name.as_str(),
+        "ArrayBuffer"
+            | "SharedArrayBuffer"
+            | "Int8Array"
+            | "Uint8Array"
+            | "Uint8ClampedArray"
+            | "Int16Array"
+            | "Uint16Array"
+            | "Int32Array"
+            | "Uint32Array"
+            | "Float16Array"
+            | "Float32Array"
+            | "Float64Array"
+            | "BigInt64Array"
+            | "BigUint64Array"
+    )
+}
 
 fn is_not_array(expr: &Expression, ctx: &LintContext) -> bool {
     if matches!(
@@ -275,40 +304,40 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        r"[...set].map(() => {});",
-        r"Int8Array.from(set);",
-        r"Uint8Array.from(set);",
-        r"Uint8ClampedArray.from(set);",
-        r"Int16Array.from(set);",
-        r"Uint16Array.from(set);",
-        r"Int32Array.from(set);",
-        r"Uint32Array.from(set);",
-        r"Float16Array.from(set);",
-        r"Float32Array.from(set);",
-        r"Float64Array.from(set);",
-        r"BigInt64Array.from(set);",
-        r"BigUint64Array.from(set);",
-        r"new Array.from(foo);",
-        r"from(foo);",
+        "[...set].map(() => {});",
+        "Int8Array.from(set);",
+        "Uint8Array.from(set);",
+        "Uint8ClampedArray.from(set);",
+        "Int16Array.from(set);",
+        "Uint16Array.from(set);",
+        "Int32Array.from(set);",
+        "Uint32Array.from(set);",
+        "Float16Array.from(set);",
+        "Float32Array.from(set);",
+        "Float64Array.from(set);",
+        "BigInt64Array.from(set);",
+        "BigUint64Array.from(set);",
+        "new Array.from(foo);",
+        "from(foo);",
         r#"Array["from"](foo);"#,
-        r"Array[from](foo);",
-        r"Array.foo(foo);",
-        r"foo.from(foo);",
-        r"lib.Array.from(foo);",
-        r"Array.from();",
-        r"Array.from(foo, mapFn, thisArg, extra);",
-        r"Array.from(...argumentsArray);",
-        r"Array.from(set, mapFn).reduce(() => {});",
-        r"Array.from(set, mapFn, thisArg).reduce(() => {});",
-        r"Array.from(set, () => {}, thisArg).reduce(() => {});",
-        r"Array.from({length: 10});",
-        r"new Array.concat(1)",
-        r"concat(1)",
-        r"array[concat](1)",
+        "Array[from](foo);",
+        "Array.foo(foo);",
+        "foo.from(foo);",
+        "lib.Array.from(foo);",
+        "Array.from();",
+        "Array.from(foo, mapFn, thisArg, extra);",
+        "Array.from(...argumentsArray);",
+        "Array.from(set, mapFn).reduce(() => {});",
+        "Array.from(set, mapFn, thisArg).reduce(() => {});",
+        "Array.from(set, () => {}, thisArg).reduce(() => {});",
+        "Array.from({length: 10});",
+        "new Array.concat(1)",
+        "concat(1)",
+        "array[concat](1)",
         r#""foo".concat("bar")"#,
         r#"`${foo}`.concat("bar")"#,
         r#"const string = 'foo';
-			foo = string.concat("bar");"#,
+            foo = string.concat("bar");"#,
         "const bufA = Buffer.concat([buf1, buf2, buf3], totalLength);",
         "Foo.concat(1)",
         "FooBar.concat(1)",
@@ -316,68 +345,87 @@ fn test() {
         r#"["1", "2"].join(",").concat("...")"#,
         r#"foo.join(",").concat("...")"#,
         "foo.join().concat(bar)",
-        //"(a + b).concat(c)",
-        r"new Array.slice()",
-        r"slice()",
-        r"array[slice]()",
-        r"array.slice",
-        r"array.slice(1)",
-        r"array.slice(...[])",
-        r"array.slice(...[0])",
-        r"array.slice(0 + 0)",
+        // "(a + b).concat(c)",
+        "new Array.slice()",
+        "slice()",
+        "array[slice]()",
+        "array.slice",
+        "array.slice(1)",
+        "array.slice(...[])",
+        "array.slice(...[0])",
+        "array.slice(0 + 0)",
         r#"array.slice("")"#,
-        r"array.slice(null)",
-        r"const ZERO = 0;array.slice(ZERO)",
-        r"array.slice(0, array.length)",
-        r"array.slice(0, 0)",
-        r"array.notSlice()",
-        r"[...foo].slice()",
-        r"[foo].slice()",
-        r"arrayBuffer.slice()",
-        r"blob.slice()",
-        r"buffer.slice()",
-        r"file.slice()",
-        r"class A {foo() {this.slice()}}",
-        r"new Array.toSpliced()",
-        r"toSpliced()",
-        r"array[toSpliced]()",
-        r"array.toSpliced",
-        r"array.toSpliced(0)",
-        r"array.toSpliced(...[])",
-        r"array.toSpliced(...[0])",
-        r"array.toSpliced(0 + 0)",
+        "array.slice(null)",
+        "const ZERO = 0;array.slice(ZERO)",
+        "array.slice(0, array.length)",
+        "array.slice(0, 0)",
+        "array.notSlice()",
+        "[...foo].slice()",
+        "[foo].slice()",
+        "arrayBuffer.slice()",
+        "blob.slice()",
+        "buffer.slice()",
+        "file.slice()",
+        "class A {foo() {this.slice()}}",
+        // TODO: Handle optional chaining case.
+        // "scopeManager?.scopes.slice()",
+        // TypedArray/ArrayBuffer constructors - spreading doesn't work or changes type
+        "new ArrayBuffer(10).slice()",
+        "new ArrayBuffer(10).slice(0)",
+        "new SharedArrayBuffer(10).slice()",
+        "new SharedArrayBuffer(10).slice(0)",
+        "new Int8Array([1, 2, 3]).slice()",
+        "new Int8Array([1, 2, 3]).slice(0)",
+        "new Uint8Array([10, 20, 30, 40, 50]).slice()",
+        "new Uint8Array([10, 20, 30, 40, 50]).slice(0)",
+        "new Uint8ClampedArray([1, 2, 3]).slice()",
+        "new Int16Array([1, 2, 3]).slice()",
+        "new Uint16Array([1, 2, 3]).slice()",
+        "new Int32Array([1, 2, 3]).slice()",
+        "new Uint32Array([1, 2, 3]).slice()",
+        "new Float32Array([1, 2, 3]).slice()",
+        "new Float64Array([1, 2, 3]).slice()",
+        "new BigInt64Array([1n, 2n, 3n]).slice()",
+        "new BigUint64Array([1n, 2n, 3n]).slice()",
+        "new Array.toSpliced()",
+        "toSpliced()",
+        "array[toSpliced]()",
+        "array.toSpliced",
+        "array.toSpliced(0)",
+        "array.toSpliced(...[])",
+        "array.toSpliced(...[0])",
+        "array.toSpliced(0 + 0)",
         r#"array.toSpliced("")"#,
-        r"array.toSpliced(null)",
-        r"const ZERO = 0;array.toSpliced(0, ZERO)",
-        r"array.toSpliced(0, array.length)",
-        r"array.toSpliced(0, 0)",
-        r"array.notToSpliced()",
-        r"[...foo].toSpliced()",
-        r"[foo].toSpliced()",
-        r"array.toSpliced(100, 0)",
-        r"array.toSpliced(-1, 0)",
+        "array.toSpliced(null)",
+        "const ZERO = 0;array.toSpliced(0, ZERO)",
+        "array.toSpliced(0, array.length)",
+        "array.toSpliced(0, 0)",
+        "array.notToSpliced()",
+        "[...foo].toSpliced()",
+        "[foo].toSpliced()",
+        "array.toSpliced(100, 0)",
+        "array.toSpliced(-1, 0)",
         r#"new foo.split("")"#,
         r#"split("")"#,
         r#"string[split]("")"#,
-        r"string.split",
-        r"string.split(1)",
+        "string.split",
+        "string.split(1)",
         r#"string.split(..."")"#,
         r#"string.split(...[""])"#,
         r#"string.split("" + "")"#,
-        r"string.split(0)",
-        r"string.split(false)",
-        r"string.split(undefined)",
-        r"string.split(0n)",
-        r"string.split(null)",
+        "string.split(0)",
+        "string.split(false)",
+        "string.split(undefined)",
+        "string.split(0n)",
+        "string.split(null)",
         r#"string.split(/""/)"#,
-        r"string.split(``)",
+        "string.split(``)",
         r#"const EMPTY_STRING = ""; string.split(EMPTY_STRING)"#,
         r#"string.split("", limit)"#,
         r#""".split(string)"#,
-        r"string.split()",
+        "string.split()",
         r#"string.notSplit("")"#,
-        r#"const x = "foo"; x.concat(x);"#,
-        r#"const y = "foo"; const x = y; x.concat(x);"#,
+        // r#"const notString = 0; notString.split("")"#,
     ];
 
     let fail = vec![
@@ -386,42 +434,42 @@ fn test() {
         "Array.from(new Set([1, 2])).map(() => {});",
         r#"Array.from(document.querySelectorAll("*")).map(() => {});"#,
         "const foo = []
-			Array.from(arrayLike).forEach(doSomething)",
+            Array.from(arrayLike).forEach(doSomething)",
         r#"const foo = "1"
-			Array.from(arrayLike).forEach(doSomething)"#,
+            Array.from(arrayLike).forEach(doSomething)"#,
         "const foo = null
-			Array.from(arrayLike).forEach(doSomething)",
+            Array.from(arrayLike).forEach(doSomething)",
         "const foo = true
-			Array.from(arrayLike).forEach(doSomething)",
+            Array.from(arrayLike).forEach(doSomething)",
         "const foo = 1
-			Array.from(arrayLike).forEach(doSomething)",
+            Array.from(arrayLike).forEach(doSomething)",
         "const foo = /./
-			Array.from(arrayLike).forEach(doSomething)",
+            Array.from(arrayLike).forEach(doSomething)",
         "const foo = /./g
-			Array.from(arrayLike).forEach(doSomething)",
+            Array.from(arrayLike).forEach(doSomething)",
         "const foo = bar
-			Array.from(arrayLike).forEach(doSomething)",
+            Array.from(arrayLike).forEach(doSomething)",
         "const foo = bar.baz
-			Array.from(arrayLike).forEach(doSomething)",
+            Array.from(arrayLike).forEach(doSomething)",
         "function* foo() {
-				yield Array.from(arrayLike).forEach(doSomething)
-			}",
-        "const foo = \\`bar\\`
-			Array.from(arrayLike).forEach(doSomething)",
+                yield Array.from(arrayLike).forEach(doSomething)
+            }",
+        r"const foo = \\`bar\\`
+            Array.from(arrayLike).forEach(doSomething)",
         "const foo = [];
-			Array.from(arrayLike).forEach(doSomething)",
+            Array.from(arrayLike).forEach(doSomething)",
         "for (const key of Array.from(arrayLike)) {
-			}",
+            }",
         "for (const key in Array.from(arrayLike)) {
-			}",
+            }",
         "const foo = `${Array.from(arrayLike)}`",
         "async function foo(){
-				return await Array.from(arrayLike)
-			}",
+                return await Array.from(arrayLike)
+            }",
         "foo()
-			Array.from(arrayLike).forEach(doSomething)",
+            Array.from(arrayLike).forEach(doSomething)",
         "const foo = {}
-			Array.from(arrayLike).forEach(doSomething)",
+            Array.from(arrayLike).forEach(doSomething)",
         "(Array).from(foo)",
         "(Array.from)(foo)",
         "((Array).from)(foo)",
@@ -451,13 +499,13 @@ fn test() {
         "(( (( ((foo)).concat ))( (([2, 3])) ,) ))",
         "(( (( ((foo)).concat ))( (([2, 3])) , bar ) ))",
         "bar()
-			foo.concat(2)",
+            foo.concat(2)",
         "const foo = foo.concat(2)",
         "const foo = () => foo.concat(2)",
         "const five = 2 + 3;
-			foo.concat(five);",
+            foo.concat(five);",
         "const array = [2 + 3];
-			foo.concat(array);",
+            foo.concat(array);",
         "foo.concat([bar])",
         "foo.concat(bar)",
         "Array.from(set).concat([2, 3])",
@@ -485,17 +533,17 @@ fn test() {
         "[1,].concat([2,,], [3,,])",
         "[].concat([], [])",
         r#"const EMPTY_STRING = ""
-			const EMPTY_STRING_IN_ARRAY = ""
-			const EMPTY_STRING_IN_ARRAY_OF_ARRAY = ""
-			const array = [].concat(
-				undefined,
-				null,
-				EMPTY_STRING,
-				false,
-				0,
-				[EMPTY_STRING_IN_ARRAY],
-				[[EMPTY_STRING_IN_ARRAY_OF_ARRAY]]
-			)"#,
+            const EMPTY_STRING_IN_ARRAY = ""
+            const EMPTY_STRING_IN_ARRAY_OF_ARRAY = ""
+            const array = [].concat(
+                undefined,
+                null,
+                EMPTY_STRING,
+                false,
+                0,
+                [EMPTY_STRING_IN_ARRAY],
+                [[EMPTY_STRING_IN_ARRAY_OF_ARRAY]]
+            )"#,
         "[].concat((a.b.c), 2)",
         "[].concat(a.b(), 2)",
         "foo.concat(bar, 2, [3, 4], baz, 5, [6, 7])",
@@ -514,9 +562,9 @@ fn test() {
         "for (const a of b) foo.concat(1)",
         "while (test) foo.concat(1)",
         "do foo.concat(1); while (test)",
-        "with (foo) foo.concat(1)", // {"parserOptions": {"ecmaVersion": 6, "sourceType": "script"}},
+        "with (foo) foo.concat(1)", // {"parserOptions": {"sourceType": "script"}},
         "const baz = [2];
-			call(foo, ...[bar].concat(baz));",
+            call(foo, ...[bar].concat(baz));",
         r#"foo.join(foo, bar).concat("...")"#,
         "array.slice()",
         "array.slice().slice()",
@@ -526,9 +574,8 @@ fn test() {
         "(( (( (( array )).slice ))() ))",
         "(scopeManager?.scopes).slice()",
         "bar()
-			foo.slice()",
+            foo.slice()",
         r#""".slice()"#,
-        "new Uint8Array([10, 20, 30, 40, 50]).slice()",
         "array.slice(0)",
         "array.slice(0b0)",
         "array.slice(0.00)",
@@ -538,7 +585,7 @@ fn test() {
         "const copy = array.toSpliced()",
         "(( (( (( array )).toSpliced ))() ))",
         "bar()
-        foo.toSpliced()",
+            foo.toSpliced()",
         r#""".toSpliced()"#,
         "new Uint8Array([10, 20, 30, 40, 50]).toSpliced()",
         r#""string".split("")"#,
@@ -547,131 +594,110 @@ fn test() {
         r#"const characters = "string".split("")"#,
         r#"(( (( (( "string" )).split ))( (("")) ) ))"#,
         r#"bar()
-        foo.split("")"#,
+            foo.split("")"#,
         r#"unknown.split("")"#,
         r#""🦄".split("")"#,
         r#"const {length} = "🦄".split("")"#,
     ];
 
-    let expect_fix = vec![
+    let fix = vec![
         // `Array.from()`
-        ("const x = Array.from(set);", "const x = [...set];", None),
-        ("Array.from(new Set([1, 2])).map(() => {});", "[...new Set([1, 2])].map(() => {});", None),
+        ("const x = Array.from(set);", "const x = [...set];"),
+        ("Array.from(new Set([1, 2])).map(() => {});", "[...new Set([1, 2])].map(() => {});"),
         // `Array.from()` - ASI hazard cases (need semicolon prefix)
         (
             "const foo = bar\nArray.from(set).map(() => {})",
             "const foo = bar\n;[...set].map(() => {})",
-            None,
         ),
-        (
-            "foo()\nArray.from(set).forEach(doSomething)",
-            "foo()\n;[...set].forEach(doSomething)",
-            None,
-        ),
+        ("foo()\nArray.from(set).forEach(doSomething)", "foo()\n;[...set].forEach(doSomething)"),
         // `Array.from()` - No ASI hazard (semicolon already present)
         (
             "const foo = bar;\nArray.from(set).map(() => {})",
             "const foo = bar;\n[...set].map(() => {})",
-            None,
         ),
         // `Array.from()` - ASI hazard with comments before
         (
             "foo() /* comment */\nArray.from(set).map(() => {})",
             "foo() /* comment */\n;[...set].map(() => {})",
-            None,
         ),
         (
             "foo() // comment\nArray.from(set).map(() => {})",
             "foo() // comment\n;[...set].map(() => {})",
-            None,
         ),
         // `array.slice()`
-        ("array.slice()", "[...array]", None),
-        ("array.slice(1).slice()", "[...array.slice(1)]", None),
+        ("array.slice()", "[...array]"),
+        ("array.slice(1).slice()", "[...array.slice(1)]"),
         // `array.slice()` - ASI hazard cases
-        ("foo()\narray.slice()", "foo()\n;[...array]", None),
+        ("foo()\narray.slice()", "foo()\n;[...array]"),
         // `array.toSpliced()`
-        ("array.toSpliced()", "[...array]", None),
-        ("const copy = array.toSpliced()", "const copy = [...array]", None),
+        ("array.toSpliced()", "[...array]"),
+        ("const copy = array.toSpliced()", "const copy = [...array]"),
         // `array.toSpliced()` - ASI hazard cases
-        ("foo()\narray.toSpliced()", "foo()\n;[...array]", None),
+        ("foo()\narray.toSpliced()", "foo()\n;[...array]"),
         // `string.split()`
-        (r#""🦄".split("")"#, r#"[..."🦄"]"#, None),
-        (r#""foo bar baz".split("")"#, r#"[..."foo bar baz"]"#, None),
+        (r#""🦄".split("")"#, r#"[..."🦄"]"#),
+        (r#""foo bar baz".split("")"#, r#"[..."foo bar baz"]"#),
         // `string.split()` - ASI hazard cases
-        ("foo()\nstr.split(\"\")", "foo()\n;[...str]", None),
+        ("foo()\nstr.split(\"\")", "foo()\n;[...str]"),
         (
             r"Array.from(path.matchAll(/\{([^{}?]+\??)\}/g))",
             "[...path.matchAll(/\\{([^{}?]+\\??)\\}/g)]",
-            None,
         ),
         // Cases where NO semicolon should be added (not an ExpressionStatement)
-        ("return Array.from(set)", "return [...set]", None),
-        ("const x = Array.from(set)", "const x = [...set]", None),
-        ("foo(Array.from(set))", "foo([...set])", None),
-        ("if (Array.from(set).length) {}", "if ([...set].length) {}", None),
+        ("return Array.from(set)", "return [...set]"),
+        ("const x = Array.from(set)", "const x = [...set]"),
+        ("foo(Array.from(set))", "foo([...set])"),
+        ("if (Array.from(set).length) {}", "if ([...set].length) {}"),
         // `Array.from()` - ASI hazard with multi-byte Unicode identifiers
-        ("日本語\nArray.from(set).map(() => {})", "日本語\n;[...set].map(() => {})", None),
+        ("日本語\nArray.from(set).map(() => {})", "日本語\n;[...set].map(() => {})"),
         (
             "const foo = 日本語\nArray.from(set).map(() => {})",
             "const foo = 日本語\n;[...set].map(() => {})",
-            None,
         ),
-        ("/**/Array.from(set).map(() => {})", "/**/[...set].map(() => {})", None),
-        ("/regex/\nArray.from(set).map(() => {})", "/regex/\n;[...set].map(() => {})", None),
-        ("/regex/g\nArray.from(set).map(() => {})", "/regex/g\n;[...set].map(() => {})", None),
-        ("0.\nArray.from(set).map(() => {})", "0.\n;[...set].map(() => {})", None),
-        (
-            "foo()\u{00A0}\nArray.from(set).map(() => {})",
-            "foo()\u{00A0}\n;[...set].map(() => {})",
-            None,
-        ),
-        (
-            "foo()\u{FEFF}\nArray.from(set).map(() => {})",
-            "foo()\u{FEFF}\n;[...set].map(() => {})",
-            None,
-        ),
-        ("foo() /* a */ /* b */\nArray.from(set)", "foo() /* a */ /* b */\n;[...set]", None),
-        ("x++\narray.slice()", "x++\n;[...array]", None),
-        ("x--\narray.slice()", "x--\n;[...array]", None),
-        ("arr[0]\narray.slice()", "arr[0]\n;[...array]", None),
-        ("obj.prop\narray.slice()", "obj.prop\n;[...array]", None),
-        ("while (array.slice().length) {}", "while ([...array].length) {}", None),
-        ("do {} while (array.slice().length)", "do {} while ([...array].length)", None),
-        ("for (array.slice();;) {}", "for ([...array];;) {}", None),
-        ("switch (array.slice()[0]) {}", "switch ([...array][0]) {}", None),
-        ("`template`\narray.toSpliced()", "`template`\n;[...array]", None),
+        ("/**/Array.from(set).map(() => {})", "/**/[...set].map(() => {})"),
+        ("/regex/\nArray.from(set).map(() => {})", "/regex/\n;[...set].map(() => {})"),
+        ("/regex/g\nArray.from(set).map(() => {})", "/regex/g\n;[...set].map(() => {})"),
+        ("0.\nArray.from(set).map(() => {})", "0.\n;[...set].map(() => {})"),
+        ("foo()\u{00A0}\nArray.from(set).map(() => {})", "foo()\u{00A0}\n;[...set].map(() => {})"),
+        ("foo()\u{FEFF}\nArray.from(set).map(() => {})", "foo()\u{FEFF}\n;[...set].map(() => {})"),
+        ("foo() /* a */ /* b */\nArray.from(set)", "foo() /* a */ /* b */\n;[...set]"),
+        ("x++\narray.slice()", "x++\n;[...array]"),
+        ("x--\narray.slice()", "x--\n;[...array]"),
+        ("arr[0]\narray.slice()", "arr[0]\n;[...array]"),
+        ("obj.prop\narray.slice()", "obj.prop\n;[...array]"),
+        ("while (array.slice().length) {}", "while ([...array].length) {}"),
+        ("do {} while (array.slice().length)", "do {} while ([...array].length)"),
+        ("for (array.slice();;) {}", "for ([...array];;) {}"),
+        ("switch (array.slice()[0]) {}", "switch ([...array][0]) {}"),
+        ("`template`\narray.toSpliced()", "`template`\n;[...array]"),
         (
             r#"'string'
 str.split("")"#,
             "'string'\n;[...str]",
-            None,
         ),
         (
             r#""string"
 str.split("")"#,
             r#""string"
 ;[...str]"#,
-            None,
         ),
         (
             "foo()\nArray.from(set).map(x => x).filter(Boolean).length",
             "foo()\n;[...set].map(x => x).filter(Boolean).length",
-            None,
         ),
-        ("const fn = () => Array.from(set)", "const fn = () => [...set]", None),
-        ("foo ? Array.from(a) : b", "foo ? [...a] : b", None),
-        ("foo || Array.from(set)", "foo || [...set]", None),
-        ("foo && Array.from(set)", "foo && [...set]", None),
-        ("foo + Array.from(set).length", "foo + [...set].length", None),
-        ("x = Array.from(set)", "x = [...set]", None),
-        ("const obj = { arr: Array.from(set) }", "const obj = { arr: [...set] }", None),
-        ("(foo, Array.from(set))", "(foo, [...set])", None),
-        ("[Array.from(set)]", "[[...set]]", None),
-        ("async () => await Array.from(set)", "async () => await [...set]", None),
+        ("const fn = () => Array.from(set)", "const fn = () => [...set]"),
+        ("foo ? Array.from(a) : b", "foo ? [...a] : b"),
+        ("foo || Array.from(set)", "foo || [...set]"),
+        ("foo && Array.from(set)", "foo && [...set]"),
+        ("foo + Array.from(set).length", "foo + [...set].length"),
+        ("x = Array.from(set)", "x = [...set]"),
+        ("const obj = { arr: Array.from(set) }", "const obj = { arr: [...set] }"),
+        ("(foo, Array.from(set))", "(foo, [...set])"),
+        ("[Array.from(set)]", "[[...set]]"),
+        ("async () => await Array.from(set)", "async () => await [...set]"),
     ];
 
     Tester::new(PreferSpread::NAME, PreferSpread::PLUGIN, pass, fail)
-        .expect_fix(expect_fix)
+        .expect_fix(fix)
         .test_and_snapshot();
 }

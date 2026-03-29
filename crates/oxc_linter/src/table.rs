@@ -8,6 +8,7 @@ pub struct RuleTable {
     pub sections: Vec<RuleTableSection>,
     pub total: usize,
     pub turned_on_by_default_count: usize,
+    pub rules_with_fixes: usize,
 }
 
 pub struct RuleTableSection {
@@ -75,6 +76,8 @@ impl RuleTable {
 
         rows.sort_by_key(|row| (row.plugin.clone(), row.name));
 
+        let rules_with_fixes = rows.iter().filter(|r| r.autofix.has_fix()).count();
+
         let mut rows_by_category = rows.into_iter().fold(
             FxHashMap::default(),
             |mut map: FxHashMap<RuleCategory, Vec<RuleTableRow>>, row| {
@@ -101,7 +104,12 @@ impl RuleTable {
         })
         .collect::<Vec<_>>();
 
-        RuleTable { total, sections, turned_on_by_default_count: default_rules.len() }
+        RuleTable {
+            total,
+            sections,
+            turned_on_by_default_count: default_rules.len(),
+            rules_with_fixes,
+        }
     }
 }
 
@@ -111,11 +119,7 @@ impl RuleTableSection {
     /// When `enabled` is [`Some`], an "Enabled?" column is added and the set
     /// is used to determine which rules are enabled. When `enabled` is
     /// [`None`], the column is omitted (used by docs rendering).
-    fn render_markdown_table_inner(
-        &self,
-        link_prefix: Option<&str>,
-        enabled: Option<&FxHashSet<&str>>,
-    ) -> String {
+    fn render_markdown_table_inner(&self, enabled: Option<&FxHashSet<&str>>) -> String {
         const FIX_EMOJI_COL_WIDTH: usize = 10;
         const DEFAULT_EMOJI_COL_WIDTH: usize = 9;
         const ENABLED_EMOJI_COL_WIDTH: usize = 10;
@@ -131,7 +135,7 @@ impl RuleTableSection {
         let rows: &Vec<RuleTableRow> = &self.rows;
         let rule_width = self.rule_column_width;
         let plugin_width = self.plugin_column_width;
-        writeln!(s, "## {} ({}):", category, rows.len()).unwrap();
+        writeln!(s, "## {} ({})", category, rows.len()).unwrap();
 
         writeln!(s, "{}", category.description()).unwrap();
 
@@ -174,11 +178,7 @@ impl RuleTableSection {
 
             let (default, default_width) =
                 if row.turned_on_by_default { ("✅", DEFAULT - 1) } else { ("", DEFAULT) };
-            let rendered_name = if let Some(prefix) = link_prefix {
-                Cow::Owned(format!("[{rule_name}]({prefix}/{plugin_name}/{rule_name}.html)"))
-            } else {
-                Cow::Borrowed(rule_name)
-            };
+            let rendered_name = Cow::Borrowed(rule_name);
             // Improved mapping for emoji column alignment, allowing FIX to grow for negative display widths
             let (fix_emoji, fix_emoji_width) =
                 Self::calculate_fix_emoji_width(row.autofix.emoji(), FIX);
@@ -222,19 +222,12 @@ impl RuleTableSection {
     }
 
     /// Renders all the rules in this section as a markdown table.
-    ///
-    /// Provide [`Some`] prefix to render the rule name as a link. Provide
-    /// [`None`] to just display the rule name as text.
-    pub fn render_markdown_table(&self, link_prefix: Option<&str>) -> String {
-        self.render_markdown_table_inner(link_prefix, None)
+    pub fn render_markdown_table(&self) -> String {
+        self.render_markdown_table_inner(None)
     }
 
-    pub fn render_markdown_table_cli(
-        &self,
-        link_prefix: Option<&str>,
-        enabled: &FxHashSet<&str>,
-    ) -> String {
-        self.render_markdown_table_inner(link_prefix, Some(enabled))
+    pub fn render_markdown_table_cli(&self, enabled: &FxHashSet<&str>) -> String {
+        self.render_markdown_table_inner(Some(enabled))
     }
 }
 
@@ -256,39 +249,18 @@ mod test {
     fn test_table_no_links() {
         let options = Options::gfm();
         for section in &table().sections {
-            let rendered_table = section.render_markdown_table(None);
+            let rendered_table = section.render_markdown_table();
             assert!(!rendered_table.is_empty());
             assert_eq!(rendered_table.split('\n').count(), 5 + section.rows.len());
 
             let html = to_html_with_options(&rendered_table, &options).unwrap();
             assert!(!html.is_empty());
             assert!(html.contains("<table>"));
-        }
-    }
-
-    #[test]
-    fn test_table_with_links() {
-        const PREFIX: &str = "/foo/bar";
-        const PREFIX_WITH_SLASH: &str = "/foo/bar/";
-
-        let options = Options::gfm();
-
-        for section in &table().sections {
-            let rendered_table = section.render_markdown_table(Some(PREFIX));
-            assert!(!rendered_table.is_empty());
-            assert_eq!(rendered_table.split('\n').count(), 5 + section.rows.len());
-
-            let html = to_html_with_options(&rendered_table, &options).unwrap();
-            assert!(!html.is_empty());
-            assert!(html.contains("<table>"));
-            assert!(html.contains(PREFIX_WITH_SLASH));
         }
     }
 
     #[test]
     fn test_table_cli_enabled_column() {
-        const PREFIX: &str = "/foo/bar";
-
         for section in &table().sections {
             // enable the first rule in the section for the CLI view
             let mut enabled = FxHashSet::default();
@@ -296,7 +268,7 @@ mod test {
                 enabled.insert(first.name);
             }
 
-            let rendered_table = section.render_markdown_table_cli(Some(PREFIX), &enabled);
+            let rendered_table = section.render_markdown_table_cli(&enabled);
             assert!(!rendered_table.is_empty());
             // same number of lines as other renderer (header + desc + separator + rows + trailing newline)
             assert_eq!(rendered_table.split('\n').count(), 5 + section.rows.len());

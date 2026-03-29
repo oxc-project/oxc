@@ -1,0 +1,75 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint-plugin-vitest(warn-todo): The use of `.todo` is not recommended.
+   ╭─[warn_todo.tsx:3:10]
+ 2 │ 
+ 3 │ describe.todo("foo", function () {})
+   ·          ────
+   ╰────
+  help: Write an actual test and remove the `.todo` modifier before pushing/merging your changes.
+
+  ⚠ eslint-plugin-vitest(warn-todo): The use of `.todo` is not recommended.
+   ╭─[warn_todo.tsx:3:4]
+ 2 │ 
+ 3 │ it.todo("foo", function () {})
+   ·    ────
+   ╰────
+  help: Write an actual test and remove the `.todo` modifier before pushing/merging your changes.
+
+  ⚠ eslint-plugin-vitest(warn-todo): The use of `.todo` is not recommended.
+   ╭─[warn_todo.tsx:3:6]
+ 2 │ 
+ 3 │ test.todo("foo", function () {})
+   ·      ────
+   ╰────
+  help: Write an actual test and remove the `.todo` modifier before pushing/merging your changes.
+
+  ⚠ eslint-plugin-vitest(warn-todo): The use of `.todo` is not recommended.
+   ╭─[warn_todo.tsx:3:10]
+ 2 │ 
+ 3 │ describe.todo.each([])("foo", function () {})
+   ·          ────
+   ╰────
+  help: Write an actual test and remove the `.todo` modifier before pushing/merging your changes.
+
+  ⚠ eslint-plugin-vitest(warn-todo): The use of `.todo` is not recommended.
+   ╭─[warn_todo.tsx:3:4]
+ 2 │ 
+ 3 │ it.todo.each([])("foo", function () {})
+   ·    ────
+   ╰────
+  help: Write an actual test and remove the `.todo` modifier before pushing/merging your changes.
+
+  ⚠ eslint-plugin-vitest(warn-todo): The use of `.todo` is not recommended.
+   ╭─[warn_todo.tsx:3:6]
+ 2 │ 
+ 3 │ test.todo.each([])("foo", function () {})
+   ·      ────
+   ╰────
+  help: Write an actual test and remove the `.todo` modifier before pushing/merging your changes.
+
+  ⚠ eslint-plugin-vitest(warn-todo): The use of `.todo` is not recommended.
+   ╭─[warn_todo.tsx:3:15]
+ 2 │ 
+ 3 │ describe.only.todo("foo", function () {})
+   ·               ────
+   ╰────
+  help: Write an actual test and remove the `.todo` modifier before pushing/merging your changes.
+
+  ⚠ eslint-plugin-vitest(warn-todo): The use of `.todo` is not recommended.
+   ╭─[warn_todo.tsx:3:9]
+ 2 │ 
+ 3 │ it.only.todo("foo", function () {})
+   ·         ────
+   ╰────
+  help: Write an actual test and remove the `.todo` modifier before pushing/merging your changes.
+
+  ⚠ eslint-plugin-vitest(warn-todo): The use of `.todo` is not recommended.
+   ╭─[warn_todo.tsx:3:11]
+ 2 │ 
+ 3 │ test.only.todo("foo", function () {})
+   ·           ────
+   ╰────
+  help: Write an actual test and remove the `.todo` modifier before pushing/merging your changes.

@@ -1,6 +1,10 @@
 {
+  "categories": {
+    "correctness": "off"
+  },
   "jsPlugins": ["./plugin.ts"],
   "rules": {
-    "basic-custom-plugin/no-debugger": "warn"
+    "basic-custom-plugin/no-debugger": "warn",
+    "eslint/no-debugger": "warn"
   }
 }

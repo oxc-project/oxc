@@ -1,28 +1,35 @@
 use rustc_hash::FxBuildHasher;
+use tower_lsp_server::ls_types::Uri;
 use tower_lsp_server::{LspService, Server, ls_types::ServerInfo};
 
 mod backend;
 mod capabilities;
 mod file_system;
-#[cfg(feature = "formatter")]
-mod formatter;
-#[cfg(feature = "linter")]
-mod linter;
+mod language_id;
 mod options;
 #[cfg(test)]
 mod tests;
 mod tool;
-mod utils;
 mod worker;
+mod worker_manager;
 
-use crate::backend::Backend;
-#[cfg(feature = "formatter")]
-pub use crate::formatter::ServerFormatterBuilder;
-#[cfg(feature = "linter")]
-pub use crate::linter::ServerLinterBuilder;
-pub use crate::tool::{Tool, ToolBuilder, ToolRestartChanges, ToolShutdownChanges};
+pub use crate::capabilities::{Capabilities, DiagnosticMode};
+pub use crate::language_id::LanguageId;
+pub use crate::tool::{DiagnosticResult, Tool, ToolBuilder, ToolRestartChanges};
 
 pub type ConcurrentHashMap<K, V> = papaya::HashMap<K, V, FxBuildHasher>;
+
+pub struct TextDocument<'a> {
+    pub uri: &'a Uri,
+    pub language_id: LanguageId,
+    pub text: Option<String>,
+}
+
+impl<'a> TextDocument<'a> {
+    pub fn new(uri: &'a Uri, language_id: LanguageId, text: Option<String>) -> Self {
+        Self { uri, language_id, text }
+    }
+}
 
 /// Run the language server
 pub async fn run_server(
@@ -30,13 +37,15 @@ pub async fn run_server(
     server_version: String,
     tools: Vec<Box<dyn ToolBuilder>>,
 ) {
-    env_logger::init();
-
     let stdin = tokio::io::stdin();
     let stdout = tokio::io::stdout();
 
     let (service, socket) = LspService::build(|client| {
-        Backend::new(client, ServerInfo { name: server_name, version: Some(server_version) }, tools)
+        crate::backend::Backend::new(
+            client,
+            ServerInfo { name: server_name, version: Some(server_version) },
+            tools,
+        )
     })
     .finish();
 

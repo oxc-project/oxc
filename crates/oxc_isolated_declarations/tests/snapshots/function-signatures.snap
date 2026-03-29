@@ -5,10 +5,7 @@ input_file: crates/oxc_isolated_declarations/tests/fixtures/function-signatures.
 ```
 ==================== .D.TS ====================
 
-// All of these are valid function signatures under isolatedDeclarations
 export declare function A(): void;
 export declare function B(): (() => void) | undefined;
-// There should be no declaration for the implementation signature, just the
-// two overloads.
 export declare function C(x: string): void;
 export declare function C(x: number): void;

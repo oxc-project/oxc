@@ -91,10 +91,20 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// Long numbers can become really hard to read, so cutting it into groups of digits,
-    /// separated with a _, is important to keep your code clear. This rule also enforces
-    /// a proper usage of the numeric separator, by checking if the groups of digits are
-    /// of the correct size.
+    /// A long series of digits can be difficult to read, and
+    /// it can be difficult to determine the value of the number at a glance.
+    /// Breaking up the digits with numeric separators (`_`) can greatly
+    /// improve readability.
+    ///
+    /// Compare the following two numbers and how easy it is to understand their magnitude:
+    ///
+    /// ```js
+    /// 1000000000;
+    /// 1_000_000_000;
+    /// ```
+    ///
+    /// This rule also enforces proper group size, for example
+    /// enforcing that the `_` separator is used every 3 digits.
     ///
     /// ### Examples
     ///
@@ -129,7 +139,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NumericSeparatorsStyle {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let mut cfg = NumericSeparatorsStyleConfig::default();
 
         if let Some(config) = value.get(0) {
@@ -153,7 +163,7 @@ impl Rule for NumericSeparatorsStyle {
             }
         }
 
-        Self(Box::new(cfg))
+        Ok(Self(Box::new(cfg)))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -788,7 +798,7 @@ mod internal_tests {
                 "octal": {"groupLength": 128, "minimumDigits": 256},
                 "onlyIfContainsSeparator": true
         }]);
-        let rule = NumericSeparatorsStyle::from_configuration(config);
+        let rule = NumericSeparatorsStyle::from_configuration(config).unwrap();
 
         assert_eq!(rule.binary.group_length, 2);
         assert_eq!(rule.binary.minimum_digits, 4);
@@ -803,7 +813,7 @@ mod internal_tests {
 
     #[test]
     fn test_from_empty_configuration() {
-        let rule = NumericSeparatorsStyle::from_configuration(json!([]));
+        let rule = NumericSeparatorsStyle::from_configuration(json!([])).unwrap();
         assert_eq!(rule, NumericSeparatorsStyle::default());
     }
 }

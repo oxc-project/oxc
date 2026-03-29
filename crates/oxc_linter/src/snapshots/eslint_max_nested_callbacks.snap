@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(max-nested-callbacks): Too many nested callbacks (3). Maximum allowed is 2.
    ╭─[max_nested_callbacks.tsx:1:50]
  1 │ foo(function() { bar(thing, function(data) { baz(function() {}); }); });

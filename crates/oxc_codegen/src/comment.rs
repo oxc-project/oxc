@@ -64,6 +64,22 @@ impl Codegen<'_> {
         }
     }
 
+    /// Print comments attached to any position in the given range `(start, end)` (exclusive).
+    /// Returns `true` if any comments were printed.
+    pub(crate) fn print_comments_in_range(&mut self, start: u32, end: u32) -> bool {
+        if self.comments.is_empty() {
+            return false;
+        }
+        // Find and remove the first key in the range.
+        let key = self.comments.keys().find(|&&k| k > start && k < end).copied();
+        if let Some(key) = key {
+            let comments = self.comments.remove(&key).unwrap();
+            self.print_comments(&comments);
+            return true;
+        }
+        false
+    }
+
     pub(crate) fn print_expr_comments(&mut self, start: u32) -> bool {
         if self.comments.is_empty() {
             return false;
@@ -85,40 +101,59 @@ impl Codegen<'_> {
     }
 
     pub(crate) fn print_comments(&mut self, comments: &[Comment]) {
-        for (i, comment) in comments.iter().enumerate() {
-            if i == 0 {
-                if comment.preceded_by_newline() {
-                    // Skip printing newline if this comment is already on a newline.
-                    if let Some(b) = self.last_byte() {
-                        match b {
-                            b'\n' => self.print_indent(),
-                            b'\t' => { /* noop */ }
-                            _ => {
-                                self.print_hard_newline();
-                                self.print_indent();
-                            }
-                        }
+        let Some((first, rest)) = comments.split_first() else {
+            return;
+        };
+
+        if first.preceded_by_newline() {
+            // Skip printing newline if this comment is already on a newline.
+            if let Some(b) = self.last_byte() {
+                match b {
+                    b'\n' => self.print_indent(),
+                    b'\t' => { /* noop */ }
+                    _ => {
+                        self.print_hard_newline();
+                        self.print_indent();
                     }
-                } else {
-                    self.print_indent();
                 }
             }
-            if i >= 1 {
+        } else {
+            self.print_indent();
+        }
+        self.print_comment(first);
+
+        if let Some((last, middle)) = rest.split_last() {
+            for comment in middle {
                 if comment.preceded_by_newline() {
                     self.print_hard_newline();
                     self.print_indent();
                 } else if comment.is_legal() {
                     self.print_hard_newline();
-                }
-            }
-            self.print_comment(comment);
-            if i == comments.len() - 1 {
-                if comment.is_line() || comment.followed_by_newline() {
-                    self.print_hard_newline();
                 } else {
-                    self.print_next_indent_as_space = true;
+                    self.print_soft_space();
                 }
+                self.print_comment(comment);
             }
+
+            if last.preceded_by_newline() {
+                self.print_hard_newline();
+                self.print_indent();
+            } else if last.is_legal() {
+                self.print_hard_newline();
+            } else {
+                self.print_soft_space();
+            }
+            self.print_comment(last);
+
+            if last.is_line() || last.followed_by_newline() {
+                self.print_hard_newline();
+            } else {
+                self.print_next_indent_as_space = true;
+            }
+        } else if first.is_line() || first.followed_by_newline() {
+            self.print_hard_newline();
+        } else {
+            self.print_next_indent_as_space = true;
         }
     }
 
@@ -189,6 +224,8 @@ impl Codegen<'_> {
         match legal_comments {
             LegalComment::Eof => {
                 self.print_hard_newline();
+                // Clear the flag to ensure consistent formatting for all EOF comments
+                self.print_next_indent_as_space = false;
                 for c in comments {
                     self.print_comment(&c);
                     self.print_hard_newline();

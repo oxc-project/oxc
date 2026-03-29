@@ -136,18 +136,6 @@
     `----
 
   x test-plugin(is-space-between):
-  | isSpaceBetween(node, binaryLeft): false
-  | isSpaceBetweenTokens(node, binaryLeft): false
-  | isSpaceBetween(binaryLeft, node): false
-  | isSpaceBetweenTokens(binaryLeft, node): false
-    ,-[files/index.js:22:1]
- 21 | // prettier-ignore
- 22 | nested = 7 + 8;
-    : ^^^^^^^^^^^^^^
- 23 | 
-    `----
-
-  x test-plugin(is-space-between):
   | isSpaceBetween(left, right): true
   | isSpaceBetweenTokens(left, right): true
   | isSpaceBetween(right, left): true
@@ -160,6 +148,18 @@
   | isSpaceBetweenTokens(right, node): false
   | isSpaceBetween(node, right): false
   | isSpaceBetweenTokens(node, right): false
+    ,-[files/index.js:22:1]
+ 21 | // prettier-ignore
+ 22 | nested = 7 + 8;
+    : ^^^^^^^^^^^^^^
+ 23 | 
+    `----
+
+  x test-plugin(is-space-between):
+  | isSpaceBetween(node, binaryLeft): false
+  | isSpaceBetweenTokens(node, binaryLeft): false
+  | isSpaceBetween(binaryLeft, node): false
+  | isSpaceBetweenTokens(binaryLeft, node): false
     ,-[files/index.js:22:1]
  21 | // prettier-ignore
  22 | nested = 7 + 8;
@@ -213,11 +213,9 @@
    `----
 
 Found 0 warnings and 13 errors.
-Finished in Xms on 2 files using X threads.
+Finished in Xms on 2 files with 1 rules using X threads.
 ```
 
 # stderr
 ```
-WARNING: JS plugins are experimental and not subject to semver.
-Breaking changes are possible while JS plugins support is under development.
 ```

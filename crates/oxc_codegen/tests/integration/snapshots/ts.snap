@@ -205,7 +205,7 @@ new Map<string, number>();
 ########## 32
 d = x satisfies y;
 ----------
-d = ((x) satisfies y);
+d = x satisfies y;
 
 ########## 33
 export @x declare abstract class C {}
@@ -318,14 +318,14 @@ export function* generatorFunctionName() {/* … */}
 export const { name5, name2: bar } = o;
 export const [name6, name7] = array;
 export { name8, /* …, */ name81 };
- export { variable1 as name9, variable2 as name10, /* …, */ name82 };
- export { variable1 as 'string name' };
+export { variable1 as name9, variable2 as name10, /* …, */ name82 };
+export { variable1 as 'string name' };
 export { name1 as default1 };
 export * from 'module-name';
 export * as name11 from 'module-name';
 export { name12, /* …, */ nameN } from 'module-name';
- export { import1 as name13, import2 as name14, /* …, */ name15 } from 'module-name';
- export { default } from 'module-name';
+export { import1 as name13, import2 as name14, /* …, */ name15 } from 'module-name';
+export { default } from 'module-name';
 export { default as name16 } from 'module-name';
 
 ########## 41

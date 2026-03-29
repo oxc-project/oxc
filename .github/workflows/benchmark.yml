@@ -12,6 +12,8 @@ on:
   workflow_dispatch:
   pull_request:
     types: [opened, synchronize]
+    branches-ignore:
+      - "**/graphite-base/**"
     paths: &paths
       - "crates/**/*.rs"
       - "tasks/benchmark/**/*.rs"
@@ -36,7 +38,7 @@ jobs:
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
-      - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
+      - uses: taiki-e/checkout-action@83ed61bfbe2b8abbb3c66e8b65b1335484c70009 # v1.4.1
 
       - name: Determine affected components
         id: set-matrix
@@ -65,9 +67,9 @@ jobs:
         include: ${{ fromJSON(needs.determine-matrix.outputs.matrix) }}
     name: Bench ${{ matrix.component }}
     steps:
-      - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
+      - uses: taiki-e/checkout-action@83ed61bfbe2b8abbb3c66e8b65b1335484c70009 # v1.4.1
 
-      - uses: oxc-project/setup-rust@c8224157c0bf235aabc633e8cd50d344f087a7de # v1.0.12
+      - uses: oxc-project/setup-rust@23f38cfb0c04af97a055f76acee94d5be71c7c82 # v1.0.16
         with:
           cache-key: benchmark-${{ matrix.feature }}
           save-cache: ${{ github.ref_name == 'main' }}
@@ -82,16 +84,15 @@ jobs:
               --no-default-features --features ${{ matrix.feature }} --features codspeed
           else
             cargo build --release -p oxc_benchmark \
-              --bench lexer --bench parser --bench transformer --bench semantic \
-              --bench minifier --bench codegen --bench formatter \
+              --bench ${{ matrix.component }} \
               --no-default-features --features ${{ matrix.feature }} --features codspeed
           fi
-          mkdir -p target/codspeed/simulation/oxc_benchmark
-          mv target/release/deps/${{ matrix.component }}-* target/codspeed/simulation/oxc_benchmark
-          rm target/codspeed/simulation/oxc_benchmark/*.d
+          mkdir -p target/codspeed/analysis/oxc_benchmark
+          mv target/release/deps/${{ matrix.component }}-* target/codspeed/analysis/oxc_benchmark
+          rm target/codspeed/analysis/oxc_benchmark/*.d
 
       - name: Run benchmark
-        uses: CodSpeedHQ/action@972e3437949c89e1357ebd1a2dbc852fcbc57245 # v4.5.1
+        uses: CodSpeedHQ/action@1c8ae4843586d3ba879736b7f6b7b0c990757fab # v4.12.1
         timeout-minutes: 30
         with:
           mode: simulation

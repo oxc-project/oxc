@@ -1,18 +1,30 @@
-#![expect(clippy::self_named_module_files)] // for rules.rs
+#![expect(clippy::self_named_module_files)]
+// for rules.rs
+// RuleEnum contains rule configs with interior mutability (e.g. Regex),
+// but Hash/Eq/Ord are based only on the rule id, so it's safe as a map key.
+#![expect(clippy::mutable_key_type)]
+// Rule::from_configuration returns Result but documenting errors is not useful here.
+#![expect(clippy::missing_errors_doc)]
 
 use std::{
-    mem,
+    iter, mem,
     path::Path,
     ptr::{self, NonNull},
     rc::Rc,
+    string::ToString,
 };
 
-use oxc_allocator::{Allocator, AllocatorPool, CloneIn};
-use oxc_ast::{ast::Program, ast_kind::AST_TYPE_MAX};
+use oxc_allocator::{Allocator, AllocatorPool, CloneIn, TakeIn, Vec as ArenaVec};
+use oxc_ast::{
+    ast::{Comment, CommentContent, CommentKind, Program},
+    ast_kind::AST_TYPE_MAX,
+};
 use oxc_ast_macros::ast;
 use oxc_ast_visit::utf8_to_utf16::Utf8ToUtf16;
 use oxc_data_structures::box_macros::boxed_array;
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_estree_tokens::{ESTreeTokenOptionsJS, update_tokens};
+use oxc_parser::Token;
 use oxc_semantic::AstNode;
 use oxc_span::Span;
 
@@ -41,6 +53,7 @@ mod generated {
     #[cfg(debug_assertions)]
     mod assert_layouts;
     mod rule_runner_impls;
+    pub mod rules_enum;
 }
 
 #[cfg(test)]
@@ -60,11 +73,12 @@ pub use crate::{
     },
     context::{ContextSubHost, LintContext},
     external_linter::{
-        ExternalLinter, ExternalLinterLintFileCb, ExternalLinterLoadPluginCb,
-        ExternalLinterSetupConfigsCb, JsFix, LintFileResult, LoadPluginResult,
+        ExternalLinter, ExternalLinterCreateWorkspaceCb, ExternalLinterDestroyWorkspaceCb,
+        ExternalLinterLintFileCb, ExternalLinterLoadPluginCb, ExternalLinterSetupRuleConfigsCb,
+        JsFix, LintFileResult, LoadPluginResult, convert_and_merge_js_fixes,
     },
     external_plugin_store::{ExternalOptionsId, ExternalPluginStore, ExternalRuleId},
-    fixer::{Fix, FixKind, Message, PossibleFixes},
+    fixer::{Fix, FixKind, Fixer, Message, PossibleFixes},
     frameworks::FrameworkFlags,
     lint_runner::{DirectivesStore, LintRunner, LintRunnerBuilder},
     loader::LINTABLE_EXTENSIONS,
@@ -80,7 +94,7 @@ use crate::{
     config::{LintConfig, OxlintEnv, OxlintGlobals, OxlintSettings},
     context::ContextHost,
     external_linter::GlobalsAndEnvs,
-    fixer::{CompositeFix, Fixer},
+    fixer::CompositeFix,
     loader::LINT_PARTIAL_LOADER_EXTENSIONS,
     rules::RuleEnum,
     utils::iter_possible_jest_call_node,
@@ -95,12 +109,16 @@ fn size_asserts() {
     assert_eq!(size_of::<RuleEnum>(), 16);
 }
 
+/// Base URL for the documentation, used to generate rule documentation URLs when a diagnostic is reported.
+const WEBSITE_BASE_RULES_URL: &str = "https://oxc.rs/docs/guide/usage/linter/rules";
+
 #[derive(Debug)]
 #[expect(clippy::struct_field_names)]
 pub struct Linter {
     options: LintOptions,
     config: ConfigStore,
     external_linter: Option<ExternalLinter>,
+    workspace_uri: Option<Box<str>>,
 }
 
 impl Linter {
@@ -109,7 +127,13 @@ impl Linter {
         config: ConfigStore,
         external_linter: Option<ExternalLinter>,
     ) -> Self {
-        Self { options, config, external_linter }
+        Self { options, config, external_linter, workspace_uri: None }
+    }
+
+    #[must_use]
+    pub fn with_workspace_uri(mut self, workspace_uri: Option<&str>) -> Self {
+        self.workspace_uri = workspace_uri.map(Box::from);
+        self
     }
 
     /// Set the kind of auto fixes to apply.
@@ -329,7 +353,7 @@ impl Linter {
                     assert_eq!(
                         optimized_diagnostics.len(),
                         unoptimized_diagnostics.len(),
-                        "Running with and without optimizations produced different diagnostic counts: {} vs {}",
+                        "Running with and without optimizations produced different diagnostic counts: {} vs {}.\nThis can be caused by a mismatch between the rule definition and generated RuleRunner impl. Try `cargo run -p oxc_linter_codegen` to regenerate.",
                         optimized_diagnostics.len(),
                         unoptimized_diagnostics.len()
                     );
@@ -454,7 +478,24 @@ impl Linter {
         }
 
         // `allocator` is a fixed-size allocator, so no need to clone AST into a new one
-        self.convert_and_call_external_linter(external_rules, path, ctx_host, program, allocator);
+        let tokens = ctx_host.parser_tokens_mut().take_in(allocator).into_bump_slice_mut();
+
+        // If file has a hashbang, add it to comments.
+        // It will be converted to a `Shebang` comment on JS side.
+        if let Some(hashbang) = &program.hashbang {
+            program
+                .comments
+                .insert(0, Comment::new(hashbang.span.start, hashbang.span.end, CommentKind::Line));
+        }
+
+        self.convert_and_call_external_linter(
+            external_rules,
+            path,
+            ctx_host,
+            program,
+            tokens,
+            allocator,
+        );
     }
 
     #[cfg(not(all(target_pointer_width = "64", target_endian = "little")))]
@@ -490,16 +531,29 @@ impl Linter {
         let original_source_text = original_program.source_text;
         original_program.source_text = "";
 
-        // Copy source text to the START of the fixed-size allocator.
-        // This is critical - the JS deserializer expects source text at offset 0.
-        // SAFETY: `js_allocator` is from a fixed-size allocator pool, which wraps the allocator
-        // in a custom `Drop` that doesn't actually drop it (it returns it to the pool), so the
-        // memory remains valid. This matches the safety requirements of `alloc_bytes_start`.
-        let new_source_text: &str = unsafe {
-            let bytes = original_source_text.as_bytes();
-            let ptr = js_allocator.alloc_bytes_start(bytes.len());
-            ptr::copy_nonoverlapping(bytes.as_ptr(), ptr.as_ptr(), bytes.len());
-            std::str::from_utf8_unchecked(std::slice::from_raw_parts(ptr.as_ptr(), bytes.len()))
+        // Copy source text to the fixed-size allocator.
+        // We have to allocate source text first, because the JS deserializer expects source text
+        // to be later in the buffer than all other strings in the AST, and the allocator bumps downwards.
+        let new_source_text = js_allocator.alloc_str(original_source_text);
+
+        // If file has a hashbang, add it to comments.
+        // It will be converted to a `Shebang` comment on JS side.
+        // Clear the original `Vec<Comment>` to avoid cloning it again below.
+        let comments = if let Some(hashbang) = &original_program.hashbang {
+            let mut comments_with_hashbang =
+                ArenaVec::with_capacity_in(original_program.comments.len() + 1, &js_allocator);
+            comments_with_hashbang.push(Comment::new(
+                hashbang.span.start,
+                hashbang.span.end,
+                CommentKind::Line,
+            ));
+            comments_with_hashbang.extend(original_program.comments.iter().copied());
+
+            original_program.comments.clear();
+
+            Some(comments_with_hashbang)
+        } else {
+            None
         };
 
         // Clone `Program` into fixed-size allocator.
@@ -511,11 +565,20 @@ impl Linter {
             js_allocator.alloc(program)
         };
 
+        // If added hashbang comment, set comments to the new `Vec<Comment>` including hashbang comment
+        if let Some(comments) = comments {
+            program.comments = comments;
+        }
+
+        // Clone tokens into fixed-size allocator
+        let tokens = js_allocator.alloc_slice_copy(ctx_host.parser_tokens());
+
         self.convert_and_call_external_linter(
             external_rules,
             path,
             ctx_host,
             program,
+            tokens,
             &js_allocator,
         );
 
@@ -533,20 +596,70 @@ impl Linter {
         path: &Path,
         ctx_host: &ContextHost<'_>,
         program: &mut Program<'_>,
+        tokens: &mut [Token],
         allocator: &Allocator,
     ) {
-        let source_text = program.source_text;
+        // If has BOM, remove it
+        const BOM: &str = "\u{feff}";
+        const BOM_LEN: usize = BOM.len();
 
-        // Convert spans to UTF-16
-        let span_converter = Utf8ToUtf16::new(source_text);
+        let original_source_text = program.source_text;
+        let mut source_text = original_source_text;
+        let has_bom = source_text.starts_with(BOM);
+        if has_bom {
+            source_text = &source_text[BOM_LEN..];
+            program.source_text = source_text;
+        }
+
+        // Create span converter.
+        // If source starts with BOM, create converter which ignores the BOM.
+        let span_converter = if has_bom {
+            #[expect(clippy::cast_possible_truncation)]
+            Utf8ToUtf16::new_with_offset(source_text, BOM_LEN as u32)
+        } else {
+            Utf8ToUtf16::new(source_text)
+        };
+
+        // Convert token spans to UTF-16 and update token kinds
+        #[expect(clippy::if_not_else, clippy::cast_possible_truncation)]
+        let (tokens_offset, tokens_len) = if !tokens.is_empty() {
+            update_tokens(tokens, program, &span_converter, ESTreeTokenOptionsJS);
+            (tokens.as_ptr() as u32, tokens.len() as u32)
+        } else {
+            (0, 0)
+        };
+
+        // Convert AST spans to UTF-16
         span_converter.convert_program(program);
-        span_converter.convert_comments(&mut program.comments);
+
+        // Convert comment spans to UTF-16.
+        // Also set the `content` field (byte 15) of each comment to `None` (0).
+        // JS side uses this byte as a "deserialized" flag for tracking lazy deserialization.
+        if let Some(mut converter) = span_converter.converter() {
+            for comment in &mut program.comments {
+                converter.convert_span(&mut comment.span);
+                comment.content = CommentContent::None;
+            }
+        } else {
+            for comment in &mut program.comments {
+                comment.content = CommentContent::None;
+            }
+        }
 
         // Get offset of `Program` within buffer (bottom 32 bits of pointer)
         let program_offset = ptr::from_ref(program) as u32;
 
         // Write offset of `Program` in metadata at end of buffer
-        let metadata = RawTransferMetadata::new(program_offset);
+        let is_ts = program.source_type.is_typescript();
+        let is_jsx = program.source_type.is_jsx();
+        let metadata = RawTransferMetadata::new(
+            program_offset,
+            is_ts,
+            is_jsx,
+            has_bom,
+            tokens_offset,
+            tokens_len,
+        );
         let metadata_ptr = allocator.end_ptr().cast::<RawTransferMetadata>();
         // SAFETY: `Allocator` was created by `FixedSizeAllocator` which reserved space after `end_ptr`
         // for a `RawTransferMetadata`. `end_ptr` is aligned for `RawTransferMetadata`.
@@ -585,6 +698,7 @@ impl Linter {
             external_rules.iter().map(|(_, options_id, _)| options_id.raw()).collect(),
             settings_json,
             globals_json,
+            self.workspace_uri.as_ref().map(ToString::to_string),
             allocator,
         );
         match result {
@@ -609,41 +723,52 @@ impl Linter {
                         continue;
                     }
 
-                    // Convert `JSFix`s fixes to `PossibleFixes`, including converting spans back to UTF-8
-                    let fix = if let Some(fixes) = diagnostic.fixes {
-                        debug_assert!(!fixes.is_empty()); // JS should send `None` instead of `Some([])`
+                    // Convert a `Vec<JsFix>` to a `Fix`, including converting spans back to UTF-8
+                    let create_fix = |fixes, fix_kind| match convert_and_merge_js_fixes(
+                        fixes,
+                        original_source_text,
+                        &span_converter,
+                        has_bom,
+                    ) {
+                        Ok(fix) => Some(fix.with_kind(fix_kind)),
+                        Err(err) => {
+                            let fixes_type = if fix_kind.contains(FixKind::Suggestion) {
+                                "suggestions"
+                            } else {
+                                "fixes"
+                            };
+                            let message = format!(
+                                "Plugin `{plugin_name}/{rule_name}` returned invalid {fixes_type}.\nFile path: {path}\n{err}"
+                            );
+                            ctx_host.push_diagnostic(Message::new(
+                                OxcDiagnostic::error(message),
+                                PossibleFixes::None,
+                            ));
+                            None
+                        }
+                    };
 
-                        let is_single = fixes.len() == 1;
+                    // Convert fix
+                    let fix = diagnostic.fixes.and_then(|fixes| create_fix(fixes, FixKind::Fix));
 
-                        let fixes = fixes.into_iter().map(|fix| {
-                            // TODO: Validate span offsets are within bounds and `start <= end`.
-                            // Also make sure offsets do not fall in middle of a multi-byte UTF-8 character.
-                            // That's possible if UTF-16 offset points to middle of a surrogate pair.
-                            let mut span = Span::new(fix.range[0], fix.range[1]);
-                            span_converter.convert_span_back(&mut span);
-                            Fix::new(fix.text, span)
+                    // Convert suggestions (only if fix kind allows suggestions), and combine with fix
+                    let possible_fixes = if let Some(suggestions) = diagnostic.suggestions
+                        && ctx_host.fix.can_apply(FixKind::Suggestion)
+                    {
+                        debug_assert!(
+                            !suggestions.is_empty(),
+                            "`diagnostic.suggestions` should be `None` if there are no suggestions"
+                        );
+
+                        let suggestions = suggestions.into_iter().filter_map(|suggestion| {
+                            create_fix(suggestion.fixes, FixKind::Suggestion)
+                                .map(|fix| fix.with_message(suggestion.message))
                         });
 
-                        if is_single {
-                            PossibleFixes::Single(fixes.into_iter().next().unwrap())
-                        } else {
-                            let fixes = fixes.collect::<Vec<_>>();
-                            match CompositeFix::merge_fixes_fallible(fixes, source_text) {
-                                Ok(fix) => PossibleFixes::Single(fix),
-                                Err(err) => {
-                                    let message = format!(
-                                        "Plugin `{plugin_name}/{rule_name}` returned invalid fixes.\nFile path: {path}\n{err}"
-                                    );
-                                    ctx_host.push_diagnostic(Message::new(
-                                        OxcDiagnostic::error(message),
-                                        PossibleFixes::None,
-                                    ));
-                                    PossibleFixes::None
-                                }
-                            }
-                        }
+                        #[expect(clippy::from_iter_instead_of_collect)]
+                        PossibleFixes::from_iter(iter::chain(fix, suggestions))
                     } else {
-                        PossibleFixes::None
+                        PossibleFixes::from(fix)
                     };
 
                     ctx_host.push_diagnostic(Message::new(
@@ -651,7 +776,7 @@ impl Linter {
                             .with_label(span)
                             .with_error_code(plugin_name.to_string(), rule_name.to_string())
                             .with_severity(severity.into()),
-                        fix,
+                        possible_fixes,
                     ));
                 }
             }
@@ -679,36 +804,28 @@ pub struct RawTransferMetadata2 {
     pub data_offset: u32,
     /// `true` if AST is TypeScript.
     pub is_ts: bool,
-    /// Padding to pad struct to size 16.
-    pub(crate) _padding: u64,
+    /// `true` if AST is JSX.
+    pub is_jsx: bool,
+    /// `true` if source text has a BOM.
+    pub has_bom: bool,
+    /// Offset of lexer `Token`s within buffer.
+    pub tokens_offset: u32,
+    /// Number of lexer `Token`s.
+    pub tokens_len: u32,
 }
 
 use RawTransferMetadata2 as RawTransferMetadata;
 
 impl RawTransferMetadata {
-    pub fn new(data_offset: u32) -> Self {
-        Self { data_offset, is_ts: false, _padding: 0 }
-    }
-}
-
-#[cfg(test)]
-mod test {
-    use std::fs;
-
-    use project_root::get_project_root;
-
-    use crate::Oxlintrc;
-
-    #[test]
-    fn test_schema_json() {
-        let path = get_project_root().unwrap().join("npm/oxlint/configuration_schema.json");
-        let json = Oxlintrc::generate_schema_json();
-        let existing_json = fs::read_to_string(&path).unwrap_or_default();
-        if existing_json.trim() != json.trim() {
-            std::fs::write(&path, &json).unwrap();
-        }
-        insta::with_settings!({ prepend_module_to_snapshot => false }, {
-            insta::assert_snapshot!(json);
-        });
+    pub fn new(
+        data_offset: u32,
+        is_ts: bool,
+        is_jsx: bool,
+        has_bom: bool,
+        tokens_offset: u32,
+        tokens_len: u32,
+    ) -> Self {
+        #[expect(clippy::inconsistent_struct_constructor)] // `#[ast]` macro reorders fields
+        Self { data_offset, is_ts, is_jsx, has_bom, tokens_offset, tokens_len }
     }
 }

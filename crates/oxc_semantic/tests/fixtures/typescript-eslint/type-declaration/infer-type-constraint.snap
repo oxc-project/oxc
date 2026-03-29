@@ -7,7 +7,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
     "children": [
       {
         "children": [],
-        "flags": "ScopeFlags(StrictMode)",
+        "flags": "ScopeFlags(0x0)",
         "id": 1,
         "node": "TSTypeAliasDeclaration",
         "symbols": []
@@ -16,7 +16,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
         "children": [
           {
             "children": [],
-            "flags": "ScopeFlags(StrictMode | TsConditional)",
+            "flags": "ScopeFlags(TsConditional)",
             "id": 3,
             "node": "TSConditionalType",
             "symbols": [
@@ -30,14 +30,15 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
                     "flags": "ReferenceFlags(Type)",
                     "id": 2,
                     "name": "Id",
-                    "node_id": 24
+                    "node_id": 24,
+                    "scope_id": 3
                   }
                 ]
               }
             ]
           }
         ],
-        "flags": "ScopeFlags(StrictMode)",
+        "flags": "ScopeFlags(0x0)",
         "id": 2,
         "node": "TSTypeAliasDeclaration",
         "symbols": [
@@ -51,14 +52,15 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
                 "flags": "ReferenceFlags(Type)",
                 "id": 0,
                 "name": "T",
-                "node_id": 13
+                "node_id": 13,
+                "scope_id": 2
               }
             ]
           }
         ]
       }
     ],
-    "flags": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(Top)",
     "id": 0,
     "node": "Program",
     "symbols": [
@@ -72,7 +74,8 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
             "flags": "ReferenceFlags(Type)",
             "id": 1,
             "name": "X",
-            "node_id": 22
+            "node_id": 22,
+            "scope_id": 3
           }
         ]
       },

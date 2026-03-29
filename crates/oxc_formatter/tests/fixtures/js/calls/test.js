@@ -45,3 +45,11 @@ global().longcalllongcall().property
   .only('foobarbazqux', async () => {
     //
   })
+
+// https://github.com/oxc-project/oxc/issues/17272
+test.fixme("C[TBD] Create automation - Priority changes triggers action @regression-standalone-qa-env @regression @automations-squad", async ({
+  page: _page,
+}, testInfo) => {
+  // TODO
+});
+

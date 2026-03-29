@@ -60,10 +60,8 @@ fn test() {
             None,
         ),
         ("describe(42)", None),
-        (
-            "describe(42)",
-            Some(serde_json::json!([{ "ignore": "undefined", "allowedPrefixes": "undefined" }])),
-        ),
+        // Cannot pass undefined, so use empty arrays.
+        ("describe(42)", Some(serde_json::json!([{ "ignore": [], "allowedPrefixes": [] }]))),
         // ignore = describe
         ("describe('Foo', function () {})", Some(serde_json::json!([{ "ignore": ["describe"] }]))),
         (

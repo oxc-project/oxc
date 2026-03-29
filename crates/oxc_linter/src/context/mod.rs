@@ -2,7 +2,7 @@
 
 use std::{ffi::OsStr, ops::Deref, path::Path, rc::Rc};
 
-use javascript_globals::GLOBALS;
+use javascript_globals::{GLOBALS, GLOBALS_BUILTIN, GLOBALS_ES2026};
 
 use oxc_ast::ast::IdentifierReference;
 use oxc_cfg::ControlFlowGraph;
@@ -14,6 +14,7 @@ use oxc_span::Span;
 use crate::rule::RuleFixMeta;
 use crate::{
     AllowWarnDeny, FrameworkFlags, ModuleRecord, OxlintEnv, OxlintGlobals, OxlintSettings,
+    WEBSITE_BASE_RULES_URL,
     config::GlobalValue,
     disable_directives::DisableDirectives,
     fixer::{Fix, FixKind, Message, PossibleFixes, RuleFix, RuleFixer},
@@ -70,9 +71,6 @@ impl<'a> Deref for LintContext<'a> {
 }
 
 impl<'a> LintContext<'a> {
-    /// Base URL for the documentation, used to generate rule documentation URLs when a diagnostic is reported.
-    const WEBSITE_BASE_URL: &'static str = "https://oxc.rs/docs/guide/usage/linter/rules";
-
     /// Set the plugin name for the current rule.
     pub fn with_plugin_name(mut self, plugin: &'static str) -> Self {
         self.current_plugin_name = plugin;
@@ -148,6 +146,18 @@ impl<'a> LintContext<'a> {
             .map(|(a, _)| a as u32)
     }
 
+    /// Finds the previous occurrence of the given token in the source code,
+    /// starting from the specified position, skipping over comments.
+    #[expect(clippy::cast_possible_truncation)]
+    pub fn find_prev_token_from(&self, start: u32, token: &str) -> Option<u32> {
+        let source = self.source_range(Span::from(0..start));
+
+        source
+            .rmatch_indices(token)
+            .find(|(a, _)| !self.is_inside_comment(*a as u32))
+            .map(|(a, _)| a as u32)
+    }
+
     /// Finds the next occurrence of the given token within a bounded span,
     /// starting from the specified position, skipping over comments.
     ///
@@ -159,6 +169,21 @@ impl<'a> LintContext<'a> {
 
         source
             .match_indices(token)
+            .find(|(a, _)| !self.is_inside_comment(start + *a as u32))
+            .map(|(a, _)| a as u32)
+    }
+
+    /// Finds the previous occurrence of the given token within a bounded span,
+    /// starting from the specified position, skipping over comments.
+    ///
+    /// Returns the offset from `start` if the token is found before `end`,
+    /// otherwise returns `None`.
+    #[expect(clippy::cast_possible_truncation)]
+    pub fn find_prev_token_within(&self, start: u32, end: u32, token: &str) -> Option<u32> {
+        let source = self.source_range(Span::new(start, end));
+
+        source
+            .rmatch_indices(token)
             .find(|(a, _)| !self.is_inside_comment(start + *a as u32))
             .map(|(a, _)| a as u32)
     }
@@ -217,7 +242,7 @@ impl<'a> LintContext<'a> {
 
     fn get_env_global_entry(&self, var: &str) -> Option<GlobalValue> {
         // builtin is always readonly
-        if GLOBALS["builtin"].contains_key(var) {
+        if GLOBALS_BUILTIN.contains_key(var) {
             return Some(GlobalValue::Readonly);
         }
 
@@ -235,11 +260,30 @@ impl<'a> LintContext<'a> {
     /// Checks if a given variable named is defined as a global variable in the current environment.
     ///
     /// Example:
-    /// - `env_contains_var("Date")` returns `true` because it is a global builtin in all environments.
-    /// - `env_contains_var("HTMLElement")` returns `true` only if the `browser` environment is enabled.
-    /// - `env_contains_var("globalThis")` returns `true` only if the `es2020` environment or higher is enabled.
-    pub fn env_contains_var(&self, var: &str) -> bool {
-        if GLOBALS["builtin"].contains_key(var) {
+    /// - `is_global_defined("Date")` returns `true` because it is a global builtin in all environments.
+    /// - `is_global_defined("HTMLElement")` returns `true` only if the `browser` environment is enabled.
+    /// - `is_global_defined("globalThis")` returns `true` only if the `es2020` environment or higher is enabled.
+    /// - `is_global_defined("myGlobalVar")` returns `true` only if it is defined in the `globals` section as a non "off" value.
+    pub fn is_global_defined(&self, var: &str) -> bool {
+        if !self.scoping().root_unresolved_references().contains_key(var) {
+            return false;
+        }
+        if self.globals().is_enabled(var) {
+            return true;
+        }
+        self.env_contains_var(var)
+    }
+
+    pub fn is_ecma_script_global(&self, var: &str) -> bool {
+        if !self.scoping().root_unresolved_references().contains_key(var) {
+            return false;
+        }
+
+        GLOBALS_ES2026.contains_key(var) || GLOBALS_BUILTIN.contains_key(var)
+    }
+
+    fn env_contains_var(&self, var: &str) -> bool {
+        if GLOBALS_BUILTIN.contains_key(var) {
             return true;
         }
         for env in self.env().iter() {
@@ -265,9 +309,7 @@ impl<'a> LintContext<'a> {
             .with_error_code(self.current_plugin_prefix, self.current_rule_name)
             .with_url(format!(
                 "{}/{}/{}.html",
-                Self::WEBSITE_BASE_URL,
-                self.current_plugin_name,
-                self.current_rule_name
+                WEBSITE_BASE_RULES_URL, self.current_plugin_name, self.current_rule_name
             ));
         if message.error.severity != self.severity {
             message.error = message.error.with_severity(self.severity);

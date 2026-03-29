@@ -10,10 +10,7 @@ pub use self::{
     lint::{LintCommand, OutputOptions, ReportUnusedDirectives, WarningOptions, lint_command},
 };
 
-const VERSION: &str = match option_env!("OXC_VERSION") {
-    Some(v) => v,
-    None => "dev",
-};
+const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 /// Miscellaneous
 #[derive(Debug, Clone, Bpaf)]

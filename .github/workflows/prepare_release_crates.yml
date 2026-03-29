@@ -14,11 +14,12 @@ concurrency:
 
 jobs:
   check:
+    if: github.repository == 'oxc-project/oxc'
     name: Check
     runs-on: ubuntu-latest
     steps:
-      - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
-      - uses: oxc-project/setup-rust@c8224157c0bf235aabc633e8cd50d344f087a7de # v1.0.12
+      - uses: taiki-e/checkout-action@83ed61bfbe2b8abbb3c66e8b65b1335484c70009 # v1.4.1
+      - uses: oxc-project/setup-rust@23f38cfb0c04af97a055f76acee94d5be71c7c82 # v1.0.16
         with:
           cache-key: warm
           tools: cargo-release-oxc
@@ -26,18 +27,19 @@ jobs:
       - run: cargo release-oxc publish --release crates --dry-run # zizmor: ignore[use-trusted-publishing]
 
   prepare:
+    if: github.repository == 'oxc-project/oxc'
     name: Prepare Release
     runs-on: ubuntu-latest
     outputs:
       pull-request-number: ${{ steps.pr.outputs.pull-request-number }}
       version: ${{ steps.run.outputs.CRATES_VERSION }}
     steps:
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
           persist-credentials: false
 
-      - uses: oxc-project/setup-rust@c8224157c0bf235aabc633e8cd50d344f087a7de # v1.0.12
+      - uses: oxc-project/setup-rust@23f38cfb0c04af97a055f76acee94d5be71c7c82 # v1.0.16
         with:
           cache-key: warm
           tools: cargo-release-oxc
@@ -49,7 +51,7 @@ jobs:
           cargo release-oxc update --release crates
           echo "CRATES_VERSION=$(cat ./target/CRATES_VERSION)" >> $GITHUB_OUTPUT
 
-      - uses: oxc-project/setup-node@8958a8e040102244b619c4a94fccb657a44b1c21 # v1.0.6
+      - uses: oxc-project/setup-node@4c26e7cb3605b6bdef5450dacd02c434b10fd8ba # v1.2.0
 
       # Run NAPI-RS build, because NAPI-RS uses version from `package.json` in the bindings file,
       # which is committed to the repo. The version has just been bumped in previous step.
@@ -63,7 +65,7 @@ jobs:
       - name: Update Cargo.lock
         run: cargo check
 
-      - uses: peter-evans/create-pull-request@98357b18bf14b5342f975ff684046ec3b2a07725 # v8.0.0
+      - uses: peter-evans/create-pull-request@c0f553fe549906ede9cf27b5156039d195d2ece0 # v8.1.0
         id: pr
         with:
           # bot account with PAT required for triggering workflow runs
@@ -80,12 +82,12 @@ jobs:
   ecosystem-ci:
     needs: prepare
     name: Trigger Monitor Oxc
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     permissions:
       issues: write
       pull-requests: write
     steps:
-      - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
+      - uses: taiki-e/checkout-action@83ed61bfbe2b8abbb3c66e8b65b1335484c70009 # v1.4.1
 
       - uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9 # v5.0.0
         id: comment
@@ -94,7 +96,7 @@ jobs:
           issue-number: ${{ needs.prepare.outputs.pull-request-number }}
           body: Triggering Monitor Oxc https://github.com/oxc-project/monitor-oxc/actions/workflows/ci.yml
 
-      - uses: benc-uk/workflow-dispatch@e2e5e9a103e331dad343f381a29e654aea3cf8fc # v1.2.4
+      - uses: benc-uk/workflow-dispatch@7a027648b88c2413826b6ddd6c76114894dc5ec4 # v1.3.1
         with:
           repo: oxc-project/monitor-oxc
           workflow: ci.yml

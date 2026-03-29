@@ -2,6 +2,10 @@ use napi::Either;
 use napi_derive::napi;
 use rustc_hash::FxHashMap;
 
+/// A single group item in the sort imports `groups` configuration.
+/// Matches oxfmtrc format: `string | string[] | { newlinesBetween: boolean }`
+pub type SortGroupItem = Either<String, Either<Vec<String>, OxcNewlinesBetweenMarker>>;
+
 #[napi(object)]
 #[derive(Default)]
 pub struct OxcOptions {
@@ -145,7 +149,7 @@ pub struct OxcFormatterOptions {
     /// Put each attribute on its own line (default: false)
     pub single_attribute_per_line: Option<bool>,
     /// Sort imports configuration (default: None)
-    pub experimental_sort_imports: Option<OxcSortImportsOptions>,
+    pub sort_imports: Option<OxcSortImportsOptions>,
 }
 
 #[napi(object)]
@@ -165,6 +169,30 @@ pub struct OxcSortImportsOptions {
     pub newlines_between: Option<bool>,
     /// Pattern prefixes for internal imports
     pub internal_pattern: Option<Vec<String>>,
-    /// Custom groups of imports
-    pub groups: Option<Vec<Vec<String>>>,
+    /// Groups configuration matching oxfmtrc format.
+    /// Each element can be a single group name string, an array of group names,
+    /// or a `{ newlinesBetween: bool }` marker object.
+    #[napi(ts_type = "Array<string | string[] | { newlinesBetween: boolean }> | undefined")]
+    pub groups: Option<Vec<SortGroupItem>>,
+    /// User-defined custom group definitions
+    pub custom_groups: Option<Vec<OxcCustomGroupDefinition>>,
+}
+
+#[napi(object)]
+#[derive(Default, Clone)]
+pub struct OxcNewlinesBetweenMarker {
+    pub newlines_between: Option<bool>,
+}
+
+#[napi(object)]
+#[derive(Default, Clone)]
+pub struct OxcCustomGroupDefinition {
+    /// The identifier used in groups representing this custom group
+    pub group_name: Option<String>,
+    /// List of glob patterns to match import sources
+    pub element_name_pattern: Option<Vec<String>>,
+    /// Import selector filter (e.g. "type", "external", "builtin")
+    pub selector: Option<String>,
+    /// Import modifier filters - all must match
+    pub modifiers: Option<Vec<String>>,
 }

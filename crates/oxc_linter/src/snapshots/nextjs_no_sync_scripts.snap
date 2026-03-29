@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-next(no-sync-scripts): Prevent synchronous scripts.
     ╭─[no_sync_scripts.tsx:9:21]
   8 │                             <h1>Hello title</h1>

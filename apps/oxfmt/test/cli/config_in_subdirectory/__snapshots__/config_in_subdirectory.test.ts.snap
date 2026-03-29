@@ -1,0 +1,31 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`config_in_subdirectory > should not panic when config with \`ignorePatterns\` is in subdirectory 1`] = `
+"--------------------
+arguments: --check -c ./subdir/.oxfmtrc.json ./subdir
+working directory: config_in_subdirectory/fixtures
+exit code: 0
+--- STDOUT ---------
+Checking formatting...
+
+All matched files use the correct format.
+Finished in <variable>ms on 1 files using 1 threads.
+--- STDERR ---------
+
+--------------------"
+`;
+
+exports[`config_in_subdirectory > should not panic when target path is absolute and outside matcher root 1`] = `
+"--------------------
+arguments: --check -c ./subdir/.oxfmtrc.json <cwd>/outside/file.js
+working directory: config_in_subdirectory/fixtures
+exit code: 0
+--- STDOUT ---------
+Checking formatting...
+
+All matched files use the correct format.
+Finished in <variable>ms on 1 files using 1 threads.
+--- STDERR ---------
+
+--------------------"
+`;

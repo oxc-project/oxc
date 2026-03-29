@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ typescript-eslint(ban-tslint-comment): tslint comment detected: "tslint:disable"
    ╭─[ban_tslint_comment.tsx:1:1]
  1 │ /* tslint:disable */

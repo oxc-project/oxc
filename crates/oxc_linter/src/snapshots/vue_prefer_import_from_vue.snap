@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-vue(prefer-import-from-vue): Use `import from 'vue'` instead of `import from '@vue/*'`.
    ╭─[prefer_import_from_vue.tsx:1:27]
  1 │ import { createApp } from '@vue/runtime-dom'

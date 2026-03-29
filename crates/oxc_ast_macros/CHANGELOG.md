@@ -4,6 +4,40 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.122.0] - 2026-03-23
+
+### ⚡ Performance
+
+- c6ea0a0 ast: Place `NodeId` field after `Span` in structs (#20584) (overlookmotel)
+
+## [0.116.0] - 2026-03-02
+
+### ⚡ Performance
+
+- 6a6513c linter/plugins: Use Oxc tokens in plugins (#19498) (camc314)
+
+## [0.114.0] - 2026-02-16
+
+### 🚀 Features
+
+- ebb80b3 ast: Add `node_id` field to all AST struct nodes (#18138) (Boshen)
+
+## [0.111.0] - 2026-01-26
+
+### 🚀 Features
+
+- 8db0e78 linter/plugins: Handle BOMs (#18376) (overlookmotel)
+
+## [0.109.0] - 2026-01-19
+
+### 💥 BREAKING CHANGES
+
+- 9135b0b ast: [**BREAKING**] Move scope from `TSEnumDeclaration` to `TSEnumBody` (#18058) (Boshen)
+
+### 🐛 Bug Fixes
+
+- 7a0ca99 linter/plugins: Use correct ScriptKind for tokens (#17185) (Peter Wagenet)
+
 ## [0.104.0] - 2025-12-19
 
 ### ⚡ Performance

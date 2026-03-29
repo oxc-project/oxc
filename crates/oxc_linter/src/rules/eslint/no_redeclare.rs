@@ -1,8 +1,8 @@
-use javascript_globals::GLOBALS;
+use javascript_globals::GLOBALS_BUILTIN;
 
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{ModuleKind, Span};
+use oxc_span::Span;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -12,19 +12,22 @@ use crate::{
 };
 
 fn no_redeclare_diagnostic(name: &str, decl_span: Span, re_decl_span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("'{name}' is already defined.")).with_labels([
-        decl_span.label(format!("'{name}' is already defined.")),
-        re_decl_span.label("It can not be redeclared here."),
-    ])
+    OxcDiagnostic::warn(format!("'{name}' is already defined."))
+        .with_help("Use a different variable name or remove the duplicate declaration.")
+        .with_labels([
+            decl_span.label(format!("'{name}' is already defined.")),
+            re_decl_span.label("It can not be redeclared here."),
+        ])
 }
 
 fn no_redeclare_as_builtin_in_diagnostic(name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("'{name}' is already defined as a built-in global variable."))
+        .with_help("Use a different variable name to avoid shadowing the built-in global.")
         .with_label(span)
 }
 
 #[derive(Debug, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoRedeclare {
     /// When set `true`, it flags redeclaring built-in globals (e.g., `let Object = 1;`).
     builtin_globals: bool,
@@ -67,18 +70,19 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoRedeclare {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        serde_json::from_value::<DefaultRuleConfig<NoRedeclare>>(value)
-            .unwrap_or_default()
-            .into_inner()
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run_once(&self, ctx: &LintContext) {
+        let builtin_globals = if self.builtin_globals { Some(&GLOBALS_BUILTIN) } else { None };
+
         for symbol_id in ctx.scoping().symbol_ids() {
             let name = ctx.scoping().symbol_name(symbol_id);
             let decl_span = ctx.scoping().symbol_span(symbol_id);
-            let is_builtin = self.builtin_globals
-                && (GLOBALS["builtin"].contains_key(name) || ctx.globals().is_enabled(name));
+            let is_builtin = builtin_globals.is_some_and(|builtin_globals| {
+                builtin_globals.contains_key(name) || ctx.globals().is_enabled(name)
+            });
 
             if is_builtin {
                 ctx.diagnostic(no_redeclare_as_builtin_in_diagnostic(name, decl_span));
@@ -122,8 +126,8 @@ impl Rule for NoRedeclare {
     }
 
     fn should_run(&self, ctx: &ContextHost) -> bool {
-        // Modules run in their own scope, and don't conflict with existing globals
-        ctx.source_type().module_kind() == ModuleKind::Script
+        // ES modules run in their own scope, and don't conflict with existing globals
+        !ctx.source_type().is_module()
     }
 }
 

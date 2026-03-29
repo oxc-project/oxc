@@ -16,6 +16,30 @@ use crate::{format, write};
 #[derive(Debug, Clone, Eq, PartialEq, Default)]
 pub struct Document<'a> {
     elements: &'a [FormatElement<'a>],
+    sorted_tailwind_classes: Vec<String>,
+}
+
+impl<'a> Document<'a> {
+    /// Creates a new document from the given elements.
+    pub fn new(
+        elements: ArenaVec<'a, FormatElement<'a>>,
+        sorted_tailwind_classes: Vec<String>,
+    ) -> Self {
+        Self { elements: elements.into_bump_slice(), sorted_tailwind_classes }
+    }
+
+    /// Consumes the document and returns its elements and sorted Tailwind CSS classes.
+    pub fn into_elements_and_tailwind_classes(self) -> (&'a [FormatElement<'a>], Vec<String>) {
+        (self.elements, self.sorted_tailwind_classes)
+    }
+
+    /// Replaces the document's format elements with new ones.
+    ///
+    /// If you have modified the elements and want to update the document,
+    /// use this method to set the new elements.
+    pub fn replace_elements(&mut self, elements: ArenaVec<'a, FormatElement<'a>>) {
+        self.elements = elements.into_bump_slice();
+    }
 }
 
 impl Document<'_> {
@@ -134,12 +158,6 @@ impl Document<'_> {
     }
 }
 
-impl<'a> From<ArenaVec<'a, FormatElement<'a>>> for Document<'a> {
-    fn from(elements: ArenaVec<'a, FormatElement<'a>>) -> Self {
-        Self { elements: elements.into_bump_slice() }
-    }
-}
-
 impl<'a> Deref for Document<'a> {
     type Target = [FormatElement<'a>];
 
@@ -151,7 +169,9 @@ impl<'a> Deref for Document<'a> {
 impl std::fmt::Display for Document<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let allocator = Allocator::default();
-        let context = FormatContext::dummy(&allocator);
+        let mut context = FormatContext::dummy(&allocator);
+        // Set the sorted Tailwind CSS classes in the context, so that `FormatElement::TailwindClass` can access them.
+        context.set_tailwind_classes(self.sorted_tailwind_classes.clone());
         let formatted = format!(context, [self.elements]);
 
         f.write_str(formatted.print().expect("Expected a valid document").as_code())
@@ -499,6 +519,21 @@ impl<'a> Format<'a> for &[FormatElement<'a>] {
 
                     if tag.is_start() {
                         write!(f, [ContentArrayStart]);
+                    }
+                }
+                FormatElement::TailwindClass(index) => {
+                    let class = f.context().get_tailwind_class(*index);
+                    if let Some(class) = class {
+                        write!(f, [text(f.context().allocator().alloc_str(class))]);
+                    } else {
+                        write!(
+                            f,
+                            [
+                                token("<UNKNOWN_TAILWIND_CLASS_INDEX<"),
+                                text(f.context().allocator().alloc_str(&std::format!("{index}"))),
+                                token(">>"),
+                            ]
+                        );
                     }
                 }
             }

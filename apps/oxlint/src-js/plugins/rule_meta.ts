@@ -29,7 +29,7 @@ export interface RuleMeta {
    * Type of fixes that the rule provides.
    * Must be `'code'` or `'whitespace'` if the rule provides fixes.
    */
-  fixable?: "code" | "whitespace";
+  fixable?: "code" | "whitespace" | null | undefined;
   /**
    * Specifies whether rule can return suggestions.
    * Must be `true` if the rule provides suggestions.
@@ -45,7 +45,6 @@ export interface RuleMeta {
    * Default options for the rule.
    * If present, any user-provided options in their config will be merged on top of them recursively.
    */
-  // TODO: Use this to alter options passed to rules.
   defaultOptions?: Options;
   /**
    * Indicates whether the rule has been deprecated, and info about the deprecation and possible replacements.

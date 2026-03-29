@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-promise(spec-only): Avoid using non-standard `Promise.done` method.
    ╭─[spec_only.tsx:1:1]
  1 │ Promise.done()

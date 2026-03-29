@@ -18,7 +18,7 @@ fn no_multi_assign_diagnostic(span: Span) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoMultiAssign {
     /// When set to `true`, the rule allows chains that don't include initializing a variable in a declaration or initializing a class field.
     ///
@@ -108,10 +108,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoMultiAssign {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        serde_json::from_value::<DefaultRuleConfig<NoMultiAssign>>(value)
-            .unwrap_or_default()
-            .into_inner()
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -152,20 +150,20 @@ fn test() {
     let pass = vec![
         (
             "var a, b, c,
-			d = 0;",
+            d = 0;",
             None,
         ),
         (
             "var a = 1; var b = 2; var c = 3;
-			var d = 0;",
+            var d = 0;",
             None,
         ),
         ("var a = 1 + (b === 10 ? 5 : 4);", None),
         ("const a = 1, b = 2, c = 3;", None), // { "ecmaVersion": 6 },
         (
             "const a = 1;
-			const b = 2;
-			 const c = 3;",
+            const b = 2;
+             const c = 3;",
             None,
         ), // { "ecmaVersion": 6 },
         ("for(var a = 0, b = 0;;){}", None),
@@ -174,7 +172,7 @@ fn test() {
         ("export let a, b;", None),          // { "ecmaVersion": 6, "sourceType": "module" },
         (
             "export let a,
-			 b = 0;",
+             b = 0;",
             None,
         ), // { "ecmaVersion": 6, "sourceType": "module" },
         (
@@ -193,8 +191,8 @@ fn test() {
         ("a=b=c", None),
         (
             "a
-			=b
-			=c",
+            =b
+            =c",
             None,
         ),
         ("var a = (b) = (((c)))", None),
@@ -202,15 +200,15 @@ fn test() {
         ("var a = b = ( (c * 12) + 2)", None),
         (
             "var a =
-			((b))
-			 = (c)",
+            ((b))
+             = (c)",
             None,
         ),
         ("a = b = '=' + c + 'foo';", None),
         ("a = b = 7 * 12 + 5;", None),
         (
             "const x = {};
-			const y = x.one = 1;",
+            const y = x.one = 1;",
             Some(serde_json::json!([{ "ignoreNonDeclaration": true }])),
         ), // { "ecmaVersion": 6 },
         ("let a, b;a = b = 1", Some(serde_json::json!([{}]))), // { "ecmaVersion": 6 },

@@ -5,17 +5,12 @@ input_file: crates/oxc_isolated_declarations/tests/fixtures/infer-expression.ts
 ```
 ==================== .D.TS ====================
 
-// Correct
-// ParenthesizedExpression
 declare const n: number;
 declare const s: string;
 declare const t: string;
 declare const b: boolean;
-// UnaryExpression
 declare let unaryA: number;
 declare const unaryB = -12n;
-// Incorrect
-// UnaryExpression
 declare const unaryC: unknown;
 declare const unaryD: unknown;
 declare const unaryE: {};

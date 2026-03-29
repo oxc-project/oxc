@@ -5,7 +5,7 @@ use std::f64::consts as f64;
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{Span, ident::MATH};
 
 use crate::{AstNode, context::LintContext, fixer::RuleFixer, rule::Rule};
 
@@ -60,7 +60,7 @@ impl Rule for ApproxConstant {
                 ctx.diagnostic_with_suggestion(
                     approx_constant_diagnostic(number_literal.span, name),
                     |fixer| {
-                        if ctx.scoping().find_binding(node.scope_id(), "Math").is_some() {
+                        if ctx.scoping().find_binding(node.scope_id(), MATH).is_some() {
                             fixer.noop()
                         } else {
                             Self::fix_with_math_constant(fixer, number_literal.span, name)

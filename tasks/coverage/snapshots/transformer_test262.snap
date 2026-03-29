@@ -1,5 +1,7 @@
-commit: 9079aeef
+commit: 5c820692
 
 transformer_test262 Summary:
-AST Parsed     : 46472/46472 (100.00%)
-Positive Passed: 46472/46472 (100.00%)
+AST Parsed     : 47047/47047 (100.00%)
+Positive Passed: 47046/47047 (100.00%)
+Mismatch: tasks/coverage/test262/test/language/statements/class/static-init-expr-new-target.js
+

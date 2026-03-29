@@ -21,17 +21,17 @@ pub struct NoPrototypeBuiltins;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow calling some Object.prototype methods directly on objects
+    /// Disallow calling some `Object.prototype` methods directly on objects.
     ///
     /// ### Why is this bad?
     ///
-    /// In ECMAScript 5.1, Object.create was added, which enables the creation of objects with a specified [[Prototype]].
-    /// Object.create(null) is a common pattern used to create objects that will be used as a Map.
-    /// This can lead to errors when it is assumed that objects will have properties from Object.prototype. This rule prevents calling some Object.prototype methods directly from an object.
-    /// Additionally, objects can have properties that shadow the builtins on Object.prototype, potentially causing unintended behavior or denial-of-service security vulnerabilities.
-    /// For example, it would be unsafe for a webserver to parse JSON input from a client and call hasOwnProperty directly on the resulting object, because a malicious client could send a JSON value like {"hasOwnProperty": 1} and cause the server to crash.
+    /// In ECMAScript 5.1, `Object.create` was added, which enables the creation of objects with a specified [[Prototype]].
+    /// `Object.create(null)` is a common pattern used to create objects that will be used as a Map.
+    /// This can lead to errors when it is assumed that objects will have properties from `Object.prototype`. This rule prevents calling some `Object.prototype` methods directly from an object.
+    /// Additionally, objects can have properties that shadow the builtins on `Object.prototype`, potentially causing unintended behavior or denial-of-service security vulnerabilities.
+    /// For example, it would be unsafe for a webserver to parse JSON input from a client and call `hasOwnProperty` directly on the resulting object, because a malicious client could send a JSON value like {"hasOwnProperty": 1} and cause the server to crash.
     ///
-    /// To avoid subtle bugs like this, it’s better to always call these methods from Object.prototype. For example, foo.hasOwnProperty("bar") should be replaced with Object.prototype.hasOwnProperty.call(foo, "bar").
+    /// To avoid subtle bugs like this, it’s better to always call these methods from `Object.prototype`. For example, `foo.hasOwnProperty("bar")` should be replaced with `Object.prototype.hasOwnProperty.call(foo, "bar")`.
     ///
     /// ### Examples
     ///
@@ -43,7 +43,8 @@ declare_oxc_lint!(
     /// ```
     NoPrototypeBuiltins,
     eslint,
-    pedantic
+    pedantic,
+    pending
 );
 
 const DISALLOWED_PROPS: &[&str; 3] = &["hasOwnProperty", "isPrototypeOf", "propertyIsEnumerable"];
@@ -90,13 +91,13 @@ fn test() {
         "({}.propertyIsEnumerable.apply(foo, ['bar']))",
         "foo[hasOwnProperty]('bar')",
         "foo['HasOwnProperty']('bar')",
-        "foo[`isPrototypeOff`]('bar')",
-        "foo?.['propertyIsEnumerabl']('bar')",
+        "foo[`isPrototypeOff`]('bar')", // { "ecmaVersion": 2015 },
+        "foo?.['propertyIsEnumerabl']('bar')", // { "ecmaVersion": 2020 },
         "foo[1]('bar')",
         "foo[null]('bar')",
-        "class C { #hasOwnProperty; foo() { obj.#hasOwnProperty('bar'); } }",
+        "class C { #hasOwnProperty; foo() { obj.#hasOwnProperty('bar'); } }", // { "ecmaVersion": 2022 },
         "foo['hasOwn' + 'Property']('bar')",
-        "foo[`hasOwnProperty${''}`]('bar')",
+        "foo[`hasOwnProperty${''}`]('bar')", // { "ecmaVersion": 2015 }
     ];
 
     let fail = vec![
@@ -106,12 +107,20 @@ fn test() {
         "foo.bar.hasOwnProperty('bar')",
         "foo.bar.baz.isPrototypeOf('bar')",
         "foo['hasOwnProperty']('bar')",
-        "foo[`isPrototypeOf`]('bar').baz",
-        "foo.bar[\"propertyIsEnumerable\"]('baz')",
-        "foo?.hasOwnProperty('bar')",
-        "(foo?.hasOwnProperty)('bar')",
-        "foo?.['hasOwnProperty']('bar')",
-        "(foo?.[`hasOwnProperty`])('bar')",
+        "foo[`isPrototypeOf`]('bar').baz", // { "ecmaVersion": 2015 },
+        r#"foo.bar["propertyIsEnumerable"]('baz')"#,
+        "(function(Object) {return foo.hasOwnProperty('bar');})",
+        "foo.hasOwnProperty('bar')", // { "globals": { "Object": "off", }, },
+        "foo?.hasOwnProperty('bar')", // { "ecmaVersion": 2020 },
+        "foo?.bar.hasOwnProperty('baz')", // { "ecmaVersion": 2020 },
+        "foo.hasOwnProperty?.('bar')", // { "ecmaVersion": 2020 },
+        "foo?.hasOwnProperty('bar').baz", // { "ecmaVersion": 2020 },
+        "foo.hasOwnProperty('bar')?.baz", // { "ecmaVersion": 2020 },
+        "(a,b).hasOwnProperty('bar')", // { "ecmaVersion": 2020 },
+        "(foo?.hasOwnProperty)('bar')", // { "ecmaVersion": 2020 },
+        "(foo?.hasOwnProperty)?.('bar')", // { "ecmaVersion": 2020 },
+        "foo?.['hasOwnProperty']('bar')", // { "ecmaVersion": 2020 },
+        "(foo?.[`hasOwnProperty`])('bar')", // { "ecmaVersion": 2020 }
     ];
 
     Tester::new(NoPrototypeBuiltins::NAME, NoPrototypeBuiltins::PLUGIN, pass, fail)

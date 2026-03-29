@@ -1,7 +1,8 @@
 use oxc_ast::ast::*;
 
 use crate::{
-    GlobalContext, to_primitive::maybe_object_with_to_primitive_related_properties_overridden,
+    GlobalContext, StringToNumber, ToJsString,
+    to_primitive::maybe_object_with_to_primitive_related_properties_overridden,
 };
 
 /// `ToNumber`
@@ -28,10 +29,7 @@ impl<'a> ToNumber<'a> for Expression<'a> {
                 "NaN" | "undefined" if ctx.is_global_reference(ident) => Some(f64::NAN),
                 _ => None,
             },
-            Expression::StringLiteral(lit) => {
-                use crate::StringToNumber;
-                Some(lit.value.as_str().string_to_number())
-            }
+            Expression::StringLiteral(lit) => Some(lit.value.as_str().string_to_number()),
             Expression::UnaryExpression(unary) if unary.operator.is_not() => {
                 let number = unary.argument.to_number(ctx)?;
                 Some(if number == 0.0 { 1.0 } else { 0.0 })
@@ -49,31 +47,26 @@ impl<'a> ToNumber<'a> for Expression<'a> {
             // `ToPrimitive` for RegExp object returns `"/regexp/"`
             Expression::RegExpLiteral(_) => Some(f64::NAN),
             Expression::ArrayExpression(arr) => {
-                // If the array is empty, `ToPrimitive` returns `""`
-                if arr.elements.is_empty() {
-                    return Some(0.0);
-                }
-                if arr.elements.len() == 1 {
-                    let first_element = arr.elements.first().unwrap();
-                    return match first_element {
-                        ArrayExpressionElement::SpreadElement(_) => None,
-                        // `ToPrimitive` returns `""` for `[,]`
-                        ArrayExpressionElement::Elision(_) => Some(0.0),
-                        match_expression!(ArrayExpressionElement) => {
-                            first_element.to_expression().to_number(ctx)
-                        }
-                    };
-                }
+                // ToNumber for arrays:
+                // 1. ToPrimitive(array, hint Number) -> tries valueOf, then toString
+                // 2. Array.toString() -> Array.join(",")
+                // 3. ToNumber(resultString)
 
-                let non_spread_element_count = arr
+                // Fast path: if array has at least 2 non-spread elements,
+                // the result will contain "," which converts to NaN
+                if arr
                     .elements
                     .iter()
                     .filter(|e| !matches!(e, ArrayExpressionElement::SpreadElement(_)))
-                    .count();
-                // If the array has at least 2 elements, `ToPrimitive` returns a string containing
-                // `,` which is not included in `StringNumericLiteral`
-                // So `ToNumber` returns `NaN`
-                if non_spread_element_count >= 2 { Some(f64::NAN) } else { None }
+                    .take(2)
+                    .count()
+                    >= 2
+                {
+                    return Some(f64::NAN);
+                }
+
+                let array_string = arr.to_js_string(ctx)?;
+                Some(array_string.as_ref().string_to_number())
             }
             _ => None,
         }

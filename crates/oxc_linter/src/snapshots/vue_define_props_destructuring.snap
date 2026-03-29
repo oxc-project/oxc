@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-vue(define-props-destructuring): Prefer destructuring from `defineProps` directly.
    ╭─[define_props_destructuring.tsx:3:33]
  2 │                   <script setup>

@@ -20,9 +20,9 @@ versioned_files = [
   "apps/oxlint/Cargo.toml",
   "apps/oxlint/package.json",
   "crates/oxc_linter/Cargo.toml",
-  "editors/vscode/package.json",
   "npm/oxlint/package.json",
-  "crates/oxc_language_server/Cargo.toml",
+  "npm/oxlint-plugin-eslint/package.json",
+  "npm/oxlint-plugins/package.json",
 ]
 
 [[releases]]

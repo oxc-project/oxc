@@ -3,7 +3,7 @@ use oxc_span::Atom;
 
 use crate::parser::reader::{
     Options,
-    ast::CodePoint,
+    ast::{CodePoint, EscapeKind},
     string_literal_parser::{
         Parser as StringLiteralParser, ast as StringLiteralAst, parse_regexp_literal,
     },
@@ -98,6 +98,13 @@ impl<'a> Reader<'a> {
 
     pub fn peek2(&self) -> Option<u32> {
         self.peek_nth(1)
+    }
+
+    /// Returns the escape kind of the current code point.
+    /// This is used to preserve information about how the character was
+    /// written in source code (e.g., as `\u0301` vs literal character).
+    pub fn peek_escape_kind(&self) -> EscapeKind {
+        self.units.get(self.index).map_or(EscapeKind::None, |cp| cp.escape_kind)
     }
 
     pub fn eat(&mut self, ch: char) -> bool {

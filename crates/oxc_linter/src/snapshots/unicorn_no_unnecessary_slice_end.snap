@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(no-unnecessary-slice-end): Passing `string.length` as the `end` argument is unnecessary.
    ╭─[no_unnecessary_slice_end.tsx:1:29]
  1 │ const foo = string.slice(1, string.length)

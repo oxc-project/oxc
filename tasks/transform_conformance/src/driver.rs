@@ -48,10 +48,6 @@ impl CompilerInterface for Driver {
         false
     }
 
-    fn semantic_child_scope_ids(&self) -> bool {
-        true
-    }
-
     fn handle_errors(&mut self, errors: Vec<OxcDiagnostic>) {
         self.errors.extend(errors);
     }

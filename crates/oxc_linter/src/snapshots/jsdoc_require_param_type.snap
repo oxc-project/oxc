@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-jsdoc(require-param-type): Missing JSDoc `@param` type.
    ╭─[require_param_type.tsx:3:17]
  2 │                       /**

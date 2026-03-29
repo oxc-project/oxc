@@ -12,6 +12,7 @@
   | getPhysicalFilename(): <fixture>/files/1.js
   | cwd: <fixture>
   | getCwd(): <fixture>
+  | parserPath: undefined
    ,-[files/1.js:1:1]
  1 | let x;
    : ^
@@ -33,6 +34,7 @@
   | getPhysicalFilename(): <fixture>/files/2.js
   | cwd: <fixture>
   | getCwd(): <fixture>
+  | parserPath: undefined
    ,-[files/2.js:1:1]
  1 | let y;
    : ^
@@ -46,11 +48,9 @@
    `----
 
 Found 0 warnings and 4 errors.
-Finished in Xms on 2 files using X threads.
+Finished in Xms on 2 files with 1 rules using X threads.
 ```
 
 # stderr
 ```
-WARNING: JS plugins are experimental and not subject to semver.
-Breaking changes are possible while JS plugins support is under development.
 ```

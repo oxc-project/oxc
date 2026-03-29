@@ -1,5 +1,5 @@
 ---
-source: crates/oxc_codegen/tests/integration/main.rs
+source: crates/oxc_codegen/tests/integration/tester.rs
 ---
 ########## 0
 /* v8 ignore next */ x
@@ -126,7 +126,7 @@ catch (err) /* c8 ignore next */ /* istanbul ignore next */ { handle(err); }
 ----------
 try {
 	something();
-} catch (err) /* c8 ignore next *//* istanbul ignore next */ {
+} catch (err) /* c8 ignore next */ /* istanbul ignore next */ {
 	handle(err);
 }
 
@@ -141,3 +141,20 @@ try {
 	handle(err);
 }
 
+########## 23
+const a = Math.random() ? 1 : /* istanbul ignore next */ 2;
+----------
+const a = Math.random() ? 1 : /* istanbul ignore next */ 2;
+
+########## 24
+switch (Math.random()) {
+  case 0.5: break;
+  /* istanbul ignore next */
+  default: break;
+}
+----------
+switch (Math.random()) {
+	case .5: break;
+	/* istanbul ignore next */
+	default: break;
+}

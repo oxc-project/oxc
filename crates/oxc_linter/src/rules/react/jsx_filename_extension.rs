@@ -25,9 +25,10 @@ fn no_jsx_with_filename_extension_diagnostic(
         .with_label(span)
 }
 
-fn extension_only_for_jsx_diagnostic(ext: &str) -> OxcDiagnostic {
+fn extension_only_for_jsx_diagnostic(ext: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Only files containing JSX may use the extension '.{ext}'"))
         .with_help("Rename the file with a good extension.")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize, Serialize)]
@@ -116,7 +117,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for JsxFilenameExtension {
-    fn from_configuration(value: Value) -> Self {
+    fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
         let config = value.get(0);
 
         let ignore_files_without_code = config
@@ -142,7 +143,11 @@ impl Rule for JsxFilenameExtension {
             })
             .unwrap_or(vec![CompactStr::from("jsx")]);
 
-        Self(Box::new(JsxFilenameExtensionConfig { allow, extensions, ignore_files_without_code }))
+        Ok(Self(Box::new(JsxFilenameExtensionConfig {
+            allow,
+            extensions,
+            ignore_files_without_code,
+        })))
     }
 
     fn run_once(&self, ctx: &LintContext) {
@@ -173,7 +178,7 @@ impl Rule for JsxFilenameExtension {
                 .iter()
                 .all(|&x| !matches!(x.kind(), AstKind::JSXElement(_) | AstKind::JSXFragment(_)))
             {
-                ctx.diagnostic(extension_only_for_jsx_diagnostic(file_extension));
+                ctx.diagnostic(extension_only_for_jsx_diagnostic(file_extension, Span::new(0, 0)));
             }
         }
     }

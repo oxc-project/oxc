@@ -28,7 +28,7 @@ fn aria_role_diagnostic(span: Span, help_suffix: &str) -> OxcDiagnostic {
 pub struct AriaRole(Box<AriaRoleConfig>);
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct AriaRoleConfig {
     /// Determines if developer-created components are checked.
     #[serde(rename = "ignoreNonDOM")]
@@ -102,10 +102,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for AriaRole {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        serde_json::from_value::<DefaultRuleConfig<AriaRole>>(value)
-            .unwrap_or_default()
-            .into_inner()
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

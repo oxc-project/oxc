@@ -1,0 +1,114 @@
+{
+  "categories": {
+    "correctness": "off"
+  },
+  "rules": {
+    "typescript/switch-exhaustiveness-check": [
+      "error",
+      {
+        "considerDefaultExhaustiveForUnions": true
+      }
+    ],
+    "typescript/no-base-to-string": [
+      "error",
+      {
+        "checkUnknown": true,
+        "ignoredTypeNames": ["Error", "RegExp", "URL", "URLSearchParams", "CustomStringifiable"]
+      }
+    ],
+    "typescript/no-deprecated": [
+      "error",
+      {
+        "allow": [
+          { "from": "file", "name": "allowedDeprecated" }
+        ]
+      }
+    ],
+    "typescript/no-misused-spread": [
+      "error",
+      {
+        "allow": [
+          { "from": "file", "name": "allowedFunc" }
+        ]
+      }
+    ],
+    "typescript/no-unnecessary-type-assertion": [
+      "error",
+      {
+        "checkLiteralConstAssertions": false
+      }
+    ],
+    "typescript/no-unsafe-member-access": [
+      "error",
+      {
+        "allowOptionalChaining": true
+      }
+    ],
+    "typescript/no-unnecessary-condition": [
+      "error",
+      {
+        "allowConstantLoopConditions": true,
+        "checkTypePredicates": false,
+      }
+    ],
+    "typescript/consistent-type-exports": [
+      "error",
+      {
+        "fixMixedExportsWithInlineTypeSpecifier": true
+      }
+    ],
+    "typescript/strict-void-return": [
+      "error",
+      {
+        "allowReturnAny": true
+      }
+    ],
+    "typescript/consistent-return": [
+      "error",
+      {
+        "treatUndefinedAsUnspecified": true
+      }
+    ],
+    "typescript/prefer-readonly-parameter-types": [
+      "error",
+      {
+        "allow": [
+          { "from": "file", "name": "RegExp" }
+        ],
+        "checkParameterProperties": false,
+        "ignoreInferredTypes": true,
+        "treatMethodsAsReadonly": true
+      }
+    ],
+    "typescript/prefer-readonly": [
+      "error",
+      {
+        "onlyInlineLambdas": true
+      }
+    ],
+    "typescript/prefer-string-starts-ends-with": [
+      "error",
+      {
+        "allowSingleElementEquality": "always"
+      }
+    ],
+    "typescript/dot-notation": [
+      "error",
+      {
+        "allowIndexSignaturePropertyAccess": true,
+        "allowKeywords": false,
+        "allowPattern": "^snake_case$",
+        "allowPrivateClassPropertyAccess": true,
+        "allowProtectedClassPropertyAccess": true
+      }
+    ],
+    "typescript/only-throw-error": [
+      "error",
+      {
+        "allowRethrowing": false,
+        "allowThrowingAny": false,
+        "allowThrowingUnknown": true
+      }
+    ]
+  }
+}

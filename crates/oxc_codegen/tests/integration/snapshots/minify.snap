@@ -138,7 +138,7 @@ new Map<string,number>;
 ########## 32
 d = x satisfies y;
 ----------
-d=((x) satisfies y);
+d=x satisfies y;
 ########## 33
 export @x declare abstract class C {}
 ----------
@@ -150,7 +150,7 @@ div<T>``;
 ########## 35
 export type Component<Props = any> = Foo;
 ----------
-export type Component<Props = any>=Foo;
+export type Component<Props=any>=Foo;
 ########## 36
 
 export type Component<
@@ -166,7 +166,7 @@ export type Component<
   | ComponentPublicInstanceConstructor<Props>
 
 ----------
-export type Component<Props = any,RawBindings = any,D = any,C extends ComputedOptions = ComputedOptions,M extends MethodOptions = MethodOptions,E extends EmitsOptions|Record<string,any[]> = {},S extends Record<string,any> = any>=ConcreteComponent<Props,RawBindings,D,C,M,E,S>|ComponentPublicInstanceConstructor<Props>;
+export type Component<Props=any,RawBindings=any,D=any,C extends ComputedOptions=ComputedOptions,M extends MethodOptions=MethodOptions,E extends EmitsOptions|Record<string,any[]>={},S extends Record<string,any>=any>=ConcreteComponent<Props,RawBindings,D,C,M,E,S>|ComponentPublicInstanceConstructor<Props>;
 ########## 37
 (a || b) as any
 ----------
@@ -222,7 +222,7 @@ import a = require("a");
 export import b = require("b");
 
 ----------
-import a = require("a");export import b = require("b");
+import a=require("a");export import b=require("b");
 ########## 42
 class C {
   static

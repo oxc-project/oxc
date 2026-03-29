@@ -21,7 +21,7 @@ fn max_lines_diagnostic(count: usize, max: usize, span: Span) -> OxcDiagnostic {
 pub struct MaxLines(Box<MaxLinesConfig>);
 
 #[derive(Debug, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct MaxLinesConfig {
     /// Maximum number of lines allowed per file.
     max: usize,
@@ -64,18 +64,21 @@ declare_oxc_lint!(
 );
 
 impl Rule for MaxLines {
-    fn from_configuration(value: Value) -> Self {
+    fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
         if let Some(max) = value
             .get(0)
             .and_then(Value::as_number)
             .and_then(serde_json::Number::as_u64)
             .and_then(|v| usize::try_from(v).ok())
         {
-            Self(Box::new(MaxLinesConfig { max, skip_comments: false, skip_blank_lines: false }))
+            Ok(Self(Box::new(MaxLinesConfig {
+                max,
+                skip_comments: false,
+                skip_blank_lines: false,
+            })))
         } else {
-            serde_json::from_value::<DefaultRuleConfig<MaxLines>>(value)
-                .unwrap_or_default()
-                .into_inner()
+            serde_json::from_value::<DefaultRuleConfig<Self>>(value)
+                .map(DefaultRuleConfig::into_inner)
         }
     }
 

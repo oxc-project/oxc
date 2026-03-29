@@ -14,6 +14,13 @@ fn prefer_enum_initializers_diagnostic(member_name: &str, span: Span) -> OxcDiag
     OxcDiagnostic::warn(format!(
         "The value of the member {member_name:?} should be explicitly defined."
     ))
+    .with_help(format!(
+        "Using default numerical values for enum members can cause bugs later on if the enum is modified. Instead give {member_name:?} an explicit initializer (for example `= 0` or `= '{member_name}'`)."
+    ))
+    .with_note(
+        "TypeScript computes uninitialized enum members as numbers: the first one defaults \
+         to `0`, and each following uninitialized member is the previous numeric value plus `1`.",
+    )
     .with_label(span)
 }
 
@@ -100,51 +107,51 @@ fn test() {
 
     let pass = vec![
         "
-			enum Direction {}
-			    ",
+            enum Direction {}
+                ",
         "
-			enum Direction {
-			  Up = 1,
-			}
-			    ",
+            enum Direction {
+              Up = 1,
+            }
+                ",
         "
-			enum Direction {
-			  Up = 1,
-			  Down = 2,
-			}
-			    ",
+            enum Direction {
+              Up = 1,
+              Down = 2,
+            }
+                ",
         "
-			enum Direction {
-			  Up = 'Up',
-			  Down = 'Down',
-			}
-			    ",
+            enum Direction {
+              Up = 'Up',
+              Down = 'Down',
+            }
+                ",
     ];
 
     let fail = vec![
         "
-			enum Direction {
-			  Up,
-			}
-			      ",
+            enum Direction {
+              Up,
+            }
+                  ",
         "
-			enum Direction {
-			  Up,
-			  Down,
-			}
-			      ",
+            enum Direction {
+              Up,
+              Down,
+            }
+                  ",
         "
-			enum Direction {
-			  Up = 'Up',
-			  Down,
-			}
-			      ",
+            enum Direction {
+              Up = 'Up',
+              Down,
+            }
+                  ",
         "
-			enum Direction {
-			  Up,
-			  Down = 'Down',
-			}
-			      ",
+            enum Direction {
+              Up,
+              Down = 'Down',
+            }
+                  ",
     ];
 
     // Each test case provides 3 suggestions: index, index+1, and member name as string

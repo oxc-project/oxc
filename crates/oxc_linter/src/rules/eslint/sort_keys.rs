@@ -8,14 +8,18 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{Rule, TupleRuleConfig},
+};
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct SortKeys(Box<SortKeysConfig>);
 
-#[derive(Debug, Default, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, JsonSchema)]
 #[serde(rename_all = "lowercase")]
 /// Sorting order for keys. Accepts "asc" for ascending or "desc" for descending.
 pub enum SortOrder {
@@ -24,8 +28,8 @@ pub enum SortOrder {
     Asc,
 }
 
-#[derive(Debug, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[derive(Debug, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct SortKeysOptions {
     /// Whether the sort comparison is case-sensitive (A < a when true).
     case_sensitive: bool,
@@ -49,18 +53,9 @@ impl Default for SortKeysOptions {
     }
 }
 
-#[derive(Debug, Default, Clone, JsonSchema)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
 #[serde(default)]
 pub struct SortKeysConfig(SortOrder, SortKeysOptions);
-
-impl SortKeys {
-    fn sort_order(&self) -> &SortOrder {
-        &(*self.0).0
-    }
-    fn options(&self) -> &SortKeysOptions {
-        &(*self.0).1
-    }
-}
 
 fn sort_properties_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Object keys should be sorted").with_label(span)
@@ -101,51 +96,17 @@ declare_oxc_lint!(
 );
 
 impl Rule for SortKeys {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let Some(config_array) = value.as_array() else {
-            return Self::default();
-        };
-
-        let sort_order = if config_array.is_empty() {
-            SortOrder::Asc
-        } else {
-            config_array[0].as_str().map_or(SortOrder::Asc, |s| match s {
-                "desc" => SortOrder::Desc,
-                _ => SortOrder::Asc,
-            })
-        };
-
-        let config = if config_array.len() > 1 {
-            config_array[1].as_object().unwrap()
-        } else {
-            &serde_json::Map::new()
-        };
-
-        let case_sensitive =
-            config.get("caseSensitive").and_then(serde_json::Value::as_bool).unwrap_or(true);
-        let natural = config.get("natural").and_then(serde_json::Value::as_bool).unwrap_or(false);
-        let min_keys = config
-            .get("minKeys")
-            .and_then(serde_json::Value::as_u64)
-            .map_or(2, |n| n.try_into().unwrap_or(2));
-        let allow_line_separated_groups = config
-            .get("allowLineSeparatedGroups")
-            .and_then(serde_json::Value::as_bool)
-            .unwrap_or(false);
-
-        Self(Box::new(SortKeysConfig(
-            sort_order,
-            SortKeysOptions { case_sensitive, natural, min_keys, allow_line_separated_groups },
-        )))
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<TupleRuleConfig<Self>>(value).map(TupleRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::ObjectExpression(dec) = node.kind() {
-            let options = self.options();
+            let SortKeysConfig(sort_order, options) = &*self.0;
+
             if dec.properties.len() < options.min_keys {
                 return;
             }
-            let sort_order = self.sort_order().clone();
 
             let mut property_groups: Vec<Vec<String>> = vec![vec![]];
 
@@ -194,7 +155,7 @@ impl Rule for SortKeys {
                     alphanumeric_sort(group);
                 }
 
-                if sort_order == SortOrder::Desc {
+                if sort_order == &SortOrder::Desc {
                     group.reverse();
                 }
             }
@@ -205,22 +166,50 @@ impl Rule for SortKeys {
             if !is_sorted {
                 // Try to provide a safe autofix when possible.
                 // Conditions for providing a fix:
-                // - No spread properties (reordering spreads is unsafe)
+                // - No in-between spread properties (reordering spreads is unsafe)
                 // - All properties have a static key name
                 // - No comments between adjacent properties
                 // - No special grouping markers (we only support a single contiguous group)
+                enum SpreadPos {
+                    Start,
+                    CanEnd,
+                    End,
+                }
 
                 let all_props = &dec.properties;
                 let mut can_fix = true;
+                let mut spread_pos = SpreadPos::Start;
                 let mut props: Vec<(String, Span)> = Vec::with_capacity(all_props.len());
 
                 for (i, prop) in all_props.iter().enumerate() {
                     match prop {
                         ObjectPropertyKind::SpreadProperty(_) => {
-                            can_fix = false;
-                            break;
+                            if let Some(next_prop) = all_props.get(i + 1)
+                                && let ObjectPropertyKind::ObjectProperty(_) = next_prop
+                                && ctx.has_comments_between(Span::new(
+                                    prop.span().end,
+                                    next_prop.span().start,
+                                ))
+                            {
+                                can_fix = false;
+                                break;
+                            }
+
+                            match spread_pos {
+                                SpreadPos::Start | SpreadPos::End => {}
+                                SpreadPos::CanEnd => spread_pos = SpreadPos::End,
+                            }
                         }
                         ObjectPropertyKind::ObjectProperty(obj) => {
+                            match spread_pos {
+                                SpreadPos::Start => spread_pos = SpreadPos::CanEnd,
+                                SpreadPos::CanEnd => {}
+                                SpreadPos::End => {
+                                    can_fix = false;
+                                    break;
+                                }
+                            }
+
                             let Some(key) = obj.key.static_name() else {
                                 can_fix = false;
                                 break;
@@ -239,11 +228,12 @@ impl Rule for SortKeys {
                     }
                 }
 
-                if can_fix
-                    && !props.is_empty()
-                    && property_groups.len() == 1
-                    && !property_groups[0].iter().any(|s| s.starts_with('<'))
-                {
+                let static_groups_count = property_groups
+                    .iter()
+                    .filter(|g| !g.is_empty() && !g.iter().any(|s| s.starts_with('<')))
+                    .count();
+
+                if can_fix && !props.is_empty() && static_groups_count == 1 {
                     // Prepare keys for comparison according to options
                     let keys_for_cmp: Vec<String> = props
                         .iter()
@@ -264,7 +254,7 @@ impl Rule for SortKeys {
                     } else {
                         alphanumeric_sort(&mut sorted_keys);
                     }
-                    if sort_order == SortOrder::Desc {
+                    if sort_order == &SortOrder::Desc {
                         sorted_keys.reverse();
                     }
 
@@ -360,7 +350,9 @@ fn natural_sort(arr: &mut [String]) {
         loop {
             match (a_chars.next(), b_chars.next()) {
                 (Some(a_char), Some(b_char)) if a_char == b_char => {}
-                (Some(a_char), Some(b_char)) if a_char.is_numeric() && b_char.is_numeric() => {
+                (Some(a_char), Some(b_char))
+                    if a_char.is_ascii_digit() && b_char.is_ascii_digit() =>
+                {
                     let n1 = take_numeric(&mut a_chars, a_char);
                     let n2 = take_numeric(&mut b_chars, b_char);
                     match n1.cmp(&n2) {
@@ -506,6 +498,7 @@ fn test() {
             "var obj = {'#':1, 'Z':2, À:3, è:4}",
             Some(serde_json::json!(["asc", { "natural": true }])),
         ),
+        ("var obj = {'a²': 1, 'b³': 2}", Some(serde_json::json!(["asc", { "natural": true }]))),
         (
             "var obj = {b_:1, a:2, b:3}",
             Some(serde_json::json!(["asc", { "natural": true, "minKeys": 4 }])),
@@ -652,185 +645,185 @@ fn test() {
         ),
         (
             "
-        	                var obj = {
-        	                    e: 1,
-        	                    f: 2,
-        	                    g: 3,
+                            var obj = {
+                                e: 1,
+                                f: 2,
+                                g: 3,
 
-        	                    a: 4,
-        	                    b: 5,
-        	                    c: 6
-        	                }
-        	            ",
+                                a: 4,
+                                b: 5,
+                                c: 6
+                            }
+                        ",
             Some(serde_json::json!(["asc", { "allowLineSeparatedGroups": true }])),
         ),
         (
             "
-        	                var obj = {
-        	                    b: 1,
+                            var obj = {
+                                b: 1,
 
-        	                    // comment
-        	                    a: 2,
-        	                    c: 3
-        	                }
-        	            ",
+                                // comment
+                                a: 2,
+                                c: 3
+                            }
+                        ",
             Some(serde_json::json!(["asc", { "allowLineSeparatedGroups": true }])),
         ),
         (
             "
-        	                var obj = {
-        	                    b: 1
+                            var obj = {
+                                b: 1
 
-        	                    ,
+                                ,
 
-        	                    // comment
-        	                    a: 2,
-        	                    c: 3
-        	                }
-        	            ",
+                                // comment
+                                a: 2,
+                                c: 3
+                            }
+                        ",
             Some(serde_json::json!(["asc", { "allowLineSeparatedGroups": true }])),
         ),
         (
             "
-        	                var obj = {
-        	                    c: 1,
-        	                    d: 2,
+                            var obj = {
+                                c: 1,
+                                d: 2,
 
-        	                    b() {
-        	                    },
-        	                    e: 4
-        	                }
-        	            ",
+                                b() {
+                                },
+                                e: 4
+                            }
+                        ",
             Some(serde_json::json!(["asc", { "allowLineSeparatedGroups": true }])),
         ), // { "ecmaVersion": 6 },
         (
             "
-        	                var obj = {
-        	                    c: 1,
-        	                    d: 2,
-        	                    // comment
+                            var obj = {
+                                c: 1,
+                                d: 2,
+                                // comment
 
-        	                    // comment
-        	                    b() {
-        	                    },
-        	                    e: 4
-        	                }
-        	            ",
+                                // comment
+                                b() {
+                                },
+                                e: 4
+                            }
+                        ",
             Some(serde_json::json!(["asc", { "allowLineSeparatedGroups": true }])),
         ), // { "ecmaVersion": 6 },
         (
             "
-        	                var obj = {
-        	                  b,
+                            var obj = {
+                              b,
 
-        	                  [a+b]: 1,
-        	                  a
-        	                }
-        	            ",
+                              [a+b]: 1,
+                              a
+                            }
+                        ",
             Some(serde_json::json!(["asc", { "allowLineSeparatedGroups": true }])),
         ), // { "ecmaVersion": 6 },
         (
             "
-        	                var obj = {
-        	                    c: 1,
-        	                    d: 2,
+                            var obj = {
+                                c: 1,
+                                d: 2,
 
-        	                    a() {
+                                a() {
 
-        	                    },
+                                },
 
-        	                    // abce
-        	                    f: 3,
+                                // abce
+                                f: 3,
 
-        	                    /*
+                                /*
 
-        	                    */
-        	                    [a+b]: 1,
-        	                    cc: 1,
-        	                    e: 2
-        	                }
-        	            ",
+                                */
+                                [a+b]: 1,
+                                cc: 1,
+                                e: 2
+                            }
+                        ",
             Some(serde_json::json!(["asc", { "allowLineSeparatedGroups": true }])),
         ), // { "ecmaVersion": 6 },
         (
             r#"
-        	                var obj = {
-        	                    b: "/*",
+                            var obj = {
+                                b: "/*",
 
-        	                    a: "*/",
-        	                }
-        	            "#,
+                                a: "*/",
+                            }
+                        "#,
             Some(serde_json::json!(["asc", { "allowLineSeparatedGroups": true }])),
         ),
         (
             "
-        	                var obj = {
-        	                    b,
-        	                    /*
-        	                    */ //
+                            var obj = {
+                                b,
+                                /*
+                                */ //
 
-        	                    a
-        	                }
-        	            ",
+                                a
+                            }
+                        ",
             Some(serde_json::json!(["asc", { "allowLineSeparatedGroups": true }])),
         ), // { "ecmaVersion": 6 },
         (
             "
-        	                var obj = {
-        	                    b,
+                            var obj = {
+                                b,
 
-        	                    /*
-        	                    */ //
-        	                    a
-        	                }
-        	            ",
+                                /*
+                                */ //
+                                a
+                            }
+                        ",
             Some(serde_json::json!(["asc", { "allowLineSeparatedGroups": true }])),
         ), // { "ecmaVersion": 6 },
         (
             "
-        	                var obj = {
-        	                    b: 1
+                            var obj = {
+                                b: 1
 
-        	                    ,a: 2
-        	                };
-        	            ",
+                                ,a: 2
+                            };
+                        ",
             Some(serde_json::json!(["asc", { "allowLineSeparatedGroups": true }])),
         ), // { "ecmaVersion": 6 },
         (
             "
-        	                var obj = {
-        	                    b: 1
-        	                // comment before comma
+                            var obj = {
+                                b: 1
+                            // comment before comma
 
-        	                ,
-        	                a: 2
-        	                };
-        	            ",
+                            ,
+                            a: 2
+                            };
+                        ",
             Some(serde_json::json!(["asc", { "allowLineSeparatedGroups": true }])),
         ), // { "ecmaVersion": 6 },
         (
             "
-        	                var obj = {
-        	                  b,
+                            var obj = {
+                              b,
 
-        	                  a,
-        	                  ...z,
-        	                  c
-        	                }
-        	            ",
+                              a,
+                              ...z,
+                              c
+                            }
+                        ",
             Some(serde_json::json!(["asc", { "allowLineSeparatedGroups": true }])),
         ), // { "ecmaVersion": 2018 },
         (
             "
-        	                var obj = {
-        	                  b,
+                            var obj = {
+                              b,
 
-        	                  [foo()]: [
+                              [foo()]: [
 
-        	                  ],
-        	                  a
-        	                }
-        	            ",
+                              ],
+                              a
+                            }
+                        ",
             Some(serde_json::json!(["asc", { "allowLineSeparatedGroups": true }])),
         ), // { "ecmaVersion": 2018 }
     ];
@@ -1040,137 +1033,137 @@ fn test() {
         ),
         (
             "
-        	                var obj = {
-        	                    b: 1,
-        	                    c: 2,
-        	                    a: 3
-        	                }
-        	            ",
+                            var obj = {
+                                b: 1,
+                                c: 2,
+                                a: 3
+                            }
+                        ",
             Some(serde_json::json!(["asc", { "allowLineSeparatedGroups": false }])),
         ),
         (
             "
-        	                let obj = {
-        	                    b
+                            let obj = {
+                                b
 
-        	                    ,a
-        	                }
-        	            ",
+                                ,a
+                            }
+                        ",
             Some(serde_json::json!(["asc", { "allowLineSeparatedGroups": false }])),
         ), // { "ecmaVersion": 6 },
         (
             "
-        	                 var obj = {
-        	                    b: 1,
-        	                    c () {
+                             var obj = {
+                                b: 1,
+                                c () {
 
-        	                    },
-        	                    a: 3
-        	                  }
-        	             ",
+                                },
+                                a: 3
+                              }
+                         ",
             Some(serde_json::json!(["asc", { "allowLineSeparatedGroups": true }])),
         ), // { "ecmaVersion": 6 },
         (
             "
-        	                 var obj = {
-        	                    a: 1,
-        	                    b: 2,
+                             var obj = {
+                                a: 1,
+                                b: 2,
 
-        	                    z () {
+                                z () {
 
-        	                    },
-        	                    y: 3
-        	                  }
-        	             ",
+                                },
+                                y: 3
+                              }
+                         ",
             Some(serde_json::json!(["asc", { "allowLineSeparatedGroups": true }])),
         ), // { "ecmaVersion": 6 },
         (
             "
-			                 var obj = {
-			                    b: 1,
-			                    c () {
-			                    },
-			                    // comment
-			                    a: 3
-			                  }
-			             ",
+                             var obj = {
+                                b: 1,
+                                c () {
+                                },
+                                // comment
+                                a: 3
+                              }
+                         ",
             Some(serde_json::json!(["asc", { "allowLineSeparatedGroups": true }])),
         ), // { "ecmaVersion": 6 },
         (
             "
-			                var obj = {
-			                  b,
-			                  [a+b]: 1,
-			                  a // sort-keys: 'a' should be before 'b'
-			                }
-			            ",
+                            var obj = {
+                              b,
+                              [a+b]: 1,
+                              a // sort-keys: 'a' should be before 'b'
+                            }
+                        ",
             Some(serde_json::json!(["asc", { "allowLineSeparatedGroups": true }])),
         ), // { "ecmaVersion": 6 },
         (
             "
-			                var obj = {
-			                    c: 1,
-			                    d: 2,
-			                    // comment
-			                    // comment
-			                    b() {
-			                    },
-			                    e: 4
-			                }
-			            ",
+                            var obj = {
+                                c: 1,
+                                d: 2,
+                                // comment
+                                // comment
+                                b() {
+                                },
+                                e: 4
+                            }
+                        ",
             Some(serde_json::json!(["asc", { "allowLineSeparatedGroups": true }])),
         ), // { "ecmaVersion": 6 },
         (
             "
-			                var obj = {
-			                    c: 1,
-			                    d: 2,
+                            var obj = {
+                                c: 1,
+                                d: 2,
 
-			                    z() {
+                                z() {
 
-			                    },
-			                    f: 3,
-			                    /*
+                                },
+                                f: 3,
+                                /*
 
 
-			                    */
-			                    [a+b]: 1,
-			                    b: 1,
-			                    e: 2
-			                }
-			            ",
+                                */
+                                [a+b]: 1,
+                                b: 1,
+                                e: 2
+                            }
+                        ",
             Some(serde_json::json!(["asc", { "allowLineSeparatedGroups": true }])),
         ), // { "ecmaVersion": 6 },
         (
             r#"
-			                var obj = {
-			                    b: "/*",
-			                    a: "*/",
-			                }
-			            "#,
+                            var obj = {
+                                b: "/*",
+                                a: "*/",
+                            }
+                        "#,
             Some(serde_json::json!(["asc", { "allowLineSeparatedGroups": true }])),
         ),
         (
             "
-			                var obj = {
-			                    b: 1
-			                    // comment before comma
-			                    , a: 2
-			                };
-			            ",
+                            var obj = {
+                                b: 1
+                                // comment before comma
+                                , a: 2
+                            };
+                        ",
             Some(serde_json::json!(["asc", { "allowLineSeparatedGroups": true }])),
         ), // { "ecmaVersion": 6 },
         (
             "
-			                let obj = {
-			                  b,
-			                  [foo()]: [
-			                  // ↓ this blank is inside a property and therefore should not count
+                            let obj = {
+                              b,
+                              [foo()]: [
+                              // ↓ this blank is inside a property and therefore should not count
 
-			                  ],
-			                  a
-			                }
-			            ",
+                              ],
+                              a
+                            }
+                        ",
             Some(serde_json::json!(["asc", { "allowLineSeparatedGroups": true }])),
         ), // { "ecmaVersion": 2018 }
     ];
@@ -1190,6 +1183,25 @@ fn test() {
         ("var obj = {c:1, a:2, b:3}", "var obj = {a:2, b:3, c:1}"),
         // Mixed types
         ("var obj = {2:1, a:2, 1:3}", "var obj = {1:3, 2:1, a:2}"),
+        // Spreading at the start
+        ("var obj = {...z, b:1, a:2}", "var obj = {...z, a:2, b:1}"),
+        // Spreading at the start when one of the keys is the empty string
+        ("var obj = {...z, a:1, '':2}", "var obj = {...z, '':2, a:1}"),
+        // No fix when a leading spread has a trailing comment
+        ("var obj = {...z, /*c*/ b:1, a:2}", "var obj = {...z, /*c*/ b:1, a:2}"),
+        // Spreading multiple times at the start
+        ("var obj = {...z, ...y, b:1, a:2,}", "var obj = {...z, ...y, a:2, b:1,}"),
+        // Spreading at the end
+        ("var obj = { b:1, a:2, ...z}", "var obj = { a:2, b:1, ...z}"),
+        // Spreading multiple times at the end
+        ("var obj = {b:1, a:2, ...z, ...y}", "var obj = {a:2, b:1, ...z, ...y}"),
+        // Spreading at both the start and end
+        ("var obj = {...z, b:1, a:2, ...y}", "var obj = {...z, a:2, b:1, ...y}"),
+        // Spreading multiple times at both the start and end
+        (
+            "var obj = { ...z, ...y, b:1, a:2, ...x, ...w, }",
+            "var obj = { ...z, ...y, a:2, b:1, ...x, ...w, }",
+        ),
         // Multi-line formatting should be preserved (issue #16391)
         (
             "const obj = {

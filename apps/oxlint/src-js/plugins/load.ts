@@ -1,6 +1,7 @@
 import { createContext } from "./context.ts";
 import { deepFreezeJsonArray } from "./json.ts";
 import { compileSchema, DEFAULT_OPTIONS } from "./options.ts";
+import { switchWorkspace } from "./workspace.ts";
 import { getErrorMessage } from "../utils/utils.ts";
 import { debugAssertIsNonNull } from "../utils/asserts.ts";
 
@@ -18,9 +19,7 @@ export interface Plugin {
   meta?: {
     name?: string;
   };
-  rules: {
-    [key: string]: Rule;
-  };
+  rules: Record<string, Rule>;
 }
 
 /**
@@ -30,7 +29,7 @@ export interface Plugin {
  * If `createOnce` method is present, `create` is ignored.
  *
  * If defining the rule with `createOnce`, and you want the rule to work with ESLint too,
- * you need to wrap the rule with `defineRule`.
+ * you need to wrap the plugin containing the rule with `eslintCompatPlugin`.
  */
 export type Rule = CreateRule | CreateOnceRule;
 
@@ -53,9 +52,9 @@ export type RuleDetails = CreateRuleDetails | CreateOnceRuleDetails;
 
 interface RuleDetailsBase {
   // Static properties of the rule
-  readonly fullName: string;
-  readonly context: Readonly<Context>;
+  readonly context: Context;
   readonly isFixable: boolean;
+  readonly hasSuggestions: boolean;
   readonly messages: Readonly<Record<string, string>> | null;
   readonly defaultOptions: Readonly<Options>;
   // Function to validate options against schema.
@@ -64,7 +63,6 @@ interface RuleDetailsBase {
   readonly optionsSchemaValidator: SchemaValidator | false | null;
   // Updated for each file
   ruleIndex: number;
-  options: Readonly<Options> | null; // Initially `null`, set to options object before linting a file
 }
 
 interface CreateRuleDetails extends RuleDetailsBase {
@@ -81,12 +79,18 @@ interface CreateOnceRuleDetails extends RuleDetailsBase {
   readonly afterHook: AfterHook | null;
 }
 
-// Absolute paths of plugins which have been loaded
-const registeredPluginUrls = new Set<string>();
-
 // Rule objects for loaded rules.
 // Indexed by `ruleId`, which is passed to `lintFile`.
-export const registeredRules: RuleDetails[] = [];
+// May be changed when switching workspaces.
+export let registeredRules: RuleDetails[] = [];
+
+/**
+ * Set `registeredRules`. Used when switching workspaces.
+ * @param rules - Array of `RuleDetails` objects
+ */
+export function setRegisteredRules(rules: RuleDetails[]) {
+  registeredRules = rules;
+}
 
 // `before` hook which makes rule never run.
 const neverRunBeforeHook: BeforeHook = () => false;
@@ -109,21 +113,18 @@ interface PluginDetails {
  * @param url - Absolute path of plugin file as a `file://...` URL
  * @param pluginName - Plugin name (either alias or package name)
  * @param pluginNameIsAlias - `true` if plugin name is an alias (takes priority over name that plugin defines itself)
+ * @param workspaceUri - Workspace URI (`null` in CLI, string in LSP)
  * @returns Plugin details or error serialized to JSON string
  */
 export async function loadPlugin(
   url: string,
   pluginName: string | null,
   pluginNameIsAlias: boolean,
+  workspaceUri: string | null,
 ): Promise<string> {
   try {
-    if (DEBUG) {
-      if (registeredPluginUrls.has(url)) throw new Error("This plugin has already been registered");
-      registeredPluginUrls.add(url);
-    }
-
     const plugin = (await import(url)).default as Plugin;
-    const res = registerPlugin(plugin, pluginName, pluginNameIsAlias);
+    const res = registerPlugin(plugin, pluginName, pluginNameIsAlias, workspaceUri);
     return JSON.stringify({ Success: res });
   } catch (err) {
     return JSON.stringify({ Failure: getErrorMessage(err) });
@@ -136,6 +137,7 @@ export async function loadPlugin(
  * @param plugin - Plugin
  * @param pluginName - Plugin name (either alias or package name)
  * @param pluginNameIsAlias - `true` if plugin name is an alias (takes priority over name that plugin defines itself)
+ * @param workspaceUri - Workspace URI (`null` in CLI, string in LSP)
  * @returns - Plugin details
  * @throws {Error} If `plugin.meta.name` is `null` / `undefined` and `packageName` not provided
  * @throws {TypeError} If one of plugin's rules is malformed, or its `createOnce` method returns invalid visitor
@@ -145,10 +147,16 @@ export function registerPlugin(
   plugin: Plugin,
   pluginName: string | null,
   pluginNameIsAlias: boolean,
+  workspaceUri: string | null,
 ): PluginDetails {
   // TODO: Use a validation library to assert the shape of the plugin, and of rules
 
   pluginName = getPluginName(plugin, pluginName, pluginNameIsAlias);
+
+  // Switch to requested workspace.
+  // In CLI, `workspaceUri` is `null`, and there's only 1 workspace, so no need to switch.
+  // In LSP, there can be multiple workspaces, so we need to switch if we're not already in the right one.
+  if (workspaceUri !== null) switchWorkspace(workspaceUri);
 
   const offset = registeredRules.length;
   const { rules } = plugin;
@@ -163,6 +171,7 @@ export function registerPlugin(
 
     // Validate `rule.meta` and convert to vars with standardized shape
     let isFixable = false,
+      hasSuggestions = false,
       messages: Record<string, string> | null = null,
       defaultOptions: Readonly<Options> = DEFAULT_OPTIONS,
       schemaValidator: SchemaValidator | false | null = null;
@@ -172,10 +181,24 @@ export function registerPlugin(
 
       const { fixable } = ruleMeta;
       if (fixable != null) {
-        if (fixable !== "code" && fixable !== "whitespace") {
+        // `true` and `false` aren't valid values for `meta.fixable`, but we accept them for
+        // backward compatibility with some ESLint plugins
+        if (
+          fixable !== "code" &&
+          fixable !== "whitespace" &&
+          fixable !== true &&
+          fixable !== false
+        ) {
           throw new TypeError("Invalid `rule.meta.fixable`");
         }
-        isFixable = true;
+        isFixable = (fixable as "code" | "whitespace" | true | false) !== false;
+      }
+
+      const inputHasSuggestions = ruleMeta.hasSuggestions;
+      if (inputHasSuggestions === true) {
+        hasSuggestions = true;
+      } else if (inputHasSuggestions != null && inputHasSuggestions !== false) {
+        throw new TypeError("Invalid `rule.meta.hasSuggestions`");
       }
 
       // If `schema` provided, compile schema to validator for applying schema defaults to options
@@ -191,17 +214,7 @@ export function registerPlugin(
         // ESLint treats empty `defaultOptions` the same as no `defaultOptions`,
         // and does not validate against schema
         if (inputDefaultOptions.length !== 0) {
-          // Serialize to JSON and deserialize again.
-          // This is the simplest way to make sure that `defaultOptions` does not contain any `undefined` values,
-          // or circular references. It may also be the fastest, as `JSON.parse` and `JSON.serialize` are native code.
-          // If we move to doing options merging on Rust side, we'll need to convert to JSON anyway.
-          try {
-            defaultOptions = JSON.parse(JSON.stringify(inputDefaultOptions)) as Options;
-          } catch (err) {
-            throw new Error(
-              `\`rule.meta.defaultOptions\` must be JSON-serializable: ${getErrorMessage(err)}`,
-            );
-          }
+          defaultOptions = conformDefaultOptions(inputDefaultOptions);
 
           // Validate default options against schema, if schema was provided.
           // This also applies any defaults from schema.
@@ -235,15 +248,14 @@ export function registerPlugin(
 
     // Create `RuleDetails` object for rule.
     const ruleDetails: RuleDetails = {
-      fullName: fullRuleName,
       rule: rule as CreateRule, // Could also be `CreateOnceRule`, but just to satisfy type checker
       context: null!, // Filled in below
       isFixable,
+      hasSuggestions,
       messages,
       defaultOptions,
       optionsSchemaValidator: schemaValidator,
       ruleIndex: 0,
-      options: null,
       visitor: null,
       beforeHook: null,
       afterHook: null,
@@ -284,6 +296,10 @@ export function registerPlugin(
       (ruleDetails as unknown as Writable<CreateOnceRuleDetails>).beforeHook = beforeHook;
       (ruleDetails as unknown as Writable<CreateOnceRuleDetails>).afterHook = afterHook;
     }
+
+    // Set `id` property on `Context` object.
+    // Do this after calling `createOnce` - `createOnce` should not have access to `id` property.
+    Object.defineProperty(ruleDetails.context, "id", { value: fullRuleName });
 
     registeredRules.push(ruleDetails);
   }
@@ -369,6 +385,61 @@ function normalizePluginName(name: string): string {
   // No normalization needed
   return name;
 }
+
+/**
+ * Serialize default options to JSON and deserialize again.
+ *
+ * This is the simplest way to make sure that `defaultOptions` does not contain any `undefined` values,
+ * or circular references. It may also be the fastest, as `JSON.parse` and `JSON.stringify` are native code.
+ * If we move to doing options merging on Rust side, we'll need to convert to JSON anyway.
+ *
+ * Special handling for `Infinity` / `-Infinity` values, to ensure they survive the round trip.
+ * Without this, they would be converted to `null`.
+ *
+ * @param defaultOptions - Default options array
+ * @returns Conformed default options array
+ */
+function conformDefaultOptions(defaultOptions: Options): Options {
+  let json,
+    containsInfinity = false;
+  try {
+    json = JSON.stringify(defaultOptions, (key, value) => {
+      if (value === Infinity || value === -Infinity) {
+        containsInfinity = true;
+        return value === Infinity ? POS_INFINITY_PLACEHOLDER : NEG_INFINITY_PLACEHOLDER;
+      }
+      return value;
+    });
+  } catch (err) {
+    throw new Error(
+      `\`rule.meta.defaultOptions\` must be JSON-serializable: ${getErrorMessage(err)}`,
+    );
+  }
+
+  if (containsInfinity) {
+    const plainJson = JSON.stringify(defaultOptions);
+    if (
+      plainJson.includes(POS_INFINITY_PLACEHOLDER) ||
+      plainJson.includes(NEG_INFINITY_PLACEHOLDER)
+    ) {
+      throw new Error(
+        `\`rule.meta.defaultOptions\` cannot contain the strings "${POS_INFINITY_PLACEHOLDER}" or "${NEG_INFINITY_PLACEHOLDER}"`,
+      );
+    }
+
+    // `JSON.parse` will convert these back to `Infinity` / `-Infinity`
+    json = json
+      .replaceAll(POS_INFINITY_PLACEHOLDER_STR, "1e+400")
+      .replaceAll(NEG_INFINITY_PLACEHOLDER_STR, "-1e+400");
+  }
+
+  return JSON.parse(json);
+}
+
+const POS_INFINITY_PLACEHOLDER = "$_$_$_POS_INFINITY_$_$_$";
+const NEG_INFINITY_PLACEHOLDER = "$_$_$_NEG_INFINITY_$_$_$";
+const POS_INFINITY_PLACEHOLDER_STR = JSON.stringify(POS_INFINITY_PLACEHOLDER);
+const NEG_INFINITY_PLACEHOLDER_STR = JSON.stringify(NEG_INFINITY_PLACEHOLDER);
 
 /**
  * Validate and conform `before` / `after` hook function.

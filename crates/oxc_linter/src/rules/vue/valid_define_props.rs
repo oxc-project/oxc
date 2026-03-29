@@ -191,117 +191,117 @@ fn test() {
     let pass = vec![
         (
             "
-			      <script setup>
-			        /* ✓ GOOD */
-			        defineProps({ msg: String })
-			      </script>
-			      ",
+                  <script setup>
+                    /* ✓ GOOD */
+                    defineProps({ msg: String })
+                  </script>
+                  ",
             None,
             None,
             Some(PathBuf::from("test.vue")),
         ),
         (
             "
-			      <script setup>
-			        /* ✓ GOOD */
-			        defineProps(['msg'])
-			      </script>
-			      ",
+                  <script setup>
+                    /* ✓ GOOD */
+                    defineProps(['msg'])
+                  </script>
+                  ",
             None,
             None,
             Some(PathBuf::from("test.vue")),
         ),
         (
             r#"
-			      <script setup lang="ts">
-			        /* ✓ GOOD */
-			        defineProps<{ msg?:string }>()
-			      </script>
-			      "#,
+                  <script setup lang="ts">
+                    /* ✓ GOOD */
+                    defineProps<{ msg?:string }>()
+                  </script>
+                  "#,
             None,
             None,
             Some(PathBuf::from("test.vue")),
         ), // {        "parserOptions": { "parser": require.resolve("@typescript-eslint/parser") }      },
         (
             "
-			      <script>
-			        const def = { msg: String }
-			      </script>
-			      <script setup>
-			        /* ✓ GOOD */
-			        defineProps(def)
-			      </script>
-			      ",
+                  <script>
+                    const def = { msg: String }
+                  </script>
+                  <script setup>
+                    /* ✓ GOOD */
+                    defineProps(def)
+                  </script>
+                  ",
             None,
             None,
             Some(PathBuf::from("test.vue")),
         ),
         (
             "
-			      <script setup>
-			        defineProps({
-			          addFunction: {
-			            type: Function,
-			            default (a, b) {
-			              return a + b
-			            }
-			          }
-			        })
-			      </script>
-			      ",
+                  <script setup>
+                    defineProps({
+                      addFunction: {
+                        type: Function,
+                        default (a, b) {
+                          return a + b
+                        }
+                      }
+                    })
+                  </script>
+                  ",
             None,
             None,
             Some(PathBuf::from("test.vue")),
         ),
         (
             r#"
-			      <script setup lang="ts">
-			      import type { PropType } from 'vue';
+                  <script setup lang="ts">
+                  import type { PropType } from 'vue';
 
-			      type X = string;
+                  type X = string;
 
-			      const props = defineProps({
-			        myProp: Array as PropType<string[]>,
-			      });
+                  const props = defineProps({
+                    myProp: Array as PropType<string[]>,
+                  });
 
-			      const emit = defineEmits({
-			        myProp: (x: X) => true,
-			      });
-			      </script>
-			      "#,
+                  const emit = defineEmits({
+                    myProp: (x: X) => true,
+                  });
+                  </script>
+                  "#,
             None,
             None,
             Some(PathBuf::from("test.vue")),
         ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
         (
             r#"
-			      <script setup lang="ts">
-			      import type { PropType } from 'vue';
+                  <script setup lang="ts">
+                  import type { PropType } from 'vue';
 
-			      const strList = ['a', 'b', 'c']
-			      const str = 'abc'
+                  const strList = ['a', 'b', 'c']
+                  const str = 'abc'
 
-			      const props = defineProps({
-			        myProp: Array as PropType<typeof strList>,
-			      });
+                  const props = defineProps({
+                    myProp: Array as PropType<typeof strList>,
+                  });
 
-			      const emit = defineEmits({
-			        myProp: (x: typeof str) => true,
-			      });
-			      </script>
-			      "#,
+                  const emit = defineEmits({
+                    myProp: (x: typeof str) => true,
+                  });
+                  </script>
+                  "#,
             None,
             None,
             Some(PathBuf::from("test.vue")),
         ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
         (
             "
-			      <script setup>
-			      import { propsDef, emitsDef } from './defs';
+                  <script setup>
+                  import { propsDef, emitsDef } from './defs';
 
-			      defineProps(propsDef);
-			      defineEmits(emitsDef);
-			      </script>",
+                  defineProps(propsDef);
+                  defineEmits(emitsDef);
+                  </script>",
             None,
             None,
             Some(PathBuf::from("test.vue")),
@@ -311,62 +311,62 @@ fn test() {
     let fail = vec![
         (
             "
-			      <script setup>
-			        /* ✗ BAD */
-			        const def = { msg: String }
-			        defineProps(def)
-			      </script>
-			      ",
+                  <script setup>
+                    /* ✗ BAD */
+                    const def = { msg: String }
+                    defineProps(def)
+                  </script>
+                  ",
             None,
             None,
             Some(PathBuf::from("test.vue")),
         ),
         (
             r#"
-			      <script setup lang="ts">
-			        /* ✗ BAD */
-			        defineProps<{ msg?:string }>({ msg: String })
-			      </script>
-			      "#,
+                  <script setup lang="ts">
+                    /* ✗ BAD */
+                    defineProps<{ msg?:string }>({ msg: String })
+                  </script>
+                  "#,
             None,
             None,
             Some(PathBuf::from("test.vue")),
         ), // {        "parserOptions": { "parser": require.resolve("@typescript-eslint/parser") }      },
         (
             "
-			      <script setup>
-			        /* ✗ BAD */
-			        defineProps({ msg: String })
-			        defineProps({ count: Number })
-			      </script>
-			      ",
+                  <script setup>
+                    /* ✗ BAD */
+                    defineProps({ msg: String })
+                    defineProps({ count: Number })
+                  </script>
+                  ",
             None,
             None,
             Some(PathBuf::from("test.vue")),
         ),
         (
             "
-			      <script>
-			      export default {
-			        props: { msg: String }
-			      }
-			      </script>
-			      <script setup>
-			        /* ✗ BAD */
-			        defineProps({ count: Number })
-			      </script>
-			      ",
+                  <script>
+                  export default {
+                    props: { msg: String }
+                  }
+                  </script>
+                  <script setup>
+                    /* ✗ BAD */
+                    defineProps({ count: Number })
+                  </script>
+                  ",
             None,
             None,
             Some(PathBuf::from("test.vue")),
         ),
         (
             "
-			      <script setup>
-			        /* ✗ BAD */
-			        defineProps()
-			      </script>
-			      ",
+                  <script setup>
+                    /* ✗ BAD */
+                    defineProps()
+                  </script>
+                  ",
             None,
             None,
             Some(PathBuf::from("test.vue")),

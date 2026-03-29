@@ -1,6 +1,8 @@
 use std::{cell::RefCell, rc::Rc};
 
 use miette::JSONReportHandler;
+use oxc_span::CompactStr;
+use rustc_hash::FxHashSet;
 use serde::Serialize;
 
 use oxc_diagnostics::{
@@ -17,24 +19,50 @@ pub struct JsonOutputFormatter {
 }
 
 impl InternalFormatter for JsonOutputFormatter {
-    fn all_rules(&self) -> Option<String> {
+    fn all_rules(&self, _enabled_rules: FxHashSet<&str>) -> Option<String> {
         #[derive(Debug, Serialize)]
         struct RuleInfoJson<'a> {
             scope: &'a str,
             value: &'a str,
             category: RuleCategory,
+            type_aware: bool,
+            fix: String,
+            default: bool,
+            docs_url: CompactStr,
         }
 
-        let rules_info = RULES.iter().map(|rule| RuleInfoJson {
-            scope: rule.plugin_name(),
-            value: rule.name(),
-            category: rule.category(),
-        });
+        // Determine which rules are turned on by default (same logic as RuleTable)
+        let default_plugin_names = ["eslint", "unicorn", "typescript", "oxc"];
+        let default_rules: FxHashSet<&'static str> = RULES
+            .iter()
+            .filter(|rule| {
+                rule.category() == RuleCategory::Correctness
+                    && default_plugin_names.contains(&rule.plugin_name())
+            })
+            .map(oxc_linter::rules::RuleEnum::name)
+            .collect();
 
-        Some(
-            serde_json::to_string_pretty(&rules_info.collect::<Vec<_>>())
-                .expect("Failed to serialize"),
-        )
+        let mut rules_info: Vec<_> = RULES
+            .iter()
+            .map(|rule| RuleInfoJson {
+                scope: rule.plugin_name(),
+                value: rule.name(),
+                category: rule.category(),
+                type_aware: rule.is_tsgolint_rule(),
+                fix: rule.fix().to_string(),
+                default: default_rules.contains(rule.name()),
+                docs_url: format!(
+                    "https://oxc.rs/docs/guide/usage/linter/rules/{}/{}.html",
+                    rule.plugin_name(),
+                    rule.name()
+                )
+                .into(),
+            })
+            .collect();
+
+        rules_info.sort_by_key(|rule| (rule.scope, rule.value));
+
+        Some(serde_json::to_string_pretty(&rules_info).expect("Failed to serialize"))
     }
 
     fn lint_command_info(&self, lint_command_info: &super::LintCommandInfo) -> Option<String> {

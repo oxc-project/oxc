@@ -1,6 +1,7 @@
 use std::{
     borrow::Cow,
     fmt::{self, Display},
+    iter,
     ops::Deref,
 };
 
@@ -117,6 +118,29 @@ impl FixKind {
             }
         }
     }
+
+    /// Returns a string representation of the fix kind.
+    ///
+    /// This method returns a lowercase, underscore-separated string
+    /// representing all possible fix kind combinations.
+    pub fn to_string(self) -> &'static str {
+        if self.is_empty() {
+            return "none";
+        }
+        match self {
+            Self::Fix => "fix",
+            Self::Suggestion => "suggestion",
+            Self::Dangerous => "dangerous",
+            Self::SafeFixOrSuggestion => "safe_fix_or_suggestion",
+            Self::DangerousFix => "dangerous_fix",
+            Self::DangerousSuggestion => "dangerous_suggestion",
+            Self::DangerousFixOrSuggestion => "dangerous_fix_or_suggestion",
+            _ => {
+                debug_assert!(false, "Unhandled FixKind combination: {self:?}");
+                "unknown"
+            }
+        }
+    }
 }
 
 // TODO: rename
@@ -126,7 +150,7 @@ pub struct RuleFix {
     kind: FixKind,
     /// A suggestion message. Will be shown in editors via code actions.
     message: Option<Cow<'static, str>>,
-    /// The actual that will be applied to the source code.
+    /// The actual fix that will be applied to the source code.
     ///
     /// See: [`Fix`]
     fix: CompositeFix,
@@ -254,6 +278,7 @@ impl RuleFix {
         };
         let mut fix = self.fix.normalize_fixes(source_text);
         fix.message = message;
+        fix.kind = self.kind;
         fix
     }
 
@@ -293,6 +318,7 @@ pub struct Fix {
     /// A brief suggestion message describing the fix. Will be shown in
     /// editors via code actions.
     pub message: Option<Cow<'static, str>>,
+    pub kind: FixKind,
     pub span: Span,
 }
 
@@ -304,22 +330,28 @@ impl Default for Fix {
 
 impl Fix {
     pub const fn delete(span: Span) -> Self {
-        Self { content: Cow::Borrowed(""), message: None, span }
+        Self { content: Cow::Borrowed(""), message: None, span, kind: FixKind::None }
     }
 
     pub fn new<T: Into<Cow<'static, str>>>(content: T, span: Span) -> Self {
-        Self { content: content.into(), message: None, span }
+        Self { content: content.into(), message: None, span, kind: FixKind::None }
     }
 
     /// Creates a [`Fix`] that doesn't change the source code.
     #[inline]
     pub const fn empty() -> Self {
-        Self { content: Cow::Borrowed(""), message: None, span: SPAN }
+        Self { content: Cow::Borrowed(""), message: None, span: SPAN, kind: FixKind::None }
     }
 
     #[must_use]
     pub fn with_message(mut self, message: impl Into<Cow<'static, str>>) -> Self {
         self.message = Some(message.into());
+        self
+    }
+
+    #[must_use]
+    pub fn with_kind(mut self, kind: FixKind) -> Self {
+        self.kind = kind;
         self
     }
 }
@@ -353,6 +385,33 @@ impl PossibleFixes {
             PossibleFixes::Multiple(fixes) => {
                 fixes.iter().map(|fix| fix.span).reduce(Span::merge).unwrap_or(SPAN)
             }
+        }
+    }
+}
+
+impl From<Option<Fix>> for PossibleFixes {
+    /// Create a new [`PossibleFixes`] from an `Option<Fix>`.
+    fn from(fix: Option<Fix>) -> Self {
+        match fix {
+            Some(fix) => PossibleFixes::Single(fix),
+            None => PossibleFixes::None,
+        }
+    }
+}
+
+impl FromIterator<Fix> for PossibleFixes {
+    /// Create a new [`PossibleFixes`] from an iterator of [`Fix`]es.
+    fn from_iter<T: IntoIterator<Item = Fix>>(fixes: T) -> Self {
+        let mut fixes = fixes.into_iter();
+
+        if let Some(first_fix) = fixes.next() {
+            if let Some(second_fix) = fixes.next() {
+                PossibleFixes::Multiple(iter::chain([first_fix, second_fix], fixes).collect())
+            } else {
+                PossibleFixes::Single(first_fix)
+            }
+        } else {
+            PossibleFixes::None
         }
     }
 }
@@ -547,12 +606,16 @@ impl CompositeFix {
         let mut last_pos = start;
         let mut output = String::new();
         let mut merged_fix_message = None;
+        let mut merged_fix_kind = FixKind::None;
 
         for fix in fixes {
-            let Fix { content, span, message } = fix;
+            let Fix { content, span, message, kind: fix_kind } = fix;
             if let Some(message) = message {
                 merged_fix_message.get_or_insert(message);
             }
+
+            // use the most severe fix kind (dangerous > suggestion > fix > none)
+            merged_fix_kind = merged_fix_kind.union(fix_kind);
 
             // negative range or overlapping ranges is invalid
             if span.start > span.end {
@@ -582,6 +645,7 @@ impl CompositeFix {
         if let Some(message) = merged_fix_message {
             fix = fix.with_message(message);
         }
+        fix = fix.with_kind(merged_fix_kind);
         Ok(fix)
     }
 }
@@ -640,6 +704,12 @@ mod test {
                 }
             }
         }
+    }
+
+    #[test]
+    fn assert_size() {
+        use std::mem::size_of;
+        assert_eq!(size_of::<Fix>(), 64);
     }
 
     #[test]
@@ -757,5 +827,31 @@ mod test {
     )]
     fn test_emojis_invalid() {
         FixKind::Dangerous.emoji();
+    }
+
+    #[test]
+    fn test_to_string() {
+        let tests = vec![
+            (FixKind::None, "none"),
+            (FixKind::Fix, "fix"),
+            (FixKind::Suggestion, "suggestion"),
+            (FixKind::Dangerous, "dangerous"),
+            (FixKind::SafeFixOrSuggestion, "safe_fix_or_suggestion"),
+            (FixKind::DangerousFix, "dangerous_fix"),
+            (FixKind::DangerousSuggestion, "dangerous_suggestion"),
+            (FixKind::DangerousFixOrSuggestion, "dangerous_fix_or_suggestion"),
+        ];
+
+        for (kind, expected) in tests {
+            assert_eq!(
+                kind.to_string(),
+                expected,
+                "Expected {kind:?} to have string '{expected}'."
+            );
+        }
+
+        // Test that aliases work correctly
+        assert_eq!(FixKind::SafeFix.to_string(), "fix"); // SafeFix is an alias for Fix
+        assert_eq!(FixKind::All.to_string(), "dangerous_fix_or_suggestion"); // All is an alias for DangerousFixOrSuggestion
     }
 }
