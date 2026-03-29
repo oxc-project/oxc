@@ -32,17 +32,6 @@
   },
   "overrides": [
     {
-      "files": ["tasks/e2e/test/*.test.ts"],
-      "rules": {
-        "vitest/valid-title": [
-          "error",
-          {
-            "typecheck": true
-          }
-        ]
-      }
-    },
-    {
       "files": ["apps/oxlint/test/fixtures/**"],
       "rules": {
         "no-restricted-imports": [
