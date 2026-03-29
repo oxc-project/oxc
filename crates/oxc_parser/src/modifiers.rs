@@ -401,25 +401,22 @@ pub use modifier_kinds::ModifierKinds;
 impl<C: Config> ParserImpl<'_, C> {
     pub(crate) fn eat_modifiers_before_declaration(&mut self) -> Modifiers {
         let mut modifiers = Modifiers::empty();
-        while self.at_modifier() {
+        while let Some(modifier_kind) = self.get_modifier() {
             let span = self.start_span();
-            let kind = self.cur_kind();
             self.bump_any();
-            let modifier = self.modifier(kind, self.end_span(span));
+            let modifier = Modifier::new(self.end_span(span), modifier_kind);
             self.check_modifier(modifiers.kinds(), &modifier);
             modifiers.add(modifier.kind, modifier.span.start);
         }
         modifiers
     }
 
-    fn at_modifier(&mut self) -> bool {
-        if !self.cur_kind().is_modifier_kind() {
-            return false;
-        }
-        self.lookahead(Self::at_modifier_worker)
+    fn get_modifier(&mut self) -> Option<ModifierKind> {
+        let modifier_kind = ModifierKind::try_from(self.cur_kind()).ok()?;
+        if self.lookahead(Self::get_modifier_worker) { Some(modifier_kind) } else { None }
     }
 
-    fn at_modifier_worker(&mut self) -> bool {
+    fn get_modifier_worker(&mut self) -> bool {
         match self.cur_kind() {
             Kind::Const => {
                 self.bump_any();
