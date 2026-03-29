@@ -84,6 +84,10 @@ pub struct SemanticBuilder<'a> {
     pub(crate) current_function_node_id: NodeId,
     pub(crate) module_instance_state_cache: FxHashMap<Address, ModuleInstanceState>,
     current_reference_flags: ReferenceFlags,
+    /// Symbols that have been hoisted out of a scope (e.g. `var` declarations hoisted to
+    /// the enclosing function scope, or Annex B function declarations hoisted to the var scope).
+    /// Keyed by the **original** scope the symbol was declared in, so that future declarations
+    /// in that scope can still detect redeclarations via `check_redeclaration`.
     pub(crate) hoisting_variables: FxHashMap<ScopeId, IdentHashMap<'a, SymbolId>>,
 
     // builders

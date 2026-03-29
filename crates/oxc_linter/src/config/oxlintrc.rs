@@ -193,6 +193,24 @@ pub struct Oxlintrc {
     /// }
     /// ```
     ///
+    /// Basic usage with a TypeScript plugin and a local plugin path.
+    ///
+    /// TypeScript plugin files are supported in the following environments:
+    /// - Deno and Bun: TypeScript files are supported natively.
+    /// - Node.js >=22.18.0 and Node.js ^20.19.0: TypeScript files are supported natively with built-in
+    ///   type-stripping enabled by default.
+    ///
+    /// For older Node.js versions, TypeScript plugins are not supported. Please use JavaScript plugins or upgrade your Node version.
+    ///
+    /// ```json
+    /// {
+    ///   "jsPlugins": ["./custom-plugin.ts"],
+    ///   "rules": {
+    ///     "custom/rule-name": "warn"
+    ///   }
+    /// }
+    /// ```
+    ///
     /// Using a built-in Rust plugin alongside a JS plugin with the same name
     /// by giving the JS plugin an alias.
     ///

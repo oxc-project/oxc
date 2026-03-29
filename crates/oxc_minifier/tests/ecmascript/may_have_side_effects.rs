@@ -1,4 +1,4 @@
-use javascript_globals::GLOBALS;
+use javascript_globals::GLOBALS_BUILTIN;
 
 use rustc_hash::FxHashSet;
 
@@ -25,7 +25,7 @@ struct Ctx {
 impl Default for Ctx {
     fn default() -> Self {
         Self {
-            global_variable_names: GLOBALS["builtin"]
+            global_variable_names: GLOBALS_BUILTIN
                 .keys()
                 .copied()
                 .chain(["arguments", "URL"])
@@ -838,7 +838,7 @@ fn test_property_access() {
 /// Ported from Rolldown's global_reference.rs / GLOBAL_IDENT set.
 #[test]
 fn test_known_global_identifiers() {
-    // Known globals (in GLOBALS["builtin"]) should be side-effect-free to access
+    // Known globals (in GLOBALS_BUILTIN) should be side-effect-free to access
     test("Math", false);
     test("Array", false);
     test("Object", false);

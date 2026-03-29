@@ -2,11 +2,19 @@
  * `SourceCode` methods related to tokens.
  */
 
-import { tokens, tokensAndComments, initTokens, initTokensAndComments } from "./tokens.ts";
+import { cachedTokens, tokensUint32, tokensLen, initTokensBuffer, getToken } from "./tokens.ts";
+import {
+  tokensAndCommentsUint32,
+  tokensAndCommentsLen,
+  getTokenOrComment,
+  getTokenOrCommentEnd,
+  initTokensAndCommentsBuffer,
+} from "./tokens_and_comments.ts";
 import { debugAssertIsNonNull } from "../utils/asserts.ts";
 
 import type { Node, NodeOrToken } from "./types.ts";
-import type { Token, TokenOrComment } from "./tokens.ts";
+import type { Token } from "./tokens.ts";
+import type { TokenOrComment } from "./tokens_and_comments.ts";
 
 /**
  * Options for various `SourceCode` methods e.g. `getFirstToken`.
@@ -87,9 +95,6 @@ export function getTokens<Options extends CountOptions | number | FilterFn | nul
   // so we use `Result` alias + casts on return statements
   type Result = TokenResult<Options>[];
 
-  if (tokens === null) initTokens();
-  debugAssertIsNonNull(tokens);
-
   // Maximum number of tokens to return
   let count = typeof countOptions === "object" && countOptions !== null ? countOptions.count : null;
 
@@ -111,21 +116,19 @@ export function getTokens<Options extends CountOptions | number | FilterFn | nul
         ? countOptions.filter
         : null;
 
-  // Whether to return comment tokens
-  const includeComments =
-    typeof countOptions === "object" &&
-    countOptions !== null &&
-    "includeComments" in countOptions &&
-    countOptions.includeComments;
+  const includeComments = getIncludeComments(countOptions);
 
-  // Source array of tokens to search in
-  let tokenList: TokenOrComment[];
-  if (includeComments) {
-    if (tokensAndComments === null) initTokensAndComments();
-    debugAssertIsNonNull(tokensAndComments);
-    tokenList = tokensAndComments;
+  let uint32: Uint32Array, len: number;
+  if (includeComments === false) {
+    if (tokensUint32 === null) initTokensBuffer();
+    debugAssertIsNonNull(tokensUint32);
+    uint32 = tokensUint32;
+    len = tokensLen;
   } else {
-    tokenList = tokens;
+    if (tokensAndCommentsUint32 === null) initTokensAndCommentsBuffer();
+    debugAssertIsNonNull(tokensAndCommentsUint32);
+    uint32 = tokensAndCommentsUint32;
+    len = tokensAndCommentsLen;
   }
 
   const { range } = node,
@@ -133,32 +136,30 @@ export function getTokens<Options extends CountOptions | number | FilterFn | nul
     rangeEnd = range[1];
 
   // Binary search for first token past `node`'s start
-  let sliceStart = firstTokenAtOrAfter(tokenList, rangeStart, 0);
+  let sliceStart = firstTokenAtOrAfter(uint32, rangeStart, 0, len);
   // Binary search for first token past `node`'s end
-  let sliceEnd = firstTokenAtOrAfter(tokenList, rangeEnd, sliceStart);
+  let sliceEnd = firstTokenAtOrAfter(uint32, rangeEnd, sliceStart, len);
 
   sliceStart = Math.max(0, sliceStart - beforeCount);
-  sliceEnd = Math.min(sliceEnd + afterCount, tokenList.length);
+  sliceEnd = Math.min(sliceEnd + afterCount, len);
 
   if (typeof filter !== "function") {
-    return tokenList.slice(
-      sliceStart,
-      Math.min(sliceStart + (count ?? sliceEnd), sliceEnd),
-    ) as Result;
+    const end = Math.min(sliceStart + (count ?? sliceEnd), sliceEnd);
+    return collectEntries(sliceStart, end, includeComments) as Result;
   }
 
   const allTokens: TokenOrComment[] = [];
 
   if (typeof count !== "number") {
     for (let i = sliceStart; i < sliceEnd; i++) {
-      const token = tokenList[i];
+      const token = getEntry(i, includeComments);
       if (filter(token)) allTokens.push(token);
     }
     return allTokens as Result;
   }
 
   for (let i = sliceStart; i < sliceEnd && count > 0; i++) {
-    const token = tokenList[i];
+    const token = getEntry(i, includeComments);
     if (filter(token)) {
       allTokens.push(token);
       count--;
@@ -184,9 +185,6 @@ export function getFirstToken<Options extends SkipOptions | number | FilterFn | 
   // so we use `Result` alias + casts on return statements
   type Result = TokenResult<Options> | null;
 
-  if (tokens === null) initTokens();
-  debugAssertIsNonNull(tokens);
-
   // Number of tokens at the beginning of the given node to skip
   let skip =
     typeof skipOptions === "number"
@@ -203,21 +201,19 @@ export function getFirstToken<Options extends SkipOptions | number | FilterFn | 
         ? skipOptions.filter
         : null;
 
-  // Whether to include comments
-  const includeComments =
-    typeof skipOptions === "object" &&
-    skipOptions !== null &&
-    "includeComments" in skipOptions &&
-    skipOptions.includeComments;
+  const includeComments = getIncludeComments(skipOptions);
 
-  // Source array of tokens
-  let tokenList: TokenOrComment[];
-  if (includeComments) {
-    if (tokensAndComments === null) initTokensAndComments();
-    debugAssertIsNonNull(tokensAndComments);
-    tokenList = tokensAndComments;
+  let uint32: Uint32Array, len: number;
+  if (includeComments === false) {
+    if (tokensUint32 === null) initTokensBuffer();
+    debugAssertIsNonNull(tokensUint32);
+    uint32 = tokensUint32;
+    len = tokensLen;
   } else {
-    tokenList = tokens;
+    if (tokensAndCommentsUint32 === null) initTokensAndCommentsBuffer();
+    debugAssertIsNonNull(tokensAndCommentsUint32);
+    uint32 = tokensAndCommentsUint32;
+    len = tokensAndCommentsLen;
   }
 
   const { range } = node,
@@ -225,29 +221,25 @@ export function getFirstToken<Options extends SkipOptions | number | FilterFn | 
     rangeEnd = range[1];
 
   // Binary search for first token past `node`'s start
-  const startIndex = firstTokenAtOrAfter(tokenList, rangeStart, 0);
+  const startIndex = firstTokenAtOrAfter(uint32, rangeStart, 0, len);
 
-  const tokensLength = tokenList.length;
   if (typeof filter !== "function") {
     const skipTo = startIndex + (skip ?? 0);
-    // Avoid indexing out of bounds
-    if (skipTo >= tokensLength) return null;
-
-    const token = tokenList[skipTo];
-    if (token.start >= rangeEnd) return null;
-    return token as Result;
+    if (skipTo >= len) return null;
+    if (entryStart(skipTo, uint32) >= rangeEnd) return null;
+    return getEntry(skipTo, includeComments) as Result;
   }
 
   if (typeof skip !== "number") {
-    for (let i = startIndex; i < tokensLength; i++) {
-      const token = tokenList[i];
-      if (token.start >= rangeEnd) return null; // Token is outside the node
+    for (let i = startIndex; i < len; i++) {
+      if (entryStart(i, uint32) >= rangeEnd) return null;
+      const token = getEntry(i, includeComments);
       if (filter(token)) return token as Result;
     }
   } else {
-    for (let i = startIndex; i < tokensLength; i++) {
-      const token = tokenList[i];
-      if (token.start >= rangeEnd) return null; // Token is outside the node
+    for (let i = startIndex; i < len; i++) {
+      if (entryStart(i, uint32) >= rangeEnd) return null;
+      const token = getEntry(i, includeComments);
       if (filter(token)) {
         if (skip <= 0) return token as Result;
         skip--;
@@ -274,9 +266,6 @@ export function getFirstTokens<Options extends CountOptions | number | FilterFn 
   // so we use `Result` alias + casts on return statements
   type Result = TokenResult<Options>[];
 
-  if (tokens === null) initTokens();
-  debugAssertIsNonNull(tokens);
-
   const count =
     typeof countOptions === "number"
       ? countOptions
@@ -291,19 +280,19 @@ export function getFirstTokens<Options extends CountOptions | number | FilterFn 
         ? countOptions.filter
         : null;
 
-  const includeComments =
-    typeof countOptions === "object" &&
-    countOptions !== null &&
-    "includeComments" in countOptions &&
-    countOptions.includeComments;
+  const includeComments = getIncludeComments(countOptions);
 
-  let tokenList: TokenOrComment[];
-  if (includeComments) {
-    if (tokensAndComments === null) initTokensAndComments();
-    debugAssertIsNonNull(tokensAndComments);
-    tokenList = tokensAndComments;
+  let uint32: Uint32Array, len: number;
+  if (includeComments === false) {
+    if (tokensUint32 === null) initTokensBuffer();
+    debugAssertIsNonNull(tokensUint32);
+    uint32 = tokensUint32;
+    len = tokensLen;
   } else {
-    tokenList = tokens;
+    if (tokensAndCommentsUint32 === null) initTokensAndCommentsBuffer();
+    debugAssertIsNonNull(tokensAndCommentsUint32);
+    uint32 = tokensAndCommentsUint32;
+    len = tokensAndCommentsLen;
   }
 
   const { range } = node,
@@ -311,24 +300,30 @@ export function getFirstTokens<Options extends CountOptions | number | FilterFn 
     rangeEnd = range[1];
 
   // Binary search for first token past `node`'s start
-  const sliceStart = firstTokenAtOrAfter(tokenList, rangeStart, 0);
+  const sliceStart = firstTokenAtOrAfter(uint32, rangeStart, 0, len);
   // Binary search for first token past `node`'s end
-  const sliceEnd = firstTokenAtOrAfter(tokenList, rangeEnd, sliceStart);
+  const sliceEnd = firstTokenAtOrAfter(uint32, rangeEnd, sliceStart, len);
 
   if (typeof filter !== "function") {
-    if (typeof count !== "number") return tokenList.slice(sliceStart, sliceEnd) as Result;
-    return tokenList.slice(sliceStart, Math.min(sliceStart + count, sliceEnd)) as Result;
+    if (typeof count !== "number") {
+      return collectEntries(sliceStart, sliceEnd, includeComments) as Result;
+    }
+    return collectEntries(
+      sliceStart,
+      Math.min(sliceStart + count, sliceEnd),
+      includeComments,
+    ) as Result;
   }
 
   const firstTokens: TokenOrComment[] = [];
   if (typeof count !== "number") {
     for (let i = sliceStart; i < sliceEnd; i++) {
-      const token = tokenList[i];
+      const token = getEntry(i, includeComments);
       if (filter(token)) firstTokens.push(token);
     }
   } else {
     for (let i = sliceStart; i < sliceEnd && firstTokens.length < count; i++) {
-      const token = tokenList[i];
+      const token = getEntry(i, includeComments);
       if (filter(token)) firstTokens.push(token);
     }
   }
@@ -351,9 +346,6 @@ export function getLastToken<Options extends SkipOptions | number | FilterFn | n
   // so we use `Result` alias + casts on return statements
   type Result = TokenResult<Options> | null;
 
-  if (tokens === null) initTokens();
-  debugAssertIsNonNull(tokens);
-
   // Number of tokens at the end of the given node to skip
   let skip =
     typeof skipOptions === "number"
@@ -369,21 +361,19 @@ export function getLastToken<Options extends SkipOptions | number | FilterFn | n
         ? skipOptions.filter
         : null;
 
-  // Whether to return comment tokens
-  const includeComments =
-    typeof skipOptions === "object" &&
-    skipOptions !== null &&
-    "includeComments" in skipOptions &&
-    skipOptions.includeComments;
+  const includeComments = getIncludeComments(skipOptions);
 
-  // Source array of tokens to search in
-  let tokenList: TokenOrComment[];
-  if (includeComments) {
-    if (tokensAndComments === null) initTokensAndComments();
-    debugAssertIsNonNull(tokensAndComments);
-    tokenList = tokensAndComments;
+  let uint32: Uint32Array, len: number;
+  if (includeComments === false) {
+    if (tokensUint32 === null) initTokensBuffer();
+    debugAssertIsNonNull(tokensUint32);
+    uint32 = tokensUint32;
+    len = tokensLen;
   } else {
-    tokenList = tokens;
+    if (tokensAndCommentsUint32 === null) initTokensAndCommentsBuffer();
+    debugAssertIsNonNull(tokensAndCommentsUint32);
+    uint32 = tokensAndCommentsUint32;
+    len = tokensAndCommentsLen;
   }
 
   const { range } = node,
@@ -391,27 +381,25 @@ export function getLastToken<Options extends SkipOptions | number | FilterFn | n
     rangeEnd = range[1];
 
   // Binary search for token immediately before `node`'s end
-  const lastTokenIndex = firstTokenAtOrAfter(tokenList, rangeEnd, 0) - 1;
+  const lastTokenIndex = firstTokenAtOrAfter(uint32, rangeEnd, 0, len) - 1;
 
   if (typeof filter !== "function") {
     const skipTo = lastTokenIndex - (skip ?? 0);
-    // Avoid indexing out of bounds
     if (skipTo < 0) return null;
-    const token = tokenList[skipTo];
-    if (token.start < rangeStart) return null;
-    return token as Result;
+    if (entryStart(skipTo, uint32) < rangeStart) return null;
+    return getEntry(skipTo, includeComments) as Result;
   }
 
   if (typeof skip !== "number") {
     for (let i = lastTokenIndex; i >= 0; i--) {
-      const token = tokenList[i];
-      if (token.start < rangeStart) return null;
+      if (entryStart(i, uint32) < rangeStart) return null;
+      const token = getEntry(i, includeComments);
       if (filter(token)) return token as Result;
     }
   } else {
     for (let i = lastTokenIndex; i >= 0; i--) {
-      const token = tokenList[i];
-      if (token.start < rangeStart) return null;
+      if (entryStart(i, uint32) < rangeStart) return null;
+      const token = getEntry(i, includeComments);
       if (filter(token)) {
         if (skip <= 0) return token as Result;
         skip--;
@@ -438,9 +426,6 @@ export function getLastTokens<Options extends CountOptions | number | FilterFn |
   // so we use `Result` alias + casts on return statements
   type Result = TokenResult<Options>[];
 
-  if (tokens === null) initTokens();
-  debugAssertIsNonNull(tokens);
-
   // Maximum number of tokens to return
   const count =
     typeof countOptions === "number"
@@ -457,21 +442,19 @@ export function getLastTokens<Options extends CountOptions | number | FilterFn |
         ? countOptions.filter
         : null;
 
-  // Whether to return comment tokens
-  const includeComments =
-    typeof countOptions === "object" &&
-    countOptions !== null &&
-    "includeComments" in countOptions &&
-    countOptions.includeComments;
+  const includeComments = getIncludeComments(countOptions);
 
-  // Source array of tokens to search in
-  let tokenList: TokenOrComment[];
-  if (includeComments) {
-    if (tokensAndComments === null) initTokensAndComments();
-    debugAssertIsNonNull(tokensAndComments);
-    tokenList = tokensAndComments;
+  let uint32: Uint32Array, len: number;
+  if (includeComments === false) {
+    if (tokensUint32 === null) initTokensBuffer();
+    debugAssertIsNonNull(tokensUint32);
+    uint32 = tokensUint32;
+    len = tokensLen;
   } else {
-    tokenList = tokens;
+    if (tokensAndCommentsUint32 === null) initTokensAndCommentsBuffer();
+    debugAssertIsNonNull(tokensAndCommentsUint32);
+    uint32 = tokensAndCommentsUint32;
+    len = tokensAndCommentsLen;
   }
 
   const { range } = node,
@@ -479,25 +462,31 @@ export function getLastTokens<Options extends CountOptions | number | FilterFn |
     rangeEnd = range[1];
 
   // Binary search for first token past `node`'s start
-  const sliceStart = firstTokenAtOrAfter(tokenList, rangeStart, 0);
+  const sliceStart = firstTokenAtOrAfter(uint32, rangeStart, 0, len);
   // Binary search for first token past `node`'s end
-  const sliceEnd = firstTokenAtOrAfter(tokenList, rangeEnd, sliceStart);
+  const sliceEnd = firstTokenAtOrAfter(uint32, rangeEnd, sliceStart, len);
 
   if (typeof filter !== "function") {
-    if (typeof count !== "number") return tokenList.slice(sliceStart, sliceEnd) as Result;
-    return tokenList.slice(Math.max(sliceStart, sliceEnd - count), sliceEnd) as Result;
+    if (typeof count !== "number") {
+      return collectEntries(sliceStart, sliceEnd, includeComments) as Result;
+    }
+    return collectEntries(
+      Math.max(sliceStart, sliceEnd - count),
+      sliceEnd,
+      includeComments,
+    ) as Result;
   }
 
   const lastTokens: TokenOrComment[] = [];
   if (typeof count !== "number") {
     for (let i = sliceStart; i < sliceEnd; i++) {
-      const token = tokenList[i];
+      const token = getEntry(i, includeComments);
       if (filter(token)) lastTokens.push(token);
     }
   } else {
     // `count` is the number of tokens within range from the end, so we iterate in reverse
     for (let i = sliceEnd - 1; i >= sliceStart && lastTokens.length < count; i--) {
-      const token = tokenList[i];
+      const token = getEntry(i, includeComments);
       if (filter(token)) lastTokens.unshift(token);
     }
   }
@@ -520,9 +509,6 @@ export function getTokenBefore<Options extends SkipOptions | number | FilterFn |
   // so we use `Result` alias + casts on return statements
   type Result = TokenResult<Options> | null;
 
-  if (tokens === null) initTokens();
-  debugAssertIsNonNull(tokens);
-
   // Number of tokens preceding the given node to skip
   let skip =
     typeof skipOptions === "number"
@@ -538,44 +524,41 @@ export function getTokenBefore<Options extends SkipOptions | number | FilterFn |
         ? skipOptions.filter
         : null;
 
-  // Whether to return comment tokens
-  const includeComments =
-    typeof skipOptions === "object" &&
-    skipOptions !== null &&
-    "includeComments" in skipOptions &&
-    skipOptions.includeComments;
+  const includeComments = getIncludeComments(skipOptions);
 
-  // Source array of tokens to search in
-  let tokenList: TokenOrComment[];
-  if (includeComments) {
-    if (tokensAndComments === null) initTokensAndComments();
-    debugAssertIsNonNull(tokensAndComments);
-    tokenList = tokensAndComments;
+  let uint32: Uint32Array, len: number;
+  if (includeComments === false) {
+    if (tokensUint32 === null) initTokensBuffer();
+    debugAssertIsNonNull(tokensUint32);
+    uint32 = tokensUint32;
+    len = tokensLen;
   } else {
-    tokenList = tokens;
+    if (tokensAndCommentsUint32 === null) initTokensAndCommentsBuffer();
+    debugAssertIsNonNull(tokensAndCommentsUint32);
+    uint32 = tokensAndCommentsUint32;
+    len = tokensAndCommentsLen;
   }
 
   const nodeStart = nodeOrToken.range[0];
 
   // Binary search for token immediately before the given node, token, or comment
-  let beforeIndex = firstTokenAtOrAfter(tokenList, nodeStart, 0) - 1;
+  let beforeIndex = firstTokenAtOrAfter(uint32, nodeStart, 0, len) - 1;
 
   if (typeof filter !== "function") {
     const skipTo = beforeIndex - (skip ?? 0);
-    // Avoid indexing out of bounds
     if (skipTo < 0) return null;
-    return tokenList[skipTo] as Result;
+    return getEntry(skipTo, includeComments) as Result;
   }
 
   if (typeof skip !== "number") {
     while (beforeIndex >= 0) {
-      const token = tokenList[beforeIndex];
+      const token = getEntry(beforeIndex, includeComments);
       if (filter(token)) return token as Result;
       beforeIndex--;
     }
   } else {
     while (beforeIndex >= 0) {
-      const token = tokenList[beforeIndex];
+      const token = getEntry(beforeIndex, includeComments);
       if (filter(token)) {
         if (skip <= 0) return token as Result;
         skip--;
@@ -621,9 +604,6 @@ export function getTokensBefore<
   // so we use `Result` alias + casts on return statements
   type Result = TokenResult<Options>[];
 
-  if (tokens === null) initTokens();
-  debugAssertIsNonNull(tokens);
-
   // Maximum number of tokens to return
   const count =
     typeof countOptions === "number"
@@ -640,44 +620,42 @@ export function getTokensBefore<
         ? countOptions.filter
         : null;
 
-  // Whether to return comment tokens
-  const includeComments =
-    typeof countOptions === "object" &&
-    countOptions !== null &&
-    "includeComments" in countOptions &&
-    countOptions.includeComments;
+  const includeComments = getIncludeComments(countOptions);
 
-  // Source array of tokens to search in
-  let tokenList: TokenOrComment[];
-  if (includeComments) {
-    if (tokensAndComments === null) initTokensAndComments();
-    debugAssertIsNonNull(tokensAndComments);
-    tokenList = tokensAndComments;
+  let uint32: Uint32Array, len: number;
+  if (includeComments === false) {
+    if (tokensUint32 === null) initTokensBuffer();
+    debugAssertIsNonNull(tokensUint32);
+    uint32 = tokensUint32;
+    len = tokensLen;
   } else {
-    tokenList = tokens;
+    if (tokensAndCommentsUint32 === null) initTokensAndCommentsBuffer();
+    debugAssertIsNonNull(tokensAndCommentsUint32);
+    uint32 = tokensAndCommentsUint32;
+    len = tokensAndCommentsLen;
   }
 
   const targetStart = nodeOrToken.range[0];
 
   // Binary search for first token past `nodeOrToken`'s start
-  const sliceEnd = firstTokenAtOrAfter(tokenList, targetStart, 0);
+  const sliceEnd = firstTokenAtOrAfter(uint32, targetStart, 0, len);
 
   // Fast path for the common case
   if (typeof filter !== "function") {
-    if (typeof count !== "number") return tokenList.slice(0, sliceEnd) as Result;
-    return tokenList.slice(sliceEnd - count, sliceEnd) as Result;
+    if (typeof count !== "number") return collectEntries(0, sliceEnd, includeComments) as Result;
+    return collectEntries(Math.max(0, sliceEnd - count), sliceEnd, includeComments) as Result;
   }
 
   const tokensBefore: TokenOrComment[] = [];
   if (typeof count !== "number") {
     for (let i = 0; i < sliceEnd; i++) {
-      const token = tokenList[i];
+      const token = getEntry(i, includeComments);
       if (filter(token)) tokensBefore.push(token);
     }
   } else {
     // Count is the number of preceding tokens, so we iterate in reverse
     for (let i = sliceEnd - 1; i >= 0 && tokensBefore.length < count; i--) {
-      const token = tokenList[i];
+      const token = getEntry(i, includeComments);
       if (filter(token)) tokensBefore.unshift(token);
     }
   }
@@ -700,9 +678,6 @@ export function getTokenAfter<Options extends SkipOptions | number | FilterFn | 
   // so we use `Result` alias + casts on return statements
   type Result = TokenResult<Options> | null;
 
-  if (tokens === null) initTokens();
-  debugAssertIsNonNull(tokens);
-
   // Number of tokens following the given node to skip
   let skip =
     typeof skipOptions === "number"
@@ -718,44 +693,41 @@ export function getTokenAfter<Options extends SkipOptions | number | FilterFn | 
         ? skipOptions.filter
         : null;
 
-  const includeComments =
-    typeof skipOptions === "object" &&
-    skipOptions !== null &&
-    "includeComments" in skipOptions &&
-    skipOptions.includeComments;
+  const includeComments = getIncludeComments(skipOptions);
 
-  // Source array of tokens to search in
-  let tokenList: TokenOrComment[];
-  if (includeComments) {
-    if (tokensAndComments === null) initTokensAndComments();
-    debugAssertIsNonNull(tokensAndComments);
-    tokenList = tokensAndComments;
+  let uint32: Uint32Array, len: number;
+  if (includeComments === false) {
+    if (tokensUint32 === null) initTokensBuffer();
+    debugAssertIsNonNull(tokensUint32);
+    uint32 = tokensUint32;
+    len = tokensLen;
   } else {
-    tokenList = tokens;
+    if (tokensAndCommentsUint32 === null) initTokensAndCommentsBuffer();
+    debugAssertIsNonNull(tokensAndCommentsUint32);
+    uint32 = tokensAndCommentsUint32;
+    len = tokensAndCommentsLen;
   }
 
   const rangeEnd = nodeOrToken.range[1];
 
   // Binary search for first token past `nodeOrToken`'s end
-  const startIndex = firstTokenAtOrAfter(tokenList, rangeEnd, 0);
+  const startIndex = firstTokenAtOrAfter(uint32, rangeEnd, 0, len);
 
   // Fast path for the common case
-  const tokensLength = tokenList.length;
   if (typeof filter !== "function") {
     const skipTo = startIndex + (skip ?? 0);
-    // Avoid indexing out of bounds
-    if (skipTo >= tokensLength) return null;
-    return tokenList[skipTo] as Result;
+    if (skipTo >= len) return null;
+    return getEntry(skipTo, includeComments) as Result;
   }
 
   if (typeof skip !== "number") {
-    for (let i = startIndex; i < tokensLength; i++) {
-      const token = tokenList[i];
+    for (let i = startIndex; i < len; i++) {
+      const token = getEntry(i, includeComments);
       if (filter(token)) return token as Result;
     }
   } else {
-    for (let i = startIndex; i < tokensLength; i++) {
-      const token = tokenList[i];
+    for (let i = startIndex; i < len; i++) {
+      const token = getEntry(i, includeComments);
       if (filter(token)) {
         if (skip <= 0) return token as Result;
         skip--;
@@ -801,9 +773,6 @@ export function getTokensAfter<Options extends CountOptions | number | FilterFn 
   // so we use `Result` alias + casts on return statements
   type Result = TokenResult<Options>[];
 
-  if (tokens === null) initTokens();
-  debugAssertIsNonNull(tokens);
-
   const count =
     typeof countOptions === "number"
       ? countOptions
@@ -818,41 +787,43 @@ export function getTokensAfter<Options extends CountOptions | number | FilterFn 
         ? countOptions.filter
         : null;
 
-  const includeComments =
-    typeof countOptions === "object" &&
-    countOptions !== null &&
-    "includeComments" in countOptions &&
-    countOptions.includeComments;
+  const includeComments = getIncludeComments(countOptions);
 
-  let tokenList: TokenOrComment[];
-  if (includeComments) {
-    if (tokensAndComments === null) initTokensAndComments();
-    debugAssertIsNonNull(tokensAndComments);
-    tokenList = tokensAndComments;
+  let uint32: Uint32Array, len: number;
+  if (includeComments === false) {
+    if (tokensUint32 === null) initTokensBuffer();
+    debugAssertIsNonNull(tokensUint32);
+    uint32 = tokensUint32;
+    len = tokensLen;
   } else {
-    tokenList = tokens;
+    if (tokensAndCommentsUint32 === null) initTokensAndCommentsBuffer();
+    debugAssertIsNonNull(tokensAndCommentsUint32);
+    uint32 = tokensAndCommentsUint32;
+    len = tokensAndCommentsLen;
   }
 
   const rangeEnd = nodeOrToken.range[1];
 
   // Binary search for first token past `nodeOrToken`'s end
-  const sliceStart = firstTokenAtOrAfter(tokenList, rangeEnd, 0);
+  const sliceStart = firstTokenAtOrAfter(uint32, rangeEnd, 0, len);
 
   // Fast path for the common case
   if (typeof filter !== "function") {
-    if (typeof count !== "number") return tokenList.slice(sliceStart) as Result;
-    return tokenList.slice(sliceStart, sliceStart + count) as Result;
+    if (typeof count !== "number") {
+      return collectEntries(sliceStart, len, includeComments) as Result;
+    }
+    return collectEntries(sliceStart, Math.min(sliceStart + count, len), includeComments) as Result;
   }
 
   const tokenListAfter: TokenOrComment[] = [];
   if (typeof count !== "number") {
-    for (let i = sliceStart; i < tokenList.length; i++) {
-      const token = tokenList[i];
+    for (let i = sliceStart; i < len; i++) {
+      const token = getEntry(i, includeComments);
       if (filter(token)) tokenListAfter.push(token);
     }
   } else {
-    for (let i = sliceStart; i < tokenList.length && tokenListAfter.length < count; i++) {
-      const token = tokenList[i];
+    for (let i = sliceStart; i < len && tokenListAfter.length < count; i++) {
+      const token = getEntry(i, includeComments);
       if (filter(token)) tokenListAfter.push(token);
     }
   }
@@ -880,9 +851,6 @@ export function getTokensBetween<
   // so we use `Result` alias + casts on return statements
   type Result = TokenResult<Options>[];
 
-  if (tokens === null) initTokens();
-  debugAssertIsNonNull(tokens);
-
   const count =
     typeof countOptions === "object" && countOptions !== null ? countOptions.count : null;
 
@@ -895,19 +863,19 @@ export function getTokensBetween<
         ? countOptions.filter
         : null;
 
-  const includeComments =
-    typeof countOptions === "object" &&
-    countOptions !== null &&
-    "includeComments" in countOptions &&
-    countOptions.includeComments;
+  const includeComments = getIncludeComments(countOptions);
 
-  let tokenList: TokenOrComment[];
-  if (includeComments) {
-    if (tokensAndComments === null) initTokensAndComments();
-    debugAssertIsNonNull(tokensAndComments);
-    tokenList = tokensAndComments;
+  let uint32: Uint32Array, len: number;
+  if (includeComments === false) {
+    if (tokensUint32 === null) initTokensBuffer();
+    debugAssertIsNonNull(tokensUint32);
+    uint32 = tokensUint32;
+    len = tokensLen;
   } else {
-    tokenList = tokens;
+    if (tokensAndCommentsUint32 === null) initTokensAndCommentsBuffer();
+    debugAssertIsNonNull(tokensAndCommentsUint32);
+    uint32 = tokensAndCommentsUint32;
+    len = tokensAndCommentsLen;
   }
 
   // This range is not invariant over node order.
@@ -917,28 +885,34 @@ export function getTokensBetween<
     rangeEnd = right.range[0];
 
   // Binary search for first token past "between" range start
-  let sliceStart = firstTokenAtOrAfter(tokenList, rangeStart, 0);
+  let sliceStart = firstTokenAtOrAfter(uint32, rangeStart, 0, len);
   // Binary search for first token past "between" range end
-  let sliceEnd = firstTokenAtOrAfter(tokenList, rangeEnd, sliceStart);
+  let sliceEnd = firstTokenAtOrAfter(uint32, rangeEnd, sliceStart, len);
 
   // Apply padding
   sliceStart = Math.max(0, sliceStart - padding);
-  sliceEnd += padding;
+  sliceEnd = Math.min(sliceEnd + padding, len);
 
   if (typeof filter !== "function") {
-    if (typeof count !== "number") return tokenList.slice(sliceStart, sliceEnd) as Result;
-    return tokenList.slice(sliceStart, Math.min(sliceStart + count, sliceEnd)) as Result;
+    if (typeof count !== "number") {
+      return collectEntries(sliceStart, sliceEnd, includeComments) as Result;
+    }
+    return collectEntries(
+      sliceStart,
+      Math.min(sliceStart + count, sliceEnd),
+      includeComments,
+    ) as Result;
   }
 
   const tokensBetween: TokenOrComment[] = [];
   if (typeof count !== "number") {
     for (let i = sliceStart; i < sliceEnd; i++) {
-      const token = tokenList[i];
+      const token = getEntry(i, includeComments);
       if (filter(token)) tokensBetween.push(token);
     }
   } else {
     for (let i = sliceStart; i < sliceEnd && tokensBetween.length < count; i++) {
-      const token = tokenList[i];
+      const token = getEntry(i, includeComments);
       if (filter(token)) tokensBetween.push(token);
     }
   }
@@ -961,9 +935,6 @@ export function getFirstTokenBetween<
   // so we use `Result` alias + casts on return statements
   type Result = TokenResult<Options> | null;
 
-  if (tokens === null) initTokens();
-  debugAssertIsNonNull(tokens);
-
   // Number of tokens at the beginning of the "between" range to skip
   let skip =
     typeof skipOptions === "number"
@@ -979,19 +950,19 @@ export function getFirstTokenBetween<
         ? skipOptions.filter
         : null;
 
-  const includeComments =
-    typeof skipOptions === "object" &&
-    skipOptions !== null &&
-    "includeComments" in skipOptions &&
-    skipOptions.includeComments;
+  const includeComments = getIncludeComments(skipOptions);
 
-  let tokenList: TokenOrComment[];
-  if (includeComments) {
-    if (tokensAndComments === null) initTokensAndComments();
-    debugAssertIsNonNull(tokensAndComments);
-    tokenList = tokensAndComments;
+  let uint32: Uint32Array, len: number;
+  if (includeComments === false) {
+    if (tokensUint32 === null) initTokensBuffer();
+    debugAssertIsNonNull(tokensUint32);
+    uint32 = tokensUint32;
+    len = tokensLen;
   } else {
-    tokenList = tokens;
+    if (tokensAndCommentsUint32 === null) initTokensAndCommentsBuffer();
+    debugAssertIsNonNull(tokensAndCommentsUint32);
+    uint32 = tokensAndCommentsUint32;
+    len = tokensAndCommentsLen;
   }
 
   // This range is not invariant over node order.
@@ -1000,30 +971,26 @@ export function getFirstTokenBetween<
   const rangeStart = left.range[1],
     rangeEnd = right.range[0];
 
-  const tokensLength = tokenList.length;
-
   // Binary search for token immediately following `left`
-  const firstTokenIndex = firstTokenAtOrAfter(tokenList, rangeStart, 0);
+  const firstTokenIndex = firstTokenAtOrAfter(uint32, rangeStart, 0, len);
 
   if (typeof filter !== "function") {
     const skipTo = firstTokenIndex + (skip ?? 0);
-    // Avoid indexing out of bounds
-    if (skipTo >= tokensLength) return null;
-    const token = tokenList[skipTo];
-    if (token.start >= rangeEnd) return null;
-    return token as Result;
+    if (skipTo >= len) return null;
+    if (entryStart(skipTo, uint32) >= rangeEnd) return null;
+    return getEntry(skipTo, includeComments) as Result;
   }
 
   if (typeof skip !== "number") {
-    for (let i = firstTokenIndex; i < tokensLength; i++) {
-      const token = tokenList[i];
-      if (token.start >= rangeEnd) return null;
+    for (let i = firstTokenIndex; i < len; i++) {
+      if (entryStart(i, uint32) >= rangeEnd) return null;
+      const token = getEntry(i, includeComments);
       if (filter(token)) return token as Result;
     }
   } else {
-    for (let i = firstTokenIndex; i < tokensLength; i++) {
-      const token = tokenList[i];
-      if (token.start >= rangeEnd) return null;
+    for (let i = firstTokenIndex; i < len; i++) {
+      if (entryStart(i, uint32) >= rangeEnd) return null;
+      const token = getEntry(i, includeComments);
       if (filter(token)) {
         if (skip <= 0) return token as Result;
         skip--;
@@ -1050,9 +1017,6 @@ export function getFirstTokensBetween<
   // so we use `Result` alias + casts on return statements
   type Result = TokenResult<Options>[];
 
-  if (tokens === null) initTokens();
-  debugAssertIsNonNull(tokens);
-
   const count =
     typeof countOptions === "number"
       ? countOptions
@@ -1067,19 +1031,19 @@ export function getFirstTokensBetween<
         ? countOptions.filter
         : null;
 
-  const includeComments =
-    typeof countOptions === "object" &&
-    countOptions !== null &&
-    "includeComments" in countOptions &&
-    countOptions.includeComments;
+  const includeComments = getIncludeComments(countOptions);
 
-  let tokenList: TokenOrComment[];
-  if (includeComments) {
-    if (tokensAndComments === null) initTokensAndComments();
-    debugAssertIsNonNull(tokensAndComments);
-    tokenList = tokensAndComments;
+  let uint32: Uint32Array, len: number;
+  if (includeComments === false) {
+    if (tokensUint32 === null) initTokensBuffer();
+    debugAssertIsNonNull(tokensUint32);
+    uint32 = tokensUint32;
+    len = tokensLen;
   } else {
-    tokenList = tokens;
+    if (tokensAndCommentsUint32 === null) initTokensAndCommentsBuffer();
+    debugAssertIsNonNull(tokensAndCommentsUint32);
+    uint32 = tokensAndCommentsUint32;
+    len = tokensAndCommentsLen;
   }
 
   // This range is not invariant over node order.
@@ -1089,24 +1053,30 @@ export function getFirstTokensBetween<
     rangeEnd = right.range[0];
 
   // Find the first token after `left`
-  const sliceStart = firstTokenAtOrAfter(tokenList, rangeStart, 0);
+  const sliceStart = firstTokenAtOrAfter(uint32, rangeStart, 0, len);
   // Find the first token at or after `right`
-  const sliceEnd = firstTokenAtOrAfter(tokenList, rangeEnd, sliceStart);
+  const sliceEnd = firstTokenAtOrAfter(uint32, rangeEnd, sliceStart, len);
 
   if (typeof filter !== "function") {
-    if (typeof count !== "number") return tokenList.slice(sliceStart, sliceEnd) as Result;
-    return tokenList.slice(sliceStart, Math.min(sliceStart + count, sliceEnd)) as Result;
+    if (typeof count !== "number") {
+      return collectEntries(sliceStart, sliceEnd, includeComments) as Result;
+    }
+    return collectEntries(
+      sliceStart,
+      Math.min(sliceStart + count, sliceEnd),
+      includeComments,
+    ) as Result;
   }
 
   const firstTokens: TokenOrComment[] = [];
   if (typeof count !== "number") {
     for (let i = sliceStart; i < sliceEnd; i++) {
-      const token = tokenList[i];
+      const token = getEntry(i, includeComments);
       if (filter(token)) firstTokens.push(token);
     }
   } else {
     for (let i = sliceStart; i < sliceEnd && firstTokens.length < count; i++) {
-      const token = tokenList[i];
+      const token = getEntry(i, includeComments);
       if (filter(token)) firstTokens.push(token);
     }
   }
@@ -1129,9 +1099,6 @@ export function getLastTokenBetween<
   // so we use `Result` alias + casts on return statements
   type Result = TokenResult<Options> | null;
 
-  if (tokens === null) initTokens();
-  debugAssertIsNonNull(tokens);
-
   // Number of tokens at the end of the "between" range to skip
   let skip =
     typeof skipOptions === "number"
@@ -1147,19 +1114,19 @@ export function getLastTokenBetween<
         ? skipOptions.filter
         : null;
 
-  const includeComments =
-    typeof skipOptions === "object" &&
-    skipOptions !== null &&
-    "includeComments" in skipOptions &&
-    skipOptions.includeComments;
+  const includeComments = getIncludeComments(skipOptions);
 
-  let tokenList: TokenOrComment[];
-  if (includeComments) {
-    if (tokensAndComments === null) initTokensAndComments();
-    debugAssertIsNonNull(tokensAndComments);
-    tokenList = tokensAndComments;
+  let uint32: Uint32Array, len: number;
+  if (includeComments === false) {
+    if (tokensUint32 === null) initTokensBuffer();
+    debugAssertIsNonNull(tokensUint32);
+    uint32 = tokensUint32;
+    len = tokensLen;
   } else {
-    tokenList = tokens;
+    if (tokensAndCommentsUint32 === null) initTokensAndCommentsBuffer();
+    debugAssertIsNonNull(tokensAndCommentsUint32);
+    uint32 = tokensAndCommentsUint32;
+    len = tokensAndCommentsLen;
   }
 
   // This range is not invariant over node order.
@@ -1169,29 +1136,27 @@ export function getLastTokenBetween<
     rangeEnd = right.range[0];
 
   // Binary search for token immediately preceding `right`.
-  // The found token may be within the left node if there are no tokens between the nodes.
-  const lastTokenIndex = firstTokenAtOrAfter(tokenList, rangeEnd, 0) - 1;
+  // The found token may be within the left node if there are no entries between the nodes.
+  const lastTokenIndex = firstTokenAtOrAfter(uint32, rangeEnd, 0, len) - 1;
 
   // Fast path for the common case
   if (typeof filter !== "function") {
     const skipTo = lastTokenIndex - (skip ?? 0);
-    // Avoid indexing out of bounds
     if (skipTo < 0) return null;
-    const token = tokenList[skipTo];
-    if (token.start < rangeStart) return null;
-    return token as Result;
+    if (entryStart(skipTo, uint32) < rangeStart) return null;
+    return getEntry(skipTo, includeComments) as Result;
   }
 
   if (typeof skip !== "number") {
     for (let i = lastTokenIndex; i >= 0; i--) {
-      const token = tokenList[i];
-      if (token.start < rangeStart) return null;
+      if (entryStart(i, uint32) < rangeStart) return null;
+      const token = getEntry(i, includeComments);
       if (filter(token)) return token as Result;
     }
   } else {
     for (let i = lastTokenIndex; i >= 0; i--) {
-      const token = tokenList[i];
-      if (token.start < rangeStart) return null;
+      if (entryStart(i, uint32) < rangeStart) return null;
+      const token = getEntry(i, includeComments);
       if (filter(token)) {
         if (skip <= 0) return token as Result;
         skip--;
@@ -1218,9 +1183,6 @@ export function getLastTokensBetween<
   // so we use `Result` alias + casts on return statements
   type Result = TokenResult<Options>[];
 
-  if (tokens === null) initTokens();
-  debugAssertIsNonNull(tokens);
-
   const count =
     typeof countOptions === "number"
       ? countOptions
@@ -1235,19 +1197,19 @@ export function getLastTokensBetween<
         ? countOptions.filter
         : null;
 
-  const includeComments =
-    typeof countOptions === "object" &&
-    countOptions !== null &&
-    "includeComments" in countOptions &&
-    countOptions.includeComments;
+  const includeComments = getIncludeComments(countOptions);
 
-  let tokenList: TokenOrComment[];
-  if (includeComments) {
-    if (tokensAndComments === null) initTokensAndComments();
-    debugAssertIsNonNull(tokensAndComments);
-    tokenList = tokensAndComments;
+  let uint32: Uint32Array, len: number;
+  if (includeComments === false) {
+    if (tokensUint32 === null) initTokensBuffer();
+    debugAssertIsNonNull(tokensUint32);
+    uint32 = tokensUint32;
+    len = tokensLen;
   } else {
-    tokenList = tokens;
+    if (tokensAndCommentsUint32 === null) initTokensAndCommentsBuffer();
+    debugAssertIsNonNull(tokensAndCommentsUint32);
+    uint32 = tokensAndCommentsUint32;
+    len = tokensAndCommentsLen;
   }
 
   // This range is not invariant over node order.
@@ -1257,26 +1219,32 @@ export function getLastTokensBetween<
     rangeEnd = right.range[0];
 
   // Binary search for first token past "between" range start
-  const sliceStart = firstTokenAtOrAfter(tokenList, rangeStart, 0);
+  const sliceStart = firstTokenAtOrAfter(uint32, rangeStart, 0, len);
   // Binary search for first token past "between" range end
-  const sliceEnd = firstTokenAtOrAfter(tokenList, rangeEnd, sliceStart);
+  const sliceEnd = firstTokenAtOrAfter(uint32, rangeEnd, sliceStart, len);
 
   // Fast path for the common case
   if (typeof filter !== "function") {
-    if (typeof count !== "number") return tokenList.slice(sliceStart, sliceEnd) as Result;
-    return tokenList.slice(Math.max(sliceStart, sliceEnd - count), sliceEnd) as Result;
+    if (typeof count !== "number") {
+      return collectEntries(sliceStart, sliceEnd, includeComments) as Result;
+    }
+    return collectEntries(
+      Math.max(sliceStart, sliceEnd - count),
+      sliceEnd,
+      includeComments,
+    ) as Result;
   }
 
   const tokensBetween: TokenOrComment[] = [];
   if (typeof count !== "number") {
     for (let i = sliceStart; i < sliceEnd; i++) {
-      const token = tokenList[i];
+      const token = getEntry(i, includeComments);
       if (filter(token)) tokensBetween.push(token);
     }
   } else {
     // Count is the number of preceding tokens, so we iterate in reverse
     for (let i = sliceEnd - 1; i >= sliceStart && tokensBetween.length < count; i--) {
-      const token = tokenList[i];
+      const token = getEntry(i, includeComments);
       if (filter(token)) tokensBetween.unshift(token);
     }
   }
@@ -1285,47 +1253,47 @@ export function getLastTokensBetween<
 
 /**
  * Get the token starting at the specified index.
- * @param index - Index of the start of the token's range.
+ * @param offset - Start offset of the token.
  * @param rangeOptions - Options object.
  * @returns `Token` (or `Token | Comment` if `includeComments` is `true`), or `null` if none found.
  */
 export function getTokenByRangeStart<Options extends RangeOptions | null | undefined>(
-  index: number,
+  offset: number,
   rangeOptions?: Options,
 ): TokenResult<Options> | null {
   // TypeScript cannot verify conditional return types within the function body,
   // so we use `Result` alias + casts on return statements
   type Result = TokenResult<Options> | null;
 
-  if (tokens === null) initTokens();
-  debugAssertIsNonNull(tokens);
-
   const includeComments =
     typeof rangeOptions === "object" &&
     rangeOptions !== null &&
     "includeComments" in rangeOptions &&
-    rangeOptions.includeComments;
+    !!rangeOptions.includeComments;
 
-  let tokenList: TokenOrComment[];
-  if (includeComments) {
-    if (tokensAndComments === null) initTokensAndComments();
-    debugAssertIsNonNull(tokensAndComments);
-    tokenList = tokensAndComments;
+  let uint32: Uint32Array, len: number;
+  if (includeComments === false) {
+    if (tokensUint32 === null) initTokensBuffer();
+    debugAssertIsNonNull(tokensUint32);
+    uint32 = tokensUint32;
+    len = tokensLen;
   } else {
-    tokenList = tokens;
+    if (tokensAndCommentsUint32 === null) initTokensAndCommentsBuffer();
+    debugAssertIsNonNull(tokensAndCommentsUint32);
+    uint32 = tokensAndCommentsUint32;
+    len = tokensAndCommentsLen;
   }
 
   // Binary search for token starting at the given index
-  for (let lo = 0, hi = tokenList.length; lo < hi; ) {
-    const mid = (lo + hi) >> 1;
-    const token = tokenList[mid],
-      tokenStart = token.start;
-    if (tokenStart < index) {
+  for (let lo = 0, hi = len; lo < hi; ) {
+    const mid = (lo + hi) >>> 1;
+    const tokenStart = uint32[mid << 2];
+    if (tokenStart < offset) {
       lo = mid + 1;
-    } else if (tokenStart > index) {
+    } else if (tokenStart > offset) {
       hi = mid;
     } else {
-      return token as Result;
+      return getEntry(mid, includeComments) as Result;
     }
   }
 
@@ -1349,11 +1317,8 @@ const JSX_WHITESPACE_REGEXP = /\s/u;
  *   any of the tokens found between the two given nodes or tokens.
  */
 export function isSpaceBetween(first: NodeOrToken, second: NodeOrToken): boolean {
-  if (tokensAndComments === null) {
-    if (tokens === null) initTokens();
-    initTokensAndComments();
-  }
-  debugAssertIsNonNull(tokensAndComments);
+  if (tokensAndCommentsUint32 === null) initTokensAndCommentsBuffer();
+  debugAssertIsNonNull(tokensAndCommentsUint32);
 
   const range1 = first.range,
     range2 = second.range;
@@ -1385,21 +1350,15 @@ export function isSpaceBetween(first: NodeOrToken, second: NodeOrToken): boolean
 
   // Binary search for the first token past `rangeStart`.
   // Unless `first` and `second` are adjacent or overlapping,
-  // the token will be the first token between the two nodes.
-  let tokenBetweenIndex = firstTokenAtOrAfter(tokensAndComments, rangeStart, 0);
+  // the token will be the first token/comment between the two nodes.
+  let index = firstTokenAtOrAfter(tokensAndCommentsUint32, rangeStart, 0, tokensAndCommentsLen);
 
-  const tokensAndCommentsLength = tokensAndComments.length;
-  for (
-    let lastTokenEnd = rangeStart;
-    tokenBetweenIndex < tokensAndCommentsLength;
-    tokenBetweenIndex++
-  ) {
-    const token = tokensAndComments[tokenBetweenIndex],
-      tokenStart = token.start;
+  for (let lastTokenEnd = rangeStart; index < tokensAndCommentsLen; index++) {
+    const tokenStart = tokensAndCommentsUint32[index << 2];
     // The first token of the later node should undergo the check in the second branch
     if (tokenStart > rangeEnd) break;
     if (tokenStart !== lastTokenEnd) return true;
-    lastTokenEnd = token.end;
+    lastTokenEnd = entryEnd(index, true);
   }
 
   return false;
@@ -1426,11 +1385,8 @@ export function isSpaceBetween(first: NodeOrToken, second: NodeOrToken): boolean
  *   any of the tokens found between the two given nodes or tokens.
  */
 export function isSpaceBetweenTokens(first: NodeOrToken, second: NodeOrToken): boolean {
-  if (tokensAndComments === null) {
-    if (tokens === null) initTokens();
-    initTokensAndComments();
-  }
-  debugAssertIsNonNull(tokensAndComments);
+  if (tokensAndCommentsUint32 === null) initTokensAndCommentsBuffer();
+  debugAssertIsNonNull(tokensAndCommentsUint32);
 
   const range1 = first.range,
     range2 = second.range;
@@ -1450,20 +1406,17 @@ export function isSpaceBetweenTokens(first: NodeOrToken, second: NodeOrToken): b
 
   // Binary search for the first token past `rangeStart`.
   // Unless `first` and `second` are adjacent or overlapping,
-  // the token will be the first token between the two nodes.
-  let tokenBetweenIndex = firstTokenAtOrAfter(tokensAndComments, rangeStart, 0);
+  // the token will be the first token/comment between the two nodes.
+  let index = firstTokenAtOrAfter(tokensAndCommentsUint32, rangeStart, 0, tokensAndCommentsLen);
 
-  const tokensAndCommentsLength = tokensAndComments.length;
-  for (
-    let lastTokenEnd = rangeStart;
-    tokenBetweenIndex < tokensAndCommentsLength;
-    tokenBetweenIndex++
-  ) {
-    const token = tokensAndComments[tokenBetweenIndex],
-      tokenStart = token.start;
+  for (let lastTokenEnd = rangeStart; index < tokensAndCommentsLen; index++) {
+    const tokenStart = tokensAndCommentsUint32[index << 2];
 
     // The first token of the later node should undergo the check in the second branch
     if (tokenStart > rangeEnd) break;
+
+    // Deserialize to check type/value for JSXText whitespace detection
+    const token = getTokenOrComment(index);
     if (
       tokenStart !== lastTokenEnd ||
       (token.type === "JSXText" && JSX_WHITESPACE_REGEXP.test(token.value))
@@ -1477,48 +1430,119 @@ export function isSpaceBetweenTokens(first: NodeOrToken, second: NodeOrToken): b
 }
 
 /**
- * Find the index of the first token in `tokens` whose `start` is >= `offset`, via binary search.
+ * Extract `includeComments` boolean from options.
  *
- * Searched range starts at `startIndex` and ends at `tokens.length`.
+ * @param options - Options object, number, function, or nullish
+ * @returns `true` if `options` has `includeComments: true`
+ */
+function getIncludeComments(
+  options: SkipOptions | CountOptions | number | FilterFn | null | undefined,
+): boolean {
+  return (
+    typeof options === "object" &&
+    options !== null &&
+    "includeComments" in options &&
+    !!options.includeComments
+  );
+}
+
+/**
+ * Get a token at `index`, deserializing if needed.
+ * For `includeComments` mode, gets from the merged buffer instead.
  *
- * Returns `tokens.length` if all tokens have `start` < `offset`.
+ * @param index - Entry index in the tokens or merged buffer
+ * @param includeComments - Whether to use the merged tokens-and-comments buffer
+ * @returns Deserialized token or comment
+ */
+function getEntry(index: number, includeComments: boolean): TokenOrComment {
+  return includeComments === true ? getTokenOrComment(index) : getToken(index);
+}
+
+/**
+ * Get `start` offset of token/comment at `index` from the given buffer.
  *
- * IMPORTANT
- * ---------
+ * @param index - Entry index
+ * @param uint32 - The `Uint32Array` buffer (tokens or merged)
+ * @returns Start offset in source text
+ */
+function entryStart(index: number, uint32: Uint32Array): number {
+  return uint32[index << 2];
+}
+
+/**
+ * Get `end` offset of token/comment at `index`.
+ * For tokens-only, reads from `tokensUint32`. For `includeComments`, looks up from the original buffer.
  *
- * This function is inlined into all call sites by a TSDown plugin, to avoid the overhead of function calls
- * (see `tsdown_plugins/inline_search.ts`).
+ * @param index - Entry index in the tokens or merged buffer
+ * @param includeComments - Whether to use the merged tokens-and-comments buffer
+ * @returns End offset in source text
+ */
+function entryEnd(index: number, includeComments: boolean): number {
+  return includeComments === true ? getTokenOrCommentEnd(index) : tokensUint32![(index << 2) + 1];
+}
+
+/**
+ * Collect tokens/comments from `startIndex` (inclusive) to `endIndex` (exclusive) into an array.
+ * Deserializes each token/comment on demand.
  *
- * For the plugin to work, the following conditions must be met:
+ * For tokens-only mode, batch-deserializes then slices `cachedTokens`.
+ * For `includeComments` mode, builds the array entry by entry from the merged buffer.
  *
- * 1. All call sites must follow this pattern:
- *   * `const result = firstTokenAtOrAfter(a, b, c);` or `let result = firstTokenAtOrAfter(a, b, c);`
- *   * `result` can be any variable name.
- *   * `a`, `b`, and `c` can be any variables, or literals (e.g. `0`).
- *   * Optionally, the call expression can be the left side of a binary expression
- *     e.g. `const result = firstTokenAtOrAfter(a, b, c) - 1;`.
+ * @param startIndex - First entry index (inclusive)
+ * @param endIndex - Last entry index (exclusive)
+ * @param includeComments - Whether to use the merged tokens-and-comments buffer
+ * @returns Array of tokens (and optionally comments)
+ */
+function collectEntries(
+  startIndex: number,
+  endIndex: number,
+  includeComments: boolean,
+): TokenOrComment[] {
+  if (includeComments === false) {
+    // Batch-deserialize tokens in range, then slice from `cachedTokens` array
+    for (let i = startIndex; i < endIndex; i++) {
+      getToken(i);
+    }
+    return cachedTokens!.slice(startIndex, endIndex) as TokenOrComment[];
+  }
+
+  const len = endIndex - startIndex;
+  if (len === 0) return [];
+
+  // Pre-allocate with correct size. Write `null` into first entry to transition to PACKED_ELEMENTS before the loop.
+  // oxlint-disable-next-line unicorn/no-new-array
+  const tokensAndCommentsSubset: TokenOrComment[] = new Array(len).fill(0);
+  tokensAndCommentsSubset[0] = null!;
+  let i = 0;
+  do {
+    tokensAndCommentsSubset[i] = getTokenOrComment(startIndex + i);
+  } while (++i < len);
+  return tokensAndCommentsSubset;
+}
+
+/**
+ * Find the index of the first entry in a `Uint32Array` buffer whose `start` is >= `offset`, via binary search.
  *
- * 2. If renaming this function, the TSDown plugin must be updated to match.
+ * Each entry occupies 4 x u32s (16 bytes), with `start` as the first u32.
+ * Searched range starts at `startIndex` and ends at `length`.
  *
- * 3. The function body is inlined except for the final `return` statement.
- *    If altering this function's body, ensure it does not define any vars at top-level of the function,
- *    as they could conflict with other vars in the call site's scope.
+ * Returns `length` if all entries have `start` < `offset`.
  *
- * If any calls cannot be inlined, it will produce an error at build time.
- *
- * @param tokens - Sorted array of tokens/comments
+ * @param u32 - Uint32Array buffer (tokens, comments, or tokensAndComments)
  * @param offset - Source offset to search for
- * @param startIndex - Starting index for the search
- * @returns Index of first token with `start >= offset`
+ * @param startIndex - Starting entry index for the search
+ * @param length - Total number of entries in the buffer
+ * @returns Index of first entry with `start >= offset`
  */
 export function firstTokenAtOrAfter(
-  tokens: TokenOrComment[],
+  uint32: Uint32Array,
   offset: number,
   startIndex: number,
+  length: number,
 ): number {
-  for (let endIndex = tokens.length; startIndex < endIndex; ) {
-    const mid = (startIndex + endIndex) >> 1;
-    if (tokens[mid].start < offset) {
+  for (let endIndex = length; startIndex < endIndex; ) {
+    const mid = (startIndex + endIndex) >>> 1;
+    if (uint32[mid << 2] < offset) {
       startIndex = mid + 1;
     } else {
       endIndex = mid;

@@ -9,6 +9,8 @@ import testingLibrary from "./testing_library.ts";
 import storybook from "./storybook.ts";
 import playwright from "./playwright.ts";
 import cypress from "./cypress.ts";
+import mocha from "./mocha.ts";
+import regexp from "./regexp.ts";
 
 export const TEST_GROUPS: TestGroup[] = [
   eslint,
@@ -20,4 +22,6 @@ export const TEST_GROUPS: TestGroup[] = [
   storybook,
   playwright,
   cypress,
+  mocha,
+  regexp,
 ];

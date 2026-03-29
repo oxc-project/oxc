@@ -1,4 +1,7 @@
+use std::sync::Arc;
+
 use rustc_hash::FxBuildHasher;
+use tower_lsp_server::ls_types::Uri;
 use tower_lsp_server::{LspService, Server, ls_types::ServerInfo};
 
 mod backend;
@@ -10,6 +13,7 @@ mod options;
 mod tests;
 mod tool;
 mod worker;
+mod worker_manager;
 
 pub use crate::capabilities::{Capabilities, DiagnosticMode};
 pub use crate::language_id::LanguageId;
@@ -17,12 +21,20 @@ pub use crate::tool::{DiagnosticResult, Tool, ToolBuilder, ToolRestartChanges};
 
 pub type ConcurrentHashMap<K, V> = papaya::HashMap<K, V, FxBuildHasher>;
 
+pub struct TextDocument<'a> {
+    pub uri: &'a Uri,
+    pub language_id: LanguageId,
+    pub text: Option<String>,
+}
+
+impl<'a> TextDocument<'a> {
+    pub fn new(uri: &'a Uri, language_id: LanguageId, text: Option<String>) -> Self {
+        Self { uri, language_id, text }
+    }
+}
+
 /// Run the language server
-pub async fn run_server(
-    server_name: String,
-    server_version: String,
-    tools: Vec<Box<dyn ToolBuilder>>,
-) {
+pub async fn run_server(server_name: String, server_version: String, tool: Arc<dyn ToolBuilder>) {
     let stdin = tokio::io::stdin();
     let stdout = tokio::io::stdout();
 
@@ -30,7 +42,7 @@ pub async fn run_server(
         crate::backend::Backend::new(
             client,
             ServerInfo { name: server_name, version: Some(server_version) },
-            tools,
+            tool,
         )
     })
     .finish();

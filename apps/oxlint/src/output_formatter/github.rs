@@ -26,6 +26,10 @@ impl DiagnosticReporter for GithubReporter {
         Some(get_diagnostic_result_output(result))
     }
 
+    fn supports_minified_file_fallback(&self) -> bool {
+        false
+    }
+
     fn render_error(&mut self, error: Error) -> Option<String> {
         Some(format_github(&error))
     }
@@ -83,7 +87,7 @@ fn escape_property(value: &str) -> String {
 #[cfg(test)]
 mod test {
     use oxc_diagnostics::{
-        NamedSource, OxcDiagnostic,
+        DiagnosticService, NamedSource, OxcDiagnostic,
         reporter::{DiagnosticReporter, DiagnosticResult},
     };
     use oxc_span::Span;
@@ -122,5 +126,26 @@ mod test {
             result.unwrap(),
             "::warning file=file%3A//test.ts,line=1,endLine=1,col=1,endColumn=9,title=oxlint::error message\n"
         );
+    }
+
+    #[test]
+    fn reporter_does_not_use_minified_fallback_for_long_annotations() {
+        let source_text = format!("{}\n", "a".repeat(1300));
+        let diagnostic = OxcDiagnostic::warn("error message")
+            .with_label(Span::new(0, 1300))
+            .with_source_code(NamedSource::new("file://test.ts", source_text));
+
+        let (mut service, sender) = DiagnosticService::new(Box::new(GithubReporter));
+        sender.send(vec![diagnostic]).unwrap();
+        drop(sender);
+
+        let mut output = Vec::new();
+        service.run(&mut output);
+        let output = String::from_utf8(output).unwrap();
+
+        assert!(output.starts_with("::warning file=file%3A//test.ts,line=1,endLine=1,col=1,"));
+        assert!(output.contains("title=oxlint::error message"));
+        assert!(!output.contains("File is too long to fit on the screen"));
+        assert!(!output.contains("file=,line=0,endLine=0,col=0,endColumn=0"));
     }
 }

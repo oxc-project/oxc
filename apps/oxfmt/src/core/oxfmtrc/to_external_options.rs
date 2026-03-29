@@ -53,29 +53,6 @@ pub fn sync_external_options(options: &FormatOptions, config: &mut Value) {
     // Other options defined independently by plugins are also left as they are.
 }
 
-/// Parsers(files) that benefit from Tailwind plugin
-#[cfg(feature = "napi")]
-static TAILWIND_PARSERS: phf::Set<&'static str> = phf::phf_set! {
-    "html",
-    "vue",
-    "angular",
-    "glimmer",
-    "css",
-    "scss",
-    "less",
-};
-
-/// Parsers(files) that can embed JS/TS code and benefit from oxfmt plugin.
-/// For now, expressions are not supported.
-/// - e.g. `__vue_expression` in `vue`, `__ng_directive` in `angular`
-#[cfg(feature = "napi")]
-static OXFMT_PARSERS: phf::Set<&'static str> = phf::phf_set! {
-    // "html",
-    "vue",
-    // "markdown",
-    // "mdx",
-};
-
 /// Finalizes external options by adding plugin-specific flags based on the formatting strategy.
 /// This should be called during `resolve()` after getting cached config.
 ///
@@ -88,21 +65,10 @@ pub fn finalize_external_options(config: &mut Value, strategy: &FormatFileStrate
         return;
     };
 
-    // Determine if Tailwind plugin should be used based on config and strategy
-    let use_tailwind = obj.contains_key("sortTailwindcss")
-        && match strategy {
-            FormatFileStrategy::OxcFormatter { .. } => true,
-            #[cfg(feature = "napi")]
-            FormatFileStrategy::ExternalFormatter { parser_name, .. } => {
-                TAILWIND_PARSERS.contains(parser_name)
-            }
-            _ => false,
-        };
-
-    // Add Tailwind plugin flag and map options
-    // See: https://github.com/tailwindlabs/prettier-plugin-tailwindcss#options
-    if use_tailwind {
+    // Add Tailwind plugin flag and map options if needed
+    if obj.contains_key("sortTailwindcss") && strategy.needs_tailwind_plugin() {
         if let Some(tailwind) = obj.get("sortTailwindcss").and_then(|v| v.as_object()).cloned() {
+            // See: https://github.com/tailwindlabs/prettier-plugin-tailwindcss#options
             for (src, dst) in [
                 ("config", "tailwindConfig"),
                 ("stylesheet", "tailwindStylesheet"),
@@ -121,11 +87,10 @@ pub fn finalize_external_options(config: &mut Value, strategy: &FormatFileStrate
 
     // Build oxfmt plugin options JSON for js-in-xxx parsers
     #[cfg(feature = "napi")]
-    if let FormatFileStrategy::ExternalFormatter { path, parser_name } = strategy
-        && OXFMT_PARSERS.contains(parser_name)
+    if let FormatFileStrategy::ExternalFormatter { path, .. } = strategy
+        && strategy.needs_oxfmt_plugin()
     {
         let mut oxfmt_plugin_options = serde_json::Map::new();
-
         for key in [
             "printWidth",
             "useTabs",
@@ -141,6 +106,7 @@ pub fn finalize_external_options(config: &mut Value, strategy: &FormatFileStrate
             "jsxSingleQuote",
             "sortImports",
             "sortTailwindcss",
+            "jsdoc",
         ] {
             if let Some(value) = obj.get(key) {
                 oxfmt_plugin_options.insert(key.to_string(), value.clone());
@@ -170,6 +136,7 @@ pub fn finalize_external_options(config: &mut Value, strategy: &FormatFileStrate
         "insertFinalNewline",
         "overrides",
         "ignorePatterns",
+        "jsdoc",
     ] {
         obj.remove(key);
     }

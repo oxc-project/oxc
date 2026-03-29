@@ -28,7 +28,7 @@ declare_oxc_lint!(
     /// ```
     PreferFind(tsgolint),
     typescript,
-    nursery,
+    style,
 );
 
 impl Rule for PreferFind {}

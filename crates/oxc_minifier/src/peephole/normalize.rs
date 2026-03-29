@@ -6,7 +6,6 @@ use oxc_ecmascript::{
     side_effects::is_valid_regexp,
 };
 use oxc_semantic::IsGlobalReference;
-use oxc_span::GetSpan;
 use oxc_syntax::scope::ScopeFlags;
 
 use crate::{ReusableTraverseCtx, Traverse, TraverseCtx, minifier_traverse::traverse_mut_with_ctx};
@@ -56,10 +55,13 @@ impl<'a> Traverse<'a> for Normalize {
     }
 
     fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
-        stmts.retain(|stmt| {
-            !(matches!(stmt, Statement::EmptyStatement(_))
-                || Self::drop_debugger(stmt, ctx)
-                || Self::drop_console(stmt, ctx))
+        stmts.retain(|stmt| match stmt {
+            Statement::EmptyStatement(_) => false,
+            Statement::DebuggerStatement(_) if ctx.state.options.drop_debugger => false,
+            Statement::ExpressionStatement(expr) if ctx.state.options.drop_console => {
+                !Self::is_console_expression(&expr.expression)
+            }
+            _ => true,
         });
     }
 
@@ -96,8 +98,11 @@ impl<'a> Traverse<'a> for Normalize {
                 Self::recover_arrow_expression_after_drop_console(e, ctx);
                 None
             }
-            Expression::CallExpression(_) if ctx.state.options.drop_console => {
-                Self::compress_console(expr, ctx)
+            Expression::CallExpression(call_expr)
+                if ctx.state.options.drop_console
+                    && Self::is_console_call_expression(call_expr) =>
+            {
+                Some(ctx.ast.void_0(call_expr.span))
             }
             Expression::StaticMemberExpression(e) => Self::fold_number_nan_to_nan(e, ctx),
             _ => None,
@@ -126,23 +131,6 @@ impl<'a> Normalize {
         Self { options }
     }
 
-    /// Drop `drop_debugger` statement.
-    ///
-    /// Enabled by `compress.drop_debugger`
-    fn drop_debugger(stmt: &Statement<'a>, ctx: &TraverseCtx<'a>) -> bool {
-        matches!(stmt, Statement::DebuggerStatement(_)) && ctx.state.options.drop_debugger
-    }
-
-    fn compress_console(expr: &Expression<'a>, ctx: &TraverseCtx<'a>) -> Option<Expression<'a>> {
-        debug_assert!(ctx.state.options.drop_console);
-        Self::is_console(expr).then(|| ctx.ast.void_0(expr.span()))
-    }
-
-    fn drop_console(stmt: &Statement<'a>, ctx: &TraverseCtx<'a>) -> bool {
-        ctx.state.options.drop_console
-            && matches!(stmt, Statement::ExpressionStatement(expr) if Self::is_console(&expr.expression))
-    }
-
     fn recover_arrow_expression_after_drop_console(
         expr: &mut ArrowFunctionExpression<'a>,
         ctx: &TraverseCtx<'a>,
@@ -152,8 +140,11 @@ impl<'a> Normalize {
         }
     }
 
-    fn is_console(expr: &Expression<'_>) -> bool {
-        let Expression::CallExpression(call_expr) = &expr else { return false };
+    fn is_console_expression(expr: &Expression<'_>) -> bool {
+        matches!(expr, Expression::CallExpression(call_expr) if Self::is_console_call_expression(call_expr))
+    }
+
+    fn is_console_call_expression(call_expr: &CallExpression<'_>) -> bool {
         let Some(member_expr) = call_expr.callee.as_member_expression() else { return false };
         let obj = member_expr.object();
         let Some(ident) = obj.get_identifier_reference() else { return false };
