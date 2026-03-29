@@ -944,12 +944,7 @@ fn test_fix_options() {
             Some(json!([{ "fix": { "variables": "off" } }])),
             FixKind::DangerousSuggestion,
         ),
-        (
-            "import foo from './foo';",
-            "",
-            None,
-            FixKind::DangerousSuggestion,
-        ),
+        ("import foo from './foo';", "", None, FixKind::DangerousSuggestion),
         (
             "import foo from './foo';",
             "",

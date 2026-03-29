@@ -582,9 +582,11 @@ fn parse_fix_mode(value: Option<&Value>, name: &str) -> Result<NoUnusedVarsFixMo
             "suggestion" => Ok(NoUnusedVarsFixMode::Suggestion),
             "fix" => Ok(NoUnusedVarsFixMode::Fix),
             "safe-fix" => Ok(NoUnusedVarsFixMode::SafeFix),
-            actual => {
-                Err(invalid_option_mismatch_error(name, ["off", "suggestion", "fix", "safe-fix"], actual))
-            }
+            actual => Err(invalid_option_mismatch_error(
+                name,
+                ["off", "suggestion", "fix", "safe-fix"],
+                actual,
+            )),
         },
         _ => Err(invalid_option_error(name, format!("Expected a boolean or string, got {value}"))),
     }
