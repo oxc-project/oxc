@@ -85,13 +85,13 @@ export type FormatFileParam = {
  * @returns Formatted code
  */
 export async function formatFile({ code, options }: FormatFileParam): Promise<string> {
-  const prettier = await loadPrettier();
+  const prettier = prettierCache ?? (await loadPrettier());
 
   // Enable Tailwind CSS plugin for non-JS files if needed
-  await setupTailwindPlugin(options);
+  if ("_useTailwindPlugin" in options) await setupTailwindPlugin(options);
   // Add oxfmt plugin for (j|t)-in-xxx files to use `oxc_formatter` instead of built-in formatter.
   // NOTE: This must be last since Prettier plugins are applied in order
-  await setupOxfmtPlugin(options);
+  if ("_oxfmtPluginOptionsJson" in options) await setupOxfmtPlugin(options);
 
   return prettier.format(code, options);
 }
@@ -114,10 +114,10 @@ export async function formatEmbeddedCode({
   code,
   options,
 }: FormatEmbeddedCodeParam): Promise<string> {
-  const prettier = await loadPrettier();
+  const prettier = prettierCache ?? (await loadPrettier());
 
   // Enable Tailwind CSS plugin for embedded code (e.g., html`...` in JS) if needed
-  await setupTailwindPlugin(options);
+  if ("_useTailwindPlugin" in options) await setupTailwindPlugin(options);
 
   // NOTE: This will throw if:
   // - Specified parser is not available
@@ -148,10 +148,10 @@ export async function formatEmbeddedDoc({
   texts,
   options,
 }: FormatEmbeddedDocParam): Promise<string[]> {
-  const prettier = await loadPrettier();
+  const prettier = prettierCache ?? (await loadPrettier());
 
   // Enable Tailwind CSS plugin for embedded code (e.g., html`...` in JS) if needed
-  await setupTailwindPlugin(options);
+  if ("_useTailwindPlugin" in options) await setupTailwindPlugin(options);
 
   // NOTE: This will throw if:
   // - Specified parser is not available
@@ -200,9 +200,6 @@ export async function formatEmbeddedDoc({
 // Tailwind CSS support
 // ---
 
-// Import types only to avoid runtime error if plugin is not installed
-
-// Shared cache for prettier-plugin-tailwindcss
 let tailwindPluginCache: typeof import("prettier-plugin-tailwindcss");
 
 async function loadTailwindPlugin(): Promise<typeof import("prettier-plugin-tailwindcss")> {
@@ -215,15 +212,11 @@ async function loadTailwindPlugin(): Promise<typeof import("prettier-plugin-tail
 // ---
 
 /**
- * Load Tailwind CSS plugin lazily when `options._useTailwindPlugin` flag is set.
- * The flag is added by Rust side only for relevant parsers.
- *
+ * Load Tailwind CSS plugin.
  * Option mapping (sortTailwindcss.xxx → tailwindXxx) is also done in Rust side.
  */
 async function setupTailwindPlugin(options: Options): Promise<void> {
-  if ("_useTailwindPlugin" in options === false) return;
-
-  const tailwindPlugin = await loadTailwindPlugin();
+  const tailwindPlugin = tailwindPluginCache ?? (await loadTailwindPlugin());
 
   options.plugins ??= [];
   options.plugins.push(tailwindPlugin as Plugin);
@@ -242,6 +235,15 @@ export interface SortTailwindClassesArgs {
   };
 }
 
+let tailwindSorterCache: typeof import("prettier-plugin-tailwindcss/sorter");
+
+async function loadTailwindSorter() {
+  if (tailwindSorterCache) return tailwindSorterCache;
+
+  tailwindSorterCache = await import("prettier-plugin-tailwindcss/sorter");
+  return tailwindSorterCache;
+}
+
 /**
  * Process Tailwind CSS classes found in JS/TS files in batch.
  * @param args - Object containing classes and options (filepath is in options.filepath)
@@ -251,7 +253,7 @@ export async function sortTailwindClasses({
   classes,
   options,
 }: SortTailwindClassesArgs): Promise<string[]> {
-  const { createSorter } = await import("prettier-plugin-tailwindcss/sorter");
+  const { createSorter } = tailwindSorterCache ?? (await loadTailwindSorter());
 
   const sorter = await createSorter({
     filepath: options.filepath,
@@ -280,13 +282,10 @@ async function loadOxfmtPlugin(): Promise<Plugin> {
 // ---
 
 /**
- * Load oxfmt plugin for js-in-xxx parsers when `options._oxfmtPluginOptionsJson` is set.
- * The flag is added by Rust side only for relevant parsers.
+ * Load oxfmt plugin for js-in-xxx parsers.
  */
 async function setupOxfmtPlugin(options: Options): Promise<void> {
-  if ("_oxfmtPluginOptionsJson" in options === false) return;
-
-  const oxcPlugin = await loadOxfmtPlugin();
+  const oxcPlugin = oxfmtPluginCache ?? (await loadOxfmtPlugin());
 
   options.plugins ??= [];
   options.plugins.push(oxcPlugin);
