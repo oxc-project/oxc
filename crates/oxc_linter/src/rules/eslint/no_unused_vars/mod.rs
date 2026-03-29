@@ -381,7 +381,8 @@ impl NoUnusedVars {
                 return;
             }
             NoUnusedVarsFixMode::Suggestion => FixKind::Suggestion,
-            NoUnusedVarsFixMode::Fix => FixKind::Fix,
+            NoUnusedVarsFixMode::Fix => FixKind::DangerousFix,
+            NoUnusedVarsFixMode::SafeFix => FixKind::SafeFix,
         };
 
         ctx.diagnostic_with_fix_of_kind(diagnostic, kind, fix);
