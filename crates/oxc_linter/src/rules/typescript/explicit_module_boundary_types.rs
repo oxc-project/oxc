@@ -9,9 +9,9 @@ use oxc_ast_visit::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeFlags;
-use oxc_span::{CompactStr, GetSpan, Ident, Span};
+use oxc_span::{CompactStr, GetSpan, Ident, IdentHashSet, Span};
 use oxc_syntax::node::NodeId;
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHashSet};
 use schemars::JsonSchema;
 use serde::Deserialize;
 use serde_json::Value;
@@ -322,9 +322,20 @@ struct ExplicitTypesChecker<'a, 'c> {
     /// [`Address`]es of those functions.
     fn_returns: FxHashMap<Address, SmallVec<[&'a ReturnStatement<'a>; 2]>>,
     scope_flags: ScopeFlags,
+    /// Spans of methods that have overload signatures in the current class.
+    /// Pre-computed in `visit_class` to avoid storing a reference to `ClassBody`.
+    overloaded_methods: FxHashSet<Span>,
+    /// Names of top-level functions that have overload signatures.
+    /// Pre-computed once at checker creation from the program body.
+    overloaded_functions: IdentHashSet<'a>,
 }
 impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
     fn new(rule: &'c ExplicitModuleBoundaryTypes, ctx: &'c LintContext<'a>) -> Self {
+        let overloaded_functions = if rule.allow_overload_functions {
+            Self::collect_overloaded_functions(&ctx.nodes().program().body)
+        } else {
+            IdentHashSet::default()
+        };
         Self {
             rule,
             ctx,
@@ -332,6 +343,8 @@ impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
             fns: smallvec::smallvec![],
             fn_returns: FxHashMap::default(),
             scope_flags: ScopeFlags::empty(),
+            overloaded_methods: FxHashSet::default(),
+            overloaded_functions,
         }
     }
     // fn target_span(&self) -> Option<Span> {
@@ -382,10 +395,7 @@ impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
             target_span.map_or(Span::sized(func.span.start, "function".len() as u32), |t| t.span);
         let is_allowed = || self.rule.is_some_allowed_name(func.name().or(target_name));
 
-        // When allow_overload_functions is enabled, skip return type checking for all functions
-        // This is a simplified implementation - a proper implementation would only skip
-        // functions that are actually part of an overload set
-        if self.rule.allow_overload_functions {
+        if self.rule.allow_overload_functions && self.function_has_overload_signatures(func) {
             return;
         }
 
@@ -409,6 +419,95 @@ impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
         let is_hof = self.is_higher_order_function(func.unstable_address());
         if !is_hof && !is_allowed() {
             self.ctx.diagnostic(func_missing_return_type(span));
+        }
+    }
+
+    /// Checks whether `func` is part of an overload set by checking the
+    /// pre-computed set of overloaded function names.
+    fn function_has_overload_signatures(&self, func: &Function<'a>) -> bool {
+        match func.name() {
+            Some(name) => self.overloaded_functions.contains(&name),
+            // unnamed export default functions: check if any unnamed overload exists
+            None => self.overloaded_functions.iter().any(|n| n.is_empty()),
+        }
+    }
+
+    /// Scans top-level statements once to collect names of functions that have
+    /// overload signatures (declarations without a body).
+    fn collect_overloaded_functions(
+        statements: &oxc_allocator::Vec<'a, Statement<'a>>,
+    ) -> IdentHashSet<'a> {
+        let mut overloads = IdentHashSet::default();
+        for statement in statements {
+            let candidate = match statement {
+                Statement::FunctionDeclaration(func) => func.as_ref(),
+                match_module_declaration!(Statement) => match statement.to_module_declaration() {
+                    ModuleDeclaration::ExportNamedDeclaration(named) => match &named.declaration {
+                        Some(Declaration::FunctionDeclaration(func)) => func.as_ref(),
+                        _ => continue,
+                    },
+                    ModuleDeclaration::ExportDefaultDeclaration(default) => {
+                        match &default.declaration {
+                            ExportDefaultDeclarationKind::FunctionDeclaration(func) => {
+                                func.as_ref()
+                            }
+                            _ => continue,
+                        }
+                    }
+                    _ => continue,
+                },
+                _ => continue,
+            };
+            // Only collect overload signatures (no body, or TSDeclareFunction)
+            if candidate.body.is_some()
+                && !matches!(candidate.r#type, FunctionType::TSDeclareFunction)
+            {
+                continue;
+            }
+            if let Some(name) = candidate.name() {
+                overloads.insert(name);
+            } else {
+                // unnamed export default overload
+                overloads.insert(Ident::empty());
+            }
+        }
+        overloads
+    }
+
+    /// Pre-computes which methods in `class_body` have overload signatures,
+    /// populating `self.overloaded_methods` with their spans.
+    fn collect_overloaded_methods(&mut self, class_body: &ClassBody<'a>) {
+        self.overloaded_methods.clear();
+        for element in &class_body.body {
+            let ClassElement::MethodDefinition(method) = element else {
+                continue;
+            };
+            let Some(method_name) = method.key.static_name() else {
+                continue;
+            };
+            // A method has overload signatures if there is a sibling with the
+            // same name and no body (overload signature).
+            let has_overload = class_body.body.iter().any(|sibling| {
+                let ClassElement::MethodDefinition(candidate) = sibling else {
+                    return false;
+                };
+                if candidate.span == method.span {
+                    return false;
+                }
+                if candidate.value.body.is_some()
+                    && !matches!(
+                        candidate.value.r#type,
+                        FunctionType::TSEmptyBodyFunctionExpression
+                    )
+                {
+                    return false;
+                }
+                candidate.r#static == method.r#static
+                    && candidate.key.static_name().is_some_and(|name| name == method_name)
+            });
+            if has_overload {
+                self.overloaded_methods.insert(method.span);
+            }
         }
     }
 
@@ -551,7 +650,9 @@ impl<'a> Visit<'a> for ExplicitTypesChecker<'a, '_> {
             return;
         }
         let Some(init) = &var.init else {
-            return; // TODO: what do we do here?
+            // Variable declarators without initializers (e.g., `let x;`) have
+            // no expression to check, so we skip them.
+            return;
         };
         let Some(binding) = var.id.get_binding_identifier() else {
             return;
@@ -594,7 +695,12 @@ impl<'a> Visit<'a> for ExplicitTypesChecker<'a, '_> {
 
     fn visit_class(&mut self, class: &Class<'a>) {
         let had_id = self.with_target_binding(class.id.as_ref());
+        let prev_overloaded = std::mem::take(&mut self.overloaded_methods);
+        if self.rule.allow_overload_functions {
+            self.collect_overloaded_methods(class.body.as_ref());
+        }
         walk::walk_class_body(self, class.body.as_ref());
+        self.overloaded_methods = prev_overloaded;
         self.reset_target(had_id);
     }
 
@@ -634,11 +740,24 @@ impl<'a> Visit<'a> for ExplicitTypesChecker<'a, '_> {
     fn visit_method_definition(&mut self, m: &MethodDefinition<'a>) {
         match m.kind {
             MethodDefinitionKind::Constructor | MethodDefinitionKind::Set => {
-                // skip return type
-                // TODO: adjust target_symbol
+                // skip return type, but set target_symbol so diagnostics
+                // point to the method name
+                let had_name = self.with_target_property(Some(&m.key));
                 self.visit_formal_parameters(m.value.as_ref().params.as_ref());
+                self.reset_target(had_name);
             }
-            _ => walk::walk_method_definition(self, m),
+            MethodDefinitionKind::Method | MethodDefinitionKind::Get => {
+                // For methods with allowOverloadFunctions, check if this
+                // method has overload signatures in the same class body.
+                if self.rule.allow_overload_functions && self.overloaded_methods.contains(&m.span) {
+                    // Only check parameters, skip return type.
+                    let had_name = self.with_target_property(Some(&m.key));
+                    self.visit_formal_parameters(m.value.as_ref().params.as_ref());
+                    self.reset_target(had_name);
+                    return;
+                }
+                walk::walk_method_definition(self, m);
+            }
         }
     }
 
@@ -2067,6 +2186,14 @@ mod test {
             };
             ",
                 Some(json!([{ "allowedNames": [],        },      ])),
+            ),
+            (
+                "
+            export function add(a: number, b: number) {
+              return a + b;
+            }
+            ",
+                Some(json!([{ "allowOverloadFunctions": true, }])),
             ),
             (
                 "
