@@ -51,7 +51,7 @@ jobs:
           cargo release-oxc update --release crates
           echo "CRATES_VERSION=$(cat ./target/CRATES_VERSION)" >> $GITHUB_OUTPUT
 
-      - uses: oxc-project/setup-node@4c26e7cb3605b6bdef5450dacd02c434b10fd8ba # v1.2.0
+      - uses: voidzero-dev/setup-vp@e34774bccb4e7d7f2e23514ca980177a71425e43 # v1.5.0
 
       # Run NAPI-RS build, because NAPI-RS uses version from `package.json` in the bindings file,
       # which is committed to the repo. The version has just been bumped in previous step.
