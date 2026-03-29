@@ -72,7 +72,7 @@ Handle Warnings
                               your project
 
 Output
-    -f, --format=ARG          Use a specific output format. Possible values: `checkstyle`,
+    -f, --format=ARG          Use a specific output format. Possible values: `agent`, `checkstyle`,
                               `default`, `github`, `gitlab`, `json`, `junit`, `stylish`, `unix`
 
 Miscellaneous

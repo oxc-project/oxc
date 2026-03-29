@@ -247,9 +247,30 @@ pub struct WarningOptions {
 #[derive(Debug, Clone, Bpaf)]
 pub struct OutputOptions {
     /// Use a specific output format. Possible values:
-    /// `checkstyle`, `default`, `github`, `gitlab`, `json`, `junit`, `stylish`, `unix`
+    /// `agent`, `checkstyle`, `default`, `github`, `gitlab`, `json`, `junit`, `stylish`, `unix`
     #[bpaf(long, short, fallback_with(default_output_format), hide_usage)]
     pub format: OutputFormat,
+}
+
+/// Detect whether oxlint is running inside an AI agent environment.
+/// Checks env-var-presence agents from [unjs/std-env](https://github.com/unjs/std-env).
+/// Agents that require regex matching on env var values (pi, devin, kiro) are not covered.
+fn is_agent_env() -> bool {
+    const AGENT_ENV_VARS: &[&str] = &[
+        "CLAUDECODE",
+        "CLAUDE_CODE",
+        "CURSOR_AGENT",
+        "GEMINI_CLI",
+        "CODEX_SANDBOX",
+        "CODEX_THREAD_ID",
+        "AUGMENT_AGENT",
+        "GOOSE_PROVIDER",
+        "OPENCODE",
+        // REPL_ID is set for all Replit sessions (not just AI agents);
+        // std-env treats Replit as an agent environment.
+        "REPL_ID",
+    ];
+    AGENT_ENV_VARS.iter().any(|var| std::env::var(var).is_ok())
 }
 
 #[expect(clippy::unnecessary_wraps)]
@@ -260,6 +281,8 @@ fn default_output_format() -> Result<OutputFormat, std::convert::Infallible> {
         Ok(OutputFormat::Github)
     } else if std::env::var("GITLAB_CI").ok().is_some_and(|value| value == "true") {
         Ok(OutputFormat::Gitlab)
+    } else if is_agent_env() {
+        Ok(OutputFormat::Agent)
     } else {
         Ok(OutputFormat::Default)
     }
