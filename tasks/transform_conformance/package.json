@@ -22,7 +22,7 @@
     "@babel/plugin-transform-typescript": "^7.26.3",
     "@oxc-project/runtime": "link:../../npm/runtime",
     "reflect-metadata": "^0.2.2",
-    "vitest": "catalog:",
-    "vite-plus": "catalog:"
+    "vite-plus": "catalog:",
+    "vitest": "catalog:"
   }
 }

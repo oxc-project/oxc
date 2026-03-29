@@ -50,8 +50,8 @@
     "@napi-rs/cli": "catalog:",
     "@types/node": "catalog:",
     "publint": "catalog:",
-    "vitest": "catalog:",
-    "vite-plus": "catalog:"
+    "vite-plus": "catalog:",
+    "vitest": "catalog:"
   },
   "napi": {
     "binaryName": "minify",

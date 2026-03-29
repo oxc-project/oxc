@@ -42,9 +42,9 @@
     "solid-js": "^1.9.7",
     "supertest": "^7",
     "terser": "^5.39.2",
+    "vite-plus": "catalog:",
     "vitest": "catalog:",
     "vue": "^3.5.14",
-    "yup": "^1.6.1",
-    "vite-plus": "catalog:"
+    "yup": "^1.6.1"
   }
 }
