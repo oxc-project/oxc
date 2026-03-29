@@ -10,14 +10,15 @@ mod jsx_impl;
 mod jsx_self;
 mod jsx_source;
 mod options;
+mod pure;
 mod refresh;
 pub use comments::update_options_with_comments;
 use display_name::ReactDisplayName;
 use jsx_impl::JsxImpl;
 use jsx_self::JsxSelf;
 pub use options::{JsxOptions, JsxRuntime, ReactRefreshOptions};
+use pure::ReactPureAnnotations;
 use refresh::ReactRefresh;
-
 /// [Preset React](https://babel.dev/docs/babel-preset-react)
 ///
 /// This preset includes the following plugins:
@@ -28,6 +29,7 @@ use refresh::ReactRefresh;
 /// * [plugin-transform-react-display-name](https://babeljs.io/docs/babel-plugin-transform-react-display-name)
 pub struct Jsx<'a> {
     implementation: JsxImpl<'a>,
+    pure_annotations: ReactPureAnnotations,
     display_name: ReactDisplayName,
     refresh: ReactRefresh<'a>,
     enable_jsx_plugin: bool,
@@ -35,6 +37,7 @@ pub struct Jsx<'a> {
     self_plugin: bool,
     source_plugin: bool,
     refresh_plugin: bool,
+    pure: bool,
 }
 
 // Constructors
@@ -49,17 +52,24 @@ impl<'a> Jsx<'a> {
             options.conform();
         }
         let JsxOptions {
-            jsx_plugin, display_name_plugin, jsx_self_plugin, jsx_source_plugin, ..
+            jsx_plugin,
+            display_name_plugin,
+            jsx_self_plugin,
+            jsx_source_plugin,
+            pure,
+            ..
         } = options;
         let refresh = options.refresh.clone();
         Self {
             implementation: JsxImpl::new(options, object_rest_spread_options, ast, source_type),
+            pure_annotations: ReactPureAnnotations::new(),
             display_name: ReactDisplayName::new(),
             enable_jsx_plugin: jsx_plugin,
             display_name_plugin,
             self_plugin: jsx_self_plugin,
             source_plugin: jsx_source_plugin,
             refresh_plugin: refresh.is_some(),
+            pure,
             refresh: ReactRefresh::new(&refresh.unwrap_or_default(), ast),
         }
     }
@@ -72,6 +82,9 @@ impl<'a> Traverse<'a, TransformState<'a>> for Jsx<'a> {
         }
         if self.refresh_plugin {
             self.refresh.enter_program(program, ctx);
+        }
+        if self.pure {
+            self.pure_annotations.enter_program(program, ctx);
         }
     }
 
@@ -97,6 +110,10 @@ impl<'a> Traverse<'a, TransformState<'a>> for Jsx<'a> {
 
         if self.refresh_plugin {
             self.refresh.enter_call_expression(call_expr, ctx);
+        }
+
+        if self.pure {
+            self.pure_annotations.enter_call_expression(call_expr, ctx);
         }
     }
 
