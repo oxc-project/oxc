@@ -67,7 +67,13 @@ impl DiagnosticReporter for AgentReporter {
             let _ = writeln!(
                 self.output,
                 "{}:{}:{} {} {}: {} (help: {})",
-                info.filename, info.start.line, info.start.column, severity, rule, info.message, help
+                info.filename,
+                info.start.line,
+                info.start.column,
+                severity,
+                rule,
+                info.message,
+                help
             );
         } else {
             let _ = writeln!(
