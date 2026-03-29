@@ -222,7 +222,7 @@ saphyr = "0.0.6" # YAML parser
 schemars = { package = "oxc-schemars", version = "0.8.27" } # JSON schema generation
 self_cell = "1.2.2" # Self-referential structs
 seq-macro = "0.3.6" # Sequence macros
-sha1 = "0.10.6" # SHA-1 hashing
+sha1 = "0.11.0" # SHA-1 hashing
 simdutf8 = { version = "0.1.5", features = ["aarch64_neon"] } # SIMD UTF-8 validation
 similar = "2.7.0" # Text diffing
 similar-asserts = "1.7.0" # Test diff assertions
