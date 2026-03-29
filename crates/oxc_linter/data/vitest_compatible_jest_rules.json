@@ -42,5 +42,6 @@
   "require-to-throw-message",
   "require-top-level-describe",
   "valid-describe-callback",
-  "valid-expect"
+  "valid-expect",
+  "valid-title"
 ]
