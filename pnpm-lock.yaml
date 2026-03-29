@@ -48,9 +48,15 @@ importers:
       '@napi-rs/cli':
         specifier: 'catalog:'
         version: 3.5.1(@emnapi/runtime@1.8.1)(@types/node@25.0.2)
-      vite-plus:
-        specifier: 'catalog:'
-        version: 0.1.14(@arethetypeswrong/core@0.18.2)(@types/node@25.0.2)(esbuild@0.27.4)(happy-dom@20.0.11)(jiti@2.6.1)(publint@0.3.18)(terser@5.44.1)(tsx@4.21.0)(typescript@5.9.3)(vite@7.3.0(@types/node@25.0.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.21.0))
+      oxfmt:
+        specifier: ^0.42.0
+        version: 0.42.0
+      oxlint:
+        specifier: ^1.51.0
+        version: 1.57.0(oxlint-tsgolint@0.18.1)
+      oxlint-tsgolint:
+        specifier: 0.18.1
+        version: 0.18.1
 
   apps/oxfmt:
     dependencies:
@@ -8203,6 +8209,29 @@ snapshots:
       '@oxlint/binding-win32-ia32-msvc': 1.57.0
       '@oxlint/binding-win32-x64-msvc': 1.57.0
       oxlint-tsgolint: 0.17.3
+
+  oxlint@1.57.0(oxlint-tsgolint@0.18.1):
+    optionalDependencies:
+      '@oxlint/binding-android-arm-eabi': 1.57.0
+      '@oxlint/binding-android-arm64': 1.57.0
+      '@oxlint/binding-darwin-arm64': 1.57.0
+      '@oxlint/binding-darwin-x64': 1.57.0
+      '@oxlint/binding-freebsd-x64': 1.57.0
+      '@oxlint/binding-linux-arm-gnueabihf': 1.57.0
+      '@oxlint/binding-linux-arm-musleabihf': 1.57.0
+      '@oxlint/binding-linux-arm64-gnu': 1.57.0
+      '@oxlint/binding-linux-arm64-musl': 1.57.0
+      '@oxlint/binding-linux-ppc64-gnu': 1.57.0
+      '@oxlint/binding-linux-riscv64-gnu': 1.57.0
+      '@oxlint/binding-linux-riscv64-musl': 1.57.0
+      '@oxlint/binding-linux-s390x-gnu': 1.57.0
+      '@oxlint/binding-linux-x64-gnu': 1.57.0
+      '@oxlint/binding-linux-x64-musl': 1.57.0
+      '@oxlint/binding-openharmony-arm64': 1.57.0
+      '@oxlint/binding-win32-arm64-msvc': 1.57.0
+      '@oxlint/binding-win32-ia32-msvc': 1.57.0
+      '@oxlint/binding-win32-x64-msvc': 1.57.0
+      oxlint-tsgolint: 0.18.1
 
   p-limit@3.1.0:
     dependencies:

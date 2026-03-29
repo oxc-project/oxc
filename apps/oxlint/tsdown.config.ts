@@ -9,12 +9,12 @@ import replaceAssertsPlugin from "./tsdown_plugins/replace_asserts.ts";
 const { env } = process;
 const isEnabled = (env: string | undefined) => env === "true" || env === "1";
 
-// When run with `CONFORMANCE=true pnpm run build-js`, generate a conformance build with alterations to behavior.
+// When run with `CONFORMANCE=true vp run build-js`, generate a conformance build with alterations to behavior.
 // Also enables debug assertions.
 // This is the build used in conformance tests.
 const CONFORMANCE = isEnabled(env.CONFORMANCE);
 
-// When run with `DEBUG=true pnpm run build-js`, generate a debug build with extra assertions.
+// When run with `DEBUG=true vp run build-js`, generate a debug build with extra assertions.
 // This is the build used in tests.
 const DEBUG = CONFORMANCE || isEnabled(env.DEBUG);
 
