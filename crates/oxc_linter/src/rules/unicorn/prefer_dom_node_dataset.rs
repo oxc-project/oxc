@@ -259,7 +259,7 @@ fn to_string_literal_text(fixer: RuleFixer, text: &str) -> String {
     let mut codegen = fixer.codegen().with_options(CodegenOptions::default());
     let alloc = Allocator::default();
     let ast = AstBuilder::new(&alloc);
-    codegen.print_expression(&ast.expression_string_literal(SPAN, ast.atom(text), None));
+    codegen.print_expression(&ast.expression_string_literal(SPAN, ast.str(text), None));
     codegen.into_source_text()
 }
 

@@ -110,7 +110,7 @@ mod test {
             let s1 = reader.offset();
             assert!(reader.eat('^'));
             let e1 = reader.offset();
-            assert_eq!(&reader.atom(s1, e1), "^");
+            assert_eq!(&reader.str(s1, e1), "^");
 
             while reader.peek() != Some('@' as u32) {
                 reader.advance();
@@ -119,7 +119,7 @@ mod test {
             assert!(reader.eat('@'));
             assert!(reader.eat('@'));
             let e2 = reader.offset();
-            assert_eq!(&reader.atom(s2, e2), "@@");
+            assert_eq!(&reader.str(s2, e2), "@@");
 
             while reader.peek() != Some('$' as u32) {
                 reader.advance();
@@ -128,7 +128,7 @@ mod test {
             assert!(reader.eat('$'));
             let e3 = reader.offset();
 
-            assert_eq!(&reader.atom(s3, e3), "$");
+            assert_eq!(&reader.str(s3, e3), "$");
         }
     }
 

@@ -2,7 +2,7 @@ use itertools::Itertools;
 use oxc_ast::{AstKind, ast::JSXAttributeItem};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{Atom, GetSpan, Span};
+use oxc_span::{GetSpan, Span, Str};
 use rustc_hash::FxHashMap;
 
 use crate::{
@@ -70,16 +70,16 @@ impl Rule for JsxPropsNoSpreadMulti {
             let spread_attrs =
                 jsx_opening_el.attributes.iter().filter_map(JSXAttributeItem::as_spread);
 
-            let mut identifier_names: FxHashMap<Atom, Span> = FxHashMap::default();
+            let mut identifier_names: FxHashMap<Str, Span> = FxHashMap::default();
             let mut member_expressions = Vec::new();
-            let mut duplicate_spreads: FxHashMap<Atom, Vec<Span>> = FxHashMap::default();
+            let mut duplicate_spreads: FxHashMap<Str, Vec<Span>> = FxHashMap::default();
 
             for spread_attr in spread_attrs {
                 let argument_without_parenthesized = spread_attr.argument.without_parentheses();
 
                 if let Some(identifier_name) = argument_without_parenthesized
                     .get_identifier_reference()
-                    .map(|arg| Atom::from(arg.name))
+                    .map(|arg| Str::from(arg.name))
                 {
                     identifier_names
                         .entry(identifier_name)

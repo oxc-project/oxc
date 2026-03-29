@@ -1,6 +1,6 @@
 //! Utility transform to add `import` / `require` statements to top of program.
 //!
-//! `ModuleImportsStore` contains an `IndexMap<Atom<'a>, Vec<ImportKind<'a>>>`.
+//! `ModuleImportsStore` contains an `IndexMap<Str<'a>, Vec<ImportKind<'a>>>`.
 //! It is stored on `TransformState`.
 //!
 //! Other transforms can add `import`s / `require`s to the store by calling methods of `ModuleImportsStore`:
@@ -10,17 +10,17 @@
 //! ```rs
 //! // import { jsx as _jsx } from 'react';
 //! ctx.state.module_imports.add_named_import(
-//!     Atom::from("react"),
-//!     Atom::from("jsx"),
-//!     Atom::from("_jsx"),
+//!     Str::from("react"),
+//!     Str::from("jsx"),
+//!     Str::from("_jsx"),
 //!     symbol_id
 //! );
 //!
 //! // ESM: import React from 'react';
 //! // CJS: var _React = require('react');
 //! ctx.state.module_imports.add_default_import(
-//!     Atom::from("react"),
-//!     Atom::from("React"),
+//!     Str::from("react"),
+//!     Str::from("React"),
 //!     symbol_id
 //! );
 //! ```
@@ -34,14 +34,14 @@ use indexmap::{IndexMap, map::Entry as IndexMapEntry};
 
 use oxc_ast::{NONE, ast::*};
 use oxc_semantic::ReferenceFlags;
-use oxc_span::{Atom, SPAN};
+use oxc_span::{SPAN, Str};
 use oxc_syntax::symbol::SymbolId;
 use oxc_traverse::BoundIdentifier;
 
 use crate::context::TraverseCtx;
 
 pub struct NamedImport<'a> {
-    imported: Atom<'a>,
+    imported: Str<'a>,
     local: BoundIdentifier<'a>,
 }
 
@@ -56,7 +56,7 @@ pub enum Import<'a> {
 /// to produce output that's the same as Babel's.
 /// Substitute `FxHashMap` once we don't need to match Babel's output exactly.
 pub struct ModuleImportsStore<'a> {
-    pub(crate) imports: IndexMap<Atom<'a>, Vec<Import<'a>>>,
+    pub(crate) imports: IndexMap<Str<'a>, Vec<Import<'a>>>,
 }
 
 // Public methods
@@ -74,12 +74,7 @@ impl<'a> ModuleImportsStore<'a> {
     /// * `var named_import = require('source');`
     ///
     /// If `front` is `true`, `import`/`require` is added to front of the `import`s/`require`s.
-    pub fn add_default_import(
-        &mut self,
-        source: Atom<'a>,
-        local: BoundIdentifier<'a>,
-        front: bool,
-    ) {
+    pub fn add_default_import(&mut self, source: Str<'a>, local: BoundIdentifier<'a>, front: bool) {
         self.add_import(source, Import::Default(local), front);
     }
 
@@ -92,8 +87,8 @@ impl<'a> ModuleImportsStore<'a> {
     /// Adding named `require`s is not supported, and will cause a panic later on.
     pub fn add_named_import(
         &mut self,
-        source: Atom<'a>,
-        imported: Atom<'a>,
+        source: Str<'a>,
+        imported: Str<'a>,
         local: BoundIdentifier<'a>,
         front: bool,
     ) {
@@ -120,7 +115,7 @@ impl<'a> ModuleImportsStore<'a> {
     /// If `front` is `true`, `import`/`require` is added to front of the `import`s/`require`s.
     /// TODO(improve-on-babel): `front` option is only required to pass one of Babel's tests. Output
     /// without it is still valid. Remove this once our output doesn't need to match Babel exactly.
-    fn add_import(&mut self, source: Atom<'a>, import: Import<'a>, front: bool) {
+    fn add_import(&mut self, source: Str<'a>, import: Import<'a>, front: bool) {
         match self.imports.entry(source) {
             IndexMapEntry::Occupied(mut entry) => {
                 entry.get_mut().push(import);
@@ -140,7 +135,7 @@ impl<'a> ModuleImportsStore<'a> {
     }
 
     pub(crate) fn get_import(
-        source: Atom<'a>,
+        source: Str<'a>,
         names: Vec<Import<'a>>,
         ctx: &TraverseCtx<'a>,
     ) -> Statement<'a> {
@@ -171,7 +166,7 @@ impl<'a> ModuleImportsStore<'a> {
     }
 
     pub(crate) fn get_require(
-        source: Atom<'a>,
+        source: Str<'a>,
         names: std::vec::Vec<Import<'a>>,
         require_symbol_id: Option<SymbolId>,
         ctx: &mut TraverseCtx<'a>,

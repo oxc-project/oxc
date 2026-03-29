@@ -370,7 +370,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         let mut keys = FxHashMap::default();
         for e in &with_entries {
-            let key = e.key.as_atom().as_str();
+            let key = e.key.as_arena_str().as_str();
             let span = e.key.span();
             if let Some(old_span) = keys.insert(key, span) {
                 self.error(diagnostics::redeclaration(key, old_span, span));

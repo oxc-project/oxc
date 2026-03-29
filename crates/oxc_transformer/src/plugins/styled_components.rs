@@ -294,7 +294,7 @@ pub struct StyledComponents<'a> {
     /// Hash of the current file for component ID generation
     component_id_prefix: Option<String>,
     /// Filename or directory name is used for `displayName`
-    block_name: Option<Atom<'a>>,
+    block_name: Option<Str<'a>>,
 }
 
 impl StyledComponents<'_> {
@@ -537,7 +537,7 @@ impl<'a> StyledComponents<'a> {
 
     // Infers the component name from the parent variable declarator, assignment expression,
     // or object property.
-    fn get_component_name(ctx: &TraverseCtx<'a>) -> Option<Atom<'a>> {
+    fn get_component_name(ctx: &TraverseCtx<'a>) -> Option<Str<'a>> {
         let mut assignment_name = None;
 
         for ancestor in ctx.ancestors() {
@@ -597,7 +597,7 @@ impl<'a> StyledComponents<'a> {
     }
 
     /// `<namespace__>sc-<file_hash>-<component_count>`
-    fn get_component_id(&mut self, ctx: &TraverseCtx<'a>) -> Atom<'a> {
+    fn get_component_id(&mut self, ctx: &TraverseCtx<'a>) -> Str<'a> {
         // Cache `<namespace__>sc-<file_hash>-` part as it's the same each time
         let prefix = if let Some(prefix) = self.component_id_prefix.as_deref() {
             prefix
@@ -624,7 +624,7 @@ impl<'a> StyledComponents<'a> {
         let mut buffer = itoa::Buffer::new();
         let count = buffer.format(self.component_count);
         self.component_count += 1;
-        ctx.ast.atom_from_strs_array([prefix, count])
+        ctx.ast.str_from_strs_array([prefix, count])
     }
 
     /// Generates a unique file hash based on the source path or source code.
@@ -657,7 +657,7 @@ impl<'a> StyledComponents<'a> {
     }
 
     /// Returns the block name based on the file stem or parent directory name.
-    fn get_block_name(&mut self, ctx: &TraverseCtx<'a>) -> Option<Atom<'a>> {
+    fn get_block_name(&mut self, ctx: &TraverseCtx<'a>) -> Option<Str<'a>> {
         if !self.options.file_name {
             return None;
         }
@@ -679,23 +679,23 @@ impl<'a> StyledComponents<'a> {
                     file_stem
                 };
 
-            ctx.ast.atom(block_name)
+            ctx.ast.str(block_name)
         }))
     }
 
     /// Returns the display name which infers the component name or gets from the file name.
-    fn get_display_name(&mut self, ctx: &TraverseCtx<'a>) -> Atom<'a> {
+    fn get_display_name(&mut self, ctx: &TraverseCtx<'a>) -> Str<'a> {
         let component_name = Self::get_component_name(ctx);
 
         let Some(block_name) = self.get_block_name(ctx) else {
-            return component_name.unwrap_or(Atom::from(""));
+            return component_name.unwrap_or(Str::from(""));
         };
 
         if let Some(component_name) = component_name {
             if block_name == component_name {
                 component_name
             } else {
-                ctx.ast.atom_from_strs_array([&block_name, "__", &component_name])
+                ctx.ast.str_from_strs_array([&block_name, "__", &component_name])
             }
         } else {
             block_name
@@ -793,7 +793,7 @@ impl<'a> StyledComponents<'a> {
     //     ^^^^^^^^^^
     fn create_object_property(
         key: &'static str,
-        value: Atom<'a>,
+        value: Str<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> ObjectPropertyKind<'a> {
         let key = ctx.ast.property_key_static_identifier(SPAN, key);
@@ -949,7 +949,7 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
                 // Set `raw` for previous quasi to `output`
                 // SAFETY: Output is all picked from the original `raw` values and is guaranteed to be valid UTF-8.
                 let output_str = unsafe { std::str::from_utf8_unchecked(&output) };
-                quasis[quasi_index - 1].value.raw = ast.atom(output_str);
+                quasis[quasi_index - 1].value.raw = ast.str(output_str);
                 output.clear();
                 is_first_output = false;
             }
@@ -1093,7 +1093,7 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
     // Update last quasi.
     // SAFETY: Output is all picked from the original `raw` values and is guaranteed to be valid UTF-8.
     let output_str = unsafe { std::str::from_utf8_unchecked(&output) };
-    quasis.last_mut().unwrap().value.raw = ast.atom(output_str);
+    quasis.last_mut().unwrap().value.raw = ast.str(output_str);
 
     // Remove quasis that are marked for removal, and the expressions following them.
     // TODO: Remove scopes, symbols, and references for removed `Expression`s.
@@ -1152,7 +1152,7 @@ mod tests {
             SPAN,
             ast.vec1(ast.template_element(
                 SPAN,
-                TemplateElementValue { raw: ast.atom(input), cooked: Some(ast.atom(input)) },
+                TemplateElementValue { raw: ast.str(input), cooked: Some(ast.str(input)) },
                 true,
                 false,
             )),

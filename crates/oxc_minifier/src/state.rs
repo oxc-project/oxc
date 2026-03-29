@@ -2,7 +2,7 @@ use oxc_ecmascript::constant_evaluation::ConstantValue;
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_data_structures::stack::NonEmptyStack;
-use oxc_span::{Atom, SourceType};
+use oxc_span::{SourceType, Str};
 use oxc_syntax::symbol::SymbolId;
 
 use crate::{CompressOptions, symbol_value::SymbolValues};
@@ -42,7 +42,7 @@ impl MinifierState<'_> {
 
 /// Stack to track class symbol information
 pub struct ClassSymbolsStack<'a> {
-    stack: NonEmptyStack<FxHashSet<Atom<'a>>>,
+    stack: NonEmptyStack<FxHashSet<Str<'a>>>,
 }
 
 impl<'a> ClassSymbolsStack<'a> {
@@ -61,7 +61,7 @@ impl<'a> ClassSymbolsStack<'a> {
     }
 
     /// Exit the current class scope
-    pub fn pop_class_scope(&mut self, declared_private_symbols: impl Iterator<Item = Atom<'a>>) {
+    pub fn pop_class_scope(&mut self, declared_private_symbols: impl Iterator<Item = Str<'a>>) {
         let mut used_private_symbols = self.stack.pop();
         declared_private_symbols.for_each(|name| {
             used_private_symbols.remove(&name);
@@ -71,12 +71,12 @@ impl<'a> ClassSymbolsStack<'a> {
     }
 
     /// Add a private member to the current class scope
-    pub fn push_private_member_to_current_class(&mut self, name: Atom<'a>) {
+    pub fn push_private_member_to_current_class(&mut self, name: Str<'a>) {
         self.stack.last_mut().insert(name);
     }
 
     /// Check if a private member is used in the current class scope
-    pub fn is_private_member_used_in_current_class(&self, name: &Atom<'a>) -> bool {
+    pub fn is_private_member_used_in_current_class(&self, name: &Str<'a>) -> bool {
         self.stack.last().contains(name)
     }
 }

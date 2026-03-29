@@ -1259,7 +1259,7 @@ impl<'a> PeepholeOptimizations {
     pub fn substitute_template_literal(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::TemplateLiteral(t) = expr else { return };
         let Some(val) = t.to_js_string(ctx) else { return };
-        *expr = ctx.ast.expression_string_literal(t.span(), ctx.ast.atom_from_cow(&val), None);
+        *expr = ctx.ast.expression_string_literal(t.span(), ctx.ast.str_from_cow(&val), None);
         ctx.state.changed = true;
     }
 
@@ -1543,7 +1543,7 @@ impl<'a> PeepholeOptimizations {
                 expr.span(),
                 ctx.ast.expression_string_literal(
                     expr.span(),
-                    ctx.ast.atom(&concatenated_string),
+                    ctx.ast.str(&concatenated_string),
                     None,
                 ),
                 ctx.ast.identifier_name(expr.span(), "split"),
@@ -1552,7 +1552,7 @@ impl<'a> PeepholeOptimizations {
             NONE,
             ctx.ast.vec1(Argument::from(ctx.ast.expression_string_literal(
                 expr.span(),
-                ctx.ast.atom(delimiter),
+                ctx.ast.str(delimiter),
                 None,
             ))),
             false,

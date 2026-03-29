@@ -3,7 +3,7 @@ use oxc_allocator::{Box, TakeIn, Vec};
 use oxc_ast::ast::*;
 #[cfg(feature = "regular_expression")]
 use oxc_regular_expression::ast::Pattern;
-use oxc_span::{Atom, GetSpan, Ident, Span};
+use oxc_span::{GetSpan, Ident, Span, Str};
 use oxc_syntax::{
     number::{BigintBase, NumberBase},
     precedence::Precedence,
@@ -152,7 +152,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// # Panics
     pub(crate) fn parse_private_identifier(&mut self) -> PrivateIdentifier<'a> {
         let span = self.cur_token().span();
-        let name = Atom::from(self.cur_string());
+        let name = Str::from(self.cur_string());
         self.bump_any();
         self.ast.private_identifier(span, name)
     }
@@ -389,7 +389,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             _ => return self.unexpected(),
         };
         self.bump_any();
-        self.ast.numeric_literal(span, value, Some(Atom::from(src)), base)
+        self.ast.numeric_literal(span, value, Some(Str::from(src)), base)
     }
 
     pub(crate) fn parse_literal_bigint(&mut self) -> BigIntLiteral<'a> {
@@ -409,7 +409,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let value = parse_big_int(src, number_kind, has_separator, self.ast.allocator);
 
         self.bump_any();
-        self.ast.big_int_literal(span, value, Some(Atom::from(raw)), base)
+        self.ast.big_int_literal(span, value, Some(Str::from(raw)), base)
     }
 
     pub(crate) fn parse_literal_regexp(&mut self) -> RegExpLiteral<'a> {
@@ -438,13 +438,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             None
         };
 
-        let pattern = RegExpPattern { text: Atom::from(pattern_text), pattern };
+        let pattern = RegExpPattern { text: Str::from(pattern_text), pattern };
 
         if flags.contains(RegExpFlags::U | RegExpFlags::V) {
             self.error(diagnostics::reg_exp_flag_u_and_v(span));
         }
 
-        self.ast.reg_exp_literal(span, RegExp { pattern, flags }, Some(Atom::from(raw)))
+        self.ast.reg_exp_literal(span, RegExp { pattern, flags }, Some(Str::from(raw)))
     }
 
     #[cfg(feature = "regular_expression")]
@@ -477,7 +477,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             return self.unexpected();
         }
         let span = self.cur_token().span();
-        let raw = Atom::from(self.cur_src());
+        let raw = Str::from(self.cur_src());
         let value = self.cur_string();
         let lone_surrogates = self.cur_token().lone_surrogates();
         self.bump_any();
@@ -608,7 +608,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         // Get `raw`
         let raw_span = self.cur_token().span();
-        let mut raw = Atom::from(
+        let mut raw = Str::from(
             &self.source_text[raw_span.start as usize + 1..(raw_span.end - end_offset) as usize],
         );
 
@@ -618,9 +618,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         // so we can skip searching for `\r` in common case where contains no escapes.
         let (cooked, lone_surrogates) = if self.cur_token().escaped() {
             // `cooked = None` when template literal has invalid escape sequence
-            let cooked = self.cur_template_string().map(Atom::from);
+            let cooked = self.cur_template_string().map(Str::from);
             if cooked.is_some() && raw.contains('\r') {
-                raw = self.ast.atom(&raw.cow_replace("\r\n", "\n").cow_replace('\r', "\n"));
+                raw = self.ast.str(&raw.cow_replace("\r\n", "\n").cow_replace('\r', "\n"));
             }
             (cooked, self.cur_token().lone_surrogates())
         } else {

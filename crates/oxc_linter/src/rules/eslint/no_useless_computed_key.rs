@@ -1,7 +1,7 @@
 use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{Atom, GetSpan, Span};
+use oxc_span::{GetSpan, Span, Str};
 use schemars::JsonSchema;
 use serde::Deserialize;
 use serde_json::Value;
@@ -13,10 +13,10 @@ use crate::{
     utils::pad_fix_with_token_boundary,
 };
 
-fn no_useless_computed_key_diagnostic(span: Span, raw: Option<Atom>) -> OxcDiagnostic {
+fn no_useless_computed_key_diagnostic(span: Span, raw: Option<Str>) -> OxcDiagnostic {
     // false positive, if we remove the closure, `borrowed data escapes outside of function `raw` escapes the function body here`
     #[expect(clippy::redundant_closure)]
-    let key = raw.unwrap_or_else(|| Atom::empty());
+    let key = raw.unwrap_or_else(|| Str::empty());
     OxcDiagnostic::warn(format!("Unnecessarily computed property `{key}` found."))
         .with_help("Replace the computed property with a plain identifier or string literal")
         .with_label(span)
@@ -239,7 +239,7 @@ fn report_useless_computed_key(
     diagnostic_span: Span,
     member_span: Span,
     key_span: Span,
-    raw: Option<Atom>,
+    raw: Option<Str>,
 ) {
     ctx.diagnostic_with_fix(no_useless_computed_key_diagnostic(diagnostic_span, raw), |fixer| {
         let Some(raw) = raw else {

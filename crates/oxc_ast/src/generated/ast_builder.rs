@@ -14,7 +14,7 @@ use oxc_syntax::{
     symbol::SymbolId,
 };
 
-use oxc_span::{Atom, Ident};
+use oxc_span::{Ident, Str};
 
 use crate::{AstBuilder, ast::*};
 
@@ -126,7 +126,7 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         value: f64,
-        raw: Option<Atom<'a>>,
+        raw: Option<Str<'a>>,
         base: NumberBase,
     ) -> Expression<'a> {
         Expression::NumericLiteral(self.alloc_numeric_literal(span, value, raw, base))
@@ -146,11 +146,11 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         value: A1,
-        raw: Option<Atom<'a>>,
+        raw: Option<Str<'a>>,
         base: BigintBase,
     ) -> Expression<'a>
     where
-        A1: Into<Atom<'a>>,
+        A1: Into<Str<'a>>,
     {
         Expression::BigIntLiteral(self.alloc_big_int_literal(span, value, raw, base))
     }
@@ -168,7 +168,7 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         regex: RegExp<'a>,
-        raw: Option<Atom<'a>>,
+        raw: Option<Str<'a>>,
     ) -> Expression<'a> {
         Expression::RegExpLiteral(self.alloc_reg_exp_literal(span, regex, raw))
     }
@@ -186,10 +186,10 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         value: A1,
-        raw: Option<Atom<'a>>,
+        raw: Option<Str<'a>>,
     ) -> Expression<'a>
     where
-        A1: Into<Atom<'a>>,
+        A1: Into<Str<'a>>,
     {
         Expression::StringLiteral(self.alloc_string_literal(span, value, raw))
     }
@@ -208,11 +208,11 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         value: A1,
-        raw: Option<Atom<'a>>,
+        raw: Option<Str<'a>>,
         lone_surrogates: bool,
     ) -> Expression<'a>
     where
-        A1: Into<Atom<'a>>,
+        A1: Into<Str<'a>>,
     {
         Expression::StringLiteral(self.alloc_string_literal_with_lone_surrogates(
             span,
@@ -3874,7 +3874,7 @@ impl<'a> AstBuilder<'a> {
         directive: A1,
     ) -> Directive<'a>
     where
-        A1: Into<Atom<'a>>,
+        A1: Into<Str<'a>>,
     {
         Directive {
             node_id: Cell::new(NodeId::DUMMY),
@@ -3892,7 +3892,7 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn hashbang<A1>(self, span: Span, value: A1) -> Hashbang<'a>
     where
-        A1: Into<Atom<'a>>,
+        A1: Into<Str<'a>>,
     {
         Hashbang { node_id: Cell::new(NodeId::DUMMY), span, value: value.into() }
     }
@@ -8107,10 +8107,10 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         value: A1,
-        raw: Option<Atom<'a>>,
+        raw: Option<Str<'a>>,
     ) -> ImportAttributeKey<'a>
     where
-        A1: Into<Atom<'a>>,
+        A1: Into<Str<'a>>,
     {
         ImportAttributeKey::StringLiteral(self.string_literal(span, value, raw))
     }
@@ -8127,11 +8127,11 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         value: A1,
-        raw: Option<Atom<'a>>,
+        raw: Option<Str<'a>>,
         lone_surrogates: bool,
     ) -> ImportAttributeKey<'a>
     where
-        A1: Into<Atom<'a>>,
+        A1: Into<Str<'a>>,
     {
         ImportAttributeKey::StringLiteral(self.string_literal_with_lone_surrogates(
             span,
@@ -8700,10 +8700,10 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         value: A1,
-        raw: Option<Atom<'a>>,
+        raw: Option<Str<'a>>,
     ) -> ModuleExportName<'a>
     where
-        A1: Into<Atom<'a>>,
+        A1: Into<Str<'a>>,
     {
         ModuleExportName::StringLiteral(self.string_literal(span, value, raw))
     }
@@ -8720,11 +8720,11 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         value: A1,
-        raw: Option<Atom<'a>>,
+        raw: Option<Str<'a>>,
         lone_surrogates: bool,
     ) -> ModuleExportName<'a>
     where
-        A1: Into<Atom<'a>>,
+        A1: Into<Str<'a>>,
     {
         ModuleExportName::StringLiteral(self.string_literal_with_lone_surrogates(
             span,
@@ -8837,7 +8837,7 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         value: f64,
-        raw: Option<Atom<'a>>,
+        raw: Option<Str<'a>>,
         base: NumberBase,
     ) -> NumericLiteral<'a> {
         NumericLiteral { node_id: Cell::new(NodeId::DUMMY), span, value, raw, base }
@@ -8858,7 +8858,7 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         value: f64,
-        raw: Option<Atom<'a>>,
+        raw: Option<Str<'a>>,
         base: NumberBase,
     ) -> Box<'a, NumericLiteral<'a>> {
         Box::new_in(self.numeric_literal(span, value, raw, base), self.allocator)
@@ -8878,10 +8878,10 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         value: A1,
-        raw: Option<Atom<'a>>,
+        raw: Option<Str<'a>>,
     ) -> StringLiteral<'a>
     where
-        A1: Into<Atom<'a>>,
+        A1: Into<Str<'a>>,
     {
         StringLiteral {
             node_id: Cell::new(NodeId::DUMMY),
@@ -8906,10 +8906,10 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         value: A1,
-        raw: Option<Atom<'a>>,
+        raw: Option<Str<'a>>,
     ) -> Box<'a, StringLiteral<'a>>
     where
-        A1: Into<Atom<'a>>,
+        A1: Into<Str<'a>>,
     {
         Box::new_in(self.string_literal(span, value, raw), self.allocator)
     }
@@ -8929,11 +8929,11 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         value: A1,
-        raw: Option<Atom<'a>>,
+        raw: Option<Str<'a>>,
         lone_surrogates: bool,
     ) -> StringLiteral<'a>
     where
-        A1: Into<Atom<'a>>,
+        A1: Into<Str<'a>>,
     {
         StringLiteral {
             node_id: Cell::new(NodeId::DUMMY),
@@ -8959,11 +8959,11 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         value: A1,
-        raw: Option<Atom<'a>>,
+        raw: Option<Str<'a>>,
         lone_surrogates: bool,
     ) -> Box<'a, StringLiteral<'a>>
     where
-        A1: Into<Atom<'a>>,
+        A1: Into<Str<'a>>,
     {
         Box::new_in(
             self.string_literal_with_lone_surrogates(span, value, raw, lone_surrogates),
@@ -8986,11 +8986,11 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         value: A1,
-        raw: Option<Atom<'a>>,
+        raw: Option<Str<'a>>,
         base: BigintBase,
     ) -> BigIntLiteral<'a>
     where
-        A1: Into<Atom<'a>>,
+        A1: Into<Str<'a>>,
     {
         BigIntLiteral { node_id: Cell::new(NodeId::DUMMY), span, value: value.into(), raw, base }
     }
@@ -9010,11 +9010,11 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         value: A1,
-        raw: Option<Atom<'a>>,
+        raw: Option<Str<'a>>,
         base: BigintBase,
     ) -> Box<'a, BigIntLiteral<'a>>
     where
-        A1: Into<Atom<'a>>,
+        A1: Into<Str<'a>>,
     {
         Box::new_in(self.big_int_literal(span, value, raw, base), self.allocator)
     }
@@ -9033,7 +9033,7 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         regex: RegExp<'a>,
-        raw: Option<Atom<'a>>,
+        raw: Option<Str<'a>>,
     ) -> RegExpLiteral<'a> {
         RegExpLiteral { node_id: Cell::new(NodeId::DUMMY), span, regex, raw }
     }
@@ -9052,7 +9052,7 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         regex: RegExp<'a>,
-        raw: Option<Atom<'a>>,
+        raw: Option<Str<'a>>,
     ) -> Box<'a, RegExpLiteral<'a>> {
         Box::new_in(self.reg_exp_literal(span, regex, raw), self.allocator)
     }
@@ -9286,7 +9286,7 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn jsx_element_name_identifier<A1>(self, span: Span, name: A1) -> JSXElementName<'a>
     where
-        A1: Into<Atom<'a>>,
+        A1: Into<Str<'a>>,
     {
         JSXElementName::Identifier(self.alloc_jsx_identifier(span, name))
     }
@@ -9702,7 +9702,7 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn jsx_attribute_name_identifier<A1>(self, span: Span, name: A1) -> JSXAttributeName<'a>
     where
-        A1: Into<Atom<'a>>,
+        A1: Into<Str<'a>>,
     {
         JSXAttributeName::Identifier(self.alloc_jsx_identifier(span, name))
     }
@@ -9738,10 +9738,10 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         value: A1,
-        raw: Option<Atom<'a>>,
+        raw: Option<Str<'a>>,
     ) -> JSXAttributeValue<'a>
     where
-        A1: Into<Atom<'a>>,
+        A1: Into<Str<'a>>,
     {
         JSXAttributeValue::StringLiteral(self.alloc_string_literal(span, value, raw))
     }
@@ -9760,11 +9760,11 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         value: A1,
-        raw: Option<Atom<'a>>,
+        raw: Option<Str<'a>>,
         lone_surrogates: bool,
     ) -> JSXAttributeValue<'a>
     where
-        A1: Into<Atom<'a>>,
+        A1: Into<Str<'a>>,
     {
         JSXAttributeValue::StringLiteral(self.alloc_string_literal_with_lone_surrogates(
             span,
@@ -9857,7 +9857,7 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn jsx_identifier<A1>(self, span: Span, name: A1) -> JSXIdentifier<'a>
     where
-        A1: Into<Atom<'a>>,
+        A1: Into<Str<'a>>,
     {
         JSXIdentifier { node_id: Cell::new(NodeId::DUMMY), span, name: name.into() }
     }
@@ -9873,7 +9873,7 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn alloc_jsx_identifier<A1>(self, span: Span, name: A1) -> Box<'a, JSXIdentifier<'a>>
     where
-        A1: Into<Atom<'a>>,
+        A1: Into<Str<'a>>,
     {
         Box::new_in(self.jsx_identifier(span, name), self.allocator)
     }
@@ -9887,9 +9887,9 @@ impl<'a> AstBuilder<'a> {
     /// * `value`: The text content.
     /// * `raw`: The raw string as it appears in source code.
     #[inline]
-    pub fn jsx_child_text<A1>(self, span: Span, value: A1, raw: Option<Atom<'a>>) -> JSXChild<'a>
+    pub fn jsx_child_text<A1>(self, span: Span, value: A1, raw: Option<Str<'a>>) -> JSXChild<'a>
     where
-        A1: Into<Atom<'a>>,
+        A1: Into<Str<'a>>,
     {
         JSXChild::Text(self.alloc_jsx_text(span, value, raw))
     }
@@ -10011,9 +10011,9 @@ impl<'a> AstBuilder<'a> {
     /// * `value`: The text content.
     /// * `raw`: The raw string as it appears in source code.
     #[inline]
-    pub fn jsx_text<A1>(self, span: Span, value: A1, raw: Option<Atom<'a>>) -> JSXText<'a>
+    pub fn jsx_text<A1>(self, span: Span, value: A1, raw: Option<Str<'a>>) -> JSXText<'a>
     where
-        A1: Into<Atom<'a>>,
+        A1: Into<Str<'a>>,
     {
         JSXText { node_id: Cell::new(NodeId::DUMMY), span, value: value.into(), raw }
     }
@@ -10032,10 +10032,10 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         value: A1,
-        raw: Option<Atom<'a>>,
+        raw: Option<Str<'a>>,
     ) -> Box<'a, JSXText<'a>>
     where
-        A1: Into<Atom<'a>>,
+        A1: Into<Str<'a>>,
     {
         Box::new_in(self.jsx_text(span, value, raw), self.allocator)
     }
@@ -10215,10 +10215,10 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         value: A1,
-        raw: Option<Atom<'a>>,
+        raw: Option<Str<'a>>,
     ) -> TSEnumMemberName<'a>
     where
-        A1: Into<Atom<'a>>,
+        A1: Into<Str<'a>>,
     {
         TSEnumMemberName::String(self.alloc_string_literal(span, value, raw))
     }
@@ -10237,11 +10237,11 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         value: A1,
-        raw: Option<Atom<'a>>,
+        raw: Option<Str<'a>>,
         lone_surrogates: bool,
     ) -> TSEnumMemberName<'a>
     where
-        A1: Into<Atom<'a>>,
+        A1: Into<Str<'a>>,
     {
         TSEnumMemberName::String(self.alloc_string_literal_with_lone_surrogates(
             span,
@@ -10264,10 +10264,10 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         value: A1,
-        raw: Option<Atom<'a>>,
+        raw: Option<Str<'a>>,
     ) -> TSEnumMemberName<'a>
     where
-        A1: Into<Atom<'a>>,
+        A1: Into<Str<'a>>,
     {
         TSEnumMemberName::ComputedString(self.alloc_string_literal(span, value, raw))
     }
@@ -10286,11 +10286,11 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         value: A1,
-        raw: Option<Atom<'a>>,
+        raw: Option<Str<'a>>,
         lone_surrogates: bool,
     ) -> TSEnumMemberName<'a>
     where
-        A1: Into<Atom<'a>>,
+        A1: Into<Str<'a>>,
     {
         TSEnumMemberName::ComputedString(self.alloc_string_literal_with_lone_surrogates(
             span,
@@ -10412,7 +10412,7 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         value: f64,
-        raw: Option<Atom<'a>>,
+        raw: Option<Str<'a>>,
         base: NumberBase,
     ) -> TSLiteral<'a> {
         TSLiteral::NumericLiteral(self.alloc_numeric_literal(span, value, raw, base))
@@ -10432,11 +10432,11 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         value: A1,
-        raw: Option<Atom<'a>>,
+        raw: Option<Str<'a>>,
         base: BigintBase,
     ) -> TSLiteral<'a>
     where
-        A1: Into<Atom<'a>>,
+        A1: Into<Str<'a>>,
     {
         TSLiteral::BigIntLiteral(self.alloc_big_int_literal(span, value, raw, base))
     }
@@ -10454,10 +10454,10 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         value: A1,
-        raw: Option<Atom<'a>>,
+        raw: Option<Str<'a>>,
     ) -> TSLiteral<'a>
     where
-        A1: Into<Atom<'a>>,
+        A1: Into<Str<'a>>,
     {
         TSLiteral::StringLiteral(self.alloc_string_literal(span, value, raw))
     }
@@ -10476,11 +10476,11 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         value: A1,
-        raw: Option<Atom<'a>>,
+        raw: Option<Str<'a>>,
         lone_surrogates: bool,
     ) -> TSLiteral<'a>
     where
-        A1: Into<Atom<'a>>,
+        A1: Into<Str<'a>>,
     {
         TSLiteral::StringLiteral(self.alloc_string_literal_with_lone_surrogates(
             span,
@@ -13698,7 +13698,7 @@ impl<'a> AstBuilder<'a> {
         type_annotation: T1,
     ) -> TSIndexSignatureName<'a>
     where
-        A1: Into<Atom<'a>>,
+        A1: Into<Str<'a>>,
         T1: IntoIn<'a, Box<'a, TSTypeAnnotation<'a>>>,
     {
         TSIndexSignatureName {
@@ -13982,10 +13982,10 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         value: A1,
-        raw: Option<Atom<'a>>,
+        raw: Option<Str<'a>>,
     ) -> TSModuleDeclarationName<'a>
     where
-        A1: Into<Atom<'a>>,
+        A1: Into<Str<'a>>,
     {
         TSModuleDeclarationName::StringLiteral(self.string_literal(span, value, raw))
     }
@@ -14002,11 +14002,11 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         value: A1,
-        raw: Option<Atom<'a>>,
+        raw: Option<Str<'a>>,
         lone_surrogates: bool,
     ) -> TSModuleDeclarationName<'a>
     where
-        A1: Into<Atom<'a>>,
+        A1: Into<Str<'a>>,
     {
         TSModuleDeclarationName::StringLiteral(self.string_literal_with_lone_surrogates(
             span,
@@ -15558,7 +15558,7 @@ impl<'a> AstBuilder<'a> {
 /// Escape special characters for template element raw value.
 ///
 /// Escapes: backticks, `${`, backslashes, and carriage returns.
-fn escape_template_element_raw<'a>(raw: &str, ast: AstBuilder<'a>) -> Atom<'a> {
+fn escape_template_element_raw<'a>(raw: &str, ast: AstBuilder<'a>) -> Str<'a> {
     let bytes = raw.as_bytes();
     let mut extra_bytes = 0usize;
     for i in 0..bytes.len() {
@@ -15569,7 +15569,7 @@ fn escape_template_element_raw<'a>(raw: &str, ast: AstBuilder<'a>) -> Atom<'a> {
         };
     }
     if extra_bytes == 0 {
-        return ast.atom(raw);
+        return ast.str(raw);
     }
     let len = bytes.len() + extra_bytes;
     let layout = std::alloc::Layout::array::<u8>(len).unwrap();
@@ -15606,6 +15606,6 @@ fn escape_template_element_raw<'a>(raw: &str, ast: AstBuilder<'a>) -> Atom<'a> {
                 }
             }
         }
-        Atom::from(std::str::from_utf8_unchecked(escaped))
+        Str::from(std::str::from_utf8_unchecked(escaped))
     }
 }

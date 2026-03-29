@@ -363,7 +363,7 @@ impl<'a> ClassProperties<'a> {
                 ctx.ast.object_property_kind_object_property(
                     SPAN,
                     PropertyKind::Init,
-                    ctx.ast.property_key_static_identifier(SPAN, Atom::from("writable")),
+                    ctx.ast.property_key_static_identifier(SPAN, Str::from("writable")),
                     ctx.ast.expression_boolean_literal(SPAN, true),
                     false,
                     false,
@@ -372,7 +372,7 @@ impl<'a> ClassProperties<'a> {
                 ctx.ast.object_property_kind_object_property(
                     SPAN,
                     PropertyKind::Init,
-                    ctx.ast.property_key_static_identifier(SPAN, Atom::from("value")),
+                    ctx.ast.property_key_static_identifier(SPAN, Str::from("value")),
                     value,
                     false,
                     false,

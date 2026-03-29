@@ -11,8 +11,8 @@ pub use cmp::ContentEq;
 pub use edit_distance::{best_match, min_edit_distance};
 pub use oxc_str::ident;
 pub use oxc_str::{
-    ArenaIdentHashMap, Atom, CompactStr, Ident, IdentHashMap, IdentHashSet,
-    MAX_INLINE_LEN as ATOM_MAX_INLINE_LEN, format_atom, format_compact_str, format_ident,
+    ArenaIdentHashMap, CompactStr, Ident, IdentHashMap, IdentHashSet,
+    MAX_INLINE_LEN as STR_MAX_INLINE_LEN, Str, format_compact_str, format_ident, format_str,
 };
 pub use source_type::{
     FileExtension, Language, LanguageVariant, ModuleKind, SourceType, UnknownExtension,
@@ -32,14 +32,14 @@ mod generated {
 pub mod __internal {
     // Used by `format_compact_str!` macro defined in `oxc_str`
     pub use compact_str::format_compact;
-    // Used by `format_atom!` and `format_ident!` macros defined in `oxc_str`
+    // Used by `format_str!` and `format_ident!` macros defined in `oxc_str`
     pub use oxc_allocator::StringBuilder as ArenaStringBuilder;
 }
 
 // Additional trait implementations for types re-exported from oxc_str
 use std::ops::Index;
 
-impl ContentEq for Atom<'_> {
+impl ContentEq for Str<'_> {
     #[inline]
     fn content_eq(&self, other: &Self) -> bool {
         self == other
