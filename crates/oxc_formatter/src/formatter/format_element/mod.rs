@@ -100,6 +100,28 @@ pub enum FormatElement<'a> {
     /// The usize is an index into the collected tailwind classes array.
     /// During printing, this will be replaced with the sorted class name.
     TailwindClass(usize),
+
+    /// AST-derived import metadata for the sort-imports IR transform. Skipped during printing.
+    ImportMetadata(&'a ImportDeclMetadata<'a>),
+}
+
+/// Metadata for an import declaration, created during formatting from AST information.
+/// Used by the sort-imports IR transform.
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+pub struct ImportDeclMetadata<'a> {
+    /// The import source path value (without quotes).
+    /// e.g. `react` for `import React from "react"`.
+    pub source: &'a str,
+    /// Whether this is a side-effect-only import (e.g., `import "foo"`).
+    pub is_side_effect: bool,
+    /// Whether this is a type-only import (e.g., `import type { Foo } from "foo"`).
+    pub is_type_import: bool,
+    /// Whether this import has a default specifier (e.g., `import Foo from "foo"`).
+    pub has_default_specifier: bool,
+    /// Whether this import has a namespace specifier (e.g., `import * as Foo from "foo"`).
+    pub has_namespace_specifier: bool,
+    /// Whether this import has named specifiers (e.g., `import { foo } from "foo"`).
+    pub has_named_specifier: bool,
 }
 
 impl std::fmt::Debug for FormatElement<'_> {
@@ -118,6 +140,9 @@ impl std::fmt::Debug for FormatElement<'_> {
             FormatElement::Tag(tag) => fmt.debug_tuple("Tag").field(tag).finish(),
             FormatElement::TailwindClass(index) => {
                 fmt.debug_tuple("TailwindClass").field(index).finish()
+            }
+            FormatElement::ImportMetadata(metadata) => {
+                fmt.debug_tuple("ImportMetadata").field(metadata).finish()
             }
         }
     }
@@ -287,7 +312,8 @@ impl FormatElements for FormatElement<'_> {
             | FormatElement::Space
             | FormatElement::Tag(_)
             | FormatElement::HardSpace
-            | FormatElement::TailwindClass(_) => false,
+            | FormatElement::TailwindClass(_)
+            | FormatElement::ImportMetadata(_) => false,
         }
     }
 

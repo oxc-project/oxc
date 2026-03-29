@@ -88,7 +88,7 @@ impl<'a> PartitionedChunk<'a> {
 
         for line in lines {
             match line {
-                SourceLine::Import(_, ref metadata) => {
+                SourceLine::Import(_, metadata) => {
                     // Handle orphan content (separated by empty line from this import)
                     // These stay at their original slot position, not attached to any import.
                     if !orphan_pending.is_empty() {

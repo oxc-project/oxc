@@ -278,6 +278,8 @@ impl<'a> Printer<'a> {
                     self.print_text(Text::Text { text, width });
                 }
             }
+            #[expect(clippy::match_same_arms)]
+            FormatElement::ImportMetadata(_) => {}
         }
 
         Ok(())
@@ -1179,6 +1181,8 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
                     return Ok(self.fits_text(Text::Text { text, width }));
                 }
             }
+            // Import metadata is only used by IR transforms, not by the printer.
+            FormatElement::ImportMetadata(_) => {}
         }
 
         Ok(Fits::Maybe)
