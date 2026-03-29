@@ -143,7 +143,7 @@ fn generate_deserializers(
         import {{ comments, initComments }} from '../plugins/comments.js';
         /* END_IF */
 
-        let uint8, uint32, float64, sourceText, sourceIsAscii, sourceStartPos, sourceEndPos;
+        let uint8, uint32, float64, sourceText, sourceIsAscii, sourceStartPos, sourceEndPos, firstNonAsciiPos;
 
         let parent = null;
         let getLoc;
@@ -187,6 +187,23 @@ fn generate_deserializers(
 
             sourceText = sourceTextInput;
             sourceIsAscii = sourceText.length === sourceByteLen;
+
+            if (!sourceIsAscii) {{
+                // Find first non-ASCII byte in source region.
+                // `sourceText.substr()` can be used for strings ending before this position,
+                // since byte offsets equal char offsets in the all-ASCII prefix.
+                if (LINTER) {{
+                    firstNonAsciiPos = sourceByteLen;
+                    for (let i = sourceStartPos, e = sourceStartPos + sourceByteLen; i < e; i++) {{
+                        if (uint8[i] >= 128) {{ firstNonAsciiPos = i - sourceStartPos; break; }}
+                    }}
+                }} else {{
+                    firstNonAsciiPos = sourceByteLen;
+                    for (let i = 0; i < sourceByteLen; i++) {{
+                        if (uint8[i] >= 128) {{ firstNonAsciiPos = i; break; }}
+                    }}
+                }}
+            }}
 
             if (LOC) getLoc = getLocInput;
 
@@ -874,15 +891,17 @@ static STR_DESERIALIZER_BODY: &str = "
     pos = uint32[pos32];
 
     if (LINTER) {
-        if (sourceIsAscii && pos >= sourceStartPos) return sourceText.substr(pos - sourceStartPos, len);
+        if (pos >= sourceStartPos && (sourceIsAscii || pos - sourceStartPos + len <= firstNonAsciiPos))
+            return sourceText.substr(pos - sourceStartPos, len);
     } else {
-        if (sourceIsAscii && pos < sourceEndPos) return sourceText.substr(pos, len);
+        if (pos < sourceEndPos && (sourceIsAscii || pos + len <= firstNonAsciiPos))
+            return sourceText.substr(pos, len);
     }
 
-    // Longer strings use `TextDecoder`
-    // TODO: Find best switch-over point
+    // Use `TextDecoder` for strings longer than 9 bytes.
+    // For shorter strings, the byte-by-byte loop below avoids native call overhead.
     const end = pos + len;
-    if (len > 50) return decodeStr(uint8.subarray(pos, end));
+    if (len > 9) return decodeStr(uint8.subarray(pos, end));
 
     // Shorter strings decode by hand to avoid native call
     let out = '',
