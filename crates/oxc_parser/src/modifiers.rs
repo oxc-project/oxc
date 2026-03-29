@@ -341,6 +341,19 @@ mod modifier_kinds {
             Self(self.0 & !(1 << (kind as u8)))
         }
 
+        /// Return intersection of this set with `other`.
+        ///
+        /// # Example
+        /// ```ignore
+        /// let kinds1 = ModifierKinds::new([ModifierKind::Public, ModifierKind::Async]);
+        /// let kinds2 = ModifierKinds::new([ModifierKind::Async, ModifierKind::Static]);
+        /// assert_eq!(kinds1.intersection(kinds2), ModifierKinds::new([ModifierKind::Async]));
+        /// ```
+        #[inline]
+        pub const fn intersection(self, other: Self) -> Self {
+            Self(self.0 & other.0)
+        }
+
         /// Count how many [`ModifierKind`]s are in this set.
         #[inline]
         pub const fn count(self) -> usize {
@@ -567,7 +580,6 @@ static ILLEGAL_PRECEDING_MODIFIERS: [ModifierKinds; ModifierKind::VARIANTS.len()
 };
 
 /// Get which modifiers are illegal to precede a modifier.
-/// This must match the logic in `illegal_modifier_error`.
 const fn get_illegal_preceding_modifiers(kind: ModifierKind) -> ModifierKinds {
     match kind {
         ModifierKind::Public | ModifierKind::Private | ModifierKind::Protected => {
@@ -633,133 +645,39 @@ impl<C: Config> ParserImpl<'_, C> {
     /// Create an error for an illegal modifier.
     #[cold]
     #[inline(never)]
-    fn illegal_modifier_error(&mut self, kinds: ModifierKinds, modifier: &Modifier) {
-        match modifier.kind {
-            ModifierKind::Public | ModifierKind::Private | ModifierKind::Protected => {
-                if kinds.intersects(ModifierKinds::new([
-                    ModifierKind::Public,
-                    ModifierKind::Private,
-                    ModifierKind::Protected,
-                ])) {
-                    self.error(diagnostics::accessibility_modifier_already_seen(modifier));
-                } else if kinds.contains(ModifierKind::Override) {
-                    self.error(diagnostics::modifier_must_precede_other_modifier(
-                        modifier,
-                        ModifierKind::Override,
-                    ));
-                } else if kinds.contains(ModifierKind::Static) {
-                    self.error(diagnostics::modifier_must_precede_other_modifier(
-                        modifier,
-                        ModifierKind::Static,
-                    ));
-                } else if kinds.contains(ModifierKind::Accessor) {
-                    self.error(diagnostics::modifier_must_precede_other_modifier(
-                        modifier,
-                        ModifierKind::Accessor,
-                    ));
-                } else if kinds.contains(ModifierKind::Readonly) {
-                    self.error(diagnostics::modifier_must_precede_other_modifier(
-                        modifier,
-                        ModifierKind::Readonly,
-                    ));
-                } else if kinds.contains(ModifierKind::Async) {
-                    self.error(diagnostics::modifier_must_precede_other_modifier(
-                        modifier,
-                        ModifierKind::Async,
-                    ));
-                } else if kinds.contains(ModifierKind::Abstract) {
-                    self.error(diagnostics::modifier_must_precede_other_modifier(
-                        modifier,
-                        ModifierKind::Abstract,
-                    ));
-                }
+    fn illegal_modifier_error(&mut self, existing_kinds: ModifierKinds, modifier: &Modifier) {
+        const ACCESSIBILITY_KINDS: ModifierKinds = ModifierKinds::new([
+            ModifierKind::Public,
+            ModifierKind::Private,
+            ModifierKind::Protected,
+        ]);
+
+        let this_kind = modifier.kind;
+        let this_kinds = ModifierKinds::new([this_kind]);
+
+        if this_kinds.intersects(ACCESSIBILITY_KINDS) {
+            // This modifier is `public`, `private`, or `protected`.
+            // Using multiple accessibility modifiers is illegal.
+            if existing_kinds.intersects(ACCESSIBILITY_KINDS) {
+                self.error(diagnostics::accessibility_modifier_already_seen(modifier));
+                return;
             }
-            ModifierKind::Static => {
-                if kinds.contains(ModifierKind::Static) {
-                    self.error(diagnostics::modifier_already_seen(modifier));
-                } else if kinds.contains(ModifierKind::Readonly) {
-                    self.error(diagnostics::modifier_must_precede_other_modifier(
-                        modifier,
-                        ModifierKind::Readonly,
-                    ));
-                } else if kinds.contains(ModifierKind::Async) {
-                    self.error(diagnostics::modifier_must_precede_other_modifier(
-                        modifier,
-                        ModifierKind::Async,
-                    ));
-                } else if kinds.contains(ModifierKind::Accessor) {
-                    self.error(diagnostics::modifier_must_precede_other_modifier(
-                        modifier,
-                        ModifierKind::Accessor,
-                    ));
-                } else if kinds.contains(ModifierKind::Override) {
-                    self.error(diagnostics::modifier_must_precede_other_modifier(
-                        modifier,
-                        ModifierKind::Override,
-                    ));
-                }
-            }
-            ModifierKind::Override => {
-                if kinds.contains(ModifierKind::Override) {
-                    self.error(diagnostics::modifier_already_seen(modifier));
-                } else if kinds.contains(ModifierKind::Readonly) {
-                    self.error(diagnostics::modifier_must_precede_other_modifier(
-                        modifier,
-                        ModifierKind::Readonly,
-                    ));
-                } else if kinds.contains(ModifierKind::Accessor) {
-                    self.error(diagnostics::modifier_must_precede_other_modifier(
-                        modifier,
-                        ModifierKind::Accessor,
-                    ));
-                } else if kinds.contains(ModifierKind::Async) {
-                    self.error(diagnostics::modifier_must_precede_other_modifier(
-                        modifier,
-                        ModifierKind::Async,
-                    ));
-                }
-            }
-            ModifierKind::Abstract => {
-                if kinds.contains(ModifierKind::Abstract) {
-                    self.error(diagnostics::modifier_already_seen(modifier));
-                } else if kinds.contains(ModifierKind::Override) {
-                    self.error(diagnostics::modifier_must_precede_other_modifier(
-                        modifier,
-                        ModifierKind::Override,
-                    ));
-                } else if kinds.contains(ModifierKind::Accessor) {
-                    self.error(diagnostics::modifier_must_precede_other_modifier(
-                        modifier,
-                        ModifierKind::Accessor,
-                    ));
-                }
-            }
-            ModifierKind::Export => {
-                if kinds.contains(ModifierKind::Export) {
-                    self.error(diagnostics::modifier_already_seen(modifier));
-                } else if kinds.contains(ModifierKind::Declare) {
-                    self.error(diagnostics::modifier_must_precede_other_modifier(
-                        modifier,
-                        ModifierKind::Declare,
-                    ));
-                } else if kinds.contains(ModifierKind::Abstract) {
-                    self.error(diagnostics::modifier_must_precede_other_modifier(
-                        modifier,
-                        ModifierKind::Abstract,
-                    ));
-                } else if kinds.contains(ModifierKind::Async) {
-                    self.error(diagnostics::modifier_must_precede_other_modifier(
-                        modifier,
-                        ModifierKind::Async,
-                    ));
-                }
-            }
-            _ => {
-                if kinds.contains(modifier.kind) {
-                    self.error(diagnostics::modifier_already_seen(modifier));
-                }
+        } else {
+            // Modifiers cannot be repeated
+            if existing_kinds.intersects(this_kinds) {
+                self.error(diagnostics::modifier_already_seen(modifier));
+                return;
             }
         }
+
+        let illegal_preceding_modifier_kinds = ILLEGAL_PRECEDING_MODIFIERS[this_kind as usize];
+
+        // `illegal_preceding_modifier_kinds` are modifiers which this modifier cannot follow.
+        // Find which of them it *is* following, and raise an error for one of them.
+        // If multiple illegal kinds, it's arbitrary which one the error is raised for.
+        let illegal_kinds = illegal_preceding_modifier_kinds.intersection(existing_kinds);
+        let illegal_kind = illegal_kinds.iter().next().unwrap();
+        self.error(diagnostics::modifier_must_precede_other_modifier(modifier, illegal_kind));
     }
 
     #[inline]
