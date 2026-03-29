@@ -1,7 +1,7 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
 // To edit this generated file you have to edit `tasks/ast_tools/src/generators/raw_transfer.rs`.
 
-let uint8, uint32, float64, sourceText, sourceIsAscii, sourceEndPos;
+let uint8, uint32, float64, sourceText, sourceIsAscii, sourceEndPos, firstNonAsciiPos;
 
 const textDecoder = new TextDecoder("utf-8", { ignoreBOM: true }),
   decodeStr = textDecoder.decode.bind(textDecoder),
@@ -20,6 +20,14 @@ function deserializeWith(buffer, sourceTextInput, sourceByteLen, getLocInput, de
   float64 = buffer.float64;
   sourceText = sourceTextInput;
   sourceIsAscii = sourceText.length === sourceByteLen;
+  if (!sourceIsAscii) {
+    firstNonAsciiPos = sourceByteLen;
+    for (let i = 0; i < sourceByteLen; i++)
+      if (uint8[i] >= 128) {
+        firstNonAsciiPos = i;
+        break;
+      }
+  }
   return deserialize(uint32[536870900]);
 }
 
@@ -4513,11 +4521,12 @@ function deserializeStr(pos) {
     len = uint32[pos32 + 2];
   if (len === 0) return "";
   pos = uint32[pos32];
-  if (sourceIsAscii && pos < sourceEndPos) return sourceText.substr(pos, len);
-  // Longer strings use `TextDecoder`
-  // TODO: Find best switch-over point
+  if (pos < sourceEndPos && (sourceIsAscii || pos + len <= firstNonAsciiPos))
+    return sourceText.substr(pos, len);
+  // Use `TextDecoder` for strings longer than 9 bytes.
+  // For shorter strings, the byte-by-byte loop below avoids native call overhead.
   let end = pos + len;
-  if (len > 50) return decodeStr(uint8.subarray(pos, end));
+  if (len > 9) return decodeStr(uint8.subarray(pos, end));
   // Shorter strings decode by hand to avoid native call
   let out = "",
     c;
