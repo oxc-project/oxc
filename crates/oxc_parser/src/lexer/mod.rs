@@ -48,9 +48,18 @@ pub struct LexerCheckpoint<'a> {
     source_position: SourcePosition<'a>,
     token: Token,
     errors_snapshot: ErrorSnapshot,
-    tokens_len: usize,
-    pure_comment: Option<usize>,
-    has_no_side_effects_comment: bool,
+    tokens_len: u32,
+    /// Packed representation of `pure_comment: Option<u32>` and `has_no_side_effects_comment: bool`.
+    /// Bit 31 = `has_no_side_effects_comment`, bits 0..30 = comment index.
+    /// `PURE_COMMENT_NONE` (all low 31 bits set) means no pure comment.
+    pure_comment_packed: u32,
+}
+
+impl LexerCheckpoint<'_> {
+    /// Sentinel value for "no pure comment" (bits 0..30 all set).
+    const PURE_COMMENT_NONE: u32 = 0x7FFF_FFFF;
+    /// Bit 31: `has_no_side_effects_comment` flag.
+    const NO_SIDE_EFFECTS_BIT: u32 = 0x8000_0000;
 }
 
 #[derive(Debug, Clone)]
@@ -193,37 +202,57 @@ impl<'a, C: Config> Lexer<'a, C> {
 
     /// Creates a checkpoint storing the current lexer state.
     /// Use `rewind` to restore the lexer to the state stored in the checkpoint.
+    #[expect(clippy::cast_possible_truncation)]
     pub fn checkpoint(&self) -> LexerCheckpoint<'a> {
         let errors_snapshot = if self.errors.is_empty() {
             ErrorSnapshot::Empty
         } else {
             ErrorSnapshot::Count(self.errors.len())
         };
+        // Skip `self.tokens.len()` when tokens are statically disabled (`NoTokensLexerConfig`).
+        // In that case `self.tokens` is always empty, so saving/restoring its length is dead work.
+        let tokens_len = if C::TOKENS_METHOD_IS_STATIC && !self.config.tokens() {
+            0
+        } else {
+            self.tokens.len()
+        };
+        let pure_comment_packed = Self::pack_pure_comment(
+            self.trivia_builder.pure_comment,
+            self.trivia_builder.has_no_side_effects_comment,
+        );
         LexerCheckpoint {
             source_position: self.source.position(),
             token: self.token,
             errors_snapshot,
-            tokens_len: self.tokens.len(),
-            pure_comment: self.trivia_builder.pure_comment,
-            has_no_side_effects_comment: self.trivia_builder.has_no_side_effects_comment,
+            tokens_len: tokens_len as u32,
+            pure_comment_packed,
         }
     }
 
     /// Create a checkpoint that can handle error popping.
     /// This is more expensive as it clones the errors vector.
+    #[expect(clippy::cast_possible_truncation)]
     pub(crate) fn checkpoint_with_error_recovery(&self) -> LexerCheckpoint<'a> {
         let errors_snapshot = if self.errors.is_empty() {
             ErrorSnapshot::Empty
         } else {
             ErrorSnapshot::Full(self.errors.clone())
         };
+        let tokens_len = if C::TOKENS_METHOD_IS_STATIC && !self.config.tokens() {
+            0
+        } else {
+            self.tokens.len()
+        };
+        let pure_comment_packed = Self::pack_pure_comment(
+            self.trivia_builder.pure_comment,
+            self.trivia_builder.has_no_side_effects_comment,
+        );
         LexerCheckpoint {
             source_position: self.source.position(),
             token: self.token,
             errors_snapshot,
-            tokens_len: self.tokens.len(),
-            pure_comment: self.trivia_builder.pure_comment,
-            has_no_side_effects_comment: self.trivia_builder.has_no_side_effects_comment,
+            tokens_len: tokens_len as u32,
+            pure_comment_packed,
         }
     }
 
@@ -234,11 +263,41 @@ impl<'a, C: Config> Lexer<'a, C> {
             ErrorSnapshot::Count(len) => self.errors.truncate(len),
             ErrorSnapshot::Full(errors) => self.errors = errors,
         }
-        self.tokens.truncate(checkpoint.tokens_len);
+        // Skip `tokens.truncate()` when tokens are statically disabled (`NoTokensLexerConfig`).
+        // In that case `self.tokens` is always empty, so truncating is dead work.
+        if !C::TOKENS_METHOD_IS_STATIC || self.config.tokens() {
+            self.tokens.truncate(checkpoint.tokens_len as usize);
+        }
         self.source.set_position(checkpoint.source_position);
         self.token = checkpoint.token;
-        self.trivia_builder.pure_comment = checkpoint.pure_comment;
-        self.trivia_builder.has_no_side_effects_comment = checkpoint.has_no_side_effects_comment;
+        let (pure_comment, has_no_side_effects_comment) =
+            Self::unpack_pure_comment(checkpoint.pure_comment_packed);
+        self.trivia_builder.pure_comment = pure_comment;
+        self.trivia_builder.has_no_side_effects_comment = has_no_side_effects_comment;
+    }
+
+    /// Pack `pure_comment` and `has_no_side_effects_comment` into a single `u32`.
+    fn pack_pure_comment(pure_comment: Option<u32>, has_no_side_effects_comment: bool) -> u32 {
+        let mut packed = match pure_comment {
+            Some(index) => {
+                debug_assert!(index < LexerCheckpoint::PURE_COMMENT_NONE);
+                index
+            }
+            None => LexerCheckpoint::PURE_COMMENT_NONE,
+        };
+        if has_no_side_effects_comment {
+            packed |= LexerCheckpoint::NO_SIDE_EFFECTS_BIT;
+        }
+        packed
+    }
+
+    /// Unpack `pure_comment` and `has_no_side_effects_comment` from a single `u32`.
+    fn unpack_pure_comment(packed: u32) -> (Option<u32>, bool) {
+        let has_no_side_effects = packed & LexerCheckpoint::NO_SIDE_EFFECTS_BIT != 0;
+        let index = packed & !LexerCheckpoint::NO_SIDE_EFFECTS_BIT;
+        let pure_comment =
+            if index == LexerCheckpoint::PURE_COMMENT_NONE { None } else { Some(index) };
+        (pure_comment, has_no_side_effects)
     }
 
     pub fn peek_token(&mut self) -> Token {

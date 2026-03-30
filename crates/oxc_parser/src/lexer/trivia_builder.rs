@@ -29,7 +29,7 @@ pub struct TriviaBuilder {
     previous_kind: Kind,
 
     /// Index of the pure comment in `comments` vec, or `None` if no pure comment for the current token.
-    pub(super) pure_comment: Option<usize>,
+    pub(super) pure_comment: Option<u32>,
 
     pub(super) has_no_side_effects_comment: bool,
 }
@@ -50,7 +50,7 @@ impl Default for TriviaBuilder {
 }
 
 impl TriviaBuilder {
-    pub fn previous_token_has_pure_comment(&self) -> Option<usize> {
+    pub fn previous_token_has_pure_comment(&self) -> Option<u32> {
         self.pure_comment
     }
 
@@ -58,8 +58,8 @@ impl TriviaBuilder {
         self.has_no_side_effects_comment
     }
 
-    pub fn mark_pure_comment_not_applied(&mut self, index: usize) {
-        if let Some(comment) = self.comments.get_mut(index) {
+    pub fn mark_pure_comment_not_applied(&mut self, index: u32) {
+        if let Some(comment) = self.comments.get_mut(index as usize) {
             debug_assert!(comment.is_pure());
             comment.content = CommentContent::PureNotApplied;
         }
@@ -283,7 +283,10 @@ impl TriviaBuilder {
             let rest = &bytes[start + 2..];
             if rest.starts_with(b"PURE__") {
                 comment.content = CommentContent::Pure;
-                self.pure_comment = Some(self.comments.len()); // will be pushed next
+                #[expect(clippy::cast_possible_truncation)]
+                {
+                    self.pure_comment = Some(self.comments.len() as u32); // will be pushed next
+                }
                 return;
             } else if rest.starts_with(b"NO_SIDE_EFFECTS__") {
                 comment.content = CommentContent::NoSideEffects;
