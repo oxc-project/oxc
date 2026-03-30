@@ -1,8 +1,10 @@
 use std::{collections::VecDeque, fmt::Debug};
 
-use crate::{context::LintContext, rule::Rule};
 use itertools::Either;
 use lazy_regex::{Lazy, Regex, RegexBuilder, lazy_regex};
+use rustc_hash::FxHashSet;
+use schemars::JsonSchema;
+
 use oxc_ast::ast::{
     ArrowFunctionExpression, Expression, Function, ObjectExpression, ObjectProperty,
     ObjectPropertyKind, PropertyKind,
@@ -12,8 +14,8 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{ReferenceId, ScopeId};
 use oxc_span::{GetSpan, Span};
-use rustc_hash::FxHashSet;
-use schemars::JsonSchema;
+
+use crate::{context::LintContext, rule::Rule};
 
 fn expected_all_properties_shorthanded(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint(object-shorthand): Expected shorthand for all properties.")
