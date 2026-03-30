@@ -288,19 +288,19 @@ fn make_function_shorthand<'a>(
                 ));
                 let should_add_parens = if func.r#async {
                     if let Some(async_token) = ctx.find_next_token_from(func.span.start, "async")
-                        && let Some(fist_param) = func.params.items.first()
+                        && let Some(first) = func.params.items.first()
                     {
                         ctx.find_next_token_within(
                             func.span.start + async_token,
-                            fist_param.span.start,
+                            first.span.start,
                             "(",
                         )
                         .is_none()
                     } else {
                         false
                     }
-                } else if let Some(fist_param) = func.params.items.first() {
-                    ctx.find_next_token_within(func.span.start, fist_param.span.start, "(")
+                } else if let Some(first_param) = func.params.items.first() {
+                    ctx.find_next_token_within(func.span.start, first_param.span.start, "(")
                         .is_none()
                 } else {
                     false
