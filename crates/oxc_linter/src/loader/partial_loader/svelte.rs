@@ -351,4 +351,20 @@ mod test {
         assert!(result.source_type.is_module());
         assert!(result.source_text.contains("let scoops = 1;"));
     }
+
+    #[test]
+    fn test_parse_svelte_script_tag_with_spaced_expression_lang_is_not_dropped() {
+        let source_text = r#"
+        <script
+            lang={ "ts" }
+            >
+            let scoops = 1;
+        </script>
+        "#;
+
+        let result = parse_svelte(source_text);
+        assert!(!result.source_type.is_typescript());
+        assert!(result.source_type.is_module());
+        assert!(result.source_text.contains("let scoops = 1;"));
+    }
 }
