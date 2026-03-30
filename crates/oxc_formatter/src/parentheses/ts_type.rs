@@ -34,6 +34,7 @@ impl NeedsParentheses<'_> for AstNode<'_, TSType<'_>> {
             AstNodes::TSConditionalType(it) => it.needs_parentheses(f),
             AstNodes::TSTypeOperator(it) => it.needs_parentheses(f),
             AstNodes::TSTypeQuery(it) => it.needs_parentheses(f),
+            AstNodes::TSTypeReference(it) => it.needs_parentheses(f),
             _ => {
                 // TODO: incomplete
                 false
@@ -190,6 +191,46 @@ impl NeedsParentheses<'_> for AstNode<'_, TSConditionalType<'_>> {
 impl NeedsParentheses<'_> for AstNode<'_, TSTypeOperator<'_>> {
     fn needs_parentheses(&self, _f: &Formatter<'_, '_>) -> bool {
         operator_type_or_higher_needs_parens(self.span(), effective_parent(self.parent()))
+    }
+}
+
+impl NeedsParentheses<'_> for AstNode<'_, TSTypeReference<'_>> {
+    fn needs_parentheses(&self, _f: &Formatter<'_, '_>) -> bool {
+        // A bare `intrinsic` identifier (no type arguments, not qualified) needs parentheses
+        // when it appears at the leading position of a type alias RHS.
+        // Without parens, `type t = intrinsic` is parsed as `TSIntrinsicKeyword` (a special keyword),
+        // but `type t = (intrinsic)` is parsed as `TSTypeReference` (a regular identifier).
+        // Removing parentheses changes the AST semantics.
+        if self.type_arguments.is_some() {
+            return false;
+        }
+        let TSTypeName::IdentifierReference(ident) = &self.type_name else {
+            return false;
+        };
+        if ident.name != "intrinsic" {
+            return false;
+        }
+        is_leading_position_in_type_alias(self.span(), effective_parent(self.parent()))
+    }
+}
+
+/// Returns `true` if the type at the given span is in the "leading position" of a type alias's
+/// right-hand side — i.e., it would be the first token printed after `=`.
+///
+/// This walks up through union/intersection types (checking only the first member)
+/// until it reaches a `TSTypeAliasDeclaration` parent.
+fn is_leading_position_in_type_alias(span: Span, parent: &AstNodes) -> bool {
+    match parent {
+        AstNodes::TSTypeAliasDeclaration(_) => true,
+        AstNodes::TSUnionType(union) => {
+            union.types.first().is_some_and(|first| first.span() == span)
+                && is_leading_position_in_type_alias(union.span(), union.parent())
+        }
+        AstNodes::TSIntersectionType(intersection) => {
+            intersection.types.first().is_some_and(|first| first.span() == span)
+                && is_leading_position_in_type_alias(intersection.span(), intersection.parent())
+        }
+        _ => false,
     }
 }
 

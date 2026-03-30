@@ -223,4 +223,12 @@ fn type_codegen_with_preserve_parens_off() {
         "type T = ({ [K in keyof Obj] : Obj[K] } & {\n\ta: 1;\n}) & {\n\tb: 2;\n};\n",
         parse_options,
     );
+
+    // `intrinsic` is a contextual keyword: `type t = intrinsic` produces TSIntrinsicKeyword,
+    // but `type t = (intrinsic)` produces TSTypeReference. Parentheses must be preserved.
+    test_with_parse_options(
+        "type t = (intrinsic);\n",
+        "type t = (intrinsic);\n",
+        parse_options,
+    );
 }

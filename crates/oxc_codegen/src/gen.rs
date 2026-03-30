@@ -3134,6 +3134,22 @@ impl Gen for TSTupleType<'_> {
     }
 }
 
+/// Returns `true` if `ty` is a bare `intrinsic` identifier reference (no type arguments,
+/// not a qualified name).
+///
+/// When `preserve_parens` is `false`, `type t = (intrinsic)` loses its parentheses and
+/// becomes `type t = intrinsic`, which changes the AST from `TSTypeReference` to
+/// `TSIntrinsicKeyword`. This function detects when parentheses need to be re-added.
+///
+/// NOTE: This only handles the direct case (`type t = (intrinsic)`).
+/// The union/intersection leading-position case (`type t = (intrinsic) & Foo`) is not
+/// handled here because codegen nodes lack parent context.
+fn is_intrinsic_identifier_type(ty: &TSType<'_>) -> bool {
+    let TSType::TSTypeReference(r) = ty else { return false };
+    r.type_arguments.is_none()
+        && matches!(&r.type_name, TSTypeName::IdentifierReference(id) if id.name == "intrinsic")
+}
+
 fn parenthesize_check_type_of_union_type(ty: &TSType<'_>) -> bool {
     match ty {
         TSType::TSUnionType(ty) => ty.types.len() > 1,
@@ -3820,7 +3836,14 @@ impl Gen for TSTypeAliasDeclaration<'_> {
         p.print_soft_space();
         p.print_ascii_byte(b'=');
         p.print_soft_space();
+        let needs_parens = is_intrinsic_identifier_type(&self.type_annotation);
+        if needs_parens {
+            p.print_ascii_byte(b'(');
+        }
         self.type_annotation.print(p, ctx);
+        if needs_parens {
+            p.print_ascii_byte(b')');
+        }
     }
 }
 
