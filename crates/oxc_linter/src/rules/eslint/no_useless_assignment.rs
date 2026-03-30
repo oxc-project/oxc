@@ -170,7 +170,9 @@ impl Rule for NoUselessAssignment {
                 .node_weight(ctx.nodes().cfg_id(decl_node.id()))
                 .expect("expected a valid node id in graph");
 
-            if Self::has_initial_write(decl_node) && !Self::should_skip_initial_write(decl_node) {
+            if Self::has_initial_write(decl_node)
+                && !Self::should_skip_initial_write(ctx, symbol_id, decl_node)
+            {
                 cfg_ops[block_id].push(OpAtNode {
                     op: Operation::Write,
                     node: decl_node.id(),
@@ -446,17 +448,30 @@ impl NoUselessAssignment {
         }
     }
 
-    fn should_skip_initial_write(decl_node: &oxc_semantic::AstNode) -> bool {
-        matches!(
-            decl_node.kind(),
-            AstKind::VariableDeclarator(var_decl)
-                if matches!(
-                    &var_decl.init,
-                    Some(
-                        Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_)
-                    )
-                )
-        )
+    fn should_skip_initial_write(
+        ctx: &LintContext,
+        symbol_id: SymbolId,
+        decl_node: &oxc_semantic::AstNode,
+    ) -> bool {
+        let Some(init) = (match decl_node.kind() {
+            AstKind::VariableDeclarator(var_decl) => var_decl.init.as_ref(),
+            _ => None,
+        }) else {
+            return false;
+        };
+
+        if !matches!(
+            init,
+            Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_)
+        ) {
+            return false;
+        }
+
+        let init_span = init.span();
+        ctx.symbol_references(symbol_id).any(|reference| {
+            reference.is_read()
+                && init_span.contains_inclusive(ctx.nodes().get_node(reference.node_id()).span())
+        })
     }
 
     fn declaration_binding_pattern<'a>(
@@ -492,6 +507,10 @@ impl NoUselessAssignment {
         }
 
         if reference.is_write() {
+            if Self::is_for_in_of_iteration_write(ctx, reference) {
+                return;
+            }
+
             if matches!(
                 Self::declaration_binding_pattern(decl_node),
                 Some(BindingPattern::ObjectPattern(_) | BindingPattern::ArrayPattern(_))
@@ -507,6 +526,15 @@ impl NoUselessAssignment {
                 .expect("expected a valid node id in graph");
             cfg_ops[ref_block].push(OpAtNode { op: Operation::Write, node: op_node, compact_idx });
         }
+    }
+
+    fn is_for_in_of_iteration_write(ctx: &LintContext, reference: &Reference) -> bool {
+        let node_span = ctx.nodes().get_node(reference.node_id()).span();
+        ctx.nodes().ancestors(reference.node_id()).any(|ancestor| match ancestor.kind() {
+            AstKind::ForInStatement(stmt) => stmt.left.span().contains_inclusive(node_span),
+            AstKind::ForOfStatement(stmt) => stmt.left.span().contains_inclusive(node_span),
+            _ => false,
+        })
     }
 
     fn find_loop_start(
@@ -1185,7 +1213,12 @@ fn test() {
                               b = (a = 2)
                             } = obj;
                             return <A prop={a} />;
-                        }", // { "parserOptions": { "ecmaFeatures": { "jsx": true }, }, }
+                        }", // { "parserOptions": { "ecmaFeatures": { "jsx": true }, }, },
+        "function foo() {
+                            let fn = () => fn;
+                            fn = 1;
+                            console.log(fn);
+                        }",
     ];
 
     let fail = vec![
@@ -1505,6 +1538,23 @@ fn test() {
                         x = 2;
                         return <A prop={x} />;
                         }", // { "parserOptions": { "ecmaFeatures": { "jsx": true }, }, },
+        "function foo() {
+                            let fn = () => {};
+                            fn = 1;
+                            console.log(fn);
+                        }",
+        "function foo(arr) {
+                            let a = 0;
+                            for (a of arr) {}
+                            a = 2;
+                            console.log(a);
+                        }",
+        "function foo(obj) {
+                            let a = 0;
+                            for (a in obj) {}
+                            a = 2;
+                            console.log(a);
+                        }",
         "function foo(param) {
                             console.log(param);
                             param = 1;
