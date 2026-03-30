@@ -91,17 +91,23 @@ declare_oxc_lint!(
 
 // https://www.w3.org/TR/wai-aria/#widget_roles
 // NOTE: "tabpanel" is not included here because it's technically a section role. It can optionally be considered interactive within the context of a tablist, because its visibility is dynamically controlled by an element with the "tab" aria role. It's included in the recommended jsx-a11y config for this reason.
-const INTERACTIVE_HTML_ROLES: [&str; 19] = [
+const INTERACTIVE_HTML_ROLES: [&str; 29] = [
     "button",
     "checkbox",
+    "combobox",
+    "grid",
     "gridcell",
     "link",
+    "listbox",
+    "menu",
+    "menubar",
     "menuitem",
     "menuitemcheckbox",
     "menuitemradio",
     "option",
     "progressbar",
     "radio",
+    "radiogroup",
     "scrollbar",
     "searchbox",
     "separator",
@@ -109,7 +115,11 @@ const INTERACTIVE_HTML_ROLES: [&str; 19] = [
     "spinbutton",
     "switch",
     "tab",
+    "tablist",
     "textbox",
+    "toolbar",
+    "tree",
+    "treegrid",
     "treeitem",
 ];
 
@@ -273,6 +283,17 @@ fn test() {
             Some(serde_json::json!([{ "allowExpressionValues": true }])),
             None,
         ),
+        // Composite widget roles should be considered interactive
+        (r#"<div role="combobox" tabIndex="0" />"#, None, None),
+        (r#"<div role="grid" tabIndex="0" />"#, None, None),
+        (r#"<div role="listbox" tabIndex="0" />"#, None, None),
+        (r#"<div role="menu" tabIndex="0" />"#, None, None),
+        (r#"<div role="menubar" tabIndex="0" />"#, None, None),
+        (r#"<div role="radiogroup" tabIndex="0" />"#, None, None),
+        (r#"<div role="tablist" tabIndex="0" />"#, None, None),
+        (r#"<div role="tree" tabIndex="0" />"#, None, None),
+        (r#"<div role="treegrid" tabIndex="0" />"#, None, None),
+        (r#"<div role="toolbar" tabIndex="0" />"#, None, None),
     ];
 
     let fail = vec![
