@@ -1,21 +1,22 @@
-use std::{collections::VecDeque, fmt::Debug};
+use std::fmt::Debug;
 
 use itertools::Either;
 use lazy_regex::{Lazy, Regex, RegexBuilder, lazy_regex};
-use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
 
-use oxc_ast::ast::{
-    ArrowFunctionExpression, Expression, Function, ObjectExpression, ObjectProperty,
-    ObjectPropertyKind, PropertyKind,
+use oxc_ast::{
+    AstKind,
+    ast::{
+        ArrowFunctionExpression, Expression, Function, ObjectExpression, ObjectProperty,
+        ObjectPropertyKind, PropertyKind,
+    },
 };
 use oxc_ast_visit::{Visit, walk};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{ReferenceId, ScopeId};
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn expected_all_properties_shorthanded(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Expected shorthand for all properties.").with_label(span)
@@ -193,396 +194,363 @@ impl Rule for ObjectShorthand {
         )))
     }
 
-    fn run_once(&self, ctx: &LintContext) {
-        let mut checker = ObjectShorthandChecker::new(self, ctx);
-        walk::walk_program(&mut checker, ctx.semantic().nodes().program());
-    }
-}
-
-struct ObjectShorthandChecker<'a, 'c> {
-    rule: &'c ObjectShorthand,
-    ctx: &'c LintContext<'a>,
-    lexical_scope_stack: VecDeque<FxHashSet<ScopeId>>,
-    arrows_with_lexical_identifiers: FxHashSet<ScopeId>,
-    arguments_identifiers: FxHashSet<ReferenceId>,
-}
-
-impl<'a, 'c> ObjectShorthandChecker<'a, 'c> {
-    fn new(rule: &'c ObjectShorthand, ctx: &'c LintContext<'a>) -> Self {
-        let arguments_identifiers = ctx
-            .scoping()
-            .root_unresolved_references()
-            .get("arguments")
-            .map(|v| v.iter().copied().collect())
-            .unwrap_or_default();
-
-        Self {
-            rule,
-            ctx,
-            lexical_scope_stack: VecDeque::default(),
-            arrows_with_lexical_identifiers: FxHashSet::default(),
-            arguments_identifiers,
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        match node.kind() {
+            AstKind::ObjectExpression(object_expr) => {
+                if self.apply_consistent {
+                    check_consistency(ctx, object_expr, false);
+                } else if self.apply_consistent_as_needed {
+                    check_consistency(ctx, object_expr, true);
+                }
+            }
+            AstKind::ObjectProperty(property) => check_object_property(self, ctx, property),
+            _ => {}
         }
     }
+}
 
-    fn make_function_shorthand(
-        &self,
-        property: &ObjectProperty,
-        fn_or_arrow_fn: Either<&Function, &ArrowFunctionExpression>,
-    ) {
-        let span = match fn_or_arrow_fn {
-            Either::Left(func) => func.span(),
-            Either::Right(func) => func.span(),
-        };
-        self.ctx.diagnostic_with_fix(expected_method_shorthand(span), |fixer| {
-            let has_comment = self.ctx.semantic().has_comments_between(Span::new(
-                property.key.span().start,
-                property.value.span().start,
-            ));
-            if has_comment {
-                return fixer.noop();
-            }
+fn make_function_shorthand<'a>(
+    ctx: &LintContext<'a>,
+    property: &ObjectProperty<'a>,
+    fn_or_arrow_fn: Either<&Function<'a>, &ArrowFunctionExpression<'a>>,
+) {
+    let span = match fn_or_arrow_fn {
+        Either::Left(func) => func.span(),
+        Either::Right(func) => func.span(),
+    };
+    ctx.diagnostic_with_fix(expected_method_shorthand(span), |fixer| {
+        let has_comment = ctx.semantic().has_comments_between(Span::new(
+            property.key.span().start,
+            property.value.span().start,
+        ));
+        if has_comment {
+            return fixer.noop();
+        }
 
-            let key_prefix = match fn_or_arrow_fn {
-                Either::Left(func) => match (func.r#async, func.generator) {
-                    (true, true) => "async *",
-                    (true, false) => "async ",
-                    (false, true) => "*",
-                    (false, false) => "",
-                },
-                Either::Right(func) => {
-                    if func.r#async {
-                        "async "
-                    } else {
-                        ""
-                    }
+        let key_prefix = match fn_or_arrow_fn {
+            Either::Left(func) => match (func.r#async, func.generator) {
+                (true, true) => "async *",
+                (true, false) => "async ",
+                (false, true) => "*",
+                (false, false) => "",
+            },
+            Either::Right(func) => {
+                if func.r#async {
+                    "async "
+                } else {
+                    ""
                 }
-            };
+            }
+        };
 
-            let property_key_span = property.key.span();
-            let key_text = if property.computed {
-                let (Some(paren_start), Some(paren_end_offset)) = (
-                    self.ctx.find_prev_token_from(property_key_span.start, "["),
-                    self.ctx.find_next_token_from(property_key_span.end, "]"),
-                ) else {
+        let property_key_span = property.key.span();
+        let key_text = if property.computed {
+            let (Some(paren_start), Some(paren_end_offset)) = (
+                ctx.find_prev_token_from(property_key_span.start, "["),
+                ctx.find_next_token_from(property_key_span.end, "]"),
+            ) else {
+                return fixer.noop();
+            };
+            ctx.source_range(Span::new(paren_start, property_key_span.end + paren_end_offset + 1))
+        } else {
+            ctx.source_range(property_key_span)
+        };
+
+        match fn_or_arrow_fn {
+            Either::Left(func) => {
+                let next_token = if func.generator {
+                    ctx.find_next_token_from(property_key_span.end, "*")
+                        .map(|offset| offset + 1 /* "*".len() */)
+                } else {
+                    ctx.find_next_token_from(property_key_span.end, "function")
+                        .map(|offset| offset + 8 /* "function".len() */)
+                };
+                let Some(func_token) = next_token else {
                     return fixer.noop();
                 };
-                self.ctx.source_range(Span::new(
-                    paren_start,
-                    property_key_span.end + paren_end_offset + 1,
-                ))
-            } else {
-                self.ctx.source_range(property_key_span)
-            };
-
-            match fn_or_arrow_fn {
-                Either::Left(func) => {
-                    let next_token = if func.generator {
-                        self.ctx
-                            .find_next_token_from(property_key_span.end, "*")
-                            .map(|offset| offset + 1 /* "*".len() */)
-                    } else {
-                        self.ctx
-                            .find_next_token_from(property_key_span.end, "function")
-                            .map(|offset| offset + 8 /* "function".len() */)
-                    };
-                    let Some(func_token) = next_token else {
-                        return fixer.noop();
-                    };
-                    let body = self
-                        .ctx
-                        .source_range(Span::new(property_key_span.end + func_token, func.span.end));
-                    let ret = format!("{key_prefix}{key_text}{body}");
-                    fixer.replace(property.span, ret)
-                }
-                Either::Right(func) => {
-                    let next_token = self
-                        .ctx
-                        .find_prev_token_from(func.body.span.start, "=>")
-                        .map(|offset| offset + 2 /* "=>".len() */);
-                    let Some(arrow_token) = next_token else {
-                        return fixer.noop();
-                    };
-                    let arrow_body = self.ctx.source_range(Span::new(
-                        arrow_token,
-                        property.value.without_parentheses().span().end,
-                    ));
-                    let old_param_text = self.ctx.source_range(Span::new(
-                        func.params.span.start,
-                        func.return_type.as_ref().map_or(func.params.span.end, |p| p.span.end),
-                    ));
-                    let should_add_parens = if func.r#async {
-                        if let Some(async_token) =
-                            self.ctx.find_next_token_from(func.span.start, "async")
-                            && let Some(fist_param) = func.params.items.first()
-                        {
-                            self.ctx
-                                .find_next_token_within(
-                                    func.span.start + async_token,
-                                    fist_param.span.start,
-                                    "(",
-                                )
-                                .is_none()
-                        } else {
-                            false
-                        }
-                    } else if let Some(fist_param) = func.params.items.first() {
-                        self.ctx
-                            .find_next_token_within(func.span.start, fist_param.span.start, "(")
-                            .is_none()
+                let body =
+                    ctx.source_range(Span::new(property_key_span.end + func_token, func.span.end));
+                let ret = format!("{key_prefix}{key_text}{body}");
+                fixer.replace(property.span, ret)
+            }
+            Either::Right(func) => {
+                let next_token = ctx
+                    .find_prev_token_from(func.body.span.start, "=>")
+                    .map(|offset| offset + 2 /* "=>".len() */);
+                let Some(arrow_token) = next_token else {
+                    return fixer.noop();
+                };
+                let arrow_body = ctx.source_range(Span::new(
+                    arrow_token,
+                    property.value.without_parentheses().span().end,
+                ));
+                let old_param_text = ctx.source_range(Span::new(
+                    func.params.span.start,
+                    func.return_type.as_ref().map_or(func.params.span.end, |p| p.span.end),
+                ));
+                let should_add_parens = if func.r#async {
+                    if let Some(async_token) = ctx.find_next_token_from(func.span.start, "async")
+                        && let Some(fist_param) = func.params.items.first()
+                    {
+                        ctx.find_next_token_within(
+                            func.span.start + async_token,
+                            fist_param.span.start,
+                            "(",
+                        )
+                        .is_none()
                     } else {
                         false
-                    };
-                    let new_param_text = if should_add_parens {
-                        format!("({old_param_text})")
-                    } else {
-                        old_param_text.to_string()
-                    };
-                    let type_param = func
-                        .type_parameters
-                        .as_ref()
-                        .map_or("", |t| self.ctx.source_range(t.span()));
-                    let ret =
-                        format!("{key_prefix}{key_text}{type_param}{new_param_text}{arrow_body}");
-                    fixer.replace(property.span, ret)
-                }
-            }
-        });
-    }
-
-    fn make_function_long_form(&self, property: &ObjectProperty) {
-        let diagnostic = if self.rule.apply_never {
-            expected_method_longform(property.span)
-        } else {
-            expected_literal_method_longform(property.span)
-        };
-        self.ctx.diagnostic_with_fix(diagnostic, |fixer| {
-            let property_key_span = property.key.span();
-            let key_text_range = if property.computed {
-                let (Some(paren_start), Some(paren_end_offset)) = (
-                    self.ctx.find_prev_token_from(property_key_span.start, "["),
-                    self.ctx.find_next_token_from(property_key_span.end, "]"),
-                ) else {
-                    return fixer.noop();
+                    }
+                } else if let Some(fist_param) = func.params.items.first() {
+                    ctx.find_next_token_within(func.span.start, fist_param.span.start, "(")
+                        .is_none()
+                } else {
+                    false
                 };
-                Span::new(paren_start, property_key_span.end + paren_end_offset + 1)
-            } else {
-                property_key_span
-            };
-            let key_text = self.ctx.source_range(key_text_range);
+                let new_param_text = if should_add_parens {
+                    format!("({old_param_text})")
+                } else {
+                    old_param_text.to_string()
+                };
+                let type_param =
+                    func.type_parameters.as_ref().map_or("", |t| ctx.source_range(t.span()));
+                let ret = format!("{key_prefix}{key_text}{type_param}{new_param_text}{arrow_body}");
+                fixer.replace(property.span, ret)
+            }
+        }
+    });
+}
 
-            let Expression::FunctionExpression(func) = &property.value.without_parentheses() else {
+fn make_function_long_form<'a>(
+    rule: &ObjectShorthand,
+    ctx: &LintContext<'a>,
+    property: &ObjectProperty<'a>,
+) {
+    let diagnostic = if rule.apply_never {
+        expected_method_longform(property.span)
+    } else {
+        expected_literal_method_longform(property.span)
+    };
+    ctx.diagnostic_with_fix(diagnostic, |fixer| {
+        let property_key_span = property.key.span();
+        let key_text_range = if property.computed {
+            let (Some(paren_start), Some(paren_end_offset)) = (
+                ctx.find_prev_token_from(property_key_span.start, "["),
+                ctx.find_next_token_from(property_key_span.end, "]"),
+            ) else {
                 return fixer.noop();
             };
-            let function_header = match (func.r#async, func.generator) {
-                (true, true) => "async function*",
-                (true, false) => "async function",
-                (false, true) => "function*",
-                (false, false) => "function",
-            };
+            Span::new(paren_start, property_key_span.end + paren_end_offset + 1)
+        } else {
+            property_key_span
+        };
+        let key_text = ctx.source_range(key_text_range);
 
-            // always include async and * in replace range
-            let replace_range = Span::new(property.span.start, key_text_range.end);
-            fixer.replace(replace_range, format!("{key_text}: {function_header}"))
-        });
-    }
-
-    fn check_longform_methods(&self, property: &ObjectProperty) {
-        if self.rule.ignore_constructors
-            && property.key.is_identifier()
-            && property.key.name().is_some_and(is_constructor)
-        {
-            return;
-        }
-
-        if let (Some(pattern), Some(static_name)) =
-            (self.rule.methods_ignore_pattern.as_ref(), property.key.static_name())
-            && pattern.is_match(static_name.as_ref())
-        {
-            return;
-        }
-
-        let is_key_string_literal = is_property_key_string_literal(property);
-        if self.rule.avoid_quotes && is_key_string_literal {
-            return;
-        }
-
-        if let Expression::FunctionExpression(func) = &property.value.without_parentheses() {
-            self.make_function_shorthand(property, Either::Left(func));
-        }
-
-        if self.rule.avoid_explicit_return_arrows
-            && let Expression::ArrowFunctionExpression(func) = &property.value.without_parentheses()
-            && !self.arrows_with_lexical_identifiers.contains(&func.scope_id())
-            && !func.expression
-        {
-            self.make_function_shorthand(property, Either::Right(func));
-        }
-    }
-
-    fn check_shorthand_properties(&self, property: &ObjectProperty) {
-        if let Some(property_name) = property.key.name() {
-            self.ctx.diagnostic_with_fix(expected_property_longform(property.span), |fixer| {
-                fixer.replace(property.span, format!("{property_name}: {property_name}"))
-            });
-        }
-    }
-
-    fn check_longform_properties(&self, property: &ObjectProperty) {
-        if self.rule.avoid_quotes && is_property_key_string_literal(property) {
-            return;
-        }
-
-        let Expression::Identifier(value_identifier) = &property.value.without_parentheses() else {
-            return;
+        let Expression::FunctionExpression(func) = &property.value.without_parentheses() else {
+            return fixer.noop();
+        };
+        let function_header = match (func.r#async, func.generator) {
+            (true, true) => "async function*",
+            (true, false) => "async function",
+            (false, true) => "function*",
+            (false, false) => "function",
         };
 
-        if self.ctx.comments().iter().any(|comment| {
-            if !property.span.contains_inclusive(comment.span) {
-                return false;
+        let replace_range = Span::new(property.span.start, key_text_range.end);
+        fixer.replace(replace_range, format!("{key_text}: {function_header}"))
+    });
+}
+
+fn check_longform_methods<'a>(
+    rule: &ObjectShorthand,
+    ctx: &LintContext<'a>,
+    property: &ObjectProperty<'a>,
+) {
+    if rule.ignore_constructors
+        && property.key.is_identifier()
+        && property.key.name().is_some_and(is_constructor)
+    {
+        return;
+    }
+
+    if let (Some(pattern), Some(static_name)) =
+        (rule.methods_ignore_pattern.as_ref(), property.key.static_name())
+        && pattern.is_match(static_name.as_ref())
+    {
+        return;
+    }
+
+    let is_key_string_literal = is_property_key_string_literal(property);
+    if rule.avoid_quotes && is_key_string_literal {
+        return;
+    }
+
+    if let Expression::FunctionExpression(func) = &property.value.without_parentheses() {
+        make_function_shorthand(ctx, property, Either::Left(func));
+    }
+
+    if rule.avoid_explicit_return_arrows
+        && let Expression::ArrowFunctionExpression(func) = &property.value.without_parentheses()
+        && !arrow_uses_lexical_identifiers(ctx, func)
+        && !func.expression
+    {
+        make_function_shorthand(ctx, property, Either::Right(func));
+    }
+}
+
+fn check_shorthand_properties<'a>(ctx: &LintContext<'a>, property: &ObjectProperty<'a>) {
+    if let Some(property_name) = property.key.name() {
+        ctx.diagnostic_with_fix(expected_property_longform(property.span), |fixer| {
+            fixer.replace(property.span, format!("{property_name}: {property_name}"))
+        });
+    }
+}
+
+fn check_longform_properties<'a>(
+    rule: &ObjectShorthand,
+    ctx: &LintContext<'a>,
+    property: &ObjectProperty<'a>,
+) {
+    if rule.avoid_quotes && is_property_key_string_literal(property) {
+        return;
+    }
+
+    let Expression::Identifier(value_identifier) = &property.value.without_parentheses() else {
+        return;
+    };
+
+    if ctx.comments().iter().any(|comment| {
+        if !property.span.contains_inclusive(comment.span) {
+            return false;
+        }
+        comment.is_jsdoc() && ctx.source_range(comment.span).contains("@type")
+    }) {
+        return;
+    }
+
+    if let Some(property_name) = property.key.name()
+        && property_name == value_identifier.name
+    {
+        ctx.diagnostic_with_fix(expected_property_shorthand(property.span), |fixer| {
+            if ctx.semantic().has_comments_between(Span::new(
+                property.key.span().start,
+                value_identifier.span.end,
+            )) {
+                return fixer.noop();
             }
-            // eslint checks `@type`
-            // https://github.com/eslint/eslint/blob/f9c3e7adf7550441341e05dc60ab23bd5307d568/lib/rules/object-shorthand.js#L592
-            comment.is_jsdoc() && self.ctx.source_range(comment.span).contains("@type")
-        }) {
-            return;
-        }
-
-        if let Some(property_name) = property.key.name()
-            && property_name == value_identifier.name
-        {
-            self.ctx.diagnostic_with_fix(expected_property_shorthand(property.span), |fixer| {
-                // x: /* */ x
-                // x: (/* */ x)
-                // "x": /* */ x
-                // "x": (/* */ x)
-                if self.ctx.semantic().has_comments_between(Span::new(
-                    property.key.span().start,
-                    value_identifier.span.end,
-                )) {
-                    return fixer.noop();
-                }
-                fixer.replace(property.span, property_name.to_string())
-            });
-        }
+            fixer.replace(property.span, property_name.to_string())
+        });
     }
+}
 
-    fn check_consistency(&self, obj_expr: &ObjectExpression, check_redundancy: bool) {
-        let properties =
-            obj_expr.properties.iter().filter_map(|property_kind| match property_kind {
-                ObjectPropertyKind::ObjectProperty(property) => {
-                    can_property_have_shorthand(property).then_some(property)
-                }
-                ObjectPropertyKind::SpreadProperty(_) => None,
-            });
+fn check_consistency<'a>(
+    ctx: &LintContext<'a>,
+    obj_expr: &ObjectExpression<'a>,
+    check_redundancy: bool,
+) {
+    let properties = obj_expr.properties.iter().filter_map(|property_kind| match property_kind {
+        ObjectPropertyKind::ObjectProperty(property) => {
+            can_property_have_shorthand(property).then_some(property)
+        }
+        ObjectPropertyKind::SpreadProperty(_) => None,
+    });
 
-        let properties_count = properties.clone().count();
-        if properties_count > 0 {
-            let shorthand_properties_count =
-                properties.clone().filter(|p| is_shorthand_property(p)).count();
+    let properties_count = properties.clone().count();
+    if properties_count > 0 {
+        let shorthand_properties_count =
+            properties.clone().filter(|p| is_shorthand_property(p)).count();
 
-            if shorthand_properties_count != properties_count {
-                if shorthand_properties_count > 0 {
-                    self.ctx.diagnostic(unexpected_mix(obj_expr.span));
-                } else if check_redundancy && properties.clone().all(|p| is_redundant_property(p)) {
-                    self.ctx.diagnostic(expected_all_properties_shorthanded(obj_expr.span));
-                }
+        if shorthand_properties_count != properties_count {
+            if shorthand_properties_count > 0 {
+                ctx.diagnostic(unexpected_mix(obj_expr.span));
+            } else if check_redundancy && properties.clone().all(|p| is_redundant_property(p)) {
+                ctx.diagnostic(expected_all_properties_shorthanded(obj_expr.span));
             }
-        }
-    }
-
-    fn enter_function(&mut self) {
-        self.lexical_scope_stack.push_front(FxHashSet::default());
-    }
-
-    fn exit_function(&mut self) {
-        self.lexical_scope_stack.pop_front();
-    }
-
-    fn report_lexical_identifier(&mut self) {
-        let Some(scope) = self.lexical_scope_stack.front() else { return };
-        for &item in scope {
-            self.arrows_with_lexical_identifiers.insert(item);
         }
     }
 }
 
-impl<'a> Visit<'a> for ObjectShorthandChecker<'a, '_> {
-    fn visit_function(&mut self, it: &oxc_ast::ast::Function<'a>, flags: oxc_semantic::ScopeFlags) {
-        self.enter_function();
-        walk::walk_function(self, it, flags);
-        self.exit_function();
+fn check_object_property<'a>(
+    rule: &ObjectShorthand,
+    ctx: &LintContext<'a>,
+    property: &ObjectProperty<'a>,
+) {
+    let is_concise_property = property.shorthand || property.method;
+
+    if !can_property_have_shorthand(property) {
+        return;
     }
 
-    fn visit_arrow_function_expression(&mut self, it: &oxc_ast::ast::ArrowFunctionExpression<'a>) {
-        let scope_id = it.scope_id();
-        if self.lexical_scope_stack.is_empty() {
-            self.enter_function();
+    if is_concise_property {
+        if property.method
+            && (rule.apply_never || rule.avoid_quotes && is_property_key_string_literal(property))
+        {
+            make_function_long_form(rule, ctx, property);
+        } else if rule.apply_never {
+            check_shorthand_properties(ctx, property);
         }
-        self.lexical_scope_stack.get_mut(0).map(|scope| scope.insert(scope_id));
+    } else if rule.apply_to_methods && is_property_value_anonymous_function(property) {
+        check_longform_methods(rule, ctx, property);
+    } else if rule.apply_to_properties {
+        check_longform_properties(rule, ctx, property);
+    }
+}
+
+fn arrow_uses_lexical_identifiers<'a>(
+    ctx: &LintContext<'a>,
+    arrow: &ArrowFunctionExpression<'a>,
+) -> bool {
+    let mut visitor = ArrowFunctionLexicalIdentifierVisitor::new(ctx);
+    visitor.visit_arrow_function_expression(arrow);
+    visitor.has_lexical_identifier
+}
+
+struct ArrowFunctionLexicalIdentifierVisitor<'a, 'c> {
+    ctx: &'c LintContext<'a>,
+    has_lexical_identifier: bool,
+}
+
+impl<'a, 'c> ArrowFunctionLexicalIdentifierVisitor<'a, 'c> {
+    fn new(ctx: &'c LintContext<'a>) -> Self {
+        Self { ctx, has_lexical_identifier: false }
+    }
+}
+
+impl<'a> Visit<'a> for ArrowFunctionLexicalIdentifierVisitor<'a, '_> {
+    fn visit_function(
+        &mut self,
+        _it: &oxc_ast::ast::Function<'a>,
+        _flags: oxc_semantic::ScopeFlags,
+    ) {
+    }
+
+    fn visit_arrow_function_expression(&mut self, it: &ArrowFunctionExpression<'a>) {
+        if self.has_lexical_identifier {
+            return;
+        }
+
         walk::walk_arrow_function_expression(self, it);
-        self.lexical_scope_stack.get_mut(0).map(|scope| scope.remove(&scope_id));
     }
 
     fn visit_this_expression(&mut self, _it: &oxc_ast::ast::ThisExpression) {
-        self.report_lexical_identifier();
+        self.has_lexical_identifier = true;
     }
 
     fn visit_super(&mut self, _it: &oxc_ast::ast::Super) {
-        self.report_lexical_identifier();
+        self.has_lexical_identifier = true;
     }
 
     fn visit_meta_property(&mut self, it: &oxc_ast::ast::MetaProperty<'a>) {
         if it.meta.name == "new" && it.property.name == "target" {
-            self.report_lexical_identifier();
+            self.has_lexical_identifier = true;
         }
     }
 
     fn visit_identifier_reference(&mut self, it: &oxc_ast::ast::IdentifierReference<'a>) {
-        if self.arguments_identifiers.contains(&it.reference_id()) {
-            self.report_lexical_identifier();
-        }
-    }
-
-    fn visit_object_expression(&mut self, it: &ObjectExpression<'a>) {
-        if self.rule.apply_consistent {
-            self.check_consistency(it, false);
-        } else if self.rule.apply_consistent_as_needed {
-            self.check_consistency(it, true);
-        }
-        walk::walk_object_expression(self, it);
-    }
-
-    fn visit_object_property(&mut self, it: &ObjectProperty<'a>) {
-        walk::walk_object_property(self, it);
-        let property = it;
-        let is_concise_property = property.shorthand || property.method;
-
-        if !can_property_have_shorthand(property) {
-            return;
-        }
-
-        if is_concise_property {
-            if property.method
-                && (self.rule.apply_never
-                    || self.rule.avoid_quotes && is_property_key_string_literal(property))
-            {
-                // from { x() {} } to { x: function() {} }
-                self.make_function_long_form(property);
-            } else if self.rule.apply_never {
-                // from { x } to { x: x }
-                self.check_shorthand_properties(property);
-            }
-        } else if self.rule.apply_to_methods && is_property_value_anonymous_function(property) {
-            // from { x: function() {} }   to { x() {} }
-            // from { [x]: function() {} } to { [x]() {} }
-            // from { x: () => {} }        to { x() {} }
-            // from { [x]: () => {} }      to { [x]() {} }
-            self.check_longform_methods(property);
-        } else if self.rule.apply_to_properties {
-            // from { x: x }   to { x }
-            // from { "x": x } to { x }
-            self.check_longform_properties(property);
+        if self.ctx.scoping().root_unresolved_references().get("arguments").is_some_and(
+            |references| references.iter().any(|&reference_id| reference_id == it.reference_id()),
+        ) {
+            self.has_lexical_identifier = true;
         }
     }
 }
