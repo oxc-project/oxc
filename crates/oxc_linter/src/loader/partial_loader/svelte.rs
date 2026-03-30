@@ -65,7 +65,8 @@ impl<'a> SveltePartialLoader<'a> {
 
         let content = &self.source_text[*pointer..*pointer + offset];
         let lang = Self::extract_lang_attribute(content);
-        let Ok(mut source_type) = SourceType::from_extension(lang) else { return None };
+        let mut source_type =
+            SourceType::from_extension(lang).unwrap_or_else(|_| SourceType::mjs());
 
         // Svelte script blocks use module semantics. Keep the existing behavior for plain
         // `<script>` blocks while also correctly detecting `lang="ts"`, `module`, and
@@ -92,35 +93,13 @@ impl<'a> SveltePartialLoader<'a> {
     fn extract_lang_attribute(content: &str) -> &str {
         Self::find_attribute(content, "lang")
             .flatten()
-            .map(Self::normalize_static_string_expression)
             .filter(|lang| !lang.is_empty())
             .unwrap_or("mjs")
     }
 
     fn is_module_script(content: &str) -> bool {
         Self::find_attribute(content, "module").is_some()
-            || matches!(
-                Self::find_attribute(content, "context")
-                    .flatten()
-                    .map(Self::normalize_static_string_expression),
-                Some("module")
-            )
-    }
-
-    fn normalize_static_string_expression(value: &str) -> &str {
-        let value = value.trim();
-        let Some(inner) = value.strip_prefix('{').and_then(|rest| rest.strip_suffix('}')) else {
-            return value;
-        };
-        let inner = inner.trim();
-        if inner.len() >= 2
-            && ((inner.starts_with('"') && inner.ends_with('"'))
-                || (inner.starts_with('\'') && inner.ends_with('\'')))
-        {
-            &inner[1..inner.len() - 1]
-        } else {
-            value
-        }
+            || matches!(Self::find_attribute(content, "context"), Some(Some("module")))
     }
 
     fn find_attribute<'b>(content: &'b str, target: &str) -> Option<Option<&'b str>> {
@@ -362,16 +341,14 @@ mod test {
             lang={"ts"}
             accesskey=">"
             >
-            let scoops = $state(1);
-            let flavours = $state([]);
-
-            const formatter = new Intl.ListFormat('en', { style: 'long', type: 'conjunction' });
+            let scoops = 1;
+            let flavours = [];
         </script>
         "#;
 
         let result = parse_svelte(source_text);
-        assert!(result.source_type.is_typescript());
+        assert!(!result.source_type.is_typescript());
         assert!(result.source_type.is_module());
-        assert!(result.source_text.contains("let scoops = $state(1);"));
+        assert!(result.source_text.contains("let scoops = 1;"));
     }
 }
