@@ -42,52 +42,54 @@ impl<'a> SveltePartialLoader<'a> {
         let script_end_finder = Finder::new(SCRIPT_END);
         let comment_start_finder = FinderRev::new(COMMENT_START);
         let comment_end_finder: Finder<'_> = Finder::new(COMMENT_END);
-        // find opening "<script"
-        *pointer += find_script_start(
-            self.source_text,
-            *pointer,
-            &script_start_finder,
-            &comment_start_finder,
-            &comment_end_finder,
-        )?;
+        loop {
+            // find opening "<script"
+            *pointer += find_script_start(
+                self.source_text,
+                *pointer,
+                &script_start_finder,
+                &comment_start_finder,
+                &comment_end_finder,
+            )?;
 
-        // skip `<script-...>` tags and keep searching for a real `<script>` block
-        let is_script_tag_boundary = self.source_text[*pointer..]
-            .chars()
-            .next()
-            .is_some_and(|ch| ch.is_whitespace() || ch == '>');
-        if !is_script_tag_boundary {
-            return self.parse_script(pointer);
+            // skip `<script-...>` tags and keep searching for a real `<script>` block
+            let is_script_tag_boundary = self.source_text[*pointer..]
+                .chars()
+                .next()
+                .is_some_and(|ch| ch.is_whitespace() || ch == '>');
+            if !is_script_tag_boundary {
+                continue;
+            }
+
+            // find closing ">"
+            let offset = find_script_closing_angle(self.source_text, *pointer)?;
+
+            let content = &self.source_text[*pointer..*pointer + offset];
+            let lang = Self::extract_lang_attribute(content);
+            let mut source_type =
+                SourceType::from_extension(lang).unwrap_or_else(|_| SourceType::mjs());
+
+            // Svelte script blocks use module semantics. Keep the existing behavior for plain
+            // `<script>` blocks while also correctly detecting `lang="ts"`, `module`, and
+            // `context="module"`.
+            if source_type.is_unambiguous() || Self::is_module_script(content) {
+                source_type = source_type.with_module(true);
+            }
+
+            *pointer += offset + 1;
+            let js_start = *pointer;
+
+            // find "</script>"
+            let offset = script_end_finder.find(&self.source_text.as_bytes()[*pointer..])?;
+            let js_end = *pointer + offset;
+            *pointer += offset + SCRIPT_END.len();
+
+            let source_text = &self.source_text[js_start..js_end];
+
+            // NOTE: loader checked that source_text.len() is less than u32::MAX
+            #[expect(clippy::cast_possible_truncation)]
+            return Some(JavaScriptSource::partial(source_text, source_type, js_start as u32));
         }
-
-        // find closing ">"
-        let offset = find_script_closing_angle(self.source_text, *pointer)?;
-
-        let content = &self.source_text[*pointer..*pointer + offset];
-        let lang = Self::extract_lang_attribute(content);
-        let mut source_type =
-            SourceType::from_extension(lang).unwrap_or_else(|_| SourceType::mjs());
-
-        // Svelte script blocks use module semantics. Keep the existing behavior for plain
-        // `<script>` blocks while also correctly detecting `lang="ts"`, `module`, and
-        // `context="module"`.
-        if source_type.is_unambiguous() || Self::is_module_script(content) {
-            source_type = source_type.with_module(true);
-        }
-
-        *pointer += offset + 1;
-        let js_start = *pointer;
-
-        // find "</script>"
-        let offset = script_end_finder.find(&self.source_text.as_bytes()[*pointer..])?;
-        let js_end = *pointer + offset;
-        *pointer += offset + SCRIPT_END.len();
-
-        let source_text = &self.source_text[js_start..js_end];
-
-        // NOTE: loader checked that source_text.len() is less than u32::MAX
-        #[expect(clippy::cast_possible_truncation)]
-        Some(JavaScriptSource::partial(source_text, source_type, js_start as u32))
     }
 
     fn extract_lang_attribute(content: &str) -> &str {
@@ -366,5 +368,15 @@ mod test {
         assert!(!result.source_type.is_typescript());
         assert!(result.source_type.is_module());
         assert!(result.source_text.contains("let scoops = 1;"));
+    }
+
+    #[test]
+    fn test_parse_svelte_with_many_script_like_tags() {
+        let mut source_text = "<script-setup>noop</script-setup>\n".repeat(2_000);
+        source_text.push_str("<script>debugger;</script>");
+
+        let result = parse_svelte(&source_text);
+        assert_eq!(result.source_text.trim(), "debugger;");
+        assert!(result.source_type.is_module());
     }
 }
