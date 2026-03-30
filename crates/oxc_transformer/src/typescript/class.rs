@@ -207,11 +207,33 @@ impl<'a> TypeScript<'a> {
         }
     }
 
-    pub(super) fn transform_class_on_exit(&self, class: &mut Class<'a>, ctx: &TraverseCtx<'a>) {
+    pub(super) fn transform_class_on_exit(&self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
         if !self.remove_class_fields_without_initializer {
             return;
         }
 
+        // Extract side-effectful computed keys from properties that will be removed.
+        // This handles the case where legacy decorators mutate the key to an assignment expression
+        // (e.g., `[_FIELD_NAME = FIELD_NAME]`). The assignment must be preserved in a static block
+        // so it evaluates at class definition time, matching TypeScript's output.
+        //
+        // Note: `transform_class_fields` (in `enter_class`) already handles key extraction for
+        // keys that need temp vars BEFORE the decorator runs. But the legacy decorator mutates
+        // keys during body traversal (after `enter_class`), so we must handle those here.
+        let mut extracted_keys: Vec<Expression<'a>> = Vec::new();
+        for element in &mut class.body.body {
+            if let ClassElement::PropertyDefinition(prop) = element
+                && prop.value.is_none()
+                && !prop.key.is_private_identifier()
+                && let Some(key) = prop.key.as_expression_mut()
+                && key_needs_temp_var(key, ctx)
+            {
+                extracted_keys.push(key.take_in(ctx.ast));
+            }
+        }
+
+        // Remove all properties without initializers.
+        // Keys that were side-effectful have been extracted above (replaced with null).
         class.body.body.retain(|element| {
             if let ClassElement::PropertyDefinition(prop) = element
                 && prop.value.is_none()
@@ -224,6 +246,24 @@ impl<'a> TypeScript<'a> {
             }
             true
         });
+
+        // Insert extracted keys in a static block, matching TypeScript's output:
+        // `class C { static { _a = FIELD_NAME; } }`
+        if !extracted_keys.is_empty() {
+            let sequence_expression =
+                ctx.ast.expression_sequence(SPAN, ctx.ast.vec_from_iter(extracted_keys));
+            let statement = ctx.ast.statement_expression(SPAN, sequence_expression);
+            let scope_id = ctx.create_child_scope(
+                class.scope_id(),
+                ScopeFlags::StrictMode | ScopeFlags::ClassStaticBlock,
+            );
+            let element = ctx.ast.class_element_static_block_with_scope_id(
+                SPAN,
+                ctx.ast.vec1(statement),
+                scope_id,
+            );
+            class.body.body.insert(0, element);
+        }
     }
 
     /// Transform constructor parameters that include modifier to `this` assignments and
