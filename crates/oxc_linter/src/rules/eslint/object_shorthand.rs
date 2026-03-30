@@ -18,40 +18,32 @@ use oxc_span::{GetSpan, Span};
 use crate::{context::LintContext, rule::Rule};
 
 fn expected_all_properties_shorthanded(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint(object-shorthand): Expected shorthand for all properties.")
-        .with_label(span)
+    OxcDiagnostic::warn("Expected shorthand for all properties.").with_label(span)
 }
 
 fn expected_literal_method_longform(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(
-        "eslint(object-shorthand): Expected longform method syntax for string literal keys.",
-    )
-    .with_label(span)
+    OxcDiagnostic::warn("Expected longform method syntax for string literal keys.").with_label(span)
 }
 
 fn expected_property_shorthand(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint(object-shorthand): Expected property shorthand.").with_label(span)
+    OxcDiagnostic::warn("Expected property shorthand.").with_label(span)
 }
 
 fn expected_property_longform(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint(object-shorthand): Expected longform property syntax.")
-        .with_label(span)
+    OxcDiagnostic::warn("Expected longform property syntax.").with_label(span)
 }
 
 fn expected_method_shorthand(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint(object-shorthand): Expected method shorthand.").with_label(span)
+    OxcDiagnostic::warn("Expected method shorthand.").with_label(span)
 }
 
 fn expected_method_longform(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint(object-shorthand): Expected longform method syntax.")
-        .with_label(span)
+    OxcDiagnostic::warn("Expected longform method syntax.").with_label(span)
 }
 
 fn unexpected_mix(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(
-        "eslint(object-shorthand): Unexpected mix of shorthand and non-shorthand properties.",
-    )
-    .with_label(span)
+    OxcDiagnostic::warn("Unexpected mix of shorthand and non-shorthand properties.")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
