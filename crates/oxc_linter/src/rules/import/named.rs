@@ -19,12 +19,20 @@ fn has_default_export(module_record: &ModuleRecord) -> bool {
         || module_record.exported_bindings.contains_key("default")
 }
 
+fn is_synthesized_indirect_export_entry(export_entry: &ExportEntry) -> bool {
+    !export_entry.statement_span.contains_inclusive(export_entry.span)
+}
+
 fn is_reexport_of_default_import(
     module_record: &ModuleRecord,
     export_entry: &ExportEntry,
     import_name: &NameSpan,
     remote_module_record: &ModuleRecord,
 ) -> bool {
+    if !is_synthesized_indirect_export_entry(export_entry) {
+        return false;
+    }
+
     let Some(module_request) = &export_entry.module_request else {
         return false;
     };
@@ -313,6 +321,22 @@ fn regression_extensionless_default_import_barrel() {
         vec![("import defaultTarget from './default_target';\nexport { defaultTarget };", None)];
 
     Tester::new(Named::NAME, Named::PLUGIN, pass, vec![])
+        .change_rule_path("extensionless_default_import/index.js")
+        .with_import_plugin(true)
+        .intentionally_allow_no_fix_tests()
+        .test();
+}
+
+#[test]
+fn regression_named_reexport_is_not_default_import_barrel() {
+    use crate::tester::Tester;
+
+    let fail = vec![(
+        "import defaultTarget from './default_target';\nexport { defaultTarget } from './default_target';",
+        None,
+    )];
+
+    Tester::new(Named::NAME, Named::PLUGIN, vec![], fail)
         .change_rule_path("extensionless_default_import/index.js")
         .with_import_plugin(true)
         .intentionally_allow_no_fix_tests()
