@@ -1,5 +1,5 @@
 use itertools::Either;
-use lazy_regex::{Lazy, Regex, RegexBuilder, lazy_regex};
+use lazy_regex::{Lazy, Regex, lazy_regex};
 use schemars::JsonSchema;
 
 use oxc_ast::{
@@ -13,8 +13,14 @@ use oxc_ast_visit::{Visit, walk};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use serde::Deserialize;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{Rule, TupleRuleConfig},
+    utils::deserialize_regex_option,
+};
 
 fn expected_all_properties_shorthanded(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Expected shorthand for all properties.").with_label(span)
@@ -48,35 +54,41 @@ fn unexpected_mix(span: Span) -> OxcDiagnostic {
 #[derive(Debug, Default, Clone)]
 pub struct ObjectShorthand(Box<ObjectShorthandConfig>);
 
-#[derive(Debug, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase")]
-pub struct ObjectShorthandConfigJSON {
-    apply_to_methods: bool,
-    apply_to_properties: bool,
-    apply_never: bool,
-    apply_consistent: bool,
-    apply_consistent_as_needed: bool,
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+#[serde(default)]
+pub struct ObjectShorthandTupleConfig(ShorthandType, ObjectShorthandOptions);
 
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[serde(default, deny_unknown_fields)]
+pub struct ObjectShorthandOptions {
     avoid_quotes: bool,
     ignore_constructors: bool,
     avoid_explicit_return_arrows: bool,
-    methods_ignore_pattern: Option<String>,
+    #[serde(default, deserialize_with = "deserialize_regex_option")]
+    methods_ignore_pattern: Option<Regex>,
 }
 
-impl ObjectShorthandConfigJSON {
-    fn into_object_shorthand_config(self) -> ObjectShorthandConfig {
+impl From<ObjectShorthandTupleConfig> for ObjectShorthandConfig {
+    fn from(value: ObjectShorthandTupleConfig) -> Self {
+        let ObjectShorthandTupleConfig(shorthand_type, options) = value;
+
         ObjectShorthandConfig {
-            apply_to_methods: self.apply_to_methods,
-            apply_to_properties: self.apply_to_properties,
-            apply_never: self.apply_never,
-            apply_consistent: self.apply_consistent,
-            apply_consistent_as_needed: self.apply_consistent_as_needed,
-            avoid_quotes: self.avoid_quotes,
-            ignore_constructors: self.ignore_constructors,
-            avoid_explicit_return_arrows: self.avoid_explicit_return_arrows,
-            methods_ignore_pattern: self
-                .methods_ignore_pattern
-                .and_then(|p| RegexBuilder::new(&p).build().ok()),
+            apply_to_methods: matches!(
+                shorthand_type,
+                ShorthandType::Methods | ShorthandType::Always
+            ),
+            apply_to_properties: matches!(
+                shorthand_type,
+                ShorthandType::Properties | ShorthandType::Always
+            ),
+            apply_never: matches!(shorthand_type, ShorthandType::Never),
+            apply_consistent: matches!(shorthand_type, ShorthandType::Consistent),
+            apply_consistent_as_needed: matches!(shorthand_type, ShorthandType::ConsistentAsNeeded),
+            avoid_quotes: options.avoid_quotes,
+            ignore_constructors: options.ignore_constructors,
+            avoid_explicit_return_arrows: options.avoid_explicit_return_arrows,
+            methods_ignore_pattern: options.methods_ignore_pattern,
         }
     }
 }
@@ -143,53 +155,12 @@ declare_oxc_lint!(
     eslint,
     style,
     fix,
-    config = ObjectShorthandConfigJSON
+    config = ObjectShorthandTupleConfig
 );
 
 impl Rule for ObjectShorthand {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        let obj1 = value.get(0);
-        let obj2 = value.get(1);
-
-        let shorthand_type =
-            obj1.and_then(serde_json::Value::as_str).map(ShorthandType::from).unwrap_or_default();
-
-        Ok(Self(Box::new(
-            ObjectShorthandConfigJSON {
-                apply_to_methods: matches!(
-                    shorthand_type,
-                    ShorthandType::Methods | ShorthandType::Always
-                ),
-                apply_to_properties: matches!(
-                    shorthand_type,
-                    ShorthandType::Properties | ShorthandType::Always
-                ),
-                apply_never: matches!(shorthand_type, ShorthandType::Never),
-                apply_consistent: matches!(shorthand_type, ShorthandType::Consistent),
-                apply_consistent_as_needed: matches!(
-                    shorthand_type,
-                    ShorthandType::ConsistentAsNeeded
-                ),
-
-                avoid_quotes: obj2
-                    .and_then(|v| v.get("avoidQuotes"))
-                    .and_then(serde_json::Value::as_bool)
-                    .unwrap_or(false),
-                ignore_constructors: obj2
-                    .and_then(|v| v.get("ignoreConstructors"))
-                    .and_then(serde_json::Value::as_bool)
-                    .unwrap_or(false),
-                avoid_explicit_return_arrows: obj2
-                    .and_then(|v| v.get("avoidExplicitReturnArrows"))
-                    .and_then(serde_json::Value::as_bool)
-                    .unwrap_or(false),
-                methods_ignore_pattern: obj2
-                    .and_then(|v| v.get("methodsIgnorePattern"))
-                    .and_then(serde_json::Value::as_str)
-                    .map(ToString::to_string),
-            }
-            .into_object_shorthand_config(),
-        )))
+        serde_json::from_value::<TupleRuleConfig<Self>>(value).map(TupleRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -204,6 +175,16 @@ impl Rule for ObjectShorthand {
             AstKind::ObjectProperty(property) => check_object_property(self, ctx, property),
             _ => {}
         }
+    }
+}
+
+impl<'de> Deserialize<'de> for ObjectShorthand {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let config = ObjectShorthandTupleConfig::deserialize(deserializer)?;
+        Ok(Self(Box::new(config.into())))
     }
 }
 
@@ -553,7 +534,8 @@ impl<'a> Visit<'a> for ArrowFunctionLexicalIdentifierVisitor<'a, '_> {
     }
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "kebab-case")]
 enum ShorthandType {
     #[default]
     Always,
@@ -562,19 +544,6 @@ enum ShorthandType {
     Consistent,
     ConsistentAsNeeded,
     Never,
-}
-
-impl ShorthandType {
-    pub fn from(raw: &str) -> Self {
-        match raw {
-            "methods" => Self::Methods,
-            "properties" => Self::Properties,
-            "consistent" => Self::Consistent,
-            "consistent-as-needed" => Self::ConsistentAsNeeded,
-            "never" => Self::Never,
-            _ => Self::Always,
-        }
-    }
 }
 
 static CTOR_PREFIX_REGEX: Lazy<Regex> = lazy_regex!(r"[^_$0-9]");
