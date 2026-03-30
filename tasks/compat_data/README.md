@@ -14,5 +14,5 @@ Code extracted from
 
 - Find the feature from https://github.com/compat-table/compat-table/blob/gh-pages/data-es2016plus.js
 - Add the feature in `./es-features.js`
-- `pnpm install`
+- `vp install`
 - `cargo run -p oxc_compat_data`

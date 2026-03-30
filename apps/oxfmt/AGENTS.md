@@ -13,10 +13,10 @@ The `oxfmt` implemented under this directory serves several purposes.
   - Full feature set like CLI, Stdin, LSP, and more
   - Format many file types with embedded language formatting support
   - Entry point: `src-js/cli.ts` which uses `run_cli()` from `src/main_napi.rs`
-  - Build with `pnpm build`
+  - Build with `vp run build`
 - Node.js API using napi-rs
   - Entry point: `src-js/index.ts` which uses `format()` from `src/main_napi.rs`
-  - Build with `pnpm build`
+  - Build with `vp run build`
 
 When making changes, consider the impact on all paths.
 
@@ -45,11 +45,11 @@ Run tests with:
 
 ```sh
 # Run E2E test
-pnpm build-test && pnpm t
+vp run build-test && vp run t
 # Update snapshots
-pnpm t -u
+vp run t -u
 # Run conformance test for xxx-in-js and js-in-xxx
-pnpm conformance
+vp run conformance
 # Run unit test in Rust
 cargo t
 ```
@@ -57,7 +57,7 @@ cargo t
 To manually verify the CLI behavior after building:
 
 ```sh
-pnpm build-test
+vp run build-test
 
 # Show help
 node ./dist/cli.js --help
@@ -67,7 +67,7 @@ cat <file> | node ./dist/cli.js --config=<cfg> --stdin-filepath=<file>
 OXC_LOG=debug node ./dist/cli.js --threads=1 <file>
 ```
 
-NOTE: `pnpm build-test` combines `pnpm build-js` and `pnpm build-napi`, so you don't need to run them separately.
+NOTE: `vp run build-test` combines `vp run build-js` and `vp run build-napi`, so you don't need to run them separately.
 
 To compare formatting output with Prettier:
 
