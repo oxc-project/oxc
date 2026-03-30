@@ -59,12 +59,12 @@ fn format_as_or_satisfies_expression<'a>(
         {
             write!(f, [FormatNodeWithoutTrailingComments(expression)]);
             write!(f, [FormatTrailingComments::Comments(block_comments)]);
-            write!(f, [space(), token(operation), space(), token("const")]);
+            write!(f, [space(), token(operation), hard_space(), token("const")]);
         } else if block_comments.is_empty() {
             write!(f, [FormatNodeWithoutTrailingComments(expression)]);
-            write!(f, [space(), token(operation), space(), type_annotation]);
+            write!(f, [space(), token(operation), hard_space(), type_annotation]);
         } else {
-            write!(f, [expression, space(), token(operation), space(), type_annotation]);
+            write!(f, [expression, space(), token(operation), hard_space(), type_annotation]);
         }
     });
 
