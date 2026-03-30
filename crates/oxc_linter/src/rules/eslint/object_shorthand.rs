@@ -649,7 +649,6 @@ fn can_property_have_shorthand(property: &ObjectProperty) -> bool {
 #[test]
 fn test() {
     use crate::tester::Tester;
-    use serde_json::json;
 
     let pass = vec![
         ("var x = {y() {}}", None),
@@ -678,7 +677,6 @@ fn test() {
         ("doSomething({x: y, y() {}})", None),
         ("doSomething({y() {}, z: a})", None),
         ("!{ a: function a(){} };", None),
-        // arrow functions are still alright by default
         ("var x = {y: (x)=>x}", None),
         ("doSomething({y: (x)=>x})", None),
         ("var x = {y: (x)=>x, y: a}", None),
@@ -686,66 +684,762 @@ fn test() {
         ("({ foo: x => { return; }})", None),
         ("({ foo: (x) => { return; }})", None),
         ("({ foo: () => { return; }})", None),
-        // getters and setters
         ("var x = {get y() {}}", None),
         ("var x = {set y(z) {}}", None),
         ("var x = {get y() {}, set y(z) {}}", None),
         ("doSomething({get y() {}})", None),
         ("doSomething({set y(z) {}})", None),
         ("doSomething({get y() {}, set y(z) {}})", None),
-        // object literal computed properties
-        ("var x = {[y]: y}", Some(json!(["properties"]))),
-        ("var x = {['y']: 'y'}", Some(json!(["properties"]))),
-        ("var x = {['y']: y}", Some(json!(["properties"]))),
-        // object literal computed methods
-        ("var x = {[y]() {}}", Some(json!(["methods"]))),
-        ("var x = {[y]: function x() {}}", Some(json!(["methods"]))),
-        ("var x = {[y]: y}", Some(json!(["methods"]))),
-        // options
-        ("var x = {y() {}}", Some(json!(["methods"]))),
-        ("var x = {x, y() {}, a:b}", Some(json!(["methods"]))),
-        ("var x = {y}", Some(json!(["properties"]))),
-        ("var x = {y: {b}}", Some(json!(["properties"]))),
-        // consistent
-        ("var x = {a: a, b: b}", Some(json!(["consistent"]))),
-        ("var x = {a: b, c: d, f: g}", Some(json!(["consistent"]))),
-        ("var x = {a, b}", Some(json!(["consistent"]))),
-        ("var x = {a, b, get test() { return 1; }}", Some(json!(["consistent"]))),
-        ("var x = {foo, bar, ...baz}", Some(json!(["consistent"]))),
-        ("var x = {bar: baz, ...qux}", Some(json!(["consistent"]))),
-        ("var x = {...foo, bar: bar, baz: baz}", Some(json!(["consistent"]))),
-        // consistent-as-needed
-        ("var x = {...bar}", Some(json!(["consistent-as-needed"]))),
-        ("var x = {a, b}", Some(json!(["consistent-as-needed"]))),
-        ("var x = {a, b, get test(){return 1;}}", Some(json!(["consistent-as-needed"]))),
-        ("var x = {0: 'foo'}", Some(json!(["consistent-as-needed"]))),
-        ("var x = {'key': 'baz'}", Some(json!(["consistent-as-needed"]))),
-        ("var x = {foo: 'foo'}", Some(json!(["consistent-as-needed"]))),
-        ("var x = {[foo]: foo}", Some(json!(["consistent-as-needed"]))),
-        ("var x = {foo: function foo() {}}", Some(json!(["consistent-as-needed"]))),
-        ("var x = {[foo]: 'foo'}", Some(json!(["consistent-as-needed"]))),
-        ("var x = {bar, ...baz}", Some(json!(["consistent-as-needed"]))),
-        ("var x = {bar: baz, ...qux}", Some(json!(["consistent-as-needed"]))),
-        ("var x = {...foo, bar, baz}", Some(json!(["consistent-as-needed"]))),
+        ("var x = {[y]: y}", Some(serde_json::json!(["properties"]))),
+        ("var x = {['y']: 'y'}", Some(serde_json::json!(["properties"]))),
+        ("var x = {['y']: y}", Some(serde_json::json!(["properties"]))),
+        ("var x = {[y]() {}}", Some(serde_json::json!(["methods"]))),
+        ("var x = {[y]: function x() {}}", Some(serde_json::json!(["methods"]))),
+        ("var x = {[y]: y}", Some(serde_json::json!(["methods"]))),
+        ("var x = {y() {}}", Some(serde_json::json!(["methods"]))),
+        ("var x = {x, y() {}, a:b}", Some(serde_json::json!(["methods"]))),
+        ("var x = {y}", Some(serde_json::json!(["properties"]))),
+        ("var x = {y: {b}}", Some(serde_json::json!(["properties"]))),
+        ("var x = {a: n, c: d, f: g}", Some(serde_json::json!(["never"]))),
+        ("var x = {a: function(){}, b: {c: d}}", Some(serde_json::json!(["never"]))),
+        (
+            "var x = {ConstructorFunction: function(){}, a: b}",
+            Some(serde_json::json!(["always", { "ignoreConstructors": true }])),
+        ),
+        (
+            "var x = {_ConstructorFunction: function(){}, a: b}",
+            Some(serde_json::json!(["always", { "ignoreConstructors": true }])),
+        ),
+        (
+            "var x = {$ConstructorFunction: function(){}, a: b}",
+            Some(serde_json::json!(["always", { "ignoreConstructors": true }])),
+        ),
+        (
+            "var x = {__ConstructorFunction: function(){}, a: b}",
+            Some(serde_json::json!(["always", { "ignoreConstructors": true }])),
+        ),
+        (
+            "var x = {_0ConstructorFunction: function(){}, a: b}",
+            Some(serde_json::json!(["always", { "ignoreConstructors": true }])),
+        ),
+        (
+            "var x = {notConstructorFunction(){}, b: c}",
+            Some(serde_json::json!(["always", { "ignoreConstructors": true }])),
+        ),
+        (
+            "var x = {ConstructorFunction: function(){}, a: b}",
+            Some(serde_json::json!(["methods", { "ignoreConstructors": true }])),
+        ),
+        (
+            "var x = {_ConstructorFunction: function(){}, a: b}",
+            Some(serde_json::json!(["methods", { "ignoreConstructors": true }])),
+        ),
+        (
+            "var x = {$ConstructorFunction: function(){}, a: b}",
+            Some(serde_json::json!(["methods", { "ignoreConstructors": true }])),
+        ),
+        (
+            "var x = {__ConstructorFunction: function(){}, a: b}",
+            Some(serde_json::json!(["methods", { "ignoreConstructors": true }])),
+        ),
+        (
+            "var x = {_0ConstructorFunction: function(){}, a: b}",
+            Some(serde_json::json!(["methods", { "ignoreConstructors": true }])),
+        ),
+        (
+            "var x = {notConstructorFunction(){}, b: c}",
+            Some(serde_json::json!(["methods", { "ignoreConstructors": true }])),
+        ),
+        ("var x = {ConstructorFunction: function(){}, a: b}", Some(serde_json::json!(["never"]))),
+        (
+            "var x = {notConstructorFunction: function(){}, b: c}",
+            Some(serde_json::json!(["never"])),
+        ),
+        (
+            "var x = { foo: function() {}  }",
+            Some(serde_json::json!(["always", { "methodsIgnorePattern": "^foo$" }])),
+        ),
+        (
+            "var x = { foo: function() {}  }",
+            Some(serde_json::json!(["methods", { "methodsIgnorePattern": "^foo$" }])),
+        ),
+        (
+            "var x = { foo: function*() {}  }",
+            Some(serde_json::json!(["always", { "methodsIgnorePattern": "^foo$" }])),
+        ),
+        (
+            "var x = { foo: async function() {}  }",
+            Some(serde_json::json!(["always", { "methodsIgnorePattern": "^foo$" }])),
+        ),
+        (
+            "var x = { foo: () => { return 5; }  }",
+            Some(
+                serde_json::json!([ "always", { "methodsIgnorePattern": "^foo$", "avoidExplicitReturnArrows": true, }, ]),
+            ),
+        ),
+        (
+            "var x = { 'foo': function() {}  }",
+            Some(serde_json::json!(["always", { "methodsIgnorePattern": "^foo$" }])),
+        ),
+        (
+            "var x = { ['foo']: function() {}  }",
+            Some(serde_json::json!(["always", { "methodsIgnorePattern": "^foo$" }])),
+        ),
+        (
+            "var x = { 123: function() {}  }",
+            Some(serde_json::json!(["always", { "methodsIgnorePattern": "^123$" }])),
+        ),
+        (
+            "var x = { afoob: function() {}  }",
+            Some(serde_json::json!(["always", { "methodsIgnorePattern": "foo" }])),
+        ),
+        (
+            "var x = { afoob: function() {}  }",
+            Some(serde_json::json!(["always", { "methodsIgnorePattern": "^.foo.$" }])),
+        ),
+        (
+            "var x = { '👍foo👍': function() {}  }",
+            Some(serde_json::json!(["always", { "methodsIgnorePattern": "^.foo.$" }])),
+        ),
+        (
+            "var x = {'a': function(){}}",
+            Some(serde_json::json!(["always", { "avoidQuotes": true }])),
+        ),
+        (
+            "var x = {['a']: function(){}}",
+            Some(serde_json::json!(["methods", { "avoidQuotes": true }])),
+        ),
+        ("var x = {'y': y}", Some(serde_json::json!(["properties", { "avoidQuotes": true }]))),
+        ("let {a, b} = o;", Some(serde_json::json!(["never"]))),
+        ("var x = {foo: foo, bar: bar, ...baz}", Some(serde_json::json!(["never"]))), // { "ecmaVersion": 2018 },
+        ("var x = {a: a, b: b}", Some(serde_json::json!(["consistent"]))),
+        ("var x = {a: b, c: d, f: g}", Some(serde_json::json!(["consistent"]))),
+        ("var x = {a, b}", Some(serde_json::json!(["consistent"]))),
+        ("var x = {a, b, get test() { return 1; }}", Some(serde_json::json!(["consistent"]))),
+        ("var x = {...bar}", Some(serde_json::json!(["consistent-as-needed"]))), // { "ecmaVersion": 2018 },
+        ("var x = {foo, bar, ...baz}", Some(serde_json::json!(["consistent"]))), // { "ecmaVersion": 2018 },
+        ("var x = {bar: baz, ...qux}", Some(serde_json::json!(["consistent"]))), // { "ecmaVersion": 2018 },
+        ("var x = {...foo, bar: bar, baz: baz}", Some(serde_json::json!(["consistent"]))), // { "ecmaVersion": 2018 },
+        ("var x = {a, b}", Some(serde_json::json!(["consistent-as-needed"]))),
+        (
+            "var x = {a, b, get test(){return 1;}}",
+            Some(serde_json::json!(["consistent-as-needed"])),
+        ),
+        ("var x = {0: 'foo'}", Some(serde_json::json!(["consistent-as-needed"]))),
+        ("var x = {'key': 'baz'}", Some(serde_json::json!(["consistent-as-needed"]))),
+        ("var x = {foo: 'foo'}", Some(serde_json::json!(["consistent-as-needed"]))),
+        ("var x = {[foo]: foo}", Some(serde_json::json!(["consistent-as-needed"]))),
+        ("var x = {foo: function foo() {}}", Some(serde_json::json!(["consistent-as-needed"]))),
+        ("var x = {[foo]: 'foo'}", Some(serde_json::json!(["consistent-as-needed"]))),
+        ("var x = {bar, ...baz}", Some(serde_json::json!(["consistent-as-needed"]))), // { "ecmaVersion": 2018 },
+        ("var x = {bar: baz, ...qux}", Some(serde_json::json!(["consistent-as-needed"]))), // { "ecmaVersion": 2018 },
+        ("var x = {...foo, bar, baz}", Some(serde_json::json!(["consistent-as-needed"]))), // { "ecmaVersion": 2018 },
+        (
+            "({ x: () => foo })",
+            Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": false }])),
+        ),
+        (
+            "({ x: () => { return; } })",
+            Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": false }])),
+        ),
+        (
+            "({ x: () => foo })",
+            Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "({ x() { return; } })",
+            Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "({ x() { return; }, y() { return; } })",
+            Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "({ x() { return; }, y: () => foo })",
+            Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "({ x: () => foo, y() { return; } })",
+            Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "({ x: () => { this; } })",
+            Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "function foo() { ({ x: () => { arguments; } }) }",
+            Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "
+                            class Foo extends Bar {
+                              constructor() {
+                                  var foo = { x: () => { super(); } };
+                              }
+                          }
+                        ",
+            Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "
+                            class Foo extends Bar {
+                                baz() {
+                                    var foo = { x: () => { super.baz(); } };
+                                }
+                            }
+                        ",
+            Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "
+                            function foo() {
+                                var x = { x: () => { new.target; } };
+                            }
+                        ",
+            Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "
+                            function foo() {
+                                var x = {
+                                    x: () => {
+                                        var y = () => { this; };
+                                    }
+                                };
+                            }
+                        ",
+            Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "
+                            function foo() {
+                                var x = {
+                                    x: () => {
+                                        var y = () => { this; };
+                                        function foo() { this; }
+                                    }
+                                };
+                            }
+                        ",
+            Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "
+                            function foo() {
+                                var x = {
+                                    x: () => {
+                                        return { y: () => { this; } };
+                                    }
+                                };
+                            }
+                        ",
+            Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "({ [foo.bar]: () => {} })",
+            Some(serde_json::json!(["always", { "ignoreConstructors": true }])),
+        ),
+        ("({ val: /** @type {number} */ (val) })", None),
+        ("({ 'prop': /** @type {string} */ (prop) })", None),
+        (
+            "({ val: /**
+             * @type {number}
+             */ (val) })",
+            None,
+        ),
+        (
+            "({ val: /**
+              * @type {number}
+              */ (val) })",
+            None,
+        ),
+        (
+            "({ val: /**
+               * @type {number}
+               */ (val) })",
+            None,
+        ),
+        (
+            "({ val: /**
+                * @type {number}
+                */ (val) })",
+            None,
+        ),
+        (
+            "({ val: /**
+                 * @type {number}
+                 */ (val) })",
+            None,
+        ),
+        (
+            "({ val: /**
+              *  @type   {number}
+              */ (val) })",
+            None,
+        ),
+        (
+            "({ val: /**
+             *  @type   {string} myParam
+             */ (val) })",
+            None,
+        ),
+        (
+            "({ val: /**
+              *  @type   {Object} options
+              */ (val) })",
+            None,
+        ),
+        (
+            "({ val: /**
+                 *	@type	{Array}
+                 */ (val) })",
+            None,
+        ),
+        (
+            "({ val: /**
+               *
+               * @type {Function}
+               * @param {string} name
+               */ (val) })",
+            None,
+        ),
     ];
 
     let fail = vec![
+        ("var x = {x: x}", None),
+        ("var x = {'x': x}", None),
+        ("var x = {y: y, x: x}", None),
+        ("var x = {y: z, x: x, a: b}", None),
+        (
+            "var x = {y: z,
+             x: x,
+             a: b
+             // comment
+            }",
+            None,
+        ),
+        (
+            "var x = {y: z,
+             a: b,
+             // comment
+            f: function() {}}",
+            None,
+        ),
+        (
+            "var x = {a: b,
+            /* comment */
+            y: y
+             }",
+            None,
+        ),
+        (
+            "var x = {
+              a: b,
+              /* comment */
+              y: y
+            }",
+            None,
+        ),
+        (
+            "var x = {
+              f: function() {
+                /* comment */
+                a(b);
+                }
+              }",
+            None,
+        ),
+        (
+            "var x = {
+              [f]: function() {
+                /* comment */
+                a(b);
+                }
+              }",
+            None,
+        ),
+        (
+            "var x = {
+              f: function*() {
+                /* comment */
+                a(b);
+                }
+              }",
+            None,
+        ),
+        (
+            "var x = {
+              f: /* comment */ function() {
+              }
+              }",
+            None,
+        ),
+        (
+            "var x = {
+             f /* comment */: function() {
+              }
+              }",
+            None,
+        ),
         ("var x = {a: /* comment */ a}", None),
         ("var x = {a /* comment */: a}", None),
         ("var x = {a: (a /* comment */)}", None),
         ("var x = {'a': /* comment */ a}", None),
-        ("var x = {'a' /* comment */: a}", None),
         ("var x = {'a': (a /* comment */)}", None),
-        ("var x = {f: /* comment */ function() {}}", None),
-        ("var x = {f /* comment */: function() {}}", None),
-        ("var x = {a: a, b}", Some(json!(["consistent"]))),
-        ("var x = {b, c: d, f: g}", Some(json!(["consistent"]))),
-        ("var x = {foo, bar: baz, ...qux}", Some(json!(["consistent"]))),
-        ("var x = {a: a, b: b}", Some(json!(["consistent-as-needed"]))),
-        ("var x = {a, z: function z(){}}", Some(json!(["consistent-as-needed"]))),
-        ("var x = {foo: function() {}}", Some(json!(["consistent-as-needed"]))),
-        ("var x = {a: a, b: b, ...baz}", Some(json!(["consistent-as-needed"]))),
-        ("var x = {foo, bar: bar, ...qux}", Some(json!(["consistent-as-needed"]))),
+        ("var x = {'a' /* comment */: a}", None),
+        ("var x = {y: function() {}}", None),
+        ("var x = {y: function*() {}}", None),
+        ("var x = {x: y, y: z, a: a}", None),
+        ("var x = {ConstructorFunction: function(){}, a: b}", None),
+        ("var x = {x: y, y: z, a: function(){}, b() {}}", None),
+        ("var x = {x: x, y: function() {}}", None),
+        ("doSomething({x: x})", None),
+        ("doSomething({'x': x})", None),
+        ("doSomething({a: 'a', 'x': x})", None),
+        ("doSomething({y: function() {}})", None),
+        ("doSomething({[y]: function() {}})", None),
+        ("doSomething({['y']: function() {}})", None),
+        ("({ foo: async function () {} })", None), // { "ecmaVersion": 8 },
+        ("({ 'foo': async function() {} })", None), // { "ecmaVersion": 8 },
+        ("({ [foo]: async function() {} })", None), // { "ecmaVersion": 8 },
+        ("({ [foo.bar]: function*() {} })", None),
+        ("({ [foo   ]: function() {} })", None),
+        ("({ [ foo ]: async function() {} })", None), // { "ecmaVersion": 8 },
+        ("({ foo: function *() {} })", None),
+        ("({ [  foo   ]: function() {} })", None),
+        ("({ [  foo]: function() {} })", None),
+        ("var x = {y: function() {}}", Some(serde_json::json!(["methods"]))),
+        ("var x = {x, y() {}, z: function() {}}", Some(serde_json::json!(["methods"]))),
+        ("var x = {ConstructorFunction: function(){}, a: b}", Some(serde_json::json!(["methods"]))),
+        ("var x = {[y]: function() {}}", Some(serde_json::json!(["methods"]))),
+        ("({ [(foo)]: function() { return; } })", None),
+        ("({ [(foo)]: async function() { return; } })", None), // { "ecmaVersion": 8 },
+        ("({ [(((((((foo)))))))]: function() { return; } })", None),
+        ("({ [(foo)]() { return; } })", Some(serde_json::json!(["never"]))),
+        ("({ async [(foo)]() { return; } })", Some(serde_json::json!(["never"]))), // { "ecmaVersion": 8 },
+        ("({ *[((foo))]() { return; } })", Some(serde_json::json!(["never"]))),
+        ("({ [(((((((foo)))))))]() { return; } })", Some(serde_json::json!(["never"]))),
+        ("({ 'foo bar'() { return; } })", Some(serde_json::json!(["never"]))),
+        ("({ *foo() { return; } })", Some(serde_json::json!(["never"]))),
+        ("({ async foo() { return; } })", Some(serde_json::json!(["never"]))), // { "ecmaVersion": 8 },
+        ("({ *['foo bar']() { return; } })", Some(serde_json::json!(["never"]))), // { "ecmaVersion": 8 },
+        ("var x = {x: x}", Some(serde_json::json!(["properties"]))),
+        ("var x = {a, b, c(){}, x: x}", Some(serde_json::json!(["properties"]))),
+        ("var x = {y() {}}", Some(serde_json::json!(["never"]))),
+        ("var x = {*y() {}}", Some(serde_json::json!(["never"]))),
+        ("var x = {y}", Some(serde_json::json!(["never"]))),
+        ("var x = {y, a: b, *x(){}}", Some(serde_json::json!(["never"]))),
+        ("var x = {y: {x}}", Some(serde_json::json!(["never"]))),
+        ("var x = {ConstructorFunction(){}, a: b}", Some(serde_json::json!(["never"]))),
+        ("var x = {notConstructorFunction(){}, b: c}", Some(serde_json::json!(["never"]))),
+        ("var x = {foo: foo, bar: baz, ...qux}", Some(serde_json::json!(["always"]))), // { "ecmaVersion": 2018 },
+        ("var x = {foo, bar: baz, ...qux}", Some(serde_json::json!(["never"]))), // { "ecmaVersion": 2018 },
+        (
+            "var x = {y: function() {}}",
+            Some(serde_json::json!(["methods", { "ignoreConstructors": true }])),
+        ),
+        (
+            "var x = {_y: function() {}}",
+            Some(serde_json::json!(["methods", { "ignoreConstructors": true }])),
+        ),
+        (
+            "var x = {$y: function() {}}",
+            Some(serde_json::json!(["methods", { "ignoreConstructors": true }])),
+        ),
+        (
+            "var x = {__y: function() {}}",
+            Some(serde_json::json!(["methods", { "ignoreConstructors": true }])),
+        ),
+        (
+            "var x = {_0y: function() {}}",
+            Some(serde_json::json!(["methods", { "ignoreConstructors": true }])),
+        ),
+        (
+            "var x = { afoob: function() {} }",
+            Some(serde_json::json!(["always", { "methodsIgnorePattern": "^foo$" }])),
+        ),
+        (
+            "var x = { afoob: function() {} }",
+            Some(serde_json::json!(["methods", { "methodsIgnorePattern": "^foo$" }])),
+        ),
+        (
+            "var x = { 'afoob': function() {} }",
+            Some(serde_json::json!(["always", { "methodsIgnorePattern": "^foo$" }])),
+        ),
+        (
+            "var x = { 1234: function() {} }",
+            Some(serde_json::json!(["always", { "methodsIgnorePattern": "^123$" }])),
+        ),
+        (
+            "var x = { bar: function() {} }",
+            Some(serde_json::json!(["always", { "methodsIgnorePattern": "foo" }])),
+        ),
+        (
+            "var x = { [foo]: function() {} }",
+            Some(serde_json::json!(["always", { "methodsIgnorePattern": "foo" }])),
+        ),
+        (
+            "var x = { foo: foo }",
+            Some(serde_json::json!(["always", { "methodsIgnorePattern": "^foo$" }])),
+        ),
+        ("var x = {a: a}", Some(serde_json::json!(["always", { "avoidQuotes": true }]))),
+        (
+            "var x = {a: function(){}}",
+            Some(serde_json::json!(["methods", { "avoidQuotes": true }])),
+        ),
+        (
+            "var x = {[a]: function(){}}",
+            Some(serde_json::json!(["methods", { "avoidQuotes": true }])),
+        ),
+        ("var x = {'a'(){}}", Some(serde_json::json!(["always", { "avoidQuotes": true }]))),
+        ("var x = {['a'](){}}", Some(serde_json::json!(["methods", { "avoidQuotes": true }]))),
+        ("var x = {a: a, b}", Some(serde_json::json!(["consistent"]))),
+        ("var x = {b, c: d, f: g}", Some(serde_json::json!(["consistent"]))),
+        ("var x = {foo, bar: baz, ...qux}", Some(serde_json::json!(["consistent"]))), // { "ecmaVersion": 2018 },
+        ("var x = {a: a, b: b}", Some(serde_json::json!(["consistent-as-needed"]))),
+        ("var x = {a, z: function z(){}}", Some(serde_json::json!(["consistent-as-needed"]))),
+        ("var x = {foo: function() {}}", Some(serde_json::json!(["consistent-as-needed"]))),
+        ("var x = {a: a, b: b, ...baz}", Some(serde_json::json!(["consistent-as-needed"]))), // { "ecmaVersion": 2018 },
+        ("var x = {foo, bar: bar, ...qux}", Some(serde_json::json!(["consistent-as-needed"]))), // { "ecmaVersion": 2018 },
+        (
+            "({ x: (arg => { return; }) })",
+            Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "({ x: () => { return; } })",
+            Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "({ x() { return; }, y: () => { return; } })",
+            Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "({ x: () => { return; }, y: () => foo })",
+            Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "({ x: () => { return; }, y: () => { return; } })",
+            Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "({ x: foo => { return; } })",
+            Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "({ x: (foo = 1) => { return; } })",
+            Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "({ x: ({ foo: bar = 1 } = {}) => { return; } })",
+            Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "({ x: () => { function foo() { this; } } })",
+            Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "({ x: () => { var foo = function() { arguments; } } })",
+            Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "({ x: () => { function foo() { arguments; } } })",
+            Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "
+                            ({
+                                x: () => {
+                                    class Foo extends Bar {
+                                        constructor() {
+                                            super();
+                                        }
+                                    }
+                                }
+                            })
+                        ",
+            Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "
+                            ({
+                                x: () => {
+                                    function foo() {
+                                        new.target;
+                                    }
+                                }
+                            })
+                        ",
+            Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "({ 'foo bar': () => { return; } })",
+            Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "({ [foo]: () => { return; } })",
+            Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "({ a: 1, foo: async (bar = 1) => { return; } })",
+            Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ), // { "ecmaVersion": 8 },
+        (
+            "({ [ foo ]: async bar => { return; } })",
+            Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ), // { "ecmaVersion": 8 },
+        (
+            "({ key: (arg = () => {}) => {} })",
+            Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "
+                            function foo() {
+                                var x = {
+                                    x: () => {
+                                        this;
+                                        return { y: () => { foo; } };
+                                    }
+                                };
+                            }
+                        ",
+            Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "
+                            function foo() {
+                                var x = {
+                                    x: () => {
+                                        ({ y: () => { foo; } });
+                                        this;
+                                    }
+                                };
+                            }
+                        ",
+            Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        ("({ a: (function(){ return foo; }) })", None),
+        (
+            "({ a: (() => { return foo; }) })",
+            Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "({ a: ((arg) => { return foo; }) })",
+            Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "({ a: ((arg, arg2) => { return foo; }) })",
+            Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "({ a: (async () => { return foo; }) })",
+            Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "({ a: (async (arg) => { return foo; }) })",
+            Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "({ a: (async (arg, arg2) => { return foo; }) })",
+            Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        ("({ a: async function*() {} })", Some(serde_json::json!(["always"]))),
+        ("({ async* a() {} })", Some(serde_json::json!(["never"]))),
+        (
+            "
+                            const test = {
+                                key: <T>(): void => { },
+                                key: async <T>(): Promise<void> => { },
+
+                                key: <T>(arg: T): T => { return arg },
+                                key: async <T>(arg: T): Promise<T> => { return arg },
+                            }
+                        ",
+            Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ), // { "parser": require("../../fixtures/parsers/typescript-parsers/object-with-generic-arrow-fn-props"), },
+        (
+            "
+                            const test = {
+                                key: (): void => {x()},
+                                key: ( (): void => {x()} ),
+                                key: ( (): (void) => {x()} ),
+
+                                key: (arg: t): void => {x()},
+                                key: ( (arg: t): void => {x()} ),
+                                key: ( (arg: t): (void) => {x()} ),
+
+                                key: (arg: t, arg2: t): void => {x()},
+                                key: ( (arg: t, arg2: t): void => {x()} ),
+                                key: ( (arg: t, arg2: t): (void) => {x()} ),
+
+                                key: async (): void => {x()},
+                                key: ( async (): void => {x()} ),
+                                key: ( async (): (void) => {x()} ),
+
+                                key: async (arg: t): void => {x()},
+                                key: ( async (arg: t): void => {x()} ),
+                                key: ( async (arg: t): (void) => {x()} ),
+
+                                key: async (arg: t, arg2: t): void => {x()},
+                                key: ( async (arg: t, arg2: t): void => {x()} ),
+                                key: ( async (arg: t, arg2: t): (void) => {x()} ),
+                            }
+                        ",
+            Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ), // { "parser": require("../../fixtures/parsers/typescript-parsers/object-with-arrow-fn-props"), },
+        ("({ val: /** regular comment */ (val) })", None),
+        ("({ val: /** @param {string} name */ (val) })", None),
+        ("({ val: /** @returns {number} */ (val) })", None),
+        ("({ val: /** @description some text */ (val) })", None),
+        (
+            "({ val: /**
+             * @param {string} name
+             */ (val) })",
+            None,
+        ),
+        (
+            "({ val: /**
+              * @returns {number}
+              */ (val) })",
+            None,
+        ),
+        (
+            "({ val: /**
+               * @description some text
+               */ (val) })",
+            None,
+        ),
+        (
+            "({ val: /**
+                * @param {string} name
+                */ (val) })",
+            None,
+        ),
+        (
+            "({ val: /**
+                 * @returns {number}
+                 */ (val) })",
+            None,
+        ),
+        (
+            "({ val: /**
+              *  @param   {string}  name
+              */ (val) })",
+            None,
+        ),
+        (
+            "({ val: /**
+             *  @returns   {number} result
+             */ (val) })",
+            None,
+        ),
+        (
+            "({ val: /**
+               *
+               * @param {string} name
+               * @returns {number}
+               */ (val) })",
+            None,
+        ),
     ];
 
     let fix = vec![
@@ -755,37 +1449,37 @@ fn test() {
         ("var x = {y: z, x: x, a: b}", "var x = {y: z, x, a: b}", None),
         (
             "var x = {y: z,
-              x: x,
-              a: b
-              // comment
+             x: x,
+             a: b
+             // comment
             }",
             "var x = {y: z,
-              x,
-              a: b
-              // comment
+             x,
+             a: b
+             // comment
             }",
             None,
         ),
         (
             "var x = {y: z,
-              a: b,
-              // comment
-              f: function() {}}",
+             a: b,
+             // comment
+            f: function() {}}",
             "var x = {y: z,
-              a: b,
-              // comment
-              f() {}}",
+             a: b,
+             // comment
+            f() {}}",
             None,
         ),
         (
             "var x = {a: b,
-              /* comment */
-              y: y
-            }",
+            /* comment */
+            y: y
+             }",
             "var x = {a: b,
-              /* comment */
-              y
-            }",
+            /* comment */
+            y
+             }",
             None,
         ),
         (
@@ -875,19 +1569,22 @@ fn test() {
         ("({ foo: function *() {} })", "({ *foo() {} })", None),
         ("({ [  foo   ]: function() {} })", "({ [  foo   ]() {} })", None),
         ("({ [  foo]: function() {} })", "({ [  foo]() {} })", None),
-        // options
-        ("var x = {y: function() {}}", "var x = {y() {}}", Some(json!(["methods"]))),
+        ("var x = {y: function() {}}", "var x = {y() {}}", Some(serde_json::json!(["methods"]))),
         (
             "var x = {x, y() {}, z: function() {}}",
             "var x = {x, y() {}, z() {}}",
-            Some(json!(["methods"])),
+            Some(serde_json::json!(["methods"])),
         ),
         (
             "var x = {ConstructorFunction: function(){}, a: b}",
             "var x = {ConstructorFunction(){}, a: b}",
-            Some(json!(["methods"])),
+            Some(serde_json::json!(["methods"])),
         ),
-        ("var x = {[y]: function() {}}", "var x = {[y]() {}}", Some(json!(["methods"]))),
+        (
+            "var x = {[y]: function() {}}",
+            "var x = {[y]() {}}",
+            Some(serde_json::json!(["methods"])),
+        ),
         ("({ [(foo)]: function() { return; } })", "({ [(foo)]() { return; } })", None),
         ("({ [(foo)]: async function() { return; } })", "({ async [(foo)]() { return; } })", None),
         (
@@ -895,760 +1592,460 @@ fn test() {
             "({ [(((((((foo)))))))]() { return; } })",
             None,
         ),
-        ("var x = {x: x}", "var x = {x}", Some(json!(["properties"]))),
-        ("var x = {a, b, c(){}, x: x}", "var x = {a, b, c(){}, x}", Some(json!(["properties"]))),
-        ("({ a: (function(){ return foo; }) })", "({ a(){ return foo; } })", None),
-        ("({ a: async function*() {} })", "({ async *a() {} })", Some(json!(["always"]))),
+        (
+            "({ [(foo)]() { return; } })",
+            "({ [(foo)]: function() { return; } })",
+            Some(serde_json::json!(["never"])),
+        ),
+        (
+            "({ async [(foo)]() { return; } })",
+            "({ [(foo)]: async function() { return; } })",
+            Some(serde_json::json!(["never"])),
+        ),
+        (
+            "({ *[((foo))]() { return; } })",
+            "({ [((foo))]: function*() { return; } })",
+            Some(serde_json::json!(["never"])),
+        ),
+        (
+            "({ [(((((((foo)))))))]() { return; } })",
+            "({ [(((((((foo)))))))]: function() { return; } })",
+            Some(serde_json::json!(["never"])),
+        ),
+        (
+            "({ 'foo bar'() { return; } })",
+            "({ 'foo bar': function() { return; } })",
+            Some(serde_json::json!(["never"])),
+        ),
+        (
+            "({ *foo() { return; } })",
+            "({ foo: function*() { return; } })",
+            Some(serde_json::json!(["never"])),
+        ),
+        (
+            "({ async foo() { return; } })",
+            "({ foo: async function() { return; } })",
+            Some(serde_json::json!(["never"])),
+        ),
+        (
+            "({ *['foo bar']() { return; } })",
+            "({ ['foo bar']: function*() { return; } })",
+            Some(serde_json::json!(["never"])),
+        ),
+        ("var x = {x: x}", "var x = {x}", Some(serde_json::json!(["properties"]))),
+        (
+            "var x = {a, b, c(){}, x: x}",
+            "var x = {a, b, c(){}, x}",
+            Some(serde_json::json!(["properties"])),
+        ),
+        ("var x = {y() {}}", "var x = {y: function() {}}", Some(serde_json::json!(["never"]))),
+        ("var x = {*y() {}}", "var x = {y: function*() {}}", Some(serde_json::json!(["never"]))),
+        ("var x = {y}", "var x = {y: y}", Some(serde_json::json!(["never"]))),
+        (
+            "var x = {y, a: b, *x(){}}",
+            "var x = {y: y, a: b, x: function*(){}}",
+            Some(serde_json::json!(["never"])),
+        ),
+        ("var x = {y: {x}}", "var x = {y: {x: x}}", Some(serde_json::json!(["never"]))),
+        (
+            "var x = {ConstructorFunction(){}, a: b}",
+            "var x = {ConstructorFunction: function(){}, a: b}",
+            Some(serde_json::json!(["never"])),
+        ),
+        (
+            "var x = {notConstructorFunction(){}, b: c}",
+            "var x = {notConstructorFunction: function(){}, b: c}",
+            Some(serde_json::json!(["never"])),
+        ),
         (
             "var x = {foo: foo, bar: baz, ...qux}",
             "var x = {foo, bar: baz, ...qux}",
-            Some(json!(["always"])),
+            Some(serde_json::json!(["always"])),
+        ),
+        (
+            "var x = {foo, bar: baz, ...qux}",
+            "var x = {foo: foo, bar: baz, ...qux}",
+            Some(serde_json::json!(["never"])),
+        ),
+        (
+            "var x = {y: function() {}}",
+            "var x = {y() {}}",
+            Some(serde_json::json!(["methods", { "ignoreConstructors": true }])),
+        ),
+        (
+            "var x = {_y: function() {}}",
+            "var x = {_y() {}}",
+            Some(serde_json::json!(["methods", { "ignoreConstructors": true }])),
+        ),
+        (
+            "var x = {$y: function() {}}",
+            "var x = {$y() {}}",
+            Some(serde_json::json!(["methods", { "ignoreConstructors": true }])),
+        ),
+        (
+            "var x = {__y: function() {}}",
+            "var x = {__y() {}}",
+            Some(serde_json::json!(["methods", { "ignoreConstructors": true }])),
+        ),
+        (
+            "var x = {_0y: function() {}}",
+            "var x = {_0y() {}}",
+            Some(serde_json::json!(["methods", { "ignoreConstructors": true }])),
+        ),
+        (
+            "var x = { afoob: function() {} }",
+            "var x = { afoob() {} }",
+            Some(serde_json::json!(["always", { "methodsIgnorePattern": "^foo$" }])),
+        ),
+        (
+            "var x = { afoob: function() {} }",
+            "var x = { afoob() {} }",
+            Some(serde_json::json!(["methods", { "methodsIgnorePattern": "^foo$" }])),
+        ),
+        (
+            "var x = { 'afoob': function() {} }",
+            "var x = { 'afoob'() {} }",
+            Some(serde_json::json!(["always", { "methodsIgnorePattern": "^foo$" }])),
+        ),
+        (
+            "var x = { 1234: function() {} }",
+            "var x = { 1234() {} }",
+            Some(serde_json::json!(["always", { "methodsIgnorePattern": "^123$" }])),
+        ),
+        (
+            "var x = { bar: function() {} }",
+            "var x = { bar() {} }",
+            Some(serde_json::json!(["always", { "methodsIgnorePattern": "foo" }])),
+        ),
+        (
+            "var x = { [foo]: function() {} }",
+            "var x = { [foo]() {} }",
+            Some(serde_json::json!(["always", { "methodsIgnorePattern": "foo" }])),
+        ),
+        (
+            "var x = { foo: foo }",
+            "var x = { foo }",
+            Some(serde_json::json!(["always", { "methodsIgnorePattern": "^foo$" }])),
+        ),
+        (
+            "var x = {a: a}",
+            "var x = {a}",
+            Some(serde_json::json!(["always", { "avoidQuotes": true }])),
+        ),
+        (
+            "var x = {a: function(){}}",
+            "var x = {a(){}}",
+            Some(serde_json::json!(["methods", { "avoidQuotes": true }])),
+        ),
+        (
+            "var x = {[a]: function(){}}",
+            "var x = {[a](){}}",
+            Some(serde_json::json!(["methods", { "avoidQuotes": true }])),
+        ),
+        (
+            "var x = {'a'(){}}",
+            "var x = {'a': function(){}}",
+            Some(serde_json::json!(["always", { "avoidQuotes": true }])),
+        ),
+        (
+            "var x = {['a'](){}}",
+            "var x = {['a']: function(){}}",
+            Some(serde_json::json!(["methods", { "avoidQuotes": true }])),
+        ),
+        (
+            "({ x: (arg => { return; }) })",
+            "({ x(arg) { return; } })",
+            Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "({ x: () => { return; } })",
+            "({ x() { return; } })",
+            Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "({ x() { return; }, y: () => { return; } })",
+            "({ x() { return; }, y() { return; } })",
+            Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "({ x: () => { return; }, y: () => foo })",
+            "({ x() { return; }, y: () => foo })",
+            Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "({ x: () => { return; }, y: () => { return; } })",
+            "({ x() { return; }, y() { return; } })",
+            Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "({ x: foo => { return; } })",
+            "({ x(foo) { return; } })",
+            Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "({ x: (foo = 1) => { return; } })",
+            "({ x(foo = 1) { return; } })",
+            Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "({ x: ({ foo: bar = 1 } = {}) => { return; } })",
+            "({ x({ foo: bar = 1 } = {}) { return; } })",
+            Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "({ x: () => { function foo() { this; } } })",
+            "({ x() { function foo() { this; } } })",
+            Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "({ x: () => { var foo = function() { arguments; } } })",
+            "({ x() { var foo = function() { arguments; } } })",
+            Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "({ x: () => { function foo() { arguments; } } })",
+            "({ x() { function foo() { arguments; } } })",
+            Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "
+                            ({
+                                x: () => {
+                                    class Foo extends Bar {
+                                        constructor() {
+                                            super();
+                                        }
+                                    }
+                                }
+                            })
+                        ",
+            "
+                            ({
+                                x() {
+                                    class Foo extends Bar {
+                                        constructor() {
+                                            super();
+                                        }
+                                    }
+                                }
+                            })
+                        ",
+            Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "
+                            ({
+                                x: () => {
+                                    function foo() {
+                                        new.target;
+                                    }
+                                }
+                            })
+                        ",
+            "
+                            ({
+                                x() {
+                                    function foo() {
+                                        new.target;
+                                    }
+                                }
+                            })
+                        ",
+            Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "({ 'foo bar': () => { return; } })",
+            "({ 'foo bar'() { return; } })",
+            Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "({ [foo]: () => { return; } })",
+            "({ [foo]() { return; } })",
+            Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "({ a: 1, foo: async (bar = 1) => { return; } })",
+            "({ a: 1, async foo(bar = 1) { return; } })",
+            Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "({ [ foo ]: async bar => { return; } })",
+            "({ async [ foo ](bar) { return; } })",
+            Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "({ key: (arg = () => {}) => {} })",
+            "({ key(arg = () => {}) {} })",
+            Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "
+                            function foo() {
+                                var x = {
+                                    x: () => {
+                                        this;
+                                        return { y: () => { foo; } };
+                                    }
+                                };
+                            }
+                        ",
+            "
+                            function foo() {
+                                var x = {
+                                    x: () => {
+                                        this;
+                                        return { y() { foo; } };
+                                    }
+                                };
+                            }
+                        ",
+            Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "
+                            function foo() {
+                                var x = {
+                                    x: () => {
+                                        ({ y: () => { foo; } });
+                                        this;
+                                    }
+                                };
+                            }
+                        ",
+            "
+                            function foo() {
+                                var x = {
+                                    x: () => {
+                                        ({ y() { foo; } });
+                                        this;
+                                    }
+                                };
+                            }
+                        ",
+            Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        ("({ a: (function(){ return foo; }) })", "({ a(){ return foo; } })", None),
+        (
+            "({ a: (() => { return foo; }) })",
+            "({ a() { return foo; } })",
+            Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "({ a: ((arg) => { return foo; }) })",
+            "({ a(arg) { return foo; } })",
+            Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "({ a: ((arg, arg2) => { return foo; }) })",
+            "({ a(arg, arg2) { return foo; } })",
+            Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "({ a: (async () => { return foo; }) })",
+            "({ async a() { return foo; } })",
+            Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "({ a: (async (arg) => { return foo; }) })",
+            "({ async a(arg) { return foo; } })",
+            Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "({ a: (async (arg, arg2) => { return foo; }) })",
+            "({ async a(arg, arg2) { return foo; } })",
+            Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "({ a: async function*() {} })",
+            "({ async *a() {} })",
+            Some(serde_json::json!(["always"])),
+        ),
+        (
+            "({ async* a() {} })",
+            "({ a: async function*() {} })",
+            Some(serde_json::json!(["never"])),
+        ),
+        (
+            "
+                            const test = {
+                                key: <T>(): void => { },
+                                key: async <T>(): Promise<void> => { },
+
+                                key: <T>(arg: T): T => { return arg },
+                                key: async <T>(arg: T): Promise<T> => { return arg },
+                            }
+                        ",
+            "
+                            const test = {
+                                key<T>(): void { },
+                                async key<T>(): Promise<void> { },
+
+                                key<T>(arg: T): T { return arg },
+                                async key<T>(arg: T): Promise<T> { return arg },
+                            }
+                        ",
+            Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "
+                            const test = {
+                                key: (): void => {x()},
+                                key: ( (): void => {x()} ),
+                                key: ( (): (void) => {x()} ),
+
+                                key: (arg: t): void => {x()},
+                                key: ( (arg: t): void => {x()} ),
+                                key: ( (arg: t): (void) => {x()} ),
+
+                                key: (arg: t, arg2: t): void => {x()},
+                                key: ( (arg: t, arg2: t): void => {x()} ),
+                                key: ( (arg: t, arg2: t): (void) => {x()} ),
+
+                                key: async (): void => {x()},
+                                key: ( async (): void => {x()} ),
+                                key: ( async (): (void) => {x()} ),
+
+                                key: async (arg: t): void => {x()},
+                                key: ( async (arg: t): void => {x()} ),
+                                key: ( async (arg: t): (void) => {x()} ),
+
+                                key: async (arg: t, arg2: t): void => {x()},
+                                key: ( async (arg: t, arg2: t): void => {x()} ),
+                                key: ( async (arg: t, arg2: t): (void) => {x()} ),
+                            }
+                        ",
+            "
+                            const test = {
+                                key(): void {x()},
+                                key(): void {x()},
+                                key(): (void) {x()},
+
+                                key(arg: t): void {x()},
+                                key(arg: t): void {x()},
+                                key(arg: t): (void) {x()},
+
+                                key(arg: t, arg2: t): void {x()},
+                                key(arg: t, arg2: t): void {x()},
+                                key(arg: t, arg2: t): (void) {x()},
+
+                                async key(): void {x()},
+                                async key(): void {x()},
+                                async key(): (void) {x()},
+
+                                async key(arg: t): void {x()},
+                                async key(arg: t): void {x()},
+                                async key(arg: t): (void) {x()},
+
+                                async key(arg: t, arg2: t): void {x()},
+                                async key(arg: t, arg2: t): void {x()},
+                                async key(arg: t, arg2: t): (void) {x()},
+                            }
+                        ",
+            Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
         ),
     ];
 
     Tester::new(ObjectShorthand::NAME, ObjectShorthand::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
-}
-
-#[test]
-fn test_jsdoc() {
-    use crate::tester::Tester;
-
-    // JSDoc @type annotation
-    let pass = vec![
-        ("({ val: /** @type {number} */ (val) })", None),
-        ("({ 'prop': /** @type {string} */ (prop) })", None),
-        ("({ val: /**\n * @type {number}\n */ (val) })", None),
-        ("({ val: /**\n  * @type {number}\n  */ (val) })", None),
-        ("({ val: /**\n   * @type {number}\n   */ (val) })", None),
-        ("({ val: /**\n\t* @type {number}\n\t*/ (val) })", None),
-        ("({ val: /**\n\t * @type {number}\n\t */ (val) })", None),
-        ("({ val: /**\n  *  @type   {number}  \n  */ (val) })", None),
-        ("({ val: /**\n *  @type   {string} myParam\n */ (val) })", None),
-        ("({ val: /**\n  *  @type   {Object} options\n  */ (val) })", None),
-        ("({ val: /**\n\t *\t@type\t{Array}\n\t */ (val) })", None),
-        (
-            "({ val: /**\n   *\n   * @type {Function}\n   * @param {string} name\n   */ (val) })",
-            None,
-        ),
-    ];
-
-    let fail = vec![
-        ("({ val: /** regular comment */ (val) })", None),
-        ("({ val: /** @param {string} name */ (val) })", None),
-        ("({ val: /** @returns {number} */ (val) })", None),
-        ("({ val: /** @description some text */ (val) })", None),
-        ("({ val: /**\n * @param {string} name\n */ (val) })", None),
-        ("({ val: /**\n  * @returns {number}\n  */ (val) })", None),
-        ("({ val: /**\n   * @description some text\n   */ (val) })", None),
-        ("({ val: /**\n\t* @param {string} name\n\t*/ (val) })", None),
-        ("({ val: /**\n\t * @returns {number}\n\t */ (val) })", None),
-        ("({ val: /**\n  *  @param   {string}  name  \n  */ (val) })", None),
-        ("({ val: /**\n *  @returns   {number} result\n */ (val) })", None),
-        (
-            "({ val: /**\n   *\n   * @param {string} name\n   * @returns {number}\n   */ (val) })",
-            None,
-        ),
-    ];
-
-    Tester::new(ObjectShorthand::NAME, ObjectShorthand::PLUGIN, pass, fail)
-        .intentionally_allow_no_fix_tests()
-        .test();
-}
-
-#[test]
-fn test_never() {
-    use crate::tester::Tester;
-    use serde_json::json;
-
-    let pass = vec![
-        ("var x = {a: n, c: d, f: g}", Some(json!(["never"]))),
-        ("var x = {a: function(){}, b: {c: d}}", Some(json!(["never"]))),
-        ("let {a, b} = o;", Some(json!(["never"]))),
-        ("var x = {foo: foo, bar: bar, ...baz}", Some(json!(["never"]))),
-    ];
-
-    let fail = vec![];
-
-    let fix = vec![
-        ("var x = {y}", "var x = {y: y}", Some(json!(["never"]))),
-        ("var x = {y: {x}}", "var x = {y: {x: x}}", Some(json!(["never"]))),
-        (
-            "var x = {foo, bar: baz, ...qux}",
-            "var x = {foo: foo, bar: baz, ...qux}",
-            Some(json!(["never"])),
-        ),
-        (
-            "({ [(foo)]() { return; } })",
-            "({ [(foo)]: function() { return; } })",
-            Some(json!(["never"])),
-        ),
-        (
-            "({ async [(foo)]() { return; } })",
-            "({ [(foo)]: async function() { return; } })",
-            Some(json!(["never"])),
-        ),
-        (
-            "({ *[((foo))]() { return; } })",
-            "({ [((foo))]: function*() { return; } })",
-            Some(json!(["never"])),
-        ),
-        (
-            "({ [(((((((foo)))))))]() { return; } })",
-            "({ [(((((((foo)))))))]: function() { return; } })",
-            Some(json!(["never"])),
-        ),
-        (
-            "({ 'foo bar'() { return; } })",
-            "({ 'foo bar': function() { return; } })",
-            Some(json!(["never"])),
-        ),
-        ("({ *foo() { return; } })", "({ foo: function*() { return; } })", Some(json!(["never"]))),
-        ("({ async* a() {} })", "({ a: async function*() {} })", Some(json!(["never"]))),
-        (
-            "({ async foo() { return; } })",
-            "({ foo: async function() { return; } })",
-            Some(json!(["never"])),
-        ),
-        (
-            "({ *['foo bar']() { return; } })",
-            "({ ['foo bar']: function*() { return; } })",
-            Some(json!(["never"])),
-        ),
-        ("var x = {y() {}}", "var x = {y: function() {}}", Some(json!(["never"]))),
-        ("var x = {*y() {}}", "var x = {y: function*() {}}", Some(json!(["never"]))),
-        (
-            "var x = {y, a: b, *x(){}}",
-            "var x = {y: y, a: b, x: function*(){}}",
-            Some(json!(["never"])),
-        ),
-        (
-            "var x = {ConstructorFunction(){}, a: b}",
-            "var x = {ConstructorFunction: function(){}, a: b}",
-            Some(json!(["never"])),
-        ),
-        (
-            "var x = {notConstructorFunction(){}, b: c}",
-            "var x = {notConstructorFunction: function(){}, b: c}",
-            Some(json!(["never"])),
-        ),
-    ];
-
-    Tester::new(ObjectShorthand::NAME, ObjectShorthand::PLUGIN, pass, fail).expect_fix(fix).test();
-}
-
-#[test]
-fn test_ignore_constructors() {
-    use crate::tester::Tester;
-    use serde_json::json;
-
-    let pass = vec![
-        (
-            "var x = {ConstructorFunction: function(){}, a: b}",
-            Some(json!(["always", { "ignoreConstructors": true }])),
-        ),
-        (
-            "var x = {_ConstructorFunction: function(){}, a: b}",
-            Some(json!(["always", { "ignoreConstructors": true }])),
-        ),
-        (
-            "var x = {$ConstructorFunction: function(){}, a: b}",
-            Some(json!(["always", { "ignoreConstructors": true }])),
-        ),
-        (
-            "var x = {__ConstructorFunction: function(){}, a: b}",
-            Some(json!(["always", { "ignoreConstructors": true }])),
-        ),
-        (
-            "var x = {_0ConstructorFunction: function(){}, a: b}",
-            Some(json!(["always", { "ignoreConstructors": true }])),
-        ),
-        (
-            "var x = {notConstructorFunction(){}, b: c}",
-            Some(json!(["always", { "ignoreConstructors": true }])),
-        ),
-        (
-            "var x = {ConstructorFunction: function(){}, a: b}",
-            Some(json!(["methods", { "ignoreConstructors": true }])),
-        ),
-        (
-            "var x = {_ConstructorFunction: function(){}, a: b}",
-            Some(json!(["methods", { "ignoreConstructors": true }])),
-        ),
-        (
-            "var x = {$ConstructorFunction: function(){}, a: b}",
-            Some(json!(["methods", { "ignoreConstructors": true }])),
-        ),
-        (
-            "var x = {__ConstructorFunction: function(){}, a: b}",
-            Some(json!(["methods", { "ignoreConstructors": true }])),
-        ),
-        (
-            "var x = {_0ConstructorFunction: function(){}, a: b}",
-            Some(json!(["methods", { "ignoreConstructors": true }])),
-        ),
-        (
-            "var x = {notConstructorFunction(){}, b: c}",
-            Some(json!(["methods", { "ignoreConstructors": true }])),
-        ),
-        ("({ [foo.bar]: () => {} })", Some(json!(["always", { "ignoreConstructors": true }]))),
-        ("var x = {ConstructorFunction: function(){}, a: b}", Some(json!(["never"]))),
-        ("var x = {notConstructorFunction: function(){}, b: c}", Some(json!(["never"]))),
-    ];
-
-    let fix = vec![
-        (
-            "var x = {y: function() {}}",
-            "var x = {y() {}}",
-            Some(json!(["methods", { "ignoreConstructors": true }])),
-        ),
-        (
-            "var x = {_y: function() {}}",
-            "var x = {_y() {}}",
-            Some(json!(["methods", { "ignoreConstructors": true }])),
-        ),
-        (
-            "var x = {$y: function() {}}",
-            "var x = {$y() {}}",
-            Some(json!(["methods", { "ignoreConstructors": true }])),
-        ),
-        (
-            "var x = {__y: function() {}}",
-            "var x = {__y() {}}",
-            Some(json!(["methods", { "ignoreConstructors": true }])),
-        ),
-        (
-            "var x = {_0y: function() {}}",
-            "var x = {_0y() {}}",
-            Some(json!(["methods", { "ignoreConstructors": true }])),
-        ),
-    ];
-
-    Tester::new(ObjectShorthand::NAME, ObjectShorthand::PLUGIN, pass, vec![])
-        .expect_fix(fix)
-        .test();
-}
-
-#[test]
-fn test_methods_ignore_pattern() {
-    use crate::tester::Tester;
-    use serde_json::json;
-
-    let pass = vec![
-        (
-            "var x = { foo: function() {}  }",
-            Some(json!(["always", { "methodsIgnorePattern": "^foo$" }])),
-        ),
-        (
-            "var x = { foo: function() {}  }",
-            Some(json!(["methods", { "methodsIgnorePattern": "^foo$" }])),
-        ),
-        (
-            "var x = { foo: function*() {}  }",
-            Some(json!(["always", { "methodsIgnorePattern": "^foo$" }])),
-        ),
-        (
-            "var x = { foo: async function() {}  }",
-            Some(json!(["always", { "methodsIgnorePattern": "^foo$" }])),
-        ),
-        (
-            "var x = { foo: () => { return 5; }  }",
-            Some(
-                json!(["always", { "methodsIgnorePattern": "^foo$", "avoidExplicitReturnArrows": true }]),
-            ),
-        ),
-        (
-            "var x = { 'foo': function() {}  }",
-            Some(json!(["always", { "methodsIgnorePattern": "^foo$" }])),
-        ),
-        (
-            "var x = { ['foo']: function() {}  }",
-            Some(json!(["always", { "methodsIgnorePattern": "^foo$" }])),
-        ),
-        (
-            "var x = { 123: function() {}  }",
-            Some(json!(["always", { "methodsIgnorePattern": "^123$" }])),
-        ),
-        (
-            "var x = { afoob: function() {}  }",
-            Some(json!(["always", { "methodsIgnorePattern": "foo" }])),
-        ),
-        (
-            "var x = { afoob: function() {}  }",
-            Some(json!(["always", { "methodsIgnorePattern": "^.foo.$" }])),
-        ),
-        (
-            "var x = { '👍foo👍': function() {}  }",
-            Some(json!(["always", { "methodsIgnorePattern": "^.foo.$" }])),
-        ),
-    ];
-
-    let fix = vec![
-        (
-            "var x = { afoob: function() {} }",
-            "var x = { afoob() {} }",
-            Some(json!(["always", { "methodsIgnorePattern": "^foo$" }])),
-        ),
-        (
-            "var x = { afoob: function() {} }",
-            "var x = { afoob() {} }",
-            Some(json!(["methods", { "methodsIgnorePattern": "^foo$" }])),
-        ),
-        (
-            "var x = { 'afoob': function() {} }",
-            "var x = { 'afoob'() {} }",
-            Some(json!(["always", { "methodsIgnorePattern": "^foo$" }])),
-        ),
-        (
-            "var x = { 1234: function() {} }",
-            "var x = { 1234() {} }",
-            Some(json!(["always", { "methodsIgnorePattern": "^123$" }])),
-        ),
-        (
-            "var x = { bar: function() {} }",
-            "var x = { bar() {} }",
-            Some(json!(["always", { "methodsIgnorePattern": "foo" }])),
-        ),
-        (
-            "var x = { [foo]: function() {} }",
-            "var x = { [foo]() {} }",
-            Some(json!(["always", { "methodsIgnorePattern": "foo" }])),
-        ),
-        (
-            "var x = { foo: foo }", // does not apply to properties
-            "var x = { foo }",
-            Some(json!(["always", { "methodsIgnorePattern": "^foo$" }])),
-        ),
-    ];
-
-    Tester::new(ObjectShorthand::NAME, ObjectShorthand::PLUGIN, pass, vec![])
-        .expect_fix(fix)
-        .test();
-}
-
-#[test]
-fn test_avoid_quotes() {
-    use crate::tester::Tester;
-    use serde_json::json;
-
-    let pass = vec![
-        ("var x = {'a': function(){}}", Some(json!(["always", { "avoidQuotes": true }]))),
-        ("var x = {['a']: function(){}}", Some(json!(["methods", { "avoidQuotes": true }]))),
-        ("var x = {'y': y}", Some(json!(["properties", { "avoidQuotes": true }]))),
-    ];
-
-    let fix = vec![
-        ("var x = {a: a}", "var x = {a}", Some(json!(["always", { "avoidQuotes": true }]))),
-        (
-            "var x = {a: function(){}}",
-            "var x = {a(){}}",
-            Some(json!(["methods", { "avoidQuotes": true }])),
-        ),
-        (
-            "var x = {[a]: function(){}}",
-            "var x = {[a](){}}",
-            Some(json!(["methods", { "avoidQuotes": true }])),
-        ),
-        (
-            "var x = {'a'(){}}",
-            "var x = {'a': function(){}}",
-            Some(json!(["always", { "avoidQuotes": true }])),
-        ),
-        (
-            "var x = {['a'](){}}",
-            "var x = {['a']: function(){}}",
-            Some(json!(["methods", { "avoidQuotes": true }])),
-        ),
-    ];
-
-    Tester::new(ObjectShorthand::NAME, ObjectShorthand::PLUGIN, pass, vec![])
-        .expect_fix(fix)
-        .test();
-}
-
-#[test]
-fn test_avoid_explicit_return_arrows() {
-    use crate::tester::Tester;
-    use serde_json::json;
-
-    let pass = vec![
-        ("({ x: () => foo })", Some(json!(["always", { "avoidExplicitReturnArrows": false }]))),
-        (
-            "({ x: () => { return; } })",
-            Some(json!(["always", { "avoidExplicitReturnArrows": false }])),
-        ),
-        ("({ x: () => foo })", Some(json!(["always", { "avoidExplicitReturnArrows": true }]))),
-        ("({ x() { return; } })", Some(json!(["always", { "avoidExplicitReturnArrows": true }]))),
-        (
-            "({ x() { return; }, y() { return; } })",
-            Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
-        ),
-        (
-            "({ x() { return; }, y: () => foo })",
-            Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
-        ),
-        (
-            "({ x: () => foo, y() { return; } })",
-            Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
-        ),
-        (
-            "({ x: () => { this; } })",
-            Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
-        ),
-        (
-            "function foo() { ({ x: () => { arguments; } }) }",
-            Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
-        ),
-        (
-            "
-                    class Foo extends Bar {
-                        constructor() {
-                            var foo = { x: () => { super(); } };
-                        }
-                    }
-                ",
-            Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
-        ),
-        (
-            "
-                    class Foo extends Bar {
-                        baz() {
-                            var foo = { x: () => { super.baz(); } };
-                        }
-                    }
-                ",
-            Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
-        ),
-        (
-            "
-                    function foo() {
-                        var x = { x: () => { new.target; } };
-                    }
-                ",
-            Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
-        ),
-        (
-            "
-                    function foo() {
-                        var x = {
-                            x: () => {
-                                var y = () => { this; };
-                            }
-                        };
-                    }
-                ",
-            Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
-        ),
-        (
-            "
-                    function foo() {
-                        var x = {
-                            x: () => {
-                                var y = () => { this; };
-                                function foo() { this; }
-                            }
-                        };
-                    }
-                ",
-            Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
-        ),
-        (
-            "
-                    function foo() {
-                        var x = {
-                            x: () => {
-                                return { y: () => { this; } };
-                            }
-                        };
-                    }
-                ",
-            Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
-        ),
-    ];
-
-    let fix = vec![
-        (
-            "({ x: (arg => { return; }) })",
-            "({ x(arg) { return; } })",
-            Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
-        ),
-        (
-            "({ x: () => { return; } })",
-            "({ x() { return; } })",
-            Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
-        ),
-        (
-            "({ x() { return; }, y: () => { return; } })",
-            "({ x() { return; }, y() { return; } })",
-            Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
-        ),
-        (
-            "({ x: () => { return; }, y: () => foo })",
-            "({ x() { return; }, y: () => foo })",
-            Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
-        ),
-        (
-            "({ x: () => { return; }, y: () => { return; } })",
-            "({ x() { return; }, y() { return; } })",
-            Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
-        ),
-        (
-            "({ x: foo => { return; } })",
-            "({ x(foo) { return; } })",
-            Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
-        ),
-        (
-            "({ x: (foo = 1) => { return; } })",
-            "({ x(foo = 1) { return; } })",
-            Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
-        ),
-        (
-            "({ x: ({ foo: bar = 1 } = {}) => { return; } })",
-            "({ x({ foo: bar = 1 } = {}) { return; } })",
-            Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
-        ),
-        (
-            "({ x: () => { function foo() { this; } } })",
-            "({ x() { function foo() { this; } } })",
-            Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
-        ),
-        (
-            "({ x: () => { var foo = function() { arguments; } } })",
-            "({ x() { var foo = function() { arguments; } } })",
-            Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
-        ),
-        (
-            "({ x: () => { function foo() { arguments; } } })",
-            "({ x() { function foo() { arguments; } } })",
-            Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
-        ),
-        (
-            "
-                    ({
-                        x: () => {
-                            class Foo extends Bar {
-                                constructor() {
-                                    super();
-                                }
-                            }
-                        }
-                    })
-                ",
-            "
-                    ({
-                        x() {
-                            class Foo extends Bar {
-                                constructor() {
-                                    super();
-                                }
-                            }
-                        }
-                    })
-                ",
-            Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
-        ),
-        (
-            "
-                    ({
-                        x: () => {
-                            function foo() {
-                                new.target;
-                            }
-                        }
-                    })
-                ",
-            "
-                    ({
-                        x() {
-                            function foo() {
-                                new.target;
-                            }
-                        }
-                    })
-                ",
-            Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
-        ),
-        (
-            "({ 'foo bar': () => { return; } })",
-            "({ 'foo bar'() { return; } })",
-            Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
-        ),
-        (
-            "({ [foo]: () => { return; } })",
-            "({ [foo]() { return; } })",
-            Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
-        ),
-        (
-            "({ a: 1, foo: async (bar = 1) => { return; } })",
-            "({ a: 1, async foo(bar = 1) { return; } })",
-            Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
-        ),
-        (
-            "({ [ foo ]: async bar => { return; } })",
-            "({ async [ foo ](bar) { return; } })",
-            Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
-        ),
-        (
-            "({ key: (arg = () => {}) => {} })",
-            "({ key(arg = () => {}) {} })",
-            Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
-        ),
-        (
-            "
-                    function foo() {
-                        var x = {
-                            x: () => {
-                                this;
-                                return { y: () => { foo; } };
-                            }
-                        };
-                    }
-                ",
-            "
-                    function foo() {
-                        var x = {
-                            x: () => {
-                                this;
-                                return { y() { foo; } };
-                            }
-                        };
-                    }
-                ",
-            Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
-        ),
-        (
-            "
-                    function foo() {
-                        var x = {
-                            x: () => {
-                                ({ y: () => { foo; } });
-                                this;
-                            }
-                        };
-                    }
-                ",
-            "
-                    function foo() {
-                        var x = {
-                            x: () => {
-                                ({ y() { foo; } });
-                                this;
-                            }
-                        };
-                    }
-                ",
-            Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
-        ),
-        (
-            "({ a: (() => { return foo; }) })",
-            "({ a() { return foo; } })",
-            Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
-        ),
-        (
-            "({ a: ((arg) => { return foo; }) })",
-            "({ a(arg) { return foo; } })",
-            Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
-        ),
-        (
-            "({ a: ((arg, arg2) => { return foo; }) })",
-            "({ a(arg, arg2) { return foo; } })",
-            Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
-        ),
-        (
-            "({ a: (async () => { return foo; }) })",
-            "({ async a() { return foo; } })",
-            Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
-        ),
-        (
-            "({ a: (async (arg) => { return foo; }) })",
-            "({ async a(arg) { return foo; } })",
-            Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
-        ),
-        (
-            "({ a: (async (arg, arg2) => { return foo; }) })",
-            "({ async a(arg, arg2) { return foo; } })",
-            Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
-        ),
-        (
-            "
-                    const test = {
-                        key: <T,>(): void => { },
-                        key: async <T,>(): Promise<void> => { },
-                        key: <T,>(arg: T): T => { return arg },
-                        key: async <T,>(arg: T): Promise<T> => { return arg },
-                    }
-                ",
-            "
-                    const test = {
-                        key<T,>(): void { },
-                        async key<T,>(): Promise<void> { },
-                        key<T,>(arg: T): T { return arg },
-                        async key<T,>(arg: T): Promise<T> { return arg },
-                    }
-                ",
-            Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
-        ),
-        (
-            "
-                    const test = {
-                        key: (): void => {x()},
-                        key: ( (): void => {x()} ),
-                        key: ( (): (void) => {x()} ),
-
-                        key: (arg: t): void => {x()},
-                        key: ( (arg: t): void => {x()} ),
-                        key: ( (arg: t): (void) => {x()} ),
-
-                        key: (arg: t, arg2: t): void => {x()},
-                        key: ( (arg: t, arg2: t): void => {x()} ),
-                        key: ( (arg: t, arg2: t): (void) => {x()} ),
-
-                        key: async (): void => {x()},
-                        key: ( async (): void => {x()} ),
-                        key: ( async (): (void) => {x()} ),
-
-                        key: async (arg: t): void => {x()},
-                        key: ( async (arg: t): void => {x()} ),
-                        key: ( async (arg: t): (void) => {x()} ),
-
-                        key: async (arg: t, arg2: t): void => {x()},
-                        key: ( async (arg: t, arg2: t): void => {x()} ),
-                        key: ( async (arg: t, arg2: t): (void) => {x()} ),
-                    }
-                ",
-            "
-                    const test = {
-                        key(): void {x()},
-                        key(): void {x()},
-                        key(): (void) {x()},
-
-                        key(arg: t): void {x()},
-                        key(arg: t): void {x()},
-                        key(arg: t): (void) {x()},
-
-                        key(arg: t, arg2: t): void {x()},
-                        key(arg: t, arg2: t): void {x()},
-                        key(arg: t, arg2: t): (void) {x()},
-
-                        async key(): void {x()},
-                        async key(): void {x()},
-                        async key(): (void) {x()},
-
-                        async key(arg: t): void {x()},
-                        async key(arg: t): void {x()},
-                        async key(arg: t): (void) {x()},
-
-                        async key(arg: t, arg2: t): void {x()},
-                        async key(arg: t, arg2: t): void {x()},
-                        async key(arg: t, arg2: t): (void) {x()},
-                    }
-                ",
-            Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
-        ),
-    ];
-
-    Tester::new(ObjectShorthand::NAME, ObjectShorthand::PLUGIN, pass, vec![])
-        .expect_fix(fix)
-        .test();
 }
