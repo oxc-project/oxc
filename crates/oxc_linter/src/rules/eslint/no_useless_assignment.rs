@@ -696,6 +696,17 @@ fn test() {
                     export { foo };
                     console.log(foo);
                     foo = 'unused like but exported';",
+        // `exported` comments aren't supported
+        // "/* exported foo */
+        //                 let foo = 'used';
+        //                 console.log(foo);
+        //                 foo = 'unused like but exported with directive';", // { "sourceType": "script" },
+        // test/use-a comments aren't supported
+        // "/*eslint test/use-a:1*/
+        //             let a = 'used';
+        //             console.log(a);
+        //             a = 'unused like but marked by markVariableAsUsed()';
+        //             ",
         "v = 'used';
                     console.log(v);
                     v = 'unused'",
@@ -808,7 +819,7 @@ fn test() {
                             // process
                         } finally {
                             console = bk;
-                        }",
+                        }", // { "globals": { "console": false }, },
         "let message = 'init';
                     try {
                         const result = call();
@@ -909,12 +920,32 @@ fn test() {
                     function unsafeFn() {
                         throw new Error();
                     }",
+        // test comments aren't supported
+        // r#"/*eslint test/unknown-ref:1*/
+        //             let a = "used";
+        //             console.log(a);
+        //             a = "unused";"#,
+        // r#"/*eslint test/unknown-ref:1*/
+        //             function foo() {
+        //                 let a = "used";
+        //                 console.log(a);
+        //                 a = "unused";
+        //             }"#,
+        // r#"/*eslint test/unknown-ref:1*/
+        //             function foo() {
+        //                 let a = "used";
+        //                 if (condition) {
+        //                     a = "unused";
+        //                     return
+        //                 }
+        //                 console.log(a);
+        //             }"#,
         r#"
                             function App() {
                                 const A = "";
                                 return <A/>;
                             }
-                        "#,
+                        "#, // { "parserOptions": { "ecmaFeatures": { "jsx": true, }, }, },
         r#"
                             function App() {
                                 let A = "";
@@ -922,50 +953,50 @@ fn test() {
                                 A = "A";
                                 return <A/>;
                             }
-                        "#,
+                        "#, // { "parserOptions": { "ecmaFeatures": { "jsx": true, }, }, },
         r#"
                             function App() {
                                 let A = "a";
                                 foo(A);
                                 return <A/>;
                             }
-                        "#,
+                        "#, // { "parserOptions": { "ecmaFeatures": { "jsx": true, }, }, },
         "function App() {
                             let x = 0;
                             foo(x);
                             x = 1;
                             return <A prop={x} />;
-                        }",
+                        }", // { "parserOptions": { "ecmaFeatures": { "jsx": true }, }, },
         r#"function App() {
                             let x = "init";
                             foo(x);
                             x = "used";
                             return <A>{x}</A>;
-                        }"#,
+                        }"#, // { "parserOptions": { "ecmaFeatures": { "jsx": true }, }, },
         "function App() {
                             let props = { a: 1 };
                             foo(props);
                             props = { b: 2 };
                             return <A {...props} />;
-                        }",
+                        }", // { "parserOptions": { "ecmaFeatures": { "jsx": true }, }, },
         "function App() {
                             let NS = Lib;
                             return <NS.Cmp />;
-                        }",
+                        }", // { "parserOptions": { "ecmaFeatures": { "jsx": true }, }, },
         "function App() {
                             let a = 0;
                             a++;
                             return <A prop={a} />;
-                        }",
+                        }", // { "parserOptions": { "ecmaFeatures": { "jsx": true }, }, },
         "function App() {
                             const obj = { a: 1 };
                             const { a, b = a } = obj;
                             return <A prop={b} />;
-                        }",
+                        }", // { "parserOptions": { "ecmaFeatures": { "jsx": true }, }, },
         "function App() {
                             let { a, b: { c = a } = {} } = obj;
                             return <A prop={c} />;
-                        }",
+                        }", // { "parserOptions": { "ecmaFeatures": { "jsx": true }, }, },
         r#"function App() {
                             let x = "init";
                             if (cond) {
@@ -973,7 +1004,7 @@ fn test() {
                                 return <A prop={x} />;
                             }
                             return <A prop={x} />;
-                        }"#,
+                        }"#, // { "parserOptions": { "ecmaFeatures": { "jsx": true }, }, },
         "function App() {
                             let A;
                             if (cond) {
@@ -982,7 +1013,7 @@ fn test() {
                               A = Bar;
                             }
                             return <A />;
-                        }",
+                        }", // { "parserOptions": { "ecmaFeatures": { "jsx": true }, }, },
         "function App() {
                             let m;
                             try {
@@ -993,12 +1024,12 @@ fn test() {
                               // ignore
                             }
                             return <A prop={m} />;
-                        }",
+                        }", // { "parserOptions": { "ecmaFeatures": { "jsx": true }, }, },
         "function App() {
                             const arr = [6];
                             const [c, d = c] = arr;
                             return <A prop={d} />;
-                        }",
+                        }", // { "parserOptions": { "ecmaFeatures": { "jsx": true }, }, },
         "function App() {
                             const obj = { a: 1 };
                             let {
@@ -1006,7 +1037,7 @@ fn test() {
                               b = (a = 2)
                             } = obj;
                             return <A prop={a} />;
-                        }",
+                        }", // { "parserOptions": { "ecmaFeatures": { "jsx": true }, }, }
     ];
 
     let fail = vec![
@@ -1270,17 +1301,17 @@ fn test() {
                         let A = "unused";
                         A = "used";
                         return <A/>;
-                        }"#,
+                        }"#, // { "parserOptions": { "ecmaFeatures": { "jsx": true }, }, },
         r#"function App() {
                         let A = "unused";
                         A = "used";
                         return <A></A>;
-                        }"#,
+                        }"#, // { "parserOptions": { "ecmaFeatures": { "jsx": true }, }, },
         r#"function App() {
                         let A = "unused";
                         A = "used";
                         return <A.B />;
-                        }"#,
+                        }"#, // { "parserOptions": { "ecmaFeatures": { "jsx": true }, }, },
         r#"function App() {
                         let x = "used";
                         if (cond) {
@@ -1288,7 +1319,7 @@ fn test() {
                         } else {
                           x = "unused";
                         }
-                        }"#,
+                        }"#, // { "parserOptions": { "ecmaFeatures": { "jsx": true }, }, },
         r#"function App() {
                         let A;
                         A = "unused";
@@ -1298,7 +1329,7 @@ fn test() {
                           A = "used2";
                         }
                         return <A/>;
-                        }"#,
+                        }"#, // { "parserOptions": { "ecmaFeatures": { "jsx": true }, }, },
         "function App() {
                         let message = 'unused';
                         try {
@@ -1308,24 +1339,24 @@ fn test() {
                           message = 'used';
                         }
                         return <A prop={message} />;
-                        }",
+                        }", // { "parserOptions": { "ecmaFeatures": { "jsx": true }, }, },
         "function App() {
                         let x = 1;
                         x = x + 1;
                         x = 5;
                         return <A prop={x} />;
-                        }",
+                        }", // { "parserOptions": { "ecmaFeatures": { "jsx": true }, }, },
         "function App() {
                         let x = 1;
                         x = 2;
                         return <A>{x}</A>;
-                        }",
+                        }", // { "parserOptions": { "ecmaFeatures": { "jsx": true }, }, },
         "function App() {
                         let x = 0;
                         x = 1;
                         x = 2;
                         return <A prop={x} />;
-                        }",
+                        }", // { "parserOptions": { "ecmaFeatures": { "jsx": true }, }, }
     ];
 
     Tester::new(NoUselessAssignment::NAME, NoUselessAssignment::PLUGIN, pass, fail)
