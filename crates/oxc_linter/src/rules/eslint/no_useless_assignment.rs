@@ -4,10 +4,10 @@ use smallvec::SmallVec;
 
 use oxc_ast::{
     AstKind,
-    ast::{BindingPattern, Expression, VariableDeclarationKind},
+    ast::{BindingPattern, Expression},
 };
 use oxc_cfg::{
-    BasicBlockId, BlockNodeId, EdgeType, ErrorEdgeKind, Graph,
+    BasicBlockId, BlockNodeId, EdgeType, Graph,
     graph::{
         Direction,
         visit::{Control, DfsEvent, EdgeRef, depth_first_search},
@@ -150,17 +150,11 @@ impl Rule for NoUselessAssignment {
 
         for symbol_id in ctx.scoping().symbol_ids() {
             let decl_node = ctx.symbol_declaration(symbol_id);
-            let AstKind::VariableDeclarator(var_decl) = decl_node.kind() else { continue };
-            if let AstKind::VariableDeclaration(var_declaration) =
-                ctx.nodes().parent_node(decl_node.id()).kind()
-                && var_declaration.kind == VariableDeclarationKind::Const
-            {
+            if !Self::is_supported_declaration(decl_node) {
                 continue;
             }
-            if matches!(
-                &var_decl.init,
-                Some(Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_))
-            ) {
+            let flags = ctx.scoping().symbol_flags(symbol_id);
+            if flags.is_const_variable() || flags.is_import() || flags.is_ambient() {
                 continue;
             }
 
@@ -176,7 +170,7 @@ impl Rule for NoUselessAssignment {
                 .node_weight(ctx.nodes().cfg_id(decl_node.id()))
                 .expect("expected a valid node id in graph");
 
-            if var_decl.init.is_some() {
+            if Self::has_initial_write(decl_node) && !Self::should_skip_initial_write(decl_node) {
                 cfg_ops[block_id].push(OpAtNode {
                     op: Operation::Write,
                     node: decl_node.id(),
@@ -203,7 +197,6 @@ impl Rule for NoUselessAssignment {
                             &mut cfg_ops,
                             reference,
                             compact_idx,
-                            var_decl,
                             decl_node,
                             &mut used_compact_indices,
                         );
@@ -215,7 +208,6 @@ impl Rule for NoUselessAssignment {
                         &mut cfg_ops,
                         lhs,
                         compact_idx,
-                        var_decl,
                         decl_node,
                         &mut used_compact_indices,
                     );
@@ -230,7 +222,6 @@ impl Rule for NoUselessAssignment {
                             &mut cfg_ops,
                             prev,
                             compact_idx,
-                            var_decl,
                             decl_node,
                             &mut used_compact_indices,
                         );
@@ -243,7 +234,6 @@ impl Rule for NoUselessAssignment {
                         &mut cfg_ops,
                         reference,
                         compact_idx,
-                        var_decl,
                         decl_node,
                         &mut used_compact_indices,
                     );
@@ -257,7 +247,6 @@ impl Rule for NoUselessAssignment {
                     &mut cfg_ops,
                     lhs,
                     compact_idx,
-                    var_decl,
                     decl_node,
                     &mut used_compact_indices,
                 );
@@ -289,6 +278,7 @@ impl Rule for NoUselessAssignment {
 
         let mut scratch_live = BitSet::new_in(num_tracked, &allocator);
         let mut scratch_catch = BitSet::new_in(num_tracked, &allocator);
+        let mut next_op_spans = vec![None; num_tracked];
 
         // Pre-allocate scratch BitSets for loop analysis (reused via clear())
         let mut scratch_loop_req = BitSet::new_in(num_tracked, &allocator);
@@ -307,6 +297,7 @@ impl Rule for NoUselessAssignment {
                         .expect("expected a valid node id in graph");
                     scratch_live.clear();
                     scratch_catch.clear();
+                    next_op_spans.fill(None);
 
                     let successors = graph.edges_directed(block_node_id, Direction::Outgoing);
 
@@ -375,10 +366,16 @@ impl Rule for NoUselessAssignment {
 
                         match op.op {
                             Operation::Write => {
+                                let catch_can_observe = scratch_catch.has_bit(compact_idx)
+                                    && Self::catch_can_observe_prior_value(
+                                        ctx,
+                                        current_block_id,
+                                        op,
+                                        next_op_spans[compact_idx],
+                                    );
                                 if !scratch_live.has_bit(compact_idx)
-                                    && !scratch_catch.has_bit(compact_idx)
+                                    && !catch_can_observe
                                     && !exported_symbols.has_bit(compact_idx)
-                                    && !Self::is_in_try_block(graph, block_node_id)
                                     && Self::has_same_parent_variable_scope(
                                         ctx,
                                         compact_to_scope[compact_idx],
@@ -395,6 +392,8 @@ impl Rule for NoUselessAssignment {
                                 scratch_live.set_bit(compact_idx);
                             }
                         }
+
+                        next_op_spans[compact_idx] = Some(ctx.nodes().get_node(op.node).span());
                     }
 
                     scratch_live.union(&scratch_catch);
@@ -414,21 +413,71 @@ impl Rule for NoUselessAssignment {
 
 impl NoUselessAssignment {
     fn is_exported(ctx: &LintContext, symbol_id: SymbolId) -> bool {
+        if ctx.scoping().scope_parent_id(ctx.scoping().symbol_scope_id(symbol_id)).is_some() {
+            return false;
+        }
         let symbol_name = ctx.scoping().symbol_name(symbol_id);
         ctx.module_record().exported_bindings.contains_key(symbol_name)
-            || ctx.module_record().local_export_entries.iter().any(|e| {
-                e.span == ctx.nodes().get_node(ctx.symbol_declaration(symbol_id).id()).span()
-            })
+            || ctx
+                .module_record()
+                .local_export_entries
+                .iter()
+                .any(|entry| entry.local_name.name() == Some(symbol_name))
     }
 
-    #[expect(clippy::too_many_arguments)]
+    fn is_supported_declaration(decl_node: &oxc_semantic::AstNode) -> bool {
+        matches!(
+            decl_node.kind(),
+            AstKind::VariableDeclarator(_)
+                | AstKind::CatchParameter(_)
+                | AstKind::Function(_)
+                | AstKind::Class(_)
+                | AstKind::BindingRestElement(_)
+                | AstKind::FormalParameter(_)
+                | AstKind::FormalParameterRest(_)
+        )
+    }
+
+    fn has_initial_write(decl_node: &oxc_semantic::AstNode) -> bool {
+        match decl_node.kind() {
+            AstKind::VariableDeclarator(var_decl) => var_decl.init.is_some(),
+            AstKind::BindingRestElement(_) => true,
+            _ => false,
+        }
+    }
+
+    fn should_skip_initial_write(decl_node: &oxc_semantic::AstNode) -> bool {
+        matches!(
+            decl_node.kind(),
+            AstKind::VariableDeclarator(var_decl)
+                if matches!(
+                    &var_decl.init,
+                    Some(
+                        Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_)
+                    )
+                )
+        )
+    }
+
+    fn declaration_binding_pattern<'a>(
+        decl_node: &'a oxc_semantic::AstNode<'a>,
+    ) -> Option<&'a BindingPattern<'a>> {
+        match decl_node.kind() {
+            AstKind::VariableDeclarator(var_decl) => Some(&var_decl.id),
+            AstKind::CatchParameter(caught) => Some(&caught.pattern),
+            AstKind::BindingRestElement(rest) => Some(&rest.argument),
+            AstKind::FormalParameter(param) => Some(&param.pattern),
+            AstKind::FormalParameterRest(param) => Some(&param.rest.argument),
+            _ => None,
+        }
+    }
+
     fn process_reference_deferred(
         ctx: &LintContext,
         graph: &Graph,
         cfg_ops: &mut CfgOps,
         reference: &Reference,
         compact_idx: u32,
-        var_decl: &oxc_ast::ast::VariableDeclarator,
         decl_node: &oxc_semantic::AstNode,
         used_compact_indices: &mut SmallVec<[u32; 32]>,
     ) {
@@ -444,8 +493,8 @@ impl NoUselessAssignment {
 
         if reference.is_write() {
             if matches!(
-                &var_decl.id,
-                BindingPattern::ObjectPattern(_) | BindingPattern::ArrayPattern(_)
+                Self::declaration_binding_pattern(decl_node),
+                Some(BindingPattern::ObjectPattern(_) | BindingPattern::ArrayPattern(_))
             ) && decl_node
                 .span()
                 .contains_inclusive(ctx.nodes().get_node(reference.node_id()).span())
@@ -506,10 +555,111 @@ impl NoUselessAssignment {
         }
     }
 
-    fn is_in_try_block(graph: &Graph, block_node_id: BlockNodeId) -> bool {
-        graph.edges_directed(block_node_id, Direction::Outgoing).any(|e| {
-            matches!(e.weight(), EdgeType::Error(ErrorEdgeKind::Explicit) | EdgeType::Finalize)
+    fn catch_can_observe_prior_value(
+        ctx: &LintContext,
+        block_id: BasicBlockId,
+        op: &OpAtNode,
+        next_op_span: Option<Span>,
+    ) -> bool {
+        let op_span = ctx.nodes().get_node(op.node).span();
+
+        if Self::write_can_throw_before_commit(ctx, op.node) {
+            return true;
+        }
+
+        ctx.cfg().basic_blocks[block_id].instructions().iter().any(|instruction| {
+            let Some(node_id) = instruction.node_id else {
+                return false;
+            };
+            let node_span = ctx.nodes().get_node(node_id).span();
+            node_span.start >= op_span.end
+                && next_op_span.is_none_or(|next_span| node_span.start < next_span.start)
+                && Self::node_may_throw(ctx, node_id)
         })
+    }
+
+    fn write_can_throw_before_commit(ctx: &LintContext, node_id: NodeId) -> bool {
+        match ctx.nodes().get_node(node_id).kind() {
+            AstKind::VariableDeclarator(var_decl) => {
+                !Self::binding_pattern_is_definitely_safe(&var_decl.id)
+                    || var_decl
+                        .init
+                        .as_ref()
+                        .is_some_and(|init| !Self::expression_is_definitely_safe(init))
+            }
+            AstKind::IdentifierReference(_) => Self::assignment_write_can_throw(ctx, node_id),
+            _ => false,
+        }
+    }
+
+    fn assignment_write_can_throw(ctx: &LintContext, node_id: NodeId) -> bool {
+        let node = ctx.nodes().get_node(node_id);
+        let parent_node = ctx.nodes().parent_node(node.id());
+        let AstKind::AssignmentExpression(assign_expr) = parent_node.kind() else {
+            return true;
+        };
+
+        assign_expr.operator != oxc_ast::ast::AssignmentOperator::Assign
+            || !assign_expr.left.is_simple_assignment_target()
+            || !Self::expression_is_definitely_safe(&assign_expr.right)
+    }
+
+    fn node_may_throw(ctx: &LintContext, node_id: NodeId) -> bool {
+        match ctx.nodes().get_node(node_id).kind() {
+            AstKind::ExpressionStatement(stmt) => {
+                !Self::expression_is_definitely_safe(&stmt.expression)
+            }
+            AstKind::VariableDeclaration(var_decl) => var_decl.declarations.iter().any(|decl| {
+                !Self::binding_pattern_is_definitely_safe(&decl.id)
+                    || decl
+                        .init
+                        .as_ref()
+                        .is_some_and(|init| !Self::expression_is_definitely_safe(init))
+            }),
+            AstKind::ReturnStatement(stmt) => {
+                stmt.argument.as_ref().is_some_and(|arg| !Self::expression_is_definitely_safe(arg))
+            }
+            AstKind::ThrowStatement(_) => true,
+            _ => true,
+        }
+    }
+
+    fn binding_pattern_is_definitely_safe(pattern: &BindingPattern) -> bool {
+        match pattern {
+            BindingPattern::BindingIdentifier(_) => true,
+            BindingPattern::AssignmentPattern(pattern) => {
+                Self::binding_pattern_is_definitely_safe(&pattern.left)
+                    && Self::expression_is_definitely_safe(&pattern.right)
+            }
+            _ => false,
+        }
+    }
+
+    fn expression_is_definitely_safe(expr: &Expression) -> bool {
+        match expr {
+            Expression::Identifier(_)
+            | Expression::ThisExpression(_)
+            | Expression::BooleanLiteral(_)
+            | Expression::NullLiteral(_)
+            | Expression::NumericLiteral(_)
+            | Expression::BigIntLiteral(_)
+            | Expression::RegExpLiteral(_)
+            | Expression::StringLiteral(_)
+            | Expression::FunctionExpression(_)
+            | Expression::ArrowFunctionExpression(_) => true,
+            Expression::ParenthesizedExpression(expr) => {
+                Self::expression_is_definitely_safe(&expr.expression)
+            }
+            Expression::SequenceExpression(expr) => {
+                expr.expressions.iter().all(Self::expression_is_definitely_safe)
+            }
+            Expression::AssignmentExpression(expr) => {
+                expr.operator == oxc_ast::ast::AssignmentOperator::Assign
+                    && expr.left.is_simple_assignment_target()
+                    && Self::expression_is_definitely_safe(&expr.right)
+            }
+            _ => false,
+        }
     }
 
     fn get_parent_variable_scope(ctx: &LintContext, scope_id: ScopeId) -> ScopeId {
@@ -1355,7 +1505,46 @@ fn test() {
                         x = 1;
                         x = 2;
                         return <A prop={x} />;
-                        }", // { "parserOptions": { "ecmaFeatures": { "jsx": true }, }, }
+                        }", // { "parserOptions": { "ecmaFeatures": { "jsx": true }, }, },
+        "function foo(param) {
+                            console.log(param);
+                            param = 1;
+                        }",
+        "try {
+                            throw 0;
+                        } catch (err) {
+                            console.log(err);
+                            err = 1;
+                        }",
+        "function foo() {
+                            function bar() {}
+                            console.log(bar);
+                            bar = 1;
+                        }",
+        "function foo() {
+                            class Bar {}
+                            console.log(Bar);
+                            Bar = 1;
+                        }",
+        "function foo() {
+                            let fn = () => {};
+                            console.log(fn);
+                            fn = 1;
+                        }",
+        "function foo() {
+                            let x = 0;
+                            try {
+                                x = 1;
+                                x = 2;
+                            } catch {}
+                            console.log(x);
+                        }",
+        "export let foo = 0;
+                        function f() {
+                            let foo = 1;
+                            console.log(foo);
+                            foo = 2;
+                        }",
     ];
 
     Tester::new(NoUselessAssignment::NAME, NoUselessAssignment::PLUGIN, pass, fail)
