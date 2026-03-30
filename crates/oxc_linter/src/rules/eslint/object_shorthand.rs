@@ -119,10 +119,6 @@ impl std::ops::Deref for ObjectShorthand {
     }
 }
 
-// doc: https://github.com/eslint/eslint/blob/main/docs/src/rules/object-shorthand.md
-// code: https://github.com/eslint/eslint/blob/main/lib/rules/object-shorthand.js
-// test: https://github.com/eslint/eslint/blob/main/tests/lib/rules/object-shorthand.js
-
 declare_oxc_lint!(
     /// ### What it does
     /// Require or disallow method and property shorthand syntax for object literals
