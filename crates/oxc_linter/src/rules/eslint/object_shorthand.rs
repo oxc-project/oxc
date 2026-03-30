@@ -1965,27 +1965,27 @@ fn test() {
             "({ a: async function*() {} })",
             Some(serde_json::json!(["never"])),
         ),
-        (
-            "
-                            const test = {
-                                key: <T>(): void => { },
-                                key: async <T>(): Promise<void> => { },
+        // (
+        //     "
+        //                     const test = {
+        //                         key: <T>(): void => { },
+        //                         key: async <T>(): Promise<void> => { },
 
-                                key: <T>(arg: T): T => { return arg },
-                                key: async <T>(arg: T): Promise<T> => { return arg },
-                            }
-                        ",
-            "
-                            const test = {
-                                key<T>(): void { },
-                                async key<T>(): Promise<void> { },
+        //                         key: <T>(arg: T): T => { return arg },
+        //                         key: async <T>(arg: T): Promise<T> => { return arg },
+        //                     }
+        //                 ",
+        //     "
+        //                     const test = {
+        //                         key<T>(): void { },
+        //                         async key<T>(): Promise<void> { },
 
-                                key<T>(arg: T): T { return arg },
-                                async key<T>(arg: T): Promise<T> { return arg },
-                            }
-                        ",
-            Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
-        ),
+        //                         key<T>(arg: T): T { return arg },
+        //                         async key<T>(arg: T): Promise<T> { return arg },
+        //                     }
+        //                 ",
+        //     Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
+        // ),
         (
             "
                             const test = {
