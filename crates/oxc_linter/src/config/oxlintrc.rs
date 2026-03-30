@@ -376,8 +376,10 @@ impl Oxlintrc {
             .collect::<Vec<_>>();
 
         let settings = self.settings.clone();
-        let env = self.env.clone();
-        let globals = self.globals.clone();
+        let mut env = other.env;
+        self.env.override_envs(&mut env);
+        let mut globals = other.globals;
+        self.globals.override_globals(&mut globals);
 
         let mut overrides = other.overrides;
         overrides.extend(self.overrides.clone());
@@ -727,6 +729,33 @@ mod test {
         let config2: Oxlintrc = serde_json::from_str(r#"{"jsPlugins": ["./plugin2.ts"]}"#).unwrap();
         let merged = config1.merge(config2);
         assert_eq!(merged.external_plugins.unwrap().len(), 2);
+    }
+
+    #[test]
+    fn test_oxlintrc_merge_env_and_globals() {
+        // base envs and globals are inherited by root
+        let config1: Oxlintrc =
+            serde_json::from_str(r#"{"env": {"browser": true}, "globals": {"window": "readonly"}}"#)
+                .unwrap();
+        let config2: Oxlintrc =
+            serde_json::from_str(r#"{"env": {"node": true}, "globals": {"process": "readonly"}}"#)
+                .unwrap();
+        let merged = config1.merge(config2);
+        assert!(merged.env.contains("browser"));
+        assert!(merged.env.contains("node"));
+        assert!(merged.globals.is_enabled("window"));
+        assert!(merged.globals.is_enabled("process"));
+
+        // root wins over base on conflict
+        let config1: Oxlintrc =
+            serde_json::from_str(r#"{"env": {"browser": true}, "globals": {"Promise": "readonly"}}"#)
+                .unwrap();
+        let config2: Oxlintrc =
+            serde_json::from_str(r#"{"env": {"browser": false}, "globals": {"Promise": "off"}}"#)
+                .unwrap();
+        let merged = config1.merge(config2);
+        assert!(merged.env.contains("browser"));
+        assert_eq!(merged.globals.get("Promise"), Some(&GlobalValue::Readonly));
     }
 
     #[test]
