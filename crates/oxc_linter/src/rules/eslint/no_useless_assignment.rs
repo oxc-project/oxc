@@ -619,6 +619,7 @@ impl NoUselessAssignment {
             AstKind::ReturnStatement(stmt) => {
                 stmt.argument.as_ref().is_some_and(|arg| !Self::expression_is_definitely_safe(arg))
             }
+            AstKind::ThrowStatement(_) => true,
             _ => true,
         }
     }
