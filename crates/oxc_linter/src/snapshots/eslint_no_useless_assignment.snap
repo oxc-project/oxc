@@ -477,33 +477,6 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider removing or reusing the assigned value.
 
   ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
-   ╭─[no_useless_assignment.tsx:2:33]
- 1 │ function foo() {
- 2 │                             let fn = () => {};
-   ·                                 ─────────────
- 3 │                             fn = 1;
-   ╰────
-  help: Consider removing or reusing the assigned value.
-
-  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
-   ╭─[no_useless_assignment.tsx:2:33]
- 1 │ function foo(arr) {
- 2 │                             let a = 0;
-   ·                                 ─────
- 3 │                             for (a of arr) {}
-   ╰────
-  help: Consider removing or reusing the assigned value.
-
-  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
-   ╭─[no_useless_assignment.tsx:2:33]
- 1 │ function foo(obj) {
- 2 │                             let a = 0;
-   ·                                 ─────
- 3 │                             for (a in obj) {}
-   ╰────
-  help: Consider removing or reusing the assigned value.
-
-  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
    ╭─[no_useless_assignment.tsx:3:29]
  2 │                             console.log(param);
  3 │                             param = 1;
