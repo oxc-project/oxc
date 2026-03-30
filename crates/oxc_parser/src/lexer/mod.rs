@@ -199,11 +199,18 @@ impl<'a, C: Config> Lexer<'a, C> {
         } else {
             ErrorSnapshot::Count(self.errors.len())
         };
+        // Skip `self.tokens.len()` when tokens are statically disabled (`NoTokensLexerConfig`).
+        // In that case `self.tokens` is always empty, so saving/restoring its length is dead work.
+        let tokens_len = if C::TOKENS_METHOD_IS_STATIC && !self.config.tokens() {
+            0
+        } else {
+            self.tokens.len()
+        };
         LexerCheckpoint {
             source_position: self.source.position(),
             token: self.token,
             errors_snapshot,
-            tokens_len: self.tokens.len(),
+            tokens_len,
             pure_comment: self.trivia_builder.pure_comment,
             has_no_side_effects_comment: self.trivia_builder.has_no_side_effects_comment,
         }
@@ -217,11 +224,16 @@ impl<'a, C: Config> Lexer<'a, C> {
         } else {
             ErrorSnapshot::Full(self.errors.clone())
         };
+        let tokens_len = if C::TOKENS_METHOD_IS_STATIC && !self.config.tokens() {
+            0
+        } else {
+            self.tokens.len()
+        };
         LexerCheckpoint {
             source_position: self.source.position(),
             token: self.token,
             errors_snapshot,
-            tokens_len: self.tokens.len(),
+            tokens_len,
             pure_comment: self.trivia_builder.pure_comment,
             has_no_side_effects_comment: self.trivia_builder.has_no_side_effects_comment,
         }
@@ -234,7 +246,11 @@ impl<'a, C: Config> Lexer<'a, C> {
             ErrorSnapshot::Count(len) => self.errors.truncate(len),
             ErrorSnapshot::Full(errors) => self.errors = errors,
         }
-        self.tokens.truncate(checkpoint.tokens_len);
+        // Skip `tokens.truncate()` when tokens are statically disabled (`NoTokensLexerConfig`).
+        // In that case `self.tokens` is always empty, so truncating is dead work.
+        if !C::TOKENS_METHOD_IS_STATIC || self.config.tokens() {
+            self.tokens.truncate(checkpoint.tokens_len);
+        }
         self.source.set_position(checkpoint.source_position);
         self.token = checkpoint.token;
         self.trivia_builder.pure_comment = checkpoint.pure_comment;
