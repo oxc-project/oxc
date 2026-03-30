@@ -1159,7 +1159,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeAnnotation<'a>> {
                 write!(f, [self.type_annotation()]);
             }
             _ => {
-                write!(f, [":", space(), self.type_annotation()]);
+                write!(f, [":", hard_space(), self.type_annotation()]);
             }
         }
     }

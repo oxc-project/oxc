@@ -60,7 +60,7 @@
 
 ## html-in-js
 
-### Option 1: 181/184 (98.37%)
+### Option 1: 185/187 (98.93%)
 
 ```json
 {"printWidth":80}
@@ -70,9 +70,8 @@
 | :--- | :--- |
 | [prettier/js/multiparser-html/issue-10691.js](diffs/html-in-js/prettier__js__multiparser-html__issue-10691.js.md) | js-in-html(`<script>`)-in-js needs lot more work; Please see oxc_formatter/src/print/template/embed/html.rs |
 | [webawesome/relative-time/relative-time.test.ts](diffs/html-in-js/webawesome__relative-time__relative-time.test.ts.md) | html-in-js: Need to solve `label({ embed, hug }))` + `shouldExpandLastArg` |
-| [webawesome/slider/slider.ts](diffs/html-in-js/webawesome__slider__slider.ts.md) | `@decorator` + union type: https://github.com/oxc-project/oxc/issues/20519 |
 
-### Option 2: 183/184 (99.46%)
+### Option 2: 186/187 (99.47%)
 
 ```json
 {"printWidth":100,"htmlWhitespaceSensitivity":"ignore"}
