@@ -14,8 +14,8 @@
   },
   "scripts": {
     "build-test": "echo 'Skipped because there are no tests.'",
-    "build-dev": "pnpm run build-wasm-dev && node scripts/patch.js",
-    "build": "pnpm run build-wasm-dev --release && node scripts/patch.js",
+    "build-dev": "vp run build-wasm-dev && node scripts/patch.js",
+    "build": "vp run build-wasm-dev --release && node scripts/patch.js",
     "build-wasm-dev": "napi build --platform --esm --target wasm32-wasip1-threads",
     "postbuild": "publint"
   },

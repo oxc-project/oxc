@@ -39,12 +39,12 @@
   },
   "scripts": {
     "build-dev": "napi build --esm --platform",
-    "build-test": "pnpm run build-dev --profile coverage",
-    "build": "pnpm run build-dev --features allocator --release",
+    "build-test": "vp run build-dev --profile coverage",
+    "build": "vp run build-dev --features allocator --release",
     "postbuild": "publint",
     "postbuild-dev": "node scripts/patch.js",
-    "build-wasm": "pnpm run build-wasm-dev --release",
-    "build-wasm-dev": "pnpm run build-dev --target wasm32-wasip1-threads",
+    "build-wasm": "vp run build-wasm-dev --release",
+    "build-wasm-dev": "vp run build-dev --target wasm32-wasip1-threads",
     "test": "vitest run --dir ./test"
   },
   "devDependencies": {

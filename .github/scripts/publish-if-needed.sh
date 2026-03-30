@@ -25,4 +25,4 @@ else
 fi
 rm -f "$npm_stderr"
 
-pnpm publish "${pkg_dir}/" "$@"
+vp pm publish "${pkg_dir}/" "$@"

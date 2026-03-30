@@ -137,7 +137,7 @@ export default function generatePluginEslint(): void {
   // Format generated index file with oxfmt to clean up unnecessary quotes around property names.
   // This isn't necessary, as it gets minified and bundled anyway, but it makes generated code easier to read
   // when debugging.
-  execSync(`pnpm exec oxfmt --write ${JSON.stringify(indexFilePath)}`, { cwd: rootDirPath });
+  execSync(`vp exec oxfmt --write ${JSON.stringify(indexFilePath)}`, { cwd: rootDirPath });
 
   // Generate the rule_names.ts file for use in tsdown config
   const ruleNamesCode = [

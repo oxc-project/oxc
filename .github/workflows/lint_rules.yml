@@ -23,7 +23,7 @@ jobs:
       - name: Checkout Branch
         uses: taiki-e/checkout-action@83ed61bfbe2b8abbb3c66e8b65b1335484c70009 # v1.4.1
 
-      - uses: oxc-project/setup-node@4c26e7cb3605b6bdef5450dacd02c434b10fd8ba # v1.2.0
+      - uses: voidzero-dev/setup-vp@e34774bccb4e7d7f2e23514ca980177a71425e43 # v1.5.0
 
       - name: Install latest plugins
         working-directory: tasks/lint_rules

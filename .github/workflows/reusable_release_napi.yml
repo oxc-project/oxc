@@ -42,53 +42,53 @@ jobs:
         include:
           - os: windows-latest
             target: x86_64-pc-windows-msvc
-            build: pnpm build --target x86_64-pc-windows-msvc
+            build: vp run build --target x86_64-pc-windows-msvc
 
           - os: windows-latest
             target: aarch64-pc-windows-msvc
-            build: pnpm build --target aarch64-pc-windows-msvc
+            build: vp run build --target aarch64-pc-windows-msvc
 
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
-            build: pnpm build --target x86_64-unknown-linux-gnu --use-napi-cross
+            build: vp run build --target x86_64-unknown-linux-gnu --use-napi-cross
 
           - os: ubuntu-latest
             target: x86_64-unknown-linux-musl
-            build: pnpm build --target x86_64-unknown-linux-musl -x
+            build: vp run build --target x86_64-unknown-linux-musl -x
 
           - os: ubuntu-latest
             target: aarch64-unknown-linux-gnu
-            build: pnpm build --target aarch64-unknown-linux-gnu --use-napi-cross
+            build: vp run build --target aarch64-unknown-linux-gnu --use-napi-cross
 
           - os: ubuntu-latest
             target: aarch64-unknown-linux-musl
-            build: pnpm build --target aarch64-unknown-linux-musl -x
+            build: vp run build --target aarch64-unknown-linux-musl -x
 
           - os: ubuntu-latest
             target: armv7-unknown-linux-gnueabihf
-            build: pnpm build --target armv7-unknown-linux-gnueabihf --use-napi-cross
+            build: vp run build --target armv7-unknown-linux-gnueabihf --use-napi-cross
 
           - os: macos-latest
             target: x86_64-apple-darwin
-            build: pnpm build --target x86_64-apple-darwin
+            build: vp run build --target x86_64-apple-darwin
 
           - os: macos-latest
             target: aarch64-apple-darwin
-            build: pnpm build --target aarch64-apple-darwin
+            build: vp run build --target aarch64-apple-darwin
 
           - os: ubuntu-latest
             target: wasm32-wasip1-threads
-            build: pnpm build --target wasm32-wasip1-threads
+            build: vp run build --target wasm32-wasip1-threads
 
           - os: ubuntu-latest
             target: s390x-unknown-linux-gnu
             build: |
               export CFLAGS="-fuse-ld=lld"
-              pnpm build --target s390x-unknown-linux-gnu --use-napi-cross
+              vp run build --target s390x-unknown-linux-gnu --use-napi-cross
 
           - os: ubuntu-latest
             target: aarch64-linux-android
-            build: pnpm build --target aarch64-linux-android
+            build: vp run build --target aarch64-linux-android
 
           - os: ubuntu-latest
             target: riscv64gc-unknown-linux-gnu
@@ -97,27 +97,27 @@ jobs:
               sudo apt-get install gcc-riscv64-linux-gnu g++-riscv64-linux-gnu -y
               export TARGET_CC=riscv64-linux-gnu-gcc
               export CXX=riscv64-linux-gnu-g++
-              pnpm build --target riscv64gc-unknown-linux-gnu
+              vp run build --target riscv64gc-unknown-linux-gnu
 
           - os: ubuntu-latest
             target: aarch64-unknown-linux-ohos
-            build: pnpm build --target aarch64-unknown-linux-ohos
+            build: vp run build --target aarch64-unknown-linux-ohos
 
           - os: ubuntu-latest
             target: armv7-linux-androideabi
-            build: pnpm build --target armv7-linux-androideabi
+            build: vp run build --target armv7-linux-androideabi
 
           - os: ubuntu-latest
             target: armv7-unknown-linux-musleabihf
-            build: pnpm build --target armv7-unknown-linux-musleabihf -x
+            build: vp run build --target armv7-unknown-linux-musleabihf -x
 
           - os: windows-latest
             target: i686-pc-windows-msvc
-            build: pnpm build --target i686-pc-windows-msvc
+            build: vp run build --target i686-pc-windows-msvc
 
           - os: ubuntu-latest
             target: powerpc64le-unknown-linux-gnu
-            build: pnpm build --target powerpc64le-unknown-linux-gnu --use-napi-cross
+            build: vp run build --target powerpc64le-unknown-linux-gnu --use-napi-cross
 
           - os: ubuntu-latest
             target: riscv64gc-unknown-linux-musl
@@ -126,7 +126,7 @@ jobs:
               sudo apt-get install gcc-riscv64-linux-gnu g++-riscv64-linux-gnu -y
               export TARGET_CC=riscv64-linux-gnu-gcc
               export CXX=riscv64-linux-gnu-g++
-              pnpm build --target riscv64gc-unknown-linux-musl -x
+              vp run build --target riscv64gc-unknown-linux-musl -x
 
     steps:
       - if: ${{ contains(matrix.os, 'windows') }}
@@ -134,7 +134,7 @@ jobs:
 
       - uses: taiki-e/checkout-action@83ed61bfbe2b8abbb3c66e8b65b1335484c70009 # v1.4.1
 
-      - uses: oxc-project/setup-node@4c26e7cb3605b6bdef5450dacd02c434b10fd8ba # v1.2.0
+      - uses: voidzero-dev/setup-vp@e34774bccb4e7d7f2e23514ca980177a71425e43 # v1.5.0
 
       - run: rustup target add ${{ matrix.target }}
 
@@ -218,7 +218,7 @@ jobs:
       - build-freebsd
     runs-on: ubuntu-slim
     permissions:
-      id-token: write # for `pnpm publish --provenance`
+      id-token: write # for `vp pm publish --provenance`
     env:
       name: ${{ inputs.name }}
       package_path: napi/${{ inputs.name }}
@@ -227,7 +227,7 @@ jobs:
     steps:
       - uses: taiki-e/checkout-action@83ed61bfbe2b8abbb3c66e8b65b1335484c70009 # v1.4.1
 
-      - uses: oxc-project/setup-node@4c26e7cb3605b6bdef5450dacd02c434b10fd8ba # v1.2.0
+      - uses: voidzero-dev/setup-vp@e34774bccb4e7d7f2e23514ca980177a71425e43 # v1.5.0
 
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
@@ -235,15 +235,15 @@ jobs:
 
       - run: mkdir -p ${npm_dir}
 
-      - run: pnpm napi create-npm-dirs --package-json-path ${package_path}/package.json --npm-dir ${npm_dir}
+      - run: vp exec napi create-npm-dirs --package-json-path ${package_path}/package.json --npm-dir ${npm_dir}
 
-      - run: pnpm napi artifacts --package-json-path ${package_path}/package.json --build-output-dir ${package_path}/src-js --npm-dir ${npm_dir}
+      - run: vp exec napi artifacts --package-json-path ${package_path}/package.json --build-output-dir ${package_path}/src-js --npm-dir ${npm_dir}
         if: ${{ inputs.name == 'parser' }}
 
-      - run: pnpm napi artifacts --package-json-path ${package_path}/package.json --build-output-dir ${package_path} --npm-dir ${npm_dir}
+      - run: vp exec napi artifacts --package-json-path ${package_path}/package.json --build-output-dir ${package_path} --npm-dir ${npm_dir}
         if: ${{ inputs.name != 'parser' }}
 
-      - run: pnpm -C ${package_path} build-browser-bundle --npmDir ../../${npm_dir}
+      - run: vp run --filter "./${package_path}" build-browser-bundle --npmDir ../../${npm_dir}
         if: ${{ inputs.name == 'parser' }}
 
       - run: npm install -g npm@latest # For trusted publishing support
@@ -255,5 +255,5 @@ jobs:
         run: |
           # Trusted publishing is configured, publish token is not required.
           # Publish sub-packages and adds `optionalDependencies` to `package_path`.
-          pnpm napi pre-publish --no-gh-release -t npm --package-json-path ${package_path}/package.json --npm-dir ${npm_dir}
+          vp exec napi pre-publish --no-gh-release -t npm --package-json-path ${package_path}/package.json --npm-dir ${npm_dir}
           bash .github/scripts/publish-if-needed.sh ${package_path} ${PUBLISH_FLAGS}

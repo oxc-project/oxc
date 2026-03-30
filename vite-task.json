@@ -6,24 +6,24 @@
       "cacheable": true
     },
     "vp:fmt": {
-      "command": "pnpm run fmt",
+      "command": "vp run fmt",
       "cacheable": true
     },
     "vp:lint": {
       "dependsOn": ["vp:build-oxlint"],
-      "command": "pnpm run lint",
+      "command": "vp run lint",
       "cacheable": true
     },
     "vp:build-oxlint": {
-      "command": "pnpm --filter oxlint-app build-js",
+      "command": "vp run --filter oxlint-app build-js",
       "cacheable": true
     },
     "vp:build-test": {
-      "command": "pnpm --workspace-concurrency=1 --filter \"./napi/*\" --filter \"./apps/*\" build-test",
+      "command": "vp run --workspace-concurrency=1 --filter \"./napi/*\" --filter \"./apps/*\" build-test",
       "cacheable": true
     },
     "vp:test": {
-      "command": "pnpm --workspace-concurrency=1 --filter \"./napi/*\" --filter \"./apps/*\" test",
+      "command": "vp run --workspace-concurrency=1 --filter \"./napi/*\" --filter \"./apps/*\" test",
       "dependsOn": ["vp:build-test"],
       "cacheable": true
     }

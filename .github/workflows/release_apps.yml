@@ -47,63 +47,63 @@ jobs:
         include:
           - os: windows-latest
             target: x86_64-pc-windows-msvc
-            build: pnpm run build-napi-release --target x86_64-pc-windows-msvc
+            build: vp run build-napi-release --target x86_64-pc-windows-msvc
 
           - os: windows-latest
             target: aarch64-pc-windows-msvc
-            build: pnpm run build-napi-release --target aarch64-pc-windows-msvc
+            build: vp run build-napi-release --target aarch64-pc-windows-msvc
 
           - os: windows-latest
             target: i686-pc-windows-msvc
-            build: pnpm run build-napi-release --target i686-pc-windows-msvc
+            build: vp run build-napi-release --target i686-pc-windows-msvc
 
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
-            build: pnpm run build-napi-release --target x86_64-unknown-linux-gnu --use-napi-cross
+            build: vp run build-napi-release --target x86_64-unknown-linux-gnu --use-napi-cross
 
           - os: ubuntu-latest
             target: aarch64-unknown-linux-gnu
-            build: pnpm run build-napi-release --target aarch64-unknown-linux-gnu --use-napi-cross
+            build: vp run build-napi-release --target aarch64-unknown-linux-gnu --use-napi-cross
 
           - os: ubuntu-latest
             target: armv7-unknown-linux-gnueabihf
-            build: pnpm run build-napi-release --target armv7-unknown-linux-gnueabihf --use-napi-cross
+            build: vp run build-napi-release --target armv7-unknown-linux-gnueabihf --use-napi-cross
 
           - os: ubuntu-latest
             target: x86_64-unknown-linux-musl
-            build: pnpm run build-napi-release --target x86_64-unknown-linux-musl -x
+            build: vp run build-napi-release --target x86_64-unknown-linux-musl -x
 
           - os: ubuntu-latest
             target: aarch64-unknown-linux-musl
-            build: pnpm run build-napi-release --target aarch64-unknown-linux-musl -x
+            build: vp run build-napi-release --target aarch64-unknown-linux-musl -x
 
           - os: ubuntu-latest
             target: armv7-unknown-linux-musleabihf
-            build: pnpm run build-napi-release --target armv7-unknown-linux-musleabihf -x
+            build: vp run build-napi-release --target armv7-unknown-linux-musleabihf -x
 
           - os: macos-latest
             target: x86_64-apple-darwin
-            build: pnpm run build-napi-release --target x86_64-apple-darwin
+            build: vp run build-napi-release --target x86_64-apple-darwin
 
           - os: macos-latest
             target: aarch64-apple-darwin
-            build: pnpm run build-napi-release --target aarch64-apple-darwin
+            build: vp run build-napi-release --target aarch64-apple-darwin
 
           - os: ubuntu-latest
             target: aarch64-linux-android
-            build: pnpm run build-napi-release --target aarch64-linux-android
+            build: vp run build-napi-release --target aarch64-linux-android
 
           - os: ubuntu-latest
             target: armv7-linux-androideabi
-            build: pnpm run build-napi-release --target armv7-linux-androideabi
+            build: vp run build-napi-release --target armv7-linux-androideabi
 
           - os: ubuntu-latest
             target: aarch64-unknown-linux-ohos
-            build: pnpm run build-napi-release --target aarch64-unknown-linux-ohos
+            build: vp run build-napi-release --target aarch64-unknown-linux-ohos
 
           - os: ubuntu-latest
             target: powerpc64le-unknown-linux-gnu
-            build: pnpm run build-napi-release --target powerpc64le-unknown-linux-gnu --use-napi-cross
+            build: vp run build-napi-release --target powerpc64le-unknown-linux-gnu --use-napi-cross
 
           - os: ubuntu-latest
             target: riscv64gc-unknown-linux-gnu
@@ -112,15 +112,15 @@ jobs:
               sudo apt-get install gcc-riscv64-linux-gnu g++-riscv64-linux-gnu -y
               export TARGET_CC=riscv64-linux-gnu-gcc
               export CXX=riscv64-linux-gnu-g++
-              pnpm run build-napi-release --target riscv64gc-unknown-linux-gnu
+              vp run build-napi-release --target riscv64gc-unknown-linux-gnu
 
           - os: ubuntu-latest
             target: riscv64gc-unknown-linux-musl
-            build: pnpm run build-napi-release --target riscv64gc-unknown-linux-musl -x
+            build: vp run build-napi-release --target riscv64gc-unknown-linux-musl -x
 
           - os: ubuntu-latest
             target: s390x-unknown-linux-gnu
-            build: export CFLAGS="-fuse-ld=lld" && pnpm run build-napi-release --target s390x-unknown-linux-gnu --use-napi-cross
+            build: export CFLAGS="-fuse-ld=lld" && vp run build-napi-release --target s390x-unknown-linux-gnu --use-napi-cross
 
     name: Build Oxlint ${{ matrix.target }}
     runs-on: ${{ matrix.os }}
@@ -145,7 +145,7 @@ jobs:
       - name: Add Rust Target
         run: rustup target add ${{ matrix.target }}
 
-      - uses: oxc-project/setup-node@4c26e7cb3605b6bdef5450dacd02c434b10fd8ba # v1.2.0
+      - uses: voidzero-dev/setup-vp@e34774bccb4e7d7f2e23514ca980177a71425e43 # v1.5.0
 
       # For cargo-zigbuild in musl builds.
       - uses: goto-bus-stop/setup-zig@abea47f85e598557f500fa1fd2ab7464fcb39406 # v2.2.1
@@ -273,7 +273,7 @@ jobs:
     needs: [check, build-oxlint, build-oxlint-freebsd]
     runs-on: ubuntu-slim
     permissions:
-      id-token: write # for `pnpm publish --provenance`
+      id-token: write # for `vp pm publish --provenance`
     env:
       package_path: npm/oxlint
       plugins_package_path: npm/oxlint-plugins
@@ -288,17 +288,17 @@ jobs:
           path: artifacts
           pattern: oxlint-bindings-*
 
-      - uses: oxc-project/setup-node@4c26e7cb3605b6bdef5450dacd02c434b10fd8ba # v1.2.0
+      - uses: voidzero-dev/setup-vp@e34774bccb4e7d7f2e23514ca980177a71425e43 # v1.5.0
 
       - name: Generate oxlint JS build
         working-directory: apps/oxlint
-        run: pnpm run build-js
+        run: vp run build-js
 
       - run: mkdir -p ${npm_dir}
 
-      - run: pnpm napi create-npm-dirs --package-json-path ${package_path}/package.json --npm-dir ${npm_dir}
+      - run: vp exec napi create-npm-dirs --package-json-path ${package_path}/package.json --npm-dir ${npm_dir}
 
-      - run: pnpm napi artifacts --package-json-path ${package_path}/package.json --build-output-dir apps/oxlint/src-js --npm-dir ${npm_dir}
+      - run: vp exec napi artifacts --package-json-path ${package_path}/package.json --build-output-dir apps/oxlint/src-js --npm-dir ${npm_dir}
 
       - name: Copy dist files to npm package
         run: cp -r apps/oxlint/dist npm/oxlint/dist
@@ -323,7 +323,7 @@ jobs:
         run: |
           # Trusted publishing is configured, publish token is not required.
           # Publish sub-packages and adds `optionalDependencies` to main package.
-          pnpm napi pre-publish --no-gh-release -t npm --package-json-path ${package_path}/package.json --npm-dir ${npm_dir}
+          vp exec napi pre-publish --no-gh-release -t npm --package-json-path ${package_path}/package.json --npm-dir ${npm_dir}
           # Publish `oxlint` package
           bash .github/scripts/publish-if-needed.sh ${package_path} ${PUBLISH_FLAGS}
           # Publish `@oxlint/plugins` package
@@ -340,63 +340,63 @@ jobs:
         include:
           - os: windows-latest
             target: x86_64-pc-windows-msvc
-            build: pnpm run build-napi-release --target x86_64-pc-windows-msvc
+            build: vp run build-napi-release --target x86_64-pc-windows-msvc
 
           - os: windows-latest
             target: aarch64-pc-windows-msvc
-            build: pnpm run build-napi-release --target aarch64-pc-windows-msvc
+            build: vp run build-napi-release --target aarch64-pc-windows-msvc
 
           - os: windows-latest
             target: i686-pc-windows-msvc
-            build: pnpm run build-napi-release --target i686-pc-windows-msvc
+            build: vp run build-napi-release --target i686-pc-windows-msvc
 
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
-            build: pnpm run build-napi-release --target x86_64-unknown-linux-gnu --use-napi-cross
+            build: vp run build-napi-release --target x86_64-unknown-linux-gnu --use-napi-cross
 
           - os: ubuntu-latest
             target: aarch64-unknown-linux-gnu
-            build: pnpm run build-napi-release --target aarch64-unknown-linux-gnu --use-napi-cross
+            build: vp run build-napi-release --target aarch64-unknown-linux-gnu --use-napi-cross
 
           - os: ubuntu-latest
             target: armv7-unknown-linux-gnueabihf
-            build: pnpm run build-napi-release --target armv7-unknown-linux-gnueabihf --use-napi-cross
+            build: vp run build-napi-release --target armv7-unknown-linux-gnueabihf --use-napi-cross
 
           - os: ubuntu-latest
             target: x86_64-unknown-linux-musl
-            build: pnpm run build-napi-release --target x86_64-unknown-linux-musl -x
+            build: vp run build-napi-release --target x86_64-unknown-linux-musl -x
 
           - os: ubuntu-latest
             target: aarch64-unknown-linux-musl
-            build: pnpm run build-napi-release --target aarch64-unknown-linux-musl -x
+            build: vp run build-napi-release --target aarch64-unknown-linux-musl -x
 
           - os: ubuntu-latest
             target: armv7-unknown-linux-musleabihf
-            build: pnpm run build-napi-release --target armv7-unknown-linux-musleabihf -x
+            build: vp run build-napi-release --target armv7-unknown-linux-musleabihf -x
 
           - os: macos-latest
             target: x86_64-apple-darwin
-            build: pnpm run build-napi-release --target x86_64-apple-darwin
+            build: vp run build-napi-release --target x86_64-apple-darwin
 
           - os: macos-latest
             target: aarch64-apple-darwin
-            build: pnpm run build-napi-release --target aarch64-apple-darwin
+            build: vp run build-napi-release --target aarch64-apple-darwin
 
           - os: ubuntu-latest
             target: aarch64-linux-android
-            build: pnpm run build-napi-release --target aarch64-linux-android
+            build: vp run build-napi-release --target aarch64-linux-android
 
           - os: ubuntu-latest
             target: armv7-linux-androideabi
-            build: pnpm run build-napi-release --target armv7-linux-androideabi
+            build: vp run build-napi-release --target armv7-linux-androideabi
 
           - os: ubuntu-latest
             target: aarch64-unknown-linux-ohos
-            build: pnpm run build-napi-release --target aarch64-unknown-linux-ohos
+            build: vp run build-napi-release --target aarch64-unknown-linux-ohos
 
           - os: ubuntu-latest
             target: powerpc64le-unknown-linux-gnu
-            build: pnpm run build-napi-release --target powerpc64le-unknown-linux-gnu --use-napi-cross
+            build: vp run build-napi-release --target powerpc64le-unknown-linux-gnu --use-napi-cross
 
           - os: ubuntu-latest
             target: riscv64gc-unknown-linux-gnu
@@ -405,15 +405,15 @@ jobs:
               sudo apt-get install gcc-riscv64-linux-gnu g++-riscv64-linux-gnu -y
               export TARGET_CC=riscv64-linux-gnu-gcc
               export CXX=riscv64-linux-gnu-g++
-              pnpm run build-napi-release --target riscv64gc-unknown-linux-gnu
+              vp run build-napi-release --target riscv64gc-unknown-linux-gnu
 
           - os: ubuntu-latest
             target: riscv64gc-unknown-linux-musl
-            build: pnpm run build-napi-release --target riscv64gc-unknown-linux-musl -x
+            build: vp run build-napi-release --target riscv64gc-unknown-linux-musl -x
 
           - os: ubuntu-latest
             target: s390x-unknown-linux-gnu
-            build: export CFLAGS="-fuse-ld=lld" && pnpm run build-napi-release --target s390x-unknown-linux-gnu --use-napi-cross
+            build: export CFLAGS="-fuse-ld=lld" && vp run build-napi-release --target s390x-unknown-linux-gnu --use-napi-cross
 
     name: Build Oxfmt ${{ matrix.target }}
     runs-on: ${{ matrix.os }}
@@ -438,7 +438,7 @@ jobs:
       - name: Add Rust Target
         run: rustup target add ${{ matrix.target }}
 
-      - uses: oxc-project/setup-node@4c26e7cb3605b6bdef5450dacd02c434b10fd8ba # v1.2.0
+      - uses: voidzero-dev/setup-vp@e34774bccb4e7d7f2e23514ca980177a71425e43 # v1.5.0
 
       # For cargo-zigbuild in musl builds.
       - uses: goto-bus-stop/setup-zig@abea47f85e598557f500fa1fd2ab7464fcb39406 # v2.2.1
@@ -566,7 +566,7 @@ jobs:
     needs: [check, build-oxfmt, build-oxfmt-freebsd]
     runs-on: ubuntu-slim
     permissions:
-      id-token: write # for `pnpm publish --provenance`
+      id-token: write # for `vp pm publish --provenance`
     env:
       package_path: npm/oxfmt
       npm_dir: npm/oxfmt-release
@@ -579,17 +579,17 @@ jobs:
           path: artifacts
           pattern: oxfmt-bindings-*
 
-      - uses: oxc-project/setup-node@4c26e7cb3605b6bdef5450dacd02c434b10fd8ba # v1.2.0
+      - uses: voidzero-dev/setup-vp@e34774bccb4e7d7f2e23514ca980177a71425e43 # v1.5.0
 
       - name: Generate oxfmt JS build
         working-directory: apps/oxfmt
-        run: pnpm run build-js
+        run: vp run build-js
 
       - run: mkdir -p ${npm_dir}
 
-      - run: pnpm napi create-npm-dirs --package-json-path ${package_path}/package.json --npm-dir ${npm_dir}
+      - run: vp exec napi create-npm-dirs --package-json-path ${package_path}/package.json --npm-dir ${npm_dir}
 
-      - run: pnpm napi artifacts --package-json-path ${package_path}/package.json --build-output-dir apps/oxfmt/src-js --npm-dir ${npm_dir}
+      - run: vp exec napi artifacts --package-json-path ${package_path}/package.json --build-output-dir apps/oxfmt/src-js --npm-dir ${npm_dir}
 
       - name: Copy dist files to npm package
         run: cp -r apps/oxfmt/dist npm/oxfmt/dist
@@ -603,7 +603,7 @@ jobs:
         run: |
           # Trusted publishing is configured, publish token is not required.
           # Publish sub-packages and adds `optionalDependencies` to main package.
-          pnpm napi pre-publish --no-gh-release -t npm --package-json-path ${package_path}/package.json --npm-dir ${npm_dir}
+          vp exec napi pre-publish --no-gh-release -t npm --package-json-path ${package_path}/package.json --npm-dir ${npm_dir}
           bash .github/scripts/publish-if-needed.sh ${package_path} ${PUBLISH_FLAGS}
 
   github-release:

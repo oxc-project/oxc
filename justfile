@@ -18,7 +18,7 @@ init:
   # Rust related init
   cargo binstall watchexec-cli cargo-insta typos-cli cargo-shear@1.11.2 -y
   # Node.js related init
-  pnpm install
+  vp install
 
 # Clone or update submodules
 submodules:
@@ -35,7 +35,7 @@ install-hook:
 # When ready, run the same CI commands
 ready:
   git diff --exit-code --quiet
-  pnpm install
+  vp install
   typos
   cargo lintgen
   just fmt
@@ -156,17 +156,17 @@ watch-oxlint *args='':
 # oxlint release build for node.js
 # After building, you can run oxlint with `node <oxc-root>/apps/oxlint/dist/cli.js`
 oxlint-node:
-  pnpm -C apps/oxlint run build
+  vp run --filter oxlint-app build
 
 # oxlint dev build, for testing with Node.js locally.
 # This uses a non-release Rust build without the `allocator` feature (no mimalloc) and sets DEBUG options for the JS bundle,
 # which mainly affects build time, performance, and debug assertions rather than available linting functionality.
 # After building, you can run oxlint with `node <oxc-root>/apps/oxlint/dist/cli.js`
 oxlint-node-dev:
-  pnpm -C apps/oxlint run build-dev
+  vp run --filter oxlint-app build-dev
 
 watch-oxlint-node *args='':
-  just watch 'pnpm run -C apps/oxlint build-dev && node apps/oxlint/dist/cli.js --disable-nested-config {{args}}'
+  just watch 'vp run --filter oxlint-app build-dev && node apps/oxlint/dist/cli.js --disable-nested-config {{args}}'
 
 # Create a new lint rule for any plugin
 new-rule name plugin='eslint':
@@ -211,16 +211,16 @@ watch-oxfmt *args='':
 # Build oxfmt in release build
 # After building, you can run oxfmt with `node <oxc-root>/apps/oxfmt/dist/cli.js`
 oxfmt-node:
-  pnpm -C apps/oxfmt run build
+  vp run --filter oxfmt-app build
 
 # oxfmt dev build, for testing with Node.js locally.
 # This builds faster than the release build and may differ in performance or behavior.
 # After building, you can run oxfmt with `node <oxc-root>/apps/oxfmt/dist/cli.js`
 oxfmt-node-dev:
-  pnpm -C apps/oxfmt run build-dev
+  vp run --filter oxfmt-app build-dev
 
 watch-oxfmt-node *args='':
-  just watch 'pnpm run -C apps/oxfmt build-dev && node apps/oxfmt/dist/cli.js {{args}}'
+  just watch 'vp run --filter oxfmt-app build-dev && node apps/oxfmt/dist/cli.js {{args}}'
 
 # ==================== TRANSFORMER ====================
 
@@ -264,10 +264,10 @@ install-wasm:
   rustup target add wasm32-wasip1-threads
 
 build-playground:
-  pnpm --filter oxc-playground build
+  vp run --filter oxc-playground build
 
 watch-playground:
-  just watch 'pnpm --filter oxc-playground build-dev'
+  just watch 'vp run --filter oxc-playground build-dev'
 
 # ==================== UTILITIES & ADVANCED ====================
 
@@ -288,7 +288,7 @@ linter-schema-json:
 
 # Generate linter config TypeScript types for `apps/oxlint/src-js/package/config.generated.ts`
 linter-config-ts:
-  pnpm --filter oxlint-app generate-config-types
+  vp run --filter oxlint-app generate-config-types
 
 # Generate formatter schema json for `npm/oxfmt/configuration_schema.json`
 formatter-schema-json:
@@ -296,7 +296,7 @@ formatter-schema-json:
 
 # Generate formatter config TypeScript types for `apps/oxfmt/src-js/config.generated.ts`
 formatter-config-ts:
-  pnpm --filter oxfmt-app generate-config-types
+  vp run --filter oxfmt-app generate-config-types
 
 # Automatically DRY up Cargo.toml manifests in a workspace
 autoinherit:

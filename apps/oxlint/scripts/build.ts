@@ -25,7 +25,7 @@ generatePluginEslint();
 
 // Build with tsdown
 console.log("Building with tsdown...");
-execSync("pnpm tsdown", { stdio: "inherit", cwd: oxlintDirPath });
+execSync("vp exec tsdown", { stdio: "inherit", cwd: oxlintDirPath });
 
 // Delete `cli.d.ts`
 console.log("Deleting cli.d.ts...");

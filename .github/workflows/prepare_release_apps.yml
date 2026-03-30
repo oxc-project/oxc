@@ -47,12 +47,12 @@ jobs:
             cat ./target/OXFMT_CHANGELOG
           } > ./target/PR_BODY.md
 
-      - uses: oxc-project/setup-node@4c26e7cb3605b6bdef5450dacd02c434b10fd8ba # v1.2.0
+      - uses: voidzero-dev/setup-vp@e34774bccb4e7d7f2e23514ca980177a71425e43 # v1.5.0
 
       - name: Rebuild NAPI bindings
         run: |
-          pnpm --filter oxlint-app run build-dev
-          pnpm --filter oxfmt-app run build-dev
+          vp run --filter oxlint-app build-dev
+          vp run --filter oxfmt-app build-dev
 
       - name: Update Cargo.lock
         run: cargo check
