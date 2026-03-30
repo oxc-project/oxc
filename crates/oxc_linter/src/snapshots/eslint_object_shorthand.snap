@@ -932,13 +932,41 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace `async* a` with `a: async function*`.
 
-  × Unexpected token. Did you mean `{'>'}` or `&gt;`?
-   ╭─[object_shorthand.tsx:3:51]
+  ⚠ eslint(object-shorthand): Expected method shorthand.
+   ╭─[object_shorthand.tsx:3:38]
  2 │                             const test = {
- 3 │                                 key: <T>(): void => { },
-   ·                                                   ▲
- 4 │                                 key: async <T>(): Promise<void> => { },
+ 3 │                                 key: <T,>(): void => { },
+   ·                                      ───────────────────
+ 4 │                                 key: async <T,>(): Promise<void> => { },
    ╰────
+  help: Replace `key: <T,>(): void => { }` with `key<T,>(): void { }`.
+
+  ⚠ eslint(object-shorthand): Expected method shorthand.
+   ╭─[object_shorthand.tsx:4:38]
+ 3 │                                 key: <T,>(): void => { },
+ 4 │                                 key: async <T,>(): Promise<void> => { },
+   ·                                      ──────────────────────────────────
+ 5 │ 
+   ╰────
+  help: Replace `key: async <T,>(): Promise<void> => { }` with `async key<T,>(): Promise<void> { }`.
+
+  ⚠ eslint(object-shorthand): Expected method shorthand.
+   ╭─[object_shorthand.tsx:6:38]
+ 5 │ 
+ 6 │                                 key: <T,>(arg: T): T => { return arg },
+   ·                                      ─────────────────────────────────
+ 7 │                                 key: async <T,>(arg: T): Promise<T> => { return arg },
+   ╰────
+  help: Replace `key: <T,>(arg: T): T => { return arg }` with `key<T,>(arg: T): T { return arg }`.
+
+  ⚠ eslint(object-shorthand): Expected method shorthand.
+   ╭─[object_shorthand.tsx:7:38]
+ 6 │                                 key: <T,>(arg: T): T => { return arg },
+ 7 │                                 key: async <T,>(arg: T): Promise<T> => { return arg },
+   ·                                      ────────────────────────────────────────────────
+ 8 │                             }
+   ╰────
+  help: Replace `key: async <T,>(arg: T): Promise<T> => { return arg }` with `async key<T,>(arg: T): Promise<T> { return arg }`.
 
   ⚠ eslint(object-shorthand): Expected method shorthand.
    ╭─[object_shorthand.tsx:3:38]
