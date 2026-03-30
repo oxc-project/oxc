@@ -1963,6 +1963,7 @@ fn test() {
             "({ a: async function*() {} })",
             Some(serde_json::json!(["never"])),
         ),
+        // FIXME
         // (
         //     "
         //                     const test = {
