@@ -69,9 +69,8 @@ impl<'a> SveltePartialLoader<'a> {
             let mut source_type =
                 SourceType::from_extension(lang).unwrap_or_else(|_| SourceType::mjs());
 
-            // Svelte script blocks use module semantics. Keep the existing behavior for plain
-            // `<script>` blocks while also correctly detecting `lang="ts"`, `module`, and
-            // `context="module"`.
+            // Keep existing behavior for plain `<script>` blocks while detecting `lang="ts"`.
+            // In Svelte, module semantics are controlled by `module`/`context="module"`.
             if source_type.is_unambiguous() || Self::is_module_script(content) {
                 source_type = source_type.with_module(true);
             }
