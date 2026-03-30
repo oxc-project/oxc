@@ -4,6 +4,17 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.123.0] - 2026-03-30
+
+### 🐛 Bug Fixes
+
+- 3375627 transformer: Remove false positive duplicate `__source`/`__self` prop error (#20678) (Dunqing)
+- 3931b98 transformer: Ignore `@jsxImportSource` inside inline code spans in comments (#20674) (Dunqing)
+
+### ⚡ Performance
+
+- bd10021 transformer: Only scan comments before first statement for JSX pragmas (#20675) (Dunqing)
+
 ## [0.121.0] - 2026-03-19
 
 ### 🚀 Features
