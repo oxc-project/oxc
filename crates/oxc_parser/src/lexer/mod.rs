@@ -60,6 +60,17 @@ enum ErrorSnapshot {
     Full(Vec<OxcDiagnostic>),
 }
 
+/// Lightweight checkpoint for `peek_token()`.
+/// Captures only the minimal state that `read_next_token()` modifies,
+/// avoiding the overhead of a full `LexerCheckpoint`.
+struct LexerPeekCheckpoint<'a> {
+    source_position: SourcePosition<'a>,
+    token: Token,
+    pure_comment: Option<usize>,
+    has_no_side_effects_comment: bool,
+    errors_len: usize,
+}
+
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum LexerContext {
     Regular,
@@ -241,11 +252,39 @@ impl<'a, C: Config> Lexer<'a, C> {
         self.trivia_builder.has_no_side_effects_comment = checkpoint.has_no_side_effects_comment;
     }
 
+    /// Create a lightweight checkpoint for peeking.
+    /// Only captures state that `read_next_token()` modifies,
+    /// avoiding the overhead of a full `LexerCheckpoint`.
+    fn peek_checkpoint(&self) -> LexerPeekCheckpoint<'a> {
+        LexerPeekCheckpoint {
+            source_position: self.source.position(),
+            token: self.token,
+            pure_comment: self.trivia_builder.pure_comment,
+            has_no_side_effects_comment: self.trivia_builder.has_no_side_effects_comment,
+            errors_len: self.errors.len(),
+        }
+    }
+
+    /// Restore state from a lightweight peek checkpoint.
+    fn rewind_peek(&mut self, checkpoint: &LexerPeekCheckpoint<'a>) {
+        self.source.set_position(checkpoint.source_position);
+        self.token = checkpoint.token;
+        self.trivia_builder.pure_comment = checkpoint.pure_comment;
+        self.trivia_builder.has_no_side_effects_comment = checkpoint.has_no_side_effects_comment;
+        self.errors.truncate(checkpoint.errors_len);
+    }
+
     pub fn peek_token(&mut self) -> Token {
-        let checkpoint = self.checkpoint();
-        let token = self.next_token();
-        self.rewind(checkpoint);
-        token
+        let checkpoint = self.peek_checkpoint();
+
+        let kind = self.read_next_token();
+        self.token.set_kind(kind);
+        self.token.set_end(self.offset());
+        let peeked = self.token;
+
+        self.rewind_peek(&checkpoint);
+
+        peeked
     }
 
     /// Set context
