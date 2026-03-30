@@ -211,11 +211,8 @@ impl<'a, C: Config> Lexer<'a, C> {
         };
         // Skip `self.tokens.len()` when tokens are statically disabled (`NoTokensLexerConfig`).
         // In that case `self.tokens` is always empty, so saving/restoring its length is dead work.
-        let tokens_len = if C::TOKENS_METHOD_IS_STATIC && !self.config.tokens() {
-            0
-        } else {
-            self.tokens.len()
-        };
+        let tokens_len =
+            if C::TOKENS_METHOD_IS_STATIC && !self.config.tokens() { 0 } else { self.tokens.len() };
         let pure_comment_packed = Self::pack_pure_comment(
             self.trivia_builder.pure_comment,
             self.trivia_builder.has_no_side_effects_comment,
@@ -238,11 +235,8 @@ impl<'a, C: Config> Lexer<'a, C> {
         } else {
             ErrorSnapshot::Full(self.errors.clone())
         };
-        let tokens_len = if C::TOKENS_METHOD_IS_STATIC && !self.config.tokens() {
-            0
-        } else {
-            self.tokens.len()
-        };
+        let tokens_len =
+            if C::TOKENS_METHOD_IS_STATIC && !self.config.tokens() { 0 } else { self.tokens.len() };
         let pure_comment_packed = Self::pack_pure_comment(
             self.trivia_builder.pure_comment,
             self.trivia_builder.has_no_side_effects_comment,
