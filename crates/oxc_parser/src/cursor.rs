@@ -393,7 +393,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     {
         let opening_span = self.cur_token().span();
         self.expect(open);
-        let mut list = self.ast.vec();
+        let mut list = self.ast.vec_with_capacity(2);
         loop {
             let kind = self.cur_kind();
             if kind == close

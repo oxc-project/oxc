@@ -33,7 +33,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         &mut self,
     ) -> (Vec<'a, Directive<'a>>, Vec<'a, Statement<'a>>) {
         let mut directives = self.ast.vec();
-        let mut statements = self.ast.vec();
+        let mut statements = self.ast.vec_with_capacity(2);
 
         let is_top_level = self.ctx.has_top_level();
         let stmt_ctx = StatementContext::StatementList;
