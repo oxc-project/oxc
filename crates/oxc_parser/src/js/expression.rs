@@ -102,6 +102,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.ast.label_identifier(span, name)
     }
 
+    #[inline]
     pub(crate) fn parse_identifier_name(&mut self) -> IdentifierName<'a> {
         if !self.cur_kind().is_identifier_name() {
             return self.unexpected();
@@ -909,6 +910,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     /// Section 13.3 `MemberExpression`
     /// static member `a.b`
+    #[inline]
     fn parse_static_member_expression(
         &mut self,
         lhs_span: u32,
