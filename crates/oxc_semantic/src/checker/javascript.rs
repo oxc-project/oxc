@@ -275,71 +275,109 @@ pub fn check_identifier_reference(ident: &IdentifierReference, ctx: &SemanticBui
         return;
     }
 
-    //  Static Semantics: AssignmentTargetType
-    //  1. If this IdentifierReference is contained in strict mode code and StringValue of Identifier is "eval" or "arguments", return invalid.
-    if ctx.strict_mode() && matches!(ident.name.as_str(), "arguments" | "eval") {
-        for node_kind in ctx.nodes.ancestor_kinds(ctx.current_node_id) {
-            match node_kind {
-                // Only check for actual assignment contexts, not member expression access
-                AstKind::ObjectAssignmentTarget(_)
-                | AstKind::AssignmentTargetPropertyIdentifier(_)
-                | AstKind::UpdateExpression(_)
-                | AstKind::ArrayAssignmentTarget(_) => {
-                    return ctx
-                        .error(diagnostics::unexpected_identifier_assign(&ident.name, ident.span));
-                }
-                AstKind::AssignmentExpression(assign_expr) => {
-                    // only throw error if arguments or eval are being assigned to
-                    if let AssignmentTarget::AssignmentTargetIdentifier(target_ident) =
-                        &assign_expr.left
-                        && target_ident.name == ident.name
-                    {
-                        return ctx.error(diagnostics::unexpected_identifier_assign(
-                            &ident.name,
-                            ident.span,
-                        ));
+    match ident.name.as_str() {
+        //  Static Semantics: AssignmentTargetType
+        //  1. If this IdentifierReference is contained in strict mode code and StringValue of Identifier is "eval" or "arguments", return invalid.
+        "eval" => {
+            if ctx.strict_mode() {
+                for node_kind in ctx.nodes.ancestor_kinds(ctx.current_node_id) {
+                    match node_kind {
+                        // Only check for actual assignment contexts, not member expression access
+                        AstKind::ObjectAssignmentTarget(_)
+                        | AstKind::AssignmentTargetPropertyIdentifier(_)
+                        | AstKind::UpdateExpression(_)
+                        | AstKind::ArrayAssignmentTarget(_) => {
+                            return ctx.error(diagnostics::unexpected_identifier_assign(
+                                &ident.name,
+                                ident.span,
+                            ));
+                        }
+                        AstKind::AssignmentExpression(assign_expr) => {
+                            // only throw error if arguments or eval are being assigned to
+                            if let AssignmentTarget::AssignmentTargetIdentifier(target_ident) =
+                                &assign_expr.left
+                                && target_ident.name == ident.name
+                            {
+                                return ctx.error(diagnostics::unexpected_identifier_assign(
+                                    &ident.name,
+                                    ident.span,
+                                ));
+                            }
+                        }
+                        m if m.is_member_expression_kind() => {
+                            break;
+                        }
+                        _ => {}
                     }
                 }
-                m if m.is_member_expression_kind() => {
-                    break;
-                }
-                _ => {}
             }
         }
-    }
+        "arguments" => {
+            if ctx.strict_mode() {
+                for node_kind in ctx.nodes.ancestor_kinds(ctx.current_node_id) {
+                    match node_kind {
+                        // Only check for actual assignment contexts, not member expression access
+                        AstKind::ObjectAssignmentTarget(_)
+                        | AstKind::AssignmentTargetPropertyIdentifier(_)
+                        | AstKind::UpdateExpression(_)
+                        | AstKind::ArrayAssignmentTarget(_) => {
+                            return ctx.error(diagnostics::unexpected_identifier_assign(
+                                &ident.name,
+                                ident.span,
+                            ));
+                        }
+                        AstKind::AssignmentExpression(assign_expr) => {
+                            // only throw error if arguments or eval are being assigned to
+                            if let AssignmentTarget::AssignmentTargetIdentifier(target_ident) =
+                                &assign_expr.left
+                                && target_ident.name == ident.name
+                            {
+                                return ctx.error(diagnostics::unexpected_identifier_assign(
+                                    &ident.name,
+                                    ident.span,
+                                ));
+                            }
+                        }
+                        m if m.is_member_expression_kind() => {
+                            break;
+                        }
+                        _ => {}
+                    }
+                }
+            }
 
-    // FieldDefinition : ClassElementName Initializeropt
-    //   It is a Syntax Error if Initializer is present and ContainsArguments of Initializer is true.
-    // ClassStaticBlockBody : ClassStaticBlockStatementList
-    //   It is a Syntax Error if ContainsArguments of ClassStaticBlockStatementList is true.
-
-    if ident.name == "arguments" {
-        let mut previous_node_address = ctx.nodes.get_node(ctx.current_node_id).address();
-        for node_kind in ctx.nodes.ancestor_kinds(ctx.current_node_id) {
-            match node_kind {
-                AstKind::Function(_) => break,
-                AstKind::PropertyDefinition(prop) => {
-                    if prop
-                        .value
-                        .as_ref()
-                        .is_some_and(|value| value.address() == previous_node_address)
-                    {
+            // FieldDefinition : ClassElementName Initializeropt
+            //   It is a Syntax Error if Initializer is present and ContainsArguments of Initializer is true.
+            // ClassStaticBlockBody : ClassStaticBlockStatementList
+            //   It is a Syntax Error if ContainsArguments of ClassStaticBlockStatementList is true.
+            let mut previous_node_address = ctx.nodes.get_node(ctx.current_node_id).address();
+            for node_kind in ctx.nodes.ancestor_kinds(ctx.current_node_id) {
+                match node_kind {
+                    AstKind::Function(_) => break,
+                    AstKind::PropertyDefinition(prop) => {
+                        if prop
+                            .value
+                            .as_ref()
+                            .is_some_and(|value| value.address() == previous_node_address)
+                        {
+                            return ctx.error(diagnostics::unexpected_arguments(
+                                "class field initializer",
+                                ident.span,
+                            ));
+                        }
+                    }
+                    AstKind::StaticBlock(_) => {
                         return ctx.error(diagnostics::unexpected_arguments(
-                            "class field initializer",
+                            "static initialization block",
                             ident.span,
                         ));
                     }
+                    _ => {}
                 }
-                AstKind::StaticBlock(_) => {
-                    return ctx.error(diagnostics::unexpected_arguments(
-                        "static initialization block",
-                        ident.span,
-                    ));
-                }
-                _ => {}
+                previous_node_address = node_kind.address();
             }
-            previous_node_address = node_kind.address();
         }
+        _ => {}
     }
 }
 
