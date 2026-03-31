@@ -376,10 +376,10 @@ impl Oxlintrc {
             .collect::<Vec<_>>();
 
         let settings = self.settings.clone();
-        let mut env = other.env;
-        self.env.override_envs(&mut env);
-        let mut globals = other.globals;
-        self.globals.override_globals(&mut globals);
+        let mut env = self.env.clone();
+        other.env.override_envs(&mut env);
+        let mut globals = self.globals.clone();
+        other.globals.override_globals(&mut globals);
 
         let mut overrides = other.overrides;
         overrides.extend(self.overrides.clone());
