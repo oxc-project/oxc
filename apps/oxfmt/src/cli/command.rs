@@ -28,6 +28,9 @@ pub struct FormatCommand {
     pub ignore_options: IgnoreOptions,
     #[bpaf(external)]
     pub runtime_options: RuntimeOptions,
+    /// Log formatted (changed) file paths to stdout
+    #[bpaf(long("log-formatted"), switch, hide_usage)]
+    pub log_formatted: bool,
     /// Single file, path or list of paths.
     /// Glob patterns are also supported.
     /// (Be sure to quote them, otherwise your shell may expand them before passing.)

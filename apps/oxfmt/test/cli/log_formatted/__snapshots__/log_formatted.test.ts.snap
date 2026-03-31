@@ -1,0 +1,15 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`log_formatted > should log changed file paths with --log-formatted 1`] = `
+"unformatted.js
+Finished in <variable>ms on 1 files using 1 threads."
+`;
+
+exports[`log_formatted > should log only changed files when mixed with already formatted 1`] = `
+"unformatted.js
+Finished in <variable>ms on 2 files using 1 threads."
+`;
+
+exports[`log_formatted > should not log paths when file is already formatted 1`] = `"Finished in <variable>ms on 1 files using 1 threads."`;
+
+exports[`log_formatted > should not log paths without --log-formatted flag 1`] = `"Finished in <variable>ms on 1 files using 1 threads."`;

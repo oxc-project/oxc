@@ -18,6 +18,7 @@ pub struct FormatService {
     format_mode: OutputMode,
     formatter: SourceFormatter,
     config_resolver: ConfigResolver,
+    log_formatted: bool,
 }
 
 impl FormatService {
@@ -26,11 +27,21 @@ impl FormatService {
         format_mode: OutputMode,
         formatter: SourceFormatter,
         config_resolver: ConfigResolver,
+        log_formatted: bool,
     ) -> Self
     where
         T: Into<Box<Path>>,
     {
-        Self { cwd: cwd.into(), format_mode, formatter, config_resolver }
+        Self { cwd: cwd.into(), format_mode, formatter, config_resolver, log_formatted }
+    }
+
+    /// Returns a display path relative to `cwd` with normalized separators.
+    fn display_path(&self, path: &Path) -> String {
+        path.strip_prefix(&self.cwd)
+            .unwrap_or(path)
+            .to_string_lossy()
+            .cow_replace('\\', "/")
+            .to_string()
     }
 
     /// Process entries as they are received from the channel
@@ -91,21 +102,16 @@ impl FormatService {
             // Report result
             let result = match (&self.format_mode, is_changed) {
                 (OutputMode::Check | OutputMode::ListDifferent, true) => {
-                    let display_path = path
-                        // Show path relative to `cwd` for cleaner output
-                        .strip_prefix(&self.cwd)
-                        .unwrap_or(path)
-                        .to_string_lossy()
-                        // Normalize path separators for consistent output across platforms
-                        .cow_replace('\\', "/")
-                        .to_string();
-
+                    let display_path = self.display_path(path);
                     if matches!(self.format_mode, OutputMode::Check) {
                         let elapsed = start_time.unwrap().elapsed().as_millis();
                         SuccessResult::Changed(format!("{display_path} ({elapsed}ms)"))
                     } else {
                         SuccessResult::Changed(display_path)
                     }
+                }
+                (OutputMode::Write, true) if self.log_formatted => {
+                    SuccessResult::Changed(self.display_path(path))
                 }
                 _ => SuccessResult::Unchanged,
             };

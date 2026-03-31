@@ -66,8 +66,14 @@ impl CliRunner {
         let start_time = Instant::now();
 
         let cwd = self.cwd;
-        let FormatCommand { paths, mode, config_options, ignore_options, runtime_options } =
-            self.options;
+        let FormatCommand {
+            paths,
+            mode,
+            config_options,
+            ignore_options,
+            runtime_options,
+            log_formatted,
+        } = self.options;
         // If `napi` feature is disabled, there is no other mode.
         #[cfg_attr(not(feature = "napi"), expect(irrefutable_let_patterns))]
         let Mode::Cli(format_mode) = mode else {
@@ -176,8 +182,13 @@ impl CliRunner {
 
         // Spawn a thread to run formatting service with streaming entries
         rayon::spawn(move || {
-            let format_service =
-                FormatService::new(cwd, format_mode_clone, source_formatter, config_resolver);
+            let format_service = FormatService::new(
+                cwd,
+                format_mode_clone,
+                source_formatter,
+                config_resolver,
+                log_formatted,
+            );
             format_service.run_streaming(rx_entry, &tx_error, &tx_success);
         });
 
@@ -267,12 +278,10 @@ impl CliRunner {
                 CliRunResult::FormatMismatch
             }
             // Default (write) outputs only stats
-            (OutputMode::Write, changed_count) => {
-                // Each changed file is also NOT printed
-                debug_assert_eq!(
-                    changed_count, 0,
-                    "In write mode, changed_count should not be counted"
-                );
+            (OutputMode::Write, _) => {
+                if !changed_paths.is_empty() {
+                    utils::print_and_flush(stdout, "\n");
+                }
                 print_stats(stdout, stderr);
                 CliRunResult::FormatSucceeded
             }
