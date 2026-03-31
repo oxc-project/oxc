@@ -730,6 +730,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     /// Section 13.3 Left-Hand-Side Expression
+    #[inline]
     pub(crate) fn parse_lhs_expression_or_higher(&mut self) -> Expression<'a> {
         let span = self.start_span();
         let mut in_optional_chain = false;
