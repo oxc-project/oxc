@@ -128,13 +128,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         // get_string's escaped lookup and kind matching.
         // `Kind::Str` needs quote stripping and `Kind::PrivateIdentifier` needs
         // `#` stripping, so fall back to `cur_string()` for those.
-        let name = if !token.escaped()
-            && !matches!(token.kind(), Kind::Str | Kind::PrivateIdentifier)
-        {
-            self.token_source(&token)
-        } else {
-            self.cur_string()
-        };
+        let name =
+            if !token.escaped() && !matches!(token.kind(), Kind::Str | Kind::PrivateIdentifier) {
+                self.token_source(&token)
+            } else {
+                self.cur_string()
+            };
         self.advance(kind);
         (span, Ident::from(name))
     }
