@@ -142,9 +142,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// [Automatic Semicolon Insertion](https://tc39.es/ecma262/#sec-automatic-semicolon-insertion)
     /// # Errors
     pub(crate) fn asi(&mut self) {
-        if self.eat(Kind::Semicolon) || self.can_insert_semicolon() {
-            /* no op */
-        } else {
+        let kind = self.cur_kind();
+        if kind == Kind::Semicolon {
+            self.advance(kind);
+        } else if kind != Kind::RCurly && kind != Kind::Eof && !self.cur_token().is_on_new_line() {
             let span = Span::empty(self.prev_token_end);
             let error = diagnostics::auto_semicolon_insertion(span);
             self.set_fatal_error(error);
