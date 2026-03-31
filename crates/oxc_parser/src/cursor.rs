@@ -97,8 +97,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// Checks if the current token is escaped if it is a keyword
     #[inline]
     pub(crate) fn advance(&mut self, kind: Kind) {
-        // Manually inlined escaped keyword check - escaped identifiers are extremely rare
-        if self.token.escaped() && kind.is_any_keyword() {
+        // Check `is_any_keyword` first — it's a simple enum range check that's false
+        // for the vast majority of tokens (identifiers, punctuation, literals),
+        // allowing us to skip the more expensive `escaped()` bit read entirely.
+        if kind.is_any_keyword() && self.token.escaped() {
             self.report_escaped_keyword(self.token.span());
         }
         self.prev_token_end = self.token.end();
