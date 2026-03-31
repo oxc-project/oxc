@@ -38,6 +38,10 @@ pub struct Checker<'a> {
     /// The semantic analysis result for the program being checked.
     pub(crate) semantic: Semantic<'a>,
 
+    /// Path of the file being checked. Used to identify this file when
+    /// calling `host.resolve_import(from_file, ...)`.
+    pub(crate) file_path: String,
+
     /// Optional host for cross-file resolution (global types, imports).
     /// When `None`, the checker falls back to its local `global_types` HashMap.
     /// When `Some`, global type queries and import resolution go through the host.
