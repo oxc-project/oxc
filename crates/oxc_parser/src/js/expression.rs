@@ -118,8 +118,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     #[inline]
     pub(crate) fn parse_identifier_kind(&mut self, kind: Kind) -> (Span, Ident<'a>) {
-        let span = self.cur_token().span();
-        let name = self.cur_string();
+        let token = self.cur_token();
+        let span = token.span();
+        // Fast path: most identifiers are not escaped, so we can slice directly
+        // from source text without going through get_string's kind matching.
+        let name = if token.escaped() {
+            self.cur_string()
+        } else {
+            self.token_source(&token)
+        };
         self.advance(kind);
         (span, Ident::from(name))
     }
