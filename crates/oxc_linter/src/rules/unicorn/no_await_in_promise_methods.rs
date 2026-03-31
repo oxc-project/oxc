@@ -49,6 +49,7 @@ declare_oxc_lint!(
     NoAwaitInPromiseMethods,
     unicorn,
     correctness,
+    tags = [recommended],
     suggestion
 );
 

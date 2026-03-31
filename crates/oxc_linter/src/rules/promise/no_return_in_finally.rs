@@ -44,6 +44,7 @@ declare_oxc_lint!(
     NoReturnInFinally,
     promise,
     nursery,
+    tags = [recommended],
 );
 
 impl Rule for NoReturnInFinally {

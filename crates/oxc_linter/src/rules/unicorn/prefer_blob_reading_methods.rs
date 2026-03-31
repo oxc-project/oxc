@@ -55,6 +55,7 @@ declare_oxc_lint!(
     PreferBlobReadingMethods,
     unicorn,
     pedantic,
+    tags = [recommended],
     pending
 );
 

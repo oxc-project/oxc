@@ -70,6 +70,7 @@ declare_oxc_lint!(
     RelativeUrlStyle,
     unicorn,
     style,
+    tags = [recommended],
     fix_suggestion,
     config = RelativeUrlStyleConfig,
 );

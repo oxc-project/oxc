@@ -131,6 +131,7 @@ declare_oxc_lint!(
     NoReturnWrap,
     promise,
     style,
+    tags = [recommended],
     pending,
     config = NoReturnWrap,
 );

@@ -122,6 +122,7 @@ declare_oxc_lint!(
     RestrictTemplateExpressions(tsgolint),
     typescript,
     correctness,
+    tags = [recommended],
     config = RestrictTemplateExpressionsConfig,
 );
 

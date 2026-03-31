@@ -39,6 +39,7 @@ declare_oxc_lint!(
     NoUnnecessaryArrayFlatDepth,
     unicorn,
     pedantic,
+    tags = [recommended],
     suggestion
 );
 

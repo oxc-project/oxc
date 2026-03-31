@@ -75,7 +75,8 @@ declare_oxc_lint!(
     /// ```
     NoUselessBackreference,
     eslint,
-    correctness
+    correctness,
+    tags = [recommended],
 );
 
 impl Rule for NoUselessBackreference {

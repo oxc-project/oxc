@@ -46,7 +46,8 @@ declare_oxc_lint!(
     /// ```
     NoIsMounted,
     react,
-    correctness
+    correctness,
+    tags = [recommended],
 );
 
 impl Rule for NoIsMounted {

@@ -46,6 +46,7 @@ declare_oxc_lint!(
     PreferArrayIndexOf,
     unicorn,
     style,
+    tags = [recommended],
     pending
 );
 

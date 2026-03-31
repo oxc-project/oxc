@@ -50,6 +50,7 @@ declare_oxc_lint!(
     NoTypeofUndefined,
     unicorn,
     pedantic,
+    tags = [recommended],
     fix_or_suggestion,
     config = NoTypeofUndefined,
 );

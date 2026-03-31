@@ -51,6 +51,7 @@ declare_oxc_lint!(
     NoEmptyStaticBlock,
     eslint,
     correctness,
+    tags = [recommended],
     suggestion,
 );
 

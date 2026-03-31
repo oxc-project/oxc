@@ -90,7 +90,8 @@ declare_oxc_lint!(
     /// ```
     NoDirectMutationState,
     react,
-    correctness
+    correctness,
+    tags = [recommended],
 );
 
 impl Rule for NoDirectMutationState {

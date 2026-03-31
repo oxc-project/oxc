@@ -76,6 +76,7 @@ declare_oxc_lint!(
     NoUnnecessaryTypeConstraint,
     typescript,
     suspicious,
+    tags = [recommended],
     pending
 );
 

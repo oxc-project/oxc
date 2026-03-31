@@ -50,7 +50,8 @@ declare_oxc_lint!(
     /// ```
     JsxNoCommentTextnodes,
     react,
-    suspicious
+    suspicious,
+    tags = [recommended],
 );
 
 impl Rule for JsxNoCommentTextnodes {

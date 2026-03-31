@@ -92,6 +92,7 @@ declare_oxc_lint!(
     RestrictPlusOperands(tsgolint),
     typescript,
     pedantic,
+    tags = [recommended],
     config = RestrictPlusOperandsConfig,
 );
 

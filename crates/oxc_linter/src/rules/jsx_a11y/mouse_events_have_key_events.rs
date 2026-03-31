@@ -72,6 +72,7 @@ declare_oxc_lint!(
     MouseEventsHaveKeyEvents,
     jsx_a11y,
     correctness,
+    tags = [recommended],
     config = MouseEventsHaveKeyEventsConfig,
 );
 

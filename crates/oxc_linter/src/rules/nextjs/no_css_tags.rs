@@ -65,7 +65,8 @@ declare_oxc_lint!(
     /// ```
     NoCssTags,
     nextjs,
-    correctness
+    correctness,
+    tags = [recommended],
 );
 
 impl Rule for NoCssTags {

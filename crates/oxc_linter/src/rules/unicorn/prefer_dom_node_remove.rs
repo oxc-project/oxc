@@ -44,6 +44,7 @@ declare_oxc_lint!(
     PreferDomNodeRemove,
     unicorn,
     pedantic,
+    tags = [recommended],
     pending
 );
 

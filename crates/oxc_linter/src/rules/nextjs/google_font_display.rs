@@ -73,7 +73,8 @@ declare_oxc_lint!(
     /// ```
     GoogleFontDisplay,
     nextjs,
-    correctness
+    correctness,
+    tags = [recommended],
 );
 
 impl Rule for GoogleFontDisplay {

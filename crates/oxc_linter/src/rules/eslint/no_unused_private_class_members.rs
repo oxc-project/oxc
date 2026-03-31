@@ -87,7 +87,8 @@ declare_oxc_lint!(
     /// ```
     NoUnusedPrivateClassMembers,
     eslint,
-    correctness
+    correctness,
+    tags = [recommended],
 );
 
 impl Rule for NoUnusedPrivateClassMembers {

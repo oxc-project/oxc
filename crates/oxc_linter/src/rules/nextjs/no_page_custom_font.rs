@@ -75,6 +75,7 @@ declare_oxc_lint!(
     NoPageCustomFont,
     nextjs,
     correctness,
+    tags = [recommended],
 );
 
 impl Rule for NoPageCustomFont {

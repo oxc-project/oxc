@@ -51,6 +51,7 @@ declare_oxc_lint!(
     PreferStringStartsEndsWith,
     unicorn,
     correctness,
+    tags = [recommended],
     fix
 );
 

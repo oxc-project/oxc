@@ -77,6 +77,7 @@ declare_oxc_lint!(
     NoExportsAssign,
     node,
     style,
+    tags = [recommended],
     fix
 );
 

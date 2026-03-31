@@ -64,7 +64,8 @@ declare_oxc_lint!(
     /// ```
     AriaActivedescendantHasTabindex,
     jsx_a11y,
-    correctness
+    correctness,
+    tags = [recommended],
 );
 
 impl Rule for AriaActivedescendantHasTabindex {

@@ -54,6 +54,7 @@ declare_oxc_lint!(
     PreferNegativeIndex,
     unicorn,
     style,
+    tags = [recommended],
     fix
 );
 
@@ -479,7 +480,7 @@ fn test() {
                                     foo.slice(
                                         // comment 1
 
-                                        
+
 
                                         // comment 2
                                         - 1,

@@ -56,6 +56,7 @@ declare_oxc_lint!(
     PreferModernMathApis,
     unicorn,
     restriction,
+    tags = [recommended],
     pending
 );
 

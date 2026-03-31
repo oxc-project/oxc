@@ -56,6 +56,7 @@ declare_oxc_lint!(
     NoWrapperObjectTypes,
     typescript,
     correctness,
+    tags = [recommended],
     fix
 );
 

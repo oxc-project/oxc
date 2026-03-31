@@ -56,7 +56,8 @@ declare_oxc_lint!(
     /// ```
     NoDupeClassMembers,
     eslint,
-    correctness
+    correctness,
+    tags = [recommended],
 );
 
 impl Rule for NoDupeClassMembers {

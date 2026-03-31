@@ -52,6 +52,7 @@ declare_oxc_lint!(
     NoEmpty,
     eslint,
     restriction,
+    tags = [recommended],
     suggestion,
     config = NoEmpty,
 );

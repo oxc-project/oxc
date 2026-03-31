@@ -85,6 +85,7 @@ declare_oxc_lint!(
     GetterReturn,
     eslint,
     nursery,
+    tags = [recommended],
     config = GetterReturn
 );
 

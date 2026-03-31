@@ -62,7 +62,8 @@ declare_oxc_lint!(
     /// ```
     NoScriptComponentInHead,
     nextjs,
-    correctness
+    correctness,
+    tags = [recommended],
 );
 
 impl Rule for NoScriptComponentInHead {

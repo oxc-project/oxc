@@ -70,7 +70,8 @@ declare_oxc_lint!(
     /// ```
     NoIdenticalTitle,
     jest,
-    style
+    style,
+    tags = [recommended],
 );
 
 impl Rule for NoIdenticalTitle {

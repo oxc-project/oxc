@@ -46,6 +46,7 @@ declare_oxc_lint!(
     TabindexNoPositive,
     jsx_a11y,
     correctness,
+    tags = [recommended],
     dangerous_suggestion
 );
 

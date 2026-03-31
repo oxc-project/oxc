@@ -40,6 +40,7 @@ declare_oxc_lint!(
     PreferLogicalOperatorOverTernary,
     unicorn,
     style,
+    tags = [recommended],
     suggestion,
 );
 

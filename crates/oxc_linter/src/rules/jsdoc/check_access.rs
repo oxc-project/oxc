@@ -57,7 +57,8 @@ declare_oxc_lint!(
     /// ```
     CheckAccess,
     jsdoc,
-    restriction
+    restriction,
+    tags = [recommended],
 );
 
 const ACCESS_LEVELS: [&str; 4] = ["package", "private", "protected", "public"];

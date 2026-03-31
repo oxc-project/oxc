@@ -70,6 +70,7 @@ declare_oxc_lint!(
     NoCaseDeclarations,
     eslint,
     pedantic,
+    tags = [recommended],
     pending
 );
 

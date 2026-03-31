@@ -54,6 +54,7 @@ declare_oxc_lint!(
     NoStaticOnlyClass,
     unicorn,
     pedantic,
+    tags = [recommended],
     fix_dangerous
 );
 

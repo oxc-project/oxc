@@ -52,6 +52,7 @@ declare_oxc_lint!(
     NoUndef,
     eslint,
     nursery,
+    tags = [recommended],
     config = NoUndef,
 );
 

@@ -52,7 +52,8 @@ declare_oxc_lint!(
     /// ```
     NoUselessCatch,
     eslint,
-    correctness
+    correctness,
+    tags = [recommended],
 );
 
 impl Rule for NoUselessCatch {

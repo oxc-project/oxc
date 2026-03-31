@@ -57,6 +57,7 @@ declare_oxc_lint!(
     NoForInArray(tsgolint),
     typescript,
     correctness,
+    tags = [recommended],
 );
 
 impl Rule for NoForInArray {}

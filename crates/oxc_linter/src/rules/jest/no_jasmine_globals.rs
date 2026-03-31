@@ -65,6 +65,7 @@ declare_oxc_lint!(
     NoJasmineGlobals,
     jest,
     style,
+    tags = [recommended],
     conditional_fix
 );
 

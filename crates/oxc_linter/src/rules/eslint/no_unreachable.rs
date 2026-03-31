@@ -54,7 +54,8 @@ declare_oxc_lint!(
     /// ```
     NoUnreachable,
     eslint,
-    nursery
+    nursery,
+    tags = [recommended],
 );
 
 impl Rule for NoUnreachable {

@@ -41,6 +41,7 @@ declare_oxc_lint!(
     NoAccessKey,
     jsx_a11y,
     correctness,
+    tags = [recommended],
     suggestion,
 );
 

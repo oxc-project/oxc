@@ -56,6 +56,7 @@ declare_oxc_lint!(
     NoUnsafeFunctionType,
     typescript,
     pedantic,
+    tags = [recommended],
 );
 
 impl Rule for NoUnsafeFunctionType {

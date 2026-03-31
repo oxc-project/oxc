@@ -84,6 +84,7 @@ declare_oxc_lint!(
     PreferAt,
     unicorn,
     pedantic,
+    tags = [recommended],
     dangerous_fix,
     config = PreferAtConfig,
 );

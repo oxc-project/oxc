@@ -103,6 +103,7 @@ declare_oxc_lint!(
     NoUnexpectedMultiline,
     eslint,
     suspicious,
+    tags = [recommended],
     fix_dangerous
 );
 

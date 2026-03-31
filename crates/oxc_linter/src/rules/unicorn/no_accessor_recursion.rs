@@ -71,6 +71,7 @@ declare_oxc_lint!(
     NoAccessorRecursion,
     unicorn,
     suspicious,
+    tags = [recommended],
 );
 
 impl Rule for NoAccessorRecursion {

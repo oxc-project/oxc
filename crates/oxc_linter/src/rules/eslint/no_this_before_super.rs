@@ -50,7 +50,8 @@ declare_oxc_lint!(
     /// ```
     NoThisBeforeSuper,
     eslint,
-    correctness
+    correctness,
+    tags = [recommended],
 );
 
 #[derive(Default, Copy, Clone, Debug)]

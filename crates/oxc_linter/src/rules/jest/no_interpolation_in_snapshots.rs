@@ -64,7 +64,8 @@ declare_oxc_lint!(
     /// ```
     NoInterpolationInSnapshots,
     jest,
-    style
+    style,
+    tags = [recommended],
 );
 
 impl Rule for NoInterpolationInSnapshots {

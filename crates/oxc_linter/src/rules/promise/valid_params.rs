@@ -63,6 +63,7 @@ declare_oxc_lint!(
     ValidParams,
     promise,
     correctness,
+    tags = [recommended],
 );
 
 impl Rule for ValidParams {

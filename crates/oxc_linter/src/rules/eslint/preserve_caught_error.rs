@@ -285,6 +285,7 @@ declare_oxc_lint!(
     PreserveCaughtError,
     eslint,
     suspicious,
+    tags = [recommended],
     conditional_fix,
     config = PreserveCaughtErrorOptions,
 );

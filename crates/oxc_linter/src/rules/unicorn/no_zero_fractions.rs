@@ -48,6 +48,7 @@ declare_oxc_lint!(
     NoZeroFractions,
     unicorn,
     style,
+    tags = [recommended],
     fix
 );
 

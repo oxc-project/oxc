@@ -52,7 +52,8 @@ declare_oxc_lint!(
     /// ```
     NoSparseArrays,
     eslint,
-    correctness
+    correctness,
+    tags = [recommended],
 );
 
 impl Rule for NoSparseArrays {

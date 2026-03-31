@@ -55,7 +55,8 @@ declare_oxc_lint!(
     /// ```
     ReactInJsxScope,
     react,
-    suspicious
+    suspicious,
+    tags = [recommended],
 );
 
 impl Rule for ReactInJsxScope {

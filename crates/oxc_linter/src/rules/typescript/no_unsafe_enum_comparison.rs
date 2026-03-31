@@ -64,6 +64,7 @@ declare_oxc_lint!(
     typescript,
     suspicious,
     pending,
+    tags = [recommended],
 );
 
 impl Rule for NoUnsafeEnumComparison {}

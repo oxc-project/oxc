@@ -59,6 +59,7 @@ declare_oxc_lint!(
     PreferDomNodeDataset,
     unicorn,
     pedantic,
+    tags = [recommended],
     conditional_fix
 );
 

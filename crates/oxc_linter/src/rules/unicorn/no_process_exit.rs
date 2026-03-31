@@ -49,6 +49,7 @@ declare_oxc_lint!(
     NoProcessExit,
     unicorn,
     restriction,
+    tags = [recommended],
     pending // TODO: suggestion
 );
 

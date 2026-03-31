@@ -191,6 +191,7 @@ declare_oxc_lint!(
     NoUnusedVars,
     eslint,
     correctness,
+    tags = [recommended],
     fix = conditional_dangerous_fix_or_suggestion,
     config = NoUnusedVarsOptions
 );

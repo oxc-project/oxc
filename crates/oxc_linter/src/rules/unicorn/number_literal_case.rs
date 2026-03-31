@@ -79,6 +79,7 @@ declare_oxc_lint!(
     NumberLiteralCase,
     unicorn,
     style,
+    tags = [recommended],
     fix
 );
 

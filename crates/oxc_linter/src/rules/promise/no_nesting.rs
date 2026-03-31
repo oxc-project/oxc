@@ -66,6 +66,7 @@ declare_oxc_lint!(
     NoNesting,
     promise,
     style,
+    tags = [recommended],
     pending
 );
 

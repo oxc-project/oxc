@@ -81,6 +81,7 @@ declare_oxc_lint!(
     CatchOrReturn,
     promise,
     restriction,
+    tags = [recommended],
     config = CatchOrReturnConfig,
 );
 

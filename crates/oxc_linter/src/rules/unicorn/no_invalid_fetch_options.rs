@@ -54,6 +54,7 @@ declare_oxc_lint!(
     NoInvalidFetchOptions,
     unicorn,
     correctness,
+    tags = [recommended],
 );
 
 impl Rule for NoInvalidFetchOptions {

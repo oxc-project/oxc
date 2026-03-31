@@ -42,7 +42,8 @@ declare_oxc_lint!(
     /// ```
     NoIrregularWhitespace,
     eslint,
-    correctness
+    correctness,
+    tags = [recommended],
 );
 
 impl Rule for NoIrregularWhitespace {

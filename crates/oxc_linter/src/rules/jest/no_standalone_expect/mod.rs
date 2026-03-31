@@ -85,6 +85,7 @@ declare_oxc_lint!(
     NoStandaloneExpect,
     jest,
     correctness,
+    tags = [recommended],
     config = NoStandaloneExpectConfig,
 );
 

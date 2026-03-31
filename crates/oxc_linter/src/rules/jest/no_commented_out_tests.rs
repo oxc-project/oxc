@@ -51,7 +51,8 @@ declare_oxc_lint!(
     /// ```
     NoCommentedOutTests,
     jest,
-    suspicious
+    suspicious,
+    tags = [recommended],
 );
 
 //  /^\s*[xf]?(test|it|describe)(\.\w+|\[['"]\w+['"]\])?\s*\(/mu

@@ -67,6 +67,7 @@ declare_oxc_lint!(
     HeadingHasContent,
     jsx_a11y,
     correctness,
+    tags = [recommended],
     config = HeadingHasContentConfig,
 );
 

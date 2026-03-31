@@ -60,6 +60,7 @@ declare_oxc_lint!(
     RequireModuleAttributes,
     unicorn,
     style,
+    tags = [recommended],
     suggestion,
 );
 

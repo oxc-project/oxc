@@ -88,6 +88,7 @@ declare_oxc_lint!(
     ValidTypeof,
     eslint,
     correctness,
+    tags = [recommended],
     conditional_fix,
     config = ValidTypeof,
 );

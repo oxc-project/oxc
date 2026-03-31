@@ -72,7 +72,8 @@ declare_oxc_lint!(
     /// ```
     NoAbusiveEslintDisable,
     unicorn,
-    restriction
+    restriction,
+    tags = [recommended],
 );
 
 impl Rule for NoAbusiveEslintDisable {

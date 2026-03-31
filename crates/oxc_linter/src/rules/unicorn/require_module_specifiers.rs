@@ -50,6 +50,7 @@ declare_oxc_lint!(
     RequireModuleSpecifiers,
     unicorn,
     suspicious,
+    tags = [recommended],
     fix
 );
 

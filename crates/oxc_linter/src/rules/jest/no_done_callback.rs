@@ -76,6 +76,7 @@ declare_oxc_lint!(
     jest,
     // TODO: add suggestion (see jest-community/eslint-plugin-jest#586)
     style,
+    tags = [recommended],
     pending
 );
 

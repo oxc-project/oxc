@@ -45,6 +45,7 @@ declare_oxc_lint!(
     NoDebugger,
     eslint,
     correctness,
+    tags = [recommended],
     fix
 );
 

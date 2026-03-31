@@ -45,6 +45,7 @@ declare_oxc_lint!(
     NoUnreadableArrayDestructuring,
     unicorn,
     style,
+    tags = [recommended],
     pending
 );
 

@@ -38,6 +38,7 @@ declare_oxc_lint!(
     PreferAddEventListener,
     unicorn,
     suspicious,
+    tags = [recommended],
     pending
 );
 

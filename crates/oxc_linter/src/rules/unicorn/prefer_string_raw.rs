@@ -42,6 +42,7 @@ declare_oxc_lint!(
     PreferStringRaw,
     unicorn,
     style,
+    tags = [recommended],
     fix,
 );
 

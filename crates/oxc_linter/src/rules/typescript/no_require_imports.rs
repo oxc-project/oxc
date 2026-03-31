@@ -112,6 +112,7 @@ declare_oxc_lint!(
     NoRequireImports,
     typescript,
     restriction,
+    tags = [recommended],
     pending,  // TODO: fixer (change require to import)
     config = NoRequireImportsConfig,
 );

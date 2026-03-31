@@ -38,6 +38,7 @@ declare_oxc_lint!(
     AriaUnsupportedElements,
     jsx_a11y,
     correctness,
+    tags = [recommended],
     fix
 );
 

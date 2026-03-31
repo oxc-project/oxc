@@ -51,6 +51,7 @@ declare_oxc_lint!(
     NoNegationInEqualityCheck,
     unicorn,
     pedantic,
+    tags = [recommended],
     suggestion,
 );
 

@@ -69,7 +69,8 @@ declare_oxc_lint!(
     /// ```
     NoDuplicateHead,
     nextjs,
-    correctness
+    correctness,
+    tags = [recommended],
 );
 
 impl Rule for NoDuplicateHead {

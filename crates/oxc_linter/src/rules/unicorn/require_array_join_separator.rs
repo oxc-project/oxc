@@ -44,6 +44,7 @@ declare_oxc_lint!(
     RequireArrayJoinSeparator,
     unicorn,
     style,
+    tags = [recommended],
     conditional_fix
 );
 

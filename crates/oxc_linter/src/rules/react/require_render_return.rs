@@ -69,7 +69,8 @@ declare_oxc_lint!(
     /// ```
     RequireRenderReturn,
     react,
-    nursery
+    nursery,
+    tags = [recommended],
 );
 
 impl Rule for RequireRenderReturn {

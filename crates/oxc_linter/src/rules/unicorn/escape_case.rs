@@ -48,6 +48,7 @@ declare_oxc_lint!(
     EscapeCase,
     unicorn,
     pedantic,
+    tags = [recommended],
     fix
 );
 

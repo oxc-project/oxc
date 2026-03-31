@@ -54,6 +54,7 @@ declare_oxc_lint!(
     NoArrayForEach,
     unicorn,
     restriction,
+    tags = [recommended],
     pending
 );
 

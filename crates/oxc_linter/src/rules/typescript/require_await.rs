@@ -74,6 +74,7 @@ declare_oxc_lint!(
     RequireAwait(tsgolint),
     typescript,
     pedantic,
+    tags = [recommended],
     pending,
 );
 

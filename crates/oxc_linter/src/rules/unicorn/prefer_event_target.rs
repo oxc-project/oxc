@@ -50,7 +50,8 @@ declare_oxc_lint!(
     /// ```
     PreferEventTarget,
     unicorn,
-    pedantic
+    pedantic,
+    tags = [recommended],
 );
 
 impl Rule for PreferEventTarget {
