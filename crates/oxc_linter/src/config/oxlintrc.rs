@@ -734,9 +734,10 @@ mod test {
     #[test]
     fn test_oxlintrc_merge_env_and_globals() {
         // base envs and globals are inherited by root
-        let config1: Oxlintrc =
-            serde_json::from_str(r#"{"env": {"browser": true}, "globals": {"window": "readonly"}}"#)
-                .unwrap();
+        let config1: Oxlintrc = serde_json::from_str(
+            r#"{"env": {"browser": true}, "globals": {"window": "readonly"}}"#,
+        )
+        .unwrap();
         let config2: Oxlintrc =
             serde_json::from_str(r#"{"env": {"node": true}, "globals": {"process": "readonly"}}"#)
                 .unwrap();
@@ -747,9 +748,10 @@ mod test {
         assert!(merged.globals.is_enabled("process"));
 
         // root wins over base on conflict
-        let config1: Oxlintrc =
-            serde_json::from_str(r#"{"env": {"browser": true}, "globals": {"Promise": "readonly"}}"#)
-                .unwrap();
+        let config1: Oxlintrc = serde_json::from_str(
+            r#"{"env": {"browser": true}, "globals": {"Promise": "readonly"}}"#,
+        )
+        .unwrap();
         let config2: Oxlintrc =
             serde_json::from_str(r#"{"env": {"browser": false}, "globals": {"Promise": "off"}}"#)
                 .unwrap();
