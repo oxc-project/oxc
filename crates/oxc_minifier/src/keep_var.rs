@@ -2,12 +2,12 @@ use oxc_allocator::Box as ArenaBox;
 use oxc_ast::{AstBuilder, NONE, ast::*};
 use oxc_ast_visit::Visit;
 use oxc_ecmascript::BoundNames;
-use oxc_span::{Atom, SPAN, Span};
+use oxc_span::{SPAN, Span, Str};
 use oxc_syntax::symbol::SymbolId;
 
 pub struct KeepVar<'a> {
     ast: AstBuilder<'a>,
-    vars: std::vec::Vec<(Atom<'a>, Span, Option<SymbolId>)>,
+    vars: std::vec::Vec<(Str<'a>, Span, Option<SymbolId>)>,
     all_hoisted: bool,
 }
 

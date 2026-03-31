@@ -79,7 +79,7 @@ pub struct ESTreeStructField {
     pub flatten: bool,
     /// No not flatten field. Overrides `#[estree(flatten)]` on the type of the field.
     pub no_flatten: bool,
-    /// `true` for fields containing a `&str` or `Atom` which does not need escaping in JSON
+    /// `true` for fields containing a `&str` or `Str` which does not need escaping in JSON
     pub json_safe: bool,
     /// `true` if field is only included in JS ESTree AST (not TS-ESTree AST).
     pub is_js: bool,

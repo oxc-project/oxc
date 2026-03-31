@@ -9,7 +9,7 @@ use std::cell::Cell;
 use oxc_allocator::{Box, CloneIn, Dummy, GetAddress, TakeIn, UnstableAddress, Vec};
 use oxc_ast_macros::ast;
 use oxc_estree::ESTree;
-use oxc_span::{Atom, ContentEq, GetSpan, GetSpanMut, Span};
+use oxc_span::{ContentEq, GetSpan, GetSpanMut, Span, Str};
 use oxc_syntax::node::NodeId;
 
 use super::{inherit_variants, js::*, literal::*, ts::*};
@@ -453,7 +453,7 @@ pub struct JSXIdentifier<'a> {
     pub span: Span,
     /// The name of the identifier.
     #[estree(json_safe)]
-    pub name: Atom<'a>,
+    pub name: Str<'a>,
 }
 
 // 1.4 JSX Children
@@ -511,11 +511,11 @@ pub struct JSXText<'a> {
     /// Node location in source code.
     pub span: Span,
     /// The text content.
-    pub value: Atom<'a>,
+    pub value: Str<'a>,
 
     /// The raw string as it appears in source code.
     ///
     /// `None` when this ast node is not constructed from the parser.
     #[content_eq(skip)]
-    pub raw: Option<Atom<'a>>,
+    pub raw: Option<Str<'a>>,
 }

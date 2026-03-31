@@ -2,7 +2,7 @@
 
 use oxc_allocator::{Allocator, Box, Dummy, Vec};
 use oxc_ast::ast::*;
-use oxc_span::{Atom, GetSpan, Span};
+use oxc_span::{GetSpan, Span, Str};
 
 use crate::{ParserConfig as Config, ParserImpl, diagnostics, lexer::Kind};
 
@@ -481,8 +481,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     fn parse_jsx_text(&mut self) -> Box<'a, JSXText<'a>> {
         let span = self.cur_token().span();
-        let raw = Atom::from(self.cur_src());
-        let value = Atom::from(self.cur_string());
+        let raw = Str::from(self.cur_src());
+        let value = Str::from(self.cur_string());
         self.bump_any();
         self.ast.alloc_jsx_text(span, value, Some(raw))
     }

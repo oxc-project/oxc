@@ -189,13 +189,8 @@ impl OxlintRules {
                         });
                     }
                 } else {
-                    // If JS plugins are disabled (language server), assume plugin name refers to a JS plugin,
-                    // and that rule name is valid for that plugin.
-                    // But language server doesn't support JS plugins, so ignore the rule.
-                    //
-                    // This unfortunately means we can't catch genuinely invalid plugin names in language server
-                    // (e.g. typos like `unicon/filename-case`). But we can't avoid this as the name of a JS plugin
-                    // can only be known by loading it, which language server can't do at present.
+                    // Plugin name is not a built-in plugin. If external plugins are enabled,
+                    // try to resolve it as an external JS plugin; otherwise ignore it.
                     if external_plugin_store.is_enabled() {
                         match external_plugin_store.lookup_rule_id(plugin_name, rule_name) {
                             Ok(external_rule_id) => {

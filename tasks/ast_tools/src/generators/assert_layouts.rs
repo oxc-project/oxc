@@ -280,7 +280,7 @@ impl LayoutCalculator<'_> {
     /// as `u64` fields that come before it on 64-bit systems, and will have same alignment as
     /// `u32`s that come after it on 32-bit systems. So it never results in padding on either platform.
     ///
-    /// Note: "usize" here also includes pointer-aligned types e.g. `Box`, `Vec`, `Atom`, `&str`.
+    /// Note: "usize" here also includes pointer-aligned types e.g. `Box`, `Vec`, `Str`, `&str`.
     /// "u64" includes other 8-byte aligned types e.g. `f64`, `Span`.
     fn calculate_struct(&mut self, type_id: TypeId) -> Layout {
         // Get layout of fields' types and calculate optimal field order
@@ -525,7 +525,7 @@ impl LayoutCalculator<'_> {
     ///
     /// Primitives have varying layouts. Some have niches, most don't.
     fn calculate_primitive(primitive_def: &PrimitiveDef) -> Layout {
-        // `&str` and `Atom` are a `NonNull` pointer + `usize` pair. Niche for 0 on the pointer field
+        // `&str` and `Str` are a `NonNull` pointer + `usize` pair. Niche for 0 on the pointer field
         let str_layout = Layout {
             layout_64: PlatformLayout::from_size_align_niche(16, 8, Niche::new(0, 8, 1, 0)),
             layout_32: PlatformLayout::from_size_align_niche(8, 4, Niche::new(0, 4, 1, 0)),
@@ -559,7 +559,7 @@ impl LayoutCalculator<'_> {
             "f32" => Layout::from_type::<f32>(),
             "f64" => Layout::from_type::<f64>(),
             "&str" => str_layout,
-            "Atom" => str_layout,
+            "Str" => str_layout,
             // `Ident` is `NonNull<u8>` + `u64` on 64-bit, `NonNull<u8>` + `u32` + `u32` on 32-bit.
             // Niche for 0 on the pointer field.
             "Ident" => Layout {

@@ -3,7 +3,7 @@ use std::{
     fmt::{self, Display},
 };
 
-use oxc_span::{Atom, GetSpan, Ident, Span};
+use oxc_span::{GetSpan, Ident, Span, Str};
 use oxc_syntax::{operator::UnaryOperator, scope::ScopeFlags, symbol::SymbolId};
 
 use crate::ast::*;
@@ -560,7 +560,7 @@ impl<'a> TemplateLiteral<'a> {
     }
 
     /// Get single quasi from `template`
-    pub fn single_quasi(&self) -> Option<Atom<'a>> {
+    pub fn single_quasi(&self) -> Option<Str<'a>> {
         if self.is_no_substitution_template() { self.quasis[0].value.cooked } else { None }
     }
 }
@@ -671,7 +671,7 @@ impl<'a> MemberExpression<'a> {
 
 impl<'a> ComputedMemberExpression<'a> {
     /// Returns the static property name of this member expression, if it has one, or `None` otherwise.
-    pub fn static_property_name(&self) -> Option<Atom<'a>> {
+    pub fn static_property_name(&self) -> Option<Str<'a>> {
         match &self.expression {
             Expression::StringLiteral(lit) => Some(lit.value),
             Expression::TemplateLiteral(lit) if lit.quasis.len() == 1 => lit.quasis[0].value.cooked,
@@ -1956,7 +1956,7 @@ impl<'a> ImportDeclarationSpecifier<'a> {
 
 impl<'a> ImportAttributeKey<'a> {
     /// Returns the string value of this import attribute key.
-    pub fn as_atom(&self) -> Atom<'a> {
+    pub fn as_arena_str(&self) -> Str<'a> {
         match self {
             Self::Identifier(identifier) => identifier.name.into(),
             Self::StringLiteral(literal) => literal.value,
@@ -2017,7 +2017,7 @@ impl<'a> ModuleExportName<'a> {
     /// - `export { foo }` => `"foo"`
     /// - `export { foo as bar }` => `"bar"`
     /// - `export { foo as "anything" }` => `"anything"`
-    pub fn name(&self) -> Atom<'a> {
+    pub fn name(&self) -> Str<'a> {
         match self {
             Self::IdentifierName(identifier) => identifier.name.into(),
             Self::IdentifierReference(identifier) => identifier.name.into(),

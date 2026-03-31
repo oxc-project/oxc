@@ -93,7 +93,7 @@ impl ESTree for JSXElementThisExpression<'_> {
         JSXIdentifier {
             span: self.0.span,
             node_id: Cell::new(NodeId::DUMMY),
-            name: Atom::from("this"),
+            name: Str::from("this"),
         }
         .serialize(serializer);
     }

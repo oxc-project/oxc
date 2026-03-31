@@ -17,8 +17,8 @@ catalog:
   json-schema-to-typescript: ^15.0.4
   publint: 0.3.18
   rolldown: 1.0.0-rc.12
-  tsdown: 0.21.5
-  vitest: 4.1.0
+  tsdown: 0.21.7
+  vitest: 4.1.2
 
 onlyBuiltDependencies:
   - "@vscode/vsce-sign@2.0.8"

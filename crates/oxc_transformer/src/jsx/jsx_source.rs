@@ -185,7 +185,7 @@ impl<'a> JsxSource<'a> {
         let filename_var = self.filename_var.as_ref()?;
 
         let id = filename_var.create_binding_pattern(ctx);
-        let source_path = ctx.ast.atom(&ctx.state.source_path.to_string_lossy());
+        let source_path = ctx.ast.str(&ctx.state.source_path.to_string_lossy());
         let init = ctx.ast.expression_string_literal(SPAN, source_path, None);
         let decl = ctx.ast.variable_declarator(
             SPAN,

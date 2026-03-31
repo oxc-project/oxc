@@ -35,6 +35,7 @@ jobs:
       - name: Generate version and changelog
         id: run
         run: |
+          mkdir -p target
           cargo release-oxc update --release oxlint --release oxfmt
           echo "OXLINT_VERSION=$(cat ./target/OXLINT_VERSION)" >> $GITHUB_OUTPUT
           echo "OXFMT_VERSION=$(cat ./target/OXFMT_VERSION)" >> $GITHUB_OUTPUT

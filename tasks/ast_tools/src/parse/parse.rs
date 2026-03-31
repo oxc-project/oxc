@@ -253,7 +253,7 @@ impl<'c> Parser<'c> {
             "AtomicIsize" => primitive("AtomicIsize"),
             "AtomicPtr" => primitive("AtomicPtr"),
             "&str" => primitive("&str"),
-            "Atom" => primitive("Atom"),
+            "Str" => primitive("Str"),
             "Ident" => primitive("Ident"),
             "NodeId" => primitive("NodeId"),
             // TODO: Remove the need for this by adding

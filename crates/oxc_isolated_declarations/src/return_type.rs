@@ -9,7 +9,7 @@ use oxc_ast::{
     },
 };
 use oxc_ast_visit::Visit;
-use oxc_span::{Atom, GetSpan, SPAN};
+use oxc_span::{GetSpan, SPAN, Str};
 use oxc_syntax::scope::{ScopeFlags, ScopeId};
 
 use crate::{IsolatedDeclarations, diagnostics::type_containing_private_name};
@@ -41,8 +41,8 @@ use crate::{IsolatedDeclarations, diagnostics::type_containing_private_name};
 pub struct FunctionReturnType<'a> {
     ast: AstBuilder<'a>,
     return_expression: Option<Option<Expression<'a>>>,
-    value_bindings: Vec<Atom<'a>>,
-    type_bindings: Vec<Atom<'a>>,
+    value_bindings: Vec<Str<'a>>,
+    type_bindings: Vec<Str<'a>>,
     return_statement_count: u8,
     scope_depth: u32,
 }
@@ -90,7 +90,7 @@ impl<'a> FunctionReturnType<'a> {
             }
             _ => None,
         } {
-            let reference_name: Atom = reference_name.into();
+            let reference_name: Str = reference_name.into();
             let is_defined_in_current_scope = if is_value {
                 visitor.value_bindings.contains(&reference_name)
             } else {

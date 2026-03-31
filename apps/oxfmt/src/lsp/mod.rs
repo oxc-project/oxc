@@ -1,4 +1,7 @@
-use std::path::{Path, PathBuf};
+use std::{
+    path::{Path, PathBuf},
+    sync::Arc,
+};
 
 use oxc_language_server::{LanguageId, run_server};
 use tower_lsp_server::ls_types::Uri;
@@ -7,8 +10,6 @@ use crate::core::{ExternalFormatter, JsConfigLoaderCb};
 
 mod options;
 mod server_formatter;
-#[cfg(test)]
-mod tester;
 
 fn get_file_extension_from_language_id(language_id: &LanguageId) -> Option<&'static str> {
     match language_id.as_str() {
@@ -51,10 +52,10 @@ pub async fn run_lsp(js_config_loader: JsConfigLoaderCb, external_formatter: Ext
     run_server(
         "oxfmt".to_string(),
         env!("CARGO_PKG_VERSION").to_string(),
-        vec![Box::new(server_formatter::ServerFormatterBuilder::new(
+        Arc::new(server_formatter::ServerFormatterBuilder::new(
             js_config_loader,
             external_formatter,
-        ))],
+        )),
     )
     .await;
 }

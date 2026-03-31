@@ -197,10 +197,12 @@ pub struct FormatConfig {
     /// Using the similar algorithm as [eslint-plugin-perfectionist/sort-imports](https://perfectionist.dev/rules/sort-imports).
     /// For details, see each field's documentation.
     ///
+    /// Pass `true` or an object to enable with defaults, or omit/set `false` to disable.
+    ///
     /// - Default: Disabled
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(alias = "experimentalSortImports")]
-    pub sort_imports: Option<SortImportsConfig>,
+    pub sort_imports: Option<SortImportsUserConfig>,
 
     /// Sort `package.json` keys.
     ///
@@ -219,10 +221,12 @@ pub struct FormatConfig {
     /// Option names omit the `tailwind` prefix used in the original plugin (e.g., `config` instead of `tailwindConfig`).
     /// For details, see each field's documentation.
     ///
+    /// Pass `true` or an object to enable with defaults, or omit/set `false` to disable.
+    ///
     /// - Default: Disabled
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(alias = "experimentalTailwindcss")]
-    pub sort_tailwindcss: Option<SortTailwindcssConfig>,
+    pub sort_tailwindcss: Option<SortTailwindcssUserConfig>,
 
     /// Enable JSDoc comment formatting.
     ///
@@ -230,11 +234,11 @@ pub struct FormatConfig {
     /// tag aliases are canonicalized, descriptions are capitalized,
     /// long lines are wrapped, and short comments are collapsed to single-line.
     ///
-    /// Pass an object (`jsdoc: {}`) to enable with defaults, or omit to disable.
+    /// Pass `true` or an object to enable with defaults, or omit/set `false` to disable.
     ///
     /// - Default: Disabled
     #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub jsdoc: Option<JsdocConfig>,
+    pub jsdoc: Option<JsdocUserConfig>,
 }
 
 impl FormatConfig {
@@ -242,7 +246,7 @@ impl FormatConfig {
     /// Otherwise, the plugin tries to resolve the Prettier's configuration file, not Oxfmt's.
     /// <https://github.com/tailwindlabs/prettier-plugin-tailwindcss/blob/125a8bc77639529a5a0c7e4e8a02174d7ed2d70b/src/config.ts#L50-L54>
     pub fn resolve_tailwind_paths(&mut self, base_dir: &Path) {
-        let Some(ref mut tw) = self.sort_tailwindcss else {
+        let Some(SortTailwindcssUserConfig::Object(ref mut tw)) = self.sort_tailwindcss else {
             return;
         };
 
@@ -339,6 +343,23 @@ pub enum HtmlWhitespaceSensitivityConfig {
 }
 
 // ---
+
+#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
+#[serde(untagged)]
+pub enum SortImportsUserConfig {
+    Bool(bool),
+    Object(SortImportsConfig),
+}
+
+impl SortImportsUserConfig {
+    pub fn into_config(self) -> Option<SortImportsConfig> {
+        match self {
+            Self::Bool(true) => Some(SortImportsConfig::default()),
+            Self::Bool(false) => None,
+            Self::Object(config) => Some(config),
+        }
+    }
+}
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default)]
@@ -579,6 +600,23 @@ impl SortPackageJsonConfig {
 
 // ---
 
+#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
+#[serde(untagged)]
+pub enum SortTailwindcssUserConfig {
+    Bool(bool),
+    Object(SortTailwindcssConfig),
+}
+
+impl SortTailwindcssUserConfig {
+    pub fn into_config(self) -> Option<SortTailwindcssConfig> {
+        match self {
+            Self::Bool(true) => Some(SortTailwindcssConfig::default()),
+            Self::Bool(false) => None,
+            Self::Object(config) => Some(config),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Default, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default)]
 pub struct SortTailwindcssConfig {
@@ -627,6 +665,23 @@ pub struct SortTailwindcssConfig {
 }
 
 // ---
+
+#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
+#[serde(untagged)]
+pub enum JsdocUserConfig {
+    Bool(bool),
+    Object(JsdocConfig),
+}
+
+impl JsdocUserConfig {
+    pub fn into_config(self) -> Option<JsdocConfig> {
+        match self {
+            Self::Bool(true) => Some(JsdocConfig::default()),
+            Self::Bool(false) => None,
+            Self::Object(config) => Some(config),
+        }
+    }
+}
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]

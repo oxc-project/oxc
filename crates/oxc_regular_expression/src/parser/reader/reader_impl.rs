@@ -1,5 +1,5 @@
 use oxc_diagnostics::Result;
-use oxc_span::Atom;
+use oxc_span::Str;
 
 use crate::parser::reader::{
     Options,
@@ -152,7 +152,7 @@ impl<'a> Reader<'a> {
         false
     }
 
-    pub fn atom(&self, start: u32, end: u32) -> Atom<'a> {
-        Atom::from(&self.source_text[start as usize..end as usize])
+    pub fn str(&self, start: u32, end: u32) -> Str<'a> {
+        Str::from(&self.source_text[start as usize..end as usize])
     }
 }

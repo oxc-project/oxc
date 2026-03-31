@@ -11,7 +11,7 @@ use oxc_allocator::{Box, CloneIn, Dummy, TakeIn, UnstableAddress};
 use oxc_ast_macros::ast;
 use oxc_estree::ESTree;
 use oxc_regular_expression::ast::Pattern;
-use oxc_span::{Atom, ContentEq, GetSpan, GetSpanMut, Span};
+use oxc_span::{ContentEq, GetSpan, GetSpanMut, Span, Str};
 use oxc_syntax::{
     node::NodeId,
     number::{BigintBase, NumberBase},
@@ -66,7 +66,7 @@ pub struct NumericLiteral<'a> {
     /// `None` when this ast node is not constructed from the parser.
     #[content_eq(skip)]
     #[estree(json_safe)]
-    pub raw: Option<Atom<'a>>,
+    pub raw: Option<Str<'a>>,
     /// The base representation used by the literal in source code
     #[content_eq(skip)]
     #[estree(skip)]
@@ -89,13 +89,13 @@ pub struct StringLiteral<'a> {
     ///
     /// Any escape sequences in the raw code are unescaped.
     #[estree(via = StringLiteralValue)]
-    pub value: Atom<'a>,
+    pub value: Str<'a>,
 
     /// The raw string as it appears in source code.
     ///
     /// `None` when this ast node is not constructed from the parser.
     #[content_eq(skip)]
-    pub raw: Option<Atom<'a>>,
+    pub raw: Option<Str<'a>>,
 
     /// The string value contains lone surrogates.
     ///
@@ -119,11 +119,11 @@ pub struct BigIntLiteral<'a> {
     pub span: Span,
     /// Bigint value in base 10 with no underscores
     #[estree(via = BigIntLiteralValue)]
-    pub value: Atom<'a>,
+    pub value: Str<'a>,
     /// The bigint as it appears in source code
     #[content_eq(skip)]
     #[estree(json_safe)]
-    pub raw: Option<Atom<'a>>,
+    pub raw: Option<Str<'a>>,
     /// The base representation used by the literal in source code
     #[content_eq(skip)]
     #[estree(skip)]
@@ -153,7 +153,7 @@ pub struct RegExpLiteral<'a> {
     ///
     /// `None` when this ast node is not constructed from the parser.
     #[content_eq(skip)]
-    pub raw: Option<Atom<'a>>,
+    pub raw: Option<Str<'a>>,
 }
 
 /// A regular expression
@@ -182,11 +182,11 @@ pub struct RegExpPattern<'a> {
     ///
     /// If `pattern` is defined, `pattern` and `text` must be in sync.
     /// i.e. If you alter the regexp by mutating `pattern`, you must regenerate `text` to match it,
-    /// using `format_atom!("{}", &pattern)`.
+    /// using `format_str!(&allocator, "{pattern}")`.
     ///
     /// `oxc_codegen` ignores `pattern` field, and prints `text`.
     #[estree(rename = "pattern")]
-    pub text: Atom<'a>,
+    pub text: Str<'a>,
     /// Parsed regexp pattern
     #[content_eq(skip)]
     #[estree(skip)]

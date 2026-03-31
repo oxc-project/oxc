@@ -387,7 +387,7 @@ pub fn check_number_literal(lit: &NumericLiteral, ctx: &SemanticBuilder<'_>) {
     // NumericLiteral :: legacy_octalIntegerLiteral
     // DecimalIntegerLiteral :: NonOctalDecimalIntegerLiteral
     // * It is a Syntax Error if the source text matched by this production is strict mode code.
-    fn leading_zero(s: Option<Atom>) -> bool {
+    fn leading_zero(s: Option<Str>) -> bool {
         if let Some(s) = s {
             let mut chars = s.bytes();
             if let Some(first) = chars.next()
@@ -981,7 +981,7 @@ pub fn check_for_statement_left(
 pub fn check_for_of_statement(stmt: &ForOfStatement, ctx: &SemanticBuilder<'_>) {
     // ClassStaticBlockBody : ClassStaticBlockStatementList
     //   It is a Syntax Error if ClassStaticBlockStatementList Contains await is true.
-    if stmt.r#await && ctx.scoping.scope_flags(ctx.current_scope_id).is_class_static_block() {
+    if stmt.r#await && is_in_class_static_block(ctx) {
         ctx.error(diagnostics::class_static_block_for_await(stmt.span));
     }
 }
@@ -1388,7 +1388,7 @@ pub fn check_await_expression(expr: &AwaitExpression, ctx: &SemanticBuilder<'_>)
         ctx.error(diagnostics::await_or_yield_in_parameter("await", expr.span));
     }
     // It is a Syntax Error if ClassStaticBlockStatementList Contains await is true.
-    if ctx.scoping.scope_flags(ctx.current_scope_id).is_class_static_block() {
+    if is_in_class_static_block(ctx) {
         let start = expr.span.start;
         ctx.error(diagnostics::class_static_block_await(Span::sized(start, 5)));
     }

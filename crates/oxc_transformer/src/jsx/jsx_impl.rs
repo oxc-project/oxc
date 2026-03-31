@@ -93,7 +93,7 @@ use oxc_allocator::{
 };
 use oxc_ast::{AstBuilder, NONE, ast::*};
 use oxc_ecmascript::PropName;
-use oxc_span::{Atom, Ident, SPAN, Span};
+use oxc_span::{Ident, SPAN, Span, Str};
 use oxc_syntax::{
     identifier::{is_identifier_name, is_white_space_single_line},
     keyword::is_reserved_keyword,
@@ -149,7 +149,7 @@ struct ClassicBindings<'a> {
 }
 
 struct AutomaticScriptBindings<'a> {
-    jsx_runtime_importer: Atom<'a>,
+    jsx_runtime_importer: Str<'a>,
     react_importer_len: u32,
     require_create_element: Option<BoundIdentifier<'a>>,
     require_jsx: Option<BoundIdentifier<'a>>,
@@ -157,7 +157,7 @@ struct AutomaticScriptBindings<'a> {
 }
 
 impl<'a> AutomaticScriptBindings<'a> {
-    fn new(jsx_runtime_importer: Atom<'a>, react_importer_len: u32, is_development: bool) -> Self {
+    fn new(jsx_runtime_importer: Str<'a>, react_importer_len: u32, is_development: bool) -> Self {
         Self {
             jsx_runtime_importer,
             react_importer_len,
@@ -194,7 +194,7 @@ impl<'a> AutomaticScriptBindings<'a> {
     fn add_require_statement(
         &self,
         variable_name: &str,
-        source: Atom<'a>,
+        source: Str<'a>,
         front: bool,
         ctx: &mut TraverseCtx<'a>,
     ) -> BoundIdentifier<'a> {
@@ -206,7 +206,7 @@ impl<'a> AutomaticScriptBindings<'a> {
 }
 
 struct AutomaticModuleBindings<'a> {
-    jsx_runtime_importer: Atom<'a>,
+    jsx_runtime_importer: Str<'a>,
     react_importer_len: u32,
     import_create_element: Option<BoundIdentifier<'a>>,
     import_fragment: Option<BoundIdentifier<'a>>,
@@ -216,7 +216,7 @@ struct AutomaticModuleBindings<'a> {
 }
 
 impl<'a> AutomaticModuleBindings<'a> {
-    fn new(jsx_runtime_importer: Atom<'a>, react_importer_len: u32, is_development: bool) -> Self {
+    fn new(jsx_runtime_importer: Str<'a>, react_importer_len: u32, is_development: bool) -> Self {
         Self {
             jsx_runtime_importer,
             react_importer_len,
@@ -288,18 +288,18 @@ impl<'a> AutomaticModuleBindings<'a> {
     fn add_import_statement(
         &self,
         name: &'static str,
-        source: Atom<'a>,
+        source: Str<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> BoundIdentifier<'a> {
         let binding = ctx.generate_uid_in_root_scope(name, SymbolFlags::Import);
-        ctx.state.module_imports.add_named_import(source, Atom::from(name), binding.clone(), false);
+        ctx.state.module_imports.add_named_import(source, Str::from(name), binding.clone(), false);
         binding
     }
 }
 
 #[inline]
-fn get_import_source(jsx_runtime_importer: &str, react_importer_len: u32) -> Atom<'_> {
-    Atom::from(&jsx_runtime_importer[..react_importer_len as usize])
+fn get_import_source(jsx_runtime_importer: &str, react_importer_len: u32) -> Str<'_> {
+    Str::from(&jsx_runtime_importer[..react_importer_len as usize])
 }
 
 /// Pragma used in classic mode.
@@ -307,15 +307,15 @@ fn get_import_source(jsx_runtime_importer: &str, react_importer_len: u32) -> Ato
 /// `Double` is first as it's most common.
 enum Pragma<'a> {
     /// `React.createElement`
-    Double(Atom<'a>, Atom<'a>),
+    Double(Str<'a>, Str<'a>),
     /// `createElement`
-    Single(Atom<'a>),
+    Single(Str<'a>),
     /// `foo.bar.qux`
-    Multiple(Vec<Atom<'a>>),
+    Multiple(Vec<Str<'a>>),
     /// `this`, `this.foo`, `this.foo.bar.qux`
-    This(Vec<Atom<'a>>),
+    This(Vec<Str<'a>>),
     /// `import.meta`, `import.meta.foo`, `import.meta.foo.bar.qux`
-    ImportMeta(Vec<Atom<'a>>),
+    ImportMeta(Vec<Str<'a>>),
 }
 
 impl<'a> Pragma<'a> {
@@ -339,7 +339,7 @@ impl<'a> Pragma<'a> {
             }
         }
 
-        Self::Double(Atom::from("React"), Atom::from(default_property_name))
+        Self::Double(Str::from("React"), Str::from(default_property_name))
     }
 
     /// Parse without `TransformCtx` - skips error reporting for invalid pragma.
@@ -356,11 +356,11 @@ impl<'a> Pragma<'a> {
             return pragma;
         }
 
-        Self::Double(Atom::from("React"), Atom::from(default_property_name))
+        Self::Double(Str::from("React"), Str::from(default_property_name))
     }
 
     fn parse_impl(pragma: &str, ast: AstBuilder<'a>) -> Option<Self> {
-        let strs_to_atoms = |parts: &[&str]| parts.iter().map(|part| ast.atom(part)).collect();
+        let strs_to_arena_strs = |parts: &[&str]| parts.iter().map(|part| ast.str(part)).collect();
 
         let parts = pragma.split('.').collect::<Vec<_>>();
         let [root, tail @ ..] = &parts[..] else {
@@ -372,7 +372,7 @@ impl<'a> Pragma<'a> {
                 if !tail.iter().all(|part| is_identifier_name(part)) {
                     return None;
                 }
-                return Some(Self::This(strs_to_atoms(tail)));
+                return Some(Self::This(strs_to_arena_strs(tail)));
             }
             "import" => {
                 let ["meta", rest @ ..] = tail else {
@@ -381,7 +381,7 @@ impl<'a> Pragma<'a> {
                 if !rest.iter().all(|part| is_identifier_name(part)) {
                     return None;
                 }
-                return Some(Self::ImportMeta(strs_to_atoms(rest)));
+                return Some(Self::ImportMeta(strs_to_arena_strs(rest)));
             }
             _ => {
                 if is_reserved_keyword(root) || !is_identifier_name(root) {
@@ -394,9 +394,9 @@ impl<'a> Pragma<'a> {
         }
 
         Some(match &parts[..] {
-            [first, second] => Self::Double(ast.atom(first), ast.atom(second)),
-            [only] => Self::Single(ast.atom(only)),
-            parts => Self::Multiple(strs_to_atoms(parts)),
+            [first, second] => Self::Double(ast.str(first), ast.str(second)),
+            [only] => Self::Single(ast.str(only)),
+            parts => Self::Multiple(strs_to_arena_strs(parts)),
         })
     }
     fn create_expression(&self, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
@@ -426,8 +426,8 @@ impl<'a> Pragma<'a> {
             Self::ImportMeta(parts) => {
                 let object = ctx.ast.expression_meta_property(
                     SPAN,
-                    ctx.ast.identifier_name(SPAN, Atom::from("import")),
-                    ctx.ast.identifier_name(SPAN, Atom::from("meta")),
+                    ctx.ast.identifier_name(SPAN, Str::from("import")),
+                    ctx.ast.identifier_name(SPAN, Str::from("meta")),
                 );
                 (object, parts.iter())
             }
@@ -471,7 +471,7 @@ impl<'a> JsxImpl<'a> {
                             }
                             Ok(source_len) => source_len,
                         };
-                        let jsx_runtime_importer = ast.atom(&format!(
+                        let jsx_runtime_importer = ast.str(&format!(
                             "{}/jsx-{}runtime",
                             import_source,
                             if is_development { "dev-" } else { "" }
@@ -480,9 +480,9 @@ impl<'a> JsxImpl<'a> {
                     }
                     None => {
                         let jsx_runtime_importer = if is_development {
-                            Atom::from("react/jsx-dev-runtime")
+                            Str::from("react/jsx-dev-runtime")
                         } else {
-                            Atom::from("react/jsx-runtime")
+                            Str::from("react/jsx-runtime")
                         };
                         (jsx_runtime_importer, "react".len() as u32)
                     }
@@ -798,7 +798,7 @@ impl<'a> JsxImpl<'a> {
                 if self.options.throw_if_namespace {
                     ctx.state.error(diagnostics::namespace_does_not_support(namespaced.span));
                 }
-                let namespace_name = ctx.ast.atom_from_strs_array([
+                let namespace_name = ctx.ast.str_from_strs_array([
                     &namespaced.namespace.name,
                     ":",
                     &namespaced.name.name,
@@ -814,7 +814,7 @@ impl<'a> JsxImpl<'a> {
             Bindings::Classic(bindings) => bindings.pragma_frag.create_expression(ctx),
             Bindings::AutomaticScript(bindings) => {
                 let object_ident = bindings.require_jsx(ctx);
-                let property_name = Atom::from("Fragment");
+                let property_name = Str::from("Fragment");
                 create_static_member_expression(object_ident, property_name, ctx)
             }
             Bindings::AutomaticModule(bindings) => {
@@ -834,14 +834,14 @@ impl<'a> JsxImpl<'a> {
             Bindings::Classic(bindings) => bindings.pragma.create_expression(ctx),
             Bindings::AutomaticScript(bindings) => {
                 let (ident, property_name) = if has_key_after_props_spread {
-                    (bindings.require_create_element(ctx), Atom::from("createElement"))
+                    (bindings.require_create_element(ctx), Str::from("createElement"))
                 } else {
                     let property_name = if bindings.is_development {
-                        Atom::from("jsxDEV")
+                        Str::from("jsxDEV")
                     } else if jsxs {
-                        Atom::from("jsxs")
+                        Str::from("jsxs")
                     } else {
-                        Atom::from("jsx")
+                        Str::from("jsx")
                     };
                     (bindings.require_jsx(ctx), property_name)
                 };
@@ -887,10 +887,10 @@ impl<'a> JsxImpl<'a> {
                 Self::decode_entities(s.value.as_str(), &mut decoded, s.value.len(), ctx);
                 let jsx_text = if let Some(decoded) = decoded {
                     // Text contains HTML entities which were decoded.
-                    // `decoded` contains the decoded string as an `ArenaString`. Convert it to `Atom`.
-                    Atom::from(decoded)
+                    // `decoded` contains the decoded string as an `ArenaString`. Convert it to `Str`.
+                    Str::from(decoded)
                 } else {
-                    // No HTML entities needed to be decoded. Use the original `Atom` without copying.
+                    // No HTML entities needed to be decoded. Use the original `Str` without copying.
                     s.value
                 };
                 ctx.ast.expression_string_literal(s.span, jsx_text, None)
@@ -971,7 +971,7 @@ impl<'a> JsxImpl<'a> {
                 }
             }
             JSXAttributeName::NamespacedName(namespaced) => {
-                let name = ctx.ast.atom(&namespaced.to_string());
+                let name = ctx.ast.str(&namespaced.to_string());
                 PropertyKey::from(ctx.ast.expression_string_literal(namespaced.span, name, None))
             }
         }
@@ -998,9 +998,9 @@ impl<'a> JsxImpl<'a> {
     ///
     /// <https://github.com/microsoft/TypeScript/blob/f0374ce2a9c465e27a15b7fa4a347e2bd9079450/src/compiler/transformers/jsx.ts#L557-L608>
     fn fixup_whitespace_and_decode_entities(
-        text: Atom<'a>,
+        text: Str<'a>,
         ctx: &TraverseCtx<'a>,
-    ) -> Option<Atom<'a>> {
+    ) -> Option<Str<'a>> {
         // Avoid copying strings in the common case where there's only 1 line of text,
         // and it contains no HTML entities that need decoding.
         //
@@ -1013,7 +1013,7 @@ impl<'a> JsxImpl<'a> {
         //
         // When first line containing some text is found:
         // * If it contains HTML entities, decode them and write decoded text to accumulator `acc`.
-        // * Otherwise, store trimmed text in `only_line` as an `Atom<'a>`.
+        // * Otherwise, store trimmed text in `only_line` as a `Str<'a>`.
         //
         // When another line containing some text is found:
         // * If accumulator isn't already initialized, initialize it, starting with `only_line`.
@@ -1021,20 +1021,20 @@ impl<'a> JsxImpl<'a> {
         // * Decode current line into the accumulator.
         //
         // At the end:
-        // * If accumulator is initialized, convert the `ArenaString` to an `Atom` and return it.
+        // * If accumulator is initialized, convert the `ArenaString` to a `Str` and return it.
         // * If `only_line` contains a string, that means only 1 line contained text, and that line
         //   didn't contain any HTML entities which needed decoding.
-        //   So we can just return the `Atom` that's in `only_line` (without any copying).
+        //   So we can just return the `Str` that's in `only_line` (without any copying).
 
         let mut acc: Option<ArenaStringBuilder> = None;
-        let mut only_line: Option<Atom<'a>> = None;
+        let mut only_line: Option<Str<'a>> = None;
         let mut first_non_whitespace: Option<usize> = Some(0);
         let mut last_non_whitespace: Option<usize> = None;
         for (index, c) in text.char_indices() {
             if is_line_terminator(c) {
                 if let (Some(first), Some(last)) = (first_non_whitespace, last_non_whitespace) {
                     Self::add_line_of_jsx_text(
-                        Atom::from(&text.as_str()[first..last]),
+                        Str::from(&text.as_str()[first..last]),
                         &mut acc,
                         &mut only_line,
                         text.len(),
@@ -1052,7 +1052,7 @@ impl<'a> JsxImpl<'a> {
 
         if let Some(first) = first_non_whitespace {
             Self::add_line_of_jsx_text(
-                Atom::from(&text.as_str()[first..]),
+                Str::from(&text.as_str()[first..]),
                 &mut acc,
                 &mut only_line,
                 text.len(),
@@ -1060,13 +1060,13 @@ impl<'a> JsxImpl<'a> {
             );
         }
 
-        if let Some(acc) = acc { Some(Atom::from(acc)) } else { only_line }
+        if let Some(acc) = acc { Some(Str::from(acc)) } else { only_line }
     }
 
     fn add_line_of_jsx_text(
-        trimmed_line: Atom<'a>,
+        trimmed_line: Str<'a>,
         acc: &mut Option<ArenaStringBuilder<'a>>,
-        only_line: &mut Option<Atom<'a>>,
+        only_line: &mut Option<Str<'a>>,
         text_len: usize,
         ctx: &TraverseCtx<'a>,
     ) {
@@ -1200,7 +1200,7 @@ impl<'a> JsxImpl<'a> {
 /// Create `IdentifierReference` for var name in current scope which is read from
 fn get_read_identifier_reference<'a>(
     span: Span,
-    name: Atom<'a>,
+    name: Str<'a>,
     ctx: &mut TraverseCtx<'a>,
 ) -> Expression<'a> {
     let name = Ident::from(name);
@@ -1211,7 +1211,7 @@ fn get_read_identifier_reference<'a>(
 
 fn create_static_member_expression<'a>(
     object_ident: IdentifierReference<'a>,
-    property_name: Atom<'a>,
+    property_name: Str<'a>,
     ctx: &TraverseCtx<'a>,
 ) -> Expression<'a> {
     let object = Expression::Identifier(ctx.alloc(object_ident));

@@ -25,7 +25,7 @@ use std::cell::Cell;
 use oxc_allocator::{Box, CloneIn, Dummy, GetAddress, TakeIn, UnstableAddress, Vec};
 use oxc_ast_macros::ast;
 use oxc_estree::ESTree;
-use oxc_span::{Atom, ContentEq, GetSpan, GetSpanMut, Ident, SourceType, Span};
+use oxc_span::{ContentEq, GetSpan, GetSpanMut, Ident, SourceType, Span, Str};
 use oxc_syntax::{
     node::NodeId,
     operator::{
@@ -512,12 +512,12 @@ pub struct TemplateElementValue<'a> {
     /// A raw interpretation where backslashes do not have special meaning.
     /// For example, \t produces two characters – a backslash and a t.
     /// This interpretation of the template strings is stored in property .raw of the first argument (an Array).
-    pub raw: Atom<'a>,
+    pub raw: Str<'a>,
     /// A cooked interpretation where backslashes have special meaning.
     /// For example, \t produces a tab character.
     /// This interpretation of the template strings is stored as an Array in the first argument.
     /// cooked = None when template literal has invalid escape sequence
-    pub cooked: Option<Atom<'a>>,
+    pub cooked: Option<Str<'a>>,
 }
 
 /// Represents a member access expression, which can include computed member access,
@@ -1166,7 +1166,7 @@ pub struct Directive<'a> {
     /// Directive with any escapes unescaped
     pub expression: StringLiteral<'a>,
     /// Raw content of directive as it appears in source, any escapes left as is
-    pub directive: Atom<'a>,
+    pub directive: Str<'a>,
 }
 
 /// `#! /usr/bin/env node` in `#! /usr/bin/env node`
@@ -1178,7 +1178,7 @@ pub struct Directive<'a> {
 pub struct Hashbang<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
-    pub value: Atom<'a>,
+    pub value: Str<'a>,
 }
 
 /// `{ let foo = 1; }` in `if(true) { let foo = 1; }`

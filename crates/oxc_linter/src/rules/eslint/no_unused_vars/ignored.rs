@@ -458,7 +458,7 @@ impl NoUnusedVars {
 
 #[cfg(test)]
 mod test {
-    use oxc_span::Atom;
+    use oxc_span::Str;
 
     use super::super::NoUnusedVars;
     use super::{IgnoreReason, Ignored};
@@ -485,7 +485,7 @@ mod test {
 
         assert_eq!(rule.is_ignored_var("_x"), Ignored::from_reason(IgnoreReason::NamePattern));
         assert_eq!(
-            rule.is_ignored_var(&Atom::from("_x")),
+            rule.is_ignored_var(&Str::from("_x")),
             Ignored::from_reason(IgnoreReason::NamePattern)
         );
         assert_eq!(rule.is_ignored_var("notIgnored"), Ignored::not_ignored());
@@ -496,11 +496,11 @@ mod test {
             Ignored::from_reason(IgnoreReason::NamePattern)
         );
         assert_eq!(
-            rule.is_ignored_arg(&Atom::from("ignored")),
+            rule.is_ignored_arg(&Str::from("ignored")),
             Ignored::from_reason(IgnoreReason::NamePattern)
         );
         assert_eq!(
-            rule.is_ignored_arg(&Atom::from("alsoIgnored")),
+            rule.is_ignored_arg(&Str::from("alsoIgnored")),
             Ignored::from_reason(IgnoreReason::NamePattern)
         );
 
@@ -519,7 +519,7 @@ mod test {
             Ignored::from_reason(IgnoreReason::NamePattern)
         );
         assert_eq!(
-            rule.is_ignored_array_destructured(&Atom::from("_x")),
+            rule.is_ignored_array_destructured(&Str::from("_x")),
             Ignored::from_reason(IgnoreReason::NamePattern)
         );
         assert_eq!(rule.is_ignored_array_destructured("notIgnored"), Ignored::not_ignored());

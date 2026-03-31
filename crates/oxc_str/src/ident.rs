@@ -11,7 +11,7 @@ use oxc_estree::{ESTree, Serializer as ESTreeSerializer};
 #[cfg(feature = "serialize")]
 use serde::{Serialize, Serializer as SerdeSerializer};
 
-use crate::{Atom, CompactStr};
+use crate::{CompactStr, Str};
 
 /// An identifier string for oxc_allocator with a precomputed hash.
 ///
@@ -129,11 +129,11 @@ impl<'a> Ident<'a> {
         unsafe { str::from_utf8_unchecked(slice::from_raw_parts(self.ptr.as_ptr(), len)) }
     }
 
-    /// Convert this [`Ident`] into an [`Atom`].
+    /// Convert this [`Ident`] into a [`Str`].
     #[expect(clippy::inline_always)]
     #[inline(always)] // Because this is a no-op
-    pub fn as_atom(&self) -> Atom<'a> {
-        Atom::from(self.as_str())
+    pub fn as_arena_str(&self) -> Str<'a> {
+        Str::from(self.as_str())
     }
 
     /// Convert this [`Ident`] into a [`String`].
@@ -271,18 +271,18 @@ impl<'a> From<Ident<'a>> for &'a str {
     }
 }
 
-impl<'a> From<Ident<'a>> for Atom<'a> {
+impl<'a> From<Ident<'a>> for Str<'a> {
     #[expect(clippy::inline_always)]
     #[inline(always)]
     fn from(s: Ident<'a>) -> Self {
-        s.as_atom()
+        s.as_arena_str()
     }
 }
 
-impl<'a> From<Atom<'a>> for Ident<'a> {
+impl<'a> From<Str<'a>> for Ident<'a> {
     #[expect(clippy::inline_always)]
     #[inline(always)]
-    fn from(s: Atom<'a>) -> Self {
+    fn from(s: Str<'a>) -> Self {
         Self::from(s.as_str())
     }
 }
@@ -388,9 +388,9 @@ impl PartialEq<&Ident<'_>> for Ident<'_> {
     }
 }
 
-impl PartialEq<Atom<'_>> for Ident<'_> {
+impl PartialEq<Str<'_>> for Ident<'_> {
     #[inline]
-    fn eq(&self, other: &Atom<'_>) -> bool {
+    fn eq(&self, other: &Str<'_>) -> bool {
         self.as_str() == other.as_str()
     }
 }
