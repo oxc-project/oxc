@@ -857,13 +857,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
                     // ?.`template` — tagged template
                     if self.cur_kind().is_template_start_of_tagged_template() {
-                        let (expr, type_arguments) =
-                            if let Expression::TSInstantiationExpression(instantiation_expr) = lhs {
-                                let expr = instantiation_expr.unbox();
-                                (expr.expression, Some(expr.type_arguments))
-                            } else {
-                                (lhs, None)
-                            };
+                        let (expr, type_arguments) = if let Expression::TSInstantiationExpression(
+                            instantiation_expr,
+                        ) = lhs
+                        {
+                            let expr = instantiation_expr.unbox();
+                            (expr.expression, Some(expr.type_arguments))
+                        } else {
+                            (lhs, None)
+                        };
                         lhs = self.parse_tagged_template(
                             lhs_span,
                             expr,
