@@ -44,12 +44,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         while !self.has_fatal_error() {
             let stmt = self.parse_statement_list_item(stmt_ctx);
-            if let Some(directive) = self.directive_from_statement(&stmt) {
-                directives.push(directive);
-                continue;
+            match self.statement_to_directive(stmt) {
+                Ok(directive) => directives.push(directive),
+                Err(stmt) => {
+                    statements.push(stmt);
+                    break;
+                }
             }
-            statements.push(stmt);
-            break;
         }
 
         while !self.has_fatal_error() {
@@ -74,12 +75,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
 
             let stmt = self.parse_statement_list_item(stmt_ctx);
-            if let Some(directive) = self.directive_from_statement(&stmt) {
-                directives.push(directive);
-                continue;
+            match self.statement_to_directive(stmt) {
+                Ok(directive) => directives.push(directive),
+                Err(stmt) => {
+                    statements.push(stmt);
+                    break;
+                }
             }
-            statements.push(stmt);
-            break;
         }
 
         while !self.has_fatal_error() {
@@ -106,12 +108,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 statements.len(),
                 &mut track_await_reparse,
             );
-            if let Some(directive) = self.directive_from_statement(&stmt) {
-                directives.push(directive);
-                continue;
+            match self.statement_to_directive(stmt) {
+                Ok(directive) => directives.push(directive),
+                Err(stmt) => {
+                    statements.push(stmt);
+                    break;
+                }
             }
-            statements.push(stmt);
-            break;
         }
 
         while !self.has_fatal_error() {
@@ -164,22 +167,26 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     #[inline]
-    fn directive_from_statement(&self, stmt: &Statement<'a>) -> Option<Directive<'a>> {
+    fn statement_to_directive(&self, stmt: Statement<'a>) -> Result<Directive<'a>, Statement<'a>> {
         // Section 11.2.1 Directive Prologue
         // The only way to get a correct directive is to parse the statement first and check if it is a string literal.
         // All other method are flawed, see test cases in [babel](https://github.com/babel/babel/blob/v7.26.2/packages/babel-parser/test/fixtures/core/categorized/not-directive/input.js)
-        if let Statement::ExpressionStatement(expr) = stmt
-            && let Expression::StringLiteral(string) = &expr.expression
-        {
-            // span start will mismatch if they are parenthesized when `preserve_parens = false`
-            if expr.span.start == string.span.start {
-                let src =
-                    &self.source_text[string.span.start as usize + 1..string.span.end as usize - 1];
-                return Some(self.ast.directive(expr.span, (*string).clone(), Str::from(src)));
-            }
+        let Statement::ExpressionStatement(expr) = stmt else { return Err(stmt) };
+        let expr = expr.unbox();
+
+        // span start will mismatch if they are parenthesized when `preserve_parens = false`
+        let span = expr.span;
+        let Expression::StringLiteral(string) = expr.expression else {
+            return Err(self.ast.statement_expression(span, expr.expression));
+        };
+        let string = string.unbox();
+        if span.start != string.span.start {
+            let expression = Expression::StringLiteral(self.alloc(string));
+            return Err(self.ast.statement_expression(span, expression));
         }
 
-        None
+        let src = &self.source_text[string.span.start as usize + 1..string.span.end as usize - 1];
+        Ok(self.ast.directive(span, string, Str::from(src)))
     }
 
     /// `StatementListItem`[Yield, Await, Return] :
