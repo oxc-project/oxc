@@ -55,11 +55,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     /// `PrimaryExpression`: Identifier Reference
+    #[inline]
     pub(crate) fn parse_identifier_expression(&mut self) -> Expression<'a> {
         let ident = self.parse_identifier_reference();
         Expression::Identifier(self.alloc(ident))
     }
 
+    #[inline]
     pub(crate) fn parse_identifier_reference(&mut self) -> IdentifierReference<'a> {
         // allow `await` and `yield`, let semantic analysis report error
         let kind = self.cur_kind();
@@ -137,6 +139,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         (span, Ident::from(name))
     }
 
+    #[inline]
     pub(crate) fn check_identifier(&mut self, kind: Kind, ctx: Context) {
         self.check_identifier_with_span(kind, ctx, self.cur_token().span());
     }
