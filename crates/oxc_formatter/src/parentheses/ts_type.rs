@@ -231,9 +231,7 @@ fn is_leading_position_in_type_alias(span: Span, parent: &AstNodes) -> bool {
                 && is_leading_position_in_type_alias(intersection.span(), intersection.parent())
         }
         // Postfix types: element type is always the leading token
-        AstNodes::TSArrayType(arr) => {
-            is_leading_position_in_type_alias(arr.span(), arr.parent())
-        }
+        AstNodes::TSArrayType(arr) => is_leading_position_in_type_alias(arr.span(), arr.parent()),
         AstNodes::TSIndexedAccessType(indexed) if indexed.object_type.span() == span => {
             is_leading_position_in_type_alias(indexed.span(), indexed.parent())
         }
