@@ -226,5 +226,14 @@ fn type_codegen_with_preserve_parens_off() {
 
     // `intrinsic` is a contextual keyword: `type t = intrinsic` produces TSIntrinsicKeyword,
     // but `type t = (intrinsic)` produces TSTypeReference. Parentheses must be preserved.
-    test_with_parse_options("type t = (intrinsic);\n", "type t = (intrinsic);\n", parse_options);
+    test_with_parse_options(
+        "type t = (intrinsic);\n",
+        "type t = (intrinsic);\n",
+        parse_options,
+    );
+    test_with_parse_options(
+        "type t = (intrinsic)[];\n",
+        "type t = (intrinsic)[];\n",
+        parse_options,
+    );
 }

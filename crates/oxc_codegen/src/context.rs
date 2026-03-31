@@ -26,6 +26,8 @@ bitflags! {
         ///
         /// When set, TypeScript syntax features are enabled in the output.
         const TYPESCRIPT  = 1 << 2;
+        /// Inside a type alias RHS, where bare `intrinsic` needs parentheses.
+        const IN_TYPE_ALIAS_RHS = 1 << 3;
     }
 }
 
