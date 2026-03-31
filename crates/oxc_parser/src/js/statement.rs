@@ -42,30 +42,18 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let mut statements = self.ast.vec();
         let stmt_ctx = StatementContext::StatementList;
 
-        let mut expecting_directives = true;
         while !self.has_fatal_error() {
             let stmt = self.parse_statement_list_item(stmt_ctx);
-
-            // Section 11.2.1 Directive Prologue
-            // The only way to get a correct directive is to parse the statement first and check if it is a string literal.
-            // All other method are flawed, see test cases in [babel](https://github.com/babel/babel/blob/v7.26.2/packages/babel-parser/test/fixtures/core/categorized/not-directive/input.js)
-            if expecting_directives {
-                if let Statement::ExpressionStatement(expr) = &stmt
-                    && let Expression::StringLiteral(string) = &expr.expression
-                {
-                    // span start will mismatch if they are parenthesized when `preserve_parens = false`
-                    if expr.span.start == string.span.start {
-                        let src = &self.source_text
-                            [string.span.start as usize + 1..string.span.end as usize - 1];
-                        let directive =
-                            self.ast.directive(expr.span, (*string).clone(), Str::from(src));
-                        directives.push(directive);
-                        continue;
-                    }
-                }
-                expecting_directives = false;
+            if let Some(directive) = self.directive_from_statement(&stmt) {
+                directives.push(directive);
+                continue;
             }
             statements.push(stmt);
+            break;
+        }
+
+        while !self.has_fatal_error() {
+            statements.push(self.parse_statement_list_item(stmt_ctx));
         }
 
         (directives, statements)
@@ -80,34 +68,25 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let mut statements = self.ast.vec();
         let stmt_ctx = StatementContext::StatementList;
 
-        let mut expecting_directives = true;
         while !self.has_fatal_error() {
             if self.at(Kind::RCurly) {
                 break;
             }
 
             let stmt = self.parse_statement_list_item(stmt_ctx);
-
-            // Section 11.2.1 Directive Prologue
-            // The only way to get a correct directive is to parse the statement first and check if it is a string literal.
-            // All other method are flawed, see test cases in [babel](https://github.com/babel/babel/blob/v7.26.2/packages/babel-parser/test/fixtures/core/categorized/not-directive/input.js)
-            if expecting_directives {
-                if let Statement::ExpressionStatement(expr) = &stmt
-                    && let Expression::StringLiteral(string) = &expr.expression
-                {
-                    // span start will mismatch if they are parenthesized when `preserve_parens = false`
-                    if expr.span.start == string.span.start {
-                        let src = &self.source_text
-                            [string.span.start as usize + 1..string.span.end as usize - 1];
-                        let directive =
-                            self.ast.directive(expr.span, (*string).clone(), Str::from(src));
-                        directives.push(directive);
-                        continue;
-                    }
-                }
-                expecting_directives = false;
+            if let Some(directive) = self.directive_from_statement(&stmt) {
+                directives.push(directive);
+                continue;
             }
             statements.push(stmt);
+            break;
+        }
+
+        while !self.has_fatal_error() {
+            if self.at(Kind::RCurly) {
+                break;
+            }
+            statements.push(self.parse_statement_list_item(stmt_ctx));
         }
 
         (directives, statements)
@@ -121,57 +100,86 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let stmt_ctx = StatementContext::StatementList;
 
         let mut track_await_reparse = true;
-        let mut expecting_directives = true;
         while !self.has_fatal_error() {
-            // Once ESM syntax is detected, enable await context for remaining statements
-            // and stop tracking (we'll reparse earlier statements at the end)
-            if track_await_reparse && self.module_record_builder.has_module_syntax() {
-                track_await_reparse = false;
-                self.ctx = self.ctx.and_await(true);
+            let stmt = self.parse_top_level_statement_with_await_reparse(
+                stmt_ctx,
+                statements.len(),
+                &mut track_await_reparse,
+            );
+            if let Some(directive) = self.directive_from_statement(&stmt) {
+                directives.push(directive);
+                continue;
             }
+            statements.push(stmt);
+            break;
+        }
 
-            // Take checkpoint for every statement when tracking await reparse.
-            // We reset the flag and only store the checkpoint if an await identifier
-            // was actually encountered during parsing.
-            let checkpoint = if track_await_reparse {
-                self.state.encountered_await_identifier = false;
-                Some((statements.len(), self.checkpoint()))
-            } else {
-                None
-            };
-
-            let stmt = self.parse_statement_list_item(stmt_ctx);
-
-            // Store checkpoint only if await identifier was encountered
-            if let Some((stmt_index, checkpoint)) = checkpoint
-                && self.state.encountered_await_identifier
-            {
-                self.state.potential_await_reparse.push((stmt_index, checkpoint));
-            }
-
-            // Section 11.2.1 Directive Prologue
-            // The only way to get a correct directive is to parse the statement first and check if it is a string literal.
-            // All other method are flawed, see test cases in [babel](https://github.com/babel/babel/blob/v7.26.2/packages/babel-parser/test/fixtures/core/categorized/not-directive/input.js)
-            if expecting_directives {
-                if let Statement::ExpressionStatement(expr) = &stmt
-                    && let Expression::StringLiteral(string) = &expr.expression
-                {
-                    // span start will mismatch if they are parenthesized when `preserve_parens = false`
-                    if expr.span.start == string.span.start {
-                        let src = &self.source_text
-                            [string.span.start as usize + 1..string.span.end as usize - 1];
-                        let directive =
-                            self.ast.directive(expr.span, (*string).clone(), Str::from(src));
-                        directives.push(directive);
-                        continue;
-                    }
-                }
-                expecting_directives = false;
-            }
+        while !self.has_fatal_error() {
+            let stmt_index = statements.len();
+            let stmt = self.parse_top_level_statement_with_await_reparse(
+                stmt_ctx,
+                stmt_index,
+                &mut track_await_reparse,
+            );
             statements.push(stmt);
         }
 
         (directives, statements)
+    }
+
+    #[inline]
+    fn parse_top_level_statement_with_await_reparse(
+        &mut self,
+        stmt_ctx: StatementContext,
+        stmt_index: usize,
+        track_await_reparse: &mut bool,
+    ) -> Statement<'a> {
+        // Once ESM syntax is detected, enable await context for remaining statements
+        // and stop tracking (we'll reparse earlier statements at the end)
+        if *track_await_reparse && self.module_record_builder.has_module_syntax() {
+            *track_await_reparse = false;
+            self.ctx = self.ctx.and_await(true);
+        }
+
+        // Take checkpoint for every statement when tracking await reparse.
+        // We reset the flag and only store the checkpoint if an await identifier
+        // was actually encountered during parsing.
+        let checkpoint = if *track_await_reparse {
+            self.state.encountered_await_identifier = false;
+            Some(self.checkpoint())
+        } else {
+            None
+        };
+
+        let stmt = self.parse_statement_list_item(stmt_ctx);
+
+        // Store checkpoint only if await identifier was encountered
+        if let Some(checkpoint) = checkpoint
+            && self.state.encountered_await_identifier
+        {
+            self.state.potential_await_reparse.push((stmt_index, checkpoint));
+        }
+
+        stmt
+    }
+
+    #[inline]
+    fn directive_from_statement(&self, stmt: &Statement<'a>) -> Option<Directive<'a>> {
+        // Section 11.2.1 Directive Prologue
+        // The only way to get a correct directive is to parse the statement first and check if it is a string literal.
+        // All other method are flawed, see test cases in [babel](https://github.com/babel/babel/blob/v7.26.2/packages/babel-parser/test/fixtures/core/categorized/not-directive/input.js)
+        if let Statement::ExpressionStatement(expr) = stmt
+            && let Expression::StringLiteral(string) = &expr.expression
+        {
+            // span start will mismatch if they are parenthesized when `preserve_parens = false`
+            if expr.span.start == string.span.start {
+                let src =
+                    &self.source_text[string.span.start as usize + 1..string.span.end as usize - 1];
+                return Some(self.ast.directive(expr.span, (*string).clone(), Str::from(src)));
+            }
+        }
+
+        None
     }
 
     /// `StatementListItem`[Yield, Await, Return] :
