@@ -140,6 +140,7 @@ oxc_traverse = { version = "0.115.0", path = "crates/oxc_traverse" } # AST trave
 
 # publish = false
 oxc_checker = { path = "crates/oxc_checker" } # TypeScript type checker
+oxc_project = { path = "crates/oxc_project" } # Cross-file type checking coordination
 oxc_types = { path = "crates/oxc_types" } # Type checker type representation
 oxc_formatter = { path = "crates/oxc_formatter" } # Code formatting
 oxc_language_server = { path = "crates/oxc_language_server", default-features = false } # Language server
@@ -174,6 +175,7 @@ oxc_sourcemap = "6.0.1" # Source map generation
 
 #
 allocator-api2 = "=0.2.21" # Allocator trait
+append-only-vec = "0.1.6" # Append-only vec with stable references (&self push)
 base64 = "0.22.1" # Base64 encoding
 bitflags = "2.10.0" # Bitflag types
 bpaf = "0.9.20" # CLI parser

@@ -1160,7 +1160,8 @@ fn run_checker_single(
     }
     let program = &parsed.program;
     let semantic = SemanticBuilder::new().build(program).semantic;
-    let mut checker = Checker::new(semantic);
+    let type_arena = oxc_types::TypeArena::with_capacity(64);
+    let mut checker = Checker::new(semantic, &type_arena);
 
     // Collect computed types from AST
     let actual = collect_checker_types(&mut checker, program, source);
@@ -1208,9 +1209,9 @@ fn parse_types_baseline(content: &str) -> Vec<(String, String)> {
             continue;
         }
         if let Some(rest) = line.strip_prefix('>') {
-            // Skip underline lines like ">  : ^^^^^^"
+            // Skip underline lines like ">  : ^^^^^^" or ">   : ^ ^^  ^^^^^^^^^"
             let trimmed = rest.trim_start();
-            if trimmed.starts_with(": ") && trimmed[2..].chars().all(|c| c == '^') {
+            if trimmed.starts_with(": ") && trimmed[2..].chars().all(|c| c == '^' || c == ' ') {
                 continue;
             }
             if let Some((expr, typ)) = rest.split_once(" : ") {
@@ -1258,10 +1259,155 @@ impl<'a> oxc::ast_visit::Visit<'a> for TypeCollectorVisitor<'a, '_> {
         oxc::ast_visit::walk::walk_expression(self, expr);
     }
 
+    fn visit_object_property(&mut self, prop: &oxc::ast::ast::ObjectProperty<'a>) {
+        use oxc::span::GetSpan as _;
+
+        // Emit the property key's type (matching tsc's walker).
+        // The property key text (e.g., "a") gets the property's value type.
+        if prop.kind == oxc::ast::ast::PropertyKind::Init {
+            if prop.key.static_name().is_some() {
+                let key_span = prop.key.span();
+                if (key_span.start as usize) < self.source.len()
+                    && (key_span.end as usize) <= self.source.len()
+                {
+                    let prop_type = self.checker.get_type_of_expression(&prop.value);
+                    let widened = self.checker.get_widened_literal_type(prop_type);
+                    let key_text =
+                        &self.source[key_span.start as usize..key_span.end as usize];
+                    self.results
+                        .push((key_text.to_string(), self.checker.type_to_string(widened)));
+                }
+            }
+        }
+
+        oxc::ast_visit::walk::walk_object_property(self, prop);
+    }
+
+    fn visit_property_definition(&mut self, prop: &oxc::ast::ast::PropertyDefinition<'a>) {
+        use oxc::span::GetSpan as _;
+        // Emit the property key's type for class property definitions
+        if let Some(_name) = prop.key.static_name() {
+            let key_span = prop.key.span();
+            if (key_span.start as usize) < self.source.len()
+                && (key_span.end as usize) <= self.source.len()
+            {
+                let prop_type = if let Some(ann) = &prop.type_annotation {
+                    self.checker.get_type_from_type_node(&ann.type_annotation)
+                } else if let Some(init) = &prop.value {
+                    self.checker.get_type_of_expression(init)
+                } else {
+                    self.checker.any_type
+                };
+                let key_text =
+                    &self.source[key_span.start as usize..key_span.end as usize];
+                self.results
+                    .push((key_text.to_string(), self.checker.type_to_string(prop_type)));
+            }
+        }
+        oxc::ast_visit::walk::walk_property_definition(self, prop);
+    }
+
+    fn visit_method_definition(&mut self, method: &oxc::ast::ast::MethodDefinition<'a>) {
+        use oxc::span::GetSpan as _;
+        // Emit the method key's type for class method definitions
+        if let Some(_name) = method.key.static_name() {
+            let key_span = method.key.span();
+            if (key_span.start as usize) < self.source.len()
+                && (key_span.end as usize) <= self.source.len()
+            {
+                let sig = self.checker.build_signature_from_function(&method.value);
+                let method_type = self.checker.create_function_type(sig);
+                let key_text =
+                    &self.source[key_span.start as usize..key_span.end as usize];
+                self.results
+                    .push((key_text.to_string(), self.checker.type_to_string(method_type)));
+            }
+        }
+        oxc::ast_visit::walk::walk_method_definition(self, method);
+    }
+
+    fn visit_ts_property_signature(&mut self, prop: &oxc::ast::ast::TSPropertySignature<'a>) {
+        use oxc::span::GetSpan as _;
+        // Emit the property key's type for interface/type literal property signatures
+        if let Some(_name) = prop.key.static_name() {
+            let key_span = prop.key.span();
+            if (key_span.start as usize) < self.source.len()
+                && (key_span.end as usize) <= self.source.len()
+            {
+                let prop_type = if let Some(ann) = &prop.type_annotation {
+                    self.checker.get_type_from_type_node(&ann.type_annotation)
+                } else {
+                    self.checker.any_type
+                };
+                let key_text =
+                    &self.source[key_span.start as usize..key_span.end as usize];
+                self.results
+                    .push((key_text.to_string(), self.checker.type_to_string(prop_type)));
+            }
+        }
+        oxc::ast_visit::walk::walk_ts_property_signature(self, prop);
+    }
+
+    fn visit_ts_method_signature(&mut self, method: &oxc::ast::ast::TSMethodSignature<'a>) {
+        use oxc::span::GetSpan as _;
+        // Emit the method key's type for interface/type literal method signatures
+        if let Some(_name) = method.key.static_name() {
+            let key_span = method.key.span();
+            if (key_span.start as usize) < self.source.len()
+                && (key_span.end as usize) <= self.source.len()
+            {
+                let sig = self.checker.build_signature_from_params(
+                    &method.params,
+                    method.return_type.as_deref(),
+                );
+                let method_type = self.checker.create_function_type(sig);
+                let key_text =
+                    &self.source[key_span.start as usize..key_span.end as usize];
+                self.results
+                    .push((key_text.to_string(), self.checker.type_to_string(method_type)));
+            }
+        }
+        oxc::ast_visit::walk::walk_ts_method_signature(self, method);
+    }
+
+    fn visit_ts_enum_member(&mut self, member: &oxc::ast::ast::TSEnumMember<'a>) {
+        use oxc::span::GetSpan as _;
+        // Emit the enum member name's type
+        let name_span = member.id.span();
+        if (name_span.start as usize) < self.source.len()
+            && (name_span.end as usize) <= self.source.len()
+        {
+            let member_type = if let Some(init) = &member.initializer {
+                self.checker.get_type_of_expression(init)
+            } else {
+                self.checker.any_type
+            };
+            let name_text =
+                &self.source[name_span.start as usize..name_span.end as usize];
+            self.results
+                .push((name_text.to_string(), self.checker.type_to_string(member_type)));
+        }
+        oxc::ast_visit::walk::walk_ts_enum_member(self, member);
+    }
+
     fn visit_binding_identifier(&mut self, id: &oxc::ast::ast::BindingIdentifier<'a>) {
-        // Record the type for declaration binding names
+        // Record the type for declaration binding names.
+        // For type declarations (class, interface, enum, type alias), use the
+        // declared type, matching tsc's getTypeOfNode which calls
+        // getDeclaredTypeOfSymbol for type declaration names.
         if let Some(symbol_id) = id.symbol_id.get() {
-            let type_id = self.checker.get_type_of_symbol(symbol_id);
+            use oxc::ast::AstKind;
+            let node_id = self.checker.semantic().scoping().symbol_declaration(symbol_id);
+            let node = self.checker.semantic().nodes().get_node(node_id);
+            let type_id = match node.kind() {
+                AstKind::Class(_)
+                | AstKind::TSInterfaceDeclaration(_)
+                | AstKind::TSTypeAliasDeclaration(_)
+                | AstKind::TSEnumDeclaration(_) => {
+                    self.checker.get_declared_type_of_symbol(symbol_id)
+                }
+                _ => self.checker.get_type_of_symbol(symbol_id),
+            };
             self.results.push((id.name.to_string(), self.checker.type_to_string(type_id)));
         }
 
@@ -1313,8 +1459,10 @@ fn run_checker_errors_single(
     }
     let program = &parsed.program;
     let semantic = SemanticBuilder::new().build(program).semantic;
-    let checker = Checker::new(semantic);
-    let diagnostics = checker.check_program(program);
+    let type_arena = oxc_types::TypeArena::with_capacity(64);
+    let mut checker = Checker::new(semantic, &type_arena);
+    checker.check_program(program);
+    let diagnostics = checker.take_diagnostics();
 
     // Extract error codes from our diagnostics
     let mut actual_codes: Vec<String> = diagnostics

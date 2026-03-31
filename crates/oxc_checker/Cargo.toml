@@ -28,5 +28,8 @@ oxc_parser = { workspace = true }
 oxc_semantic = { workspace = true }
 oxc_span = { workspace = true }
 oxc_syntax = { workspace = true }
+oxc_index = { workspace = true }
 oxc_types = { workspace = true }
+bitflags = { workspace = true }
+rustc-hash = { workspace = true }
 smallvec = { workspace = true }

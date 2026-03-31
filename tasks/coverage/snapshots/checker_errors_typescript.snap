@@ -2,7 +2,7 @@ commit: 34725489
 
 checker_errors_typescript Summary:
 AST Parsed     : 6430/6430 (100.00%)
-Positive Passed: 50/6430 (0.78%)
+Positive Passed: 257/6430 (4.00%)
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/ArrowFunctionExpression1.ts
 'public' modifier cannot appear on a parameter.
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration10.ts
@@ -162,8 +162,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/ambientStatement
 Initializers are not allowed in ambient contexts.
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/ambiguousGenericAssertion1.ts
 Unexpected token
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/ambiguousOverload.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/amdDependencyComment1.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/amdDependencyComment2.ts
@@ -202,8 +200,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/argumentsObjectIt
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/argumentsObjectIterator03_ES5.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/argumentsPropertyNameInJsMode1.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/argumentsReferenceInConstructor4_Js.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/argumentsReferenceInFunction1_Js.ts
@@ -219,8 +215,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/arithAssignTyping
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/arithmeticOnInvalidTypes.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/arithmeticOnInvalidTypes2.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/arityErrorRelatedSpanBindingPattern.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/arrayAssignmentTest1.ts
 
@@ -256,8 +250,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/arrayLiteralAndAr
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/arrayLiteralTypeInference.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/arrayOfSubtypeIsAssignableToReadonlyArray.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/arrayReferenceWithoutTypeArgs.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/arraySigChecking.ts
@@ -290,8 +282,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/asiReturn.ts
 A 'return' statement can only be used within a function body.
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/assertInWrapSomeTypeParameter.ts
 Expected `,` or `>` but found `(`
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/assignLambdaToNominalSubtypeOfFunction.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/assignToEnum.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/assignToExistingClass.ts
@@ -390,15 +380,11 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/assignmentCompata
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/assignmentCompatability45.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/assignmentCompatability46.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/assignmentCompatability_checking-apply-member-off-of-function-interface.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/assignmentCompatability_checking-call-member-off-of-function-interface.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/assignmentCompatibilityForConstrainedTypeParameters.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/assignmentIndexedToPrimitives.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/assignmentRestElementWithErrorSourceType.ts
 
@@ -410,8 +396,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/assignmentToFunct
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/assignmentToInstantiationExpression.ts
 The left-hand side of an assignment expression must be a variable or a property access.
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/assignmentToObject.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/assignmentToObjectAndFunction.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/assignmentToParenthesizedExpression1.ts
@@ -421,8 +405,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/assignmentToRefer
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/asyncArrowInClassES5.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/asyncAwaitWithCapturedBlockScopeVar.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/asyncFunctionReturnExpressionErrorSpans.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/asyncFunctionTempVariableScoping.ts
 
@@ -461,12 +443,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/augmentedTypesVar
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/autoLift2.ts
 Expected a semicolon or an implicit semicolon after a statement, but found none
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/autoTypeAssignedUsingDestructuringFromNeverNoCrash.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/autolift3.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/autolift4.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/avoidListingPropertiesForTypesWithOnlyCallOrConstructSignatures.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/awaitCallExpressionInSyncFunction.ts
 
@@ -521,10 +497,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/bestCommonTypeWit
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/bestCommonTypeWithOptionalProperties.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/betterErrorForAccidentalCall.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/betterErrorForUnionCall.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/bigIntWithTargetLessThanES2016.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/bigintIndex.ts
@@ -573,11 +545,7 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/blockScopedFuncti
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/blockScopedSameNameFunctionDeclarationES5.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/blockScopedSameNameFunctionDeclarationES6.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/blockScopedSameNameFunctionDeclarationStrictES5.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/blockScopedSameNameFunctionDeclarationStrictES6.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/blockScopedVariablesUseBeforeDef.ts
 
@@ -597,15 +565,11 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/breakTarget6.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/builtinIterator.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/callConstructAssignment.ts
-
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/callExpressionWithMissingTypeArgument1.ts
 Unexpected token
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/callExpressionWithTypeParameterConstrainedToOuterTypeParameter.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/callOnClass.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/callOnInstance.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/callOverloadViaElementAccessExpression.ts
 
@@ -674,15 +638,11 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/cf.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/chainedAssignment1.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/chainedAssignment2.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/chainedAssignment3.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/chainedAssignmentChecking.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/chainedCallsWithTypeParameterConstrainedToOtherTypeParameter.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/chainedCallsWithTypeParameterConstrainedToOtherTypeParameter2.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/chainedSpecializationToObjectTypeLiteral.ts
 
@@ -698,7 +658,7 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/checkInheritedPro
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/checkJsFiles6.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/checkJsFiles_skipDiagnostics.ts
+checker_errors: tasks/coverage/typescript/tests/cases/compiler/checkJsObjectLiteralHasCheckedKeyof.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/checkSuperCallBeforeThisAccess.ts
 
@@ -711,8 +671,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/checkSuperCallBef
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/checkSuperCallBeforeThisAccessing9.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/checkTypePredicateForRedundantProperties.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/checkingObjectDefinePropertyOnFunctionNonexistentPropertyNoCrash1.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/checkingObjectWithThisInNamePositionNoCrash.ts
 
@@ -785,8 +743,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/classExtendsInter
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/classExtendsInterfaceThatExtendsClassWithPrivates1.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/classExtendsInterface_not.ts
-
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/classExtendsMultipleBaseClasses.ts
 Classes can only extend a single class.
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/classExtendsNull.ts
@@ -849,8 +805,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/classOrder2.ts
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/classOverloadForFunction.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/classOverloadForFunction2.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/classPropertyErrorOnNameOnly.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/classSideInheritance1.ts
 
@@ -988,8 +942,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/complexClassRelat
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/complicatedGenericRecursiveBaseClassReference.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/complicatedIndexedAccessKeyofReliesOnKeyofNeverUpperBound.ts
-
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/complicatedPrivacy.ts
 A 'get' accessor must not have any formal parameters.
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/compositeGenericFunction.ts
@@ -1013,8 +965,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/computerPropertie
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/concatClassAndString.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/concatError.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/conditionalAnyCheckTypePicksBothBranches.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/conditionalDoesntLeakUninstantiatedTypeParameter.ts
 
@@ -1097,8 +1047,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/constDeclarations
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/constDeclarations-useBeforeDefinition.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/constEnumBadPropertyNames.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/constEnumErrors.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/constEnumMergingWithValues1.ts
@@ -1120,10 +1068,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/constIndexedAcces
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/constWithNonNull.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/constantEnumAssert.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/constantOverloadFunction.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/constantOverloadFunctionNoSubtypeError.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/constraintErrors1.ts
 
@@ -1195,10 +1139,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/contextualSignatu
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/contextualSignatureInstatiationContravariance.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/contextualTupleTypeParameterReadonly.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/contextualTypeAny.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/contextualTypeArrayReturnType.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/contextualTypeBasedOnIntersectionWithAnyInTheMix4.ts
@@ -1220,10 +1160,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/contextualTyping1
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/contextualTyping2.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/contextualTyping20.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/contextualTyping21.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/contextualTyping24.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/contextualTyping30.ts
 
@@ -1303,11 +1239,7 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/controlFlowForSta
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/controlFlowJavascript.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/controlFlowLoopAnalysis.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/controlFlowNoImplicitAny.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/controlFlowNullTypeAndLiteral.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/controlFlowSelfReferentialLoop.ts
 
@@ -1330,8 +1262,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/covariance1.ts
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/crashInEmitTokenWithComment.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/crashInYieldStarInAsyncFunction.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/crashInsourcePropertyIsRelatableToTargetProperty.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/crashIntypeCheckInvocationExpression.ts
 
@@ -1543,21 +1473,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/decrementAndIncr
 Cannot assign to this expression
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/deduplicateImportsInSystem.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/deepComparisons.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/deepElaborationsIntoArrowExpressions.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/deepExcessPropertyCheckingWhenTargetIsIntersection.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/deepKeysIndexing.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/deeplyNestedAssignabilityErrorsCombined.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/deeplyNestedAssignabilityIssue.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/deeplyNestedCheck.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/deeplyNestedMappedTypes.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/defaultArgsInFunctionExpressions.ts
 
@@ -1609,8 +1531,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/derivedClasses.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/derivedInterfaceCallSignature.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/derivedTypeCallingBaseImplWithOptionalParams.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/derivedTypeIncompatibleSignatures.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/destructionAssignmentError.ts
@@ -1620,8 +1540,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/destructureComput
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/destructureTupleWithVariableElement.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/destructuredLateBoundNameHasCorrectTypes.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/destructuringAssignmentWithDefault2.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/destructuringAssignmentWithExportedName.ts
 
@@ -1651,10 +1569,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/destructuringWith
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/detachedCommentAtStartOfConstructor2.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/detachedCommentAtStartOfFunctionBody1.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/detachedCommentAtStartOfFunctionBody2.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/detachedCommentAtStartOfLambdaFunction1.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/detachedCommentAtStartOfLambdaFunction2.ts
@@ -1674,8 +1588,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/discriminatedUnio
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/dissallowSymbolAsWeakType.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/distributiveConditionalTypeConstraints.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/divergentAccessorsTypes2.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/divergentAccessorsTypes3.ts
@@ -1691,8 +1603,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/divergentAccessor
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/divergentAccessorsVisibility1.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/doNotElaborateAssignabilityToTypeParameters.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/doNotWidenAtObjectLiteralPropertyAssignment.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/doYouNeedToChangeYourTargetLibraryES2016Plus.ts
 
@@ -1808,8 +1718,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/dynamicRequire.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/elaboratedErrors.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/elaboratedErrorsOnNullableTargets01.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/elaborationForPossiblyCallableTypeStillReferencesArgumentAtTopLevel.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/emitAccessExpressionOfCastedObjectLiteralExpressionInArrowFunctionES5.ts
@@ -1860,9 +1768,9 @@ Type argument list cannot be empty.
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/emptyTypeArgumentListWithNew.ts
 Type argument list cannot be empty.
 Type argument list cannot be empty.
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/enumAssignmentCompat3.ts
+checker_errors: tasks/coverage/typescript/tests/cases/compiler/enumAssignmentCompat2.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/enumAssignmentCompat5.ts
+checker_errors: tasks/coverage/typescript/tests/cases/compiler/enumAssignmentCompat3.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/enumAssignmentCompat7.ts
 
@@ -1882,8 +1790,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/enumLiteralAssign
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/enumMemberResolution.ts
 Expected a semicolon or an implicit semicolon after a statement, but found none
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/enumPropertyAccess.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/enumPropertyAccessBeforeInitalisation.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/enumUsedBeforeDeclaration.ts
@@ -1930,13 +1836,7 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/errorInfoForRelat
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/errorLocationForInterfaceExtension.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/errorMessageOnIntersectionsWithDiscriminants01.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/errorMessageOnObjectLiteralType.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/errorMessagesIntersectionTypes01.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/errorMessagesIntersectionTypes02.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/errorMessagesIntersectionTypes03.ts
 
@@ -1948,21 +1848,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/errorOnInitializ
 Unexpected token
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/errorOnInitializerInObjectTypeLiteralProperty.ts
 Unexpected token
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/errorOnUnionVsObjectShouldDeeplyDisambiguate.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/errorOnUnionVsObjectShouldDeeplyDisambiguate2.ts
-
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/errorRecoveryInClassDeclaration.ts
 Expected `,` or `)` but found `Identifier`
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/errorRecoveryWithDotFollowedByNamespaceKeyword.ts
 Expected a semicolon or an implicit semicolon after a statement, but found none
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/errorSpanForUnclosedJsxTag.tsx
 Unexpected token
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/errorSupression1.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/errorTypesAsTypeArguments.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/errorWithTruncatedType.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/errorsForCallAndAssignmentAreSimilar.ts
 
@@ -2102,8 +1994,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/es6ClassTest.ts
 A parameter cannot have a question mark and an initializer.
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/es6ClassTest9.ts
 Expected `{` but found `(`
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/es6DeclOrdering.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/es6ExportAssignment.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/es6ExportClauseInEs5.ts
@@ -2137,8 +2027,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/escapedIdentifier
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/evalAfter0.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/evolvingArrayResolvedAssert.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/exactOptionalPropertyTypesIdentical.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/exactSpellingSuggestion.ts
 
@@ -2295,8 +2183,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/extendBaseClassBe
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/extendConstructSignatureInInterface.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/extendFromAny.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/extendGenericArray.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/extendGenericArray2.ts
@@ -2329,8 +2215,6 @@ An implementation cannot be declared in ambient contexts.
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/externalModuleQualification.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/extractInferenceImprovement.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/fakeInfinity1.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/fallFromLastCase2.ts
 
@@ -2404,15 +2288,7 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/functionArgShadow
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/functionAssignment.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/functionCall10.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/functionCall11.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/functionCall12.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/functionCall13.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/functionCall14.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/functionCall15.ts
 
@@ -2420,21 +2296,11 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/functionCall16.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/functionCall17.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/functionCall18.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/functionCall6.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/functionCall7.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/functionCall8.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/functionCall9.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/functionCallOnConstrainedTypeVariable.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/functionExpressionInWithBlock.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/functionExpressionShadowedByParams.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/functionLikeInParameterInitializer.ts
 
@@ -2462,15 +2328,9 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/functionOverloads
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/functionOverloads27.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/functionOverloads29.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/functionOverloads3.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/functionOverloads32.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/functionOverloads34.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/functionOverloads37.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/functionOverloads4.ts
 
@@ -2487,8 +2347,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/functionOverloads
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/functionOverloadsRecursiveGenericReturnType.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/functionParameterArityMismatch.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/functionSignatureAssignmentCompat1.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/functionToFunctionWithPropError.ts
 
@@ -2533,8 +2391,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/genericArgumentCa
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/genericArray0.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/genericArrayAssignment1.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/genericArrayAssignmentCompatErrors.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/genericArrayExtenstions.ts
@@ -2544,8 +2400,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/genericArrayMetho
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/genericArrayWithoutTypeAnnotation.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/genericAssignmentCompatOfFunctionSignatures1.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/genericAssignmentCompatWithInterfaces1.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/genericBaseClassLiteralProperty.ts
 
@@ -2598,8 +2452,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/genericConstraint
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/genericConstraint2.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/genericConstraintDeclaration.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/genericConstraintSatisfaction1.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/genericConstructInvocationWithNoTypeArg.ts
@@ -2624,11 +2476,7 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/genericFunctionTy
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/genericFunctions2.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/genericFunctions3.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/genericFunctionsWithOptionalParameters1.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/genericFunctionsWithOptionalParameters2.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/genericFunctionsWithOptionalParameters3.ts
 
@@ -2687,10 +2535,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/genericRecursiveI
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/genericRecursiveImplicitConstructorErrors3.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/genericReduce.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/genericRestArgs.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/genericRestTypes.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/genericReturnTypeFromGetter1.ts
 
@@ -2857,8 +2701,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/implicitAnyInAmbi
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/implicitAnyNewExprLackConstructorSignature.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/implicitAnyWidenToAny.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/implicitConstParameters.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/implicitIndexSignatures.ts
@@ -3014,15 +2856,11 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/indirectSelfRefer
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/indirectSelfReferenceGeneric.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/inexistentPropertyInsideToStringType.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/inferFromAnnotatedReturn1.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/inferFromGenericFunctionReturnTypes1.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/inferFromGenericFunctionReturnTypes2.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/inferFromGenericFunctionReturnTypes3.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/inferFromNestedSameShapeTuple.ts
 
@@ -3033,8 +2871,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/inferTypePredicat
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/inferenceExactOptionalProperties2.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/inferenceFromGenericClassNoCrash1.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/inferenceFromIncompleteSource.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/inferenceOuterResultNotIncorrectlyInstantiatedWithInnerResult.ts
 
@@ -3061,6 +2897,8 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/infinitelyExpandi
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/infinitelyExpandingTypeAssignability.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/infinitelyExpandingTypes1.ts
+
+checker_errors: tasks/coverage/typescript/tests/cases/compiler/infinitelyExpandingTypes2.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/infinitelyExpandingTypes3.ts
 
@@ -3160,8 +2998,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/instantiateContex
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/instantiateTypeParameter.ts
 Type argument list cannot be empty.
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/instantiatedReturnTypeContravariance.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/instantiationExpressionErrorNoCrash.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/intTypeCheck.ts
@@ -3316,8 +3152,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/invalidReferenceS
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/invalidSplice.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/invalidStaticField.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/invalidSymbolInTypeParameter1.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/invalidTripleSlashReference.ts
@@ -3335,8 +3169,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/invalidUseOfTypeA
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/invariantGenericErrorElaboration.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/invocationExpressionInFunctionParameter.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/invokingNonGenericMethodWithTypeArguments1.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/invokingNonGenericMethodWithTypeArguments2.ts
 
@@ -3393,8 +3225,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/isolatedModulesRe
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/iterableWithNeverAsUnionMember.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/iteratorExtraParameters.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/jsCheckObjectDefineThisNoCrash.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/jsDeclarationsInheritedTypes.ts
 
@@ -3593,8 +3423,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/jsxPropsAsIdentif
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/jsxSpreadTag.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/keyRemappingKeyofResult.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/keyofDoesntContainSymbols.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/keyofGenericExtendingClassDoubleLayer.ts
@@ -3604,8 +3432,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/keyofIsLiteralCon
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/keywordExpressionInternalComments.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/keywordInJsxIdentifier.tsx
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/knockout.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/lambdaArgCrash.ts
 
@@ -3681,8 +3507,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/limitDeepInstanti
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/listFailure.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/literalFreshnessPropagationOnNarrowing.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/literals-negative.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/literalsInComputedProperties1.ts
@@ -3690,8 +3514,6 @@ An enum member cannot have a numeric name.
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/logicalNotExpression1.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/longObjectInstantiationChain1.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/longObjectInstantiationChain2.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/longObjectInstantiationChain3.ts
 
@@ -3705,8 +3527,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/mappedTypeAsStrin
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/mappedTypeGenericWithKnownKeys.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/mappedTypeIndexedAccess.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/mappedTypeIndexedAccessConstraint.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/mappedTypeInferenceFromApparentType.ts
@@ -3717,15 +3537,11 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/mappedTypeNotMist
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/mappedTypeRecursiveInference.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/mappedTypeUnionConstrainTupleTreatedAsArrayLike.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/mappedTypeUnionConstraintInferences.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/mappedTypeWithAsClauseAndLateBoundProperty.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/mappedTypeWithCombinedTypeMappers.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/matchReturnTypeInAllBranches.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/maxConstraints.ts
 
@@ -3780,8 +3596,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/missingCommaInTem
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/missingDiscriminants.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/missingDiscriminants2.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/missingDomElement_UsingDomLib.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/missingDomElements.ts
 
@@ -3952,11 +3766,7 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/multivar.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/mutrec.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/mutuallyRecursiveCallbacks.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/mutuallyRecursiveGenericBaseTypes1.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/mutuallyRecursiveGenericBaseTypes2.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/mutuallyRecursiveInference.ts
 
@@ -4046,8 +3856,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/newOnInstanceSymb
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/newOperator.ts
 Unexpected token
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/noConstraintInReturnType1.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/noCrashOnMixin.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/noCrashOnMixin2.ts
@@ -4057,8 +3865,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/noCrashOnNoLib.ts
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/noCrashOnParameterNamedRequire.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/noEmitHelpers2.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/noErrorTruncation.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/noErrorUsingImportExportModuleAugmentationInDeclarationFile1.ts
 
@@ -4200,10 +4006,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/nonMergedOverload
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/nonObjectUnionNestedExcessPropertyCheck.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/nonexistentPropertyOnUnion.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/nonexistentPropertyUnavailableOnPromisedType.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/normalizedIntersectionTooComplex.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/null.ts
@@ -4217,8 +4019,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/numberAssignableT
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/numberLiteralsWithLeadingZeros.ts
 Expected a semicolon or an implicit semicolon after a statement, but found none
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/numberOnLeftSideOfInExpression.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/numberToString.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/numberVsBigIntOperations.ts
 
@@ -4298,8 +4098,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/objectLiteralRefe
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/objectLiteralThisWidenedOnUse.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/objectLiteralWithNumericPropertyName.ts
-
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/objectLiteralWithSemicolons1.ts
 Expected `,` or `}` but found `;`
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/objectLiteralWithSemicolons2.ts
@@ -4310,8 +4108,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/objectLiteralWit
 Expected `,` or `}` but found `;`
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/objectLiteralWithSemicolons5.ts
 Expected `,` or `}` but found `;`
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/objectLiteralsAgainstUnionsOfArrays01.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/objectMembersOnTypes.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/objectTypeWithOptionalProperty1.ts
@@ -4366,17 +4162,11 @@ A parameter cannot have a question mark and an initializer.
 A parameter cannot have a question mark and an initializer.
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/optionalChainWithInstantiationExpression1.ts
 An instantiation expression cannot be followed by a property access.
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/optionalFunctionArgAssignability.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/optionalParamArgsTest.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/optionalParamAssignmentCompat.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/optionalParamReferencingOtherParams2.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/optionalParamReferencingOtherParams3.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/optionalParamTypeComparison.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/optionalParameterInDestructuringWithInitializer.ts
 
@@ -4416,21 +4206,11 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/overloadBindingAc
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/overloadConsecutiveness.ts
 Expected a semicolon or an implicit semicolon after a statement, but found none
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/overloadEquivalenceWithStatics.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/overloadErrorMatchesImplementationElaboaration.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/overloadGenericFunctionWithRestArgs.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/overloadModifiersMustAgree.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/overloadOnConstConstraintChecks1.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/overloadOnConstConstraintChecks2.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/overloadOnConstConstraintChecks3.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/overloadOnConstConstraintChecks4.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/overloadOnConstInheritance2.ts
 
@@ -4447,8 +4227,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/overloadResolutio
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/overloadResolutionOverCTLambda.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/overloadResolutionTest1.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/overloadedStaticMethodSpecialization.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/overloadingOnConstants1.ts
 
@@ -4682,8 +4460,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/promiseChaining2.
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/promiseDefinitionTest.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/promiseEmptyTupleNoException.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/promiseIdentity.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/promiseIdentity2.ts
@@ -4700,8 +4476,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/promisePermutatio
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/promisePermutations3.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/promisesWithConstraints.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/propagationOfPromiseInitialization.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/properties.ts
@@ -4713,10 +4487,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/propertiesAndInde
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/propertiesAndIndexersForNumericNames.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/propertyAccess1.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/propertyAccess2.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/propertyAccess3.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/propertyAccess4.ts
 
@@ -4734,11 +4504,7 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/propertyNamesWith
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/propertyOrdering.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/propertyOrdering2.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/propertyOverridingPrototype.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/propertyParameterWithQuestionMark.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/propertySignatures.ts
 
@@ -4754,8 +4520,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/protoAssignment.t
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/prototypeInstantiatedWithBaseConstraint.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/prototypes.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/publicGetterProtectedSetterFromThisParameter.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/publicMemberImplementedAsPrivateInDerivedClass.ts
@@ -4769,8 +4533,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/qualifiedName_ent
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/qualify.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/quickIntersectionCheckCorrectlyCachesErrors.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/quickinfoTypeAtReturnPositionsInaccurate.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/quotedModuleNameMustBeAmbient.ts
 
@@ -4972,8 +4734,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFile
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFile_PathMapping.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/requiredInitializedParameter1.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/requiredInitializedParameter2.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/requiredMappedTypeModifierTrumpsVariance.ts
@@ -5106,17 +4866,9 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/sigantureIsSubTyp
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/signatureCombiningRestParameters1.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/signatureCombiningRestParameters3.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/signatureCombiningRestParameters4.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/signatureCombiningRestParameters5.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/signatureLengthMismatchCall.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/signatureLengthMismatchInOverload.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/signatureLengthMismatchWithOptionalParameters.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/signaturesUseJSDocForOptionalParameters.ts
 
@@ -5125,8 +4877,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/simpleRecursionWi
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/slashBeforeVariableDeclaration1.ts
 Invalid Unicode escape sequence
 Keywords cannot contain escape characters
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/slightlyIndirectedDeepObjectLiteralElaborations.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/sourceMap-Comment1.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/sourceMap-Comments.ts
@@ -5261,8 +5011,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/staticClassProps
 Expected a semicolon or an implicit semicolon after a statement, but found none
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/staticInstanceResolution.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/staticInstanceResolution4.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/staticMemberExportAccess.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/staticMemberOfClassAndPublicMemberOfAnotherClassAssignment.ts
@@ -5330,10 +5078,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/strictSubtypeAndN
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/stringIndexerAndConstructor.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/stringIndexerAndConstructor1.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/stringIndexerAssignments1.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/stringIndexerAssignments2.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/stringLiteralsErrors.ts
 Unterminated string
@@ -5516,8 +5260,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/targetTypeObjectL
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/targetTypeTest1.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/targetTypeTest3.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/targetTypeVoidFunc.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/templateLiteralEscapeSequence.ts
@@ -5562,8 +5304,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/templateStringsAr
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/templateStringsArrayTypeNotDefinedES5Mode.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/templateStringsArrayTypeRedefinedInES6Mode.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/temporal.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/thisBinding.ts
 
@@ -5705,8 +5445,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/typeArgumentInfer
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/typeArgumentsOnFunctionsWithNoTypeParameters.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/typeArgumentsShouldDisallowNonGenericOverloads.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/typeAssertionToGenericFunctionType.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/typeAssignabilityErrorMessage.ts
@@ -5714,8 +5452,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/typeAssignability
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/typeCheckTypeArgument.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/typeCheckingInsideFunctionExpressionInArray.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/typeGuardConstructorClassAndNumber.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/typeGuardConstructorDerivedClass.ts
 
@@ -5732,8 +5468,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/typeIdentityConsi
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/typeInfer1.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/typeInferenceConflictingCandidates.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/typeInferenceReturnTypeCallback.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/typeInferenceTypePredicate.ts
 
@@ -5795,8 +5529,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/typeParameterDiam
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/typeParameterDiamond4.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/typeParameterEquality.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/typeParameterExplicitlyExtendsAny.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/typeParameterExtendsPrimitive.ts
@@ -5840,8 +5572,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/typeUsedAsValueEr
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/typeValueConflict1.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/typeValueConflict2.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/typeVariableConstraintedToAliasNotAssignableToUnion.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/typecheckCommaExpression.ts
 
@@ -5918,8 +5648,6 @@ Unexpected token
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/unicodeIdentifierName2.ts
 Invalid Character `₁`
 Expected a semicolon or an implicit semicolon after a statement, but found none
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/unionErrorMessageOnMatchingDiscriminant.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/unionOfArraysFilterCall.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/unionPropertyExistence.ts
@@ -5928,13 +5656,9 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/unionPropertyOfPr
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/unionSubtypeReductionErrors.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/unionTypeErrorMessageTypeRefs01.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/unionTypeWithRecursiveSubtypeReduction1.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/unionTypeWithRecursiveSubtypeReduction2.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/unionTypeWithRecursiveSubtypeReduction3.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/uniqueSymbolAllowsIndexInObjectWithIndexSignature.ts
 
@@ -6268,11 +5992,7 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/variableDeclarato
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/varianceAnnotationValidation.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/varianceMeasurement.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/varianceReferences.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/voidArrayLit.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/voidAsOperator.ts
 
@@ -6924,10 +6644,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/conformance/classes/member
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/classes/members/inheritanceAndOverriding/derivedClassOverridesWithoutSubtype.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/classes/members/inheritanceAndOverriding/derivedClassTransitivity.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/classes/members/inheritanceAndOverriding/derivedClassTransitivity2.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/classes/members/inheritanceAndOverriding/derivedClassTransitivity3.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/classes/members/inheritanceAndOverriding/derivedClassTransitivity4.ts
@@ -6947,8 +6663,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/conformance/classes/member
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/classes/members/instanceAndStaticMembers/thisAndSuperInStaticMembers3.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/classes/members/instanceAndStaticMembers/thisAndSuperInStaticMembers4.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/classes/members/instanceAndStaticMembers/typeOfThisInInstanceMember.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/classes/members/instanceAndStaticMembers/typeOfThisInInstanceMember2.ts
 
@@ -6973,8 +6687,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/conformance/classes/member
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/classes/members/instanceAndStaticMembers/typeOfThisInStaticMembers8.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/classes/members/instanceAndStaticMembers/typeOfThisInStaticMembers9.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/classes/members/instanceAndStaticMembers/typeOfThisInstanceMemberNarrowedWithLoopAntecedent.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNameAccessors.ts
 
@@ -7118,8 +6830,6 @@ Expected `]` but found `#identifier`
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNamesAndMethods.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNamesAndStaticFields.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNamesAndkeyof.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNamesConstructorChain-1.ts
 
@@ -7360,8 +7070,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/conformance/constEnums/con
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/constEnums/constEnum4.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/constEnums/constEnumNoObjectPrototypePropertyAccess.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/constEnums/constEnumPropertyAccess1.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/constEnums/constEnumPropertyAccess2.ts
@@ -7379,8 +7087,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/conformance/controlFlow/co
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/controlFlow/controlFlowConditionalExpression.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/controlFlow/controlFlowDeleteOperator.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/controlFlow/controlFlowDoWhileStatement.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/controlFlow/controlFlowForInStatement.ts
 
@@ -7625,8 +7331,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/conformance/es2019/globalT
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/es2019/globalThisPropertyAssignment.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/es2019/globalThisReadonlyProperties.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/es2019/globalThisUnknown.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/es2019/globalThisUnknownNoImplicitAny.ts
 
@@ -8178,8 +7882,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/conformance/es6/destructur
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/es6/destructuring/destructuringVariableDeclaration1ES6.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/es6/destructuring/destructuringVariableDeclaration2.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/es6/destructuring/destructuringVoidStrictNullChecks.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/es6/destructuring/destructuringWithLiteralInitializers2.ts
@@ -8230,12 +7932,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/conformance/es6/destructur
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/es6/destructuring/iterableArrayPattern13.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/es6/destructuring/iterableArrayPattern16.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/es6/destructuring/iterableArrayPattern17.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/es6/destructuring/iterableArrayPattern18.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/es6/destructuring/iterableArrayPattern19.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/es6/destructuring/iterableArrayPattern21.ts
 
@@ -8442,8 +8138,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/shorthand
 Expected `:` but found `,`
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/shorthandPropertyAssignment/objectLiteralShorthandPropertiesErrorWithModule.ts
 Expected `,` or `}` but found `.`
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/es6/shorthandPropertyAssignment/objectLiteralShorthandPropertiesFunctionArgument2.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/es6/spread/arrayLiteralSpreadES5iterable.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/es6/spread/arraySpreadInCall.ts
@@ -8451,8 +8145,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/conformance/es6/spread/arr
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/es6/spread/iteratorSpreadInArray10.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/es6/spread/iteratorSpreadInArray11.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/es6/spread/iteratorSpreadInArray5.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/es6/spread/iteratorSpreadInArray6.ts
 
@@ -8467,10 +8159,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/conformance/es6/spread/ite
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/es6/spread/iteratorSpreadInCall2.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/es6/spread/iteratorSpreadInCall4.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/es6/spread/iteratorSpreadInCall6.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/es6/spread/iteratorSpreadInCall7.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/es6/spread/iteratorSpreadInCall8.ts
 
@@ -8519,10 +8207,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/conformance/es6/templates/
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/es6/templates/templateStringBinaryOperationsInvalid.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/es6/templates/templateStringInArrowFunction.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/es6/templates/templateStringInCallExpression.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/es6/templates/templateStringInCallExpressionES6.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/es6/templates/templateStringInDeleteExpression.ts
 
@@ -9128,8 +8812,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/conformance/esDecorators/e
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/arrayLiterals/arrayLiterals.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/arrayLiterals/arrayLiterals3.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/asOperator/asOperator1.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/asOperator/asOperator2.ts
@@ -9304,8 +8986,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/co
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/contextualTyping/arrayLiteralExpressionContextualTyping.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/contextualTyping/functionExpressionContextualTyping2.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/contextualTyping/generatedContextualTyping.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/contextualTyping/getSetAccessorContextualTyping.ts
@@ -9342,8 +9022,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/fu
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/functionCalls/functionCalls.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/functionCalls/grammarAmbiguities.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/functionCalls/newWithSpreadES5.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/functionCalls/overloadResolution.ts
@@ -9356,11 +9034,7 @@ checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/fu
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/functionCalls/typeArgumentInferenceConstructSignatures.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/functionCalls/typeArgumentInferenceErrors.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/functionCalls/typeArgumentInferenceWithConstraints.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/functionCalls/typeArgumentInferenceWithObjectLiteral.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/functions/contextuallyTypedIifeStrict.ts
 
@@ -9470,8 +9144,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/ty
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardFunctionErrors.ts
 Expected a semicolon or an implicit semicolon after a statement, but found none
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardFunctionOfFormThisErrors.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardInClass.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardNarrowsPrimitiveIntersection.ts
@@ -9524,8 +9196,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/ty
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardsInClassMethods.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardsInDoStatement.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardsInExternalModule.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardsInForStatement.ts
@@ -9542,15 +9212,9 @@ checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/ty
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardsInRightOperandOfOrOrOperator.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardsInWhileStatement.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardsObjectMethods.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardsOnClassProperty.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardsWithAny.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardsWithInstanceOf.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardsWithInstanceOfByConstructorSignature.ts
 
@@ -9568,8 +9232,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/ty
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/typeSatisfaction/typeSatisfaction_js.ts
 Type satisfaction expressions can only be used in TypeScript files.
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/typeSatisfaction/typeSatisfaction_optionalMemberConformance.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/typeSatisfaction/typeSatisfaction_propNameConstraining.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/typeSatisfaction/typeSatisfaction_propertyNameFulfillment.ts
@@ -10146,8 +9808,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/conformance/jsdoc/checkJsd
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/jsdoc/checkJsdocSatisfiesTag3.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/jsdoc/checkJsdocSatisfiesTag6.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/jsdoc/checkJsdocSatisfiesTag7.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/jsdoc/checkJsdocSatisfiesTag8.ts
@@ -10268,8 +9928,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocAug
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocAugments_nameMismatch.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocAugments_noExtends.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocAugments_notAClass.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocCatchClauseWithTypeAnnotation.ts
@@ -10349,8 +10007,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocTyp
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocTypeReferenceToMergedClass.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocTypeTagParameterType.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocTypeTagRequiredParameters.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/jsdoc/noAssertForUnparseableTypedefs.ts
 
@@ -10565,11 +10221,7 @@ checker_errors: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSfcRetu
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSfcReturnUndefinedStrictNullChecks.tsx
 
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSpreadAttributesResolution10.tsx
-
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSpreadAttributesResolution11.tsx
-
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSpreadAttributesResolution12.tsx
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSpreadAttributesResolution13.tsx
 
@@ -10584,8 +10236,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSpreadA
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSpreadAttributesResolution4.tsx
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSpreadAttributesResolution5.tsx
-
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSpreadAttributesResolution6.tsx
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSpreadChildren.tsx
 
@@ -11367,8 +11017,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
 Expected a semicolon or an implicit semicolon after a statement, but found none
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/RegressionTests/parser521128.ts
 Expected a semicolon or an implicit semicolon after a statement, but found none
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/RegressionTests/parser536727.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/RegressionTests/parser553699.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/RegressionTests/parser566700.ts
@@ -11736,8 +11384,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascr
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/parserKeywordsAsIdentifierName2.ts
 Unterminated multiline comment
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/parserNoASIOnCallAfterFunctionExpression1.ts
-
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/parserNotRegex1.ts
 A 'return' statement can only be used within a function body.
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/parserObjectCreationArrayLiteral1.ts
@@ -11999,11 +11645,7 @@ checker_errors: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFrom
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFromPropertyAssignment22.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFromPropertyAssignment26.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFromPropertyAssignment28.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFromPropertyAssignment29.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFromPropertyAssignment31.ts
 
@@ -12473,23 +12115,17 @@ checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/conditio
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/conditional/conditionalTypes2.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/conditional/conditionalTypesExcessProperties.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/conditional/inferTypes1.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/conditional/inferTypesInvalidExtendsDeclaration.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/conditional/inferTypesWithExtends2.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/contextualTypes/commaOperator/contextuallyTypeCommaOperator02.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/contextualTypes/commaOperator/contextuallyTypeCommaOperator03.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/contextualTypes/jsxAttributes/contextuallyTypedStringLiteralsInJsxAttributes01.tsx
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/contextualTypes/jsxAttributes/contextuallyTypedStringLiteralsInJsxAttributes02.tsx
-
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/contextualTypes/logicalAnd/contextuallyTypeLogicalAnd02.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/contextualTypes/logicalAnd/contextuallyTypeLogicalAnd03.ts
 
@@ -12498,8 +12134,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/contextu
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/contextualTypes/methodDeclarations/contextuallyTypedClassExpressionMethodDeclaration01.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/contextualTypes/methodDeclarations/contextuallyTypedClassExpressionMethodDeclaration02.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/contextualTypes/partiallyAnnotatedFunction/partiallyAnnotatedFunctionInferenceError.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/contextualTypes/partiallyAnnotatedFunction/partiallyAnnotatedFunctionInferenceWithTypeParameter.ts
 
@@ -12523,8 +12157,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/intersec
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/intersection/intersectionReduction.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/intersection/intersectionReductionStrict.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/intersection/intersectionTypeAssignment.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/intersection/intersectionTypeInference.ts
@@ -12534,8 +12166,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/intersec
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/intersection/intersectionTypeOverloading.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/intersection/intersectionTypeReadonly.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/intersection/intersectionWithIndexSignatures.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/intersection/recursiveIntersectionTypes.ts
 
@@ -12577,8 +12207,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/literal/
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/literal/stringLiteralsWithTypeAssertions01.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/literal/stringMappingOverPatternLiterals.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/literal/templateLiteralTypes1.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/literal/templateLiteralTypes2.ts
@@ -12600,8 +12228,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/localTyp
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/localTypes/localTypes4.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/mapped/mappedTypeAsClauseRelationships.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/mapped/mappedTypeAsClauses.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/mapped/mappedTypeConstraints2.ts
 
@@ -12679,17 +12305,11 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/namedTy
 'private' modifier cannot appear on a type member.
 'private' modifier cannot appear on a type member.
 'private' modifier cannot appear on a type member.
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/never/neverIntersectionNotCallable.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/never/neverTypeErrors1.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/never/neverTypeErrors2.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/nonPrimitive/nonPrimitiveAccessProperty.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/nonPrimitive/nonPrimitiveAndTypeVariables.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/nonPrimitive/nonPrimitiveAsProperty.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/nonPrimitive/nonPrimitiveAssignError.ts
 
@@ -12846,8 +12466,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/primitiv
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/primitives/enum/invalidEnumAssignments.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/primitives/enum/validEnumAssignments.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/primitives/null/directReferenceToNull.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/primitives/null/validNullAssignments.ts
@@ -12875,8 +12493,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/rest/gen
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/rest/genericRestArityStrict.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/rest/genericRestParameters1.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/rest/genericRestParameters3.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/rest/objectRest.ts
 
@@ -12940,8 +12556,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/spread/
 Unexpected token
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/spread/objectSpreadSetonlyAccessor.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/spread/objectSpreadStrictNull.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/spread/spreadDuplicate.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/spread/spreadDuplicateExact.ts
@@ -12972,10 +12586,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/stringLi
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/stringLiteral/stringLiteralTypesInVariableDeclarations01.ts
 Missing initializer in const declaration
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/stringLiteral/stringLiteralTypesOverloadAssignability01.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/stringLiteral/stringLiteralTypesOverloadAssignability02.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/stringLiteral/stringLiteralTypesOverloadAssignability05.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/stringLiteral/stringLiteralTypesOverloads03.ts
@@ -13074,8 +12684,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/tuple/va
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/tuple/wideningTuples3.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/tuple/wideningTuples4.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/tuple/wideningTuples5.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/tuple/wideningTuples7.ts
@@ -13169,12 +12777,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/typeRela
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/assignmentCompatibility/anyAssignableToEveryType.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/assignmentCompatibility/assignmentCompatBetweenTupleAndArray.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/assignmentCompatibility/assignmentCompatWithCallSignatures.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/assignmentCompatibility/assignmentCompatWithCallSignatures2.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/assignmentCompatibility/assignmentCompatWithCallSignatures3.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/assignmentCompatibility/assignmentCompatWithCallSignatures4.ts
@@ -13182,10 +12784,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/typeRela
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/assignmentCompatibility/assignmentCompatWithCallSignatures5.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/assignmentCompatibility/assignmentCompatWithCallSignatures6.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/assignmentCompatibility/assignmentCompatWithCallSignaturesWithOptionalParameters.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/assignmentCompatibility/assignmentCompatWithCallSignaturesWithRestParameters.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/assignmentCompatibility/assignmentCompatWithConstructSignatures.ts
 
@@ -13261,8 +12859,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/typeRela
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/assignmentCompatibility/constructSignatureAssignabilityInInheritance6.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/assignmentCompatibility/covariantCallbacks.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/assignmentCompatibility/enumAssignability.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/assignmentCompatibility/enumAssignabilityInInheritance.ts
@@ -13274,8 +12870,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/typeRela
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/assignmentCompatibility/nullAssignedToUndefined.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/assignmentCompatibility/numberAssignableToEnum.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/assignmentCompatibility/optionalPropertyAssignableToStringIndexSignature.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/assignmentCompatibility/typeParameterAssignability.ts
 
@@ -13311,8 +12905,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/typeRela
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/comparable/typeAssertionsWithUnionTypes01.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/instanceOf/narrowingGenericTypeFromInstanceof01.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/recursiveTypes/objectTypeWithRecursiveWrappedProperty.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/recursiveTypes/objectTypeWithRecursiveWrappedProperty2.ts
@@ -13344,8 +12936,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/typeRela
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/subtypesAndSuperTypes/subtypingWithCallSignatures2.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/subtypesAndSuperTypes/subtypingWithCallSignatures3.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/subtypesAndSuperTypes/subtypingWithCallSignaturesA.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/subtypesAndSuperTypes/subtypingWithCallSignaturesWithOptionalParameters.ts
 
@@ -13429,8 +13019,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/typeRela
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeInference/genericCallWithConstraintsTypeArgumentInference2.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeInference/genericCallWithConstructorTypedArguments5.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeInference/genericCallWithFunctionTypedArguments.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeInference/genericCallWithFunctionTypedArguments2.ts
@@ -13501,8 +13089,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/union/co
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/union/contextualTypeWithUnionTypeMembers.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/union/contextualTypeWithUnionTypeObjectLiteral.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/union/discriminatedUnionTypes1.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/union/discriminatedUnionTypes2.ts
@@ -13522,8 +13108,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/union/un
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/union/unionTypeConstructSignatures.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/union/unionTypeEquivalence.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/union/unionTypeFromArrayLiteral.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/union/unionTypeMembers.ts
 
@@ -13550,6 +13134,8 @@ checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/uniqueSy
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/unknown/unknownControlFlow.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/unknown/unknownType1.ts
+
+checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/unknown/unknownType2.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/witness/witness.ts
 

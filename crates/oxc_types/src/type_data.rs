@@ -1,7 +1,7 @@
-use std::collections::HashMap;
 use std::sync::Arc;
 
 use oxc_span::CompactStr;
+use rustc_hash::FxHashMap;
 use smallvec::SmallVec;
 
 use crate::TypeId;
@@ -75,6 +75,10 @@ pub enum TypeData {
 
     /// Conditional type: `T extends U ? X : Y`.
     Conditional(ConditionalType),
+
+    /// Function type (arrow function, function expression, function declaration).
+    /// Most functions have exactly 1 call signature.
+    Function(FunctionType),
 }
 
 // ---------------------------------------------------------------------------
@@ -109,6 +113,26 @@ pub struct UniqueESSymbolType {
     pub name: CompactStr,
 }
 
+/// A named property on a structured type (object, interface, class).
+///
+/// Corresponds to tsgo's `Symbol` with `SymbolFlagsProperty`. Stores the
+/// property name, type, and modifier flags (optional, readonly) needed for
+/// mapped type modifier inheritance (`-?`, `-readonly`).
+#[derive(Debug, Clone)]
+pub struct PropertyInfo {
+    pub name: CompactStr,
+    pub type_id: TypeId,
+    pub optional: bool,
+    pub readonly: bool,
+}
+
+impl PropertyInfo {
+    /// Create a required, non-readonly property.
+    pub fn new(name: CompactStr, type_id: TypeId) -> Self {
+        Self { name, type_id, optional: false, readonly: false }
+    }
+}
+
 /// An anonymous object type (object literals, computed results).
 ///
 /// Corresponds to tsgo's `ObjectType`. In Go this is a base struct for
@@ -118,9 +142,17 @@ pub struct UniqueESSymbolType {
 pub struct ObjectType {
     /// Target type for instantiated generics.
     pub target: Option<TypeId>,
-    /// Named properties: property name → property type.
-    pub properties: HashMap<CompactStr, TypeId>,
-    // TODO: call/construct signatures, index infos
+    /// Named properties, ordered. Used for iteration (structural comparison,
+    /// display, instantiation).
+    pub properties: Vec<PropertyInfo>,
+    /// Property lookup map: O(1) access by name.
+    /// Mirrors tsgo's `StructuredType.members` (`map[string]*Symbol`).
+    /// Built at type creation time via `build_member_map`.
+    pub member_map: FxHashMap<CompactStr, TypeId>,
+    /// Call signatures (e.g., from type literals with call signatures).
+    pub call_signatures: Vec<Signature>,
+    /// Construct signatures (e.g., `new (...) => T`).
+    pub construct_signatures: Vec<Signature>,
 }
 
 /// A type reference — an instantiation of a generic type.
@@ -150,9 +182,14 @@ pub struct InterfaceType {
     pub this_type: Option<TypeId>,
     /// Resolved base types.
     pub resolved_base_types: SmallVec<[TypeId; 4]>,
-    /// Declared properties: property name → property type.
-    pub properties: HashMap<CompactStr, TypeId>,
-    // TODO: call/construct signatures, index infos
+    /// Declared properties, ordered.
+    pub properties: Vec<PropertyInfo>,
+    /// Property lookup map: O(1) access by name.
+    pub member_map: FxHashMap<CompactStr, TypeId>,
+    /// Call signatures (for callable interfaces).
+    pub call_signatures: Vec<Signature>,
+    /// Construct signatures (for newable interfaces).
+    pub construct_signatures: Vec<Signature>,
 }
 
 /// A tuple type: `[string, number, ...boolean[]]`.
@@ -200,14 +237,31 @@ bitflags::bitflags! {
 /// Corresponds to tsgo's `MappedType` (embeds `ObjectType`).
 #[derive(Debug, Clone)]
 pub struct MappedType {
+    /// The iteration type parameter: `P` in `[P in keyof T]`.
     pub type_parameter: TypeId,
+    /// The constraint on the iteration: `keyof T` in `[P in keyof T]`.
     pub constraint_type: Option<TypeId>,
+    /// Key remapping: the `X` in `[P in keyof T as X]`.
     pub name_type: Option<TypeId>,
+    /// The template value type: `T[P]` in `{ [P in keyof T]: T[P] }`.
     pub template_type: Option<TypeId>,
-    pub modifiers_type: Option<TypeId>,
-    pub resolved_apparent_type: Option<TypeId>,
-    pub contains_error: bool,
-    // TODO: declaration (AST node reference)
+    /// Optional modifier: None (preserve), Some(Add), Some(Remove).
+    /// `?` or `+?` = Add, `-?` = Remove.
+    pub optional_modifier: MappedTypeModifier,
+    /// Readonly modifier: None (preserve), Some(Add), Some(Remove).
+    /// `readonly` or `+readonly` = Add, `-readonly` = Remove.
+    pub readonly_modifier: MappedTypeModifier,
+}
+
+/// Modifier operation in a mapped type.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum MappedTypeModifier {
+    /// No modifier — preserve from source type.
+    None,
+    /// `+?` or `?` / `+readonly` or `readonly` — add the modifier.
+    Add,
+    /// `-?` / `-readonly` — remove the modifier.
+    Remove,
 }
 
 /// A reverse-mapped type (inferred from mapped type context).
@@ -267,6 +321,8 @@ pub struct IntersectionType {
 /// Corresponds to tsgo's `TypeParameter`.
 #[derive(Debug, Clone)]
 pub struct TypeParameterType {
+    /// The name of the type parameter (e.g., `"T"`).
+    pub name: Option<CompactStr>,
     /// The constraint: `T extends Constraint`.
     pub constraint: Option<TypeId>,
     /// Target type parameter (for instantiated type parameters).
@@ -334,12 +390,78 @@ pub struct SubstitutionType {
 
 /// A conditional type: `T extends U ? X : Y`.
 ///
-/// Corresponds to tsgo's `ConditionalType`.
+/// Corresponds to tsgo's `ConditionalType`. Created as a deferred type when
+/// the check type is generic. Resolved eagerly when both check and extends
+/// are concrete.
 #[derive(Debug, Clone)]
 pub struct ConditionalType {
+    /// The type being checked: `T` in `T extends U ? X : Y`.
     pub check_type: TypeId,
+    /// The type being checked against: `U` in `T extends U ? X : Y`.
     pub extends_type: TypeId,
-    pub resolved_true_type: Option<TypeId>,
-    pub resolved_false_type: Option<TypeId>,
-    // TODO: root, mapper, combined_mapper, resolved_inferred_true_type, etc.
+    /// The type returned when the check succeeds.
+    pub true_type: TypeId,
+    /// The type returned when the check fails.
+    pub false_type: TypeId,
+    /// Whether the conditional distributes over unions.
+    /// True when the original check type was a bare type parameter
+    /// (e.g., `T extends U ? X : Y` where T is a type param).
+    pub is_distributive: bool,
+}
+
+// ---------------------------------------------------------------------------
+// Function types and signatures
+// ---------------------------------------------------------------------------
+
+bitflags::bitflags! {
+    /// Flags for function/method signatures.
+    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+    pub struct SignatureFlags: u8 {
+        const None             = 0;
+        const HasRestParameter = 1 << 0;
+        const Construct        = 1 << 1;
+        const Abstract         = 1 << 2;
+    }
+}
+
+/// A single function/method signature.
+///
+/// Corresponds to tsgo's `Signature`.
+#[derive(Debug, Clone)]
+pub struct Signature {
+    pub flags: SignatureFlags,
+    /// Minimum number of required arguments (excludes optional/rest).
+    pub min_argument_count: u32,
+    /// Parameter names and types, in order.
+    pub parameters: Vec<ParameterInfo>,
+    /// The return type of the signature.
+    pub return_type: TypeId,
+    // Deferred: type_parameters, this_parameter, mapper, type_predicate
+}
+
+/// Info about a single parameter in a signature.
+#[derive(Debug, Clone)]
+pub struct ParameterInfo {
+    pub name: CompactStr,
+    pub type_id: TypeId,
+    pub is_optional: bool,
+    pub is_rest: bool,
+}
+
+/// A function type (arrow function, function expression, function declaration).
+/// Most functions have exactly 1 call signature.
+///
+/// Unlike tsc which models function types as anonymous object types with a
+/// single call signature, we use a dedicated variant to avoid bloating the
+/// common case with object-related fields.
+#[derive(Debug, Clone)]
+pub struct FunctionType {
+    pub signatures: SmallVec<[Signature; 1]>,
+}
+
+/// Build a HashMap from a property list for O(1) name lookup.
+/// Called at type creation time alongside the properties Vec.
+/// Mirrors tsgo's `StructuredType.members` map.
+pub fn build_member_map(properties: &[PropertyInfo]) -> FxHashMap<CompactStr, TypeId> {
+    properties.iter().map(|p| (p.name.clone(), p.type_id)).collect()
 }

@@ -15,13 +15,19 @@ impl Checker<'_> {
 
     /// Check an expression, dispatching by kind.
     /// Equivalent to tsgo's `checkExpression` / `checkExpressionWorker`.
+    ///
+    /// For most expressions, evaluating the type via `get_type_of_expression`
+    /// recursively walks sub-expressions and emits diagnostics (TS2339, TS2345,
+    /// TS2349, TS2554, etc.) along the way. Assignment expressions need
+    /// special handling for LHS type checking.
     pub(crate) fn check_expression(&mut self, expr: &Expression<'_>) {
         match expr {
             Expression::AssignmentExpression(assign) => {
                 self.check_assignment_expression(assign);
             }
-            // TODO: handle more expression kinds
-            _ => {}
+            _ => {
+                self.get_type_of_expression(expr);
+            }
         }
     }
 

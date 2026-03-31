@@ -1,8 +1,12 @@
-use oxc_ast::ast::{BinaryExpression, Expression, UnaryExpression};
-use oxc_span::CompactStr;
+use oxc_ast::ast::{
+    BinaryExpression, ChainExpression, ComputedMemberExpression, Expression, UnaryExpression,
+};
+use oxc_diagnostics::OxcDiagnostic;
+use oxc_span::{CompactStr, GetSpan};
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 use oxc_syntax::symbol::SymbolId;
-use oxc_types::{LiteralType, ObjectFlags, TypeData, TypeFlags, TypeId};
+use oxc_types::{LiteralType, ObjectFlags, ObjectType, PropertyInfo, TypeData, TypeFlags, TypeId, build_member_map};
+use rustc_hash::FxHashMap;
 
 use crate::Checker;
 
@@ -25,26 +29,15 @@ impl Checker<'_> {
 
     fn get_type_of_expression_inner(&mut self, expr: &Expression<'_>) -> TypeId {
         match expr {
-            Expression::StringLiteral(lit) => self.type_arena.new_type(
-                TypeFlags::StringLiteral,
-                ObjectFlags::None,
-                TypeData::Literal(LiteralType::String(CompactStr::new(&lit.value))),
-                None,
-            ),
-            Expression::NumericLiteral(lit) => self.type_arena.new_type(
-                TypeFlags::NumberLiteral,
-                ObjectFlags::None,
-                TypeData::Literal(LiteralType::Number(lit.value)),
-                None,
-            ),
-            Expression::BigIntLiteral(lit) => self.type_arena.new_type(
-                TypeFlags::BigIntLiteral,
-                ObjectFlags::None,
-                TypeData::Literal(LiteralType::BigInt(CompactStr::new(
-                    lit.value.as_str(),
-                ))),
-                None,
-            ),
+            Expression::StringLiteral(lit) => {
+                self.get_or_create_string_literal_type(&lit.value)
+            }
+            Expression::NumericLiteral(lit) => {
+                self.get_or_create_number_literal_type(lit.value)
+            }
+            Expression::BigIntLiteral(lit) => {
+                self.get_or_create_bigint_literal_type(lit.value.as_str())
+            }
             Expression::BooleanLiteral(lit) => {
                 if lit.value {
                     self.true_type
@@ -111,31 +104,94 @@ impl Checker<'_> {
             // ++x, x++ etc — returns number (simplified; bigint not handled)
             Expression::UpdateExpression(_) => self.number_type,
 
-            // Not yet implemented — return `any`
-            Expression::RegExpLiteral(_)
-            | Expression::MetaProperty(_)
-            | Expression::Super(_)
-            | Expression::ArrayExpression(_)
-            | Expression::ArrowFunctionExpression(_)
-            | Expression::AssignmentExpression(_)
-            | Expression::AwaitExpression(_)
-            | Expression::CallExpression(_)
-            | Expression::ChainExpression(_)
-            | Expression::ClassExpression(_)
-            | Expression::FunctionExpression(_)
+            // Object literal: `{ x: 1, y: "hello" }`
+            Expression::ObjectExpression(obj) => self.get_type_of_object_literal(obj),
+
+            // Property access: foo.bar
+            Expression::StaticMemberExpression(expr) => {
+                self.get_type_of_static_member_expression(expr)
+            }
+
+            // Array literal: [1, 2, 3]
+            Expression::ArrayExpression(arr) => self.get_type_of_array_literal(arr),
+
+            // Assignment: result type is the RHS
+            Expression::AssignmentExpression(assign) => {
+                self.get_type_of_expression(&assign.right)
+            }
+
+            // Optional chaining: unwrap inner, union with undefined
+            Expression::ChainExpression(chain) => self.get_type_of_chain_expression(chain),
+
+            // Computed member access: obj["key"]
+            Expression::ComputedMemberExpression(expr) => {
+                self.get_type_of_computed_member_expression(expr)
+            }
+
+            // await expr — simplified: returns operand type directly
+            Expression::AwaitExpression(expr) => self.get_type_of_expression(&expr.argument),
+
+            // /regex/ — always RegExp
+            Expression::RegExpLiteral(_) => self.get_global_type("RegExp"),
+
+            // this — returns the enclosing class type or the implicit `this` type parameter
+            Expression::ThisExpression(_) => {
+                if let Some(&class_type) = self.class_type_stack.last() {
+                    class_type
+                } else {
+                    self.this_type
+                }
+            }
+
+            // These need more infrastructure (call signatures, generators, modules)
+            Expression::YieldExpression(_)
             | Expression::ImportExpression(_)
-            | Expression::NewExpression(_)
-            | Expression::ObjectExpression(_)
-            | Expression::TaggedTemplateExpression(_)
-            | Expression::ThisExpression(_)
-            | Expression::YieldExpression(_)
+            | Expression::TaggedTemplateExpression(_) => self.any_type,
+
+            Expression::ArrowFunctionExpression(arrow) => {
+                let mut sig = self.build_signature_from_params(
+                    &arrow.params,
+                    arrow.return_type.as_deref(),
+                );
+                // Infer return type when there's no annotation.
+                if arrow.return_type.is_none() {
+                    sig.return_type = if arrow.expression {
+                        // Expression body: () => expr — return type is the expression type
+                        if let Some(oxc_ast::ast::Statement::ExpressionStatement(expr_stmt)) =
+                            arrow.body.statements.first()
+                        {
+                            self.get_type_of_expression(&expr_stmt.expression)
+                        } else {
+                            self.void_type
+                        }
+                    } else {
+                        // Block body: () => { ... } — infer from return statements
+                        self.infer_return_type_from_body(&arrow.body.statements)
+                    };
+                }
+                self.create_function_type(sig)
+            }
+
+            Expression::FunctionExpression(func) => {
+                let sig = self.build_signature_from_function(func);
+                self.create_function_type(sig)
+            }
+
+            Expression::CallExpression(call) => self.get_type_of_call_expression(call),
+
+            Expression::NewExpression(new_expr) => self.get_type_of_new_expression(new_expr),
+
+            // super — represents the parent class constructor or prototype
+            Expression::Super(_) => self.any_type,
+
+            // Not yet implemented — return `any`
+            Expression::MetaProperty(_)
+            | Expression::ClassExpression(_)
             | Expression::PrivateInExpression(_)
             | Expression::JSXElement(_)
             | Expression::JSXFragment(_)
             | Expression::TSInstantiationExpression(_)
             | Expression::V8IntrinsicExpression(_)
-            | Expression::ComputedMemberExpression(_)
-            | Expression::StaticMemberExpression(_)
             | Expression::PrivateFieldExpression(_) => self.any_type,
         }
     }
@@ -153,11 +209,23 @@ impl Checker<'_> {
 
         let reference = self.semantic().scoping().get_reference(reference_id);
         let Some(symbol_id) = reference.symbol_id() else {
-            // Unresolved reference (global variable)
-            return self.any_type;
+            // Unresolved reference — check well-known globals
+            return self.get_type_of_global_identifier(&ident.name);
         };
 
-        self.get_type_of_symbol(symbol_id)
+        let declared_type = self.get_type_of_symbol(symbol_id);
+
+        // Apply control flow narrowing if a flow graph is active.
+        self.get_flow_type_of_reference(ident.node_id.get(), symbol_id, declared_type)
+    }
+
+    /// Get the type of a well-known global identifier.
+    fn get_type_of_global_identifier(&self, name: &str) -> TypeId {
+        match name {
+            "undefined" => self.undefined_type,
+            "NaN" | "Infinity" => self.number_type,
+            _ => self.any_type,
+        }
     }
 
     /// Get the type of a symbol, with caching and cycle detection.
@@ -169,21 +237,20 @@ impl Checker<'_> {
     /// Mirrors tsgo's `getTypeOfSymbol` with `valueSymbolLinks.resolvedType`
     /// caching and `pushTypeResolution`/`popTypeResolution` cycle detection.
     pub fn get_type_of_symbol(&mut self, symbol_id: SymbolId) -> TypeId {
-        // Check cache
-        if let Some(&cached) = self.symbol_type_cache.get(&symbol_id) {
+        // Check cache (IndexVec: O(1) array indexing)
+        if let Some(cached) = self.symbol_type_cache[symbol_id] {
             return cached;
         }
 
         // Cycle detection: if this symbol is already being resolved, break cycle
-        if self.resolving_symbols.contains(&symbol_id) {
+        if !self.resolving_symbols.insert(symbol_id) {
             return self.any_type;
         }
 
-        // Push onto resolution stack, resolve, pop, cache
-        self.resolving_symbols.push(symbol_id);
+        // Resolve, remove from resolution set, cache
         let result = self.resolve_symbol_type(symbol_id);
-        self.resolving_symbols.pop();
-        self.symbol_type_cache.insert(symbol_id, result);
+        self.resolving_symbols.remove(&symbol_id);
+        self.symbol_type_cache[symbol_id] = Some(result);
         result
     }
 
@@ -198,13 +265,40 @@ impl Checker<'_> {
 
         match node.kind() {
             AstKind::VariableDeclarator(decl) => {
+                // Check if this is a destructuring pattern
+                if !matches!(decl.id, oxc_ast::ast::BindingPattern::BindingIdentifier(_)) {
+                    // Destructuring: get overall type, then extract this symbol's portion
+                    let overall_type = if let Some(annotation) = &decl.type_annotation {
+                        self.get_type_from_type_node(&annotation.type_annotation)
+                    } else if let Some(init) = &decl.init {
+                        self.get_type_of_expression(init)
+                    } else {
+                        // May be in a for-of/for-in loop
+                        self.get_type_from_for_loop_context(node_id)
+                    };
+                    let resolved = self
+                        .resolve_destructured_binding_type(&decl.id, overall_type, symbol_id)
+                        .unwrap_or(self.any_type);
+                    // Widen literal types for let/var destructured bindings
+                    return if decl.kind != oxc_ast::ast::VariableDeclarationKind::Const {
+                        self.get_widened_literal_type(resolved)
+                    } else {
+                        resolved
+                    };
+                }
                 if let Some(annotation) = &decl.type_annotation {
                     self.get_type_from_type_node(&annotation.type_annotation)
                 } else if let Some(init) = &decl.init {
-                    // Infer type from initializer if no annotation
-                    self.get_type_of_expression(init)
+                    let inferred = self.get_type_of_expression(init);
+                    // Widen literal types for non-const declarations
+                    if decl.kind != oxc_ast::ast::VariableDeclarationKind::Const {
+                        self.get_widened_literal_type(inferred)
+                    } else {
+                        inferred
+                    }
                 } else {
-                    self.any_type
+                    // No annotation and no initializer — check for for-of/for-in context
+                    self.get_type_from_for_loop_context(node_id)
                 }
             }
             AstKind::FormalParameter(param) => {
@@ -214,7 +308,241 @@ impl Checker<'_> {
                     self.any_type
                 }
             }
-            // TODO: functions, classes, enums, type aliases, interfaces, etc.
+            AstKind::Class(_) => {
+                // The value type of a class is the constructor — an anonymous
+                // object type with the class symbol attached. Displays as
+                // "typeof C". For binding identifiers, the conformance runner
+                // uses get_declared_type_of_symbol instead, which returns the
+                // instance type displayed as "C".
+                self.type_arena.new_type(
+                    TypeFlags::Object,
+                    ObjectFlags::Anonymous,
+                    TypeData::Object(ObjectType {
+                        target: None,
+                        properties: Vec::new(),
+                        member_map: FxHashMap::default(),
+                        call_signatures: Vec::new(),
+                        construct_signatures: Vec::new(),
+                    }),
+                    Some(symbol_id),
+                )
+            }
+            AstKind::TSEnumDeclaration(decl) => {
+                // The value type of an enum is the namespace object with member
+                // properties. Displays as "typeof E". For binding identifiers,
+                // the conformance runner uses get_declared_type_of_symbol which
+                // returns the enum union type displayed as "E".
+                let mut properties = Vec::new();
+                let mut auto_value: f64 = 0.0;
+                for member in &decl.body.members {
+                    let name = member.id.static_name();
+                    let member_type = self.compute_enum_member_value(member, &mut auto_value);
+                    properties.push(PropertyInfo::new(CompactStr::new(&name), member_type));
+                }
+                self.type_arena.new_type(
+                    TypeFlags::Object,
+                    ObjectFlags::Anonymous,
+                    TypeData::Object(ObjectType { target: None, member_map: build_member_map(&properties), properties, call_signatures: Vec::new(), construct_signatures: Vec::new() }),
+                    Some(symbol_id),
+                )
+            }
+            AstKind::TSEnumMember(member) => {
+                // Individual enum member: resolve its literal type
+                if let Some(init) = &member.initializer {
+                    self.get_type_of_expression(init)
+                } else {
+                    // Auto-incremented numeric member — walk the parent enum body
+                    // to compute the auto-incremented value.
+                    let target_node_id = member.node_id.get();
+                    let parent_id = self.semantic().nodes().parent_id(node_id);
+                    let parent = self.semantic().nodes().get_node(parent_id);
+                    if let oxc_ast::AstKind::TSEnumBody(body) = parent.kind() {
+                        let mut auto_value: f64 = 0.0;
+                        for m in &body.members {
+                            let t = self.compute_enum_member_value(m, &mut auto_value);
+                            if m.node_id.get() == target_node_id {
+                                return t;
+                            }
+                        }
+                    }
+                    self.any_type
+                }
+            }
+            AstKind::Function(func) => {
+                let sig = self.build_signature_from_function(func);
+                self.create_function_type(sig)
+            }
+            _ => self.any_type,
+        }
+    }
+
+    /// Compute the type of an enum member, updating the auto-increment counter.
+    fn compute_enum_member_value(
+        &mut self,
+        member: &oxc_ast::ast::TSEnumMember<'_>,
+        auto_value: &mut f64,
+    ) -> TypeId {
+        if let Some(init) = &member.initializer {
+            let t = self.get_type_of_expression(init);
+            if let TypeData::Literal(LiteralType::Number(n)) = self.type_arena.get_data(t) {
+                *auto_value = *n + 1.0;
+            }
+            t
+        } else {
+            let t = self.get_or_create_number_literal_type(*auto_value);
+            *auto_value += 1.0;
+            t
+        }
+    }
+
+    /// Check if a VariableDeclarator is inside a for-of or for-in statement.
+    /// If so, return the iterated element type; otherwise return `any_type`.
+    fn get_type_from_for_loop_context(&mut self, declarator_node_id: oxc_syntax::node::NodeId) -> TypeId {
+        use oxc_ast::AstKind;
+        // Walk up: VariableDeclarator → VariableDeclaration → ForOfStatement/ForInStatement
+        // Capture the loop node ID without holding a mutable borrow.
+        let loop_node_id = 'search: {
+            for ancestor in self.semantic().nodes().ancestors(declarator_node_id) {
+                match ancestor.kind() {
+                    AstKind::ForOfStatement(_) | AstKind::ForInStatement(_) => {
+                        break 'search Some(ancestor.id());
+                    }
+                    AstKind::VariableDeclarator(_) | AstKind::VariableDeclaration(_) => continue,
+                    _ => break,
+                }
+            }
+            None
+        };
+        let Some(loop_node_id) = loop_node_id else {
+            return self.any_type;
+        };
+        let node = self.semantic().nodes().get_node(loop_node_id);
+        match node.kind() {
+            AstKind::ForOfStatement(for_of) => {
+                let iterable_type = self.get_type_of_expression(&for_of.right);
+                self.get_iterated_type_of_iterable(iterable_type)
+            }
+            AstKind::ForInStatement(_) => self.string_type,
+            _ => unreachable!(),
+        }
+    }
+
+    /// Get the iterated element type from an iterable type.
+    /// For Array<T>, returns T. For tuples, returns union of element types.
+    fn get_iterated_type_of_iterable(&mut self, type_id: TypeId) -> TypeId {
+        // Check Array<T> → T
+        if let TypeData::TypeReference(tr) = self.type_arena.get_data(type_id) {
+            if tr.target == Some(self.array_type) && !tr.resolved_type_arguments.is_empty() {
+                return tr.resolved_type_arguments[0];
+            }
+            return self.any_type;
+        }
+        // Collect tuple element types (releases the type_arena borrow before union creation)
+        let tuple_element_types = if let TypeData::Tuple(tuple) = self.type_arena.get_data(type_id) {
+            Some(tuple.element_infos.iter().map(|e| e.element_type).collect::<Vec<_>>())
+        } else {
+            None
+        };
+        if let Some(types) = tuple_element_types {
+            if types.is_empty() {
+                return self.never_type;
+            }
+            return self.get_or_create_union_type(types);
+        }
+        self.any_type
+    }
+
+    /// Walk a destructuring pattern to find the binding matching `target_symbol`,
+    /// extracting the corresponding property/element type from `init_type`.
+    fn resolve_destructured_binding_type(
+        &mut self,
+        pattern: &oxc_ast::ast::BindingPattern<'_>,
+        init_type: TypeId,
+        target_symbol: SymbolId,
+    ) -> Option<TypeId> {
+        use oxc_ast::ast::BindingPattern;
+        match pattern {
+            BindingPattern::BindingIdentifier(ident) => {
+                if ident.symbol_id.get() == Some(target_symbol) {
+                    Some(init_type)
+                } else {
+                    None
+                }
+            }
+            BindingPattern::ObjectPattern(obj) => {
+                for prop in &obj.properties {
+                    if let Some(name) = prop.key.static_name() {
+                        let prop_type = self.get_property_of_type(init_type, &name);
+                        if let Some(result) = self.resolve_destructured_binding_type(
+                            &prop.value,
+                            prop_type,
+                            target_symbol,
+                        ) {
+                            return Some(result);
+                        }
+                    }
+                }
+                if let Some(rest) = &obj.rest {
+                    if let Some(result) = self.resolve_destructured_binding_type(
+                        &rest.argument,
+                        self.any_type,
+                        target_symbol,
+                    ) {
+                        return Some(result);
+                    }
+                }
+                None
+            }
+            BindingPattern::ArrayPattern(arr) => {
+                for (i, element) in arr.elements.iter().enumerate() {
+                    if let Some(element) = element {
+                        let elem_type = self.get_element_type_at_index(init_type, i);
+                        if let Some(result) = self.resolve_destructured_binding_type(
+                            element,
+                            elem_type,
+                            target_symbol,
+                        ) {
+                            return Some(result);
+                        }
+                    }
+                }
+                if let Some(rest) = &arr.rest {
+                    if let Some(result) = self.resolve_destructured_binding_type(
+                        &rest.argument,
+                        self.any_type,
+                        target_symbol,
+                    ) {
+                        return Some(result);
+                    }
+                }
+                None
+            }
+            BindingPattern::AssignmentPattern(assign) => {
+                // Default value doesn't change the declared type
+                self.resolve_destructured_binding_type(&assign.left, init_type, target_symbol)
+            }
+        }
+    }
+
+    /// Get the element type at a specific index from an array or tuple type.
+    fn get_element_type_at_index(&self, type_id: TypeId, index: usize) -> TypeId {
+        match self.type_arena.get_data(type_id) {
+            TypeData::Tuple(tuple) => {
+                if index < tuple.element_infos.len() {
+                    tuple.element_infos[index].element_type
+                } else {
+                    self.any_type
+                }
+            }
+            TypeData::TypeReference(tr) => {
+                // Array<T> → element type is T
+                if let Some(target) = tr.target {
+                    if target == self.array_type && !tr.resolved_type_arguments.is_empty() {
+                        return tr.resolved_type_arguments[0];
+                    }
+                }
+                self.any_type
+            }
             _ => self.any_type,
         }
     }
@@ -243,6 +571,247 @@ impl Checker<'_> {
                 }
             }
         }
+    }
+
+    /// Get the type of an object literal expression.
+    fn get_type_of_object_literal(
+        &mut self,
+        obj: &oxc_ast::ast::ObjectExpression<'_>,
+    ) -> TypeId {
+        use oxc_ast::ast::{ObjectPropertyKind, PropertyKind};
+
+        let mut properties = Vec::new();
+
+        for prop_kind in &obj.properties {
+            match prop_kind {
+                ObjectPropertyKind::ObjectProperty(prop) => {
+                    if prop.kind != PropertyKind::Init {
+                        continue;
+                    }
+                    if let Some(name) = prop.key.static_name() {
+                        let prop_type = self.get_type_of_expression(&prop.value);
+                        // Widen literal types in object literal properties
+                        let widened = self.get_widened_literal_type(prop_type);
+                        properties.push(PropertyInfo::new(CompactStr::new(&name), widened));
+                    }
+                }
+                ObjectPropertyKind::SpreadProperty(_) => {
+                    // TODO: merge spread type properties
+                }
+            }
+        }
+
+        self.type_arena.new_type(
+            TypeFlags::Object,
+            ObjectFlags::Anonymous | ObjectFlags::ObjectLiteral,
+            TypeData::Object(ObjectType {
+                target: None,
+                member_map: build_member_map(&properties),
+                properties,
+                call_signatures: Vec::new(),
+                construct_signatures: Vec::new(),
+            }),
+            None,
+        )
+    }
+
+    /// Get the type of a static member expression (`obj.prop`).
+    ///
+    /// Resolves the object's type, then looks up the property by name.
+    /// Handles Object, Interface, and TypeReference (via lazy instantiation).
+    fn get_type_of_static_member_expression(
+        &mut self,
+        expr: &oxc_ast::ast::StaticMemberExpression<'_>,
+    ) -> TypeId {
+        let object_type = self.get_type_of_expression(&expr.object);
+        let prop_name = expr.property.name.as_str();
+        let result = self.get_property_of_type(object_type, prop_name);
+        if result == self.any_type
+            && !self.type_arena.get_flags(object_type).intersects(TypeFlags::Any)
+        {
+            let type_str = self.type_to_string(object_type);
+            self.diagnostics.push(
+                OxcDiagnostic::error(format!(
+                    "Property '{prop_name}' does not exist on type '{type_str}'."
+                ))
+                .with_error_code("ts", "2339")
+                .with_label(expr.property.span),
+            );
+        }
+        result
+    }
+
+    /// Look up a property by name on a type. O(1) via HashMap.
+    ///
+    /// Handles Object, Interface, TypeReference, and Union types.
+    /// For TypeReferences, resolves to the instantiated type first
+    /// (cached via `instantiation_cache`).
+    /// Returns `any_type` if the property is not found or the type
+    /// doesn't support property access.
+    pub(crate) fn get_property_of_type(&mut self, type_id: TypeId, name: &str) -> TypeId {
+        let flags = self.type_arena.get_flags(type_id);
+
+        // any.prop → any
+        if flags.intersects(TypeFlags::Any) {
+            return self.any_type;
+        }
+
+        // Union type: look up property on each constituent, union the results
+        if flags.intersects(TypeFlags::Union) {
+            if let TypeData::Union(u) = self.type_arena.get_data(type_id) {
+                let prop_types: Vec<TypeId> = u.types
+                    .iter()
+                    .map(|&m| self.get_property_of_type(m, name))
+                    .collect();
+                if prop_types.iter().any(|&t| t == self.any_type) {
+                    return self.any_type;
+                }
+                return self.get_or_create_union_type(prop_types);
+            }
+        }
+
+        // TypeReference: resolve to instantiated type first (cached)
+        let resolved_id = if let TypeData::TypeReference(_) = self.type_arena.get_data(type_id) {
+            self.resolve_type_reference(type_id)
+        } else {
+            type_id
+        };
+
+        // O(1) HashMap lookup on resolved type
+        match self.type_arena.get_data(resolved_id) {
+            TypeData::Object(obj) => {
+                if let Some(&prop_type) = obj.member_map.get(name) {
+                    return prop_type;
+                }
+            }
+            TypeData::Interface(iface) => {
+                if let Some(&prop_type) = iface.member_map.get(name) {
+                    return prop_type;
+                }
+            }
+            _ => {}
+        }
+
+        self.any_type
+    }
+
+    /// Get the type of an array literal expression.
+    ///
+    /// Infers the element type as the union of all element types,
+    /// then creates an `Array<ElementType>` TypeReference.
+    fn get_type_of_array_literal(
+        &mut self,
+        arr: &oxc_ast::ast::ArrayExpression<'_>,
+    ) -> TypeId {
+        use oxc_ast::ast::ArrayExpressionElement;
+
+        let mut element_types = Vec::new();
+
+        for element in &arr.elements {
+            match element {
+                ArrayExpressionElement::SpreadElement(spread) => {
+                    // TODO: extract element type from spread
+                    let spread_type = self.get_type_of_expression(&spread.argument);
+                    element_types.push(spread_type);
+                }
+                ArrayExpressionElement::Elision(_) => {
+                    element_types.push(self.undefined_type);
+                }
+                _ => {
+                    // Expression elements (inherited from Expression)
+                    let elem_expr = element.to_expression();
+                    let elem_type = self.get_type_of_expression(elem_expr);
+                    element_types.push(elem_type);
+                }
+            }
+        }
+
+        // Empty array: never[] (matching tsc's inference for uncontextualized [])
+        if element_types.is_empty() {
+            if self.array_type == self.any_type {
+                return self.any_type;
+            }
+            return self.type_arena.new_type(
+                TypeFlags::Object,
+                ObjectFlags::Reference,
+                TypeData::TypeReference(oxc_types::TypeReferenceType {
+                    target: Some(self.array_type),
+                    resolved_type_arguments: smallvec::smallvec![self.never_type],
+                }),
+                None,
+            );
+        }
+
+        // Widen literal types in array elements and union them
+        let widened: Vec<TypeId> = element_types
+            .into_iter()
+            .map(|t| self.get_widened_literal_type(t))
+            .collect();
+        let elem_type = self.get_or_create_union_type(widened);
+
+        if self.array_type == self.any_type {
+            return self.any_type;
+        }
+
+        self.type_arena.new_type(
+            TypeFlags::Object,
+            ObjectFlags::Reference,
+            TypeData::TypeReference(oxc_types::TypeReferenceType {
+                target: Some(self.array_type),
+                resolved_type_arguments: smallvec::smallvec![elem_type],
+            }),
+            None,
+        )
+    }
+
+    /// Get the type of a chain expression (`foo?.bar`, `foo?.()`).
+    ///
+    /// Resolves the inner expression type and unions with `undefined`
+    /// since the chain may short-circuit.
+    fn get_type_of_chain_expression(&mut self, chain: &ChainExpression<'_>) -> TypeId {
+        use oxc_ast::ast::ChainElement;
+
+        let inner_type = match &chain.expression {
+            ChainElement::StaticMemberExpression(e) => {
+                self.get_type_of_static_member_expression(e)
+            }
+            ChainElement::ComputedMemberExpression(e) => {
+                self.get_type_of_computed_member_expression(e)
+            }
+            ChainElement::TSNonNullExpression(e) => self.get_type_of_expression(&e.expression),
+            _ => self.any_type, // CallExpression, PrivateFieldExpression
+        };
+        self.get_or_create_union_type(vec![inner_type, self.undefined_type])
+    }
+
+    /// Get the type of a computed member expression (`obj["key"]`, `obj[0]`).
+    ///
+    /// For string literal keys, performs a property lookup on the object type.
+    fn get_type_of_computed_member_expression(
+        &mut self,
+        expr: &ComputedMemberExpression<'_>,
+    ) -> TypeId {
+        let object_type = self.get_type_of_expression(&expr.object);
+        // String literal index → property lookup
+        if let Expression::StringLiteral(lit) = &expr.expression {
+            let result = self.get_property_of_type(object_type, &lit.value);
+            if result == self.any_type
+                && !self.type_arena.get_flags(object_type).intersects(TypeFlags::Any)
+            {
+                let type_str = self.type_to_string(object_type);
+                let prop_name = &lit.value;
+                self.diagnostics.push(
+                    OxcDiagnostic::error(format!(
+                        "Property '{prop_name}' does not exist on type '{type_str}'."
+                    ))
+                    .with_error_code("ts", "2339")
+                    .with_label(lit.span()),
+                );
+            }
+            return result;
+        }
+        // TODO: numeric index on arrays/tuples, keyof, index signatures
+        self.any_type
     }
 
     /// Get the result type of a binary expression.
@@ -303,6 +872,166 @@ impl Checker<'_> {
                     self.number_type
                 }
             }
+        }
+    }
+
+    /// Get the type of a call expression, checking for TS2349, TS2554, TS2345.
+    fn get_type_of_call_expression(
+        &mut self,
+        call: &oxc_ast::ast::CallExpression<'_>,
+    ) -> TypeId {
+        use oxc_ast::ast::Argument;
+
+        let callee_type = self.get_type_of_expression(&call.callee);
+        let callee_flags = self.type_arena.get_flags(callee_type);
+
+        // any(...) → any
+        if callee_flags.intersects(TypeFlags::Any) {
+            // Still evaluate argument expressions for side-effect diagnostics
+            for arg in &call.arguments {
+                if let Some(expr) = arg.as_expression() {
+                    self.get_type_of_expression(expr);
+                }
+            }
+            return self.any_type;
+        }
+
+        // Extract call signatures from the callee type.
+        // Returns a slice reference — stable because type_arena uses AppendOnlyVec.
+        let empty_sigs: &[oxc_types::Signature] = &[];
+        let signatures: &[oxc_types::Signature] = match self.type_arena.get_data(callee_type) {
+            TypeData::Function(f) => &f.signatures,
+            TypeData::Interface(i) => &i.call_signatures,
+            TypeData::Object(o) => &o.call_signatures,
+            _ => empty_sigs,
+        };
+
+        if signatures.is_empty() {
+            // TS2349: This expression is not callable
+            let type_str = self.type_to_string(callee_type);
+            self.diagnostics.push(
+                OxcDiagnostic::error(format!(
+                    "This expression is not callable.\n  Type '{type_str}' has no call signatures."
+                ))
+                .with_error_code("ts", "2349")
+                .with_label(call.callee.span()),
+            );
+            // Still evaluate arguments for diagnostics
+            for arg in &call.arguments {
+                if let Some(expr) = arg.as_expression() {
+                    self.get_type_of_expression(expr);
+                }
+            }
+            return self.any_type;
+        }
+
+        // Use the first signature (overload resolution deferred)
+        let sig = &signatures[0];
+
+        // Count non-rest parameters for max argument count
+        let max_args = if sig.flags.intersects(oxc_types::SignatureFlags::HasRestParameter) {
+            usize::MAX
+        } else {
+            sig.parameters.len()
+        };
+        let min_args = sig.min_argument_count as usize;
+        let actual_args = call.arguments.len();
+
+        // TS2554: Expected N arguments, but got M
+        if actual_args < min_args || actual_args > max_args {
+            let expected = if min_args == max_args {
+                format!("{min_args}")
+            } else if max_args == usize::MAX {
+                format!("at least {min_args}")
+            } else {
+                format!("{min_args}-{max_args}")
+            };
+            self.diagnostics.push(
+                OxcDiagnostic::error(format!(
+                    "Expected {expected} arguments, but got {actual_args}."
+                ))
+                .with_error_code("ts", "2554")
+                .with_label(call.span),
+            );
+        }
+
+        // Check each argument type against the parameter type (TS2345)
+        for (i, arg) in call.arguments.iter().enumerate() {
+            let arg_type = match arg {
+                Argument::SpreadElement(spread) => {
+                    self.get_type_of_expression(&spread.argument)
+                }
+                _ => {
+                    let expr = arg.to_expression();
+                    self.get_type_of_expression(expr)
+                }
+            };
+
+            // Find the corresponding parameter
+            let param = if i < sig.parameters.len() {
+                Some(&sig.parameters[i])
+            } else if sig.flags.intersects(oxc_types::SignatureFlags::HasRestParameter) {
+                sig.parameters.last()
+            } else {
+                None
+            };
+
+            if let Some(param) = param {
+                let param_type = param.type_id;
+                // Skip check if param is `any`
+                if !self.type_arena.get_flags(param_type).intersects(TypeFlags::Any) {
+                    if !self.is_type_assignable_to(arg_type, param_type) {
+                        let arg_str = self.type_to_string(arg_type);
+                        let param_str = self.type_to_string(param_type);
+                        let span = match arg {
+                            Argument::SpreadElement(s) => s.span,
+                            _ => arg.to_expression().span(),
+                        };
+                        self.diagnostics.push(
+                            OxcDiagnostic::error(format!(
+                                "Argument of type '{arg_str}' is not assignable to parameter of type '{param_str}'."
+                            ))
+                            .with_error_code("ts", "2345")
+                            .with_label(span),
+                        );
+                    }
+                }
+            }
+        }
+
+        sig.return_type
+    }
+
+    /// Get the type of a `new` expression (`new Foo()`).
+    ///
+    /// If the callee resolves to a class, returns the class's instance type
+    /// (declared type). Otherwise returns `any`.
+    fn get_type_of_new_expression(
+        &mut self,
+        new_expr: &oxc_ast::ast::NewExpression<'_>,
+    ) -> TypeId {
+        use oxc_ast::AstKind;
+
+        // Resolve callee: only handle simple identifiers for now
+        let Expression::Identifier(ident) = &new_expr.callee else {
+            return self.any_type;
+        };
+
+        let Some(reference_id) = ident.reference_id.get() else {
+            return self.any_type;
+        };
+
+        let reference = self.semantic().scoping().get_reference(reference_id);
+        let Some(symbol_id) = reference.symbol_id() else {
+            return self.any_type;
+        };
+
+        let node_id = self.semantic().scoping().symbol_declaration(symbol_id);
+        let node = self.semantic().nodes().get_node(node_id);
+
+        match node.kind() {
+            AstKind::Class(_) => self.get_declared_type_of_symbol(symbol_id),
+            _ => self.any_type,
         }
     }
 }

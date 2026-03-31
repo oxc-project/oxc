@@ -36,6 +36,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a23eb6b1614318a8071c9b2521f36b424b2c83db5eb3a0fead4a6c0809af6e61"
 
 [[package]]
+name = "append-only-vec"
+version = "0.1.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2114736faba96bcd79595c700d03183f61357b9fbce14852515e59f3bee4ed4a"
+
+[[package]]
 name = "approx"
 version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -263,7 +269,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "117725a109d387c937a1533ce01b450cbde6b88abceea8473c4d7a85853cda3c"
 dependencies = [
  "lazy_static",
- "windows-sys 0.52.0",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -272,7 +278,7 @@ version = "3.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fde0e0ec90c9dfb3b4b1a0891a7dcd0e2bffde2f7efed5fe7c9bb00e5bfb915e"
 dependencies = [
- "windows-sys 0.52.0",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -678,7 +684,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "39cab71617ae0d63f51a36d69f866391735b51691dbda63cf6f96d042b63efeb"
 dependencies = [
  "libc",
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -1796,15 +1802,18 @@ dependencies = [
 name = "oxc_checker"
 version = "0.115.0"
 dependencies = [
+ "bitflags",
  "oxc_allocator",
  "oxc_ast",
  "oxc_ast_visit",
  "oxc_diagnostics",
+ "oxc_index",
  "oxc_parser",
  "oxc_semantic",
  "oxc_span",
  "oxc_syntax",
  "oxc_types",
+ "rustc-hash",
  "smallvec",
 ]
 
@@ -2258,6 +2267,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "oxc_project"
+version = "0.115.0"
+dependencies = [
+ "oxc_allocator",
+ "oxc_ast",
+ "oxc_checker",
+ "oxc_parser",
+ "oxc_semantic",
+ "oxc_span",
+ "oxc_syntax",
+ "oxc_types",
+ "rustc-hash",
+ "smallvec",
+]
+
+[[package]]
 name = "oxc_regular_expression"
 version = "0.115.0"
 dependencies = [
@@ -2541,11 +2566,13 @@ dependencies = [
 name = "oxc_types"
 version = "0.115.0"
 dependencies = [
+ "append-only-vec",
  "bitflags",
  "nonmax",
  "oxc_index",
  "oxc_span",
  "oxc_syntax",
+ "rustc-hash",
  "smallvec",
 ]
 
@@ -2990,7 +3017,7 @@ dependencies = [
  "errno",
  "libc",
  "linux-raw-sys",
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -3085,7 +3112,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5b55fb86dfd3a2f5f76ea78310a88f96c4ea21a3031f8d212443d56123fd0521"
 dependencies = [
  "libc",
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -3374,7 +3401,7 @@ dependencies = [
  "getrandom 0.3.4",
  "once_cell",
  "rustix",
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -3910,7 +3937,7 @@ version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c2a7b1c03c876122aa43f3020e6c3c3ee5c05081c9a00739faf7503aeba10d22"
 dependencies = [
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]

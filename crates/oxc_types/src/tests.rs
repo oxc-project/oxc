@@ -6,7 +6,7 @@ use crate::{IntrinsicType, ObjectFlags, TypeArena, TypeData, TypeFlags, UnionTyp
 
 #[test]
 fn create_intrinsic_types() {
-    let mut arena = TypeArena::new();
+    let arena = TypeArena::new();
 
     let string_type = arena.new_type(
         TypeFlags::String,
@@ -38,7 +38,7 @@ fn create_intrinsic_types() {
 
 #[test]
 fn create_union_type() {
-    let mut arena = TypeArena::new();
+    let arena = TypeArena::new();
 
     let string_type = arena.new_type(
         TypeFlags::String,
@@ -107,7 +107,7 @@ fn type_flags_composite_checks() {
 fn arena_symbol_association() {
     use oxc_syntax::symbol::SymbolId;
 
-    let mut arena = TypeArena::new();
+    let arena = TypeArena::new();
 
     let type_without_symbol = arena.new_type(
         TypeFlags::String,
