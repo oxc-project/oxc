@@ -29,26 +29,100 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// `StatementList`[Yield, Await, Return] :
     ///     `StatementListItem`[?Yield, ?Await, ?Return]
     ///     `StatementList`[?Yield, ?Await, ?Return] `StatementListItem`[?Yield, ?Await, ?Return]
+    pub(crate) fn parse_top_level_directives_and_statements(
+        &mut self,
+    ) -> (Vec<'a, Directive<'a>>, Vec<'a, Statement<'a>>) {
+        debug_assert!(self.ctx.has_top_level());
+
+        if self.source_type.is_unambiguous() && !self.ctx.has_await() {
+            return self.parse_top_level_directives_and_statements_with_await_reparse();
+        }
+
+        let mut directives = self.ast.vec();
+        let mut statements = self.ast.vec();
+        let stmt_ctx = StatementContext::StatementList;
+
+        let mut expecting_directives = true;
+        while !self.has_fatal_error() {
+            let stmt = self.parse_statement_list_item(stmt_ctx);
+
+            // Section 11.2.1 Directive Prologue
+            // The only way to get a correct directive is to parse the statement first and check if it is a string literal.
+            // All other method are flawed, see test cases in [babel](https://github.com/babel/babel/blob/v7.26.2/packages/babel-parser/test/fixtures/core/categorized/not-directive/input.js)
+            if expecting_directives {
+                if let Statement::ExpressionStatement(expr) = &stmt
+                    && let Expression::StringLiteral(string) = &expr.expression
+                {
+                    // span start will mismatch if they are parenthesized when `preserve_parens = false`
+                    if expr.span.start == string.span.start {
+                        let src = &self.source_text
+                            [string.span.start as usize + 1..string.span.end as usize - 1];
+                        let directive =
+                            self.ast.directive(expr.span, (*string).clone(), Str::from(src));
+                        directives.push(directive);
+                        continue;
+                    }
+                }
+                expecting_directives = false;
+            }
+            statements.push(stmt);
+        }
+
+        (directives, statements)
+    }
+
     pub(crate) fn parse_directives_and_statements(
+        &mut self,
+    ) -> (Vec<'a, Directive<'a>>, Vec<'a, Statement<'a>>) {
+        debug_assert!(!self.ctx.has_top_level());
+
+        let mut directives = self.ast.vec();
+        let mut statements = self.ast.vec();
+        let stmt_ctx = StatementContext::StatementList;
+
+        let mut expecting_directives = true;
+        while !self.has_fatal_error() {
+            if self.at(Kind::RCurly) {
+                break;
+            }
+
+            let stmt = self.parse_statement_list_item(stmt_ctx);
+
+            // Section 11.2.1 Directive Prologue
+            // The only way to get a correct directive is to parse the statement first and check if it is a string literal.
+            // All other method are flawed, see test cases in [babel](https://github.com/babel/babel/blob/v7.26.2/packages/babel-parser/test/fixtures/core/categorized/not-directive/input.js)
+            if expecting_directives {
+                if let Statement::ExpressionStatement(expr) = &stmt
+                    && let Expression::StringLiteral(string) = &expr.expression
+                {
+                    // span start will mismatch if they are parenthesized when `preserve_parens = false`
+                    if expr.span.start == string.span.start {
+                        let src = &self.source_text
+                            [string.span.start as usize + 1..string.span.end as usize - 1];
+                        let directive =
+                            self.ast.directive(expr.span, (*string).clone(), Str::from(src));
+                        directives.push(directive);
+                        continue;
+                    }
+                }
+                expecting_directives = false;
+            }
+            statements.push(stmt);
+        }
+
+        (directives, statements)
+    }
+
+    fn parse_top_level_directives_and_statements_with_await_reparse(
         &mut self,
     ) -> (Vec<'a, Directive<'a>>, Vec<'a, Statement<'a>>) {
         let mut directives = self.ast.vec();
         let mut statements = self.ast.vec();
-
-        let is_top_level = self.ctx.has_top_level();
         let stmt_ctx = StatementContext::StatementList;
 
-        // Check if we need to track potential await reparsing.
-        // This is only needed in unambiguous mode at top level when not in await context.
-        let mut track_await_reparse =
-            is_top_level && self.source_type.is_unambiguous() && !self.ctx.has_await();
-
+        let mut track_await_reparse = true;
         let mut expecting_directives = true;
         while !self.has_fatal_error() {
-            if !is_top_level && self.at(Kind::RCurly) {
-                break;
-            }
-
             // Once ESM syntax is detected, enable await context for remaining statements
             // and stop tracking (we'll reparse earlier statements at the end)
             if track_await_reparse && self.module_record_builder.has_module_syntax() {

@@ -566,7 +566,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
 
         let hashbang = self.parse_hashbang();
         self.ctx |= Context::TopLevel;
-        let (directives, mut statements) = self.parse_directives_and_statements();
+        let (directives, mut statements) = self.parse_top_level_directives_and_statements();
 
         // In unambiguous mode, if ESM syntax was detected (import/export/import.meta),
         // we need to reparse statements that were originally parsed with `await` as identifier.
