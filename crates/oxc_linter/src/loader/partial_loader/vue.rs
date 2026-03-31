@@ -6,7 +6,7 @@ use crate::frameworks::FrameworkOptions;
 
 use super::{
     COMMENT_END, COMMENT_START, JavaScriptSource, SCRIPT_END, SCRIPT_START,
-    find_script_closing_angle, find_script_start,
+    find_script_closing_angle, find_script_start, trim_script_block_newlines,
 };
 
 pub struct VuePartialLoader<'a> {
@@ -75,13 +75,15 @@ impl<'a> VuePartialLoader<'a> {
         }
 
         *pointer += offset + 1;
-        let js_start = *pointer;
+        let mut js_start = *pointer;
 
         // find "</script>"
         let script_end_finder: Finder<'_> = Finder::new(SCRIPT_END);
         let offset = script_end_finder.find(&self.source_text.as_bytes()[*pointer..])?;
-        let js_end = *pointer + offset;
+        let mut js_end = *pointer + offset;
         *pointer += offset + SCRIPT_END.len();
+
+        trim_script_block_newlines(self.source_text.as_bytes(), &mut js_start, &mut js_end);
 
         let source_text = &self.source_text[js_start..js_end];
         // NOTE: loader checked that source_text.len() is less than u32::MAX
@@ -313,6 +315,79 @@ mod test {
         let result: JavaScriptSource<'_> = parse_vue(source_text);
         assert_eq!(result.source_text, "b");
         assert_eq!(result.start, 79);
+    }
+
+    #[test]
+    fn test_leading_newline_trimmed() {
+        let source_text = "<template>\n  <div>test</div>\n</template>\n\n<script setup lang=\"ts\">\nimport { ref } from 'vue';\n</script>";
+        let result = parse_vue(source_text);
+        assert_eq!(result.source_text, "import { ref } from 'vue';");
+    }
+
+    #[test]
+    fn test_leading_newline_trimmed_crlf() {
+        let source_text = "<script>\r\nimport { ref } from 'vue';\r\n</script>";
+        let result = parse_vue(source_text);
+        assert_eq!(result.source_text, "import { ref } from 'vue';");
+    }
+
+    #[test]
+    fn test_no_leading_newline_no_trim() {
+        let source_text = "<script>console.log('hi')</script>";
+        let result = parse_vue(source_text);
+        assert_eq!(result.source_text, "console.log('hi')");
+    }
+
+    #[test]
+    fn test_trailing_newline_trimmed() {
+        let source_text = "<script>\nimport { ref } from 'vue';\n</script>";
+        let result = parse_vue(source_text);
+        assert_eq!(result.source_text, "import { ref } from 'vue';");
+    }
+
+    #[test]
+    fn test_trailing_newline_trimmed_crlf() {
+        let source_text = "<script>\r\nimport { ref } from 'vue';\r\n</script>";
+        let result = parse_vue(source_text);
+        assert_eq!(result.source_text, "import { ref } from 'vue';");
+    }
+
+    #[test]
+    fn test_newline_only_script_block() {
+        let source_text = "<script>\n</script>";
+        let result = parse_vue(source_text);
+        assert_eq!(result.source_text, "");
+    }
+
+    #[test]
+    fn test_two_newlines_only_trims_one_each() {
+        let source_text = "<script>\n\n</script>";
+        let result = parse_vue(source_text);
+        assert_eq!(result.source_text, "");
+    }
+
+    #[test]
+    fn test_multiple_blank_lines_preserved() {
+        let source_text = "<script>\n\n\nimport { ref } from 'vue';\n</script>";
+        let result = parse_vue(source_text);
+        assert_eq!(result.source_text, "\n\nimport { ref } from 'vue';");
+    }
+
+    #[test]
+    fn test_start_offset_after_trim() {
+        let source_text = "<script>\nimport { ref } from 'vue';\n</script>";
+        let result = parse_vue(source_text);
+        assert_eq!(result.start, 9);
+        assert_eq!(result.source_text, "import { ref } from 'vue';");
+    }
+
+    #[test]
+    fn test_issue_20896_repro() {
+        let source_text = "<template>\n  <div>test</div>\n</template>\n\n<script setup lang=\"ts\">\nimport { ref } from 'vue';\n\nconst test = ref();\n\n\n// ok\ntest.value = 'a';\n</script>";
+        let result = parse_vue(source_text);
+        assert!(!result.source_text.starts_with('\n'));
+        assert!(result.source_text.starts_with("import"));
+        assert!(!result.source_text.ends_with('\n'));
     }
 
     #[test]

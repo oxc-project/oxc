@@ -39,6 +39,28 @@ impl PartialLoader {
     }
 }
 
+/// Trim one leading newline and one trailing newline from the script block content range.
+///
+/// This prevents false "beginning of file" / "end of file" detection in external (JS) plugins,
+/// which see the extracted script block as a standalone file.
+/// See: <https://github.com/oxc-project/oxc/issues/20896>
+fn trim_script_block_newlines(source: &[u8], js_start: &mut usize, js_end: &mut usize) {
+    if let Some(content) = source.get(*js_start..*js_end) {
+        if content.starts_with(b"\r\n") {
+            *js_start += 2;
+        } else if content.starts_with(b"\n") {
+            *js_start += 1;
+        }
+    }
+    if let Some(content) = source.get(*js_start..*js_end) {
+        if content.ends_with(b"\r\n") {
+            *js_end -= 2;
+        } else if content.ends_with(b"\n") {
+            *js_end -= 1;
+        }
+    }
+}
+
 /// Find closing angle for situations where there is another `>` in between.
 /// e.g. `<script generic="T extends Record<string, string>">`
 /// or `<script attribute="text with > inside">`

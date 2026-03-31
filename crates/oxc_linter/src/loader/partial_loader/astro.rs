@@ -4,7 +4,10 @@ use oxc_span::{SourceType, Span};
 
 use crate::loader::JavaScriptSource;
 
-use super::{COMMENT_END, COMMENT_START, SCRIPT_END, SCRIPT_START, find_script_start};
+use super::{
+    COMMENT_END, COMMENT_START, SCRIPT_END, SCRIPT_START, find_script_start,
+    trim_script_block_newlines,
+};
 
 const ASTRO_SPLIT: &str = "---";
 
@@ -62,8 +65,8 @@ impl<'a> AstroPartialLoader<'a> {
         let mut pointer = start;
 
         loop {
-            let js_start;
-            let js_end;
+            let mut js_start;
+            let mut js_end;
             // find opening "<script"
             if let Some(offset) = find_script_start(
                 self.source_text,
@@ -92,6 +95,12 @@ impl<'a> AstroPartialLoader<'a> {
             {
                 js_end = pointer + offset;
                 pointer += offset + SCRIPT_END.len();
+
+                trim_script_block_newlines(
+                    self.source_text.as_bytes(),
+                    &mut js_start,
+                    &mut js_end,
+                );
             } else {
                 break;
             }
@@ -129,7 +138,7 @@ mod test {
         let sources = parse_astro(source_text);
         assert_eq!(sources.len(), 1);
         assert_eq!(sources[0].source_text.trim(), r#"console.log("Hi");"#);
-        assert_eq!(sources[0].start, 51);
+        assert_eq!(sources[0].start, 52);
     }
 
     #[test]
@@ -154,7 +163,23 @@ mod test {
         );
         assert_eq!(sources[0].start, 12);
         assert_eq!(sources[1].source_text.trim(), r#"console.log("Hi");"#);
-        assert_eq!(sources[1].start, 141);
+        assert_eq!(sources[1].start, 142);
+    }
+
+    #[test]
+    fn test_leading_newline_trimmed() {
+        let source_text = "<script>\nconsole.log('hi');\n</script>";
+        let sources = parse_astro(source_text);
+        assert_eq!(sources.len(), 1);
+        assert_eq!(sources[0].source_text, "console.log('hi');");
+    }
+
+    #[test]
+    fn test_leading_newline_trimmed_crlf() {
+        let source_text = "<script>\r\nconsole.log('hi');\r\n</script>";
+        let sources = parse_astro(source_text);
+        assert_eq!(sources.len(), 1);
+        assert_eq!(sources[0].source_text, "console.log('hi');");
     }
 
     #[test]
@@ -174,7 +199,7 @@ mod test {
         assert!(sources[0].source_text.is_empty());
         assert_eq!(sources[0].start, 102);
         assert_eq!(sources[1].source_text.trim(), r#"console.log("Hi");"#);
-        assert_eq!(sources[1].start, 129);
+        assert_eq!(sources[1].start, 130);
     }
 
     #[test]
@@ -208,6 +233,6 @@ mod test {
         assert!(sources[0].source_text.is_empty());
         assert_eq!(sources[0].start, 104);
         assert_eq!(sources[1].source_text.trim(), r#"console.log("Hi");"#);
-        assert_eq!(sources[1].start, 122);
+        assert_eq!(sources[1].start, 123);
     }
 }

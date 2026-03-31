@@ -6,7 +6,7 @@ use crate::loader::JavaScriptSource;
 
 use super::{
     COMMENT_END, COMMENT_START, SCRIPT_END, SCRIPT_START, find_script_closing_angle,
-    find_script_start,
+    find_script_start, trim_script_block_newlines,
 };
 
 pub struct SveltePartialLoader<'a> {
@@ -59,12 +59,14 @@ impl<'a> SveltePartialLoader<'a> {
         let is_ts = content.contains("ts");
 
         *pointer += offset + 1;
-        let js_start = *pointer;
+        let mut js_start = *pointer;
 
         // find "</script>"
         let offset = script_end_finder.find(&self.source_text.as_bytes()[*pointer..])?;
-        let js_end = *pointer + offset;
+        let mut js_end = *pointer + offset;
         *pointer += offset + SCRIPT_END.len();
+
+        trim_script_block_newlines(self.source_text.as_bytes(), &mut js_start, &mut js_end);
 
         let source_text = &self.source_text[js_start..js_end];
         let source_type = SourceType::mjs().with_typescript(is_ts);
@@ -108,6 +110,20 @@ mod test {
         let result = parse_svelte(source_text);
         assert_eq!(result.source_text, "b");
         assert_eq!(result.start, 79);
+    }
+
+    #[test]
+    fn test_leading_newline_trimmed() {
+        let source_text = "<script>\nimport { onMount } from 'svelte';\n</script>";
+        let result = parse_svelte(source_text);
+        assert_eq!(result.source_text, "import { onMount } from 'svelte';");
+    }
+
+    #[test]
+    fn test_leading_newline_trimmed_crlf() {
+        let source_text = "<script>\r\nimport { onMount } from 'svelte';\r\n</script>";
+        let result = parse_svelte(source_text);
+        assert_eq!(result.source_text, "import { onMount } from 'svelte';");
     }
 
     #[test]
