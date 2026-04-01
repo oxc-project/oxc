@@ -825,22 +825,46 @@ impl<'a> Checker<'a> {
         self.return_type_stack.pop();
     }
 
-    /// Check a class declaration's method bodies.
+    /// Check a class declaration's members: method bodies and property initializers.
     fn check_class_declaration(&mut self, class: &oxc_ast::ast::Class<'a>) {
         for element in &class.body.body {
             use oxc_ast::ast::ClassElement;
-            if let ClassElement::MethodDefinition(method) = element {
-                if let Some(body) = &method.value.body {
-                    let return_type = method
-                        .value
-                        .return_type
-                        .as_ref()
-                        .map(|rt| self.get_type_from_type_node(&rt.type_annotation));
-                    self.check_body_statements(&body.statements, return_type);
+            match element {
+                ClassElement::MethodDefinition(method) => {
+                    if let Some(body) = &method.value.body {
+                        let return_type = method
+                            .value
+                            .return_type
+                            .as_ref()
+                            .map(|rt| self.get_type_from_type_node(&rt.type_annotation));
+                        self.check_body_statements(&body.statements, return_type);
+                    }
                 }
+                ClassElement::PropertyDefinition(prop) => {
+                    let declared_type = prop
+                        .type_annotation
+                        .as_ref()
+                        .map(|ann| self.get_type_from_type_node(&ann.type_annotation));
+
+                    let init_type = prop
+                        .value
+                        .as_ref()
+                        .map(|init| self.check_expression(init, declared_type));
+
+                    if let (Some(declared_type), Some(init_type)) = (declared_type, init_type) {
+                        let label_span = prop.key.span();
+                        self.check_type_assignable_to_and_report(
+                            init_type,
+                            declared_type,
+                            label_span,
+                            "2322",
+                            |s, t| format!("Type '{s}' is not assignable to type '{t}'."),
+                        );
+                    }
+                }
+                _ => {}
             }
         }
-        // TODO: check property initializer types against annotations
         // TODO: check that abstract members are implemented in subclasses
     }
 
