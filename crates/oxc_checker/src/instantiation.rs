@@ -1,6 +1,6 @@
 use oxc_types::{
     ObjectFlags, ParameterInfo, PropertyInfo, Signature, StructuredType, StructuredTypeKind,
-    TypeData, TypeFlags, TypeId, build_member_map,
+    TypeData, TypeFlags, TypeId, sort_properties,
 };
 use smallvec::SmallVec;
 
@@ -114,10 +114,11 @@ impl<'a> Checker<'a> {
 
         // Dispatch based on target type kind
         match self.type_arena.get_data(target) {
-            TypeData::Structured(StructuredType {
-                kind: StructuredTypeKind::Interface { all_type_parameters, .. },
-                ..
-            }) => {
+            TypeData::Structured(s) => {
+                let StructuredTypeKind::Interface { all_type_parameters, .. } = &s.kind else {
+                    self.instantiation_cache.insert(type_ref_id, target);
+                    return target;
+                };
                 let Some(mapper) = TypeMapper::from_type_parameters(all_type_parameters, type_args)
                 else {
                     self.instantiation_cache.insert(type_ref_id, target);
@@ -128,7 +129,7 @@ impl<'a> Checker<'a> {
                 let TypeData::Structured(s) = self.type_arena.get_data(target) else {
                     unreachable!()
                 };
-                let instantiated_props: Vec<PropertyInfo> = s
+                let mut instantiated_props: Vec<PropertyInfo> = s
                     .properties
                     .iter()
                     .map(|p| PropertyInfo {
@@ -136,9 +137,10 @@ impl<'a> Checker<'a> {
                         type_id: self.instantiate_type(p.type_id, &mapper),
                         optional: p.optional,
                         readonly: p.readonly,
+                        decl_order: 0,
                     })
                     .collect();
-                let member_map = build_member_map(&instantiated_props);
+                sort_properties(&mut instantiated_props);
 
                 // Instantiate base types through the mapper so that
                 // `interface Child<T> extends Base<T>` instantiated as
@@ -156,9 +158,8 @@ impl<'a> Checker<'a> {
                 let resolved_id = self.type_arena.new_type(
                     TypeFlags::Object,
                     ObjectFlags::Interface,
-                    TypeData::Structured(StructuredType {
+                    TypeData::Structured(Box::new(StructuredType {
                         properties: instantiated_props,
-                        member_map,
                         string_index_type: None,
                         number_index_type: None,
                         call_signatures: Vec::new(),
@@ -170,7 +171,7 @@ impl<'a> Checker<'a> {
                             this_type: None,
                             resolved_base_types: instantiated_base_types,
                         },
-                    }),
+                    })),
                     None,
                 );
 
@@ -344,30 +345,19 @@ impl Checker<'_> {
                     return type_id; // no change
                 }
 
-                self.type_arena.new_type(
-                    TypeFlags::Object,
-                    oxc_types::ObjectFlags::None,
-                    TypeData::TypeReference(oxc_types::TypeReferenceType {
-                        target,
-                        resolved_type_arguments: new_args,
-                    }),
-                    None,
-                )
+                let Some(target) = target else { return type_id };
+                self.get_or_create_type_reference(target, new_args)
             }
 
             TypeData::Structured(s) => {
-                let properties = s.properties.clone();
-                let call_sigs = s.call_signatures.clone();
-                let construct_sigs = s.construct_signatures.clone();
-                let kind = s.kind.clone();
                 let string_index_type = s.string_index_type;
                 let number_index_type = s.number_index_type;
                 self.instantiate_structured_type(
                     type_id,
-                    &properties,
-                    &call_sigs,
-                    &construct_sigs,
-                    &kind,
+                    &s.properties,
+                    &s.call_signatures,
+                    &s.construct_signatures,
+                    &s.kind,
                     string_index_type,
                     number_index_type,
                     mapper,
@@ -400,7 +390,7 @@ impl Checker<'_> {
                 self.type_arena.new_type(
                     TypeFlags::Object,
                     obj_flags,
-                    TypeData::Function(oxc_types::FunctionType { signatures: sigs }),
+                    TypeData::Function(Box::new(oxc_types::FunctionType { signatures: sigs })),
                     None,
                 )
             }
@@ -482,7 +472,7 @@ impl Checker<'_> {
                 self.type_arena.new_type(
                     TypeFlags::Object,
                     obj_flags,
-                    TypeData::Tuple(oxc_types::TupleType {
+                    TypeData::Tuple(Box::new(oxc_types::TupleType {
                         target: tuple.target,
                         resolved_type_arguments: type_arguments,
                         min_length: tuple.min_length,
@@ -490,7 +480,7 @@ impl Checker<'_> {
                         combined_flags: tuple.combined_flags,
                         readonly: tuple.readonly,
                         element_infos: new_elements,
-                    }),
+                    })),
                     None,
                 )
             }
@@ -537,7 +527,7 @@ impl Checker<'_> {
     ) -> TypeId {
         let mut changed = false;
 
-        let new_props: Vec<PropertyInfo> = properties
+        let mut new_props: Vec<PropertyInfo> = properties
             .iter()
             .map(|p| {
                 let new_type_id = self.instantiate_type(p.type_id, mapper);
@@ -549,6 +539,7 @@ impl Checker<'_> {
                     type_id: new_type_id,
                     optional: p.optional,
                     readonly: p.readonly,
+                    decl_order: 0,
                 }
             })
             .collect();
@@ -622,18 +613,18 @@ impl Checker<'_> {
             return type_id;
         }
 
+        sort_properties(&mut new_props);
         self.type_arena.new_type(
             TypeFlags::Object,
             oxc_types::ObjectFlags::None,
-            TypeData::Structured(StructuredType {
-                member_map: build_member_map(&new_props),
+            TypeData::Structured(Box::new(StructuredType {
                 properties: new_props,
                 string_index_type,
                 number_index_type,
                 call_signatures: new_call_sigs,
                 construct_signatures: new_construct_sigs,
                 kind: new_kind,
-            }),
+            })),
             None,
         )
     }
@@ -742,14 +733,9 @@ impl Checker<'_> {
                         optional_mod,
                         outer_mapper,
                     );
-                    let result = self.type_arena.new_type(
-                        TypeFlags::Object,
-                        ObjectFlags::Reference,
-                        TypeData::TypeReference(oxc_types::TypeReferenceType {
-                            target: Some(self.array_type),
-                            resolved_type_arguments: smallvec::smallvec![mapped_elem],
-                        }),
-                        None,
+                    let result = self.get_or_create_type_reference(
+                        self.array_type,
+                        smallvec::smallvec![mapped_elem],
                     );
                     self.mapped_type_cache.insert(cache_key, result);
                     return result;
@@ -826,7 +812,7 @@ impl Checker<'_> {
                 let result = self.type_arena.new_type(
                     TypeFlags::Object,
                     ObjectFlags::Tuple,
-                    TypeData::Tuple(oxc_types::TupleType {
+                    TypeData::Tuple(Box::new(oxc_types::TupleType {
                         target: None,
                         resolved_type_arguments: type_arguments,
                         element_infos: new_elements,
@@ -834,7 +820,7 @@ impl Checker<'_> {
                         fixed_length,
                         combined_flags,
                         readonly: new_readonly,
-                    }),
+                    })),
                     None,
                 );
                 self.mapped_type_cache.insert(cache_key, result);

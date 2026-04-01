@@ -165,7 +165,9 @@ impl Checker<'_> {
                 .properties
                 .iter()
                 .filter_map(|t_prop| {
-                    s_struct.member_map.get(&t_prop.name).map(|&s_type| (s_type, t_prop.type_id))
+                    s_struct
+                        .find_property(&t_prop.name)
+                        .map(|p| (p.type_id, t_prop.type_id))
                 })
                 .collect();
             for (s_type, t_type) in prop_pairs {

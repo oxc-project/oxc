@@ -16,7 +16,7 @@ use oxc_syntax::symbol::SymbolId;
 use oxc_types::{
     FunctionType, ObjectFlags, ParameterInfo, PropertyInfo, Signature, SignatureFlags,
     StructuredType, StructuredTypeKind, TypeArena, TypeData, TypeFlags, TypeId, TypeParameterType,
-    UnionType, build_member_map,
+    TypeReferenceType, UnionType, sort_properties,
 };
 use smallvec::SmallVec;
 
@@ -118,6 +118,11 @@ pub struct Checker<'a> {
     /// Cache for deduplicating intersection types. Key preserves constituent
     /// order (unlike unions which are sorted), matching tsgo's approach.
     intersection_types: FxHashMap<SmallVec<[TypeId; 4]>, TypeId>,
+
+    /// Cache for deduplicating TypeReference types. Key is (target, type_args).
+    /// Ensures `Array<string>` is one TypeId regardless of how many code paths
+    /// create it (type annotation, array literal inference, mapper instantiation).
+    type_reference_types: FxHashMap<(TypeId, SmallVec<[TypeId; 4]>), TypeId>,
 
     /// Cache for deduplicating string literal types. Key is the string value.
     string_literal_types: FxHashMap<CompactStr, TypeId>,
@@ -325,15 +330,14 @@ impl<'a> Checker<'a> {
         let empty_object_type = type_arena.new_type(
             TypeFlags::Object,
             ObjectFlags::Anonymous,
-            TypeData::Structured(StructuredType {
-                member_map: FxHashMap::default(),
+            TypeData::Structured(Box::new(StructuredType {
                 properties: Vec::new(),
                 string_index_type: None,
                 number_index_type: None,
                 call_signatures: Vec::new(),
                 construct_signatures: Vec::new(),
                 kind: StructuredTypeKind::Anonymous { target: None },
-            }),
+            })),
             None,
         );
 
@@ -382,6 +386,7 @@ impl<'a> Checker<'a> {
             recursion_depth: 0,
             union_types: FxHashMap::default(),
             intersection_types: FxHashMap::default(),
+            type_reference_types: FxHashMap::default(),
             string_literal_types: FxHashMap::default(),
             number_literal_types: FxHashMap::default(),
             bigint_literal_types: FxHashMap::default(),
@@ -1072,9 +1077,9 @@ impl<'a> Checker<'a> {
         while i < types.len() {
             if self.type_arena.get_flags(types[i]).intersects(TypeFlags::Intersection) {
                 if let TypeData::Intersection(inter) = self.type_arena.get_data(types[i]) {
-                    let children: SmallVec<[TypeId; 4]> = inter.types.clone();
+                    let children = &inter.types;
                     types.remove(i);
-                    for (j, child) in children.into_iter().enumerate() {
+                    for (j, &child) in children.iter().enumerate() {
                         types.insert(i + j, child);
                     }
                     continue; // re-check at same index
@@ -1182,6 +1187,49 @@ impl<'a> Checker<'a> {
         *type_id
     }
 
+    /// Create a deduplicated TypeReference for a generic instantiation.
+    ///
+    /// If a TypeReference with the same `(target, type_args)` already exists,
+    /// returns the existing TypeId. Otherwise creates a new one.
+    /// Follows the same dedup pattern as `get_or_create_union_type`.
+    pub fn get_or_create_type_reference(
+        &mut self,
+        target: TypeId,
+        type_args: SmallVec<[TypeId; 4]>,
+    ) -> TypeId {
+        let key = (target, type_args);
+        if let Some(&existing) = self.type_reference_types.get(&key) {
+            return existing;
+        }
+
+        let has_instantiable = key.1.iter().any(|&t| {
+            let f = self.type_arena.get_flags(t);
+            f.intersects(TypeFlags::Instantiable)
+                || self
+                    .type_arena
+                    .get_object_flags(t)
+                    .intersects(ObjectFlags::CouldContainTypeVariables)
+        });
+        let obj_flags = ObjectFlags::Reference
+            | if has_instantiable {
+                ObjectFlags::CouldContainTypeVariables
+            } else {
+                ObjectFlags::None
+            };
+
+        let type_id = self.type_arena.new_type(
+            TypeFlags::Object,
+            obj_flags,
+            TypeData::TypeReference(TypeReferenceType {
+                target: Some(target),
+                resolved_type_arguments: key.1.clone(),
+            }),
+            None,
+        );
+        self.type_reference_types.insert(key, type_id);
+        type_id
+    }
+
     /// Get or create a deduplicated string literal type.
     pub fn get_or_create_string_literal_type(&mut self, value: &str) -> TypeId {
         let key = CompactStr::new(value);
@@ -1275,14 +1323,12 @@ impl<'a> Checker<'a> {
 
         if flags.intersects(TypeFlags::Union) {
             if let TypeData::Union(u) = self.type_arena.get_data(filtered) {
-                let members = u.types.clone();
-                return members.iter().all(|&t| self.is_valid_spread_type(t));
+                return u.types.iter().all(|&t| self.is_valid_spread_type(t));
             }
         }
         if flags.intersects(TypeFlags::Intersection) {
             if let TypeData::Intersection(i) = self.type_arena.get_data(filtered) {
-                let members = i.types.clone();
-                return members.iter().all(|&t| self.is_valid_spread_type(t));
+                return i.types.iter().all(|&t| self.is_valid_spread_type(t));
             }
         }
 
@@ -1384,7 +1430,7 @@ impl<'a> Checker<'a> {
 
         let right_entries: Vec<(CompactStr, TypeId, bool, bool)> =
             if let TypeData::Structured(s) = self.type_arena.get_data(right) {
-                s.properties
+                s.properties_in_decl_order()
                     .iter()
                     .map(|p| (p.name.clone(), p.type_id, p.optional, p.readonly))
                     .collect()
@@ -1394,7 +1440,7 @@ impl<'a> Checker<'a> {
 
         let left_entries: Vec<(CompactStr, TypeId, bool, bool)> =
             if let TypeData::Structured(s) = self.type_arena.get_data(left) {
-                s.properties
+                s.properties_in_decl_order()
                     .iter()
                     .map(|p| (p.name.clone(), p.type_id, p.optional, p.readonly))
                     .collect()
@@ -1467,21 +1513,21 @@ impl<'a> Checker<'a> {
             }
         };
 
+        sort_properties(&mut result_props);
         self.type_arena.new_type(
             TypeFlags::Object,
             ObjectFlags::Anonymous
                 | ObjectFlags::ObjectLiteral
                 | ObjectFlags::ContainsObjectOrArrayLiteral
                 | ObjectFlags::ContainsSpread,
-            TypeData::Structured(StructuredType {
-                member_map: build_member_map(&result_props),
+            TypeData::Structured(Box::new(StructuredType {
                 properties: result_props,
                 string_index_type: string_index,
                 number_index_type: number_index,
                 call_signatures: Vec::new(),
                 construct_signatures: Vec::new(),
                 kind: StructuredTypeKind::Anonymous { target: None },
-            }),
+            })),
             None,
         )
     }
@@ -1735,7 +1781,7 @@ impl<'a> Checker<'a> {
         self.type_arena.new_type(
             TypeFlags::Object,
             obj_flags,
-            TypeData::Function(FunctionType { signatures: smallvec::smallvec![signature] }),
+            TypeData::Function(Box::new(FunctionType { signatures: smallvec::smallvec![signature] })),
             None,
         )
     }
@@ -1749,15 +1795,14 @@ impl<'a> Checker<'a> {
         self.type_arena.new_type(
             TypeFlags::Object,
             obj_flags,
-            TypeData::Structured(StructuredType {
+            TypeData::Structured(Box::new(StructuredType {
                 properties: Vec::new(),
-                member_map: FxHashMap::default(),
                 string_index_type: None,
                 number_index_type: None,
                 call_signatures: Vec::new(),
                 construct_signatures: vec![signature],
                 kind: StructuredTypeKind::Anonymous { target: None },
-            }),
+            })),
             None,
         )
     }

@@ -8,11 +8,12 @@ use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 use oxc_syntax::symbol::SymbolId;
 use oxc_types::{
     LiteralType, ObjectFlags, PropertyInfo, StructuredType, StructuredTypeKind, TypeData,
-    TypeFlags, TypeId, build_member_map,
+    TypeFlags, TypeId, sort_properties,
 };
 use smallvec::SmallVec;
 
 use crate::Checker;
+use crate::instantiation::TypeMapper;
 
 /// Selects which error reporter `check_non_null_type_with_reporter` uses.
 /// Mirrors tsgo's function-pointer approach to `checkNonNullTypeWithReporter`.
@@ -789,6 +790,7 @@ impl Checker<'_> {
                                     type_id: prop_type,
                                     optional: prop.optional,
                                     readonly: prop.readonly,
+                                    decl_order: 0,
                                 });
                             }
                         }
@@ -828,18 +830,18 @@ impl Checker<'_> {
                     });
                 }
 
+                sort_properties(&mut properties);
                 self.type_arena.new_type(
                     TypeFlags::Object,
                     ObjectFlags::Anonymous,
-                    TypeData::Structured(StructuredType {
-                        member_map: build_member_map(&properties),
+                    TypeData::Structured(Box::new(StructuredType {
                         properties,
                         string_index_type: None,
                         number_index_type: None,
                         call_signatures: Vec::new(),
                         construct_signatures,
                         kind: StructuredTypeKind::Anonymous { target: None },
-                    }),
+                    })),
                     Some((self.file_idx, symbol_id)),
                 )
             }
@@ -855,18 +857,18 @@ impl Checker<'_> {
                     let member_type = self.compute_enum_member_value(member, &mut auto_value);
                     properties.push(PropertyInfo::new(CompactStr::new(&name), member_type));
                 }
+                sort_properties(&mut properties);
                 self.type_arena.new_type(
                     TypeFlags::Object,
                     ObjectFlags::Anonymous,
-                    TypeData::Structured(StructuredType {
-                        member_map: build_member_map(&properties),
+                    TypeData::Structured(Box::new(StructuredType {
                         properties,
                         string_index_type: None,
                         number_index_type: None,
                         call_signatures: Vec::new(),
                         construct_signatures: Vec::new(),
                         kind: StructuredTypeKind::Anonymous { target: None },
-                    }),
+                    })),
                     Some((self.file_idx, symbol_id)),
                 )
             }
@@ -1230,19 +1232,19 @@ impl Checker<'_> {
     }
 
     /// Create a fresh object literal type from a list of properties.
-    fn create_object_literal_type(&mut self, properties: Vec<PropertyInfo>) -> TypeId {
+    fn create_object_literal_type(&mut self, mut properties: Vec<PropertyInfo>) -> TypeId {
+        sort_properties(&mut properties);
         self.type_arena.new_type(
             TypeFlags::Object,
             ObjectFlags::Anonymous | ObjectFlags::ObjectLiteral | ObjectFlags::FreshLiteral,
-            TypeData::Structured(StructuredType {
-                member_map: build_member_map(&properties),
+            TypeData::Structured(Box::new(StructuredType {
                 properties,
                 string_index_type: None,
                 number_index_type: None,
                 call_signatures: Vec::new(),
                 construct_signatures: Vec::new(),
                 kind: StructuredTypeKind::Anonymous { target: None },
-            }),
+            })),
             None,
         )
     }
@@ -1352,9 +1354,8 @@ impl Checker<'_> {
         // Property exists if found in ANY constituent (opposite of unions).
         if flags.intersects(TypeFlags::Intersection) {
             if let TypeData::Intersection(i) = self.type_arena.get_data(type_id) {
-                let constituents: SmallVec<[TypeId; 4]> = i.types.clone();
                 let mut prop_types = Vec::new();
-                for &member in &constituents {
+                for &member in i.types.iter() {
                     if let Some(prop) = self.get_property_of_type(member, name) {
                         if prop != self.any_type
                             || self.type_arena.get_flags(member).intersects(TypeFlags::Any)
@@ -1373,36 +1374,109 @@ impl Checker<'_> {
             }
         }
 
-        // TypeReference: resolve to instantiated type first (cached)
-        let resolved_id = if let TypeData::TypeReference(_) = self.type_arena.get_data(type_id) {
-            self.resolve_type_reference(type_id)
-        } else {
-            type_id
-        };
-
-        // O(1) HashMap lookup on resolved type
-        match self.type_arena.get_data(resolved_id) {
-            TypeData::Structured(s) => {
-                if let Some(&prop_type) = s.member_map.get(name) {
-                    return Some(prop_type);
-                }
-                // Walk base types (interface inheritance)
-                if let StructuredTypeKind::Interface { resolved_base_types, .. } = &s.kind {
-                    for base in resolved_base_types.iter() {
-                        if let Some(prop) = self.get_property_of_type(*base, name) {
-                            return Some(prop);
-                        }
-                    }
-                }
-                // Fall back to index signature
-                if let Some(idx_type) = s.string_index_type {
-                    return Some(idx_type);
-                }
+        // TypeReference: lazy per-property resolution (avoids materializing all properties).
+        // Check instantiation_cache first — if another path (assignability, keyof) already
+        // resolved this TypeReference eagerly, reuse that for O(1) lookup.
+        if let TypeData::TypeReference(_) = self.type_arena.get_data(type_id) {
+            if let Some(&cached) = self.instantiation_cache.get(&type_id) {
+                return self.get_property_of_structured(cached, name);
             }
-            _ => {}
+            return self.get_property_of_type_reference(type_id, name);
         }
 
+        // Direct property lookup on StructuredType (object literals, resolved interfaces, etc.)
+        self.get_property_of_structured(type_id, name)
+    }
+
+    /// Property lookup on a concrete StructuredType (not a TypeReference).
+    /// Checks own properties, walks base types, falls back to index signature.
+    fn get_property_of_structured(&mut self, type_id: TypeId, name: &str) -> Option<TypeId> {
+        let TypeData::Structured(s) = self.type_arena.get_data(type_id) else {
+            return None;
+        };
+        if let Some(prop) = s.find_property(name) {
+            return Some(prop.type_id);
+        }
+        if let StructuredTypeKind::Interface { resolved_base_types, .. } = &s.kind {
+            for base in resolved_base_types.iter() {
+                if let Some(prop) = self.get_property_of_type(*base, name) {
+                    return Some(prop);
+                }
+            }
+        }
+        if let Some(idx_type) = s.string_index_type {
+            return Some(idx_type);
+        }
         None
+    }
+
+    /// Lazy per-property resolution for TypeReferences.
+    ///
+    /// Instead of materializing all properties via `resolve_type_reference`,
+    /// looks up the single requested property on the uninstantiated target
+    /// and instantiates only that property's type through the mapper.
+    ///
+    /// Falls back to `resolve_type_reference` for non-Structured targets.
+    ///
+    /// Note: this path only handles property lookups. Call/construct signatures
+    /// on TypeReferences still require `resolve_type_reference` (accessed through
+    /// separate code paths in assignability and inference).
+    fn get_property_of_type_reference(
+        &mut self,
+        type_ref_id: TypeId,
+        name: &str,
+    ) -> Option<TypeId> {
+        let TypeData::TypeReference(tr) = self.type_arena.get_data(type_ref_id) else {
+            return None;
+        };
+        let target = tr.target?;
+        let type_args: SmallVec<[TypeId; 4]> = tr.resolved_type_arguments.clone();
+
+        let TypeData::Structured(s) = self.type_arena.get_data(target) else {
+            // Non-structured target — fall back to eager resolve
+            let resolved = self.resolve_type_reference(type_ref_id);
+            return self.get_property_of_type(resolved, name);
+        };
+
+        // Extract everything from arena in one pass before calling &mut self methods.
+        let prop_type = s.find_property(name).map(|p| p.type_id);
+        let string_idx = s.string_index_type;
+        let (type_params, base_types) = match &s.kind {
+            StructuredTypeKind::Interface { all_type_parameters, resolved_base_types, .. } => {
+                (all_type_parameters.clone(), resolved_base_types.clone())
+            }
+            StructuredTypeKind::Anonymous { .. } => {
+                // No type params — direct lookup, no mapper needed
+                return prop_type.or(string_idx);
+            }
+        };
+
+        let mapper = TypeMapper::from_type_parameters(&type_params, &type_args);
+
+        // Own property
+        if let Some(pt) = prop_type {
+            return Some(match &mapper {
+                Some(m) => self.instantiate_type(pt, m),
+                None => pt,
+            });
+        }
+
+        // Base types
+        for &base in &base_types {
+            let instantiated_base = match &mapper {
+                Some(m) => self.instantiate_type(base, m),
+                None => base,
+            };
+            if let Some(prop) = self.get_property_of_type(instantiated_base, name) {
+                return Some(prop);
+            }
+        }
+
+        // Index signature fallback
+        string_idx.map(|idx| match &mapper {
+            Some(m) => self.instantiate_type(idx, m),
+            None => idx,
+        })
     }
 
     /// Resolve the type of `this` by walking up AST ancestors from the given node.
@@ -1495,14 +1569,9 @@ impl Checker<'_> {
             if self.array_type == self.any_type {
                 return self.any_type;
             }
-            return self.type_arena.new_type(
-                TypeFlags::Object,
-                ObjectFlags::Reference,
-                TypeData::TypeReference(oxc_types::TypeReferenceType {
-                    target: Some(self.array_type),
-                    resolved_type_arguments: smallvec::smallvec![self.never_type],
-                }),
-                None,
+            return self.get_or_create_type_reference(
+                self.array_type,
+                smallvec::smallvec![self.never_type],
             );
         }
 
@@ -1515,15 +1584,7 @@ impl Checker<'_> {
             return self.any_type;
         }
 
-        self.type_arena.new_type(
-            TypeFlags::Object,
-            ObjectFlags::Reference,
-            TypeData::TypeReference(oxc_types::TypeReferenceType {
-                target: Some(self.array_type),
-                resolved_type_arguments: smallvec::smallvec![elem_type],
-            }),
-            None,
-        )
+        self.get_or_create_type_reference(self.array_type, smallvec::smallvec![elem_type])
     }
 
     /// Check an array literal against a tuple contextual type.
@@ -1581,7 +1642,7 @@ impl Checker<'_> {
         self.type_arena.new_type(
             TypeFlags::Object,
             ObjectFlags::Tuple | ObjectFlags::Reference,
-            TypeData::Tuple(oxc_types::TupleType {
+            TypeData::Tuple(Box::new(oxc_types::TupleType {
                 target: None,
                 resolved_type_arguments: element_types,
                 element_infos,
@@ -1589,7 +1650,7 @@ impl Checker<'_> {
                 fixed_length,
                 combined_flags: oxc_types::ElementFlags::Required,
                 readonly: false,
-            }),
+            })),
             None,
         )
     }

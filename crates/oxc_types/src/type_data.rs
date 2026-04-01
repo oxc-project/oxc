@@ -1,7 +1,6 @@
 use std::sync::Arc;
 
 use oxc_span::CompactStr;
-use rustc_hash::FxHashMap;
 use smallvec::SmallVec;
 
 use crate::TypeId;
@@ -28,13 +27,23 @@ pub enum TypeData {
     /// Structured type: object literal, interface, or class with properties.
     /// Unifies the old Object and Interface variants. The `kind` field on
     /// `StructuredType` distinguishes anonymous objects from named interfaces.
-    Structured(StructuredType),
+    ///
+    /// Boxed to keep the `TypeData` enum compact (~56 bytes instead of 208).
+    /// `StructuredType` is the largest variant (208 bytes) due to its Vec/HashMap
+    /// fields, but represents only ~15% of types in a typical codebase. Boxing
+    /// avoids penalizing the 85% of types that are small (intrinsics, literals,
+    /// unions, type parameters, etc.).
+    Structured(Box<StructuredType>),
 
     /// Type reference: instantiation of a generic type or interface.
     TypeReference(TypeReferenceType),
 
     /// Tuple type: `[string, number, ...boolean[]]`.
-    Tuple(TupleType),
+    ///
+    /// Boxed because `TupleType` (72 bytes) would otherwise dominate the enum
+    /// size. Tuples already heap-allocate their element_infos Vec, so the extra
+    /// Box indirection is negligible.
+    Tuple(Box<TupleType>),
 
     /// Mapped type: `{ [K in keyof T]: V }`.
     Mapped(MappedType),
@@ -77,7 +86,11 @@ pub enum TypeData {
 
     /// Function type (arrow function, function expression, function declaration).
     /// Most functions have exactly 1 call signature.
-    Function(FunctionType),
+    ///
+    /// Boxed because `FunctionType` (72 bytes) would otherwise be the largest
+    /// unboxed variant. Functions with 1 signature already heap-allocate their
+    /// parameters Vec, so the extra Box is negligible.
+    Function(Box<FunctionType>),
 }
 
 // ---------------------------------------------------------------------------
@@ -117,37 +130,55 @@ pub struct UniqueESSymbolType {
 /// Corresponds to tsgo's `Symbol` with `SymbolFlagsProperty`. Stores the
 /// property name, type, and modifier flags (optional, readonly) needed for
 /// mapped type modifier inheritance (`-?`, `-readonly`).
+///
+/// Properties in a `StructuredType` are sorted by name for O(log N) binary
+/// search lookup. The `decl_order` field preserves the original declaration
+/// order for display purposes (error messages, type-to-string conversion).
 #[derive(Debug, Clone)]
 pub struct PropertyInfo {
     pub name: CompactStr,
     pub type_id: TypeId,
     pub optional: bool,
     pub readonly: bool,
+    /// Original declaration position (0-based). Used to reconstruct source
+    /// order when displaying the type. Fits in existing struct padding, so
+    /// `PropertyInfo` remains 32 bytes.
+    pub decl_order: u16,
 }
 
 impl PropertyInfo {
     /// Create a required, non-readonly property.
     pub fn new(name: CompactStr, type_id: TypeId) -> Self {
-        Self { name, type_id, optional: false, readonly: false }
+        Self { name, type_id, optional: false, readonly: false, decl_order: 0 }
     }
 }
 
 /// A structured type: object literal, interface, or class with properties.
 ///
 /// Unifies tsgo's `ObjectType` and `InterfaceType`. Shared fields (properties,
-/// member_map, signatures, index types) live directly on this struct. The
-/// `kind` field carries variant-specific data (interface type parameters,
-/// base types, etc.). This eliminates duplicate match arms throughout the
-/// checker — code that just needs properties works on `&StructuredType`
-/// without caring whether it's an object or interface.
+/// signatures, index types) live directly on this struct. The `kind` field
+/// carries variant-specific data (interface type parameters, base types, etc.).
+/// This eliminates duplicate match arms throughout the checker — code that
+/// just needs properties works on `&StructuredType` without caring whether
+/// it's an object or interface.
+///
+/// Properties are sorted by name for O(log N) binary search lookup, replacing
+/// the previous `FxHashMap<CompactStr, TypeId>` member map. This eliminates
+/// per-property name duplication and reduces `StructuredType` size by 48 bytes.
+/// Original declaration order is preserved via `PropertyInfo::decl_order`.
 ///
 /// Follows the same pattern as `FlowEntry { kind: FlowNodeKind }`.
 #[derive(Debug, Clone)]
 pub struct StructuredType {
-    /// Named properties, ordered.
+    /// Named properties, **sorted by name** for binary search lookup.
+    /// Use [`StructuredType::find_property`] for O(log N) name lookup.
+    ///
+    /// **Warning**: Iterating this field directly yields alphabetical order,
+    /// NOT declaration order. When building a new type from these properties
+    /// or displaying them, use [`StructuredType::properties_in_decl_order`]
+    /// to get the original source ordering.
+    /// Use [`StructuredType::properties_in_decl_order`] for display.
     pub properties: Vec<PropertyInfo>,
-    /// Property lookup map: O(1) access by name.
-    pub member_map: FxHashMap<CompactStr, TypeId>,
     /// String index signature value type: `{ [key: string]: T }` → T.
     pub string_index_type: Option<TypeId>,
     /// Number index signature value type: `{ [idx: number]: T }` → T.
@@ -467,9 +498,43 @@ pub struct FunctionType {
     pub signatures: SmallVec<[Signature; 1]>,
 }
 
-/// Build a HashMap from a property list for O(1) name lookup.
-/// Called at type creation time alongside the properties Vec.
-/// Mirrors tsgo's `StructuredType.members` map.
-pub fn build_member_map(properties: &[PropertyInfo]) -> FxHashMap<CompactStr, TypeId> {
-    properties.iter().map(|p| (p.name.clone(), p.type_id)).collect()
+/// Sort a property list by name for binary search lookup.
+///
+/// Assigns `decl_order` to each property based on its current position
+/// (preserving the original declaration order), then sorts by name.
+/// Called at type creation time before storing in `StructuredType`.
+///
+/// Replaces the previous `build_member_map` which created a separate
+/// `FxHashMap<CompactStr, TypeId>` — this eliminates per-property name
+/// duplication and the 48-byte HashMap overhead per type.
+pub fn sort_properties(properties: &mut [PropertyInfo]) {
+    for (i, p) in properties.iter_mut().enumerate() {
+        p.decl_order = i as u16;
+    }
+    properties.sort_by(|a, b| a.name.as_str().cmp(b.name.as_str()));
+}
+
+impl StructuredType {
+    /// Look up a property by name using binary search. O(log N).
+    pub fn find_property(&self, name: &str) -> Option<&PropertyInfo> {
+        self.properties
+            .binary_search_by(|p| p.name.as_str().cmp(name))
+            .ok()
+            .map(|idx| &self.properties[idx])
+    }
+
+    /// Check if a property with the given name exists. O(log N).
+    pub fn has_property(&self, name: &str) -> bool {
+        self.find_property(name).is_some()
+    }
+
+    /// Iterate properties in original declaration order (for display).
+    ///
+    /// Returns an iterator that yields properties sorted by `decl_order`.
+    /// Allocates a temporary sorted index.
+    pub fn properties_in_decl_order(&self) -> Vec<&PropertyInfo> {
+        let mut ordered: Vec<&PropertyInfo> = self.properties.iter().collect();
+        ordered.sort_by_key(|p| p.decl_order);
+        ordered
+    }
 }

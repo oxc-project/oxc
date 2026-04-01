@@ -655,7 +655,7 @@ impl Checker<'_> {
         }
 
         let constituents = match self.type_arena.get_data(type_id) {
-            TypeData::Union(u) => u.types.clone(),
+            TypeData::Union(u) => &u.types,
             _ => return type_id,
         };
 
@@ -747,7 +747,7 @@ impl Checker<'_> {
         assume_eq: bool,
     ) -> TypeId {
         let constituents = match self.type_arena.get_data(type_id) {
-            TypeData::Union(u) => u.types.clone(), // Arc refcount bump
+            TypeData::Union(u) => &u.types,
             _ => return type_id,
         };
 
@@ -805,13 +805,13 @@ impl Checker<'_> {
         // For unions: check if any constituent of a is comparable with any of b.
         if a_flags.intersects(TypeFlags::Union) {
             if let TypeData::Union(u) = self.type_arena.get_data(a) {
-                let types = u.types.clone();
+                let types = &u.types;
                 return types.iter().any(|&t| self.are_types_comparable(t, b));
             }
         }
         if b_flags.intersects(TypeFlags::Union) {
             if let TypeData::Union(u) = self.type_arena.get_data(b) {
-                let types = u.types.clone();
+                let types = &u.types;
                 return types.iter().any(|&t| self.are_types_comparable(a, t));
             }
         }
@@ -900,7 +900,7 @@ impl Checker<'_> {
         // For unions: map each constituent. For non-unions: map directly.
         if t_flags.intersects(TypeFlags::Union) {
             if let TypeData::Union(u) = self.type_arena.get_data(t) {
-                let types = u.types.clone(); // Arc refcount bump
+                let types = &u.types;
                 let mut narrowed: Vec<TypeId> = Vec::new();
                 for &constituent in types.iter() {
                     let mapped = self.narrow_constituent(constituent, candidate, check_derived);
@@ -988,7 +988,7 @@ impl Checker<'_> {
             // instanceof false: remove types derived from candidate.
             if flags.intersects(TypeFlags::Union) {
                 if let TypeData::Union(u) = self.type_arena.get_data(t) {
-                    let types = u.types.clone(); // Arc refcount bump
+                    let types = &u.types;
                     let filtered: Vec<TypeId> = types
                         .iter()
                         .copied()
@@ -1010,7 +1010,7 @@ impl Checker<'_> {
 
             if flags.intersects(TypeFlags::Union) {
                 if let TypeData::Union(u) = self.type_arena.get_data(t) {
-                    let types = u.types.clone();
+                    let types = &u.types;
                     let filtered: Vec<TypeId> = types
                         .iter()
                         .copied()
@@ -1043,7 +1043,7 @@ impl Checker<'_> {
         // Union source: all constituents must derive.
         if source_flags.intersects(TypeFlags::Union) {
             if let TypeData::Union(u) = self.type_arena.get_data(source) {
-                let types = u.types.clone(); // Arc refcount bump
+                let types = &u.types;
                 return types.iter().all(|&t| self.is_type_derived_from(t, target));
             }
         }
@@ -1051,7 +1051,7 @@ impl Checker<'_> {
         // Union target: some constituent must be a base.
         if target_flags.intersects(TypeFlags::Union) {
             if let TypeData::Union(u) = self.type_arena.get_data(target) {
-                let types = u.types.clone(); // Arc refcount bump
+                let types = &u.types;
                 return types.iter().any(|&t| self.is_type_derived_from(source, t));
             }
         }
@@ -1059,8 +1059,7 @@ impl Checker<'_> {
         // Intersection source: any constituent must derive.
         if source_flags.intersects(TypeFlags::Intersection) {
             if let TypeData::Intersection(i) = self.type_arena.get_data(source) {
-                let types: SmallVec<[TypeId; 4]> = i.types.clone();
-                return types.iter().any(|&t| self.is_type_derived_from(t, target));
+                return i.types.iter().any(|&t| self.is_type_derived_from(t, target));
             }
         }
 

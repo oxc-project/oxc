@@ -232,7 +232,7 @@ impl Relater {
         match c.type_arena.get_data(resolved) {
             TypeData::Structured(s) => {
                 // Direct property lookup
-                if s.member_map.contains_key(name) {
+                if s.has_property(name) {
                     return true;
                 }
                 // String index signature accepts any string key

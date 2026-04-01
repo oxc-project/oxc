@@ -13,7 +13,7 @@
 use oxc_span::CompactStr;
 use oxc_types::{
     MappedTypeModifier, ObjectFlags, PropertyInfo, StructuredType, StructuredTypeKind, TypeData,
-    TypeFlags, TypeId, build_member_map,
+    TypeFlags, TypeId, sort_properties,
 };
 
 use crate::Checker;
@@ -109,6 +109,7 @@ impl Checker<'_> {
                 type_id: final_type,
                 optional: is_optional,
                 readonly: is_readonly,
+                decl_order: 0,
             });
         }
 
@@ -116,23 +117,18 @@ impl Checker<'_> {
     }
 
     /// Look up a property's PropertyInfo from a concrete type by name.
-    /// Uses member_map for O(1) name lookup, then finds the full PropertyInfo.
+    /// Uses binary search for O(log N) name lookup.
     fn get_property_info_of_type(
         &self,
         type_id: TypeId,
         name: &str,
     ) -> Option<(TypeId, bool, bool)> {
-        // Check member_map first for O(1) existence check
-        let (properties, member_map) = match self.type_arena.get_data(type_id) {
-            TypeData::Structured(s) => (&s.properties, &s.member_map),
-            _ => return None,
-        };
-        member_map.get(name)?;
-        // Find full PropertyInfo for flags (member_map only stores TypeId)
-        properties
-            .iter()
-            .find(|p| p.name.as_str() == name)
-            .map(|p| (p.type_id, p.optional, p.readonly))
+        match self.type_arena.get_data(type_id) {
+            TypeData::Structured(s) => {
+                s.find_property(name).map(|p| (p.type_id, p.optional, p.readonly))
+            }
+            _ => None,
+        }
     }
 
     /// Remove `undefined` from a union type. Used by `-?` mapped type modifier.
@@ -161,21 +157,20 @@ impl Checker<'_> {
     pub(crate) fn build_mapped_object_type(
         &mut self,
         target: TypeId,
-        properties: Vec<PropertyInfo>,
+        mut properties: Vec<PropertyInfo>,
     ) -> TypeId {
-        let member_map = build_member_map(&properties);
+        sort_properties(&mut properties);
         self.type_arena.new_type(
             TypeFlags::Object,
             ObjectFlags::Anonymous | ObjectFlags::Mapped,
-            TypeData::Structured(StructuredType {
+            TypeData::Structured(Box::new(StructuredType {
                 properties,
-                member_map,
                 string_index_type: None,
                 number_index_type: None,
                 call_signatures: Vec::new(),
                 construct_signatures: Vec::new(),
                 kind: StructuredTypeKind::Anonymous { target: Some(target) },
-            }),
+            })),
             None,
         )
     }

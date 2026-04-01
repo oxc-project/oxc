@@ -2,7 +2,7 @@ use oxc_span::CompactStr;
 use oxc_syntax::symbol::SymbolId;
 use oxc_types::{
     LiteralType, ObjectFlags, PropertyInfo, Signature, StructuredType, StructuredTypeKind,
-    TypeData, TypeFlags, TypeId, TypeParameterType, build_member_map,
+    TypeData, TypeFlags, TypeId, TypeParameterType, sort_properties,
 };
 use smallvec::SmallVec;
 
@@ -104,6 +104,7 @@ impl Checker<'_> {
                             type_id: prop_type,
                             optional: prop.optional,
                             readonly: prop.readonly,
+                            decl_order: 0,
                         });
                     }
                 }
@@ -133,6 +134,7 @@ impl Checker<'_> {
                             type_id: method_type,
                             optional: method.optional,
                             readonly: false,
+                            decl_order: 0,
                         });
                     }
                 }
@@ -166,11 +168,11 @@ impl Checker<'_> {
             }
         }
 
+        sort_properties(&mut properties);
         self.type_arena.new_type(
             TypeFlags::Object,
             ObjectFlags::Interface,
-            TypeData::Structured(StructuredType {
-                member_map: build_member_map(&properties),
+            TypeData::Structured(Box::new(StructuredType {
                 properties,
                 string_index_type,
                 number_index_type,
@@ -183,7 +185,7 @@ impl Checker<'_> {
                     this_type: None,
                     resolved_base_types,
                 },
-            }),
+            })),
             Some((self.file_idx, symbol_id)),
         )
     }
@@ -272,6 +274,7 @@ impl Checker<'_> {
                             type_id: prop_type,
                             optional: prop.optional,
                             readonly: prop.readonly,
+                            decl_order: 0,
                         });
                     }
                 }
@@ -302,11 +305,11 @@ impl Checker<'_> {
             }
         }
 
+        sort_properties(&mut properties);
         self.type_arena.new_type(
             TypeFlags::Object,
             ObjectFlags::Class,
-            TypeData::Structured(StructuredType {
-                member_map: build_member_map(&properties),
+            TypeData::Structured(Box::new(StructuredType {
                 properties,
                 string_index_type: None,
                 number_index_type: None,
@@ -319,7 +322,7 @@ impl Checker<'_> {
                     this_type: None,
                     resolved_base_types,
                 },
-            }),
+            })),
             Some((self.file_idx, symbol_id)),
         )
     }
