@@ -40,6 +40,8 @@ If your ESLint config is not at the default location, pass the path explicitly:
 npx @oxlint/migrate ./path/to/eslint.config.js
 ```
 
+> **Type-aware rules**: If the source ESLint config used `@typescript-eslint/recommended-type-checked`, `strict-type-checked`, or any other type-aware rules, run with `--type-aware` to preserve that coverage. Without this flag, all type-aware rules are silently skipped. Install `oxlint-tsgolint` after migrating (see Step 3).
+
 ## Step 2: Review Generated Config
 
 After migration, review the generated `.oxlintrc.json`.
@@ -149,6 +151,35 @@ For ESLint plugins without a built-in oxlint equivalent, use the `jsPlugins` fie
 }
 ```
 
+### ESLint Core Rules Not Yet in Oxlint
+
+Some ESLint built-in rules are not yet natively implemented in oxlint (e.g., `no-restricted-syntax`). Rather than keeping a separate ESLint process for these, use [`oxlint-plugin-eslint`](https://oxc.rs/blog/2026-03-11-oxlint-js-plugins-alpha#migrating-from-eslint) — a JS plugin that bundles all ESLint core rules for use inside oxlint.
+
+Install it:
+
+```bash
+npm install -D oxlint-plugin-eslint
+```
+
+Then reference it in `.oxlintrc.json` using the `eslint-js/` namespace:
+
+```json
+{
+  "jsPlugins": ["oxlint-plugin-eslint"],
+  "rules": {
+    "eslint-js/no-restricted-syntax": [
+      "error",
+      {
+        "selector": "TSEnumDeclaration",
+        "message": "Don't declare enums, use unions or lookup objects instead."
+      }
+    ]
+  }
+}
+```
+
+This avoids maintaining a parallel ESLint config and keeps all linting in one tool.
+
 ## Step 5: Update CI and Scripts
 
 Replace ESLint commands with oxlint. Path arguments are optional; oxlint defaults to the current working directory.
@@ -179,7 +210,7 @@ Additional oxlint options:
 
 ## Tips
 
-- You can run alongside ESLint if necessary: Oxlint is designed to complement ESLint during migration, but with JS Plugins many projects can switch over fully without losing many rules.
+- For ESLint core rules not yet natively in oxlint, prefer `oxlint-plugin-eslint` (see Step 4) over keeping a parallel ESLint process — it keeps all linting in one command and avoids ESLint dependencies. Running ESLint alongside oxlint is only necessary when you rely on third-party ESLint plugins that have no oxlint equivalent and do not work as oxlint JS plugins.
 - Disable comments work: `// eslint-disable` and `// eslint-disable-next-line` comments are supported by oxlint. Use `--replace-eslint-comments` when running @oxlint/migrate to convert them to `// oxlint-disable` equivalents if desired.
 - List available rules: Run `npx oxlint --rules` to see all supported rules, or refer to the [rule documentation](https://oxc.rs/docs/guide/usage/linter/rules.html).
 - Schema support: Add `"$schema": "./node_modules/oxlint/configuration_schema.json"` to `.oxlintrc.json` for editor autocompletion if the migration tool didn't do it automatically.
