@@ -22,7 +22,6 @@ use core::slice;
 use core::str;
 use core_alloc::alloc::{Layout, alloc, dealloc};
 
-#[cfg(feature = "allocator-api2")]
 use allocator_api2::alloc::{AllocError, Allocator};
 
 pub use alloc::AllocErr;
@@ -2445,7 +2444,6 @@ unsafe impl<'a, const MIN_ALIGN: usize> alloc::Alloc for &'a Bump<MIN_ALIGN> {
 #[cfg(doctest)]
 fn _doctest_only() {}
 
-#[cfg(feature = "allocator-api2")]
 unsafe impl<'a, const MIN_ALIGN: usize> Allocator for &'a Bump<MIN_ALIGN> {
     #[inline]
     fn allocate(&self, layout: Layout) -> Result<NonNull<[u8]>, AllocError> {
