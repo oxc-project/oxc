@@ -9,7 +9,7 @@
 #[doc(hidden)]
 pub extern crate alloc as core_alloc;
 
-mod alloc;
+use crate::bumpalo_alloc;
 
 use core::cell::Cell;
 use core::cmp::Ordering;
@@ -24,7 +24,7 @@ use core_alloc::alloc::{Layout, alloc, dealloc};
 
 use allocator_api2::alloc::{AllocError, Allocator};
 
-pub use alloc::AllocErr;
+pub use bumpalo_alloc::AllocErr;
 
 /// An error returned from [`Bump::try_alloc_try_with`].
 #[derive(Clone, PartialEq, Eq, Debug)]
@@ -2400,7 +2400,7 @@ fn oom() -> ! {
     panic!("out of memory")
 }
 
-unsafe impl<'a, const MIN_ALIGN: usize> alloc::Alloc for &'a Bump<MIN_ALIGN> {
+unsafe impl<'a, const MIN_ALIGN: usize> bumpalo_alloc::Alloc for &'a Bump<MIN_ALIGN> {
     #[inline(always)]
     unsafe fn alloc(&mut self, layout: Layout) -> Result<NonNull<u8>, AllocErr> {
         self.try_alloc_layout(layout)
@@ -2536,7 +2536,7 @@ mod tests {
     // Uses private `alloc` module.
     #[test]
     fn test_realloc() {
-        use crate::alloc::Alloc;
+        use crate::bumpalo_alloc::Alloc;
 
         unsafe {
             const CAPACITY: usize = DEFAULT_CHUNK_SIZE_WITHOUT_FOOTER;
@@ -2585,7 +2585,7 @@ mod tests {
     // Uses our private `alloc` module.
     #[test]
     fn invalid_read() {
-        use alloc::Alloc;
+        use crate::bumpalo_alloc::Alloc;
 
         let mut b = &Bump::new();
 
