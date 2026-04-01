@@ -408,8 +408,9 @@ impl<'a> Checker<'a> {
         // For each property, collect types from constituents and intersect.
         let mut properties = Vec::with_capacity(all_names.len());
         for name in &all_names {
-            let prop_type = self.get_property_of_type(intersection_id, name);
-            properties.push(PropertyInfo::new(name.clone(), prop_type));
+            if let Some(prop_type) = self.get_property_of_type(intersection_id, name) {
+                properties.push(PropertyInfo::new(name.clone(), prop_type));
+            }
         }
 
         // Merge signatures and index types from all constituents.

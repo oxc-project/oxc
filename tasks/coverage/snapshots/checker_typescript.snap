@@ -2,7 +2,7 @@ commit: 34725489
 
 checker_typescript Summary:
 AST Parsed     : 3811/3811 (100.00%)
-Positive Passed: 415/3811 (10.89%)
+Positive Passed: 419/3811 (10.99%)
 checker: tasks/coverage/typescript/tests/cases/compiler/2dArrays.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/ClassDeclarationWithInvalidConstOnPropertyDeclaration2.ts
@@ -318,8 +318,6 @@ checker: tasks/coverage/typescript/tests/cases/compiler/breakTarget4.ts
 checker: tasks/coverage/typescript/tests/cases/compiler/cachedContextualTypes.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/callOfConditionalTypeWithConcreteBranches.ts
-
-checker: tasks/coverage/typescript/tests/cases/compiler/callSignatureFunctionOverload.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/callsOnComplexSignatures.tsx
 
@@ -1945,8 +1943,6 @@ checker: tasks/coverage/typescript/tests/cases/compiler/genericConstraintOnExten
 
 checker: tasks/coverage/typescript/tests/cases/compiler/genericConstraintOnExtendedBuiltinTypes2.ts
 
-checker: tasks/coverage/typescript/tests/cases/compiler/genericConstructSignatureInInterface.ts
-
 checker: tasks/coverage/typescript/tests/cases/compiler/genericFunctionHasFreshTypeArgs.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/genericFunctionInference2.ts
@@ -2048,8 +2044,6 @@ checker: tasks/coverage/typescript/tests/cases/compiler/homomorphicMappedTypeNes
 checker: tasks/coverage/typescript/tests/cases/compiler/homomorphicMappedTypeWithNonHomomorphicInstantiationSpreadable1.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/icomparable.ts
-
-checker: tasks/coverage/typescript/tests/cases/compiler/idInProp.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/identicalGenericConditionalsWithInferRelated.ts
 
@@ -4084,8 +4078,6 @@ checker: tasks/coverage/typescript/tests/cases/compiler/verifyDefaultLib_webwork
 checker: tasks/coverage/typescript/tests/cases/compiler/visSyntax.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/visibilityOfTypeParameters.ts
-
-checker: tasks/coverage/typescript/tests/cases/compiler/voidConstructor.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/voidFunctionAssignmentCompat.ts
 

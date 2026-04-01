@@ -133,6 +133,16 @@ pub struct Checker<'a> {
     /// `TypeParameter.constraint` field (nil until first access).
     pub(crate) type_param_constraints: FxHashMap<TypeId, TypeId>,
 
+    /// Cache of awaited types. Maps a type to its "awaited" form — the result
+    /// of `await`ing it. `Promise<T>` → `T`, non-promises → themselves.
+    /// Avoids recomputing recursive Promise unwrapping.
+    pub(crate) awaited_type_cache: FxHashMap<TypeId, TypeId>,
+
+    /// Stack of types currently being unwrapped by `get_awaited_type`.
+    /// Used to detect circular self-referencing promises. Mirrors tsgo's
+    /// `awaitedTypeStack` field.
+    pub(crate) awaited_type_stack: Vec<TypeId>,
+
     /// Stack of return types for enclosing functions.
     /// `Some(type_id)` = function has a declared return type annotation.
     /// `None` = function has no return type annotation (returns are unchecked).
@@ -174,6 +184,10 @@ pub struct Checker<'a> {
     pub this_type: TypeId,
     /// Cached global `Array` type for display and array literal creation.
     pub(crate) array_type: TypeId,
+    /// Cached global `Promise` type for await unwrapping.
+    pub(crate) promise_type: Option<TypeId>,
+    /// Cached global `PromiseLike` type for await unwrapping.
+    pub(crate) promise_like_type: Option<TypeId>,
 }
 
 impl<'a> Checker<'a> {
@@ -209,6 +223,8 @@ impl<'a> Checker<'a> {
 
         let symbols_len = semantic.scoping().symbols_len();
         let array_type = host.get_global_type("Array").unwrap_or(intrinsics.any_type);
+        let promise_type = host.get_global_type("Promise");
+        let promise_like_type = host.get_global_type("PromiseLike");
 
         Self {
             semantic,
@@ -232,6 +248,8 @@ impl<'a> Checker<'a> {
             instantiation_cache: FxHashMap::default(),
             mapped_type_cache: FxHashMap::default(),
             type_param_constraints: FxHashMap::default(),
+            awaited_type_cache: FxHashMap::default(),
+            awaited_type_stack: Vec::new(),
             return_type_stack: Vec::new(),
             class_type_stack: Vec::new(),
             current_flow_graph: crate::flow::FlowGraph::empty(),
@@ -252,6 +270,8 @@ impl<'a> Checker<'a> {
             false_type: intrinsics.false_type,
             this_type,
             array_type,
+            promise_type,
+            promise_like_type,
         }
     }
 

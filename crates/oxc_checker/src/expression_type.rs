@@ -140,8 +140,11 @@ impl Checker<'_> {
                 self.get_type_of_computed_member_expression(expr)
             }
 
-            // await expr — simplified: returns operand type directly
-            Expression::AwaitExpression(expr) => self.get_type_of_expression(&expr.argument, None),
+            // await expr — unwrap Promise<T> to T
+            Expression::AwaitExpression(expr) => {
+                let operand_type = self.get_type_of_expression(&expr.argument, None);
+                self.get_awaited_type(operand_type, expr.span)
+            }
 
             // /regex/ — always RegExp
             Expression::RegExpLiteral(_) => self.get_global_type("RegExp"),
@@ -737,20 +740,21 @@ impl Checker<'_> {
                 let constituents: SmallVec<[TypeId; 4]> = i.types.clone();
                 let mut prop_types = Vec::new();
                 for &member in &constituents {
-                    let prop = self.get_property_of_type(member, name);
-                    if prop != self.any_type
-                        || self.type_arena.get_flags(member).intersects(TypeFlags::Any)
-                    {
-                        prop_types.push(prop);
+                    if let Some(prop) = self.get_property_of_type(member, name) {
+                        if prop != self.any_type
+                            || self.type_arena.get_flags(member).intersects(TypeFlags::Any)
+                        {
+                            prop_types.push(prop);
+                        }
                     }
                 }
                 if prop_types.is_empty() {
-                    return self.any_type;
+                    return Some(self.any_type);
                 }
                 if prop_types.len() == 1 {
-                    return prop_types[0];
+                    return Some(prop_types[0]);
                 }
-                return self.get_or_create_intersection_type(prop_types);
+                return Some(self.get_or_create_intersection_type(prop_types));
             }
         }
 
