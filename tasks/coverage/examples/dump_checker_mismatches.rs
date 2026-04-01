@@ -13,7 +13,7 @@ use std::path::Path;
 use oxc::allocator::Allocator;
 use oxc::parser::Parser;
 use oxc::span::{GetSpan as _, SourceType};
-use oxc_checker::Checker;
+use oxc_checker::{CheckMode, Checker};
 
 fn main() {
     let workspace = find_workspace_root();
@@ -215,7 +215,7 @@ impl<'a> oxc::ast_visit::Visit<'a> for TypeCollectorVisitor<'a, '_> {
         let span = expr.span();
         if (span.start as usize) < self.source.len() && (span.end as usize) <= self.source.len() {
             let expr_text = &self.source[span.start as usize..span.end as usize];
-            let type_id = self.checker.get_type_of_expression(expr, None);
+            let type_id = self.checker.get_type_of_expression(expr, None, CheckMode::TYPE_ONLY);
             let type_str = self.checker.type_to_string(type_id);
             self.results.push((expr_text.to_string(), type_str.clone()));
             self.last_expression_type = Some(type_str);
@@ -264,7 +264,7 @@ impl<'a> oxc::ast_visit::Visit<'a> for TypeCollectorVisitor<'a, '_> {
                 if (key_span.start as usize) < self.source.len()
                     && (key_span.end as usize) <= self.source.len()
                 {
-                    let prop_type = self.checker.get_type_of_expression(&prop.value, None);
+                    let prop_type = self.checker.get_type_of_expression(&prop.value, None, CheckMode::TYPE_ONLY);
                     let widened = self.checker.get_widened_literal_type(prop_type);
                     let key_text =
                         &self.source[key_span.start as usize..key_span.end as usize];
@@ -285,7 +285,7 @@ impl<'a> oxc::ast_visit::Visit<'a> for TypeCollectorVisitor<'a, '_> {
                 let prop_type = if let Some(ann) = &prop.type_annotation {
                     self.checker.get_type_from_type_node(&ann.type_annotation)
                 } else if let Some(init) = &prop.value {
-                    self.checker.get_type_of_expression(init, None)
+                    self.checker.get_type_of_expression(init, None, CheckMode::TYPE_ONLY)
                 } else {
                     self.checker.any_type
                 };
@@ -361,7 +361,7 @@ impl<'a> oxc::ast_visit::Visit<'a> for TypeCollectorVisitor<'a, '_> {
             && (name_span.end as usize) <= self.source.len()
         {
             let member_type = if let Some(init) = &member.initializer {
-                self.checker.get_type_of_expression(init, None)
+                self.checker.get_type_of_expression(init, None, CheckMode::TYPE_ONLY)
             } else {
                 self.checker.any_type
             };

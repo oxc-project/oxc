@@ -5,6 +5,7 @@ use oxc_syntax::operator::UnaryOperator;
 
 use oxc_types::TypeId;
 
+use crate::checker::CheckMode;
 use crate::Checker;
 
 impl Checker<'_> {
@@ -17,21 +18,15 @@ impl Checker<'_> {
     /// Check an expression — the primary entry point for all expression checking.
     /// Equivalent to tsgo's `checkExpression`.
     ///
-    /// Returns the type of the expression. All expression-level diagnostics
-    /// (TS2695, TS2322, TS2339, TS2345, TS2349, TS2554, etc.) are emitted
-    /// from within `get_type_of_expression` / `get_type_of_expression_inner`.
-    ///
-    /// Use this for user-written expressions (statement-level, variable
-    /// initializers, return values, etc.). For type-only contexts (CFA
-    /// narrowing, declaration resolution), use `get_type_of_expression`
-    /// directly — in the future, that path will pass `CheckMode::TypeOnly`
-    /// to suppress certain diagnostics.
+    /// Uses `CheckMode::NORMAL` so all diagnostics are enabled.
+    /// For type-only contexts (CFA narrowing, declaration resolution),
+    /// call `get_type_of_expression` with `CheckMode::TYPE_ONLY` directly.
     pub(crate) fn check_expression(
         &mut self,
         expr: &Expression<'_>,
         contextual_type: Option<TypeId>,
     ) -> TypeId {
-        self.get_type_of_expression(expr, contextual_type)
+        self.get_type_of_expression(expr, contextual_type, CheckMode::NORMAL)
     }
 
     /// Check a sequence (comma) expression.
@@ -46,6 +41,7 @@ impl Checker<'_> {
         &mut self,
         seq: &oxc_ast::ast::SequenceExpression<'_>,
         contextual_type: Option<TypeId>,
+        check_mode: CheckMode,
     ) -> TypeId {
         let exprs = &seq.expressions;
         let mut result = self.undefined_type;
@@ -66,7 +62,7 @@ impl Checker<'_> {
             }
             // Check each sub-expression (the last one gets the contextual type)
             let ctx = if is_last { contextual_type } else { None };
-            result = self.get_type_of_expression(expr, ctx);
+            result = self.get_type_of_expression(expr, ctx, check_mode);
         }
         result
     }
@@ -153,6 +149,7 @@ impl Checker<'_> {
         &mut self,
         assign: &oxc_ast::ast::AssignmentExpression<'_>,
         contextual_type: Option<TypeId>,
+        check_mode: CheckMode,
     ) -> TypeId {
         use oxc_ast::ast::AssignmentTarget;
         use oxc_syntax::operator::AssignmentOperator;
@@ -160,7 +157,8 @@ impl Checker<'_> {
         if assign.operator == AssignmentOperator::Assign {
             if let AssignmentTarget::AssignmentTargetIdentifier(ident) = &assign.left {
                 let target_type = self.get_type_of_identifier(ident);
-                let value_type = self.get_type_of_expression(&assign.right, Some(target_type));
+                let value_type =
+                    self.get_type_of_expression(&assign.right, Some(target_type), check_mode);
                 self.check_type_assignable_to_and_report(
                     value_type,
                     target_type,
@@ -172,7 +170,7 @@ impl Checker<'_> {
             }
         }
 
-        self.get_type_of_expression(&assign.right, contextual_type)
+        self.get_type_of_expression(&assign.right, contextual_type, check_mode)
     }
 
     /// Check a type assertion (`expr as T` or `<T>expr`).
@@ -187,9 +185,11 @@ impl Checker<'_> {
         expression: &Expression<'_>,
         type_annotation: &TSType<'_>,
         contextual_type: Option<TypeId>,
+        check_mode: CheckMode,
     ) -> TypeId {
         if Self::is_const_type_reference(type_annotation) {
-            let expr_type = self.get_type_of_expression(expression, contextual_type);
+            let expr_type =
+                self.get_type_of_expression(expression, contextual_type, check_mode);
             if !self.is_valid_const_assertion_argument(expression) {
                 self.diagnostics.push(
                     OxcDiagnostic::error(

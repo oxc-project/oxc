@@ -8,6 +8,8 @@ use oxc_ast::ast::Expression;
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 use oxc_syntax::symbol::SymbolId;
 use oxc_types::{ObjectFlags, StructuredTypeKind, TypeData, TypeFlags, TypeId};
+
+use crate::checker::CheckMode;
 use smallvec::SmallVec;
 
 use crate::Checker;
@@ -728,7 +730,7 @@ impl Checker<'_> {
         let prop_name = member.property.name.as_str();
 
         // Get the type of the value being compared against.
-        let value_type = self.get_type_of_expression(value_expr, None);
+        let value_type = self.get_type_of_expression(value_expr, None, CheckMode::TYPE_ONLY);
 
         Some(self.narrow_by_discriminant(type_id, prop_name, value_type, assume_eq))
     }
@@ -842,7 +844,7 @@ impl Checker<'_> {
         }
 
         // Get the type of the RHS constructor.
-        let ctor_type = self.get_type_of_expression(ctor_expr, None);
+        let ctor_type = self.get_type_of_expression(ctor_expr, None, CheckMode::TYPE_ONLY);
 
         Some(self.narrow_by_instanceof(type_id, ctor_type, assume_true))
     }
