@@ -484,7 +484,7 @@ impl Checker<'_> {
     }
 
     /// Check if a type is always falsy (null, undefined, false, void).
-    fn is_falsy_type(&self, type_id: TypeId) -> bool {
+    pub(crate) fn is_falsy_type(&self, type_id: TypeId) -> bool {
         let flags = self.type_arena.get_flags(type_id);
         if flags.intersects(TypeFlags::Null | TypeFlags::Undefined | TypeFlags::Void) {
             return true;

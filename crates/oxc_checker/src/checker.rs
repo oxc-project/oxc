@@ -12,8 +12,9 @@ use oxc_semantic::Semantic;
 use oxc_span::{CompactStr, GetSpan};
 use oxc_syntax::symbol::SymbolId;
 use oxc_types::{
-    FunctionType, ObjectFlags, ParameterInfo, Signature, SignatureFlags, StructuredType,
-    StructuredTypeKind, TypeArena, TypeData, TypeFlags, TypeId, TypeParameterType, UnionType,
+    FunctionType, ObjectFlags, ParameterInfo, PropertyInfo, Signature, SignatureFlags,
+    StructuredType, StructuredTypeKind, TypeArena, TypeData, TypeFlags, TypeId, TypeParameterType,
+    UnionType, build_member_map,
 };
 use smallvec::SmallVec;
 
@@ -205,6 +206,9 @@ pub struct Checker<'a> {
     pub(crate) promise_type: Option<TypeId>,
     /// Cached global `PromiseLike` type for await unwrapping.
     pub(crate) promise_like_type: Option<TypeId>,
+    /// Empty anonymous object type `{}` — used as the initial accumulator
+    /// for spread type folding.
+    pub(crate) empty_object_type: TypeId,
 }
 
 impl<'a> Checker<'a> {
@@ -234,6 +238,21 @@ impl<'a> Checker<'a> {
                 target: None,
                 is_this_type: true,
                 resolved_default_type: None,
+            }),
+            None,
+        );
+
+        let empty_object_type = type_arena.new_type(
+            TypeFlags::Object,
+            ObjectFlags::Anonymous,
+            TypeData::Structured(StructuredType {
+                member_map: FxHashMap::default(),
+                properties: Vec::new(),
+                string_index_type: None,
+                number_index_type: None,
+                call_signatures: Vec::new(),
+                construct_signatures: Vec::new(),
+                kind: StructuredTypeKind::Anonymous { target: None },
             }),
             None,
         );
@@ -290,6 +309,7 @@ impl<'a> Checker<'a> {
             array_type,
             promise_type,
             promise_like_type,
+            empty_object_type,
         }
     }
 
@@ -1045,6 +1065,242 @@ impl<'a> Checker<'a> {
         } else {
             type_id
         }
+    }
+
+    // ── Spread type validation ─────────────────────────────────────────
+
+    /// Check whether a type is valid as the argument of an object spread (`{ ...x }`).
+    ///
+    /// Valid spread types are: `any`, `object`, object types, instantiable
+    /// non-primitive types (type parameters, conditionals, substitutions),
+    /// and unions/intersections where every constituent is itself a valid spread type.
+    ///
+    /// Mirrors TypeScript's `isValidSpreadType`.
+    pub(crate) fn is_valid_spread_type(&mut self, type_id: TypeId) -> bool {
+        let resolved = self.get_base_constraint_or_type(type_id);
+        let filtered = self.remove_definitely_falsy_types(resolved);
+        let flags = self.type_arena.get_flags(filtered);
+
+        if flags.intersects(
+            TypeFlags::Any
+                | TypeFlags::NonPrimitive
+                | TypeFlags::Object
+                | TypeFlags::InstantiableNonPrimitive,
+        ) {
+            return true;
+        }
+
+        if flags.intersects(TypeFlags::Union) {
+            if let TypeData::Union(u) = self.type_arena.get_data(filtered) {
+                let members = u.types.clone();
+                return members.iter().all(|&t| self.is_valid_spread_type(t));
+            }
+        }
+        if flags.intersects(TypeFlags::Intersection) {
+            if let TypeData::Intersection(i) = self.type_arena.get_data(filtered) {
+                let members = i.types.clone();
+                return members.iter().all(|&t| self.is_valid_spread_type(t));
+            }
+        }
+
+        // Never is valid (it's a bottom type — spreading it produces nothing)
+        flags.intersects(TypeFlags::Never)
+    }
+
+    /// If `type_id` is an instantiable type (e.g. type parameter), resolve its
+    /// base constraint; otherwise return the type unchanged.
+    ///
+    /// Mirrors TypeScript's `getBaseConstraintOrType`.
+    fn get_base_constraint_or_type(&mut self, type_id: TypeId) -> TypeId {
+        let flags = self.type_arena.get_flags(type_id);
+
+        if flags.intersects(TypeFlags::TypeParameter) {
+            if let Some(constraint) = self.get_constraint_of_type_parameter(type_id) {
+                return constraint;
+            }
+        }
+        // TODO: handle other instantiable types (conditional, substitution,
+        // indexed access, index, template literal, string mapping)
+        // and unions/intersections of such types.
+        type_id
+    }
+
+    /// Filter out definitely-falsy constituents (null, undefined, void,
+    /// false literal, 0 literal, "" literal) from a type.
+    ///
+    /// Mirrors TypeScript's `removeDefinitelyFalsyTypes`.
+    fn remove_definitely_falsy_types(&mut self, type_id: TypeId) -> TypeId {
+        self.narrow_type_by_predicate(type_id, |checker, t| !checker.is_falsy_type(t))
+    }
+
+    // ── Spread type merging ───────────────────────────────────────────
+
+    /// Merge two types in a spread operation (left-fold).
+    ///
+    /// Called repeatedly as `spread = get_spread_type(spread, next_element)`
+    /// while iterating through an object literal's properties and spreads.
+    ///
+    /// Mirrors TypeScript's `getSpreadType`.
+    pub(crate) fn get_spread_type(&mut self, left: TypeId, right: TypeId) -> TypeId {
+        let left_flags = self.type_arena.get_flags(left);
+        let right_flags = self.type_arena.get_flags(right);
+
+        // Any absorbs everything
+        if left_flags.intersects(TypeFlags::Any) || right_flags.intersects(TypeFlags::Any) {
+            return self.any_type;
+        }
+        // Unknown absorbs everything
+        if left_flags.intersects(TypeFlags::Unknown) || right_flags.intersects(TypeFlags::Unknown) {
+            return self.unknown_type;
+        }
+        // Never is identity
+        if left_flags.intersects(TypeFlags::Never) {
+            return right;
+        }
+        if right_flags.intersects(TypeFlags::Never) {
+            return left;
+        }
+
+        // TODO (Tier 3): Union distribution
+        // if left is union → mapType(left, |t| get_spread_type(t, right))
+        // if right is union → mapType(right, |t| get_spread_type(left, t))
+
+        // Primitive on right → return left unchanged (spreading a primitive is a no-op)
+        if right_flags.intersects(
+            TypeFlags::BooleanLike
+                | TypeFlags::NumberLike
+                | TypeFlags::BigIntLike
+                | TypeFlags::StringLike
+                | TypeFlags::EnumLike
+                | TypeFlags::NonPrimitive
+                | TypeFlags::Index,
+        ) {
+            return left;
+        }
+
+        // TODO (Tier 4): Generic object types → create intersection
+        // if is_generic_object_type(left) || is_generic_object_type(right) {
+        //     return get_intersection_type([left, right])
+        // }
+
+        // Concrete object merge
+        self.merge_spread_types(left, right)
+    }
+
+    /// Merge two concrete object types for a spread operation.
+    ///
+    /// Right properties override left properties. When both sides have the
+    /// same property and the right's is optional, a union of both types is
+    /// created with the optionality of the left property preserved.
+    fn merge_spread_types(&mut self, left: TypeId, right: TypeId) -> TypeId {
+        // Phase 1: Read — extract property data from the arena as Copy/cheap types.
+        // Arena references are stable (AppendOnlyVec), but we still need to release
+        // the borrows before calling &mut self methods like get_or_create_union_type.
+        // We extract only the data we need: names (CompactStr is cheap to clone),
+        // TypeIds (Copy), and flags (Copy).
+
+        let right_entries: Vec<(CompactStr, TypeId, bool, bool)> =
+            if let TypeData::Structured(s) = self.type_arena.get_data(right) {
+                s.properties
+                    .iter()
+                    .map(|p| (p.name.clone(), p.type_id, p.optional, p.readonly))
+                    .collect()
+            } else {
+                Vec::new()
+            };
+
+        let left_entries: Vec<(CompactStr, TypeId, bool, bool)> =
+            if let TypeData::Structured(s) = self.type_arena.get_data(left) {
+                s.properties
+                    .iter()
+                    .map(|p| (p.name.clone(), p.type_id, p.optional, p.readonly))
+                    .collect()
+            } else {
+                Vec::new()
+            };
+
+        let (l_str_idx, l_num_idx) = if let TypeData::Structured(s) = self.type_arena.get_data(left)
+        {
+            (s.string_index_type, s.number_index_type)
+        } else {
+            (None, None)
+        };
+        let (r_str_idx, r_num_idx) =
+            if let TypeData::Structured(s) = self.type_arena.get_data(right) {
+                (s.string_index_type, s.number_index_type)
+            } else {
+                (None, None)
+            };
+
+        // Phase 2: Merge — build result properties, calling &mut self as needed.
+
+        // Start with right properties, tracking positions for O(1) overlap updates
+        let mut result_props: Vec<PropertyInfo> = right_entries
+            .iter()
+            .map(|(name, type_id, optional, readonly)| {
+                let mut p = PropertyInfo::new(name.clone(), *type_id);
+                p.optional = *optional;
+                p.readonly = *readonly;
+                p
+            })
+            .collect();
+        let right_index: FxHashMap<&CompactStr, usize> =
+            right_entries.iter().enumerate().map(|(i, (name, ..))| (name, i)).collect();
+
+        for (name, left_type, left_optional, left_readonly) in &left_entries {
+            if let Some(&idx) = right_index.get(name) {
+                // Both sides have this property
+                if result_props[idx].optional {
+                    // Right is optional: union the types, keep left's optionality
+                    let union_type =
+                        self.get_or_create_union_type(vec![*left_type, result_props[idx].type_id]);
+                    result_props[idx].type_id = union_type;
+                    result_props[idx].optional = *left_optional;
+                }
+                // If right is required, it wins — already in result_props
+            } else {
+                let mut p = PropertyInfo::new(name.clone(), *left_type);
+                p.optional = *left_optional;
+                p.readonly = *left_readonly;
+                result_props.push(p);
+            }
+        }
+
+        // Merge index signatures
+        let string_index = if left == self.empty_object_type {
+            r_str_idx
+        } else {
+            match (l_str_idx, r_str_idx) {
+                (Some(l), Some(r)) => Some(self.get_or_create_union_type(vec![l, r])),
+                (some, None) | (None, some) => some,
+            }
+        };
+        let number_index = if left == self.empty_object_type {
+            r_num_idx
+        } else {
+            match (l_num_idx, r_num_idx) {
+                (Some(l), Some(r)) => Some(self.get_or_create_union_type(vec![l, r])),
+                (some, None) | (None, some) => some,
+            }
+        };
+
+        self.type_arena.new_type(
+            TypeFlags::Object,
+            ObjectFlags::Anonymous
+                | ObjectFlags::ObjectLiteral
+                | ObjectFlags::ContainsObjectOrArrayLiteral
+                | ObjectFlags::ContainsSpread,
+            TypeData::Structured(StructuredType {
+                member_map: build_member_map(&result_props),
+                properties: result_props,
+                string_index_type: string_index,
+                number_index_type: number_index,
+                call_signatures: Vec::new(),
+                construct_signatures: Vec::new(),
+                kind: StructuredTypeKind::Anonymous { target: None },
+            }),
+            None,
+        )
     }
 
     /// Build a Signature from a function's formal parameters and return type.

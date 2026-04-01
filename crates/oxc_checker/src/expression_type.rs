@@ -756,9 +756,10 @@ impl Checker<'_> {
 
     /// Get the type of an object literal expression.
     ///
-    /// When a `contextual_type` is provided (e.g., from a variable declaration annotation),
-    /// each property value is checked with its corresponding contextual property type.
-    /// This enables contextual typing of nested callbacks.
+    /// Uses a left-fold pattern when spreads are present: properties between
+    /// spreads are grouped into segments, and each segment is merged into
+    /// an accumulator via `get_spread_type`. When no spreads exist, takes a
+    /// fast path that builds the type directly.
     fn get_type_of_object_literal(
         &mut self,
         obj: &oxc_ast::ast::ObjectExpression<'_>,
@@ -766,7 +767,9 @@ impl Checker<'_> {
     ) -> TypeId {
         use oxc_ast::ast::{ObjectPropertyKind, PropertyKind};
 
+        let mut spread = self.empty_object_type;
         let mut properties = Vec::new();
+        let mut has_spread = false;
 
         for prop_kind in &obj.properties {
             match prop_kind {
@@ -775,22 +778,61 @@ impl Checker<'_> {
                         continue;
                     }
                     if let Some(name) = prop.key.static_name() {
-                        // Look up contextual type for this property
                         let prop_contextual_type =
                             contextual_type.and_then(|ct| self.get_property_of_type(ct, &name));
                         let prop_type =
                             self.get_type_of_expression(&prop.value, prop_contextual_type);
-                        // Widen literal types in object literal properties
                         let widened = self.get_widened_literal_type(prop_type);
                         properties.push(PropertyInfo::new(CompactStr::new(&name), widened));
                     }
                 }
-                ObjectPropertyKind::SpreadProperty(_) => {
-                    // TODO: merge spread type properties
+                ObjectPropertyKind::SpreadProperty(spread_prop) => {
+                    has_spread = true;
+                    // Flush accumulated properties into the spread accumulator
+                    if !properties.is_empty() {
+                        let segment =
+                            self.create_object_literal_type(std::mem::take(&mut properties));
+                        spread = self.get_spread_type(spread, segment);
+                    }
+                    let spread_type = self.get_type_of_expression(&spread_prop.argument, None);
+                    if self.is_valid_spread_type(spread_type) {
+                        spread = self.get_spread_type(spread, spread_type);
+                    } else {
+                        self.diagnostics.push(
+                            OxcDiagnostic::error(
+                                "Spread types may only be created from object types.",
+                            )
+                            .with_error_code("ts", "2698")
+                            .with_label(spread_prop.argument.span()),
+                        );
+                        // Use any_type to suppress cascading errors
+                        spread = self.any_type;
+                    }
                 }
             }
         }
 
+        if !has_spread {
+            // Fast path: no spreads, same as before
+            return self.create_object_literal_type(properties);
+        }
+
+        // Flush any remaining properties after the last spread
+        if !properties.is_empty() {
+            let segment = self.create_object_literal_type(std::mem::take(&mut properties));
+            spread = self.get_spread_type(spread, segment);
+        }
+
+        // If no spread was actually merged, produce a fresh empty literal
+        if spread == self.empty_object_type {
+            return self.create_object_literal_type(Vec::new());
+        }
+
+        spread
+    }
+
+    /// Create a fresh object literal type from a list of properties.
+    fn create_object_literal_type(&mut self, properties: Vec<PropertyInfo>) -> TypeId {
         self.type_arena.new_type(
             TypeFlags::Object,
             ObjectFlags::Anonymous | ObjectFlags::ObjectLiteral | ObjectFlags::FreshLiteral,

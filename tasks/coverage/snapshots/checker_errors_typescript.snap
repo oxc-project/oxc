@@ -2,7 +2,7 @@ commit: 34725489
 
 checker_errors_typescript Summary:
 AST Parsed     : 6430/6430 (100.00%)
-Positive Passed: 289/6430 (4.49%)
+Positive Passed: 298/6430 (4.63%)
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/ArrowFunctionExpression1.ts
 'public' modifier cannot appear on a parameter.
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration10.ts
@@ -875,10 +875,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/collisionSuperAnd
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/collisionSuperAndParameter.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/collisionThisExpressionAndLocalVarInAccessors.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/commaOperator1.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/commaOperatorLeftSideUnused.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/commentInMethodCall.ts
 
@@ -2025,8 +2021,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/esModuleInteropIm
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/esModuleInteropUsesExportStarWhenDefaultPlusNames.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/escapedIdentifiers.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/evalAfter0.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/evolvingArrayResolvedAssert.ts
 
@@ -4040,6 +4034,8 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/objectLitTargetTy
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/objectLiteralExcessProperties.ts
 
+checker_errors: tasks/coverage/typescript/tests/cases/compiler/objectLiteralFreshnessWithSpread.ts
+
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/objectLiteralFunctionArgContextualTyping.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/objectLiteralFunctionArgContextualTyping2.ts
@@ -4915,8 +4911,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/sourceMapValidati
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/sourceMapValidationExportAssignment.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/sourceMapValidationFor.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/sourceMapValidationLabeled.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/sourceMapValidationStatements.ts
@@ -4952,8 +4946,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/spliceTuples.ts
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/spreadIntersection.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/spreadIntersectionJsx.tsx
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/spreadInvalidArgumentType.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/spreadOfParamsFromGeneratorMakesRequiredParams.ts
 
@@ -5266,6 +5258,8 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/templateStringsAr
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/templateStringsArrayTypeNotDefinedES5Mode.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/templateStringsArrayTypeRedefinedInES6Mode.ts
+
+checker_errors: tasks/coverage/typescript/tests/cases/compiler/temporal.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/thisBinding.ts
 
@@ -8906,6 +8900,8 @@ checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/bi
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/binaryOperators/logicalOrOperator/logicalOrOperatorWithTypeParameters.ts
 
+checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/commaOperator/commaOperatorInvalidAssignmentType.ts
+
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/commaOperator/commaOperatorOtherInvalidOperation.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/commaOperator/commaOperatorOtherValidOperation.ts
@@ -9240,8 +9236,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/un
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/logicalNotOperator/logicalNotOperatorWithBooleanType.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/logicalNotOperator/logicalNotOperatorWithEnumType.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/logicalNotOperator/logicalNotOperatorWithNumberType.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/logicalNotOperator/logicalNotOperatorWithStringType.ts
@@ -9250,33 +9244,17 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/u
 Unexpected token
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/negateOperator/negateOperatorWithAnyOtherType.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/negateOperator/negateOperatorWithBooleanType.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/negateOperator/negateOperatorWithEnumType.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/negateOperator/negateOperatorWithNumberType.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/negateOperator/negateOperatorWithStringType.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/plusOperator/plusOperatorInvalidOperations.ts
 Unexpected token
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/plusOperator/plusOperatorWithAnyOtherType.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/plusOperator/plusOperatorWithBooleanType.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/plusOperator/plusOperatorWithEnumType.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/plusOperator/plusOperatorWithNumberType.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/plusOperator/plusOperatorWithStringType.ts
-
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/typeofOperator/typeofOperatorInvalidOperations.ts
 Expected a semicolon or an implicit semicolon after a statement, but found none
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/typeofOperator/typeofOperatorWithAnyOtherType.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/typeofOperator/typeofOperatorWithBooleanType.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/typeofOperator/typeofOperatorWithEnumType.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/typeofOperator/typeofOperatorWithNumberType.ts
 
@@ -12069,6 +12047,8 @@ checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/conditio
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/conditional/inferTypesWithExtends2.ts
 
+checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/contextualTypes/commaOperator/contextuallyTypeCommaOperator02.ts
+
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/contextualTypes/commaOperator/contextuallyTypeCommaOperator03.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/contextualTypes/jsxAttributes/contextuallyTypedStringLiteralsInJsxAttributes01.tsx
@@ -12629,6 +12609,8 @@ A rest element cannot follow another rest element.
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/tuple/variadicTuples3.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/tuple/wideningTuples3.ts
+
+checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/tuple/wideningTuples4.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/tuple/wideningTuples5.ts
 
