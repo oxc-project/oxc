@@ -252,21 +252,16 @@ impl Checker<'_> {
         }
 
         // Conditional: T extends U ? X : Y — instantiate all parts, then resolve.
-        // The root_id is carried through so infer params and distributivity
-        // are preserved across instantiations.
+        // Root fields (is_distributive, infer_type_parameters) are carried
+        // inline on the ConditionalType.
         if flags.intersects(TypeFlags::Conditional) {
             if let TypeData::Conditional(cond) = self.type_arena.get_data(type_id) {
-                let root_id = cond.root;
                 let orig_check = cond.check_type;
                 let orig_extends = cond.extends_type;
                 let orig_true = cond.true_type;
                 let orig_false = cond.false_type;
-
-                // Look up distributivity from the root
-                let Some(root) = self.get_conditional_root(root_id.index()) else {
-                    return type_id;
-                };
-                let is_distributive = root.is_distributive;
+                let is_distributive = cond.is_distributive;
+                let infer_type_parameters = cond.infer_type_parameters.clone();
 
                 let new_check = self.instantiate_type(orig_check, mapper);
 
@@ -280,6 +275,7 @@ impl Checker<'_> {
                     if check_flags.intersects(TypeFlags::Union) {
                         if let TypeData::Union(u) = self.type_arena.get_data(new_check) {
                             let members: Vec<TypeId> = u.types.iter().copied().collect();
+                            let infer_params = infer_type_parameters.clone();
                             let results: Vec<TypeId> = members
                                 .iter()
                                 .map(|&member| {
@@ -288,7 +284,10 @@ impl Checker<'_> {
                                     let ext = self.instantiate_type(orig_extends, &per_member);
                                     let tru = self.instantiate_type(orig_true, &per_member);
                                     let fal = self.instantiate_type(orig_false, &per_member);
-                                    self.get_conditional_type(root_id, member, ext, tru, fal)
+                                    self.get_conditional_type(
+                                        member, ext, tru, fal,
+                                        is_distributive, infer_params.clone(),
+                                    )
                                 })
                                 .collect();
                             return self.get_or_create_union_type(results);
@@ -301,7 +300,8 @@ impl Checker<'_> {
                 let new_false = self.instantiate_type(orig_false, mapper);
 
                 return self.get_conditional_type(
-                    root_id, new_check, new_extends, new_true, new_false,
+                    new_check, new_extends, new_true, new_false,
+                    is_distributive, infer_type_parameters,
                 );
             }
         }

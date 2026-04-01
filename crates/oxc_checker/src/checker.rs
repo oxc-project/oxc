@@ -8,7 +8,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::Semantic;
 use oxc_span::{CompactStr, GetSpan};
 use oxc_syntax::symbol::SymbolId;
-use oxc_types::{ConditionalRoot, FunctionType, ObjectFlags, ParameterInfo, Signature, SignatureFlags, StructuredType, StructuredTypeKind, TypeArena, TypeData, TypeFlags, TypeId, TypeParameterType, UnionType};
+use oxc_types::{FunctionType, ObjectFlags, ParameterInfo, Signature, SignatureFlags, StructuredType, StructuredTypeKind, TypeArena, TypeData, TypeFlags, TypeId, TypeParameterType, UnionType};
 use smallvec::SmallVec;
 
 use oxc_checker_host::CheckerHost;
@@ -133,15 +133,9 @@ pub struct Checker<'a> {
     /// `TypeParameter.constraint` field (nil until first access).
     pub(crate) type_param_constraints: FxHashMap<TypeId, TypeId>,
 
-    /// Conditional type roots. Each `TSConditionalType` AST node creates
-    /// exactly one root storing the original types, distributivity flag,
-    /// and `infer` type parameters. Multiple `ConditionalType` instances
-    /// (from instantiation) share the same root via `ConditionalRootId`.
-    pub(crate) conditional_roots: Vec<ConditionalRoot>,
-
     /// Buffer for collecting `infer` type parameters during extends clause
     /// processing. Swapped to an empty vec before processing each conditional
-    /// type's extends clause, then drained into the `ConditionalRoot`.
+    /// type's extends clause, then drained into the `ConditionalType`.
     /// Supports nesting (nested conditionals swap/restore the buffer).
     pub(crate) current_infer_type_params: Vec<TypeId>,
 
@@ -265,7 +259,6 @@ impl<'a> Checker<'a> {
             instantiation_cache: FxHashMap::default(),
             mapped_type_cache: FxHashMap::default(),
             type_param_constraints: FxHashMap::default(),
-            conditional_roots: Vec::new(),
             current_infer_type_params: Vec::new(),
             awaited_type_cache: FxHashMap::default(),
             awaited_type_stack: Vec::new(),
@@ -339,27 +332,6 @@ impl<'a> Checker<'a> {
     /// type parameters declared in other files.
     pub fn take_type_param_constraints(&mut self) -> FxHashMap<TypeId, TypeId> {
         std::mem::take(&mut self.type_param_constraints)
-    }
-
-    /// Extract the conditional type roots.
-    ///
-    /// Used by Project to accumulate roots from all files so per-file
-    /// checkers can look up roots for conditional types declared in
-    /// other files (e.g., `Exclude<T, U>` from lib.d.ts).
-    pub fn take_conditional_roots(&mut self) -> Vec<ConditionalRoot> {
-        std::mem::take(&mut self.conditional_roots)
-    }
-
-    /// Look up a conditional type root by its ID.
-    ///
-    /// Checks the local `conditional_roots` vec first (for roots created
-    /// by this checker), then falls back to the host (for roots from
-    /// lib.d.ts or other files).
-    pub(crate) fn get_conditional_root(&self, index: usize) -> Option<ConditionalRoot> {
-        self.conditional_roots
-            .get(index)
-            .cloned()
-            .or_else(|| self.host.get_conditional_root(index))
     }
 
     /// Check assignability with excess property checking support.

@@ -156,11 +156,10 @@ impl Checker<'_> {
                 let is_distributive = self.type_arena.get_flags(check)
                     .intersects(TypeFlags::TypeParameter);
 
-                let root_id = self.create_conditional_root(
+                self.get_conditional_type(
                     check, extends, true_type, false_type,
                     is_distributive, infer_params,
-                );
-                self.get_conditional_type(root_id, check, extends, true_type, false_type)
+                )
             }
 
             // Infer type: `infer U` in extends clause of conditional type

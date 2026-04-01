@@ -7,7 +7,7 @@
 
 use oxc_span::CompactStr;
 use oxc_syntax::symbol::SymbolId;
-use oxc_types::{ConditionalRoot, TypeId};
+use oxc_types::TypeId;
 
 /// Exported binding with separate type-side and value-side types.
 ///
@@ -80,12 +80,4 @@ pub trait CheckerHost {
     /// The `file_idx` identifies which file's Semantic to look up,
     /// and `symbol_id` indexes into that file's symbol table.
     fn get_symbol_name(&self, file_idx: u16, symbol_id: SymbolId) -> Option<CompactStr>;
-
-    /// Look up a conditional type root by its ID.
-    ///
-    /// Conditional roots are created per AST conditional type node and shared
-    /// across all instantiations. Roots from lib.d.ts are stored on the
-    /// Project so per-file checkers can access them when instantiating
-    /// global conditional types (e.g., `Exclude<T, U>`, `Extract<T, U>`).
-    fn get_conditional_root(&self, index: usize) -> Option<ConditionalRoot>;
 }

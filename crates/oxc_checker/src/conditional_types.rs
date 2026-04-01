@@ -5,9 +5,10 @@
 //! is *distributive*: `(A | B) extends U ? X : Y` distributes to
 //! `(A extends U ? X : Y) | (B extends U ? X : Y)`.
 //!
-//! Each conditional type AST node creates a `ConditionalRoot` (shared across
-//! instantiations) that stores the original types and any `infer` type
-//! parameters from the extends clause.
+//! Root metadata (distributivity flag, `infer` type parameters) is stored
+//! inline on each `ConditionalType` rather than behind a shared indirection
+//! ID. This avoids cross-file indexing issues when conditional types from
+//! lib.d.ts are instantiated by per-file checkers.
 //!
 //! Resolution strategy:
 //! - **Concrete**: both check and extends are non-generic → use `is_type_assignable_to`
@@ -15,7 +16,7 @@
 //! - **Deferred**: check type is generic → create a `ConditionalType` in the arena
 //! - **Never**: `never extends U ? X : Y` → `never` (empty distribution)
 
-use oxc_types::{ConditionalRoot, ConditionalRootId, ConditionalType, ObjectFlags, TypeData, TypeFlags, TypeId};
+use oxc_types::{ConditionalType, ObjectFlags, TypeData, TypeFlags, TypeId};
 use smallvec::SmallVec;
 
 use crate::Checker;
@@ -23,31 +24,6 @@ use crate::inference::InferenceContext;
 use crate::instantiation::TypeMapper;
 
 impl Checker<'_> {
-    /// Create a `ConditionalRoot` and return its ID.
-    ///
-    /// Called once per `TSConditionalType` AST node. The root is shared
-    /// by all instantiations of this conditional type.
-    pub(crate) fn create_conditional_root(
-        &mut self,
-        check_type: TypeId,
-        extends_type: TypeId,
-        true_type: TypeId,
-        false_type: TypeId,
-        is_distributive: bool,
-        infer_type_parameters: SmallVec<[TypeId; 2]>,
-    ) -> ConditionalRootId {
-        let id = ConditionalRootId::new(self.conditional_roots.len() as u32);
-        self.conditional_roots.push(ConditionalRoot {
-            check_type,
-            extends_type,
-            true_type,
-            false_type,
-            is_distributive,
-            infer_type_parameters,
-        });
-        id
-    }
-
     /// Resolve or defer a conditional type.
     ///
     /// If both check and extends are concrete, resolves immediately using
@@ -57,11 +33,12 @@ impl Checker<'_> {
     /// Mirrors tsgo's `getConditionalType`.
     pub(crate) fn get_conditional_type(
         &mut self,
-        root_id: ConditionalRootId,
         check_type: TypeId,
         extends_type: TypeId,
         true_type: TypeId,
         false_type: TypeId,
+        is_distributive: bool,
+        infer_type_parameters: SmallVec<[TypeId; 2]>,
     ) -> TypeId {
         let check_flags = self.type_arena.get_flags(check_type);
 
@@ -77,14 +54,11 @@ impl Checker<'_> {
         // TypeParameters — that's expected. Inference resolves them, so we
         // don't require extends to be non-generic in that case.
         if !check_is_generic {
-            let infer_params = self.get_conditional_root(root_id.index())
-                .map(|r| r.infer_type_parameters)
-                .unwrap_or_default();
-
-            if !infer_params.is_empty() {
+            if !infer_type_parameters.is_empty() {
                 // Concrete check + infer params → run inference to resolve
                 return self.resolve_conditional_with_infer(
-                    root_id, check_type, extends_type, true_type, false_type, &infer_params,
+                    check_type, extends_type, true_type, false_type,
+                    is_distributive, &infer_type_parameters,
                 );
             }
 
@@ -102,11 +76,12 @@ impl Checker<'_> {
             TypeFlags::Conditional,
             ObjectFlags::None,
             TypeData::Conditional(ConditionalType {
-                root: root_id,
                 check_type,
                 extends_type,
                 true_type,
                 false_type,
+                is_distributive,
+                infer_type_parameters,
             }),
             None,
         )
@@ -124,11 +99,11 @@ impl Checker<'_> {
     /// deferred `ConditionalType`.
     fn resolve_conditional_with_infer(
         &mut self,
-        root_id: ConditionalRootId,
         check_type: TypeId,
         extends_type: TypeId,
         true_type: TypeId,
         false_type: TypeId,
+        is_distributive: bool,
         infer_params: &[TypeId],
     ) -> TypeId {
         // Create inference context and run inference
@@ -157,11 +132,12 @@ impl Checker<'_> {
                 TypeFlags::Conditional,
                 ObjectFlags::None,
                 TypeData::Conditional(ConditionalType {
-                    root: root_id,
                     check_type,
                     extends_type: resolved_extends,
                     true_type: resolved_true,
                     false_type,
+                    is_distributive,
+                    infer_type_parameters: SmallVec::from_slice(infer_params),
                 }),
                 None,
             );
