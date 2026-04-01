@@ -1,7 +1,7 @@
-use oxc_ast::ast::{AssignmentExpression, Expression, ExpressionStatement};
+use oxc_ast::ast::{Expression, ExpressionStatement};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::GetSpan;
-use oxc_syntax::operator::{AssignmentOperator, UnaryOperator};
+use oxc_syntax::operator::UnaryOperator;
 
 use oxc_types::TypeId;
 
@@ -14,41 +14,41 @@ impl Checker<'_> {
         self.check_expression(&stmt.expression, None);
     }
 
-    /// Check an expression, dispatching by kind.
-    /// Equivalent to tsgo's `checkExpression` / `checkExpressionWorker`.
+    /// Check an expression — the primary entry point for all expression checking.
+    /// Equivalent to tsgo's `checkExpression`.
     ///
-    /// For most expressions, evaluating the type via `get_type_of_expression`
-    /// recursively walks sub-expressions and emits diagnostics (TS2339, TS2345,
-    /// TS2349, TS2554, etc.) along the way. Assignment expressions need
-    /// special handling for LHS type checking.
+    /// Returns the type of the expression. All expression-level diagnostics
+    /// (TS2695, TS2322, TS2339, TS2345, TS2349, TS2554, etc.) are emitted
+    /// from within `get_type_of_expression` / `get_type_of_expression_inner`.
+    ///
+    /// Use this for user-written expressions (statement-level, variable
+    /// initializers, return values, etc.). For type-only contexts (CFA
+    /// narrowing, declaration resolution), use `get_type_of_expression`
+    /// directly — in the future, that path will pass `CheckMode::TypeOnly`
+    /// to suppress certain diagnostics.
     pub(crate) fn check_expression(
         &mut self,
         expr: &Expression<'_>,
         contextual_type: Option<TypeId>,
-    ) {
-        match expr {
-            Expression::AssignmentExpression(assign) => {
-                self.check_assignment_expression(assign);
-            }
-            Expression::SequenceExpression(seq) => {
-                self.check_sequence_expression(seq, contextual_type);
-            }
-            _ => {
-                self.get_type_of_expression(expr, contextual_type);
-            }
-        }
+    ) -> TypeId {
+        self.get_type_of_expression(expr, contextual_type)
     }
 
     /// Check a sequence (comma) expression.
     ///
     /// Emits TS2695 for non-last elements that are side-effect-free.
+    /// Returns the type of the last element.
     /// Mirrors tsgo's comma-token case in `checkBinaryLikeExpression`.
-    fn check_sequence_expression(
+    ///
+    /// Called from `get_type_of_expression_inner` so diagnostics fire
+    /// regardless of how the expression is reached.
+    pub(crate) fn check_sequence_expression(
         &mut self,
         seq: &oxc_ast::ast::SequenceExpression<'_>,
         contextual_type: Option<TypeId>,
-    ) {
+    ) -> TypeId {
         let exprs = &seq.expressions;
+        let mut result = self.undefined_type;
         for (i, expr) in exprs.iter().enumerate() {
             let is_last = i == exprs.len() - 1;
             if !is_last && Self::is_side_effect_free(expr) && !Self::is_indirect_call(expr, exprs.get(i + 1)) {
@@ -62,8 +62,9 @@ impl Checker<'_> {
             }
             // Check each sub-expression (the last one gets the contextual type)
             let ctx = if is_last { contextual_type } else { None };
-            self.get_type_of_expression(expr, ctx);
+            result = self.get_type_of_expression(expr, ctx);
         }
+        result
     }
 
     /// Determines if an expression is side-effect-free (i.e., evaluating it
@@ -137,29 +138,34 @@ impl Checker<'_> {
         ) || matches!(right, Expression::Identifier(id) if id.name == "eval")
     }
 
-    /// Check an assignment expression (`x = value`).
+    /// Check an assignment expression and return its type.
     ///
     /// For simple `=` assignments to identifiers, validates that the RHS type
-    /// is assignable to the LHS declared type.
-    fn check_assignment_expression(&mut self, assign: &AssignmentExpression<'_>) {
-        // Only handle simple `=` for now
-        if assign.operator != AssignmentOperator::Assign {
-            return;
+    /// is assignable to the LHS declared type (TS2322). Always returns the
+    /// RHS type as the expression result.
+    ///
+    /// Called from `get_type_of_expression_inner` so diagnostics fire
+    /// regardless of how the expression is reached.
+    pub(crate) fn check_assignment_expression(
+        &mut self,
+        assign: &oxc_ast::ast::AssignmentExpression<'_>,
+        contextual_type: Option<TypeId>,
+    ) -> TypeId {
+        use oxc_ast::ast::AssignmentTarget;
+        use oxc_syntax::operator::AssignmentOperator;
+
+        if assign.operator == AssignmentOperator::Assign {
+            if let AssignmentTarget::AssignmentTargetIdentifier(ident) = &assign.left {
+                let target_type = self.get_type_of_identifier(ident);
+                let value_type = self.get_type_of_expression(&assign.right, Some(target_type));
+                self.check_type_assignable_to_and_report(
+                    value_type, target_type, ident.span(), "2322",
+                    |s, t| format!("Type '{s}' is not assignable to type '{t}'."),
+                );
+                return value_type;
+            }
         }
 
-        use oxc_ast::ast::AssignmentTarget;
-
-        // Only handle simple identifier targets for now
-        let AssignmentTarget::AssignmentTargetIdentifier(ident) = &assign.left else {
-            return;
-        };
-
-        let target_type = self.get_type_of_identifier(ident);
-        let value_type = self.get_type_of_expression(&assign.right, Some(target_type));
-
-        self.check_type_assignable_to_and_report(
-            value_type, target_type, ident.span(), "2322",
-            |s, t| format!("Type '{s}' is not assignable to type '{t}'."),
-        );
+        self.get_type_of_expression(&assign.right, contextual_type)
     }
 }

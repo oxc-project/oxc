@@ -619,11 +619,11 @@ impl<'a> Checker<'a> {
             .map(|ann| self.get_type_from_type_node(&ann.type_annotation));
 
         // Evaluate the initializer with the declared type as context.
-        // This triggers diagnostics (e.g., TS2339) even without a type annotation.
+        // This triggers diagnostics (e.g., TS2339, TS2695) even without a type annotation.
         let init_type = decl
             .init
             .as_ref()
-            .map(|init| self.get_type_of_expression(init, declared_type));
+            .map(|init| self.check_expression(init, declared_type));
 
         let Some(declared_type) = declared_type else {
             return;
@@ -706,7 +706,7 @@ impl<'a> Checker<'a> {
             return;
         };
 
-        let actual_type = self.get_type_of_expression(arg, expected_return_type);
+        let actual_type = self.check_expression(arg, expected_return_type);
 
         if let Some(expected) = expected_return_type {
             self.check_type_assignable_to_and_report(
@@ -722,7 +722,7 @@ impl<'a> Checker<'a> {
     /// - The RHS expression is of type `any`, an object type, or a type parameter
     /// - The LHS variable (when not a declaration) is assignable from `string`
     fn check_for_in_statement(&mut self, for_in: &oxc_ast::ast::ForInStatement<'a>) {
-        let right_type = self.get_type_of_expression(&for_in.right, None);
+        let right_type = self.check_expression(&for_in.right, None);
         let right_flags = self.type_arena.get_flags(right_type);
 
         // RHS must be any, an object type, or a type parameter.

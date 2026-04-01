@@ -105,13 +105,10 @@ impl Checker<'_> {
             // Template literals — always string (simplified; tsc can produce literal types)
             Expression::TemplateLiteral(_) => self.string_type,
 
-            // Sequence expression — type of the last element
-            Expression::SequenceExpression(expr) => {
-                if let Some(last) = expr.expressions.last() {
-                    self.get_type_of_expression(last, contextual_type)
-                } else {
-                    self.undefined_type
-                }
+            // Sequence expression — checks all sub-expressions, emits TS2695,
+            // returns type of the last element.
+            Expression::SequenceExpression(seq) => {
+                self.check_sequence_expression(seq, contextual_type)
             }
 
             // void x — always undefined
@@ -138,9 +135,9 @@ impl Checker<'_> {
             // Array literal: [1, 2, 3]
             Expression::ArrayExpression(arr) => self.get_type_of_array_literal(arr, contextual_type),
 
-            // Assignment: result type is the RHS
+            // Assignment: checks assignability (TS2322), returns RHS type.
             Expression::AssignmentExpression(assign) => {
-                self.get_type_of_expression(&assign.right, contextual_type)
+                self.check_assignment_expression(assign, contextual_type)
             }
 
             // Optional chaining: unwrap inner, union with undefined
