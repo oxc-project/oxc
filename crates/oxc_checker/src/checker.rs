@@ -3,6 +3,7 @@ use std::sync::Arc;
 use oxc_index::IndexVec;
 use rustc_hash::{FxHashMap, FxHashSet};
 
+use oxc_ast::AstKind;
 use oxc_ast::ast::{
     BindingPattern, Declaration, Expression, ForStatementInit, ForStatementLeft, Function, Program,
     Statement,
@@ -10,6 +11,7 @@ use oxc_ast::ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::Semantic;
 use oxc_span::{CompactStr, GetSpan};
+use oxc_syntax::node::NodeId;
 use oxc_syntax::symbol::SymbolId;
 use oxc_types::{
     FunctionType, ObjectFlags, ParameterInfo, PropertyInfo, Signature, SignatureFlags,
@@ -236,6 +238,24 @@ pub struct Checker<'a> {
     pub(crate) global_es_symbol_type: Option<TypeId>,
     /// Cached `number | bigint` union type for arithmetic operand validation.
     pub(crate) number_or_bigint_type: TypeId,
+
+    /// Deferred function expression and arrow function bodies to check after
+    /// all top-level statements have been processed. Mirrors tsgo's
+    /// `deferredNodes` queue.
+    ///
+    /// Function expression bodies are deferred so that the enclosing scope is
+    /// fully resolved before the body is checked — this ensures recursive and
+    /// forward references inside the body find cached symbol types.
+    ///
+    /// Stores `NodeId` values which are looked up from `semantic.nodes()` at
+    /// processing time, yielding `&'a Function<'a>` / `&'a ArrowFunctionExpression<'a>`
+    /// with the correct lifetime without requiring lifetime annotations on the
+    /// methods that queue them.
+    deferred_bodies: Vec<NodeId>,
+    /// Set for O(1) deduplication when queuing deferred bodies. A function
+    /// expression may be encountered multiple times during type resolution
+    /// (assignability, CFA, etc.) but should only be body-checked once.
+    deferred_bodies_set: FxHashSet<NodeId>,
 }
 
 impl<'a> Checker<'a> {
@@ -361,6 +381,8 @@ impl<'a> Checker<'a> {
             global_bigint_type,
             global_es_symbol_type,
             number_or_bigint_type,
+            deferred_bodies: Vec::new(),
+            deferred_bodies_set: FxHashSet::default(),
         }
     }
 
@@ -377,6 +399,9 @@ impl<'a> Checker<'a> {
         self.flow_type_cache.clear();
         self.check_source_elements(&program.body);
         self.current_flow_graph = crate::flow::FlowGraph::empty();
+        // Process deferred function expression / arrow bodies.
+        // Mirrors tsgo's checkDeferredNodes called after checkSourceElements.
+        self.check_deferred_bodies();
     }
 
     /// Drain and return all collected diagnostics.
@@ -689,21 +714,68 @@ impl<'a> Checker<'a> {
         );
     }
 
-    /// Check a function's body with the return type context pushed.
+    /// Check a function body: resolve the return type annotation, build a
+    /// per-function flow graph, and walk the statements.
+    ///
+    /// Saves and restores the outer flow graph and cache so nested function
+    /// bodies don't interfere with the enclosing scope's CFA state.
     fn check_function_body(&mut self, func: &Function<'a>) {
         let return_type =
             func.return_type.as_ref().map(|rt| self.get_type_from_type_node(&rt.type_annotation));
-        self.return_type_stack.push(return_type);
         if let Some(body) = &func.body {
-            // Build per-function flow graph, saving the outer one for nested functions.
-            let flow_graph =
-                crate::flow_builder::FlowGraphBuilder::build(&body.statements, &self.semantic);
-            let prev_graph = std::mem::replace(&mut self.current_flow_graph, flow_graph);
-            let prev_cache = std::mem::take(&mut self.flow_type_cache);
-            self.check_source_elements(&body.statements);
-            self.current_flow_graph = prev_graph;
-            self.flow_type_cache = prev_cache;
+            self.check_body_statements(&body.statements, return_type);
         }
+    }
+
+    /// Queue a function expression or arrow function body for deferred checking.
+    ///
+    /// Called from `get_type_of_expression_inner` when a function expression or
+    /// arrow function is encountered. The body will be checked after all
+    /// top-level statements are processed (in `check_deferred_bodies`).
+    pub(crate) fn queue_deferred_body(&mut self, node_id: NodeId) {
+        if self.deferred_bodies_set.insert(node_id) {
+            self.deferred_bodies.push(node_id);
+        }
+    }
+
+    /// Process all deferred function expression and arrow function bodies.
+    ///
+    /// Called after `check_source_elements` in `check_program`. Uses an index
+    /// loop because checking a body may discover nested function expressions
+    /// that are appended to the queue during iteration.
+    fn check_deferred_bodies(&mut self) {
+        let mut i = 0;
+        while i < self.deferred_bodies.len() {
+            let node_id = self.deferred_bodies[i];
+            i += 1;
+            let kind = self.semantic.nodes().get_node(node_id).kind();
+            match kind {
+                AstKind::Function(func) => self.check_function_body(func),
+                AstKind::ArrowFunctionExpression(arrow) => {
+                    let return_type = arrow
+                        .return_type
+                        .as_ref()
+                        .map(|rt| self.get_type_from_type_node(&rt.type_annotation));
+                    self.check_body_statements(&arrow.body.statements, return_type);
+                }
+                _ => {}
+            }
+        }
+    }
+
+    /// Shared implementation for checking a function/arrow/method body.
+    ///
+    /// Pushes the return type context, builds a per-scope flow graph, walks
+    /// the body statements, then restores the outer flow graph and return
+    /// type stack.
+    fn check_body_statements(&mut self, stmts: &[Statement<'a>], return_type: Option<TypeId>) {
+        self.return_type_stack.push(return_type);
+        let flow_graph = crate::flow_builder::FlowGraphBuilder::build(stmts, &self.semantic);
+        let prev_graph = std::mem::replace(&mut self.current_flow_graph, flow_graph);
+        let prev_cache = std::mem::take(&mut self.flow_type_cache);
+        self.check_source_elements(stmts);
+        self.current_flow_graph = prev_graph;
+        self.flow_type_cache = prev_cache;
         self.return_type_stack.pop();
     }
 
@@ -718,17 +790,7 @@ impl<'a> Checker<'a> {
                         .return_type
                         .as_ref()
                         .map(|rt| self.get_type_from_type_node(&rt.type_annotation));
-                    self.return_type_stack.push(return_type);
-                    let flow_graph = crate::flow_builder::FlowGraphBuilder::build(
-                        &body.statements,
-                        &self.semantic,
-                    );
-                    let prev_graph = std::mem::replace(&mut self.current_flow_graph, flow_graph);
-                    let prev_cache = std::mem::take(&mut self.flow_type_cache);
-                    self.check_source_elements(&body.statements);
-                    self.current_flow_graph = prev_graph;
-                    self.flow_type_cache = prev_cache;
-                    self.return_type_stack.pop();
+                    self.check_body_statements(&body.statements, return_type);
                 }
             }
         }

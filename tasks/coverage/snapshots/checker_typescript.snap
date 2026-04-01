@@ -2,7 +2,7 @@ commit: 34725489
 
 checker_typescript Summary:
 AST Parsed     : 3811/3811 (100.00%)
-Positive Passed: 420/3811 (11.02%)
+Positive Passed: 427/3811 (11.20%)
 checker: tasks/coverage/typescript/tests/cases/compiler/2dArrays.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/ClassDeclarationWithInvalidConstOnPropertyDeclaration2.ts
@@ -5707,12 +5707,6 @@ checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/thisTag1.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/thisTag2.ts
 
-checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/tsNoCheckForTypescript.ts
-
-checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/tsNoCheckForTypescriptComments1.ts
-
-checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/tsNoCheckForTypescriptComments2.ts
-
 checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/typeParameterExtendsUnionConstraintDistributed.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/typeTagOnPropertyAssignment.ts
@@ -5894,12 +5888,6 @@ checker: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Er
 checker: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/FunctionDeclarations/parserFunctionDeclaration8.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Fuzz/parser768531.ts
-
-checker: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Generics/parserAmbiguityWithBinaryOperator1.ts
-
-checker: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Generics/parserAmbiguityWithBinaryOperator2.ts
-
-checker: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Generics/parserAmbiguityWithBinaryOperator3.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Generics/parserGenericClass1.ts
 
@@ -6498,8 +6486,6 @@ checker: tasks/coverage/typescript/tests/cases/conformance/types/stringLiteral/s
 checker: tasks/coverage/typescript/tests/cases/conformance/types/stringLiteral/stringLiteralTypesTypePredicates01.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/types/stringLiteral/stringLiteralTypesWithTemplateStrings01.ts
-
-checker: tasks/coverage/typescript/tests/cases/conformance/types/stringLiteral/stringLiteralTypesWithVariousOperators01.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/types/thisType/contextualThisType.ts
 
