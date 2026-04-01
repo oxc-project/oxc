@@ -92,7 +92,7 @@ impl Rule for PreferStringReplaceAll {
                         let ast = AstBuilder::new(&alloc);
                         codegen.print_expression(&ast.expression_string_literal(
                             SPAN,
-                            ast.atom(&k),
+                            ast.str(&k),
                             None,
                         ));
                         fixer.replace(pattern.span(), codegen.into_source_text())

@@ -329,6 +329,10 @@ fn keep_exposed_variables() {
     test("var x = foo; x()", "foo()");
     test_script_same("var x = foo; x()");
     test_script("{ let x = foo; x() }", "foo()");
+    test(
+        "var b = 'b', l = { '-a': 'a', b }; export { l }",
+        "var l = { '-a': 'a', b: 'b' }; export { l }",
+    );
 }
 
 #[test]
@@ -339,32 +343,29 @@ fn keep_names() {
     );
     test_keep_names(
         "var x = function() {}; var y = x; console.log(y.name)",
-        "var x = function() {}, y = x; console.log(y.name)",
+        "var x = function() {}; console.log(x.name)",
     );
     test_keep_names(
         "var x = (function() {}); var y = x; console.log(y.name)",
-        "var x = (function() {}), y = x; console.log(y.name)",
+        "var x = (function() {}); console.log(x.name)",
     );
     test_keep_names(
         "var x = function foo() {}; var y = x; console.log(y.name)",
         "console.log(function foo() {}.name)",
     );
 
-    test(
-        "var x = class {}; var y = x; console.log(y.name)",
-        "var y = class {}; console.log(y.name)",
-    );
+    test("var x = class {}; var y = x; console.log(y.name)", "console.log(class {}.name)");
     test_keep_names(
         "var x = class {}; var y = x; console.log(y.name)",
-        "var x = class {}, y = x; console.log(y.name)",
+        "var x = class {}; console.log(x.name)",
     );
     test_keep_names(
         "var x = (class {}); var y = x; console.log(y.name)",
-        "var x = (class {}), y = x; console.log(y.name)",
+        "var x = (class {}); console.log(x.name)",
     );
     test_keep_names(
         "var x = class Foo {}; var y = x; console.log(y.name)",
-        "var y = class Foo {}; console.log(y.name)",
+        "console.log(class Foo {}.name)",
     );
 }
 

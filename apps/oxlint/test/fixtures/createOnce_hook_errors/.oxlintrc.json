@@ -1,0 +1,51 @@
+{
+  "jsPlugins": ["./plugin.ts"],
+  "categories": { "correctness": "off" },
+  "overrides": [
+    // Check that `after` hooks run even after an error in another rule's `before` hook
+    {
+      "files": ["files/throwInBefore/1.js"],
+      "rules": {
+        "create-once-errors-plugin/before-and-after": "error",
+        "create-once-errors-plugin/throw-in-before": "error",
+        "create-once-errors-plugin/before-and-after-late": "error"
+      }
+    },
+    {
+      "files": ["files/throwInBefore/2.js"],
+      "rules": {
+        "create-once-errors-plugin/before-and-after-late": "error"
+      }
+    },
+    // Check that `after` hooks run even after an error during visiting AST
+    {
+      "files": ["files/throwInVisit/1.js"],
+      "rules": {
+        "create-once-errors-plugin/before-and-after": "error",
+        "create-once-errors-plugin/throw-in-visit": "error",
+        "create-once-errors-plugin/before-and-after-late": "error"
+      }
+    },
+    {
+      "files": ["files/throwInVisit/2.js"],
+      "rules": {
+        "create-once-errors-plugin/before-and-after-late": "error"
+      }
+    },
+    // Check that `after` hooks run even after an error in another rule's `after` hook
+    {
+      "files": ["files/throwInAfter/1.js"],
+      "rules": {
+        "create-once-errors-plugin/before-and-after": "error",
+        "create-once-errors-plugin/throw-in-after": "error",
+        "create-once-errors-plugin/before-and-after-late": "error"
+      }
+    },
+    {
+      "files": ["files/throwInAfter/2.js"],
+      "rules": {
+        "create-once-errors-plugin/before-and-after-late": "error"
+      }
+    }
+  ]
+}

@@ -4,7 +4,7 @@
 //! including type checking, conversions, and tree traversal helpers.
 
 use oxc_allocator::{Address, GetAddress, UnstableAddress};
-use oxc_span::{Atom, GetSpan, Ident};
+use oxc_span::{GetSpan, Ident, Str};
 
 use super::{AstKind, ast::*};
 
@@ -626,7 +626,7 @@ impl<'a> MemberExpressionKind<'a> {
     /// Returns the property name of the member expression, otherwise `None`.
     ///
     /// Example: returns the `prop` in `obj.prop` or `obj["prop"]`.
-    pub fn static_property_name(&self) -> Option<Atom<'a>> {
+    pub fn static_property_name(&self) -> Option<Str<'a>> {
         match self {
             Self::Computed(member_expr) => member_expr.static_property_name(),
             Self::Static(member_expr) => Some(member_expr.property.name.into()),

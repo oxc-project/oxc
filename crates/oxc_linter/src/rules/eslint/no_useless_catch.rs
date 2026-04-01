@@ -26,7 +26,7 @@ pub struct NoUselessCatch;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow unnecessary catch clauses
+    /// Disallow unnecessary catch clauses.
     ///
     /// ### Why is this bad?
     ///

@@ -1,0 +1,20 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: -W no-undef -c fixtures/cli/no_undef/eslintrc.json fixtures/cli/no_undef/test.js
+working directory: 
+----------
+
+  ! eslint(no-undef): 'console' is not defined.
+   ,-[fixtures/cli/no_undef/test.js:1:1]
+ 1 | console.log(foo)
+   : ^^^^^^^
+   `----
+  help: Either define 'console' or remove the reference to it. If 'console' is a global variable, add it to the 'globals' configuration.
+
+Found 1 warning and 0 errors.
+Finished in <variable>ms on 1 file with 94 rules using 1 threads.
+----------
+CLI result: LintSucceeded
+----------

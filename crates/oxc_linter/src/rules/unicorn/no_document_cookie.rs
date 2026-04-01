@@ -12,8 +12,9 @@ use crate::{
 };
 
 fn no_document_cookie_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Do not use `document.cookie` directly")
-        .with_help("Use the Cookie Store API or a cookie library instead")
+    OxcDiagnostic::warn("Do not use `document.cookie` directly.")
+        .with_help("Use the Cookie Store API or a cookie library instead.")
+        .with_note("https://developer.mozilla.org/en-US/docs/Web/API/Cookie_Store_API")
         .with_label(span)
 }
 
@@ -23,7 +24,7 @@ pub struct NoDocumentCookie;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow direct use of
+    /// Disallows direct use of
     /// [`document.cookie`](https://developer.mozilla.org/en-US/docs/Web/API/Document/cookie).
     ///
     /// ### Why is this bad?
@@ -33,7 +34,7 @@ declare_oxc_lint!(
     /// directly as it's easy to get the string wrong. Instead, you should use
     /// the [Cookie Store
     /// API](https://developer.mozilla.org/en-US/docs/Web/API/Cookie_Store_API)
-    /// or a [cookie library](https://www.npmjs.com/search?q=cookie).
+    /// or a [cookie library](https://npmx.dev/search?q=cookie).
     ///
     /// ### Examples
     ///

@@ -1,8 +1,19 @@
 import { describe, expect, it } from "vitest";
-import { format } from "../../dist/index.js";
+import { format, defineConfig } from "../../dist/index.js";
 import type { FormatOptions } from "../../dist/index.js";
 
-describe("Basic", () => {
+describe("defineConfig() API", () => {
+  it("`defineConfig()` function exists", () => {
+    expect(typeof defineConfig).toBe("function");
+  });
+
+  it("`defineConfig()` returns the same object", () => {
+    const config = defineConfig({ semi: true, tabWidth: 4, ignorePatterns: ["*.min.js"] });
+    expect(config).toStrictEqual({ semi: true, tabWidth: 4, ignorePatterns: ["*.min.js"] });
+  });
+});
+
+describe("format() API", () => {
   it("`format()` function exists", () => {
     expect(typeof format).toBe("function");
   });

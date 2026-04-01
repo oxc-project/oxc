@@ -27,7 +27,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Prefer using `describe.each` rather than a manual loop.
 
   ⚠ eslint-plugin-jest(prefer-each): Enforce using `each` rather than manual loops
-   ╭─[prefer_each.tsx:8:4]
+   ╭─[prefer_each.tsx:8:13]
  7 │             }
  8 │             for (const [input, expected] of data) {
    ·             ──────────────────────────────────────
@@ -44,7 +44,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Prefer using `it.each` rather than a manual loop.
 
   ⚠ eslint-plugin-jest(prefer-each): Enforce using `each` rather than manual loops
-   ╭─[prefer_each.tsx:4:4]
+   ╭─[prefer_each.tsx:4:13]
  3 │             });
  4 │             for (const [input, expected] of data) {
    ·             ──────────────────────────────────────
@@ -61,7 +61,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Prefer using `it.each` rather than a manual loop.
 
   ⚠ eslint-plugin-jest(prefer-each): Enforce using `each` rather than manual loops
-   ╭─[prefer_each.tsx:4:4]
+   ╭─[prefer_each.tsx:4:13]
  3 │             });
  4 │             for (const [input, expected] of data) {
    ·             ──────────────────────────────────────
@@ -86,7 +86,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Prefer using `it.each` rather than a manual loop.
 
   ⚠ eslint-plugin-jest(prefer-each): Enforce using `each` rather than manual loops
-   ╭─[prefer_each.tsx:6:4]
+   ╭─[prefer_each.tsx:6:13]
  5 │             }
  6 │             for (const [input, expected] of data) {
    ·             ──────────────────────────────────────
@@ -103,7 +103,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Prefer using `it.each` rather than a manual loop.
 
   ⚠ eslint-plugin-jest(prefer-each): Enforce using `each` rather than manual loops
-   ╭─[prefer_each.tsx:6:4]
+   ╭─[prefer_each.tsx:6:13]
  5 │             }
  6 │             for (const [input, expected] of data) {
    ·             ──────────────────────────────────────
@@ -160,7 +160,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Prefer using `describe.each` rather than a manual loop.
 
   ⚠ eslint-plugin-jest(prefer-each): Enforce using `each` rather than manual loops
-    ╭─[prefer_each.tsx:9:11]
+    ╭─[prefer_each.tsx:9:20]
   8 │ 
   9 │                    for (const [input, expected] of data) {
     ·                    ──────────────────────────────────────
@@ -177,7 +177,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Prefer using `it.each` rather than a manual loop.
 
   ⚠ eslint-plugin-jest(prefer-each): Enforce using `each` rather than manual loops
-   ╭─[prefer_each.tsx:5:11]
+   ╭─[prefer_each.tsx:5:20]
  4 │ 
  5 │                    for (const [input, expected] of data) {
    ·                    ──────────────────────────────────────
@@ -194,7 +194,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Prefer using `it.each` rather than a manual loop.
 
   ⚠ eslint-plugin-jest(prefer-each): Enforce using `each` rather than manual loops
-   ╭─[prefer_each.tsx:5:11]
+   ╭─[prefer_each.tsx:5:20]
  4 │ 
  5 │                    for (const [input, expected] of data) {
    ·                    ──────────────────────────────────────
@@ -219,7 +219,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Prefer using `it.each` rather than a manual loop.
 
   ⚠ eslint-plugin-jest(prefer-each): Enforce using `each` rather than manual loops
-   ╭─[prefer_each.tsx:7:11]
+   ╭─[prefer_each.tsx:7:20]
  6 │ 
  7 │                    for (const [input, expected] of data) {
    ·                    ──────────────────────────────────────
@@ -236,7 +236,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Prefer using `describe.each` rather than a manual loop.
 
   ⚠ eslint-plugin-jest(prefer-each): Enforce using `each` rather than manual loops
-   ╭─[prefer_each.tsx:2:11]
+   ╭─[prefer_each.tsx:2:20]
  1 │ 
  2 │                    for (const [input, expected] of data) {
    ·                    ──────────────────────────────────────
@@ -245,7 +245,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Prefer using `it.each` rather than a manual loop.
 
   ⚠ eslint-plugin-jest(prefer-each): Enforce using `each` rather than manual loops
-   ╭─[prefer_each.tsx:2:11]
+   ╭─[prefer_each.tsx:2:20]
  1 │ 
  2 │                    for (const [input, expected] of data) {
    ·                    ──────────────────────────────────────

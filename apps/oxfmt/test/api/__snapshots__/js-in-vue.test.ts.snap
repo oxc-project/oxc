@@ -31,3 +31,29 @@ exports[`Format js-in-vue with prettier-plugin-oxfmt > should format .vue w/ sor
 </template>
 "
 `;
+
+exports[`Format js-in-vue with prettier-plugin-oxfmt > should format .vue w/ template literal (no vueIndentScriptAndStyle) 1`] = `
+"<script setup>
+const a = \`
+  hello
+  world
+\`;
+</script>
+<template>
+  <div>{{ a }}</div>
+</template>
+"
+`;
+
+exports[`Format js-in-vue with prettier-plugin-oxfmt > should format .vue w/ template literal idempotently (vueIndentScriptAndStyle) 1`] = `
+"<script setup>
+  const a = \`
+  hello
+  world
+\`;
+</script>
+<template>
+  <div>{{ a }}</div>
+</template>
+"
+`;

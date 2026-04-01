@@ -58,6 +58,20 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add parentheses around the nested ternary expression.
 
+  ⚠ eslint-plugin-unicorn(no-nested-ternary): Unexpected nested ternary expression without parentheses.
+   ╭─[no_nested_ternary.tsx:1:21]
+ 1 │ const foo = i > 5 ? i < 100 ? true : false : i < 100 ? true : false;
+   ·                     ──────────────────────
+   ╰────
+  help: Add parentheses around the nested ternary expression.
+
+  ⚠ eslint-plugin-unicorn(no-nested-ternary): Unexpected nested ternary expression without parentheses.
+   ╭─[no_nested_ternary.tsx:1:46]
+ 1 │ const foo = i > 5 ? i < 100 ? true : false : i < 100 ? true : false;
+   ·                                              ──────────────────────
+   ╰────
+  help: Add parentheses around the nested ternary expression.
+
   ⚠ eslint-plugin-unicorn(no-nested-ternary): Unexpected deeply nested ternary expression.
    ╭─[no_nested_ternary.tsx:1:47]
  1 │ const foo = i > 5 ? true : (i < 100 ? true : (i < 1000 ? true : false));

@@ -30,7 +30,7 @@ impl<'a> FlagsParser<'a> {
             if unique_flags.contains(&cp) {
                 return Err(diagnostics::duplicated_flags(
                     self.span_factory.create(span_start, span_end),
-                    &self.reader.atom(span_start, span_end),
+                    &self.reader.str(span_start, span_end),
                 ));
             }
             if char::try_from(cp)
@@ -38,7 +38,7 @@ impl<'a> FlagsParser<'a> {
             {
                 return Err(diagnostics::unknown_flag(
                     self.span_factory.create(span_start, span_end),
-                    &self.reader.atom(span_start, span_end),
+                    &self.reader.str(span_start, span_end),
                     &["d", "g", "i", "m", "s", "u", "v", "y"],
                 ));
             }

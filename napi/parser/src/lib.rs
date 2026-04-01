@@ -5,7 +5,7 @@ use napi_derive::napi;
 
 use oxc::{
     allocator::Allocator,
-    parser::{ParseOptions, Parser, ParserReturn},
+    parser::{ParseOptions, Parser, ParserReturn, config::RuntimeParserConfig},
     semantic::SemanticBuilder,
     span::SourceType,
 };
@@ -85,6 +85,7 @@ fn parse_impl<'a>(
             preserve_parens: options.preserve_parens.unwrap_or(true),
             ..ParseOptions::default()
         })
+        .with_config(RuntimeParserConfig::new(options.tokens.unwrap_or(false)))
         .parse()
 }
 

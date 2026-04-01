@@ -1,3 +1,6 @@
+use lazy_regex::{Regex, RegexBuilder};
+use serde::Deserialize;
+
 /// Always returns `true`.
 ///
 /// Useful for default values in rule configs that use serde.
@@ -22,4 +25,16 @@
 #[inline]
 pub const fn default_true() -> bool {
     true
+}
+
+pub fn deserialize_regex_option<'de, D>(deserializer: D) -> Result<Option<Regex>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    use serde::de::Error;
+
+    Option::<String>::deserialize(deserializer)?
+        .map(|pattern| RegexBuilder::new(&pattern).build())
+        .transpose()
+        .map_err(D::Error::custom)
 }

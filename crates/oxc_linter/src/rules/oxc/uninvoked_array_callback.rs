@@ -26,7 +26,7 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// When the Array constructor is called with a single number argument, an array with the specified number of empty slots (not actual undefined values) is constructed.
+    /// When the Array constructor is called with a single number argument, an array with the specified number of empty slots (not actual `undefined` values) is constructed.
     /// If a callback function is passed to the function of this array, the callback function is never invoked because the array has no actual elements.
     ///
     /// ### Examples

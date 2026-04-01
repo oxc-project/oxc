@@ -49,7 +49,7 @@ declare_oxc_lint!(
     /// ```
     PreferReadonly(tsgolint),
     typescript,
-    nursery,
+    style,
     config = PreferReadonlyConfig,
 );
 

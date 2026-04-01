@@ -15,11 +15,11 @@ pub struct NoNonNullAssertion;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow non-null assertions using the ! postfix operator.
+    /// Disallow non-null assertions using the `!` postfix operator.
     ///
     /// ### Why is this bad?
     ///
-    /// TypeScript's ! non-null assertion operator asserts to the type system that an expression is non-nullable, as in not null or undefined. Using assertions to tell the type system new information is often a sign that code is not fully type-safe. It's generally better to structure program logic so that TypeScript understands when values may be nullable.
+    /// TypeScript's `!` non-null assertion operator asserts to the type system that an expression is non-nullable, as in not `null` or `undefined`. Using assertions to tell the type system new information is often a sign that code is not fully type-safe. It's generally better to structure program logic so that TypeScript understands when values may be nullable.
     ///
     /// ### Examples
     ///

@@ -28,12 +28,14 @@ source: crates/oxc_linter/src/tester.rs
  1 │ x = y * x
    · ─────────
    ╰────
+  note: Use '*=' shorthand instead of '='.
 
   ⚠ eslint(operator-assignment): Assignment (=) can be replaced with operator assignment (*=).
    ╭─[operator_assignment.tsx:1:1]
  1 │ x = (y * z) * x
    · ───────────────
    ╰────
+  note: Use '*=' shorthand instead of '='.
 
   ⚠ eslint(operator-assignment): Assignment (=) can be replaced with operator assignment (/=).
    ╭─[operator_assignment.tsx:1:1]

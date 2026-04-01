@@ -26,10 +26,7 @@ pub struct JsonSafeString<'s>(pub &'s str);
 impl ESTree for JsonSafeString<'_> {
     #[inline(always)]
     fn serialize<S: Serializer>(&self, mut serializer: S) {
-        let buffer = serializer.buffer_mut();
-        buffer.print_ascii_byte(b'"');
-        buffer.print_str(self.0);
-        buffer.print_ascii_byte(b'"');
+        serializer.buffer_mut().print_strs_array(["\"", self.0, "\""]);
     }
 }
 

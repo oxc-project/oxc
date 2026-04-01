@@ -130,23 +130,23 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        ("Math.max(0, Math.min(100, x))", None),
-        ("Math.max(Math.min(100, x), 0)", None),
-        ("Math.min(100, Math.max(0.9, x))", None),
-        ("Math.min(255.255, Math.max(0, x))", None),
-        ("Math.min(Math.max(0, x), 255)", None),
-        ("Math.min(0, Math.min(0, x))", None),
+        "Math.max(0, Math.min(100, x))",
+        "Math.max(Math.min(100, x), 0)",
+        "Math.min(100, Math.max(0.9, x))",
+        "Math.min(255.255, Math.max(0, x))",
+        "Math.min(Math.max(0, x), 255)",
+        "Math.min(0, Math.min(0, x))",
     ];
 
     let fail = vec![
-        ("Math.min(Math.max(100, x), 0)", None),
-        ("Math.max(255.255, Math.min(0, x))", None),
-        ("Math.max(Math.min(0, x), 255)", None),
-        ("Math.max(1000, Math.min(0, z))", None),
-        ("Math[\"min\"](0, Math.max(100, x))", None),
-        ("Math.min(Math.max(1000, x), 100, 3)", None),
-        ("Math.min(0, 5, Math['max'](x, 100, 30))", None),
-        ("Math.min(Math.max(1e3, x), 1.55e2)", None),
+        "Math.min(Math.max(100, x), 0)",
+        "Math.max(255.255, Math.min(0, x))",
+        "Math.max(Math.min(0, x), 255)",
+        "Math.max(1000, Math.min(0, z))",
+        "Math[\"min\"](0, Math.max(100, x))",
+        "Math.min(Math.max(1000, x), 100, 3)",
+        "Math.min(0, 5, Math['max'](x, 100, 30))",
+        "Math.min(Math.max(1e3, x), 1.55e2)",
     ];
 
     Tester::new(BadMinMaxFunc::NAME, BadMinMaxFunc::PLUGIN, pass, fail).test_and_snapshot();

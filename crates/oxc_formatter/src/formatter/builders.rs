@@ -32,7 +32,7 @@ use crate::{TrailingSeparator, write};
 ///
 /// Soft line breaks are omitted if the enclosing `Group` fits on a single line
 ///
-/// ```
+/// ```text
 /// use biome_formatter::{format, format_args};
 /// use biome_formatter::prelude::*;
 ///
@@ -52,7 +52,7 @@ use crate::{TrailingSeparator, write};
 /// `Group` fits on a single line.
 ///
 /// Soft line breaks are emitted if the enclosing `Group` doesn't fit on a single line
-/// ```
+/// ```text
 /// use biome_formatter::{format, format_args, LineWidth, SimpleFormatOptions};
 /// use biome_formatter::prelude::*;
 ///
@@ -88,7 +88,7 @@ pub const fn soft_line_break() -> Line {
 /// # Examples
 ///
 /// It forces a line break, even if the enclosing `Group` would otherwise fit on a single line.
-/// ```
+/// ```text
 /// use biome_formatter::{format, format_args};
 /// use biome_formatter::prelude::*;
 ///
@@ -119,7 +119,7 @@ pub const fn hard_line_break() -> Line {
 ///
 /// # Examples
 ///
-/// ```
+/// ```text
 /// use biome_formatter::{format, format_args};
 /// use biome_formatter::prelude::*;
 ///
@@ -151,7 +151,7 @@ pub const fn empty_line() -> Line {
 /// # Examples
 ///
 /// The line breaks are emitted as spaces if the enclosing `Group` fits on a single line:
-/// ```
+/// ```text
 /// use biome_formatter::{format, format_args};
 /// use biome_formatter::prelude::*;
 ///
@@ -173,7 +173,7 @@ pub const fn empty_line() -> Line {
 /// ```
 ///
 /// The printer breaks the lines if the enclosing `Group` doesn't fit on a single line:
-/// ```
+/// ```text
 /// use biome_formatter::{format_args, format, LineWidth, SimpleFormatOptions};
 /// use biome_formatter::prelude::*;
 ///
@@ -235,7 +235,7 @@ impl std::fmt::Debug for Line {
 ///
 /// # Examples
 ///
-/// ```
+/// ```text
 /// use biome_formatter::format;
 /// use biome_formatter::prelude::*;
 ///
@@ -253,7 +253,7 @@ impl std::fmt::Debug for Line {
 /// Printing a string literal as a literal requires that the string literal is properly escaped and
 /// enclosed in quotes (depending on the target language).
 ///
-/// ```
+/// ```text
 /// use biome_formatter::format;
 /// use biome_formatter::prelude::*;
 ///
@@ -350,7 +350,7 @@ fn debug_assert_no_cr_line_break(text: &str) {
 ///
 /// ## Examples
 ///
-/// ```
+/// ```text
 /// use biome_formatter::{format};
 /// use biome_formatter::prelude::*;
 ///
@@ -401,7 +401,7 @@ impl std::fmt::Debug for LineSuffix<'_, '_> {
 /// ## Examples
 ///
 /// Forces the line suffix "c" to be printed before the token `d`.
-/// ```
+/// ```text
 /// use biome_formatter::format;
 /// use biome_formatter::prelude::*;
 ///
@@ -442,7 +442,7 @@ impl Format<'_> for LineSuffixBoundary {
 ///
 /// ## Examples
 ///
-/// ```rust
+/// ```text
 /// # use biome_formatter::prelude::*;
 /// # use biome_formatter::{format, write, LineWidth};
 ///
@@ -531,7 +531,7 @@ impl std::fmt::Debug for FormatLabelled<'_, '_> {
 ///
 /// # Examples
 ///
-/// ```
+/// ```text
 /// use biome_formatter::format;
 /// use biome_formatter::prelude::*;
 ///
@@ -554,7 +554,7 @@ pub const fn space() -> Space {
 ///
 /// # Examples
 ///
-/// ```
+/// ```text
 /// use biome_formatter::{format, format_args, LineWidth, SimpleFormatOptions};
 /// use biome_formatter::prelude::*;
 ///
@@ -583,7 +583,7 @@ pub const fn space() -> Space {
 ///
 /// Without HardSpace
 ///
-/// ```
+/// ```text
 /// use biome_formatter::{format, format_args, LineWidth, SimpleFormatOptions};
 /// use biome_formatter::prelude::*;
 ///
@@ -617,7 +617,7 @@ pub const fn hard_space() -> HardSpace {
 ///
 /// # Examples
 ///
-/// ```
+/// ```text
 /// use biome_formatter::format;
 /// use biome_formatter::prelude::*;
 ///
@@ -662,7 +662,7 @@ impl Format<'_> for HardSpace {
 ///
 /// # Examples
 ///
-/// ```
+/// ```text
 /// use biome_formatter::{format, format_args};
 /// use biome_formatter::prelude::*;
 ///
@@ -689,7 +689,7 @@ impl Format<'_> for HardSpace {
 /// ```
 ///
 /// When the indent_style is tab, [indent] convert the preceding alignments to indents
-/// ```
+/// ```text
 /// use biome_formatter::prelude::*;
 /// use biome_formatter::{format, format_args};
 ///
@@ -760,7 +760,7 @@ impl std::fmt::Debug for Indent<'_, '_> {
 ///
 /// # Examples
 ///
-/// ```
+/// ```text
 /// use biome_formatter::{format, format_args};
 /// use biome_formatter::prelude::*;
 ///
@@ -793,7 +793,7 @@ impl std::fmt::Debug for Indent<'_, '_> {
 /// # }
 /// ```
 ///
-/// ```
+/// ```text
 /// use biome_formatter::prelude::*;
 /// use biome_formatter::{format, format_args, IndentStyle, IndentWidth, SimpleFormatOptions};
 ///
@@ -848,7 +848,7 @@ impl std::fmt::Debug for Indent<'_, '_> {
 /// # }
 /// ```
 ///
-/// ```
+/// ```text
 /// use biome_formatter::prelude::*;
 /// use biome_formatter::{format, format_args};
 ///
@@ -912,7 +912,7 @@ impl std::fmt::Debug for Dedent<'_, '_> {
 ///
 /// # Examples
 ///
-/// ```
+/// ```text
 /// use biome_formatter::{format, format_args};
 /// use biome_formatter::prelude::*;
 ///
@@ -970,7 +970,7 @@ where
 ///
 /// ## Tab indention
 ///
-/// ```
+/// ```text
 /// use std::num::NonZeroU8;
 /// use biome_formatter::{format, format_args};
 /// use biome_formatter::prelude::*;
@@ -1015,7 +1015,7 @@ where
 ///
 /// ## Spaces indention
 ///
-/// ```
+/// ```text
 /// use std::num::NonZeroU8;
 /// use biome_formatter::{format, format_args, IndentStyle, SimpleFormatOptions};
 /// use biome_formatter::prelude::*;
@@ -1103,7 +1103,7 @@ impl std::fmt::Debug for Align<'_, '_> {
 ///
 /// # Examples
 ///
-/// ```
+/// ```text
 /// use biome_formatter::{format, format_args};
 /// use biome_formatter::prelude::*;
 ///
@@ -1141,7 +1141,7 @@ pub fn block_indent<'ast>(content: &impl Format<'ast>) -> BlockIndent<'_, 'ast> 
 ///
 /// Indents the content by one level and puts in new lines if the enclosing `Group` doesn't fit on a single line
 ///
-/// ```
+/// ```text
 /// use biome_formatter::{format, format_args, LineWidth, SimpleFormatOptions};
 /// use biome_formatter::prelude::*;
 ///
@@ -1172,7 +1172,7 @@ pub fn block_indent<'ast>(content: &impl Format<'ast>) -> BlockIndent<'_, 'ast> 
 /// ```
 ///
 /// Doesn't change the formatting if the enclosing `Group` fits on a single line
-/// ```
+/// ```text
 /// use biome_formatter::{format, format_args};
 /// use biome_formatter::prelude::*;
 ///
@@ -1209,7 +1209,7 @@ pub fn soft_block_indent<'ast>(content: &impl Format<'ast>) -> BlockIndent<'_, '
 ///
 /// Adds line breaks and indents the content if the enclosing group doesn't fit on the line.
 ///
-/// ```
+/// ```text
 /// use biome_formatter::{format, format_args, LineWidth, SimpleFormatOptions};
 /// use biome_formatter::prelude::*;
 ///
@@ -1242,7 +1242,7 @@ pub fn soft_block_indent<'ast>(content: &impl Format<'ast>) -> BlockIndent<'_, '
 ///
 /// Adds spaces around the content if the caller requests it and the group fits on the line.
 ///
-/// ```
+/// ```text
 /// use biome_formatter::{format, format_args};
 /// use biome_formatter::prelude::*;
 ///
@@ -1269,7 +1269,7 @@ pub fn soft_block_indent<'ast>(content: &impl Format<'ast>) -> BlockIndent<'_, '
 /// ```
 ///
 /// Does not add spaces around the content if the caller denies it and the group fits on the line.
-/// ```
+/// ```text
 /// use biome_formatter::{format, format_args};
 /// use biome_formatter::prelude::*;
 ///
@@ -1312,7 +1312,7 @@ pub fn soft_block_indent_with_maybe_space<'ast>(
 /// Indents the content by one level and puts in new lines if the enclosing `Group` doesn't
 /// fit on a single line. Otherwise, just inserts a space.
 ///
-/// ```
+/// ```text
 /// use biome_formatter::{format, format_args, LineWidth, SimpleFormatOptions};
 /// use biome_formatter::prelude::*;
 ///
@@ -1346,7 +1346,7 @@ pub fn soft_block_indent_with_maybe_space<'ast>(
 /// ```
 ///
 /// Only adds a space if the enclosing `Group` fits on a single line
-/// ```
+/// ```text
 /// use biome_formatter::{format, format_args};
 /// use biome_formatter::prelude::*;
 ///
@@ -1379,7 +1379,7 @@ pub fn soft_line_indent_or_space<'ast>(content: &impl Format<'ast>) -> BlockInde
 /// Indents the content by one level and puts in new lines if the enclosing `Group` doesn't
 /// fit on a single line. Otherwise, just inserts a space.
 ///
-/// ```
+/// ```text
 /// use biome_formatter::{format, format_args, LineWidth, SimpleFormatOptions};
 /// use biome_formatter::prelude::*;
 ///
@@ -1413,7 +1413,7 @@ pub fn soft_line_indent_or_space<'ast>(content: &impl Format<'ast>) -> BlockInde
 /// ```
 ///
 /// Only adds a space if the enclosing `Group` fits on a single line
-/// ```
+/// ```text
 /// use biome_formatter::{format, format_args};
 /// use biome_formatter::prelude::*;
 ///
@@ -1436,7 +1436,7 @@ pub fn soft_line_indent_or_space<'ast>(content: &impl Format<'ast>) -> BlockInde
 /// ```
 ///
 /// It enforces a space after the "=" assignment operators
-/// ```
+/// ```text
 /// use biome_formatter::{format, format_args, LineWidth, SimpleFormatOptions};
 /// use biome_formatter::prelude::*;
 ///
@@ -1539,7 +1539,7 @@ impl std::fmt::Debug for BlockIndent<'_, '_> {
 ///
 /// Adds line breaks and indents the content if the enclosing group doesn't fit on the line.
 ///
-/// ```
+/// ```text
 /// use biome_formatter::{format, format_args, LineWidth, SimpleFormatOptions};
 /// use biome_formatter::prelude::*;
 ///
@@ -1571,7 +1571,7 @@ impl std::fmt::Debug for BlockIndent<'_, '_> {
 /// ```
 ///
 /// Adds spaces around the content if the group fits on the line
-/// ```
+/// ```text
 /// use biome_formatter::{format, format_args};
 /// use biome_formatter::prelude::*;
 ///
@@ -1613,7 +1613,7 @@ pub fn soft_space_or_block_indent<'ast>(content: &impl Format<'ast>) -> BlockInd
 ///
 /// `Group` that fits on a single line
 ///
-/// ```
+/// ```text
 /// use biome_formatter::{format, format_args};
 /// use biome_formatter::prelude::*;
 ///
@@ -1641,7 +1641,7 @@ pub fn soft_space_or_block_indent<'ast>(content: &impl Format<'ast>) -> BlockInd
 /// ```
 ///
 /// The printer breaks the `Group` over multiple lines if its content doesn't fit on a single line
-/// ```
+/// ```text
 /// use biome_formatter::{format, format_args, LineWidth, SimpleFormatOptions};
 /// use biome_formatter::prelude::*;
 ///
@@ -1733,7 +1733,7 @@ impl std::fmt::Debug for Group<'_, '_> {
 ///
 /// ## Examples
 ///
-/// ```
+/// ```text
 /// use biome_formatter::{format, format_args, LineWidth};
 /// use biome_formatter::prelude::*;
 ///
@@ -1787,7 +1787,7 @@ impl Format<'_> for ExpandParent {
 /// # Examples
 ///
 /// Omits the trailing comma for the last array element if the `Group` fits on a single line
-/// ```
+/// ```text
 /// use biome_formatter::{format, format_args};
 /// use biome_formatter::prelude::*;
 ///
@@ -1816,7 +1816,7 @@ impl Format<'_> for ExpandParent {
 /// ```
 ///
 /// Prints the trailing comma for the last array element if the `Group` doesn't fit on a single line
-/// ```
+/// ```text
 /// use biome_formatter::{format_args, format, LineWidth, SimpleFormatOptions};
 /// use biome_formatter::prelude::*;
 /// use biome_formatter::printer::PrintWidth;
@@ -1865,7 +1865,7 @@ where
 /// # Examples
 ///
 /// Adds the trailing comma for the last array element if the `Group` fits on a single line
-/// ```
+/// ```text
 /// use biome_formatter::{format, format_args};
 /// use biome_formatter::prelude::*;
 ///
@@ -1894,7 +1894,7 @@ where
 /// ```
 ///
 /// Omits the trailing comma for the last array element if the `Group` doesn't fit on a single line
-/// ```
+/// ```text
 /// use biome_formatter::{format, format_args, LineWidth, SimpleFormatOptions};
 /// use biome_formatter::prelude::*;
 ///
@@ -1952,7 +1952,7 @@ impl IfGroupBreaks<'_, '_> {
     /// because `fill` creates an implicit group around each item and tries to print the item in flat mode.
     /// The item `[4]` in this example fits on a single line but the trailing comma should still be printed
     ///
-    /// ```
+    /// ```text
     /// use biome_formatter::{format, format_args, write, LineWidth, SimpleFormatOptions};
     /// use biome_formatter::prelude::*;
     ///
@@ -2029,7 +2029,7 @@ impl std::fmt::Debug for IfGroupBreaks<'_, '_> {
 ///
 /// This IR has the same semantics as using [if_group_breaks] and [if_group_fits_on_line] together.
 ///
-/// ```
+/// ```text
 /// # use biome_formatter::prelude::*;
 /// # use biome_formatter::write;
 /// # let format = format_with(|f: &mut Formatter<SimpleFormatContext>| {
@@ -2052,7 +2052,7 @@ impl std::fmt::Debug for IfGroupBreaks<'_, '_> {
 /// # Examples
 ///
 /// Indent the body of an arrow function if the group wrapping the signature breaks:
-/// ```
+/// ```text
 /// use biome_formatter::{format, format_args, LineWidth, SimpleFormatOptions, write};
 /// use biome_formatter::prelude::*;
 ///
@@ -2082,7 +2082,7 @@ impl std::fmt::Debug for IfGroupBreaks<'_, '_> {
 /// ```
 ///
 /// It doesn't add an indent if the group wrapping the signature doesn't break:
-/// ```
+/// ```text
 /// use biome_formatter::{format, format_args, LineWidth, SimpleFormatOptions, write};
 /// use biome_formatter::prelude::*;
 ///
@@ -2165,7 +2165,7 @@ impl<T> std::fmt::Debug for FormatWith<T> {
 ///
 /// # Examples
 ///
-/// ```
+/// ```text
 /// use biome_formatter::prelude::*;
 /// use biome_formatter::{SimpleFormatContext, format, write};
 /// use biome_rowan::TextSize;
@@ -2219,7 +2219,7 @@ where
 ///
 /// # Example
 ///
-/// ```
+/// ```text
 /// use biome_formatter::prelude::*;
 /// use biome_formatter::{SimpleFormatContext, format, write, Buffer};
 ///

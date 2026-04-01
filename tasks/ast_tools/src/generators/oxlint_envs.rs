@@ -46,9 +46,9 @@ fn generate() -> String {
     ");
 
     let mut envs = GLOBALS.entries().collect::<Vec<_>>();
-    envs.sort_unstable_by_key(|(key, _)| **key);
+    envs.sort_unstable_by_key(|(key, _)| *key);
 
-    for (&name, vars) in envs {
+    for (name, vars) in envs {
         let const_name = format!("ENV_{}", name.to_case(Case::UpperSnake));
 
         let mut readonly_names = vec![];

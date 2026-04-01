@@ -5,7 +5,7 @@ use oxc_syntax::operator::AssignmentOperator;
 use crate::{
     Context, ParserConfig as Config, ParserImpl, diagnostics,
     lexer::Kind,
-    modifiers::{ModifierFlags, Modifiers},
+    modifiers::{ModifierKind, ModifierKinds, Modifiers},
 };
 
 use super::FunctionKind;
@@ -67,7 +67,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if asterisk_token || matches!(self.cur_kind(), Kind::LParen | Kind::LAngle) {
             self.verify_modifiers(
                 &modifiers,
-                ModifierFlags::ASYNC,
+                ModifierKinds::new([ModifierKind::Async]),
                 true,
                 diagnostics::modifier_cannot_be_used_here,
             );
@@ -89,7 +89,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         self.verify_modifiers(
             &modifiers,
-            ModifierFlags::empty(),
+            ModifierKinds::none(),
             true,
             diagnostics::modifier_cannot_be_used_here,
         );
@@ -208,7 +208,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         &mut self,
         span: u32,
         kind: PropertyKind,
-        modifiers: &Modifiers<'a>,
+        modifiers: &Modifiers,
     ) -> Box<'a, ObjectProperty<'a>> {
         let (key, computed) = self.parse_property_name();
         let function = self.parse_method(false, false, FunctionKind::ObjectMethod);
@@ -219,7 +219,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
         self.verify_modifiers(
             modifiers,
-            ModifierFlags::empty(),
+            ModifierKinds::none(),
             true,
             diagnostics::modifier_cannot_be_used_here,
         );

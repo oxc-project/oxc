@@ -161,21 +161,21 @@ fn test() {
     let pass = vec![
         (
             "
-			      <script setup>
-			      import { ref, computed } from 'vue'
-			      import { someFunction } from '@vue/runtime-core'
-			      </script>
-			      ",
+                  <script setup>
+                  import { ref, computed } from 'vue'
+                  import { someFunction } from '@vue/runtime-core'
+                  </script>
+                  ",
             None,
             None,
             Some(PathBuf::from("test.vue")),
         ),
         (
             "
-			      <script>
-			      import { defineProps } from 'some-other-package'
-			      </script>
-			      ",
+                  <script>
+                  import { defineProps } from 'some-other-package'
+                  </script>
+                  ",
             None,
             None,
             Some(PathBuf::from("test.vue")),
@@ -185,55 +185,55 @@ fn test() {
     let fail = vec![
         (
             "
-			      <script setup>
-			      import { defineProps } from 'vue'
-			      </script>
-			      ",
+                  <script setup>
+                  import { defineProps } from 'vue'
+                  </script>
+                  ",
             None,
             None,
             Some(PathBuf::from("test.vue")),
         ),
         (
             "
-			      <script setup>
-			      import {
-			        ref,
-			        defineProps
-			      } from 'vue'
-			      </script>
-			      ",
+                  <script setup>
+                  import {
+                    ref,
+                    defineProps
+                  } from 'vue'
+                  </script>
+                  ",
             None,
             None,
             Some(PathBuf::from("test.vue")),
         ),
         (
             "
-			      <script setup>
-			      import { ref, defineProps } from 'vue'
-			      import { defineEmits, computed } from '@vue/runtime-core'
-			      import { defineExpose, watch, withDefaults } from '@vue/runtime-dom'
-			      </script>
-			      ",
+                  <script setup>
+                  import { ref, defineProps } from 'vue'
+                  import { defineEmits, computed } from '@vue/runtime-core'
+                  import { defineExpose, watch, withDefaults } from '@vue/runtime-dom'
+                  </script>
+                  ",
             None,
             None,
             Some(PathBuf::from("test.vue")),
         ),
         (
             "
-			      <script setup>
-			      import { defineModel, defineOptions } from 'vue'
-			      </script>
-			      ",
+                  <script setup>
+                  import { defineModel, defineOptions } from 'vue'
+                  </script>
+                  ",
             None,
             None,
             Some(PathBuf::from("test.vue")),
         ),
         (
             r#"
-			      <script setup lang="ts">
-			      import { ref as refFoo, defineSlots as defineSlotsFoo, type computed } from '@vue/runtime-core'
-			      </script>
-			      "#,
+                  <script setup lang="ts">
+                  import { ref as refFoo, defineSlots as defineSlotsFoo, type computed } from '@vue/runtime-core'
+                  </script>
+                  "#,
             None,
             None,
             Some(PathBuf::from("test.vue")),
@@ -245,47 +245,47 @@ fn test() {
         ("import { defineProps } from 'vue'", "", None),
         (
             "
-			      import {
-			        ref,
-			        defineProps
-			      } from 'vue'
-			      ",
+                  import {
+                    ref,
+                    defineProps
+                  } from 'vue'
+                  ",
             "
-			      import {
-			        ref
-			      } from 'vue'
-			      ",
+                  import {
+                    ref
+                  } from 'vue'
+                  ",
             None,
         ),
         (
             "
-			      import { ref, defineProps } from 'vue'
-			      import { defineEmits, computed } from '@vue/runtime-core'
-			      import { defineExpose, watch, withDefaults } from '@vue/runtime-dom'
-			      ",
+                  import { ref, defineProps } from 'vue'
+                  import { defineEmits, computed } from '@vue/runtime-core'
+                  import { defineExpose, watch, withDefaults } from '@vue/runtime-dom'
+                  ",
             "
-			      import { ref } from 'vue'
-			      import {  computed } from '@vue/runtime-core'
-			      import {  watch } from '@vue/runtime-dom'
-			      ",
+                  import { ref } from 'vue'
+                  import {  computed } from '@vue/runtime-core'
+                  import {  watch } from '@vue/runtime-dom'
+                  ",
             None,
         ),
         (
             "
-			      import { defineModel, defineOptions } from 'vue'
-			      ",
+                  import { defineModel, defineOptions } from 'vue'
+                  ",
             "
-			      import {  defineOptions } from 'vue'
-			      ",
+                  import {  defineOptions } from 'vue'
+                  ",
             None,
         ),
         (
             r"
-			      import { ref as refFoo, defineSlots as defineSlotsFoo, type computed } from '@vue/runtime-core'
-			      ",
+                  import { ref as refFoo, defineSlots as defineSlotsFoo, type computed } from '@vue/runtime-core'
+                  ",
             r"
-			      import { ref as refFoo, type computed } from '@vue/runtime-core'
-			      ",
+                  import { ref as refFoo, type computed } from '@vue/runtime-core'
+                  ",
             None,
         ),
     ];

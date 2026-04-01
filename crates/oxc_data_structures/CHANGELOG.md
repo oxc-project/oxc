@@ -4,6 +4,17 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.116.0] - 2026-03-02
+
+### 🚀 Features
+
+- b3dceae data_structures: Add `fieldless_enum!` macro (#19876) (overlookmotel)
+- 4699498 data_structures: Add `CodeBuffer::print_strs_array` (#19760) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 93bb861 formatter: Trim trailing whitespace before breaking line (#19740) (leaysgur)
+
 ## [0.115.0] - 2026-02-23
 
 ### 🚀 Features

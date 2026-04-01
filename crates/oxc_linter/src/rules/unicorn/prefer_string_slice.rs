@@ -1,4 +1,7 @@
-use oxc_ast::{AstKind, ast::MemberExpression};
+use oxc_ast::{
+    AstKind,
+    ast::{Argument, Expression, MemberExpression},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -36,7 +39,7 @@ declare_oxc_lint!(
     PreferStringSlice,
     unicorn,
     pedantic,
-    fix
+    conditional_fix
 );
 
 impl Rule for PreferStringSlice {
@@ -53,12 +56,56 @@ impl Rule for PreferStringSlice {
             if !matches!(v.property.name.as_str(), "substr" | "substring") {
                 return;
             }
+            let method_name = v.property.name.as_str();
+            let has_spread_arguments = call_expr.arguments.iter().any(Argument::is_spread);
+            let has_unsafe_arguments = match method_name {
+                "substr" => has_spread_arguments || call_expr.arguments.len() >= 2,
+                "substring" => {
+                    has_spread_arguments || !is_safe_substring_arguments(&call_expr.arguments)
+                }
+                _ => unreachable!(),
+            };
+
+            if has_unsafe_arguments {
+                ctx.diagnostic(prefer_string_slice_diagnostic(v.property.span, method_name));
+                return;
+            }
+
             ctx.diagnostic_with_fix(
-                prefer_string_slice_diagnostic(v.property.span, v.property.name.as_str()),
+                prefer_string_slice_diagnostic(v.property.span, method_name),
                 |fixer| fixer.replace(v.property.span, "slice"),
             );
         }
     }
+}
+
+fn is_safe_substring_arguments(arguments: &[Argument<'_>]) -> bool {
+    match arguments {
+        [] => true,
+        [start] => get_non_negative_integer_argument(start).is_some(),
+        [start, end] => {
+            let Some(start_value) = get_non_negative_integer_argument(start) else {
+                return false;
+            };
+            let Some(end_value) = get_non_negative_integer_argument(end) else {
+                return false;
+            };
+            start_value <= end_value
+        }
+        _ => false,
+    }
+}
+
+fn get_non_negative_integer_argument(argument: &Argument<'_>) -> Option<f64> {
+    if !argument.is_expression() {
+        return None;
+    }
+
+    let Expression::NumericLiteral(number) = argument.to_expression().get_inner_expression() else {
+        return None;
+    };
+
+    if number.value >= 0.0 && number.value.fract() == 0.0 { Some(number.value) } else { None }
 }
 
 #[test]
@@ -90,13 +137,18 @@ fn test() {
         r#""foo".substr()"#,
         r#""foo".substr(1)"#,
         r#""foo".substr(1, 2)"#,
+        r#""foo".substr(11, 8)"#,
         r#""foo".substr(bar.length, Math.min(baz, 100))"#,
         r#""foo".substr(1, length)"#,
         r#""foo".substr(1, "abc".length)"#,
         r#""foo".substr("1", 2)"#,
         r#""foo".substr(0, -1)"#,
         r#""foo".substr(0, "foo".length)"#,
+        r#"const length = 123;
+            "foo".substr(1, length - 4)"#,
         r#""foo".substr(1, length)"#,
+        "const uri = 'foo';
+            ((uri || '')).substr(1)",
         "foo.substr(start)",
         r#""foo".substr(1)"#,
         "foo.substr(start, length)",
@@ -119,6 +171,19 @@ fn test() {
         "foo.substring(start, end)",
         r#""foo".substring(1, 3)"#,
         "foo.substring(1, 2, 3)",
+        "function foo() {
+                return (bar as string).substr(3);
+            }",
+        "function foo() {
+                return ((bar as string)).substring(3);
+            }",
+        "/* 1 */ (( /* 2 */ 0 /* 3 */, /* 4 */ foo /* 5 */ )) /* 6 */
+                . /* 7 */ substring /* 8 */ (
+                    /* 9 */ (( /* 10 */ bar /* 11 */ )) /* 12 */,
+                    /* 13 */ (( /* 14 */ 0 /* 15 */ )) /* 16 */,
+                    /* 17 */
+                )
+            /* 18 */",
         "foo.substr(0, ...bar)",
         "foo.substr(...bar)",
         "foo.substr(0, (100, 1))",
@@ -128,6 +193,8 @@ fn test() {
         "foo.substring(0, (10, 1))",
         "foo.substring(0, await 1)",
         "foo.substring((10, bar))",
+        r#"const string = "::";
+            const output = string.substr(-2, 2);"#,
     ];
 
     let fix = vec![
@@ -140,6 +207,59 @@ fn test() {
         ("foo.bar?.baz?.substr()", "foo.bar?.baz?.slice()"),
         ("foo.bar?.baz.substring()", "foo.bar?.baz.slice()"),
         ("foo.bar.baz?.substr()", "foo.bar.baz?.slice()"),
+        (r#""foo".substr()"#, r#""foo".slice()"#),
+        // TODO: Get this passing.
+        // (
+        //     r#"const length = 123;
+        //     "foo".substr(0, length)"#,
+        //     r#"const length = 123;
+        //     "foo".slice(0, Math.max(0, length))"#,
+        // ),
+        // (r#""foo".substr(0, -1)"#, r#""foo".slice(0, 0)"#),
+        (
+            "const uri = 'foo';
+            ((uri || '')).substr(1)",
+            "const uri = 'foo';
+            ((uri || '')).slice(1)",
+        ),
+        ("foo.substr(start)", "foo.slice(start)"),
+        (r#""foo".substr(1)"#, r#""foo".slice(1)"#),
+        // TODO: Get this passing.
+        // (r#""foo".substr(1, 2)"#, r#""foo".slice(1, 3)"#),
+        // (
+        //     r#""Sample".substr(0, "Sample".lastIndexOf("/"))"#,
+        //     r#""Sample".slice(0, Math.max(0, "Sample".lastIndexOf("/")))"#,
+        // ),
+        ("foo.substring()", "foo.slice()"),
+        (r#""foo".substring()"#, r#""foo".slice()"#),
+        (r#""foo".substring(1)"#, r#""foo".slice(1)"#),
+        (r#""foo".substring(1, 2)"#, r#""foo".slice(1, 2)"#),
+        // TODO: Get this passing.
+        // (r#""foo".substring(2, 1)"#, r#""foo".slice(1, 2)"#),
+        // (r#""foo".substring(-1, -5)"#, r#""foo".slice(0, 0)"#),
+        // (r#""foo".substring(-1, 2)"#, r#""foo".slice(0, 2)"#),
+        // (r#""foo".substring(length)"#, r#""foo".slice(Math.max(0, length))"#),
+        // TODO: Get this passing.
+        // (r#""foo".substring(0, length)"#, r#""foo".slice(0, Math.max(0, length))"#),
+        // (r#""foo".substring(length, 0)"#, r#""foo".slice(0, Math.max(0, length))"#),
+        // ("foo.substring(start)", "foo.slice(Math.max(0, start))"),
+        (r#""foo".substring(1, 3)"#, r#""foo".slice(1, 3)"#),
+        (
+            "function foo() {
+                return (bar as string).substr(3);
+            }",
+            "function foo() {
+                return (bar as string).slice(3);
+            }",
+        ),
+        (
+            "function foo() {
+                return ((bar as string)).substring(3);
+            }",
+            "function foo() {
+                return ((bar as string)).slice(3);
+            }",
+        ),
     ];
 
     Tester::new(PreferStringSlice::NAME, PreferStringSlice::PLUGIN, pass, fail)

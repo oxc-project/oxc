@@ -34,15 +34,15 @@ fn radix_map(base: &str) -> Option<(&'static str, &'static str)> {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow parseInt() and Number.parseInt() in favor of binary, octal, and hexadecimal
+    /// Disallow `parseInt()` and `Number.parseInt()` in favor of binary, octal, and hexadecimal
     /// literals.
     ///
     /// ### Why is this bad?
     ///
-    /// The parseInt() and Number.parseInt() functions can be used to turn binary, octal, and
+    /// The `parseInt()` and `Number.parseInt()` functions can be used to turn binary, octal, and
     /// hexadecimal strings into integers. As binary, octal, and hexadecimal literals are supported
-    /// in ES2015, this rule encourages use of those numeric literals instead of parseInt() or
-    /// Number.parseInt().
+    /// in ES2015, this rule encourages use of those numeric literals instead of `parseInt()` or
+    /// `Number.parseInt()`.
     ///
     /// ### Examples
     ///

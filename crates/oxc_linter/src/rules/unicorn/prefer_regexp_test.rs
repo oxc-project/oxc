@@ -224,12 +224,33 @@ fn test() {
         "if (foo.match(bar?.baz)) {}",
         "if (foo.match(bar?.baz())) {}",
         "if (foo.match(bar || baz)) {}",
+        "async function a() {
+                if (foo.match(await bar())) {}
+            }",
         "if ((foo).match(/re/)) {}",
         "if ((foo).match(new SomeRegExp)) {}",
         "if ((foo).match(bar?.baz)) {}",
         "if ((foo).match(bar?.baz())) {}",
         "const bar = false; const baz = /a/; if ((foo).match(bar || baz)) {}",
+        "async function a() {
+                if ((foo).match(await bar())) {}
+            }",
         "const re = [/a/]; if (foo.match([re][0])) {}",
+        "async function a() {
+                if (
+                    /* 1 */ foo() /* 2 */
+                        ./* 3 */ match /* 4 */ (
+                            /* 5 */ await /* 6 */ bar() /* 7 */
+                            ,
+                            /* 8 */
+                        )
+                ) {}
+            }",
+        r"const string = '[.!?]\\\\s*$';
+            if (foo.match(string)) {
+            }",
+        r"const regex = new RegExp('[.!?]\\\\s*$');
+            if (foo.match(regex)) {}",
         "if (foo.match(unknown)) {}",
         "if (foo.match(/a/g));",
         "if (foo.match(/a/y));",
@@ -242,6 +263,16 @@ fn test() {
         "if (/a/yi.exec(foo));",
         r#"if (new RegExp("a", "g").exec(foo));"#,
         r#"if (new RegExp("a", "y").exec(foo));"#,
+        "const regex = /weird/g;
+            if (foo.match(regex));",
+        "const regex = /weird/g;
+            if (regex.exec(foo));",
+        "const regex = /weird/y;
+            if (regex.exec(foo));",
+        "const regex = /weird/gyi;
+            if (regex.exec(foo));",
+        "let re = new RegExp('foo', 'g');
+            if(str.match(re));",
         "!/a/u.exec(foo)",
         "!/a/v.exec(foo)",
     ];

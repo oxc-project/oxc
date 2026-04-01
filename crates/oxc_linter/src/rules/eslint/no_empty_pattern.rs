@@ -103,26 +103,26 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        ("var {a = {}} = foo;", None),
-        ("var {a, b = {}} = foo;", None),
-        ("var {a = []} = foo;", None),
-        ("function foo({a = {}}) {}", None),
-        ("function foo({a = []}) {}", None),
-        ("var [a] = foo", None),
-        ("var {...x} = foo;", None),
-        ("var [...x] = foo;", None),
+        "var {a = {}} = foo;",
+        "var {a, b = {}} = foo;",
+        "var {a = []} = foo;",
+        "function foo({a = {}}) {}",
+        "function foo({a = []}) {}",
+        "var [a] = foo",
+        "var {...x} = foo;",
+        "var [...x] = foo;",
     ];
 
     let fail = vec![
-        ("var {} = foo", None),
-        ("var [] = foo", None),
-        ("var {a: {}} = foo", None),
-        ("var {a, b: {}} = foo", None),
-        ("var {a: []} = foo", None),
-        ("function foo({}) {}", None),
-        ("function foo([]) {}", None),
-        ("function foo({a: {}}) {}", None),
-        ("function foo({a: []}) {}", None),
+        "var {} = foo",
+        "var [] = foo",
+        "var {a: {}} = foo",
+        "var {a, b: {}} = foo",
+        "var {a: []} = foo",
+        "function foo({}) {}",
+        "function foo([]) {}",
+        "function foo({a: {}}) {}",
+        "function foo({a: []}) {}",
     ];
 
     Tester::new(NoEmptyPattern::NAME, NoEmptyPattern::PLUGIN, pass, fail).test_and_snapshot();

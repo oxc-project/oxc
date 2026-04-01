@@ -13,33 +13,9 @@ use oxc_formatter::{
 // - caching interned elements
 // - reusing constant Doc structures like `{type: "line", hard: true}`
 
-/// Splits a printed string by newlines and joins with Prettier `hardline` docs.
-pub fn printed_string_to_hardline_doc(text: &str) -> Value {
-    // `lines()` will remove trailing newlines, but it is fine.
-    // For js-in-xxx fragments, do not need to preserve trailing newlines.
-    let lines: Vec<&str> = text.lines().collect();
-
-    if lines.len() <= 1 {
-        return Value::String(text.to_string());
-    }
-
-    let mut parts: Vec<Value> = Vec::with_capacity(lines.len() * 3);
-    for (i, line) in lines.iter().enumerate() {
-        if 0 < i {
-            // hardline = [{ type: "line", hard: true } + break-parent]
-            // https://github.com/prettier/prettier/blob/90983f40dce5e20beea4e5618b5e0426a6a7f4f0/src/document/builders/line.js#L27
-            parts.push(json!({"type": "line", "hard": true}));
-            parts.push(json!({"type": "break-parent"}));
-        }
-        parts.push(Value::String((*line).to_string()));
-    }
-
-    normalize_array(parts)
-}
-
 /// Converts `oxc_formatter` IR (`FormatElement` slice) into Prettier Doc.
 ///
-/// This is used for js-in-xxx fragment formatting
+/// This is used for js-in-xxx formatting (both full and fragment)
 /// where the IR must be returned to Prettier as an unresolved Doc (rather than a printed string)
 /// so that Prettier can handle line-wrapping in the parent context.
 pub fn format_elements_to_prettier_doc(
@@ -85,41 +61,165 @@ enum StartTagInfo {
     Labelled,
 }
 
+/// Simulates a subset of the `oxc_formatter` printer's runtime state.
+///
+/// Our IR (`FormatElement`) is designed to be consumed by its own printer,
+/// which applies several runtime optimizations
+/// (space deduplication, consecutive hardline merging, etc.).
+/// When converting this IR to Prettier `Doc` instead of printed text,
+/// we must replicate these same optimizations,
+/// otherwise the `Doc` would contain redundant spaces/lines that the printer would have suppressed.
+///
+/// Each field corresponds to a specific printer behavior in
+/// `crates/oxc_formatter/src/formatter/printer/mod.rs`.
+///
+/// NOTE: If the printer gains new runtime optimizations that affect output,
+/// this struct may need corresponding updates.
+/// The conformance tests will catch most divergences,
+/// but when debugging mismatches, compare against the printer's state machine.
+struct PrinterState {
+    /// Mirrors the printer's `pending_space` flag.
+    /// See: `PrinterState::pending_space` in `printer/mod.rs`
+    ///
+    /// Set by `Space`/`HardSpace` elements.
+    /// Consumed (flushed as `" "`) before the next visible content.
+    /// Boolean semantics naturally deduplicates consecutive spaces.
+    pending_space: bool,
+
+    /// Mirrors the printer's `line_width > 0` guard for hardline emission
+    /// and `has_empty_line` flag for empty line deduplication.
+    /// See: `Printer::print_line()` in printer/mod.rs
+    ///
+    /// When true, consecutive `Hard` lines are suppressed (the line is already broken).
+    /// `Empty` after a hardline emits only one additional `Hard` (the second newline).
+    ///
+    /// NOTE: Consecutive `Empty, Empty` won't fully collapse to a single empty line,
+    /// but such sequences don't occur in practice since the IR generators already
+    /// control line emission.
+    last_was_hardline: bool,
+}
+
+impl PrinterState {
+    fn new() -> Self {
+        Self { pending_space: false, last_was_hardline: false }
+    }
+
+    /// Flushes the pending space (if any) by appending `" "` to the current scope's children.
+    fn flush_pending_space(&mut self, stack: &mut [StackEntry]) -> Result<(), String> {
+        if self.pending_space {
+            concat_string(current_children_mut(stack)?, " ");
+            self.pending_space = false;
+        }
+        Ok(())
+    }
+}
+
 fn convert_elements(
     elements: &[FormatElement],
     state: &mut ConvertState,
 ) -> Result<Vec<Value>, String> {
     let mut stack: Vec<StackEntry> =
         vec![StackEntry { start_tag: None, start_info: None, children: vec![] }];
+    let mut printer = PrinterState::new();
 
     for element in elements {
         match element {
             FormatElement::Space | FormatElement::HardSpace => {
-                concat_string(current_children_mut(&mut stack)?, " ");
+                printer.pending_space = true;
+                printer.last_was_hardline = false;
             }
             FormatElement::Token { text } => {
+                printer.flush_pending_space(&mut stack)?;
                 concat_string(current_children_mut(&mut stack)?, text);
+                printer.last_was_hardline = false;
             }
             FormatElement::Text { text, .. } => {
+                printer.flush_pending_space(&mut stack)?;
                 push_text(current_children_mut(&mut stack)?, text);
+                printer.last_was_hardline = false;
             }
             FormatElement::Line(mode) => {
-                push_line(current_children_mut(&mut stack)?, *mode);
+                match mode {
+                    LineMode::SoftOrSpace => {
+                        // `SoftOrSpace` produces a space in flat mode, newline in expanded.
+                        // If `pending_space` is already set,
+                        // `SoftOrSpace` subsumes it (just like the printer's boolean idempotency).
+                        printer.pending_space = false;
+                        push_line(current_children_mut(&mut stack)?, *mode);
+                    }
+                    LineMode::Soft => {
+                        // Soft produces nothing in flat mode, newline in expanded.
+                        // Keep `pending_space` as-is (mirroring the printer).
+                        push_line(current_children_mut(&mut stack)?, *mode);
+                    }
+                    LineMode::Hard | LineMode::Empty => {
+                        printer.flush_pending_space(&mut stack)?;
+                        // Mimic the printer's `line_width > 0` guard and `has_empty_line` dedup:
+                        // - The printer only emits a newline when the line has content (`line_width > 0`).
+                        //   Consecutive `Hard, Hard` produces only one newline.
+                        // - For `Empty` after a hardline, only the second newline of `Empty` is emitted
+                        //   (the first is redundant since the line is already broken).
+                        if printer.last_was_hardline {
+                            if *mode == LineMode::Empty {
+                                push_line(current_children_mut(&mut stack)?, LineMode::Hard);
+                            }
+                            // `Hard` after `Hard` → skip (line already broken)
+                        } else {
+                            push_line(current_children_mut(&mut stack)?, *mode);
+                        }
+                    }
+                }
+                printer.last_was_hardline = matches!(mode, LineMode::Hard | LineMode::Empty);
             }
+            // `ExpandParent` is a directive (not visible content) — it forces the parent group
+            // to break. The printer treats it as a no-op (expansion is propagated at IR level).
+            // Neither `pending_space` nor `last_was_hardline` should be affected.
             FormatElement::ExpandParent => {
                 current_children_mut(&mut stack)?.push(json!({"type": "break-parent"}));
             }
             FormatElement::LineSuffixBoundary => {
+                printer.flush_pending_space(&mut stack)?;
                 current_children_mut(&mut stack)?.push(json!({"type": "line-suffix-boundary"}));
+                printer.last_was_hardline = false;
             }
             FormatElement::Tag(tag) => {
                 if tag.is_start() {
+                    // Flush pending space to the parent scope before opening a new tag.
+                    // The space belongs before the group/indent/conditional, not inside it.
+                    // If it were flushed inside (e.g. into a `ConditionalContent(Flat)`),
+                    // it could be lost when the group breaks.
+                    //
+                    // Exception: `LineSuffix` already contains a leading `Space` for separation.
+                    // Flushing the outer `pending_space` here would create a double space
+                    // (one from the flush + one from the LineSuffix's inner Space).
+                    // The printer avoids this via `line_width > 0` guard and boolean idempotency.
+                    // We discard the outer `pending_space` since the `LineSuffix`'s inner `Space` handles it.
+                    if printer.pending_space {
+                        if !matches!(tag, Tag::StartLineSuffix) {
+                            concat_string(current_children_mut(&mut stack)?, " ");
+                        }
+                        printer.pending_space = false;
+                    }
                     stack.push(StackEntry {
                         start_tag: Some(tag.clone()),
                         start_info: Some(extract_start_tag_info(tag)),
                         children: vec![],
                     });
                 } else {
+                    // For ConditionalContent, flush pending space into the closing scope's children
+                    // so it stays within the conditional branch (otherwise it leaks into expanded mode).
+                    // For all other tags (Indent, Group, Align, etc.), carry pending_space to the parent —
+                    // these wrappers are transparent for spacing, and flushing inside would cause
+                    // double-space bugs (e.g. `extends A, B  {` where indent's trailing " " + outer " ").
+                    if printer.pending_space
+                        && matches!(
+                            tag,
+                            Tag::EndConditionalContent | Tag::EndIndentIfGroupBreaks(_)
+                        )
+                    {
+                        concat_string(current_children_mut(&mut stack)?, " ");
+                        printer.pending_space = false;
+                    }
                     if stack.len() == 1 {
                         return Err(format!(
                             "Invalid formatter IR: found unmatched end tag `{tag:?}` while converting to Prettier Doc"
@@ -135,11 +235,43 @@ fn convert_elements(
                             "Invalid formatter IR: mismatched tags (start: `{start_tag:?}`, end: `{tag:?}`)"
                         ));
                     }
-                    let doc = build_doc(entry.start_info.as_ref(), entry.children);
+                    let is_line_suffix = matches!(entry.start_info, Some(StartTagInfo::LineSuffix));
+                    let mut doc = build_doc(entry.start_info.as_ref(), entry.children);
+
+                    // The formatter always prepends a `Space` inside `LineSuffix` for separation
+                    // from preceding code (e.g. `x = 1; // comment`).
+                    // The printer guards this with `line_width > 0`,
+                    // so the `Space` is suppressed when the line has no content yet.
+                    // When the parent scope has no preceding content (e.g. comment-only `<script>` blocks),
+                    // strip the leading space from the `lineSuffix` contents to avoid a spurious leading space.
+                    if is_line_suffix
+                        && current_children_mut(&mut stack)?.is_empty()
+                        && let Value::Object(ref mut map) = doc
+                        && let Some(contents) = map.get_mut("contents")
+                    {
+                        strip_leading_space(contents);
+                    }
+
                     current_children_mut(&mut stack)?.push(doc);
                 }
             }
             FormatElement::Interned(interned) => {
+                if printer.pending_space {
+                    // If the interned starts with a space-producing element,
+                    // don't flush — the inner conversion already emits a leading space.
+                    // This mirrors the printer's boolean idempotency (`Space + Space` = one space).
+                    if !matches!(
+                        interned.first(),
+                        Some(
+                            FormatElement::Space
+                                | FormatElement::HardSpace
+                                | FormatElement::Line(LineMode::SoftOrSpace)
+                        )
+                    ) {
+                        concat_string(current_children_mut(&mut stack)?, " ");
+                    }
+                    printer.pending_space = false;
+                }
                 let key = interned_cache_key(interned);
                 if let Some(cached) = state.interned_cache.get(&key) {
                     current_children_mut(&mut stack)?.extend(cached.iter().cloned());
@@ -148,15 +280,20 @@ fn convert_elements(
                     state.interned_cache.insert(key, converted.clone());
                     current_children_mut(&mut stack)?.extend(converted);
                 }
+                printer.last_was_hardline = false;
             }
             FormatElement::BestFitting(best_fitting) => {
+                printer.flush_pending_space(&mut stack)?;
                 let doc = convert_best_fitting(best_fitting, state)?;
                 current_children_mut(&mut stack)?.push(doc);
+                printer.last_was_hardline = false;
             }
             FormatElement::TailwindClass(index) => {
+                printer.flush_pending_space(&mut stack)?;
                 if let Some(class) = state.sorted_tailwind_classes.get(*index) {
                     concat_string(current_children_mut(&mut stack)?, class);
                 }
+                printer.last_was_hardline = false;
             }
         }
     }
@@ -289,7 +426,14 @@ fn build_doc(start_info: Option<&StartTagInfo>, children: Vec<Value>) -> Value {
 
     match info {
         StartTagInfo::Indent => {
-            json!({"type": "indent", "contents": normalize_array(children)})
+            // If the indent scope contains only hardlines and break-parents (no actual content),
+            // unwrap the indent wrapper. Otherwise Prettier applies indentation to the hardline,
+            // producing spurious leading spaces (e.g. empty `switch` body: `{\n  }` instead of `{\n}`).
+            if children_are_only_hardlines(&children) {
+                normalize_array(children)
+            } else {
+                json!({"type": "indent", "contents": normalize_array(children)})
+            }
         }
         StartTagInfo::Align(count) => {
             json!({"type": "align", "n": *count, "contents": normalize_array(children)})
@@ -391,6 +535,40 @@ fn group_id_string(id: GroupId) -> String {
     format!("G{}", u32::from(id))
 }
 
+/// Returns `true` if the children consist only of hardline docs and break-parent docs
+/// (i.e., no visible content that would benefit from indentation).
+fn children_are_only_hardlines(children: &[Value]) -> bool {
+    children.iter().all(|child| {
+        if let Value::Object(map) = child {
+            let ty = map.get("type").and_then(Value::as_str);
+            ty == Some("break-parent")
+                || (ty == Some("line") && map.get("hard") == Some(&Value::Bool(true)))
+        } else {
+            false
+        }
+    })
+}
+
+/// Strips a leading space character from a `Value`.
+/// Handles both plain strings (`" foo"` → `"foo"`) and arrays whose first element is a string.
+fn strip_leading_space(value: &mut Value) {
+    match value {
+        Value::String(s) => {
+            if s.starts_with(' ') {
+                s.remove(0);
+            }
+        }
+        Value::Array(arr) => {
+            if let Some(Value::String(s)) = arr.first_mut()
+                && s.starts_with(' ')
+            {
+                s.remove(0);
+            }
+        }
+        _ => {}
+    }
+}
+
 /// Concatenates a string onto the last element if it's also a string,
 /// otherwise pushes a new string value.
 fn concat_string(children: &mut Vec<Value>, s: &str) {
@@ -400,8 +578,6 @@ fn concat_string(children: &mut Vec<Value>, s: &str) {
         children.push(Value::String(s.to_string()));
     }
 }
-
-// ---
 
 /// Normalizes a `Vec<Value>` into a single `Value`:
 /// - Empty vec -> empty string

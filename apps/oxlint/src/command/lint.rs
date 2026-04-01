@@ -114,17 +114,24 @@ impl LintCommand {
 #[derive(Debug, Clone, Bpaf)]
 pub struct BasicOptions {
     /// Oxlint configuration file
-    ///  * `.json` config files are supported in all runtimes
+    ///  * `.json` and `.jsonc` config files are supported in all runtimes
     ///  * JavaScript/TypeScript config files are experimental and require running via Node.js
     ///  * you can use comments in configuration files.
     ///  * tries to be compatible with ESLint v8's format
     ///
-    /// If not provided, Oxlint will look for `.oxlintrc.json` in the current working directory.
+    /// If not provided, Oxlint will look for a `.oxlintrc.json`, `.oxlintrc.jsonc`, or `oxlint.config.ts` file in the current working directory.
     #[bpaf(long, short, argument("./.oxlintrc.json"))]
     pub config: Option<PathBuf>,
 
-    /// TypeScript `tsconfig.json` path for reading path alias and project references for import plugin.
-    /// If not provided, will look for `tsconfig.json` in the current working directory.
+    /// Override the TypeScript config used for import resolution.
+    /// Oxlint automatically discovers the relevant `tsconfig.json` for each file.
+    /// Use this only when your project uses a non-standard tsconfig name or location.
+    ///
+    /// ::: warning
+    /// Avoid using this option. It can cause differences between import resolution,
+    /// and type-aware linting. Type aware linting **does not** respect this option,
+    /// and will always discover the appropriate `tsconfig.json` for each file automatically.
+    /// :::
     #[bpaf(argument("./tsconfig.json"), hide_usage)]
     pub tsconfig: Option<PathBuf>,
 
@@ -245,8 +252,21 @@ pub struct WarningOptions {
 pub struct OutputOptions {
     /// Use a specific output format. Possible values:
     /// `checkstyle`, `default`, `github`, `gitlab`, `json`, `junit`, `stylish`, `unix`
-    #[bpaf(long, short, fallback(OutputFormat::Default), hide_usage)]
+    #[bpaf(long, short, fallback_with(default_output_format), hide_usage)]
     pub format: OutputFormat,
+}
+
+#[expect(clippy::unnecessary_wraps)]
+fn default_output_format() -> Result<OutputFormat, std::convert::Infallible> {
+    if cfg!(debug_assertions) {
+        Ok(OutputFormat::Default)
+    } else if std::env::var("GITHUB_ACTIONS").ok().is_some_and(|value| value == "true") {
+        Ok(OutputFormat::Github)
+    } else if std::env::var("GITLAB_CI").ok().is_some_and(|value| value == "true") {
+        Ok(OutputFormat::Gitlab)
+    } else {
+        Ok(OutputFormat::Default)
+    }
 }
 
 /// Enable/Disable Plugins
@@ -278,8 +298,6 @@ pub struct EnablePlugins {
     pub typescript_plugin: OverrideToggle,
 
     /// Enable import plugin and detect ESM problems.
-    /// It should be used with the `--tsconfig` flag if your project has a
-    /// tsconfig with a name other than `tsconfig.json`.
     #[bpaf(flag(OverrideToggle::Enable, OverrideToggle::NotSet), hide_usage)]
     pub import_plugin: OverrideToggle,
 

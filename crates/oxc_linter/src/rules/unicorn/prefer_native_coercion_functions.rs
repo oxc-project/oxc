@@ -260,6 +260,44 @@ fn test() {
         "const foo = function * (v) {yield String(v);}",
         "const foo = async function (v) {await String(v);}",
         "const foo = function (v) {return;}",
+        // TODO: Get this passing.
+        // "function foo(v) {
+        //         'use strict';
+        //         return String(v);
+        //     }",
+        "function foo(v) {
+                return String(v);
+                function x() {}
+            }",
+        "function foo({v}) {
+                return String(v);
+            }",
+        "function foo(v) {
+                return String({v});
+            }",
+        "function foo(...v) {
+                return String(v);
+            }",
+        "function foo(...v) {
+                return String(...v);
+            }",
+        // TODO: Get this passing.
+        // "class A {
+        //         constructor(v) {
+        //             return String(v);
+        //         }
+        //     }",
+        "class A {
+                get foo() {
+                    return String(v);
+                }
+            }",
+        // TODO: Get this passing.
+        // "class A {
+        //         set foo(v) {
+        //             return String(v);
+        //         }
+        //     }",
         "({get foo() {return String(v)}})",
         "({set foo(v) {return String(v)}})",
         "array.some?.(v => v)",
@@ -272,6 +310,18 @@ fn test() {
         "array.some(function(v) {return;})",
         "array.some(function(v) {return v.v;})",
         "cells.every((cellRowIdx, cellColIdx, tableLoop, cellLoop) => {});",
+        "const identity = v => v;
+            array.some(identity)",
+        r#"array.some(function(v) {
+                "use strict";
+                return v;
+            })"#,
+        // TODO: Get these passing.
+        // "array.filter((value): value is string => value)", // {"parser": parsers.typescript},
+        // "array.filter((value): value is string => {
+        //         return value;
+        //     })", // {"parser": parsers.typescript},
+        // "array.some((value): value is string => value)", // {"parser": parsers.typescript}
     ];
 
     let fail = vec![
@@ -280,9 +330,55 @@ fn test() {
         "const foo = v => BigInt(v)",
         "const foo = v => Boolean(v)",
         "const foo = v => Symbol(v)",
+        "const foo = v => {
+                return String(v);
+            }",
+        "const foo = function (v) {
+                return String(v);
+            }",
         "function foo(v) { return String(v); }",
         "export default function foo(v) { return String(v); }",
         "export default function (v) { return String(v); }",
+        "class A {
+                foo(v) {
+                    return String(v);
+                }
+                bar() {}
+            }",
+        "class A {
+                static foo(v) {
+                    return String(v);
+                }
+                bar() {}
+            }",
+        "class A {
+                #foo(v) {
+                    return String(v);
+                }
+                bar() {}
+            }",
+        "class A {
+                static #foo(v) {
+                    return String(v);
+                }
+                bar() {}
+            }",
+        // TODO: Get these passing.
+        // "object = {
+        //         foo(v) {
+        //             return String(v);
+        //         },
+        //         bar
+        //     }",
+        // "object = {
+        //         foo: function(v) {
+        //             return String(v);
+        //         },
+        //         bar
+        //     }",
+        // "object = {
+        //         [function(v) {return String(v);}]: 1,
+        //     }",
         "const foo = (v, extra) => String(v)",
         "const foo = (v, ) => String(v, extra)",
         "const foo = (v, ) => /* comment */ String(v)",
@@ -294,8 +390,16 @@ fn test() {
         "array.findIndex(v => v)",
         "array.findLastIndex(v => v)",
         "array.some(v => v)",
+        "array.some(v => {
+                return v;
+            })",
+        // TODO: Get this working.
+        // "array.some(function (v) {
+        //         return v;
+        //     })",
         "array.some((v, extra) => v)",
         "array.some((v, ) => /* comment */ v)",
+        "array.filter((value): boolean => value)", // {"parser": parsers.typescript}
     ];
 
     Tester::new(

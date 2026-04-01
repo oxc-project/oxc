@@ -22,7 +22,8 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// The instanceof Array check doesn't work across realms/contexts, for example, frames/windows in browsers or the vm module in Node.js.
+    /// The `instanceof Array` check doesn't work across realms/contexts.
+    /// For example, frames/windows in browsers or the `vm` module in Node.js.
     ///
     /// ### Examples
     ///

@@ -19,7 +19,9 @@ use crate::{
 };
 
 fn use_angle_bracket_diagnostic(cast: &str, span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Use `<{cast}>` instead of `as {cast}`.")).with_label(span)
+    OxcDiagnostic::warn(format!("Use `<{cast}>` instead of `as {cast}`."))
+        .with_help(format!("Replace `as {cast}` with `<{cast}>`. For example, change `value as {cast}` to `<{cast}>value`."))
+        .with_label(span)
 }
 
 fn use_as_diagnostic(cast: &str, span: Span) -> OxcDiagnostic {
@@ -27,15 +29,24 @@ fn use_as_diagnostic(cast: &str, span: Span) -> OxcDiagnostic {
 }
 
 fn never_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Do not use any type assertions.").with_label(span)
+    OxcDiagnostic::warn("Do not use any type assertions.")
+        .with_help("Remove the type assertion and use a type annotation instead. For example, change `const x = value as Type` to `const x: Type = value`. Alternatively, use the `satisfies` operator: `const x = value satisfies Type`.")
+        .with_note("Type assertions bypass TypeScript's type checking and can hide type errors. Using type annotations or the `satisfies` operator provides better type safety while still allowing TypeScript to infer types where appropriate.")
+        .with_label(span)
 }
 
 fn unexpected_object_type_assertion_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Always prefer `const x: T = { ... }`.").with_label(span)
+    OxcDiagnostic::warn("Always prefer `const x: T = { ... }`.")
+        .with_help("Replace the object literal type assertion with a type annotation. For example, change `const x = { a: 1 } as Type` to `const x: Type = { a: 1 }`. Alternatively, use `const x = { a: 1 } satisfies Type` if you want TypeScript to infer the exact shape.")
+        .with_note("Type assertions on object literals can hide errors where the object doesn't actually match the asserted type. Using type annotations or `satisfies` ensures TypeScript verifies that the object matches the expected type.")
+        .with_label(span)
 }
 
 fn unexpected_array_type_assertion_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Always prefer `const x: T[] = [ ... ]`.").with_label(span)
+    OxcDiagnostic::warn("Always prefer `const x: T[] = [ ... ]`.")
+        .with_help("Replace the array literal type assertion with a type annotation. For example, change `const x = [1, 2] as Type[]` to `const x: Type[] = [1, 2]`. Alternatively, use `const x = [1, 2] satisfies Type[]` if you want TypeScript to infer the exact array type.")
+        .with_note("Type assertions on array literals can hide errors where the array doesn't actually match the asserted type. Using type annotations or `satisfies` ensures TypeScript verifies that the array matches the expected type.")
+        .with_label(span)
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, JsonSchema)]

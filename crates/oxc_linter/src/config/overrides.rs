@@ -101,7 +101,7 @@ pub struct OxlintOverride {
     /// Read more about JS plugins in
     /// [the docs](https://oxc.rs/docs/guide/usage/linter/js-plugins.html).
     ///
-    /// Note: JS plugins are experimental and not subject to semver.
+    /// Note: JS plugins are in alpha and not subject to semver.
     #[serde(rename = "jsPlugins", default, skip_serializing_if = "Option::is_none")]
     #[schemars(schema_with = "external_plugins_schema")]
     pub external_plugins: Option<FxHashSet<ExternalPluginEntry>>,

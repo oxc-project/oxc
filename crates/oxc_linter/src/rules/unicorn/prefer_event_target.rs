@@ -15,8 +15,9 @@ use crate::{
 const IGNORED_PACKAGES: [&str; 2] = ["@angular/core", "eventemitter3"];
 
 fn prefer_event_target_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Prefer `EventTarget` over `EventEmitter`")
+    OxcDiagnostic::warn("Prefer `EventTarget` over `EventEmitter`.")
         .with_help("Change `EventEmitter` to `EventTarget`. EventEmitters are only available in Node.js, while EventTargets are also available in browsers.")
+        .with_note("https://developer.mozilla.org/en-US/docs/Web/API/EventTarget")
         .with_label(span)
 }
 

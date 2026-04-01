@@ -1,6 +1,6 @@
 use oxc_allocator::{Box as ArenaBox, CloneIn, TakeIn, Vec as ArenaVec};
 use oxc_ast::{NONE, ast::*};
-use oxc_span::{Atom, GetSpan, SPAN};
+use oxc_span::{GetSpan, SPAN, Str};
 
 use crate::{IsolatedDeclarations, diagnostics::default_export_inferred};
 
@@ -21,11 +21,11 @@ impl<'a> IsolatedDeclarations<'a> {
         ))
     }
 
-    pub(crate) fn create_unique_name(&self, name: &str) -> Atom<'a> {
-        let mut binding = self.ast.atom(name);
+    pub(crate) fn create_unique_name(&self, name: &str) -> Str<'a> {
+        let mut binding = self.ast.str(name);
         let mut i = 1;
         while self.scope.has_reference(&binding) {
-            binding = self.ast.atom(format!("{name}_{i}").as_str());
+            binding = self.ast.str(format!("{name}_{i}").as_str());
             i += 1;
         }
         binding

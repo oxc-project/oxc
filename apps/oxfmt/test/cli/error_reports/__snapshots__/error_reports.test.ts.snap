@@ -1,0 +1,38 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`error_reports > should report errors for invalid files 1`] = `
+"--------------------
+arguments: --check invalid.js
+working directory: error_reports/fixtures
+exit code: 2
+--- STDOUT ---------
+Checking formatting...
+
+--- STDERR ---------
+
+  x Expected \`}\` but found \`EOF\`
+   ,-[invalid.js:2:1]
+ 1 | class {
+   :       |
+   :       \`-- Opened here
+   \`----
+Error occurred when checking code style in the above files.
+--------------------
+--------------------
+arguments: --check invalid.yaml
+working directory: error_reports/fixtures
+exit code: 2
+--- STDOUT ---------
+Checking formatting...
+
+--- STDERR ---------
+
+  x SyntaxError: Nested mappings are not allowed in compact mappings (1:6)
+  | [invalid.yaml]
+  | > 1 | key: val: nested
+  |     |      ^^^^^^^^^^^
+  | > 2 |
+  |     | ^
+Error occurred when checking code style in the above files.
+--------------------"
+`;

@@ -39,6 +39,9 @@ const createRule: Rule = {
     const { id } = stmt.declarations[0];
     assert.strictEqual(id.type, "Identifier");
 
+    // Check AST has no `hashbang` property
+    assert.strictEqual("hashbang" in ast, false);
+
     context.report({
       message:
         "create:\n" +

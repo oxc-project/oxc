@@ -39,7 +39,7 @@ help: Remove the debugger statement
 ts-config/test.ts
 --- Diagnostics ---------
 > 1 | debugger;
-    | ^^^^^^^^^ Error: \`debugger\` statement is not allowed
+    | ^^^^^^^^^ Warning: \`debugger\` statement is not allowed
 help: Remove the debugger statement
 --------------------"
 `;

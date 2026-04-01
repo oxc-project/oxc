@@ -171,7 +171,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move function declaration to program root
 
   ⚠ eslint(no-inner-declarations): Variable or `function` declarations are not allowed in nested blocks
-   ╭─[no_inner_declarations.mjs:2:17]
+   ╭─[no_inner_declarations.mjs:2:26]
  1 │ 'use strict'
  2 │              if (test) { function doSomething() { } }
    ·                          ────────
@@ -179,7 +179,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move function declaration to program root
 
   ⚠ eslint(no-inner-declarations): Variable or `function` declarations are not allowed in nested blocks
-   ╭─[no_inner_declarations.mjs:2:17]
+   ╭─[no_inner_declarations.mjs:2:26]
  1 │ 'use strict'
  2 │              if (test) { function doSomething() { } }
    ·                          ────────
@@ -187,7 +187,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move function declaration to program root
 
   ⚠ eslint(no-inner-declarations): Variable or `function` declarations are not allowed in nested blocks
-   ╭─[no_inner_declarations.mjs:2:17]
+   ╭─[no_inner_declarations.mjs:2:26]
  1 │ 'use strict'
  2 │              if (test) { function doSomething() { } }
    ·                          ────────
@@ -195,7 +195,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move function declaration to program root
 
   ⚠ eslint(no-inner-declarations): Variable or `function` declarations are not allowed in nested blocks
-   ╭─[no_inner_declarations.mjs:2:7]
+   ╭─[no_inner_declarations.mjs:2:16]
  1 │ function foo() {'use strict'
  2 │              { function bar() { } } }
    ·                ────────
@@ -203,7 +203,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move function declaration to function body root
 
   ⚠ eslint(no-inner-declarations): Variable or `function` declarations are not allowed in nested blocks
-   ╭─[no_inner_declarations.mjs:2:7]
+   ╭─[no_inner_declarations.mjs:2:16]
  1 │ function foo() {'use strict'
  2 │              { function bar() { } } }
    ·                ────────
@@ -211,7 +211,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move function declaration to function body root
 
   ⚠ eslint(no-inner-declarations): Variable or `function` declarations are not allowed in nested blocks
-   ╭─[no_inner_declarations.mjs:2:10]
+   ╭─[no_inner_declarations.mjs:2:19]
  1 │ function doSomething() { 'use strict'
  2 │              do { function somethingElse() { } } while (test); }
    ·                   ────────

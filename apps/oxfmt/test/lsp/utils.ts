@@ -41,7 +41,7 @@ export function createLspConnection() {
     // NOTE: Config and ignore files are searched from `workspaceFolders[].uri` upward
     // Or, provide a custom config path via `initializationOptions`
     async initialize(
-      workspaceFolders: WorkspaceFolder[],
+      workspaceFolders: WorkspaceFolder[] | null,
       capabilities: ClientCapabilities = {},
       initializationOptions?: unknown,
     ) {
@@ -114,6 +114,29 @@ export async function formatFixture(
   return await formatFixtureContent(fixturesDir, fixturePath, fileUri, languageId, clientOrConfig);
 }
 
+export async function formatSingleFileFixture(
+  fixturesDir: string,
+  fixturePath: string,
+  languageId: string,
+): Promise<string> {
+  const filePath = join(fixturesDir, fixturePath);
+  const fileUri = pathToFileURL(filePath).href;
+  const content = await fs.readFile(filePath, "utf-8");
+
+  const client = createLspConnection();
+  await client.initialize(null);
+  await client.didOpen(fileUri, languageId, content);
+  const edits = await client.format(fileUri);
+
+  return `${uriSnapshotHeader(fileUri, fixturesDir)}
+--- BEFORE ---------
+${content}
+--- AFTER ----------
+${applyEdits(content, edits, languageId)}
+--------------------
+`.trim();
+}
+
 export async function formatFixtureContent(
   fixturesDir: string,
   fixturePath: string,
@@ -147,9 +170,7 @@ export async function formatFixtureContent(
     await innerClient[Symbol.asyncDispose]();
   }
 
-  return `
---- FILE -----------
-${fixturePath}
+  return `${uriSnapshotHeader(fileUri, fixturesDir)}
 --- BEFORE ---------
 ${content}
 --- AFTER ----------
@@ -191,9 +212,7 @@ export async function formatFixtureAfterConfigChange(
   const edits2 = await client.format(fileUri);
   const formatted2 = applyEdits(formatted1, edits2, languageId);
 
-  return `
---- FILE -----------
-${fixturePath}
+  return `${uriSnapshotHeader(fileUri, fixturesDir)}
 --- BEFORE ---------
 ${content}
 --- AFTER FIRST FORMAT ----------
@@ -215,4 +234,15 @@ function applyEdits(content: string, edits: TextEdit[] | null, languageId: strin
   if (edits === null || edits.length === 0) return content;
   const doc = TextDocument.create("file:///test", languageId, 1, content);
   return TextDocument.applyEdits(doc, edits);
+}
+
+function uriSnapshotHeader(fileUri: string, fixtureDir: string): string {
+  const fixtureUri = pathToFileURL(fixtureDir).href;
+  const safeUri = fileUri.startsWith(fixtureUri)
+    ? fileUri.replace(fixtureUri, "file://<fixture>")
+    : fileUri;
+
+  return `
+  --- URI -----------
+${safeUri}`;
 }

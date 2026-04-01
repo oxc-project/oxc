@@ -70,7 +70,7 @@ mod declare_oxc_lint;
 ///
 /// # Example
 ///
-/// ```
+/// ```rust,ignore
 /// use oxc_macros::declare_oxc_lint;
 ///
 /// #[derive(Debug, Default, Clone)]

@@ -122,72 +122,72 @@ fn test() {
     let pass = vec![
         (
             "
-			      <template>Without script</template>
-			      ",
+                  <template>Without script</template>
+                  ",
             None,
             None,
             Some(PathBuf::from("test.vue")),
         ),
         (
             "
-			      <script>
-			        import { ref } from 'vue';
+                  <script>
+                    import { ref } from 'vue';
 
-			        export default {}
-			      </script>
-			      ",
+                    export default {}
+                  </script>
+                  ",
             None,
             None,
             Some(PathBuf::from("test.vue")),
         ),
         (
             "
-			      <script setup>
-			        const foo = 'foo';
-			      </script>
-			      ",
+                  <script setup>
+                    const foo = 'foo';
+                  </script>
+                  ",
             None,
             None,
             Some(PathBuf::from("test.vue")),
         ),
         (
             "
-			      <script>
-			      const component = {};
+                  <script>
+                  const component = {};
 
-			      export default component;
-			      </script>
-			      ",
+                  export default component;
+                  </script>
+                  ",
             None,
             None,
             Some(PathBuf::from("test.vue")),
         ),
         (
             "
-			      <script>
-			      import {defineComponent} from 'vue';
+                  <script>
+                  import {defineComponent} from 'vue';
 
-			      export default defineComponent({});
-			      </script>
-			      ",
+                  export default defineComponent({});
+                  </script>
+                  ",
             None,
             None,
             Some(PathBuf::from("test.vue")),
         ),
         (
             "
-			      const foo = 'foo';
-			      export const bar = 'bar';
-			      ",
+                  const foo = 'foo';
+                  export const bar = 'bar';
+                  ",
             None,
             None,
             Some(PathBuf::from("test.js")),
         ),
         (
             "
-			      import {defineComponent} from 'vue';
-			      defineComponent({});
-			      ",
+                  import {defineComponent} from 'vue';
+                  defineComponent({});
+                  ",
             None,
             None,
             Some(PathBuf::from("test.js")),
@@ -197,67 +197,67 @@ fn test() {
     let fail = vec![
         (
             "
-			      <script>
-			      const foo = 'foo';
-			      </script>
-			      ",
+                  <script>
+                  const foo = 'foo';
+                  </script>
+                  ",
             None,
             None,
             Some(PathBuf::from("test.vue")),
         ),
         (
             "
-			      <script>
-			      export const foo = 'foo';
-			      </script>
-			      ",
+                  <script>
+                  export const foo = 'foo';
+                  </script>
+                  ",
             None,
             None,
             Some(PathBuf::from("test.vue")),
         ),
         (
             "
-			      <script>
-			      const foo = 'foo';
+                  <script>
+                  const foo = 'foo';
 
-			      export { foo };
-			      </script>
-			      ",
+                  export { foo };
+                  </script>
+                  ",
             None,
             None,
             Some(PathBuf::from("test.vue")),
         ),
         (
             "
-			      <script>
-			      export const foo = 'foo';
-			      export const bar = 'bar';
-			      </script>
-			      ",
+                  <script>
+                  export const foo = 'foo';
+                  export const bar = 'bar';
+                  </script>
+                  ",
             None,
             None,
             Some(PathBuf::from("test.vue")),
         ),
         (
             "
-			      <script>
-			      import { defineComponent } from 'vue';
+                  <script>
+                  import { defineComponent } from 'vue';
 
-			      export const component = defineComponent({});
-			      </script>
-			      ",
+                  export const component = defineComponent({});
+                  </script>
+                  ",
             None,
             None,
             Some(PathBuf::from("test.vue")),
         ),
         (
             "
-			      <script>
-			      import Vue from 'vue';
+                  <script>
+                  import Vue from 'vue';
 
-			      const component = Vue.component('foo', {});
-			      </script>
-			      ",
+                  const component = Vue.component('foo', {});
+                  </script>
+                  ",
             None,
             None,
             Some(PathBuf::from("test.vue")),

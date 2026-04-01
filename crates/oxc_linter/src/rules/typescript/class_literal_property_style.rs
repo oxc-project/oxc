@@ -12,7 +12,7 @@ use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeFlags;
-use oxc_span::{Atom, GetSpan, Span};
+use oxc_span::{GetSpan, Span, Str};
 use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -132,7 +132,7 @@ fn check_fields_mode<'a>(class_body: &ClassBody<'a>, ctx: &LintContext<'a>) {
 }
 
 fn check_getters_mode<'a>(class_body: &ClassBody<'a>, ctx: &LintContext<'a>) {
-    let mut excluded_properties: FxHashSet<Atom<'a>> = FxHashSet::default();
+    let mut excluded_properties: FxHashSet<Str<'a>> = FxHashSet::default();
     for element in &class_body.body {
         if let ClassElement::MethodDefinition(method) = element
             && method.kind == MethodDefinitionKind::Constructor
@@ -209,26 +209,26 @@ fn property_keys_match(a: &PropertyKey<'_>, b: &PropertyKey<'_>) -> bool {
     }
 }
 
-fn assigned_this_property_name<'a>(left: &AssignmentTarget<'a>) -> Option<Atom<'a>> {
+fn assigned_this_property_name<'a>(left: &AssignmentTarget<'a>) -> Option<Str<'a>> {
     let is_this_object =
         |expr: &Expression<'_>| matches!(expr.without_parentheses(), Expression::ThisExpression(_));
 
     match left {
         AssignmentTarget::StaticMemberExpression(expr) if is_this_object(&expr.object) => {
-            Some(expr.property.name.as_atom())
+            Some(expr.property.name.as_arena_str())
         }
         AssignmentTarget::ComputedMemberExpression(expr) if is_this_object(&expr.object) => {
             expr.static_property_name()
         }
         AssignmentTarget::PrivateFieldExpression(expr) if is_this_object(&expr.object) => {
-            Some(expr.field.name.as_atom())
+            Some(expr.field.name.as_arena_str())
         }
         _ => None,
     }
 }
 
 struct ConstructorAssignmentCollector<'set, 'a> {
-    excluded_properties: &'set mut FxHashSet<Atom<'a>>,
+    excluded_properties: &'set mut FxHashSet<Str<'a>>,
 }
 
 impl<'a> Visit<'a> for ConstructorAssignmentCollector<'_, 'a> {

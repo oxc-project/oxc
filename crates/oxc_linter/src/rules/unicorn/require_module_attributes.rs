@@ -26,7 +26,7 @@ pub struct RequireModuleAttributes;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This rule enforces non-empty attribute list in import/export statements and import() expressions.
+    /// This rule enforces non-empty attribute list in `import`/`export` statements and `import()` expressions.
     ///
     /// ### Why is this bad?
     ///

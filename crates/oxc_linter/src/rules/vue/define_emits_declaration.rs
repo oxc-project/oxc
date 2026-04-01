@@ -201,101 +201,101 @@ fn test() {
     let pass = vec![
         (
             "
-			        <script setup>
-			          const emit = defineEmits(['change', 'update'])
-			        </script>
-			       ",
+                    <script setup>
+                      const emit = defineEmits(['change', 'update'])
+                    </script>
+                   ",
             None,
             None,
             Some(PathBuf::from("test.vue")),
         ),
         (
             r#"
-			        <script setup lang="ts">
-			        const emit = defineEmits<{
-			          (e: 'change', id: number): void
-			          (e: 'update', value: string): void
-			        }>()
-			        </script>
-			       "#,
+                    <script setup lang="ts">
+                    const emit = defineEmits<{
+                      (e: 'change', id: number): void
+                      (e: 'update', value: string): void
+                    }>()
+                    </script>
+                   "#,
             None,
             None,
             Some(PathBuf::from("test.vue")),
         ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
         (
             r#"
-			        <script setup lang="ts">
-			        const emit = defineEmits<{
-			          (e: 'change', id: number): void
-			          (e: 'update', value: string): void
-			        }>()
-			        </script>
-			       "#,
+                    <script setup lang="ts">
+                    const emit = defineEmits<{
+                      (e: 'change', id: number): void
+                      (e: 'update', value: string): void
+                    }>()
+                    </script>
+                   "#,
             Some(serde_json::json!(["type-based"])),
             None,
             Some(PathBuf::from("test.vue")),
         ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
         (
             r#"
-			       <script setup lang="ts">
-			       const emit = defineEmits(['change', 'update'])
-			       </script>
-			       "#,
+                   <script setup lang="ts">
+                   const emit = defineEmits(['change', 'update'])
+                   </script>
+                   "#,
             Some(serde_json::json!(["runtime"])),
             None,
             Some(PathBuf::from("test.vue")),
         ),
         (
             r#"
-			        <script setup lang="ts">
-			        const emit = defineEmits<{
-			          change: [id: number]
-			          update: [value: string]
-			        }>()
-			        </script>
-			       "#,
+                    <script setup lang="ts">
+                    const emit = defineEmits<{
+                      change: [id: number]
+                      update: [value: string]
+                    }>()
+                    </script>
+                   "#,
             Some(serde_json::json!(["type-based"])),
             None,
             Some(PathBuf::from("test.vue")),
         ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
         (
             r#"
-			        <script setup lang="ts">
-			        const emit = defineEmits<{
-			          change: [id: number]
-			          update: [value: string]
-			        }>()
-			        </script>
-			       "#,
+                    <script setup lang="ts">
+                    const emit = defineEmits<{
+                      change: [id: number]
+                      update: [value: string]
+                    }>()
+                    </script>
+                   "#,
             Some(serde_json::json!(["type-literal"])),
             None,
             Some(PathBuf::from("test.vue")),
         ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
         (
             r#"
-			        <script setup lang="ts">
-			        const props = defineProps({
-			          kind: { type: String },
-			        })
-			        </script>
-			       "#,
+                    <script setup lang="ts">
+                    const props = defineProps({
+                      kind: { type: String },
+                    })
+                    </script>
+                   "#,
             None,
             None,
             Some(PathBuf::from("test.vue")),
         ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
         (
             r#"
-			         <script lang="ts">
-			         import { PropType } from 'vue'
+                     <script lang="ts">
+                     import { PropType } from 'vue'
 
-			         export default {
-			           props: {
-			             kind: { type: String as PropType<'primary' | 'secondary'> },
-			           },
-			           emits: ['check']
-			         }
-			         </script>
-			       "#,
+                     export default {
+                       props: {
+                         kind: { type: String as PropType<'primary' | 'secondary'> },
+                       },
+                       emits: ['check']
+                     }
+                     </script>
+                   "#,
             None,
             None,
             Some(PathBuf::from("test.vue")),
@@ -305,79 +305,79 @@ fn test() {
     let fail = vec![
         (
             r#"
-			       <script setup lang="ts">
-			       const emit = defineEmits(['change', 'update'])
-			       </script>
-			       "#,
+                   <script setup lang="ts">
+                   const emit = defineEmits(['change', 'update'])
+                   </script>
+                   "#,
             None,
             None,
             Some(PathBuf::from("test.vue")),
         ),
         (
             r#"
-			       <script setup lang="ts">
-			       const emit = defineEmits(['change', 'update'])
-			       </script>
-			       "#,
+                   <script setup lang="ts">
+                   const emit = defineEmits(['change', 'update'])
+                   </script>
+                   "#,
             Some(serde_json::json!(["type-based"])),
             None,
             Some(PathBuf::from("test.vue")),
         ),
         (
             r#"
-			       <script setup lang="ts">
-			       const emit = defineEmits(['change', 'update'])
-			       </script>
-			       "#,
+                   <script setup lang="ts">
+                   const emit = defineEmits(['change', 'update'])
+                   </script>
+                   "#,
             Some(serde_json::json!(["type-literal"])),
             None,
             Some(PathBuf::from("test.vue")),
         ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
         (
             r#"
-			        <script setup lang="ts">
-			        const emit = defineEmits<{
-			          (e: 'change', id: number): void
-			          (e: 'update', value: string): void
-			        }>()
-			        </script>
-			       "#,
+                    <script setup lang="ts">
+                    const emit = defineEmits<{
+                      (e: 'change', id: number): void
+                      (e: 'update', value: string): void
+                    }>()
+                    </script>
+                   "#,
             Some(serde_json::json!(["runtime"])),
             None,
             Some(PathBuf::from("test.vue")),
         ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
         (
             r#"
-			        <script setup lang="ts">
-			        const emit = defineEmits<{
-			          (e: 'change', id: number): void
-			          (e: 'update', value: string): void
-			        }>()
-			        </script>
-			       "#,
+                    <script setup lang="ts">
+                    const emit = defineEmits<{
+                      (e: 'change', id: number): void
+                      (e: 'update', value: string): void
+                    }>()
+                    </script>
+                   "#,
             Some(serde_json::json!(["type-literal"])),
             None,
             Some(PathBuf::from("test.vue")),
         ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
         (
             r#"
-			        <script setup lang="ts">
-			        const emit = defineEmits<{
-			          'change': [id: number]
-			          (e: 'update', value: string): void
-			        }>()
-			        </script>
-			       "#,
+                    <script setup lang="ts">
+                    const emit = defineEmits<{
+                      'change': [id: number]
+                      (e: 'update', value: string): void
+                    }>()
+                    </script>
+                   "#,
             Some(serde_json::json!(["type-literal"])),
             None,
             Some(PathBuf::from("test.vue")),
         ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
         (
             r#"
-			        <script setup lang="ts">
-			        const emit = defineEmits<(e: 'change', id: number) => void>()
-			        </script>
-			        "#,
+                    <script setup lang="ts">
+                    const emit = defineEmits<(e: 'change', id: number) => void>()
+                    </script>
+                    "#,
             Some(serde_json::json!(["type-literal"])),
             None,
             Some(PathBuf::from("test.vue")),

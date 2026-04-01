@@ -44,18 +44,40 @@ declare_oxc_lint!(
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
-    /// ```js
+    /// ```ts
     /// class Foo {
-    ///     constructor() {
-    ///         this.bar = 1;
-    ///     }
+    ///   constructor() {
+    ///     this.bar = 1;
+    ///   }
+    /// }
+    ///
+    /// class MyError extends Error {
+    ///   constructor(message: string) {
+    ///     super(message);
+    ///     this.name = 'MyError';
+    ///   }
+    /// }
+    ///
+    /// class Foo {
+    ///   foo = "foo";
+    ///   constructor() {
+    ///     this.foo = "bar";
+    ///   }
     /// }
     /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```js
     /// class Foo {
-    ///     bar = 1;
+    ///   bar = 1;
+    /// }
+    ///
+    /// class MyError extends Error {
+    ///   name = "MyError";
+    /// }
+    ///
+    /// class Foo {
+    ///   foo = "bar";
     /// }
     /// ```
     PreferClassFields,

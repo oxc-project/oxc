@@ -4,7 +4,7 @@
 //! report problems. It implements [miette]'s [`Diagnostic`] trait, making it compatible with other
 //! tooling you may be using.
 //!
-//! ```rust
+//! ```rust,ignore
 //! use oxc_diagnostics::{OxcDiagnostic, Result};
 //! fn my_tool() -> Result<()> {
 //!     try_something().map_err(|e| OxcDiagnostic::error(e.to_string()))?;
@@ -19,7 +19,7 @@
 //! [`DiagnosticService`] to format and render them to a string or a stream. It can receive
 //! [`Error`]s over a multi-producer, single consumer
 //!
-//! ```
+//! ```rust,ignore
 //! use std::{path::PathBuf, sync::Arc, thread};
 //! use oxc_diagnostics::{DiagnosticService, Error, OxcDiagnostic, GraphicalReportHandler, NamedSource};
 //!
@@ -265,7 +265,7 @@ impl OxcDiagnostic {
     /// Suggest a possible solution for a problem to the user.
     ///
     /// ## Example
-    /// ```
+    /// ```rust,ignore
     /// use std::path::PathBuf;
     /// use oxc_diagnostics::OxcDiagnostic
     ///
@@ -283,7 +283,7 @@ impl OxcDiagnostic {
     /// Show a note to the user.
     ///
     /// ## Example
-    /// ```
+    /// ```rust,ignore
     /// use std::path::PathBuf;
     /// use oxc_diagnostics::OxcDiagnostic
     ///

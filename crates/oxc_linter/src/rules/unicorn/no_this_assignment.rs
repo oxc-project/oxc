@@ -125,6 +125,12 @@ fn test() {
         "function foo(a = this) {}",
         "function foo({a = this}) {}",
         "function foo([a = this]) {}",
+        "class A {
+                foo = this;
+            }",
+        "class A {
+                static foo = this;
+            }",
     ];
 
     let fail = vec![

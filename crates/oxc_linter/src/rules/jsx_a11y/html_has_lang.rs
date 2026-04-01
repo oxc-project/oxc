@@ -31,7 +31,7 @@ pub struct HtmlHasLang;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Ensures that every HTML document has a lang attribute
+    /// Ensures that every HTML document has a lang attribute.
     ///
     /// ### Why is this bad?
     ///

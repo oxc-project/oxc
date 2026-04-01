@@ -126,7 +126,7 @@ impl FormatJsxChildList {
                     }
                     // Leading whitespace. Only possible if used together with a expression child
                     //
-                    // ```
+                    // ```text
                     // <div>
                     //
                     //   {' '}
@@ -146,7 +146,7 @@ impl FormatJsxChildList {
                         // Here we handle the case when we have a newline between a single-character word and a jsx element
                         // We need to use the previous and the next element
                         // [JsxChild::Word, JsxChild::Newline, JsxChild::NonText]
-                        // ```
+                        // ```text
                         // <div>
                         //   <div>First</div>,
                         //   <div>Second</div>
@@ -164,7 +164,7 @@ impl FormatJsxChildList {
                         // Here we handle the case when we have a single-character word between a new line and a jsx element
                         // Here we need to look ahead two elements
                         // [JsxChild::Newline, JsxChild::Word, JsxChild::NonText]
-                        // ```
+                        // ```text
                         // <div>
                         //   <div>First</div>
                         //   ,<div>Second</div>

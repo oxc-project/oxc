@@ -3,7 +3,7 @@ source: crates/oxc_linter/src/tester.rs
 ---
 
   ⚠ eslint-plugin-react(no-will-update-set-state): Do not use `setState` in `componentWillUpdate`.
-   ╭─[no_will_update_set_state.tsx:4:16]
+   ╭─[no_will_update_set_state.tsx:4:25]
  3 │                       componentWillUpdate: function() {
  4 │                         this.setState({
    ·                         ─────────────
@@ -12,7 +12,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Updating state during the update step can lead to indeterminate component state and is not allowed.
 
   ⚠ eslint-plugin-react(no-will-update-set-state): Do not use `setState` in `componentWillUpdate`.
-   ╭─[no_will_update_set_state.tsx:4:16]
+   ╭─[no_will_update_set_state.tsx:4:25]
  3 │                       componentWillUpdate() {
  4 │                         this.setState({
    ·                         ─────────────
@@ -21,7 +21,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Updating state during the update step can lead to indeterminate component state and is not allowed.
 
   ⚠ eslint-plugin-react(no-will-update-set-state): Do not use `setState` in `componentWillUpdate`.
-   ╭─[no_will_update_set_state.tsx:4:16]
+   ╭─[no_will_update_set_state.tsx:4:25]
  3 │                       componentWillUpdate: function() {
  4 │                         this.setState({
    ·                         ─────────────
@@ -30,7 +30,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Updating state during the update step can lead to indeterminate component state and is not allowed.
 
   ⚠ eslint-plugin-react(no-will-update-set-state): Do not use `setState` in `componentWillUpdate`.
-   ╭─[no_will_update_set_state.tsx:4:16]
+   ╭─[no_will_update_set_state.tsx:4:25]
  3 │                       componentWillUpdate() {
  4 │                         this.setState({
    ·                         ─────────────
@@ -39,7 +39,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Updating state during the update step can lead to indeterminate component state and is not allowed.
 
   ⚠ eslint-plugin-react(no-will-update-set-state): Do not use `setState` in `componentWillUpdate`.
-   ╭─[no_will_update_set_state.tsx:5:18]
+   ╭─[no_will_update_set_state.tsx:5:27]
  4 │                         someClass.onSomeEvent(function(data) {
  5 │                           this.setState({
    ·                           ─────────────
@@ -48,7 +48,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Updating state during the update step can lead to indeterminate component state and is not allowed.
 
   ⚠ eslint-plugin-react(no-will-update-set-state): Do not use `setState` in `componentWillUpdate`.
-   ╭─[no_will_update_set_state.tsx:5:18]
+   ╭─[no_will_update_set_state.tsx:5:27]
  4 │                         someClass.onSomeEvent(function(data) {
  5 │                           this.setState({
    ·                           ─────────────
@@ -57,7 +57,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Updating state during the update step can lead to indeterminate component state and is not allowed.
 
   ⚠ eslint-plugin-react(no-will-update-set-state): Do not use `setState` in `componentWillUpdate`.
-   ╭─[no_will_update_set_state.tsx:5:18]
+   ╭─[no_will_update_set_state.tsx:5:27]
  4 │                         if (true) {
  5 │                           this.setState({
    ·                           ─────────────
@@ -66,7 +66,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Updating state during the update step can lead to indeterminate component state and is not allowed.
 
   ⚠ eslint-plugin-react(no-will-update-set-state): Do not use `setState` in `componentWillUpdate`.
-   ╭─[no_will_update_set_state.tsx:5:18]
+   ╭─[no_will_update_set_state.tsx:5:27]
  4 │                         if (true) {
  5 │                           this.setState({
    ·                           ─────────────
@@ -75,7 +75,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Updating state during the update step can lead to indeterminate component state and is not allowed.
 
   ⚠ eslint-plugin-react(no-will-update-set-state): Do not use `setState` in `componentWillUpdate`.
-   ╭─[no_will_update_set_state.tsx:4:48]
+   ╭─[no_will_update_set_state.tsx:4:57]
  3 │                       componentWillUpdate: function() {
  4 │                         someClass.onSomeEvent((data) => this.setState({data: data}));
    ·                                                         ─────────────
@@ -84,7 +84,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Updating state during the update step can lead to indeterminate component state and is not allowed.
 
   ⚠ eslint-plugin-react(no-will-update-set-state): Do not use `setState` in `componentWillUpdate`.
-   ╭─[no_will_update_set_state.tsx:4:48]
+   ╭─[no_will_update_set_state.tsx:4:57]
  3 │                       componentWillUpdate() {
  4 │                         someClass.onSomeEvent((data) => this.setState({data: data}));
    ·                                                         ─────────────
@@ -93,7 +93,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Updating state during the update step can lead to indeterminate component state and is not allowed.
 
   ⚠ eslint-plugin-react(no-will-update-set-state): Do not use `setState` in `componentWillUpdate`.
-   ╭─[no_will_update_set_state.tsx:4:16]
+   ╭─[no_will_update_set_state.tsx:4:25]
  3 │                       UNSAFE_componentWillUpdate() {
  4 │                         this.setState({
    ·                         ─────────────
@@ -102,7 +102,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Updating state during the update step can lead to indeterminate component state and is not allowed.
 
   ⚠ eslint-plugin-react(no-will-update-set-state): Do not use `setState` in `componentWillUpdate`.
-   ╭─[no_will_update_set_state.tsx:4:16]
+   ╭─[no_will_update_set_state.tsx:4:25]
  3 │                       UNSAFE_componentWillUpdate: function() {
  4 │                         this.setState({
    ·                         ─────────────

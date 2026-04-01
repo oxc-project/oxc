@@ -120,6 +120,11 @@ fn test() {
         "trimLeft.trimRight()",
         "foo.trimLeft.trimRight()",
         r#""foo".trimLeft()"#,
+        "foo
+                // comment
+                .trimRight/* comment */(
+                    /* comment */
+                )",
         "foo?.trimLeft()",
     ];
 

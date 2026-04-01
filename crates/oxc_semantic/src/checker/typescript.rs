@@ -5,7 +5,7 @@ use rustc_hash::FxHashMap;
 
 use oxc_ast::{AstKind, ast::*};
 use oxc_ecmascript::BoundNames;
-use oxc_span::{Atom, GetSpan, Span};
+use oxc_span::{GetSpan, Span, Str};
 
 use crate::{builder::SemanticBuilder, diagnostics};
 
@@ -73,6 +73,19 @@ pub fn check_ts_type_alias_declaration<'a>(
     check_type_name_is_reserved(&decl.id, ctx, "Type alias");
 }
 
+pub fn check_ts_infer_type<'a>(infer_type: &TSInferType<'a>, ctx: &SemanticBuilder<'a>) {
+    let is_in_conditional_extends_clause =
+        ctx.nodes.ancestor_kinds(ctx.current_node_id).any(|kind| {
+            kind.as_ts_conditional_type().is_some_and(|conditional| {
+                conditional.extends_type.span().contains_inclusive(infer_type.span)
+            })
+        });
+
+    if !is_in_conditional_extends_clause {
+        ctx.error(diagnostics::infer_declaration_only_permitted_in_extends_clause(infer_type.span));
+    }
+}
+
 pub fn check_formal_parameters(params: &FormalParameters, ctx: &SemanticBuilder<'_>) {
     if params.kind == FormalParameterKind::Signature && params.items.len() > 1 {
         check_duplicate_bound_names(params, ctx);
@@ -91,7 +104,7 @@ pub fn check_formal_parameters(params: &FormalParameters, ctx: &SemanticBuilder<
 }
 
 fn check_duplicate_bound_names<'a, T: BoundNames<'a>>(bound_names: &T, ctx: &SemanticBuilder<'_>) {
-    let mut idents: FxHashMap<Atom<'a>, Span> = FxHashMap::default();
+    let mut idents: FxHashMap<Str<'a>, Span> = FxHashMap::default();
     bound_names.bound_names(&mut |ident| {
         if let Some(old_span) = idents.insert(ident.name.into(), ident.span) {
             ctx.error(diagnostics::redeclaration(&ident.name, old_span, ident.span));

@@ -5,7 +5,10 @@ use std::mem;
 
 use itoa::Buffer as ItoaBuffer;
 
-use oxc_data_structures::{code_buffer::CodeBuffer, stack::NonEmptyStack};
+use oxc_data_structures::{
+    code_buffer::{CodeBuffer, IndentChar},
+    stack::NonEmptyStack,
+};
 
 mod blanket;
 mod concat;
@@ -31,13 +34,15 @@ pub trait ESTree {
 }
 
 /// Trait for serializers.
-//
-// This trait contains public methods.
-// Internal methods we don't want to expose outside this crate are in [`SerializerPrivate`] trait.
-#[expect(private_bounds)]
-pub trait Serializer: SerializerPrivate {
-    /// `true` if output should contain TS fields
+pub trait Serializer {
+    /// `true` if output should contain TS fields.
     const INCLUDE_TS_FIELDS: bool;
+
+    /// `true` if serializer's formatter produces compact JSON (not pretty-printed JSON).
+    const IS_COMPACT: bool = Self::Formatter::IS_COMPACT;
+
+    /// Type of `Formatter` this serializer uses.
+    type Formatter: Formatter;
 
     /// Type of struct serializer this serializer uses.
     type StructSerializer: StructSerializer;
@@ -59,12 +64,6 @@ pub trait Serializer: SerializerPrivate {
     /// These nodes cannot be serialized to JSON, because JSON doesn't support `BigInt`s or `RegExp`s.
     /// "Fix paths" can be used on JS side to locate these nodes and set their `value` fields correctly.
     fn record_fix_path(&mut self);
-}
-
-/// Trait containing internal methods of [`Serializer`]s that we don't want to expose outside this crate.
-trait SerializerPrivate: Sized {
-    /// Formatter type
-    type Formatter: Formatter;
 
     /// Get mutable reference to buffer.
     fn buffer_mut(&mut self) -> &mut CodeBuffer;
@@ -110,7 +109,7 @@ impl<C: Config, F: Formatter> ESTreeSerializer<C, F> {
     /// Create new [`ESTreeSerializer`].
     pub fn new(ranges: bool) -> Self {
         Self {
-            buffer: CodeBuffer::new(),
+            buffer: CodeBuffer::with_indent(IndentChar::Space, 2),
             formatter: F::new(),
             trace_path: NonEmptyStack::new(TracePathPart::Index(0)),
             fixes_buffer: CodeBuffer::new(),
@@ -121,7 +120,7 @@ impl<C: Config, F: Formatter> ESTreeSerializer<C, F> {
     /// Create new [`ESTreeSerializer`] with specified buffer capacity.
     pub fn with_capacity(capacity: usize, ranges: bool) -> Self {
         Self {
-            buffer: CodeBuffer::with_capacity(capacity),
+            buffer: CodeBuffer::with_capacity_and_indent(capacity, IndentChar::Space, 2),
             formatter: F::new(),
             trace_path: NonEmptyStack::new(TracePathPart::Index(0)),
             fixes_buffer: CodeBuffer::new(),
@@ -178,6 +177,7 @@ impl<'s, C: Config, F: Formatter> Serializer for &'s mut ESTreeSerializer<C, F> 
     /// `true` if output should contain TS fields
     const INCLUDE_TS_FIELDS: bool = C::INCLUDE_TS_FIELDS;
 
+    type Formatter = F;
     type StructSerializer = ESTreeStructSerializer<'s, C, F>;
     type SequenceSerializer = ESTreeSequenceSerializer<'s, C, F>;
 
@@ -220,9 +220,7 @@ impl<'s, C: Config, F: Formatter> Serializer for &'s mut ESTreeSerializer<C, F> 
             }
             match *part {
                 TracePathPart::Key(key) => {
-                    self.fixes_buffer.print_ascii_byte(b'"');
-                    self.fixes_buffer.print_str(key);
-                    self.fixes_buffer.print_ascii_byte(b'"');
+                    self.fixes_buffer.print_strs_array(["\"", key, "\""]);
                 }
                 TracePathPart::Index(index) => {
                     let mut buffer = ItoaBuffer::new();
@@ -234,10 +232,6 @@ impl<'s, C: Config, F: Formatter> Serializer for &'s mut ESTreeSerializer<C, F> 
 
         self.fixes_buffer.print_ascii_byte(b']');
     }
-}
-
-impl<C: Config, F: Formatter> SerializerPrivate for &mut ESTreeSerializer<C, F> {
-    type Formatter = F;
 
     /// Get mutable reference to buffer.
     #[inline(always)]

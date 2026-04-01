@@ -247,6 +247,13 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace `(string | number)[]` with `Array<string | number>`.
 
+  ⚠ typescript-eslint(array-type): Array type using 'string[]' is forbidden. Use 'Array<string>' instead.
+   ╭─[array_type.ts:1:27]
+ 1 │ interface I { b: string | string[]; }
+   ·                           ────────
+   ╰────
+  help: Replace `string[]` with `Array<string>`.
+
   ⚠ typescript-eslint(array-type): Array type using 'readonly number[]' is forbidden. Use 'ReadonlyArray<number>' instead.
    ╭─[array_type.ts:1:8]
  1 │ let a: readonly number[] = [];
@@ -632,13 +639,6 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace `string[]` with `Array<string>`.
 
-  ⚠ typescript-eslint(array-type): Array type using 'string[]' is forbidden. Use 'Array<string>' instead.
-   ╭─[array_type.ts:1:16]
- 1 │ let a: Promise<string[]> = Promise.resolve([]);
-   ·                ────────
-   ╰────
-  help: Replace `string[]` with `Array<string>`.
-
   ⚠ typescript-eslint(array-type): Array type using 'Array<number>' is forbidden. Use 'number[]' instead.
    ╭─[array_type.ts:1:10]
  1 │ type x = Array<number>[]
@@ -754,22 +754,6 @@ source: crates/oxc_linter/src/tester.rs
    ·                                     ────────
    ╰────
   help: Replace `string[]` with `Array<string>`.
-
-  ⚠ typescript-eslint(array-type): Array type using 'string[]' is forbidden. Use 'Array<string>' instead.
-   ╭─[array_type.ts:2:37]
- 1 │ function testFn<T>(param: T) { return param; }
- 2 │ export const test4 = testFn<Promise<string[]>>([]);
-   ·                                     ────────
-   ╰────
-  help: Replace `string[]` with `Array<string>`.
-
-  ⚠ typescript-eslint(array-type): Array type using 'Array<string>' is forbidden. Use 'string[]' instead.
-   ╭─[array_type.ts:2:37]
- 1 │ function testFn<T>(param: T) { return param; }
- 2 │ export const test4 = testFn<Promise<Array<string>>>([]);
-   ·                                     ─────────────
-   ╰────
-  help: Replace `Array<string>` with `string[]`.
 
   ⚠ typescript-eslint(array-type): Array type using 'Array<string>' is forbidden. Use 'string[]' instead.
    ╭─[array_type.ts:2:37]
@@ -902,6 +886,55 @@ source: crates/oxc_linter/src/tester.rs
    ·                                        ──────
    ╰────
   help: Replace `T[K][]` with `Array<T[K]>`.
+
+  ⚠ typescript-eslint(array-type): Array type using 'Array<string>' is forbidden. Use 'string[]' instead.
+   ╭─[array_type.ts:1:10]
+ 1 │ let y = <Array<string>>['2'];
+   ·          ─────────────
+   ╰────
+  help: Replace `Array<string>` with `string[]`.
+
+  ⚠ typescript-eslint(array-type): Array type using 'string[]' is forbidden. Use 'Array<string>' instead.
+   ╭─[array_type.ts:1:20]
+ 1 │ type Box<T extends string[]> = T;
+   ·                    ────────
+   ╰────
+  help: Replace `string[]` with `Array<string>`.
+
+  ⚠ typescript-eslint(array-type): Array type using 'Array<string>' is forbidden. Use 'string[]' instead.
+   ╭─[array_type.ts:1:20]
+ 1 │ type Box<T extends Array<string>> = T;
+   ·                    ─────────────
+   ╰────
+  help: Replace `Array<string>` with `string[]`.
+
+  ⚠ typescript-eslint(array-type): Array type using 'string[]' is forbidden. Use 'Array<string>' instead.
+   ╭─[array_type.ts:1:14]
+ 1 │ type Box<T = string[]> = T;
+   ·              ────────
+   ╰────
+  help: Replace `string[]` with `Array<string>`.
+
+  ⚠ typescript-eslint(array-type): Array type using 'Array<string>' is forbidden. Use 'string[]' instead.
+   ╭─[array_type.ts:1:14]
+ 1 │ type Box<T = Array<string>> = T;
+   ·              ─────────────
+   ╰────
+  help: Replace `Array<string>` with `string[]`.
+
+  ⚠ typescript-eslint(array-type): Array type using 'Array<T>' is forbidden. Use 'T[]' instead.
+   ╭─[array_type.ts:1:8]
+ 1 │ let x: Array<(string | number)> = [];
+   ·        ────────────────────────
+   ╰────
+  help: Replace `Array<(string | number)>` with `(string | number)[]`.
+
+  ⚠ typescript-eslint(array-type): Array type using 'ReadonlyArray<T>' is forbidden. Use 'readonly T[]' instead.
+   ╭─[array_type.ts:1:8]
+ 1 │ let x: ReadonlyArray<(string | number)> = [];
+   ·        ────────────────────────────────
+   ╰────
+  help: Replace `ReadonlyArray<(string | number)>` with `readonly (string | number)[]`.
 
   ⚠ typescript-eslint(array-type): Array type using 'readonly string[]' is forbidden. Use 'ReadonlyArray<string>' instead.
    ╭─[array_type.ts:1:35]

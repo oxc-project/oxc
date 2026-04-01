@@ -52,6 +52,12 @@ pub fn parse_jsdoc(
     // (e.g. `@vue/shared`) appearing mid-line in tag descriptions.
     let mut at_line_start = true;
 
+    // Track indentation after the `*` prefix to detect 4-space indented code blocks.
+    // When a line has 4+ spaces of content indent (after `* `), `@` on that line
+    // should not be treated as a tag marker — it's inside an indented code block.
+    let mut line_seen_star = false;
+    let mut spaces_after_star: u32 = 0;
+
     // This flag tells us if we have already found the main comment block.
     // The first part before any @tags is considered the comment. Everything after is a tag.
     let mut comment_found = false;
@@ -79,7 +85,7 @@ pub fn parse_jsdoc(
             // - 2 backticks: inline code (used to escape backticks inside)
             // - 3+ backticks: code fence (for nested code blocks)
             // Opening and closing sequences must have the same number of backticks.
-            '`' => {
+            '`' if !in_single_quotes && !in_double_quotes => {
                 // Count consecutive backticks
                 let mut count: u32 = 1;
                 while chars.peek() == Some(&'`') {
@@ -96,20 +102,50 @@ pub fn parse_jsdoc(
                 }
                 // Mismatched count inside a backtick section: ignore
             }
-            '"' => in_double_quotes = !in_double_quotes,
-            '\'' => in_single_quotes = !in_single_quotes,
+            // Inside backtick-quoted sections (inline code / code fences),
+            // all bracket/quote tracking is suspended. Characters like `{`, `}`,
+            // `"`, etc. inside code literals are not syntactic and must not
+            // affect `can_parse` — otherwise a stray `{` in inline code
+            // (e.g. `` `{` ``) would prevent subsequent `@` tags from being
+            // recognized, causing them to merge into the description.
+            '"' if backtick_count == 0 && !in_single_quotes => {
+                in_double_quotes = !in_double_quotes;
+            }
+            '\'' if backtick_count == 0 && !in_double_quotes => {
+                in_single_quotes = !in_single_quotes;
+            }
             '\n' => {
                 in_double_quotes = false;
                 in_single_quotes = false;
+                // Parentheses and square-bracket syntaxes are line-oriented in JSDoc.
+                // Reset them on each new line so prose such as `[min, max)` does not
+                // block parsing subsequent `@tag` lines.
+                brace_depth = 0;
+                square_brace_depth = 0;
             }
-            '{' => curly_brace_depth += 1,
-            '}' => curly_brace_depth = curly_brace_depth.saturating_sub(1),
-            '(' => brace_depth += 1,
-            ')' => brace_depth = brace_depth.saturating_sub(1),
-            '[' => square_brace_depth += 1,
-            ']' => square_brace_depth = square_brace_depth.saturating_sub(1),
+            '{' if backtick_count == 0 && !in_double_quotes && !in_single_quotes => {
+                curly_brace_depth += 1;
+            }
+            '}' if backtick_count == 0 && !in_double_quotes && !in_single_quotes => {
+                curly_brace_depth = (curly_brace_depth - 1).max(0);
+            }
+            '(' if backtick_count == 0 && !in_double_quotes && !in_single_quotes => {
+                brace_depth += 1;
+            }
+            ')' if backtick_count == 0 && !in_double_quotes && !in_single_quotes => {
+                brace_depth = (brace_depth - 1).max(0);
+            }
+            '[' if backtick_count == 0 && !in_double_quotes && !in_single_quotes => {
+                square_brace_depth += 1;
+            }
+            ']' if backtick_count == 0 && !in_double_quotes && !in_single_quotes => {
+                square_brace_depth = (square_brace_depth - 1).max(0);
+            }
 
-            '@' if can_parse && at_line_start => {
+            '@' if can_parse
+                && at_line_start
+                && !is_indented_code_block(line_seen_star, spaces_after_star) =>
+            {
                 let part = &source_text[start..end];
                 let span = Span::new(
                     jsdoc_span_start + u32::try_from(start).unwrap_or_default(),
@@ -136,8 +172,19 @@ pub fn parse_jsdoc(
         // - Everything else sets to false
         if ch == '\n' {
             at_line_start = true;
-        } else if at_line_start && !matches!(ch, ' ' | '\t' | '\r' | '*') {
-            at_line_start = false;
+            line_seen_star = false;
+            spaces_after_star = 0;
+        } else if at_line_start {
+            if ch == '*' {
+                line_seen_star = true;
+                spaces_after_star = 0;
+            } else if matches!(ch, ' ' | '\t' | '\r') {
+                if line_seen_star {
+                    spaces_after_star += 1;
+                }
+            } else {
+                at_line_start = false;
+            }
         }
 
         // Move the `end` pointer forward by the character's length
@@ -160,6 +207,16 @@ pub fn parse_jsdoc(
     }
 
     (comment.unwrap_or(JSDocCommentPart::new("", Span::empty(jsdoc_span_start))), tags)
+}
+
+/// Check if the current line position represents a 4-space indented code block.
+/// In CommonMark, 4+ spaces of indent from the content margin indicate an indented
+/// code block. In JSDoc, the content margin is after `* ` (star + one conventional space),
+/// so we need 5+ spaces after `*` (1 conventional + 4 for code block).
+/// If no `*` was seen on this line, this returns false (conservative).
+fn is_indented_code_block(line_seen_star: bool, spaces_after_star: u32) -> bool {
+    // 5 = 1 conventional space after `*` + 4 for indented code block
+    line_seen_star && spaces_after_star >= 5
 }
 
 /// tag_content: Starts with `@`, may be multiline
@@ -197,4 +254,93 @@ fn parse_jsdoc_tag(tag_content: &str, jsdoc_tag_span: Span) -> JSDocTag<'_> {
     );
 
     JSDocTag::new(kind, body_content, body_span)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Helper: parse JSDoc and return tag kind strings.
+    fn tag_kinds(source: &str) -> Vec<String> {
+        let (_, tags) = parse_jsdoc(source, 0);
+        tags.iter().map(|t| t.kind.parsed().to_string()).collect()
+    }
+
+    #[test]
+    fn backtick_inside_quotes_does_not_prevent_tag_split() {
+        // Bug A: backtick inside single quotes toggled backtick_count,
+        // preventing @returns from being recognized as a separate tag.
+        let src = " \n * @param {\"'\" | '\"' | '`'} string_start_char desc\n * @returns {number} The index";
+        let kinds = tag_kinds(src);
+        assert_eq!(kinds, vec!["param", "returns"]);
+    }
+
+    #[test]
+    fn extra_closing_brace_does_not_prevent_tag_split() {
+        // Bug B: extra `}` after param name decremented curly_brace_depth
+        // below 0 (i32 saturating_sub), preventing next @param recognition.
+        let src = " \n * @param {AST.SvelteElement | AST.RegularElement} node}\n * @param {{ stop: () => void }} context";
+        let kinds = tag_kinds(src);
+        assert_eq!(kinds, vec!["param", "param"]);
+    }
+
+    #[test]
+    fn normal_tags_still_split_correctly() {
+        let src = " \n * @param {string} name The name\n * @returns {boolean} True if valid";
+        let kinds = tag_kinds(src);
+        assert_eq!(kinds, vec!["param", "returns"]);
+    }
+
+    #[test]
+    fn inline_link_does_not_split_tag() {
+        // {@link ...} should NOT start a new tag
+        let src = " \n * @param {string} name See {@link Foo} for details\n * @returns {void}";
+        let kinds = tag_kinds(src);
+        assert_eq!(kinds, vec!["param", "returns"]);
+    }
+
+    #[test]
+    fn at_sign_mid_line_does_not_split_tag() {
+        // @ in email or scoped package mid-line should not split
+        let src = " \n * @param {string} email user@example.com address\n * @returns {void}";
+        let kinds = tag_kinds(src);
+        assert_eq!(kinds, vec!["param", "returns"]);
+    }
+
+    #[test]
+    fn code_fence_does_not_prevent_tag_split() {
+        // Backtick code fence should not affect tag splitting after the fence
+        let src = " \n * @example\n * ```\n * const x = 1;\n * ```\n * @returns {void}";
+        let kinds = tag_kinds(src);
+        assert_eq!(kinds, vec!["example", "returns"]);
+    }
+
+    #[test]
+    fn braces_inside_quotes_do_not_prevent_tag_split() {
+        // Braces inside quoted strings in description text should not affect
+        // curly_brace_depth tracking. This caused @param to be merged into the
+        // description when the description contained unbalanced braces in quotes.
+        let src = " \n * \"props\" of the form \"{ [key: string]: { type?: \"String\" | \"Object\" }\"\n * @param {null} node\n * @returns {never}";
+        let kinds = tag_kinds(src);
+        assert_eq!(kinds, vec!["param", "returns"]);
+    }
+
+    #[test]
+    fn indented_code_block_at_sign_does_not_split_tag() {
+        // `@` inside a 4-space indented code block (after `* `) should NOT be
+        // treated as a tag marker. 5 spaces after `*` = 1 conventional + 4 for code block.
+        let src = " \n * @deprecated\n *     @myDecorator\n *     class Foo {}\n * @type {string}";
+        let kinds = tag_kinds(src);
+        // @myDecorator is inside a code block, so only @deprecated and @type are real tags
+        assert_eq!(kinds, vec!["deprecated", "type"]);
+    }
+
+    #[test]
+    fn normal_indent_at_sign_still_splits() {
+        // `@` with less than 4-space indent (3 spaces after conventional) should still split
+        let src = " \n * @deprecated\n *    @type {string}";
+        let kinds = tag_kinds(src);
+        // 4 spaces after `*` = 1 conventional + 3 indent → NOT an indented code block
+        assert_eq!(kinds, vec!["deprecated", "type"]);
+    }
 }

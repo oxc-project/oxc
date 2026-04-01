@@ -64,7 +64,7 @@ export function createLspConnection() {
     // NOTE: Config and ignore files are searched from `workspaceFolders[].uri` upward
     // Or, provide a custom config path via `initializationOptions`
     async initialize(
-      workspaceFolders: WorkspaceFolder[],
+      workspaceFolders: WorkspaceFolder[] | null,
       capabilities: ClientCapabilities = {},
       initializationOptions?: unknown,
     ) {
@@ -159,6 +159,21 @@ export async function lintFixture(
     fixturesDir,
     [{ path: fixturePath, languageId }],
     initializationOptions ? [initializationOptions] : undefined,
+  );
+}
+
+export async function lintSingleFileFixture(
+  fixtureDir: string,
+  fixturePath: string,
+  languageId: string,
+): Promise<string> {
+  await using client = createLspConnection();
+  await client.initialize(null, PULL_DIAGNOSTICS_CAPABILITY);
+  return await getDiagnosticSnapshot(
+    fixturePath,
+    join(fixtureDir, fixturePath),
+    languageId,
+    client,
   );
 }
 

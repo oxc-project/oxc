@@ -1,0 +1,221 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-vitest(prefer-called-exactly-once-with): Prefer `toHaveBeenCalledExactlyOnceWith` over `toHaveBeenCalledOnce` and `toHaveBeenCalledWith` on the same target.
+   ╭─[prefer_called_exactly_once_with.tsx:2:10]
+ 1 │ 
+ 2 │                   expect(x).toHaveBeenCalledOnce();
+   ·                   ────────────────┬───────────────
+   ·                                   ╰── Replace with `toHaveBeenCalledExactlyOnceWith`
+ 3 │                   expect(x).toHaveBeenCalledWith('hoge');
+   · ─────────────────────────────┬────────────────────────────
+   ·                              ╰── Remove this expect
+ 4 │                   
+   ╰────
+  help: Replace with `toHaveBeenCalledExactlyOnceWith` and remove redundant expect
+
+  ⚠ eslint-plugin-vitest(prefer-called-exactly-once-with): Prefer `toHaveBeenCalledExactlyOnceWith` over `toHaveBeenCalledOnce` and `toHaveBeenCalledWith` on the same target.
+   ╭─[prefer_called_exactly_once_with.tsx:2:10]
+ 1 │ 
+ 2 │                   expect(x).toHaveBeenCalledWith('hoge');
+   ·                   ───────────────────┬──────────────────
+   ·                                      ╰── Replace with `toHaveBeenCalledExactlyOnceWith`
+ 3 │                   expect(x).toHaveBeenCalledOnce();
+   · ──────────────────────────┬─────────────────────────
+   ·                           ╰── Remove this expect
+ 4 │                   
+   ╰────
+  help: Replace with `toHaveBeenCalledExactlyOnceWith` and remove redundant expect
+
+  ⚠ eslint-plugin-vitest(prefer-called-exactly-once-with): Prefer `toHaveBeenCalledExactlyOnceWith` over `toHaveBeenCalledOnce` and `toHaveBeenCalledWith` on the same target.
+   ╭─[prefer_called_exactly_once_with.tsx:2:10]
+ 1 │ 
+ 2 │                   expect(x).toHaveBeenCalledWith('hoge', 123);
+   ·                   ─────────────────────┬─────────────────────
+   ·                                        ╰── Replace with `toHaveBeenCalledExactlyOnceWith`
+ 3 │                   expect(x).toHaveBeenCalledOnce();
+   · ──────────────────────────┬─────────────────────────
+   ·                           ╰── Remove this expect
+ 4 │                   
+   ╰────
+  help: Replace with `toHaveBeenCalledExactlyOnceWith` and remove redundant expect
+
+  ⚠ eslint-plugin-vitest(prefer-called-exactly-once-with): Prefer `toHaveBeenCalledExactlyOnceWith` over `toHaveBeenCalledOnce` and `toHaveBeenCalledWith` on the same target.
+   ╭─[prefer_called_exactly_once_with.tsx:3:12]
+ 2 │                   test('example',() => {
+ 3 │                     expect(x).toHaveBeenCalledWith('hoge', 123);
+   ·                     ─────────────────────┬─────────────────────
+   ·                                          ╰── Replace with `toHaveBeenCalledExactlyOnceWith`
+ 4 │                     expect(x).toHaveBeenCalledOnce();
+   · ───────────────────────────┬──────────────────────────
+   ·                            ╰── Remove this expect
+ 5 │                   });
+ 6 │                   
+   ╰────
+  help: Replace with `toHaveBeenCalledExactlyOnceWith` and remove redundant expect
+
+  ⚠ eslint-plugin-vitest(prefer-called-exactly-once-with): Prefer `toHaveBeenCalledExactlyOnceWith` over `toHaveBeenCalledOnce` and `toHaveBeenCalledWith` on the same target.
+   ╭─[prefer_called_exactly_once_with.tsx:2:10]
+ 1 │ 
+ 2 │                   expect(x).toHaveBeenCalledWith('hoge', 123);
+   ·                   ─────────────────────┬─────────────────────
+   ·                                        ╰── Replace with `toHaveBeenCalledExactlyOnceWith`
+ 3 │                   expect(x).toHaveBeenCalledOnce();
+   · ──────────────────────────┬─────────────────────────
+   ·                           ╰── Remove this expect
+ 4 │                   expect(y).toHaveBeenCalledWith('foo', 456);
+ 5 │                   expect(y).toHaveBeenCalledOnce();
+   ╰────
+  help: Replace with `toHaveBeenCalledExactlyOnceWith` and remove redundant expect
+
+  ⚠ eslint-plugin-vitest(prefer-called-exactly-once-with): Prefer `toHaveBeenCalledExactlyOnceWith` over `toHaveBeenCalledOnce` and `toHaveBeenCalledWith` on the same target.
+   ╭─[prefer_called_exactly_once_with.tsx:4:10]
+ 3 │                   expect(x).toHaveBeenCalledOnce();
+ 4 │                   expect(y).toHaveBeenCalledWith('foo', 456);
+   ·                   ─────────────────────┬────────────────────
+   ·                                        ╰── Replace with `toHaveBeenCalledExactlyOnceWith`
+ 5 │                   expect(y).toHaveBeenCalledOnce();
+   · ──────────────────────────┬─────────────────────────
+   ·                           ╰── Remove this expect
+ 6 │                   
+   ╰────
+  help: Replace with `toHaveBeenCalledExactlyOnceWith` and remove redundant expect
+
+  ⚠ eslint-plugin-vitest(prefer-called-exactly-once-with): Prefer `toHaveBeenCalledExactlyOnceWith` over `toHaveBeenCalledOnce` and `toHaveBeenCalledWith` on the same target.
+   ╭─[prefer_called_exactly_once_with.tsx:2:10]
+ 1 │ 
+ 2 │                   expect(x).toHaveBeenCalledWith('hoge', 123);
+   ·                   ─────────────────────┬─────────────────────
+   ·                                        ╰── Replace with `toHaveBeenCalledExactlyOnceWith`
+ 3 │                   const hoge = 'foo';
+ 4 │                   expect(x).toHaveBeenCalledOnce();
+   · ──────────────────────────┬─────────────────────────
+   ·                           ╰── Remove this expect
+ 5 │                   
+   ╰────
+  help: Replace with `toHaveBeenCalledExactlyOnceWith` and remove redundant expect
+
+  ⚠ eslint-plugin-vitest(prefer-called-exactly-once-with): Prefer `toHaveBeenCalledExactlyOnceWith` over `toHaveBeenCalledOnce` and `toHaveBeenCalledWith` on the same target.
+   ╭─[prefer_called_exactly_once_with.tsx:2:10]
+ 1 │ 
+ 2 │                   expect(x).toHaveBeenCalledOnce();
+   ·                   ────────────────┬───────────────
+   ·                                   ╰── Replace with `toHaveBeenCalledExactlyOnceWith`
+ 3 │                   y.mockClear();
+ 4 │                   expect(x).toHaveBeenCalledWith('hoge');
+   · ─────────────────────────────┬────────────────────────────
+   ·                              ╰── Remove this expect
+ 5 │                   
+   ╰────
+  help: Replace with `toHaveBeenCalledExactlyOnceWith` and remove redundant expect
+
+  ⚠ eslint-plugin-vitest(prefer-called-exactly-once-with): Prefer `toHaveBeenCalledExactlyOnceWith` over `toHaveBeenCalledOnce` and `toHaveBeenCalledWith` on the same target.
+   ╭─[prefer_called_exactly_once_with.tsx:2:10]
+ 1 │ 
+ 2 │                   expect(x).toHaveBeenCalledOnce();
+   ·                   ────────────────┬───────────────
+   ·                                   ╰── Replace with `toHaveBeenCalledExactlyOnceWith`
+ 3 │                   expect(x).toHaveBeenCalledWith<[string]>('hoge');
+   · ──────────────────────────────────┬─────────────────────────────────
+   ·                                   ╰── Remove this expect
+ 4 │                   
+   ╰────
+  help: Replace with `toHaveBeenCalledExactlyOnceWith` and remove redundant expect
+
+  ⚠ eslint-plugin-vitest(prefer-called-exactly-once-with): Prefer `toHaveBeenCalledExactlyOnceWith` over `toHaveBeenCalledOnce` and `toHaveBeenCalledWith` on the same target.
+   ╭─[prefer_called_exactly_once_with.tsx:2:10]
+ 1 │ 
+ 2 │                   expect(x).toHaveBeenCalledWith<[string]>('hoge');
+   ·                   ────────────────────────┬───────────────────────
+   ·                                           ╰── Replace with `toHaveBeenCalledExactlyOnceWith`
+ 3 │                   expect(x).toHaveBeenCalledOnce();
+   · ──────────────────────────┬─────────────────────────
+   ·                           ╰── Remove this expect
+ 4 │                   
+   ╰────
+  help: Replace with `toHaveBeenCalledExactlyOnceWith` and remove redundant expect
+
+  ⚠ eslint-plugin-vitest(prefer-called-exactly-once-with): Prefer `toHaveBeenCalledExactlyOnceWith` over `toHaveBeenCalledOnce` and `toHaveBeenCalledWith` on the same target.
+   ╭─[prefer_called_exactly_once_with.tsx:2:10]
+ 1 │ 
+ 2 │                   expect(x).toHaveBeenCalledOnce<[number]>();
+   ·                   ─────────────────────┬────────────────────
+   ·                                        ╰── Replace with `toHaveBeenCalledExactlyOnceWith`
+ 3 │                   expect(x).toHaveBeenCalledWith<[string]>('hoge');
+   · ──────────────────────────────────┬─────────────────────────────────
+   ·                                   ╰── Remove this expect
+ 4 │                   
+   ╰────
+  help: Replace with `toHaveBeenCalledExactlyOnceWith` and remove redundant expect
+
+  ⚠ eslint-plugin-vitest(prefer-called-exactly-once-with): Prefer `toHaveBeenCalledExactlyOnceWith` over `toHaveBeenCalledOnce` and `toHaveBeenCalledWith` on the same target.
+    ╭─[prefer_called_exactly_once_with.tsx:2:10]
+  1 │     
+  2 │                       expect(x).toHaveBeenCalledOnce();
+    ·                       ────────────────┬───────────────
+    ·                                       ╰── Replace with `toHaveBeenCalledExactlyOnceWith`
+  3 │ ╭─▶                   expect(x).toHaveBeenCalledWith<
+  4 │ │                       [
+  5 │ │                         {
+  6 │ │                           id: number
+  7 │ │                         }
+  8 │ │                       ]
+  9 │ ├─▶                   >('hoge');
+    · ╰──── Remove this expect
+ 10 │                       
+    ╰────
+  help: Replace with `toHaveBeenCalledExactlyOnceWith` and remove redundant expect
+
+  ⚠ eslint-plugin-vitest(prefer-called-exactly-once-with): Prefer `toHaveBeenCalledExactlyOnceWith` over `toHaveBeenCalledOnce` and `toHaveBeenCalledWith` on the same target.
+   ╭─[prefer_called_exactly_once_with.tsx:2:10]
+ 1 │ 
+ 2 │                   expect(x).toHaveBeenCalledWith<[string, number]>('hoge', 123);
+   ·                   ──────────────────────────────┬──────────────────────────────
+   ·                                                 ╰── Replace with `toHaveBeenCalledExactlyOnceWith`
+ 3 │                   expect(x).toHaveBeenCalledOnce();
+   · ──────────────────────────┬─────────────────────────
+   ·                           ╰── Remove this expect
+ 4 │                   
+   ╰────
+  help: Replace with `toHaveBeenCalledExactlyOnceWith` and remove redundant expect
+
+  ⚠ eslint-plugin-vitest(prefer-called-exactly-once-with): Prefer `toHaveBeenCalledExactlyOnceWith` over `toHaveBeenCalledOnce` and `toHaveBeenCalledWith` on the same target.
+   ╭─[prefer_called_exactly_once_with.tsx:2:10]
+ 1 │ 
+ 2 │                   expect(x).toHaveBeenCalledWith<[string, number]>('hoge', 123);
+   ·                   ──────────────────────────────┬──────────────────────────────
+   ·                                                 ╰── Replace with `toHaveBeenCalledExactlyOnceWith`
+ 3 │                   expect(x).toHaveBeenCalledOnce();
+   · ──────────────────────────┬─────────────────────────
+   ·                           ╰── Remove this expect
+ 4 │                   expect(y).toHaveBeenCalledWith('foo', 456);
+ 5 │                   expect(y).toHaveBeenCalledOnce();
+   ╰────
+  help: Replace with `toHaveBeenCalledExactlyOnceWith` and remove redundant expect
+
+  ⚠ eslint-plugin-vitest(prefer-called-exactly-once-with): Prefer `toHaveBeenCalledExactlyOnceWith` over `toHaveBeenCalledOnce` and `toHaveBeenCalledWith` on the same target.
+   ╭─[prefer_called_exactly_once_with.tsx:4:10]
+ 3 │                   expect(x).toHaveBeenCalledOnce();
+ 4 │                   expect(y).toHaveBeenCalledWith('foo', 456);
+   ·                   ─────────────────────┬────────────────────
+   ·                                        ╰── Replace with `toHaveBeenCalledExactlyOnceWith`
+ 5 │                   expect(y).toHaveBeenCalledOnce();
+   · ──────────────────────────┬─────────────────────────
+   ·                           ╰── Remove this expect
+ 6 │                   
+   ╰────
+  help: Replace with `toHaveBeenCalledExactlyOnceWith` and remove redundant expect
+
+  ⚠ eslint-plugin-vitest(prefer-called-exactly-once-with): Prefer `toHaveBeenCalledExactlyOnceWith` over `toHaveBeenCalledOnce` and `toHaveBeenCalledWith` on the same target.
+   ╭─[prefer_called_exactly_once_with.tsx:2:10]
+ 1 │ 
+ 2 │                   expect(x).toHaveBeenCalledOnce();
+   ·                   ────────────────┬───────────────
+   ·                                   ╰── Replace with `toHaveBeenCalledExactlyOnceWith`
+ 3 │                   y.mockClear();
+ 4 │                   expect(x).toHaveBeenCalledWith<[string]>('hoge');
+   · ──────────────────────────────────┬─────────────────────────────────
+   ·                                   ╰── Remove this expect
+ 5 │                   
+   ╰────
+  help: Replace with `toHaveBeenCalledExactlyOnceWith` and remove redundant expect

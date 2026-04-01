@@ -1,11 +1,18 @@
+import { basename as pathBasename } from "node:path";
+
 import { getErrorMessage } from "./utils/utils.ts";
-import { isDefineConfig } from "./package/config.ts";
-import { JSONStringify } from "./utils/globals.ts";
+import { DateNow, JSONStringify } from "./utils/globals.ts";
+import { getUnsupportedTypeScriptModuleLoadHintForError } from "./utils/node_version.ts";
 
 interface JsConfigResult {
   path: string;
-  config: unknown; // Will be validated as Oxlintrc on Rust side
+  config: unknown; // Will be validated as Oxlintrc on Rust side, `null` means "skip this config"
 }
+
+const isObject = (v: unknown) => typeof v === "object" && v !== null && !Array.isArray(v);
+
+const VITE_CONFIG_NAME = "vite.config.ts";
+const VITE_OXLINT_CONFIG_FIELD = "lint";
 
 type LoadJsConfigsResult =
   | { Success: JsConfigResult[] }
@@ -52,7 +59,7 @@ function validateConfigExtends(root: object): void {
       }
       for (let i = 0; i < maybeExtends.length; i++) {
         const item = maybeExtends[i];
-        if (typeof item !== "object" || item === null || Array.isArray(item)) {
+        if (!isObject(item)) {
           throw new Error(
             `\`extends[${i}]\` must be a config object (strings/paths are not supported).`,
           );
@@ -89,9 +96,11 @@ function validateConfigExtends(root: object): void {
  */
 export async function loadJsConfigs(paths: string[]): Promise<string> {
   try {
+    const cacheKey = DateNow();
     const results = await Promise.allSettled(
       paths.map(async (path): Promise<JsConfigResult> => {
-        const fileUrl = new URL(`file://${path}`);
+        // Bypass Node.js module cache to allow reloading changed config files (used for LSP, where we reload configs after important changes)
+        const fileUrl = new URL(`file://${path}?cache=${cacheKey}`);
         const module = await import(fileUrl.href);
         const config = module.default;
 
@@ -99,18 +108,34 @@ export async function loadJsConfigs(paths: string[]): Promise<string> {
           throw new Error(`Configuration file has no default export.`);
         }
 
-        if (typeof config !== "object" || config === null || Array.isArray(config)) {
+        // Vite config: extract `.lint` field, skip `defineConfig()` validation
+        if (pathBasename(path) === VITE_CONFIG_NAME) {
+          // NOTE: Vite configs may export a function via `defineConfig(() => ({ ... }))`,
+          // but we don't know the arguments to call the function.
+          // Treat non-object exports as "no config" and skip.
+          if (!isObject(config)) {
+            return { path, config: null };
+          }
+
+          const lintConfig = (config as Record<string, unknown>)[VITE_OXLINT_CONFIG_FIELD];
+          // NOTE: return `null` if `.lint` is missing which signals "skip" this
+          if (lintConfig === undefined) {
+            return { path, config: null };
+          }
+
+          if (!isObject(lintConfig)) {
+            throw new Error(
+              `The \`${VITE_OXLINT_CONFIG_FIELD}\` field in the default export must be an object.`,
+            );
+          }
+          validateConfigExtends(lintConfig as object);
+          return { path, config: lintConfig };
+        }
+
+        if (!isObject(config)) {
           throw new Error(`Configuration file must have a default export that is an object.`);
         }
-
-        if (!isDefineConfig(config)) {
-          throw new Error(
-            `Configuration file must wrap its default export with defineConfig() from "oxlint".`,
-          );
-        }
-
         validateConfigExtends(config as object);
-
         return { path, config };
       }),
     );
@@ -123,7 +148,15 @@ export async function loadJsConfigs(paths: string[]): Promise<string> {
       if (result.status === "fulfilled") {
         successes.push(result.value);
       } else {
-        errors.push({ path: paths[i], error: getErrorMessage(result.reason) });
+        const path = paths[i];
+        const unsupportedNodeHint = getUnsupportedTypeScriptModuleLoadHintForError(
+          result.reason,
+          path,
+        );
+        errors.push({
+          path,
+          error: unsupportedNodeHint ?? getErrorMessage(result.reason),
+        });
       }
     }
 

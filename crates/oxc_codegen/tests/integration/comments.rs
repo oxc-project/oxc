@@ -220,6 +220,16 @@ catch (err) /* c8 ignore next */ /* istanbul ignore next */ { handle(err); }",
             "try { something(); }
 catch (err) // v8 ignore next
 { handle(err); }",
+            // Coverage comment before ConditionalExpression alternate
+            // https://github.com/oxc-project/oxc/issues/20549
+            "const a = Math.random() ? 1 : /* istanbul ignore next */ 2;",
+            // Coverage comment between SwitchStatement cases
+            // https://github.com/oxc-project/oxc/issues/20549
+            "switch (Math.random()) {
+  case 0.5: break;
+  /* istanbul ignore next */
+  default: break;
+}",
         ];
 
         snapshot("coverage", &cases);

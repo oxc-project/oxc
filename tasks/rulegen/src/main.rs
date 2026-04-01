@@ -1440,7 +1440,7 @@ fn main() {
         RuleKind::Node => format!("{NODE_TEST_PATH}/{kebab_rule_name}.js"),
         RuleKind::Promise => format!("{PROMISE_TEST_PATH}/{kebab_rule_name}.js"),
         RuleKind::Vitest => format!("{VITEST_TEST_PATH}/{kebab_rule_name}.test.ts"),
-        RuleKind::Vue => format!("{VUE_TEST_PATH}/{kebab_rule_name}.js"),
+        RuleKind::Vue => format!("{VUE_TEST_PATH}/{kebab_rule_name}.test.ts"),
         RuleKind::Oxc => String::new(),
     };
     let rule_src_path = match rule_kind {

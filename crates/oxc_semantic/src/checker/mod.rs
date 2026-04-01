@@ -61,6 +61,7 @@ pub fn check<'a>(kind: AstKind<'a>, ctx: &SemanticBuilder<'a>) {
         }
         AstKind::ForOfStatement(stmt) => {
             js::check_function_declaration(&stmt.body, false, ctx);
+            js::check_for_of_statement(stmt, ctx);
             js::check_for_statement_left(&stmt.left, false, ctx);
             ts::check_for_statement_left(&stmt.left, false, ctx);
         }
@@ -121,6 +122,7 @@ pub fn check<'a>(kind: AstKind<'a>, ctx: &SemanticBuilder<'a>) {
         AstKind::TSGlobalDeclaration(decl) => ts::check_ts_global_declaration(decl, ctx),
         AstKind::TSEnumDeclaration(decl) => ts::check_ts_enum_declaration(decl, ctx),
         AstKind::TSTypeAliasDeclaration(decl) => ts::check_ts_type_alias_declaration(decl, ctx),
+        AstKind::TSInferType(infer_type) => ts::check_ts_infer_type(infer_type, ctx),
         AstKind::TSImportEqualsDeclaration(decl) => {
             ts::check_ts_import_equals_declaration(decl, ctx);
         }

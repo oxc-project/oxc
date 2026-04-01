@@ -5,7 +5,7 @@
 
 use std::fmt;
 
-use oxc_span::Atom;
+use oxc_span::Str;
 
 use crate::ast::*;
 
@@ -13,7 +13,7 @@ impl<'a> TSEnumMemberName<'a> {
     /// Get the name of this enum member.
     /// # Panics
     /// Panics if `self` is a `TemplateString` with no quasi.
-    pub fn static_name(&self) -> Atom<'a> {
+    pub fn static_name(&self) -> Str<'a> {
         match self {
             Self::Identifier(ident) => ident.name.into(),
             Self::String(lit) | Self::ComputedString(lit) => lit.value,
@@ -215,7 +215,7 @@ impl<'a> TSModuleDeclarationName<'a> {
     }
 
     /// Get the static name of this module declaration name.
-    pub fn name(&self) -> Atom<'a> {
+    pub fn name(&self) -> Str<'a> {
         match self {
             Self::Identifier(ident) => ident.name.into(),
             Self::StringLiteral(lit) => lit.value,
