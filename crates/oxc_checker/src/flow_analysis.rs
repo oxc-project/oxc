@@ -782,7 +782,7 @@ impl Checker<'_> {
     /// could match the compared value. Two types are comparable if
     /// either is assignable to the other, or both are literal types
     /// of the same kind.
-    fn are_types_comparable(&mut self, a: TypeId, b: TypeId) -> bool {
+    pub(crate) fn are_types_comparable(&mut self, a: TypeId, b: TypeId) -> bool {
         if a == b {
             return true;
         }

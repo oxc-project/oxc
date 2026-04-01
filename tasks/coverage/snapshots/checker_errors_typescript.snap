@@ -2,7 +2,7 @@ commit: 34725489
 
 checker_errors_typescript Summary:
 AST Parsed     : 6430/6430 (100.00%)
-Positive Passed: 495/6430 (7.70%)
+Positive Passed: 507/6430 (7.88%)
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/ArrowFunctionExpression1.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration10.ts
@@ -914,8 +914,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/computedPropertie
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/computedPropertiesTransformedInOtherwiseNonTSClasses.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/computedPropertyBindingElementDeclarationNoCrash1.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/computerPropertiesInES5ShouldBeTransformed.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/concatClassAndString.ts
@@ -1091,8 +1089,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/contextualTyping3
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/contextualTyping38.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/contextualTyping39.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/contextualTyping4.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/contextualTyping41.ts
 
@@ -2437,8 +2433,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/gettersAndSetters
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/giant.ts
 An index signature must have a type annotation.
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/grammarAmbiguities1.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/heterogeneousArrayAndOverloads.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/hidingConstructSignatures.ts
@@ -4358,8 +4352,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/regularExpression
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/regularExpressionWithNonBMPFlags.ts
 Expected a semicolon or an implicit semicolon after a statement, but found none
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/relationComplexityError.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/relationalOperatorComparable.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/renamingDestructuredPropertyInFunctionType.ts
 
@@ -8036,10 +8028,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/bi
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/binaryOperators/comparisonOperator/comparisonOperatorWithIdenticalObjects.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/binaryOperators/comparisonOperator/comparisonOperatorWithIdenticalPrimitiveType.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/binaryOperators/comparisonOperator/comparisonOperatorWithIntersectionType.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/binaryOperators/comparisonOperator/comparisonOperatorWithNoRelationshipObjectsOnCallSignature.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/binaryOperators/comparisonOperator/comparisonOperatorWithNoRelationshipObjectsOnConstructorSignature.ts
@@ -8058,15 +8046,7 @@ checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/bi
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/binaryOperators/comparisonOperator/comparisonOperatorWithNumberOperand.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/binaryOperators/comparisonOperator/comparisonOperatorWithNumericLiteral.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/binaryOperators/comparisonOperator/comparisonOperatorWithOneOperandIsAny.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/binaryOperators/comparisonOperator/comparisonOperatorWithOneOperandIsNull.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/binaryOperators/comparisonOperator/comparisonOperatorWithOneOperandIsUndefined.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/binaryOperators/comparisonOperator/comparisonOperatorWithSubtypeEnumAndNumber.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/binaryOperators/comparisonOperator/comparisonOperatorWithSubtypeObjectOnCallSignature.ts
 
@@ -8077,8 +8057,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/bi
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/binaryOperators/comparisonOperator/comparisonOperatorWithSubtypeObjectOnInstantiatedCallSignature.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/binaryOperators/comparisonOperator/comparisonOperatorWithSubtypeObjectOnInstantiatedConstructorSignature.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/binaryOperators/comparisonOperator/comparisonOperatorWithSubtypeObjectOnOptionalProperty.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/binaryOperators/comparisonOperator/comparisonOperatorWithTypeParameter.ts
 
@@ -11722,8 +11700,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/typeRela
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/bestCommonType/bestCommonTypeOfTuple.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/bestCommonType/bestCommonTypeOfTuple2.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/comparable/equalityStrictNulls.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/comparable/equalityWithEnumTypes.ts
 
