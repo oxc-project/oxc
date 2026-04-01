@@ -1,6 +1,7 @@
 use oxc_ast::ast::{AssignmentExpression, Expression, ExpressionStatement};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::GetSpan;
-use oxc_syntax::operator::AssignmentOperator;
+use oxc_syntax::operator::{AssignmentOperator, UnaryOperator};
 
 use oxc_types::TypeId;
 
@@ -29,10 +30,111 @@ impl Checker<'_> {
             Expression::AssignmentExpression(assign) => {
                 self.check_assignment_expression(assign);
             }
+            Expression::SequenceExpression(seq) => {
+                self.check_sequence_expression(seq, contextual_type);
+            }
             _ => {
                 self.get_type_of_expression(expr, contextual_type);
             }
         }
+    }
+
+    /// Check a sequence (comma) expression.
+    ///
+    /// Emits TS2695 for non-last elements that are side-effect-free.
+    /// Mirrors tsgo's comma-token case in `checkBinaryLikeExpression`.
+    fn check_sequence_expression(
+        &mut self,
+        seq: &oxc_ast::ast::SequenceExpression<'_>,
+        contextual_type: Option<TypeId>,
+    ) {
+        let exprs = &seq.expressions;
+        for (i, expr) in exprs.iter().enumerate() {
+            let is_last = i == exprs.len() - 1;
+            if !is_last && Self::is_side_effect_free(expr) && !Self::is_indirect_call(expr, exprs.get(i + 1)) {
+                self.diagnostics.push(
+                    OxcDiagnostic::error(
+                        "Left side of comma operator is unused and has no side effects.",
+                    )
+                    .with_error_code("ts", "2695")
+                    .with_label(expr.span()),
+                );
+            }
+            // Check each sub-expression (the last one gets the contextual type)
+            let ctx = if is_last { contextual_type } else { None };
+            self.get_type_of_expression(expr, ctx);
+        }
+    }
+
+    /// Determines if an expression is side-effect-free (i.e., evaluating it
+    /// produces no observable change). Mirrors tsgo's `isSideEffectFree`.
+    fn is_side_effect_free(expr: &Expression<'_>) -> bool {
+        match expr.without_parentheses() {
+            // Literals and identifiers
+            Expression::Identifier(_)
+            | Expression::BooleanLiteral(_)
+            | Expression::NullLiteral(_)
+            | Expression::NumericLiteral(_)
+            | Expression::BigIntLiteral(_)
+            | Expression::StringLiteral(_)
+            | Expression::RegExpLiteral(_)
+            | Expression::TemplateLiteral(_)
+            | Expression::TaggedTemplateExpression(_)
+            | Expression::FunctionExpression(_)
+            | Expression::ClassExpression(_)
+            | Expression::ArrowFunctionExpression(_)
+            | Expression::ArrayExpression(_)
+            | Expression::ObjectExpression(_)
+            | Expression::TSNonNullExpression(_) => true,
+
+            // Unary ~, !, +, -, typeof are side-effect-free (tsgo does not
+            // recurse into the operand).
+            Expression::UnaryExpression(unary) => matches!(
+                unary.operator,
+                UnaryOperator::Typeof
+                    | UnaryOperator::LogicalNot
+                    | UnaryOperator::UnaryPlus
+                    | UnaryOperator::UnaryNegation
+                    | UnaryOperator::BitwiseNot
+            ),
+
+            // Conditional: both branches must be side-effect-free
+            Expression::ConditionalExpression(cond) => {
+                Self::is_side_effect_free(&cond.consequent)
+                    && Self::is_side_effect_free(&cond.alternate)
+            }
+
+            // Binary: both sides must be side-effect-free and not an assignment
+            Expression::BinaryExpression(bin) => {
+                Self::is_side_effect_free(&bin.left) && Self::is_side_effect_free(&bin.right)
+            }
+
+            _ => false,
+        }
+    }
+
+    /// Detect the indirect call pattern `(0, x.f)()` or `(0, eval)()`.
+    /// When a comma expression is used for indirect invocation, TS2695 is suppressed.
+    ///
+    /// Note: tsgo also checks that the parent of the comma expression is a
+    /// parenthesized call expression. We don't have parent access here, so this
+    /// is a shape-only heuristic that may suppress TS2695 for bare `0, eval;`
+    /// statements. This is a harmless false negative (missing a diagnostic in
+    /// a rare edge case).
+    // TODO: check parent is a call expression once node_id is available here
+    fn is_indirect_call(left: &Expression<'_>, right: Option<&Expression<'_>>) -> bool {
+        // Left must be the numeric literal `0`
+        let is_zero = matches!(left, Expression::NumericLiteral(n) if n.value == 0.0);
+        if !is_zero {
+            return false;
+        }
+        // Right must be a property access or `eval`
+        let Some(right) = right else { return false };
+        matches!(
+            right,
+            Expression::StaticMemberExpression(_)
+                | Expression::ComputedMemberExpression(_)
+        ) || matches!(right, Expression::Identifier(id) if id.name == "eval")
     }
 
     /// Check an assignment expression (`x = value`).
