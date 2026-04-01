@@ -259,7 +259,7 @@ fn get_current_chunk_footer_field_offset() -> usize {
         assert!(align_of::<Cell<Option<usize>>>() == align_of::<usize>());
     }
 
-    let bump = ManuallyDrop::new(Bump::new());
+    let bump = ManuallyDrop::new(Bump::<1>::with_min_align());
     bump.set_allocation_limit(Some(123));
 
     // SAFETY:
@@ -269,7 +269,7 @@ fn get_current_chunk_footer_field_offset() -> usize {
     // so either field order means 3rd `usize` is fully initialized
     // (it's either `NonNull<ChunkFooter>>` or the `usize` in `Option<usize>`).
     unsafe {
-        let ptr = ptr::from_ref::<ManuallyDrop<Bump>>(&bump).cast::<usize>();
+        let ptr = ptr::from_ref(&bump).cast::<usize>();
         if *ptr.add(2) == 123 {
             // `allocation_limit` is 2nd field. So `current_chunk_footer` is 1st.
             0
