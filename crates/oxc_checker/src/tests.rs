@@ -3662,3 +3662,290 @@ fn this_at_top_level_is_generic() {
     );
 }
 
+// -------------------------------------------------------
+// Infer in conditional types
+// -------------------------------------------------------
+
+#[test]
+fn infer_basic_type_reference() {
+    // T extends Box<infer U> ? U : never — with T = Box<string>
+    with_checker!(
+        r#"
+        interface Box<T> { value: T }
+        type Unbox<T> = T extends Box<infer U> ? U : never;
+        let x: Unbox<Box<string>>;
+        "#,
+        |checker, program| {
+            let stmt = &program.body[2];
+            let Statement::VariableDeclaration(decl) = stmt else { panic!() };
+            let declarator = &decl.declarations[0];
+            let ann = declarator.type_annotation.as_ref().unwrap();
+            let t = checker.get_type_from_type_node(&ann.type_annotation);
+            assert_eq!(checker.type_to_string(t), "string");
+        }
+    );
+}
+
+#[test]
+fn infer_bare_type() {
+    // T extends infer U ? U : never — U should be inferred as T
+    with_checker!(
+        r#"
+        type Identity<T> = T extends infer U ? U : never;
+        let x: Identity<number>;
+        "#,
+        |checker, program| {
+            let stmt = &program.body[1];
+            let Statement::VariableDeclaration(decl) = stmt else { panic!() };
+            let declarator = &decl.declarations[0];
+            let ann = declarator.type_annotation.as_ref().unwrap();
+            let t = checker.get_type_from_type_node(&ann.type_annotation);
+            assert_eq!(checker.type_to_string(t), "number");
+        }
+    );
+}
+
+#[test]
+fn infer_false_branch() {
+    // When check doesn't match, return false branch
+    with_checker!(
+        r#"
+        interface Box<T> { value: T }
+        type Unbox<T> = T extends Box<infer U> ? U : "fallback";
+        let x: Unbox<number>;
+        "#,
+        |checker, program| {
+            let stmt = &program.body[2];
+            let Statement::VariableDeclaration(decl) = stmt else { panic!() };
+            let declarator = &decl.declarations[0];
+            let ann = declarator.type_annotation.as_ref().unwrap();
+            let t = checker.get_type_from_type_node(&ann.type_annotation);
+            assert_eq!(checker.type_to_string(t), "\"fallback\"");
+        }
+    );
+}
+
+#[test]
+fn infer_with_distribution() {
+    // Unbox distributes over unions:
+    // Unbox<Box<string> | Box<number>> → string | number
+    with_checker!(
+        r#"
+        interface Box<T> { value: T }
+        type Unbox<T> = T extends Box<infer U> ? U : never;
+        let x: Unbox<Box<string> | Box<number>>;
+        "#,
+        |checker, program| {
+            let stmt = &program.body[2];
+            let Statement::VariableDeclaration(decl) = stmt else { panic!() };
+            let declarator = &decl.declarations[0];
+            let ann = declarator.type_annotation.as_ref().unwrap();
+            let t = checker.get_type_from_type_node(&ann.type_annotation);
+            assert_eq!(checker.type_to_string(t), "string | number");
+        }
+    );
+}
+
+#[test]
+fn infer_function_return_type() {
+    // T extends (x: any) => infer R ? R : never
+    with_checker!(
+        r#"
+        type ReturnType2<T> = T extends (x: any) => infer R ? R : never;
+        let x: ReturnType2<(x: number) => string>;
+        "#,
+        |checker, program| {
+            let stmt = &program.body[1];
+            let Statement::VariableDeclaration(decl) = stmt else { panic!() };
+            let declarator = &decl.declarations[0];
+            let ann = declarator.type_annotation.as_ref().unwrap();
+            let t = checker.get_type_from_type_node(&ann.type_annotation);
+            assert_eq!(checker.type_to_string(t), "string");
+        }
+    );
+}
+
+#[test]
+fn infer_function_parameter_type() {
+    // T extends (x: infer P) => any ? P : never
+    with_checker!(
+        r#"
+        type FirstParam<T> = T extends (x: infer P) => any ? P : never;
+        let x: FirstParam<(x: number) => string>;
+        "#,
+        |checker, program| {
+            let stmt = &program.body[1];
+            let Statement::VariableDeclaration(decl) = stmt else { panic!() };
+            let declarator = &decl.declarations[0];
+            let ann = declarator.type_annotation.as_ref().unwrap();
+            let t = checker.get_type_from_type_node(&ann.type_annotation);
+            assert_eq!(checker.type_to_string(t), "number");
+        }
+    );
+}
+
+#[test]
+fn infer_from_object_property() {
+    // T extends { value: infer U } ? U : never
+    with_checker!(
+        r#"
+        type ValueOf<T> = T extends { value: infer U } ? U : never;
+        let x: ValueOf<{ value: string; extra: number }>;
+        "#,
+        |checker, program| {
+            let stmt = &program.body[1];
+            let Statement::VariableDeclaration(decl) = stmt else { panic!() };
+            let declarator = &decl.declarations[0];
+            let ann = declarator.type_annotation.as_ref().unwrap();
+            let t = checker.get_type_from_type_node(&ann.type_annotation);
+            assert_eq!(checker.type_to_string(t), "string");
+        }
+    );
+}
+
+#[test]
+fn infer_from_tuple_elements() {
+    // T extends [infer A, infer B] ? A : never
+    with_checker!(
+        r#"
+        type First<T> = T extends [infer A, infer B] ? A : never;
+        let x: First<[string, number]>;
+        "#,
+        |checker, program| {
+            let stmt = &program.body[1];
+            let Statement::VariableDeclaration(decl) = stmt else { panic!() };
+            let declarator = &decl.declarations[0];
+            let ann = declarator.type_annotation.as_ref().unwrap();
+            let t = checker.get_type_from_type_node(&ann.type_annotation);
+            assert_eq!(checker.type_to_string(t), "string");
+        }
+    );
+}
+
+#[test]
+fn infer_from_tuple_second_element() {
+    // T extends [infer A, infer B] ? B : never
+    with_checker!(
+        r#"
+        type Second<T> = T extends [infer A, infer B] ? B : never;
+        let x: Second<[string, number]>;
+        "#,
+        |checker, program| {
+            let stmt = &program.body[1];
+            let Statement::VariableDeclaration(decl) = stmt else { panic!() };
+            let declarator = &decl.declarations[0];
+            let ann = declarator.type_annotation.as_ref().unwrap();
+            let t = checker.get_type_from_type_node(&ann.type_annotation);
+            assert_eq!(checker.type_to_string(t), "number");
+        }
+    );
+}
+
+#[test]
+fn infer_constructor_return_type() {
+    // T extends new (x: any) => infer R ? R : never
+    with_checker!(
+        r#"
+        type InstanceType2<T> = T extends new (x: any) => infer R ? R : never;
+        let x: InstanceType2<new (x: number) => string>;
+        "#,
+        |checker, program| {
+            let stmt = &program.body[1];
+            let Statement::VariableDeclaration(decl) = stmt else { panic!() };
+            let declarator = &decl.declarations[0];
+            let ann = declarator.type_annotation.as_ref().unwrap();
+            let t = checker.get_type_from_type_node(&ann.type_annotation);
+            assert_eq!(checker.type_to_string(t), "string");
+        }
+    );
+}
+
+// -------------------------------------------------------
+// Constrained infer: infer T extends U
+// -------------------------------------------------------
+
+#[test]
+fn infer_constrained_satisfies() {
+    // infer U extends string — when inferred type satisfies constraint, keep it
+    with_checker!(
+        r#"
+        interface Box<T> { value: T }
+        type UnboxString<T> = T extends Box<infer U extends string> ? U : never;
+        let x: UnboxString<Box<"hello">>;
+        "#,
+        |checker, program| {
+            let stmt = &program.body[2];
+            let Statement::VariableDeclaration(decl) = stmt else { panic!() };
+            let declarator = &decl.declarations[0];
+            let ann = declarator.type_annotation.as_ref().unwrap();
+            let t = checker.get_type_from_type_node(&ann.type_annotation);
+            assert_eq!(checker.type_to_string(t), "\"hello\"");
+        }
+    );
+}
+
+#[test]
+fn infer_constrained_violates() {
+    // infer U extends string — when inferred type violates constraint,
+    // falls back to constraint itself
+    with_checker!(
+        r#"
+        interface Box<T> { value: T }
+        type UnboxString<T> = T extends Box<infer U extends string> ? U : never;
+        let x: UnboxString<Box<number>>;
+        "#,
+        |checker, program| {
+            let stmt = &program.body[2];
+            let Statement::VariableDeclaration(decl) = stmt else { panic!() };
+            let declarator = &decl.declarations[0];
+            let ann = declarator.type_annotation.as_ref().unwrap();
+            let t = checker.get_type_from_type_node(&ann.type_annotation);
+            // number doesn't extend string, so U falls back to constraint "string".
+            // The extends check uses the resolved extends Box<string>, and
+            // Box<number> extends Box<string> depends on assignability.
+            // In our test env Box is invariant, so this goes to false branch.
+            assert_eq!(checker.type_to_string(t), "never");
+        }
+    );
+}
+
+#[test]
+fn infer_constrained_bare_satisfies() {
+    // T extends infer U extends string ? U : never — with T = "hello"
+    with_checker!(
+        r#"
+        type StringOnly<T> = T extends infer U extends string ? U : never;
+        let x: StringOnly<"hello">;
+        "#,
+        |checker, program| {
+            let stmt = &program.body[1];
+            let Statement::VariableDeclaration(decl) = stmt else { panic!() };
+            let declarator = &decl.declarations[0];
+            let ann = declarator.type_annotation.as_ref().unwrap();
+            let t = checker.get_type_from_type_node(&ann.type_annotation);
+            assert_eq!(checker.type_to_string(t), "\"hello\"");
+        }
+    );
+}
+
+#[test]
+fn infer_constrained_bare_violates() {
+    // T extends infer U extends string ? U : never — with T = number
+    with_checker!(
+        r#"
+        type StringOnly<T> = T extends infer U extends string ? U : never;
+        let x: StringOnly<number>;
+        "#,
+        |checker, program| {
+            let stmt = &program.body[1];
+            let Statement::VariableDeclaration(decl) = stmt else { panic!() };
+            let declarator = &decl.declarations[0];
+            let ann = declarator.type_annotation.as_ref().unwrap();
+            let t = checker.get_type_from_type_node(&ann.type_annotation);
+            // number doesn't satisfy "extends string", U falls back to string.
+            // Then check: number extends string? No → false branch → never.
+            assert_eq!(checker.type_to_string(t), "never");
+        }
+    );
+}
+

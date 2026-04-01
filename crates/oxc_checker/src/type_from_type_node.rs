@@ -140,18 +140,36 @@ impl Checker<'_> {
             // Conditional type: `T extends U ? X : Y`
             TSType::TSConditionalType(cond) => {
                 let check = self.get_type_from_type_node(&cond.check_type);
+
+                // Swap infer buffer so nested conditionals don't interfere.
+                // TSInferType nodes in the extends clause push to this buffer.
+                let prev_infer = std::mem::take(&mut self.current_infer_type_params);
                 let extends = self.get_type_from_type_node(&cond.extends_type);
+                let infer_params: SmallVec<[TypeId; 2]> =
+                    self.current_infer_type_params.drain(..).collect();
+                self.current_infer_type_params = prev_infer;
+
                 let true_type = self.get_type_from_type_node(&cond.true_type);
                 let false_type = self.get_type_from_type_node(&cond.false_type);
+
                 // Distributive if the check type is a bare type parameter
                 let is_distributive = self.type_arena.get_flags(check)
                     .intersects(TypeFlags::TypeParameter);
-                self.get_conditional_type(check, extends, true_type, false_type, is_distributive)
+
+                let root_id = self.create_conditional_root(
+                    check, extends, true_type, false_type,
+                    is_distributive, infer_params,
+                );
+                self.get_conditional_type(root_id, check, extends, true_type, false_type)
+            }
+
+            // Infer type: `infer U` in extends clause of conditional type
+            TSType::TSInferType(infer) => {
+                self.get_type_from_infer_type_node(infer)
             }
 
             // Not yet implemented — return `any` as a placeholder
             TSType::TSImportType(_)
-            | TSType::TSInferType(_)
             | TSType::TSTemplateLiteralType(_)
             | TSType::TSTypePredicate(_)
             | TSType::JSDocNullableType(_)
@@ -487,9 +505,13 @@ impl Checker<'_> {
             .iter()
             .fold(ElementFlags::empty(), |acc, info| acc | info.flags);
 
+        let mut obj_flags = ObjectFlags::Tuple;
+        if type_arguments.iter().any(|&t| self.type_could_contain_type_variables(t)) {
+            obj_flags |= ObjectFlags::CouldContainTypeVariables;
+        }
         self.type_arena.new_type(
             TypeFlags::Object,
-            ObjectFlags::Tuple,
+            obj_flags,
             TypeData::Tuple(TupleType {
                 target: None,
                 resolved_type_arguments: type_arguments,
@@ -675,5 +697,52 @@ impl Checker<'_> {
             }),
             None,
         )
+    }
+
+    /// Handle `infer U` in the extends clause of a conditional type.
+    ///
+    /// Creates a fresh TypeParameter for the infer declaration, caches it
+    /// in `declared_type_cache` (so references in the true branch resolve
+    /// to the same TypeId), and pushes it to `current_infer_type_params`
+    /// for collection by the enclosing `TSConditionalType` handler.
+    fn get_type_from_infer_type_node(
+        &mut self,
+        infer: &oxc_ast::ast::TSInferType<'_>,
+    ) -> TypeId {
+        let tp = &infer.type_parameter;
+        let symbol_id = tp.name.symbol_id.get();
+
+        // Reuse cached TypeParameter if already created (e.g., multiple
+        // references to the same infer param within the extends clause).
+        if let Some(sid) = symbol_id {
+            if let Some(cached) = self.declared_type_cache[sid] {
+                if self.type_arena.get_flags(cached).intersects(TypeFlags::TypeParameter) {
+                    self.current_infer_type_params.push(cached);
+                    return cached;
+                }
+            }
+        }
+
+        let param_name = CompactStr::new(tp.name.name.as_str());
+        let type_id = self.type_arena.new_type(
+            TypeFlags::TypeParameter,
+            ObjectFlags::None,
+            TypeData::TypeParameter(TypeParameterType {
+                name: Some(param_name),
+                constraint: None, // resolved lazily via get_constraint_of_type_parameter
+                target: None,
+                is_this_type: false,
+                resolved_default_type: None,
+            }),
+            symbol_id.map(|s| (self.file_idx, s)),
+        );
+
+        // Cache so that references in the true branch resolve to this TypeId.
+        if let Some(symbol_id) = symbol_id {
+            self.declared_type_cache[symbol_id] = Some(type_id);
+        }
+
+        self.current_infer_type_params.push(type_id);
+        type_id
     }
 }

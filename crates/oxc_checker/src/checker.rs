@@ -8,7 +8,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::Semantic;
 use oxc_span::{CompactStr, GetSpan};
 use oxc_syntax::symbol::SymbolId;
-use oxc_types::{FunctionType, ObjectFlags, ParameterInfo, Signature, SignatureFlags, StructuredType, StructuredTypeKind, TypeArena, TypeData, TypeFlags, TypeId, TypeParameterType, UnionType};
+use oxc_types::{ConditionalRoot, FunctionType, ObjectFlags, ParameterInfo, Signature, SignatureFlags, StructuredType, StructuredTypeKind, TypeArena, TypeData, TypeFlags, TypeId, TypeParameterType, UnionType};
 use smallvec::SmallVec;
 
 use oxc_checker_host::CheckerHost;
@@ -133,6 +133,18 @@ pub struct Checker<'a> {
     /// `TypeParameter.constraint` field (nil until first access).
     pub(crate) type_param_constraints: FxHashMap<TypeId, TypeId>,
 
+    /// Conditional type roots. Each `TSConditionalType` AST node creates
+    /// exactly one root storing the original types, distributivity flag,
+    /// and `infer` type parameters. Multiple `ConditionalType` instances
+    /// (from instantiation) share the same root via `ConditionalRootId`.
+    pub(crate) conditional_roots: Vec<ConditionalRoot>,
+
+    /// Buffer for collecting `infer` type parameters during extends clause
+    /// processing. Swapped to an empty vec before processing each conditional
+    /// type's extends clause, then drained into the `ConditionalRoot`.
+    /// Supports nesting (nested conditionals swap/restore the buffer).
+    pub(crate) current_infer_type_params: Vec<TypeId>,
+
     /// Stack of return types for enclosing functions.
     /// `Some(type_id)` = function has a declared return type annotation.
     /// `None` = function has no return type annotation (returns are unchecked).
@@ -238,6 +250,8 @@ impl<'a> Checker<'a> {
             instantiation_cache: FxHashMap::default(),
             mapped_type_cache: FxHashMap::default(),
             type_param_constraints: FxHashMap::default(),
+            conditional_roots: Vec::new(),
+            current_infer_type_params: Vec::new(),
             return_type_stack: Vec::new(),
             current_flow_graph: crate::flow::FlowGraph::empty(),
             flow_type_cache: FxHashMap::default(),
@@ -1188,11 +1202,35 @@ impl<'a> Checker<'a> {
         }
     }
 
+    /// Check if a type could contain type variables (type parameters or
+    /// composite types that transitively contain them).
+    ///
+    /// This is the single-level check used at type creation time to propagate
+    /// `CouldContainTypeVariables`. It works because the flag is set
+    /// transitively: if a child has it, the parent gets it too.
+    pub(crate) fn type_could_contain_type_variables(&self, type_id: TypeId) -> bool {
+        let flags = self.type_arena.get_flags(type_id);
+        flags.intersects(TypeFlags::Instantiable)
+            || self.type_arena.get_object_flags(type_id)
+                .intersects(ObjectFlags::CouldContainTypeVariables)
+    }
+
+    /// Check if a signature could contain type variables in its parameter
+    /// types or return type.
+    pub(crate) fn signature_could_contain_type_variables(&self, sig: &Signature) -> bool {
+        sig.parameters.iter().any(|p| self.type_could_contain_type_variables(p.type_id))
+            || self.type_could_contain_type_variables(sig.return_type)
+    }
+
     /// Create a function type from a single signature.
     pub fn create_function_type(&mut self, signature: Signature) -> TypeId {
+        let mut obj_flags = ObjectFlags::Anonymous;
+        if self.signature_could_contain_type_variables(&signature) {
+            obj_flags |= ObjectFlags::CouldContainTypeVariables;
+        }
         self.type_arena.new_type(
             TypeFlags::Object,
-            ObjectFlags::Anonymous,
+            obj_flags,
             TypeData::Function(FunctionType {
                 signatures: smallvec::smallvec![signature],
             }),
@@ -1202,9 +1240,13 @@ impl<'a> Checker<'a> {
 
     /// Create a constructor type from a single construct signature.
     pub fn create_constructor_type(&mut self, signature: Signature) -> TypeId {
+        let mut obj_flags = ObjectFlags::Anonymous;
+        if self.signature_could_contain_type_variables(&signature) {
+            obj_flags |= ObjectFlags::CouldContainTypeVariables;
+        }
         self.type_arena.new_type(
             TypeFlags::Object,
-            ObjectFlags::Anonymous,
+            obj_flags,
             TypeData::Structured(StructuredType {
                 properties: Vec::new(),
                 member_map: FxHashMap::default(),

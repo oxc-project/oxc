@@ -1,4 +1,4 @@
-use oxc_types::{ObjectFlags, PropertyInfo, StructuredType, StructuredTypeKind, TypeData, TypeFlags, TypeId, build_member_map};
+use oxc_types::{ObjectFlags, ParameterInfo, PropertyInfo, Signature, StructuredType, StructuredTypeKind, TypeData, TypeFlags, TypeId, build_member_map};
 use smallvec::SmallVec;
 
 use crate::Checker;
@@ -251,14 +251,19 @@ impl Checker<'_> {
             }
         }
 
-        // Conditional: T extends U ? X : Y — instantiate all parts, then resolve
+        // Conditional: T extends U ? X : Y — instantiate all parts, then resolve.
+        // The root_id is carried through so infer params and distributivity
+        // are preserved across instantiations.
         if flags.intersects(TypeFlags::Conditional) {
             if let TypeData::Conditional(cond) = self.type_arena.get_data(type_id) {
-                let is_distributive = cond.is_distributive;
+                let root_id = cond.root;
                 let orig_check = cond.check_type;
                 let orig_extends = cond.extends_type;
                 let orig_true = cond.true_type;
                 let orig_false = cond.false_type;
+
+                // Look up distributivity from the root
+                let is_distributive = self.conditional_roots[root_id.index()].is_distributive;
 
                 let new_check = self.instantiate_type(orig_check, mapper);
 
@@ -280,7 +285,7 @@ impl Checker<'_> {
                                     let ext = self.instantiate_type(orig_extends, &per_member);
                                     let tru = self.instantiate_type(orig_true, &per_member);
                                     let fal = self.instantiate_type(orig_false, &per_member);
-                                    self.get_conditional_type(member, ext, tru, fal, false)
+                                    self.get_conditional_type(root_id, member, ext, tru, fal)
                                 })
                                 .collect();
                             return self.get_or_create_union_type(results);
@@ -293,7 +298,7 @@ impl Checker<'_> {
                 let new_false = self.instantiate_type(orig_false, mapper);
 
                 return self.get_conditional_type(
-                    new_check, new_extends, new_true, new_false, is_distributive,
+                    root_id, new_check, new_extends, new_true, new_false,
                 );
             }
         }
@@ -332,8 +337,43 @@ impl Checker<'_> {
             }
 
             TypeData::Structured(s) => {
-                let properties = &s.properties;
-                self.instantiate_properties(type_id, properties, mapper)
+                let properties = s.properties.clone();
+                let call_sigs = s.call_signatures.clone();
+                let construct_sigs = s.construct_signatures.clone();
+                let kind = s.kind.clone();
+                let string_index_type = s.string_index_type;
+                let number_index_type = s.number_index_type;
+                self.instantiate_structured_type(
+                    type_id, &properties, &call_sigs, &construct_sigs,
+                    &kind, string_index_type, number_index_type, mapper,
+                )
+            }
+
+            TypeData::Function(func) => {
+                let sigs: SmallVec<[oxc_types::Signature; 1]> = func.signatures
+                    .iter()
+                    .map(|sig| self.instantiate_signature(sig, mapper))
+                    .collect();
+                // Check if anything actually changed
+                let changed = sigs.iter().zip(func.signatures.iter()).any(|(new, old)| {
+                    new.return_type != old.return_type
+                        || new.parameters.len() != old.parameters.len()
+                        || new.parameters.iter().zip(old.parameters.iter())
+                            .any(|(np, op)| np.type_id != op.type_id)
+                });
+                if !changed {
+                    return type_id;
+                }
+                let mut obj_flags = oxc_types::ObjectFlags::Anonymous;
+                if sigs.iter().any(|s| self.signature_could_contain_type_variables(s)) {
+                    obj_flags |= oxc_types::ObjectFlags::CouldContainTypeVariables;
+                }
+                self.type_arena.new_type(
+                    TypeFlags::Object,
+                    obj_flags,
+                    TypeData::Function(oxc_types::FunctionType { signatures: sigs }),
+                    None,
+                )
             }
 
             TypeData::Mapped(mapped) => {
@@ -373,32 +413,129 @@ impl Checker<'_> {
                 self.build_mapped_object_type(type_id, properties)
             }
 
+            TypeData::Tuple(tuple) => {
+                let new_elements: Vec<oxc_types::TupleElementInfo> = tuple
+                    .element_infos
+                    .iter()
+                    .map(|info| oxc_types::TupleElementInfo {
+                        element_type: self.instantiate_type(info.element_type, mapper),
+                        flags: info.flags,
+                        label_name: info.label_name.clone(),
+                    })
+                    .collect();
+                let changed = new_elements.iter().zip(tuple.element_infos.iter())
+                    .any(|(new, old)| new.element_type != old.element_type);
+                if !changed {
+                    return type_id;
+                }
+                let type_arguments: SmallVec<[TypeId; 4]> = new_elements
+                    .iter()
+                    .map(|e| e.element_type)
+                    .collect();
+                let mut obj_flags = oxc_types::ObjectFlags::Tuple;
+                if new_elements.iter().any(|e| self.type_could_contain_type_variables(e.element_type)) {
+                    obj_flags |= oxc_types::ObjectFlags::CouldContainTypeVariables;
+                }
+                self.type_arena.new_type(
+                    TypeFlags::Object,
+                    obj_flags,
+                    TypeData::Tuple(oxc_types::TupleType {
+                        target: tuple.target,
+                        resolved_type_arguments: type_arguments,
+                        min_length: tuple.min_length,
+                        fixed_length: tuple.fixed_length,
+                        combined_flags: tuple.combined_flags,
+                        readonly: tuple.readonly,
+                        element_infos: new_elements,
+                    }),
+                    None,
+                )
+            }
+
             _ => type_id,
         }
     }
 
-    /// Instantiate properties of an Object or Interface type with a mapper.
-    /// Returns the original type_id if no properties changed.
-    fn instantiate_properties(
+    /// Instantiate a signature with a type mapper.
+    fn instantiate_signature(&mut self, sig: &Signature, mapper: &TypeMapper) -> Signature {
+        let new_params: Vec<ParameterInfo> = sig.parameters
+            .iter()
+            .map(|p| ParameterInfo {
+                name: p.name.clone(),
+                type_id: self.instantiate_type(p.type_id, mapper),
+                is_optional: p.is_optional,
+                is_rest: p.is_rest,
+            })
+            .collect();
+        let new_return = self.instantiate_type(sig.return_type, mapper);
+        Signature {
+            flags: sig.flags,
+            min_argument_count: sig.min_argument_count,
+            parameters: new_params,
+            return_type: new_return,
+            type_parameters: sig.type_parameters.clone(),
+        }
+    }
+
+    /// Instantiate a structured type: properties, call/construct signatures,
+    /// and index types. Returns the original type_id if nothing changed.
+    #[allow(clippy::too_many_arguments)]
+    fn instantiate_structured_type(
         &mut self,
         type_id: TypeId,
         properties: &[PropertyInfo],
+        call_signatures: &[Signature],
+        construct_signatures: &[Signature],
+        kind: &StructuredTypeKind,
+        string_index_type: Option<TypeId>,
+        number_index_type: Option<TypeId>,
         mapper: &TypeMapper,
     ) -> TypeId {
-        let mut new_props = Vec::new();
         let mut changed = false;
-        for p in properties {
-            let new_type_id = self.instantiate_type(p.type_id, mapper);
-            if new_type_id != p.type_id {
-                changed = true;
-            }
-            new_props.push(PropertyInfo {
-                name: p.name.clone(),
-                type_id: new_type_id,
-                optional: p.optional,
-                readonly: p.readonly,
-            });
-        }
+
+        let new_props: Vec<PropertyInfo> = properties
+            .iter()
+            .map(|p| {
+                let new_type_id = self.instantiate_type(p.type_id, mapper);
+                if new_type_id != p.type_id {
+                    changed = true;
+                }
+                PropertyInfo {
+                    name: p.name.clone(),
+                    type_id: new_type_id,
+                    optional: p.optional,
+                    readonly: p.readonly,
+                }
+            })
+            .collect();
+
+        let new_call_sigs: Vec<Signature> = call_signatures
+            .iter()
+            .map(|sig| {
+                let new_sig = self.instantiate_signature(sig, mapper);
+                if new_sig.return_type != sig.return_type
+                    || new_sig.parameters.iter().zip(sig.parameters.iter())
+                        .any(|(n, o)| n.type_id != o.type_id)
+                {
+                    changed = true;
+                }
+                new_sig
+            })
+            .collect();
+
+        let new_construct_sigs: Vec<Signature> = construct_signatures
+            .iter()
+            .map(|sig| {
+                let new_sig = self.instantiate_signature(sig, mapper);
+                if new_sig.return_type != sig.return_type
+                    || new_sig.parameters.iter().zip(sig.parameters.iter())
+                        .any(|(n, o)| n.type_id != o.type_id)
+                {
+                    changed = true;
+                }
+                new_sig
+            })
+            .collect();
 
         if !changed {
             return type_id;
@@ -410,11 +547,11 @@ impl Checker<'_> {
             TypeData::Structured(StructuredType {
                 member_map: build_member_map(&new_props),
                 properties: new_props,
-                string_index_type: None,
-                number_index_type: None,
-                call_signatures: Vec::new(),
-                construct_signatures: Vec::new(),
-                kind: StructuredTypeKind::Anonymous { target: Some(type_id) },
+                string_index_type,
+                number_index_type,
+                call_signatures: new_call_sigs,
+                construct_signatures: new_construct_sigs,
+                kind: kind.clone(),
             }),
             None,
         )
