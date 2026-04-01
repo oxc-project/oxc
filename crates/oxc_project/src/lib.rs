@@ -106,7 +106,7 @@ pub struct Project {
     /// checkers. Ensures TypeId identity comparisons work across files.
     intrinsics: IntrinsicIds,
 
-    /// Module resolver (None for single-file mode).
+    /// Module resolver (None for single-file mode or virtual files).
     resolver: Option<Resolver>,
 
     /// Ordered file paths in the project.
@@ -122,6 +122,11 @@ pub struct Project {
     /// Uses RefCell so `ensure_file_checked` can take ownership of the
     /// source text without requiring `&mut self`.
     sources: RefCell<Vec<Option<String>>>,
+
+    /// Explicit per-file SourceType overrides (from `new_multi_from_sources`).
+    /// When `Some`, `ensure_file_checked` uses these instead of inferring
+    /// from file path extensions. Index 0 is lib.d.ts (always d.ts).
+    source_types: Option<Vec<SourceType>>,
 
     /// Parsed and bound files, kept alive for cross-file Semantic access.
     /// Indexed by file index. Populated lazily by `ensure_file_checked`.
@@ -152,6 +157,9 @@ pub struct Project {
     /// Shared type arena reference for on-demand checking.
     /// Set during check_all, None otherwise.
     arena: Option<*const TypeArena>,
+
+    /// Checker options passed to each per-file Checker.
+    checker_options: CheckerOptions,
 
     /// Accumulated timing.
     parse_ms: RefCell<f64>,
@@ -185,12 +193,14 @@ impl Project {
             file_paths: vec![PathBuf::from("<lib.es5.d.ts>")],
             file_index: FxHashMap::default(),
             sources: RefCell::new(vec![lib_source]),
+            source_types: None,
             file_cells: RefCell::new(vec![None]),
             exports: RefCell::new(FxHashMap::default()),
             type_param_constraints: RefCell::new(FxHashMap::default()),
             checking: RefCell::new(FxHashSet::default()),
             checked: RefCell::new(FxHashSet::default()),
             arena: Some(arena as *const TypeArena),
+            checker_options: CheckerOptions::default(),
             parse_ms: RefCell::new(0.0),
             bind_ms: RefCell::new(0.0),
             check_ms: RefCell::new(0.0),
@@ -247,12 +257,74 @@ impl Project {
             file_paths,
             file_index,
             sources: RefCell::new(sources),
+            source_types: None,
             file_cells: RefCell::new((0..file_count).map(|_| None).collect()),
             exports: RefCell::new(FxHashMap::default()),
             type_param_constraints: RefCell::new(FxHashMap::default()),
             checking: RefCell::new(FxHashSet::default()),
             checked: RefCell::new(FxHashSet::default()),
             arena: Some(arena as *const TypeArena),
+            checker_options: CheckerOptions::default(),
+            parse_ms: RefCell::new(0.0),
+            bind_ms: RefCell::new(0.0),
+            check_ms: RefCell::new(0.0),
+            all_diagnostics: RefCell::new(Vec::new()),
+        };
+        project.ensure_file_checked(LIB_FILE_INDEX);
+        project
+    }
+
+    /// Create a project from in-memory sources (virtual files).
+    ///
+    /// Like `new_multi`, but accepts source text directly instead of reading
+    /// from disk. Module resolution uses simple path + extension matching
+    /// against the provided file paths (no disk-based resolver).
+    pub fn new_multi_from_sources(
+        arena: &TypeArena,
+        files: Vec<(PathBuf, String, SourceType)>,
+        checker_options: CheckerOptions,
+    ) -> Self {
+        let intrinsics = allocate_intrinsics(arena);
+        let lib_source = find_lib_source();
+
+        let mut file_paths = Vec::with_capacity(1 + files.len());
+        file_paths.push(PathBuf::from("<lib.es5.d.ts>"));
+
+        let mut sources = Vec::with_capacity(1 + files.len());
+        sources.push(lib_source);
+
+        let mut source_type_vec = Vec::with_capacity(1 + files.len());
+        source_type_vec.push(SourceType::d_ts()); // lib.d.ts
+
+        for (path, source, source_type) in files {
+            file_paths.push(path);
+            sources.push(Some(source));
+            source_type_vec.push(source_type);
+        }
+
+        let file_index: FxHashMap<PathBuf, usize> = file_paths
+            .iter()
+            .enumerate()
+            .skip(1)
+            .map(|(i, p)| (p.clone(), i))
+            .collect();
+
+        let file_count = file_paths.len();
+
+        let project = Self {
+            intrinsics,
+            resolver: None,
+            file_paths,
+            file_index,
+            sources: RefCell::new(sources),
+            source_types: Some(source_type_vec),
+            file_cells: RefCell::new((0..file_count).map(|_| None).collect()),
+            exports: RefCell::new(FxHashMap::default()),
+            type_param_constraints: RefCell::new(FxHashMap::default()),
+            checking: RefCell::new(FxHashSet::default()),
+            checked: RefCell::new(FxHashSet::default()),
+            arena: Some(arena as *const TypeArena),
+            checker_options,
             parse_ms: RefCell::new(0.0),
             bind_ms: RefCell::new(0.0),
             check_ms: RefCell::new(0.0),
@@ -318,7 +390,9 @@ impl Project {
         let arena = unsafe { &*self.arena.unwrap() };
 
         let is_lib = file_idx == LIB_FILE_INDEX;
-        let source_type = if is_lib {
+        let source_type = if let Some(ref types) = self.source_types {
+            types[file_idx]
+        } else if is_lib {
             SourceType::d_ts()
         } else {
             SourceType::from_path(&self.file_paths[file_idx]).unwrap_or_default()
@@ -330,6 +404,8 @@ impl Project {
         // Timing is recorded via Cell so the builder closure can write to it.
         let parse_elapsed = std::cell::Cell::new(0.0f64);
         let bind_elapsed = std::cell::Cell::new(0.0f64);
+        let parser_errors: RefCell<Vec<OxcDiagnostic>> = RefCell::new(Vec::new());
+        let semantic_errors: RefCell<Vec<OxcDiagnostic>> = RefCell::new(Vec::new());
         let file_cell = FileCell::new(
             FileOwned {
                 allocator: oxc_allocator::Allocator::default(),
@@ -344,19 +420,20 @@ impl Project {
                 ).parse();
                 parse_elapsed.set(parse_start.elapsed().as_secs_f64() * 1000.0);
 
-                // Destructure to move program and module_record out
-                let oxc_parser::ParserReturn { program, module_record, .. } = parsed;
+                let oxc_parser::ParserReturn { program, module_record, errors, .. } = parsed;
+                *parser_errors.borrow_mut() = errors;
+
                 // Park program in the bump allocator so Semantic can
                 // reference it with the allocator's lifetime.
                 let program = owned.allocator.alloc(program);
 
                 let bind_start = Instant::now();
-                let semantic = oxc_semantic::SemanticBuilder::new()
-                    .build(program)
-                    .semantic;
+                let semantic_ret = oxc_semantic::SemanticBuilder::new()
+                    .build(program);
                 bind_elapsed.set(bind_start.elapsed().as_secs_f64() * 1000.0);
 
-                FileBorrowed { semantic, program, module_record }
+                *semantic_errors.borrow_mut() = semantic_ret.errors;
+                FileBorrowed { semantic: semantic_ret.semantic, program, module_record }
             },
         );
         *self.parse_ms.borrow_mut() += parse_elapsed.get();
@@ -376,7 +453,7 @@ impl Project {
                 self,
                 path_str,
                 file_idx as u16,
-                CheckerOptions::default(),
+                self.checker_options,
             );
             checker.check_program(&borrowed.program);
 
@@ -419,9 +496,13 @@ impl Project {
             self.type_param_constraints.borrow_mut().extend(file_constraints);
         }
 
-        if !diagnostics.is_empty() {
+        // Combine all diagnostics: parser → semantic → checker
+        let mut all_file_diags = parser_errors.into_inner();
+        all_file_diags.extend(semantic_errors.into_inner());
+        all_file_diags.extend(diagnostics);
+        if !all_file_diags.is_empty() {
             self.all_diagnostics.borrow_mut().push(
-                (self.file_paths[file_idx].clone(), diagnostics)
+                (self.file_paths[file_idx].clone(), all_file_diags)
             );
         }
 
@@ -546,12 +627,38 @@ impl Project {
 
     /// Resolve a module specifier from a given file to a file index.
     #[allow(dead_code)]
-    fn resolve_module_to_index(&self, _from_idx: usize, specifier: &str) -> Option<usize> {
-        let resolver = self.resolver.as_ref()?;
-        let from_dir = self.file_paths[_from_idx].parent()?;
-        let resolution = resolver.resolve(from_dir, specifier).ok()?;
-        let resolved_path = resolution.path().canonicalize().ok()?;
-        self.file_index.get(&resolved_path).copied()
+    fn resolve_module_to_index(&self, from_idx: usize, specifier: &str) -> Option<usize> {
+        let from_dir = self.file_paths[from_idx].parent()?;
+        if let Some(resolver) = self.resolver.as_ref() {
+            let resolution = resolver.resolve(from_dir, specifier).ok()?;
+            let resolved_path = resolution.path().canonicalize().ok()?;
+            self.file_index.get(&resolved_path).copied()
+        } else {
+            self.resolve_virtual(from_dir, specifier)
+        }
+    }
+
+    /// Simple path-based module resolution for virtual files.
+    ///
+    /// Tries the specifier with standard TypeScript extensions against
+    /// `file_index`. Used when no disk-based resolver is available.
+    fn resolve_virtual(&self, from_dir: &Path, specifier: &str) -> Option<usize> {
+        let base = from_dir.join(specifier);
+
+        // Exact match (specifier already has extension, e.g. "./a.ts")
+        if let Some(&idx) = self.file_index.get(&base) {
+            return Some(idx);
+        }
+
+        // Try appending TypeScript extensions (mirrors tsc resolution order)
+        let base_str = base.to_string_lossy();
+        for ext in &[".ts", ".tsx", ".d.ts", ".js", ".jsx"] {
+            let candidate = PathBuf::from(format!("{base_str}{ext}"));
+            if let Some(&idx) = self.file_index.get(&candidate) {
+                return Some(idx);
+            }
+        }
+        None
     }
 }
 
@@ -584,10 +691,14 @@ impl CheckerHost for Project {
     ) -> Option<ExportedBinding> {
         let from_path = Path::new(from_file);
         let from_dir = from_path.parent()?;
-        let resolver = self.resolver.as_ref()?;
-        let resolution = resolver.resolve(from_dir, module_specifier).ok()?;
-        let resolved_path = resolution.path().canonicalize().ok()?;
-        let &file_idx = self.file_index.get(&resolved_path)?;
+
+        let file_idx = if let Some(resolver) = self.resolver.as_ref() {
+            let resolution = resolver.resolve(from_dir, module_specifier).ok()?;
+            let resolved_path = resolution.path().canonicalize().ok()?;
+            *self.file_index.get(&resolved_path)?
+        } else {
+            self.resolve_virtual(from_dir, module_specifier)?
+        };
 
         // Lazy: ensure the dependency file is checked before looking up its exports
         self.ensure_file_checked(file_idx);

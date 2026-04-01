@@ -1,6 +1,6 @@
 //! Tool runner functions for coverage testing
 
-use std::{borrow::Cow, fs, path::Path, sync::Arc};
+use std::{borrow::Cow, fs, path::{Path, PathBuf}, sync::Arc};
 
 use oxc::{
     allocator::Allocator,
@@ -1160,20 +1160,29 @@ pub fn run_checker_typescript(files: &[TypeScriptFile]) -> Vec<CoverageResult> {
             if !f.error_codes.is_empty() {
                 return None;
             }
-            // Only handle single-unit files for now
-            if f.units.len() != 1 {
-                return None;
-            }
 
             // Derive .types baseline path from source path
             let stem = f.path.file_stem()?.to_str()?;
             let baseline_path = baselines_dir.join(format!("{stem}.types"));
             let baseline_content = fs::read_to_string(&baseline_path).ok()?;
 
-            let source = &f.units[0].content;
-            let source_type = f.units[0].source_type;
             let options = checker_options_from_settings(&f.settings);
-            let result = run_checker_single(source, source_type, &baseline_content, options);
+
+            let result = if f.units.len() == 1 {
+                run_checker_single(
+                    &f.units[0].content,
+                    f.units[0].source_type,
+                    &baseline_content,
+                    options,
+                )
+            } else {
+                run_checker_multi(
+                    &f.units,
+                    &baseline_content,
+                    options,
+                )
+            };
+
             Some(CoverageResult { path: f.path.clone(), should_fail: false, result })
         })
         .collect()
@@ -1216,6 +1225,96 @@ fn run_checker_single(
 
     // Match assertions against actual
     let mut actual_iter = actual.iter();
+    for (expr_text, expected_type) in &assertions {
+        let mut found = false;
+        for (act_text, act_type) in actual_iter.by_ref() {
+            if act_text == expr_text {
+                if act_type != expected_type {
+                    return TestResult::Mismatch(
+                        "checker",
+                        format!(">{expr_text} : {act_type}"),
+                        format!(">{expr_text} : {expected_type}"),
+                    );
+                }
+                found = true;
+                break;
+            }
+        }
+        if !found {
+            return TestResult::Mismatch(
+                "checker",
+                String::new(),
+                format!(">{expr_text} : {expected_type}"),
+            );
+        }
+    }
+
+    TestResult::Passed
+}
+
+/// Multi-unit types baseline test.
+///
+/// Creates a `Project` from virtual files for cross-file resolution, then
+/// checks each unit with a standalone `Checker` to collect type information.
+fn run_checker_multi(
+    units: &[crate::typescript::meta::TestUnitData],
+    baseline_content: &str,
+    options: oxc_checker::CheckerOptions,
+) -> TestResult {
+    use oxc::semantic::SemanticBuilder;
+    use oxc_checker::Checker;
+
+    let assertions = parse_types_baseline(baseline_content);
+    if assertions.is_empty() {
+        return TestResult::Passed;
+    }
+
+    // Build virtual file list (filter non-TS/JS units)
+    let ts_units: Vec<_> = units
+        .iter()
+        .filter(|u| SourceType::from_path(Path::new(&u.name)).is_ok())
+        .collect();
+
+    if ts_units.is_empty() {
+        return TestResult::Passed;
+    }
+
+    let files: Vec<(PathBuf, String, SourceType)> = ts_units
+        .iter()
+        .map(|u| (virtual_path_from_unit_name(&u.name), u.content.clone(), u.source_type))
+        .collect();
+
+    // Create Project for cross-file resolution (global types + imports)
+    let type_arena = oxc_types::TypeArena::with_capacity(64);
+    let project = oxc_project::Project::new_multi_from_sources(&type_arena, files, options);
+
+    // Check each unit with a standalone Checker, collecting types
+    let mut all_types: Vec<(String, String)> = Vec::new();
+    for unit in &ts_units {
+        let allocator = Allocator::default();
+        let parsed = Parser::new(&allocator, &unit.content, unit.source_type).parse();
+        if !parsed.errors.is_empty() {
+            return TestResult::ParseError(
+                parsed.errors.iter().map(|e| e.message.to_string()).collect::<Vec<_>>().join("\n"),
+                false,
+            );
+        }
+        let program = &parsed.program;
+        let semantic = SemanticBuilder::new().build(program).semantic;
+        let mut checker = Checker::new_with_host(
+            &semantic,
+            &type_arena,
+            &project,
+            String::new(),
+            1,
+            options,
+        );
+        checker.check_program(program);
+        all_types.extend(collect_checker_types(&mut checker, program, &unit.content));
+    }
+
+    // Match assertions against collected types
+    let mut actual_iter = all_types.iter();
     for (expr_text, expected_type) in &assertions {
         let mut found = false;
         for (act_text, act_type) in actual_iter.by_ref() {
@@ -1505,22 +1604,29 @@ pub fn run_checker_errors_typescript(files: &[TypeScriptFile]) -> Vec<CoverageRe
             if f.error_codes.is_empty() {
                 return None;
             }
-            // Only handle single-unit files for now
-            if f.units.len() != 1 {
-                return None;
-            }
 
-            let source = &f.units[0].content;
-            let source_type = f.units[0].source_type;
             let options = checker_options_from_settings(&f.settings);
             let compiler_options_list = compiler_options_from_settings(&f.settings);
-            let result = run_checker_errors_single(
-                source,
-                source_type,
-                &f.error_codes,
-                options,
-                &compiler_options_list,
-            );
+
+            let result = if f.units.len() == 1 {
+                // Single-unit: fast path (standalone Checker, no Project overhead)
+                run_checker_errors_single(
+                    &f.units[0].content,
+                    f.units[0].source_type,
+                    &f.error_codes,
+                    options,
+                    &compiler_options_list,
+                )
+            } else {
+                // Multi-unit: use Project with virtual file paths
+                run_checker_errors_multi(
+                    &f.units,
+                    &f.error_codes,
+                    options,
+                    &compiler_options_list,
+                )
+            };
+
             Some(CoverageResult { path: f.path.clone(), should_fail: false, result })
         })
         .collect()
@@ -1604,6 +1710,83 @@ fn run_checker_errors_single(
     actual_codes.dedup();
 
     // Check if our actual codes match expected codes
+    let mut expected_sorted: Vec<&str> = expected_codes.iter().map(|s| s.as_str()).collect();
+    expected_sorted.sort();
+
+    if actual_codes.iter().map(|s| s.as_str()).collect::<Vec<_>>() == expected_sorted {
+        TestResult::Passed
+    } else {
+        TestResult::Mismatch(
+            "checker_errors",
+            format!("actual: [{}]", actual_codes.join(", ")),
+            format!("expected: [{}]", expected_sorted.join(", ")),
+        )
+    }
+}
+
+/// Convert a test unit filename to a virtual path under /virtual/.
+///
+/// Normalizes leading `./` or `/` so all units share a common parent
+/// directory, enabling relative imports to resolve correctly.
+fn virtual_path_from_unit_name(name: &str) -> PathBuf {
+    let normalized = name
+        .strip_prefix("./")
+        .or_else(|| name.strip_prefix('/'))
+        .unwrap_or(name);
+    PathBuf::from(format!("/virtual/{normalized}"))
+}
+
+fn run_checker_errors_multi(
+    units: &[crate::typescript::meta::TestUnitData],
+    expected_codes: &[String],
+    options: oxc_checker::CheckerOptions,
+    compiler_options_list: &[oxc_project::CompilerOptions],
+) -> TestResult {
+    let mut actual_codes: Vec<String> = Vec::new();
+
+    // Validate compiler options (same as single-unit path)
+    for compiler_options in compiler_options_list {
+        for d in &oxc_project::validate_compiler_options(compiler_options) {
+            if let Some(code) = d.code.number.as_ref() {
+                actual_codes.push(code.to_string());
+            }
+        }
+    }
+
+    // Build virtual file list, filtering out non-TS/JS files (package.json, etc.)
+    let files: Vec<(PathBuf, String, SourceType)> = units
+        .iter()
+        .filter(|unit| SourceType::from_path(Path::new(&unit.name)).is_ok())
+        .map(|unit| {
+            let path = virtual_path_from_unit_name(&unit.name);
+            (path, unit.content.clone(), unit.source_type)
+        })
+        .collect();
+
+    if files.is_empty() {
+        return TestResult::Passed;
+    }
+
+    let type_arena = oxc_types::TypeArena::with_capacity(64);
+    let mut project = oxc_project::Project::new_multi_from_sources(
+        &type_arena,
+        files,
+        options,
+    );
+    let result = project.check_all();
+
+    // Collect error codes from all files' diagnostics
+    for (_path, diagnostics) in &result.diagnostics {
+        for d in diagnostics {
+            if let Some(code) = d.code.number.as_ref() {
+                actual_codes.push(code.to_string());
+            }
+        }
+    }
+
+    actual_codes.sort();
+    actual_codes.dedup();
+
     let mut expected_sorted: Vec<&str> = expected_codes.iter().map(|s| s.as_str()).collect();
     expected_sorted.sort();
 

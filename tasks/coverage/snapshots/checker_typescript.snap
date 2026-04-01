@@ -1,8 +1,8 @@
 commit: 34725489
 
 checker_typescript Summary:
-AST Parsed     : 3811/3811 (100.00%)
-Positive Passed: 496/3811 (13.01%)
+AST Parsed     : 4439/4439 (100.00%)
+Positive Passed: 511/4439 (11.51%)
 checker: tasks/coverage/typescript/tests/cases/compiler/2dArrays.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/ClassDeclarationWithInvalidConstOnPropertyDeclaration2.ts
@@ -33,9 +33,23 @@ checker: tasks/coverage/typescript/tests/cases/compiler/aliasInaccessibleModule2
 
 checker: tasks/coverage/typescript/tests/cases/compiler/aliasOfGenericFunctionWithRestBehavedSameAsUnaliased.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/aliasUsedAsNameValue.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/allowJsClassThisTypeCrash.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/allowJsCrossMonorepoPackage.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/allowSyntheticDefaultImports1.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/allowSyntheticDefaultImports4.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/allowSyntheticDefaultImports9.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/allowSyntheticDefaultImportsCanPaintCrossModuleDeclaration.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/alwaysStrictAlreadyUseStrict.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/ambientClassDeclarationWithExtends.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/ambientClassDeclaredBeforeBase.ts
 
@@ -69,11 +83,13 @@ checker: tasks/coverage/typescript/tests/cases/compiler/ambientModuleWithTemplat
 
 checker: tasks/coverage/typescript/tests/cases/compiler/ambientModules.ts
 
-checker: tasks/coverage/typescript/tests/cases/compiler/ambientNameRestrictions.ts
-
 checker: tasks/coverage/typescript/tests/cases/compiler/ambiguousCallsWhereReturnTypesAgree.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/ambiguousOverloadResolution.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/amdLikeInputDeclarationEmit.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/anonClassDeclarationEmitIsAnon.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/anonterface.ts
 
@@ -153,6 +169,10 @@ checker: tasks/coverage/typescript/tests/cases/compiler/arrayFlatNoCrashInferenc
 
 checker: tasks/coverage/typescript/tests/cases/compiler/arrayFromAsync.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/arrayLiteral1.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/arrayLiteral2.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/arrayLiteralComments.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/arrayLiteralContextualType.ts
@@ -177,13 +197,19 @@ checker: tasks/coverage/typescript/tests/cases/compiler/arrowFunctionParsingDoes
 
 checker: tasks/coverage/typescript/tests/cases/compiler/arrowFunctionParsingGenericInObject.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/arrowFunctionWithObjectLiteralBody5.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/arrowFunctionWithObjectLiteralBody6.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/asiArith.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/asiInES6Classes.ts
 
-checker: tasks/coverage/typescript/tests/cases/compiler/assertionFunctionsCanNarrowByDiscriminant.ts
+checker: tasks/coverage/typescript/tests/cases/compiler/assertionFunctionWildcardImport1.ts
 
-checker: tasks/coverage/typescript/tests/cases/compiler/assign1.ts
+checker: tasks/coverage/typescript/tests/cases/compiler/assertionFunctionWildcardImport2.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/assertionFunctionsCanNarrowByDiscriminant.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/assignToObjectTypeWithPrototypeProperty.ts
 
@@ -229,6 +255,8 @@ checker: tasks/coverage/typescript/tests/cases/compiler/asyncFunctionReturnType.
 
 checker: tasks/coverage/typescript/tests/cases/compiler/asyncFunctionWithForStatementNoInitializer.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/asyncFunctionsAcrossFiles.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/asyncFunctionsAndStrictNullChecks.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/asyncIIFE.ts
@@ -236,6 +264,12 @@ checker: tasks/coverage/typescript/tests/cases/compiler/asyncIIFE.ts
 checker: tasks/coverage/typescript/tests/cases/compiler/asyncImportNestedYield.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/asyncYieldStarContextualType.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/augmentExportEquals3.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/augmentExportEquals4.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/augmentExportEquals6.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/augmentedTypeBracketNamedPropertyAccess.ts
 
@@ -309,6 +343,12 @@ checker: tasks/coverage/typescript/tests/cases/compiler/breakTarget4.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/cachedContextualTypes.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/cachedModuleResolution1.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/cachedModuleResolution2.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/cachedModuleResolution5.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/callOfConditionalTypeWithConcreteBranches.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/callSignatureFunctionOverload.ts
@@ -349,6 +389,8 @@ checker: tasks/coverage/typescript/tests/cases/compiler/capturedLetConstInLoop9.
 
 checker: tasks/coverage/typescript/tests/cases/compiler/capturedLetConstInLoop9_ES6.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/caseInsensitiveFileSystemWithCapsImportTypeDeclarations.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/castExpressionParentheses.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/castFunctionExpressionShouldBeParenthesized.ts
@@ -359,9 +401,13 @@ checker: tasks/coverage/typescript/tests/cases/compiler/castParentheses.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/catch.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/chainedImportAlias.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/checkInfiniteExpansionTermination.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/checkInfiniteExpansionTermination2.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/checkInterfaceBases.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/checkJsFiles5.ts
 
@@ -370,6 +416,12 @@ checker: tasks/coverage/typescript/tests/cases/compiler/checkJsFiles7.ts
 checker: tasks/coverage/typescript/tests/cases/compiler/checkJsFiles_noErrorLocation.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/checkJsObjectLiteralIndexSignatures.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/checkJsdocTypeTagOnExportAssignment5.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/checkJsdocTypeTagOnExportAssignment7.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/checkJsdocTypeTagOnExportAssignment8.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/checkSuperCallBeforeThisAccessing1.ts
 
@@ -396,6 +448,8 @@ checker: tasks/coverage/typescript/tests/cases/compiler/circularInferredTypeOfVa
 checker: tasks/coverage/typescript/tests/cases/compiler/circularInstantiationExpression.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/circularMappedTypeConstraint.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/circularReferenceInImport.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/circularTypeofWithFunctionModule.ts
 
@@ -519,6 +573,8 @@ checker: tasks/coverage/typescript/tests/cases/compiler/collisionCodeGenModuleWi
 
 checker: tasks/coverage/typescript/tests/cases/compiler/collisionCodeGenModuleWithUnicodeNames.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/collisionExportsRequireAndAmbientEnum.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/collisionExportsRequireAndAmbientFunction.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/collisionExportsRequireAndAmbientFunctionInGlobalFile.ts
@@ -597,23 +653,35 @@ checker: tasks/coverage/typescript/tests/cases/compiler/collisionThisExpressionA
 
 checker: tasks/coverage/typescript/tests/cases/compiler/commaOperatorInConditionalExpression.ts
 
-checker: tasks/coverage/typescript/tests/cases/compiler/commentEmitAtEndOfFile1.ts
-
 checker: tasks/coverage/typescript/tests/cases/compiler/commentEmitOnParenthesizedAssertionInReturnStatement.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/commentEmitOnParenthesizedAssertionInReturnStatement2.ts
 
-checker: tasks/coverage/typescript/tests/cases/compiler/commentInNamespaceDeclarationWithIdentifierPathName.ts
-
 checker: tasks/coverage/typescript/tests/cases/compiler/commentLeadingCloseBrace.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/commentOnAmbientClass1.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/commentOnAmbientEnum.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/commentOnAmbientModule.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/commentOnAmbientVariable2.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/commentOnAmbientfunction.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/commentOnArrayElement1.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/commentOnArrayElement10.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/commentOnArrayElement11.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/commentOnArrayElement12.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/commentOnArrayElement13.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/commentOnArrayElement14.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/commentOnArrayElement15.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/commentOnArrayElement16.ts
 
@@ -624,6 +692,10 @@ checker: tasks/coverage/typescript/tests/cases/compiler/commentOnArrayElement3.t
 checker: tasks/coverage/typescript/tests/cases/compiler/commentOnArrayElement4.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/commentOnArrayElement5.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/commentOnArrayElement6.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/commentOnArrayElement7.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/commentOnArrayElement8.ts
 
@@ -638,6 +710,8 @@ checker: tasks/coverage/typescript/tests/cases/compiler/commentOnClassAccessor1.
 checker: tasks/coverage/typescript/tests/cases/compiler/commentOnClassAccessor2.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/commentOnExportEnumDeclaration.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/commentOnSignature1.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/commentOnSimpleArrowFunctionBody1.ts
 
@@ -661,7 +735,11 @@ checker: tasks/coverage/typescript/tests/cases/compiler/commentsPropertySignatur
 
 checker: tasks/coverage/typescript/tests/cases/compiler/commentsTypeParameters.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/commonJsImportClassExpression.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/commonJsIsolatedModules.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/commonSourceDirectory.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/commonjsAccessExports.ts
 
@@ -677,6 +755,8 @@ checker: tasks/coverage/typescript/tests/cases/compiler/complicatedIndexesOfInte
 
 checker: tasks/coverage/typescript/tests/cases/compiler/compositeContextualSignature.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/compositeWithNodeModulesSourceFile.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/compoundVarDecl1.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/computedEnumTypeWidening.ts
@@ -684,6 +764,8 @@ checker: tasks/coverage/typescript/tests/cases/compiler/computedEnumTypeWidening
 checker: tasks/coverage/typescript/tests/cases/compiler/computedPropertiesWithSetterAssignment.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/computedPropertyNameAndTypeParameterConflict.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/computedPropertyNameWithImportedKey.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/computedTypesKeyofNoIndexSignatureType.ts
 
@@ -715,8 +797,6 @@ checker: tasks/coverage/typescript/tests/cases/compiler/conditionalTypesSimplify
 
 checker: tasks/coverage/typescript/tests/cases/compiler/constDeclarationShadowedByVarDeclaration3.ts
 
-checker: tasks/coverage/typescript/tests/cases/compiler/constDeclarations-ambient.ts
-
 checker: tasks/coverage/typescript/tests/cases/compiler/constDeclarations-scopes2.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/constDeclarations.ts
@@ -725,7 +805,17 @@ checker: tasks/coverage/typescript/tests/cases/compiler/constDeclarations2.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/constEnumDeclarations.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/constEnumNoEmitReexport.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/constEnumNoPreserveDeclarationReexport.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/constEnumOnlyModuleMerging.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/constEnumPreserveEmitNamedExport1.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/constEnumPreserveEmitNamedExport2.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/constEnumPreserveEmitReexport.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/constEnumSyntheticNodesComments.ts
 
@@ -764,6 +854,8 @@ checker: tasks/coverage/typescript/tests/cases/compiler/contextSensitiveReturnTy
 checker: tasks/coverage/typescript/tests/cases/compiler/contextualComputedNonBindablePropertyType.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/contextualOuterTypeParameters.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/contextualOverloadListFromArrayUnion.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/contextualParamTypeVsNestedReturnTypeInference1.ts
 
@@ -849,6 +941,12 @@ checker: tasks/coverage/typescript/tests/cases/compiler/contextualTyping22.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/contextualTyping23.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/contextualTyping28.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/contextualTyping29.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/contextualTyping31.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/contextualTyping32.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/contextualTyping36.ts
@@ -858,6 +956,10 @@ checker: tasks/coverage/typescript/tests/cases/compiler/contextualTyping37.ts
 checker: tasks/coverage/typescript/tests/cases/compiler/contextualTyping40.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/contextualTyping6.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/contextualTyping7.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/contextualTyping8.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/contextualTypingArrayOfLambdas.ts
 
@@ -965,6 +1067,8 @@ checker: tasks/coverage/typescript/tests/cases/compiler/controlFlowForCompoundAs
 
 checker: tasks/coverage/typescript/tests/cases/compiler/controlFlowInitializedDestructuringVariables.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/controlFlowInstanceof.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/controlFlowInstanceofWithSymbolHasInstance.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/controlFlowManyCallExpressionStatementsPerf.ts
@@ -995,7 +1099,11 @@ checker: tasks/coverage/typescript/tests/cases/compiler/customAsyncIterator.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/cyclicModuleImport.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/declFileAliasUseBeforeDeclaration.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/declFileAliasUseBeforeDeclaration2.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/declFileAmbientExternalModuleWithSingleExportedModule.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/declFileClassWithIndexSignature.ts
 
@@ -1011,6 +1119,8 @@ checker: tasks/coverage/typescript/tests/cases/compiler/declFileExportAssignment
 
 checker: tasks/coverage/typescript/tests/cases/compiler/declFileForClassWithPrivateOverloadedFunction.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/declFileForExportedImport.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/declFileForFunctionTypeAsTypeParameter.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/declFileForInterfaceWithRestParams.ts
@@ -1018,6 +1128,8 @@ checker: tasks/coverage/typescript/tests/cases/compiler/declFileForInterfaceWith
 checker: tasks/coverage/typescript/tests/cases/compiler/declFileGenericType2.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/declFileImportChainInExportAssignment.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/declFileImportModuleWithExportAssignment.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/declFileImportedTypeUseInTypeArgPosition.ts
 
@@ -1051,15 +1163,19 @@ checker: tasks/coverage/typescript/tests/cases/compiler/declFileWithInternalModu
 
 checker: tasks/coverage/typescript/tests/cases/compiler/declFileWithInternalModuleNameConflictsInExtendsClause3.ts
 
-checker: tasks/coverage/typescript/tests/cases/compiler/declInput-2.ts
-
 checker: tasks/coverage/typescript/tests/cases/compiler/declInput.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/declInput3.ts
 
-checker: tasks/coverage/typescript/tests/cases/compiler/declInput4.ts
-
 checker: tasks/coverage/typescript/tests/cases/compiler/declarationAssertionNodeNotReusedWhenTypeNotEquivalent1.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitAliasExportStar.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitAliasFromIndirectFile.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitAliasInlineing.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitAnyComputedPropertyInClass.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitArrowFunctionNoRenaming.ts
 
@@ -1083,15 +1199,27 @@ checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitClassSetA
 
 checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitClassSetAccessorParamNameInJs3.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitComputedNameCausesImportToBePainted.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitComputedNameConstEnumAlias.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitComputedNameWithQuestionToken.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitComputedNamesInaccessible.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitComputedPropertyName1.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitComputedPropertyNameEnum1.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitCrossFileCopiedGeneratedImportType.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitCrossFileImportTypeOfAmbientModule.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitDefaultExport3.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitDefaultExport8.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitDefaultExportWithStaticAssignment.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitDestructuring1.ts
 
@@ -1117,19 +1245,37 @@ checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitDestructu
 
 checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitDistributiveConditionalWithInfer.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitDoesNotUseReexportedNamespaceAsLocal.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitDuplicateParameterDestructuring.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitEnumReadonlyProperty.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitEnumReferenceViaImportEquals.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitExpandoWithGenericConstraint.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitExportAliasVisibiilityMarking.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitExportAssignedNamespaceNoTripleSlashTypesReference.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitExpressionInExtends5.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitExpressionInExtends6.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitFBoundedTypeParams.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitFirstTypeArgumentGenericFunctionType.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitForDefaultExportClassExtendingExpression01.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitForGlobalishSpecifierSymlink.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitForGlobalishSpecifierSymlink2.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitForModuleImportingModuleAugmentationRetainsImport.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitForTypesWhichNeedImportTypes.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitFunctionDuplicateNamespace.ts
 
@@ -1142,6 +1288,8 @@ checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitGenericTy
 checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitGenericTypeParamerSerialization3.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitGlobalThisPreserved.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitHasTypesRefOnNamespaceUse.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitHigherOrderRetainedGenerics.ts
 
@@ -1159,6 +1307,8 @@ checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitInferredT
 
 checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitInferredUndefinedPropFromFunctionInArray.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitInlinedDistributiveConditional.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitKeywordDestructuring.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitLateBoundAssignments.ts
@@ -1171,6 +1321,8 @@ checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitLocalClas
 
 checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitLocalClassHasRequiredDeclare.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitMappedTypeDistributivityPreservesConstraints.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitMappedTypePreservesTypeParameterConstraint.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitMappedTypePropertyFromNumericStringKey.ts
@@ -1180,6 +1332,8 @@ checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitMergedAli
 checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitMethodDeclaration.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitMultipleComputedNamesSameDomain.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitNameConflicts.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitNameConflicts2.ts
 
@@ -1193,6 +1347,12 @@ checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitNestedAno
 
 checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitNestedGenerics.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitNoInvalidCommentReuse1.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitNoInvalidCommentReuse2.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitNoInvalidCommentReuse3.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitNoNonRequiredParens.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitNonExportedBindingPattern.ts
@@ -1201,6 +1361,14 @@ checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitObjectLit
 
 checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitObjectLiteralAccessorsJs1.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitOfTypeofAliasedExport.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitOptionalMappedTypePropertyNoStrictNullChecks1.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitOptionalMappedTypePropertyNoStrictNullChecks2.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitOptionalMappedTypePropertyNoStrictNullChecks3.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitOptionalMappedTypePropertyNoStrictNullChecks4.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitOptionalMethod.ts
@@ -1208,6 +1376,14 @@ checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitOptionalM
 checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitOverloadedPrivateInference.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitParameterProperty.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitPartialNodeReuseTypeOf.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitPartialNodeReuseTypeReferences.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitPartialReuseComputedProperty.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitPreserveReferencedImports.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitPrivateAsync.ts
 
@@ -1219,7 +1395,23 @@ checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitPromise.t
 
 checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitPropertyNumericStringKey.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitQualifiedAliasTypeArgument.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitRecursiveConditionalAliasPreserved.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitReexportedSymlinkReference.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitReexportedSymlinkReference2.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitResolveTypesIfNotReusable.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitRetainedAnnotationRetainsImportInOutput.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitRetainsJsdocyComments.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitReusesLambdaParameterNodes.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitScopeConsistency.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitScopeConsistency3.ts
 
@@ -1231,9 +1423,17 @@ checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitSimpleCom
 
 checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitSpreadStringlyKeyedEnum.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitStringEnumUsedInNonlocalSpread.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitToDeclarationDirWithCompositeOption.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitToDeclarationDirWithDeclarationOption.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitTopLevelNodeFromCrossFile.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitTopLevelNodeFromCrossFile2.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitTransitiveImportOfHtmlDeclarationItem.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitTupleRestSignatureLeadingVariadic.ts
 
@@ -1255,19 +1455,43 @@ checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitTypeParam
 
 checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitTypeParameterNameShadowedInternally.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitTypeofDefaultExport.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitTypeofRest.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitTypeofThisInClass.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitUsingAlternativeContainingModules1.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitUsingAlternativeContainingModules2.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitUsingTypeAlias2.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/declarationEmitWithComposite.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/declarationFunctionTypeNonlocalShouldNotBeAnError.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/declarationImportTypeAliasInferredAndEmittable.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/declarationMaps.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/declarationMapsMultifile.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/declarationMerging1.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/declarationNoDanglingGenerics.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/declarationQuotedMembers.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/declarationTypecheckNoUseBeforeReferenceCheck.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/declarationsForFileShadowingGlobalNoError.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/declarationsForIndirectTypeAliasReference.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/declarationsForInferredTypeFromOtherFile.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/declarationsIndirectGeneratedAliasReference.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/declarationsWithRecursiveInternalTypesProduceUniqueTypeParams.ts
 
@@ -1287,6 +1511,10 @@ checker: tasks/coverage/typescript/tests/cases/compiler/decoratorMetadataNoStric
 
 checker: tasks/coverage/typescript/tests/cases/compiler/decoratorMetadataPromise.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/decoratorMetadataTypeOnlyExport.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/decoratorReferenceOnOtherProperty.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/decoratorReferences.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/decoratorWithUnderscoreMethod.ts
@@ -1298,6 +1526,8 @@ checker: tasks/coverage/typescript/tests/cases/compiler/deeplyDependentLargeArra
 checker: tasks/coverage/typescript/tests/cases/compiler/deeplyNestedConditionalTypes.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/deeplyNestedConstraints.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/defaultDeclarationEmitDefaultImport.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/defaultIndexProps1.ts
 
@@ -1317,6 +1547,8 @@ checker: tasks/coverage/typescript/tests/cases/compiler/defaultParameterAddsUnde
 
 checker: tasks/coverage/typescript/tests/cases/compiler/defaultParameterTrailingComments.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/defaultPropsEmptyCurlyBecomesAnyForJs.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/deferredConditionalTypes.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/deferredConditionalTypes2.ts
@@ -1333,11 +1565,17 @@ checker: tasks/coverage/typescript/tests/cases/compiler/destructureOfVariableSam
 
 checker: tasks/coverage/typescript/tests/cases/compiler/destructureOptionalParameter.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/destructuredDeclarationEmit.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/destructuredMaappedTypeIsNotImplicitlyAny.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/destructuringAssignmentWithDefault.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/destructuringAssignmentWithStrictNullChecks.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/destructuringInVariableDeclarations1.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/destructuringInVariableDeclarations2.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/destructuringInitializerContextualTypeFromContext.ts
 
@@ -1350,6 +1588,8 @@ checker: tasks/coverage/typescript/tests/cases/compiler/destructuringTypeGuardFl
 checker: tasks/coverage/typescript/tests/cases/compiler/destructuringWithConstraint.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/destructuringWithNewExpression.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/destructuringWithNumberLiteral.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/detachedCommentAtStartOfConstructor1.ts
 
@@ -1405,6 +1645,8 @@ checker: tasks/coverage/typescript/tests/cases/compiler/doNotEmitPinnedDetachedC
 
 checker: tasks/coverage/typescript/tests/cases/compiler/doNotInferUnrelatedTypes.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/doNotemitTripleSlashComments.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/doWhileUnreachableCode.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/doYouNeedToChangeYourTargetLibraryES2015.ts
@@ -1421,9 +1663,7 @@ checker: tasks/coverage/typescript/tests/cases/compiler/doubleUnderscoreMappedTy
 
 checker: tasks/coverage/typescript/tests/cases/compiler/doubleUnderscoreReactNamespace.ts
 
-checker: tasks/coverage/typescript/tests/cases/compiler/duplicateAnonymousInners1.ts
-
-checker: tasks/coverage/typescript/tests/cases/compiler/duplicateAnonymousModuleClasses.ts
+checker: tasks/coverage/typescript/tests/cases/compiler/dtsEmitTripleSlashAvoidUnnecessaryResolutionMode.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/duplicateConstructorOverloadSignature2.ts
 
@@ -1433,11 +1673,23 @@ checker: tasks/coverage/typescript/tests/cases/compiler/duplicateLabel4.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/duplicateObjectLiteralProperty_computedNameNegative1.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/duplicatePackage_packageIdIncludesSubModule.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/duplicatePackage_referenceTypes.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/duplicatePackage_relativeImportWithinPackage.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/duplicatePackage_relativeImportWithinPackage_scoped.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/duplicatePackage_subModule.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/duplicateVarAndImport.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/duplicateVariablesByScope.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/dynamicImportEvaluateSpecifier.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/dynamicImportsDeclaration.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/dynamicModuleTypecheckError.ts
 
@@ -1445,9 +1697,15 @@ checker: tasks/coverage/typescript/tests/cases/compiler/elementAccessExpressionI
 
 checker: tasks/coverage/typescript/tests/cases/compiler/elidedEmbeddedStatementsReplacedWithSemicolon.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/elidingImportNames.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/emitAccessExpressionOfCastedObjectLiteralExpressionInArrowFunctionES6.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/emitClassExpressionInDeclarationFile.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/emitClassMergedWithConstNamespaceNotElided.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/emitMemberAccessExpression.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/emitMethodCalledNew.ts
 
@@ -1465,11 +1723,17 @@ checker: tasks/coverage/typescript/tests/cases/compiler/emitSuperCallBeforeEmitP
 
 checker: tasks/coverage/typescript/tests/cases/compiler/emitSuperCallBeforeEmitPropertyDeclarationAndParameterPropertyDeclaration1ES6.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/emitTopOfFileTripleSlashCommentOnNotEmittedNodeIfRemoveCommentsIsFalse.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/emptyArgumentsListComment.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/emptyArrayDestructuringExpressionVisitedByTransformer.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/emptyDeclarationEmitIsModule.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/emptyEnum.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/emptyExpr.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/emptyOptionalBindingPatternInDeclarationSignature.ts
 
@@ -1478,6 +1742,10 @@ checker: tasks/coverage/typescript/tests/cases/compiler/enumAssignmentCompat4.ts
 checker: tasks/coverage/typescript/tests/cases/compiler/enumCodeGenNewLines1.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/enumDecl1.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/enumDeclarationEmitInitializerHasImport.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/enumFromExternalModule.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/enumIndexer.ts
 
@@ -1539,7 +1807,35 @@ checker: tasks/coverage/typescript/tests/cases/compiler/es6ClassTest7.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/es6ClassTest8.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/es6ExportAssignment4.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/es6ExportClause.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/es6ExportClauseWithoutModuleSpecifier.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/es6ImportDefaultBinding.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/es6ImportDefaultBindingFollowedWithNamedImport.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/es6ImportDefaultBindingFollowedWithNamespaceBinding1.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/es6ImportEqualsDeclaration2.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/es6ImportNameSpaceImport.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/es6ImportNameSpaceImportDts.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/es6ImportNamedImport.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/es6ImportNamedImportDts.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/es6ImportNamedImportInExportAssignment.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/es6ImportNamedImportInIndirectExportAssignment.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/es6ImportNamedImportWithTypesAndValues.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/es6ImportWithJsDocTags.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/es6Module.ts
 
@@ -1559,11 +1855,27 @@ checker: tasks/coverage/typescript/tests/cases/compiler/es6ModuleInternalImport.
 
 checker: tasks/coverage/typescript/tests/cases/compiler/es6ModuleLet.ts
 
-checker: tasks/coverage/typescript/tests/cases/compiler/es6ModuleModuleDeclaration.ts
-
 checker: tasks/coverage/typescript/tests/cases/compiler/es6ModuleVariableStatement.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/es6ModuleWithModuleGenTargetCommonjs.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/es6UseOfTopLevelRequire.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/esModuleInterop.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/esModuleInteropDefaultMemberMustBeSyntacticallyDefaultExport.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/esModuleInteropEnablesSyntheticDefaultImports.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/esModuleInteropImportCall.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/esModuleInteropImportNamespace.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/esModuleInteropImportTSLibHasImport.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/esModuleInteropNamedDefaultImports.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/esModuleIntersectionCrash.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/esNextWeakRefs_IterableWeakMap.ts
 
@@ -1599,21 +1911,51 @@ checker: tasks/coverage/typescript/tests/cases/compiler/expandoFunctionNullishPr
 
 checker: tasks/coverage/typescript/tests/cases/compiler/expandoFunctionSymbolProperty.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/expandoFunctionSymbolPropertyJs.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/explicitAnyAfterSpreadNoImplicitAnyError.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/exportArrayBindingPattern.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/exportAsNamespace.d.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/exportAssignValueAndType.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/exportAssignedNamespaceIsVisibleInDeclarationEmit.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/exportAssignmentEnum.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/exportAssignmentMembersVisibleInAugmentation.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/exportAssignmentVariable.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/exportAssignmentWithoutIdentifier1.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/exportDeclarationWithModuleSpecifierNameOnNextLine1.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/exportDeclarationsInAmbientNamespaces.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/exportDefaultAsyncFunction.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/exportDefaultForNonInstantiatedModule.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/exportDefaultInterfaceAndFunctionOverloads.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/exportDefaultMarksIdentifierAsUsed.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/exportDefaultParenthesizeES6.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/exportDefaultProperty.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/exportDefaultProperty2.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/exportDefaultQualifiedNameNoError.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/exportDefaultVariable.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/exportDefaultWithJSDoc1.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/exportDefaultWithJSDoc2.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/exportEqualsClassNoRedeclarationError.ts
 
@@ -1621,13 +1963,21 @@ checker: tasks/coverage/typescript/tests/cases/compiler/exportEqualsCommonJs.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/exportEqualsOfModule.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/exportEqualsProperty.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/exportEqualsProperty2.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/exportImportAndClodule.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/exportImportNonInstantiatedModule.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/exportNamespaceDeclarationRetainsVisibility.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/exportRedeclarationTypeAliases.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/exportSpecifierAndExportedMemberDeclaration.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/exportStarNotElided.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/exportToString.ts
 
@@ -1651,6 +2001,10 @@ checker: tasks/coverage/typescript/tests/cases/compiler/externModuleClobber.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/externalModuleReferenceDoubleUnderscore1.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/externalModuleResolution.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/externalModuleResolution2.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/fakeInfinity2.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/fakeInfinity3.ts
@@ -1665,7 +2019,11 @@ checker: tasks/coverage/typescript/tests/cases/compiler/fatarrowfunctionsInFunct
 
 checker: tasks/coverage/typescript/tests/cases/compiler/fatarrowfunctionsInFunctions.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/fileReferencesWithNoExtensions.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/fileWithNextLine1.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/fixCrashAliasLookupForDefauledImport.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/fixingTypeParametersRepeatedly1.ts
 
@@ -1707,6 +2065,8 @@ checker: tasks/coverage/typescript/tests/cases/compiler/funcdecl.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/functionAssignmentError.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/functionCall3.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/functionCall5.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/functionDeclarationWithArgumentOfTypeFunctionTypeArray.ts
@@ -1726,8 +2086,6 @@ checker: tasks/coverage/typescript/tests/cases/compiler/functionExpressionWithRe
 checker: tasks/coverage/typescript/tests/cases/compiler/functionExpressionWithResolutionOfTypeOfSameName01.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/functionExpressionWithResolutionOfTypeOfSameName02.ts
-
-checker: tasks/coverage/typescript/tests/cases/compiler/functionInIfStatementInModule.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/functionMergedWithModule.ts
 
@@ -1805,9 +2163,13 @@ checker: tasks/coverage/typescript/tests/cases/compiler/functionWithDefaultParam
 
 checker: tasks/coverage/typescript/tests/cases/compiler/functionWithDefaultParameterWithNoStatements10.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/functionWithDefaultParameterWithNoStatements11.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/functionWithDefaultParameterWithNoStatements12.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/functionWithDefaultParameterWithNoStatements13.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/functionWithDefaultParameterWithNoStatements14.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/functionWithDefaultParameterWithNoStatements15.ts
 
@@ -1838,6 +2200,8 @@ checker: tasks/coverage/typescript/tests/cases/compiler/functionsInClassExpressi
 checker: tasks/coverage/typescript/tests/cases/compiler/funduleExportedClassIsUsedBeforeDeclaration.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/funduleOfFunctionWithoutReturnTypeAnnotation.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/funduleUsedAcrossFileBoundary.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/generatorES6_1.ts
 
@@ -1890,6 +2254,8 @@ checker: tasks/coverage/typescript/tests/cases/compiler/genericConstraintOnExten
 checker: tasks/coverage/typescript/tests/cases/compiler/genericConstraintOnExtendedBuiltinTypes2.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/genericConstructSignatureInInterface.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/genericDefaultsJs.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/genericFunctionHasFreshTypeArgs.ts
 
@@ -1977,11 +2343,17 @@ checker: tasks/coverage/typescript/tests/cases/compiler/gettersAndSettersTypesAg
 
 checker: tasks/coverage/typescript/tests/cases/compiler/global.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/globalFunctionAugmentationOverload.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/globalIsContextualKeyword.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/globalThis.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/globalThisCapture.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/globalThisDeclarationEmit2.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/globalThisDeclarationEmit3.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/higherOrderMappedIndexLookupInference.ts
 
@@ -2011,17 +2383,45 @@ checker: tasks/coverage/typescript/tests/cases/compiler/implicitAnyGenericTypeIn
 
 checker: tasks/coverage/typescript/tests/cases/compiler/implicitAnyInCatch.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/impliedNodeFormatInterop1.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/importAliasAnExternalModuleInsideAnInternalModule.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/importAliasWithDottedName.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/importAndVariableDeclarationConflict2.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/importDeclFromTypeNodeInJsSource.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/importDeclWithExportModifierInAmbientContext.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/importDeclarationNotCheckedAsValueWhenTargetNonValue.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/importElisionEnum.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/importElisionExportNonExportAndDefault.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/importExportInternalComments.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/importInTypePosition.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/importNonExportedMember12.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/importOnAliasedIdentifiers.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/importPropertyFromMappedType.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/importShouldNotBeElidedInDeclarationEmit.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/importTypeGenericArrowTypeParenthesized.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/importTypeResolutionJSDocEOF.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/importTypeTypeofClassStaticLookup.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/importUsedInGenericImportResolves.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/importedAliasedConditionalTypeInstantiation.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/inKeywordAndIntersection.ts
 
@@ -2111,6 +2511,8 @@ checker: tasks/coverage/typescript/tests/cases/compiler/inferenceExactOptionalPr
 
 checker: tasks/coverage/typescript/tests/cases/compiler/inferenceFromParameterlessLambda.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/inferenceLimit.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/inferenceOfNullableObjectTypesWithCommonBase.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/inferenceOptionalProperties.ts
@@ -2133,11 +2535,15 @@ checker: tasks/coverage/typescript/tests/cases/compiler/inferentialTypingWithFun
 
 checker: tasks/coverage/typescript/tests/cases/compiler/inferentialTypingWithFunctionTypeNested.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/inferredIndexerOnNamespaceImport.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/inferredNonidentifierTypesGetQuotes.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/inferredRestTypeFixedOnce.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/inferredReturnTypeIncorrectReuse1.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/inferrenceInfiniteLoopWithSubtyping.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/inferringAnyFunctionType1.ts
 
@@ -2197,6 +2603,8 @@ checker: tasks/coverage/typescript/tests/cases/compiler/initializersInAmbientEnu
 
 checker: tasks/coverage/typescript/tests/cases/compiler/inlineConditionalHasSimilarAssignability.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/inlineMappedTypeModifierDeclarationEmit.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/innerBoundLambdaEmit.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/innerExtern.ts
@@ -2217,6 +2625,8 @@ checker: tasks/coverage/typescript/tests/cases/compiler/instanceofTypeAliasToGen
 
 checker: tasks/coverage/typescript/tests/cases/compiler/instantiateContextualTypes.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/instantiateCrossFileMerge.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/instantiatedTypeAliasDisplay.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/interfaceDeclaration2.ts
@@ -2224,6 +2634,8 @@ checker: tasks/coverage/typescript/tests/cases/compiler/interfaceDeclaration2.ts
 checker: tasks/coverage/typescript/tests/cases/compiler/interfaceExtendsClass1.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/interfaceImplementation5.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/interfaceMergedUnconstrainedNoErrorIrrespectiveOfOrder.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/interfaceOnly.ts
 
@@ -2311,6 +2723,12 @@ checker: tasks/coverage/typescript/tests/cases/compiler/invalidThisEmitInContext
 
 checker: tasks/coverage/typescript/tests/cases/compiler/isolatedDeclarationsLiterals.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/isolatedModulesConstEnum.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/isolatedModulesImportConstEnum.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/isolatedModulesImportConstEnumTypeOnly.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/isolatedModulesNonAmbientConstEnum.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/isolatedModules_resolveJsonModule.ts
@@ -2323,9 +2741,13 @@ checker: tasks/coverage/typescript/tests/cases/compiler/javascriptCommonjsModule
 
 checker: tasks/coverage/typescript/tests/cases/compiler/javascriptDefinePropertyPrototypeNonConstructor.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/javascriptImportDefaultBadExport.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/javascriptThisAssignmentInStaticBlock.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/jqueryInference.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/jsDeclarationEmitDoesNotRenameImport.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/jsDeclarationEmitExportAssignedArray.ts
 
@@ -2335,11 +2757,21 @@ checker: tasks/coverage/typescript/tests/cases/compiler/jsDeclarationsGlobalFile
 
 checker: tasks/coverage/typescript/tests/cases/compiler/jsDeclarationsGlobalFileConstFunctionNamed.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/jsDeclarationsWithDefaultAsNamespaceLikeMerge.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/jsDocDeclarationEmitDoesNotUseNodeModulesPathWithoutError.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/jsEnumCrossFileExport.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/jsEnumFunctionLocalNoCrash.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/jsEnumTagOnObjectFrozen.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/jsExpandoObjectDefineProperty.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/jsExportAssignmentNonMutableLocation.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/jsExportMemberMergedWithModuleAugmentation3.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/jsFileAlternativeUseOfOverloadTag.ts
 
@@ -2351,11 +2783,17 @@ checker: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationAwaitMo
 
 checker: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationDecoratorSyntax.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationExternalPackageError.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/jsFileESModuleWithEnumTag.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/jsFileFunctionOverloads.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/jsFileFunctionOverloads2.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/jsFileFunctionParametersAsOptional.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/jsFileImportPreservedWhenUsed.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/jsFileMethodOverloads.ts
 
@@ -2371,11 +2809,15 @@ checker: tasks/coverage/typescript/tests/cases/compiler/jsPropertyAssignedAfterM
 
 checker: tasks/coverage/typescript/tests/cases/compiler/jsSelfReferencingArgumentsFunction.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/jsdocAccessEnumType.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/jsdocArrayObjectPromiseImplicitAny.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/jsdocCastCommentEmit.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/jsdocFunctionClassPropertiesDeclaration.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/jsdocImportTypeResolution.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/jsdocParamTagOnPropertyInitializer.ts
 
@@ -2405,7 +2847,15 @@ checker: tasks/coverage/typescript/tests/cases/compiler/jsxElementClassTooManyPa
 
 checker: tasks/coverage/typescript/tests/cases/compiler/jsxElementsAsIdentifierNames.tsx
 
+checker: tasks/coverage/typescript/tests/cases/compiler/jsxEmitWithAttributes.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/jsxFactoryIdentifier.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/jsxFactoryIdentifierAsParameter.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/jsxFactoryQualifiedName.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/jsxFragmentAndFactoryUsedOnFragmentUse.tsx
 
 checker: tasks/coverage/typescript/tests/cases/compiler/jsxGenericComponentWithSpreadingResultOfGenericFunction.tsx
 
@@ -2423,13 +2873,25 @@ checker: tasks/coverage/typescript/tests/cases/compiler/jsxLibraryManagedAttribu
 
 checker: tasks/coverage/typescript/tests/cases/compiler/jsxLocalNamespaceIndexSignatureNoCrash.tsx
 
+checker: tasks/coverage/typescript/tests/cases/compiler/jsxNamespaceGlobalReexport.tsx
+
+checker: tasks/coverage/typescript/tests/cases/compiler/jsxNamespaceImplicitImportJSXNamespace.tsx
+
+checker: tasks/coverage/typescript/tests/cases/compiler/jsxNamespaceImplicitImportJSXNamespaceFromPragmaPickedOverGlobalOne.tsx
+
+checker: tasks/coverage/typescript/tests/cases/compiler/jsxNamespaceReexports.tsx
+
 checker: tasks/coverage/typescript/tests/cases/compiler/jsxNamespacedNameNotComparedToNonMatchingIndexSignature.tsx
 
 checker: tasks/coverage/typescript/tests/cases/compiler/jsxPartialSpread.tsx
 
+checker: tasks/coverage/typescript/tests/cases/compiler/jsxPreserveWithJsInput.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/jsxSpreadFirstUnionNoErrors.tsx
 
 checker: tasks/coverage/typescript/tests/cases/compiler/keyRemappingKeyofResult2.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/keyofModuleObjectHasCorrectKeys.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/keyofObjectWithGlobalSymbolIncluded.ts
 
@@ -2455,11 +2917,7 @@ checker: tasks/coverage/typescript/tests/cases/compiler/letDeclarations-access.t
 
 checker: tasks/coverage/typescript/tests/cases/compiler/letDeclarations.ts
 
-checker: tasks/coverage/typescript/tests/cases/compiler/letDeclarations2.ts
-
 checker: tasks/coverage/typescript/tests/cases/compiler/letInNonStrictMode.ts
-
-checker: tasks/coverage/typescript/tests/cases/compiler/letKeepNamesOfTopLevelItems.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/letShadowedByNameInNestedScope.ts
 
@@ -2511,6 +2969,8 @@ checker: tasks/coverage/typescript/tests/cases/compiler/mappedTypeContextualType
 
 checker: tasks/coverage/typescript/tests/cases/compiler/mappedTypeGenericIndexedAccess.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/mappedTypeGenericInstantiationPreservesHomomorphism.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/mappedTypeGenericInstantiationPreservesInlineForm.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/mappedTypeInferenceAliasSubstitution.ts
@@ -2541,9 +3001,13 @@ checker: tasks/coverage/typescript/tests/cases/compiler/mappedTypeWithNameClause
 
 checker: tasks/coverage/typescript/tests/cases/compiler/matchingOfObjectLiteralConstraints.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/mergeMultipleInterfacesReexported.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/mergedDeclarations1.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/mergedDeclarations4.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/mergedDeclarations5.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/mergedEnumDeclarationCodeGen.ts
 
@@ -2567,6 +3031,8 @@ checker: tasks/coverage/typescript/tests/cases/compiler/methodSignatureDeclarati
 
 checker: tasks/coverage/typescript/tests/cases/compiler/missingSelf.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/missingSemicolonInModuleSpecifier.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/missingTypeArguments3.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/misspelledJsDocTypedefTags.ts
@@ -2580,8 +3046,6 @@ checker: tasks/coverage/typescript/tests/cases/compiler/mixinIntersectionIsValid
 checker: tasks/coverage/typescript/tests/cases/compiler/mixinOverMappedTypeNoCrash.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/mixingApparentTypeOverrides.ts
-
-checker: tasks/coverage/typescript/tests/cases/compiler/mixingFunctionAndAmbientModule1.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/modFunctionCrash.ts
 
@@ -2611,29 +3075,91 @@ checker: tasks/coverage/typescript/tests/cases/compiler/moduleAliasInterface.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/moduleAndInterfaceSharingName4.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationDoesInterfaceMergeOfReexport.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationDoesNamespaceEnumMergeOfReexport.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationDoesNamespaceMergeOfReexport.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationDuringSyntheticDefaultCheck.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationGlobal2.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationGlobal3.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationGlobal4.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationGlobal5.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationInAmbientModule5.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationInDependency.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationOfAlias.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/moduleCodeGenTest3.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/moduleCodeGenTest5.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/moduleCodegenTest4.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/moduleDeclarationExportStarShadowingGlobalIsNameable.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/moduleExportsTypeNoExcessPropertyCheckFromContainedLiteral.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/moduleExportsUnaryExpression.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/moduleIdentifiers.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/moduleLocalImportNotIncorrectlyRedirected.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/moduleMemberWithoutTypeAnnotation1.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/moduleMemberWithoutTypeAnnotation2.ts
 
-checker: tasks/coverage/typescript/tests/cases/compiler/moduleMerge.ts
+checker: tasks/coverage/typescript/tests/cases/compiler/moduleOuterQualification.ts
 
-checker: tasks/coverage/typescript/tests/cases/compiler/moduleNoEmit.ts
+checker: tasks/coverage/typescript/tests/cases/compiler/modulePreserve1.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/modulePreserve2.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/modulePreserveImportHelpers.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/modulePrologueCommonjs.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/modulePrologueES6.ts
 
-checker: tasks/coverage/typescript/tests/cases/compiler/moduleScopingBug.ts
+checker: tasks/coverage/typescript/tests/cases/compiler/moduleResolutionAsTypeReferenceDirective.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/moduleResolutionAsTypeReferenceDirectiveAmbient.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/moduleResolutionNoResolve.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/moduleResolutionWithExtensions_withAmbientPresent.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/moduleResolutionWithRequireAndImport.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/moduleResolutionWithSymlinks_notInNodeModules.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/moduleResolution_automaticTypeDirectiveNames.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/moduleResolution_explicitNodeModulesImport.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/moduleResolution_packageJson_notAtPackageRoot.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/moduleResolution_packageJson_notAtPackageRoot_fakeScopedPackage.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/moduleResolution_packageJson_scopedPackage.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/moduleResolution_packageJson_yesAtPackageRoot.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/moduleResolution_packageJson_yesAtPackageRoot_fakeScopedPackage.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/moduleResolution_packageJson_yesAtPackageRoot_mainFieldInSubDirectory.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/moduleResolution_relativeImportJsFile.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/moduleSameValueDuplicateExportedBindings2.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/moduleSharesNameWithImportDeclarationInsideIt.ts
 
@@ -2643,8 +3169,6 @@ checker: tasks/coverage/typescript/tests/cases/compiler/moduleSharesNameWithImpo
 
 checker: tasks/coverage/typescript/tests/cases/compiler/moduleSharesNameWithImportDeclarationInsideIt6.ts
 
-checker: tasks/coverage/typescript/tests/cases/compiler/moduleUnassignedVariable.ts
-
 checker: tasks/coverage/typescript/tests/cases/compiler/moduleVariables.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/moduleVisibilityTest1.ts
@@ -2653,9 +3177,13 @@ checker: tasks/coverage/typescript/tests/cases/compiler/moduleWithTryStatement1.
 
 checker: tasks/coverage/typescript/tests/cases/compiler/module_augmentUninstantiatedModule.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/module_augmentUninstantiatedModule2.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/multiCallOverloads.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/multiExtendsSplitInterfaces1.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/multiImportExport.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/multiModuleClodule1.ts
 
@@ -2680,6 +3208,8 @@ checker: tasks/coverage/typescript/tests/cases/compiler/namedFunctionExpressionI
 checker: tasks/coverage/typescript/tests/cases/compiler/namespaces1.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/namespaces2.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/namespacesWithTypeAliasOnlyExportsMerge.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/narrowByBooleanComparison.ts
 
@@ -2710,6 +3240,10 @@ checker: tasks/coverage/typescript/tests/cases/compiler/narrowUnknownByTypePredi
 checker: tasks/coverage/typescript/tests/cases/compiler/narrowUnknownByTypeofObject.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/narrowedConstInMethod.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/narrowedImports.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/narrowedImports_assumeInitialized.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/narrowingAssignmentReadonlyRespectsAssertion.ts
 
@@ -2793,8 +3327,6 @@ checker: tasks/coverage/typescript/tests/cases/compiler/nestedHomomorphicMappedT
 
 checker: tasks/coverage/typescript/tests/cases/compiler/nestedIndexer.ts
 
-checker: tasks/coverage/typescript/tests/cases/compiler/nestedModulePrivateAccess.ts
-
 checker: tasks/coverage/typescript/tests/cases/compiler/nestedObjectRest.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/nestedRecursiveLambda.ts
@@ -2810,6 +3342,8 @@ checker: tasks/coverage/typescript/tests/cases/compiler/newLineFlagWithCRLF.ts
 checker: tasks/coverage/typescript/tests/cases/compiler/newLineFlagWithLF.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/newLineInTypeofInstantiation.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/newNamesInGlobalAugmentations1.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/noAsConstNameLookup.ts
 
@@ -2839,7 +3373,11 @@ checker: tasks/coverage/typescript/tests/cases/compiler/noCollisionThisExpressio
 
 checker: tasks/coverage/typescript/tests/cases/compiler/noCrashOnThisTypeUsage.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/noCrashUMDMergedWithGlobalValue.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/noEmitHelpers.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/noImplicitAnyAndPrivateMembersWithoutTypeAnnotations.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/noImplicitAnyDestructuringInPrivateMethod.ts
 
@@ -2869,13 +3407,45 @@ checker: tasks/coverage/typescript/tests/cases/compiler/noUsedBeforeDefinedError
 
 checker: tasks/coverage/typescript/tests/cases/compiler/noUsedBeforeDefinedErrorInTypeContext.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/nodeColonModuleResolution.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/nodeColonModuleResolution2.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/nodeModuleReexportFromDottedPath.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/nodeNextCjsNamespaceImportDefault1.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/nodeNextCjsNamespaceImportDefault2.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/nodeNextEsmImportsOfPackagesWithExtensionlessMains.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/nodeNextPackageImportMapRootDir.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/nodeNextPackageSelfNameWithOutDirDeclDirComposite.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/nodeNextPackageSelfNameWithOutDirDeclDirCompositeNestedDirs.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/nodeNextPackageSelfNameWithOutDirDeclDirNestedDirs.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/nodeNextPackageSelfNameWithOutDirDeclDirRootDir.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/nodeNextPackageSelfNameWithOutDirRootDir.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/nodeResolution1.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/nodeResolution2.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/nodeResolution3.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/nodeResolution4.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/nodeResolution5.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/nodeResolution6.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/nodeResolution7.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/nodeResolution8.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/nonContextuallyTypedLogicalOr.ts
 
@@ -2903,11 +3473,17 @@ checker: tasks/coverage/typescript/tests/cases/compiler/nonNullableWithNullableG
 
 checker: tasks/coverage/typescript/tests/cases/compiler/nondistributiveConditionalTypeInfer.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/nongenericConditionalNotPartiallyComputed.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/nongenericPartialInstantiationsRelatedInBothDirections.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/nonnullAssertionPropegatesContextualType.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/nonstrictTemplateWithNotOctalPrintsAsIs.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/nounusedTypeParameterConstraint.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/numberAsInLHS.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/numericEnumMappedType.ts
 
@@ -3015,6 +3591,8 @@ checker: tasks/coverage/typescript/tests/cases/compiler/overrideBaseIntersection
 
 checker: tasks/coverage/typescript/tests/cases/compiler/parameterDestructuringObjectLiteral.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/parameterPropertyInConstructor4.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/parameterPropertyInConstructorWithPrologues.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/parameterReferenceInInitializer2.ts
@@ -3047,7 +3625,7 @@ checker: tasks/coverage/typescript/tests/cases/compiler/partialTypeNarrowedToByT
 
 checker: tasks/coverage/typescript/tests/cases/compiler/partiallyAmbientClodule.ts
 
-checker: tasks/coverage/typescript/tests/cases/compiler/partiallyAmbientFundule.ts
+checker: tasks/coverage/typescript/tests/cases/compiler/pathMappingBasedModuleResolution6_node.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/performanceComparisonOfStructurallyIdenticalInterfacesWithGenericSignatures.ts
 
@@ -3065,6 +3643,10 @@ checker: tasks/coverage/typescript/tests/cases/compiler/prespecializedGenericMem
 
 checker: tasks/coverage/typescript/tests/cases/compiler/primitiveUnionDetection.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/privacyCannotNameVarTypeDeclFile.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/privacyCheckExternalModuleExportAssignmentOfGenericClass.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/privacyCheckTypeOfFunction.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/privacyCheckTypeOfInvisibleModuleError.ts
@@ -3073,7 +3655,13 @@ checker: tasks/coverage/typescript/tests/cases/compiler/privacyCheckTypeOfInvisi
 
 checker: tasks/coverage/typescript/tests/cases/compiler/privacyClass.ts
 
-checker: tasks/coverage/typescript/tests/cases/compiler/privacyFunc.ts
+checker: tasks/coverage/typescript/tests/cases/compiler/privacyClassImplementsClauseDeclFile.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/privacyFunctionCannotNameParameterTypeDeclFile.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/privacyFunctionCannotNameReturnTypeDeclFile.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/privacyFunctionParameterDeclFile.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/privacyGloClass.ts
 
@@ -3084,6 +3672,8 @@ checker: tasks/coverage/typescript/tests/cases/compiler/privacyGloInterface.ts
 checker: tasks/coverage/typescript/tests/cases/compiler/privacyImport.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/privacyInterface.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/privacyInterfaceExtendsClauseDeclFile.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/privacyLocalInternalReferenceImportWithExport.ts
 
@@ -3123,6 +3713,8 @@ checker: tasks/coverage/typescript/tests/cases/compiler/promiseWithResolvers.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/promises.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/propTypeValidatorInference.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/propagateNonInferrableType.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/propertyAccess6.ts
@@ -3132,6 +3724,8 @@ checker: tasks/coverage/typescript/tests/cases/compiler/propertyAccess7.ts
 checker: tasks/coverage/typescript/tests/cases/compiler/propertyAccessExpressionInnerComments.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/propertyAccessOnObjectLiteral.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/protoAsIndexInIndexExpression.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/protoInIndexer.ts
 
@@ -3153,11 +3747,19 @@ checker: tasks/coverage/typescript/tests/cases/compiler/ramdaToolsNoInfinite.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/ramdaToolsNoInfinite2.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/reExportUndefined2.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/reachabilityCheckWithEmptyDefault.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/reachabilityChecksIgnored.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/reactHOCSpreadprops.tsx
+
+checker: tasks/coverage/typescript/tests/cases/compiler/reactImportDropped.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/reactJsxReactResolvedNodeNext.tsx
+
+checker: tasks/coverage/typescript/tests/cases/compiler/reactJsxReactResolvedNodeNextEsm.tsx
 
 checker: tasks/coverage/typescript/tests/cases/compiler/reactReadonlyHOCAssignabilityReal.tsx
 
@@ -3167,9 +3769,9 @@ checker: tasks/coverage/typescript/tests/cases/compiler/reactTagNameComponentWit
 
 checker: tasks/coverage/typescript/tests/cases/compiler/reactTagNameComponentWithPropsNoOOM2.tsx
 
-checker: tasks/coverage/typescript/tests/cases/compiler/readonlyFloat32ArrayAssignableWithFloat32Array.ts
+checker: tasks/coverage/typescript/tests/cases/compiler/reactTransitiveImportHasValidDeclaration.ts
 
-checker: tasks/coverage/typescript/tests/cases/compiler/reboundBaseClassSymbol.ts
+checker: tasks/coverage/typescript/tests/cases/compiler/readonlyFloat32ArrayAssignableWithFloat32Array.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/recur1.ts
 
@@ -3196,6 +3798,8 @@ checker: tasks/coverage/typescript/tests/cases/compiler/recursiveConditionalEval
 checker: tasks/coverage/typescript/tests/cases/compiler/recursiveConditionalTypes2.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/recursiveExcessPropertyChecks.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/recursiveExportAssignmentAndFindAliasedType7.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/recursiveFieldSetting.ts
 
@@ -3231,6 +3835,18 @@ checker: tasks/coverage/typescript/tests/cases/compiler/redeclarationOfVarWithGe
 
 checker: tasks/coverage/typescript/tests/cases/compiler/reducibleIndexedAccessTypes.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/reexportDefaultIsCallable.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/reexportMissingDefault4.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/reexportMissingDefault8.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/reexportNameAliasedAndHoisted.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/reexportWrittenCorrectlyInDeclaration.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/referenceTypesPreferedToPathIfPossible.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/regExpWithSlashInCharClass.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/regexMatchAll-esnext.ts
@@ -3243,9 +3859,13 @@ checker: tasks/coverage/typescript/tests/cases/compiler/relatedViaDiscriminatedT
 
 checker: tasks/coverage/typescript/tests/cases/compiler/renamingDestructuredPropertyInFunctionType2.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/requireAsFunctionInExternalModule.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFile.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFileNonRelative.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFileNonRelativeWithoutExtensionResolvesToTs.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFileTypes.ts
 
@@ -3271,6 +3891,8 @@ checker: tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFileWithout
 
 checker: tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFileWithoutEsModuleInterop.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFileWithoutExtensionResolvesToTs.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFileWithoutOutDir.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/requiredInitializedParameter3.ts
@@ -3286,6 +3908,8 @@ checker: tasks/coverage/typescript/tests/cases/compiler/resolveInterfaceNameWith
 checker: tasks/coverage/typescript/tests/cases/compiler/resolveModuleNameWithSameLetDeclarationName1.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/resolveModuleNameWithSameLetDeclarationName2.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/resolveNameWithNamspace.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/restElementAssignable.ts
 
@@ -3323,6 +3947,8 @@ checker: tasks/coverage/typescript/tests/cases/compiler/returnTypeParameterWithM
 
 checker: tasks/coverage/typescript/tests/cases/compiler/returnTypePredicateIsInstantiateInContextOfTarget.tsx
 
+checker: tasks/coverage/typescript/tests/cases/compiler/reuseInnerModuleMember.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/reverseMappedContravariantInference.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/reverseMappedIntersectionInference1.ts
@@ -3359,7 +3985,7 @@ checker: tasks/coverage/typescript/tests/cases/compiler/selfReferencingTypeRefer
 
 checker: tasks/coverage/typescript/tests/cases/compiler/selfReferentialFunctionType.ts
 
-checker: tasks/coverage/typescript/tests/cases/compiler/separate1-2.ts
+checker: tasks/coverage/typescript/tests/cases/compiler/shebangBeforeReferences.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/shouldNotPrintNullEscapesIntoOctalLiterals.ts
 
@@ -3386,8 +4012,6 @@ checker: tasks/coverage/typescript/tests/cases/compiler/singletonLabeledTuple.ts
 checker: tasks/coverage/typescript/tests/cases/compiler/sliceResultCast.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/sourceMap-FileWithComments.ts
-
-checker: tasks/coverage/typescript/tests/cases/compiler/sourceMapForFunctionInInternalModuleWithCommentPrecedingStatement01.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/sourceMapValidationClassWithDefaultConstructor.ts
 
@@ -3483,6 +4107,8 @@ checker: tasks/coverage/typescript/tests/cases/compiler/spreadExpressionContaini
 
 checker: tasks/coverage/typescript/tests/cases/compiler/spreadExpressionContextualType.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/spreadExpressionContextualTypeWithNamespace.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/spreadIdenticalTypesRemoved.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/spreadObjectNoCircular1.ts
@@ -3498,6 +4124,10 @@ checker: tasks/coverage/typescript/tests/cases/compiler/spreadTupleAccessedByTyp
 checker: tasks/coverage/typescript/tests/cases/compiler/spreadTypeRemovesReadonly.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/spreadsAndContextualTupleTypes.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/spuriousCircularityOnTypeImport.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/stackDepthLimitCastingType.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/staticFieldWithInterfaceContext.ts
 
@@ -3559,11 +4189,9 @@ checker: tasks/coverage/typescript/tests/cases/compiler/stringRawType.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/stringTrim.ts
 
-checker: tasks/coverage/typescript/tests/cases/compiler/structural1.ts
-
-checker: tasks/coverage/typescript/tests/cases/compiler/structuralTypeInDeclareFileForModule.ts
-
 checker: tasks/coverage/typescript/tests/cases/compiler/subSubClassCanAccessProtectedConstructor.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/subclassThisTypeAssignable02.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/subclassUint8Array.ts
 
@@ -3627,7 +4255,21 @@ checker: tasks/coverage/typescript/tests/cases/compiler/switchCaseNarrowsMatchin
 
 checker: tasks/coverage/typescript/tests/cases/compiler/switchFallThroughs.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/symbolLinkDeclarationEmitModuleNamesImportRef.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/symbolLinkDeclarationEmitModuleNamesRootDir.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/symbolMergeValueAndImportedType.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/symbolObserverMismatchingPolyfillsWorkTogether.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/symlinkedWorkspaceDependenciesNoDirectLinkGeneratesDeepNonrelativeName.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/symlinkedWorkspaceDependenciesNoDirectLinkGeneratesNonrelativeName.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/symlinkedWorkspaceDependenciesNoDirectLinkOptionalGeneratesNonrelativeName.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/symlinkedWorkspaceDependenciesNoDirectLinkPeerGeneratesNonrelativeName.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/taggedPrimitiveNarrowing.ts
 
@@ -3681,8 +4323,6 @@ checker: tasks/coverage/typescript/tests/cases/compiler/templateLiteralsSourceMa
 
 checker: tasks/coverage/typescript/tests/cases/compiler/ternaryExpressionSourceMap.ts
 
-checker: tasks/coverage/typescript/tests/cases/compiler/testContainerList.ts
-
 checker: tasks/coverage/typescript/tests/cases/compiler/testTypings.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/thisCapture1.ts
@@ -3723,9 +4363,15 @@ checker: tasks/coverage/typescript/tests/cases/compiler/toStringOnPrimitives.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/topLevel.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/topLevelBlockExpando.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/topLevelLambda2.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/trackedSymbolsNoCrash.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/transformsElideNullUndefinedType.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/tripleSlashReferenceAbsoluteWindowsPath.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/truthinessCallExpressionCoercion3.ts
 
@@ -3735,11 +4381,19 @@ checker: tasks/coverage/typescript/tests/cases/compiler/tryCatchFinally.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/tryStatementInternalComments.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/tslibReExportHelpers.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/tslibReExportHelpers2.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/tsxAttributeQuickinfoTypesSameAsObjectLiteral.tsx
 
 checker: tasks/coverage/typescript/tests/cases/compiler/tsxAttributesHasInferrableIndex.tsx
 
+checker: tasks/coverage/typescript/tests/cases/compiler/tsxDefaultImports.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/tsxDiscriminantPropertyInference.tsx
+
+checker: tasks/coverage/typescript/tests/cases/compiler/tsxFragmentChildrenCheck.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/tsxReactPropsInferenceSucceedsOnIntersections.tsx
 
@@ -3769,6 +4423,8 @@ checker: tasks/coverage/typescript/tests/cases/compiler/typeAnnotationBestCommon
 
 checker: tasks/coverage/typescript/tests/cases/compiler/typeArgumentsInFunctionExpressions.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/typeCheckObjectCreationExpressionWithUndefinedCallResolutionData.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/typeCheckObjectLiteralMethodBody.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/typeConstraintsWithConstructSignatures.ts
@@ -3796,6 +4452,8 @@ checker: tasks/coverage/typescript/tests/cases/compiler/typeGuardNarrowsIndexedA
 checker: tasks/coverage/typescript/tests/cases/compiler/typeGuardNarrowsIndexedAccessOfKnownProperty6.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/typeGuardNarrowsIndexedAccessOfKnownProperty7.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/typeGuardNarrowsIndexedAccessOfKnownProperty8.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/typeGuardOnContainerTypeNoHang.ts
 
@@ -3865,6 +4523,34 @@ checker: tasks/coverage/typescript/tests/cases/compiler/typePredicatesOptionalCh
 
 checker: tasks/coverage/typescript/tests/cases/compiler/typePredicatesOptionalChaining3.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/typeReferenceDirectiveWithTypeAsFile.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/typeReferenceDirectives1.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/typeReferenceDirectives10.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/typeReferenceDirectives13.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/typeReferenceDirectives2.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/typeReferenceDirectives3.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/typeReferenceDirectives4.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/typeReferenceDirectives5.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/typeReferenceDirectives6.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/typeReferenceDirectives7.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/typeReferenceDirectives8.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/typeReferenceDirectives9.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/typeRootsFromMultipleNodeModulesDirectories.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/typeRootsFromNodeModulesInParentDirectory.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/typeVal.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/typeVariableConstraintIntersections.ts
@@ -3879,6 +4565,8 @@ checker: tasks/coverage/typescript/tests/cases/compiler/typedArraysSubarray.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/typedGenericPrototypeMember.ts
 
+checker: tasks/coverage/typescript/tests/cases/compiler/typeofImportInstantiationExpression.ts
+
 checker: tasks/coverage/typescript/tests/cases/compiler/typeofInterface.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/typeofObjectInference.ts
@@ -3890,6 +4578,8 @@ checker: tasks/coverage/typescript/tests/cases/compiler/typeofStripsFreshness.ts
 checker: tasks/coverage/typescript/tests/cases/compiler/typeofThisInMethodSignature.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/typeofUsedBeforeBlockScoped.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/umdGlobalConflict.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/unaryPlus.ts
 
@@ -3904,8 +4594,6 @@ checker: tasks/coverage/typescript/tests/cases/compiler/underscoreMapFirst.ts
 checker: tasks/coverage/typescript/tests/cases/compiler/underscoreThisInDerivedClass01.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/underscoreThisInDerivedClass02.ts
-
-checker: tasks/coverage/typescript/tests/cases/compiler/unexportedInstanceClassVariables.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/unicodeEscapesInJSDoc.ts
 
@@ -3924,6 +4612,8 @@ checker: tasks/coverage/typescript/tests/cases/compiler/unionOfEnumInference.ts
 checker: tasks/coverage/typescript/tests/cases/compiler/unionOfFunctionAndSignatureIsCallable.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/unionReductionMutualSubtypes.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/unionReductionWithStringMappingAndIdenticalBaseTypeExistsNoCrash.tsx
 
 checker: tasks/coverage/typescript/tests/cases/compiler/unionRelationshipCheckPasses.ts
 
@@ -3953,11 +4643,17 @@ checker: tasks/coverage/typescript/tests/cases/compiler/unreachableFlowAfterFina
 
 checker: tasks/coverage/typescript/tests/cases/compiler/untypedArgumentInLambdaExpression.ts
 
-checker: tasks/coverage/typescript/tests/cases/compiler/unusedClassesinNamespace3.ts
+checker: tasks/coverage/typescript/tests/cases/compiler/unusedImportWithSpread.ts
 
-checker: tasks/coverage/typescript/tests/cases/compiler/unusedInterfaceinNamespace4.ts
+checker: tasks/coverage/typescript/tests/cases/compiler/unusedImports11.ts
 
-checker: tasks/coverage/typescript/tests/cases/compiler/unusedInterfaceinNamespace5.ts
+checker: tasks/coverage/typescript/tests/cases/compiler/unusedImports13.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/unusedImports14.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/unusedImports15.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/unusedImports16.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/unusedLocalProperty.ts
 
@@ -3972,6 +4668,8 @@ checker: tasks/coverage/typescript/tests/cases/compiler/unusedLocalsInRecursiveR
 checker: tasks/coverage/typescript/tests/cases/compiler/unusedParameterInCatchClause.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/unusedSetterInClass2.ts
+
+checker: tasks/coverage/typescript/tests/cases/compiler/unusedTypeParameters6.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/unusedTypeParametersNotCheckedByNoUnusedLocals.ts
 
@@ -4015,8 +4713,6 @@ checker: tasks/coverage/typescript/tests/cases/compiler/verifyDefaultLib_dom.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/verifyDefaultLib_webworker.ts
 
-checker: tasks/coverage/typescript/tests/cases/compiler/visSyntax.ts
-
 checker: tasks/coverage/typescript/tests/cases/compiler/visibilityOfTypeParameters.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/voidConstructor.ts
@@ -4055,13 +4751,25 @@ checker: tasks/coverage/typescript/tests/cases/compiler/yieldStarContextualType.
 
 checker: tasks/coverage/typescript/tests/cases/conformance/ambient/ambientDeclarations.ts
 
+checker: tasks/coverage/typescript/tests/cases/conformance/ambient/ambientDeclarationsExternal.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/ambient/ambientDeclarationsPatterns.ts
+
 checker: tasks/coverage/typescript/tests/cases/conformance/ambient/ambientEnumDeclaration1.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/ambient/ambientEnumDeclaration2.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/ambient/ambientInsideNonAmbient.ts
 
+checker: tasks/coverage/typescript/tests/cases/conformance/ambient/ambientShorthand.ts
+
 checker: tasks/coverage/typescript/tests/cases/conformance/ambient/ambientShorthand_declarationEmit.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/ambient/ambientShorthand_duplicate.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/ambient/ambientShorthand_merging.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/ambient/ambientShorthand_reExport.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/async/es2017/asyncArrowFunction/asyncArrowFunction1_es2017.ts
 
@@ -4080,6 +4788,14 @@ checker: tasks/coverage/typescript/tests/cases/conformance/async/es2017/asyncMet
 checker: tasks/coverage/typescript/tests/cases/conformance/async/es2017/asyncMethodWithSuper_es2017.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/async/es2017/asyncUseStrict_es2017.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/async/es2017/awaitBinaryExpression/awaitBinaryExpression1_es2017.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/async/es2017/awaitBinaryExpression/awaitBinaryExpression2_es2017.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/async/es2017/awaitBinaryExpression/awaitBinaryExpression3_es2017.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/async/es2017/awaitBinaryExpression/awaitBinaryExpression4_es2017.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/async/es2017/awaitCallExpression/awaitCallExpression1_es2017.ts
 
@@ -4103,6 +4819,12 @@ checker: tasks/coverage/typescript/tests/cases/conformance/async/es2017/awaitInh
 
 checker: tasks/coverage/typescript/tests/cases/conformance/async/es2017/await_unaryExpression_es2017.ts
 
+checker: tasks/coverage/typescript/tests/cases/conformance/async/es2017/functionDeclarations/asyncFunctionDeclaration11_es2017.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/async/es2017/functionDeclarations/asyncFunctionDeclaration14_es2017.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/async/es2017/functionDeclarations/asyncFunctionDeclaration1_es2017.ts
+
 checker: tasks/coverage/typescript/tests/cases/conformance/async/es6/asyncAliasReturnType_es6.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/async/es6/asyncArrowFunction/asyncArrowFunction1_es6.ts
@@ -4119,7 +4841,17 @@ checker: tasks/coverage/typescript/tests/cases/conformance/async/es6/asyncAwait_
 
 checker: tasks/coverage/typescript/tests/cases/conformance/async/es6/asyncMethodWithSuper_es6.ts
 
+checker: tasks/coverage/typescript/tests/cases/conformance/async/es6/asyncMultiFile_es6.ts
+
 checker: tasks/coverage/typescript/tests/cases/conformance/async/es6/asyncUseStrict_es6.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/async/es6/awaitBinaryExpression/awaitBinaryExpression1_es6.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/async/es6/awaitBinaryExpression/awaitBinaryExpression2_es6.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/async/es6/awaitBinaryExpression/awaitBinaryExpression3_es6.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/async/es6/awaitBinaryExpression/awaitBinaryExpression4_es6.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/async/es6/awaitCallExpression/awaitCallExpression1_es6.ts
 
@@ -4143,13 +4875,17 @@ checker: tasks/coverage/typescript/tests/cases/conformance/async/es6/awaitUnion_
 
 checker: tasks/coverage/typescript/tests/cases/conformance/async/es6/await_unaryExpression_es6.ts
 
+checker: tasks/coverage/typescript/tests/cases/conformance/async/es6/functionDeclarations/asyncFunctionDeclaration11_es6.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/async/es6/functionDeclarations/asyncFunctionDeclaration14_es6.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/async/es6/functionDeclarations/asyncFunctionDeclaration1_es6.ts
+
 checker: tasks/coverage/typescript/tests/cases/conformance/asyncGenerators/asyncGeneratorGenericNonWrappedReturn.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/asyncGenerators/asyncGeneratorPromiseNextType.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractAsIdentifier.ts
-
-checker: tasks/coverage/typescript/tests/cases/conformance/classes/classDeclarations/classAndInterfaceMerge.d.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/classes/classDeclarations/classDeclarationLoop.ts
 
@@ -4178,6 +4914,8 @@ checker: tasks/coverage/typescript/tests/cases/conformance/classes/classExpressi
 checker: tasks/coverage/typescript/tests/cases/conformance/classes/classExpressions/classExpression5.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/classes/classExpressions/classExpressionLoop.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/classes/classExpressions/extendClassExpressionFromModule.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/classes/classExpressions/modifierOnClassExpressionMemberInFunction.ts
 
@@ -4275,6 +5013,8 @@ checker: tasks/coverage/typescript/tests/cases/conformance/classes/members/priva
 
 checker: tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/typeFromPrivatePropertyAssignment.ts
 
+checker: tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/typeFromPrivatePropertyAssignmentJs.ts
+
 checker: tasks/coverage/typescript/tests/cases/conformance/classes/mixinAbstractClasses.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/classes/mixinAbstractClassesReturnTypeInference.ts
@@ -4305,6 +5045,8 @@ checker: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMembe
 
 checker: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/autoAccessor9.ts
 
+checker: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/autoAccessorNoUseDefineForClassFields.ts
+
 checker: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/instanceMemberInitialization.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/instanceMemberWithComputedPropertyName.ts
@@ -4320,6 +5062,8 @@ checker: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMembe
 checker: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/staticMemberInitialization.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/staticPropertyNameConflictsInAmbientContext.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/thisPropertyOverridesAccessors.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/classes/staticIndexSignature/staticIndexSignature6.ts
 
@@ -4395,6 +5139,10 @@ checker: tasks/coverage/typescript/tests/cases/conformance/declarationEmit/anony
 
 checker: tasks/coverage/typescript/tests/cases/conformance/declarationEmit/exportDefaultNamespace.ts
 
+checker: tasks/coverage/typescript/tests/cases/conformance/declarationEmit/leaveOptionalParameterAsWritten.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/declarationEmit/libReferenceDeclarationEmit.ts
+
 checker: tasks/coverage/typescript/tests/cases/conformance/declarationEmit/nullPropertyName.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/declarationEmit/typePredicates/declarationEmitIdentifierPredicates01.ts
@@ -4408,6 +5156,16 @@ checker: tasks/coverage/typescript/tests/cases/conformance/declarationEmit/typeP
 checker: tasks/coverage/typescript/tests/cases/conformance/declarationEmit/typePredicates/declarationEmitThisPredicatesWithPrivateName01.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/declarationEmit/typePredicates/declarationEmitThisPredicatesWithPrivateName02.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/declarationEmit/typeReferenceRelatedFiles.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/declarationEmit/typeofImportTypeOnlyExport.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/declarationEmit/typesVersionsDeclarationEmit.ambient.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/declarationEmit/typesVersionsDeclarationEmit.multiFile.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/declarationEmit/typesVersionsDeclarationEmit.multiFileBackReferenceToUnmapped.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/decorators/class/decoratedClassExportsCommonJS1.ts
 
@@ -4433,13 +5191,61 @@ checker: tasks/coverage/typescript/tests/cases/conformance/decorators/decoratorI
 
 checker: tasks/coverage/typescript/tests/cases/conformance/decorators/legacyDecorators-contextualTypes.ts
 
+checker: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpression1ES2020.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpression2ES2020.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpression3ES2020.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpression4ES2020.ts
+
 checker: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionAsyncES2020.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionAsyncES6CJS.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionDeclarationEmit1.ts
 
+checker: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionDeclarationEmit2.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionDeclarationEmit3.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionES6CJS.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionInCJS1.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionInCJS2.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionInCJS3.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionInCJS4.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionInCJS5.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionInExportEqualsCJS.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionNestedCJS.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionNestedES2020.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionReturnPromiseOfAny.ts
+
 checker: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionShouldNotGetParen.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/emitter/es2015/asyncGenerators/emitter.asyncGenerators.classMethods.es2015.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/emitter/es2015/asyncGenerators/emitter.asyncGenerators.functionDeclarations.es2015.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/emitter/es2015/asyncGenerators/emitter.asyncGenerators.functionExpressions.es2015.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/emitter/es2015/asyncGenerators/emitter.asyncGenerators.objectLiteralMethods.es2015.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/emitter/es2018/asyncGenerators/emitter.asyncGenerators.classMethods.es2018.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/emitter/es2018/asyncGenerators/emitter.asyncGenerators.functionDeclarations.es2018.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/emitter/es2018/asyncGenerators/emitter.asyncGenerators.functionExpressions.es2018.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/emitter/es2018/asyncGenerators/emitter.asyncGenerators.objectLiteralMethods.es2018.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/enums/enumBasics.ts
 
@@ -4474,6 +5280,8 @@ checker: tasks/coverage/typescript/tests/cases/conformance/es2020/bigintMissingE
 checker: tasks/coverage/typescript/tests/cases/conformance/es2020/intlNumberFormatES2020.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/es2020/localesObjectArgument.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/es2020/modules/exportAsNamespace5.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/es2021/es2021LocalesObjectArgument.ts
 
@@ -4709,6 +5517,8 @@ checker: tasks/coverage/typescript/tests/cases/conformance/es6/decorators/class/
 
 checker: tasks/coverage/typescript/tests/cases/conformance/es6/decorators/class/method/decoratorOnClassMethod1.es6.ts
 
+checker: tasks/coverage/typescript/tests/cases/conformance/es6/decorators/class/method/parameter/decoratorOnClassMethodParameter1.es6.ts
+
 checker: tasks/coverage/typescript/tests/cases/conformance/es6/decorators/class/property/decoratorOnClassProperty1.es6.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/es6/defaultParameters/emitDefaultParametersFunctionES6.ts
@@ -4831,6 +5641,8 @@ checker: tasks/coverage/typescript/tests/cases/conformance/es6/for-ofStatements/
 
 checker: tasks/coverage/typescript/tests/cases/conformance/es6/for-ofStatements/for-of38.ts
 
+checker: tasks/coverage/typescript/tests/cases/conformance/es6/for-ofStatements/for-of4.ts
+
 checker: tasks/coverage/typescript/tests/cases/conformance/es6/for-ofStatements/for-of40.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/es6/for-ofStatements/for-of41.ts
@@ -4844,6 +5656,8 @@ checker: tasks/coverage/typescript/tests/cases/conformance/es6/for-ofStatements/
 checker: tasks/coverage/typescript/tests/cases/conformance/es6/for-ofStatements/for-of45.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/es6/for-ofStatements/for-of49.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/es6/for-ofStatements/for-of5.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/es6/for-ofStatements/for-of50.ts
 
@@ -4866,6 +5680,24 @@ checker: tasks/coverage/typescript/tests/cases/conformance/es6/memberFunctionDec
 checker: tasks/coverage/typescript/tests/cases/conformance/es6/memberFunctionDeclarations/MemberFunctionDeclaration2_es6.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/es6/memberFunctionDeclarations/MemberFunctionDeclaration7_es6.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/es6/modules/defaultExportInAwaitExpression02.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/es6/modules/exportsAndImports1-es6.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/es6/modules/exportsAndImports1.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/es6/modules/exportsAndImports2-es6.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/es6/modules/exportsAndImports2.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/es6/modules/exportsAndImports3-es6.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/es6/modules/exportsAndImports3.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/es6/modules/exportsAndImports4-es6.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/es6/modules/exportsAndImports5.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/es6/newTarget/newTarget.es6.ts
 
@@ -5049,6 +5881,10 @@ checker: tasks/coverage/typescript/tests/cases/conformance/es6/templates/templat
 
 checker: tasks/coverage/typescript/tests/cases/conformance/es6/templates/templateStringWithEmbeddedAdditionES6.ts
 
+checker: tasks/coverage/typescript/tests/cases/conformance/es6/templates/templateStringWithEmbeddedArray.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/es6/templates/templateStringWithEmbeddedArrayES6.ts
+
 checker: tasks/coverage/typescript/tests/cases/conformance/es6/templates/templateStringWithEmbeddedComments.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/es6/templates/templateStringWithEmbeddedCommentsES6.ts
@@ -5114,8 +5950,6 @@ checker: tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/
 checker: tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/YieldExpression7_es6.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/YieldStarExpression4_es6.ts
-
-checker: tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/generatorInAmbientContext6.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/generatorNoImplicitReturns.ts
 
@@ -5227,6 +6061,8 @@ checker: tasks/coverage/typescript/tests/cases/conformance/expressions/asOperato
 
 checker: tasks/coverage/typescript/tests/cases/conformance/expressions/asOperator/asOperator3.ts
 
+checker: tasks/coverage/typescript/tests/cases/conformance/expressions/asOperator/asOperator4.ts
+
 checker: tasks/coverage/typescript/tests/cases/conformance/expressions/asOperator/asOperatorASI.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/expressions/assignmentOperator/assignmentGenericLookupTypeNarrowing.ts
@@ -5333,6 +6169,8 @@ checker: tasks/coverage/typescript/tests/cases/conformance/expressions/superProp
 
 checker: tasks/coverage/typescript/tests/cases/conformance/expressions/thisKeyword/typeOfThisInConstructorParamList.ts
 
+checker: tasks/coverage/typescript/tests/cases/conformance/expressions/typeAssertions/constAssertionOnEnum.ts
+
 checker: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/TypeGuardWithEnumUnion.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/nullOrUndefinedTypeGuardIsOrderIndependent.ts
@@ -5383,7 +6221,11 @@ checker: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOper
 
 checker: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/voidOperator/voidOperatorWithStringType.ts
 
-checker: tasks/coverage/typescript/tests/cases/conformance/externalModules/asiPreventsParsingAsAmbientExternalModule02.ts
+checker: tasks/coverage/typescript/tests/cases/conformance/externalModules/commonJSImportAsPrimaryExpression.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/externalModules/commonJSImportNotAsPrimaryExpression.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/externalModules/commonJsImportBindingElementNarrowType.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/externalModules/es6/es6modulekind.ts
 
@@ -5393,9 +6235,87 @@ checker: tasks/coverage/typescript/tests/cases/conformance/externalModules/esnex
 
 checker: tasks/coverage/typescript/tests/cases/conformance/externalModules/esnext/esnextmodulekindWithES2015Target.ts
 
+checker: tasks/coverage/typescript/tests/cases/conformance/externalModules/exportAssignDottedName.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/externalModules/exportAssignImportedIdentifier.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/externalModules/exportAssignTypes.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/externalModules/exportAssignmentMergedModule.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/externalModules/exportAssignmentOfExportNamespaceWithDefault.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/externalModules/exportDeclaredModule.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/externalModules/exportTypeMergedWithExportStarAsNamespace.ts
+
 checker: tasks/coverage/typescript/tests/cases/conformance/externalModules/globalAugmentationModuleResolution.ts
 
+checker: tasks/coverage/typescript/tests/cases/conformance/externalModules/moduleResolutionWithExtensions.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/externalModules/moduleScoping.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/externalModules/nameDelimitedBySlashes.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/externalModules/nameWithFileExtension.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/externalModules/nameWithRelativePaths.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/externalModules/reexportClassDefinition.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/externalModules/topLevelAmbientModule.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/externalModules/topLevelFileModule.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeAndNamespaceExportMerge.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnly/ambient.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnly/cjsImportInES2015.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnly/exportDeclaration_moduleSpecifier-isolatedModules.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnly/exportDeclaration_value.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnly/implementsClause.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnly/importDefaultNamedType.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnly/importDefaultNamedType2.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnly/importDefaultNamedType3.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnly/mergedWithLocalValue.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnly/namespaceImportTypeQuery2.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnly/nestedNamespace.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnly/typeQuery.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnlyMerge1.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeValueMerge1.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/externalModules/umd-augmentation-1.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/externalModules/umd-augmentation-2.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/externalModules/umd-augmentation-3.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/externalModules/umd-augmentation-4.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/externalModules/umd6.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/externalModules/umd7.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/externalModules/umd9.ts
+
 checker: tasks/coverage/typescript/tests/cases/conformance/externalModules/verbatimModuleSyntaxConstEnum.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/externalModules/verbatimModuleSyntaxConstEnumUsage.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/externalModules/verbatimModuleSyntaxDeclarationFile.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/functions/strictBindCallApply2.ts
 
@@ -5413,11 +6333,31 @@ checker: tasks/coverage/typescript/tests/cases/conformance/generators/generatorY
 
 checker: tasks/coverage/typescript/tests/cases/conformance/importAttributes/importAttributes11.ts
 
+checker: tasks/coverage/typescript/tests/cases/conformance/importAttributes/importAttributes7.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/importAttributes/importAttributes8.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/importDefer/importBindingDefer.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/importDefer/importBindingDefer2.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/importDefer/importDeferDeclaration.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/importDefer/importEqualsBindingDefer.ts
+
 checker: tasks/coverage/typescript/tests/cases/conformance/inferFromBindingPattern.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/interfaces/declarationMerging/mergedInterfacesWithConflictingPropertyNames2.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/interfaces/interfaceDeclarations/interfaceExtendsObjectIntersection.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/internalModules/DeclarationMerging/AmbientModuleAndAmbientFunctionWithTheSameNameAndCommonRoot.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/internalModules/DeclarationMerging/AmbientModuleAndAmbientWithSameNameAndCommonRoot.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/internalModules/DeclarationMerging/AmbientModuleAndNonAmbientClassWithSameNameAndCommonRoot.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/internalModules/DeclarationMerging/AmbientModuleAndNonAmbientFunctionWithTheSameNameAndCommonRoot.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/internalModules/DeclarationMerging/ClassAndModuleThatMergeWithStaticFunctionAndNonExportedFunctionThatShareAName.ts
 
@@ -5425,39 +6365,35 @@ checker: tasks/coverage/typescript/tests/cases/conformance/internalModules/Decla
 
 checker: tasks/coverage/typescript/tests/cases/conformance/internalModules/DeclarationMerging/EnumAndModuleWithSameNameAndCommonRoot.ts
 
+checker: tasks/coverage/typescript/tests/cases/conformance/internalModules/DeclarationMerging/FunctionAndModuleWithSameNameAndDifferentCommonRoot.ts
+
 checker: tasks/coverage/typescript/tests/cases/conformance/internalModules/DeclarationMerging/ModuleAndEnumWithSameNameAndCommonRoot.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/internalModules/DeclarationMerging/TwoInternalModulesThatMergeEachWithExportedAndNonExportedInterfacesOfTheSameName.ts
 
+checker: tasks/coverage/typescript/tests/cases/conformance/internalModules/DeclarationMerging/TwoInternalModulesThatMergeEachWithExportedAndNonExportedLocalVarsOfTheSameName.ts
+
 checker: tasks/coverage/typescript/tests/cases/conformance/internalModules/DeclarationMerging/TwoInternalModulesThatMergeEachWithExportedInterfacesOfTheSameName.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/internalModules/DeclarationMerging/TwoInternalModulesWithTheSameNameAndDifferentCommonRoot.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/internalModules/DeclarationMerging/TwoInternalModulesWithTheSameNameAndSameCommonRoot.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/internalModules/codeGeneration/importStatements.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/internalModules/exportDeclarations/ExportClassWhichExtendsInterfaceWithInaccessibleType.ts
 
-checker: tasks/coverage/typescript/tests/cases/conformance/internalModules/exportDeclarations/ExportInterfaceWithAccessibleTypesInTypeParameterConstraintsClassHeritageListMemberTypeAnnotations.ts
-
 checker: tasks/coverage/typescript/tests/cases/conformance/internalModules/exportDeclarations/ExportInterfaceWithInaccessibleTypeInIndexerTypeAnnotations.ts
 
-checker: tasks/coverage/typescript/tests/cases/conformance/internalModules/exportDeclarations/ExportInterfaceWithInaccessibleTypeInTypeParameterConstraint.ts
-
-checker: tasks/coverage/typescript/tests/cases/conformance/internalModules/exportDeclarations/ExportModuleWithAccessibleTypesOnItsExportedMembers.ts
-
-checker: tasks/coverage/typescript/tests/cases/conformance/internalModules/exportDeclarations/ExportObjectLiteralAndObjectTypeLiteralWithAccessibleTypesInMemberTypeAnnotations.ts
-
-checker: tasks/coverage/typescript/tests/cases/conformance/internalModules/exportDeclarations/ExportVariableWithAccessibleTypeInTypeAnnotation.ts
-
-checker: tasks/coverage/typescript/tests/cases/conformance/internalModules/exportDeclarations/ExportVariableWithInaccessibleTypeInTypeAnnotation.ts
-
 checker: tasks/coverage/typescript/tests/cases/conformance/internalModules/importDeclarations/exportImportAlias.ts
-
-checker: tasks/coverage/typescript/tests/cases/conformance/internalModules/moduleDeclarations/asiPreventsParsingAsNamespace03.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/internalModules/moduleDeclarations/asiPreventsParsingAsNamespace05.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/internalModules/moduleDeclarations/nestedModules.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/internalModules/moduleDeclarations/reExportAliasMakesInstantiated.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/callbackCrossModule.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/callbackOnConstructor.ts
 
@@ -5495,7 +6431,13 @@ checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/constructorTagO
 
 checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/constructorTagWithThisTag.ts
 
+checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsClassAccessor.ts
+
 checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsClassMethod.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsClassStatic2.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsCommonjsRelativePath.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsConstsAsNamespacesWithReferences.ts
 
@@ -5503,11 +6445,17 @@ checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/js
 
 checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsExportDoubleAssignmentInClosure.ts
 
+checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsExportedClassAliases.ts
+
 checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsFunctionWithDefaultAssignedMember.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsFunctions.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsGetterSetter.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsImportAliasExposedWithinNamespaceCjs.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsImportNamespacedType.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsJSDocRedirectedLookups.ts
 
@@ -5517,7 +6465,13 @@ checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/js
 
 checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsOptionalTypeLiteralProps2.ts
 
+checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsParameterTagReusesInputNodeInEmit1.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsParameterTagReusesInputNodeInEmit2.ts
+
 checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsPrivateFields01.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsReferenceToClassInstanceCrossFile.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsReusesExistingTypeAnnotations.ts
 
@@ -5525,7 +6479,19 @@ checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/js
 
 checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsThisTypes.ts
 
+checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsTypeAliases.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsTypeReassignmentFromDeclaration.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsTypedefAndImportTypes.ts
+
 checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsTypedefFunction.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsTypedefPropertyAndExportAssignment.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsUniqueSymbolUsage.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/enumTagImported.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/enumTagOnExports.ts
 
@@ -5537,23 +6503,71 @@ checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/errorIsolation.
 
 checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/exportedAliasedEnumTag.ts
 
+checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/exportedEnumTypeAndValue.ts
+
 checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/extendsTag1.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/extendsTag3.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/extendsTag6.ts
 
+checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/importTag1.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/importTag16.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/importTag18.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/importTag19.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/importTag2.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/importTag20.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/importTag25.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/importTag3.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/importTag5.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/importTag6.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/importTag7.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/importTag8.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/importTag9.ts
+
 checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/inferThis.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/instantiateTemplateTagTypeParameterOnVariableStatement.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocAugments_qualifiedName.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocAugments_withTypeParameter.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocBindingInUnreachableCode.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocImplementsTag.ts
 
+checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocImplements_namespacedInterface.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocImportTypeReferenceToClassAlias.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocImportTypeReferenceToCommonjsModule.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocImportTypeReferenceToESModule.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocImportTypeReferenceToStringLiteral.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocLinkTag2.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocLinkTag4.ts
+
 checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocLinkTag6.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocLinkTag7.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocLinkTag9.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocParseHigherOrderFunction.ts
 
@@ -5573,7 +6587,15 @@ checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocTemplateTa
 
 checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocTemplateTag6.ts
 
+checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocTypeDefAtStartOfFile.ts
+
 checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocTypeReferenceExports.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocTypeReferenceToImport.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocTypeReferenceToImportOfClassExpression.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocTypeReferenceToImportOfFunctionExpression.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocTypeReferenceToValue.ts
 
@@ -5583,9 +6605,21 @@ checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocTypeTagOnP
 
 checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocVariableDeclarationWithTypeAnnotation.ts
 
+checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocVariadicType.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/linkTagEmit1.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/moduleExportsElementAccessAssignment.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/moduleExportsElementAccessAssignment2.ts
+
 checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/overloadTag3.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/paramTagBracketsAddOptionalUndefined.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/paramTagOnCallExpression.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/paramTagTypeResolution.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/paramTagTypeResolution2.ts
 
@@ -5604,6 +6638,8 @@ checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/typeParameterEx
 checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/typeTagOnPropertyAssignment.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/typeTagWithGenericSignature.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/typedefCrossModule.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/jsdoc/typedefOnSemicolonClassElement.ts
 
@@ -5631,6 +6667,12 @@ checker: tasks/coverage/typescript/tests/cases/conformance/jsx/checkJsxUnionSFXC
 
 checker: tasks/coverage/typescript/tests/cases/conformance/jsx/commentEmittingInPreserveJsx1.tsx
 
+checker: tasks/coverage/typescript/tests/cases/conformance/jsx/inline/inlineJsxAndJsxFragPragmaOverridesCompilerOptions.tsx
+
+checker: tasks/coverage/typescript/tests/cases/conformance/jsx/inline/inlineJsxFactoryDeclarations.tsx
+
+checker: tasks/coverage/typescript/tests/cases/conformance/jsx/inline/inlineJsxFactoryOverridesCompilerOption.tsx
+
 checker: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxAttributeResolution13.tsx
 
 checker: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxAttributeResolution16.tsx
@@ -5645,7 +6687,15 @@ checker: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxDynamicTagName
 
 checker: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxDynamicTagName4.tsx
 
+checker: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxDynamicTagName5.tsx
+
 checker: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxDynamicTagName6.tsx
+
+checker: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxDynamicTagName8.tsx
+
+checker: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxDynamicTagName9.tsx
+
+checker: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxElementResolution19.tsx
 
 checker: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxElementResolution2.tsx
 
@@ -5671,6 +6721,8 @@ checker: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxReactComponent
 
 checker: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxReactEmit2.tsx
 
+checker: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxReactEmit6.tsx
+
 checker: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxReactEmitEntities.tsx
 
 checker: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxReactEmitWhitespace.tsx
@@ -5695,6 +6747,30 @@ checker: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxUnionElementTy
 
 checker: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxUnionTypeComponent1.tsx
 
+checker: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/node10IsNode_node10.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/packageJsonMain.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/scopedPackages.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/selfNameModuleAugmentation.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/typesVersions.ambientModules.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/typesVersions.multiFile.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/untypedModuleImport.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/untypedModuleImport_vsAmbient.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/node/allowJs/nodeAllowJsPackageSelfName2.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesPackageImportsRootWildcard.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesTripleSlashReferenceModeOverrideOldResolutionError.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/nonjsExtensions/declarationFileForHtmlFileWithinDeclarationFile.ts
+
 checker: tasks/coverage/typescript/tests/cases/conformance/override/override10.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/override/override14.ts
@@ -5704,6 +6780,8 @@ checker: tasks/coverage/typescript/tests/cases/conformance/override/override_js1
 checker: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript3/Accessors/parserES3Accessors2.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ArrayLiteralExpressions/parserArrayLiteralExpression1.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ArrayLiteralExpressions/parserArrayLiteralExpression10.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ArrayLiteralExpressions/parserArrayLiteralExpression11.ts
 
@@ -5715,9 +6793,21 @@ checker: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Ar
 
 checker: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ArrayLiteralExpressions/parserArrayLiteralExpression15.ts
 
+checker: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ArrayLiteralExpressions/parserArrayLiteralExpression2.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ArrayLiteralExpressions/parserArrayLiteralExpression3.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ArrayLiteralExpressions/parserArrayLiteralExpression4.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ArrayLiteralExpressions/parserArrayLiteralExpression5.ts
+
 checker: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ArrayLiteralExpressions/parserArrayLiteralExpression6.ts
 
+checker: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ArrayLiteralExpressions/parserArrayLiteralExpression7.ts
+
 checker: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ArrayLiteralExpressions/parserArrayLiteralExpression8.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ArrayLiteralExpressions/parserArrayLiteralExpression9.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ArrowFunctionExpressions/parserArrowFunctionExpression6.ts
 
@@ -5760,8 +6850,6 @@ checker: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Er
 checker: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/ArrowFunctions/ArrowFunction4.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/ArrowFunctions/parserX_ArrowFunction4.ts
-
-checker: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/FunctionDeclarations/parserFunctionDeclaration8.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Fuzz/parser768531.ts
 
@@ -5807,11 +6895,19 @@ checker: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Pr
 
 checker: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/RegressionTests/parser509546_2.ts
 
+checker: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/RegressionTests/parser596700.ts
+
 checker: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/RegressionTests/parser630933.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/RegressionTests/parser645086_3.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/RegressionTests/parser645086_4.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/RegressionTests/parser645484.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/RegressionTests/parserNotHexLiteral1.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/RegularExpressions/parserRegularExpression1.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/RegularExpressions/parserRegularExpression6.ts
 
@@ -5891,19 +6987,61 @@ checker: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript6/Sy
 
 checker: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript6/Symbols/parserSymbolProperty9.ts
 
+checker: tasks/coverage/typescript/tests/cases/conformance/references/library-reference-1.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/references/library-reference-10.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/references/library-reference-11.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/references/library-reference-12.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/references/library-reference-13.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/references/library-reference-14.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/references/library-reference-2.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/references/library-reference-3.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/references/library-reference-6.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/references/library-reference-7.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/references/library-reference-8.ts
+
 checker: tasks/coverage/typescript/tests/cases/conformance/salsa/annotatedThisPropertyInitializerDoesntNarrow.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/salsa/binderUninitializedModuleExportsAssignment.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/salsa/circularMultipleAssignmentDeclaration.ts
 
+checker: tasks/coverage/typescript/tests/cases/conformance/salsa/commonJSAliasedExport.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/salsa/commonJSImportClassTypeReference.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/salsa/commonJSImportExportedClassExpression.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/salsa/commonJSImportNestedClassTypeReference.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/salsa/commonJSReexport.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/salsa/constructorFunctionMergeWithClass.ts
+
 checker: tasks/coverage/typescript/tests/cases/conformance/salsa/constructorFunctionMethodTypeParameters.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/salsa/constructorFunctions2.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/salsa/constructorFunctions3.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/salsa/constructorNameInObjectLiteralAccessor.ts
 
+checker: tasks/coverage/typescript/tests/cases/conformance/salsa/contextualTypedSpecialAssignment.ts
+
 checker: tasks/coverage/typescript/tests/cases/conformance/salsa/defaultPropertyAssignedClassWithPrototype.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/salsa/exportNestedNamespaces.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/salsa/inferingFromAny.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/salsa/inferringClassMembersFromAssignments2.ts
 
@@ -5919,7 +7057,15 @@ checker: tasks/coverage/typescript/tests/cases/conformance/salsa/inferringClassM
 
 checker: tasks/coverage/typescript/tests/cases/conformance/salsa/inferringClassMembersFromAssignments8.ts
 
+checker: tasks/coverage/typescript/tests/cases/conformance/salsa/inferringClassStaticMembersFromAssignments.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/salsa/jsContainerMergeJsContainer.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/salsa/jsContainerMergeTsDeclaration.ts
+
 checker: tasks/coverage/typescript/tests/cases/conformance/salsa/jsdocConstructorFunctionTypeReference.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/salsa/lateBoundAssignmentDeclarationSupport7.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/salsa/lateBoundClassMemberAssignmentJS.ts
 
@@ -5931,6 +7077,10 @@ checker: tasks/coverage/typescript/tests/cases/conformance/salsa/malformedTags.t
 
 checker: tasks/coverage/typescript/tests/cases/conformance/salsa/mixedPropertyElementAccessAssignmentDeclaration.ts
 
+checker: tasks/coverage/typescript/tests/cases/conformance/salsa/moduleExportAlias.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/salsa/moduleExportAlias2.ts
+
 checker: tasks/coverage/typescript/tests/cases/conformance/salsa/moduleExportAlias3.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/salsa/moduleExportAlias4.ts
@@ -5941,7 +7091,13 @@ checker: tasks/coverage/typescript/tests/cases/conformance/salsa/moduleExportAli
 
 checker: tasks/coverage/typescript/tests/cases/conformance/salsa/moduleExportAliasExports.ts
 
+checker: tasks/coverage/typescript/tests/cases/conformance/salsa/moduleExportAliasImported.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/salsa/moduleExportAssignment.ts
+
 checker: tasks/coverage/typescript/tests/cases/conformance/salsa/moduleExportAssignment2.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/salsa/moduleExportAssignment3.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/salsa/moduleExportAssignment4.ts
 
@@ -5949,13 +7105,23 @@ checker: tasks/coverage/typescript/tests/cases/conformance/salsa/moduleExportAss
 
 checker: tasks/coverage/typescript/tests/cases/conformance/salsa/moduleExportAssignment6.ts
 
+checker: tasks/coverage/typescript/tests/cases/conformance/salsa/moduleExportDuplicateAlias2.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/salsa/moduleExportDuplicateAlias3.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/salsa/moduleExportNestedNamespaces.ts
+
 checker: tasks/coverage/typescript/tests/cases/conformance/salsa/moduleExportPropertyAssignmentDefault.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/salsa/nestedPrototypeAssignment.ts
 
+checker: tasks/coverage/typescript/tests/cases/conformance/salsa/plainJSGrammarErrors2.ts
+
 checker: tasks/coverage/typescript/tests/cases/conformance/salsa/privateConstructorFunction.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/salsa/propertiesOfGenericConstructorFunctions.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/salsa/propertyAssignmentOnImportedSymbol.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/salsa/propertyAssignmentOnParenthesizedNumber.ts
 
@@ -5963,7 +7129,19 @@ checker: tasks/coverage/typescript/tests/cases/conformance/salsa/propertyAssignm
 
 checker: tasks/coverage/typescript/tests/cases/conformance/salsa/propertyAssignmentUseParentType3.ts
 
+checker: tasks/coverage/typescript/tests/cases/conformance/salsa/prototypePropertyAssignmentMergeAcrossFiles.ts
+
 checker: tasks/coverage/typescript/tests/cases/conformance/salsa/prototypePropertyAssignmentMergedTypeReference.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/salsa/reExportJsFromTs.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/salsa/requireAssertsFromTypescript.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/salsa/requireTwoPropertyAccesses.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/salsa/sourceFileMergeWithFunction.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/salsa/spellingUncheckedJS.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/salsa/thisPropertyAssignmentCircular.ts
 
@@ -5973,23 +7151,39 @@ checker: tasks/coverage/typescript/tests/cases/conformance/salsa/thisTypeOfConst
 
 checker: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFromContextualThisType.ts
 
+checker: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFromParamTagForFunction.ts
+
 checker: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFromPropertyAssignment.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFromPropertyAssignment10.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFromPropertyAssignment10_1.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFromPropertyAssignment11.ts
 
+checker: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFromPropertyAssignment12.ts
+
 checker: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFromPropertyAssignment13.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFromPropertyAssignment14.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFromPropertyAssignment15.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFromPropertyAssignment16.ts
 
+checker: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFromPropertyAssignment17.ts
+
 checker: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFromPropertyAssignment18.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFromPropertyAssignment19.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFromPropertyAssignment2.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFromPropertyAssignment20.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFromPropertyAssignment23.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFromPropertyAssignment24.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFromPropertyAssignment25.ts
 
@@ -5999,13 +7193,29 @@ checker: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFromPropert
 
 checker: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFromPropertyAssignment30.ts
 
+checker: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFromPropertyAssignment34.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFromPropertyAssignment35.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFromPropertyAssignment37.ts
+
 checker: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFromPropertyAssignment38.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFromPropertyAssignment39.ts
 
+checker: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFromPropertyAssignment4.ts
+
 checker: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFromPropertyAssignment40.ts
 
+checker: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFromPropertyAssignment5.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFromPropertyAssignment6.ts
+
 checker: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFromPropertyAssignment7.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFromPropertyAssignment8.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFromPropertyAssignment8_1.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFromPropertyAssignment9.ts
 
@@ -6018,6 +7228,10 @@ checker: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFromPrototy
 checker: tasks/coverage/typescript/tests/cases/conformance/salsa/typeTagOnFunctionReferencesGeneric.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/salsa/unannotatedParametersAreOptional.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/salsa/varRequireFromJavascript.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/salsa/varRequireFromTypescript.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/scanner/ecmascript5/scannerEnum1.ts
 
@@ -6085,6 +7299,8 @@ checker: tasks/coverage/typescript/tests/cases/conformance/types/contextualTypes
 
 checker: tasks/coverage/typescript/tests/cases/conformance/types/forAwait/types.forAwait.es2018.1.ts
 
+checker: tasks/coverage/typescript/tests/cases/conformance/types/import/importTypeInJSDoc.ts
+
 checker: tasks/coverage/typescript/tests/cases/conformance/types/intersection/contextualIntersectionType.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/types/intersection/intersectionMemberOfUnionNarrowsCorrectly.ts
@@ -6100,6 +7316,8 @@ checker: tasks/coverage/typescript/tests/cases/conformance/types/intersection/in
 checker: tasks/coverage/typescript/tests/cases/conformance/types/intersection/intersectionTypeInference2.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/types/intersection/intersectionTypeInference3.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/types/intersection/intersectionsAndEmptyObjects.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/types/intersection/operatorsAndIntersectionTypes.ts
 
@@ -6260,6 +7478,8 @@ checker: tasks/coverage/typescript/tests/cases/conformance/types/primitives/numb
 checker: tasks/coverage/typescript/tests/cases/conformance/types/primitives/string/extendStringInterface.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/types/primitives/string/stringPropertyAccess.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/types/primitives/string/validStringAssignments.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/types/primitives/stringLiteral/stringLiteralType.ts
 
@@ -6611,6 +7831,8 @@ checker: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationshi
 
 checker: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeInference/keyofInferenceLowerPriorityThanReturn.ts
 
+checker: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeInference/noInferRedeclaration.ts
+
 checker: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeInference/unionAndIntersectionInference3.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/widenedTypes/arrayLiteralWidened.ts
@@ -6632,4 +7854,8 @@ checker: tasks/coverage/typescript/tests/cases/conformance/types/union/unionType
 checker: tasks/coverage/typescript/tests/cases/conformance/types/union/unionTypeReduction.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/types/uniqueSymbol/uniqueSymbolsDeclarationsErrors.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/typings/typingsLookup1.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/typings/typingsLookup4.ts
 
