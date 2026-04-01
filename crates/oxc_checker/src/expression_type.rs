@@ -169,6 +169,8 @@ impl Checker<'_> {
             | Expression::TaggedTemplateExpression(_) => self.any_type,
 
             Expression::ArrowFunctionExpression(arrow) => {
+                // Queue body for deferred checking (after enclosing scope is resolved).
+                self.queue_deferred_body(arrow.node_id());
                 // Inline arena access to get contextual signature without
                 // borrowing &self (avoids clone). self.type_arena is &'a,
                 // so the returned reference has lifetime 'a.
@@ -212,6 +214,8 @@ impl Checker<'_> {
             }
 
             Expression::FunctionExpression(func) => {
+                // Queue body for deferred checking (after enclosing scope is resolved).
+                self.queue_deferred_body(func.node_id());
                 let contextual_sig =
                     contextual_type.and_then(|c| match self.type_arena.get_data(c) {
                         TypeData::Function(f) => f.signatures.first(),
@@ -275,15 +279,15 @@ impl Checker<'_> {
             self.get_definite_assignment_info(symbol_id, declared_type);
         let needs_assignment_check =
             is_potentially_uninit && !self.is_outer_variable(symbol_id, ref_scope_id);
-        let initial_type = if needs_assignment_check {
-            cached_initial_type
-        } else {
-            declared_type
-        };
+        let initial_type = if needs_assignment_check { cached_initial_type } else { declared_type };
 
         // Apply control flow narrowing.
-        let flow_type =
-            self.get_flow_type_of_reference(ident.node_id.get(), symbol_id, initial_type, declared_type);
+        let flow_type = self.get_flow_type_of_reference(
+            ident.node_id.get(),
+            symbol_id,
+            initial_type,
+            declared_type,
+        );
 
         // TS2454: Variable used before being assigned.
         // If the declared type doesn't include undefined but the flow type does,
@@ -294,11 +298,9 @@ impl Checker<'_> {
         {
             let name = self.semantic().scoping().symbol_name(symbol_id).to_string();
             self.diagnostics.push(
-                OxcDiagnostic::error(format!(
-                    "Variable '{name}' is used before being assigned."
-                ))
-                .with_error_code("ts", "2454")
-                .with_label(ident.span),
+                OxcDiagnostic::error(format!("Variable '{name}' is used before being assigned."))
+                    .with_error_code("ts", "2454")
+                    .with_label(ident.span),
             );
             // Return declared type to reduce follow-on errors.
             return declared_type;
@@ -321,11 +323,8 @@ impl Checker<'_> {
             return cached;
         }
         let is_uninit = self.is_symbol_potentially_uninitialized(symbol_id);
-        let initial_type = if is_uninit {
-            self.get_optional_type(declared_type)
-        } else {
-            declared_type
-        };
+        let initial_type =
+            if is_uninit { self.get_optional_type(declared_type) } else { declared_type };
         let result = (is_uninit, initial_type);
         self.definite_assignment_cache[symbol_id] = Some(result);
         result
@@ -373,10 +372,7 @@ impl Checker<'_> {
         let parent_id = self.semantic().nodes().parent_id(node_id);
         let grandparent_id = self.semantic().nodes().parent_id(parent_id);
         let grandparent = self.semantic().nodes().get_node(grandparent_id);
-        if matches!(
-            grandparent.kind(),
-            AstKind::ForInStatement(_) | AstKind::ForOfStatement(_)
-        ) {
+        if matches!(grandparent.kind(), AstKind::ForInStatement(_) | AstKind::ForOfStatement(_)) {
             return false;
         }
 
@@ -434,9 +430,11 @@ impl Checker<'_> {
         // If it's a union, check if any member is undefined
         if flags.intersects(TypeFlags::Union) {
             if let TypeData::Union(union_data) = self.type_arena.get_data(type_id) {
-                if union_data.types.iter().any(|&t| {
-                    self.type_arena.get_flags(t).intersects(TypeFlags::Undefined)
-                }) {
+                if union_data
+                    .types
+                    .iter()
+                    .any(|&t| self.type_arena.get_flags(t).intersects(TypeFlags::Undefined))
+                {
                     return type_id;
                 }
             }
@@ -456,10 +454,7 @@ impl Checker<'_> {
 
         if flags.intersects(TypeFlags::Union) {
             if let TypeData::Union(union_data) = self.type_arena.get_data(type_id) {
-                return union_data
-                    .types
-                    .iter()
-                    .any(|&t| self.contains_undefined_type(t));
+                return union_data.types.iter().any(|&t| self.contains_undefined_type(t));
             }
         }
 
