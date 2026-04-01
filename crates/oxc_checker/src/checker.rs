@@ -108,6 +108,14 @@ pub struct Checker<'a> {
     /// Uses IndexVec for O(1) array indexing (standard oxc pattern for per-symbol data).
     pub(crate) symbol_type_cache: IndexVec<SymbolId, Option<TypeId>>,
 
+    /// Per-symbol cache for definite-assignment analysis (TS2454).
+    /// `None` = not yet computed.
+    /// `Some((false, _))` = symbol is NOT potentially uninitialized.
+    /// `Some((true, initial_type))` = symbol IS potentially uninitialized;
+    ///   `initial_type` is `declared_type | undefined`.
+    /// The scope-walk (outer-variable check) is still done per-reference.
+    pub(crate) definite_assignment_cache: IndexVec<SymbolId, Option<(bool, TypeId)>>,
+
     /// Set of symbols currently being resolved, for cycle detection.
     /// If we encounter a symbol already in this set, we have a circular
     /// reference and return `any_type` to break the cycle.
@@ -294,6 +302,7 @@ impl<'a> Checker<'a> {
             assignability_cache: FxHashMap::default(),
             intersection_resolved_cache: FxHashMap::default(),
             symbol_type_cache: IndexVec::from_vec(vec![None; symbols_len]),
+            definite_assignment_cache: IndexVec::from_vec(vec![None; symbols_len]),
             resolving_symbols: FxHashSet::default(),
             declared_type_cache: IndexVec::from_vec(vec![None; symbols_len]),
             instantiation_cache: FxHashMap::default(),

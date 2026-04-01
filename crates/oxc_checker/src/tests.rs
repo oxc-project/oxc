@@ -371,10 +371,109 @@ fn check_program_no_error_without_annotation() {
 
 #[test]
 fn check_program_no_error_without_initializer() {
+    // Declaring a variable without using it should not emit TS2454
     with_checker!("var x: number", |checker, program| {
         checker.check_program(program);
         let diagnostics = checker.take_diagnostics();
         assert!(diagnostics.is_empty());
+    });
+}
+
+#[test]
+fn ts2454_var_used_before_assigned() {
+    // let x: number; followed by reading x should emit TS2454
+    with_checker!("let x: number; let y = x;", |checker, program| {
+        checker.check_program(program);
+        let diagnostics = checker.take_diagnostics();
+        assert_eq!(diagnostics.len(), 1, "expected TS2454, got: {diagnostics:?}");
+        let d = &diagnostics[0];
+        assert!(
+            d.message.to_string().contains("used before being assigned"),
+            "expected TS2454 message, got: {}",
+            d.message
+        );
+    });
+}
+
+#[test]
+fn ts2454_not_emitted_after_assignment() {
+    // let x: number; x = 5; let y = x; should NOT emit TS2454
+    with_checker!("let x: number; x = 5; let y = x;", |checker, program| {
+        checker.check_program(program);
+        let diagnostics = checker.take_diagnostics();
+        assert!(
+            diagnostics.is_empty(),
+            "should not emit TS2454 after assignment, got: {diagnostics:?}"
+        );
+    });
+}
+
+#[test]
+fn ts2454_not_emitted_after_assignment_in_loop() {
+    // Assignment inside a loop body should prevent TS2454 after the assignment
+    with_checker!(
+        "let x: number; while (true) { x = 1; let y: number = x; }",
+        |checker, program| {
+            checker.check_program(program);
+            let diagnostics = checker.take_diagnostics();
+            assert!(
+                diagnostics.is_empty(),
+                "should not emit TS2454 after assignment in loop, got: {diagnostics:?}"
+            );
+        }
+    );
+}
+
+#[test]
+fn ts2454_emitted_for_conditional_assignment_in_loop() {
+    // If assignment is conditional, x may be uninitialized on the first
+    // iteration when the if-branch isn't taken
+    with_checker!(
+        r#"
+        declare let cond: boolean;
+        let x: number;
+        while (cond) {
+            if (cond) { x = 1; }
+            let y: number = x;
+        }
+        "#,
+        |checker, program| {
+            checker.check_program(program);
+            let diagnostics = checker.take_diagnostics();
+            let has_2454 = diagnostics.iter().any(|d|
+                d.message.to_string().contains("used before being assigned")
+            );
+            assert!(
+                has_2454,
+                "should emit TS2454 for conditional assignment in loop, got: {diagnostics:?}"
+            );
+        }
+    );
+}
+
+#[test]
+fn ts2454_not_emitted_for_declare_var() {
+    // declare var x: number; let y = x; should NOT emit TS2454
+    with_checker!("declare var x: number; let y = x;", |checker, program| {
+        checker.check_program(program);
+        let diagnostics = checker.take_diagnostics();
+        assert!(
+            diagnostics.is_empty(),
+            "should not emit TS2454 for declare var, got: {diagnostics:?}"
+        );
+    });
+}
+
+#[test]
+fn ts2454_not_emitted_with_initializer() {
+    // let x: number = 5; let y = x; should NOT emit TS2454
+    with_checker!("let x: number = 5; let y = x;", |checker, program| {
+        checker.check_program(program);
+        let diagnostics = checker.take_diagnostics();
+        assert!(
+            diagnostics.is_empty(),
+            "should not emit TS2454 for initialized variable, got: {diagnostics:?}"
+        );
     });
 }
 

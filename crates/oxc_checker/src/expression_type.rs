@@ -244,6 +244,7 @@ impl Checker<'_> {
     /// Resolve an identifier reference to its type.
     ///
     /// Looks up the reference -> symbol -> declaration -> type annotation.
+    /// Emits TS2454 if the variable is used before being assigned.
     pub(crate) fn get_type_of_identifier(
         &mut self,
         ident: &oxc_ast::ast::IdentifierReference<'_>,
@@ -258,10 +259,211 @@ impl Checker<'_> {
             return self.get_type_of_global_identifier(&ident.name);
         };
 
+        // Skip TS2454 for write-only references (the variable is being assigned to).
+        let is_write_only = reference.is_write() && !reference.is_read();
+        // Extract scope_id before mutable borrows
+        let ref_scope_id = reference.scope_id();
+        if is_write_only {
+            return self.get_type_of_symbol(symbol_id);
+        }
+
         let declared_type = self.get_type_of_symbol(symbol_id);
 
-        // Apply control flow narrowing if a flow graph is active.
-        self.get_flow_type_of_reference(ident.node_id.get(), symbol_id, declared_type)
+        // Determine if this variable needs definite-assignment checking.
+        // Symbol-level check is cached; scope walk is per-reference.
+        let (is_potentially_uninit, cached_initial_type) =
+            self.get_definite_assignment_info(symbol_id, declared_type);
+        let needs_assignment_check =
+            is_potentially_uninit && !self.is_outer_variable(symbol_id, ref_scope_id);
+        let initial_type = if needs_assignment_check {
+            cached_initial_type
+        } else {
+            declared_type
+        };
+
+        // Apply control flow narrowing.
+        let flow_type =
+            self.get_flow_type_of_reference(ident.node_id.get(), symbol_id, initial_type, declared_type);
+
+        // TS2454: Variable used before being assigned.
+        // If the declared type doesn't include undefined but the flow type does,
+        // the variable hasn't been assigned on all code paths reaching here.
+        if needs_assignment_check
+            && !self.contains_undefined_type(declared_type)
+            && self.contains_undefined_type(flow_type)
+        {
+            let name = self.semantic().scoping().symbol_name(symbol_id).to_string();
+            self.diagnostics.push(
+                OxcDiagnostic::error(format!(
+                    "Variable '{name}' is used before being assigned."
+                ))
+                .with_error_code("ts", "2454")
+                .with_label(ident.span),
+            );
+            // Return declared type to reduce follow-on errors.
+            return declared_type;
+        }
+
+        flow_type
+    }
+
+    /// Get cached definite-assignment info for a symbol.
+    ///
+    /// Returns `(is_potentially_uninitialized, initial_type)`.
+    /// Computed once per symbol and cached. The scope walk (outer-variable
+    /// check) is NOT included here — it's per-reference.
+    fn get_definite_assignment_info(
+        &mut self,
+        symbol_id: SymbolId,
+        declared_type: TypeId,
+    ) -> (bool, TypeId) {
+        if let Some(cached) = self.definite_assignment_cache[symbol_id] {
+            return cached;
+        }
+        let is_uninit = self.is_symbol_potentially_uninitialized(symbol_id);
+        let initial_type = if is_uninit {
+            self.get_optional_type(declared_type)
+        } else {
+            declared_type
+        };
+        let result = (is_uninit, initial_type);
+        self.definite_assignment_cache[symbol_id] = Some(result);
+        result
+    }
+
+    /// Symbol-level check: is this variable declared without an initializer?
+    ///
+    /// Returns true for `let x: T;` / `var x: T;` (no init), but NOT for
+    /// parameters, for-in/for-of loop variables, ambient declarations,
+    /// variables with `!` assertions, or any/unknown-typed variables.
+    ///
+    /// Does NOT check whether the reference is from a nested scope
+    /// (that's `is_outer_variable`, done per-reference).
+    fn is_symbol_potentially_uninitialized(&self, symbol_id: SymbolId) -> bool {
+        use oxc_ast::AstKind;
+
+        let symbol_flags = self.semantic().scoping().symbol_flags(symbol_id);
+        if !symbol_flags.is_variable() {
+            return false;
+        }
+
+        // Ambient declarations (declare var/let) are assumed to be initialized
+        if symbol_flags.is_ambient() {
+            return false;
+        }
+
+        let node_id = self.semantic().scoping().symbol_declaration(symbol_id);
+        let node = self.semantic().nodes().get_node(node_id);
+
+        let AstKind::VariableDeclarator(decl) = node.kind() else {
+            return false;
+        };
+
+        // Has initializer → not uninitialized
+        if decl.init.is_some() {
+            return false;
+        }
+
+        // Has definite-assignment assertion (x!: T) → skip
+        if decl.definite {
+            return false;
+        }
+
+        // Check for for-in/for-of loop context — those variables are always assigned
+        let parent_id = self.semantic().nodes().parent_id(node_id);
+        let grandparent_id = self.semantic().nodes().parent_id(parent_id);
+        let grandparent = self.semantic().nodes().get_node(grandparent_id);
+        if matches!(
+            grandparent.kind(),
+            AstKind::ForInStatement(_) | AstKind::ForOfStatement(_)
+        ) {
+            return false;
+        }
+
+        // Declared type must not be any/unknown (those are always "safe")
+        if let Some(dt) = self.symbol_type_cache[symbol_id] {
+            let flags = self.type_arena.get_flags(dt);
+            if flags.intersects(TypeFlags::Any | TypeFlags::Unknown) {
+                return false;
+            }
+        }
+
+        true
+    }
+
+    /// Per-reference check: is this reference from a nested function scope?
+    ///
+    /// If the reference crosses a function boundary relative to the
+    /// declaration, the variable is assumed initialized (tsc's
+    /// `isOuterVariable && !isNeverInitialized` logic).
+    fn is_outer_variable(
+        &self,
+        symbol_id: SymbolId,
+        ref_scope_id: oxc_syntax::scope::ScopeId,
+    ) -> bool {
+        use oxc_syntax::scope::ScopeFlags;
+
+        let decl_scope = self.semantic().scoping().symbol_scope_id(symbol_id);
+        if decl_scope == ref_scope_id {
+            return false;
+        }
+
+        let scoping = self.semantic().scoping();
+        for ancestor_scope in scoping.scope_ancestors(ref_scope_id) {
+            if ancestor_scope == decl_scope {
+                return false; // Reached declaration scope without crossing function boundary
+            }
+            let flags = scoping.scope_flags(ancestor_scope);
+            if flags.intersects(ScopeFlags::Function | ScopeFlags::Arrow) {
+                return true; // Crossed a function boundary → outer variable
+            }
+        }
+        false
+    }
+
+    /// Create a union type of `type_id | undefined`.
+    /// If the type already contains undefined, returns it unchanged.
+    fn get_optional_type(&mut self, type_id: TypeId) -> TypeId {
+        let flags = self.type_arena.get_flags(type_id);
+
+        // Already undefined or contains undefined
+        if flags.intersects(TypeFlags::Undefined) {
+            return type_id;
+        }
+
+        // If it's a union, check if any member is undefined
+        if flags.intersects(TypeFlags::Union) {
+            if let TypeData::Union(union_data) = self.type_arena.get_data(type_id) {
+                if union_data.types.iter().any(|&t| {
+                    self.type_arena.get_flags(t).intersects(TypeFlags::Undefined)
+                }) {
+                    return type_id;
+                }
+            }
+        }
+
+        self.get_or_create_union_type(vec![type_id, self.undefined_type])
+    }
+
+    /// Check if a type contains undefined (directly or as a union member).
+    /// Handles nested unions (union members that are themselves unions).
+    fn contains_undefined_type(&self, type_id: TypeId) -> bool {
+        let flags = self.type_arena.get_flags(type_id);
+
+        if flags.intersects(TypeFlags::Undefined) {
+            return true;
+        }
+
+        if flags.intersects(TypeFlags::Union) {
+            if let TypeData::Union(union_data) = self.type_arena.get_data(type_id) {
+                return union_data
+                    .types
+                    .iter()
+                    .any(|&t| self.contains_undefined_type(t));
+            }
+        }
+
+        false
     }
 
     /// Get the type of a global identifier in value/expression position.
