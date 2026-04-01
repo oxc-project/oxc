@@ -1649,15 +1649,37 @@ impl Checker<'_> {
     /// Get the result type of a binary expression.
     fn get_type_of_binary_expression(&mut self, expr: &BinaryExpression<'_>) -> TypeId {
         match expr.operator {
-            // Comparison and equality operators always return boolean
+            // Relational operators: validate operands (checkNonNullType, comparability).
+            // Emits TS18050 for null/undefined literals, TS2365 for incompatible types.
+            BinaryOperator::LessThan
+            | BinaryOperator::LessEqualThan
+            | BinaryOperator::GreaterThan
+            | BinaryOperator::GreaterEqualThan => {
+                let left_type = self.get_type_of_expression(&expr.left, None);
+                let right_type = self.get_type_of_expression(&expr.right, None);
+
+                // TODO: checkForDisallowedESSymbolOperand
+
+                let left_non_null = self.check_non_null_type(left_type, &expr.left);
+                let left_type = self.get_base_type_for_comparison(left_non_null);
+                let right_non_null = self.check_non_null_type(right_type, &expr.right);
+                let right_type = self.get_base_type_for_comparison(right_non_null);
+
+                self.check_relational_operand_types(
+                    left_type,
+                    expr.operator,
+                    right_type,
+                    expr.span,
+                );
+                self.boolean_type
+            }
+
+            // Equality operators: no checkNonNullType (null/undefined comparisons are valid).
+            // TODO: checkNaNEquality, isTypeEqualityComparableTo, literal object checks
             BinaryOperator::Equality
             | BinaryOperator::Inequality
             | BinaryOperator::StrictEquality
             | BinaryOperator::StrictInequality
-            | BinaryOperator::LessThan
-            | BinaryOperator::LessEqualThan
-            | BinaryOperator::GreaterThan
-            | BinaryOperator::GreaterEqualThan
             | BinaryOperator::In
             | BinaryOperator::Instanceof => self.boolean_type,
 
@@ -1824,6 +1846,62 @@ impl Checker<'_> {
             .with_error_code("ts", "2365")
             .with_label(span),
         );
+    }
+
+    /// Widen literal types to their base types for relational comparisons.
+    /// Mirrors tsgo's `getBaseTypeOfLiteralTypeForComparison`.
+    fn get_base_type_for_comparison(&mut self, type_id: TypeId) -> TypeId {
+        let flags = self.type_arena.get_flags(type_id);
+        if flags.intersects(TypeFlags::StringLiteral | TypeFlags::TemplateLiteral | TypeFlags::StringMapping) {
+            self.string_type
+        } else if flags.intersects(TypeFlags::NumberLiteral | TypeFlags::Enum) {
+            self.number_type
+        } else if flags.intersects(TypeFlags::BigIntLiteral) {
+            self.bigint_type
+        } else if flags.intersects(TypeFlags::BooleanLiteral) {
+            self.boolean_type
+        } else if flags.intersects(TypeFlags::Union) {
+            if let TypeData::Union(u) = self.type_arena.get_data(type_id) {
+                let widened: Vec<TypeId> =
+                    u.types.iter().map(|&m| self.get_base_type_for_comparison(m)).collect();
+                return self.get_or_create_union_type(widened);
+            }
+            type_id
+        } else {
+            type_id
+        }
+    }
+
+    /// Validate relational operator operand types.
+    /// Emits TS2365 if the operands are not comparable.
+    /// Mirrors tsgo's relational check in `checkBinaryLikeExpression`.
+    fn check_relational_operand_types(
+        &mut self,
+        left_type: TypeId,
+        operator: BinaryOperator,
+        right_type: TypeId,
+        span: oxc_span::Span,
+    ) {
+        let left_flags = self.type_arena.get_flags(left_type);
+        let right_flags = self.type_arena.get_flags(right_type);
+
+        // If either is any, the comparison is always valid.
+        if left_flags.intersects(TypeFlags::Any) || right_flags.intersects(TypeFlags::Any) {
+            return;
+        }
+
+        let left_numeric = self.is_type_assignable_to(left_type, self.number_or_bigint_type);
+        let right_numeric = self.is_type_assignable_to(right_type, self.number_or_bigint_type);
+
+        // Both numeric → OK; both non-numeric → check structural comparability.
+        if left_numeric && right_numeric {
+            return;
+        }
+        if !left_numeric && !right_numeric && self.are_types_comparable(left_type, right_type) {
+            return;
+        }
+
+        self.report_operator_error(left_type, operator, right_type, span);
     }
 
     /// Check if a type could contain a constituent matching the given flags.
