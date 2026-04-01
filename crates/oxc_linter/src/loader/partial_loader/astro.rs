@@ -96,11 +96,7 @@ impl<'a> AstroPartialLoader<'a> {
                 js_end = pointer + offset;
                 pointer += offset + SCRIPT_END.len();
 
-                trim_script_block_newlines(
-                    self.source_text.as_bytes(),
-                    &mut js_start,
-                    &mut js_end,
-                );
+                trim_script_block_newlines(self.source_text.as_bytes(), &mut js_start, &mut js_end);
             } else {
                 break;
             }
