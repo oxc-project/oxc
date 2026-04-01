@@ -3236,3 +3236,136 @@ fn generic_inference_no_args_uses_constraint() {
     );
 }
 
+// ---- Intersection type tests ----
+
+#[test]
+fn intersection_reduction_never_propagates() {
+    // A & never → never
+    with_checker!(
+        "let x: string & never",
+        |checker, program| {
+            let ann = first_var_type_annotation(program).unwrap();
+            let t = checker.get_type_from_type_node(ann);
+            assert_eq!(
+                checker.type_arena().get_flags(t),
+                TypeFlags::Never,
+                "string & never should reduce to never"
+            );
+        }
+    );
+}
+
+#[test]
+fn intersection_reduction_contradictory_primitives() {
+    // string & number → never
+    with_checker!(
+        "let x: string & number",
+        |checker, program| {
+            let ann = first_var_type_annotation(program).unwrap();
+            let t = checker.get_type_from_type_node(ann);
+            assert_eq!(
+                checker.type_arena().get_flags(t),
+                TypeFlags::Never,
+                "string & number should reduce to never"
+            );
+        }
+    );
+}
+
+#[test]
+fn intersection_reduction_supertype_removal() {
+    // string & "hello" → "hello"
+    with_checker!(
+        r#"let x: string & "hello""#,
+        |checker, program| {
+            let ann = first_var_type_annotation(program).unwrap();
+            let t = checker.get_type_from_type_node(ann);
+            let s = checker.type_to_string(t);
+            assert_eq!(s, r#""hello""#, "string & 'hello' should reduce to 'hello'");
+        }
+    );
+}
+
+#[test]
+fn intersection_target_assignability() {
+    // {a: string, b: number} should be assignable to {a: string} & {b: number}
+    with_checker!(
+        r#"
+        let x: {a: string, b: number} = { a: "hi", b: 1 };
+        let y: {a: string} & {b: number} = x;
+        "#,
+        |checker, program| {
+            checker.check_program(program);
+            let diagnostics = checker.take_diagnostics();
+            assert!(
+                diagnostics.is_empty(),
+                "object should be assignable to intersection: {diagnostics:?}"
+            );
+        }
+    );
+}
+
+#[test]
+fn intersection_source_assignability() {
+    // {a: string} & {b: number} should be assignable to {a: string, b: number}
+    with_checker!(
+        r#"
+        let x: {a: string} & {b: number} = {} as {a: string} & {b: number};
+        let y: {a: string, b: number} = x;
+        "#,
+        |checker, program| {
+            checker.check_program(program);
+            let diagnostics = checker.take_diagnostics();
+            assert!(
+                diagnostics.is_empty(),
+                "intersection should be assignable to object with same props: {diagnostics:?}"
+            );
+        }
+    );
+}
+
+#[test]
+fn intersection_constituent_shortcut() {
+    // string is a constituent of string & X, so string & X should be assignable to string
+    with_checker!(
+        r#"
+        let x: string & {} = "" as string & {};
+        let y: string = x;
+        "#,
+        |checker, program| {
+            checker.check_program(program);
+            let diagnostics = checker.take_diagnostics();
+            assert!(
+                diagnostics.is_empty(),
+                "intersection constituent should satisfy target: {diagnostics:?}"
+            );
+        }
+    );
+}
+
+#[test]
+fn intersection_property_type_resolution() {
+    // Property access on intersection type should resolve correctly
+    with_checker!(
+        r#"
+        let x: {a: string} & {b: number} = {} as {a: string} & {b: number};
+        "#,
+        |checker, program| {
+            let ann = first_var_type_annotation(program).unwrap();
+            let t = checker.get_type_from_type_node(ann);
+            // Property 'a' should exist and be string
+            let a_type = checker.get_property_of_type(t, "a");
+            assert_eq!(
+                checker.type_to_string(a_type), "string",
+                "property 'a' on intersection should be string"
+            );
+            // Property 'b' should exist and be number
+            let b_type = checker.get_property_of_type(t, "b");
+            assert_eq!(
+                checker.type_to_string(b_type), "number",
+                "property 'b' on intersection should be number"
+            );
+        }
+    );
+}
+
