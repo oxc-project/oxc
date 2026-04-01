@@ -2,7 +2,7 @@ commit: 34725489
 
 checker_errors_typescript Summary:
 AST Parsed     : 6430/6430 (100.00%)
-Positive Passed: 1024/6430 (15.93%)
+Positive Passed: 1025/6430 (15.94%)
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/ArrowFunctionExpression1.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration10.ts
@@ -937,8 +937,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/constEnumMergingW
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/constEnums.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/constWithNonNull.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/constantEnumAssert.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/constraintErrors1.ts
 

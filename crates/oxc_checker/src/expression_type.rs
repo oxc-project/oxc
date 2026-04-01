@@ -80,10 +80,12 @@ impl Checker<'_> {
             Expression::ParenthesizedExpression(paren) => {
                 self.get_type_of_expression(&paren.expression, contextual_type)
             }
-            // Type assertions — return the asserted type
-            Expression::TSAsExpression(expr) => self.get_type_from_type_node(&expr.type_annotation),
+            // Type assertions
+            Expression::TSAsExpression(expr) => {
+                self.check_assertion(&expr.expression, &expr.type_annotation, contextual_type)
+            }
             Expression::TSTypeAssertion(expr) => {
-                self.get_type_from_type_node(&expr.type_annotation)
+                self.check_assertion(&expr.expression, &expr.type_annotation, contextual_type)
             }
             // `satisfies` checks but returns the expression's type, not the annotation
             Expression::TSSatisfiesExpression(expr) => {
