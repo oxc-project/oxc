@@ -13,6 +13,9 @@
 #![allow(deprecated)]
 
 //! Memory allocation APIs
+//!
+//! This module was originally copied from `bumpalo` at commit a47f6d6b7b5fee9c99a285f0de80257a0a982ef3
+//! (2 commits after 3.20.2 release). Changes have been made since.
 
 use core::cmp;
 use core::fmt;
