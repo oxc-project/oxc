@@ -269,12 +269,21 @@ impl Checker<'_> {
         self.get_flow_type_of_reference(ident.node_id.get(), symbol_id, declared_type)
     }
 
-    /// Get the type of a well-known global identifier.
+    /// Get the type of a global identifier in value/expression position.
+    ///
+    /// Prefers the value-side type (from `declare var` / `declare function` in
+    /// lib.d.ts), falls back to type-side (interface), then `any`.
     fn get_type_of_global_identifier(&self, name: &str) -> TypeId {
         match name {
             "undefined" => self.undefined_type,
-            "NaN" | "Infinity" => self.number_type,
-            _ => self.any_type,
+            _ => {
+                // Prefer value-side (declare var, declare function)
+                if let Some(t) = self.host.get_global_value_type(name) {
+                    return t;
+                }
+                // Fallback to type-side (interface) — better than any
+                self.get_global_type(name)
+            }
         }
     }
 
@@ -310,10 +319,10 @@ impl Checker<'_> {
     fn resolve_symbol_type(&mut self, symbol_id: SymbolId) -> TypeId {
         use oxc_ast::AstKind;
 
-        // Import binding — resolve via host (cross-file)
+        // Import binding — resolve value-side via host (cross-file)
         let symbol_flags = self.semantic().scoping().symbol_flags(symbol_id);
         if symbol_flags.is_import() {
-            return self.resolve_import_type(symbol_id);
+            return self.resolve_import_as_value(symbol_id);
         }
 
         let node_id = self.semantic().scoping().symbol_declaration(symbol_id);
@@ -485,6 +494,54 @@ impl Checker<'_> {
                     }
                     self.any_type
                 }
+            }
+            AstKind::Function(func) => {
+                let sig = self.build_signature_from_function(func);
+                self.create_function_type(sig)
+            }
+            _ => {
+                // For merged symbols (e.g., interface + declare var), the primary
+                // declaration may be the type-side node. Search redeclarations
+                // for a value-side declaration.
+                self.resolve_value_from_redeclarations(symbol_id)
+            }
+        }
+    }
+
+    /// Search a symbol's redeclarations for a value-side declaration node.
+    ///
+    /// When a symbol has merged declarations (e.g., `interface RegExp` +
+    /// `declare var RegExp: RegExpConstructor`), `symbol_declaration()` returns
+    /// the first declaration which may be the type-side node. This method
+    /// searches all redeclarations for one with value flags and resolves its type.
+    fn resolve_value_from_redeclarations(&mut self, symbol_id: SymbolId) -> TypeId {
+        use oxc_ast::AstKind;
+        use oxc_syntax::symbol::SymbolFlags;
+
+        // Extract only (NodeId, flags) to release the borrow on semantic
+        // before entering mutable type resolution below.
+        let value_decl_node = self
+            .semantic()
+            .scoping()
+            .symbol_redeclarations(symbol_id)
+            .iter()
+            .find(|r| r.flags.intersects(SymbolFlags::Variable | SymbolFlags::Function))
+            .map(|r| r.declaration);
+
+        let Some(node_id) = value_decl_node else {
+            return self.any_type;
+        };
+
+        let node = self.semantic().nodes().get_node(node_id);
+        match node.kind() {
+            AstKind::VariableDeclarator(decl) => {
+                if let Some(annotation) = &decl.type_annotation {
+                    return self.get_type_from_type_node(&annotation.type_annotation);
+                }
+                if let Some(init) = &decl.init {
+                    return self.get_type_of_expression(init, None);
+                }
+                self.any_type
             }
             AstKind::Function(func) => {
                 let sig = self.build_signature_from_function(func);
@@ -1387,12 +1444,15 @@ impl Checker<'_> {
         }
     }
 
-    /// Resolve the type of an import binding via the host.
+    /// Resolve an import binding to its `ExportedBinding` via the host.
     ///
     /// Walks from the import specifier's declaration node up to its parent
     /// ImportDeclaration to extract the module specifier and import name,
     /// then calls `host.resolve_import()`.
-    pub(crate) fn resolve_import_type(&mut self, symbol_id: SymbolId) -> TypeId {
+    fn resolve_import_binding(
+        &self,
+        symbol_id: SymbolId,
+    ) -> Option<oxc_checker_host::ExportedBinding> {
         use oxc_ast::AstKind;
 
         let node_id = self.semantic().scoping().symbol_declaration(symbol_id);
@@ -1400,24 +1460,35 @@ impl Checker<'_> {
 
         // Extract the imported name from the specifier
         let export_name = match node.kind() {
-            AstKind::ImportSpecifier(spec) => {
-                spec.imported.name().to_string()
-            }
-            AstKind::ImportDefaultSpecifier(_) => {
-                "default".to_string()
-            }
-            _ => return self.any_type,
+            AstKind::ImportSpecifier(spec) => spec.imported.name().to_string(),
+            AstKind::ImportDefaultSpecifier(_) => "default".to_string(),
+            _ => return None,
         };
 
         // Walk up to the ImportDeclaration to get the module specifier
         let parent_id = self.semantic().nodes().parent_id(node_id);
         let parent = self.semantic().nodes().get_node(parent_id);
         let AstKind::ImportDeclaration(import_decl) = parent.kind() else {
-            return self.any_type;
+            return None;
         };
 
         let module_specifier = import_decl.source.value.as_str();
         self.host.resolve_import(&self.file_path, module_specifier, &export_name)
+    }
+
+    /// Resolve an import binding's value-side type.
+    /// Called from `resolve_symbol_type` (value context).
+    pub(crate) fn resolve_import_as_value(&mut self, symbol_id: SymbolId) -> TypeId {
+        self.resolve_import_binding(symbol_id)
+            .and_then(|b| b.value_type)
+            .unwrap_or(self.any_type)
+    }
+
+    /// Resolve an import binding's type-side type.
+    /// Called from `resolve_declared_type` (type context).
+    pub(crate) fn resolve_import_as_type(&mut self, symbol_id: SymbolId) -> TypeId {
+        self.resolve_import_binding(symbol_id)
+            .and_then(|b| b.type_type)
             .unwrap_or(self.any_type)
     }
 }

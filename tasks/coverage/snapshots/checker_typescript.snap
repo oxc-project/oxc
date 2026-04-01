@@ -2,7 +2,7 @@ commit: 34725489
 
 checker_typescript Summary:
 AST Parsed     : 3811/3811 (100.00%)
-Positive Passed: 471/3811 (12.36%)
+Positive Passed: 463/3811 (12.15%)
 checker: tasks/coverage/typescript/tests/cases/compiler/2dArrays.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/ClassDeclarationWithInvalidConstOnPropertyDeclaration2.ts
@@ -4097,6 +4097,14 @@ checker: tasks/coverage/typescript/tests/cases/conformance/async/es2017/asyncMet
 
 checker: tasks/coverage/typescript/tests/cases/conformance/async/es2017/asyncUseStrict_es2017.ts
 
+checker: tasks/coverage/typescript/tests/cases/conformance/async/es2017/awaitBinaryExpression/awaitBinaryExpression1_es2017.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/async/es2017/awaitBinaryExpression/awaitBinaryExpression2_es2017.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/async/es2017/awaitBinaryExpression/awaitBinaryExpression3_es2017.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/async/es2017/awaitBinaryExpression/awaitBinaryExpression4_es2017.ts
+
 checker: tasks/coverage/typescript/tests/cases/conformance/async/es2017/awaitCallExpression/awaitCallExpression1_es2017.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/async/es2017/awaitCallExpression/awaitCallExpression2_es2017.ts
@@ -4136,6 +4144,14 @@ checker: tasks/coverage/typescript/tests/cases/conformance/async/es6/asyncAwait_
 checker: tasks/coverage/typescript/tests/cases/conformance/async/es6/asyncMethodWithSuper_es6.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/async/es6/asyncUseStrict_es6.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/async/es6/awaitBinaryExpression/awaitBinaryExpression1_es6.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/async/es6/awaitBinaryExpression/awaitBinaryExpression2_es6.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/async/es6/awaitBinaryExpression/awaitBinaryExpression3_es6.ts
+
+checker: tasks/coverage/typescript/tests/cases/conformance/async/es6/awaitBinaryExpression/awaitBinaryExpression4_es6.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/async/es6/awaitCallExpression/awaitCallExpression1_es6.ts
 

@@ -4127,3 +4127,55 @@ fn excess_property_check_assignment() {
     );
 }
 
+// ---- Global value-side type resolution ----
+
+#[test]
+fn global_value_type_regexp() {
+    with_checker!(
+        "let x = RegExp",
+        |checker, program| {
+            checker.check_program(program);
+            // RegExp in value position should resolve to RegExpConstructor
+            // (from `declare var RegExp: RegExpConstructor` in lib.d.ts)
+            let val_type = checker.get_global_value_type("RegExp");
+            assert!(val_type.is_some(), "RegExp should have a global value type");
+            let val_type = val_type.unwrap();
+            assert_ne!(val_type, checker.any_type, "RegExp value type should not be any");
+            let s = checker.type_to_string(val_type);
+            assert_eq!(s, "RegExpConstructor", "RegExp value type should be RegExpConstructor, got: {s}");
+        }
+    );
+}
+
+#[test]
+fn global_value_type_math() {
+    with_checker!(
+        "let x = Math",
+        |checker, program| {
+            checker.check_program(program);
+            let val_type = checker.get_global_value_type("Math");
+            assert!(val_type.is_some(), "Math should have a global value type");
+            let val_type = val_type.unwrap();
+            assert_ne!(val_type, checker.any_type, "Math value type should not be any");
+            let s = checker.type_to_string(val_type);
+            assert_eq!(s, "Math", "Math value type should be Math, got: {s}");
+        }
+    );
+}
+
+#[test]
+fn global_value_type_resolves_in_expression() {
+    with_checker!(
+        "let x = JSON",
+        |checker, program| {
+            checker.check_program(program);
+            // The initializer `JSON` should resolve via get_type_of_global_identifier
+            // to the JSON interface (from `declare var JSON: JSON` in lib.d.ts)
+            let init = first_var_init(program).expect("should have initializer");
+            let t = checker.get_type_of_expression(init, None);
+            let s = checker.type_to_string(t);
+            assert_ne!(s, "any", "JSON in expression position should not be any, got: {s}");
+        }
+    );
+}
+

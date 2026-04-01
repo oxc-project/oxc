@@ -2,7 +2,7 @@ commit: 34725489
 
 checker_errors_typescript Summary:
 AST Parsed     : 6430/6430 (100.00%)
-Positive Passed: 292/6430 (4.54%)
+Positive Passed: 289/6430 (4.49%)
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/ArrowFunctionExpression1.ts
 'public' modifier cannot appear on a parameter.
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration10.ts
@@ -2206,6 +2206,8 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/externSyntax.ts
 An implementation cannot be declared in ambient contexts.
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/externalModuleQualification.ts
 
+checker_errors: tasks/coverage/typescript/tests/cases/compiler/extractInferenceImprovement.ts
+
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/fallFromLastCase2.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/fallbackToBindingPatternForTypeInference.ts
@@ -2842,6 +2844,8 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/inferFromGenericF
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/inferFromGenericFunctionReturnTypes2.ts
 
+checker_errors: tasks/coverage/typescript/tests/cases/compiler/inferFromGenericFunctionReturnTypes3.ts
+
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/inferFromNestedSameShapeTuple.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/inferSetterParamType.ts
@@ -3103,8 +3107,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/internalImportUnI
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/internalImportUnInstantiatedModuleMergedWithClassNotReferencingInstanceNoConflict.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/intersectionPropertyCheck.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/intersectionWithConflictingPrivates.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/intersectionsAndReadonlyProperties.ts
 
@@ -3401,6 +3403,8 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/jsxPropsAsIdentif
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/jsxSpreadTag.ts
 
+checker_errors: tasks/coverage/typescript/tests/cases/compiler/keyRemappingKeyofResult.ts
+
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/keyofDoesntContainSymbols.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/keyofGenericExtendingClassDoubleLayer.ts
@@ -3492,10 +3496,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/literals-negative
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/literalsInComputedProperties1.ts
 An enum member cannot have a numeric name.
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/logicalNotExpression1.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/longObjectInstantiationChain1.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/longObjectInstantiationChain3.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/m7Bugs.ts
 
@@ -8094,6 +8094,8 @@ checker_errors: tasks/coverage/typescript/tests/cases/conformance/es6/spread/ite
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/es6/spread/iteratorSpreadInArray11.ts
 
+checker_errors: tasks/coverage/typescript/tests/cases/conformance/es6/spread/iteratorSpreadInArray5.ts
+
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/es6/spread/iteratorSpreadInArray6.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/es6/spread/iteratorSpreadInArray7.ts
@@ -8107,6 +8109,10 @@ checker_errors: tasks/coverage/typescript/tests/cases/conformance/es6/spread/ite
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/es6/spread/iteratorSpreadInCall2.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/es6/spread/iteratorSpreadInCall4.ts
+
+checker_errors: tasks/coverage/typescript/tests/cases/conformance/es6/spread/iteratorSpreadInCall6.ts
+
+checker_errors: tasks/coverage/typescript/tests/cases/conformance/es6/spread/iteratorSpreadInCall7.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/es6/spread/iteratorSpreadInCall8.ts
 

@@ -33,7 +33,7 @@ use std::path::{Path, PathBuf};
 use std::time::Instant;
 
 use oxc_checker::{Checker, allocate_intrinsics, find_lib_source};
-use oxc_checker_host::{CheckerHost, IntrinsicIds};
+use oxc_checker_host::{CheckerHost, ExportedBinding, IntrinsicIds};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_resolver::{ResolveOptions, Resolver};
 use oxc_span::{CompactStr, SourceType};
@@ -123,13 +123,14 @@ pub struct Project {
     /// Indexed by file index. Populated lazily by `ensure_file_checked`.
     file_cells: RefCell<Vec<Option<FileCell>>>,
 
-    /// Cross-file export map: (file_index, export_name) → TypeId.
-    /// For lib.d.ts (index 0): all root scope declared types.
+    /// Cross-file export map: (file_index, export_name) → ExportedBinding.
+    /// Each binding has separate type-side and value-side types.
+    /// For lib.d.ts (index 0): all root scope declared + value types.
     /// For user files: ES module exports.
     /// Uses RefCell for interior mutability — checkers hold &self (via
     /// CheckerHost) while exports are being populated. Swappable to
     /// DashMap for the parallel version.
-    export_types: RefCell<FxHashMap<(usize, CompactStr), TypeId>>,
+    exports: RefCell<FxHashMap<(usize, CompactStr), ExportedBinding>>,
 
     /// Accumulated type parameter constraints from all checked files.
     /// Keyed by TypeParameter TypeId → constraint TypeId. Since TypeIds
@@ -187,7 +188,7 @@ impl Project {
             file_index: FxHashMap::default(),
             sources: RefCell::new(vec![lib_source]),
             file_cells: RefCell::new(vec![None]),
-            export_types: RefCell::new(FxHashMap::default()),
+            exports: RefCell::new(FxHashMap::default()),
             type_param_constraints: RefCell::new(FxHashMap::default()),
             conditional_roots: RefCell::new(Vec::new()),
             checking: RefCell::new(FxHashSet::default()),
@@ -250,7 +251,7 @@ impl Project {
             file_index,
             sources: RefCell::new(sources),
             file_cells: RefCell::new((0..file_count).map(|_| None).collect()),
-            export_types: RefCell::new(FxHashMap::default()),
+            exports: RefCell::new(FxHashMap::default()),
             type_param_constraints: RefCell::new(FxHashMap::default()),
             conditional_roots: RefCell::new(Vec::new()),
             checking: RefCell::new(FxHashSet::default()),
@@ -412,9 +413,9 @@ impl Project {
 
         // Record exports
         {
-            let mut export_map = self.export_types.borrow_mut();
-            for (name, type_id) in exports {
-                export_map.insert((file_idx, name), type_id);
+            let mut export_map = self.exports.borrow_mut();
+            for (name, binding) in exports {
+                export_map.insert((file_idx, name), binding);
             }
         }
 
@@ -444,11 +445,18 @@ impl Project {
         self.checked.borrow_mut().insert(file_idx);
     }
 
-    /// Extract all root scope declared types from an ambient file (lib.d.ts
-    /// or .d.ts without module syntax). All declarations are globally visible.
+    /// Extract all root scope declared types and value types from an ambient
+    /// file (lib.d.ts or .d.ts without module syntax). All declarations are
+    /// globally visible.
+    ///
+    /// For each root-scope symbol, resolves both the type-side (interface,
+    /// type alias, class instance, enum union) and value-side (var annotation,
+    /// function signature, class constructor, enum namespace) types.
     fn extract_ambient_declarations(
         checker: &mut Checker<'_>,
-    ) -> Vec<(CompactStr, TypeId)> {
+    ) -> Vec<(CompactStr, ExportedBinding)> {
+        use oxc_syntax::symbol::SymbolFlags;
+
         let root_scope = checker.semantic().scoping().root_scope_id();
         let symbols: Vec<oxc_syntax::symbol::SymbolId> = checker
             .semantic()
@@ -456,35 +464,55 @@ impl Project {
             .iter_bindings_in(root_scope)
             .collect();
 
-        let mut exports = Vec::new();
+        let mut export_map: FxHashMap<CompactStr, ExportedBinding> = FxHashMap::default();
         for symbol_id in symbols {
-            let name = checker.semantic().scoping().symbol_name(symbol_id).to_string();
-            let type_id = checker.get_declared_type_of_symbol(symbol_id);
-            if type_id != checker.any_type {
-                exports.push((CompactStr::new(&name), type_id));
+            let name = CompactStr::new(checker.semantic().scoping().symbol_name(symbol_id));
+            let flags = checker.semantic().scoping().symbol_flags(symbol_id);
+            let binding = export_map.entry(name).or_default();
+
+            // Type-side: interfaces, type aliases, classes (instance), enums (union)
+            if flags.intersects(SymbolFlags::Type) {
+                let t = checker.get_declared_type_of_symbol(symbol_id);
+                if t != checker.any_type {
+                    binding.type_type = Some(t);
+                }
+            }
+            // Value-side: variables, functions, classes (constructor), enums (namespace)
+            if flags.intersects(SymbolFlags::Value) {
+                let v = checker.get_type_of_symbol(symbol_id);
+                if v != checker.any_type {
+                    binding.value_type = Some(v);
+                }
             }
         }
-        exports
+        // Filter out bindings with neither side resolved
+        export_map
+            .into_iter()
+            .filter(|(_, b)| b.type_type.is_some() || b.value_type.is_some())
+            .collect()
     }
 
     /// Extract ES module exports from a checked file.
-    /// Eagerly resolves types for exported symbols that weren't accessed during checking.
+    /// Eagerly resolves both type-side and value-side types for exported symbols.
     fn extract_module_exports(
         checker: &mut Checker<'_>,
         module_record: &oxc_syntax::module_record::ModuleRecord<'_>,
-    ) -> Vec<(CompactStr, TypeId)> {
+    ) -> Vec<(CompactStr, ExportedBinding)> {
         use oxc_syntax::module_record::{ExportExportName, ExportLocalName};
+        use oxc_syntax::symbol::SymbolFlags;
 
         let root_scope = checker.semantic().scoping().root_scope_id();
         let mut exports = Vec::new();
 
         // Collect into owned Strings to avoid borrowing checker during the loop
-        let binding_map: FxHashMap<String, oxc_syntax::symbol::SymbolId> = checker
+        let binding_map: FxHashMap<String, (oxc_syntax::symbol::SymbolId, SymbolFlags)> = checker
             .semantic()
             .scoping()
             .iter_bindings_in(root_scope)
             .map(|sym_id| {
-                (checker.semantic().scoping().symbol_name(sym_id).to_string(), sym_id)
+                let name = checker.semantic().scoping().symbol_name(sym_id).to_string();
+                let flags = checker.semantic().scoping().symbol_flags(sym_id);
+                (name, (sym_id, flags))
             })
             .collect();
 
@@ -500,24 +528,32 @@ impl Project {
                 ExportLocalName::Null => continue,
             };
 
-            let Some(&symbol_id) = binding_map.get(&local_name.to_string()) else {
+            let Some(&(symbol_id, flags)) = binding_map.get(&local_name.to_string()) else {
                 continue;
             };
 
-            // Eagerly resolve the type if not already cached (it may not
-            // have been referenced during check_program).
-            let type_id = checker.get_cached_symbol_type(symbol_id)
-                .or_else(|| checker.get_cached_declared_type(symbol_id))
-                .unwrap_or_else(|| {
-                    // Try both value-side and type-side resolution
-                    let t = checker.get_type_of_symbol(symbol_id);
-                    if t != checker.any_type { return t; }
-                    checker.get_declared_type_of_symbol(symbol_id)
-                });
-            let type_id = Some(type_id).filter(|&t| t != checker.any_type);
+            let mut binding = ExportedBinding::default();
 
-            if let Some(type_id) = type_id {
-                exports.push((CompactStr::new(export_name), type_id));
+            // Type-side: interfaces, type aliases, classes (instance), enums (union)
+            if flags.intersects(SymbolFlags::Type) {
+                let t = checker.get_cached_declared_type(symbol_id)
+                    .unwrap_or_else(|| checker.get_declared_type_of_symbol(symbol_id));
+                if t != checker.any_type {
+                    binding.type_type = Some(t);
+                }
+            }
+
+            // Value-side: variables, functions, classes (constructor), enums (namespace)
+            if flags.intersects(SymbolFlags::Value) {
+                let v = checker.get_cached_symbol_type(symbol_id)
+                    .unwrap_or_else(|| checker.get_type_of_symbol(symbol_id));
+                if v != checker.any_type {
+                    binding.value_type = Some(v);
+                }
+            }
+
+            if binding.type_type.is_some() || binding.value_type.is_some() {
+                exports.push((CompactStr::new(export_name), binding));
             }
         }
 
@@ -541,9 +577,19 @@ impl CheckerHost for Project {
     }
 
     fn get_global_type(&self, name: &str) -> Option<TypeId> {
-        // Ensure lib.d.ts has been checked
         self.ensure_file_checked(LIB_FILE_INDEX);
-        self.export_types.borrow().get(&(LIB_FILE_INDEX, CompactStr::new(name))).copied()
+        self.exports
+            .borrow()
+            .get(&(LIB_FILE_INDEX, CompactStr::new(name)))
+            .and_then(|b| b.type_type)
+    }
+
+    fn get_global_value_type(&self, name: &str) -> Option<TypeId> {
+        self.ensure_file_checked(LIB_FILE_INDEX);
+        self.exports
+            .borrow()
+            .get(&(LIB_FILE_INDEX, CompactStr::new(name)))
+            .and_then(|b| b.value_type)
     }
 
     fn resolve_import(
@@ -551,7 +597,7 @@ impl CheckerHost for Project {
         from_file: &str,
         module_specifier: &str,
         export_name: &str,
-    ) -> Option<TypeId> {
+    ) -> Option<ExportedBinding> {
         let from_path = Path::new(from_file);
         let from_dir = from_path.parent()?;
         let resolver = self.resolver.as_ref()?;
@@ -562,7 +608,10 @@ impl CheckerHost for Project {
         // Lazy: ensure the dependency file is checked before looking up its exports
         self.ensure_file_checked(file_idx);
 
-        self.export_types.borrow().get(&(file_idx, CompactStr::new(export_name))).copied()
+        self.exports
+            .borrow()
+            .get(&(file_idx, CompactStr::new(export_name)))
+            .copied()
     }
 
     fn get_type_param_constraint(&self, type_id: TypeId) -> Option<TypeId> {

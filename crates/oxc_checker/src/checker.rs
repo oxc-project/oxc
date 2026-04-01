@@ -795,12 +795,18 @@ impl<'a> Checker<'a> {
         self.check_source_element(&for_in.body);
     }
 
-    /// Look up a global type by name (e.g., "Array", "Promise").
+    /// Look up a global type by name (type-side, e.g., "Array", "Promise").
     /// Returns `any_type` if not found.
     pub fn get_global_type(&self, name: &str) -> TypeId {
         self.host
             .get_global_type(name)
             .unwrap_or(self.any_type)
+    }
+
+    /// Look up a global value type by name (value-side, e.g., "RegExp" → RegExpConstructor).
+    /// Returns `None` if not found.
+    pub fn get_global_value_type(&self, name: &str) -> Option<TypeId> {
+        self.host.get_global_value_type(name)
     }
 
     /// Get the type arena (for testing/inspection).

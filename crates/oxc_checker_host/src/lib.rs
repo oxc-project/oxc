@@ -9,6 +9,20 @@ use oxc_span::CompactStr;
 use oxc_syntax::symbol::SymbolId;
 use oxc_types::{ConditionalRoot, TypeId};
 
+/// Exported binding with separate type-side and value-side types.
+///
+/// A name can be a type (interface, type alias), a value (variable, function),
+/// or both (class, enum, merged interface+var). For example, `RegExp` in
+/// lib.d.ts has both `interface RegExp` (type-side, instance shape) and
+/// `declare var RegExp: RegExpConstructor` (value-side, constructor).
+#[derive(Clone, Copy, Default, Debug)]
+pub struct ExportedBinding {
+    /// Type namespace: interface, type alias, class instance type, enum union.
+    pub type_type: Option<TypeId>,
+    /// Value namespace: var annotation, function type, class constructor, enum namespace.
+    pub value_type: Option<TypeId>,
+}
+
 /// Pre-allocated intrinsic type IDs.
 ///
 /// All 14 primitive/intrinsic types plus true/false literal types are
@@ -40,16 +54,24 @@ pub trait CheckerHost {
     /// Get the shared intrinsic type IDs (any, string, number, etc.).
     fn get_intrinsics(&self) -> IntrinsicIds;
 
-    /// Get a global type by name (e.g., "Array", "Promise", "String").
+    /// Get a global type by name (type-side, e.g., "Array", "Promise", "String").
     fn get_global_type(&self, name: &str) -> Option<TypeId>;
 
+    /// Get a global value type by name (value-side, e.g., "RegExp" → RegExpConstructor).
+    /// Used for resolving unresolved identifiers in expression position.
+    fn get_global_value_type(&self, name: &str) -> Option<TypeId> {
+        let _ = name;
+        None
+    }
+
     /// Resolve a named import from a module specifier.
+    /// Returns both type-side and value-side types for the exported name.
     fn resolve_import(
         &self,
         from_file: &str,
         module_specifier: &str,
         export_name: &str,
-    ) -> Option<TypeId>;
+    ) -> Option<ExportedBinding>;
 
     /// Look up a type parameter constraint resolved in another file.
     fn get_type_param_constraint(&self, type_id: TypeId) -> Option<TypeId>;
