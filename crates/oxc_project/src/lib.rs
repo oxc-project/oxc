@@ -33,7 +33,7 @@ use std::path::{Path, PathBuf};
 use std::time::Instant;
 
 use oxc_checker::{Checker, allocate_intrinsics, find_lib_source};
-use oxc_checker_host::{CheckerHost, ExportedBinding, IntrinsicIds};
+use oxc_checker_host::{CheckerHost, CheckerOptions, ExportedBinding, IntrinsicIds};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_resolver::{ResolveOptions, Resolver};
 use oxc_span::{CompactStr, SourceType};
@@ -372,6 +372,7 @@ impl Project {
                 self,
                 path_str,
                 file_idx as u16,
+                CheckerOptions::default(),
             );
             checker.check_program(&borrowed.program);
 

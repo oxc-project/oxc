@@ -21,8 +21,14 @@ macro_rules! with_checker {
         let $program = &parsed.program;
         let semantic = SemanticBuilder::new().build($program).semantic;
         #[allow(unused_mut)]
-        let mut $checker =
-            Checker::new_with_host(&semantic, &type_arena, &project, String::new(), 1);
+        let mut $checker = Checker::new_with_host(
+            &semantic,
+            &type_arena,
+            &project,
+            String::new(),
+            1,
+            oxc_checker_host::CheckerOptions::default(),
+        );
         $body
     }};
 }

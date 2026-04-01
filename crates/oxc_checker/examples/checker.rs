@@ -82,6 +82,7 @@ fn main() -> ExitCode {
             &project,
             file_paths[0].to_string_lossy().to_string(),
             1,
+            oxc_checker::CheckerOptions::default(),
         );
         checker.check_program(&parsed.program);
         let check_ms = check_start.elapsed().as_secs_f64() * 1000.0;

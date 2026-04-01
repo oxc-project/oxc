@@ -1104,6 +1104,28 @@ pub fn run_estree_typescript_tokens(files: &[TypeScriptFile]) -> Vec<CoverageRes
 }
 
 // ================================
+// Checker (shared helpers)
+// ================================
+
+/// Convert test runner `CompilerSettings` into `CheckerOptions`.
+fn checker_options_from_settings(
+    settings: &crate::typescript::meta::CompilerSettings,
+) -> oxc_checker::CheckerOptions {
+    oxc_checker::CheckerOptions {
+        strict: settings.strict,
+        strict_null_checks: settings.strict_null_checks,
+        strict_property_initialization: settings.strict_property_initialization,
+        strict_function_types: settings.strict_function_types,
+        no_implicit_any: settings.no_implicit_any,
+        no_implicit_this: settings.no_implicit_this,
+        allow_unreachable_code: settings.allow_unreachable_code,
+        allow_unused_labels: settings.allow_unused_labels,
+        no_fallthrough_cases_in_switch: settings.no_fallthrough_cases_in_switch,
+        no_implicit_returns: settings.no_implicit_returns,
+    }
+}
+
+// ================================
 // Checker (.types baseline conformance)
 // ================================
 
@@ -1129,7 +1151,8 @@ pub fn run_checker_typescript(files: &[TypeScriptFile]) -> Vec<CoverageResult> {
 
             let source = &f.units[0].content;
             let source_type = f.units[0].source_type;
-            let result = run_checker_single(source, source_type, &baseline_content);
+            let options = checker_options_from_settings(&f.settings);
+            let result = run_checker_single(source, source_type, &baseline_content, options);
             Some(CoverageResult { path: f.path.clone(), should_fail: false, result })
         })
         .collect()
@@ -1139,6 +1162,7 @@ fn run_checker_single(
     source: &str,
     source_type: SourceType,
     baseline_content: &str,
+    options: oxc_checker::CheckerOptions,
 ) -> TestResult {
     use oxc::semantic::SemanticBuilder;
     use oxc_checker::Checker;
@@ -1162,7 +1186,8 @@ fn run_checker_single(
     }
     let program = &parsed.program;
     let semantic = SemanticBuilder::new().build(program).semantic;
-    let mut checker = Checker::new_with_host(&semantic, &type_arena, &project, String::new(), 1);
+    let mut checker =
+        Checker::new_with_host(&semantic, &type_arena, &project, String::new(), 1, options);
     checker.check_program(program);
 
     // Collect computed types from AST (uses cached types from check_program)
@@ -1466,7 +1491,8 @@ pub fn run_checker_errors_typescript(files: &[TypeScriptFile]) -> Vec<CoverageRe
 
             let source = &f.units[0].content;
             let source_type = f.units[0].source_type;
-            let result = run_checker_errors_single(source, source_type, &f.error_codes);
+            let options = checker_options_from_settings(&f.settings);
+            let result = run_checker_errors_single(source, source_type, &f.error_codes, options);
             Some(CoverageResult { path: f.path.clone(), should_fail: false, result })
         })
         .collect()
@@ -1476,6 +1502,7 @@ fn run_checker_errors_single(
     source: &str,
     source_type: SourceType,
     expected_codes: &[String],
+    options: oxc_checker::CheckerOptions,
 ) -> TestResult {
     use oxc::semantic::SemanticBuilder;
     use oxc_checker::Checker;
@@ -1517,8 +1544,14 @@ fn run_checker_errors_single(
         }
     }
 
-    let mut checker =
-        Checker::new_with_host(&semantic_ret.semantic, &type_arena, &project, String::new(), 1);
+    let mut checker = Checker::new_with_host(
+        &semantic_ret.semantic,
+        &type_arena,
+        &project,
+        String::new(),
+        1,
+        options,
+    );
     checker.check_program(program);
 
     // Collect TS error codes from checker diagnostics

@@ -69,8 +69,14 @@ fn main() {
         }
         let program = &parsed.program;
         let semantic = oxc::semantic::SemanticBuilder::new().build(program).semantic;
-        let mut checker =
-            Checker::new_with_host(&semantic, &type_arena, &project, String::new(), 1);
+        let mut checker = Checker::new_with_host(
+            &semantic,
+            &type_arena,
+            &project,
+            String::new(),
+            1,
+            oxc_checker::CheckerOptions::default(),
+        );
 
         // Collect computed types
         let actual = collect_checker_types(&mut checker, program, &source);

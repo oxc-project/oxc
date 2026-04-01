@@ -20,7 +20,7 @@ use oxc_types::{
 };
 use smallvec::SmallVec;
 
-use oxc_checker_host::CheckerHost;
+use oxc_checker_host::{CheckerHost, CheckerOptions};
 
 /// TypeScript type checker.
 ///
@@ -61,6 +61,38 @@ pub struct Checker<'a> {
     /// Index of the file being checked. Stored on types created by this
     /// checker so cross-file lookups know which Semantic to query.
     pub(crate) file_idx: u16,
+
+    // -- Resolved compiler options --
+    // These are not all used yet — diagnostics gated on them will be added
+    // incrementally as the checker gains coverage. Suppress dead_code for now.
+    /// `allowUnreachableCode` tristate, passed through from `CheckerOptions`.
+    /// `Some(true)` = suppress, `Some(false)` = error, `None` = suggestion.
+    pub(crate) allow_unreachable_code: Option<bool>,
+    /// `allowUnusedLabels` tristate, passed through from `CheckerOptions`.
+    /// `Some(true)` = suppress, `Some(false)` = error, `None` = suggestion.
+    #[allow(dead_code)]
+    pub(crate) allow_unused_labels: Option<bool>,
+    /// Resolved `strictNullChecks` (from option or inherited from `strict`).
+    #[allow(dead_code)]
+    pub(crate) strict_null_checks: bool,
+    /// Resolved `strictPropertyInitialization` (from option or `strict`).
+    #[allow(dead_code)]
+    pub(crate) strict_property_initialization: bool,
+    /// Resolved `strictFunctionTypes` (from option or `strict`).
+    #[allow(dead_code)]
+    pub(crate) strict_function_types: bool,
+    /// Resolved `noImplicitAny` (from option or `strict`).
+    #[allow(dead_code)]
+    pub(crate) no_implicit_any: bool,
+    /// Resolved `noImplicitThis` (from option or `strict`).
+    #[allow(dead_code)]
+    pub(crate) no_implicit_this: bool,
+    /// `noFallthroughCasesInSwitch` option.
+    #[allow(dead_code)]
+    pub(crate) no_fallthrough_cases_in_switch: bool,
+    /// `noImplicitReturns` option.
+    #[allow(dead_code)]
+    pub(crate) no_implicit_returns: bool,
 
     /// Borrowed arena storing all types created during checking.
     /// Shared with global types (from lib.d.ts) and other checkers via
@@ -272,6 +304,7 @@ impl<'a> Checker<'a> {
         host: &'a dyn CheckerHost,
         file_path: String,
         file_idx: u16,
+        options: CheckerOptions,
     ) -> Self {
         let intrinsics = host.get_intrinsics();
         let base_count = type_arena.len() as u32;
@@ -325,11 +358,24 @@ impl<'a> Checker<'a> {
         let global_bigint_type = host.get_global_type("BigInt");
         let global_es_symbol_type = host.get_global_type("Symbol");
 
+        // Resolve strict-family options: explicit value wins, otherwise inherit from `strict`.
+        let resolve_strict = |opt: Option<bool>| opt.unwrap_or(options.strict);
+
         Self {
             semantic,
             file_path,
             host,
             file_idx,
+            // Resolved compiler options
+            allow_unreachable_code: options.allow_unreachable_code,
+            allow_unused_labels: options.allow_unused_labels,
+            strict_null_checks: resolve_strict(options.strict_null_checks),
+            strict_property_initialization: resolve_strict(options.strict_property_initialization),
+            strict_function_types: resolve_strict(options.strict_function_types),
+            no_implicit_any: resolve_strict(options.no_implicit_any),
+            no_implicit_this: resolve_strict(options.no_implicit_this),
+            no_fallthrough_cases_in_switch: options.no_fallthrough_cases_in_switch,
+            no_implicit_returns: options.no_implicit_returns,
             type_arena,
             base_count,
             diagnostics: Vec::new(),

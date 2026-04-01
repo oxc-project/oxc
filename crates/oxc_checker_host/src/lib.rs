@@ -46,6 +46,64 @@ pub struct IntrinsicIds {
     pub false_type: TypeId,
 }
 
+/// Compiler options that affect type-checking behavior.
+///
+/// Mirrors a subset of TypeScript's `compilerOptions`. All fields have
+/// tsc-compatible defaults (non-strict mode). Options from the `strict`
+/// family are stored as `Option<bool>`; the checker resolves them against
+/// `strict` during construction.
+#[derive(Clone, Copy, Debug)]
+pub struct CheckerOptions {
+    /// Master strict mode flag. When `true`, unset strict-family options
+    /// (`strict_null_checks`, `no_implicit_any`, etc.) default to `true`.
+    pub strict: bool,
+
+    // -- Strict sub-options: `None` = inherit from `strict` --
+    /// Enable strict null checks (affects type narrowing, assignability).
+    pub strict_null_checks: Option<bool>,
+    /// Enable strict property initialization checks (TS2564).
+    pub strict_property_initialization: Option<bool>,
+    /// Enable strict function type checks (contravariant parameters).
+    pub strict_function_types: Option<bool>,
+    /// Report errors for expressions/statements with an implied `any` type.
+    pub no_implicit_any: Option<bool>,
+    /// Report errors when `this` has an implied `any` type.
+    pub no_implicit_this: Option<bool>,
+
+    // -- Tristate options --
+    // These have three distinct behaviors in tsc:
+    //   `Some(true)` = suppress the diagnostic entirely
+    //   `Some(false)` = report as an error
+    //   `None` (unset) = report as a suggestion (warning)
+    /// Controls unreachable code diagnostics (e.g., TS2695).
+    pub allow_unreachable_code: Option<bool>,
+    /// Controls unused label diagnostics (e.g., TS1328).
+    pub allow_unused_labels: Option<bool>,
+
+    // -- Plain bool options --
+    /// Report errors for fallthrough cases in switch statements (TS7029).
+    pub no_fallthrough_cases_in_switch: bool,
+    /// Report errors when a function doesn't explicitly return in all code paths.
+    pub no_implicit_returns: bool,
+}
+
+impl Default for CheckerOptions {
+    fn default() -> Self {
+        Self {
+            strict: false,
+            strict_null_checks: None,
+            strict_property_initialization: None,
+            strict_function_types: None,
+            no_implicit_any: None,
+            no_implicit_this: None,
+            allow_unreachable_code: None,
+            allow_unused_labels: None,
+            no_fallthrough_cases_in_switch: false,
+            no_implicit_returns: false,
+        }
+    }
+}
+
 /// Interface for cross-file type resolution.
 ///
 /// Implemented by `Project` (in `oxc_project`), consumed by `Checker`

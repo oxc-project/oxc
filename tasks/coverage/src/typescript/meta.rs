@@ -36,13 +36,20 @@ pub struct CompilerSettings {
     pub declaration: bool,
     pub emit_declaration_only: bool,
     pub always_strict: bool, // Ensure 'use strict' is always emitted.
-    pub allow_unreachable_code: bool,
-    pub allow_unused_labels: bool,
+    pub allow_unreachable_code: Option<bool>,
+    pub allow_unused_labels: Option<bool>,
     pub no_fallthrough_cases_in_switch: bool,
     pub preserve_const_enums: Vec<bool>,
     pub use_define_for_class_fields: Vec<bool>,
     pub experimental_decorators: Vec<bool>,
     pub module_detection: Vec<String>, // "auto", "legacy", "force"
+    // Strict sub-options: None = not specified (inherit from strict)
+    pub strict_null_checks: Option<bool>,
+    pub strict_property_initialization: Option<bool>,
+    pub strict_function_types: Option<bool>,
+    pub no_implicit_any: Option<bool>,
+    pub no_implicit_this: Option<bool>,
+    pub no_implicit_returns: bool,
 }
 
 impl CompilerSettings {
@@ -58,11 +65,14 @@ impl CompilerSettings {
                 false,
             ),
             always_strict: Self::value_to_boolean(options.get("alwaysstrict"), false),
-            allow_unreachable_code: Self::value_to_boolean(
+            allow_unreachable_code: Self::value_to_tristate(
                 options.get("allowunreachablecode"),
-                true,
+                None,
             ),
-            allow_unused_labels: Self::value_to_boolean(options.get("allowunusedlabels"), true),
+            allow_unused_labels: Self::value_to_tristate(
+                options.get("allowunusedlabels"),
+                None,
+            ),
             no_fallthrough_cases_in_switch: Self::value_to_boolean(
                 options.get("nofallthroughcasesinswitch"),
                 false,
@@ -83,6 +93,24 @@ impl CompilerSettings {
                 .map(|_| vec![true, false])
                 .unwrap_or_default(),
             module_detection: Self::split_value_options(options.get("moduledetection")),
+            strict_null_checks: Self::value_to_tristate(
+                options.get("strictnullchecks"),
+                None,
+            ),
+            strict_property_initialization: Self::value_to_tristate(
+                options.get("strictpropertyinitialization"),
+                None,
+            ),
+            strict_function_types: Self::value_to_tristate(
+                options.get("strictfunctiontypes"),
+                None,
+            ),
+            no_implicit_any: Self::value_to_tristate(options.get("noimplicitany"), None),
+            no_implicit_this: Self::value_to_tristate(options.get("noimplicitthis"), None),
+            no_implicit_returns: Self::value_to_boolean(
+                options.get("noimplicitreturns"),
+                false,
+            ),
         }
     }
 
@@ -96,6 +124,17 @@ impl CompilerSettings {
         match value.map(AsRef::as_ref) {
             Some("true") => true,
             Some("false") => false,
+            _ => default,
+        }
+    }
+
+    /// Parse a tristate option: `Some(true)`, `Some(false)`, or the default
+    /// (typically `None` for "unset"). Used for options like `allowUnreachableCode`
+    /// and strict sub-options where absence and explicit `false` have different semantics.
+    fn value_to_tristate(value: Option<&String>, default: Option<bool>) -> Option<bool> {
+        match value.map(AsRef::as_ref) {
+            Some("true") => Some(true),
+            Some("false") => Some(false),
             _ => default,
         }
     }

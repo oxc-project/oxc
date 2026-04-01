@@ -2,7 +2,7 @@ commit: 34725489
 
 checker_errors_typescript Summary:
 AST Parsed     : 6430/6430 (100.00%)
-Positive Passed: 464/6430 (7.22%)
+Positive Passed: 472/6430 (7.34%)
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/ArrowFunctionExpression1.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration10.ts
@@ -1721,10 +1721,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/errorLocationForI
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/errorMessageOnObjectLiteralType.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/errorMessagesIntersectionTypes01.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/errorMessagesIntersectionTypes02.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/errorMessagesIntersectionTypes03.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/errorMessagesIntersectionTypes04.ts
@@ -2401,11 +2397,7 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/genericTypeUsedWi
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/genericTypeUsedWithoutTypeArguments3.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/genericTypeWithMultipleBases1.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/genericTypeWithMultipleBases2.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/genericTypeWithMultipleBases3.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/genericTypeWithNonGenericBaseMisMatch.ts
 
@@ -2698,8 +2690,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/infiniteConstrain
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/infinitelyExpandingOverloads.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/infinitelyExpandingTypes1.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/infinitelyExpandingTypes2.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/infinitelyExpandingTypes4.ts
 
@@ -3540,8 +3530,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/multipleExports.t
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/multipleInheritance.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/multivar.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/mutuallyRecursiveGenericBaseTypes1.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/mutuallyRecursiveInference.ts
 
@@ -5058,6 +5046,8 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/typeArgumentDefau
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/typeArgumentInferenceApparentType2.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/typeArgumentInferenceOrdering.ts
+
+checker_errors: tasks/coverage/typescript/tests/cases/compiler/typeArgumentInferenceWithConstraintAsCommonRoot.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/typeArgumentInferenceWithRecursivelyReferencedTypeAliasToTypeLiteral01.ts
 
@@ -8160,13 +8150,9 @@ checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/bi
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/binaryOperators/logicalOrOperator/logicalOrOperatorWithTypeParameters.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/commaOperator/commaOperatorInvalidAssignmentType.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/commaOperator/commaOperatorOtherInvalidOperation.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/commaOperator/commaOperatorOtherValidOperation.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/commaOperator/commaOperatorWithSecondOperandBooleanType.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/commaOperator/commaOperatorWithSecondOperandNumberType.ts
 
@@ -11111,8 +11097,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/conditio
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/conditional/inferTypesInvalidExtendsDeclaration.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/conditional/inferTypesWithExtends2.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/contextualTypes/commaOperator/contextuallyTypeCommaOperator02.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/contextualTypes/commaOperator/contextuallyTypeCommaOperator03.ts
 

@@ -52,6 +52,7 @@ impl Checker<'_> {
         for (i, expr) in exprs.iter().enumerate() {
             let is_last = i == exprs.len() - 1;
             if !is_last
+                && self.allow_unreachable_code != Some(true)
                 && Self::is_side_effect_free(expr)
                 && !Self::is_indirect_call(expr, exprs.get(i + 1))
             {
