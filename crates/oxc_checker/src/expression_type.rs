@@ -589,7 +589,7 @@ impl Checker<'_> {
         non_nullable
     }
 
-    /// Report TS18050 / TS2531 / TS2532 / TS2533 depending on the expression
+    /// Report TS18050 / TS18047-18049 / TS2531-2533 depending on the expression
     /// and which nullable constituents are present.
     /// Mirrors tsgo's `reportObjectPossiblyNullOrUndefinedError`.
     fn report_possibly_null_or_undefined_error(
@@ -610,14 +610,31 @@ impl Checker<'_> {
             return;
         }
 
-        // undefined identifier → TS18050
-        if matches!(expr, Expression::Identifier(id) if id.name == "undefined") {
-            self.diagnostics.push(
-                OxcDiagnostic::error("The value 'undefined' cannot be used here.")
-                    .with_error_code("ts", "18050")
-                    .with_label(span),
-            );
-            return;
+        // Entity name expression (identifier or `a.b.c` chain) →
+        // TS18050 for `undefined`, else TS18047/18048/18049 with the name.
+        // Mirrors tsgo's branch: isEntityNameExpression(node) && len < 100.
+        if let Some(name) = entity_name_expression_text(expr) {
+            if name.len() < 100 {
+                if matches!(expr, Expression::Identifier(id) if id.name == "undefined") {
+                    self.diagnostics.push(
+                        OxcDiagnostic::error("The value 'undefined' cannot be used here.")
+                            .with_error_code("ts", "18050")
+                            .with_label(span),
+                    );
+                    return;
+                }
+                let (code, msg) = match (has_null, has_undefined) {
+                    (true, true) => ("18049", format!("'{name}' is possibly 'null' or 'undefined'.")),
+                    (true, false) => ("18047", format!("'{name}' is possibly 'null'.")),
+                    _ => ("18048", format!("'{name}' is possibly 'undefined'.")),
+                };
+                self.diagnostics.push(
+                    OxcDiagnostic::error(msg)
+                        .with_error_code("ts", code)
+                        .with_label(span),
+                );
+                return;
+            }
         }
 
         // Other expressions → TS2531/2532/2533
@@ -2182,5 +2199,19 @@ impl Checker<'_> {
     /// Called from `resolve_declared_type` (type context).
     pub(crate) fn resolve_import_as_type(&mut self, symbol_id: SymbolId) -> TypeId {
         self.resolve_import_binding(symbol_id).and_then(|b| b.type_type).unwrap_or(self.any_type)
+    }
+}
+
+/// If `expr` is an entity name expression (identifier or `a.b.c` property-access
+/// chain), return its dotted text. Returns `None` for anything else.
+/// Mirrors tsgo's `isEntityNameExpression` + `entityNameToString`.
+fn entity_name_expression_text(expr: &Expression<'_>) -> Option<String> {
+    match expr {
+        Expression::Identifier(id) => Some(id.name.to_string()),
+        Expression::StaticMemberExpression(member) => {
+            let object_text = entity_name_expression_text(&member.object)?;
+            Some(format!("{object_text}.{}", member.property.name))
+        }
+        _ => None,
     }
 }
