@@ -2,7 +2,7 @@ commit: 34725489
 
 checker_typescript Summary:
 AST Parsed     : 3811/3811 (100.00%)
-Positive Passed: 474/3811 (12.44%)
+Positive Passed: 477/3811 (12.52%)
 checker: tasks/coverage/typescript/tests/cases/compiler/2dArrays.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/ClassDeclarationWithInvalidConstOnPropertyDeclaration2.ts
@@ -1339,10 +1339,6 @@ checker: tasks/coverage/typescript/tests/cases/compiler/destructuringAssignmentW
 
 checker: tasks/coverage/typescript/tests/cases/compiler/destructuringAssignmentWithStrictNullChecks.ts
 
-checker: tasks/coverage/typescript/tests/cases/compiler/destructuringInVariableDeclarations1.ts
-
-checker: tasks/coverage/typescript/tests/cases/compiler/destructuringInVariableDeclarations2.ts
-
 checker: tasks/coverage/typescript/tests/cases/compiler/destructuringInitializerContextualTypeFromContext.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/destructuringPropertyAssignmentNameIsNotAssignmentTarget.ts
@@ -1354,8 +1350,6 @@ checker: tasks/coverage/typescript/tests/cases/compiler/destructuringTypeGuardFl
 checker: tasks/coverage/typescript/tests/cases/compiler/destructuringWithConstraint.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/destructuringWithNewExpression.ts
-
-checker: tasks/coverage/typescript/tests/cases/compiler/destructuringWithNumberLiteral.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/detachedCommentAtStartOfConstructor1.ts
 

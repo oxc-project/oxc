@@ -2,7 +2,7 @@ commit: 34725489
 
 checker_errors_typescript Summary:
 AST Parsed     : 6430/6430 (100.00%)
-Positive Passed: 298/6430 (4.63%)
+Positive Passed: 303/6430 (4.71%)
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/ArrowFunctionExpression1.ts
 'public' modifier cannot appear on a parameter.
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration10.ts
@@ -1177,8 +1177,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/contextualTypingO
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/contextualTypingOfConditionalExpression2.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/contextualTypingOfGenericFunctionTypedArguments1.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/contextualTypingOfLambdaReturnExpression.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/contextualTypingOfObjectLiterals2.ts
@@ -2282,6 +2280,8 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/functionCallOnCon
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/functionExpressionInWithBlock.ts
 
+checker_errors: tasks/coverage/typescript/tests/cases/compiler/functionExpressionShadowedByParams.ts
+
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/functionLikeInParameterInitializer.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/functionOverloadAmbiguity1.ts
@@ -2331,8 +2331,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/functionParameter
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/functionToFunctionWithPropError.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/functionTypeArgumentArityErrors.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/functionTypeArgumentAssignmentCompat.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/functionTypesLackingReturnTypes.ts
 Expected `,` or `)` but found `var`
@@ -2422,8 +2420,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/genericCloneRetur
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/genericCloneReturnTypes2.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/genericCombinators2.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/genericConditionalConstrainedToUnknownNotAssignableToConcreteObject.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/genericConstraint1.ts
@@ -2445,8 +2441,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/genericDefaultsEr
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/genericDerivedTypeWithSpecializedBase.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/genericDerivedTypeWithSpecializedBase2.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/genericFunctionCallSignatureReturnTypeMismatch.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/genericFunctionInference1.ts
 
@@ -9244,8 +9238,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/u
 Unexpected token
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/negateOperator/negateOperatorWithAnyOtherType.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/negateOperator/negateOperatorWithStringType.ts
-
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/plusOperator/plusOperatorInvalidOperations.ts
 Unexpected token
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/plusOperator/plusOperatorWithAnyOtherType.ts
@@ -12401,8 +12393,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/primitiv
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/primitives/string/assignFromStringInterface2.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/primitives/string/invalidStringAssignments.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/primitives/string/stringPropertyAccessWithError.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/primitives/undefined/directReferenceToUndefined.ts
 
