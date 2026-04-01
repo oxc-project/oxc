@@ -341,6 +341,27 @@ impl<'a> Checker<'a> {
         std::mem::take(&mut self.type_param_constraints)
     }
 
+    /// Extract the conditional type roots.
+    ///
+    /// Used by Project to accumulate roots from all files so per-file
+    /// checkers can look up roots for conditional types declared in
+    /// other files (e.g., `Exclude<T, U>` from lib.d.ts).
+    pub fn take_conditional_roots(&mut self) -> Vec<ConditionalRoot> {
+        std::mem::take(&mut self.conditional_roots)
+    }
+
+    /// Look up a conditional type root by its ID.
+    ///
+    /// Checks the local `conditional_roots` vec first (for roots created
+    /// by this checker), then falls back to the host (for roots from
+    /// lib.d.ts or other files).
+    pub(crate) fn get_conditional_root(&self, index: usize) -> Option<ConditionalRoot> {
+        self.conditional_roots
+            .get(index)
+            .cloned()
+            .or_else(|| self.host.get_conditional_root(index))
+    }
+
     /// Check assignability with excess property checking support.
     ///
     /// Unlike `is_type_assignable_to` which returns a bare bool, this method

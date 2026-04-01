@@ -77,9 +77,9 @@ impl Checker<'_> {
         // TypeParameters — that's expected. Inference resolves them, so we
         // don't require extends to be non-generic in that case.
         if !check_is_generic {
-            let infer_params = self.conditional_roots[root_id.index()]
-                .infer_type_parameters
-                .clone();
+            let infer_params = self.get_conditional_root(root_id.index())
+                .map(|r| r.infer_type_parameters)
+                .unwrap_or_default();
 
             if !infer_params.is_empty() {
                 // Concrete check + infer params → run inference to resolve

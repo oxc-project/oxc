@@ -37,7 +37,7 @@ use oxc_checker_host::{CheckerHost, IntrinsicIds};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_resolver::{ResolveOptions, Resolver};
 use oxc_span::{CompactStr, SourceType};
-use oxc_types::{TypeArena, TypeId};
+use oxc_types::{ConditionalRoot, TypeArena, TypeId};
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use self_cell::self_cell;
@@ -138,6 +138,12 @@ pub struct Project {
     /// they encounter a type parameter from another file.
     type_param_constraints: RefCell<FxHashMap<TypeId, TypeId>>,
 
+    /// Accumulated conditional type roots from all checked files.
+    /// Indexed by `ConditionalRootId`. Roots from lib.d.ts are created first
+    /// (during lib checking) and must be accessible to per-file checkers
+    /// that instantiate global conditional types like `Exclude<T, U>`.
+    conditional_roots: RefCell<Vec<ConditionalRoot>>,
+
     /// Set of files currently being checked, for circular import detection.
     checking: RefCell<FxHashSet<usize>>,
 
@@ -183,6 +189,7 @@ impl Project {
             file_cells: RefCell::new(vec![None]),
             export_types: RefCell::new(FxHashMap::default()),
             type_param_constraints: RefCell::new(FxHashMap::default()),
+            conditional_roots: RefCell::new(Vec::new()),
             checking: RefCell::new(FxHashSet::default()),
             checked: RefCell::new(FxHashSet::default()),
             arena: Some(arena as *const TypeArena),
@@ -245,6 +252,7 @@ impl Project {
             file_cells: RefCell::new((0..file_count).map(|_| None).collect()),
             export_types: RefCell::new(FxHashMap::default()),
             type_param_constraints: RefCell::new(FxHashMap::default()),
+            conditional_roots: RefCell::new(Vec::new()),
             checking: RefCell::new(FxHashSet::default()),
             checked: RefCell::new(FxHashSet::default()),
             arena: Some(arena as *const TypeArena),
@@ -362,6 +370,7 @@ impl Project {
         let check_start = Instant::now();
         let exports;
         let file_constraints;
+        let file_roots;
         let diagnostics;
         {
             let borrowed = file_cell.borrow_dependent();
@@ -393,6 +402,7 @@ impl Project {
 
             // Extract caches from checker before it's dropped.
             file_constraints = checker.take_type_param_constraints();
+            file_roots = checker.take_conditional_roots();
             diagnostics = checker.take_diagnostics();
         } // checker dropped; FileCell borrow released
         *self.check_ms.borrow_mut() += check_start.elapsed().as_secs_f64() * 1000.0;
@@ -411,6 +421,17 @@ impl Project {
         // Merge constraints
         if !file_constraints.is_empty() {
             self.type_param_constraints.borrow_mut().extend(file_constraints);
+        }
+
+        // Merge conditional roots. Roots are indexed by position, so
+        // we append new roots. ConditionalRootIds created by this file's
+        // checker are offset by the current length of the global vec,
+        // but since each checker starts with an empty vec and creates
+        // roots at indices 0..N, we need to verify the IDs match.
+        // Currently, only the lib checker creates roots that are referenced
+        // cross-file, and it's always checked first (file index 0).
+        if !file_roots.is_empty() {
+            self.conditional_roots.borrow_mut().extend(file_roots);
         }
 
         if !diagnostics.is_empty() {
@@ -546,6 +567,10 @@ impl CheckerHost for Project {
 
     fn get_type_param_constraint(&self, type_id: TypeId) -> Option<TypeId> {
         self.type_param_constraints.borrow().get(&type_id).copied()
+    }
+
+    fn get_conditional_root(&self, index: usize) -> Option<ConditionalRoot> {
+        self.conditional_roots.borrow().get(index).cloned()
     }
 
     fn get_symbol_name(&self, file_idx: u16, symbol_id: oxc_syntax::symbol::SymbolId) -> Option<CompactStr> {

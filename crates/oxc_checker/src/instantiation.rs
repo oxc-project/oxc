@@ -263,7 +263,10 @@ impl Checker<'_> {
                 let orig_false = cond.false_type;
 
                 // Look up distributivity from the root
-                let is_distributive = self.conditional_roots[root_id.index()].is_distributive;
+                let Some(root) = self.get_conditional_root(root_id.index()) else {
+                    return type_id;
+                };
+                let is_distributive = root.is_distributive;
 
                 let new_check = self.instantiate_type(orig_check, mapper);
 
