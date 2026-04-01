@@ -22,6 +22,33 @@ use smallvec::SmallVec;
 
 use oxc_checker_host::{CheckerHost, CheckerOptions};
 
+/// Controls expression checking behavior.
+///
+/// Mirrors tsgo's `CheckMode`. Flags are bitwise-combinable.
+///
+///  - `NORMAL` (0): full checking with all diagnostics.
+///  - `TYPE_ONLY`: type resolution without certain diagnostics — used by
+///    `getTypeOfExpression` (CFA, declared-type inference). Currently
+///    suppresses equality-comparison diagnostics that can false-fire
+///    on transiently narrowed types during control-flow analysis.
+///  - Future flags (`CONTEXTUAL`, `INFERENTIAL`, etc.) will be added as
+///    the checker gains inference and overload resolution.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct CheckMode(u8);
+
+impl CheckMode {
+    /// Normal type checking — all diagnostics enabled.
+    pub const NORMAL: Self = Self(0);
+    /// Called from `get_type_of_expression` in non-checking contexts.
+    /// Diagnostics may be omitted.
+    pub const TYPE_ONLY: Self = Self(1 << 0);
+
+    #[inline]
+    pub const fn contains(self, flag: Self) -> bool {
+        self.0 & flag.0 == flag.0
+    }
+}
+
 /// TypeScript type checker.
 ///
 /// The checker runs after semantic analysis and resolves types for all
@@ -468,7 +495,7 @@ impl<'a> Checker<'a> {
         if let Some(&cached) = self.expression_type_cache.get(&key) {
             return cached;
         }
-        self.get_type_of_expression(expr, None)
+        self.get_type_of_expression(expr, None, CheckMode::TYPE_ONLY)
     }
 
     /// Extract the type parameter constraint cache.
@@ -1641,7 +1668,7 @@ impl<'a> Checker<'a> {
         match stmt {
             Statement::ReturnStatement(ret) => {
                 let return_type = if let Some(arg) = &ret.argument {
-                    self.get_type_of_expression(arg, None)
+                    self.get_type_of_expression(arg, None, CheckMode::NORMAL)
                 } else {
                     self.undefined_type
                 };

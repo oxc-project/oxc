@@ -1347,7 +1347,7 @@ impl<'a> oxc::ast_visit::Visit<'a> for TypeCollectorVisitor<'a, '_> {
                 if (key_span.start as usize) < self.source.len()
                     && (key_span.end as usize) <= self.source.len()
                 {
-                    let prop_type = self.checker.get_type_of_expression(&prop.value, None);
+                    let prop_type = self.checker.get_type_of_expression(&prop.value, None, oxc_checker::CheckMode::TYPE_ONLY);
                     let widened = self.checker.get_widened_literal_type(prop_type);
                     let key_text =
                         &self.source[key_span.start as usize..key_span.end as usize];
@@ -1371,7 +1371,7 @@ impl<'a> oxc::ast_visit::Visit<'a> for TypeCollectorVisitor<'a, '_> {
                 let prop_type = if let Some(ann) = &prop.type_annotation {
                     self.checker.get_type_from_type_node(&ann.type_annotation)
                 } else if let Some(init) = &prop.value {
-                    self.checker.get_type_of_expression(init, None)
+                    self.checker.get_type_of_expression(init, None, oxc_checker::CheckMode::TYPE_ONLY)
                 } else {
                     self.checker.any_type
                 };
@@ -1455,7 +1455,7 @@ impl<'a> oxc::ast_visit::Visit<'a> for TypeCollectorVisitor<'a, '_> {
             && (name_span.end as usize) <= self.source.len()
         {
             let member_type = if let Some(init) = &member.initializer {
-                self.checker.get_type_of_expression(init, None)
+                self.checker.get_type_of_expression(init, None, oxc_checker::CheckMode::TYPE_ONLY)
             } else {
                 self.checker.any_type
             };

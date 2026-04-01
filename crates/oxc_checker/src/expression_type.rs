@@ -12,6 +12,7 @@ use oxc_types::{
 };
 use smallvec::SmallVec;
 
+use crate::checker::CheckMode;
 use crate::Checker;
 
 /// Selects which error reporter `check_non_null_type_with_reporter` uses.
@@ -35,13 +36,14 @@ impl Checker<'_> {
         &mut self,
         expr: &Expression<'_>,
         contextual_type: Option<TypeId>,
+        check_mode: CheckMode,
     ) -> TypeId {
         // Guard against infinite recursion (e.g., `const x = x`)
         if self.recursion_depth > 100 {
             return self.any_type;
         }
         self.recursion_depth += 1;
-        let result = self.get_type_of_expression_inner(expr, contextual_type);
+        let result = self.get_type_of_expression_inner(expr, contextual_type, check_mode);
         self.recursion_depth -= 1;
 
         // Cache if we're inside check_program() (flow graph is active).
@@ -61,6 +63,7 @@ impl Checker<'_> {
         &mut self,
         expr: &Expression<'_>,
         contextual_type: Option<TypeId>,
+        check_mode: CheckMode,
     ) -> TypeId {
         match expr {
             Expression::StringLiteral(lit) => self.get_or_create_string_literal_type(&lit.value),
@@ -78,33 +81,52 @@ impl Checker<'_> {
             Expression::NullLiteral(_) => self.null_type,
             Expression::Identifier(ident) => self.get_type_of_identifier(ident),
             Expression::ParenthesizedExpression(paren) => {
-                self.get_type_of_expression(&paren.expression, contextual_type)
+                self.get_type_of_expression(&paren.expression, contextual_type, check_mode)
             }
-            // Type assertions — return the asserted type
-            Expression::TSAsExpression(expr) => self.get_type_from_type_node(&expr.type_annotation),
+            // Type assertions
+            Expression::TSAsExpression(expr) => {
+                self.check_assertion(
+                    &expr.expression,
+                    &expr.type_annotation,
+                    contextual_type,
+                    check_mode,
+                )
+            }
             Expression::TSTypeAssertion(expr) => {
-                self.get_type_from_type_node(&expr.type_annotation)
+                self.check_assertion(
+                    &expr.expression,
+                    &expr.type_annotation,
+                    contextual_type,
+                    check_mode,
+                )
             }
             // `satisfies` checks but returns the expression's type, not the annotation
             Expression::TSSatisfiesExpression(expr) => {
-                self.get_type_of_expression(&expr.expression, contextual_type)
+                self.get_type_of_expression(&expr.expression, contextual_type, check_mode)
             }
             // Non-null assertion — remove null/undefined from the expression type
             Expression::TSNonNullExpression(expr) => {
-                let type_id = self.get_type_of_expression(&expr.expression, contextual_type);
+                let type_id =
+                    self.get_type_of_expression(&expr.expression, contextual_type, check_mode);
                 self.get_non_nullable_type(type_id)
             }
 
             // Unary expressions
-            Expression::UnaryExpression(expr) => self.get_type_of_unary_expression(expr),
+            Expression::UnaryExpression(expr) => {
+                self.get_type_of_unary_expression(expr, check_mode)
+            }
 
             // Binary expressions
-            Expression::BinaryExpression(expr) => self.get_type_of_binary_expression(expr),
+            Expression::BinaryExpression(expr) => {
+                self.get_type_of_binary_expression(expr, check_mode)
+            }
 
             // Conditional (ternary) — union of both branches
             Expression::ConditionalExpression(expr) => {
-                let true_type = self.get_type_of_expression(&expr.consequent, contextual_type);
-                let false_type = self.get_type_of_expression(&expr.alternate, contextual_type);
+                let true_type =
+                    self.get_type_of_expression(&expr.consequent, contextual_type, check_mode);
+                let false_type =
+                    self.get_type_of_expression(&expr.alternate, contextual_type, check_mode);
                 self.get_or_create_union_type(vec![true_type, false_type])
             }
 
@@ -114,7 +136,7 @@ impl Checker<'_> {
             // Sequence expression — checks all sub-expressions, emits TS2695,
             // returns type of the last element.
             Expression::SequenceExpression(seq) => {
-                self.check_sequence_expression(seq, contextual_type)
+                self.check_sequence_expression(seq, contextual_type, check_mode)
             }
 
             // void x — always undefined
@@ -122,8 +144,10 @@ impl Checker<'_> {
 
             // Logical expressions — simplified to union of both sides
             Expression::LogicalExpression(expr) => {
-                let left_type = self.get_type_of_expression(&expr.left, contextual_type);
-                let right_type = self.get_type_of_expression(&expr.right, contextual_type);
+                let left_type =
+                    self.get_type_of_expression(&expr.left, contextual_type, check_mode);
+                let right_type =
+                    self.get_type_of_expression(&expr.right, contextual_type, check_mode);
                 self.get_or_create_union_type(vec![left_type, right_type])
             }
 
@@ -133,13 +157,13 @@ impl Checker<'_> {
 
             // Object literal: `{ x: 1, y: "hello" }`
             Expression::ObjectExpression(obj) => {
-                self.get_type_of_object_literal(obj, contextual_type)
+                self.get_type_of_object_literal(obj, contextual_type, check_mode)
             }
 
             // Property access: foo.bar / foo?.bar
             // Null check at dispatch; optional chains skip it.
             Expression::StaticMemberExpression(expr) => {
-                let object_type = self.get_type_of_expression(&expr.object, None);
+                let object_type = self.get_type_of_expression(&expr.object, None, check_mode);
                 let object_type = if expr.optional {
                     object_type
                 } else {
@@ -150,21 +174,23 @@ impl Checker<'_> {
 
             // Array literal: [1, 2, 3]
             Expression::ArrayExpression(arr) => {
-                self.get_type_of_array_literal(arr, contextual_type)
+                self.get_type_of_array_literal(arr, contextual_type, check_mode)
             }
 
             // Assignment: checks assignability (TS2322), returns RHS type.
             Expression::AssignmentExpression(assign) => {
-                self.check_assignment_expression(assign, contextual_type)
+                self.check_assignment_expression(assign, contextual_type, check_mode)
             }
 
             // Optional chaining: unwrap inner, union with undefined
-            Expression::ChainExpression(chain) => self.get_type_of_chain_expression(chain),
+            Expression::ChainExpression(chain) => {
+                self.get_type_of_chain_expression(chain, check_mode)
+            }
 
             // Computed member access: obj["key"] / obj?.["key"]
             // Null check at dispatch; optional chains skip it.
             Expression::ComputedMemberExpression(expr) => {
-                let object_type = self.get_type_of_expression(&expr.object, None);
+                let object_type = self.get_type_of_expression(&expr.object, None, check_mode);
                 let object_type = if expr.optional {
                     object_type
                 } else {
@@ -175,7 +201,7 @@ impl Checker<'_> {
 
             // await expr — unwrap Promise<T> to T
             Expression::AwaitExpression(expr) => {
-                let operand_type = self.get_type_of_expression(&expr.argument, None);
+                let operand_type = self.get_type_of_expression(&expr.argument, None, check_mode);
                 self.get_awaited_type(operand_type, expr.span)
             }
 
@@ -225,6 +251,7 @@ impl Checker<'_> {
                             self.get_type_of_expression(
                                 &expr_stmt.expression,
                                 return_contextual_type,
+                                check_mode,
                             )
                         } else {
                             self.void_type
@@ -250,7 +277,7 @@ impl Checker<'_> {
                 self.create_function_type(sig)
             }
 
-            Expression::CallExpression(call) => self.get_type_of_call_expression(call),
+            Expression::CallExpression(call) => self.get_type_of_call_expression(call, check_mode),
 
             Expression::NewExpression(new_expr) => self.get_type_of_new_expression(new_expr),
 
@@ -741,7 +768,7 @@ impl Checker<'_> {
                     let overall_type = if let Some(annotation) = &decl.type_annotation {
                         self.get_type_from_type_node(&annotation.type_annotation)
                     } else if let Some(init) = &decl.init {
-                        self.get_type_of_expression(init, None)
+                        self.get_type_of_expression(init, None, CheckMode::TYPE_ONLY)
                     } else {
                         // May be in a for-of/for-in loop
                         self.get_type_from_for_loop_context(node_id)
@@ -759,7 +786,7 @@ impl Checker<'_> {
                 if let Some(annotation) = &decl.type_annotation {
                     self.get_type_from_type_node(&annotation.type_annotation)
                 } else if let Some(init) = &decl.init {
-                    let inferred = self.get_type_of_expression(init, None);
+                    let inferred = self.get_type_of_expression(init, None, CheckMode::TYPE_ONLY);
                     // Widen literal types for non-const declarations
                     if decl.kind != oxc_ast::ast::VariableDeclarationKind::Const {
                         self.get_widened_literal_type(inferred)
@@ -797,7 +824,7 @@ impl Checker<'_> {
                                 let prop_type = if let Some(ann) = &prop.type_annotation {
                                     self.get_type_from_type_node(&ann.type_annotation)
                                 } else if let Some(init) = &prop.value {
-                                    self.get_type_of_expression(init, None)
+                                    self.get_type_of_expression(init, None, CheckMode::TYPE_ONLY)
                                 } else {
                                     self.any_type
                                 };
@@ -890,7 +917,7 @@ impl Checker<'_> {
             AstKind::TSEnumMember(member) => {
                 // Individual enum member: resolve its literal type
                 if let Some(init) = &member.initializer {
-                    self.get_type_of_expression(init, None)
+                    self.get_type_of_expression(init, None, CheckMode::TYPE_ONLY)
                 } else {
                     // Auto-incremented numeric member — walk the parent enum body
                     // to compute the auto-incremented value.
@@ -953,7 +980,7 @@ impl Checker<'_> {
                     return self.get_type_from_type_node(&annotation.type_annotation);
                 }
                 if let Some(init) = &decl.init {
-                    return self.get_type_of_expression(init, None);
+                    return self.get_type_of_expression(init, None, CheckMode::TYPE_ONLY);
                 }
                 self.any_type
             }
@@ -972,7 +999,7 @@ impl Checker<'_> {
         auto_value: &mut f64,
     ) -> TypeId {
         if let Some(init) = &member.initializer {
-            let t = self.get_type_of_expression(init, None);
+            let t = self.get_type_of_expression(init, None, CheckMode::TYPE_ONLY);
             if let TypeData::Literal(LiteralType::Number(n)) = self.type_arena.get_data(t) {
                 *auto_value = *n + 1.0;
             }
@@ -1011,7 +1038,7 @@ impl Checker<'_> {
         let node = self.semantic().nodes().get_node(loop_node_id);
         match node.kind() {
             AstKind::ForOfStatement(for_of) => {
-                let iterable_type = self.get_type_of_expression(&for_of.right, None);
+                let iterable_type = self.get_type_of_expression(&for_of.right, None, CheckMode::TYPE_ONLY);
                 self.get_iterated_type_of_iterable(iterable_type)
             }
             AstKind::ForInStatement(_) => self.string_type,
@@ -1139,7 +1166,7 @@ impl Checker<'_> {
     }
 
     /// Get the result type of a unary expression.
-    fn get_type_of_unary_expression(&mut self, expr: &UnaryExpression<'_>) -> TypeId {
+    fn get_type_of_unary_expression(&mut self, expr: &UnaryExpression<'_>, check_mode: CheckMode) -> TypeId {
         match expr.operator {
             // typeof always returns a string
             UnaryOperator::Typeof => self.string_type,
@@ -1151,13 +1178,13 @@ impl Checker<'_> {
             UnaryOperator::Delete => self.boolean_type,
             // +x always returns number
             UnaryOperator::UnaryPlus => {
-                let operand_type = self.get_type_of_expression(&expr.argument, None);
+                let operand_type = self.get_type_of_expression(&expr.argument, None, check_mode);
                 self.check_non_null_type(operand_type, &expr.argument);
                 self.number_type
             }
             // -x and ~x return number or bigint depending on operand
             UnaryOperator::UnaryNegation | UnaryOperator::BitwiseNot => {
-                let operand_type = self.get_type_of_expression(&expr.argument, None);
+                let operand_type = self.get_type_of_expression(&expr.argument, None, check_mode);
                 self.check_non_null_type(operand_type, &expr.argument);
                 let operand_flags = self.type_arena.get_flags(operand_type);
                 if operand_flags.intersects(TypeFlags::BigIntLike) {
@@ -1179,6 +1206,7 @@ impl Checker<'_> {
         &mut self,
         obj: &oxc_ast::ast::ObjectExpression<'_>,
         contextual_type: Option<TypeId>,
+        check_mode: CheckMode,
     ) -> TypeId {
         use oxc_ast::ast::{ObjectPropertyKind, PropertyKind};
 
@@ -1196,7 +1224,7 @@ impl Checker<'_> {
                         let prop_contextual_type =
                             contextual_type.and_then(|ct| self.get_property_of_type(ct, &name));
                         let prop_type =
-                            self.get_type_of_expression(&prop.value, prop_contextual_type);
+                            self.get_type_of_expression(&prop.value, prop_contextual_type, check_mode);
                         let widened = self.get_widened_literal_type(prop_type);
                         properties.push(PropertyInfo::new(CompactStr::new(&name), widened));
                     }
@@ -1209,7 +1237,7 @@ impl Checker<'_> {
                             self.create_object_literal_type(std::mem::take(&mut properties));
                         spread = self.get_spread_type(spread, segment);
                     }
-                    let spread_type = self.get_type_of_expression(&spread_prop.argument, None);
+                    let spread_type = self.get_type_of_expression(&spread_prop.argument, None, check_mode);
                     if self.is_valid_spread_type(spread_type) {
                         spread = self.get_spread_type(spread, spread_type);
                     } else {
@@ -1476,13 +1504,14 @@ impl Checker<'_> {
         &mut self,
         arr: &oxc_ast::ast::ArrayExpression<'_>,
         contextual_type: Option<TypeId>,
+        check_mode: CheckMode,
     ) -> TypeId {
         use oxc_ast::ast::ArrayExpressionElement;
 
         // If contextual type is a tuple, check as tuple with per-position types
         if let Some(ct) = contextual_type {
             if matches!(self.type_arena.get_data(ct), TypeData::Tuple(_)) {
-                return self.check_array_literal_as_tuple(arr, ct);
+                return self.check_array_literal_as_tuple(arr, ct, check_mode);
             }
         }
 
@@ -1492,7 +1521,7 @@ impl Checker<'_> {
             match element {
                 ArrayExpressionElement::SpreadElement(spread) => {
                     // TODO: extract element type from spread
-                    let spread_type = self.get_type_of_expression(&spread.argument, None);
+                    let spread_type = self.get_type_of_expression(&spread.argument, None, check_mode);
                     element_types.push(spread_type);
                 }
                 ArrayExpressionElement::Elision(_) => {
@@ -1501,7 +1530,7 @@ impl Checker<'_> {
                 _ => {
                     // Expression elements (inherited from Expression)
                     let elem_expr = element.to_expression();
-                    let elem_type = self.get_type_of_expression(elem_expr, None);
+                    let elem_type = self.get_type_of_expression(elem_expr, None, check_mode);
                     element_types.push(elem_type);
                 }
             }
@@ -1551,6 +1580,7 @@ impl Checker<'_> {
         &mut self,
         arr: &oxc_ast::ast::ArrayExpression<'_>,
         tuple_contextual_type: TypeId,
+        check_mode: CheckMode,
     ) -> TypeId {
         use oxc_ast::ast::ArrayExpressionElement;
 
@@ -1568,12 +1598,12 @@ impl Checker<'_> {
 
             let elem_type = match element {
                 ArrayExpressionElement::SpreadElement(spread) => {
-                    self.get_type_of_expression(&spread.argument, None)
+                    self.get_type_of_expression(&spread.argument, None, check_mode)
                 }
                 ArrayExpressionElement::Elision(_) => self.undefined_type,
                 _ => {
                     let elem_expr = element.to_expression();
-                    self.get_type_of_expression(elem_expr, ctx_elem_type)
+                    self.get_type_of_expression(elem_expr, ctx_elem_type, check_mode)
                 }
             };
 
@@ -1615,20 +1645,20 @@ impl Checker<'_> {
     ///
     /// Resolves the inner expression type and unions with `undefined`
     /// since the chain may short-circuit.
-    fn get_type_of_chain_expression(&mut self, chain: &ChainExpression<'_>) -> TypeId {
+    fn get_type_of_chain_expression(&mut self, chain: &ChainExpression<'_>, check_mode: CheckMode) -> TypeId {
         use oxc_ast::ast::ChainElement;
 
         let inner_type = match &chain.expression {
             ChainElement::StaticMemberExpression(e) => {
-                let object_type = self.get_type_of_expression(&e.object, None);
+                let object_type = self.get_type_of_expression(&e.object, None, check_mode);
                 self.resolve_static_member_type(object_type, e)
             }
             ChainElement::ComputedMemberExpression(e) => {
-                let object_type = self.get_type_of_expression(&e.object, None);
+                let object_type = self.get_type_of_expression(&e.object, None, check_mode);
                 self.resolve_computed_member_type(object_type, e)
             }
             ChainElement::TSNonNullExpression(e) => {
-                self.get_type_of_expression(&e.expression, None)
+                self.get_type_of_expression(&e.expression, None, check_mode)
             }
             _ => self.any_type, // CallExpression, PrivateFieldExpression
         };
@@ -1681,15 +1711,17 @@ impl Checker<'_> {
                 self.get_type_of_identifier(ident)
             }
             AssignmentTarget::StaticMemberExpression(expr) => {
-                let object_type = self.get_type_of_expression(&expr.object, None);
+                let object_type =
+                    self.get_type_of_expression(&expr.object, None, CheckMode::NORMAL);
                 self.resolve_static_member_type(object_type, expr)
             }
             AssignmentTarget::ComputedMemberExpression(expr) => {
-                let object_type = self.get_type_of_expression(&expr.object, None);
+                let object_type =
+                    self.get_type_of_expression(&expr.object, None, CheckMode::NORMAL);
                 self.resolve_computed_member_type(object_type, expr)
             }
             AssignmentTarget::TSNonNullExpression(expr) => {
-                self.get_type_of_expression(&expr.expression, None)
+                self.get_type_of_expression(&expr.expression, None, CheckMode::NORMAL)
             }
             AssignmentTarget::TSAsExpression(expr) => {
                 // The asserted type is what the LHS is declared as
@@ -1699,7 +1731,7 @@ impl Checker<'_> {
                 self.get_type_from_type_node(&expr.type_annotation)
             }
             AssignmentTarget::TSSatisfiesExpression(expr) => {
-                self.get_type_of_expression(&expr.expression, None)
+                self.get_type_of_expression(&expr.expression, None, CheckMode::NORMAL)
             }
             // Destructuring patterns — not yet supported
             AssignmentTarget::ArrayAssignmentTarget(_)
@@ -1709,7 +1741,7 @@ impl Checker<'_> {
     }
 
     /// Get the result type of a binary expression.
-    fn get_type_of_binary_expression(&mut self, expr: &BinaryExpression<'_>) -> TypeId {
+    fn get_type_of_binary_expression(&mut self, expr: &BinaryExpression<'_>, check_mode: CheckMode) -> TypeId {
         match expr.operator {
             // Relational operators: validate operands (checkNonNullType, comparability).
             // Emits TS18050 for null/undefined literals, TS2365 for incompatible types.
@@ -1717,8 +1749,8 @@ impl Checker<'_> {
             | BinaryOperator::LessEqualThan
             | BinaryOperator::GreaterThan
             | BinaryOperator::GreaterEqualThan => {
-                let left_type = self.get_type_of_expression(&expr.left, None);
-                let right_type = self.get_type_of_expression(&expr.right, None);
+                let left_type = self.get_type_of_expression(&expr.left, None, check_mode);
+                let right_type = self.get_type_of_expression(&expr.right, None, check_mode);
 
                 // TODO: checkForDisallowedESSymbolOperand
 
@@ -1759,8 +1791,8 @@ impl Checker<'_> {
             | BinaryOperator::BitwiseOR
             | BinaryOperator::BitwiseXOR
             | BinaryOperator::BitwiseAnd => {
-                let left_type = self.get_type_of_expression(&expr.left, None);
-                let right_type = self.get_type_of_expression(&expr.right, None);
+                let left_type = self.get_type_of_expression(&expr.left, None, check_mode);
+                let right_type = self.get_type_of_expression(&expr.right, None, check_mode);
 
                 let left_type = self.check_non_null_type(left_type, &expr.left);
                 let right_type = self.check_non_null_type(right_type, &expr.right);
@@ -1817,8 +1849,8 @@ impl Checker<'_> {
             // checkNonNullType is only applied when neither side is string-like
             // (string concat with null/undefined is valid — they coerce to "null"/"undefined").
             BinaryOperator::Addition => {
-                let left_type = self.get_type_of_expression(&expr.left, None);
-                let right_type = self.get_type_of_expression(&expr.right, None);
+                let left_type = self.get_type_of_expression(&expr.left, None, check_mode);
+                let right_type = self.get_type_of_expression(&expr.right, None, check_mode);
 
                 let is_string_concat =
                     self.is_type_assignable_to_kind_ex(left_type, TypeFlags::StringLike, true)
@@ -2033,10 +2065,10 @@ impl Checker<'_> {
     }
 
     /// Get the type of a call expression, checking for TS2349, TS2554, TS2345.
-    fn get_type_of_call_expression(&mut self, call: &oxc_ast::ast::CallExpression<'_>) -> TypeId {
+    fn get_type_of_call_expression(&mut self, call: &oxc_ast::ast::CallExpression<'_>, check_mode: CheckMode) -> TypeId {
         use oxc_ast::ast::Argument;
 
-        let callee_type = self.get_type_of_expression(&call.callee, None);
+        let callee_type = self.get_type_of_expression(&call.callee, None, check_mode);
         let callee_flags = self.type_arena.get_flags(callee_type);
 
         // any(...) → any
@@ -2044,7 +2076,7 @@ impl Checker<'_> {
             // Still evaluate argument expressions for side-effect diagnostics
             for arg in &call.arguments {
                 if let Some(expr) = arg.as_expression() {
-                    self.get_type_of_expression(expr, None);
+                    self.get_type_of_expression(expr, None, check_mode);
                 }
             }
             return self.any_type;
@@ -2078,7 +2110,7 @@ impl Checker<'_> {
             // Still evaluate arguments for diagnostics
             for arg in &call.arguments {
                 if let Some(expr) = arg.as_expression() {
-                    self.get_type_of_expression(expr, None);
+                    self.get_type_of_expression(expr, None, check_mode);
                 }
             }
             return self.any_type;
@@ -2137,11 +2169,11 @@ impl Checker<'_> {
                 let param_ctx = self.get_param_type_at(&param_type_ids, i, sig_flags);
                 match arg {
                     Argument::SpreadElement(spread) => {
-                        self.get_type_of_expression(&spread.argument, None)
+                        self.get_type_of_expression(&spread.argument, None, check_mode)
                     }
                     _ => {
                         let expr = arg.to_expression();
-                        self.get_type_of_expression(expr, param_ctx)
+                        self.get_type_of_expression(expr, param_ctx, check_mode)
                     }
                 }
             })

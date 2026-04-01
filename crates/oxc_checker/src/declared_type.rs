@@ -6,6 +6,7 @@ use oxc_types::{
 };
 use smallvec::SmallVec;
 
+use crate::checker::CheckMode;
 use crate::Checker;
 
 impl Checker<'_> {
@@ -263,7 +264,7 @@ impl Checker<'_> {
                         let prop_type = if let Some(ann) = &prop.type_annotation {
                             self.get_type_from_type_node(&ann.type_annotation)
                         } else if let Some(init) = &prop.value {
-                            self.get_type_of_expression(init, None)
+                            self.get_type_of_expression(init, None, CheckMode::TYPE_ONLY)
                         } else {
                             self.any_type
                         };
@@ -296,7 +297,7 @@ impl Checker<'_> {
         // Handle extends clause — resolve base types
         let mut resolved_base_types = SmallVec::new();
         if let Some(super_class) = &decl.super_class {
-            let base_type = self.get_type_of_expression(super_class, None);
+            let base_type = self.get_type_of_expression(super_class, None, CheckMode::TYPE_ONLY);
             if base_type != self.any_type {
                 resolved_base_types.push(base_type);
             }
@@ -337,7 +338,7 @@ impl Checker<'_> {
 
         for member in &decl.body.members {
             let member_type = if let Some(init) = &member.initializer {
-                let init_type = self.get_type_of_expression(init, None);
+                let init_type = self.get_type_of_expression(init, None, CheckMode::TYPE_ONLY);
                 if let TypeData::Literal(LiteralType::Number(n)) =
                     self.type_arena.get_data(init_type)
                 {

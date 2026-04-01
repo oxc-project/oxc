@@ -5,6 +5,7 @@ use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
 use oxc_types::{StructuredTypeKind, TypeData, TypeFlags};
 
+use crate::checker::CheckMode;
 use crate::Checker;
 
 /// Helper macro to set up parser -> semantic -> checker in a single scope,
@@ -222,7 +223,7 @@ fn literal_expression_types() {
         with_checker!(source, |checker, program| {
             let init =
                 first_var_init(program).unwrap_or_else(|| panic!("no initializer in: {source}"));
-            let type_id = checker.get_type_of_expression(init, None);
+            let type_id = checker.get_type_of_expression(init, None, CheckMode::NORMAL);
 
             assert_eq!(
                 checker.type_arena().get_flags(type_id),
@@ -242,7 +243,7 @@ fn identifier_resolves_to_declared_type() {
         // Get the second declaration's initializer (which is `x`)
         if let Statement::VariableDeclaration(decl) = &program.body[1] {
             let init = decl.declarations[0].init.as_ref().unwrap();
-            let type_id = checker.get_type_of_expression(init, None);
+            let type_id = checker.get_type_of_expression(init, None, CheckMode::NORMAL);
             assert_eq!(checker.type_to_string(type_id), "string");
             assert_eq!(checker.type_arena().get_flags(type_id), TypeFlags::String);
         } else {
@@ -259,7 +260,7 @@ fn identifier_infers_type_from_initializer() {
     with_checker!("let x = 42; let y = x", |checker, program| {
         if let Statement::VariableDeclaration(decl) = &program.body[1] {
             let init = decl.declarations[0].init.as_ref().unwrap();
-            let type_id = checker.get_type_of_expression(init, None);
+            let type_id = checker.get_type_of_expression(init, None, CheckMode::NORMAL);
             assert_eq!(checker.type_to_string(type_id), "number");
             assert_eq!(checker.type_arena().get_flags(type_id), TypeFlags::Number);
         } else {
@@ -316,21 +317,21 @@ fn assignability_primitives_not_assignable_across() {
 fn assignability_literal_to_base() {
     with_checker!("let x = \"hello\"", |checker, program| {
         let init = first_var_init(program).unwrap();
-        let lit_type = checker.get_type_of_expression(init, None);
+        let lit_type = checker.get_type_of_expression(init, None, CheckMode::NORMAL);
         assert!(checker.is_type_assignable_to(lit_type, checker.string_type));
         assert!(!checker.is_type_assignable_to(checker.string_type, lit_type));
     });
 
     with_checker!("let x = 42", |checker, program| {
         let init = first_var_init(program).unwrap();
-        let lit_type = checker.get_type_of_expression(init, None);
+        let lit_type = checker.get_type_of_expression(init, None, CheckMode::NORMAL);
         assert!(checker.is_type_assignable_to(lit_type, checker.number_type));
         assert!(!checker.is_type_assignable_to(checker.number_type, lit_type));
     });
 
     with_checker!("let x = true", |checker, program| {
         let init = first_var_init(program).unwrap();
-        let lit_type = checker.get_type_of_expression(init, None);
+        let lit_type = checker.get_type_of_expression(init, None, CheckMode::NORMAL);
         assert!(checker.is_type_assignable_to(lit_type, checker.boolean_type));
         assert!(!checker.is_type_assignable_to(checker.boolean_type, lit_type));
     });
@@ -1084,7 +1085,7 @@ fn type_literal_extra_properties_ok() {
 fn object_expression_type() {
     with_checker!("let x = { a: 1, b: 'hello' }", |checker, program| {
         let init = first_var_init(program).unwrap();
-        let type_id = checker.get_type_of_expression(init, None);
+        let type_id = checker.get_type_of_expression(init, None, CheckMode::NORMAL);
         let flags = checker.type_arena().get_flags(type_id);
         assert!(flags.intersects(TypeFlags::Object));
         assert_eq!(checker.type_to_string(type_id), "{ a: number; b: string; }");
@@ -1095,7 +1096,7 @@ fn object_expression_type() {
 fn object_expression_empty() {
     with_checker!("let x = {}", |checker, program| {
         let init = first_var_init(program).unwrap();
-        let type_id = checker.get_type_of_expression(init, None);
+        let type_id = checker.get_type_of_expression(init, None, CheckMode::NORMAL);
         assert_eq!(checker.type_to_string(type_id), "{}");
     });
 }
@@ -1340,7 +1341,7 @@ fn property_access_on_object_literal() {
                 for declarator in &decl.declarations {
                     if count == 1 {
                         if let Some(init) = &declarator.init {
-                            let type_id = checker.get_type_of_expression(init, None);
+                            let type_id = checker.get_type_of_expression(init, None, CheckMode::NORMAL);
                             let flags = checker.type_arena().get_flags(type_id);
                             assert!(
                                 flags.intersects(TypeFlags::Number),
@@ -1367,7 +1368,7 @@ fn property_access_on_interface() {
                     for declarator in &decl.declarations {
                         if count == 1 {
                             if let Some(init) = &declarator.init {
-                                let type_id = checker.get_type_of_expression(init, None);
+                                let type_id = checker.get_type_of_expression(init, None, CheckMode::NORMAL);
                                 assert_eq!(checker.type_to_string(type_id), "number");
                             }
                         }
@@ -1388,7 +1389,7 @@ fn property_access_unknown_property() {
                 for declarator in &decl.declarations {
                     if count == 1 {
                         if let Some(init) = &declarator.init {
-                            let type_id = checker.get_type_of_expression(init, None);
+                            let type_id = checker.get_type_of_expression(init, None, CheckMode::NORMAL);
                             let flags = checker.type_arena().get_flags(type_id);
                             assert!(
                                 flags.intersects(TypeFlags::Any),
@@ -1439,7 +1440,7 @@ fn property_access_on_type_literal() {
                 for declarator in &decl.declarations {
                     if count == 1 {
                         if let Some(init) = &declarator.init {
-                            let type_id = checker.get_type_of_expression(init, None);
+                            let type_id = checker.get_type_of_expression(init, None, CheckMode::NORMAL);
                             assert_eq!(checker.type_to_string(type_id), "string");
                         }
                     }
@@ -1456,7 +1457,7 @@ fn property_access_on_type_literal() {
 fn array_expression_infers_type() {
     with_checker!("let arr = [1, 2, 3]", |checker, program| {
         let init = first_var_init(program).unwrap();
-        let type_id = checker.get_type_of_expression(init, None);
+        let type_id = checker.get_type_of_expression(init, None, CheckMode::NORMAL);
         let flags = checker.type_arena().get_flags(type_id);
         assert!(flags.intersects(TypeFlags::Object), "array should be Object type");
     });
@@ -1494,7 +1495,7 @@ fn computed_member_string_literal() {
                 for declarator in &decl.declarations {
                     if count == 1 {
                         if let Some(init) = &declarator.init {
-                            let type_id = checker.get_type_of_expression(init, None);
+                            let type_id = checker.get_type_of_expression(init, None, CheckMode::NORMAL);
                             let flags = checker.type_arena().get_flags(type_id);
                             assert!(
                                 flags.intersects(TypeFlags::Number),
@@ -1521,7 +1522,7 @@ fn chain_expression_member() {
                 for declarator in &decl.declarations {
                     if count == 1 {
                         if let Some(init) = &declarator.init {
-                            let type_id = checker.get_type_of_expression(init, None);
+                            let type_id = checker.get_type_of_expression(init, None, CheckMode::NORMAL);
                             let flags = checker.type_arena().get_flags(type_id);
                             // Should be a union containing undefined
                             assert!(
@@ -1545,7 +1546,7 @@ fn chain_expression_member() {
 fn regexp_type() {
     with_checker!("let x = /foo/", |checker, program| {
         let init = first_var_init(program).unwrap();
-        let type_id = checker.get_type_of_expression(init, None);
+        let type_id = checker.get_type_of_expression(init, None, CheckMode::NORMAL);
         // Without lib.d.ts, get_global_type("RegExp") returns any
         let flags = checker.type_arena().get_flags(type_id);
         assert!(
@@ -1667,7 +1668,7 @@ fn function_declaration_type() {
 fn function_type_display() {
     with_checker!("let f = (x: number, y: string): boolean => true", |checker, program| {
         let init = first_var_init(program).unwrap();
-        let type_id = checker.get_type_of_expression(init, None);
+        let type_id = checker.get_type_of_expression(init, None, CheckMode::NORMAL);
         let display = checker.type_to_string(type_id);
         assert_eq!(display, "(x: number, y: string) => boolean");
     });
@@ -1852,7 +1853,7 @@ fn new_expression_class_instance() {
             checker.check_program(program);
             // f should be typed as Foo (the instance type)
             let f_init = first_var_init(program).expect("should have var init");
-            let f_type = checker.get_type_of_expression(f_init, None);
+            let f_type = checker.get_type_of_expression(f_init, None, CheckMode::NORMAL);
             let type_str = checker.type_to_string(f_type);
             assert_eq!(type_str, "Foo", "new Foo() should have type Foo, got {type_str}");
         }
@@ -1960,7 +1961,7 @@ fn let_widened_rejects_wrong_literal() {
 fn enum_displays_by_name() {
     with_checker!("enum Color { Red, Green, Blue }; let c = Color;", |checker, program| {
         let init = first_var_init(program).unwrap();
-        let t = checker.get_type_of_expression(init, None);
+        let t = checker.get_type_of_expression(init, None, CheckMode::NORMAL);
         let s = checker.type_to_string(t);
         // In expression position, an enum reference is "typeof Color" (the namespace object).
         assert_eq!(
@@ -1975,7 +1976,7 @@ fn enum_member_access() {
     with_checker!("enum Choice { Yes, No } let v = Choice.Yes;", |checker, program| {
         checker.check_program(program);
         let init = first_var_init(program).unwrap();
-        let t = checker.get_type_of_expression(init, None);
+        let t = checker.get_type_of_expression(init, None, CheckMode::NORMAL);
         let s = checker.type_to_string(t);
         assert_eq!(s, "0", "Choice.Yes should be literal 0, got '{s}'");
     });
@@ -3988,7 +3989,7 @@ fn global_value_type_resolves_in_expression() {
         // The initializer `JSON` should resolve via get_type_of_global_identifier
         // to the JSON interface (from `declare var JSON: JSON` in lib.d.ts)
         let init = first_var_init(program).expect("should have initializer");
-        let t = checker.get_type_of_expression(init, None);
+        let t = checker.get_type_of_expression(init, None, CheckMode::NORMAL);
         let s = checker.type_to_string(t);
         assert_ne!(s, "any", "JSON in expression position should not be any, got: {s}");
     });

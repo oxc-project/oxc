@@ -1,10 +1,11 @@
-use oxc_ast::ast::{Expression, ExpressionStatement};
+use oxc_ast::ast::{Expression, ExpressionStatement, TSType, TSTypeName};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::GetSpan;
 use oxc_syntax::operator::UnaryOperator;
 
 use oxc_types::TypeId;
 
+use crate::checker::CheckMode;
 use crate::Checker;
 
 impl Checker<'_> {
@@ -17,21 +18,15 @@ impl Checker<'_> {
     /// Check an expression — the primary entry point for all expression checking.
     /// Equivalent to tsgo's `checkExpression`.
     ///
-    /// Returns the type of the expression. All expression-level diagnostics
-    /// (TS2695, TS2322, TS2339, TS2345, TS2349, TS2554, etc.) are emitted
-    /// from within `get_type_of_expression` / `get_type_of_expression_inner`.
-    ///
-    /// Use this for user-written expressions (statement-level, variable
-    /// initializers, return values, etc.). For type-only contexts (CFA
-    /// narrowing, declaration resolution), use `get_type_of_expression`
-    /// directly — in the future, that path will pass `CheckMode::TypeOnly`
-    /// to suppress certain diagnostics.
+    /// Uses `CheckMode::NORMAL` so all diagnostics are enabled.
+    /// For type-only contexts (CFA narrowing, declaration resolution),
+    /// call `get_type_of_expression` with `CheckMode::TYPE_ONLY` directly.
     pub(crate) fn check_expression(
         &mut self,
         expr: &Expression<'_>,
         contextual_type: Option<TypeId>,
     ) -> TypeId {
-        self.get_type_of_expression(expr, contextual_type)
+        self.get_type_of_expression(expr, contextual_type, CheckMode::NORMAL)
     }
 
     /// Check a sequence (comma) expression.
@@ -46,6 +41,7 @@ impl Checker<'_> {
         &mut self,
         seq: &oxc_ast::ast::SequenceExpression<'_>,
         contextual_type: Option<TypeId>,
+        check_mode: CheckMode,
     ) -> TypeId {
         let exprs = &seq.expressions;
         let mut result = self.undefined_type;
@@ -66,7 +62,7 @@ impl Checker<'_> {
             }
             // Check each sub-expression (the last one gets the contextual type)
             let ctx = if is_last { contextual_type } else { None };
-            result = self.get_type_of_expression(expr, ctx);
+            result = self.get_type_of_expression(expr, ctx, check_mode);
         }
         result
     }
@@ -160,6 +156,7 @@ impl Checker<'_> {
         &mut self,
         assign: &oxc_ast::ast::AssignmentExpression<'_>,
         contextual_type: Option<TypeId>,
+        check_mode: CheckMode,
     ) -> TypeId {
         use oxc_syntax::operator::AssignmentOperator;
 
@@ -170,7 +167,8 @@ impl Checker<'_> {
 
         if assign.operator == AssignmentOperator::Assign {
             // Simple assignment: check RHS assignable to LHS
-            let value_type = self.get_type_of_expression(&assign.right, Some(target_type));
+            let value_type =
+                self.get_type_of_expression(&assign.right, Some(target_type), check_mode);
             self.check_type_assignable_to_and_report(
                 value_type,
                 target_type,
@@ -183,7 +181,8 @@ impl Checker<'_> {
 
         if assign.operator.is_logical() {
             // Logical assignments (||=, &&=, ??=): RHS must be assignable to LHS
-            let value_type = self.get_type_of_expression(&assign.right, Some(target_type));
+            let value_type =
+                self.get_type_of_expression(&assign.right, Some(target_type), check_mode);
             self.check_type_assignable_to_and_report(
                 value_type,
                 target_type,
@@ -197,7 +196,7 @@ impl Checker<'_> {
         // Compound assignment (+=, -=, *=, etc.): compute the binary result
         // type and check it's assignable back to the LHS.
         if let Some(bin_op) = assign.operator.to_binary_operator() {
-            let rhs_type = self.get_type_of_expression(&assign.right, None);
+            let rhs_type = self.get_type_of_expression(&assign.right, None, check_mode);
             let result_type =
                 self.get_result_type_of_binary_operation(bin_op, target_type, rhs_type);
             self.check_type_assignable_to_and_report(
@@ -211,6 +210,115 @@ impl Checker<'_> {
         }
 
         // Fallback for any unhandled operator variant
-        self.get_type_of_expression(&assign.right, contextual_type)
+        self.get_type_of_expression(&assign.right, contextual_type, check_mode)
+    }
+
+    /// Check a type assertion (`expr as T` or `<T>expr`).
+    ///
+    /// For const assertions (`as const` / `<const>`), validates that the
+    /// expression is a valid const assertion target (TS1355) and returns
+    /// the expression's type. For regular assertions, returns the asserted type.
+    ///
+    /// Mirrors tsgo's `checkAssertion`.
+    pub(crate) fn check_assertion(
+        &mut self,
+        expression: &Expression<'_>,
+        type_annotation: &TSType<'_>,
+        contextual_type: Option<TypeId>,
+        check_mode: CheckMode,
+    ) -> TypeId {
+        if Self::is_const_type_reference(type_annotation) {
+            let expr_type =
+                self.get_type_of_expression(expression, contextual_type, check_mode);
+            if !self.is_valid_const_assertion_argument(expression) {
+                self.diagnostics.push(
+                    OxcDiagnostic::error(
+                        "A 'const' assertion can only be applied to references to enum members, or string, number, boolean, array, or object literals."
+                    )
+                    .with_error_code("ts", "1355")
+                    .with_label(expression.span()),
+                );
+            }
+            return expr_type;
+        }
+        self.get_type_from_type_node(type_annotation)
+    }
+
+    /// Returns `true` if `type_node` is a `TSTypeReference` to the bare
+    /// identifier `const` with no type arguments — i.e. the `const` in
+    /// `as const` or `<const>`.
+    fn is_const_type_reference(type_node: &TSType<'_>) -> bool {
+        let TSType::TSTypeReference(type_ref) = type_node else {
+            return false;
+        };
+        if type_ref.type_arguments.is_some() {
+            return false;
+        }
+        let TSTypeName::IdentifierReference(ident) = &type_ref.type_name else {
+            return false;
+        };
+        ident.name == "const"
+    }
+
+    /// Returns `true` if `expr` is a valid target for a const assertion.
+    ///
+    /// Valid targets: string/number/bigint/boolean literals, template literals,
+    /// array literals, object literals, parenthesized valid targets, unary
+    /// +/- on numeric/bigint literals, and enum member references.
+    ///
+    /// Mirrors tsgo's `isValidConstAssertionArgument`.
+    fn is_valid_const_assertion_argument(&self, expr: &Expression<'_>) -> bool {
+        match expr {
+            Expression::StringLiteral(_)
+            | Expression::TemplateLiteral(_)
+            | Expression::NumericLiteral(_)
+            | Expression::BigIntLiteral(_)
+            | Expression::BooleanLiteral(_)
+            | Expression::ArrayExpression(_)
+            | Expression::ObjectExpression(_) => true,
+
+            Expression::ParenthesizedExpression(paren) => {
+                self.is_valid_const_assertion_argument(&paren.expression)
+            }
+
+            Expression::UnaryExpression(unary) => {
+                match unary.operator {
+                    UnaryOperator::UnaryNegation => matches!(
+                        unary.argument,
+                        Expression::NumericLiteral(_) | Expression::BigIntLiteral(_)
+                    ),
+                    UnaryOperator::UnaryPlus => {
+                        matches!(unary.argument, Expression::NumericLiteral(_))
+                    }
+                    _ => false,
+                }
+            }
+
+            // Enum member references: `E.Member` or `E["Member"]`
+            Expression::StaticMemberExpression(member) => {
+                self.is_enum_member_expression(&member.object)
+            }
+            Expression::ComputedMemberExpression(member) => {
+                self.is_enum_member_expression(&member.object)
+            }
+
+            _ => false,
+        }
+    }
+
+    /// Returns `true` if the expression resolves to an enum symbol.
+    /// Used for validating enum member references in const assertions.
+    fn is_enum_member_expression(&self, expr: &Expression<'_>) -> bool {
+        let expr = expr.without_parentheses();
+        if let Expression::Identifier(ident) = expr {
+            if let Some(reference_id) = ident.reference_id.get() {
+                let reference = self.semantic().scoping().get_reference(reference_id);
+                if let Some(symbol_id) = reference.symbol_id() {
+                    let flags = self.semantic().scoping().symbol_flags(symbol_id);
+                    return flags.is_enum();
+                }
+            }
+        }
+        false
     }
 }
