@@ -4187,3 +4187,77 @@ fn interface_extends_type_alias() {
         }
     );
 }
+
+// ---- check_non_null_type tests ----
+
+#[test]
+fn check_non_null_type_negate_null_emits_ts18050() {
+    with_checker!("var x = -null;", |checker, program| {
+        checker.check_program(program);
+        let diagnostics = checker.take_diagnostics();
+        assert!(
+            diagnostics.iter().any(|d| d.message.to_string().contains("The value 'null' cannot be used here")),
+            "expected TS18050 for -null, got: {diagnostics:?}"
+        );
+    });
+}
+
+#[test]
+fn check_non_null_type_negate_undefined_emits_ts18050() {
+    with_checker!("var x = -undefined;", |checker, program| {
+        checker.check_program(program);
+        let diagnostics = checker.take_diagnostics();
+        assert!(
+            diagnostics.iter().any(|d| d.message.to_string().contains("The value 'undefined' cannot be used here")),
+            "expected TS18050 for -undefined, got: {diagnostics:?}"
+        );
+    });
+}
+
+#[test]
+fn check_non_null_type_plus_null_emits_ts18050() {
+    with_checker!("var x = +null;", |checker, program| {
+        checker.check_program(program);
+        let diagnostics = checker.take_diagnostics();
+        assert!(
+            diagnostics.iter().any(|d| d.message.to_string().contains("The value 'null' cannot be used here")),
+            "expected TS18050 for +null, got: {diagnostics:?}"
+        );
+    });
+}
+
+#[test]
+fn check_non_null_type_bitwise_not_undefined_emits_ts18050() {
+    with_checker!("var x = ~undefined;", |checker, program| {
+        checker.check_program(program);
+        let diagnostics = checker.take_diagnostics();
+        assert!(
+            diagnostics.iter().any(|d| d.message.to_string().contains("The value 'undefined' cannot be used here")),
+            "expected TS18050 for ~undefined, got: {diagnostics:?}"
+        );
+    });
+}
+
+#[test]
+fn check_non_null_type_negate_number_no_error() {
+    with_checker!("var x = -42;", |checker, program| {
+        checker.check_program(program);
+        let diagnostics = checker.take_diagnostics();
+        assert!(
+            diagnostics.is_empty(),
+            "expected no errors for -42, got: {diagnostics:?}"
+        );
+    });
+}
+
+#[test]
+fn check_non_null_type_negate_any_no_error() {
+    with_checker!("var y: any; var x = -y;", |checker, program| {
+        checker.check_program(program);
+        let diagnostics = checker.take_diagnostics();
+        assert!(
+            diagnostics.is_empty(),
+            "expected no errors for -any, got: {diagnostics:?}"
+        );
+    });
+}

@@ -14,6 +14,17 @@ use smallvec::SmallVec;
 
 use crate::Checker;
 
+/// Selects which error reporter `check_non_null_type_with_reporter` uses.
+/// Mirrors tsgo's function-pointer approach to `checkNonNullTypeWithReporter`.
+pub(crate) enum NullableErrorReporter {
+    /// TS18050 / TS2531 / TS2532 / TS2533 — general "value cannot be used here" / "possibly null".
+    /// Used by most call sites (unary ops, property access, binary ops, etc.).
+    Default,
+    /// TS2721 / TS2722 / TS2723 — "cannot invoke an object which is possibly null/undefined".
+    /// Used by call expression checking.
+    CannotInvoke,
+}
+
 impl Checker<'_> {
     /// Get the type of an expression.
     ///
@@ -81,9 +92,7 @@ impl Checker<'_> {
             // Non-null assertion — remove null/undefined from the expression type
             Expression::TSNonNullExpression(expr) => {
                 let type_id = self.get_type_of_expression(&expr.expression, contextual_type);
-                self.narrow_type_by_predicate(type_id, |checker, t| {
-                    !checker.type_arena.get_flags(t).intersects(TypeFlags::Nullable)
-                })
+                self.get_non_nullable_type(type_id)
             }
 
             // Unary expressions
@@ -118,7 +127,8 @@ impl Checker<'_> {
                 self.get_or_create_union_type(vec![left_type, right_type])
             }
 
-            // ++x, x++ etc — returns number (simplified; bigint not handled)
+            // ++x, x++ etc — returns number or bigint depending on operand
+            // TODO: add check_non_null_type once it supports SimpleAssignmentTarget
             Expression::UpdateExpression(_) => self.number_type,
 
             // Object literal: `{ x: 1, y: "hello" }`
@@ -126,9 +136,16 @@ impl Checker<'_> {
                 self.get_type_of_object_literal(obj, contextual_type)
             }
 
-            // Property access: foo.bar
+            // Property access: foo.bar / foo?.bar
+            // Null check at dispatch; optional chains skip it.
             Expression::StaticMemberExpression(expr) => {
-                self.get_type_of_static_member_expression(expr)
+                let object_type = self.get_type_of_expression(&expr.object, None);
+                let object_type = if expr.optional {
+                    object_type
+                } else {
+                    self.check_non_null_type(object_type, &expr.object)
+                };
+                self.resolve_static_member_type(object_type, expr)
             }
 
             // Array literal: [1, 2, 3]
@@ -144,9 +161,16 @@ impl Checker<'_> {
             // Optional chaining: unwrap inner, union with undefined
             Expression::ChainExpression(chain) => self.get_type_of_chain_expression(chain),
 
-            // Computed member access: obj["key"]
+            // Computed member access: obj["key"] / obj?.["key"]
+            // Null check at dispatch; optional chains skip it.
             Expression::ComputedMemberExpression(expr) => {
-                self.get_type_of_computed_member_expression(expr)
+                let object_type = self.get_type_of_expression(&expr.object, None);
+                let object_type = if expr.optional {
+                    object_type
+                } else {
+                    self.check_non_null_type(object_type, &expr.object)
+                };
+                self.resolve_computed_member_type(object_type, expr)
             }
 
             // await expr — unwrap Promise<T> to T
@@ -459,6 +483,178 @@ impl Checker<'_> {
         }
 
         false
+    }
+
+    /// Strip `null` and `undefined` from a type.
+    /// For unions: filters out Nullable constituents. For bare null/undefined: returns never.
+    /// Mirrors tsgo's `GetNonNullableType` (without strictNullChecks gating for now).
+    pub(crate) fn get_non_nullable_type(&mut self, type_id: TypeId) -> TypeId {
+        let (has_null, has_undefined, non_nullable) = self.get_nullable_info(type_id);
+        if !has_null && !has_undefined {
+            return type_id;
+        }
+        non_nullable
+    }
+
+    /// Single-pass nullable analysis: determines whether a type contains null/undefined
+    /// and computes the stripped (non-nullable) type in one traversal.
+    ///
+    /// Returns `(has_null, has_undefined, non_nullable_type)`.
+    /// `non_nullable_type` is only meaningful when `has_null || has_undefined`.
+    fn get_nullable_info(&mut self, type_id: TypeId) -> (bool, bool, TypeId) {
+        let flags = self.type_arena.get_flags(type_id);
+
+        if flags.intersects(TypeFlags::Union) {
+            if let TypeData::Union(u) = self.type_arena.get_data(type_id) {
+                let mut has_null = false;
+                let mut has_undefined = false;
+                let mut filtered = Vec::new();
+
+                for &t in u.types.iter() {
+                    let t_flags = self.type_arena.get_flags(t);
+                    if t_flags.intersects(TypeFlags::Null) {
+                        has_null = true;
+                    } else if t_flags.intersects(TypeFlags::Undefined) {
+                        has_undefined = true;
+                    } else {
+                        filtered.push(t);
+                    }
+                }
+
+                if !has_null && !has_undefined {
+                    return (false, false, type_id);
+                }
+
+                let non_nullable = if filtered.is_empty() {
+                    self.never_type
+                } else {
+                    self.get_or_create_union_type(filtered)
+                };
+                return (has_null, has_undefined, non_nullable);
+            }
+        }
+
+        // Non-union: check the type directly
+        let has_null = flags.intersects(TypeFlags::Null);
+        let has_undefined = flags.intersects(TypeFlags::Undefined);
+        let non_nullable = if has_null || has_undefined { self.never_type } else { type_id };
+        (has_null, has_undefined, non_nullable)
+    }
+
+    /// Check that a type is non-null/non-undefined. If it contains nullable constituents,
+    /// reports an error and returns the stripped type. Returns the type unchanged if non-nullable.
+    ///
+    /// Mirrors tsgo's `checkNonNullType`. Uses the default error reporter
+    /// (`reportObjectPossiblyNullOrUndefinedError`).
+    pub(crate) fn check_non_null_type(
+        &mut self,
+        type_id: TypeId,
+        expr: &Expression<'_>,
+    ) -> TypeId {
+        self.check_non_null_type_with_reporter(type_id, expr, NullableErrorReporter::Default)
+    }
+
+    /// Check that a type is non-null/non-undefined, using a caller-chosen error
+    /// reporter. Mirrors tsgo's `checkNonNullTypeWithReporter`.
+    pub(crate) fn check_non_null_type_with_reporter(
+        &mut self,
+        type_id: TypeId,
+        expr: &Expression<'_>,
+        reporter: NullableErrorReporter,
+    ) -> TypeId {
+        let (has_null, has_undefined, non_nullable) = self.get_nullable_info(type_id);
+
+        if !has_null && !has_undefined {
+            return type_id;
+        }
+
+        match reporter {
+            NullableErrorReporter::Default => {
+                self.report_possibly_null_or_undefined_error(expr, has_null, has_undefined);
+            }
+            NullableErrorReporter::CannotInvoke => {
+                self.report_cannot_invoke_possibly_null_or_undefined_error(
+                    expr,
+                    has_null,
+                    has_undefined,
+                );
+            }
+        }
+
+        let flags = self.type_arena.get_flags(non_nullable);
+        // If type was purely null/undefined, stripping leaves never → use any as error recovery
+        if flags.intersects(TypeFlags::Never) {
+            return self.any_type;
+        }
+        non_nullable
+    }
+
+    /// Report TS18050 / TS2531 / TS2532 / TS2533 depending on the expression
+    /// and which nullable constituents are present.
+    /// Mirrors tsgo's `reportObjectPossiblyNullOrUndefinedError`.
+    fn report_possibly_null_or_undefined_error(
+        &mut self,
+        expr: &Expression<'_>,
+        has_null: bool,
+        has_undefined: bool,
+    ) {
+        let span = expr.span();
+
+        // null keyword → TS18050
+        if matches!(expr, Expression::NullLiteral(_)) {
+            self.diagnostics.push(
+                OxcDiagnostic::error("The value 'null' cannot be used here.")
+                    .with_error_code("ts", "18050")
+                    .with_label(span),
+            );
+            return;
+        }
+
+        // undefined identifier → TS18050
+        if matches!(expr, Expression::Identifier(id) if id.name == "undefined") {
+            self.diagnostics.push(
+                OxcDiagnostic::error("The value 'undefined' cannot be used here.")
+                    .with_error_code("ts", "18050")
+                    .with_label(span),
+            );
+            return;
+        }
+
+        // Other expressions → TS2531/2532/2533
+        let (code, msg) = match (has_null, has_undefined) {
+            (true, true) => ("2533", "Object is possibly 'null' or 'undefined'."),
+            (true, false) => ("2531", "Object is possibly 'null'."),
+            _ => ("2532", "Object is possibly 'undefined'."),
+        };
+        self.diagnostics.push(
+            OxcDiagnostic::error(msg)
+                .with_error_code("ts", code)
+                .with_label(span),
+        );
+    }
+
+    /// Report TS2721 / TS2722 / TS2723 for attempting to invoke a possibly-null type.
+    /// Mirrors tsgo's `reportCannotInvokePossiblyNullOrUndefinedError`.
+    fn report_cannot_invoke_possibly_null_or_undefined_error(
+        &mut self,
+        expr: &Expression<'_>,
+        has_null: bool,
+        has_undefined: bool,
+    ) {
+        let span = expr.span();
+        let (code, msg) = match (has_null, has_undefined) {
+            (true, true) => (
+                "2723",
+                "Cannot invoke an object which is possibly 'null' or 'undefined'.",
+            ),
+            (true, false) => ("2721", "Cannot invoke an object which is possibly 'null'."),
+            _ => ("2722", "Cannot invoke an object which is possibly 'undefined'."),
+        };
+        self.diagnostics.push(
+            OxcDiagnostic::error(msg)
+                .with_error_code("ts", code)
+                .with_label(span),
+        );
     }
 
     /// Get the type of a global identifier in value/expression position.
@@ -937,10 +1133,15 @@ impl Checker<'_> {
             // delete returns boolean
             UnaryOperator::Delete => self.boolean_type,
             // +x always returns number
-            UnaryOperator::UnaryPlus => self.number_type,
+            UnaryOperator::UnaryPlus => {
+                let operand_type = self.get_type_of_expression(&expr.argument, None);
+                self.check_non_null_type(operand_type, &expr.argument);
+                self.number_type
+            }
             // -x and ~x return number or bigint depending on operand
             UnaryOperator::UnaryNegation | UnaryOperator::BitwiseNot => {
                 let operand_type = self.get_type_of_expression(&expr.argument, None);
+                self.check_non_null_type(operand_type, &expr.argument);
                 let operand_flags = self.type_arena.get_flags(operand_type);
                 if operand_flags.intersects(TypeFlags::BigIntLike) {
                     self.bigint_type
@@ -1046,15 +1247,14 @@ impl Checker<'_> {
         )
     }
 
-    /// Get the type of a static member expression (`obj.prop`).
-    ///
-    /// Resolves the object's type, then looks up the property by name.
-    /// Handles Object, Interface, and TypeReference (via lazy instantiation).
-    fn get_type_of_static_member_expression(
+    /// Resolve a static member expression (`obj.prop`) given a pre-resolved object type.
+    /// Looks up the property by name and reports TS2339 if not found.
+    /// Null checking is the caller's responsibility (see dispatch site convention).
+    fn resolve_static_member_type(
         &mut self,
+        object_type: TypeId,
         expr: &oxc_ast::ast::StaticMemberExpression<'_>,
     ) -> TypeId {
-        let object_type = self.get_type_of_expression(&expr.object, None);
         let prop_name = expr.property.name.as_str();
         let result = self.get_property_of_type(object_type, prop_name);
         if result.is_none() {
@@ -1402,9 +1602,13 @@ impl Checker<'_> {
         use oxc_ast::ast::ChainElement;
 
         let inner_type = match &chain.expression {
-            ChainElement::StaticMemberExpression(e) => self.get_type_of_static_member_expression(e),
+            ChainElement::StaticMemberExpression(e) => {
+                let object_type = self.get_type_of_expression(&e.object, None);
+                self.resolve_static_member_type(object_type, e)
+            }
             ChainElement::ComputedMemberExpression(e) => {
-                self.get_type_of_computed_member_expression(e)
+                let object_type = self.get_type_of_expression(&e.object, None);
+                self.resolve_computed_member_type(object_type, e)
             }
             ChainElement::TSNonNullExpression(e) => {
                 self.get_type_of_expression(&e.expression, None)
@@ -1414,14 +1618,14 @@ impl Checker<'_> {
         self.get_or_create_union_type(vec![inner_type, self.undefined_type])
     }
 
-    /// Get the type of a computed member expression (`obj["key"]`, `obj[0]`).
-    ///
-    /// For string literal keys, performs a property lookup on the object type.
-    fn get_type_of_computed_member_expression(
+    /// Resolve a computed member expression (`obj["key"]`, `obj[0]`) given a pre-resolved
+    /// object type. For string literal keys, performs a property lookup.
+    /// Null checking is the caller's responsibility (see dispatch site convention).
+    fn resolve_computed_member_type(
         &mut self,
+        object_type: TypeId,
         expr: &ComputedMemberExpression<'_>,
     ) -> TypeId {
-        let object_type = self.get_type_of_expression(&expr.object, None);
         // String literal index → property lookup
         if let Expression::StringLiteral(lit) = &expr.expression {
             let result = self.get_property_of_type(object_type, &lit.value);
@@ -1474,6 +1678,9 @@ impl Checker<'_> {
                 let left_type = self.get_type_of_expression(&expr.left, None);
                 let right_type = self.get_type_of_expression(&expr.right, None);
 
+                let left_type = self.check_non_null_type(left_type, &expr.left);
+                let right_type = self.check_non_null_type(right_type, &expr.right);
+
                 // Validate each operand is assignable to number | bigint
                 let _left_ok = self.check_arithmetic_operand_type(&expr.left, left_type, true);
                 let _right_ok = self.check_arithmetic_operand_type(&expr.right, right_type, false);
@@ -1498,9 +1705,27 @@ impl Checker<'_> {
 
             // + is special: string concat if either side is string-like, otherwise number.
             // Emits TS2365 when operands are incompatible.
+            // checkNonNullType is only applied when neither side is string-like
+            // (string concat with null/undefined is valid — they coerce to "null"/"undefined").
             BinaryOperator::Addition => {
                 let left_type = self.get_type_of_expression(&expr.left, None);
                 let right_type = self.get_type_of_expression(&expr.right, None);
+
+                let is_string_concat =
+                    self.is_type_assignable_to_kind_ex(left_type, TypeFlags::StringLike, true)
+                        || self.is_type_assignable_to_kind_ex(
+                            right_type,
+                            TypeFlags::StringLike,
+                            true,
+                        );
+                let (left_type, right_type) = if is_string_concat {
+                    (left_type, right_type)
+                } else {
+                    (
+                        self.check_non_null_type(left_type, &expr.left),
+                        self.check_non_null_type(right_type, &expr.right),
+                    )
+                };
 
                 if self.is_type_assignable_to_kind_ex(left_type, TypeFlags::NumberLike, true)
                     && self.is_type_assignable_to_kind_ex(right_type, TypeFlags::NumberLike, true)
@@ -1608,6 +1833,12 @@ impl Checker<'_> {
             }
             return self.any_type;
         }
+
+        let callee_type = self.check_non_null_type_with_reporter(
+            callee_type,
+            &call.callee,
+            NullableErrorReporter::CannotInvoke,
+        );
 
         // Extract call signatures from the callee type.
         // Returns a slice reference — stable because type_arena uses AppendOnlyVec.
