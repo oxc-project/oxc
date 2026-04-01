@@ -827,13 +827,57 @@ impl Checker<'_> {
         result.unwrap_or(self.any_type)
     }
 
+    /// Get the apparent type of a type.
+    ///
+    /// Maps primitive types to their corresponding global wrapper interfaces
+    /// from lib.d.ts (e.g., `string` → `String`, `number` → `Number`).
+    /// This enables property access on primitives — `"hello".charAt(0)` works
+    /// because `string`'s apparent type is the `String` interface which has
+    /// a `charAt` method.
+    ///
+    /// Mirrors tsgo's `getApparentType` (checker.go).
+    pub(crate) fn get_apparent_type(&self, type_id: TypeId) -> TypeId {
+        let flags = self.type_arena.get_flags(type_id);
+
+        if flags.intersects(TypeFlags::StringLike) {
+            if let Some(t) = self.global_string_type {
+                return t;
+            }
+        } else if flags.intersects(TypeFlags::NumberLike) {
+            if let Some(t) = self.global_number_type {
+                return t;
+            }
+        } else if flags.intersects(TypeFlags::BigIntLike) {
+            if let Some(t) = self.global_bigint_type {
+                return t;
+            }
+        } else if flags.intersects(TypeFlags::BooleanLike) {
+            if let Some(t) = self.global_boolean_type {
+                return t;
+            }
+        } else if flags.intersects(TypeFlags::ESSymbolLike) {
+            if let Some(t) = self.global_es_symbol_type {
+                return t;
+            }
+        }
+
+        type_id
+    }
+
     /// Look up a property by name on a type. O(1) via HashMap.
     ///
-    /// Handles Object, Interface, TypeReference, and Union types.
+    /// Handles Object, Interface, TypeReference, Union, and primitive types.
+    /// Primitive types are resolved to their apparent type (wrapper interface)
+    /// before property lookup.
     /// For TypeReferences, resolves to the instantiated type first
     /// (cached via `instantiation_cache`).
     /// Returns `None` if the property is not found or the type
     /// doesn't support property access.
+    ///
+    /// NOTE: This function always applies apparent type resolution (matching
+    /// tsgo's `getPropertyOfTypeEx`). If a raw property lookup without
+    /// apparent type mapping is ever needed, split this into a raw version
+    /// and an `_ex` variant, or add a `skip_apparent_type` parameter.
     pub(crate) fn get_property_of_type(&mut self, type_id: TypeId, name: &str) -> Option<TypeId> {
         let flags = self.type_arena.get_flags(type_id);
 
@@ -841,6 +885,11 @@ impl Checker<'_> {
         if flags.intersects(TypeFlags::Any) {
             return Some(self.any_type);
         }
+
+        // Apparent type: map primitives to their wrapper interfaces.
+        // e.g., string → String, number → Number.
+        let type_id = self.get_apparent_type(type_id);
+        let flags = self.type_arena.get_flags(type_id);
 
         // Union type: look up property on each constituent, union the results
         if flags.intersects(TypeFlags::Union) {

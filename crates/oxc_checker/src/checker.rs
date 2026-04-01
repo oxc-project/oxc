@@ -205,6 +205,16 @@ pub struct Checker<'a> {
     pub(crate) promise_type: Option<TypeId>,
     /// Cached global `PromiseLike` type for await unwrapping.
     pub(crate) promise_like_type: Option<TypeId>,
+    /// Cached global `String` interface (apparent type for `string`/string literals).
+    pub(crate) global_string_type: Option<TypeId>,
+    /// Cached global `Number` interface (apparent type for `number`/number literals).
+    pub(crate) global_number_type: Option<TypeId>,
+    /// Cached global `Boolean` interface (apparent type for `boolean`/boolean literals).
+    pub(crate) global_boolean_type: Option<TypeId>,
+    /// Cached global `BigInt` interface (apparent type for `bigint`/bigint literals).
+    pub(crate) global_bigint_type: Option<TypeId>,
+    /// Cached global `Symbol` interface (apparent type for `symbol`).
+    pub(crate) global_es_symbol_type: Option<TypeId>,
 }
 
 impl<'a> Checker<'a> {
@@ -242,6 +252,11 @@ impl<'a> Checker<'a> {
         let array_type = host.get_global_type("Array").unwrap_or(intrinsics.any_type);
         let promise_type = host.get_global_type("Promise");
         let promise_like_type = host.get_global_type("PromiseLike");
+        let global_string_type = host.get_global_type("String");
+        let global_number_type = host.get_global_type("Number");
+        let global_boolean_type = host.get_global_type("Boolean");
+        let global_bigint_type = host.get_global_type("BigInt");
+        let global_es_symbol_type = host.get_global_type("Symbol");
 
         Self {
             semantic,
@@ -291,6 +306,11 @@ impl<'a> Checker<'a> {
             array_type,
             promise_type,
             promise_like_type,
+            global_string_type,
+            global_number_type,
+            global_boolean_type,
+            global_bigint_type,
+            global_es_symbol_type,
         }
     }
 
