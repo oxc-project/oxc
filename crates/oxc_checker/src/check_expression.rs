@@ -166,16 +166,20 @@ impl Checker<'_> {
         let label_span = assign.left.span();
 
         if assign.operator == AssignmentOperator::Assign {
-            // Simple assignment: check RHS assignable to LHS
+            // Simple assignment: check RHS assignable to LHS.
+            // Skip assignability check when target is `any` (e.g. property
+            // not found already reported TS2339 — don't pile on TS2322).
             let value_type =
                 self.get_type_of_expression(&assign.right, Some(target_type), check_mode);
-            self.check_type_assignable_to_and_report(
-                value_type,
-                target_type,
-                label_span,
-                "2322",
-                |s, t| format!("Type '{s}' is not assignable to type '{t}'."),
-            );
+            if target_type != self.any_type {
+                self.check_type_assignable_to_and_report(
+                    value_type,
+                    target_type,
+                    label_span,
+                    "2322",
+                    |s, t| format!("Type '{s}' is not assignable to type '{t}'."),
+                );
+            }
             return value_type;
         }
 
@@ -320,5 +324,25 @@ impl Checker<'_> {
             }
         }
         false
+    }
+
+    /// Get the type of an object expression in an assignment target position.
+    ///
+    /// For identifiers, returns the declared type directly (via `get_type_of_symbol`)
+    /// to avoid firing TS2454 — the object of `x.prop = value` is in write context,
+    /// so TSC doesn't treat `x` as "used before assigned" here.
+    /// For non-identifier expressions, falls through to `get_type_of_expression`.
+    pub(crate) fn get_assignment_target_object_type(&mut self, object: &Expression<'_>) -> TypeId {
+        if let Expression::Identifier(ident) = object {
+            let Some(reference_id) = ident.reference_id.get() else {
+                return self.any_type;
+            };
+            let reference = self.semantic().scoping().get_reference(reference_id);
+            let Some(symbol_id) = reference.symbol_id() else {
+                return self.get_type_of_global_identifier(&ident.name);
+            };
+            return self.get_type_of_symbol(symbol_id);
+        }
+        self.get_type_of_expression(object, None, CheckMode::NORMAL)
     }
 }
