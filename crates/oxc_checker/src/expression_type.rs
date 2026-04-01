@@ -7,7 +7,6 @@ use oxc_syntax::node::NodeId;
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 use oxc_syntax::symbol::SymbolId;
 use oxc_types::{LiteralType, ObjectFlags, PropertyInfo, StructuredType, StructuredTypeKind, TypeData, TypeFlags, TypeId, build_member_map};
-use rustc_hash::FxHashMap;
 use smallvec::SmallVec;
 
 use crate::Checker;
@@ -368,22 +367,82 @@ impl Checker<'_> {
                     self.any_type
                 }
             }
-            AstKind::Class(_) => {
+            AstKind::Class(class) => {
                 // The value type of a class is the constructor — an anonymous
                 // object type with the class symbol attached. Displays as
-                // "typeof C". For binding identifiers, the conformance runner
-                // uses get_declared_type_of_symbol instead, which returns the
-                // instance type displayed as "C".
+                // "typeof C". Includes static members as properties and a
+                // construct signature that returns the instance type.
+                let mut properties = Vec::new();
+                let mut construct_signatures = Vec::new();
+
+                for element in &class.body.body {
+                    use oxc_ast::ast::ClassElement;
+                    match element {
+                        ClassElement::PropertyDefinition(prop) => {
+                            if !prop.r#static {
+                                continue; // instance props go on the instance type
+                            }
+                            if let Some(name) = prop.key.static_name() {
+                                let prop_type = if let Some(ann) = &prop.type_annotation {
+                                    self.get_type_from_type_node(&ann.type_annotation)
+                                } else if let Some(init) = &prop.value {
+                                    self.get_type_of_expression(init, None)
+                                } else {
+                                    self.any_type
+                                };
+                                properties.push(PropertyInfo {
+                                    name: CompactStr::new(&name),
+                                    type_id: prop_type,
+                                    optional: prop.optional,
+                                    readonly: prop.readonly,
+                                });
+                            }
+                        }
+                        ClassElement::MethodDefinition(method) => {
+                            if method.r#static {
+                                // Static method → property on the constructor type
+                                if let Some(name) = method.key.static_name() {
+                                    let sig = self.build_signature_from_function(&method.value);
+                                    let method_type = self.create_function_type(sig);
+                                    properties.push(PropertyInfo::new(
+                                        CompactStr::new(&name),
+                                        method_type,
+                                    ));
+                                }
+                            } else if method.kind == oxc_ast::ast::MethodDefinitionKind::Constructor {
+                                // Constructor → construct signature returning the instance type
+                                let instance_type = self.get_declared_type_of_symbol(symbol_id);
+                                let mut sig = self.build_signature_from_function(&method.value);
+                                sig.return_type = instance_type;
+                                construct_signatures.push(sig);
+                            }
+                        }
+                        _ => {}
+                    }
+                }
+
+                // If no explicit constructor, add a default construct signature
+                if construct_signatures.is_empty() {
+                    let instance_type = self.get_declared_type_of_symbol(symbol_id);
+                    construct_signatures.push(oxc_types::Signature {
+                        flags: oxc_types::SignatureFlags::None,
+                        parameters: Vec::new(),
+                        return_type: instance_type,
+                        type_parameters: SmallVec::new(),
+                        min_argument_count: 0,
+                    });
+                }
+
                 self.type_arena.new_type(
                     TypeFlags::Object,
                     ObjectFlags::Anonymous,
                     TypeData::Structured(StructuredType {
-                        properties: Vec::new(),
-                        member_map: FxHashMap::default(),
+                        member_map: build_member_map(&properties),
+                        properties,
                         string_index_type: None,
                         number_index_type: None,
                         call_signatures: Vec::new(),
-                        construct_signatures: Vec::new(),
+                        construct_signatures,
                         kind: StructuredTypeKind::Anonymous { target: None },
                     }),
                     Some((self.file_idx, symbol_id)),
