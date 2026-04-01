@@ -1663,6 +1663,51 @@ impl Checker<'_> {
         self.any_type
     }
 
+    /// Resolve the type of an assignment target (LHS of `=` or `op=`).
+    ///
+    /// Dispatches to the appropriate `get_type_of_*` method based on the
+    /// target variant, which may emit diagnostics (e.g., TS2339 for
+    /// non-existent properties on member expression targets).
+    ///
+    /// Mirrors tsgo's approach of calling `checkExpressionEx(left)` on the
+    /// LHS of assignments before checking assignability.
+    pub(crate) fn get_type_of_assignment_target(
+        &mut self,
+        target: &oxc_ast::ast::AssignmentTarget<'_>,
+    ) -> TypeId {
+        use oxc_ast::ast::AssignmentTarget;
+        match target {
+            AssignmentTarget::AssignmentTargetIdentifier(ident) => {
+                self.get_type_of_identifier(ident)
+            }
+            AssignmentTarget::StaticMemberExpression(expr) => {
+                let object_type = self.get_type_of_expression(&expr.object, None);
+                self.resolve_static_member_type(object_type, expr)
+            }
+            AssignmentTarget::ComputedMemberExpression(expr) => {
+                let object_type = self.get_type_of_expression(&expr.object, None);
+                self.resolve_computed_member_type(object_type, expr)
+            }
+            AssignmentTarget::TSNonNullExpression(expr) => {
+                self.get_type_of_expression(&expr.expression, None)
+            }
+            AssignmentTarget::TSAsExpression(expr) => {
+                // The asserted type is what the LHS is declared as
+                self.get_type_from_type_node(&expr.type_annotation)
+            }
+            AssignmentTarget::TSTypeAssertion(expr) => {
+                self.get_type_from_type_node(&expr.type_annotation)
+            }
+            AssignmentTarget::TSSatisfiesExpression(expr) => {
+                self.get_type_of_expression(&expr.expression, None)
+            }
+            // Destructuring patterns — not yet supported
+            AssignmentTarget::ArrayAssignmentTarget(_)
+            | AssignmentTarget::ObjectAssignmentTarget(_)
+            | AssignmentTarget::PrivateFieldExpression(_) => self.any_type,
+        }
+    }
+
     /// Get the result type of a binary expression.
     fn get_type_of_binary_expression(&mut self, expr: &BinaryExpression<'_>) -> TypeId {
         match expr.operator {
@@ -1813,6 +1858,57 @@ impl Checker<'_> {
                     self.any_type
                 }
             }
+        }
+    }
+
+    /// Compute the result type of `left_type <op> right_type`.
+    ///
+    /// Simplified version of binary operator type logic for compound assignments
+    /// (e.g., `+=` maps to `Addition`). Does not emit operand validation
+    /// diagnostics — those are only relevant for standalone binary expressions.
+    pub(crate) fn get_result_type_of_binary_operation(
+        &self,
+        op: BinaryOperator,
+        left_type: TypeId,
+        right_type: TypeId,
+    ) -> TypeId {
+        let left_flags = self.type_arena.get_flags(left_type);
+        let right_flags = self.type_arena.get_flags(right_type);
+        match op {
+            BinaryOperator::Addition => {
+                if left_flags.intersects(TypeFlags::StringLike)
+                    || right_flags.intersects(TypeFlags::StringLike)
+                {
+                    self.string_type
+                } else if left_flags.intersects(TypeFlags::BigIntLike)
+                    && right_flags.intersects(TypeFlags::BigIntLike)
+                {
+                    self.bigint_type
+                } else {
+                    self.number_type
+                }
+            }
+            BinaryOperator::Subtraction
+            | BinaryOperator::Multiplication
+            | BinaryOperator::Division
+            | BinaryOperator::Remainder
+            | BinaryOperator::Exponential
+            | BinaryOperator::ShiftLeft
+            | BinaryOperator::ShiftRight
+            | BinaryOperator::ShiftRightZeroFill
+            | BinaryOperator::BitwiseOR
+            | BinaryOperator::BitwiseXOR
+            | BinaryOperator::BitwiseAnd => {
+                if left_flags.intersects(TypeFlags::BigIntLike)
+                    && right_flags.intersects(TypeFlags::BigIntLike)
+                {
+                    self.bigint_type
+                } else {
+                    self.number_type
+                }
+            }
+            // Comparison/equality/relational — unreachable from compound assignments
+            _ => self.boolean_type,
         }
     }
 
