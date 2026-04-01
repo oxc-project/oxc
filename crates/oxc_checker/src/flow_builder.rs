@@ -173,14 +173,23 @@ impl<'a, 'b> FlowGraphBuilder<'a, 'b> {
                     if let Some(init) = &declarator.init {
                         self.visit_expression_for_flow(init);
                     }
-                    // Record the assignment to this variable
-                    if let oxc_ast::ast::BindingPattern::BindingIdentifier(id) = &declarator.id {
-                        if let Some(symbol_id) = id.symbol_id.get() {
-                            self.current_flow = self.push_node(FlowNodeKind::Assignment {
-                                node_id: id.node_id.get(),
-                                symbol_id,
-                                antecedent: self.current_flow,
-                            });
+                    // Record the assignment to this variable — only when there's
+                    // an initializer. Uninitialized declarations (e.g. `let x: string;`)
+                    // are NOT assignments; the backward walk should pass through
+                    // to Start so definite-assignment analysis (TS2454) can detect
+                    // usage before assignment.
+                    if declarator.init.is_some() {
+                        if let oxc_ast::ast::BindingPattern::BindingIdentifier(id) =
+                            &declarator.id
+                        {
+                            if let Some(symbol_id) = id.symbol_id.get() {
+                                self.current_flow =
+                                    self.push_node(FlowNodeKind::Assignment {
+                                        node_id: id.node_id.get(),
+                                        symbol_id,
+                                        antecedent: self.current_flow,
+                                    });
+                            }
                         }
                     }
                 }

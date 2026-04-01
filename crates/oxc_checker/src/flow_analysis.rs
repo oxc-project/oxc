@@ -21,11 +21,18 @@ impl Checker<'_> {
     ///
     /// Walks backward through the flow graph from the identifier's position,
     /// applying narrowing from conditions and assignment resets.
-    /// Returns `declared_type` if no narrowing applies or no flow graph is active.
+    ///
+    /// `initial_type` is the type returned when the backward walk reaches the
+    /// function/program entry (`Start`). For uninitialized variables this
+    /// includes `undefined` so that TS2454 can be detected by the caller.
+    ///
+    /// `declared_type` is the type returned when the walk hits an assignment
+    /// to the target symbol — this is the "reset" type after an assignment.
     pub fn get_flow_type_of_reference(
         &mut self,
         ident_node_id: oxc_syntax::node::NodeId,
         symbol_id: SymbolId,
+        initial_type: TypeId,
         declared_type: TypeId,
     ) -> TypeId {
         // Swap the flow graph out of self so we can pass &FlowGraph independently
@@ -35,12 +42,14 @@ impl Checker<'_> {
 
         let Some(flow_node_id) = flow_graph.get_flow_for_node(ident_node_id) else {
             self.current_flow_graph = flow_graph;
-            return declared_type;
+            return initial_type;
         };
 
         // Only narrow union types or types that include null/undefined.
         // Simple types like `string` or `number` can't be narrowed further.
-        let flags = self.type_arena.get_flags(declared_type);
+        // Check initial_type flags since that's what we start from (may include
+        // undefined for uninitialized variables).
+        let flags = self.type_arena.get_flags(initial_type);
         if !flags.intersects(
             TypeFlags::Union
                 | TypeFlags::Null
@@ -49,11 +58,12 @@ impl Checker<'_> {
                 | TypeFlags::Unknown,
         ) {
             self.current_flow_graph = flow_graph;
-            return declared_type;
+            return initial_type;
         }
 
-        let result =
-            self.get_type_at_flow_node(&flow_graph, flow_node_id, symbol_id, declared_type, 0);
+        let result = self.get_type_at_flow_node(
+            &flow_graph, flow_node_id, symbol_id, initial_type, declared_type, 0,
+        );
 
         self.current_flow_graph = flow_graph;
         result
@@ -62,11 +72,16 @@ impl Checker<'_> {
     /// Core backward walk: resolve the type at a given flow node.
     /// Uses a loop for linear chains (assignments, single-antecedent nodes)
     /// and recurses only at branching points (labels, conditions).
+    ///
+    /// `initial_type` is returned at `Start` (may include undefined for
+    /// uninitialized variables). `declared_type` is returned at `Assignment`
+    /// nodes targeting the symbol (the "reset" type after assignment).
     fn get_type_at_flow_node(
         &mut self,
         flow_graph: &FlowGraph,
         flow_id: FlowNodeId,
         symbol_id: SymbolId,
+        initial_type: TypeId,
         declared_type: TypeId,
         depth: u32,
     ) -> TypeId {
@@ -93,7 +108,7 @@ impl Checker<'_> {
 
             match &entry.kind {
                 FlowNodeKind::Start => {
-                    return declared_type;
+                    return initial_type;
                 }
 
                 FlowNodeKind::Unreachable => {
@@ -121,6 +136,7 @@ impl Checker<'_> {
                         node_id,
                         true,
                         symbol_id,
+                        initial_type,
                         declared_type,
                         current_depth,
                     );
@@ -139,6 +155,7 @@ impl Checker<'_> {
                         node_id,
                         false,
                         symbol_id,
+                        initial_type,
                         declared_type,
                         current_depth,
                     );
@@ -154,6 +171,7 @@ impl Checker<'_> {
                         flow_graph,
                         &antecedents,
                         symbol_id,
+                        initial_type,
                         declared_type,
                         current_depth,
                     );
@@ -165,16 +183,17 @@ impl Checker<'_> {
 
                 FlowNodeKind::LoopLabel { antecedents } => {
                     let antecedents = antecedents.clone();
-                    // Insert a sentinel (declared_type) before recursing so that
+                    // Insert a sentinel (initial_type) before recursing so that
                     // back-edges that revisit this loop label hit the cache instead
                     // of recursing indefinitely. This mirrors tsgo's approach of
-                    // using the declared type as the initial assumption for
+                    // using the initial type as the initial assumption for
                     // loop-carried types.
-                    self.flow_type_cache.insert((current_id, symbol_id), declared_type);
+                    self.flow_type_cache.insert((current_id, symbol_id), initial_type);
                     let result = self.handle_label_flow(
                         flow_graph,
                         &antecedents,
                         symbol_id,
+                        initial_type,
                         declared_type,
                         current_depth,
                     );
@@ -192,11 +211,13 @@ impl Checker<'_> {
         condition_node_id: oxc_syntax::node::NodeId,
         assume_true: bool,
         symbol_id: SymbolId,
+        initial_type: TypeId,
         declared_type: TypeId,
         depth: u32,
     ) -> TypeId {
-        let type_before =
-            self.get_type_at_flow_node(flow_graph, antecedent, symbol_id, declared_type, depth + 1);
+        let type_before = self.get_type_at_flow_node(
+            flow_graph, antecedent, symbol_id, initial_type, declared_type, depth + 1,
+        );
 
         // Look up the condition expression from the AST using the NodeId.
         self.narrow_type_by_flow_condition(type_before, condition_node_id, symbol_id, assume_true)
@@ -207,6 +228,7 @@ impl Checker<'_> {
         flow_graph: &FlowGraph,
         antecedents: &[FlowNodeId],
         symbol_id: SymbolId,
+        initial_type: TypeId,
         declared_type: TypeId,
         depth: u32,
     ) -> TypeId {
@@ -217,8 +239,9 @@ impl Checker<'_> {
         // Merge types from all antecedents into a union.
         let mut result_types = Vec::new();
         for &ant in antecedents {
-            let t =
-                self.get_type_at_flow_node(flow_graph, ant, symbol_id, declared_type, depth + 1);
+            let t = self.get_type_at_flow_node(
+                flow_graph, ant, symbol_id, initial_type, declared_type, depth + 1,
+            );
             if !result_types.contains(&t) {
                 result_types.push(t);
             }
