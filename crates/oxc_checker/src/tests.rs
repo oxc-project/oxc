@@ -4261,3 +4261,55 @@ fn check_non_null_type_negate_any_no_error() {
         );
     });
 }
+
+#[test]
+fn check_non_null_type_property_access_on_possibly_undefined_emits_ts18048() {
+    with_checker!(
+        "declare var x: string | undefined; x.length;",
+        |checker, program| {
+            checker.check_program(program);
+            let diagnostics = checker.take_diagnostics();
+            assert!(
+                diagnostics
+                    .iter()
+                    .any(|d| d.message.to_string().contains("'x' is possibly 'undefined'.")),
+                "expected TS18048 for identifier with undefined, got: {diagnostics:?}"
+            );
+        }
+    );
+}
+
+#[test]
+fn check_non_null_type_property_access_on_possibly_null_emits_ts18047() {
+    with_checker!(
+        "declare var x: string | null; x.length;",
+        |checker, program| {
+            checker.check_program(program);
+            let diagnostics = checker.take_diagnostics();
+            assert!(
+                diagnostics
+                    .iter()
+                    .any(|d| d.message.to_string().contains("'x' is possibly 'null'.")),
+                "expected TS18047 for identifier with null, got: {diagnostics:?}"
+            );
+        }
+    );
+}
+
+#[test]
+fn check_non_null_type_property_access_on_possibly_null_or_undefined_emits_ts18049() {
+    with_checker!(
+        "declare var x: string | null | undefined; x.length;",
+        |checker, program| {
+            checker.check_program(program);
+            let diagnostics = checker.take_diagnostics();
+            assert!(
+                diagnostics.iter().any(|d| d
+                    .message
+                    .to_string()
+                    .contains("'x' is possibly 'null' or 'undefined'.")),
+                "expected TS18049 for identifier with null|undefined, got: {diagnostics:?}"
+            );
+        }
+    );
+}
