@@ -1681,6 +1681,31 @@ impl Checker<'_> {
                 let left_type = self.check_non_null_type(left_type, &expr.left);
                 let right_type = self.check_non_null_type(right_type, &expr.right);
 
+                // If both operands are boolean-like and operator is bitwise,
+                // suggest the logical operator instead (TS2447).
+                if self.type_arena.get_flags(left_type).intersects(TypeFlags::BooleanLike)
+                    && self.type_arena.get_flags(right_type).intersects(TypeFlags::BooleanLike)
+                {
+                    let suggestion = match expr.operator {
+                        BinaryOperator::BitwiseAnd => Some("&&"),
+                        BinaryOperator::BitwiseXOR => Some("!=="),
+                        BinaryOperator::BitwiseOR => Some("||"),
+                        _ => None,
+                    };
+                    if let Some(suggestion) = suggestion {
+                        self.diagnostics.push(
+                            OxcDiagnostic::error(format!(
+                                "The '{}' operator is not allowed for boolean types. Consider using '{}' instead.",
+                                expr.operator.as_str(),
+                                suggestion,
+                            ))
+                            .with_error_code("ts", "2447")
+                            .with_label(expr.span),
+                        );
+                        return self.number_type;
+                    }
+                }
+
                 // Validate each operand is assignable to number | bigint
                 let _left_ok = self.check_arithmetic_operand_type(&expr.left, left_type, true);
                 let _right_ok = self.check_arithmetic_operand_type(&expr.right, right_type, false);
