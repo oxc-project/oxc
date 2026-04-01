@@ -13,11 +13,12 @@
     clippy::inline_always,
     clippy::manual_div_ceil,
     clippy::map_unwrap_or,
+    clippy::missing_errors_doc,
+    clippy::missing_panics_doc,
     clippy::mut_from_ref,
     clippy::needless_lifetimes,
     clippy::ptr_as_ptr,
     clippy::ptr_cast_constness,
-    clippy::redundant_pub_crate,
     clippy::ref_as_ptr,
     clippy::semicolon_if_nothing_returned,
     clippy::undocumented_unsafe_blocks,
@@ -125,7 +126,7 @@ impl<E: Display> Display for AllocOrInitError<E> {
 /// ## Example
 ///
 /// ```
-/// use bumpalo::Bump;
+/// # use oxc_allocator::bump::Bump;
 ///
 /// // Create a new bump arena.
 /// let bump = Bump::new();
@@ -179,7 +180,7 @@ impl<E: Display> Display for AllocOrInitError<E> {
 /// scenarios, rather than raising a panic on OOM.
 ///
 /// ```
-/// use bumpalo::Bump;
+/// # use oxc_allocator::bump::Bump;
 ///
 /// let bump = Bump::new();
 ///
@@ -251,7 +252,9 @@ impl<E: Display> Display for AllocOrInitError<E> {
 /// payload is returned semantically by value:
 ///
 /// ```rust
-/// let bump = bumpalo::Bump::new();
+/// # use oxc_allocator::bump::Bump;
+///
+/// let bump = Bump::new();
 ///
 /// let r: Result<&mut [u8; 1000], ()> = bump.alloc_try_with(|| {
 ///     let _ = bump.alloc(0_u8);
@@ -284,7 +287,9 @@ impl<E: Display> Display for AllocOrInitError<E> {
 /// #### Example
 ///
 /// ```
-/// let bump = bumpalo::Bump::new();
+/// # use oxc_allocator::bump::Bump;
+///
+/// let bump = Bump::new();
 ///
 /// assert_eq!(bump.allocation_limit(), None);
 /// bump.set_allocation_limit(Some(0));
@@ -555,7 +560,8 @@ impl Bump<1> {
     /// ## Example
     ///
     /// ```
-    /// let bump = bumpalo::Bump::new();
+    /// # use oxc_allocator::bump::Bump;
+    /// let bump = Bump::new();
     /// # let _ = bump;
     /// ```
     pub fn new() -> Self {
@@ -567,7 +573,8 @@ impl Bump<1> {
     /// ## Example
     ///
     /// ```
-    /// let bump = bumpalo::Bump::try_new();
+    /// # use oxc_allocator::bump::Bump;
+    /// let bump = Bump::try_new();
     /// # let _ = bump.unwrap();
     /// ```
     pub fn try_new() -> Result<Self, AllocErr> {
@@ -580,7 +587,8 @@ impl Bump<1> {
     /// ## Example
     ///
     /// ```
-    /// let bump = bumpalo::Bump::with_capacity(100);
+    /// # use oxc_allocator::bump::Bump;
+    /// let bump = Bump::with_capacity(100);
     /// # let _ = bump;
     /// ```
     ///
@@ -599,8 +607,9 @@ impl Bump<1> {
     /// ## Example
     ///
     /// ```
-    /// # fn _foo() -> Result<(), bumpalo::AllocErr> {
-    /// let bump = bumpalo::Bump::try_with_capacity(100)?;
+    /// # use oxc_allocator::bump::{AllocErr, Bump};
+    /// # fn _foo() -> Result<(), AllocErr> {
+    /// let bump = Bump::try_with_capacity(100)?;
     /// # let _ = bump;
     /// # Ok(())
     /// # }
@@ -623,7 +632,9 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// # Example
     ///
     /// ```
-    /// type BumpAlign8 = bumpalo::Bump<8>;
+    /// # use oxc_allocator::bump::Bump;
+    ///
+    /// type BumpAlign8 = Bump<8>;
     /// let bump = BumpAlign8::with_min_align();
     /// for x in 0..u8::MAX {
     ///     let x = bump.alloc(x);
@@ -666,7 +677,9 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// # Example
     ///
     /// ```
-    /// type BumpAlign8 = bumpalo::Bump<8>;
+    /// # use oxc_allocator::bump::Bump;
+    ///
+    /// type BumpAlign8 = Bump<8>;
     /// let mut bump = BumpAlign8::with_min_align_and_capacity(8 * 100);
     /// for x in 0..100_u64 {
     ///     let x = bump.alloc(x);
@@ -700,8 +713,9 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// # Example
     ///
     /// ```
-    /// # fn _foo() -> Result<(), bumpalo::AllocErr> {
-    /// type BumpAlign8 = bumpalo::Bump<8>;
+    /// # use oxc_allocator::bump::{AllocErr, Bump};
+    /// # fn _foo() -> Result<(), AllocErr> {
+    /// type BumpAlign8 = Bump<8>;
     /// let mut bump = BumpAlign8::try_with_min_align_and_capacity(8 * 100)?;
     /// for x in 0..100_u64 {
     ///     let x = bump.alloc(x);
@@ -758,10 +772,12 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// ## Example
     ///
     /// ```
-    /// let bump2 = bumpalo::Bump::<2>::with_min_align();
+    /// # use oxc_allocator::bump::Bump;
+    ///
+    /// let bump2 = Bump::<2>::with_min_align();
     /// assert_eq!(bump2.min_align(), 2);
     ///
-    /// let bump4 = bumpalo::Bump::<4>::with_min_align();
+    /// let bump4 = Bump::<4>::with_min_align();
     /// assert_eq!(bump4.min_align(), 4);
     /// ```
     #[inline]
@@ -774,7 +790,9 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// ## Example
     ///
     /// ```
-    /// let bump = bumpalo::Bump::with_capacity(0);
+    /// # use oxc_allocator::bump::Bump;
+    ///
+    /// let bump = Bump::with_capacity(0);
     ///
     /// assert_eq!(bump.allocation_limit(), None);
     ///
@@ -799,7 +817,9 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// ## Example
     ///
     /// ```
-    /// let bump = bumpalo::Bump::with_capacity(0);
+    /// # use oxc_allocator::bump::Bump;
+    ///
+    /// let bump = Bump::with_capacity(0);
     ///
     /// bump.set_allocation_limit(Some(0));
     ///
@@ -946,7 +966,9 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// ## Example
     ///
     /// ```
-    /// let mut bump = bumpalo::Bump::new();
+    /// # use oxc_allocator::bump::Bump;
+    ///
+    /// let mut bump = Bump::new();
     ///
     /// // Allocate a bunch of things.
     /// {
@@ -1010,7 +1032,9 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// ## Example
     ///
     /// ```
-    /// let bump = bumpalo::Bump::new();
+    /// # use oxc_allocator::bump::Bump;
+    ///
+    /// let bump = Bump::new();
     /// let x = bump.alloc("hello");
     /// assert_eq!(*x, "hello");
     /// ```
@@ -1029,7 +1053,9 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// ## Example
     ///
     /// ```
-    /// let bump = bumpalo::Bump::new();
+    /// # use oxc_allocator::bump::Bump;
+    ///
+    /// let bump = Bump::new();
     /// let x = bump.try_alloc("hello");
     /// assert_eq!(x, Ok(&mut "hello"));
     /// ```
@@ -1053,7 +1079,9 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// ## Example
     ///
     /// ```
-    /// let bump = bumpalo::Bump::new();
+    /// # use oxc_allocator::bump::Bump;
+    ///
+    /// let bump = Bump::new();
     /// let x = bump.alloc_with(|| "hello");
     /// assert_eq!(*x, "hello");
     /// ```
@@ -1105,7 +1133,9 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// ## Example
     ///
     /// ```
-    /// let bump = bumpalo::Bump::new();
+    /// # use oxc_allocator::bump::Bump;
+    ///
+    /// let bump = Bump::new();
     /// let x = bump.try_alloc_with(|| "hello");
     /// assert_eq!(x, Ok(&mut "hello"));
     /// ```
@@ -1175,7 +1205,9 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// ## Example
     ///
     /// ```
-    /// let bump = bumpalo::Bump::new();
+    /// # use oxc_allocator::bump::Bump;
+    ///
+    /// let bump = Bump::new();
     /// let x = bump.alloc_try_with(|| Ok("hello"))?;
     /// assert_eq!(*x, "hello");
     /// # Result::<_, ()>::Ok(())
@@ -1283,10 +1315,12 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// ## Example
     ///
     /// ```
-    /// let bump = bumpalo::Bump::new();
+    /// # use oxc_allocator::bump::{AllocOrInitError, Bump};
+    ///
+    /// let bump = Bump::new();
     /// let x = bump.try_alloc_try_with(|| Ok("hello"))?;
     /// assert_eq!(*x, "hello");
-    /// # Result::<_, bumpalo::AllocOrInitError<()>>::Ok(())
+    /// # Result::<_, AllocOrInitError<()>>::Ok(())
     /// ```
     #[inline(always)]
     pub fn try_alloc_try_with<F, T, E>(&self, f: F) -> Result<&mut T, AllocOrInitError<E>>
@@ -1368,7 +1402,9 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// ## Example
     ///
     /// ```
-    /// let bump = bumpalo::Bump::new();
+    /// # use oxc_allocator::bump::Bump;
+    ///
+    /// let bump = Bump::new();
     /// let x = bump.alloc_slice_copy(&[1, 2, 3]);
     /// assert_eq!(x, &[1, 2, 3]);
     /// ```
@@ -1391,15 +1427,17 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// ## Example
     ///
     /// ```
-    /// let bump = bumpalo::Bump::new();
+    /// # use oxc_allocator::bump::{AllocErr, Bump};
+    ///
+    /// let bump = Bump::new();
     /// let x = bump.try_alloc_slice_copy(&[1, 2, 3]);
     /// assert_eq!(x, Ok(&mut[1, 2, 3] as &mut [_]));
     ///
     ///
-    /// let bump = bumpalo::Bump::new();
+    /// let bump = Bump::new();
     /// bump.set_allocation_limit(Some(4));
     /// let x = bump.try_alloc_slice_copy(&[1, 2, 3, 4, 5, 6]);
-    /// assert_eq!(x, Err(bumpalo::AllocErr)); // too big
+    /// assert_eq!(x, Err(AllocErr)); // too big
     /// ```
     #[inline(always)]
     pub fn try_alloc_slice_copy<T>(&self, src: &[T]) -> Result<&mut [T], AllocErr>
@@ -1425,6 +1463,8 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// ## Example
     ///
     /// ```
+    /// # use oxc_allocator::bump::Bump;
+    ///
     /// #[derive(Clone, Debug, Eq, PartialEq)]
     /// struct Sheep {
     ///     name: String,
@@ -1436,7 +1476,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     ///     Sheep { name: "Cathy".into() },
     /// ];
     ///
-    /// let bump = bumpalo::Bump::new();
+    /// let bump = Bump::new();
     /// let clones = bump.alloc_slice_clone(&originals);
     /// assert_eq!(originals, clones);
     /// ```
@@ -1484,7 +1524,9 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// ## Example
     ///
     /// ```
-    /// let bump = bumpalo::Bump::new();
+    /// # use oxc_allocator::bump::Bump;
+    ///
+    /// let bump = Bump::new();
     /// let hello = bump.alloc_str("hello world");
     /// assert_eq!("hello world", hello);
     /// ```
@@ -1502,15 +1544,17 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// ## Example
     ///
     /// ```
-    /// let bump = bumpalo::Bump::new();
+    /// # use oxc_allocator::bump::{AllocErr, Bump};
+    ///
+    /// let bump = Bump::new();
     /// let hello = bump.try_alloc_str("hello world").unwrap();
     /// assert_eq!("hello world", hello);
     ///
     ///
-    /// let bump = bumpalo::Bump::new();
+    /// let bump = Bump::new();
     /// bump.set_allocation_limit(Some(5));
     /// let hello = bump.try_alloc_str("hello world");
-    /// assert_eq!(Err(bumpalo::AllocErr), hello);
+    /// assert_eq!(Err(AllocErr), hello);
     /// ```
     #[inline(always)]
     pub fn try_alloc_str(&self, src: &str) -> Result<&mut str, AllocErr> {
@@ -1534,7 +1578,9 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// ## Example
     ///
     /// ```
-    /// let bump = bumpalo::Bump::new();
+    /// # use oxc_allocator::bump::Bump;
+    ///
+    /// let bump = Bump::new();
     /// let x = bump.alloc_slice_fill_with(5, |i| 5 * (i + 1));
     /// assert_eq!(x, &[5, 10, 15, 20, 25]);
     /// ```
@@ -1570,13 +1616,17 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// ## Example
     ///
     /// ```
-    /// let bump = bumpalo::Bump::new();
+    /// # use oxc_allocator::bump::Bump;
+    ///
+    /// let bump = Bump::new();
     /// let x: Result<&mut [usize], ()> = bump.alloc_slice_try_fill_with(5, |i| Ok(5 * i));
     /// assert_eq!(x, Ok(bump.alloc_slice_copy(&[0, 5, 10, 15, 20])));
     /// ```
     ///
     /// ```
-    /// let bump = bumpalo::Bump::new();
+    /// # use oxc_allocator::bump::Bump;
+    ///
+    /// let bump = Bump::new();
     /// let x: Result<&mut [usize], ()> = bump.alloc_slice_try_fill_with(
     ///    5,
     ///    |n| if n == 2 { Err(()) } else { Ok(n) }
@@ -1618,15 +1668,17 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// ## Example
     ///
     /// ```
-    /// let bump = bumpalo::Bump::new();
+    /// # use oxc_allocator::bump::{AllocErr, Bump};
+    ///
+    /// let bump = Bump::new();
     /// let x = bump.try_alloc_slice_fill_with(5, |i| 5 * (i + 1));
     /// assert_eq!(x, Ok(&mut[5usize, 10, 15, 20, 25] as &mut [_]));
     ///
     ///
-    /// let bump = bumpalo::Bump::new();
+    /// let bump = Bump::new();
     /// bump.set_allocation_limit(Some(4));
     /// let x = bump.try_alloc_slice_fill_with(10, |i| 5 * (i + 1));
-    /// assert_eq!(x, Err(bumpalo::AllocErr));
+    /// assert_eq!(x, Err(AllocErr));
     /// ```
     #[inline(always)]
     pub fn try_alloc_slice_fill_with<T, F>(
@@ -1663,7 +1715,9 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// ## Example
     ///
     /// ```
-    /// let bump = bumpalo::Bump::new();
+    /// # use oxc_allocator::bump::Bump;
+    ///
+    /// let bump = Bump::new();
     /// let x = bump.alloc_slice_fill_copy(5, 42);
     /// assert_eq!(x, &[42, 42, 42, 42, 42]);
     /// ```
@@ -1694,7 +1748,9 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// ## Example
     ///
     /// ```
-    /// let bump = bumpalo::Bump::new();
+    /// # use oxc_allocator::bump::Bump;
+    ///
+    /// let bump = Bump::new();
     /// let s: String = "Hello Bump!".to_string();
     /// let x: &[String] = bump.alloc_slice_fill_clone(2, &s);
     /// assert_eq!(x.len(), 2);
@@ -1729,7 +1785,9 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// ## Example
     ///
     /// ```
-    /// let bump = bumpalo::Bump::new();
+    /// # use oxc_allocator::bump::Bump;
+    ///
+    /// let bump = Bump::new();
     /// let x: &[i32] = bump.alloc_slice_fill_iter([2, 3, 5].iter().cloned().map(|i| i * i));
     /// assert_eq!(x, [4, 9, 25]);
     /// ```
@@ -1758,7 +1816,9 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// ## Examples
     ///
     /// ```
-    /// let bump = bumpalo::Bump::new();
+    /// # use oxc_allocator::bump::Bump;
+    ///
+    /// let bump = Bump::new();
     /// let x: Result<&mut [i32], ()> = bump.alloc_slice_try_fill_iter(
     ///    [2, 3, 5].iter().cloned().map(|i| Ok(i * i))
     /// );
@@ -1766,7 +1826,9 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// ```
     ///
     /// ```
-    /// let bump = bumpalo::Bump::new();
+    /// # use oxc_allocator::bump::Bump;
+    ///
+    /// let bump = Bump::new();
     /// let x: Result<&mut [i32], ()> = bump.alloc_slice_try_fill_iter(
     ///    [Ok(2), Err(()), Ok(5)].iter().cloned()
     /// );
@@ -1792,7 +1854,9 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// ## Example
     ///
     /// ```
-    /// let bump = bumpalo::Bump::new();
+    /// # use oxc_allocator::bump::Bump;
+    ///
+    /// let bump = Bump::new();
     /// let x: &[i32] = bump.try_alloc_slice_fill_iter([2, 3, 5]
     ///     .iter().cloned().map(|i| i * i)).unwrap();
     /// assert_eq!(x, [4, 9, 25]);
@@ -1823,7 +1887,9 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// ## Example
     ///
     /// ```
-    /// let bump = bumpalo::Bump::new();
+    /// # use oxc_allocator::bump::Bump;
+    ///
+    /// let bump = Bump::new();
     /// let x = bump.alloc_slice_fill_default::<u32>(5);
     /// assert_eq!(x, &[0, 0, 0, 0, 0]);
     /// ```
@@ -1974,7 +2040,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// ## Example
     ///
     /// ```
-    /// use bumpalo::Bump;
+    /// # use oxc_allocator::bump::Bump;
     ///
     /// let bump = Bump::with_capacity(100);
     ///
@@ -2091,7 +2157,9 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// ## Example
     ///
     /// ```
-    /// let mut bump = bumpalo::Bump::new();
+    /// # use oxc_allocator::bump::Bump;
+    ///
+    /// let mut bump = Bump::new();
     ///
     /// // Allocate a bunch of `i32`s in this bump arena, potentially causing
     /// // additional memory chunks to be reserved.
@@ -2175,7 +2243,9 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// ## Example
     ///
     /// ```
-    /// let bump = bumpalo::Bump::new();
+    /// # use oxc_allocator::bump::Bump;
+    ///
+    /// let bump = Bump::new();
     /// let _x = bump.alloc_slice_fill_default::<u32>(5);
     /// let bytes = bump.allocated_bytes();
     /// assert!(bytes >= core::mem::size_of::<u32>() * 5);
@@ -2459,7 +2529,7 @@ unsafe impl<'a, const MIN_ALIGN: usize> bumpalo_alloc::Alloc for &'a Bump<MIN_AL
 
 /// This function tests that Bump isn't Sync.
 /// ```compile_fail
-/// use bumpalo::Bump;
+/// use oxc_allocator::Bump;
 /// fn _requires_sync<T: Sync>(_value: T) {}
 /// fn _bump_not_sync(b: Bump) {
 ///    _requires_sync(b);

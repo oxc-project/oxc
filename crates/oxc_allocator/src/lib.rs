@@ -44,7 +44,6 @@ mod allocator_api2;
 #[cfg(feature = "bitset")]
 mod bitset;
 mod boxed;
-pub(crate) mod bump;
 pub(crate) mod bumpalo_alloc;
 mod clone_in;
 mod convert;
@@ -61,6 +60,12 @@ mod take_in;
 mod tracking;
 mod vec;
 mod vec2;
+
+// Only expose `bump` module for doc tests
+#[cfg(not(feature = "testing"))]
+mod bump;
+#[cfg(feature = "testing")]
+pub mod bump;
 
 pub use accessor::AllocatorAccessor;
 pub use address::{Address, GetAddress, UnstableAddress};

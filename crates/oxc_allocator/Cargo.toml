@@ -38,6 +38,10 @@ oxc_estree = { workspace = true, features = ["serialize"] }
 serde = { workspace = true }
 serde_json = { workspace = true }
 
+# Enable `testing` feature in tests and doctests.
+# Allows doctests to use `bump` module without exposing it publicly.
+oxc_allocator = { path = ".", features = ["testing"] }
+
 [features]
 bitset = []
 fixed_size = ["from_raw_parts", "pool", "dep:oxc_ast_macros"]
@@ -46,3 +50,5 @@ pool = []
 serialize = ["dep:serde", "oxc_estree/serialize"]
 track_allocations = []
 disable_track_allocations = []
+# Only for use in tests
+testing = []

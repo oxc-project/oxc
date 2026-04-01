@@ -1702,6 +1702,7 @@ version = "0.123.0"
 dependencies = [
  "allocator-api2",
  "hashbrown 0.16.1",
+ "oxc_allocator",
  "oxc_ast_macros",
  "oxc_data_structures",
  "oxc_estree",
