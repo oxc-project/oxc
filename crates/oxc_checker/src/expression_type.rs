@@ -69,9 +69,12 @@ impl Checker<'_> {
             Expression::TSSatisfiesExpression(expr) => {
                 self.get_type_of_expression(&expr.expression, contextual_type)
             }
-            // Non-null assertion — return the expression type (TODO: remove null/undefined)
+            // Non-null assertion — remove null/undefined from the expression type
             Expression::TSNonNullExpression(expr) => {
-                self.get_type_of_expression(&expr.expression, contextual_type)
+                let type_id = self.get_type_of_expression(&expr.expression, contextual_type);
+                self.narrow_type_by_predicate(type_id, |checker, t| {
+                    !checker.type_arena.get_flags(t).intersects(TypeFlags::Nullable)
+                })
             }
 
             // Unary expressions
