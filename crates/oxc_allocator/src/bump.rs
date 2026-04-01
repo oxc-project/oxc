@@ -5,7 +5,6 @@
 
 #![deny(missing_debug_implementations)]
 #![deny(missing_docs)]
-#![cfg_attr(feature = "allocator_api", feature(allocator_api))]
 
 #[doc(hidden)]
 pub extern crate alloc as core_alloc;
@@ -23,10 +22,7 @@ use core::slice;
 use core::str;
 use core_alloc::alloc::{Layout, alloc, dealloc};
 
-#[cfg(feature = "allocator_api")]
-use core_alloc::alloc::{AllocError, Allocator};
-
-#[cfg(all(feature = "allocator-api2", not(feature = "allocator_api")))]
+#[cfg(feature = "allocator-api2")]
 use allocator_api2::alloc::{AllocError, Allocator};
 
 pub use alloc::AllocErr;
@@ -2449,7 +2445,7 @@ unsafe impl<'a, const MIN_ALIGN: usize> alloc::Alloc for &'a Bump<MIN_ALIGN> {
 #[cfg(doctest)]
 fn _doctest_only() {}
 
-#[cfg(any(feature = "allocator_api", feature = "allocator-api2"))]
+#[cfg(feature = "allocator-api2")]
 unsafe impl<'a, const MIN_ALIGN: usize> Allocator for &'a Bump<MIN_ALIGN> {
     #[inline]
     fn allocate(&self, layout: Layout) -> Result<NonNull<[u8]>, AllocError> {
