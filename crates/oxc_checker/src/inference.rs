@@ -50,9 +50,7 @@ impl InferenceContext {
 
     /// Find the InferenceInfo for a type parameter, if it's being inferred.
     pub fn get_inference_info_mut(&mut self, type_param: TypeId) -> Option<&mut InferenceInfo> {
-        self.inferences
-            .iter_mut()
-            .find(|info| info.type_parameter == type_param)
+        self.inferences.iter_mut().find(|info| info.type_parameter == type_param)
     }
 }
 
@@ -120,8 +118,7 @@ impl Checker<'_> {
 
         // Function types: match signatures (parameters + return type).
         // Handles: T extends (...args: infer P) => infer R ? ...
-        if let (TypeData::Function(s_func), TypeData::Function(t_func)) =
-            (source_data, target_data)
+        if let (TypeData::Function(s_func), TypeData::Function(t_func)) = (source_data, target_data)
         {
             if let (Some(s_sig), Some(t_sig)) =
                 (s_func.signatures.first(), t_func.signatures.first())
@@ -153,10 +150,9 @@ impl Checker<'_> {
             }
 
             // Infer from construct signatures
-            if let (Some(s_sig), Some(t_sig)) = (
-                s_struct.construct_signatures.first(),
-                t_struct.construct_signatures.first(),
-            ) {
+            if let (Some(s_sig), Some(t_sig)) =
+                (s_struct.construct_signatures.first(), t_struct.construct_signatures.first())
+            {
                 let pairs = Self::collect_signature_inference_pairs(s_sig, t_sig);
                 for (s_type, t_type) in pairs {
                     self.infer_from_types(ctx, s_type, t_type);
@@ -169,10 +165,7 @@ impl Checker<'_> {
                 .properties
                 .iter()
                 .filter_map(|t_prop| {
-                    s_struct
-                        .member_map
-                        .get(&t_prop.name)
-                        .map(|&s_type| (s_type, t_prop.type_id))
+                    s_struct.member_map.get(&t_prop.name).map(|&s_type| (s_type, t_prop.type_id))
                 })
                 .collect();
             for (s_type, t_type) in prop_pairs {
@@ -211,9 +204,7 @@ impl Checker<'_> {
         }
 
         // Tuple types: infer element-by-element from matching positions.
-        if let (TypeData::Tuple(s_tuple), TypeData::Tuple(t_tuple)) =
-            (source_data, target_data)
-        {
+        if let (TypeData::Tuple(s_tuple), TypeData::Tuple(t_tuple)) = (source_data, target_data) {
             let pairs: SmallVec<[(TypeId, TypeId); 4]> = s_tuple
                 .element_infos
                 .iter()

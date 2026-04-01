@@ -1,4 +1,7 @@
-use oxc_types::{LiteralType, ObjectFlags, PropertyInfo, Signature, StructuredType, StructuredTypeKind, TypeData, TypeFlags, TypeId, build_member_map};
+use oxc_types::{
+    LiteralType, ObjectFlags, PropertyInfo, Signature, StructuredType, StructuredTypeKind,
+    TypeData, TypeFlags, TypeId, build_member_map,
+};
 use smallvec::SmallVec;
 
 use crate::Checker;
@@ -21,7 +24,10 @@ impl<'a> Checker<'a> {
         let t = self.type_arena.get_flags(target);
 
         // `any` is assignable to and from everything; `never` is assignable to everything
-        if s.intersects(TypeFlags::Any) || t.intersects(TypeFlags::Any) || s.intersects(TypeFlags::Never) {
+        if s.intersects(TypeFlags::Any)
+            || t.intersects(TypeFlags::Any)
+            || s.intersects(TypeFlags::Never)
+        {
             return true;
         }
 
@@ -102,18 +108,14 @@ impl<'a> Checker<'a> {
         // distributes correctly (each source constituent checked against full target).
         if s.intersects(TypeFlags::Union) {
             if let TypeData::Union(u) = self.type_arena.get_data(source) {
-                return u.types
-                    .iter()
-                    .all(|&member| self.is_type_assignable_to(member, target));
+                return u.types.iter().all(|&member| self.is_type_assignable_to(member, target));
             }
         }
 
         // Target is union → source assignable to any constituent
         if t.intersects(TypeFlags::Union) {
             if let TypeData::Union(u) = self.type_arena.get_data(target) {
-                return u.types
-                    .iter()
-                    .any(|&member| self.is_type_assignable_to(source, member));
+                return u.types.iter().any(|&member| self.is_type_assignable_to(source, member));
             }
         }
 
@@ -155,10 +157,7 @@ impl<'a> Checker<'a> {
 
     /// Check if two literal types have the same value.
     fn are_literals_equal(&self, a: TypeId, b: TypeId) -> bool {
-        match (
-            self.type_arena.get_data(a),
-            self.type_arena.get_data(b),
-        ) {
+        match (self.type_arena.get_data(a), self.type_arena.get_data(b)) {
             (TypeData::Literal(la), TypeData::Literal(lb)) => match (la, lb) {
                 (LiteralType::String(a), LiteralType::String(b)) => a == b,
                 (LiteralType::String(_), _) => false,
@@ -204,9 +203,8 @@ impl<'a> Checker<'a> {
             }
             // Each target signature must be matched by at least one source signature.
             for t_sig in target_sigs {
-                let matched = source_sigs.iter().any(|s_sig| {
-                    self.is_signature_assignable_to(s_sig, t_sig)
-                });
+                let matched =
+                    source_sigs.iter().any(|s_sig| self.is_signature_assignable_to(s_sig, t_sig));
                 if !matched {
                     return false;
                 }
@@ -222,10 +220,11 @@ impl<'a> Checker<'a> {
 
         // Get target properties (iterate ordered Vec).
         // Direct arena access: reference has lifetime 'a, independent of &mut self.
-        let target_props: &[oxc_types::PropertyInfo] = match self.type_arena.get_data(resolved_target) {
-            TypeData::Structured(s) => &s.properties,
-            _ => return true,
-        };
+        let target_props: &[oxc_types::PropertyInfo] =
+            match self.type_arena.get_data(resolved_target) {
+                TypeData::Structured(s) => &s.properties,
+                _ => return true,
+            };
         if target_props.is_empty() {
             return true;
         }
@@ -250,7 +249,6 @@ impl<'a> Checker<'a> {
 
         true
     }
-
 
     /// Check if a source signature is assignable to a target signature.
     ///
@@ -315,11 +313,7 @@ impl<'a> Checker<'a> {
     /// for most readonly interfaces (Array, Promise, etc.) but overly
     /// permissive for mutable containers. Proper variance computation
     /// (from usage analysis) is a future improvement.
-    fn check_type_reference_variance(
-        &mut self,
-        source: TypeId,
-        target: TypeId,
-    ) -> Option<bool> {
+    fn check_type_reference_variance(&mut self, source: TypeId, target: TypeId) -> Option<bool> {
         let (source_target, source_args) = match self.type_arena.get_data(source) {
             TypeData::TypeReference(tr) => (tr.target?, &tr.resolved_type_arguments),
             _ => return None,
@@ -368,7 +362,8 @@ impl<'a> Checker<'a> {
         let mut seen_names = rustc_hash::FxHashSet::default();
         for &constituent in &constituents {
             // Resolve TypeReference to access properties
-            let resolved = if let TypeData::TypeReference(_) = self.type_arena.get_data(constituent) {
+            let resolved = if let TypeData::TypeReference(_) = self.type_arena.get_data(constituent)
+            {
                 self.resolve_type_reference(constituent)
             } else {
                 constituent
@@ -396,7 +391,8 @@ impl<'a> Checker<'a> {
         let mut string_index_type: Option<TypeId> = None;
         let mut number_index_type: Option<TypeId> = None;
         for &constituent in &constituents {
-            let resolved = if let TypeData::TypeReference(_) = self.type_arena.get_data(constituent) {
+            let resolved = if let TypeData::TypeReference(_) = self.type_arena.get_data(constituent)
+            {
                 self.resolve_type_reference(constituent)
             } else {
                 constituent

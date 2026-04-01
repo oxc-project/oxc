@@ -57,8 +57,12 @@ impl Checker<'_> {
             if !infer_type_parameters.is_empty() {
                 // Concrete check + infer params → run inference to resolve
                 return self.resolve_conditional_with_infer(
-                    check_type, extends_type, true_type, false_type,
-                    is_distributive, &infer_type_parameters,
+                    check_type,
+                    extends_type,
+                    true_type,
+                    false_type,
+                    is_distributive,
+                    &infer_type_parameters,
                 );
             }
 
@@ -170,7 +174,9 @@ impl Checker<'_> {
         // Check CouldContainTypeVariables for Object types (function, tuple,
         // structured) and union/intersection types.
         if flags.intersects(TypeFlags::Object | TypeFlags::UnionOrIntersection) {
-            return self.type_arena.get_object_flags(type_id)
+            return self
+                .type_arena
+                .get_object_flags(type_id)
                 .intersects(oxc_types::ObjectFlags::CouldContainTypeVariables);
         }
         false

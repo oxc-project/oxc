@@ -44,10 +44,8 @@ impl Checker<'_> {
         // keyof (A | B) → (keyof A) & (keyof B)
         if flags.intersects(TypeFlags::Union) {
             if let TypeData::Union(u) = self.type_arena.get_data(target) {
-                let index_types: Vec<TypeId> = u.types
-                    .iter()
-                    .map(|&t| self.get_index_type(t))
-                    .collect();
+                let index_types: Vec<TypeId> =
+                    u.types.iter().map(|&t| self.get_index_type(t)).collect();
                 return self.get_or_create_intersection_type(index_types);
             }
         }
@@ -55,10 +53,8 @@ impl Checker<'_> {
         // keyof (A & B) → (keyof A) | (keyof B)
         if flags.intersects(TypeFlags::Intersection) {
             if let TypeData::Intersection(i) = self.type_arena.get_data(target) {
-                let index_types: Vec<TypeId> = i.types
-                    .iter()
-                    .map(|&t| self.get_index_type(t))
-                    .collect();
+                let index_types: Vec<TypeId> =
+                    i.types.iter().map(|&t| self.get_index_type(t)).collect();
                 return self.get_or_create_union_type(index_types);
             }
         }
@@ -92,7 +88,8 @@ impl Checker<'_> {
     /// Get property names of a concrete type as a union of string literal types.
     fn get_property_names_as_union(&mut self, type_id: TypeId) -> TypeId {
         let names: Vec<TypeId> = match self.type_arena.get_data(type_id) {
-            TypeData::Structured(s) => s.properties
+            TypeData::Structured(s) => s
+                .properties
                 .iter()
                 .map(|p| self.get_or_create_string_literal_type(&p.name))
                 .collect(),
@@ -144,7 +141,8 @@ impl Checker<'_> {
         // Index is a union: distribute T["a" | "b"] → T["a"] | T["b"]
         if idx_flags.intersects(TypeFlags::Union) {
             if let TypeData::Union(u) = self.type_arena.get_data(index_type) {
-                let result_types: Vec<TypeId> = u.types
+                let result_types: Vec<TypeId> = u
+                    .types
                     .iter()
                     .map(|&idx| self.get_indexed_access_type(object_type, idx))
                     .collect();
@@ -163,16 +161,18 @@ impl Checker<'_> {
         }
 
         // If either type is generic, create a deferred IndexedAccessType
-        if obj_flags.intersects(TypeFlags::TypeParameter | TypeFlags::IndexedAccess | TypeFlags::Conditional)
-            || idx_flags.intersects(TypeFlags::TypeParameter | TypeFlags::Index | TypeFlags::IndexedAccess | TypeFlags::Conditional)
-        {
+        if obj_flags.intersects(
+            TypeFlags::TypeParameter | TypeFlags::IndexedAccess | TypeFlags::Conditional,
+        ) || idx_flags.intersects(
+            TypeFlags::TypeParameter
+                | TypeFlags::Index
+                | TypeFlags::IndexedAccess
+                | TypeFlags::Conditional,
+        ) {
             return self.type_arena.new_type(
                 TypeFlags::IndexedAccess,
                 ObjectFlags::None,
-                TypeData::IndexedAccess(IndexedAccessType {
-                    object_type,
-                    index_type,
-                }),
+                TypeData::IndexedAccess(IndexedAccessType { object_type, index_type }),
                 None,
             );
         }
@@ -190,10 +190,7 @@ impl Checker<'_> {
     /// Used by `T[keyof T]` to produce the union of all value types.
     fn get_all_property_types_as_union(&mut self, type_id: TypeId) -> TypeId {
         let prop_types: Vec<TypeId> = match self.type_arena.get_data(type_id) {
-            TypeData::Structured(s) => s.properties
-                .iter()
-                .map(|p| p.type_id)
-                .collect(),
+            TypeData::Structured(s) => s.properties.iter().map(|p| p.type_id).collect(),
             _ => return self.any_type,
         };
 

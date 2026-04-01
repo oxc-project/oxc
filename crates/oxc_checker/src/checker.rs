@@ -3,12 +3,18 @@ use std::sync::Arc;
 use oxc_index::IndexVec;
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use oxc_ast::ast::{BindingPattern, Declaration, Expression, ForStatementInit, ForStatementLeft, Function, Program, Statement};
+use oxc_ast::ast::{
+    BindingPattern, Declaration, Expression, ForStatementInit, ForStatementLeft, Function, Program,
+    Statement,
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::Semantic;
 use oxc_span::{CompactStr, GetSpan};
 use oxc_syntax::symbol::SymbolId;
-use oxc_types::{FunctionType, ObjectFlags, ParameterInfo, Signature, SignatureFlags, StructuredType, StructuredTypeKind, TypeArena, TypeData, TypeFlags, TypeId, TypeParameterType, UnionType};
+use oxc_types::{
+    FunctionType, ObjectFlags, ParameterInfo, Signature, SignatureFlags, StructuredType,
+    StructuredTypeKind, TypeArena, TypeData, TypeFlags, TypeId, TypeParameterType, UnionType,
+};
 use smallvec::SmallVec;
 
 use oxc_checker_host::CheckerHost;
@@ -294,10 +300,8 @@ impl<'a> Checker<'a> {
     /// inspected after checking.
     pub fn check_program(&mut self, program: &Program<'a>) {
         // Build flow graph for the program's top-level statements.
-        let flow_graph = crate::flow_builder::FlowGraphBuilder::build(
-            &program.body,
-            &self.semantic,
-        );
+        let flow_graph =
+            crate::flow_builder::FlowGraphBuilder::build(&program.body, &self.semantic);
         self.current_flow_graph = flow_graph;
         self.flow_type_cache.clear();
         self.check_source_elements(&program.body);
@@ -579,10 +583,7 @@ impl<'a> Checker<'a> {
         }
     }
 
-    fn check_variable_declarator(
-        &mut self,
-        decl: &oxc_ast::ast::VariableDeclarator<'a>,
-    ) {
+    fn check_variable_declarator(&mut self, decl: &oxc_ast::ast::VariableDeclarator<'a>) {
         // Compute declared type first so it can be used as contextual type
         // for the initializer (enables callback parameter inference, tuple context, etc.)
         let declared_type = decl
@@ -592,10 +593,7 @@ impl<'a> Checker<'a> {
 
         // Evaluate the initializer with the declared type as context.
         // This triggers diagnostics (e.g., TS2339, TS2695) even without a type annotation.
-        let init_type = decl
-            .init
-            .as_ref()
-            .map(|init| self.check_expression(init, declared_type));
+        let init_type = decl.init.as_ref().map(|init| self.check_expression(init, declared_type));
 
         let Some(declared_type) = declared_type else {
             return;
@@ -612,24 +610,23 @@ impl<'a> Checker<'a> {
         };
 
         self.check_type_assignable_to_and_report(
-            init_type, declared_type, label_span, "2322",
+            init_type,
+            declared_type,
+            label_span,
+            "2322",
             |s, t| format!("Type '{s}' is not assignable to type '{t}'."),
         );
     }
 
     /// Check a function's body with the return type context pushed.
     fn check_function_body(&mut self, func: &Function<'a>) {
-        let return_type = func
-            .return_type
-            .as_ref()
-            .map(|rt| self.get_type_from_type_node(&rt.type_annotation));
+        let return_type =
+            func.return_type.as_ref().map(|rt| self.get_type_from_type_node(&rt.type_annotation));
         self.return_type_stack.push(return_type);
         if let Some(body) = &func.body {
             // Build per-function flow graph, saving the outer one for nested functions.
-            let flow_graph = crate::flow_builder::FlowGraphBuilder::build(
-                &body.statements,
-                &self.semantic,
-            );
+            let flow_graph =
+                crate::flow_builder::FlowGraphBuilder::build(&body.statements, &self.semantic);
             let prev_graph = std::mem::replace(&mut self.current_flow_graph, flow_graph);
             let prev_cache = std::mem::take(&mut self.flow_type_cache);
             self.check_source_elements(&body.statements);
@@ -645,7 +642,9 @@ impl<'a> Checker<'a> {
             use oxc_ast::ast::ClassElement;
             if let ClassElement::MethodDefinition(method) = element {
                 if let Some(body) = &method.value.body {
-                    let return_type = method.value.return_type
+                    let return_type = method
+                        .value
+                        .return_type
                         .as_ref()
                         .map(|rt| self.get_type_from_type_node(&rt.type_annotation));
                     self.return_type_stack.push(return_type);
@@ -682,7 +681,10 @@ impl<'a> Checker<'a> {
 
         if let Some(expected) = expected_return_type {
             self.check_type_assignable_to_and_report(
-                actual_type, expected, ret.span, "2322",
+                actual_type,
+                expected,
+                ret.span,
+                "2322",
                 |s, t| format!("Type '{s}' is not assignable to type '{t}'."),
             );
         }
@@ -770,9 +772,7 @@ impl<'a> Checker<'a> {
     /// Look up a global type by name (type-side, e.g., "Array", "Promise").
     /// Returns `any_type` if not found.
     pub fn get_global_type(&self, name: &str) -> TypeId {
-        self.host
-            .get_global_type(name)
-            .unwrap_or(self.any_type)
+        self.host.get_global_type(name).unwrap_or(self.any_type)
     }
 
     /// Look up a global value type by name (value-side, e.g., "RegExp" → RegExpConstructor).
@@ -792,12 +792,18 @@ impl<'a> Checker<'a> {
     }
 
     /// Get the cached type for a symbol (value-side), if resolved.
-    pub fn get_cached_symbol_type(&self, symbol_id: oxc_syntax::symbol::SymbolId) -> Option<TypeId> {
+    pub fn get_cached_symbol_type(
+        &self,
+        symbol_id: oxc_syntax::symbol::SymbolId,
+    ) -> Option<TypeId> {
         self.symbol_type_cache[symbol_id]
     }
 
     /// Get the cached declared type for a symbol (type-side), if resolved.
-    pub fn get_cached_declared_type(&self, symbol_id: oxc_syntax::symbol::SymbolId) -> Option<TypeId> {
+    pub fn get_cached_declared_type(
+        &self,
+        symbol_id: oxc_syntax::symbol::SymbolId,
+    ) -> Option<TypeId> {
         self.declared_type_cache[symbol_id]
     }
 
@@ -831,7 +837,9 @@ impl<'a> Checker<'a> {
             let has_instantiable = key.iter().any(|&t| {
                 let f = self.type_arena.get_flags(t);
                 f.intersects(TypeFlags::Instantiable)
-                    || self.type_arena.get_object_flags(t)
+                    || self
+                        .type_arena
+                        .get_object_flags(t)
                         .intersects(ObjectFlags::CouldContainTypeVariables)
             });
             let obj_flags = if has_instantiable {
@@ -843,7 +851,7 @@ impl<'a> Checker<'a> {
                 TypeFlags::Union,
                 obj_flags,
                 TypeData::Union(UnionType { types: key.clone() }),
-                None
+                None,
             )
         });
 
@@ -882,14 +890,30 @@ impl<'a> Checker<'a> {
         let mut groups = 0u8;
         for &t in &types {
             let f = self.type_arena.get_flags(t);
-            if f.intersects(TypeFlags::StringLike) { groups |= 1; }
-            if f.intersects(TypeFlags::NumberLike) { groups |= 2; }
-            if f.intersects(TypeFlags::BigIntLike) { groups |= 4; }
-            if f.intersects(TypeFlags::BooleanLike) { groups |= 8; }
-            if f.intersects(TypeFlags::ESSymbolLike) { groups |= 16; }
-            if f.intersects(TypeFlags::Void) { groups |= 32; }
-            if f.intersects(TypeFlags::Undefined) { groups |= 64; }
-            if f.intersects(TypeFlags::Null) { groups |= 128; }
+            if f.intersects(TypeFlags::StringLike) {
+                groups |= 1;
+            }
+            if f.intersects(TypeFlags::NumberLike) {
+                groups |= 2;
+            }
+            if f.intersects(TypeFlags::BigIntLike) {
+                groups |= 4;
+            }
+            if f.intersects(TypeFlags::BooleanLike) {
+                groups |= 8;
+            }
+            if f.intersects(TypeFlags::ESSymbolLike) {
+                groups |= 16;
+            }
+            if f.intersects(TypeFlags::Void) {
+                groups |= 32;
+            }
+            if f.intersects(TypeFlags::Undefined) {
+                groups |= 64;
+            }
+            if f.intersects(TypeFlags::Null) {
+                groups |= 128;
+            }
         }
         if groups.count_ones() > 1 {
             return self.never_type;
@@ -897,10 +921,18 @@ impl<'a> Checker<'a> {
 
         // 4. Supertype removal: string & "hello" → "hello"
         {
-            let has_string_literal = types.iter().any(|&t| self.type_arena.get_flags(t).intersects(TypeFlags::StringLiteral));
-            let has_number_literal = types.iter().any(|&t| self.type_arena.get_flags(t).intersects(TypeFlags::NumberLiteral));
-            let has_boolean_literal = types.iter().any(|&t| self.type_arena.get_flags(t).intersects(TypeFlags::BooleanLiteral));
-            let has_bigint_literal = types.iter().any(|&t| self.type_arena.get_flags(t).intersects(TypeFlags::BigIntLiteral));
+            let has_string_literal = types
+                .iter()
+                .any(|&t| self.type_arena.get_flags(t).intersects(TypeFlags::StringLiteral));
+            let has_number_literal = types
+                .iter()
+                .any(|&t| self.type_arena.get_flags(t).intersects(TypeFlags::NumberLiteral));
+            let has_boolean_literal = types
+                .iter()
+                .any(|&t| self.type_arena.get_flags(t).intersects(TypeFlags::BooleanLiteral));
+            let has_bigint_literal = types
+                .iter()
+                .any(|&t| self.type_arena.get_flags(t).intersects(TypeFlags::BigIntLiteral));
             types.retain(|&t| {
                 let f = self.type_arena.get_flags(t);
                 !(has_string_literal && f.intersects(TypeFlags::String))
@@ -927,7 +959,9 @@ impl<'a> Checker<'a> {
             let has_instantiable = key.iter().any(|&t| {
                 let f = self.type_arena.get_flags(t);
                 f.intersects(TypeFlags::Instantiable)
-                    || self.type_arena.get_object_flags(t)
+                    || self
+                        .type_arena
+                        .get_object_flags(t)
                         .intersects(ObjectFlags::CouldContainTypeVariables)
             });
             let obj_flags = if has_instantiable {
@@ -938,9 +972,7 @@ impl<'a> Checker<'a> {
             self.type_arena.new_type(
                 TypeFlags::Intersection,
                 obj_flags,
-                TypeData::Intersection(oxc_types::IntersectionType {
-                    types: key.clone(),
-                }),
+                TypeData::Intersection(oxc_types::IntersectionType { types: key.clone() }),
                 None,
             )
         });
@@ -1005,10 +1037,8 @@ impl<'a> Checker<'a> {
             self.boolean_type
         } else if flags.intersects(TypeFlags::Union) {
             if let TypeData::Union(u) = self.type_arena.get_data(type_id) {
-                let widened: Vec<TypeId> = u.types
-                    .iter()
-                    .map(|&m| self.get_widened_literal_type(m))
-                    .collect();
+                let widened: Vec<TypeId> =
+                    u.types.iter().map(|&m| self.get_widened_literal_type(m)).collect();
                 return self.get_or_create_union_type(widened);
             }
             type_id
@@ -1059,21 +1089,12 @@ impl<'a> Checker<'a> {
                 self.get_type_from_type_node(&ann.type_annotation)
             } else if let Some(ctx_sig) = contextual_sig {
                 // Fall back to contextual parameter type
-                ctx_sig
-                    .parameters
-                    .get(i)
-                    .map(|p| p.type_id)
-                    .unwrap_or(self.any_type)
+                ctx_sig.parameters.get(i).map(|p| p.type_id).unwrap_or(self.any_type)
             } else {
                 self.any_type
             };
             let is_optional = param.optional || param.initializer.is_some();
-            parameters.push(ParameterInfo {
-                name,
-                type_id,
-                is_optional,
-                is_rest: false,
-            });
+            parameters.push(ParameterInfo { name, type_id, is_optional, is_rest: false });
             if !is_optional {
                 min_argument_count += 1;
             }
@@ -1090,12 +1111,7 @@ impl<'a> Checker<'a> {
             } else {
                 self.any_type
             };
-            parameters.push(ParameterInfo {
-                name,
-                type_id,
-                is_optional: false,
-                is_rest: true,
-            });
+            parameters.push(ParameterInfo { name, type_id, is_optional: false, is_rest: true });
             has_rest = true;
         }
 
@@ -1131,9 +1147,8 @@ impl<'a> Checker<'a> {
         // Create type parameters FIRST so that parameter/return type annotations
         // that reference them (e.g., `T` in `function id<T>(x: T): T`) resolve
         // to the correct TypeParameter TypeIds via the declared_type_cache.
-        let type_parameters = self.get_type_parameters_from_declaration(
-            func.type_parameters.as_deref(),
-        );
+        let type_parameters =
+            self.get_type_parameters_from_declaration(func.type_parameters.as_deref());
         let mut sig = self.build_signature_from_params_with_context(
             &func.params,
             func.return_type.as_deref(),
@@ -1154,10 +1169,7 @@ impl<'a> Checker<'a> {
     /// Collects all return expression types, checks end-of-function reachability
     /// via the flow graph, and produces a union type. If the function end is
     /// reachable (implicit return), `void` is included in the union.
-    pub(crate) fn infer_return_type_from_body(
-        &mut self,
-        stmts: &[Statement<'_>],
-    ) -> TypeId {
+    pub(crate) fn infer_return_type_from_body(&mut self, stmts: &[Statement<'_>]) -> TypeId {
         // Collect types from all return statements (non-recursive into nested functions).
         let mut return_types = Vec::new();
         self.collect_return_types(stmts, &mut return_types);
@@ -1180,21 +1192,13 @@ impl<'a> Checker<'a> {
 
     /// Walk statements collecting return expression types.
     /// Does NOT descend into nested function/arrow bodies.
-    fn collect_return_types(
-        &mut self,
-        stmts: &[Statement<'_>],
-        out: &mut Vec<TypeId>,
-    ) {
+    fn collect_return_types(&mut self, stmts: &[Statement<'_>], out: &mut Vec<TypeId>) {
         for stmt in stmts {
             self.collect_return_types_from_statement(stmt, out);
         }
     }
 
-    fn collect_return_types_from_statement(
-        &mut self,
-        stmt: &Statement<'_>,
-        out: &mut Vec<TypeId>,
-    ) {
+    fn collect_return_types_from_statement(&mut self, stmt: &Statement<'_>, out: &mut Vec<TypeId>) {
         match stmt {
             Statement::ReturnStatement(ret) => {
                 let return_type = if let Some(arg) = &ret.argument {
@@ -1270,7 +1274,9 @@ impl<'a> Checker<'a> {
     pub(crate) fn type_could_contain_type_variables(&self, type_id: TypeId) -> bool {
         let flags = self.type_arena.get_flags(type_id);
         flags.intersects(TypeFlags::Instantiable)
-            || self.type_arena.get_object_flags(type_id)
+            || self
+                .type_arena
+                .get_object_flags(type_id)
                 .intersects(ObjectFlags::CouldContainTypeVariables)
     }
 
@@ -1290,9 +1296,7 @@ impl<'a> Checker<'a> {
         self.type_arena.new_type(
             TypeFlags::Object,
             obj_flags,
-            TypeData::Function(FunctionType {
-                signatures: smallvec::smallvec![signature],
-            }),
+            TypeData::Function(FunctionType { signatures: smallvec::smallvec![signature] }),
             None,
         )
     }
@@ -1319,4 +1323,3 @@ impl<'a> Checker<'a> {
         )
     }
 }
-

@@ -1,6 +1,9 @@
 use oxc_span::CompactStr;
 use oxc_syntax::symbol::SymbolId;
-use oxc_types::{LiteralType, ObjectFlags, PropertyInfo, Signature, StructuredType, StructuredTypeKind, TypeData, TypeFlags, TypeId, TypeParameterType, build_member_map};
+use oxc_types::{
+    LiteralType, ObjectFlags, PropertyInfo, Signature, StructuredType, StructuredTypeKind,
+    TypeData, TypeFlags, TypeId, TypeParameterType, build_member_map,
+};
 use smallvec::SmallVec;
 
 use crate::Checker;
@@ -43,9 +46,7 @@ impl Checker<'_> {
             AstKind::TSTypeAliasDeclaration(decl) => {
                 // Resolve outer type parameters (e.g., T in `type Partial<T> = ...`)
                 // so they exist in declared_type_cache for the body to reference.
-                self.get_type_parameters_from_declaration(
-                    decl.type_parameters.as_deref(),
-                );
+                self.get_type_parameters_from_declaration(decl.type_parameters.as_deref());
 
                 // Resolve the body — type parameter references within resolve
                 // via declared_type_cache. Instantiation with concrete type args
@@ -57,10 +58,8 @@ impl Checker<'_> {
                 // If the body type already has a symbol (e.g., an interface reference),
                 // keep the original. Only attach for "anonymous" types like unions/intersections.
                 if self.type_arena.get_symbol(body_type).is_none() {
-                    self.type_arena.clone_type_with_symbol(
-                        body_type,
-                        Some((self.file_idx, symbol_id)),
-                    )
+                    self.type_arena
+                        .clone_type_with_symbol(body_type, Some((self.file_idx, symbol_id)))
                 } else {
                     body_type
                 }
@@ -68,12 +67,8 @@ impl Checker<'_> {
             AstKind::TSInterfaceDeclaration(decl) => {
                 self.get_type_of_interface_declaration(decl, symbol_id)
             }
-            AstKind::Class(decl) => {
-                self.get_type_of_class_declaration(decl, symbol_id)
-            }
-            AstKind::TSEnumDeclaration(decl) => {
-                self.get_type_of_enum_declaration(decl, symbol_id)
-            }
+            AstKind::Class(decl) => self.get_type_of_class_declaration(decl, symbol_id),
+            AstKind::TSEnumDeclaration(decl) => self.get_type_of_enum_declaration(decl, symbol_id),
             _ => self.any_type,
         }
     }
@@ -85,9 +80,8 @@ impl Checker<'_> {
         symbol_id: SymbolId,
     ) -> TypeId {
         // Extract type parameters (e.g., T in interface Foo<T>)
-        let type_parameters = self.get_type_parameters_from_declaration(
-            decl.type_parameters.as_deref(),
-        );
+        let type_parameters =
+            self.get_type_parameters_from_declaration(decl.type_parameters.as_deref());
 
         let mut properties = Vec::new();
         let mut call_signatures = Vec::new();
@@ -114,9 +108,8 @@ impl Checker<'_> {
                     }
                 }
                 TSSignature::TSCallSignatureDeclaration(call_sig) => {
-                    let tp = self.get_type_parameters_from_declaration(
-                        call_sig.type_parameters.as_deref(),
-                    );
+                    let tp = self
+                        .get_type_parameters_from_declaration(call_sig.type_parameters.as_deref());
                     let mut sig = self.build_signature_from_params(
                         &call_sig.params,
                         call_sig.return_type.as_deref(),
@@ -144,9 +137,11 @@ impl Checker<'_> {
                     }
                 }
                 TSSignature::TSIndexSignature(idx_sig) => {
-                    let value_type = self.get_type_from_type_node(&idx_sig.type_annotation.type_annotation);
+                    let value_type =
+                        self.get_type_from_type_node(&idx_sig.type_annotation.type_annotation);
                     if let Some(param) = idx_sig.parameters.first() {
-                        let key_type = self.get_type_from_type_node(&param.type_annotation.type_annotation);
+                        let key_type =
+                            self.get_type_from_type_node(&param.type_annotation.type_annotation);
                         if self.type_arena.get_flags(key_type).intersects(TypeFlags::Number) {
                             number_index_type = Some(value_type);
                         } else {
@@ -187,9 +182,8 @@ impl Checker<'_> {
         decl: &oxc_ast::ast::Class<'_>,
         symbol_id: SymbolId,
     ) -> TypeId {
-        let type_parameters = self.get_type_parameters_from_declaration(
-            decl.type_parameters.as_deref(),
-        );
+        let type_parameters =
+            self.get_type_parameters_from_declaration(decl.type_parameters.as_deref());
 
         let mut properties = Vec::new();
 
@@ -385,7 +379,10 @@ impl Checker<'_> {
     /// access, avoiding deep recursion through lib.d.ts's interconnected types.
     ///
     /// Returns `None` if the type parameter has no constraint (unconstrained `T`).
-    pub(crate) fn get_constraint_of_type_parameter(&mut self, type_param_id: TypeId) -> Option<TypeId> {
+    pub(crate) fn get_constraint_of_type_parameter(
+        &mut self,
+        type_param_id: TypeId,
+    ) -> Option<TypeId> {
         // Check the side cache first
         if let Some(&cached) = self.type_param_constraints.get(&type_param_id) {
             return Some(cached);

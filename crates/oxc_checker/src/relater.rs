@@ -79,12 +79,7 @@ impl Relater {
     ///
     /// Returns true when source is a fresh object literal and target
     /// is a suitable excess property check target.
-    fn should_check_excess_properties(
-        &self,
-        c: &Checker,
-        source: TypeId,
-        target: TypeId,
-    ) -> bool {
+    fn should_check_excess_properties(&self, c: &Checker, source: TypeId, target: TypeId) -> bool {
         let source_flags = c.type_arena.get_flags(source);
         let source_obj_flags = c.type_arena.get_object_flags(source);
 
@@ -92,9 +87,7 @@ impl Relater {
         if !source_flags.intersects(TypeFlags::Object) {
             return false;
         }
-        if !source_obj_flags
-            .contains(ObjectFlags::FreshLiteral | ObjectFlags::ObjectLiteral)
-        {
+        if !source_obj_flags.contains(ObjectFlags::FreshLiteral | ObjectFlags::ObjectLiteral) {
             return false;
         }
 
@@ -129,20 +122,14 @@ impl Relater {
         // Union: at least one constituent must be a valid target
         if flags.intersects(TypeFlags::Union) {
             if let TypeData::Union(u) = c.type_arena.get_data(target) {
-                return u
-                    .types
-                    .iter()
-                    .any(|&m| Self::is_excess_property_check_target(c, m));
+                return u.types.iter().any(|&m| Self::is_excess_property_check_target(c, m));
             }
         }
 
         // Intersection: all constituents must be valid targets
         if flags.intersects(TypeFlags::Intersection) {
             if let TypeData::Intersection(i) = c.type_arena.get_data(target) {
-                return i
-                    .types
-                    .iter()
-                    .all(|&m| Self::is_excess_property_check_target(c, m));
+                return i.types.iter().all(|&m| Self::is_excess_property_check_target(c, m));
             }
         }
 
@@ -253,10 +240,7 @@ impl Relater {
                     return true;
                 }
                 // Walk base types (interface inheritance)
-                if let StructuredTypeKind::Interface {
-                    resolved_base_types, ..
-                } = &s.kind
-                {
+                if let StructuredTypeKind::Interface { resolved_base_types, .. } = &s.kind {
                     let bases: SmallVec<[TypeId; 4]> =
                         resolved_base_types.iter().copied().collect();
                     for base in &bases {

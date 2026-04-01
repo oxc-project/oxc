@@ -21,11 +21,7 @@ impl Checker<'_> {
         self.get_awaited_type_worker(type_id, error_span)
     }
 
-    fn get_awaited_type_worker(
-        &mut self,
-        type_id: TypeId,
-        error_span: Span,
-    ) -> TypeId {
+    fn get_awaited_type_worker(&mut self, type_id: TypeId, error_span: Span) -> TypeId {
         let flags = self.type_arena.get_flags(type_id);
 
         // `any` passes through unchanged
@@ -53,10 +49,8 @@ impl Checker<'_> {
             if let TypeData::Union(u) = self.type_arena.get_data(type_id) {
                 let members: Vec<TypeId> = u.types.iter().copied().collect();
                 self.awaited_type_stack.push(type_id);
-                let awaited_members: Vec<TypeId> = members
-                    .iter()
-                    .map(|&m| self.get_awaited_type_worker(m, error_span))
-                    .collect();
+                let awaited_members: Vec<TypeId> =
+                    members.iter().map(|&m| self.get_awaited_type_worker(m, error_span)).collect();
                 self.awaited_type_stack.pop();
                 let result = self.get_or_create_union_type(awaited_members);
                 self.awaited_type_cache.insert(type_id, result);

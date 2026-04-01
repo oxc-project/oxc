@@ -12,8 +12,8 @@
 
 use oxc_span::CompactStr;
 use oxc_types::{
-    MappedTypeModifier, ObjectFlags, PropertyInfo, StructuredType, StructuredTypeKind, TypeData, TypeFlags, TypeId,
-    build_member_map,
+    MappedTypeModifier, ObjectFlags, PropertyInfo, StructuredType, StructuredTypeKind, TypeData,
+    TypeFlags, TypeId, build_member_map,
 };
 
 use crate::Checker;
@@ -47,10 +47,7 @@ impl Checker<'_> {
             // Build per-key mapper once — used for both name_type and template.
             let key_mapper = match outer_mapper {
                 Some(outer) => outer.clone().with_mapping(type_param, *key_type_id),
-                None => TypeMapper::Simple {
-                    source: type_param,
-                    target: *key_type_id,
-                },
+                None => TypeMapper::Simple { source: type_param, target: *key_type_id },
             };
 
             // Apply name remapping (`as` clause) if present.
@@ -62,8 +59,7 @@ impl Checker<'_> {
                 if name_flags.intersects(TypeFlags::Never) {
                     continue; // filtered out
                 }
-                self.get_string_from_literal_type(resolved_name)
-                    .unwrap_or(key_name.clone())
+                self.get_string_from_literal_type(resolved_name).unwrap_or(key_name.clone())
             } else {
                 key_name.clone()
             };
@@ -75,8 +71,8 @@ impl Checker<'_> {
             };
 
             // Look up source property flags for modifier inheritance
-            let source_prop = modifiers_type
-                .and_then(|mt| self.get_property_info_of_type(mt, &key_name));
+            let source_prop =
+                modifiers_type.and_then(|mt| self.get_property_info_of_type(mt, &key_name));
             let source_optional = source_prop.map_or(false, |(_, opt, _)| opt);
             let source_readonly = source_prop.map_or(false, |(_, _, ro)| ro);
 
@@ -121,7 +117,11 @@ impl Checker<'_> {
 
     /// Look up a property's PropertyInfo from a concrete type by name.
     /// Uses member_map for O(1) name lookup, then finds the full PropertyInfo.
-    fn get_property_info_of_type(&self, type_id: TypeId, name: &str) -> Option<(TypeId, bool, bool)> {
+    fn get_property_info_of_type(
+        &self,
+        type_id: TypeId,
+        name: &str,
+    ) -> Option<(TypeId, bool, bool)> {
         // Check member_map first for O(1) existence check
         let (properties, member_map) = match self.type_arena.get_data(type_id) {
             TypeData::Structured(s) => (&s.properties, &s.member_map),
@@ -129,7 +129,8 @@ impl Checker<'_> {
         };
         member_map.get(name)?;
         // Find full PropertyInfo for flags (member_map only stores TypeId)
-        properties.iter()
+        properties
+            .iter()
             .find(|p| p.name.as_str() == name)
             .map(|p| (p.type_id, p.optional, p.readonly))
     }
@@ -142,7 +143,8 @@ impl Checker<'_> {
             return type_id;
         }
         if let TypeData::Union(u) = self.type_arena.get_data(type_id) {
-            let filtered: Vec<TypeId> = u.types
+            let filtered: Vec<TypeId> = u
+                .types
                 .iter()
                 .copied()
                 .filter(|&t| !self.type_arena.get_flags(t).intersects(TypeFlags::Undefined))
@@ -196,9 +198,9 @@ impl Checker<'_> {
             if let TypeData::Union(u) = self.type_arena.get_data(constraint) {
                 let members: Vec<TypeId> = u.types.iter().copied().collect();
                 // Check all members are string literals
-                let all_literals = members.iter().all(|&m| {
-                    self.type_arena.get_flags(m).intersects(TypeFlags::StringLiteral)
-                });
+                let all_literals = members
+                    .iter()
+                    .all(|&m| self.type_arena.get_flags(m).intersects(TypeFlags::StringLiteral));
                 if all_literals {
                     return Some(members);
                 }

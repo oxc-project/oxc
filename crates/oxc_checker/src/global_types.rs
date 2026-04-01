@@ -12,9 +12,7 @@ static LIB_SOURCE_CACHE: OnceLock<Option<String>> = OnceLock::new();
 ///
 /// Used by `Project` (which checks lib.d.ts as a regular file).
 pub fn find_lib_source() -> Option<String> {
-    LIB_SOURCE_CACHE
-        .get_or_init(find_and_read_lib)
-        .clone()
+    LIB_SOURCE_CACHE.get_or_init(find_and_read_lib).clone()
 }
 
 /// Allocate all intrinsic types in the arena. Call once during Project
@@ -77,11 +75,8 @@ pub fn allocate_intrinsics(arena: &TypeArena) -> IntrinsicIds {
 fn find_and_read_lib() -> Option<String> {
     let mut dir = std::env::current_dir().ok()?;
     loop {
-        let candidate = dir
-            .join("node_modules")
-            .join("typescript")
-            .join("lib")
-            .join("lib.es5.d.ts");
+        let candidate =
+            dir.join("node_modules").join("typescript").join("lib").join("lib.es5.d.ts");
         if candidate.exists() {
             return std::fs::read_to_string(candidate).ok();
         }

@@ -30,11 +30,7 @@ impl Checker<'_> {
                     } else {
                         let s = n.to_string();
                         // Remove trailing ".0" to match tsc output (e.g., "42" not "42.0")
-                        if s.ends_with(".0") {
-                            s[..s.len() - 2].to_string()
-                        } else {
-                            s
-                        }
+                        if s.ends_with(".0") { s[..s.len() - 2].to_string() } else { s }
                     }
                 }
                 oxc_types::LiteralType::BigInt(s) => format!("{s}n"),
@@ -45,18 +41,10 @@ impl Checker<'_> {
                 if let Some(name) = self.resolve_type_name(type_id) {
                     return name;
                 }
-                u.types
-                    .iter()
-                    .map(|&t| self.type_to_string(t))
-                    .collect::<Vec<_>>()
-                    .join(" | ")
+                u.types.iter().map(|&t| self.type_to_string(t)).collect::<Vec<_>>().join(" | ")
             }
             TypeData::Intersection(i) => {
-                i.types
-                    .iter()
-                    .map(|&t| self.type_to_string(t))
-                    .collect::<Vec<_>>()
-                    .join(" & ")
+                i.types.iter().map(|&t| self.type_to_string(t)).collect::<Vec<_>>().join(" & ")
             }
             TypeData::Structured(s) => {
                 if let Some(name) = self.resolve_type_name(type_id) {
@@ -89,11 +77,10 @@ impl Checker<'_> {
                         target_str
                     } else {
                         // Check if this is Array<T> — display as T[]
-                        let is_array = self.array_type != self.any_type
-                            && target == self.array_type;
+                        let is_array =
+                            self.array_type != self.any_type && target == self.array_type;
                         if is_array && tr.resolved_type_arguments.len() == 1 {
-                            let elem_str =
-                                self.type_to_string(tr.resolved_type_arguments[0]);
+                            let elem_str = self.type_to_string(tr.resolved_type_arguments[0]);
                             format!("{elem_str}[]")
                         } else {
                             let args = tr

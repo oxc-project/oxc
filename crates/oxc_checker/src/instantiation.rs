@@ -1,4 +1,7 @@
-use oxc_types::{ObjectFlags, ParameterInfo, PropertyInfo, Signature, StructuredType, StructuredTypeKind, TypeData, TypeFlags, TypeId, build_member_map};
+use oxc_types::{
+    ObjectFlags, ParameterInfo, PropertyInfo, Signature, StructuredType, StructuredTypeKind,
+    TypeData, TypeFlags, TypeId, build_member_map,
+};
 use smallvec::SmallVec;
 
 use crate::Checker;
@@ -18,27 +21,18 @@ pub enum TypeMapper {
 
     /// Multiple substitutions: N type parameters → N type arguments.
     /// Covers: `Map<string, number>`, `Record<K, V>`, and composed mappers.
-    Array {
-        sources: SmallVec<[TypeId; 4]>,
-        targets: SmallVec<[TypeId; 4]>,
-    },
+    Array { sources: SmallVec<[TypeId; 4]>, targets: SmallVec<[TypeId; 4]> },
 }
 
 impl TypeMapper {
     /// Create a mapper from type parameter list and type argument list.
-    pub fn from_type_parameters(
-        type_params: &[TypeId],
-        type_args: &[TypeId],
-    ) -> Option<Self> {
+    pub fn from_type_parameters(type_params: &[TypeId], type_args: &[TypeId]) -> Option<Self> {
         if type_params.is_empty() || type_params.len() != type_args.len() {
             return None;
         }
 
         if type_params.len() == 1 {
-            Some(Self::Simple {
-                source: type_params[0],
-                target: type_args[0],
-            })
+            Some(Self::Simple { source: type_params[0], target: type_args[0] })
         } else {
             Some(Self::Array {
                 sources: SmallVec::from_slice(type_params),
@@ -58,10 +52,9 @@ impl TypeMapper {
                     None
                 }
             }
-            Self::Array { sources, targets } => sources
-                .iter()
-                .position(|s| *s == t)
-                .map(|i| targets[i]),
+            Self::Array { sources, targets } => {
+                sources.iter().position(|s| *s == t).map(|i| targets[i])
+            }
         }
     }
 
@@ -114,31 +107,35 @@ impl<'a> Checker<'a> {
         let TypeData::TypeReference(tr) = self.type_arena.get_data(type_ref_id) else {
             return type_ref_id;
         };
-        let Some(target) = tr.target else { return type_ref_id; };
+        let Some(target) = tr.target else {
+            return type_ref_id;
+        };
         let type_args = &tr.resolved_type_arguments;
 
         // Dispatch based on target type kind
         match self.type_arena.get_data(target) {
-            TypeData::Structured(StructuredType { kind: StructuredTypeKind::Interface { all_type_parameters, .. }, .. }) => {
-                let Some(mapper) = TypeMapper::from_type_parameters(
-                    all_type_parameters,
-                    type_args,
-                ) else {
+            TypeData::Structured(StructuredType {
+                kind: StructuredTypeKind::Interface { all_type_parameters, .. },
+                ..
+            }) => {
+                let Some(mapper) = TypeMapper::from_type_parameters(all_type_parameters, type_args)
+                else {
                     self.instantiation_cache.insert(type_ref_id, target);
                     return target;
                 };
 
                 // Instantiate properties. Arena references are stable (AppendOnlyVec).
-                let TypeData::Structured(s) = self.type_arena.get_data(target) else { unreachable!() };
-                let instantiated_props: Vec<PropertyInfo> = s.properties
+                let TypeData::Structured(s) = self.type_arena.get_data(target) else {
+                    unreachable!()
+                };
+                let instantiated_props: Vec<PropertyInfo> = s
+                    .properties
                     .iter()
-                    .map(|p| {
-                        PropertyInfo {
-                            name: p.name.clone(),
-                            type_id: self.instantiate_type(p.type_id, &mapper),
-                            optional: p.optional,
-                            readonly: p.readonly,
-                        }
+                    .map(|p| PropertyInfo {
+                        name: p.name.clone(),
+                        type_id: self.instantiate_type(p.type_id, &mapper),
+                        optional: p.optional,
+                        readonly: p.readonly,
                     })
                     .collect();
                 let member_map = build_member_map(&instantiated_props);
@@ -204,10 +201,8 @@ impl Checker<'_> {
         // Union — instantiate each constituent
         if flags.intersects(TypeFlags::Union) {
             if let TypeData::Union(u) = self.type_arena.get_data(type_id) {
-                let new_members: Vec<TypeId> = u.types
-                    .iter()
-                    .map(|&t| self.instantiate_type(t, mapper))
-                    .collect();
+                let new_members: Vec<TypeId> =
+                    u.types.iter().map(|&t| self.instantiate_type(t, mapper)).collect();
                 return self.get_or_create_union_type(new_members);
             }
         }
@@ -215,10 +210,8 @@ impl Checker<'_> {
         // Intersection — instantiate each constituent
         if flags.intersects(TypeFlags::Intersection) {
             if let TypeData::Intersection(i) = self.type_arena.get_data(type_id) {
-                let new_members: Vec<TypeId> = i.types
-                    .iter()
-                    .map(|&t| self.instantiate_type(t, mapper))
-                    .collect();
+                let new_members: Vec<TypeId> =
+                    i.types.iter().map(|&t| self.instantiate_type(t, mapper)).collect();
                 return self.get_or_create_intersection_type(new_members);
             }
         }
@@ -280,13 +273,18 @@ impl Checker<'_> {
                                 .iter()
                                 .map(|&member| {
                                     // Override: check_param → member
-                                    let per_member = mapper.clone().with_mapping(orig_check, member);
+                                    let per_member =
+                                        mapper.clone().with_mapping(orig_check, member);
                                     let ext = self.instantiate_type(orig_extends, &per_member);
                                     let tru = self.instantiate_type(orig_true, &per_member);
                                     let fal = self.instantiate_type(orig_false, &per_member);
                                     self.get_conditional_type(
-                                        member, ext, tru, fal,
-                                        is_distributive, infer_params.clone(),
+                                        member,
+                                        ext,
+                                        tru,
+                                        fal,
+                                        is_distributive,
+                                        infer_params.clone(),
                                     )
                                 })
                                 .collect();
@@ -300,8 +298,12 @@ impl Checker<'_> {
                 let new_false = self.instantiate_type(orig_false, mapper);
 
                 return self.get_conditional_type(
-                    new_check, new_extends, new_true, new_false,
-                    is_distributive, infer_type_parameters,
+                    new_check,
+                    new_extends,
+                    new_true,
+                    new_false,
+                    is_distributive,
+                    infer_type_parameters,
                 );
             }
         }
@@ -319,7 +321,8 @@ impl Checker<'_> {
                 // e.g., if we have Wrapper<T> where T→string, and a property
                 // typed as Array<T>, we instantiate to Array<string>.
                 let target = tr.target;
-                let new_args: SmallVec<[TypeId; 4]> = tr.resolved_type_arguments
+                let new_args: SmallVec<[TypeId; 4]> = tr
+                    .resolved_type_arguments
                     .iter()
                     .map(|&t| self.instantiate_type(t, mapper))
                     .collect();
@@ -347,13 +350,20 @@ impl Checker<'_> {
                 let string_index_type = s.string_index_type;
                 let number_index_type = s.number_index_type;
                 self.instantiate_structured_type(
-                    type_id, &properties, &call_sigs, &construct_sigs,
-                    &kind, string_index_type, number_index_type, mapper,
+                    type_id,
+                    &properties,
+                    &call_sigs,
+                    &construct_sigs,
+                    &kind,
+                    string_index_type,
+                    number_index_type,
+                    mapper,
                 )
             }
 
             TypeData::Function(func) => {
-                let sigs: SmallVec<[oxc_types::Signature; 1]> = func.signatures
+                let sigs: SmallVec<[oxc_types::Signature; 1]> = func
+                    .signatures
                     .iter()
                     .map(|sig| self.instantiate_signature(sig, mapper))
                     .collect();
@@ -361,7 +371,10 @@ impl Checker<'_> {
                 let changed = sigs.iter().zip(func.signatures.iter()).any(|(new, old)| {
                     new.return_type != old.return_type
                         || new.parameters.len() != old.parameters.len()
-                        || new.parameters.iter().zip(old.parameters.iter())
+                        || new
+                            .parameters
+                            .iter()
+                            .zip(old.parameters.iter())
                             .any(|(np, op)| np.type_id != op.type_id)
                 });
                 if !changed {
@@ -394,8 +407,14 @@ impl Checker<'_> {
                 if let Some(type_variable) = homomorphic_var {
                     let concrete = mapper.map(type_variable).unwrap_or(type_variable);
                     return self.instantiate_mapped_type_homomorphic(
-                        type_id, concrete, template, type_param,
-                        optional_mod, readonly_mod, name_type, mapper,
+                        type_id,
+                        concrete,
+                        template,
+                        type_param,
+                        optional_mod,
+                        readonly_mod,
+                        name_type,
+                        mapper,
                     );
                 }
 
@@ -406,9 +425,14 @@ impl Checker<'_> {
                 let new_constraint = self.instantiate_type(constraint, mapper);
 
                 let Some(properties) = self.resolve_mapped_type_to_properties(
-                    new_constraint, template, type_param,
-                    optional_mod, readonly_mod,
-                    Some(mapper), None, name_type,
+                    new_constraint,
+                    template,
+                    type_param,
+                    optional_mod,
+                    readonly_mod,
+                    Some(mapper),
+                    None,
+                    name_type,
                 ) else {
                     return type_id; // can't resolve — return as-is
                 };
@@ -426,17 +450,20 @@ impl Checker<'_> {
                         label_name: info.label_name.clone(),
                     })
                     .collect();
-                let changed = new_elements.iter().zip(tuple.element_infos.iter())
+                let changed = new_elements
+                    .iter()
+                    .zip(tuple.element_infos.iter())
                     .any(|(new, old)| new.element_type != old.element_type);
                 if !changed {
                     return type_id;
                 }
-                let type_arguments: SmallVec<[TypeId; 4]> = new_elements
-                    .iter()
-                    .map(|e| e.element_type)
-                    .collect();
+                let type_arguments: SmallVec<[TypeId; 4]> =
+                    new_elements.iter().map(|e| e.element_type).collect();
                 let mut obj_flags = oxc_types::ObjectFlags::Tuple;
-                if new_elements.iter().any(|e| self.type_could_contain_type_variables(e.element_type)) {
+                if new_elements
+                    .iter()
+                    .any(|e| self.type_could_contain_type_variables(e.element_type))
+                {
                     obj_flags |= oxc_types::ObjectFlags::CouldContainTypeVariables;
                 }
                 self.type_arena.new_type(
@@ -461,7 +488,8 @@ impl Checker<'_> {
 
     /// Instantiate a signature with a type mapper.
     fn instantiate_signature(&mut self, sig: &Signature, mapper: &TypeMapper) -> Signature {
-        let new_params: Vec<ParameterInfo> = sig.parameters
+        let new_params: Vec<ParameterInfo> = sig
+            .parameters
             .iter()
             .map(|p| ParameterInfo {
                 name: p.name.clone(),
@@ -517,7 +545,10 @@ impl Checker<'_> {
             .map(|sig| {
                 let new_sig = self.instantiate_signature(sig, mapper);
                 if new_sig.return_type != sig.return_type
-                    || new_sig.parameters.iter().zip(sig.parameters.iter())
+                    || new_sig
+                        .parameters
+                        .iter()
+                        .zip(sig.parameters.iter())
                         .any(|(n, o)| n.type_id != o.type_id)
                 {
                     changed = true;
@@ -531,7 +562,10 @@ impl Checker<'_> {
             .map(|sig| {
                 let new_sig = self.instantiate_signature(sig, mapper);
                 if new_sig.return_type != sig.return_type
-                    || new_sig.parameters.iter().zip(sig.parameters.iter())
+                    || new_sig
+                        .parameters
+                        .iter()
+                        .zip(sig.parameters.iter())
                         .any(|(n, o)| n.type_id != o.type_id)
                 {
                     changed = true;
@@ -572,11 +606,7 @@ impl Checker<'_> {
             return None;
         };
         let target_flags = self.type_arena.get_flags(idx.target);
-        if target_flags.intersects(TypeFlags::TypeParameter) {
-            Some(idx.target)
-        } else {
-            None
-        }
+        if target_flags.intersects(TypeFlags::TypeParameter) { Some(idx.target) } else { None }
     }
 
     /// Instantiate a homomorphic mapped type (e.g., `Partial<T>` where T has
@@ -612,12 +642,19 @@ impl Checker<'_> {
 
         // Primitives pass through unchanged: Partial<string> = string
         if concrete_flags.intersects(
-            TypeFlags::String | TypeFlags::Number | TypeFlags::Boolean
-            | TypeFlags::BigInt | TypeFlags::ESSymbol
-            | TypeFlags::StringLiteral | TypeFlags::NumberLiteral
-            | TypeFlags::BooleanLiteral | TypeFlags::BigIntLiteral
-            | TypeFlags::Void | TypeFlags::Undefined | TypeFlags::Null
-            | TypeFlags::Never
+            TypeFlags::String
+                | TypeFlags::Number
+                | TypeFlags::Boolean
+                | TypeFlags::BigInt
+                | TypeFlags::ESSymbol
+                | TypeFlags::StringLiteral
+                | TypeFlags::NumberLiteral
+                | TypeFlags::BooleanLiteral
+                | TypeFlags::BigIntLiteral
+                | TypeFlags::Void
+                | TypeFlags::Undefined
+                | TypeFlags::Null
+                | TypeFlags::Never,
         ) {
             self.mapped_type_cache.insert(cache_key, concrete);
             return concrete;
@@ -631,8 +668,14 @@ impl Checker<'_> {
                     .iter()
                     .map(|&member| {
                         self.instantiate_mapped_type_homomorphic(
-                            mapped_type_id, member, template, type_param,
-                            optional_mod, readonly_mod, name_type, outer_mapper,
+                            mapped_type_id,
+                            member,
+                            template,
+                            type_param,
+                            optional_mod,
+                            readonly_mod,
+                            name_type,
+                            outer_mapper,
                         )
                     })
                     .collect();
@@ -649,7 +692,11 @@ impl Checker<'_> {
                 if tr.target == Some(self.array_type) && !tr.resolved_type_arguments.is_empty() {
                     let elem_type = tr.resolved_type_arguments[0];
                     let mapped_elem = self.instantiate_mapped_element_type(
-                        elem_type, template, type_param, optional_mod, outer_mapper,
+                        elem_type,
+                        template,
+                        type_param,
+                        optional_mod,
+                        outer_mapper,
                     );
                     let result = self.type_arena.new_type(
                         TypeFlags::Object,
@@ -685,8 +732,11 @@ impl Checker<'_> {
                     let label_name = info.label_name.clone();
 
                     let mapped_elem = self.instantiate_mapped_element_type(
-                        elem_type, template, type_param,
-                        optional_mod, outer_mapper,
+                        elem_type,
+                        template,
+                        type_param,
+                        optional_mod,
+                        outer_mapper,
                     );
                     let new_flags = match optional_mod {
                         oxc_types::MappedTypeModifier::Add => {
@@ -710,9 +760,8 @@ impl Checker<'_> {
                     .iter()
                     .filter(|e| e.flags.contains(oxc_types::ElementFlags::Required))
                     .count() as u32;
-                let has_rest = new_elements
-                    .iter()
-                    .any(|e| e.flags.contains(oxc_types::ElementFlags::Rest));
+                let has_rest =
+                    new_elements.iter().any(|e| e.flags.contains(oxc_types::ElementFlags::Rest));
                 let fixed_length = if has_rest {
                     new_elements.len() as u32 - 1
                 } else {
@@ -721,10 +770,8 @@ impl Checker<'_> {
                 let combined_flags = new_elements
                     .iter()
                     .fold(oxc_types::ElementFlags::empty(), |acc, e| acc | e.flags);
-                let type_arguments: SmallVec<[TypeId; 4]> = new_elements
-                    .iter()
-                    .map(|e| e.element_type)
-                    .collect();
+                let type_arguments: SmallVec<[TypeId; 4]> =
+                    new_elements.iter().map(|e| e.element_type).collect();
 
                 let new_readonly = match readonly_mod {
                     oxc_types::MappedTypeModifier::Add => true,
@@ -754,9 +801,14 @@ impl Checker<'_> {
         // Objects/Interfaces: resolve keyof to get keys, instantiate template
         let keyof_concrete = self.get_index_type(concrete);
         let Some(properties) = self.resolve_mapped_type_to_properties(
-            keyof_concrete, template, type_param,
-            optional_mod, readonly_mod,
-            Some(outer_mapper), Some(concrete), name_type,
+            keyof_concrete,
+            template,
+            type_param,
+            optional_mod,
+            readonly_mod,
+            Some(outer_mapper),
+            Some(concrete),
+            name_type,
         ) else {
             return mapped_type_id;
         };

@@ -10,8 +10,8 @@ use oxc_syntax::symbol::SymbolId;
 use oxc_types::{ObjectFlags, StructuredTypeKind, TypeData, TypeFlags, TypeId};
 use smallvec::SmallVec;
 
-use crate::flow::{CacheState, FlowGraph, FlowNodeId, FlowNodeKind};
 use crate::Checker;
+use crate::flow::{CacheState, FlowGraph, FlowNodeId, FlowNodeKind};
 
 /// Maximum recursion depth for the backward walk.
 const MAX_FLOW_DEPTH: u32 = 2000;
@@ -31,10 +31,7 @@ impl Checker<'_> {
         // Swap the flow graph out of self so we can pass &FlowGraph independently
         // of &mut self through the recursive backward walk. This is the single
         // swap/put-back point — the entire walk below uses zero-copy &FlowGraph.
-        let flow_graph = std::mem::replace(
-            &mut self.current_flow_graph,
-            FlowGraph::empty(),
-        );
+        let flow_graph = std::mem::replace(&mut self.current_flow_graph, FlowGraph::empty());
 
         let Some(flow_node_id) = flow_graph.get_flow_for_node(ident_node_id) else {
             self.current_flow_graph = flow_graph;
@@ -119,8 +116,13 @@ impl Checker<'_> {
                     let node_id = *node_id;
                     let antecedent = *antecedent;
                     let result = self.handle_condition_flow(
-                        flow_graph, antecedent, node_id, true,
-                        symbol_id, declared_type, current_depth,
+                        flow_graph,
+                        antecedent,
+                        node_id,
+                        true,
+                        symbol_id,
+                        declared_type,
+                        current_depth,
                     );
                     if is_shared {
                         self.flow_type_cache.insert((current_id, symbol_id), result);
@@ -132,8 +134,13 @@ impl Checker<'_> {
                     let node_id = *node_id;
                     let antecedent = *antecedent;
                     let result = self.handle_condition_flow(
-                        flow_graph, antecedent, node_id, false,
-                        symbol_id, declared_type, current_depth,
+                        flow_graph,
+                        antecedent,
+                        node_id,
+                        false,
+                        symbol_id,
+                        declared_type,
+                        current_depth,
                     );
                     if is_shared {
                         self.flow_type_cache.insert((current_id, symbol_id), result);
@@ -144,7 +151,11 @@ impl Checker<'_> {
                 FlowNodeKind::BranchLabel { antecedents } => {
                     let antecedents = antecedents.clone();
                     let result = self.handle_label_flow(
-                        flow_graph, &antecedents, symbol_id, declared_type, current_depth,
+                        flow_graph,
+                        &antecedents,
+                        symbol_id,
+                        declared_type,
+                        current_depth,
                     );
                     if is_shared {
                         self.flow_type_cache.insert((current_id, symbol_id), result);
@@ -161,7 +172,11 @@ impl Checker<'_> {
                     // loop-carried types.
                     self.flow_type_cache.insert((current_id, symbol_id), declared_type);
                     let result = self.handle_label_flow(
-                        flow_graph, &antecedents, symbol_id, declared_type, current_depth,
+                        flow_graph,
+                        &antecedents,
+                        symbol_id,
+                        declared_type,
+                        current_depth,
                     );
                     self.flow_type_cache.insert((current_id, symbol_id), result);
                     return result;
@@ -295,22 +310,12 @@ impl Checker<'_> {
 
                 // Check for `x === null` or `x === undefined` pattern.
                 if let Some(narrowed) = self.try_narrow_by_equality(
-                    type_id,
-                    &bin.left,
-                    &bin.right,
-                    symbol_id,
-                    assume_eq,
-                    true, // strict
+                    type_id, &bin.left, &bin.right, symbol_id, assume_eq, true, // strict
                 ) {
                     return narrowed;
                 }
                 if let Some(narrowed) = self.try_narrow_by_equality(
-                    type_id,
-                    &bin.right,
-                    &bin.left,
-                    symbol_id,
-                    assume_eq,
-                    true,
+                    type_id, &bin.right, &bin.left, symbol_id, assume_eq, true,
                 ) {
                     return narrowed;
                 }
@@ -336,22 +341,12 @@ impl Checker<'_> {
 
                 // Loose equality with null: `x == null` narrows to null | undefined.
                 if let Some(narrowed) = self.try_narrow_by_equality(
-                    type_id,
-                    &bin.left,
-                    &bin.right,
-                    symbol_id,
-                    assume_eq,
-                    false, // loose
+                    type_id, &bin.left, &bin.right, symbol_id, assume_eq, false, // loose
                 ) {
                     return narrowed;
                 }
                 if let Some(narrowed) = self.try_narrow_by_equality(
-                    type_id,
-                    &bin.right,
-                    &bin.left,
-                    symbol_id,
-                    assume_eq,
-                    false,
+                    type_id, &bin.right, &bin.left, symbol_id, assume_eq, false,
                 ) {
                     return narrowed;
                 }
@@ -372,16 +367,14 @@ impl Checker<'_> {
             }
 
             // `x instanceof Foo`
-            BinaryOperator::Instanceof => {
-                self.try_narrow_by_instanceof(type_id, &bin.left, &bin.right, symbol_id, assume_true)
-                    .unwrap_or(type_id)
-            }
+            BinaryOperator::Instanceof => self
+                .try_narrow_by_instanceof(type_id, &bin.left, &bin.right, symbol_id, assume_true)
+                .unwrap_or(type_id),
 
             // `"prop" in x`
-            BinaryOperator::In => {
-                self.try_narrow_by_in_keyword(type_id, &bin.left, &bin.right, symbol_id, assume_true)
-                    .unwrap_or(type_id)
-            }
+            BinaryOperator::In => self
+                .try_narrow_by_in_keyword(type_id, &bin.left, &bin.right, symbol_id, assume_true)
+                .unwrap_or(type_id),
 
             _ => type_id,
         }
@@ -449,12 +442,7 @@ impl Checker<'_> {
     }
 
     /// Narrow a type based on a typeof check.
-    fn narrow_by_typeof(
-        &mut self,
-        type_id: TypeId,
-        type_string: &str,
-        assume_eq: bool,
-    ) -> TypeId {
+    fn narrow_by_typeof(&mut self, type_id: TypeId, type_string: &str, assume_eq: bool) -> TypeId {
         self.narrow_type_by_predicate(type_id, |checker, t| {
             let matches = checker.type_matches_typeof(t, type_string);
             if assume_eq { matches } else { !matches }
@@ -472,17 +460,12 @@ impl Checker<'_> {
             "symbol" => flags.intersects(TypeFlags::ESSymbolLike),
             "undefined" => flags.intersects(TypeFlags::Undefined | TypeFlags::Void),
             "object" => {
-                flags.intersects(
-                    TypeFlags::Object | TypeFlags::Null | TypeFlags::NonPrimitive,
-                )
+                flags.intersects(TypeFlags::Object | TypeFlags::Null | TypeFlags::NonPrimitive)
             }
             "function" => {
                 // TODO: check for callable types
                 flags.intersects(TypeFlags::Object)
-                    && matches!(
-                        self.type_arena.get_data(type_id),
-                        TypeData::Function(_)
-                    )
+                    && matches!(self.type_arena.get_data(type_id), TypeData::Function(_))
             }
             _ => false,
         }
@@ -558,7 +541,8 @@ impl Checker<'_> {
 
         // value_expr must be null or undefined.
         let is_null = matches!(value_expr, Expression::NullLiteral(_));
-        let is_undefined = matches!(value_expr, Expression::Identifier(id) if id.name == "undefined");
+        let is_undefined =
+            matches!(value_expr, Expression::Identifier(id) if id.name == "undefined");
 
         if !is_null && !is_undefined {
             return None;
@@ -896,8 +880,7 @@ impl Checker<'_> {
                 let types = u.types.clone(); // Arc refcount bump
                 let mut narrowed: Vec<TypeId> = Vec::new();
                 for &constituent in types.iter() {
-                    let mapped =
-                        self.narrow_constituent(constituent, candidate, check_derived);
+                    let mapped = self.narrow_constituent(constituent, candidate, check_derived);
                     if mapped != self.never_type && !narrowed.contains(&mapped) {
                         narrowed.push(mapped);
                     }
@@ -996,11 +979,7 @@ impl Checker<'_> {
                 }
             }
 
-            if self.is_type_derived_from(t, candidate) {
-                self.never_type
-            } else {
-                t
-            }
+            if self.is_type_derived_from(t, candidate) { self.never_type } else { t }
         } else {
             // Type predicate false: compute true narrowing, then remove
             // constituents that are subsets of it.
@@ -1022,11 +1001,7 @@ impl Checker<'_> {
                 }
             }
 
-            if self.is_type_assignable_to(t, true_type) {
-                self.never_type
-            } else {
-                t
-            }
+            if self.is_type_assignable_to(t, true_type) { self.never_type } else { t }
         }
     }
 
@@ -1167,7 +1142,10 @@ impl Checker<'_> {
             Expression::LogicalExpression(logical) => logical.node_id.get(),
             Expression::CallExpression(call) => call.node_id.get(),
             _ => {
-                debug_assert!(false, "get_inner_expression_node_id called on unexpected expression");
+                debug_assert!(
+                    false,
+                    "get_inner_expression_node_id called on unexpected expression"
+                );
                 oxc_syntax::node::NodeId::DUMMY
             }
         }

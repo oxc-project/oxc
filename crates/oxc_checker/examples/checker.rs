@@ -26,7 +26,14 @@ use std::process::ExitCode;
 fn main() -> ExitCode {
     let mut args: Vec<String> = std::env::args().skip(1).collect();
 
-    let show_timing = args.iter().position(|a| a == "--timing").map(|i| { args.remove(i); i }).is_some();
+    let show_timing = args
+        .iter()
+        .position(|a| a == "--timing")
+        .map(|i| {
+            args.remove(i);
+            i
+        })
+        .is_some();
 
     if args.is_empty() {
         eprintln!("Usage: checker [--timing] <file.ts> [file2.ts ...]");
@@ -38,13 +45,11 @@ fn main() -> ExitCode {
     // Canonicalize paths
     let file_paths: Vec<PathBuf> = file_paths
         .into_iter()
-        .filter_map(|p| {
-            match p.canonicalize() {
-                Ok(canonical) => Some(canonical),
-                Err(e) => {
-                    eprintln!("Error: cannot read {}: {e}", p.display());
-                    None
-                }
+        .filter_map(|p| match p.canonicalize() {
+            Ok(canonical) => Some(canonical),
+            Err(e) => {
+                eprintln!("Error: cannot read {}: {e}", p.display());
+                None
             }
         })
         .collect();
@@ -72,8 +77,11 @@ fn main() -> ExitCode {
 
         let check_start = std::time::Instant::now();
         let mut checker = oxc_checker::Checker::new_with_host(
-            &semantic, &arena, &project,
-            file_paths[0].to_string_lossy().to_string(), 1,
+            &semantic,
+            &arena,
+            &project,
+            file_paths[0].to_string_lossy().to_string(),
+            1,
         );
         checker.check_program(&parsed.program);
         let check_ms = check_start.elapsed().as_secs_f64() * 1000.0;

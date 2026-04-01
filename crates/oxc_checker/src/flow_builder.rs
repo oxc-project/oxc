@@ -4,14 +4,12 @@
 //! conditions, assignments, branches, and loops. The resulting `FlowGraph`
 //! is consumed by the backward walk in `flow_analysis.rs`.
 
-use oxc_ast::ast::{
-    AssignmentTarget, Expression, Statement,
-};
+use oxc_ast::ast::{AssignmentTarget, Expression, Statement};
 use oxc_index::IndexVec;
-use rustc_hash::FxHashMap;
 use oxc_syntax::node::NodeId;
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator};
 use oxc_syntax::symbol::SymbolId;
+use rustc_hash::FxHashMap;
 use smallvec::SmallVec;
 
 use crate::flow::{CacheState, FlowEntry, FlowGraph, FlowNodeId, FlowNodeKind};
@@ -38,10 +36,7 @@ pub struct FlowGraphBuilder<'a, 'b> {
 
 impl<'a, 'b> FlowGraphBuilder<'a, 'b> {
     /// Build a flow graph for a list of statements (program top-level or function body).
-    pub fn build(
-        stmts: &[Statement<'_>],
-        semantic: &'a oxc_semantic::Semantic<'b>,
-    ) -> FlowGraph {
+    pub fn build(stmts: &[Statement<'_>], semantic: &'a oxc_semantic::Semantic<'b>) -> FlowGraph {
         let mut builder = Self::new(semantic);
         builder.visit_statements(stmts);
         builder.finish()
@@ -50,14 +45,10 @@ impl<'a, 'b> FlowGraphBuilder<'a, 'b> {
     fn new(semantic: &'a oxc_semantic::Semantic<'b>) -> Self {
         let mut nodes = IndexVec::new();
 
-        let start = nodes.push(FlowEntry {
-            cache_state: CacheState::None,
-            kind: FlowNodeKind::Start,
-        });
-        let unreachable = nodes.push(FlowEntry {
-            cache_state: CacheState::None,
-            kind: FlowNodeKind::Unreachable,
-        });
+        let start =
+            nodes.push(FlowEntry { cache_state: CacheState::None, kind: FlowNodeKind::Start });
+        let unreachable = nodes
+            .push(FlowEntry { cache_state: CacheState::None, kind: FlowNodeKind::Unreachable });
 
         Self {
             nodes,
@@ -84,24 +75,17 @@ impl<'a, 'b> FlowGraphBuilder<'a, 'b> {
     // ── Node creation helpers ──────────────────────────────────────────
 
     fn push_node(&mut self, kind: FlowNodeKind) -> FlowNodeId {
-        self.nodes.push(FlowEntry {
-            cache_state: CacheState::None,
-            kind,
-        })
+        self.nodes.push(FlowEntry { cache_state: CacheState::None, kind })
     }
 
     /// Create a branch label (non-looping merge point).
     fn new_branch_label(&mut self) -> FlowNodeId {
-        self.push_node(FlowNodeKind::BranchLabel {
-            antecedents: SmallVec::new(),
-        })
+        self.push_node(FlowNodeKind::BranchLabel { antecedents: SmallVec::new() })
     }
 
     /// Create a loop label (looping merge point — back-edge target).
     fn new_loop_label(&mut self) -> FlowNodeId {
-        self.push_node(FlowNodeKind::LoopLabel {
-            antecedents: SmallVec::new(),
-        })
+        self.push_node(FlowNodeKind::LoopLabel { antecedents: SmallVec::new() })
     }
 
     /// Add an antecedent to a label node (branch or loop).
@@ -119,7 +103,9 @@ impl<'a, 'b> FlowGraphBuilder<'a, 'b> {
             CacheState::Shared => {}
         }
         let antecedents = match &mut self.nodes[label].kind {
-            FlowNodeKind::BranchLabel { antecedents } | FlowNodeKind::LoopLabel { antecedents } => antecedents,
+            FlowNodeKind::BranchLabel { antecedents } | FlowNodeKind::LoopLabel { antecedents } => {
+                antecedents
+            }
             _ => unreachable!("add_antecedent called on non-label node"),
         };
         // Avoid duplicates.
@@ -132,7 +118,9 @@ impl<'a, 'b> FlowGraphBuilder<'a, 'b> {
     /// if 1 return that antecedent directly, otherwise return the label itself.
     fn finish_label(&self, label: FlowNodeId) -> FlowNodeId {
         let antecedents = match &self.nodes[label].kind {
-            FlowNodeKind::BranchLabel { antecedents } | FlowNodeKind::LoopLabel { antecedents } => antecedents,
+            FlowNodeKind::BranchLabel { antecedents } | FlowNodeKind::LoopLabel { antecedents } => {
+                antecedents
+            }
             _ => unreachable!("finish_label called on non-label node"),
         };
         match antecedents.len() {
@@ -151,14 +139,8 @@ impl<'a, 'b> FlowGraphBuilder<'a, 'b> {
     ) -> (FlowNodeId, FlowNodeId) {
         if self.is_narrowing_expression(expr) {
             let node_id = self.get_expression_node_id(expr);
-            let true_node = self.push_node(FlowNodeKind::TrueCondition {
-                node_id,
-                antecedent,
-            });
-            let false_node = self.push_node(FlowNodeKind::FalseCondition {
-                node_id,
-                antecedent,
-            });
+            let true_node = self.push_node(FlowNodeKind::TrueCondition { node_id, antecedent });
+            let false_node = self.push_node(FlowNodeKind::FalseCondition { node_id, antecedent });
             (true_node, false_node)
         } else {
             (antecedent, antecedent)
@@ -420,8 +402,7 @@ impl<'a, 'b> FlowGraphBuilder<'a, 'b> {
         if let Some(test) = &for_stmt.test {
             self.visit_expression_for_flow(test);
             let pre_condition = self.current_flow;
-            let (true_flow, false_flow) =
-                self.maybe_create_condition_pair(test, pre_condition);
+            let (true_flow, false_flow) = self.maybe_create_condition_pair(test, pre_condition);
 
             self.current_flow = true_flow;
             self.visit_statement(&for_stmt.body);
@@ -659,8 +640,7 @@ impl<'a, 'b> FlowGraphBuilder<'a, 'b> {
             }
 
             // Arrow/function expressions create a new scope — don't walk into body.
-            Expression::ArrowFunctionExpression(_)
-            | Expression::FunctionExpression(_) => {}
+            Expression::ArrowFunctionExpression(_) | Expression::FunctionExpression(_) => {}
 
             // Literals, this, class — no flow effect.
             _ => {}
@@ -731,10 +711,7 @@ impl<'a, 'b> FlowGraphBuilder<'a, 'b> {
         }
     }
 
-    fn is_narrowing_binary_expression(
-        &self,
-        bin: &oxc_ast::ast::BinaryExpression<'_>,
-    ) -> bool {
+    fn is_narrowing_binary_expression(&self, bin: &oxc_ast::ast::BinaryExpression<'_>) -> bool {
         match bin.operator {
             // Equality operators: narrowing if one side is a narrowable reference
             BinaryOperator::Equality
@@ -746,14 +723,10 @@ impl<'a, 'b> FlowGraphBuilder<'a, 'b> {
             }
 
             // instanceof
-            BinaryOperator::Instanceof => {
-                self.contains_narrowable_reference(&bin.left)
-            }
+            BinaryOperator::Instanceof => self.contains_narrowable_reference(&bin.left),
 
             // in operator
-            BinaryOperator::In => {
-                self.contains_narrowable_reference(&bin.right)
-            }
+            BinaryOperator::In => self.contains_narrowable_reference(&bin.right),
 
             _ => false,
         }

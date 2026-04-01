@@ -6,9 +6,9 @@
 //! `IndexVec` instead of pointer-based linked lists, `SmallVec` for antecedents.
 
 use oxc_index::define_index_type;
-use rustc_hash::FxHashMap;
 use oxc_syntax::node::NodeId;
 use oxc_syntax::symbol::SymbolId;
+use rustc_hash::FxHashMap;
 use smallvec::SmallVec;
 
 define_index_type! {
@@ -46,29 +46,15 @@ pub enum FlowNodeKind {
     /// Dead code sentinel. Backward walk returns `never` here.
     Unreachable,
     /// Variable assignment. Resets the narrowed type for `symbol_id`.
-    Assignment {
-        node_id: NodeId,
-        symbol_id: SymbolId,
-        antecedent: FlowNodeId,
-    },
+    Assignment { node_id: NodeId, symbol_id: SymbolId, antecedent: FlowNodeId },
     /// True branch of a narrowing condition (e.g., the `if` body for `if (x)`).
-    TrueCondition {
-        node_id: NodeId,
-        antecedent: FlowNodeId,
-    },
+    TrueCondition { node_id: NodeId, antecedent: FlowNodeId },
     /// False branch of a narrowing condition (e.g., the `else` body for `if (x)`).
-    FalseCondition {
-        node_id: NodeId,
-        antecedent: FlowNodeId,
-    },
+    FalseCondition { node_id: NodeId, antecedent: FlowNodeId },
     /// Non-looping junction (if/else merge point, switch merge, try/catch merge).
-    BranchLabel {
-        antecedents: SmallVec<[FlowNodeId; 2]>,
-    },
+    BranchLabel { antecedents: SmallVec<[FlowNodeId; 2]> },
     /// Looping junction (while/for back-edge target).
-    LoopLabel {
-        antecedents: SmallVec<[FlowNodeId; 2]>,
-    },
+    LoopLabel { antecedents: SmallVec<[FlowNodeId; 2]> },
 }
 
 /// Per-function flow graph. Stores all flow nodes in a contiguous `IndexVec`
@@ -94,21 +80,11 @@ impl FlowGraph {
     /// Used as the default/placeholder when no function scope is active.
     pub fn empty() -> Self {
         let mut nodes = oxc_index::IndexVec::new();
-        let start = nodes.push(FlowEntry {
-            cache_state: CacheState::None,
-            kind: FlowNodeKind::Start,
-        });
-        let unreachable = nodes.push(FlowEntry {
-            cache_state: CacheState::None,
-            kind: FlowNodeKind::Unreachable,
-        });
-        Self {
-            nodes,
-            node_flow_map: FxHashMap::default(),
-            start,
-            unreachable,
-            end_of_flow: start,
-        }
+        let start =
+            nodes.push(FlowEntry { cache_state: CacheState::None, kind: FlowNodeKind::Start });
+        let unreachable = nodes
+            .push(FlowEntry { cache_state: CacheState::None, kind: FlowNodeKind::Unreachable });
+        Self { nodes, node_flow_map: FxHashMap::default(), start, unreachable, end_of_flow: start }
     }
 
     /// Get a flow node by its ID.

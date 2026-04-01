@@ -6,7 +6,10 @@ use oxc_span::{CompactStr, GetSpan};
 use oxc_syntax::node::NodeId;
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 use oxc_syntax::symbol::SymbolId;
-use oxc_types::{LiteralType, ObjectFlags, PropertyInfo, StructuredType, StructuredTypeKind, TypeData, TypeFlags, TypeId, build_member_map};
+use oxc_types::{
+    LiteralType, ObjectFlags, PropertyInfo, StructuredType, StructuredTypeKind, TypeData,
+    TypeFlags, TypeId, build_member_map,
+};
 use smallvec::SmallVec;
 
 use crate::Checker;
@@ -49,12 +52,8 @@ impl Checker<'_> {
         contextual_type: Option<TypeId>,
     ) -> TypeId {
         match expr {
-            Expression::StringLiteral(lit) => {
-                self.get_or_create_string_literal_type(&lit.value)
-            }
-            Expression::NumericLiteral(lit) => {
-                self.get_or_create_number_literal_type(lit.value)
-            }
+            Expression::StringLiteral(lit) => self.get_or_create_string_literal_type(&lit.value),
+            Expression::NumericLiteral(lit) => self.get_or_create_number_literal_type(lit.value),
             Expression::BigIntLiteral(lit) => {
                 self.get_or_create_bigint_literal_type(lit.value.as_str())
             }
@@ -71,9 +70,7 @@ impl Checker<'_> {
                 self.get_type_of_expression(&paren.expression, contextual_type)
             }
             // Type assertions — return the asserted type
-            Expression::TSAsExpression(expr) => {
-                self.get_type_from_type_node(&expr.type_annotation)
-            }
+            Expression::TSAsExpression(expr) => self.get_type_from_type_node(&expr.type_annotation),
             Expression::TSTypeAssertion(expr) => {
                 self.get_type_from_type_node(&expr.type_annotation)
             }
@@ -125,7 +122,9 @@ impl Checker<'_> {
             Expression::UpdateExpression(_) => self.number_type,
 
             // Object literal: `{ x: 1, y: "hello" }`
-            Expression::ObjectExpression(obj) => self.get_type_of_object_literal(obj, contextual_type),
+            Expression::ObjectExpression(obj) => {
+                self.get_type_of_object_literal(obj, contextual_type)
+            }
 
             // Property access: foo.bar
             Expression::StaticMemberExpression(expr) => {
@@ -133,7 +132,9 @@ impl Checker<'_> {
             }
 
             // Array literal: [1, 2, 3]
-            Expression::ArrayExpression(arr) => self.get_type_of_array_literal(arr, contextual_type),
+            Expression::ArrayExpression(arr) => {
+                self.get_type_of_array_literal(arr, contextual_type)
+            }
 
             // Assignment: checks assignability (TS2322), returns RHS type.
             Expression::AssignmentExpression(assign) => {
@@ -160,9 +161,7 @@ impl Checker<'_> {
             // this — resolve from AST ancestors: find the enclosing class,
             // stopping at regular functions (which reset `this`).
             // Arrow functions inherit `this` so we skip past them.
-            Expression::ThisExpression(this_expr) => {
-                self.resolve_this_type(this_expr.node_id())
-            }
+            Expression::ThisExpression(this_expr) => self.resolve_this_type(this_expr.node_id()),
 
             // These need more infrastructure (call signatures, generators, modules)
             Expression::YieldExpression(_)
@@ -173,18 +172,16 @@ impl Checker<'_> {
                 // Inline arena access to get contextual signature without
                 // borrowing &self (avoids clone). self.type_arena is &'a,
                 // so the returned reference has lifetime 'a.
-                let contextual_sig = contextual_type.and_then(|c| {
-                    match self.type_arena.get_data(c) {
+                let contextual_sig =
+                    contextual_type.and_then(|c| match self.type_arena.get_data(c) {
                         TypeData::Function(f) => f.signatures.first(),
                         TypeData::Structured(s) => s.call_signatures.first(),
                         _ => None,
-                    }
-                });
+                    });
                 // Create type parameters before building the signature so that
                 // references to T in parameter/return types resolve correctly.
-                let type_parameters = self.get_type_parameters_from_declaration(
-                    arrow.type_parameters.as_deref(),
-                );
+                let type_parameters =
+                    self.get_type_parameters_from_declaration(arrow.type_parameters.as_deref());
                 let mut sig = self.build_signature_from_params_with_context(
                     &arrow.params,
                     arrow.return_type.as_deref(),
@@ -215,15 +212,13 @@ impl Checker<'_> {
             }
 
             Expression::FunctionExpression(func) => {
-                let contextual_sig = contextual_type.and_then(|c| {
-                    match self.type_arena.get_data(c) {
+                let contextual_sig =
+                    contextual_type.and_then(|c| match self.type_arena.get_data(c) {
                         TypeData::Function(f) => f.signatures.first(),
                         TypeData::Structured(s) => s.call_signatures.first(),
                         _ => None,
-                    }
-                });
-                let sig =
-                    self.build_signature_from_function_with_context(func, contextual_sig);
+                    });
+                let sig = self.build_signature_from_function_with_context(func, contextual_sig);
                 self.create_function_type(sig)
             }
 
@@ -415,7 +410,8 @@ impl Checker<'_> {
                                         method_type,
                                     ));
                                 }
-                            } else if method.kind == oxc_ast::ast::MethodDefinitionKind::Constructor {
+                            } else if method.kind == oxc_ast::ast::MethodDefinitionKind::Constructor
+                            {
                                 // Constructor → construct signature returning the instance type
                                 let instance_type = self.get_declared_type_of_symbol(symbol_id);
                                 let mut sig = self.build_signature_from_function(&method.value);
@@ -469,7 +465,15 @@ impl Checker<'_> {
                 self.type_arena.new_type(
                     TypeFlags::Object,
                     ObjectFlags::Anonymous,
-                    TypeData::Structured(StructuredType { member_map: build_member_map(&properties), properties, string_index_type: None, number_index_type: None, call_signatures: Vec::new(), construct_signatures: Vec::new(), kind: StructuredTypeKind::Anonymous { target: None } }),
+                    TypeData::Structured(StructuredType {
+                        member_map: build_member_map(&properties),
+                        properties,
+                        string_index_type: None,
+                        number_index_type: None,
+                        call_signatures: Vec::new(),
+                        construct_signatures: Vec::new(),
+                        kind: StructuredTypeKind::Anonymous { target: None },
+                    }),
                     Some((self.file_idx, symbol_id)),
                 )
             }
@@ -572,7 +576,10 @@ impl Checker<'_> {
 
     /// Check if a VariableDeclarator is inside a for-of or for-in statement.
     /// If so, return the iterated element type; otherwise return `any_type`.
-    fn get_type_from_for_loop_context(&mut self, declarator_node_id: oxc_syntax::node::NodeId) -> TypeId {
+    fn get_type_from_for_loop_context(
+        &mut self,
+        declarator_node_id: oxc_syntax::node::NodeId,
+    ) -> TypeId {
         use oxc_ast::AstKind;
         // Walk up: VariableDeclarator → VariableDeclaration → ForOfStatement/ForInStatement
         // Capture the loop node ID without holding a mutable borrow.
@@ -613,7 +620,8 @@ impl Checker<'_> {
             return self.any_type;
         }
         // Collect tuple element types (releases the type_arena borrow before union creation)
-        let tuple_element_types = if let TypeData::Tuple(tuple) = self.type_arena.get_data(type_id) {
+        let tuple_element_types = if let TypeData::Tuple(tuple) = self.type_arena.get_data(type_id)
+        {
             Some(tuple.element_infos.iter().map(|e| e.element_type).collect::<Vec<_>>())
         } else {
             None
@@ -638,17 +646,14 @@ impl Checker<'_> {
         use oxc_ast::ast::BindingPattern;
         match pattern {
             BindingPattern::BindingIdentifier(ident) => {
-                if ident.symbol_id.get() == Some(target_symbol) {
-                    Some(init_type)
-                } else {
-                    None
-                }
+                if ident.symbol_id.get() == Some(target_symbol) { Some(init_type) } else { None }
             }
             BindingPattern::ObjectPattern(obj) => {
                 for prop in &obj.properties {
                     if let Some(name) = prop.key.static_name() {
                         // TODO: should emit an error or return `undefined` when property doesn't exist
-                        let prop_type = self.get_property_of_type(init_type, &name).unwrap_or(self.any_type);
+                        let prop_type =
+                            self.get_property_of_type(init_type, &name).unwrap_or(self.any_type);
                         if let Some(result) = self.resolve_destructured_binding_type(
                             &prop.value,
                             prop_type,
@@ -771,9 +776,8 @@ impl Checker<'_> {
                     }
                     if let Some(name) = prop.key.static_name() {
                         // Look up contextual type for this property
-                        let prop_contextual_type = contextual_type.and_then(|ct| {
-                            self.get_property_of_type(ct, &name)
-                        });
+                        let prop_contextual_type =
+                            contextual_type.and_then(|ct| self.get_property_of_type(ct, &name));
                         let prop_type =
                             self.get_type_of_expression(&prop.value, prop_contextual_type);
                         // Widen literal types in object literal properties
@@ -930,10 +934,7 @@ impl Checker<'_> {
             for ancestor in self.semantic().nodes().ancestor_kinds(node_id) {
                 match ancestor {
                     AstKind::Class(class) => {
-                        result = class
-                            .id
-                            .as_ref()
-                            .and_then(|id| id.symbol_id.get());
+                        result = class.id.as_ref().and_then(|id| id.symbol_id.get());
                         break;
                     }
                     AstKind::Function(_) => {
@@ -1018,10 +1019,8 @@ impl Checker<'_> {
         }
 
         // Widen literal types in array elements and union them
-        let widened: Vec<TypeId> = element_types
-            .into_iter()
-            .map(|t| self.get_widened_literal_type(t))
-            .collect();
+        let widened: Vec<TypeId> =
+            element_types.into_iter().map(|t| self.get_widened_literal_type(t)).collect();
         let elem_type = self.get_or_create_union_type(widened);
 
         if self.array_type == self.any_type {
@@ -1081,7 +1080,10 @@ impl Checker<'_> {
                     .get(i)
                     .map(|info| info.flags)
                     .unwrap_or(oxc_types::ElementFlags::Required),
-                label_name: tuple_data.element_infos.get(i).and_then(|info| info.label_name.clone()),
+                label_name: tuple_data
+                    .element_infos
+                    .get(i)
+                    .and_then(|info| info.label_name.clone()),
             });
         }
 
@@ -1112,13 +1114,13 @@ impl Checker<'_> {
         use oxc_ast::ast::ChainElement;
 
         let inner_type = match &chain.expression {
-            ChainElement::StaticMemberExpression(e) => {
-                self.get_type_of_static_member_expression(e)
-            }
+            ChainElement::StaticMemberExpression(e) => self.get_type_of_static_member_expression(e),
             ChainElement::ComputedMemberExpression(e) => {
                 self.get_type_of_computed_member_expression(e)
             }
-            ChainElement::TSNonNullExpression(e) => self.get_type_of_expression(&e.expression, None),
+            ChainElement::TSNonNullExpression(e) => {
+                self.get_type_of_expression(&e.expression, None)
+            }
             _ => self.any_type, // CallExpression, PrivateFieldExpression
         };
         self.get_or_create_union_type(vec![inner_type, self.undefined_type])
@@ -1214,10 +1216,7 @@ impl Checker<'_> {
     }
 
     /// Get the type of a call expression, checking for TS2349, TS2554, TS2345.
-    fn get_type_of_call_expression(
-        &mut self,
-        call: &oxc_ast::ast::CallExpression<'_>,
-    ) -> TypeId {
+    fn get_type_of_call_expression(&mut self, call: &oxc_ast::ast::CallExpression<'_>) -> TypeId {
         use oxc_ast::ast::Argument;
 
         let callee_type = self.get_type_of_expression(&call.callee, None);
@@ -1275,11 +1274,8 @@ impl Checker<'_> {
         let sig_type_params: smallvec::SmallVec<[TypeId; 4]> = sig.type_parameters.clone();
 
         // Extract parameter TypeIds (SmallVec, stack-allocated for ≤8 params)
-        let param_type_ids: smallvec::SmallVec<[TypeId; 8]> = sig
-            .parameters
-            .iter()
-            .map(|p| p.type_id)
-            .collect();
+        let param_type_ids: smallvec::SmallVec<[TypeId; 8]> =
+            sig.parameters.iter().map(|p| p.type_id).collect();
 
         // Count non-rest parameters for max argument count
         let max_args = if sig_flags.intersects(oxc_types::SignatureFlags::HasRestParameter) {
@@ -1341,13 +1337,10 @@ impl Checker<'_> {
                     .collect::<smallvec::SmallVec<[TypeId; 4]>>()
             } else {
                 // Infer from arguments
-                let mut infer_ctx =
-                    crate::inference::InferenceContext::new(&sig_type_params);
+                let mut infer_ctx = crate::inference::InferenceContext::new(&sig_type_params);
 
                 for (i, &arg_type) in arg_types.iter().enumerate() {
-                    let raw_param_type = self.get_param_type_at(
-                        &param_type_ids, i, sig_flags,
-                    );
+                    let raw_param_type = self.get_param_type_at(&param_type_ids, i, sig_flags);
                     if let Some(param_type) = raw_param_type {
                         self.infer_from_types(&mut infer_ctx, arg_type, param_type);
                     }
@@ -1358,10 +1351,8 @@ impl Checker<'_> {
             if let Some(mapper) =
                 crate::instantiation::TypeMapper::from_type_parameters(&sig_type_params, &type_args)
             {
-                let instantiated_params: smallvec::SmallVec<[TypeId; 8]> = param_type_ids
-                    .iter()
-                    .map(|&p| self.instantiate_type(p, &mapper))
-                    .collect();
+                let instantiated_params: smallvec::SmallVec<[TypeId; 8]> =
+                    param_type_ids.iter().map(|&p| self.instantiate_type(p, &mapper)).collect();
                 let instantiated_return = self.instantiate_type(sig_return_type, &mapper);
                 (instantiated_params, instantiated_return)
             } else {
@@ -1374,9 +1365,7 @@ impl Checker<'_> {
         // --- Argument type checking (TS2345) ---
         // Check each argument against the (possibly instantiated) parameter type.
         for (i, (arg, &arg_type)) in call.arguments.iter().zip(arg_types.iter()).enumerate() {
-            let param_type = self.get_param_type_at(
-                &effective_param_types, i, sig_flags,
-            );
+            let param_type = self.get_param_type_at(&effective_param_types, i, sig_flags);
 
             if let Some(param_type) = param_type {
                 if !self.type_arena.get_flags(param_type).intersects(TypeFlags::Any) {
@@ -1415,10 +1404,7 @@ impl Checker<'_> {
     ///
     /// If the callee resolves to a class, returns the class's instance type
     /// (declared type). Otherwise returns `any`.
-    fn get_type_of_new_expression(
-        &mut self,
-        new_expr: &oxc_ast::ast::NewExpression<'_>,
-    ) -> TypeId {
+    fn get_type_of_new_expression(&mut self, new_expr: &oxc_ast::ast::NewExpression<'_>) -> TypeId {
         use oxc_ast::AstKind;
 
         // Resolve callee: only handle simple identifiers for now
@@ -1479,16 +1465,12 @@ impl Checker<'_> {
     /// Resolve an import binding's value-side type.
     /// Called from `resolve_symbol_type` (value context).
     pub(crate) fn resolve_import_as_value(&mut self, symbol_id: SymbolId) -> TypeId {
-        self.resolve_import_binding(symbol_id)
-            .and_then(|b| b.value_type)
-            .unwrap_or(self.any_type)
+        self.resolve_import_binding(symbol_id).and_then(|b| b.value_type).unwrap_or(self.any_type)
     }
 
     /// Resolve an import binding's type-side type.
     /// Called from `resolve_declared_type` (type context).
     pub(crate) fn resolve_import_as_type(&mut self, symbol_id: SymbolId) -> TypeId {
-        self.resolve_import_binding(symbol_id)
-            .and_then(|b| b.type_type)
-            .unwrap_or(self.any_type)
+        self.resolve_import_binding(symbol_id).and_then(|b| b.type_type).unwrap_or(self.any_type)
     }
 }

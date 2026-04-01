@@ -21,9 +21,8 @@ macro_rules! with_checker {
         let $program = &parsed.program;
         let semantic = SemanticBuilder::new().build($program).semantic;
         #[allow(unused_mut)]
-        let mut $checker = Checker::new_with_host(
-            &semantic, &type_arena, &project, String::new(), 1,
-        );
+        let mut $checker =
+            Checker::new_with_host(&semantic, &type_arena, &project, String::new(), 1);
         $body
     }};
 }
@@ -99,10 +98,7 @@ fn intrinsic_types_have_correct_names() {
         for (type_id, expected_name) in cases {
             match arena.get_data(type_id) {
                 TypeData::Intrinsic(t) => {
-                    assert_eq!(
-                        t.intrinsic_name, expected_name,
-                        "wrong name for {expected_name}"
-                    );
+                    assert_eq!(t.intrinsic_name, expected_name, "wrong name for {expected_name}");
                 }
                 _ => panic!("expected IntrinsicType for {expected_name}"),
             }
@@ -218,8 +214,8 @@ fn literal_expression_types() {
 
     for (source, expected_str, expected_flags) in cases {
         with_checker!(source, |checker, program| {
-            let init = first_var_init(program)
-                .unwrap_or_else(|| panic!("no initializer in: {source}"));
+            let init =
+                first_var_init(program).unwrap_or_else(|| panic!("no initializer in: {source}"));
             let type_id = checker.get_type_of_expression(init, None);
 
             assert_eq!(
@@ -227,11 +223,7 @@ fn literal_expression_types() {
                 expected_flags,
                 "wrong flags for: {source}"
             );
-            assert_eq!(
-                checker.type_to_string(type_id),
-                expected_str,
-                "wrong string for: {source}"
-            );
+            assert_eq!(checker.type_to_string(type_id), expected_str, "wrong string for: {source}");
         });
     }
 }
@@ -263,10 +255,7 @@ fn identifier_infers_type_from_initializer() {
             let init = decl.declarations[0].init.as_ref().unwrap();
             let type_id = checker.get_type_of_expression(init, None);
             assert_eq!(checker.type_to_string(type_id), "number");
-            assert_eq!(
-                checker.type_arena().get_flags(type_id),
-                TypeFlags::Number
-            );
+            assert_eq!(checker.type_arena().get_flags(type_id), TypeFlags::Number);
         } else {
             panic!("expected variable declaration");
         }
@@ -404,7 +393,12 @@ fn check_program_boolean_literal_to_number_error() {
         checker.check_program(program);
         let diagnostics = checker.take_diagnostics();
         assert_eq!(diagnostics.len(), 1);
-        assert!(diagnostics[0].message.to_string().contains("Type 'true' is not assignable to type 'number'"));
+        assert!(
+            diagnostics[0]
+                .message
+                .to_string()
+                .contains("Type 'true' is not assignable to type 'number'")
+        );
     });
 }
 
@@ -502,7 +496,12 @@ fn check_program_union_mismatch() {
         checker.check_program(program);
         let diagnostics = checker.take_diagnostics();
         assert_eq!(diagnostics.len(), 1);
-        assert!(diagnostics[0].message.to_string().contains("Type 'true' is not assignable to type 'string | number'"));
+        assert!(
+            diagnostics[0]
+                .message
+                .to_string()
+                .contains("Type 'true' is not assignable to type 'string | number'")
+        );
     });
 }
 
@@ -536,7 +535,12 @@ fn assignment_mismatch() {
         checker.check_program(program);
         let diagnostics = checker.take_diagnostics();
         assert_eq!(diagnostics.len(), 1);
-        assert!(diagnostics[0].message.to_string().contains("Type '42' is not assignable to type 'string'"));
+        assert!(
+            diagnostics[0]
+                .message
+                .to_string()
+                .contains("Type '42' is not assignable to type 'string'")
+        );
     });
 }
 
@@ -555,7 +559,12 @@ fn assignment_to_union_mismatch() {
         checker.check_program(program);
         let diagnostics = checker.take_diagnostics();
         assert_eq!(diagnostics.len(), 1);
-        assert!(diagnostics[0].message.to_string().contains("Type 'true' is not assignable to type 'string | number'"));
+        assert!(
+            diagnostics[0]
+                .message
+                .to_string()
+                .contains("Type 'true' is not assignable to type 'string | number'")
+        );
     });
 }
 
@@ -579,14 +588,11 @@ fn assignment_no_annotation_no_error() {
 
 #[test]
 fn multiple_assignments_multiple_errors() {
-    with_checker!(
-        "let x: string; x = 42; x = true",
-        |checker, program| {
-            checker.check_program(program);
+    with_checker!("let x: string; x = 42; x = true", |checker, program| {
+        checker.check_program(program);
         let diagnostics = checker.take_diagnostics();
-            assert_eq!(diagnostics.len(), 2);
-        }
-    );
+        assert_eq!(diagnostics.len(), 2);
+    });
 }
 
 // --- Forward references, caching, and cycle detection ---
@@ -594,296 +600,235 @@ fn multiple_assignments_multiple_errors() {
 #[test]
 fn forward_reference() {
     // `y` is referenced before its declaration; symbol resolution should still work.
-    with_checker!(
-        "let x: number = y; let y: number = 42",
-        |checker, program| {
-            checker.check_program(program);
+    with_checker!("let x: number = y; let y: number = 42", |checker, program| {
+        checker.check_program(program);
         let diagnostics = checker.take_diagnostics();
-            // x: number = y where y: number — compatible, no error
-            assert!(diagnostics.is_empty());
-        }
-    );
+        // x: number = y where y: number — compatible, no error
+        assert!(diagnostics.is_empty());
+    });
 }
 
 #[test]
 fn symbol_type_cached() {
     // Resolving the same symbol twice should return the same TypeId from cache.
-    with_checker!(
-        "let y: string = 'hi'",
-        |checker, program| {
-            // Get y's identifier expression from the initializer is a literal,
-            // so instead resolve y's symbol directly.
-            // Find y's symbol ID from semantic.
-            // y should be the first symbol
-            let symbol_id = oxc_syntax::symbol::SymbolId::from_usize(0);
-            let t1 = checker.get_type_of_symbol(symbol_id);
-            let t2 = checker.get_type_of_symbol(symbol_id);
-            assert_eq!(t1, t2, "cached type should be identical");
-            assert_eq!(checker.symbol_type_cache.len(), 1);
-        }
-    );
+    with_checker!("let y: string = 'hi'", |checker, program| {
+        // Get y's identifier expression from the initializer is a literal,
+        // so instead resolve y's symbol directly.
+        // Find y's symbol ID from semantic.
+        // y should be the first symbol
+        let symbol_id = oxc_syntax::symbol::SymbolId::from_usize(0);
+        let t1 = checker.get_type_of_symbol(symbol_id);
+        let t2 = checker.get_type_of_symbol(symbol_id);
+        assert_eq!(t1, t2, "cached type should be identical");
+        assert_eq!(checker.symbol_type_cache.len(), 1);
+    });
 }
 
 #[test]
 fn function_parameter_type() {
     // Function parameter with type annotation should resolve correctly.
-    with_checker!(
-        "function f(x: number) { let y: string = x; }",
-        |checker, program| {
-            checker.check_program(program);
+    with_checker!("function f(x: number) { let y: string = x; }", |checker, program| {
+        checker.check_program(program);
         let diagnostics = checker.take_diagnostics();
-            // x is number, y is string — should produce TS2322
-            assert_eq!(diagnostics.len(), 1);
-            assert!(diagnostics[0].message.to_string().contains("Type 'number' is not assignable to type 'string'"));
-        }
-    );
+        // x is number, y is string — should produce TS2322
+        assert_eq!(diagnostics.len(), 1);
+        assert!(
+            diagnostics[0]
+                .message
+                .to_string()
+                .contains("Type 'number' is not assignable to type 'string'")
+        );
+    });
 }
 
 #[test]
 fn function_parameter_no_annotation() {
     // Parameter without annotation resolves to `any`, which is assignable to anything.
-    with_checker!(
-        "function f(x) { let y: string = x; }",
-        |checker, program| {
-            checker.check_program(program);
+    with_checker!("function f(x) { let y: string = x; }", |checker, program| {
+        checker.check_program(program);
         let diagnostics = checker.take_diagnostics();
-            assert!(diagnostics.is_empty());
-        }
-    );
+        assert!(diagnostics.is_empty());
+    });
 }
 
 // --- Type assertions ---
 
 #[test]
 fn type_assertion_as() {
-    with_checker!(
-        "let x: string = 42 as unknown as string",
-        |checker, program| {
-            checker.check_program(program);
+    with_checker!("let x: string = 42 as unknown as string", |checker, program| {
+        checker.check_program(program);
         let diagnostics = checker.take_diagnostics();
-            assert!(diagnostics.is_empty());
-        }
-    );
+        assert!(diagnostics.is_empty());
+    });
 }
 
 #[test]
 fn type_assertion_angle_bracket() {
-    with_checker!(
-        "let x: string = <string><unknown>42",
-        |checker, program| {
-            checker.check_program(program);
+    with_checker!("let x: string = <string><unknown>42", |checker, program| {
+        checker.check_program(program);
         let diagnostics = checker.take_diagnostics();
-            assert!(diagnostics.is_empty());
-        }
-    );
+        assert!(diagnostics.is_empty());
+    });
 }
 
 // --- Binary expression types ---
 
 #[test]
 fn binary_arithmetic_returns_number() {
-    with_checker!(
-        "let x: number = 1 + 2",
-        |checker, program| {
-            checker.check_program(program);
+    with_checker!("let x: number = 1 + 2", |checker, program| {
+        checker.check_program(program);
         let diagnostics = checker.take_diagnostics();
-            assert!(diagnostics.is_empty());
-        }
-    );
+        assert!(diagnostics.is_empty());
+    });
 }
 
 #[test]
 fn binary_arithmetic_to_string_error() {
-    with_checker!(
-        "let x: string = 1 + 2",
-        |checker, program| {
-            checker.check_program(program);
+    with_checker!("let x: string = 1 + 2", |checker, program| {
+        checker.check_program(program);
         let diagnostics = checker.take_diagnostics();
-            assert_eq!(diagnostics.len(), 1);
-            assert!(diagnostics[0].message.to_string().contains("not assignable"));
-        }
-    );
+        assert_eq!(diagnostics.len(), 1);
+        assert!(diagnostics[0].message.to_string().contains("not assignable"));
+    });
 }
 
 #[test]
 fn binary_string_concat() {
-    with_checker!(
-        "let x: string = 'a' + 'b'",
-        |checker, program| {
-            checker.check_program(program);
+    with_checker!("let x: string = 'a' + 'b'", |checker, program| {
+        checker.check_program(program);
         let diagnostics = checker.take_diagnostics();
-            assert!(diagnostics.is_empty());
-        }
-    );
+        assert!(diagnostics.is_empty());
+    });
 }
 
 #[test]
 fn binary_comparison_returns_boolean() {
-    with_checker!(
-        "let x: boolean = 1 < 2",
-        |checker, program| {
-            checker.check_program(program);
+    with_checker!("let x: boolean = 1 < 2", |checker, program| {
+        checker.check_program(program);
         let diagnostics = checker.take_diagnostics();
-            assert!(diagnostics.is_empty());
-        }
-    );
+        assert!(diagnostics.is_empty());
+    });
 }
 
 // --- Unary expression types ---
 
 #[test]
 fn typeof_returns_string() {
-    with_checker!(
-        "let x: string = typeof 42",
-        |checker, program| {
-            checker.check_program(program);
+    with_checker!("let x: string = typeof 42", |checker, program| {
+        checker.check_program(program);
         let diagnostics = checker.take_diagnostics();
-            assert!(diagnostics.is_empty());
-        }
-    );
+        assert!(diagnostics.is_empty());
+    });
 }
 
 #[test]
 fn void_returns_undefined() {
-    with_checker!(
-        "let x: undefined = void 0",
-        |checker, program| {
-            checker.check_program(program);
+    with_checker!("let x: undefined = void 0", |checker, program| {
+        checker.check_program(program);
         let diagnostics = checker.take_diagnostics();
-            assert!(diagnostics.is_empty());
-        }
-    );
+        assert!(diagnostics.is_empty());
+    });
 }
 
 #[test]
 fn logical_not_returns_boolean() {
-    with_checker!(
-        "let x: boolean = !true",
-        |checker, program| {
-            checker.check_program(program);
+    with_checker!("let x: boolean = !true", |checker, program| {
+        checker.check_program(program);
         let diagnostics = checker.take_diagnostics();
-            assert!(diagnostics.is_empty());
-        }
-    );
+        assert!(diagnostics.is_empty());
+    });
 }
 
 // --- Conditional expression ---
 
 #[test]
 fn conditional_unions_branches() {
-    with_checker!(
-        "let x: string | number = true ? 'a' : 1",
-        |checker, program| {
-            checker.check_program(program);
+    with_checker!("let x: string | number = true ? 'a' : 1", |checker, program| {
+        checker.check_program(program);
         let diagnostics = checker.take_diagnostics();
-            assert!(diagnostics.is_empty());
-        }
-    );
+        assert!(diagnostics.is_empty());
+    });
 }
 
 #[test]
 fn conditional_mismatch() {
-    with_checker!(
-        "let x: string = true ? 'a' : 1",
-        |checker, program| {
-            checker.check_program(program);
+    with_checker!("let x: string = true ? 'a' : 1", |checker, program| {
+        checker.check_program(program);
         let diagnostics = checker.take_diagnostics();
-            assert_eq!(diagnostics.len(), 1);
-        }
-    );
+        assert_eq!(diagnostics.len(), 1);
+    });
 }
 
 // --- Literal types in annotations ---
 
 #[test]
 fn literal_type_annotation() {
-    with_checker!(
-        "let x: 42 = 42",
-        |checker, program| {
-            checker.check_program(program);
+    with_checker!("let x: 42 = 42", |checker, program| {
+        checker.check_program(program);
         let diagnostics = checker.take_diagnostics();
-            assert!(diagnostics.is_empty());
-        }
-    );
+        assert!(diagnostics.is_empty());
+    });
 }
 
 #[test]
 fn literal_type_annotation_mismatch() {
-    with_checker!(
-        "let x: 42 = 43",
-        |checker, program| {
-            checker.check_program(program);
+    with_checker!("let x: 42 = 43", |checker, program| {
+        checker.check_program(program);
         let diagnostics = checker.take_diagnostics();
-            assert_eq!(diagnostics.len(), 1);
-        }
-    );
+        assert_eq!(diagnostics.len(), 1);
+    });
 }
 
 // --- Template literal ---
 
 #[test]
 fn template_literal_is_string() {
-    with_checker!(
-        "let x: string = `hello ${42}`",
-        |checker, program| {
-            checker.check_program(program);
+    with_checker!("let x: string = `hello ${42}`", |checker, program| {
+        checker.check_program(program);
         let diagnostics = checker.take_diagnostics();
-            assert!(diagnostics.is_empty());
-        }
-    );
+        assert!(diagnostics.is_empty());
+    });
 }
 
 // --- Return type checking ---
 
 #[test]
 fn return_type_compatible() {
-    with_checker!(
-        "function f(): number { return 42; }",
-        |checker, program| {
-            checker.check_program(program);
+    with_checker!("function f(): number { return 42; }", |checker, program| {
+        checker.check_program(program);
         let diagnostics = checker.take_diagnostics();
-            assert!(diagnostics.is_empty());
-        }
-    );
+        assert!(diagnostics.is_empty());
+    });
 }
 
 #[test]
 fn return_type_mismatch() {
-    with_checker!(
-        "function f(): string { return 42; }",
-        |checker, program| {
-            checker.check_program(program);
+    with_checker!("function f(): string { return 42; }", |checker, program| {
+        checker.check_program(program);
         let diagnostics = checker.take_diagnostics();
-            assert_eq!(diagnostics.len(), 1);
-            assert!(diagnostics[0].message.to_string().contains("not assignable"));
-        }
-    );
+        assert_eq!(diagnostics.len(), 1);
+        assert!(diagnostics[0].message.to_string().contains("not assignable"));
+    });
 }
 
 #[test]
 fn return_type_no_annotation_no_error() {
     // Without return type annotation, return values aren't checked.
-    with_checker!(
-        "function f() { return 42; }",
-        |checker, program| {
-            checker.check_program(program);
+    with_checker!("function f() { return 42; }", |checker, program| {
+        checker.check_program(program);
         let diagnostics = checker.take_diagnostics();
-            assert!(diagnostics.is_empty());
-        }
-    );
+        assert!(diagnostics.is_empty());
+    });
 }
 
 #[test]
 fn return_type_void_bare_return() {
     // `return;` in a void function is fine.
-    with_checker!(
-        "function f(): void { return; }",
-        |checker, program| {
-            checker.check_program(program);
+    with_checker!("function f(): void { return; }", |checker, program| {
+        checker.check_program(program);
         let diagnostics = checker.take_diagnostics();
-            assert!(diagnostics.is_empty());
-        }
-    );
+        assert!(diagnostics.is_empty());
+    });
 }
 
 #[test]
@@ -893,7 +838,7 @@ fn return_type_nested_function() {
         "function f(): string { function g(): number { return 42; } return 'hi'; }",
         |checker, program| {
             checker.check_program(program);
-        let diagnostics = checker.take_diagnostics();
+            let diagnostics = checker.take_diagnostics();
             assert!(diagnostics.is_empty());
         }
     );
@@ -906,7 +851,7 @@ fn return_type_nested_mismatch() {
         "function f(): string { function g(): string { return 42; } return 'hi'; }",
         |checker, program| {
             checker.check_program(program);
-        let diagnostics = checker.take_diagnostics();
+            let diagnostics = checker.take_diagnostics();
             assert_eq!(diagnostics.len(), 1);
         }
     );
@@ -916,177 +861,138 @@ fn return_type_nested_mismatch() {
 
 #[test]
 fn type_alias_simple() {
-    with_checker!(
-        "type Num = number; let x: Num = 42",
-        |checker, program| {
-            checker.check_program(program);
+    with_checker!("type Num = number; let x: Num = 42", |checker, program| {
+        checker.check_program(program);
         let diagnostics = checker.take_diagnostics();
-            assert!(diagnostics.is_empty());
-        }
-    );
+        assert!(diagnostics.is_empty());
+    });
 }
 
 #[test]
 fn type_alias_mismatch() {
-    with_checker!(
-        "type Num = number; let x: Num = 'hello'",
-        |checker, program| {
-            checker.check_program(program);
+    with_checker!("type Num = number; let x: Num = 'hello'", |checker, program| {
+        checker.check_program(program);
         let diagnostics = checker.take_diagnostics();
-            assert_eq!(diagnostics.len(), 1);
-            assert!(diagnostics[0].message.to_string().contains("not assignable"));
-        }
-    );
+        assert_eq!(diagnostics.len(), 1);
+        assert!(diagnostics[0].message.to_string().contains("not assignable"));
+    });
 }
 
 #[test]
 fn type_alias_union() {
-    with_checker!(
-        "type StrOrNum = string | number; let x: StrOrNum = 42",
-        |checker, program| {
-            checker.check_program(program);
+    with_checker!("type StrOrNum = string | number; let x: StrOrNum = 42", |checker, program| {
+        checker.check_program(program);
         let diagnostics = checker.take_diagnostics();
-            assert!(diagnostics.is_empty());
-        }
-    );
+        assert!(diagnostics.is_empty());
+    });
 }
 
 #[test]
 fn type_alias_chain() {
     // Type alias referencing another type alias
-    with_checker!(
-        "type A = number; type B = A; let x: B = 42",
-        |checker, program| {
-            checker.check_program(program);
+    with_checker!("type A = number; type B = A; let x: B = 42", |checker, program| {
+        checker.check_program(program);
         let diagnostics = checker.take_diagnostics();
-            assert!(diagnostics.is_empty());
-        }
-    );
+        assert!(diagnostics.is_empty());
+    });
 }
 
 // --- Interface types ---
 
 #[test]
 fn interface_property_check() {
-    with_checker!(
-        "interface Foo { x: number } let f: Foo = { x: 42 }",
-        |checker, program| {
-            checker.check_program(program);
+    with_checker!("interface Foo { x: number } let f: Foo = { x: 42 }", |checker, program| {
+        checker.check_program(program);
         let diagnostics = checker.take_diagnostics();
-            assert!(diagnostics.is_empty());
-        }
-    );
+        assert!(diagnostics.is_empty());
+    });
 }
 
 // --- Type literal tests ---
 
 #[test]
 fn type_literal_basic() {
-    with_checker!(
-        "let x: { a: number; b: string }",
-        |checker, program| {
-            let ts_type = first_var_type_annotation(program).unwrap();
-            let type_id = checker.get_type_from_type_node(ts_type);
-            let flags = checker.type_arena().get_flags(type_id);
-            assert!(flags.intersects(TypeFlags::Object));
-            assert_eq!(checker.type_to_string(type_id), "{ a: number; b: string; }");
-        }
-    );
+    with_checker!("let x: { a: number; b: string }", |checker, program| {
+        let ts_type = first_var_type_annotation(program).unwrap();
+        let type_id = checker.get_type_from_type_node(ts_type);
+        let flags = checker.type_arena().get_flags(type_id);
+        assert!(flags.intersects(TypeFlags::Object));
+        assert_eq!(checker.type_to_string(type_id), "{ a: number; b: string; }");
+    });
 }
 
 #[test]
 fn type_literal_empty() {
-    with_checker!(
-        "let x: {}",
-        |checker, program| {
-            let ts_type = first_var_type_annotation(program).unwrap();
-            let type_id = checker.get_type_from_type_node(ts_type);
-            assert_eq!(checker.type_to_string(type_id), "{}");
-        }
-    );
+    with_checker!("let x: {}", |checker, program| {
+        let ts_type = first_var_type_annotation(program).unwrap();
+        let type_id = checker.get_type_from_type_node(ts_type);
+        assert_eq!(checker.type_to_string(type_id), "{}");
+    });
 }
 
 #[test]
 fn type_literal_assignability_compatible() {
-    with_checker!(
-        "let x: { a: number } = { a: 42 }",
-        |checker, program| {
-            checker.check_program(program);
+    with_checker!("let x: { a: number } = { a: 42 }", |checker, program| {
+        checker.check_program(program);
         let diagnostics = checker.take_diagnostics();
-            assert!(diagnostics.is_empty());
-        }
-    );
+        assert!(diagnostics.is_empty());
+    });
 }
 
 #[test]
 fn type_literal_assignability_missing_property() {
-    with_checker!(
-        "let x: { a: number; b: string } = { a: 42 }",
-        |checker, program| {
-            checker.check_program(program);
+    with_checker!("let x: { a: number; b: string } = { a: 42 }", |checker, program| {
+        checker.check_program(program);
         let diagnostics = checker.take_diagnostics();
-            assert!(!diagnostics.is_empty(), "should error: missing property b");
-        }
-    );
+        assert!(!diagnostics.is_empty(), "should error: missing property b");
+    });
 }
 
 #[test]
 fn type_literal_assignability_wrong_type() {
-    with_checker!(
-        "let x: { a: number } = { a: 'hello' }",
-        |checker, program| {
-            checker.check_program(program);
+    with_checker!("let x: { a: number } = { a: 'hello' }", |checker, program| {
+        checker.check_program(program);
         let diagnostics = checker.take_diagnostics();
-            assert!(!diagnostics.is_empty(), "should error: string not assignable to number");
-        }
-    );
+        assert!(!diagnostics.is_empty(), "should error: string not assignable to number");
+    });
 }
 
 #[test]
 fn type_literal_extra_properties_ok() {
     // Excess property checking: fresh object literals assigned to typed
     // targets must not have properties that don't exist in the target.
-    with_checker!(
-        "let x: { a: number } = { a: 42, b: 'extra' }",
-        |checker, program| {
-            checker.check_program(program);
-            let diagnostics = checker.take_diagnostics();
-            assert_eq!(diagnostics.len(), 1, "should have 1 excess property error");
-            let msg = diagnostics[0].message.to_string();
-            assert!(
-                msg.contains("does not exist in type"),
-                "should be excess property error, got: {msg}"
-            );
-        }
-    );
+    with_checker!("let x: { a: number } = { a: 42, b: 'extra' }", |checker, program| {
+        checker.check_program(program);
+        let diagnostics = checker.take_diagnostics();
+        assert_eq!(diagnostics.len(), 1, "should have 1 excess property error");
+        let msg = diagnostics[0].message.to_string();
+        assert!(
+            msg.contains("does not exist in type"),
+            "should be excess property error, got: {msg}"
+        );
+    });
 }
 
 // --- Object expression tests ---
 
 #[test]
 fn object_expression_type() {
-    with_checker!(
-        "let x = { a: 1, b: 'hello' }",
-        |checker, program| {
-            let init = first_var_init(program).unwrap();
-            let type_id = checker.get_type_of_expression(init, None);
-            let flags = checker.type_arena().get_flags(type_id);
-            assert!(flags.intersects(TypeFlags::Object));
-            assert_eq!(checker.type_to_string(type_id), "{ a: number; b: string; }");
-        }
-    );
+    with_checker!("let x = { a: 1, b: 'hello' }", |checker, program| {
+        let init = first_var_init(program).unwrap();
+        let type_id = checker.get_type_of_expression(init, None);
+        let flags = checker.type_arena().get_flags(type_id);
+        assert!(flags.intersects(TypeFlags::Object));
+        assert_eq!(checker.type_to_string(type_id), "{ a: number; b: string; }");
+    });
 }
 
 #[test]
 fn object_expression_empty() {
-    with_checker!(
-        "let x = {}",
-        |checker, program| {
-            let init = first_var_init(program).unwrap();
-            let type_id = checker.get_type_of_expression(init, None);
-            assert_eq!(checker.type_to_string(type_id), "{}");
-        }
-    );
+    with_checker!("let x = {}", |checker, program| {
+        let init = first_var_init(program).unwrap();
+        let type_id = checker.get_type_of_expression(init, None);
+        assert_eq!(checker.type_to_string(type_id), "{}");
+    });
 }
 
 #[test]
@@ -1095,7 +1001,7 @@ fn object_to_interface_assignability() {
         "interface Point { x: number; y: number } let p: Point = { x: 1, y: 2 }",
         |checker, program| {
             checker.check_program(program);
-        let diagnostics = checker.take_diagnostics();
+            let diagnostics = checker.take_diagnostics();
             assert!(diagnostics.is_empty());
         }
     );
@@ -1107,7 +1013,7 @@ fn object_to_interface_missing_prop() {
         "interface Point { x: number; y: number } let p: Point = { x: 1 }",
         |checker, program| {
             checker.check_program(program);
-        let diagnostics = checker.take_diagnostics();
+            let diagnostics = checker.take_diagnostics();
             assert!(!diagnostics.is_empty(), "should error: missing property y");
         }
     );
@@ -1175,15 +1081,12 @@ fn array_type_display() {
 
 #[test]
 fn array_type_assignability() {
-    with_checker!(
-        "let x: number[] = [1, 2, 3]",
-        |checker, program| {
-            // ArrayExpression is Track A's job, so init will be `any` for now
-            checker.check_program(program);
+    with_checker!("let x: number[] = [1, 2, 3]", |checker, program| {
+        // ArrayExpression is Track A's job, so init will be `any` for now
+        checker.check_program(program);
         let diagnostics = checker.take_diagnostics();
-            assert!(diagnostics.is_empty()); // any is assignable to anything
-        }
-    );
+        assert!(diagnostics.is_empty()); // any is assignable to anything
+    });
 }
 
 // --- Tuple type tests ---
@@ -1238,14 +1141,11 @@ fn tuple_type_empty() {
 
 #[test]
 fn class_declaration_no_errors() {
-    with_checker!(
-        "class Point { x: number; y: string; }",
-        |checker, program| {
-            checker.check_program(program);
+    with_checker!("class Point { x: number; y: string; }", |checker, program| {
+        checker.check_program(program);
         let diagnostics = checker.take_diagnostics();
-            assert!(diagnostics.is_empty());
-        }
-    );
+        assert!(diagnostics.is_empty());
+    });
 }
 
 #[test]
@@ -1254,7 +1154,7 @@ fn class_as_type_annotation() {
         "class Point { x: number; y: number; } let p: Point = { x: 1, y: 2 }",
         |checker, program| {
             checker.check_program(program);
-        let diagnostics = checker.take_diagnostics();
+            let diagnostics = checker.take_diagnostics();
             assert!(diagnostics.is_empty());
         }
     );
@@ -1266,7 +1166,7 @@ fn class_type_missing_property() {
         "class Point { x: number; y: number; } let p: Point = { x: 1 }",
         |checker, program| {
             checker.check_program(program);
-        let diagnostics = checker.take_diagnostics();
+            let diagnostics = checker.take_diagnostics();
             assert!(!diagnostics.is_empty(), "should error: missing property y");
         }
     );
@@ -1278,7 +1178,7 @@ fn class_type_wrong_property_type() {
         "class Point { x: number; y: number; } let p: Point = { x: 1, y: 'hello' }",
         |checker, program| {
             checker.check_program(program);
-        let diagnostics = checker.take_diagnostics();
+            let diagnostics = checker.take_diagnostics();
             assert!(!diagnostics.is_empty(), "should error: string not assignable to number");
         }
     );
@@ -1286,84 +1186,69 @@ fn class_type_wrong_property_type() {
 
 #[test]
 fn class_method_return_type_check() {
-    with_checker!(
-        "class Foo { greet(): string { return 42; } }",
-        |checker, program| {
-            checker.check_program(program);
+    with_checker!("class Foo { greet(): string { return 42; } }", |checker, program| {
+        checker.check_program(program);
         let diagnostics = checker.take_diagnostics();
-            assert_eq!(diagnostics.len(), 1);
-            assert!(diagnostics[0].message.to_string().contains("not assignable"));
-        }
-    );
+        assert_eq!(diagnostics.len(), 1);
+        assert!(diagnostics[0].message.to_string().contains("not assignable"));
+    });
 }
 
 #[test]
 fn class_method_return_type_ok() {
-    with_checker!(
-        "class Foo { greet(): string { return 'hi'; } }",
-        |checker, program| {
-            checker.check_program(program);
+    with_checker!("class Foo { greet(): string { return 'hi'; } }", |checker, program| {
+        checker.check_program(program);
         let diagnostics = checker.take_diagnostics();
-            assert!(diagnostics.is_empty());
-        }
-    );
+        assert!(diagnostics.is_empty());
+    });
 }
 
 // --- Enum declaration tests ---
 
 #[test]
 fn enum_numeric_basic() {
-    with_checker!(
-        "enum Direction { Up, Down, Left, Right }",
-        |checker, program| {
-            checker.check_program(program);
+    with_checker!("enum Direction { Up, Down, Left, Right }", |checker, program| {
+        checker.check_program(program);
         let diagnostics = checker.take_diagnostics();
-            assert!(diagnostics.is_empty());
-        }
-    );
+        assert!(diagnostics.is_empty());
+    });
 }
 
 #[test]
 fn enum_as_type_annotation() {
-    with_checker!(
-        "enum Direction { Up, Down } let d: Direction = 0",
-        |checker, program| {
-            checker.check_program(program);
+    with_checker!("enum Direction { Up, Down } let d: Direction = 0", |checker, program| {
+        checker.check_program(program);
         let diagnostics = checker.take_diagnostics();
-            // Direction is union of 0 | 1, and 0 is assignable
-            assert!(diagnostics.is_empty());
-        }
-    );
+        // Direction is union of 0 | 1, and 0 is assignable
+        assert!(diagnostics.is_empty());
+    });
 }
 
 // --- Property access tests (Track A) ---
 
 #[test]
 fn property_access_on_object_literal() {
-    with_checker!(
-        "let obj = { x: 42, y: 'hello' }; let v = obj.x",
-        |checker, program| {
-            let mut count = 0;
-            for stmt in &program.body {
-                if let Statement::VariableDeclaration(decl) = stmt {
-                    for declarator in &decl.declarations {
-                        if count == 1 {
-                            if let Some(init) = &declarator.init {
-                                let type_id = checker.get_type_of_expression(init, None);
-                                let flags = checker.type_arena().get_flags(type_id);
-                                assert!(
-                                    flags.intersects(TypeFlags::Number),
-                                    "obj.x should be number, got: {}",
-                                    checker.type_to_string(type_id)
-                                );
-                            }
+    with_checker!("let obj = { x: 42, y: 'hello' }; let v = obj.x", |checker, program| {
+        let mut count = 0;
+        for stmt in &program.body {
+            if let Statement::VariableDeclaration(decl) = stmt {
+                for declarator in &decl.declarations {
+                    if count == 1 {
+                        if let Some(init) = &declarator.init {
+                            let type_id = checker.get_type_of_expression(init, None);
+                            let flags = checker.type_arena().get_flags(type_id);
+                            assert!(
+                                flags.intersects(TypeFlags::Number),
+                                "obj.x should be number, got: {}",
+                                checker.type_to_string(type_id)
+                            );
                         }
-                        count += 1;
                     }
+                    count += 1;
                 }
             }
         }
-    );
+    });
 }
 
 #[test]
@@ -1391,112 +1276,94 @@ fn property_access_on_interface() {
 
 #[test]
 fn property_access_unknown_property() {
-    with_checker!(
-        "let obj = { x: 42 }; let v = obj.z",
-        |checker, program| {
-            let mut count = 0;
-            for stmt in &program.body {
-                if let Statement::VariableDeclaration(decl) = stmt {
-                    for declarator in &decl.declarations {
-                        if count == 1 {
-                            if let Some(init) = &declarator.init {
-                                let type_id = checker.get_type_of_expression(init, None);
-                                let flags = checker.type_arena().get_flags(type_id);
-                                assert!(
-                                    flags.intersects(TypeFlags::Any),
-                                    "obj.z should be any, got: {}",
-                                    checker.type_to_string(type_id)
-                                );
-                            }
+    with_checker!("let obj = { x: 42 }; let v = obj.z", |checker, program| {
+        let mut count = 0;
+        for stmt in &program.body {
+            if let Statement::VariableDeclaration(decl) = stmt {
+                for declarator in &decl.declarations {
+                    if count == 1 {
+                        if let Some(init) = &declarator.init {
+                            let type_id = checker.get_type_of_expression(init, None);
+                            let flags = checker.type_arena().get_flags(type_id);
+                            assert!(
+                                flags.intersects(TypeFlags::Any),
+                                "obj.z should be any, got: {}",
+                                checker.type_to_string(type_id)
+                            );
                         }
-                        count += 1;
                     }
+                    count += 1;
                 }
             }
         }
-    );
+    });
 }
 
 #[test]
 fn property_access_unknown_property_emits_ts2339() {
-    with_checker!(
-        "let obj = { x: 42 }; let v = obj.z",
-        |checker, program| {
-            checker.check_program(program);
-            let diagnostics = checker.take_diagnostics();
-            assert!(
-                diagnostics.iter().any(|d| d.message.contains("does not exist on type")),
-                "Expected TS2339 for obj.z, got: {:?}",
-                diagnostics.iter().map(|d| &d.message).collect::<Vec<_>>()
-            );
-        }
-    );
+    with_checker!("let obj = { x: 42 }; let v = obj.z", |checker, program| {
+        checker.check_program(program);
+        let diagnostics = checker.take_diagnostics();
+        assert!(
+            diagnostics.iter().any(|d| d.message.contains("does not exist on type")),
+            "Expected TS2339 for obj.z, got: {:?}",
+            diagnostics.iter().map(|d| &d.message).collect::<Vec<_>>()
+        );
+    });
 }
 
 #[test]
 fn property_access_on_any_no_ts2339() {
-    with_checker!(
-        "let obj: any; let v = obj.whatever",
-        |checker, program| {
-            checker.check_program(program);
-            let diagnostics = checker.take_diagnostics();
-            assert!(
-                diagnostics.is_empty(),
-                "Should not emit TS2339 for any.whatever, got: {:?}",
-                diagnostics.iter().map(|d| &d.message).collect::<Vec<_>>()
-            );
-        }
-    );
+    with_checker!("let obj: any; let v = obj.whatever", |checker, program| {
+        checker.check_program(program);
+        let diagnostics = checker.take_diagnostics();
+        assert!(
+            diagnostics.is_empty(),
+            "Should not emit TS2339 for any.whatever, got: {:?}",
+            diagnostics.iter().map(|d| &d.message).collect::<Vec<_>>()
+        );
+    });
 }
 
 #[test]
 fn property_access_on_type_literal() {
-    with_checker!(
-        "let obj: { a: number; b: string }; let v = obj.b",
-        |checker, program| {
-            let mut count = 0;
-            for stmt in &program.body {
-                if let Statement::VariableDeclaration(decl) = stmt {
-                    for declarator in &decl.declarations {
-                        if count == 1 {
-                            if let Some(init) = &declarator.init {
-                                let type_id = checker.get_type_of_expression(init, None);
-                                assert_eq!(checker.type_to_string(type_id), "string");
-                            }
+    with_checker!("let obj: { a: number; b: string }; let v = obj.b", |checker, program| {
+        let mut count = 0;
+        for stmt in &program.body {
+            if let Statement::VariableDeclaration(decl) = stmt {
+                for declarator in &decl.declarations {
+                    if count == 1 {
+                        if let Some(init) = &declarator.init {
+                            let type_id = checker.get_type_of_expression(init, None);
+                            assert_eq!(checker.type_to_string(type_id), "string");
                         }
-                        count += 1;
                     }
+                    count += 1;
                 }
             }
         }
-    );
+    });
 }
 
 // --- Array expression tests (Track A) ---
 
 #[test]
 fn array_expression_infers_type() {
-    with_checker!(
-        "let arr = [1, 2, 3]",
-        |checker, program| {
-            let init = first_var_init(program).unwrap();
-            let type_id = checker.get_type_of_expression(init, None);
-            let flags = checker.type_arena().get_flags(type_id);
-            assert!(flags.intersects(TypeFlags::Object), "array should be Object type");
-        }
-    );
+    with_checker!("let arr = [1, 2, 3]", |checker, program| {
+        let init = first_var_init(program).unwrap();
+        let type_id = checker.get_type_of_expression(init, None);
+        let flags = checker.type_arena().get_flags(type_id);
+        assert!(flags.intersects(TypeFlags::Object), "array should be Object type");
+    });
 }
 
 #[test]
 fn array_expression_assignable_to_array_type() {
-    with_checker!(
-        "let x: number[] = [1, 2, 3]",
-        |checker, program| {
-            checker.check_program(program);
+    with_checker!("let x: number[] = [1, 2, 3]", |checker, program| {
+        checker.check_program(program);
         let diagnostics = checker.take_diagnostics();
-            assert!(diagnostics.is_empty(), "number[] = [1,2,3] should not error");
-        }
-    );
+        assert!(diagnostics.is_empty(), "number[] = [1,2,3] should not error");
+    });
 }
 
 // --- Assignment expression type tests ---
@@ -1504,109 +1371,95 @@ fn array_expression_assignable_to_array_type() {
 #[test]
 fn assignment_expression_type() {
     // Assignment result type is the RHS type
-    with_checker!(
-        "let x: number = 1; x = 42",
-        |checker, program| {
-            checker.check_program(program);
+    with_checker!("let x: number = 1; x = 42", |checker, program| {
+        checker.check_program(program);
         let diagnostics = checker.take_diagnostics();
-            assert!(diagnostics.is_empty(), "x = 42 should not error when x: number");
-        }
-    );
+        assert!(diagnostics.is_empty(), "x = 42 should not error when x: number");
+    });
 }
 
 // --- Computed member expression tests ---
 
 #[test]
 fn computed_member_string_literal() {
-    with_checker!(
-        "let obj = { x: 42 }; let v = obj[\"x\"]",
-        |checker, program| {
-            let mut count = 0;
-            for stmt in &program.body {
-                if let Statement::VariableDeclaration(decl) = stmt {
-                    for declarator in &decl.declarations {
-                        if count == 1 {
-                            if let Some(init) = &declarator.init {
-                                let type_id = checker.get_type_of_expression(init, None);
-                                let flags = checker.type_arena().get_flags(type_id);
-                                assert!(
-                                    flags.intersects(TypeFlags::Number),
-                                    "obj[\"x\"] should be number, got: {}",
-                                    checker.type_to_string(type_id)
-                                );
-                            }
+    with_checker!("let obj = { x: 42 }; let v = obj[\"x\"]", |checker, program| {
+        let mut count = 0;
+        for stmt in &program.body {
+            if let Statement::VariableDeclaration(decl) = stmt {
+                for declarator in &decl.declarations {
+                    if count == 1 {
+                        if let Some(init) = &declarator.init {
+                            let type_id = checker.get_type_of_expression(init, None);
+                            let flags = checker.type_arena().get_flags(type_id);
+                            assert!(
+                                flags.intersects(TypeFlags::Number),
+                                "obj[\"x\"] should be number, got: {}",
+                                checker.type_to_string(type_id)
+                            );
                         }
-                        count += 1;
                     }
+                    count += 1;
                 }
             }
         }
-    );
+    });
 }
 
 // --- Chain expression tests ---
 
 #[test]
 fn chain_expression_member() {
-    with_checker!(
-        "let obj: { x: number } | undefined; let v = obj?.x",
-        |checker, program| {
-            let mut count = 0;
-            for stmt in &program.body {
-                if let Statement::VariableDeclaration(decl) = stmt {
-                    for declarator in &decl.declarations {
-                        if count == 1 {
-                            if let Some(init) = &declarator.init {
-                                let type_id = checker.get_type_of_expression(init, None);
-                                let flags = checker.type_arena().get_flags(type_id);
-                                // Should be a union containing undefined
-                                assert!(
-                                    flags.intersects(TypeFlags::Union) || flags.intersects(TypeFlags::Undefined),
-                                    "obj?.x should include undefined, got: {}",
-                                    checker.type_to_string(type_id)
-                                );
-                            }
+    with_checker!("let obj: { x: number } | undefined; let v = obj?.x", |checker, program| {
+        let mut count = 0;
+        for stmt in &program.body {
+            if let Statement::VariableDeclaration(decl) = stmt {
+                for declarator in &decl.declarations {
+                    if count == 1 {
+                        if let Some(init) = &declarator.init {
+                            let type_id = checker.get_type_of_expression(init, None);
+                            let flags = checker.type_arena().get_flags(type_id);
+                            // Should be a union containing undefined
+                            assert!(
+                                flags.intersects(TypeFlags::Union)
+                                    || flags.intersects(TypeFlags::Undefined),
+                                "obj?.x should include undefined, got: {}",
+                                checker.type_to_string(type_id)
+                            );
                         }
-                        count += 1;
                     }
+                    count += 1;
                 }
             }
         }
-    );
+    });
 }
 
 // --- RegExp type tests ---
 
 #[test]
 fn regexp_type() {
-    with_checker!(
-        "let x = /foo/",
-        |checker, program| {
-            let init = first_var_init(program).unwrap();
-            let type_id = checker.get_type_of_expression(init, None);
-            // Without lib.d.ts, get_global_type("RegExp") returns any
-            let flags = checker.type_arena().get_flags(type_id);
-            assert!(
-                flags.intersects(TypeFlags::Any) || flags.intersects(TypeFlags::Object),
-                "regexp should be RegExp (any without lib.d.ts), got: {}",
-                checker.type_to_string(type_id)
-            );
-        }
-    );
+    with_checker!("let x = /foo/", |checker, program| {
+        let init = first_var_init(program).unwrap();
+        let type_id = checker.get_type_of_expression(init, None);
+        // Without lib.d.ts, get_global_type("RegExp") returns any
+        let flags = checker.type_arena().get_flags(type_id);
+        assert!(
+            flags.intersects(TypeFlags::Any) || flags.intersects(TypeFlags::Object),
+            "regexp should be RegExp (any without lib.d.ts), got: {}",
+            checker.type_to_string(type_id)
+        );
+    });
 }
 
 // --- Array string assignable test ---
 
 #[test]
 fn array_string_assignable() {
-    with_checker!(
-        "let x: string[] = [\"a\", \"b\"]",
-        |checker, program| {
-            checker.check_program(program);
+    with_checker!("let x: string[] = [\"a\", \"b\"]", |checker, program| {
+        checker.check_program(program);
         let diagnostics = checker.take_diagnostics();
-            assert!(diagnostics.is_empty(), "string[] = ['a', 'b'] should not error");
-        }
-    );
+        assert!(diagnostics.is_empty(), "string[] = ['a', 'b'] should not error");
+    });
 }
 
 // --- Await expression tests ---
@@ -1614,14 +1467,11 @@ fn array_string_assignable() {
 #[test]
 fn await_non_promise_passthrough() {
     // await on a non-promise type should pass through unchanged
-    with_checker!(
-        "async function f() { let x: number = await 42; }",
-        |checker, program| {
-            checker.check_program(program);
-            let diagnostics = checker.take_diagnostics();
-            assert!(diagnostics.is_empty(), "await 42 should be number: {:?}", diagnostics);
-        }
-    );
+    with_checker!("async function f() { let x: number = await 42; }", |checker, program| {
+        checker.check_program(program);
+        let diagnostics = checker.take_diagnostics();
+        assert!(diagnostics.is_empty(), "await 42 should be number: {:?}", diagnostics);
+    });
 }
 
 #[test]
@@ -1629,57 +1479,57 @@ fn await_unwraps_promise_type() {
     // When the global Promise type is available, await Promise<T> should yield T.
     // This test constructs a TypeReference to Promise manually so it works
     // without lib.d.ts being accessible from the test working directory.
-    with_checker!(
-        "let x = 1",
-        |checker, program| {
-            checker.check_program(program);
-            let promise_type = checker.promise_type;
-            if let Some(promise_id) = promise_type {
-                // Build a Promise<string> TypeReference
-                let promise_string = checker.type_arena().new_type(
-                    TypeFlags::Object,
-                    oxc_types::ObjectFlags::Reference,
-                    oxc_types::TypeData::TypeReference(oxc_types::TypeReferenceType {
-                        target: Some(promise_id),
-                        resolved_type_arguments: smallvec::smallvec![checker.string_type],
-                    }),
-                    None,
-                );
-                let awaited = checker.get_awaited_type(promise_string, oxc_span::Span::default());
-                assert_eq!(
-                    checker.type_to_string(awaited), "string",
-                    "await Promise<string> should yield string"
-                );
+    with_checker!("let x = 1", |checker, program| {
+        checker.check_program(program);
+        let promise_type = checker.promise_type;
+        if let Some(promise_id) = promise_type {
+            // Build a Promise<string> TypeReference
+            let promise_string = checker.type_arena().new_type(
+                TypeFlags::Object,
+                oxc_types::ObjectFlags::Reference,
+                oxc_types::TypeData::TypeReference(oxc_types::TypeReferenceType {
+                    target: Some(promise_id),
+                    resolved_type_arguments: smallvec::smallvec![checker.string_type],
+                }),
+                None,
+            );
+            let awaited = checker.get_awaited_type(promise_string, oxc_span::Span::default());
+            assert_eq!(
+                checker.type_to_string(awaited),
+                "string",
+                "await Promise<string> should yield string"
+            );
 
-                // Nested: Promise<Promise<number>> should yield number
-                let promise_number = checker.type_arena().new_type(
-                    TypeFlags::Object,
-                    oxc_types::ObjectFlags::Reference,
-                    oxc_types::TypeData::TypeReference(oxc_types::TypeReferenceType {
-                        target: Some(promise_id),
-                        resolved_type_arguments: smallvec::smallvec![checker.number_type],
-                    }),
-                    None,
-                );
-                let promise_promise_number = checker.type_arena().new_type(
-                    TypeFlags::Object,
-                    oxc_types::ObjectFlags::Reference,
-                    oxc_types::TypeData::TypeReference(oxc_types::TypeReferenceType {
-                        target: Some(promise_id),
-                        resolved_type_arguments: smallvec::smallvec![promise_number],
-                    }),
-                    None,
-                );
-                let awaited2 = checker.get_awaited_type(promise_promise_number, oxc_span::Span::default());
-                assert_eq!(
-                    checker.type_to_string(awaited2), "number",
-                    "await Promise<Promise<number>> should yield number"
-                );
-            }
-            // If Promise is not available (no lib.d.ts), skip silently.
-            // Conformance tests cover this path.
+            // Nested: Promise<Promise<number>> should yield number
+            let promise_number = checker.type_arena().new_type(
+                TypeFlags::Object,
+                oxc_types::ObjectFlags::Reference,
+                oxc_types::TypeData::TypeReference(oxc_types::TypeReferenceType {
+                    target: Some(promise_id),
+                    resolved_type_arguments: smallvec::smallvec![checker.number_type],
+                }),
+                None,
+            );
+            let promise_promise_number = checker.type_arena().new_type(
+                TypeFlags::Object,
+                oxc_types::ObjectFlags::Reference,
+                oxc_types::TypeData::TypeReference(oxc_types::TypeReferenceType {
+                    target: Some(promise_id),
+                    resolved_type_arguments: smallvec::smallvec![promise_number],
+                }),
+                None,
+            );
+            let awaited2 =
+                checker.get_awaited_type(promise_promise_number, oxc_span::Span::default());
+            assert_eq!(
+                checker.type_to_string(awaited2),
+                "number",
+                "await Promise<Promise<number>> should yield number"
+            );
         }
-    );
+        // If Promise is not available (no lib.d.ts), skip silently.
+        // Conformance tests cover this path.
+    });
 }
 
 // Note: Full Promise unwrapping conformance is validated via
@@ -1710,28 +1560,22 @@ fn function_declaration_type() {
 
 #[test]
 fn function_type_display() {
-    with_checker!(
-        "let f = (x: number, y: string): boolean => true",
-        |checker, program| {
-            let init = first_var_init(program).unwrap();
-            let type_id = checker.get_type_of_expression(init, None);
-            let display = checker.type_to_string(type_id);
-            assert_eq!(display, "(x: number, y: string) => boolean");
-        }
-    );
+    with_checker!("let f = (x: number, y: string): boolean => true", |checker, program| {
+        let init = first_var_init(program).unwrap();
+        let type_id = checker.get_type_of_expression(init, None);
+        let display = checker.type_to_string(type_id);
+        assert_eq!(display, "(x: number, y: string) => boolean");
+    });
 }
 
 #[test]
 fn function_type_annotation() {
-    with_checker!(
-        "let f: (x: number) => string",
-        |checker, program| {
-            let ts_type = first_var_type_annotation(program).unwrap();
-            let type_id = checker.get_type_from_type_node(ts_type);
-            let display = checker.type_to_string(type_id);
-            assert_eq!(display, "(x: number) => string");
-        }
-    );
+    with_checker!("let f: (x: number) => string", |checker, program| {
+        let ts_type = first_var_type_annotation(program).unwrap();
+        let type_id = checker.get_type_from_type_node(ts_type);
+        let display = checker.type_to_string(type_id);
+        assert_eq!(display, "(x: number) => string");
+    });
 }
 
 #[test]
@@ -1752,98 +1596,80 @@ fn call_expression_returns_return_type() {
 
 #[test]
 fn ts2349_not_callable() {
-    with_checker!(
-        "let x: number = 42;\nx();",
-        |checker, program| {
-            checker.check_program(program);
-            let diagnostics = checker.take_diagnostics();
-            assert!(
-                diagnostics.iter().any(|d| d.message.contains("not callable")),
-                "Expected TS2349 for calling a number, got: {:?}",
-                diagnostics.iter().map(|d| &d.message).collect::<Vec<_>>()
-            );
-        }
-    );
+    with_checker!("let x: number = 42;\nx();", |checker, program| {
+        checker.check_program(program);
+        let diagnostics = checker.take_diagnostics();
+        assert!(
+            diagnostics.iter().any(|d| d.message.contains("not callable")),
+            "Expected TS2349 for calling a number, got: {:?}",
+            diagnostics.iter().map(|d| &d.message).collect::<Vec<_>>()
+        );
+    });
 }
 
 #[test]
 fn ts2554_wrong_arg_count() {
-    with_checker!(
-        "function f(a: number, b: number): void {}\nf(1);",
-        |checker, program| {
-            checker.check_program(program);
-            let diagnostics = checker.take_diagnostics();
-            assert!(
-                diagnostics.iter().any(|d| d.message.contains("Expected 2 arguments, but got 1")),
-                "Expected TS2554 for wrong arg count, got: {:?}",
-                diagnostics.iter().map(|d| &d.message).collect::<Vec<_>>()
-            );
-        }
-    );
+    with_checker!("function f(a: number, b: number): void {}\nf(1);", |checker, program| {
+        checker.check_program(program);
+        let diagnostics = checker.take_diagnostics();
+        assert!(
+            diagnostics.iter().any(|d| d.message.contains("Expected 2 arguments, but got 1")),
+            "Expected TS2554 for wrong arg count, got: {:?}",
+            diagnostics.iter().map(|d| &d.message).collect::<Vec<_>>()
+        );
+    });
 }
 
 #[test]
 fn ts2554_too_many_args() {
-    with_checker!(
-        "function f(a: number): void {}\nf(1, 2, 3);",
-        |checker, program| {
-            checker.check_program(program);
-            let diagnostics = checker.take_diagnostics();
-            assert!(
-                diagnostics.iter().any(|d| d.message.contains("Expected 1 arguments, but got 3")),
-                "Expected TS2554 for too many args, got: {:?}",
-                diagnostics.iter().map(|d| &d.message).collect::<Vec<_>>()
-            );
-        }
-    );
+    with_checker!("function f(a: number): void {}\nf(1, 2, 3);", |checker, program| {
+        checker.check_program(program);
+        let diagnostics = checker.take_diagnostics();
+        assert!(
+            diagnostics.iter().any(|d| d.message.contains("Expected 1 arguments, but got 3")),
+            "Expected TS2554 for too many args, got: {:?}",
+            diagnostics.iter().map(|d| &d.message).collect::<Vec<_>>()
+        );
+    });
 }
 
 #[test]
 fn ts2345_wrong_arg_type() {
-    with_checker!(
-        "function f(a: number): void {}\nf('hello');",
-        |checker, program| {
-            checker.check_program(program);
-            let diagnostics = checker.take_diagnostics();
-            assert!(
-                diagnostics.iter().any(|d| d.message.contains("not assignable to parameter")),
-                "Expected TS2345 for wrong arg type, got: {:?}",
-                diagnostics.iter().map(|d| &d.message).collect::<Vec<_>>()
-            );
-        }
-    );
+    with_checker!("function f(a: number): void {}\nf('hello');", |checker, program| {
+        checker.check_program(program);
+        let diagnostics = checker.take_diagnostics();
+        assert!(
+            diagnostics.iter().any(|d| d.message.contains("not assignable to parameter")),
+            "Expected TS2345 for wrong arg type, got: {:?}",
+            diagnostics.iter().map(|d| &d.message).collect::<Vec<_>>()
+        );
+    });
 }
 
 #[test]
 fn call_expression_any_callee_no_error() {
-    with_checker!(
-        "let f: any;\nf(1, 2, 3);",
-        |checker, program| {
-            checker.check_program(program);
-            let diagnostics = checker.take_diagnostics();
-            assert!(
-                diagnostics.is_empty(),
-                "Calling any should not emit errors, got: {:?}",
-                diagnostics.iter().map(|d| &d.message).collect::<Vec<_>>()
-            );
-        }
-    );
+    with_checker!("let f: any;\nf(1, 2, 3);", |checker, program| {
+        checker.check_program(program);
+        let diagnostics = checker.take_diagnostics();
+        assert!(
+            diagnostics.is_empty(),
+            "Calling any should not emit errors, got: {:?}",
+            diagnostics.iter().map(|d| &d.message).collect::<Vec<_>>()
+        );
+    });
 }
 
 #[test]
 fn optional_param_no_error() {
-    with_checker!(
-        "function f(a: number, b?: string): void {}\nf(1);",
-        |checker, program| {
-            checker.check_program(program);
-            let diagnostics = checker.take_diagnostics();
-            assert!(
-                diagnostics.is_empty(),
-                "Optional param should allow fewer args, got: {:?}",
-                diagnostics.iter().map(|d| &d.message).collect::<Vec<_>>()
-            );
-        }
-    );
+    with_checker!("function f(a: number, b?: string): void {}\nf(1);", |checker, program| {
+        checker.check_program(program);
+        let diagnostics = checker.take_diagnostics();
+        assert!(
+            diagnostics.is_empty(),
+            "Optional param should allow fewer args, got: {:?}",
+            diagnostics.iter().map(|d| &d.message).collect::<Vec<_>>()
+        );
+    });
 }
 
 #[test]
@@ -1889,29 +1715,23 @@ fn first_function_declaration<'a>(
 
 #[test]
 fn typeof_query_basic() {
-    with_checker!(
-        "let x: number = 42; let y: typeof x = 10;",
-        |checker, program| {
-            checker.check_program(program);
-            let diagnostics = checker.take_diagnostics();
-            assert!(diagnostics.is_empty(), "typeof x should resolve to number: {diagnostics:?}");
-        }
-    );
+    with_checker!("let x: number = 42; let y: typeof x = 10;", |checker, program| {
+        checker.check_program(program);
+        let diagnostics = checker.take_diagnostics();
+        assert!(diagnostics.is_empty(), "typeof x should resolve to number: {diagnostics:?}");
+    });
 }
 
 #[test]
 fn typeof_query_type_error() {
-    with_checker!(
-        r#"let x: number = 42; let y: typeof x = "hello";"#,
-        |checker, program| {
-            checker.check_program(program);
-            let diagnostics = checker.take_diagnostics();
-            assert!(
-                diagnostics.iter().any(|d| d.message.contains("not assignable")),
-                "Assigning string to typeof number should error: {diagnostics:?}"
-            );
-        }
-    );
+    with_checker!(r#"let x: number = 42; let y: typeof x = "hello";"#, |checker, program| {
+        checker.check_program(program);
+        let diagnostics = checker.take_diagnostics();
+        assert!(
+            diagnostics.iter().any(|d| d.message.contains("not assignable")),
+            "Assigning string to typeof number should error: {diagnostics:?}"
+        );
+    });
 }
 
 // ============ new expressions ============
@@ -1946,7 +1766,10 @@ fn new_expression_property_access() {
         |checker, program| {
             checker.check_program(program);
             let diagnostics = checker.take_diagnostics();
-            assert!(diagnostics.is_empty(), "Property access on new Foo() should work: {diagnostics:?}");
+            assert!(
+                diagnostics.is_empty(),
+                "Property access on new Foo() should work: {diagnostics:?}"
+            );
         }
     );
 }
@@ -1976,96 +1799,81 @@ fn new_expression_property_type_error() {
 fn let_number_literal_widens() {
     // let x = 42 should have type number, not 42
     // Verify by assigning to a number-typed variable (should succeed)
-    with_checker!(
-        "let x = 42; let y: number = x;",
-        |checker, program| {
-            checker.check_program(program);
-            let diagnostics = checker.take_diagnostics();
-            assert!(diagnostics.is_empty(), "let x = 42 should widen to number: {diagnostics:?}");
-        }
-    );
+    with_checker!("let x = 42; let y: number = x;", |checker, program| {
+        checker.check_program(program);
+        let diagnostics = checker.take_diagnostics();
+        assert!(diagnostics.is_empty(), "let x = 42 should widen to number: {diagnostics:?}");
+    });
 }
 
 #[test]
 fn const_number_literal_stays_narrow() {
     // const x = 42 should have type 42, not number
     // Verify by assigning to a literal-typed variable
-    with_checker!(
-        "const x = 42; let y: 42 = x;",
-        |checker, program| {
-            checker.check_program(program);
-            let diagnostics = checker.take_diagnostics();
-            assert!(diagnostics.is_empty(), "const x = 42 should keep literal type 42: {diagnostics:?}");
-        }
-    );
+    with_checker!("const x = 42; let y: 42 = x;", |checker, program| {
+        checker.check_program(program);
+        let diagnostics = checker.take_diagnostics();
+        assert!(
+            diagnostics.is_empty(),
+            "const x = 42 should keep literal type 42: {diagnostics:?}"
+        );
+    });
 }
 
 #[test]
 fn let_string_literal_widens() {
-    with_checker!(
-        r#"let x = "hello"; let y: string = x;"#,
-        |checker, program| {
-            checker.check_program(program);
-            let diagnostics = checker.take_diagnostics();
-            assert!(diagnostics.is_empty(), "let x = 'hello' should widen to string: {diagnostics:?}");
-        }
-    );
+    with_checker!(r#"let x = "hello"; let y: string = x;"#, |checker, program| {
+        checker.check_program(program);
+        let diagnostics = checker.take_diagnostics();
+        assert!(diagnostics.is_empty(), "let x = 'hello' should widen to string: {diagnostics:?}");
+    });
 }
 
 #[test]
 fn let_boolean_literal_widens() {
-    with_checker!(
-        "let x = true; let y: boolean = x;",
-        |checker, program| {
-            checker.check_program(program);
-            let diagnostics = checker.take_diagnostics();
-            assert!(diagnostics.is_empty(), "let x = true should widen to boolean: {diagnostics:?}");
-        }
-    );
+    with_checker!("let x = true; let y: boolean = x;", |checker, program| {
+        checker.check_program(program);
+        let diagnostics = checker.take_diagnostics();
+        assert!(diagnostics.is_empty(), "let x = true should widen to boolean: {diagnostics:?}");
+    });
 }
 
 #[test]
 fn let_widened_rejects_wrong_literal() {
     // let x = 42 has type number, so assigning to type 42 should fail
-    with_checker!(
-        "let x = 42; let y: 42 = x;",
-        |checker, program| {
-            checker.check_program(program);
-            let diagnostics = checker.take_diagnostics();
-            assert!(
-                diagnostics.iter().any(|d| d.message.contains("not assignable")),
-                "number should not be assignable to literal 42: {diagnostics:?}"
-            );
-        }
-    );
+    with_checker!("let x = 42; let y: 42 = x;", |checker, program| {
+        checker.check_program(program);
+        let diagnostics = checker.take_diagnostics();
+        assert!(
+            diagnostics.iter().any(|d| d.message.contains("not assignable")),
+            "number should not be assignable to literal 42: {diagnostics:?}"
+        );
+    });
 }
 
 #[test]
 fn enum_displays_by_name() {
-    with_checker!(
-        "enum Color { Red, Green, Blue }; let c = Color;",
-        |checker, program| {
-            let init = first_var_init(program).unwrap();
-            let t = checker.get_type_of_expression(init, None);
-            let s = checker.type_to_string(t);
-            // In expression position, an enum reference is "typeof Color" (the namespace object).
-            assert_eq!(s, "typeof Color", "Enum value in expression should display as 'typeof Color', got '{s}'");
-        }
-    );
+    with_checker!("enum Color { Red, Green, Blue }; let c = Color;", |checker, program| {
+        let init = first_var_init(program).unwrap();
+        let t = checker.get_type_of_expression(init, None);
+        let s = checker.type_to_string(t);
+        // In expression position, an enum reference is "typeof Color" (the namespace object).
+        assert_eq!(
+            s, "typeof Color",
+            "Enum value in expression should display as 'typeof Color', got '{s}'"
+        );
+    });
 }
 
 #[test]
 fn enum_member_access() {
-    with_checker!(
-        "enum Choice { Yes, No } let v = Choice.Yes;",
-        |checker, program| {
-            checker.check_program(program);
-            let init = first_var_init(program).unwrap();
-            let t = checker.get_type_of_expression(init, None);
-            let s = checker.type_to_string(t);
-            assert_eq!(s, "0", "Choice.Yes should be literal 0, got '{s}'");
-        }
-    );
+    with_checker!("enum Choice { Yes, No } let v = Choice.Yes;", |checker, program| {
+        checker.check_program(program);
+        let init = first_var_init(program).unwrap();
+        let t = checker.get_type_of_expression(init, None);
+        let s = checker.type_to_string(t);
+        assert_eq!(s, "0", "Choice.Yes should be literal 0, got '{s}'");
+    });
 }
 
 // ---- CFA: typeof narrowing ----
@@ -2218,11 +2026,7 @@ fn cfa_strict_null_else_keeps_null() {
             checker.check_program(program);
             let diagnostics = checker.take_diagnostics();
             // In else branch, x is null — assigning to string should fail
-            assert_eq!(
-                diagnostics.len(),
-                1,
-                "else of x !== null should keep null type"
-            );
+            assert_eq!(diagnostics.len(), 1, "else of x !== null should keep null type");
         }
     );
 }
@@ -2438,82 +2242,73 @@ fn return_type_inferred_arrow_expression() {
 #[test]
 fn conformance_probe_types() {
     // Probe: function declaration type string
-    with_checker!(
-        "function f1(x: number): void {}",
-        |checker, program| {
-            if let Statement::FunctionDeclaration(func) = &program.body[0] {
-                if let Some(bid) = &func.id {
-                    if let Some(sid) = bid.symbol_id.get() {
-                        let t = checker.get_type_of_symbol(sid);
-                        let s = checker.type_to_string(t);
-                        eprintln!("f1 type: {s}");
-                    }
+    with_checker!("function f1(x: number): void {}", |checker, program| {
+        if let Statement::FunctionDeclaration(func) = &program.body[0] {
+            if let Some(bid) = &func.id {
+                if let Some(sid) = bid.symbol_id.get() {
+                    let t = checker.get_type_of_symbol(sid);
+                    let s = checker.type_to_string(t);
+                    eprintln!("f1 type: {s}");
                 }
             }
         }
-    );
+    });
     // Probe: class - value type is constructor (typeof C), declared type is instance (C)
-    with_checker!(
-        "class C { x: number; }",
-        |checker, program| {
-            if let Statement::ClassDeclaration(class) = &program.body[0] {
-                if let Some(bid) = &class.id {
-                    if let Some(sid) = bid.symbol_id.get() {
-                        // Value type (expression reference) is "typeof C"
-                        let t = checker.get_type_of_symbol(sid);
-                        let s = checker.type_to_string(t);
-                        assert_eq!(s, "typeof C", "class value type should be 'typeof C', got '{s}'");
-                        // Declared type (type-namespace) is "C"
-                        let dt = checker.get_declared_type_of_symbol(sid);
-                        let ds = checker.type_to_string(dt);
-                        assert_eq!(ds, "C", "class declared type should be 'C', got '{ds}'");
-                    }
+    with_checker!("class C { x: number; }", |checker, program| {
+        if let Statement::ClassDeclaration(class) = &program.body[0] {
+            if let Some(bid) = &class.id {
+                if let Some(sid) = bid.symbol_id.get() {
+                    // Value type (expression reference) is "typeof C"
+                    let t = checker.get_type_of_symbol(sid);
+                    let s = checker.type_to_string(t);
+                    assert_eq!(s, "typeof C", "class value type should be 'typeof C', got '{s}'");
+                    // Declared type (type-namespace) is "C"
+                    let dt = checker.get_declared_type_of_symbol(sid);
+                    let ds = checker.type_to_string(dt);
+                    assert_eq!(ds, "C", "class declared type should be 'C', got '{ds}'");
                 }
             }
         }
-    );
+    });
     // Probe: var with no annotation no init
-    with_checker!(
-        "var x;",
-        |checker, program| {
-            if let Statement::VariableDeclaration(decl) = &program.body[0] {
-                if let Some(sid) = decl.declarations[0].id.get_binding_identifier().and_then(|b| b.symbol_id.get()) {
-                    let t = checker.get_type_of_symbol(sid);
-                    let s = checker.type_to_string(t);
-                    eprintln!("var x (no init) type: {s}");
-                    // tsc expects "any"
-                }
+    with_checker!("var x;", |checker, program| {
+        if let Statement::VariableDeclaration(decl) = &program.body[0] {
+            if let Some(sid) =
+                decl.declarations[0].id.get_binding_identifier().and_then(|b| b.symbol_id.get())
+            {
+                let t = checker.get_type_of_symbol(sid);
+                let s = checker.type_to_string(t);
+                eprintln!("var x (no init) type: {s}");
+                // tsc expects "any"
             }
         }
-    );
+    });
     // Probe: const literal
-    with_checker!(
-        "const x = 42;",
-        |checker, program| {
-            if let Statement::VariableDeclaration(decl) = &program.body[0] {
-                if let Some(sid) = decl.declarations[0].id.get_binding_identifier().and_then(|b| b.symbol_id.get()) {
-                    let t = checker.get_type_of_symbol(sid);
-                    let s = checker.type_to_string(t);
-                    eprintln!("const x = 42 type: {s}");
-                    // tsc expects "42"
-                }
+    with_checker!("const x = 42;", |checker, program| {
+        if let Statement::VariableDeclaration(decl) = &program.body[0] {
+            if let Some(sid) =
+                decl.declarations[0].id.get_binding_identifier().and_then(|b| b.symbol_id.get())
+            {
+                let t = checker.get_type_of_symbol(sid);
+                let s = checker.type_to_string(t);
+                eprintln!("const x = 42 type: {s}");
+                // tsc expects "42"
             }
         }
-    );
+    });
     // Probe: let literal (widened)
-    with_checker!(
-        "let x = 42;",
-        |checker, program| {
-            if let Statement::VariableDeclaration(decl) = &program.body[0] {
-                if let Some(sid) = decl.declarations[0].id.get_binding_identifier().and_then(|b| b.symbol_id.get()) {
-                    let t = checker.get_type_of_symbol(sid);
-                    let s = checker.type_to_string(t);
-                    eprintln!("let x = 42 type: {s}");
-                    // tsc expects "number"
-                }
+    with_checker!("let x = 42;", |checker, program| {
+        if let Statement::VariableDeclaration(decl) = &program.body[0] {
+            if let Some(sid) =
+                decl.declarations[0].id.get_binding_identifier().and_then(|b| b.symbol_id.get())
+            {
+                let t = checker.get_type_of_symbol(sid);
+                let s = checker.type_to_string(t);
+                eprintln!("let x = 42 type: {s}");
+                // tsc expects "number"
             }
         }
-    );
+    });
 }
 
 #[test]
@@ -2538,111 +2333,88 @@ fn return_type_inferred_arrow_block() {
 
 #[test]
 fn global_array_has_type_parameters() {
-    with_checker!(
-        "let x: number = 1",
-        |checker, _program| {
-            let array_type = checker.get_global_type("Array");
-            assert_ne!(array_type, checker.any_type, "Array should not be any");
-            let data = checker.type_arena().get_data(array_type);
-            match data {
-                TypeData::Structured(s) => {
-                    match &s.kind {
-                        StructuredTypeKind::Interface { all_type_parameters, .. } => {
-                            assert!(
-                                !all_type_parameters.is_empty(),
-                                "Array interface should have type parameters, got none"
-                            );
-                        }
-                        other => panic!("Expected Interface kind, got {:?}", std::mem::discriminant(other)),
-                    }
+    with_checker!("let x: number = 1", |checker, _program| {
+        let array_type = checker.get_global_type("Array");
+        assert_ne!(array_type, checker.any_type, "Array should not be any");
+        let data = checker.type_arena().get_data(array_type);
+        match data {
+            TypeData::Structured(s) => match &s.kind {
+                StructuredTypeKind::Interface { all_type_parameters, .. } => {
+                    assert!(
+                        !all_type_parameters.is_empty(),
+                        "Array interface should have type parameters, got none"
+                    );
                 }
-                other => panic!("Expected Structured, got {:?}", std::mem::discriminant(other)),
-            }
+                other => panic!("Expected Interface kind, got {:?}", std::mem::discriminant(other)),
+            },
+            other => panic!("Expected Structured, got {:?}", std::mem::discriminant(other)),
         }
-    );
+    });
 }
 
 // ---- Mapped type / keyof / indexed access tests ----
 
 #[test]
 fn keyof_object_literal() {
-    with_checker!(
-        r#"let x: keyof { a: string; b: number }"#,
-        |checker, program| {
-            let ann = first_var_type_annotation(program).unwrap();
-            let t = checker.get_type_from_type_node(ann);
-            let s = checker.type_to_string(t);
-            // keyof { a: string; b: number } → "a" | "b"
-            assert!(
-                (s == r#""a" | "b""# || s == r#""b" | "a""#),
-                "expected '\"a\" | \"b\"', got '{s}'"
-            );
-        }
-    );
+    with_checker!(r#"let x: keyof { a: string; b: number }"#, |checker, program| {
+        let ann = first_var_type_annotation(program).unwrap();
+        let t = checker.get_type_from_type_node(ann);
+        let s = checker.type_to_string(t);
+        // keyof { a: string; b: number } → "a" | "b"
+        assert!(
+            (s == r#""a" | "b""# || s == r#""b" | "a""#),
+            "expected '\"a\" | \"b\"', got '{s}'"
+        );
+    });
 }
 
 #[test]
 fn keyof_any_is_string_number_symbol() {
-    with_checker!(
-        "let x: keyof any",
-        |checker, program| {
-            let ann = first_var_type_annotation(program).unwrap();
-            let t = checker.get_type_from_type_node(ann);
-            let flags = checker.type_arena().get_flags(t);
-            assert!(flags.intersects(TypeFlags::Union));
-        }
-    );
+    with_checker!("let x: keyof any", |checker, program| {
+        let ann = first_var_type_annotation(program).unwrap();
+        let t = checker.get_type_from_type_node(ann);
+        let flags = checker.type_arena().get_flags(t);
+        assert!(flags.intersects(TypeFlags::Union));
+    });
 }
 
 #[test]
 fn indexed_access_concrete() {
-    with_checker!(
-        r#"let x: { a: string; b: number }["a"]"#,
-        |checker, program| {
-            let ann = first_var_type_annotation(program).unwrap();
-            let t = checker.get_type_from_type_node(ann);
-            assert_eq!(checker.type_to_string(t), "string");
-        }
-    );
+    with_checker!(r#"let x: { a: string; b: number }["a"]"#, |checker, program| {
+        let ann = first_var_type_annotation(program).unwrap();
+        let t = checker.get_type_from_type_node(ann);
+        assert_eq!(checker.type_to_string(t), "string");
+    });
 }
 
 #[test]
 fn indexed_access_union_key() {
-    with_checker!(
-        r#"let x: { a: string; b: number }["a" | "b"]"#,
-        |checker, program| {
-            let ann = first_var_type_annotation(program).unwrap();
-            let t = checker.get_type_from_type_node(ann);
-            let s = checker.type_to_string(t);
-            assert!(
-                s == "string | number" || s == "number | string",
-                "expected 'string | number', got '{s}'"
-            );
-        }
-    );
+    with_checker!(r#"let x: { a: string; b: number }["a" | "b"]"#, |checker, program| {
+        let ann = first_var_type_annotation(program).unwrap();
+        let t = checker.get_type_from_type_node(ann);
+        let s = checker.type_to_string(t);
+        assert!(
+            s == "string | number" || s == "number | string",
+            "expected 'string | number', got '{s}'"
+        );
+    });
 }
 
 #[test]
 fn mapped_type_deferred_for_generic() {
     // A mapped type with a generic constraint should remain as a MappedType
     // (not eagerly resolved), since we can't enumerate keys of a type parameter.
-    with_checker!(
-        "type Partial2<T> = { [P in keyof T]?: T[P] }",
-        |checker, program| {
-            let stmt = &program.body[0];
-            if let Statement::TSTypeAliasDeclaration(decl) = stmt {
-                let symbol_id = decl.id.symbol_id.get().unwrap();
-                let t = checker.get_declared_type_of_symbol(symbol_id);
-                let data = checker.type_arena().get_data(t);
-                assert!(
-                    matches!(data, TypeData::Mapped(_)),
-                    "expected Mapped, got {data:?}"
-                );
-            } else {
-                panic!("expected type alias declaration");
-            }
+    with_checker!("type Partial2<T> = { [P in keyof T]?: T[P] }", |checker, program| {
+        let stmt = &program.body[0];
+        if let Statement::TSTypeAliasDeclaration(decl) = stmt {
+            let symbol_id = decl.id.symbol_id.get().unwrap();
+            let t = checker.get_declared_type_of_symbol(symbol_id);
+            let data = checker.type_arena().get_data(t);
+            assert!(matches!(data, TypeData::Mapped(_)), "expected Mapped, got {data:?}");
+        } else {
+            panic!("expected type alias declaration");
         }
-    );
+    });
 }
 
 #[test]
@@ -2661,10 +2433,7 @@ fn mapped_type_alias_instantiation() {
             let t = checker.get_type_from_type_node(&ann.type_annotation);
             let flags = checker.type_arena().get_flags(t);
             // Should be an Object type (resolved mapped type), not a generic MappedType
-            assert!(
-                flags.intersects(TypeFlags::Object),
-                "expected Object, got {flags:?}"
-            );
+            assert!(flags.intersects(TypeFlags::Object), "expected Object, got {flags:?}");
             let data = checker.type_arena().get_data(t);
             match data {
                 TypeData::Structured(s) => {
@@ -2702,7 +2471,12 @@ fn mapped_type_record() {
             let data = checker.type_arena().get_data(t);
             match data {
                 TypeData::Structured(s) => {
-                    assert_eq!(s.properties.len(), 2, "expected 2 properties, got {:?}", s.properties);
+                    assert_eq!(
+                        s.properties.len(),
+                        2,
+                        "expected 2 properties, got {:?}",
+                        s.properties
+                    );
                     for p in &s.properties {
                         assert_eq!(
                             checker.type_to_string(p.type_id),
@@ -2732,10 +2506,7 @@ fn mapped_type_homomorphic_primitive_passthrough() {
             let declarator = &decl.declarations[0];
             let ann = declarator.type_annotation.as_ref().unwrap();
             let t = checker.get_type_from_type_node(&ann.type_annotation);
-            assert_eq!(
-                checker.type_to_string(t), "string",
-                "Partial<string> should be string"
-            );
+            assert_eq!(checker.type_to_string(t), "string", "Partial<string> should be string");
         }
     );
 }
@@ -2913,73 +2684,55 @@ fn mapped_type_as_clause_filtering() {
 #[test]
 fn conditional_type_concrete_true() {
     // string extends object ? "yes" : "no" → "no" (string is not assignable to object)
-    with_checker!(
-        r#"let x: string extends object ? "yes" : "no""#,
-        |checker, program| {
-            let ann = first_var_type_annotation(program).unwrap();
-            let t = checker.get_type_from_type_node(ann);
-            assert_eq!(checker.type_to_string(t), r#""no""#);
-        }
-    );
+    with_checker!(r#"let x: string extends object ? "yes" : "no""#, |checker, program| {
+        let ann = first_var_type_annotation(program).unwrap();
+        let t = checker.get_type_from_type_node(ann);
+        assert_eq!(checker.type_to_string(t), r#""no""#);
+    });
 }
 
 #[test]
 fn conditional_type_concrete_false() {
     // number extends number ? "yes" : "no" → "yes"
-    with_checker!(
-        r#"let x: number extends number ? "yes" : "no""#,
-        |checker, program| {
-            let ann = first_var_type_annotation(program).unwrap();
-            let t = checker.get_type_from_type_node(ann);
-            assert_eq!(checker.type_to_string(t), r#""yes""#);
-        }
-    );
+    with_checker!(r#"let x: number extends number ? "yes" : "no""#, |checker, program| {
+        let ann = first_var_type_annotation(program).unwrap();
+        let t = checker.get_type_from_type_node(ann);
+        assert_eq!(checker.type_to_string(t), r#""yes""#);
+    });
 }
 
 #[test]
 fn conditional_type_literal_extends_base() {
     // "hello" extends string ? true : false → true
-    with_checker!(
-        r#"let x: "hello" extends string ? true : false"#,
-        |checker, program| {
-            let ann = first_var_type_annotation(program).unwrap();
-            let t = checker.get_type_from_type_node(ann);
-            assert_eq!(checker.type_to_string(t), "true");
-        }
-    );
+    with_checker!(r#"let x: "hello" extends string ? true : false"#, |checker, program| {
+        let ann = first_var_type_annotation(program).unwrap();
+        let t = checker.get_type_from_type_node(ann);
+        assert_eq!(checker.type_to_string(t), "true");
+    });
 }
 
 #[test]
 fn conditional_type_never_is_never() {
     // never extends string ? "yes" : "no" → never
-    with_checker!(
-        r#"let x: never extends string ? "yes" : "no""#,
-        |checker, program| {
-            let ann = first_var_type_annotation(program).unwrap();
-            let t = checker.get_type_from_type_node(ann);
-            assert_eq!(checker.type_to_string(t), "never");
-        }
-    );
+    with_checker!(r#"let x: never extends string ? "yes" : "no""#, |checker, program| {
+        let ann = first_var_type_annotation(program).unwrap();
+        let t = checker.get_type_from_type_node(ann);
+        assert_eq!(checker.type_to_string(t), "never");
+    });
 }
 
 #[test]
 fn conditional_type_deferred_for_generic() {
     // T extends string ? T : never — should remain as ConditionalType
-    with_checker!(
-        "type StringOnly<T> = T extends string ? T : never",
-        |checker, program| {
-            let stmt = &program.body[0];
-            if let Statement::TSTypeAliasDeclaration(decl) = stmt {
-                let symbol_id = decl.id.symbol_id.get().unwrap();
-                let t = checker.get_declared_type_of_symbol(symbol_id);
-                let data = checker.type_arena().get_data(t);
-                assert!(
-                    matches!(data, TypeData::Conditional(_)),
-                    "expected Conditional, got {data:?}"
-                );
-            }
+    with_checker!("type StringOnly<T> = T extends string ? T : never", |checker, program| {
+        let stmt = &program.body[0];
+        if let Statement::TSTypeAliasDeclaration(decl) = stmt {
+            let symbol_id = decl.id.symbol_id.get().unwrap();
+            let t = checker.get_declared_type_of_symbol(symbol_id);
+            let data = checker.type_arena().get_data(t);
+            assert!(matches!(data, TypeData::Conditional(_)), "expected Conditional, got {data:?}");
         }
-    );
+    });
 }
 
 #[test]
@@ -3092,33 +2845,24 @@ fn conditional_type_distribution_none_match() {
 #[test]
 fn contextual_typing_arrow_param_from_variable_annotation() {
     // Arrow function parameter type inferred from variable annotation
-    with_checker!(
-        "let f: (x: number) => number = (x) => x + 1;",
-        |checker, program| {
-            checker.check_program(program);
-            let diagnostics = checker.take_diagnostics();
-            assert!(
-                diagnostics.is_empty(),
-                "arrow param should get type from annotation: {diagnostics:?}"
-            );
-        }
-    );
+    with_checker!("let f: (x: number) => number = (x) => x + 1;", |checker, program| {
+        checker.check_program(program);
+        let diagnostics = checker.take_diagnostics();
+        assert!(
+            diagnostics.is_empty(),
+            "arrow param should get type from annotation: {diagnostics:?}"
+        );
+    });
 }
 
 #[test]
 fn contextual_typing_arrow_param_return_type_mismatch() {
     // Arrow function return type doesn't match contextual return type
-    with_checker!(
-        "let f: (x: number) => string = (x) => x + 1;",
-        |checker, program| {
-            checker.check_program(program);
-            let diagnostics = checker.take_diagnostics();
-            assert!(
-                !diagnostics.is_empty(),
-                "should error: number not assignable to string"
-            );
-        }
-    );
+    with_checker!("let f: (x: number) => string = (x) => x + 1;", |checker, program| {
+        checker.check_program(program);
+        let diagnostics = checker.take_diagnostics();
+        assert!(!diagnostics.is_empty(), "should error: number not assignable to string");
+    });
 }
 
 #[test]
@@ -3145,10 +2889,7 @@ fn contextual_typing_conditional_branches() {
         |checker, program| {
             checker.check_program(program);
             let diagnostics = checker.take_diagnostics();
-            assert!(
-                diagnostics.is_empty(),
-                "context should flow through ternary: {diagnostics:?}"
-            );
+            assert!(diagnostics.is_empty(), "context should flow through ternary: {diagnostics:?}");
         }
     );
 }
@@ -3161,10 +2902,7 @@ fn contextual_typing_return_statement() {
         |checker, program| {
             checker.check_program(program);
             let diagnostics = checker.take_diagnostics();
-            assert!(
-                diagnostics.is_empty(),
-                "return context should flow to arrow: {diagnostics:?}"
-            );
+            assert!(diagnostics.is_empty(), "return context should flow to arrow: {diagnostics:?}");
         }
     );
 }
@@ -3188,17 +2926,14 @@ fn contextual_typing_object_literal_callback() {
 #[test]
 fn contextual_typing_array_as_tuple() {
     // Array literal inferred as tuple when contextual type is tuple
-    with_checker!(
-        "let t: [number, string] = [1, 'hello'];",
-        |checker, program| {
-            checker.check_program(program);
-            let diagnostics = checker.take_diagnostics();
-            assert!(
-                diagnostics.is_empty(),
-                "array should be checked as tuple with tuple context: {diagnostics:?}"
-            );
-        }
-    );
+    with_checker!("let t: [number, string] = [1, 'hello'];", |checker, program| {
+        checker.check_program(program);
+        let diagnostics = checker.take_diagnostics();
+        assert!(
+            diagnostics.is_empty(),
+            "array should be checked as tuple with tuple context: {diagnostics:?}"
+        );
+    });
 }
 
 #[test]
@@ -3220,33 +2955,24 @@ fn contextual_typing_function_expression() {
 #[test]
 fn contextual_typing_assignment() {
     // Context from LHS type flows to RHS in assignment
-    with_checker!(
-        "let f: (x: number) => number;\nf = (x) => x + 1;",
-        |checker, program| {
-            checker.check_program(program);
-            let diagnostics = checker.take_diagnostics();
-            assert!(
-                diagnostics.is_empty(),
-                "assignment context should flow to arrow: {diagnostics:?}"
-            );
-        }
-    );
+    with_checker!("let f: (x: number) => number;\nf = (x) => x + 1;", |checker, program| {
+        checker.check_program(program);
+        let diagnostics = checker.take_diagnostics();
+        assert!(diagnostics.is_empty(), "assignment context should flow to arrow: {diagnostics:?}");
+    });
 }
 
 #[test]
 fn void_return_type_accepts_any_return() {
     // TypeScript: any return type is assignable to void (void means "don't care")
-    with_checker!(
-        "let f: (x: number) => void = (x) => x + 1;",
-        |checker, program| {
-            checker.check_program(program);
-            let diagnostics = checker.take_diagnostics();
-            assert!(
-                diagnostics.is_empty(),
-                "number return should be assignable to void: {diagnostics:?}"
-            );
-        }
-    );
+    with_checker!("let f: (x: number) => void = (x) => x + 1;", |checker, program| {
+        checker.check_program(program);
+        let diagnostics = checker.take_diagnostics();
+        assert!(
+            diagnostics.is_empty(),
+            "number return should be assignable to void: {diagnostics:?}"
+        );
+    });
 }
 
 // ---- Generic type argument inference tests ----
@@ -3259,10 +2985,7 @@ fn generic_inference_basic() {
         |checker, program| {
             checker.check_program(program);
             let diagnostics = checker.take_diagnostics();
-            assert!(
-                diagnostics.is_empty(),
-                "id(42) should infer T=number: {diagnostics:?}"
-            );
+            assert!(diagnostics.is_empty(), "id(42) should infer T=number: {diagnostics:?}");
         }
     );
 }
@@ -3518,49 +3241,40 @@ fn for_in_valid_no_errors() {
 #[test]
 fn intersection_reduction_never_propagates() {
     // A & never → never
-    with_checker!(
-        "let x: string & never",
-        |checker, program| {
-            let ann = first_var_type_annotation(program).unwrap();
-            let t = checker.get_type_from_type_node(ann);
-            assert_eq!(
-                checker.type_arena().get_flags(t),
-                TypeFlags::Never,
-                "string & never should reduce to never"
-            );
-        }
-    );
+    with_checker!("let x: string & never", |checker, program| {
+        let ann = first_var_type_annotation(program).unwrap();
+        let t = checker.get_type_from_type_node(ann);
+        assert_eq!(
+            checker.type_arena().get_flags(t),
+            TypeFlags::Never,
+            "string & never should reduce to never"
+        );
+    });
 }
 
 #[test]
 fn intersection_reduction_contradictory_primitives() {
     // string & number → never
-    with_checker!(
-        "let x: string & number",
-        |checker, program| {
-            let ann = first_var_type_annotation(program).unwrap();
-            let t = checker.get_type_from_type_node(ann);
-            assert_eq!(
-                checker.type_arena().get_flags(t),
-                TypeFlags::Never,
-                "string & number should reduce to never"
-            );
-        }
-    );
+    with_checker!("let x: string & number", |checker, program| {
+        let ann = first_var_type_annotation(program).unwrap();
+        let t = checker.get_type_from_type_node(ann);
+        assert_eq!(
+            checker.type_arena().get_flags(t),
+            TypeFlags::Never,
+            "string & number should reduce to never"
+        );
+    });
 }
 
 #[test]
 fn intersection_reduction_supertype_removal() {
     // string & "hello" → "hello"
-    with_checker!(
-        r#"let x: string & "hello""#,
-        |checker, program| {
-            let ann = first_var_type_annotation(program).unwrap();
-            let t = checker.get_type_from_type_node(ann);
-            let s = checker.type_to_string(t);
-            assert_eq!(s, r#""hello""#, "string & 'hello' should reduce to 'hello'");
-        }
-    );
+    with_checker!(r#"let x: string & "hello""#, |checker, program| {
+        let ann = first_var_type_annotation(program).unwrap();
+        let t = checker.get_type_from_type_node(ann);
+        let s = checker.type_to_string(t);
+        assert_eq!(s, r#""hello""#, "string & 'hello' should reduce to 'hello'");
+    });
 }
 
 #[test]
@@ -3633,13 +3347,15 @@ fn intersection_property_type_resolution() {
             // Property 'a' should exist and be string
             let a_type = checker.get_property_of_type(t, "a").expect("property 'a' should exist");
             assert_eq!(
-                checker.type_to_string(a_type), "string",
+                checker.type_to_string(a_type),
+                "string",
                 "property 'a' on intersection should be string"
             );
             // Property 'b' should exist and be number
             let b_type = checker.get_property_of_type(t, "b").expect("property 'b' should exist");
             assert_eq!(
-                checker.type_to_string(b_type), "number",
+                checker.type_to_string(b_type),
+                "number",
                 "property 'b' on intersection should be number"
             );
         }
@@ -3651,7 +3367,10 @@ fn intersection_property_type_resolution() {
 /// Helper: collect NodeIds of all ThisExpression nodes.
 fn find_this_node_ids(checker: &Checker<'_>) -> Vec<oxc_syntax::node::NodeId> {
     use oxc_ast::AstKind;
-    checker.semantic().nodes().iter()
+    checker
+        .semantic()
+        .nodes()
+        .iter()
         .filter_map(|node| {
             if let AstKind::ThisExpression(this_expr) = node.kind() {
                 Some(this_expr.node_id())
@@ -3672,8 +3391,11 @@ fn this_in_class_method_resolves_to_class() {
             let ids = find_this_node_ids(&checker);
             assert_eq!(ids.len(), 1, "should find exactly one ThisExpression");
             let t = checker.resolve_this_type(ids[0]);
-            assert_eq!(checker.type_to_string(t), "Foo",
-                "this in class method should resolve to class type");
+            assert_eq!(
+                checker.type_to_string(t),
+                "Foo",
+                "this in class method should resolve to class type"
+            );
         }
     );
 }
@@ -3688,8 +3410,11 @@ fn this_in_arrow_inside_method_resolves_to_class() {
             let ids = find_this_node_ids(&checker);
             assert_eq!(ids.len(), 1);
             let t = checker.resolve_this_type(ids[0]);
-            assert_eq!(checker.type_to_string(t), "Foo",
-                "this in arrow inside method should inherit class type");
+            assert_eq!(
+                checker.type_to_string(t),
+                "Foo",
+                "this in arrow inside method should inherit class type"
+            );
         }
     );
 }
@@ -3708,8 +3433,11 @@ fn this_in_standalone_function_inside_method_is_generic() {
             let ids = find_this_node_ids(&checker);
             assert_eq!(ids.len(), 1);
             let t = checker.resolve_this_type(ids[0]);
-            assert_eq!(checker.type_to_string(t), "this",
-                "this in standalone function should NOT resolve to Foo");
+            assert_eq!(
+                checker.type_to_string(t),
+                "this",
+                "this in standalone function should NOT resolve to Foo"
+            );
         }
     );
 }
@@ -3724,8 +3452,11 @@ fn this_at_top_level_is_generic() {
             let ids = find_this_node_ids(&checker);
             assert_eq!(ids.len(), 1);
             let t = checker.resolve_this_type(ids[0]);
-            assert_eq!(checker.type_to_string(t), "this",
-                "top-level this should be generic this type");
+            assert_eq!(
+                checker.type_to_string(t),
+                "this",
+                "top-level this should be generic this type"
+            );
         }
     );
 }
@@ -4022,71 +3753,56 @@ fn infer_constrained_bare_violates() {
 #[test]
 fn excess_property_check_basic() {
     // Object literal with excess property should produce TS2353
-    with_checker!(
-        "var x: { a: number } = { a: 1, b: 2 }",
-        |checker, program| {
-            checker.check_program(program);
-            let diagnostics = checker.take_diagnostics();
-            assert_eq!(diagnostics.len(), 1, "should have 1 error");
-            let msg = diagnostics[0].message.to_string();
-            assert!(msg.contains("does not exist in type"), "got: {msg}");
-            assert!(msg.contains("'b'"), "should mention property 'b', got: {msg}");
-        }
-    );
+    with_checker!("var x: { a: number } = { a: 1, b: 2 }", |checker, program| {
+        checker.check_program(program);
+        let diagnostics = checker.take_diagnostics();
+        assert_eq!(diagnostics.len(), 1, "should have 1 error");
+        let msg = diagnostics[0].message.to_string();
+        assert!(msg.contains("does not exist in type"), "got: {msg}");
+        assert!(msg.contains("'b'"), "should mention property 'b', got: {msg}");
+    });
 }
 
 #[test]
 fn excess_property_check_no_excess() {
     // Object literal with only known properties — no error
-    with_checker!(
-        "var x: { a: number } = { a: 1 }",
-        |checker, program| {
-            checker.check_program(program);
-            let diagnostics = checker.take_diagnostics();
-            assert!(diagnostics.is_empty(), "should have no errors");
-        }
-    );
+    with_checker!("var x: { a: number } = { a: 1 }", |checker, program| {
+        checker.check_program(program);
+        let diagnostics = checker.take_diagnostics();
+        assert!(diagnostics.is_empty(), "should have no errors");
+    });
 }
 
 #[test]
 fn excess_property_check_with_index_signature() {
     // Target has string index signature — excess properties allowed
-    with_checker!(
-        "var x: { [key: string]: number } = { a: 1, b: 2 }",
-        |checker, program| {
-            checker.check_program(program);
-            let diagnostics = checker.take_diagnostics();
-            assert!(diagnostics.is_empty(), "index signature should allow any property");
-        }
-    );
+    with_checker!("var x: { [key: string]: number } = { a: 1, b: 2 }", |checker, program| {
+        checker.check_program(program);
+        let diagnostics = checker.take_diagnostics();
+        assert!(diagnostics.is_empty(), "index signature should allow any property");
+    });
 }
 
 #[test]
 fn excess_property_not_assignable_still_works() {
     // Wrong property type should still produce TS2322, not TS2353
-    with_checker!(
-        r#"var x: { a: string } = { a: 1 }"#,
-        |checker, program| {
-            checker.check_program(program);
-            let diagnostics = checker.take_diagnostics();
-            assert_eq!(diagnostics.len(), 1, "should have 1 error");
-            let msg = diagnostics[0].message.to_string();
-            assert!(msg.contains("is not assignable to type"), "should be type mismatch, got: {msg}");
-        }
-    );
+    with_checker!(r#"var x: { a: string } = { a: 1 }"#, |checker, program| {
+        checker.check_program(program);
+        let diagnostics = checker.take_diagnostics();
+        assert_eq!(diagnostics.len(), 1, "should have 1 error");
+        let msg = diagnostics[0].message.to_string();
+        assert!(msg.contains("is not assignable to type"), "should be type mismatch, got: {msg}");
+    });
 }
 
 #[test]
 fn excess_property_check_empty_target() {
     // Empty object type {} accepts anything structurally
-    with_checker!(
-        "var x: {} = { a: 1, b: 2 }",
-        |checker, program| {
-            checker.check_program(program);
-            let diagnostics = checker.take_diagnostics();
-            assert!(diagnostics.is_empty(), "empty object should accept any properties");
-        }
-    );
+    with_checker!("var x: {} = { a: 1, b: 2 }", |checker, program| {
+        checker.check_program(program);
+        let diagnostics = checker.take_diagnostics();
+        assert!(diagnostics.is_empty(), "empty object should accept any properties");
+    });
 }
 
 #[test]
@@ -4131,51 +3847,44 @@ fn excess_property_check_assignment() {
 
 #[test]
 fn global_value_type_regexp() {
-    with_checker!(
-        "let x = RegExp",
-        |checker, program| {
-            checker.check_program(program);
-            // RegExp in value position should resolve to RegExpConstructor
-            // (from `declare var RegExp: RegExpConstructor` in lib.d.ts)
-            let val_type = checker.get_global_value_type("RegExp");
-            assert!(val_type.is_some(), "RegExp should have a global value type");
-            let val_type = val_type.unwrap();
-            assert_ne!(val_type, checker.any_type, "RegExp value type should not be any");
-            let s = checker.type_to_string(val_type);
-            assert_eq!(s, "RegExpConstructor", "RegExp value type should be RegExpConstructor, got: {s}");
-        }
-    );
+    with_checker!("let x = RegExp", |checker, program| {
+        checker.check_program(program);
+        // RegExp in value position should resolve to RegExpConstructor
+        // (from `declare var RegExp: RegExpConstructor` in lib.d.ts)
+        let val_type = checker.get_global_value_type("RegExp");
+        assert!(val_type.is_some(), "RegExp should have a global value type");
+        let val_type = val_type.unwrap();
+        assert_ne!(val_type, checker.any_type, "RegExp value type should not be any");
+        let s = checker.type_to_string(val_type);
+        assert_eq!(
+            s, "RegExpConstructor",
+            "RegExp value type should be RegExpConstructor, got: {s}"
+        );
+    });
 }
 
 #[test]
 fn global_value_type_math() {
-    with_checker!(
-        "let x = Math",
-        |checker, program| {
-            checker.check_program(program);
-            let val_type = checker.get_global_value_type("Math");
-            assert!(val_type.is_some(), "Math should have a global value type");
-            let val_type = val_type.unwrap();
-            assert_ne!(val_type, checker.any_type, "Math value type should not be any");
-            let s = checker.type_to_string(val_type);
-            assert_eq!(s, "Math", "Math value type should be Math, got: {s}");
-        }
-    );
+    with_checker!("let x = Math", |checker, program| {
+        checker.check_program(program);
+        let val_type = checker.get_global_value_type("Math");
+        assert!(val_type.is_some(), "Math should have a global value type");
+        let val_type = val_type.unwrap();
+        assert_ne!(val_type, checker.any_type, "Math value type should not be any");
+        let s = checker.type_to_string(val_type);
+        assert_eq!(s, "Math", "Math value type should be Math, got: {s}");
+    });
 }
 
 #[test]
 fn global_value_type_resolves_in_expression() {
-    with_checker!(
-        "let x = JSON",
-        |checker, program| {
-            checker.check_program(program);
-            // The initializer `JSON` should resolve via get_type_of_global_identifier
-            // to the JSON interface (from `declare var JSON: JSON` in lib.d.ts)
-            let init = first_var_init(program).expect("should have initializer");
-            let t = checker.get_type_of_expression(init, None);
-            let s = checker.type_to_string(t);
-            assert_ne!(s, "any", "JSON in expression position should not be any, got: {s}");
-        }
-    );
+    with_checker!("let x = JSON", |checker, program| {
+        checker.check_program(program);
+        // The initializer `JSON` should resolve via get_type_of_global_identifier
+        // to the JSON interface (from `declare var JSON: JSON` in lib.d.ts)
+        let init = first_var_init(program).expect("should have initializer");
+        let t = checker.get_type_of_expression(init, None);
+        let s = checker.type_to_string(t);
+        assert_ne!(s, "any", "JSON in expression position should not be any, got: {s}");
+    });
 }
-

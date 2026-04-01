@@ -51,7 +51,10 @@ impl Checker<'_> {
         let mut result = self.undefined_type;
         for (i, expr) in exprs.iter().enumerate() {
             let is_last = i == exprs.len() - 1;
-            if !is_last && Self::is_side_effect_free(expr) && !Self::is_indirect_call(expr, exprs.get(i + 1)) {
+            if !is_last
+                && Self::is_side_effect_free(expr)
+                && !Self::is_indirect_call(expr, exprs.get(i + 1))
+            {
                 self.diagnostics.push(
                     OxcDiagnostic::error(
                         "Left side of comma operator is unused and has no side effects.",
@@ -133,8 +136,7 @@ impl Checker<'_> {
         let Some(right) = right else { return false };
         matches!(
             right,
-            Expression::StaticMemberExpression(_)
-                | Expression::ComputedMemberExpression(_)
+            Expression::StaticMemberExpression(_) | Expression::ComputedMemberExpression(_)
         ) || matches!(right, Expression::Identifier(id) if id.name == "eval")
     }
 
@@ -159,7 +161,10 @@ impl Checker<'_> {
                 let target_type = self.get_type_of_identifier(ident);
                 let value_type = self.get_type_of_expression(&assign.right, Some(target_type));
                 self.check_type_assignable_to_and_report(
-                    value_type, target_type, ident.span(), "2322",
+                    value_type,
+                    target_type,
+                    ident.span(),
+                    "2322",
                     |s, t| format!("Type '{s}' is not assignable to type '{t}'."),
                 );
                 return value_type;

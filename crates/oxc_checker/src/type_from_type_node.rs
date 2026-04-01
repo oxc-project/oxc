@@ -1,6 +1,10 @@
 use oxc_ast::ast::TSType;
 use oxc_span::CompactStr;
-use oxc_types::{ElementFlags, MappedType, MappedTypeModifier, ObjectFlags, PropertyInfo, SignatureFlags, StructuredType, StructuredTypeKind, TupleElementInfo, TupleType, TypeData, TypeFlags, TypeId, TypeParameterType, TypeReferenceType, build_member_map};
+use oxc_types::{
+    ElementFlags, MappedType, MappedTypeModifier, ObjectFlags, PropertyInfo, SignatureFlags,
+    StructuredType, StructuredTypeKind, TupleElementInfo, TupleType, TypeData, TypeFlags, TypeId,
+    TypeParameterType, TypeReferenceType, build_member_map,
+};
 use smallvec::SmallVec;
 
 use crate::Checker;
@@ -42,9 +46,7 @@ impl Checker<'_> {
             }
 
             // Type reference: `Foo`, `Array<T>`, `MyInterface`, etc.
-            TSType::TSTypeReference(ref_type) => {
-                self.get_type_from_type_reference(ref_type)
-            }
+            TSType::TSTypeReference(ref_type) => self.get_type_from_type_reference(ref_type),
 
             // Type literal: `{ x: number; y: string }`
             TSType::TSTypeLiteral(lit) => self.get_type_from_type_literal(lit),
@@ -74,26 +76,20 @@ impl Checker<'_> {
 
             // Function type: `(x: number) => string`
             TSType::TSFunctionType(func_type) => {
-                let tp = self.get_type_parameters_from_declaration(
-                    func_type.type_parameters.as_deref(),
-                );
-                let mut sig = self.build_signature_from_params(
-                    &func_type.params,
-                    Some(&func_type.return_type),
-                );
+                let tp =
+                    self.get_type_parameters_from_declaration(func_type.type_parameters.as_deref());
+                let mut sig = self
+                    .build_signature_from_params(&func_type.params, Some(&func_type.return_type));
                 sig.type_parameters = tp;
                 self.create_function_type(sig)
             }
 
             // Constructor type: `new (x: number) => Foo`
             TSType::TSConstructorType(ctor_type) => {
-                let tp = self.get_type_parameters_from_declaration(
-                    ctor_type.type_parameters.as_deref(),
-                );
-                let mut sig = self.build_signature_from_params(
-                    &ctor_type.params,
-                    Some(&ctor_type.return_type),
-                );
+                let tp =
+                    self.get_type_parameters_from_declaration(ctor_type.type_parameters.as_deref());
+                let mut sig = self
+                    .build_signature_from_params(&ctor_type.params, Some(&ctor_type.return_type));
                 sig.type_parameters = tp;
                 sig.flags |= SignatureFlags::Construct;
                 if ctor_type.r#abstract {
@@ -153,19 +149,21 @@ impl Checker<'_> {
                 let false_type = self.get_type_from_type_node(&cond.false_type);
 
                 // Distributive if the check type is a bare type parameter
-                let is_distributive = self.type_arena.get_flags(check)
-                    .intersects(TypeFlags::TypeParameter);
+                let is_distributive =
+                    self.type_arena.get_flags(check).intersects(TypeFlags::TypeParameter);
 
                 self.get_conditional_type(
-                    check, extends, true_type, false_type,
-                    is_distributive, infer_params,
+                    check,
+                    extends,
+                    true_type,
+                    false_type,
+                    is_distributive,
+                    infer_params,
                 )
             }
 
             // Infer type: `infer U` in extends clause of conditional type
-            TSType::TSInferType(infer) => {
-                self.get_type_from_infer_type_node(infer)
-            }
+            TSType::TSInferType(infer) => self.get_type_from_infer_type_node(infer),
 
             // Not yet implemented — return `any` as a placeholder
             TSType::TSImportType(_)
@@ -181,11 +179,8 @@ impl Checker<'_> {
     }
 
     fn get_type_from_union_type_node(&mut self, union: &oxc_ast::ast::TSUnionType<'_>) -> TypeId {
-        let types: Vec<TypeId> = union
-            .types
-            .iter()
-            .map(|t| self.get_type_from_type_node(t))
-            .collect();
+        let types: Vec<TypeId> =
+            union.types.iter().map(|t| self.get_type_from_type_node(t)).collect();
         self.get_or_create_union_type(types)
     }
 
@@ -193,18 +188,12 @@ impl Checker<'_> {
         &mut self,
         intersection: &oxc_ast::ast::TSIntersectionType<'_>,
     ) -> TypeId {
-        let types: Vec<TypeId> = intersection
-            .types
-            .iter()
-            .map(|t| self.get_type_from_type_node(t))
-            .collect();
+        let types: Vec<TypeId> =
+            intersection.types.iter().map(|t| self.get_type_from_type_node(t)).collect();
         self.get_or_create_intersection_type(types)
     }
 
-    fn get_type_from_literal_type_node(
-        &mut self,
-        lit: &oxc_ast::ast::TSLiteralType<'_>,
-    ) -> TypeId {
+    fn get_type_from_literal_type_node(&mut self, lit: &oxc_ast::ast::TSLiteralType<'_>) -> TypeId {
         use oxc_ast::ast::TSLiteral;
         match &lit.literal {
             TSLiteral::BooleanLiteral(b) => {
@@ -221,14 +210,12 @@ impl Checker<'_> {
                 use oxc_ast::ast::Expression;
                 use oxc_syntax::operator::UnaryOperator;
                 match unary.operator {
-                    UnaryOperator::UnaryNegation => {
-                        match &unary.argument {
-                            Expression::NumericLiteral(n) => {
-                                self.get_or_create_number_literal_type(-n.value)
-                            }
-                            _ => self.any_type,
+                    UnaryOperator::UnaryNegation => match &unary.argument {
+                        Expression::NumericLiteral(n) => {
+                            self.get_or_create_number_literal_type(-n.value)
                         }
-                    }
+                        _ => self.any_type,
+                    },
                     _ => self.any_type,
                 }
             }
@@ -238,10 +225,7 @@ impl Checker<'_> {
     }
 
     /// Resolve a type literal (`{ x: number; y: string }`) to a StructuredType.
-    fn get_type_from_type_literal(
-        &mut self,
-        lit: &oxc_ast::ast::TSTypeLiteral<'_>,
-    ) -> TypeId {
+    fn get_type_from_type_literal(&mut self, lit: &oxc_ast::ast::TSTypeLiteral<'_>) -> TypeId {
         use oxc_ast::ast::TSSignature;
 
         let mut properties = Vec::new();
@@ -268,9 +252,8 @@ impl Checker<'_> {
                     }
                 }
                 TSSignature::TSCallSignatureDeclaration(call_sig) => {
-                    let tp = self.get_type_parameters_from_declaration(
-                        call_sig.type_parameters.as_deref(),
-                    );
+                    let tp = self
+                        .get_type_parameters_from_declaration(call_sig.type_parameters.as_deref());
                     let mut sig = self.build_signature_from_params(
                         &call_sig.params,
                         call_sig.return_type.as_deref(),
@@ -298,9 +281,11 @@ impl Checker<'_> {
                     }
                 }
                 TSSignature::TSIndexSignature(idx_sig) => {
-                    let value_type = self.get_type_from_type_node(&idx_sig.type_annotation.type_annotation);
+                    let value_type =
+                        self.get_type_from_type_node(&idx_sig.type_annotation.type_annotation);
                     if let Some(param) = idx_sig.parameters.first() {
-                        let key_type = self.get_type_from_type_node(&param.type_annotation.type_annotation);
+                        let key_type =
+                            self.get_type_from_type_node(&param.type_annotation.type_annotation);
                         if self.type_arena.get_flags(key_type).intersects(TypeFlags::Number) {
                             number_index_type = Some(value_type);
                         } else {
@@ -309,9 +294,8 @@ impl Checker<'_> {
                     }
                 }
                 TSSignature::TSConstructSignatureDeclaration(ctor_sig) => {
-                    let tp = self.get_type_parameters_from_declaration(
-                        ctor_sig.type_parameters.as_deref(),
-                    );
+                    let tp = self
+                        .get_type_parameters_from_declaration(ctor_sig.type_parameters.as_deref());
                     let mut sig = self.build_signature_from_params(
                         &ctor_sig.params,
                         ctor_sig.return_type.as_deref(),
@@ -354,8 +338,8 @@ impl Checker<'_> {
         &mut self,
         ref_type: &oxc_ast::ast::TSTypeReference<'_>,
     ) -> TypeId {
-        use oxc_ast::ast::TSTypeName;
         use oxc_ast::AstKind;
+        use oxc_ast::ast::TSTypeName;
 
         // Only handle simple identifier references for now (not `A.B.C`)
         let TSTypeName::IdentifierReference(ident) = &ref_type.type_name else {
@@ -408,11 +392,8 @@ impl Checker<'_> {
         };
 
         // Resolve type arguments
-        let type_arguments: SmallVec<[TypeId; 4]> = type_args_node
-            .params
-            .iter()
-            .map(|arg| self.get_type_from_type_node(arg))
-            .collect();
+        let type_arguments: SmallVec<[TypeId; 4]> =
+            type_args_node.params.iter().map(|arg| self.get_type_from_type_node(arg)).collect();
 
         // Get the type alias's type parameters from the declaration
         let node_id = self.semantic().scoping().symbol_declaration(symbol_id);
@@ -428,10 +409,9 @@ impl Checker<'_> {
         }
 
         // Build mapper from alias type params → type arguments
-        let Some(mapper) = crate::instantiation::TypeMapper::from_type_parameters(
-            &type_params,
-            &type_arguments,
-        ) else {
+        let Some(mapper) =
+            crate::instantiation::TypeMapper::from_type_parameters(&type_params, &type_arguments)
+        else {
             return target;
         };
 
@@ -442,10 +422,7 @@ impl Checker<'_> {
     }
 
     /// Resolve a tuple type node (`[string, number]`) to a TupleType.
-    fn get_type_from_tuple_type_node(
-        &mut self,
-        tuple: &oxc_ast::ast::TSTupleType<'_>,
-    ) -> TypeId {
+    fn get_type_from_tuple_type_node(&mut self, tuple: &oxc_ast::ast::TSTupleType<'_>) -> TypeId {
         use oxc_ast::ast::TSTupleElement;
 
         let mut element_infos = Vec::new();
@@ -494,15 +471,11 @@ impl Checker<'_> {
             });
         }
 
-        let fixed_length = if has_rest {
-            type_arguments.len() as u32 - 1
-        } else {
-            type_arguments.len() as u32
-        };
+        let fixed_length =
+            if has_rest { type_arguments.len() as u32 - 1 } else { type_arguments.len() as u32 };
 
-        let combined_flags = element_infos
-            .iter()
-            .fold(ElementFlags::empty(), |acc, info| acc | info.flags);
+        let combined_flags =
+            element_infos.iter().fold(ElementFlags::empty(), |acc, info| acc | info.flags);
 
         let mut obj_flags = ObjectFlags::Tuple;
         if type_arguments.iter().any(|&t| self.type_could_contain_type_variables(t)) {
@@ -539,9 +512,7 @@ impl Checker<'_> {
             TSTupleElement::TSOptionalType(opt) => {
                 self.get_type_from_type_node(&opt.type_annotation)
             }
-            TSTupleElement::TSRestType(rest) => {
-                self.get_type_from_type_node(&rest.type_annotation)
-            }
+            TSTupleElement::TSRestType(rest) => self.get_type_from_type_node(&rest.type_annotation),
             _ => {
                 // All other variants are inherited TSType variants.
                 // as_ts_type() is generated by inherit_variants! and performs
@@ -567,17 +538,17 @@ impl Checker<'_> {
         };
 
         // Resolve each type argument
-        let type_arguments: SmallVec<[TypeId; 4]> = type_args_node
-            .params
-            .iter()
-            .map(|arg| self.get_type_from_type_node(arg))
-            .collect();
+        let type_arguments: SmallVec<[TypeId; 4]> =
+            type_args_node.params.iter().map(|arg| self.get_type_from_type_node(arg)).collect();
 
         // Check the target actually has type parameters — if not,
         // the type arguments are extraneous (e.g., `string<number>`).
         // In that case, just return the target.
         let has_type_params = match self.type_arena.get_data(target) {
-            TypeData::Structured(StructuredType { kind: StructuredTypeKind::Interface { all_type_parameters, .. }, .. }) => !all_type_parameters.is_empty(),
+            TypeData::Structured(StructuredType {
+                kind: StructuredTypeKind::Interface { all_type_parameters, .. },
+                ..
+            }) => !all_type_parameters.is_empty(),
             _ => false,
         };
 
@@ -600,10 +571,7 @@ impl Checker<'_> {
     }
 
     /// Resolve `typeof x` in type position to the value-side type of `x`.
-    fn get_type_from_type_query(
-        &mut self,
-        query: &oxc_ast::ast::TSTypeQuery<'_>,
-    ) -> TypeId {
+    fn get_type_from_type_query(&mut self, query: &oxc_ast::ast::TSTypeQuery<'_>) -> TypeId {
         use oxc_ast::ast::TSTypeQueryExprName;
 
         match &query.expr_name {
@@ -659,13 +627,10 @@ impl Checker<'_> {
         // (IndexType, IndexedAccessType) that are instantiated later.
         let constraint_type = self.get_type_from_type_node(&mapped.constraint);
 
-        let template_type = mapped.type_annotation
-            .as_ref()
-            .map(|t| self.get_type_from_type_node(t));
+        let template_type =
+            mapped.type_annotation.as_ref().map(|t| self.get_type_from_type_node(t));
 
-        let name_type = mapped.name_type
-            .as_ref()
-            .map(|t| self.get_type_from_type_node(t));
+        let name_type = mapped.name_type.as_ref().map(|t| self.get_type_from_type_node(t));
 
         // Convert AST modifiers to our representation
         let optional_modifier = match mapped.optional {
@@ -704,10 +669,7 @@ impl Checker<'_> {
     /// in `declared_type_cache` (so references in the true branch resolve
     /// to the same TypeId), and pushes it to `current_infer_type_params`
     /// for collection by the enclosing `TSConditionalType` handler.
-    fn get_type_from_infer_type_node(
-        &mut self,
-        infer: &oxc_ast::ast::TSInferType<'_>,
-    ) -> TypeId {
+    fn get_type_from_infer_type_node(&mut self, infer: &oxc_ast::ast::TSInferType<'_>) -> TypeId {
         let tp = &infer.type_parameter;
         let symbol_id = tp.name.symbol_id.get();
 
