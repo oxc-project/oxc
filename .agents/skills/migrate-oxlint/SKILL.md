@@ -114,6 +114,8 @@ If you want to add the `oxlint-tsgolint` package, if you intend to use type-awar
 npm install -D oxlint-tsgolint
 ```
 
+> **`oxlint-tsgolint` limitations**: `oxlint-tsgolint` uses its own TypeScript compiler (tsgo) which has known gaps compared to `tsc`. In particular, it does not resolve module augmentations declared in test setup files (e.g., `vitest.setup.ts`, `jest.setup.ts`). This causes false-positive `typescript/no-unsafe-call` errors on custom matchers added by test helper libraries (e.g., `jest-styled-components`). Suppress these with `// oxlint-disable-next-line typescript/no-unsafe-call` and a comment explaining why the suppression is needed.
+
 No other packages besides the above are needed by default, though you will need to keep/install any additional ESLint plugins that were migrated into `jsPlugins`. Do not add `@oxlint/migrate` to the package.json, it is meant for one-off usage.
 
 ## Step 4: Handle Unsupported Features
@@ -124,6 +126,23 @@ Some features require manual attention:
 - `eslint-plugin-prettier`: Supported, but very slow. It is recommended to use [oxfmt](https://oxc.rs/docs/guide/usage/formatter) instead, or switch to `prettier --check` as a separate step alongside oxlint.
 - `settings` in override configs: Oxlint does not support `settings` inside `overrides` blocks.
 - ESLint v9+ plugins: Not all work with oxlint's JS Plugins API, but the majority will.
+
+### React Projects: JSX Transform and Version Setting
+
+If your project uses the **new JSX transform** (`"jsx": "react-jsx"` in tsconfig), explicitly disable `react/react-in-jsx-scope` — the rule requires `import React` in every JSX file, which the new transform makes unnecessary. The migration tool does not disable this automatically.
+
+Additionally, set the React version in `settings` so that version-dependent rules (e.g., `react/no-deprecated`) can evaluate correctly:
+
+```json
+{
+  "settings": {
+    "react": { "version": "19.1.0" }
+  },
+  "rules": {
+    "react/react-in-jsx-scope": "off"
+  }
+}
+```
 
 ### Local Plugins
 
