@@ -2,7 +2,7 @@ commit: 34725489
 
 checker_typescript Summary:
 AST Parsed     : 3811/3811 (100.00%)
-Positive Passed: 459/3811 (12.04%)
+Positive Passed: 463/3811 (12.15%)
 checker: tasks/coverage/typescript/tests/cases/compiler/2dArrays.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/ClassDeclarationWithInvalidConstOnPropertyDeclaration2.ts
@@ -1325,8 +1325,6 @@ checker: tasks/coverage/typescript/tests/cases/compiler/deferredLookupTypeResolu
 
 checker: tasks/coverage/typescript/tests/cases/compiler/deferredLookupTypeResolution2.ts
 
-checker: tasks/coverage/typescript/tests/cases/compiler/deferredTypeReferenceWithinArrayWithinTuple.ts
-
 checker: tasks/coverage/typescript/tests/cases/compiler/defineVariables_useDefineForClassFields.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/definiteAssignmentOfDestructuredVariable.ts
@@ -1380,8 +1378,6 @@ checker: tasks/coverage/typescript/tests/cases/compiler/discriminantsAndNullOrUn
 checker: tasks/coverage/typescript/tests/cases/compiler/discriminantsAndPrimitives.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/discriminantsAndTypePredicates.ts
-
-checker: tasks/coverage/typescript/tests/cases/compiler/discriminateObjectTypesOnly.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/discriminateWithDivergentAccessors1.ts
 
@@ -1636,8 +1632,6 @@ checker: tasks/coverage/typescript/tests/cases/compiler/exportEqualsOfModule.ts
 checker: tasks/coverage/typescript/tests/cases/compiler/exportImportAndClodule.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/exportImportNonInstantiatedModule.ts
-
-checker: tasks/coverage/typescript/tests/cases/compiler/exportNamespaceDeclarationRetainsVisibility.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/exportRedeclarationTypeAliases.ts
 
@@ -2920,8 +2914,6 @@ checker: tasks/coverage/typescript/tests/cases/compiler/nonNullableTypes1.ts
 checker: tasks/coverage/typescript/tests/cases/compiler/nonNullableWithNullableGenericIndexedAccessArg.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/nondistributiveConditionalTypeInfer.ts
-
-checker: tasks/coverage/typescript/tests/cases/compiler/nongenericConditionalNotPartiallyComputed.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/nongenericPartialInstantiationsRelatedInBothDirections.ts
 

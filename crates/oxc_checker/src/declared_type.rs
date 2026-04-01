@@ -30,10 +30,10 @@ impl Checker<'_> {
     fn resolve_declared_type(&mut self, symbol_id: SymbolId) -> TypeId {
         use oxc_ast::AstKind;
 
-        // Import binding — resolve via host (cross-file)
+        // Import binding — resolve type-side via host (cross-file)
         let symbol_flags = self.semantic().scoping().symbol_flags(symbol_id);
         if symbol_flags.is_import() {
-            return self.resolve_import_type(symbol_id);
+            return self.resolve_import_as_type(symbol_id);
         }
 
         let node_id = self.semantic().scoping().symbol_declaration(symbol_id);

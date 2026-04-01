@@ -262,8 +262,14 @@ impl Checker<'_> {
                 let orig_true = cond.true_type;
                 let orig_false = cond.false_type;
 
-                // Look up distributivity from the root
-                let is_distributive = self.conditional_roots[root_id.index()].is_distributive;
+                // Look up distributivity from the root.
+                // The root may come from a different file (e.g., lib.d.ts conditional
+                // types accessed by a per-file checker). If the root_id is out of
+                // range for this checker's conditional_roots, default to non-distributive.
+                let is_distributive = self
+                    .conditional_roots
+                    .get(root_id.index())
+                    .map_or(false, |r| r.is_distributive);
 
                 let new_check = self.instantiate_type(orig_check, mapper);
 

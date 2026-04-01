@@ -77,9 +77,26 @@ impl Checker<'_> {
         // TypeParameters — that's expected. Inference resolves them, so we
         // don't require extends to be non-generic in that case.
         if !check_is_generic {
-            let infer_params = self.conditional_roots[root_id.index()]
-                .infer_type_parameters
-                .clone();
+            // The root may come from a different file (e.g., lib.d.ts utility
+            // types like ReturnType<T>). If the root_id is out of range for
+            // this checker's conditional_roots, fall through to the deferred
+            // path. TODO: fix properly by moving roots to shared storage.
+            let Some(root) = self.conditional_roots.get(root_id.index()) else {
+                // Fall through to create a deferred ConditionalType below
+                return self.type_arena.new_type(
+                    TypeFlags::Conditional,
+                    ObjectFlags::None,
+                    TypeData::Conditional(ConditionalType {
+                        root: root_id,
+                        check_type,
+                        extends_type,
+                        true_type,
+                        false_type,
+                    }),
+                    None,
+                );
+            };
+            let infer_params = root.infer_type_parameters.clone();
 
             if !infer_params.is_empty() {
                 // Concrete check + infer params → run inference to resolve
