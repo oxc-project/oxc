@@ -667,7 +667,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Use named export instead.
 
-  ⚠ eslint(no-restricted-exports): Exporting named values as default is restricted.
+  ⚠ eslint(no-restricted-exports): Exporting named value as default is restricted.
    ╭─[no_restricted_exports.tsx:2:13]
  1 │ const foo = 123;
  2 │             export { foo as default };

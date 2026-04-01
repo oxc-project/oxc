@@ -764,7 +764,6 @@ pub enum RuleEnum {
     ImportNoWebpackLoaderSyntax(ImportNoWebpackLoaderSyntax),
     ImportPreferDefaultExport(ImportPreferDefaultExport),
     ImportUnambiguous(ImportUnambiguous),
-    EslintNoRestrictedExports(EslintNoRestrictedExports),
     EslintAccessorPairs(EslintAccessorPairs),
     EslintArrayCallbackReturn(EslintArrayCallbackReturn),
     EslintArrowBodyStyle(EslintArrowBodyStyle),
@@ -868,6 +867,7 @@ pub enum RuleEnum {
     EslintNoPrototypeBuiltins(EslintNoPrototypeBuiltins),
     EslintNoRedeclare(EslintNoRedeclare),
     EslintNoRegexSpaces(EslintNoRegexSpaces),
+    EslintNoRestrictedExports(EslintNoRestrictedExports),
     EslintNoRestrictedGlobals(EslintNoRestrictedGlobals),
     EslintNoRestrictedImports(EslintNoRestrictedImports),
     EslintNoReturnAssign(EslintNoReturnAssign),
@@ -1484,8 +1484,7 @@ const IMPORT_NO_UNASSIGNED_IMPORT_ID: usize = IMPORT_NO_SELF_IMPORT_ID + 1usize;
 const IMPORT_NO_WEBPACK_LOADER_SYNTAX_ID: usize = IMPORT_NO_UNASSIGNED_IMPORT_ID + 1usize;
 const IMPORT_PREFER_DEFAULT_EXPORT_ID: usize = IMPORT_NO_WEBPACK_LOADER_SYNTAX_ID + 1usize;
 const IMPORT_UNAMBIGUOUS_ID: usize = IMPORT_PREFER_DEFAULT_EXPORT_ID + 1usize;
-const ESLINT_NO_RESTRICTED_EXPORTS_ID: usize = IMPORT_UNAMBIGUOUS_ID + 1usize;
-const ESLINT_ACCESSOR_PAIRS_ID: usize = ESLINT_NO_RESTRICTED_EXPORTS_ID + 1usize;
+const ESLINT_ACCESSOR_PAIRS_ID: usize = IMPORT_UNAMBIGUOUS_ID + 1usize;
 const ESLINT_ARRAY_CALLBACK_RETURN_ID: usize = ESLINT_ACCESSOR_PAIRS_ID + 1usize;
 const ESLINT_ARROW_BODY_STYLE_ID: usize = ESLINT_ARRAY_CALLBACK_RETURN_ID + 1usize;
 const ESLINT_BLOCK_SCOPED_VAR_ID: usize = ESLINT_ARROW_BODY_STYLE_ID + 1usize;
@@ -1588,7 +1587,8 @@ const ESLINT_NO_PROTO_ID: usize = ESLINT_NO_PROMISE_EXECUTOR_RETURN_ID + 1usize;
 const ESLINT_NO_PROTOTYPE_BUILTINS_ID: usize = ESLINT_NO_PROTO_ID + 1usize;
 const ESLINT_NO_REDECLARE_ID: usize = ESLINT_NO_PROTOTYPE_BUILTINS_ID + 1usize;
 const ESLINT_NO_REGEX_SPACES_ID: usize = ESLINT_NO_REDECLARE_ID + 1usize;
-const ESLINT_NO_RESTRICTED_GLOBALS_ID: usize = ESLINT_NO_REGEX_SPACES_ID + 1usize;
+const ESLINT_NO_RESTRICTED_EXPORTS_ID: usize = ESLINT_NO_REGEX_SPACES_ID + 1usize;
+const ESLINT_NO_RESTRICTED_GLOBALS_ID: usize = ESLINT_NO_RESTRICTED_EXPORTS_ID + 1usize;
 const ESLINT_NO_RESTRICTED_IMPORTS_ID: usize = ESLINT_NO_RESTRICTED_GLOBALS_ID + 1usize;
 const ESLINT_NO_RETURN_ASSIGN_ID: usize = ESLINT_NO_RESTRICTED_IMPORTS_ID + 1usize;
 const ESLINT_NO_SCRIPT_URL_ID: usize = ESLINT_NO_RETURN_ASSIGN_ID + 1usize;
@@ -2291,7 +2291,6 @@ impl RuleEnum {
             Self::ImportNoWebpackLoaderSyntax(_) => IMPORT_NO_WEBPACK_LOADER_SYNTAX_ID,
             Self::ImportPreferDefaultExport(_) => IMPORT_PREFER_DEFAULT_EXPORT_ID,
             Self::ImportUnambiguous(_) => IMPORT_UNAMBIGUOUS_ID,
-            Self::EslintNoRestrictedExports(_) => ESLINT_NO_RESTRICTED_EXPORTS_ID,
             Self::EslintAccessorPairs(_) => ESLINT_ACCESSOR_PAIRS_ID,
             Self::EslintArrayCallbackReturn(_) => ESLINT_ARRAY_CALLBACK_RETURN_ID,
             Self::EslintArrowBodyStyle(_) => ESLINT_ARROW_BODY_STYLE_ID,
@@ -2395,6 +2394,7 @@ impl RuleEnum {
             Self::EslintNoPrototypeBuiltins(_) => ESLINT_NO_PROTOTYPE_BUILTINS_ID,
             Self::EslintNoRedeclare(_) => ESLINT_NO_REDECLARE_ID,
             Self::EslintNoRegexSpaces(_) => ESLINT_NO_REGEX_SPACES_ID,
+            Self::EslintNoRestrictedExports(_) => ESLINT_NO_RESTRICTED_EXPORTS_ID,
             Self::EslintNoRestrictedGlobals(_) => ESLINT_NO_RESTRICTED_GLOBALS_ID,
             Self::EslintNoRestrictedImports(_) => ESLINT_NO_RESTRICTED_IMPORTS_ID,
             Self::EslintNoReturnAssign(_) => ESLINT_NO_RETURN_ASSIGN_ID,
@@ -3118,7 +3118,6 @@ impl RuleEnum {
             Self::ImportNoWebpackLoaderSyntax(_) => ImportNoWebpackLoaderSyntax::NAME,
             Self::ImportPreferDefaultExport(_) => ImportPreferDefaultExport::NAME,
             Self::ImportUnambiguous(_) => ImportUnambiguous::NAME,
-            Self::EslintNoRestrictedExports(_) => EslintNoRestrictedExports::NAME,
             Self::EslintAccessorPairs(_) => EslintAccessorPairs::NAME,
             Self::EslintArrayCallbackReturn(_) => EslintArrayCallbackReturn::NAME,
             Self::EslintArrowBodyStyle(_) => EslintArrowBodyStyle::NAME,
@@ -3222,6 +3221,7 @@ impl RuleEnum {
             Self::EslintNoPrototypeBuiltins(_) => EslintNoPrototypeBuiltins::NAME,
             Self::EslintNoRedeclare(_) => EslintNoRedeclare::NAME,
             Self::EslintNoRegexSpaces(_) => EslintNoRegexSpaces::NAME,
+            Self::EslintNoRestrictedExports(_) => EslintNoRestrictedExports::NAME,
             Self::EslintNoRestrictedGlobals(_) => EslintNoRestrictedGlobals::NAME,
             Self::EslintNoRestrictedImports(_) => EslintNoRestrictedImports::NAME,
             Self::EslintNoReturnAssign(_) => EslintNoReturnAssign::NAME,
@@ -3935,7 +3935,6 @@ impl RuleEnum {
             Self::ImportNoWebpackLoaderSyntax(_) => ImportNoWebpackLoaderSyntax::CATEGORY,
             Self::ImportPreferDefaultExport(_) => ImportPreferDefaultExport::CATEGORY,
             Self::ImportUnambiguous(_) => ImportUnambiguous::CATEGORY,
-            Self::EslintNoRestrictedExports(_) => EslintNoRestrictedExports::CATEGORY,
             Self::EslintAccessorPairs(_) => EslintAccessorPairs::CATEGORY,
             Self::EslintArrayCallbackReturn(_) => EslintArrayCallbackReturn::CATEGORY,
             Self::EslintArrowBodyStyle(_) => EslintArrowBodyStyle::CATEGORY,
@@ -4039,6 +4038,7 @@ impl RuleEnum {
             Self::EslintNoPrototypeBuiltins(_) => EslintNoPrototypeBuiltins::CATEGORY,
             Self::EslintNoRedeclare(_) => EslintNoRedeclare::CATEGORY,
             Self::EslintNoRegexSpaces(_) => EslintNoRegexSpaces::CATEGORY,
+            Self::EslintNoRestrictedExports(_) => EslintNoRestrictedExports::CATEGORY,
             Self::EslintNoRestrictedGlobals(_) => EslintNoRestrictedGlobals::CATEGORY,
             Self::EslintNoRestrictedImports(_) => EslintNoRestrictedImports::CATEGORY,
             Self::EslintNoReturnAssign(_) => EslintNoReturnAssign::CATEGORY,
@@ -4801,7 +4801,6 @@ impl RuleEnum {
             Self::ImportNoWebpackLoaderSyntax(_) => ImportNoWebpackLoaderSyntax::FIX,
             Self::ImportPreferDefaultExport(_) => ImportPreferDefaultExport::FIX,
             Self::ImportUnambiguous(_) => ImportUnambiguous::FIX,
-            Self::EslintNoRestrictedExports(_) => EslintNoRestrictedExports::FIX,
             Self::EslintAccessorPairs(_) => EslintAccessorPairs::FIX,
             Self::EslintArrayCallbackReturn(_) => EslintArrayCallbackReturn::FIX,
             Self::EslintArrowBodyStyle(_) => EslintArrowBodyStyle::FIX,
@@ -4905,6 +4904,7 @@ impl RuleEnum {
             Self::EslintNoPrototypeBuiltins(_) => EslintNoPrototypeBuiltins::FIX,
             Self::EslintNoRedeclare(_) => EslintNoRedeclare::FIX,
             Self::EslintNoRegexSpaces(_) => EslintNoRegexSpaces::FIX,
+            Self::EslintNoRestrictedExports(_) => EslintNoRestrictedExports::FIX,
             Self::EslintNoRestrictedGlobals(_) => EslintNoRestrictedGlobals::FIX,
             Self::EslintNoRestrictedImports(_) => EslintNoRestrictedImports::FIX,
             Self::EslintNoReturnAssign(_) => EslintNoReturnAssign::FIX,
@@ -5623,7 +5623,6 @@ impl RuleEnum {
             Self::ImportNoWebpackLoaderSyntax(_) => ImportNoWebpackLoaderSyntax::documentation(),
             Self::ImportPreferDefaultExport(_) => ImportPreferDefaultExport::documentation(),
             Self::ImportUnambiguous(_) => ImportUnambiguous::documentation(),
-            Self::EslintNoRestrictedExports(_) => EslintNoRestrictedExports::documentation(),
             Self::EslintAccessorPairs(_) => EslintAccessorPairs::documentation(),
             Self::EslintArrayCallbackReturn(_) => EslintArrayCallbackReturn::documentation(),
             Self::EslintArrowBodyStyle(_) => EslintArrowBodyStyle::documentation(),
@@ -5737,6 +5736,7 @@ impl RuleEnum {
             Self::EslintNoPrototypeBuiltins(_) => EslintNoPrototypeBuiltins::documentation(),
             Self::EslintNoRedeclare(_) => EslintNoRedeclare::documentation(),
             Self::EslintNoRegexSpaces(_) => EslintNoRegexSpaces::documentation(),
+            Self::EslintNoRestrictedExports(_) => EslintNoRestrictedExports::documentation(),
             Self::EslintNoRestrictedGlobals(_) => EslintNoRestrictedGlobals::documentation(),
             Self::EslintNoRestrictedImports(_) => EslintNoRestrictedImports::documentation(),
             Self::EslintNoReturnAssign(_) => EslintNoReturnAssign::documentation(),
@@ -6700,10 +6700,6 @@ impl RuleEnum {
             }
             Self::ImportUnambiguous(_) => ImportUnambiguous::config_schema(generator)
                 .or_else(|| ImportUnambiguous::schema(generator)),
-            Self::EslintNoRestrictedExports(_) => {
-                EslintNoRestrictedExports::config_schema(generator)
-                    .or_else(|| EslintNoRestrictedExports::schema(generator))
-            }
             Self::EslintAccessorPairs(_) => EslintAccessorPairs::config_schema(generator)
                 .or_else(|| EslintAccessorPairs::schema(generator)),
             Self::EslintArrayCallbackReturn(_) => {
@@ -6954,6 +6950,10 @@ impl RuleEnum {
                 .or_else(|| EslintNoRedeclare::schema(generator)),
             Self::EslintNoRegexSpaces(_) => EslintNoRegexSpaces::config_schema(generator)
                 .or_else(|| EslintNoRegexSpaces::schema(generator)),
+            Self::EslintNoRestrictedExports(_) => {
+                EslintNoRestrictedExports::config_schema(generator)
+                    .or_else(|| EslintNoRestrictedExports::schema(generator))
+            }
             Self::EslintNoRestrictedGlobals(_) => {
                 EslintNoRestrictedGlobals::config_schema(generator)
                     .or_else(|| EslintNoRestrictedGlobals::schema(generator))
@@ -8689,7 +8689,6 @@ impl RuleEnum {
             Self::ImportNoWebpackLoaderSyntax(_) => "import",
             Self::ImportPreferDefaultExport(_) => "import",
             Self::ImportUnambiguous(_) => "import",
-            Self::EslintNoRestrictedExports(_) => "eslint",
             Self::EslintAccessorPairs(_) => "eslint",
             Self::EslintArrayCallbackReturn(_) => "eslint",
             Self::EslintArrowBodyStyle(_) => "eslint",
@@ -8793,6 +8792,7 @@ impl RuleEnum {
             Self::EslintNoPrototypeBuiltins(_) => "eslint",
             Self::EslintNoRedeclare(_) => "eslint",
             Self::EslintNoRegexSpaces(_) => "eslint",
+            Self::EslintNoRestrictedExports(_) => "eslint",
             Self::EslintNoRestrictedGlobals(_) => "eslint",
             Self::EslintNoRestrictedImports(_) => "eslint",
             Self::EslintNoReturnAssign(_) => "eslint",
@@ -9471,9 +9471,6 @@ impl RuleEnum {
             Self::ImportUnambiguous(_) => {
                 Ok(Self::ImportUnambiguous(ImportUnambiguous::from_configuration(value)?))
             }
-            Self::EslintNoRestrictedExports(_) => Ok(Self::EslintNoRestrictedExports(
-                EslintNoRestrictedExports::from_configuration(value)?,
-            )),
             Self::EslintAccessorPairs(_) => {
                 Ok(Self::EslintAccessorPairs(EslintAccessorPairs::from_configuration(value)?))
             }
@@ -9783,6 +9780,9 @@ impl RuleEnum {
             Self::EslintNoRegexSpaces(_) => {
                 Ok(Self::EslintNoRegexSpaces(EslintNoRegexSpaces::from_configuration(value)?))
             }
+            Self::EslintNoRestrictedExports(_) => Ok(Self::EslintNoRestrictedExports(
+                EslintNoRestrictedExports::from_configuration(value)?,
+            )),
             Self::EslintNoRestrictedGlobals(_) => Ok(Self::EslintNoRestrictedGlobals(
                 EslintNoRestrictedGlobals::from_configuration(value)?,
             )),
@@ -11710,7 +11710,6 @@ impl RuleEnum {
             Self::ImportNoWebpackLoaderSyntax(rule) => rule.to_configuration(),
             Self::ImportPreferDefaultExport(rule) => rule.to_configuration(),
             Self::ImportUnambiguous(rule) => rule.to_configuration(),
-            Self::EslintNoRestrictedExports(rule) => rule.to_configuration(),
             Self::EslintAccessorPairs(rule) => rule.to_configuration(),
             Self::EslintArrayCallbackReturn(rule) => rule.to_configuration(),
             Self::EslintArrowBodyStyle(rule) => rule.to_configuration(),
@@ -11814,6 +11813,7 @@ impl RuleEnum {
             Self::EslintNoPrototypeBuiltins(rule) => rule.to_configuration(),
             Self::EslintNoRedeclare(rule) => rule.to_configuration(),
             Self::EslintNoRegexSpaces(rule) => rule.to_configuration(),
+            Self::EslintNoRestrictedExports(rule) => rule.to_configuration(),
             Self::EslintNoRestrictedGlobals(rule) => rule.to_configuration(),
             Self::EslintNoRestrictedImports(rule) => rule.to_configuration(),
             Self::EslintNoReturnAssign(rule) => rule.to_configuration(),
@@ -12433,7 +12433,6 @@ impl RuleEnum {
             Self::ImportNoWebpackLoaderSyntax(rule) => rule.run(node, ctx),
             Self::ImportPreferDefaultExport(rule) => rule.run(node, ctx),
             Self::ImportUnambiguous(rule) => rule.run(node, ctx),
-            Self::EslintNoRestrictedExports(rule) => rule.run(node, ctx),
             Self::EslintAccessorPairs(rule) => rule.run(node, ctx),
             Self::EslintArrayCallbackReturn(rule) => rule.run(node, ctx),
             Self::EslintArrowBodyStyle(rule) => rule.run(node, ctx),
@@ -12537,6 +12536,7 @@ impl RuleEnum {
             Self::EslintNoPrototypeBuiltins(rule) => rule.run(node, ctx),
             Self::EslintNoRedeclare(rule) => rule.run(node, ctx),
             Self::EslintNoRegexSpaces(rule) => rule.run(node, ctx),
+            Self::EslintNoRestrictedExports(rule) => rule.run(node, ctx),
             Self::EslintNoRestrictedGlobals(rule) => rule.run(node, ctx),
             Self::EslintNoRestrictedImports(rule) => rule.run(node, ctx),
             Self::EslintNoReturnAssign(rule) => rule.run(node, ctx),
@@ -13152,7 +13152,6 @@ impl RuleEnum {
             Self::ImportNoWebpackLoaderSyntax(rule) => rule.run_once(ctx),
             Self::ImportPreferDefaultExport(rule) => rule.run_once(ctx),
             Self::ImportUnambiguous(rule) => rule.run_once(ctx),
-            Self::EslintNoRestrictedExports(rule) => rule.run_once(ctx),
             Self::EslintAccessorPairs(rule) => rule.run_once(ctx),
             Self::EslintArrayCallbackReturn(rule) => rule.run_once(ctx),
             Self::EslintArrowBodyStyle(rule) => rule.run_once(ctx),
@@ -13256,6 +13255,7 @@ impl RuleEnum {
             Self::EslintNoPrototypeBuiltins(rule) => rule.run_once(ctx),
             Self::EslintNoRedeclare(rule) => rule.run_once(ctx),
             Self::EslintNoRegexSpaces(rule) => rule.run_once(ctx),
+            Self::EslintNoRestrictedExports(rule) => rule.run_once(ctx),
             Self::EslintNoRestrictedGlobals(rule) => rule.run_once(ctx),
             Self::EslintNoRestrictedImports(rule) => rule.run_once(ctx),
             Self::EslintNoReturnAssign(rule) => rule.run_once(ctx),
@@ -13875,7 +13875,6 @@ impl RuleEnum {
             Self::ImportNoWebpackLoaderSyntax(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ImportPreferDefaultExport(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ImportUnambiguous(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoRestrictedExports(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintAccessorPairs(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintArrayCallbackReturn(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintArrowBodyStyle(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -13979,6 +13978,7 @@ impl RuleEnum {
             Self::EslintNoPrototypeBuiltins(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoRedeclare(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoRegexSpaces(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::EslintNoRestrictedExports(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoRestrictedGlobals(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoRestrictedImports(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoReturnAssign(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -14690,7 +14690,6 @@ impl RuleEnum {
             Self::ImportNoWebpackLoaderSyntax(rule) => rule.should_run(ctx),
             Self::ImportPreferDefaultExport(rule) => rule.should_run(ctx),
             Self::ImportUnambiguous(rule) => rule.should_run(ctx),
-            Self::EslintNoRestrictedExports(rule) => rule.should_run(ctx),
             Self::EslintAccessorPairs(rule) => rule.should_run(ctx),
             Self::EslintArrayCallbackReturn(rule) => rule.should_run(ctx),
             Self::EslintArrowBodyStyle(rule) => rule.should_run(ctx),
@@ -14794,6 +14793,7 @@ impl RuleEnum {
             Self::EslintNoPrototypeBuiltins(rule) => rule.should_run(ctx),
             Self::EslintNoRedeclare(rule) => rule.should_run(ctx),
             Self::EslintNoRegexSpaces(rule) => rule.should_run(ctx),
+            Self::EslintNoRestrictedExports(rule) => rule.should_run(ctx),
             Self::EslintNoRestrictedGlobals(rule) => rule.should_run(ctx),
             Self::EslintNoRestrictedImports(rule) => rule.should_run(ctx),
             Self::EslintNoReturnAssign(rule) => rule.should_run(ctx),
@@ -15415,7 +15415,6 @@ impl RuleEnum {
             Self::ImportNoWebpackLoaderSyntax(_) => ImportNoWebpackLoaderSyntax::IS_TSGOLINT_RULE,
             Self::ImportPreferDefaultExport(_) => ImportPreferDefaultExport::IS_TSGOLINT_RULE,
             Self::ImportUnambiguous(_) => ImportUnambiguous::IS_TSGOLINT_RULE,
-            Self::EslintNoRestrictedExports(_) => EslintNoRestrictedExports::IS_TSGOLINT_RULE,
             Self::EslintAccessorPairs(_) => EslintAccessorPairs::IS_TSGOLINT_RULE,
             Self::EslintArrayCallbackReturn(_) => EslintArrayCallbackReturn::IS_TSGOLINT_RULE,
             Self::EslintArrowBodyStyle(_) => EslintArrowBodyStyle::IS_TSGOLINT_RULE,
@@ -15529,6 +15528,7 @@ impl RuleEnum {
             Self::EslintNoPrototypeBuiltins(_) => EslintNoPrototypeBuiltins::IS_TSGOLINT_RULE,
             Self::EslintNoRedeclare(_) => EslintNoRedeclare::IS_TSGOLINT_RULE,
             Self::EslintNoRegexSpaces(_) => EslintNoRegexSpaces::IS_TSGOLINT_RULE,
+            Self::EslintNoRestrictedExports(_) => EslintNoRestrictedExports::IS_TSGOLINT_RULE,
             Self::EslintNoRestrictedGlobals(_) => EslintNoRestrictedGlobals::IS_TSGOLINT_RULE,
             Self::EslintNoRestrictedImports(_) => EslintNoRestrictedImports::IS_TSGOLINT_RULE,
             Self::EslintNoReturnAssign(_) => EslintNoReturnAssign::IS_TSGOLINT_RULE,
@@ -16441,7 +16441,6 @@ impl RuleEnum {
             Self::ImportNoWebpackLoaderSyntax(_) => ImportNoWebpackLoaderSyntax::HAS_CONFIG,
             Self::ImportPreferDefaultExport(_) => ImportPreferDefaultExport::HAS_CONFIG,
             Self::ImportUnambiguous(_) => ImportUnambiguous::HAS_CONFIG,
-            Self::EslintNoRestrictedExports(_) => EslintNoRestrictedExports::HAS_CONFIG,
             Self::EslintAccessorPairs(_) => EslintAccessorPairs::HAS_CONFIG,
             Self::EslintArrayCallbackReturn(_) => EslintArrayCallbackReturn::HAS_CONFIG,
             Self::EslintArrowBodyStyle(_) => EslintArrowBodyStyle::HAS_CONFIG,
@@ -16549,6 +16548,7 @@ impl RuleEnum {
             Self::EslintNoPrototypeBuiltins(_) => EslintNoPrototypeBuiltins::HAS_CONFIG,
             Self::EslintNoRedeclare(_) => EslintNoRedeclare::HAS_CONFIG,
             Self::EslintNoRegexSpaces(_) => EslintNoRegexSpaces::HAS_CONFIG,
+            Self::EslintNoRestrictedExports(_) => EslintNoRestrictedExports::HAS_CONFIG,
             Self::EslintNoRestrictedGlobals(_) => EslintNoRestrictedGlobals::HAS_CONFIG,
             Self::EslintNoRestrictedImports(_) => EslintNoRestrictedImports::HAS_CONFIG,
             Self::EslintNoReturnAssign(_) => EslintNoReturnAssign::HAS_CONFIG,
@@ -17332,7 +17332,6 @@ impl RuleEnum {
             Self::ImportNoWebpackLoaderSyntax(rule) => rule.types_info(),
             Self::ImportPreferDefaultExport(rule) => rule.types_info(),
             Self::ImportUnambiguous(rule) => rule.types_info(),
-            Self::EslintNoRestrictedExports(rule) => rule.types_info(),
             Self::EslintAccessorPairs(rule) => rule.types_info(),
             Self::EslintArrayCallbackReturn(rule) => rule.types_info(),
             Self::EslintArrowBodyStyle(rule) => rule.types_info(),
@@ -17436,6 +17435,7 @@ impl RuleEnum {
             Self::EslintNoPrototypeBuiltins(rule) => rule.types_info(),
             Self::EslintNoRedeclare(rule) => rule.types_info(),
             Self::EslintNoRegexSpaces(rule) => rule.types_info(),
+            Self::EslintNoRestrictedExports(rule) => rule.types_info(),
             Self::EslintNoRestrictedGlobals(rule) => rule.types_info(),
             Self::EslintNoRestrictedImports(rule) => rule.types_info(),
             Self::EslintNoReturnAssign(rule) => rule.types_info(),
@@ -18051,7 +18051,6 @@ impl RuleEnum {
             Self::ImportNoWebpackLoaderSyntax(rule) => rule.run_info(),
             Self::ImportPreferDefaultExport(rule) => rule.run_info(),
             Self::ImportUnambiguous(rule) => rule.run_info(),
-            Self::EslintNoRestrictedExports(rule) => rule.run_info(),
             Self::EslintAccessorPairs(rule) => rule.run_info(),
             Self::EslintArrayCallbackReturn(rule) => rule.run_info(),
             Self::EslintArrowBodyStyle(rule) => rule.run_info(),
@@ -18155,6 +18154,7 @@ impl RuleEnum {
             Self::EslintNoPrototypeBuiltins(rule) => rule.run_info(),
             Self::EslintNoRedeclare(rule) => rule.run_info(),
             Self::EslintNoRegexSpaces(rule) => rule.run_info(),
+            Self::EslintNoRestrictedExports(rule) => rule.run_info(),
             Self::EslintNoRestrictedGlobals(rule) => rule.run_info(),
             Self::EslintNoRestrictedImports(rule) => rule.run_info(),
             Self::EslintNoReturnAssign(rule) => rule.run_info(),
@@ -18792,7 +18792,6 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::ImportNoWebpackLoaderSyntax(ImportNoWebpackLoaderSyntax::default()),
         RuleEnum::ImportPreferDefaultExport(ImportPreferDefaultExport::default()),
         RuleEnum::ImportUnambiguous(ImportUnambiguous::default()),
-        RuleEnum::EslintNoRestrictedExports(EslintNoRestrictedExports::default()),
         RuleEnum::EslintAccessorPairs(EslintAccessorPairs::default()),
         RuleEnum::EslintArrayCallbackReturn(EslintArrayCallbackReturn::default()),
         RuleEnum::EslintArrowBodyStyle(EslintArrowBodyStyle::default()),
@@ -18896,6 +18895,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::EslintNoPrototypeBuiltins(EslintNoPrototypeBuiltins::default()),
         RuleEnum::EslintNoRedeclare(EslintNoRedeclare::default()),
         RuleEnum::EslintNoRegexSpaces(EslintNoRegexSpaces::default()),
+        RuleEnum::EslintNoRestrictedExports(EslintNoRestrictedExports::default()),
         RuleEnum::EslintNoRestrictedGlobals(EslintNoRestrictedGlobals::default()),
         RuleEnum::EslintNoRestrictedImports(EslintNoRestrictedImports::default()),
         RuleEnum::EslintNoReturnAssign(EslintNoReturnAssign::default()),

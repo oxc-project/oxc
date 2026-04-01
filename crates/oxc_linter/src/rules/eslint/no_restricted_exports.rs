@@ -42,12 +42,27 @@ fn no_restricted_default_exports_diagnostic(
 }
 
 fn no_restricted_named_exports_diagnostic(span: Span, name: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("'{}' is restricted from being used as an exported name.", name))
+    OxcDiagnostic::warn(format!("'{name}' is restricted from being used as an exported name."))
         .with_help("Rename this export.")
         .with_label(span)
 }
 
-#[derive(Clone, Debug, Default, Deserialize, JsonSchema)]
+#[derive(Debug, Default, Clone, Deserialize)]
+pub struct NoRestrictedExports(Box<NoRestrictedExportsConfig>);
+
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
+pub struct NoRestrictedExportsConfig {
+    restricted_named_exports: FxHashSet<String>,
+    #[serde(deserialize_with = "deserialize_regex_pattern")]
+    restricted_named_exports_pattern: Option<Regex>,
+    restrict_default_exports: RestrictDefaultExports,
+
+    #[serde(skip_serializing)]
+    has_default_restricted_named_export: bool,
+}
+
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 struct RestrictDefaultExports {
     default_from: bool,
@@ -57,16 +72,18 @@ struct RestrictDefaultExports {
     namespace_from: bool,
 }
 
-#[derive(Clone, Debug, Default, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
-pub struct NoRestrictedExports {
-    restricted_named_exports: FxHashSet<String>,
-    #[serde(deserialize_with = "deserialize_regex_pattern")]
-    restricted_named_exports_pattern: Option<Regex>,
-    restrict_default_exports: RestrictDefaultExports,
+impl std::ops::Deref for NoRestrictedExports {
+    type Target = NoRestrictedExportsConfig;
 
-    #[serde(skip_serializing)]
-    has_default_restricted_named_export: bool,
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl std::ops::DerefMut for NoRestrictedExports {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
 }
 
 fn deserialize_regex_pattern<'de, D>(deserializer: D) -> Result<Option<Regex>, D::Error>
@@ -209,26 +226,27 @@ declare_oxc_lint!(
     NoRestrictedExports,
     eslint,
     nursery, // TODO: change category to `restriction`
-    config = NoRestrictedExports,
+    config = NoRestrictedExportsConfig,
 );
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum LocalSpecifier {
-    NamedFrom,     // export { foo as default } from 'foo';
-    DefaultFrom,   // export { default } from 'mod';
-    NamespaceFrom, // export * as default from 'mod';
+enum LocalFromSpecifier {
+    Named,     // export { foo as default } from 'foo';
+    Default,   // export { default } from 'mod';
+    Namespace, // export * as default from 'mod';
 }
 
 impl Rule for NoRestrictedExports {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        let mut config = serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-            .map(DefaultRuleConfig::into_inner)?;
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value)
+            .map(DefaultRuleConfig::into_inner)
+            .map(|mut c| {
+                // Cache if "default" is in restricted_named_exports
+                c.has_default_restricted_named_export =
+                    c.restricted_named_exports.contains("default");
 
-        // Cache if "default" is in restricted_named_exports
-        config.has_default_restricted_named_export =
-            config.restricted_named_exports.contains("default");
-
-        Ok(config)
+                c
+            })
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -257,7 +275,7 @@ impl NoRestrictedExports {
                     ctx,
                     export.span,
                     true,
-                    std::iter::once(LocalSpecifier::NamespaceFrom),
+                    std::iter::once(LocalFromSpecifier::Namespace),
                 );
             }
         }
@@ -276,8 +294,8 @@ impl NoRestrictedExports {
                 if spec.exported.name() == "default" {
                     has_default = true;
                     let local_spec = match spec.local.name().as_str() {
-                        "default" => LocalSpecifier::DefaultFrom,
-                        _ => LocalSpecifier::NamedFrom,
+                        "default" => LocalFromSpecifier::Default,
+                        _ => LocalFromSpecifier::Named,
                     };
                     specifiers.push(local_spec);
                 }
@@ -346,7 +364,7 @@ impl NoRestrictedExports {
         specifiers: S,
     ) where
         S: IntoIterator,
-        S::Item: Borrow<LocalSpecifier>,
+        S::Item: Borrow<LocalFromSpecifier>,
     {
         // restrict default exports option only works if the restrictedNamedExports option does not contain the "default" value.
         if self.has_default_restricted_named_export {
@@ -358,19 +376,19 @@ impl NoRestrictedExports {
             (false, opts) => opts.named.then_some(DefaultExportType::Named),
             // With source: check specific types
             (true, opts) => specifiers.into_iter().find_map(|spec| match spec.borrow() {
-                LocalSpecifier::DefaultFrom => {
+                LocalFromSpecifier::Default => {
                     opts.default_from.then_some(DefaultExportType::DefaultFrom)
                 }
-                LocalSpecifier::NamedFrom => {
+                LocalFromSpecifier::Named => {
                     opts.named_from.then_some(DefaultExportType::NamedFrom)
                 }
-                LocalSpecifier::NamespaceFrom => {
+                LocalFromSpecifier::Namespace => {
                     opts.namespace_from.then_some(DefaultExportType::NamespaceFrom)
                 }
             }),
         } {
             ctx.diagnostic(no_restricted_default_exports_diagnostic(span, type_export));
-        };
+        }
     }
 
     fn check_no_restricted_named_exports<S>(&self, ctx: &LintContext<'_>, span: Span, exports: S)
@@ -384,7 +402,7 @@ impl NoRestrictedExports {
             return;
         }
 
-        for export in exports.into_iter() {
+        for export in exports {
             let export = export.borrow();
             if self.restricted_named_exports.contains(export)
                 || (export != "default"
