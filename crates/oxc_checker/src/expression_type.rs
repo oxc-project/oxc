@@ -546,11 +546,7 @@ impl Checker<'_> {
     ///
     /// Mirrors tsgo's `checkNonNullType`. Uses the default error reporter
     /// (`reportObjectPossiblyNullOrUndefinedError`).
-    pub(crate) fn check_non_null_type(
-        &mut self,
-        type_id: TypeId,
-        expr: &Expression<'_>,
-    ) -> TypeId {
+    pub(crate) fn check_non_null_type(&mut self, type_id: TypeId, expr: &Expression<'_>) -> TypeId {
         self.check_non_null_type_with_reporter(type_id, expr, NullableErrorReporter::Default)
     }
 
@@ -626,11 +622,8 @@ impl Checker<'_> {
             (true, false) => ("2531", "Object is possibly 'null'."),
             _ => ("2532", "Object is possibly 'undefined'."),
         };
-        self.diagnostics.push(
-            OxcDiagnostic::error(msg)
-                .with_error_code("ts", code)
-                .with_label(span),
-        );
+        self.diagnostics
+            .push(OxcDiagnostic::error(msg).with_error_code("ts", code).with_label(span));
     }
 
     /// Report TS2721 / TS2722 / TS2723 for attempting to invoke a possibly-null type.
@@ -643,25 +636,21 @@ impl Checker<'_> {
     ) {
         let span = expr.span();
         let (code, msg) = match (has_null, has_undefined) {
-            (true, true) => (
-                "2723",
-                "Cannot invoke an object which is possibly 'null' or 'undefined'.",
-            ),
+            (true, true) => {
+                ("2723", "Cannot invoke an object which is possibly 'null' or 'undefined'.")
+            }
             (true, false) => ("2721", "Cannot invoke an object which is possibly 'null'."),
             _ => ("2722", "Cannot invoke an object which is possibly 'undefined'."),
         };
-        self.diagnostics.push(
-            OxcDiagnostic::error(msg)
-                .with_error_code("ts", code)
-                .with_label(span),
-        );
+        self.diagnostics
+            .push(OxcDiagnostic::error(msg).with_error_code("ts", code).with_label(span));
     }
 
     /// Get the type of a global identifier in value/expression position.
     ///
     /// Prefers the value-side type (from `declare var` / `declare function` in
     /// lib.d.ts), falls back to type-side (interface), then `any`.
-    fn get_type_of_global_identifier(&self, name: &str) -> TypeId {
+    pub(crate) fn get_type_of_global_identifier(&self, name: &str) -> TypeId {
         match name {
             "undefined" => self.undefined_type,
             _ => {
@@ -843,6 +832,12 @@ impl Checker<'_> {
                     Some((self.file_idx, symbol_id)),
                 )
             }
+            AstKind::TSModuleDeclaration(decl) => {
+                // The value type of a namespace is a structured object with
+                // properties for each exported value declaration.
+                // Similar to enum value types above.
+                self.get_namespace_value_type(decl, symbol_id)
+            }
             AstKind::TSEnumDeclaration(decl) => {
                 // The value type of an enum is the namespace object with member
                 // properties. Displays as "typeof E". For binding identifiers,
@@ -964,6 +959,136 @@ impl Checker<'_> {
             let t = self.get_or_create_number_literal_type(*auto_value);
             *auto_value += 1.0;
             t
+        }
+    }
+
+    /// Build the value type of a namespace/module declaration.
+    ///
+    /// Iterates through the body's statements, collecting exported value
+    /// declarations (variables, functions, classes, enums, nested namespaces)
+    /// as properties of a structured object type.
+    fn get_namespace_value_type(
+        &mut self,
+        decl: &oxc_ast::ast::TSModuleDeclaration<'_>,
+        symbol_id: SymbolId,
+    ) -> TypeId {
+        use oxc_ast::ast::{Statement, TSModuleDeclarationBody};
+
+        let mut properties = Vec::new();
+
+        let Some(body) = &decl.body else {
+            // Ambient module with no body (e.g., `declare module "foo";`)
+            return self.type_arena.new_type(
+                TypeFlags::Object,
+                ObjectFlags::Anonymous,
+                TypeData::Structured(StructuredType {
+                    member_map: build_member_map(&properties),
+                    properties,
+                    string_index_type: None,
+                    number_index_type: None,
+                    call_signatures: Vec::new(),
+                    construct_signatures: Vec::new(),
+                    kind: StructuredTypeKind::Anonymous { target: None },
+                }),
+                Some((self.file_idx, symbol_id)),
+            );
+        };
+
+        match body {
+            TSModuleDeclarationBody::TSModuleBlock(block) => {
+                for stmt in &block.body {
+                    // In a namespace body, exported declarations appear as
+                    // ExportNamedDeclaration wrapping a Declaration.
+                    if let Statement::ExportNamedDeclaration(export) = stmt {
+                        if let Some(inner_decl) = &export.declaration {
+                            self.collect_namespace_properties_from_declaration(
+                                inner_decl,
+                                &mut properties,
+                            );
+                        }
+                    }
+                }
+            }
+            TSModuleDeclarationBody::TSModuleDeclaration(inner) => {
+                // Dotted name: `namespace A.B { ... }` — the inner module
+                // becomes a single property on the outer namespace.
+                let name = inner.id.name();
+                let inner_type = self.get_namespace_value_type(inner, symbol_id);
+                properties.push(PropertyInfo::new(CompactStr::new(&name), inner_type));
+            }
+        }
+
+        self.type_arena.new_type(
+            TypeFlags::Object,
+            ObjectFlags::Anonymous,
+            TypeData::Structured(StructuredType {
+                member_map: build_member_map(&properties),
+                properties,
+                string_index_type: None,
+                number_index_type: None,
+                call_signatures: Vec::new(),
+                construct_signatures: Vec::new(),
+                kind: StructuredTypeKind::Anonymous { target: None },
+            }),
+            Some((self.file_idx, symbol_id)),
+        )
+    }
+
+    /// Collect property entries from a declaration inside a namespace body.
+    fn collect_namespace_properties_from_declaration(
+        &mut self,
+        decl: &oxc_ast::ast::Declaration<'_>,
+        properties: &mut Vec<PropertyInfo>,
+    ) {
+        use oxc_ast::ast::Declaration;
+
+        match decl {
+            Declaration::VariableDeclaration(var_decl) => {
+                for declarator in &var_decl.declarations {
+                    if let oxc_ast::ast::BindingPattern::BindingIdentifier(id) = &declarator.id {
+                        if let Some(sid) = id.symbol_id.get() {
+                            let prop_type = self.get_type_of_symbol(sid);
+                            properties
+                                .push(PropertyInfo::new(CompactStr::new(&id.name), prop_type));
+                        }
+                    }
+                }
+            }
+            Declaration::FunctionDeclaration(func) => {
+                if let Some(id) = &func.id {
+                    if let Some(sid) = id.symbol_id.get() {
+                        let func_type = self.get_type_of_symbol(sid);
+                        properties.push(PropertyInfo::new(CompactStr::new(&id.name), func_type));
+                    }
+                }
+            }
+            Declaration::ClassDeclaration(class) => {
+                if let Some(id) = &class.id {
+                    if let Some(sid) = id.symbol_id.get() {
+                        let class_type = self.get_type_of_symbol(sid);
+                        properties.push(PropertyInfo::new(CompactStr::new(&id.name), class_type));
+                    }
+                }
+            }
+            Declaration::TSEnumDeclaration(enum_decl) => {
+                if let Some(sid) = enum_decl.id.symbol_id.get() {
+                    let enum_type = self.get_type_of_symbol(sid);
+                    properties
+                        .push(PropertyInfo::new(CompactStr::new(&enum_decl.id.name), enum_type));
+                }
+            }
+            Declaration::TSModuleDeclaration(inner_ns) => {
+                let name = inner_ns.id.name();
+                if let oxc_ast::ast::TSModuleDeclarationName::Identifier(id) = &inner_ns.id {
+                    if let Some(sid) = id.symbol_id.get() {
+                        let ns_type = self.get_type_of_symbol(sid);
+                        properties.push(PropertyInfo::new(CompactStr::new(&name), ns_type));
+                    }
+                }
+            }
+            // Type-only declarations (interfaces, type aliases) don't contribute
+            // to the namespace value type.
+            _ => {}
         }
     }
 
@@ -1250,7 +1375,7 @@ impl Checker<'_> {
     /// Resolve a static member expression (`obj.prop`) given a pre-resolved object type.
     /// Looks up the property by name and reports TS2339 if not found.
     /// Null checking is the caller's responsibility (see dispatch site convention).
-    fn resolve_static_member_type(
+    pub(crate) fn resolve_static_member_type(
         &mut self,
         object_type: TypeId,
         expr: &oxc_ast::ast::StaticMemberExpression<'_>,
@@ -1621,7 +1746,7 @@ impl Checker<'_> {
     /// Resolve a computed member expression (`obj["key"]`, `obj[0]`) given a pre-resolved
     /// object type. For string literal keys, performs a property lookup.
     /// Null checking is the caller's responsibility (see dispatch site convention).
-    fn resolve_computed_member_type(
+    pub(crate) fn resolve_computed_member_type(
         &mut self,
         object_type: TypeId,
         expr: &ComputedMemberExpression<'_>,

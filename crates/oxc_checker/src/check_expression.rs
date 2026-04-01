@@ -158,20 +158,78 @@ impl Checker<'_> {
         use oxc_syntax::operator::AssignmentOperator;
 
         if assign.operator == AssignmentOperator::Assign {
-            if let AssignmentTarget::AssignmentTargetIdentifier(ident) = &assign.left {
-                let target_type = self.get_type_of_identifier(ident);
-                let value_type = self.get_type_of_expression(&assign.right, Some(target_type));
-                self.check_type_assignable_to_and_report(
-                    value_type,
-                    target_type,
-                    ident.span(),
-                    "2322",
-                    |s, t| format!("Type '{s}' is not assignable to type '{t}'."),
-                );
-                return value_type;
+            match &assign.left {
+                AssignmentTarget::AssignmentTargetIdentifier(ident) => {
+                    let target_type = self.get_type_of_identifier(ident);
+                    let value_type = self.get_type_of_expression(&assign.right, Some(target_type));
+                    self.check_type_assignable_to_and_report(
+                        value_type,
+                        target_type,
+                        ident.span(),
+                        "2322",
+                        |s, t| format!("Type '{s}' is not assignable to type '{t}'."),
+                    );
+                    return value_type;
+                }
+                AssignmentTarget::StaticMemberExpression(expr) => {
+                    // Use declared type for the object — the object of a member
+                    // assignment target is in write context and should not
+                    // trigger TS2454 (used before assigned).
+                    let object_type = self.get_assignment_target_object_type(&expr.object);
+                    let target_type = self.resolve_static_member_type(object_type, expr);
+                    let value_type = self.get_type_of_expression(&assign.right, Some(target_type));
+                    // Skip assignability check when target is `any` (e.g. property
+                    // not found already reported TS2339 — don't pile on TS2322).
+                    if target_type != self.any_type {
+                        self.check_type_assignable_to_and_report(
+                            value_type,
+                            target_type,
+                            expr.span(),
+                            "2322",
+                            |s, t| format!("Type '{s}' is not assignable to type '{t}'."),
+                        );
+                    }
+                    return value_type;
+                }
+                AssignmentTarget::ComputedMemberExpression(expr) => {
+                    let object_type = self.get_assignment_target_object_type(&expr.object);
+                    let target_type = self.resolve_computed_member_type(object_type, expr);
+                    let value_type = self.get_type_of_expression(&assign.right, Some(target_type));
+                    if target_type != self.any_type {
+                        self.check_type_assignable_to_and_report(
+                            value_type,
+                            target_type,
+                            expr.span(),
+                            "2322",
+                            |s, t| format!("Type '{s}' is not assignable to type '{t}'."),
+                        );
+                    }
+                    return value_type;
+                }
+                _ => {}
             }
         }
 
         self.get_type_of_expression(&assign.right, contextual_type)
+    }
+
+    /// Get the type of an object expression in an assignment target position.
+    ///
+    /// For identifiers, returns the declared type directly (via `get_type_of_symbol`)
+    /// to avoid firing TS2454 — the object of `x.prop = value` is in write context,
+    /// so TSC doesn't treat `x` as "used before assigned" here.
+    /// For non-identifier expressions, falls through to `get_type_of_expression`.
+    fn get_assignment_target_object_type(&mut self, object: &Expression<'_>) -> TypeId {
+        if let Expression::Identifier(ident) = object {
+            let Some(reference_id) = ident.reference_id.get() else {
+                return self.any_type;
+            };
+            let reference = self.semantic().scoping().get_reference(reference_id);
+            let Some(symbol_id) = reference.symbol_id() else {
+                return self.get_type_of_global_identifier(&ident.name);
+            };
+            return self.get_type_of_symbol(symbol_id);
+        }
+        self.get_type_of_expression(object, None)
     }
 }
