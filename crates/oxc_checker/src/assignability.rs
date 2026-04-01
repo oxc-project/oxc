@@ -2,6 +2,7 @@ use oxc_types::{
     LiteralType, ObjectFlags, PropertyInfo, Signature, StructuredType, StructuredTypeKind,
     TypeData, TypeFlags, TypeId, build_member_map,
 };
+use rustc_hash::FxHashSet;
 use smallvec::SmallVec;
 
 use crate::Checker;
@@ -225,9 +226,6 @@ impl<'a> Checker<'a> {
                 TypeData::Structured(s) => &s.properties,
                 _ => return true,
             };
-        if target_props.is_empty() {
-            return true;
-        }
 
         // For each target property, O(1) lookup in source via get_property_of_type
         // (which uses member_map internally). This replaces the old O(P*Q) pattern.
@@ -244,6 +242,97 @@ impl<'a> Checker<'a> {
                         return false;
                     }
                 }
+            }
+        }
+
+        // Also check inherited properties from base types (interface extends).
+        // Track which property names have already been checked so that overrides
+        // at intermediate levels in the chain are respected (child shadows parent).
+        if let TypeData::Structured(s) = self.type_arena.get_data(resolved_target) {
+            if let StructuredTypeKind::Interface { resolved_base_types, .. } = &s.kind {
+                let bases: SmallVec<[TypeId; 4]> = resolved_base_types.clone();
+                // Seed with direct property names — these are already checked above.
+                let mut checked_names: FxHashSet<oxc_span::CompactStr> =
+                    match self.type_arena.get_data(resolved_target) {
+                        TypeData::Structured(s) => {
+                            s.properties.iter().map(|p| p.name.clone()).collect()
+                        }
+                        _ => FxHashSet::default(),
+                    };
+                for &base in &bases {
+                    if !self.check_inherited_properties_assignable(source, base, &mut checked_names)
+                    {
+                        return false;
+                    }
+                }
+            }
+        }
+
+        true
+    }
+
+    /// Check that inherited (base type) properties of a target are satisfied by the source.
+    ///
+    /// Walks the base type's properties, skipping any already in `checked_names`
+    /// (overridden by a descendant type). Adds newly checked names to the set so
+    /// that grandparent properties overridden at intermediate levels are also skipped.
+    ///
+    /// Recurses into the base type's own base types to handle multi-level inheritance.
+    fn check_inherited_properties_assignable(
+        &mut self,
+        source: TypeId,
+        base: TypeId,
+        checked_names: &mut FxHashSet<oxc_span::CompactStr>,
+    ) -> bool {
+        // Resolve TypeReference for the base (e.g., Base<number>)
+        let resolved_base = if let TypeData::TypeReference(_) = self.type_arena.get_data(base) {
+            self.resolve_type_reference(base)
+        } else {
+            base
+        };
+
+        let base_data = self.type_arena.get_data(resolved_base);
+        let TypeData::Structured(base_s) = base_data else {
+            return true;
+        };
+
+        // Collect property info we need before calling &mut self methods
+        let base_props: Vec<(oxc_span::CompactStr, TypeId, bool)> =
+            base_s.properties.iter().map(|p| (p.name.clone(), p.type_id, p.optional)).collect();
+
+        // Collect further base types for recursive walk
+        let grandparent_bases: SmallVec<[TypeId; 4]> =
+            if let StructuredTypeKind::Interface { resolved_base_types, .. } = &base_s.kind {
+                resolved_base_types.clone()
+            } else {
+                SmallVec::new()
+            };
+
+        // Check each base property not already checked by a descendant type
+        for (name, prop_type, optional) in &base_props {
+            if !checked_names.insert(name.clone()) {
+                // Already checked by a descendant — skip (descendant's type takes precedence)
+                continue;
+            }
+
+            match self.get_property_of_type(source, name) {
+                None => {
+                    if !optional {
+                        return false;
+                    }
+                }
+                Some(source_prop_type) => {
+                    if !self.is_type_assignable_to(source_prop_type, *prop_type) {
+                        return false;
+                    }
+                }
+            }
+        }
+
+        // Recurse into grandparent base types
+        for &grandparent in &grandparent_bases {
+            if !self.check_inherited_properties_assignable(source, grandparent, checked_names) {
+                return false;
             }
         }
 

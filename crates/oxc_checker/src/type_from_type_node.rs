@@ -387,7 +387,23 @@ impl Checker<'_> {
         symbol_id: oxc_syntax::symbol::SymbolId,
         ref_type: &oxc_ast::ast::TSTypeReference<'_>,
     ) -> TypeId {
-        let Some(type_args_node) = &ref_type.type_arguments else {
+        self.maybe_instantiate_type_alias_from_args(
+            target,
+            symbol_id,
+            ref_type.type_arguments.as_deref(),
+        )
+    }
+
+    /// Instantiate a type alias body with type arguments from an explicit
+    /// `TSTypeParameterInstantiation` node. Shared by `maybe_instantiate_type_alias`
+    /// (TSTypeReference) and `get_type_from_heritage_element` (TSInterfaceHeritage).
+    pub(crate) fn maybe_instantiate_type_alias_from_args(
+        &mut self,
+        target: TypeId,
+        symbol_id: oxc_syntax::symbol::SymbolId,
+        type_args_node: Option<&oxc_ast::ast::TSTypeParameterInstantiation<'_>>,
+    ) -> TypeId {
+        let Some(type_args_node) = type_args_node else {
             return target;
         };
 
@@ -533,7 +549,20 @@ impl Checker<'_> {
         target: TypeId,
         ref_type: &oxc_ast::ast::TSTypeReference<'_>,
     ) -> TypeId {
-        let Some(type_args_node) = &ref_type.type_arguments else {
+        self.maybe_create_type_reference_from_args(target, ref_type.type_arguments.as_deref())
+    }
+
+    /// If `type_args_node` is present, wrap `target` in a TypeReference for
+    /// lazy generic instantiation. Otherwise return target directly.
+    ///
+    /// Shared by `maybe_create_type_reference` (for TSTypeReference nodes)
+    /// and `maybe_create_heritage_type_reference` (for TSInterfaceHeritage nodes).
+    pub(crate) fn maybe_create_type_reference_from_args(
+        &mut self,
+        target: TypeId,
+        type_args_node: Option<&oxc_ast::ast::TSTypeParameterInstantiation<'_>>,
+    ) -> TypeId {
+        let Some(type_args_node) = type_args_node else {
             return target;
         };
 
