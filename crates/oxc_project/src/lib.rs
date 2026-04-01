@@ -28,6 +28,10 @@
 //! check is a task, imports create dependency edges, rayon work-stealing
 //! schedules execution. `RefCell` on the export map swaps to `DashMap`.
 
+mod compiler_options;
+
+pub use compiler_options::{CompilerOptions, ScriptTarget, validate_compiler_options};
+
 use std::cell::RefCell;
 use std::path::{Path, PathBuf};
 use std::time::Instant;

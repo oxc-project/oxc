@@ -2,7 +2,7 @@ commit: 34725489
 
 checker_typescript Summary:
 AST Parsed     : 3811/3811 (100.00%)
-Positive Passed: 427/3811 (11.20%)
+Positive Passed: 440/3811 (11.55%)
 checker: tasks/coverage/typescript/tests/cases/compiler/2dArrays.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/ClassDeclarationWithInvalidConstOnPropertyDeclaration2.ts
@@ -1917,10 +1917,6 @@ checker: tasks/coverage/typescript/tests/cases/compiler/genericCallInferenceWith
 
 checker: tasks/coverage/typescript/tests/cases/compiler/genericCallOnMemberReturningClosedOverObject.ts
 
-checker: tasks/coverage/typescript/tests/cases/compiler/genericCallWithFixedArguments.ts
-
-checker: tasks/coverage/typescript/tests/cases/compiler/genericCallWithNonGenericArgs1.ts
-
 checker: tasks/coverage/typescript/tests/cases/compiler/genericCallWithinOwnBodyCastTypeParameterIdentity.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/genericCapturingFunctionNarrowing.ts
@@ -3411,8 +3407,6 @@ checker: tasks/coverage/typescript/tests/cases/compiler/selfInCallback.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/selfInLambdas.ts
 
-checker: tasks/coverage/typescript/tests/cases/compiler/selfReference.ts
-
 checker: tasks/coverage/typescript/tests/cases/compiler/selfReferencingTypeReferenceInference.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/selfReferentialFunctionType.ts
@@ -3870,8 +3864,6 @@ checker: tasks/coverage/typescript/tests/cases/compiler/typeInferenceTypePredica
 checker: tasks/coverage/typescript/tests/cases/compiler/typeInferenceWithExcessProperties.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/typeInferenceWithExcessPropertiesJsx.tsx
-
-checker: tasks/coverage/typescript/tests/cases/compiler/typeInferenceWithTypeAnnotation.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/typeOfSuperCall.ts
 
@@ -4787,14 +4779,6 @@ checker: tasks/coverage/typescript/tests/cases/conformance/es6/computedPropertie
 
 checker: tasks/coverage/typescript/tests/cases/conformance/es6/decorators/class/accessor/decoratorOnClassAccessor1.es6.ts
 
-checker: tasks/coverage/typescript/tests/cases/conformance/es6/decorators/class/decoratorOnClass1.es6.ts
-
-checker: tasks/coverage/typescript/tests/cases/conformance/es6/decorators/class/decoratorOnClass2.es6.ts
-
-checker: tasks/coverage/typescript/tests/cases/conformance/es6/decorators/class/decoratorOnClass3.es6.ts
-
-checker: tasks/coverage/typescript/tests/cases/conformance/es6/decorators/class/decoratorOnClass4.es6.ts
-
 checker: tasks/coverage/typescript/tests/cases/conformance/es6/decorators/class/decoratorOnClass5.es6.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/es6/decorators/class/decoratorOnClass6.es6.ts
@@ -5343,13 +5327,9 @@ checker: tasks/coverage/typescript/tests/cases/conformance/expressions/binaryOpe
 
 checker: tasks/coverage/typescript/tests/cases/conformance/expressions/binaryOperators/additionOperator/additionOperatorWithConstrainedTypeParameter.ts
 
-checker: tasks/coverage/typescript/tests/cases/conformance/expressions/binaryOperators/comparisonOperator/comparisonOperatorWithIdenticalTypeParameter.ts
-
 checker: tasks/coverage/typescript/tests/cases/conformance/expressions/binaryOperators/comparisonOperator/comparisonOperatorWithNoRelationshipObjectsOnOptionalProperty.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/expressions/binaryOperators/comparisonOperator/comparisonOperatorWithSubtypeObjectOnProperty.ts
-
-checker: tasks/coverage/typescript/tests/cases/conformance/expressions/binaryOperators/instanceofOperator/instanceofOperatorWithLHSIsTypeParameter.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/expressions/binaryOperators/instanceofOperator/instanceofOperatorWithRHSHasSymbolHasInstance.ts
 
@@ -5876,8 +5856,6 @@ checker: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/En
 checker: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/EnumDeclarations/parserInterfaceKeywordInEnum.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/EnumDeclarations/parserInterfaceKeywordInEnum1.ts
-
-checker: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/AccessibilityAfterStatic/parserAccessibilityAfterStatic14.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/AccessibilityAfterStatic/parserAccessibilityAfterStatic3.ts
 
@@ -6575,8 +6553,6 @@ checker: tasks/coverage/typescript/tests/cases/conformance/types/typeParameters/
 
 checker: tasks/coverage/typescript/tests/cases/conformance/types/typeParameters/typeParameterLists/typeParameterUsedAsConstraint.ts
 
-checker: tasks/coverage/typescript/tests/cases/conformance/types/typeParameters/typeParameterLists/typeParametersAvailableInNestedScope2.ts
-
 checker: tasks/coverage/typescript/tests/cases/conformance/types/typeParameters/typeParameterLists/typeParametersAvailableInNestedScope3.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/assignmentCompatibility/anyAssignabilityInInheritance.ts
@@ -6612,8 +6588,6 @@ checker: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationshi
 checker: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/instanceOf/narrowingConstrainedTypeVariable.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/recursiveTypes/arrayLiteralsWithRecursiveGenerics.ts
-
-checker: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/recursiveTypes/infiniteExpansionThroughTypeInference.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/recursiveTypes/nominalSubtypeCheckOfTypeParameter.ts
 

@@ -1125,6 +1125,27 @@ fn checker_options_from_settings(
     }
 }
 
+/// Build project-level `CompilerOptions` from test runner settings.
+///
+/// For multi-target tests (e.g. `@target: es5,es2015`), the test runner aggregates
+/// error codes from all variant baselines into a single expected set. We collect
+/// all parsed targets so that config validation can emit diagnostics (e.g. TS5107)
+/// for any deprecated target in the list, matching the aggregation.
+fn compiler_options_from_settings(
+    settings: &crate::typescript::meta::CompilerSettings,
+) -> Vec<oxc_project::CompilerOptions> {
+    let targets: Vec<_> = settings
+        .targets
+        .iter()
+        .filter_map(|t| oxc_project::ScriptTarget::from_str_option(t))
+        .collect();
+    if targets.is_empty() {
+        vec![oxc_project::CompilerOptions::default()]
+    } else {
+        targets.into_iter().map(|t| oxc_project::CompilerOptions { target: Some(t) }).collect()
+    }
+}
+
 // ================================
 // Checker (.types baseline conformance)
 // ================================
@@ -1492,7 +1513,14 @@ pub fn run_checker_errors_typescript(files: &[TypeScriptFile]) -> Vec<CoverageRe
             let source = &f.units[0].content;
             let source_type = f.units[0].source_type;
             let options = checker_options_from_settings(&f.settings);
-            let result = run_checker_errors_single(source, source_type, &f.error_codes, options);
+            let compiler_options_list = compiler_options_from_settings(&f.settings);
+            let result = run_checker_errors_single(
+                source,
+                source_type,
+                &f.error_codes,
+                options,
+                &compiler_options_list,
+            );
             Some(CoverageResult { path: f.path.clone(), should_fail: false, result })
         })
         .collect()
@@ -1503,14 +1531,25 @@ fn run_checker_errors_single(
     source_type: SourceType,
     expected_codes: &[String],
     options: oxc_checker::CheckerOptions,
+    compiler_options_list: &[oxc_project::CompilerOptions],
 ) -> TestResult {
     use oxc::semantic::SemanticBuilder;
     use oxc_checker::Checker;
 
-    // Collect error codes from all phases: parser, semantic, and checker.
+    // Collect error codes from all phases: config validation, parser, semantic, and checker.
     // tsc's .errors.txt baselines include errors from all compiler phases,
     // so we must do the same to get accurate conformance results.
     let mut actual_codes: Vec<String> = Vec::new();
+
+    // Validate compiler options (emits e.g. TS5107 for deprecated target=ES5).
+    // For multi-target tests, validate each variant to match the aggregated baselines.
+    for compiler_options in compiler_options_list {
+        for d in &oxc_project::validate_compiler_options(compiler_options) {
+            if let Some(code) = d.code.number.as_ref() {
+                actual_codes.push(code.to_string());
+            }
+        }
+    }
 
     let type_arena = oxc_types::TypeArena::with_capacity(64);
     let project = oxc_project::Project::new(&type_arena);
