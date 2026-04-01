@@ -1462,7 +1462,9 @@ impl Checker<'_> {
             | BinaryOperator::In
             | BinaryOperator::Instanceof => self.boolean_type,
 
-            // Arithmetic operators (not +) return number or bigint
+            // Arithmetic operators (not +): validate operands and return number or bigint.
+            // Emits TS2362 (left) / TS2363 (right) for invalid operands,
+            // and TS2365 for mixed number/bigint.
             BinaryOperator::Subtraction
             | BinaryOperator::Multiplication
             | BinaryOperator::Division
@@ -1476,36 +1478,122 @@ impl Checker<'_> {
             | BinaryOperator::BitwiseAnd => {
                 let left_type = self.get_type_of_expression(&expr.left, None);
                 let right_type = self.get_type_of_expression(&expr.right, None);
-                let left_flags = self.type_arena.get_flags(left_type);
-                let right_flags = self.type_arena.get_flags(right_type);
-                if left_flags.intersects(TypeFlags::BigIntLike)
-                    && right_flags.intersects(TypeFlags::BigIntLike)
+
+                // Validate each operand is assignable to number | bigint
+                let _left_ok = self.check_arithmetic_operand_type(&expr.left, left_type, true);
+                let _right_ok = self.check_arithmetic_operand_type(&expr.right, right_type, false);
+
+                // Determine result type
+                if (self.type_arena.get_flags(left_type).intersects(TypeFlags::AnyOrUnknown)
+                    && self.type_arena.get_flags(right_type).intersects(TypeFlags::AnyOrUnknown))
+                    || (!self.maybe_type_of_kind(left_type, TypeFlags::BigIntLike)
+                        && !self.maybe_type_of_kind(right_type, TypeFlags::BigIntLike))
+                {
+                    self.number_type
+                } else if self.maybe_type_of_kind(left_type, TypeFlags::BigIntLike)
+                    && self.maybe_type_of_kind(right_type, TypeFlags::BigIntLike)
                 {
                     self.bigint_type
                 } else {
+                    // Mixed number/bigint
+                    self.report_operator_error(left_type, expr.operator, right_type, expr.span);
                     self.number_type
                 }
             }
 
-            // + is special: string concat if either side is string-like, otherwise number
+            // + is special: string concat if either side is string-like, otherwise number.
+            // Emits TS2365 when operands are incompatible.
             BinaryOperator::Addition => {
                 let left_type = self.get_type_of_expression(&expr.left, None);
                 let right_type = self.get_type_of_expression(&expr.right, None);
-                let left_flags = self.type_arena.get_flags(left_type);
-                let right_flags = self.type_arena.get_flags(right_type);
-                if left_flags.intersects(TypeFlags::StringLike)
-                    || right_flags.intersects(TypeFlags::StringLike)
+
+                if self.is_type_assignable_to_kind_ex(left_type, TypeFlags::NumberLike, true)
+                    && self.is_type_assignable_to_kind_ex(right_type, TypeFlags::NumberLike, true)
                 {
-                    self.string_type
-                } else if left_flags.intersects(TypeFlags::BigIntLike)
-                    && right_flags.intersects(TypeFlags::BigIntLike)
+                    self.number_type
+                } else if self.is_type_assignable_to_kind_ex(left_type, TypeFlags::BigIntLike, true)
+                    && self.is_type_assignable_to_kind_ex(right_type, TypeFlags::BigIntLike, true)
                 {
                     self.bigint_type
+                } else if self.is_type_assignable_to_kind_ex(left_type, TypeFlags::StringLike, true)
+                    || self.is_type_assignable_to_kind_ex(right_type, TypeFlags::StringLike, true)
+                {
+                    self.string_type
+                } else if self.type_arena.get_flags(left_type).intersects(TypeFlags::Any)
+                    || self.type_arena.get_flags(right_type).intersects(TypeFlags::Any)
+                {
+                    self.any_type
                 } else {
-                    self.number_type
+                    // No valid combination
+                    self.report_operator_error(left_type, expr.operator, right_type, expr.span);
+                    self.any_type
                 }
             }
         }
+    }
+
+    /// Validate that an operand is assignable to `number | bigint`.
+    /// Emits TS2362 (left-hand side) or TS2363 (right-hand side) if not.
+    fn check_arithmetic_operand_type(
+        &mut self,
+        operand: &Expression<'_>,
+        ty: TypeId,
+        is_left: bool,
+    ) -> bool {
+        if self.is_type_assignable_to(ty, self.number_or_bigint_type) {
+            return true;
+        }
+        let (code, msg) = if is_left {
+            (
+                "2362",
+                "The left-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.",
+            )
+        } else {
+            (
+                "2363",
+                "The right-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.",
+            )
+        };
+        self.diagnostics
+            .push(OxcDiagnostic::error(msg).with_error_code("ts", code).with_label(operand.span()));
+        false
+    }
+
+    /// Emit TS2365: "Operator '{op}' cannot be applied to types '{left}' and '{right}'."
+    fn report_operator_error(
+        &mut self,
+        left_type: TypeId,
+        operator: BinaryOperator,
+        right_type: TypeId,
+        span: oxc_span::Span,
+    ) {
+        let left_str = self.type_to_string(left_type);
+        let right_str = self.type_to_string(right_type);
+        self.diagnostics.push(
+            OxcDiagnostic::error(format!(
+                "Operator '{}' cannot be applied to types '{}' and '{}'.",
+                operator.as_str(),
+                left_str,
+                right_str,
+            ))
+            .with_error_code("ts", "2365")
+            .with_label(span),
+        );
+    }
+
+    /// Check if a type could contain a constituent matching the given flags.
+    /// For union types, checks each member. Otherwise checks the type's own flags.
+    fn maybe_type_of_kind(&self, type_id: TypeId, kind: TypeFlags) -> bool {
+        let flags = self.type_arena.get_flags(type_id);
+        if flags.intersects(kind) {
+            return true;
+        }
+        if flags.intersects(TypeFlags::Union) {
+            if let TypeData::Union(u) = self.type_arena.get_data(type_id) {
+                return u.types.iter().any(|&t| self.type_arena.get_flags(t).intersects(kind));
+            }
+        }
+        false
     }
 
     /// Get the type of a call expression, checking for TS2349, TS2554, TS2345.

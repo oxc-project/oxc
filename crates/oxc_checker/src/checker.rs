@@ -99,6 +99,13 @@ pub struct Checker<'a> {
     /// expensive structural comparisons.
     pub(crate) assignability_cache: FxHashMap<u64, bool>,
 
+    /// Set of `(source, target)` pairs currently being checked for
+    /// assignability. Used to detect cycles (e.g., TypeParameter
+    /// constraints `T extends U, U extends T`) and break infinite
+    /// recursion by returning `false`. Mirrors the `resolving_symbols`
+    /// pattern for symbol resolution cycle detection.
+    pub(crate) in_flight_assignability: FxHashSet<u64>,
+
     /// Cache of resolved intersection types. Maps an intersection TypeId to
     /// a StructuredType TypeId with merged properties from all constituents.
     pub(crate) intersection_resolved_cache: FxHashMap<TypeId, TypeId>,
@@ -227,6 +234,8 @@ pub struct Checker<'a> {
     pub(crate) global_bigint_type: Option<TypeId>,
     /// Cached global `Symbol` interface (apparent type for `symbol`).
     pub(crate) global_es_symbol_type: Option<TypeId>,
+    /// Cached `number | bigint` union type for arithmetic operand validation.
+    pub(crate) number_or_bigint_type: TypeId,
 }
 
 impl<'a> Checker<'a> {
@@ -275,6 +284,17 @@ impl<'a> Checker<'a> {
             None,
         );
 
+        let number_or_bigint_type = {
+            let types: SmallVec<[TypeId; 4]> =
+                smallvec::smallvec![intrinsics.number_type, intrinsics.bigint_type];
+            type_arena.new_type(
+                TypeFlags::Union,
+                ObjectFlags::None,
+                TypeData::Union(UnionType { types: types.into() }),
+                None,
+            )
+        };
+
         let symbols_len = semantic.scoping().symbols_len();
         let array_type = host.get_global_type("Array").unwrap_or(intrinsics.any_type);
         let promise_type = host.get_global_type("Promise");
@@ -300,6 +320,7 @@ impl<'a> Checker<'a> {
             number_literal_types: FxHashMap::default(),
             bigint_literal_types: FxHashMap::default(),
             assignability_cache: FxHashMap::default(),
+            in_flight_assignability: FxHashSet::default(),
             intersection_resolved_cache: FxHashMap::default(),
             symbol_type_cache: IndexVec::from_vec(vec![None; symbols_len]),
             definite_assignment_cache: IndexVec::from_vec(vec![None; symbols_len]),
@@ -339,6 +360,7 @@ impl<'a> Checker<'a> {
             global_boolean_type,
             global_bigint_type,
             global_es_symbol_type,
+            number_or_bigint_type,
         }
     }
 
