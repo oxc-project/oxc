@@ -506,6 +506,19 @@ fn check_program_union_mismatch() {
     });
 }
 
+#[test]
+fn union_property_access_with_any_member() {
+    // {x: any} | {x: string} → accessing .x should give any | string, not "not found"
+    with_checker!(
+        "interface A { x: any } interface B { x: string } declare let u: A | B; let v = u.x",
+        |checker, program| {
+            checker.check_program(program);
+            let diagnostics = checker.take_diagnostics();
+            assert!(diagnostics.is_empty(), "should not error: x exists on both members");
+        }
+    );
+}
+
 // --- Assignment expression checking ---
 
 #[test]
@@ -1090,6 +1103,45 @@ fn object_to_interface_missing_prop() {
             checker.check_program(program);
         let diagnostics = checker.take_diagnostics();
             assert!(!diagnostics.is_empty(), "should error: missing property y");
+        }
+    );
+}
+
+#[test]
+fn object_to_interface_optional_prop_missing_ok() {
+    // {a: string} should be assignable to {a: string, b?: number}
+    with_checker!(
+        "interface Target { a: string; b?: number } let t: Target = { a: 'hello' }",
+        |checker, program| {
+            checker.check_program(program);
+            let diagnostics = checker.take_diagnostics();
+            assert!(diagnostics.is_empty(), "should not error: b is optional");
+        }
+    );
+}
+
+#[test]
+fn object_to_interface_optional_prop_present_ok() {
+    // {a: string, b: number} should be assignable to {a: string, b?: number}
+    with_checker!(
+        "interface Target { a: string; b?: number } let t: Target = { a: 'hello', b: 42 }",
+        |checker, program| {
+            checker.check_program(program);
+            let diagnostics = checker.take_diagnostics();
+            assert!(diagnostics.is_empty(), "should not error: b is present and compatible");
+        }
+    );
+}
+
+#[test]
+fn object_to_interface_required_prop_still_required() {
+    // {b: number} should NOT be assignable to {a: string, b?: number} (missing required a)
+    with_checker!(
+        "interface Target { a: string; b?: number } let t: Target = { b: 42 }",
+        |checker, program| {
+            checker.check_program(program);
+            let diagnostics = checker.take_diagnostics();
+            assert!(!diagnostics.is_empty(), "should error: required property a is missing");
         }
     );
 }
@@ -3231,6 +3283,163 @@ fn generic_inference_no_args_uses_constraint() {
             assert!(
                 diagnostics.is_empty(),
                 "create() with constraint should use constraint: {diagnostics:?}"
+            );
+        }
+    );
+}
+
+// ---- Statement expression checking tests ----
+
+#[test]
+fn if_condition_expression_is_checked() {
+    // Property access on the condition should emit TS2339
+    with_checker!(
+        r#"
+        let obj = { x: 42 };
+        if (obj.nonexistent) {}
+        "#,
+        |checker, program| {
+            checker.check_program(program);
+            let diagnostics = checker.take_diagnostics();
+            assert!(
+                diagnostics.iter().any(|d| d.message.contains("does not exist on type")),
+                "Expected TS2339 for if condition, got: {:?}",
+                diagnostics.iter().map(|d| &d.message).collect::<Vec<_>>()
+            );
+        }
+    );
+}
+
+#[test]
+fn while_condition_expression_is_checked() {
+    with_checker!(
+        r#"
+        let obj = { x: 42 };
+        while (obj.nonexistent) {}
+        "#,
+        |checker, program| {
+            checker.check_program(program);
+            let diagnostics = checker.take_diagnostics();
+            assert!(
+                diagnostics.iter().any(|d| d.message.contains("does not exist on type")),
+                "Expected TS2339 for while condition, got: {:?}",
+                diagnostics.iter().map(|d| &d.message).collect::<Vec<_>>()
+            );
+        }
+    );
+}
+
+#[test]
+fn switch_discriminant_is_checked() {
+    with_checker!(
+        r#"
+        let obj = { x: 42 };
+        switch (obj.nonexistent) { case 1: break; }
+        "#,
+        |checker, program| {
+            checker.check_program(program);
+            let diagnostics = checker.take_diagnostics();
+            assert!(
+                diagnostics.iter().any(|d| d.message.contains("does not exist on type")),
+                "Expected TS2339 for switch discriminant, got: {:?}",
+                diagnostics.iter().map(|d| &d.message).collect::<Vec<_>>()
+            );
+        }
+    );
+}
+
+#[test]
+fn throw_argument_is_checked() {
+    with_checker!(
+        r#"
+        let obj = { x: 42 };
+        throw obj.nonexistent;
+        "#,
+        |checker, program| {
+            checker.check_program(program);
+            let diagnostics = checker.take_diagnostics();
+            assert!(
+                diagnostics.iter().any(|d| d.message.contains("does not exist on type")),
+                "Expected TS2339 for throw argument, got: {:?}",
+                diagnostics.iter().map(|d| &d.message).collect::<Vec<_>>()
+            );
+        }
+    );
+}
+
+#[test]
+fn for_loop_parts_are_checked() {
+    with_checker!(
+        r#"
+        let obj = { x: 42 };
+        for (obj.nonexistent; obj.missing; obj.absent) {}
+        "#,
+        |checker, program| {
+            checker.check_program(program);
+            let diagnostics = checker.take_diagnostics();
+            assert!(
+                diagnostics.len() >= 3,
+                "Expected at least 3 diagnostics for for-loop init/test/update, got {}: {:?}",
+                diagnostics.len(),
+                diagnostics.iter().map(|d| &d.message).collect::<Vec<_>>()
+            );
+        }
+    );
+}
+
+#[test]
+fn for_in_rhs_must_be_object_type() {
+    with_checker!(
+        r#"
+        let x: string = "hello";
+        for (let k in x) {}
+        "#,
+        |checker, program| {
+            checker.check_program(program);
+            let diagnostics = checker.take_diagnostics();
+            assert!(
+                diagnostics.iter().any(|d| d.message.contains("right-hand side of a 'for...in'")),
+                "Expected TS2407 for for-in with string RHS, got: {:?}",
+                diagnostics.iter().map(|d| &d.message).collect::<Vec<_>>()
+            );
+        }
+    );
+}
+
+#[test]
+fn for_in_lhs_must_be_string() {
+    with_checker!(
+        r#"
+        let k: number;
+        let obj = { a: 1, b: 2 };
+        for (k in obj) {}
+        "#,
+        |checker, program| {
+            checker.check_program(program);
+            let diagnostics = checker.take_diagnostics();
+            assert!(
+                diagnostics.iter().any(|d| d.message.contains("left-hand side of a 'for...in'")),
+                "Expected TS2405 for for-in with number LHS, got: {:?}",
+                diagnostics.iter().map(|d| &d.message).collect::<Vec<_>>()
+            );
+        }
+    );
+}
+
+#[test]
+fn for_in_valid_no_errors() {
+    with_checker!(
+        r#"
+        let obj = { a: 1, b: 2 };
+        for (let k in obj) {}
+        "#,
+        |checker, program| {
+            checker.check_program(program);
+            let diagnostics = checker.take_diagnostics();
+            assert!(
+                diagnostics.is_empty(),
+                "Valid for-in should produce no diagnostics, got: {:?}",
+                diagnostics.iter().map(|d| &d.message).collect::<Vec<_>>()
             );
         }
     );

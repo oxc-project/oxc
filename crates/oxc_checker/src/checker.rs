@@ -3,12 +3,12 @@ use std::sync::Arc;
 use oxc_index::IndexVec;
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use oxc_ast::ast::{BindingPattern, Declaration, Function, Program, Statement};
+use oxc_ast::ast::{BindingPattern, Declaration, ForStatementInit, ForStatementLeft, Function, Program, Statement};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::Semantic;
 use oxc_span::{CompactStr, GetSpan};
 use oxc_syntax::symbol::SymbolId;
-use oxc_types::{FunctionType, ObjectFlags, ParameterInfo, Signature, SignatureFlags, TypeArena, TypeData, TypeFlags, TypeId, TypeParameterType, UnionType};
+use oxc_types::{FunctionType, ObjectFlags, ParameterInfo, Signature, SignatureFlags, StructuredType, StructuredTypeKind, TypeArena, TypeData, TypeFlags, TypeId, TypeParameterType, UnionType};
 use smallvec::SmallVec;
 
 use oxc_checker_host::CheckerHost;
@@ -315,28 +315,56 @@ impl<'a> Checker<'a> {
                 self.check_source_elements(&block.body);
             }
             Statement::IfStatement(if_stmt) => {
+                self.check_expression(&if_stmt.test, None);
                 self.check_source_element(&if_stmt.consequent);
                 if let Some(alt) = &if_stmt.alternate {
                     self.check_source_element(alt);
                 }
             }
             Statement::ForStatement(for_stmt) => {
+                if let Some(init) = &for_stmt.init {
+                    match init {
+                        ForStatementInit::VariableDeclaration(decl) => {
+                            for declarator in &decl.declarations {
+                                self.check_variable_declarator(declarator);
+                            }
+                        }
+                        init => {
+                            if let Some(expr) = init.as_expression() {
+                                self.check_expression(expr, None);
+                            }
+                        }
+                    }
+                }
+                if let Some(test) = &for_stmt.test {
+                    self.check_expression(test, None);
+                }
+                if let Some(update) = &for_stmt.update {
+                    self.check_expression(update, None);
+                }
                 self.check_source_element(&for_stmt.body);
             }
             Statement::ForInStatement(for_in) => {
-                self.check_source_element(&for_in.body);
+                self.check_for_in_statement(for_in);
             }
             Statement::ForOfStatement(for_of) => {
+                self.check_expression(&for_of.right, None);
                 self.check_source_element(&for_of.body);
             }
             Statement::WhileStatement(while_stmt) => {
+                self.check_expression(&while_stmt.test, None);
                 self.check_source_element(&while_stmt.body);
             }
             Statement::DoWhileStatement(do_while) => {
                 self.check_source_element(&do_while.body);
+                self.check_expression(&do_while.test, None);
             }
             Statement::SwitchStatement(switch_stmt) => {
+                self.check_expression(&switch_stmt.discriminant, None);
                 for case in &switch_stmt.cases {
+                    if let Some(test) = &case.test {
+                        self.check_expression(test, None);
+                    }
                     self.check_source_elements(&case.consequent);
                 }
             }
@@ -391,12 +419,15 @@ impl<'a> Checker<'a> {
                 // TODO: check for duplicate member names, check initializer types
             }
 
+            Statement::ThrowStatement(throw_stmt) => {
+                self.check_expression(&throw_stmt.argument, None);
+            }
+
             // Leaf statements / not yet implemented — no-op
             Statement::BreakStatement(_)
             | Statement::ContinueStatement(_)
             | Statement::DebuggerStatement(_)
             | Statement::EmptyStatement(_)
-            | Statement::ThrowStatement(_)
             | Statement::TSTypeAliasDeclaration(_)
             | Statement::TSInterfaceDeclaration(_)
             | Statement::TSModuleDeclaration(_)
@@ -575,6 +606,85 @@ impl<'a> Checker<'a> {
                 .with_label(ret.span),
             );
         }
+    }
+
+    /// Check a for-in statement.
+    ///
+    /// Validates that:
+    /// - The RHS expression is of type `any`, an object type, or a type parameter
+    /// - The LHS variable (when not a declaration) is assignable from `string`
+    fn check_for_in_statement(&mut self, for_in: &oxc_ast::ast::ForInStatement<'a>) {
+        let right_type = self.get_type_of_expression(&for_in.right, None);
+        let right_flags = self.type_arena.get_flags(right_type);
+
+        // RHS must be any, an object type, or a type parameter.
+        // Skip check for `any` and `unknown` (permissive) and `never` (already an error elsewhere).
+        if !right_flags.intersects(
+            TypeFlags::AnyOrUnknown
+                | TypeFlags::Never
+                | TypeFlags::NonPrimitive
+                | TypeFlags::Object
+                | TypeFlags::InstantiableNonPrimitive,
+        ) {
+            // For unions, check if every constituent is valid.
+            let is_valid = if right_flags.intersects(TypeFlags::Union) {
+                if let TypeData::Union(u) = self.type_arena.get_data(right_type) {
+                    let types: SmallVec<[TypeId; 4]> = u.types.iter().copied().collect();
+                    types.iter().all(|&t| {
+                        let f = self.type_arena.get_flags(t);
+                        f.intersects(
+                            TypeFlags::AnyOrUnknown
+                                | TypeFlags::NonPrimitive
+                                | TypeFlags::Object
+                                | TypeFlags::InstantiableNonPrimitive,
+                        )
+                    })
+                } else {
+                    false
+                }
+            } else {
+                false
+            };
+
+            if !is_valid {
+                let type_str = self.type_to_string(right_type);
+                self.diagnostics.push(
+                    OxcDiagnostic::error(format!(
+                        "The right-hand side of a 'for...in' statement must be of type 'any', an object type or a type parameter, but here has type '{type_str}'."
+                    ))
+                    .with_error_code("ts", "2407")
+                    .with_label(for_in.right.span()),
+                );
+            }
+        }
+
+        // LHS validation: when the LHS is an existing variable (not a declaration),
+        // its type must be assignable from `string`.
+        match &for_in.left {
+            ForStatementLeft::VariableDeclaration(decl) => {
+                for declarator in &decl.declarations {
+                    self.check_variable_declarator(declarator);
+                }
+            }
+            ForStatementLeft::AssignmentTargetIdentifier(ident) => {
+                let left_type = self.get_type_of_identifier(ident);
+                if !self.is_type_assignable_to(self.string_type, left_type) {
+                    self.diagnostics.push(
+                        OxcDiagnostic::error(
+                            "The left-hand side of a 'for...in' statement must be of type 'string' or 'any'."
+                        )
+                        .with_error_code("ts", "2405")
+                        .with_label(ident.span()),
+                    );
+                }
+            }
+            _ => {
+                // Member expressions, destructuring patterns, etc. — check expression
+                // but skip detailed validation for now.
+            }
+        }
+
+        self.check_source_element(&for_in.body);
     }
 
     /// Look up a global type by name (e.g., "Array", "Promise").
@@ -1018,6 +1128,24 @@ impl<'a> Checker<'a> {
             ObjectFlags::Anonymous,
             TypeData::Function(FunctionType {
                 signatures: smallvec::smallvec![signature],
+            }),
+            None,
+        )
+    }
+
+    /// Create a constructor type from a single construct signature.
+    pub fn create_constructor_type(&mut self, signature: Signature) -> TypeId {
+        self.type_arena.new_type(
+            TypeFlags::Object,
+            ObjectFlags::Anonymous,
+            TypeData::Structured(StructuredType {
+                properties: Vec::new(),
+                member_map: FxHashMap::default(),
+                string_index_type: None,
+                number_index_type: None,
+                call_signatures: Vec::new(),
+                construct_signatures: vec![signature],
+                kind: StructuredTypeKind::Anonymous { target: None },
             }),
             None,
         )

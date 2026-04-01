@@ -1,6 +1,6 @@
 use oxc_ast::ast::TSType;
 use oxc_span::CompactStr;
-use oxc_types::{ElementFlags, MappedType, MappedTypeModifier, ObjectFlags, PropertyInfo, StructuredType, StructuredTypeKind, TupleElementInfo, TupleType, TypeData, TypeFlags, TypeId, TypeParameterType, TypeReferenceType, build_member_map};
+use oxc_types::{ElementFlags, MappedType, MappedTypeModifier, ObjectFlags, PropertyInfo, SignatureFlags, StructuredType, StructuredTypeKind, TupleElementInfo, TupleType, TypeData, TypeFlags, TypeId, TypeParameterType, TypeReferenceType, build_member_map};
 use smallvec::SmallVec;
 
 use crate::Checker;
@@ -86,9 +86,20 @@ impl Checker<'_> {
             }
 
             // Constructor type: `new (x: number) => Foo`
-            TSType::TSConstructorType(_) => {
-                // TODO: implement constructor types (requires construct signatures)
-                self.any_type
+            TSType::TSConstructorType(ctor_type) => {
+                let tp = self.get_type_parameters_from_declaration(
+                    ctor_type.type_parameters.as_deref(),
+                );
+                let mut sig = self.build_signature_from_params(
+                    &ctor_type.params,
+                    Some(&ctor_type.return_type),
+                );
+                sig.type_parameters = tp;
+                sig.flags |= SignatureFlags::Construct;
+                if ctor_type.r#abstract {
+                    sig.flags |= SignatureFlags::Abstract;
+                }
+                self.create_constructor_type(sig)
             }
 
             // typeof x — resolve to value-side type
@@ -218,7 +229,7 @@ impl Checker<'_> {
 
         let mut properties = Vec::new();
         let mut call_signatures = Vec::new();
-        let construct_signatures: Vec<oxc_types::Signature> = Vec::new();
+        let mut construct_signatures: Vec<oxc_types::Signature> = Vec::new();
         let mut string_index_type: Option<TypeId> = None;
         let mut number_index_type: Option<TypeId> = None;
 
@@ -280,8 +291,18 @@ impl Checker<'_> {
                         }
                     }
                 }
-                // TODO: TSConstructSignatureDeclaration
-                _ => {}
+                TSSignature::TSConstructSignatureDeclaration(ctor_sig) => {
+                    let tp = self.get_type_parameters_from_declaration(
+                        ctor_sig.type_parameters.as_deref(),
+                    );
+                    let mut sig = self.build_signature_from_params(
+                        &ctor_sig.params,
+                        ctor_sig.return_type.as_deref(),
+                    );
+                    sig.type_parameters = tp;
+                    sig.flags |= SignatureFlags::Construct;
+                    construct_signatures.push(sig);
+                }
             }
         }
 

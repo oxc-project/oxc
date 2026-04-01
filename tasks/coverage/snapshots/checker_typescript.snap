@@ -2,7 +2,7 @@ commit: 34725489
 
 checker_typescript Summary:
 AST Parsed     : 3811/3811 (100.00%)
-Positive Passed: 418/3811 (10.97%)
+Positive Passed: 419/3811 (10.99%)
 checker: tasks/coverage/typescript/tests/cases/compiler/2dArrays.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/ClassDeclarationWithInvalidConstOnPropertyDeclaration2.ts
@@ -4078,8 +4078,6 @@ checker: tasks/coverage/typescript/tests/cases/compiler/verifyDefaultLib_webwork
 checker: tasks/coverage/typescript/tests/cases/compiler/visSyntax.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/visibilityOfTypeParameters.ts
-
-checker: tasks/coverage/typescript/tests/cases/compiler/voidConstructor.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/voidFunctionAssignmentCompat.ts
 

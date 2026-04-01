@@ -389,7 +389,7 @@ impl Checker<'_> {
 
     /// Narrow a type by keeping only members that satisfy a predicate.
     /// For unions: filters constituents. For non-unions: keeps or discards the whole type.
-    fn narrow_type_by_predicate(
+    pub(crate) fn narrow_type_by_predicate(
         &mut self,
         type_id: TypeId,
         keep: impl Fn(&Self, TypeId) -> bool,
