@@ -1,4 +1,5 @@
-use oxc_types::{LiteralType, Signature, TypeData, TypeFlags, TypeId};
+use oxc_types::{LiteralType, ObjectFlags, PropertyInfo, Signature, StructuredType, StructuredTypeKind, TypeData, TypeFlags, TypeId, build_member_map};
+use smallvec::SmallVec;
 
 use crate::Checker;
 
@@ -116,10 +117,37 @@ impl<'a> Checker<'a> {
             }
         }
 
+        // Target is intersection → source must be assignable to ALL constituents
+        if t.intersects(TypeFlags::Intersection) {
+            if let TypeData::Intersection(i) = self.type_arena.get_data(target) {
+                let members: SmallVec<[TypeId; 4]> = i.types.clone();
+                return members.iter().all(|&m| self.is_type_assignable_to(source, m));
+            }
+        }
+
+        // Source is intersection → cheap check: if ANY constituent is assignable
+        // to target, succeed without structural comparison.
+        if s.intersects(TypeFlags::Intersection) {
+            if let TypeData::Intersection(i) = self.type_arena.get_data(source) {
+                let members: SmallVec<[TypeId; 4]> = i.types.clone();
+                if members.iter().any(|&m| self.is_type_assignable_to(m, target)) {
+                    return true;
+                }
+            }
+        }
+
         // Structural assignability for object/interface types:
         // source must have all properties of target with compatible types.
-        if t.intersects(TypeFlags::Object) && s.intersects(TypeFlags::Object) {
-            return self.is_object_type_assignable_to(source, target);
+        // Also handles source-intersection via structural fallback when
+        // no single constituent matched above.
+        if t.intersects(TypeFlags::Object) {
+            if s.intersects(TypeFlags::Object) {
+                return self.is_object_type_assignable_to(source, target);
+            }
+            if s.intersects(TypeFlags::Intersection) {
+                let resolved = self.resolve_intersection_properties(source);
+                return self.is_object_type_assignable_to(resolved, target);
+            }
         }
 
         false
@@ -343,4 +371,92 @@ impl<'a> Checker<'a> {
         Some(true)
     }
 
+    /// Resolve an intersection type into a StructuredType with merged properties.
+    ///
+    /// For each property name found in ANY constituent, the resulting type is the
+    /// intersection of that property's type across all constituents that have it.
+    /// Results are cached via `intersection_resolved_cache`.
+    fn resolve_intersection_properties(&mut self, intersection_id: TypeId) -> TypeId {
+        if let Some(&cached) = self.intersection_resolved_cache.get(&intersection_id) {
+            return cached;
+        }
+
+        let constituents: SmallVec<[TypeId; 4]> = match self.type_arena.get_data(intersection_id) {
+            TypeData::Intersection(i) => i.types.clone(),
+            _ => return intersection_id,
+        };
+
+        // Collect all unique property names from all constituents.
+        let mut all_names: Vec<oxc_span::CompactStr> = Vec::new();
+        let mut seen_names = rustc_hash::FxHashSet::default();
+        for &constituent in &constituents {
+            // Resolve TypeReference to access properties
+            let resolved = if let TypeData::TypeReference(_) = self.type_arena.get_data(constituent) {
+                self.resolve_type_reference(constituent)
+            } else {
+                constituent
+            };
+            if let TypeData::Structured(s) = self.type_arena.get_data(resolved) {
+                for prop in &s.properties {
+                    if seen_names.insert(prop.name.clone()) {
+                        all_names.push(prop.name.clone());
+                    }
+                }
+            }
+        }
+
+        // For each property, collect types from constituents and intersect.
+        let mut properties = Vec::with_capacity(all_names.len());
+        for name in &all_names {
+            let prop_type = self.get_property_of_type(intersection_id, name);
+            properties.push(PropertyInfo::new(name.clone(), prop_type));
+        }
+
+        // Merge signatures and index types from all constituents.
+        let mut call_signatures = Vec::new();
+        let mut construct_signatures = Vec::new();
+        let mut string_index_type: Option<TypeId> = None;
+        let mut number_index_type: Option<TypeId> = None;
+        for &constituent in &constituents {
+            let resolved = if let TypeData::TypeReference(_) = self.type_arena.get_data(constituent) {
+                self.resolve_type_reference(constituent)
+            } else {
+                constituent
+            };
+            if let TypeData::Structured(s) = self.type_arena.get_data(resolved) {
+                call_signatures.extend(s.call_signatures.iter().cloned());
+                construct_signatures.extend(s.construct_signatures.iter().cloned());
+                if let Some(idx) = s.string_index_type {
+                    string_index_type = Some(match string_index_type {
+                        Some(existing) => self.get_or_create_intersection_type(vec![existing, idx]),
+                        None => idx,
+                    });
+                }
+                if let Some(idx) = s.number_index_type {
+                    number_index_type = Some(match number_index_type {
+                        Some(existing) => self.get_or_create_intersection_type(vec![existing, idx]),
+                        None => idx,
+                    });
+                }
+            }
+        }
+
+        let member_map = build_member_map(&properties);
+        let resolved_id = self.type_arena.new_type(
+            TypeFlags::Object,
+            ObjectFlags::Anonymous,
+            TypeData::Structured(StructuredType {
+                member_map,
+                properties,
+                string_index_type,
+                number_index_type,
+                call_signatures,
+                construct_signatures,
+                kind: StructuredTypeKind::Anonymous { target: Some(intersection_id) },
+            }),
+            None,
+        );
+        self.intersection_resolved_cache.insert(intersection_id, resolved_id);
+        resolved_id
+    }
 }

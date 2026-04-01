@@ -7,6 +7,7 @@ use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 use oxc_syntax::symbol::SymbolId;
 use oxc_types::{LiteralType, ObjectFlags, PropertyInfo, StructuredType, StructuredTypeKind, TypeData, TypeFlags, TypeId, build_member_map};
 use rustc_hash::FxHashMap;
+use smallvec::SmallVec;
 
 use crate::Checker;
 
@@ -726,6 +727,30 @@ impl Checker<'_> {
                     }
                 }
                 return Some(self.get_or_create_union_type(concrete));
+            }
+        }
+
+        // Intersection type: look up property on each constituent, intersect results.
+        // Property exists if found in ANY constituent (opposite of unions).
+        if flags.intersects(TypeFlags::Intersection) {
+            if let TypeData::Intersection(i) = self.type_arena.get_data(type_id) {
+                let constituents: SmallVec<[TypeId; 4]> = i.types.clone();
+                let mut prop_types = Vec::new();
+                for &member in &constituents {
+                    let prop = self.get_property_of_type(member, name);
+                    if prop != self.any_type
+                        || self.type_arena.get_flags(member).intersects(TypeFlags::Any)
+                    {
+                        prop_types.push(prop);
+                    }
+                }
+                if prop_types.is_empty() {
+                    return self.any_type;
+                }
+                if prop_types.len() == 1 {
+                    return prop_types[0];
+                }
+                return self.get_or_create_intersection_type(prop_types);
             }
         }
 

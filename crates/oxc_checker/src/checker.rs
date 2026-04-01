@@ -92,6 +92,10 @@ pub struct Checker<'a> {
     /// expensive structural comparisons.
     pub(crate) assignability_cache: FxHashMap<u64, bool>,
 
+    /// Cache of resolved intersection types. Maps an intersection TypeId to
+    /// a StructuredType TypeId with merged properties from all constituents.
+    pub(crate) intersection_resolved_cache: FxHashMap<TypeId, TypeId>,
+
     /// Cache of resolved symbol types. Each symbol's type is computed at most
     /// once and stored here. Mirrors tsgo's valueSymbolLinks.resolvedType.
     /// Uses IndexVec for O(1) array indexing (standard oxc pattern for per-symbol data).
@@ -221,6 +225,7 @@ impl<'a> Checker<'a> {
             number_literal_types: FxHashMap::default(),
             bigint_literal_types: FxHashMap::default(),
             assignability_cache: FxHashMap::default(),
+            intersection_resolved_cache: FxHashMap::default(),
             symbol_type_cache: IndexVec::from_vec(vec![None; symbols_len]),
             resolving_symbols: FxHashSet::default(),
             declared_type_cache: IndexVec::from_vec(vec![None; symbols_len]),
@@ -770,6 +775,60 @@ impl<'a> Checker<'a> {
     /// (unlike unions which are sorted), matching tsgo's approach.
     /// Returns `unknown` for empty, unwraps single-element intersections.
     pub fn get_or_create_intersection_type(&mut self, mut types: Vec<TypeId>) -> TypeId {
+        // 1. Flatten nested intersections: (A & B) & C → [A, B, C]
+        let mut i = 0;
+        while i < types.len() {
+            if self.type_arena.get_flags(types[i]).intersects(TypeFlags::Intersection) {
+                if let TypeData::Intersection(inter) = self.type_arena.get_data(types[i]) {
+                    let children: SmallVec<[TypeId; 4]> = inter.types.clone();
+                    types.remove(i);
+                    for (j, child) in children.into_iter().enumerate() {
+                        types.insert(i + j, child);
+                    }
+                    continue; // re-check at same index
+                }
+            }
+            i += 1;
+        }
+
+        // 2. Never propagation: A & never → never
+        if types.iter().any(|&t| self.type_arena.get_flags(t).intersects(TypeFlags::Never)) {
+            return self.never_type;
+        }
+
+        // 3. Contradictory primitive reduction: string & number → never
+        // Collect which disjoint primitive groups are present.
+        let mut groups = 0u8;
+        for &t in &types {
+            let f = self.type_arena.get_flags(t);
+            if f.intersects(TypeFlags::StringLike) { groups |= 1; }
+            if f.intersects(TypeFlags::NumberLike) { groups |= 2; }
+            if f.intersects(TypeFlags::BigIntLike) { groups |= 4; }
+            if f.intersects(TypeFlags::BooleanLike) { groups |= 8; }
+            if f.intersects(TypeFlags::ESSymbolLike) { groups |= 16; }
+            if f.intersects(TypeFlags::Void) { groups |= 32; }
+            if f.intersects(TypeFlags::Undefined) { groups |= 64; }
+            if f.intersects(TypeFlags::Null) { groups |= 128; }
+        }
+        if groups.count_ones() > 1 {
+            return self.never_type;
+        }
+
+        // 4. Supertype removal: string & "hello" → "hello"
+        {
+            let has_string_literal = types.iter().any(|&t| self.type_arena.get_flags(t).intersects(TypeFlags::StringLiteral));
+            let has_number_literal = types.iter().any(|&t| self.type_arena.get_flags(t).intersects(TypeFlags::NumberLiteral));
+            let has_boolean_literal = types.iter().any(|&t| self.type_arena.get_flags(t).intersects(TypeFlags::BooleanLiteral));
+            let has_bigint_literal = types.iter().any(|&t| self.type_arena.get_flags(t).intersects(TypeFlags::BigIntLiteral));
+            types.retain(|&t| {
+                let f = self.type_arena.get_flags(t);
+                !(has_string_literal && f.intersects(TypeFlags::String))
+                    && !(has_number_literal && f.intersects(TypeFlags::Number))
+                    && !(has_boolean_literal && f.intersects(TypeFlags::Boolean))
+                    && !(has_bigint_literal && f.intersects(TypeFlags::BigInt))
+            });
+        }
+
         // Order-preserving dedup: retain first occurrence of each type.
         let mut seen = FxHashSet::default();
         types.retain(|t| seen.insert(*t));
