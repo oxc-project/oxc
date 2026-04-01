@@ -260,14 +260,19 @@ impl Checker<'_> {
             }
         }
 
-        // Conditional: T extends U ? X : Y — instantiate all parts, then resolve
+        // Conditional: T extends U ? X : Y — instantiate all parts, then resolve.
+        // The root_id is carried through so infer params and distributivity
+        // are preserved across instantiations.
         if flags.intersects(TypeFlags::Conditional) {
             if let TypeData::Conditional(cond) = self.type_arena.get_data(type_id) {
-                let is_distributive = cond.is_distributive;
+                let root_id = cond.root;
                 let orig_check = cond.check_type;
                 let orig_extends = cond.extends_type;
                 let orig_true = cond.true_type;
                 let orig_false = cond.false_type;
+
+                // Look up distributivity from the root
+                let is_distributive = self.conditional_roots[root_id.index()].is_distributive;
 
                 let new_check = self.instantiate_type(orig_check, mapper);
 
@@ -289,7 +294,7 @@ impl Checker<'_> {
                                     let ext = self.instantiate_type(orig_extends, &per_member);
                                     let tru = self.instantiate_type(orig_true, &per_member);
                                     let fal = self.instantiate_type(orig_false, &per_member);
-                                    self.get_conditional_type(member, ext, tru, fal, false)
+                                    self.get_conditional_type(root_id, member, ext, tru, fal)
                                 })
                                 .collect();
                             return self.get_or_create_union_type(results);
@@ -302,7 +307,7 @@ impl Checker<'_> {
                 let new_false = self.instantiate_type(orig_false, mapper);
 
                 return self.get_conditional_type(
-                    new_check, new_extends, new_true, new_false, is_distributive,
+                    root_id, new_check, new_extends, new_true, new_false,
                 );
             }
         }
@@ -345,6 +350,33 @@ impl Checker<'_> {
                 self.instantiate_properties(type_id, properties, mapper)
             }
 
+            TypeData::Function(func) => {
+                let sigs: SmallVec<[oxc_types::Signature; 1]> = func.signatures
+                    .iter()
+                    .map(|sig| self.instantiate_signature(sig, mapper))
+                    .collect();
+                // Check if anything actually changed
+                let changed = sigs.iter().zip(func.signatures.iter()).any(|(new, old)| {
+                    new.return_type != old.return_type
+                        || new.parameters.len() != old.parameters.len()
+                        || new.parameters.iter().zip(old.parameters.iter())
+                            .any(|(np, op)| np.type_id != op.type_id)
+                });
+                if !changed {
+                    return type_id;
+                }
+                let mut obj_flags = oxc_types::ObjectFlags::Anonymous;
+                if sigs.iter().any(|s| self.signature_could_contain_type_variables(s)) {
+                    obj_flags |= oxc_types::ObjectFlags::CouldContainTypeVariables;
+                }
+                self.type_arena.new_type(
+                    TypeFlags::Object,
+                    obj_flags,
+                    TypeData::Function(oxc_types::FunctionType { signatures: sigs }),
+                    None,
+                )
+            }
+
             TypeData::Mapped(mapped) => {
                 let constraint = mapped.constraint_type.unwrap_or(self.never_type);
                 let template = mapped.template_type;
@@ -380,6 +412,45 @@ impl Checker<'_> {
                 };
 
                 self.build_mapped_object_type(type_id, properties)
+            }
+
+            TypeData::Tuple(tuple) => {
+                let new_elements: Vec<oxc_types::TupleElementInfo> = tuple
+                    .element_infos
+                    .iter()
+                    .map(|info| oxc_types::TupleElementInfo {
+                        element_type: self.instantiate_type(info.element_type, mapper),
+                        flags: info.flags,
+                        label_name: info.label_name.clone(),
+                    })
+                    .collect();
+                let changed = new_elements.iter().zip(tuple.element_infos.iter())
+                    .any(|(new, old)| new.element_type != old.element_type);
+                if !changed {
+                    return type_id;
+                }
+                let type_arguments: SmallVec<[TypeId; 4]> = new_elements
+                    .iter()
+                    .map(|e| e.element_type)
+                    .collect();
+                let mut obj_flags = oxc_types::ObjectFlags::Tuple;
+                if new_elements.iter().any(|e| self.type_could_contain_type_variables(e.element_type)) {
+                    obj_flags |= oxc_types::ObjectFlags::CouldContainTypeVariables;
+                }
+                self.type_arena.new_type(
+                    TypeFlags::Object,
+                    obj_flags,
+                    TypeData::Tuple(oxc_types::TupleType {
+                        target: tuple.target,
+                        resolved_type_arguments: type_arguments,
+                        min_length: tuple.min_length,
+                        fixed_length: tuple.fixed_length,
+                        combined_flags: tuple.combined_flags,
+                        readonly: tuple.readonly,
+                        element_infos: new_elements,
+                    }),
+                    None,
+                )
             }
 
             _ => type_id,

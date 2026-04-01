@@ -384,25 +384,72 @@ pub struct SubstitutionType {
     pub constraint: TypeId,
 }
 
+/// Index into the checker's `conditional_roots` vec.
+///
+/// Each conditional type node in the AST gets exactly one root, shared by
+/// all instantiations of that conditional type. The root stores the original
+/// (uninstantiated) types, distributivity flag, and `infer` type parameters.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct ConditionalRootId(u32);
+
+impl ConditionalRootId {
+    pub fn new(index: u32) -> Self {
+        Self(index)
+    }
+
+    pub fn index(self) -> usize {
+        self.0 as usize
+    }
+}
+
+/// Shared metadata for a conditional type, created once per AST node.
+///
+/// Mirrors tsgo's `ConditionalRoot`. One root is shared across all
+/// instantiations of the same conditional type expression. It stores:
+/// - The original (uninstantiated) check/extends/true/false types
+/// - Whether the conditional distributes over unions
+/// - The `infer` type parameters extracted from the extends clause
+#[derive(Debug, Clone)]
+pub struct ConditionalRoot {
+    /// The original check type: `T` in `T extends U ? X : Y`.
+    pub check_type: TypeId,
+    /// The original extends type: `U` in `T extends U ? X : Y`.
+    pub extends_type: TypeId,
+    /// The original true branch type: `X` in `T extends U ? X : Y`.
+    pub true_type: TypeId,
+    /// The original false branch type: `Y` in `T extends U ? X : Y`.
+    pub false_type: TypeId,
+    /// Whether the conditional distributes over unions.
+    /// True when the original check type was a bare type parameter.
+    pub is_distributive: bool,
+    /// Type parameters declared with `infer` in the extends clause.
+    /// E.g., for `T extends Array<infer U> ? U : never`, this contains `[U]`.
+    /// Empty when the conditional has no `infer` declarations.
+    pub infer_type_parameters: SmallVec<[TypeId; 2]>,
+}
+
 /// A conditional type: `T extends U ? X : Y`.
 ///
 /// Corresponds to tsgo's `ConditionalType`. Created as a deferred type when
 /// the check type is generic. Resolved eagerly when both check and extends
 /// are concrete.
+///
+/// Each instance references a `ConditionalRoot` (shared across instantiations)
+/// and stores the (possibly instantiated) check/extends/true/false types.
 #[derive(Debug, Clone)]
 pub struct ConditionalType {
-    /// The type being checked: `T` in `T extends U ? X : Y`.
+    /// Reference to the shared root (original types, infer params, etc.).
+    pub root: ConditionalRootId,
+    /// The (possibly instantiated) check type.
     pub check_type: TypeId,
-    /// The type being checked against: `U` in `T extends U ? X : Y`.
+    /// The (possibly instantiated) extends type.
     pub extends_type: TypeId,
-    /// The type returned when the check succeeds.
+    /// The (possibly instantiated) true branch type.
+    /// Infer type parameters remain as TypeParameters here until inference
+    /// resolves them during eager conditional type resolution.
     pub true_type: TypeId,
-    /// The type returned when the check fails.
+    /// The (possibly instantiated) false branch type.
     pub false_type: TypeId,
-    /// Whether the conditional distributes over unions.
-    /// True when the original check type was a bare type parameter
-    /// (e.g., `T extends U ? X : Y` where T is a type param).
-    pub is_distributive: bool,
 }
 
 // ---------------------------------------------------------------------------
