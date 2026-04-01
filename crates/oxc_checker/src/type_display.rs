@@ -59,7 +59,7 @@ impl Checker<'_> {
                 oxc_types::LiteralType::Boolean(b) => b.to_string(),
             },
             TypeData::Union(u) => {
-                // Named unions (e.g., enums) display by name
+                // Named unions (e.g., enums, type aliases) display by name
                 if let Some(name) = self.resolve_type_name(type_id) {
                     return name;
                 }

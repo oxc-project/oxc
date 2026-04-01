@@ -759,7 +759,8 @@ impl<'a, 'b> FlowGraphBuilder<'a, 'b> {
         }
     }
 
-    /// Check if an expression contains a narrowable reference (identifier or typeof).
+    /// Check if an expression contains a narrowable reference
+    /// (identifier, typeof, or property access on identifier).
     fn contains_narrowable_reference(&self, expr: &Expression<'_>) -> bool {
         match expr {
             Expression::Identifier(_) => true,
@@ -767,6 +768,10 @@ impl<'a, 'b> FlowGraphBuilder<'a, 'b> {
                 // typeof x
                 unary.operator == UnaryOperator::Typeof
                     && matches!(&unary.argument, Expression::Identifier(_))
+            }
+            // x.kind — property access on identifier (for discriminated unions)
+            Expression::StaticMemberExpression(member) => {
+                matches!(&member.object, Expression::Identifier(_))
             }
             Expression::ParenthesizedExpression(paren) => {
                 self.contains_narrowable_reference(&paren.expression)
@@ -784,6 +789,7 @@ impl<'a, 'b> FlowGraphBuilder<'a, 'b> {
             Expression::BinaryExpression(bin) => bin.node_id.get(),
             Expression::UnaryExpression(unary) => unary.node_id.get(),
             Expression::LogicalExpression(logical) => logical.node_id.get(),
+            Expression::StaticMemberExpression(member) => member.node_id.get(),
             Expression::ParenthesizedExpression(paren) => {
                 self.get_expression_node_id(&paren.expression)
             }

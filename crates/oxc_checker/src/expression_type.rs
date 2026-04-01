@@ -738,19 +738,21 @@ impl Checker<'_> {
                 let mut prop_types = Vec::new();
                 for &member in &constituents {
                     let prop = self.get_property_of_type(member, name);
-                    if prop != self.any_type
-                        || self.type_arena.get_flags(member).intersects(TypeFlags::Any)
-                    {
-                        prop_types.push(prop);
+                    if let Some(prop) = prop {
+                        if prop != self.any_type
+                            || self.type_arena.get_flags(member).intersects(TypeFlags::Any)
+                        {
+                            prop_types.push(prop);
+                        }
                     }
                 }
                 if prop_types.is_empty() {
-                    return self.any_type;
+                    return Some(self.any_type);
                 }
                 if prop_types.len() == 1 {
-                    return prop_types[0];
+                    return Some(prop_types[0]);
                 }
-                return self.get_or_create_intersection_type(prop_types);
+                return Some(self.get_or_create_intersection_type(prop_types));
             }
         }
 
