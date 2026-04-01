@@ -1044,13 +1044,19 @@ fn type_literal_assignability_wrong_type() {
 
 #[test]
 fn type_literal_extra_properties_ok() {
-    // Structural typing: extra properties are fine
+    // Excess property checking: fresh object literals assigned to typed
+    // targets must not have properties that don't exist in the target.
     with_checker!(
         "let x: { a: number } = { a: 42, b: 'extra' }",
         |checker, program| {
             checker.check_program(program);
-        let diagnostics = checker.take_diagnostics();
-            assert!(diagnostics.is_empty());
+            let diagnostics = checker.take_diagnostics();
+            assert_eq!(diagnostics.len(), 1, "should have 1 excess property error");
+            let msg = diagnostics[0].message.to_string();
+            assert!(
+                msg.contains("does not exist in type"),
+                "should be excess property error, got: {msg}"
+            );
         }
     );
 }
@@ -3945,6 +3951,116 @@ fn infer_constrained_bare_violates() {
             // number doesn't satisfy "extends string", U falls back to string.
             // Then check: number extends string? No → false branch → never.
             assert_eq!(checker.type_to_string(t), "never");
+        }
+    );
+}
+
+// --- Excess property checking tests ---
+
+#[test]
+fn excess_property_check_basic() {
+    // Object literal with excess property should produce TS2353
+    with_checker!(
+        "var x: { a: number } = { a: 1, b: 2 }",
+        |checker, program| {
+            checker.check_program(program);
+            let diagnostics = checker.take_diagnostics();
+            assert_eq!(diagnostics.len(), 1, "should have 1 error");
+            let msg = diagnostics[0].message.to_string();
+            assert!(msg.contains("does not exist in type"), "got: {msg}");
+            assert!(msg.contains("'b'"), "should mention property 'b', got: {msg}");
+        }
+    );
+}
+
+#[test]
+fn excess_property_check_no_excess() {
+    // Object literal with only known properties — no error
+    with_checker!(
+        "var x: { a: number } = { a: 1 }",
+        |checker, program| {
+            checker.check_program(program);
+            let diagnostics = checker.take_diagnostics();
+            assert!(diagnostics.is_empty(), "should have no errors");
+        }
+    );
+}
+
+#[test]
+fn excess_property_check_with_index_signature() {
+    // Target has string index signature — excess properties allowed
+    with_checker!(
+        "var x: { [key: string]: number } = { a: 1, b: 2 }",
+        |checker, program| {
+            checker.check_program(program);
+            let diagnostics = checker.take_diagnostics();
+            assert!(diagnostics.is_empty(), "index signature should allow any property");
+        }
+    );
+}
+
+#[test]
+fn excess_property_not_assignable_still_works() {
+    // Wrong property type should still produce TS2322, not TS2353
+    with_checker!(
+        r#"var x: { a: string } = { a: 1 }"#,
+        |checker, program| {
+            checker.check_program(program);
+            let diagnostics = checker.take_diagnostics();
+            assert_eq!(diagnostics.len(), 1, "should have 1 error");
+            let msg = diagnostics[0].message.to_string();
+            assert!(msg.contains("is not assignable to type"), "should be type mismatch, got: {msg}");
+        }
+    );
+}
+
+#[test]
+fn excess_property_check_empty_target() {
+    // Empty object type {} accepts anything structurally
+    with_checker!(
+        "var x: {} = { a: 1, b: 2 }",
+        |checker, program| {
+            checker.check_program(program);
+            let diagnostics = checker.take_diagnostics();
+            assert!(diagnostics.is_empty(), "empty object should accept any properties");
+        }
+    );
+}
+
+#[test]
+fn excess_property_check_return_statement() {
+    // Excess property in return statement
+    with_checker!(
+        r#"
+        function f(): { a: number } {
+            return { a: 1, b: 2 };
+        }
+        "#,
+        |checker, program| {
+            checker.check_program(program);
+            let diagnostics = checker.take_diagnostics();
+            assert_eq!(diagnostics.len(), 1, "should have 1 error");
+            let msg = diagnostics[0].message.to_string();
+            assert!(msg.contains("does not exist in type"), "got: {msg}");
+        }
+    );
+}
+
+#[test]
+fn excess_property_check_assignment() {
+    // Excess property in assignment expression
+    with_checker!(
+        r#"
+        var x: { a: number };
+        x = { a: 1, c: 3 };
+        "#,
+        |checker, program| {
+            checker.check_program(program);
+            let diagnostics = checker.take_diagnostics();
+            assert_eq!(diagnostics.len(), 1, "should have 1 error");
+            let msg = diagnostics[0].message.to_string();
+            assert!(msg.contains("does not exist in type"), "got: {msg}");
+            assert!(msg.contains("'c'"), "should mention property 'c', got: {msg}");
         }
     );
 }
