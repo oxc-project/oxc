@@ -1,4 +1,4 @@
-use oxc_types::{ObjectFlags, StructuredTypeKind, TypeData, TypeId};
+use oxc_types::{ObjectFlags, Signature, StructuredTypeKind, TypeData, TypeId};
 
 use crate::Checker;
 
@@ -12,6 +12,24 @@ impl Checker<'_> {
             return Some(self.semantic().scoping().symbol_name(symbol_id).to_string());
         }
         self.host.get_symbol_name(file_idx, symbol_id).map(|s| s.to_string())
+    }
+
+    /// Format a signature's parameter list as a string.
+    fn format_signature_params(&self, sig: &Signature) -> String {
+        sig.parameters
+            .iter()
+            .map(|p| {
+                let type_str = self.type_to_string(p.type_id);
+                if p.is_rest {
+                    format!("...{}: {}", p.name, type_str)
+                } else if p.is_optional {
+                    format!("{}?: {}", p.name, type_str)
+                } else {
+                    format!("{}: {}", p.name, type_str)
+                }
+            })
+            .collect::<Vec<_>>()
+            .join(", ")
     }
 
     /// Convert a `TypeId` to its string representation, matching tsc's output.
@@ -70,17 +88,47 @@ impl Checker<'_> {
                     }
                     return name;
                 }
-                // Anonymous — display structurally
-                if s.properties.is_empty() {
+
+                let has_props = !s.properties.is_empty();
+                let has_call_sigs = !s.call_signatures.is_empty();
+                let has_construct_sigs = !s.construct_signatures.is_empty();
+
+                // Standalone constructor type: `new (a: number) => Foo`
+                if !has_props && !has_call_sigs && has_construct_sigs && s.construct_signatures.len() == 1 {
+                    let sig = &s.construct_signatures[0];
+                    let params = self.format_signature_params(sig);
+                    let ret = self.type_to_string(sig.return_type);
+                    return format!("new ({params}) => {ret}");
+                }
+
+                // Standalone call signature: `(a: number) => Foo`
+                if !has_props && has_call_sigs && !has_construct_sigs && s.call_signatures.len() == 1 {
+                    let sig = &s.call_signatures[0];
+                    let params = self.format_signature_params(sig);
+                    let ret = self.type_to_string(sig.return_type);
+                    return format!("({params}) => {ret}");
+                }
+
+                if !has_props && !has_call_sigs && !has_construct_sigs {
                     return "{}".to_string();
                 }
-                let props = s
-                    .properties
-                    .iter()
-                    .map(|p| format!("{}: {}", p.name, self.type_to_string(p.type_id)))
-                    .collect::<Vec<_>>()
-                    .join("; ");
-                format!("{{ {}; }}", props)
+
+                // General case: `{ new(params): ReturnType; (params): ReturnType; prop: type; }`
+                let mut members = Vec::new();
+                for sig in &s.construct_signatures {
+                    let params = self.format_signature_params(sig);
+                    let ret = self.type_to_string(sig.return_type);
+                    members.push(format!("new({params}): {ret}"));
+                }
+                for sig in &s.call_signatures {
+                    let params = self.format_signature_params(sig);
+                    let ret = self.type_to_string(sig.return_type);
+                    members.push(format!("({params}): {ret}"));
+                }
+                for p in &s.properties {
+                    members.push(format!("{}: {}", p.name, self.type_to_string(p.type_id)));
+                }
+                format!("{{ {}; }}", members.join("; "))
             }
             TypeData::TypeReference(tr) => {
                 if let Some(target) = tr.target {
@@ -137,21 +185,7 @@ impl Checker<'_> {
             }
             TypeData::Function(f) => {
                 if let Some(sig) = f.signatures.first() {
-                    let params = sig
-                        .parameters
-                        .iter()
-                        .map(|p| {
-                            let type_str = self.type_to_string(p.type_id);
-                            if p.is_rest {
-                                format!("...{}: {}", p.name, type_str)
-                            } else if p.is_optional {
-                                format!("{}?: {}", p.name, type_str)
-                            } else {
-                                format!("{}: {}", p.name, type_str)
-                            }
-                        })
-                        .collect::<Vec<_>>()
-                        .join(", ");
+                    let params = self.format_signature_params(sig);
                     let ret = self.type_to_string(sig.return_type);
                     format!("({params}) => {ret}")
                 } else {

@@ -1221,15 +1221,47 @@ impl Checker<'_> {
 
     /// Get the type of a `new` expression (`new Foo()`).
     ///
-    /// If the callee resolves to a class, returns the class's instance type
-    /// (declared type). Otherwise returns `any`.
+    /// Checks construct signatures on the callee type first, then falls back
+    /// to class-based resolution.
     fn get_type_of_new_expression(
         &mut self,
         new_expr: &oxc_ast::ast::NewExpression<'_>,
     ) -> TypeId {
         use oxc_ast::AstKind;
 
-        // Resolve callee: only handle simple identifiers for now
+        // Resolve callee type
+        let callee_type = self.get_type_of_expression(&new_expr.callee, None);
+        let callee_flags = self.type_arena.get_flags(callee_type);
+
+        // any → any
+        if callee_flags.intersects(TypeFlags::Any) {
+            for arg in &new_expr.arguments {
+                if let Some(expr) = arg.as_expression() {
+                    self.get_type_of_expression(expr, None);
+                }
+            }
+            return self.any_type;
+        }
+
+        // Check for construct signatures on the callee type
+        let construct_return = match self.type_arena.get_data(callee_type) {
+            TypeData::Structured(s) if !s.construct_signatures.is_empty() => {
+                Some(s.construct_signatures[0].return_type)
+            }
+            _ => None,
+        };
+
+        if let Some(return_type) = construct_return {
+            // Evaluate arguments for diagnostics
+            for arg in &new_expr.arguments {
+                if let Some(expr) = arg.as_expression() {
+                    self.get_type_of_expression(expr, None);
+                }
+            }
+            return return_type;
+        }
+
+        // Fall back to class-based resolution
         let Expression::Identifier(ident) = &new_expr.callee else {
             return self.any_type;
         };

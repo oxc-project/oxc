@@ -1,4 +1,4 @@
-use oxc_types::{ObjectFlags, PropertyInfo, StructuredType, StructuredTypeKind, TypeData, TypeFlags, TypeId, build_member_map};
+use oxc_types::{ObjectFlags, ParameterInfo, PropertyInfo, Signature, StructuredType, StructuredTypeKind, TypeData, TypeFlags, TypeId, build_member_map};
 use smallvec::SmallVec;
 
 use crate::Checker;
@@ -128,7 +128,8 @@ impl<'a> Checker<'a> {
                     return target;
                 };
 
-                // Instantiate properties. Arena references are stable (AppendOnlyVec).
+                // Instantiate properties and signatures.
+                // Arena references have lifetime 'a (AppendOnlyVec), independent of &mut self.
                 let TypeData::Structured(s) = self.type_arena.get_data(target) else { unreachable!() };
                 let instantiated_props: Vec<PropertyInfo> = s.properties
                     .iter()
@@ -141,6 +142,14 @@ impl<'a> Checker<'a> {
                         }
                     })
                     .collect();
+                let call_sigs: Vec<Signature> = s.call_signatures
+                    .iter()
+                    .map(|sig| self.instantiate_signature(sig, &mapper))
+                    .collect();
+                let construct_sigs: Vec<Signature> = s.construct_signatures
+                    .iter()
+                    .map(|sig| self.instantiate_signature(sig, &mapper))
+                    .collect();
                 let member_map = build_member_map(&instantiated_props);
 
                 let resolved_id = self.type_arena.new_type(
@@ -151,8 +160,8 @@ impl<'a> Checker<'a> {
                         member_map,
                         string_index_type: None,
                         number_index_type: None,
-                        call_signatures: Vec::new(),
-                        construct_signatures: Vec::new(),
+                        call_signatures: call_sigs,
+                        construct_signatures: construct_sigs,
                         kind: StructuredTypeKind::Interface {
                             target: Some(target),
                             resolved_type_arguments: type_args.clone(),
@@ -377,8 +386,29 @@ impl Checker<'_> {
         }
     }
 
-    /// Instantiate properties of an Object or Interface type with a mapper.
-    /// Returns the original type_id if no properties changed.
+    /// Instantiate a signature with a type mapper.
+    fn instantiate_signature(&mut self, sig: &Signature, mapper: &TypeMapper) -> Signature {
+        let new_params: Vec<ParameterInfo> = sig.parameters
+            .iter()
+            .map(|p| ParameterInfo {
+                name: p.name.clone(),
+                type_id: self.instantiate_type(p.type_id, mapper),
+                is_optional: p.is_optional,
+                is_rest: p.is_rest,
+            })
+            .collect();
+        let new_return = self.instantiate_type(sig.return_type, mapper);
+        Signature {
+            flags: sig.flags,
+            min_argument_count: sig.min_argument_count,
+            parameters: new_params,
+            return_type: new_return,
+            type_parameters: sig.type_parameters.clone(),
+        }
+    }
+
+    /// Instantiate properties and signatures of an Object or Interface type with a mapper.
+    /// Returns the original type_id if no properties or signatures changed.
     fn instantiate_properties(
         &mut self,
         type_id: TypeId,
@@ -400,6 +430,42 @@ impl Checker<'_> {
             });
         }
 
+        // Instantiate call and construct signatures.
+        // Arena references have lifetime 'a (AppendOnlyVec), independent of &mut self.
+        let TypeData::Structured(s) = self.type_arena.get_data(type_id) else {
+            if !changed { return type_id; }
+            return self.type_arena.new_type(
+                TypeFlags::Object,
+                oxc_types::ObjectFlags::None,
+                TypeData::Structured(StructuredType {
+                    member_map: build_member_map(&new_props),
+                    properties: new_props,
+                    string_index_type: None,
+                    number_index_type: None,
+                    call_signatures: Vec::new(),
+                    construct_signatures: Vec::new(),
+                    kind: StructuredTypeKind::Anonymous { target: Some(type_id) },
+                }),
+                None,
+            );
+        };
+
+        let call_sigs: Vec<Signature> = s.call_signatures.iter().map(|sig| {
+            let new_sig = self.instantiate_signature(sig, mapper);
+            if new_sig.return_type != sig.return_type || new_sig.parameters.iter().zip(sig.parameters.iter()).any(|(a, b)| a.type_id != b.type_id) {
+                changed = true;
+            }
+            new_sig
+        }).collect();
+
+        let construct_sigs: Vec<Signature> = s.construct_signatures.iter().map(|sig| {
+            let new_sig = self.instantiate_signature(sig, mapper);
+            if new_sig.return_type != sig.return_type || new_sig.parameters.iter().zip(sig.parameters.iter()).any(|(a, b)| a.type_id != b.type_id) {
+                changed = true;
+            }
+            new_sig
+        }).collect();
+
         if !changed {
             return type_id;
         }
@@ -412,8 +478,8 @@ impl Checker<'_> {
                 properties: new_props,
                 string_index_type: None,
                 number_index_type: None,
-                call_signatures: Vec::new(),
-                construct_signatures: Vec::new(),
+                call_signatures: call_sigs,
+                construct_signatures: construct_sigs,
                 kind: StructuredTypeKind::Anonymous { target: Some(type_id) },
             }),
             None,

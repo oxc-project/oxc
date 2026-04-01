@@ -185,6 +185,29 @@ impl<'a> Checker<'a> {
             }
         }
 
+        // Check construct signature compatibility.
+        let target_construct_sigs: &[Signature] = match self.type_arena.get_data(target) {
+            TypeData::Structured(s) => &s.construct_signatures,
+            _ => &[],
+        };
+        if !target_construct_sigs.is_empty() {
+            let source_construct_sigs: &[Signature] = match self.type_arena.get_data(source) {
+                TypeData::Structured(s) => &s.construct_signatures,
+                _ => &[],
+            };
+            if source_construct_sigs.is_empty() {
+                return false;
+            }
+            for t_sig in target_construct_sigs {
+                let matched = source_construct_sigs.iter().any(|s_sig| {
+                    self.is_signature_assignable_to(s_sig, t_sig)
+                });
+                if !matched {
+                    return false;
+                }
+            }
+        }
+
         // Resolve TypeReferences so we can access their member_map
         let resolved_target = if let TypeData::TypeReference(_) = self.type_arena.get_data(target) {
             self.resolve_type_reference(target)
