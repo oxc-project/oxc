@@ -89,7 +89,15 @@ impl<'a> Checker<'a> {
             return cached;
         }
 
+        // Cycle detection: if this pair is already being checked (e.g., circular
+        // TypeParameter constraints T extends U, U extends T), return false to
+        // break the cycle. Mirrors the `resolving_symbols` pattern.
+        if !self.in_flight_assignability.insert(cache_key) {
+            return false;
+        }
+
         let result = self.is_type_assignable_to_slow(source, target, s, t);
+        self.in_flight_assignability.remove(&cache_key);
         self.assignability_cache.insert(cache_key, result);
         result
     }
@@ -152,7 +160,70 @@ impl<'a> Checker<'a> {
             }
         }
 
+        // Source is TypeParameter → check if its constraint is assignable to target.
+        // e.g., `T extends number` should be assignable to `number | bigint`.
+        // Unconstrained type parameters have no constraint, so they fall through to false.
+        if s.intersects(TypeFlags::TypeParameter) {
+            if let Some(constraint) = self.get_constraint_of_type_parameter(source) {
+                return self.is_type_assignable_to(constraint, target);
+            }
+        }
+
         false
+    }
+
+    /// Check if `source` is assignable to the type category described by `kind` flags.
+    /// Fast path: check flags directly. Slow path: use full assignability.
+    /// Mirrors tsgo's `isTypeAssignableToKind`.
+    pub fn is_type_assignable_to_kind(&mut self, source: TypeId, kind: TypeFlags) -> bool {
+        self.is_type_assignable_to_kind_ex(source, kind, false)
+    }
+
+    /// Strict variant that rejects any/unknown/void/undefined/null before the slow path.
+    /// Used by the `+` operator where `any + any` should return `any` (handled separately),
+    /// not match the number/bigint/string branches.
+    /// Mirrors tsgo's `isTypeAssignableToKindEx`.
+    pub fn is_type_assignable_to_kind_ex(
+        &mut self,
+        source: TypeId,
+        kind: TypeFlags,
+        strict: bool,
+    ) -> bool {
+        let flags = self.type_arena.get_flags(source);
+        if flags.intersects(kind) {
+            return true;
+        }
+        if strict
+            && flags.intersects(
+                TypeFlags::Any
+                    | TypeFlags::Unknown
+                    | TypeFlags::Void
+                    | TypeFlags::Undefined
+                    | TypeFlags::Null,
+            )
+        {
+            return false;
+        }
+        (kind.intersects(TypeFlags::NumberLike)
+            && self.is_type_assignable_to(source, self.number_type))
+            || (kind.intersects(TypeFlags::BigIntLike)
+                && self.is_type_assignable_to(source, self.bigint_type))
+            || (kind.intersects(TypeFlags::StringLike)
+                && self.is_type_assignable_to(source, self.string_type))
+            || (kind.intersects(TypeFlags::BooleanLike)
+                && self.is_type_assignable_to(source, self.boolean_type))
+            || (kind.intersects(TypeFlags::ESSymbol)
+                && self.is_type_assignable_to(source, self.es_symbol_type))
+            || (kind.intersects(TypeFlags::Void)
+                && self.is_type_assignable_to(source, self.void_type))
+            || (kind.intersects(TypeFlags::Never)
+                && self.is_type_assignable_to(source, self.never_type))
+            || (kind.intersects(TypeFlags::Null)
+                && self.is_type_assignable_to(source, self.null_type))
+            || (kind.intersects(TypeFlags::Undefined)
+                && self.is_type_assignable_to(source, self.undefined_type))
+            || (kind.intersects(TypeFlags::NonPrimitive)
+                && self.is_type_assignable_to(source, self.non_primitive_type))
     }
 
     /// Check if two literal types have the same value.
