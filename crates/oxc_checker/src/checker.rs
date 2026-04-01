@@ -322,6 +322,62 @@ impl<'a> Checker<'a> {
         std::mem::take(&mut self.type_param_constraints)
     }
 
+    /// Check assignability with excess property checking support.
+    ///
+    /// Unlike `is_type_assignable_to` which returns a bare bool, this method
+    /// returns a `RelationResult` that distinguishes between "not assignable"
+    /// and "excess property" failures, allowing call sites to produce the
+    /// correct error code (TS2322 vs TS2353).
+    pub fn check_type_assignable_to(
+        &mut self,
+        source: TypeId,
+        target: TypeId,
+        error_span: oxc_span::Span,
+    ) -> crate::relater::RelationResult {
+        let relater = crate::relater::Relater::new(error_span);
+        relater.check_type_assignable_to(self, source, target)
+    }
+
+    /// Check assignability and emit diagnostics for failures.
+    ///
+    /// Handles both excess property errors (TS2353) and type mismatch errors.
+    /// The `not_assignable_code` and `not_assignable_msg` closure are used
+    /// only for the `NotAssignable` case — the closure receives `(source_str, target_str)`
+    /// and returns the error message. This avoids computing type strings on the
+    /// common success path.
+    pub(crate) fn check_type_assignable_to_and_report(
+        &mut self,
+        source: TypeId,
+        target: TypeId,
+        span: oxc_span::Span,
+        not_assignable_code: &'static str,
+        not_assignable_msg: impl FnOnce(&str, &str) -> String,
+    ) {
+        let result = self.check_type_assignable_to(source, target, span);
+        match result {
+            crate::relater::RelationResult::Assignable => {}
+            crate::relater::RelationResult::ExcessProperty { property_name, target_type } => {
+                let target_str = self.type_to_string(target_type);
+                self.diagnostics.push(
+                    OxcDiagnostic::error(format!(
+                        "Object literal may only specify known properties, and '{property_name}' does not exist in type '{target_str}'."
+                    ))
+                    .with_error_code("ts", "2353")
+                    .with_label(span),
+                );
+            }
+            crate::relater::RelationResult::NotAssignable => {
+                let source_str = self.type_to_string(source);
+                let target_str = self.type_to_string(target);
+                self.diagnostics.push(
+                    OxcDiagnostic::error(not_assignable_msg(&source_str, &target_str))
+                        .with_error_code("ts", not_assignable_code)
+                        .with_label(span),
+                );
+            }
+        }
+    }
+
     /// Eagerly resolve all type parameter constraints in the arena.
     ///
     /// Used after checking lib.d.ts to ensure all constraints are cached
@@ -536,25 +592,17 @@ impl<'a> Checker<'a> {
             return;
         };
 
-        if !self.is_type_assignable_to(init_type, declared_type) {
-            let source_str = self.type_to_string(init_type);
-            let target_str = self.type_to_string(declared_type);
+        // Get the span of the binding identifier for the error label
+        let label_span = if let BindingPattern::BindingIdentifier(id) = &decl.id {
+            id.span
+        } else {
+            decl.id.span()
+        };
 
-            // Get the span of the binding identifier for the error label
-            let label_span = if let BindingPattern::BindingIdentifier(id) = &decl.id {
-                id.span
-            } else {
-                decl.id.span()
-            };
-
-            self.diagnostics.push(
-                OxcDiagnostic::error(format!(
-                    "Type '{source_str}' is not assignable to type '{target_str}'."
-                ))
-                .with_error_code("ts", "2322")
-                .with_label(label_span),
-            );
-        }
+        self.check_type_assignable_to_and_report(
+            init_type, declared_type, label_span, "2322",
+            |s, t| format!("Type '{s}' is not assignable to type '{t}'."),
+        );
     }
 
     /// Check a function's body with the return type context pushed.
@@ -621,17 +669,10 @@ impl<'a> Checker<'a> {
         let actual_type = self.get_type_of_expression(arg, expected_return_type);
 
         if let Some(expected) = expected_return_type {
-            if !self.is_type_assignable_to(actual_type, expected) {
-                let source_str = self.type_to_string(actual_type);
-                let target_str = self.type_to_string(expected);
-                self.diagnostics.push(
-                    OxcDiagnostic::error(format!(
-                        "Type '{source_str}' is not assignable to type '{target_str}'."
-                    ))
-                    .with_error_code("ts", "2322")
-                    .with_label(ret.span),
-                );
-            }
+            self.check_type_assignable_to_and_report(
+                actual_type, expected, ret.span, "2322",
+                |s, t| format!("Type '{s}' is not assignable to type '{t}'."),
+            );
         }
     }
 

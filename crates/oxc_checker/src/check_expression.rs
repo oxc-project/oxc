@@ -2,7 +2,6 @@ use oxc_ast::ast::{AssignmentExpression, Expression, ExpressionStatement};
 use oxc_span::GetSpan;
 use oxc_syntax::operator::AssignmentOperator;
 
-use oxc_diagnostics::OxcDiagnostic;
 use oxc_types::TypeId;
 
 use crate::Checker;
@@ -56,17 +55,9 @@ impl Checker<'_> {
         let target_type = self.get_type_of_identifier(ident);
         let value_type = self.get_type_of_expression(&assign.right, Some(target_type));
 
-        if !self.is_type_assignable_to(value_type, target_type) {
-            let source_str = self.type_to_string(value_type);
-            let target_str = self.type_to_string(target_type);
-
-            self.diagnostics.push(
-                OxcDiagnostic::error(format!(
-                    "Type '{source_str}' is not assignable to type '{target_str}'."
-                ))
-                .with_error_code("ts", "2322")
-                .with_label(ident.span()),
-            );
-        }
+        self.check_type_assignable_to_and_report(
+            value_type, target_type, ident.span(), "2322",
+            |s, t| format!("Type '{s}' is not assignable to type '{t}'."),
+        );
     }
 }

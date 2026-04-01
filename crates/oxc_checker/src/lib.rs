@@ -19,6 +19,7 @@ mod inference;
 mod instantiation;
 mod keyof;
 mod mapped_types;
+mod relater;
 mod type_display;
 mod type_from_type_node;
 

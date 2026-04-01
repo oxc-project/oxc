@@ -673,7 +673,7 @@ impl Checker<'_> {
 
         self.type_arena.new_type(
             TypeFlags::Object,
-            ObjectFlags::Anonymous | ObjectFlags::ObjectLiteral,
+            ObjectFlags::Anonymous | ObjectFlags::ObjectLiteral | ObjectFlags::FreshLiteral,
             TypeData::Structured(StructuredType {
                 member_map: build_member_map(&properties),
                 properties,
@@ -1264,21 +1264,14 @@ impl Checker<'_> {
 
             if let Some(param_type) = param_type {
                 if !self.type_arena.get_flags(param_type).intersects(TypeFlags::Any) {
-                    if !self.is_type_assignable_to(arg_type, param_type) {
-                        let arg_str = self.type_to_string(arg_type);
-                        let param_str = self.type_to_string(param_type);
-                        let span = match arg {
-                            Argument::SpreadElement(s) => s.span,
-                            _ => arg.to_expression().span(),
-                        };
-                        self.diagnostics.push(
-                            OxcDiagnostic::error(format!(
-                                "Argument of type '{arg_str}' is not assignable to parameter of type '{param_str}'."
-                            ))
-                            .with_error_code("ts", "2345")
-                            .with_label(span),
-                        );
-                    }
+                    let span = match arg {
+                        Argument::SpreadElement(s) => s.span,
+                        _ => arg.to_expression().span(),
+                    };
+                    self.check_type_assignable_to_and_report(
+                        arg_type, param_type, span, "2345",
+                        |s, t| format!("Argument of type '{s}' is not assignable to parameter of type '{t}'."),
+                    );
                 }
             }
         }
