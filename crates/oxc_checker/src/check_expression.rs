@@ -142,9 +142,16 @@ impl Checker<'_> {
 
     /// Check an assignment expression and return its type.
     ///
-    /// For simple `=` assignments to identifiers, validates that the RHS type
-    /// is assignable to the LHS declared type (TS2322). Always returns the
-    /// RHS type as the expression result.
+    /// For simple `=` assignments, resolves the LHS type (triggering TS2339
+    /// for non-existent properties) and validates that the RHS type is
+    /// assignable to the LHS declared type (TS2322).
+    ///
+    /// For compound assignments (`+=`, `-=`, etc.), resolves both LHS and
+    /// RHS types, computes the binary operation result type, and checks
+    /// that it's assignable back to the LHS.
+    ///
+    /// For logical assignments (`||=`, `&&=`, `??=`), checks that the RHS
+    /// type is assignable to the LHS type directly.
     ///
     /// Called from `get_type_of_expression_inner` so diagnostics fire
     /// regardless of how the expression is reached.
@@ -153,24 +160,56 @@ impl Checker<'_> {
         assign: &oxc_ast::ast::AssignmentExpression<'_>,
         contextual_type: Option<TypeId>,
     ) -> TypeId {
-        use oxc_ast::ast::AssignmentTarget;
         use oxc_syntax::operator::AssignmentOperator;
 
+        // Resolve the LHS type — this triggers TS2339 for member expressions
+        // where the property doesn't exist on the object type.
+        let target_type = self.get_type_of_assignment_target(&assign.left);
+        let label_span = assign.left.span();
+
         if assign.operator == AssignmentOperator::Assign {
-            if let AssignmentTarget::AssignmentTargetIdentifier(ident) = &assign.left {
-                let target_type = self.get_type_of_identifier(ident);
-                let value_type = self.get_type_of_expression(&assign.right, Some(target_type));
-                self.check_type_assignable_to_and_report(
-                    value_type,
-                    target_type,
-                    ident.span(),
-                    "2322",
-                    |s, t| format!("Type '{s}' is not assignable to type '{t}'."),
-                );
-                return value_type;
-            }
+            // Simple assignment: check RHS assignable to LHS
+            let value_type = self.get_type_of_expression(&assign.right, Some(target_type));
+            self.check_type_assignable_to_and_report(
+                value_type,
+                target_type,
+                label_span,
+                "2322",
+                |s, t| format!("Type '{s}' is not assignable to type '{t}'."),
+            );
+            return value_type;
         }
 
+        if assign.operator.is_logical() {
+            // Logical assignments (||=, &&=, ??=): RHS must be assignable to LHS
+            let value_type = self.get_type_of_expression(&assign.right, Some(target_type));
+            self.check_type_assignable_to_and_report(
+                value_type,
+                target_type,
+                label_span,
+                "2322",
+                |s, t| format!("Type '{s}' is not assignable to type '{t}'."),
+            );
+            return value_type;
+        }
+
+        // Compound assignment (+=, -=, *=, etc.): compute the binary result
+        // type and check it's assignable back to the LHS.
+        if let Some(bin_op) = assign.operator.to_binary_operator() {
+            let rhs_type = self.get_type_of_expression(&assign.right, None);
+            let result_type =
+                self.get_result_type_of_binary_operation(bin_op, target_type, rhs_type);
+            self.check_type_assignable_to_and_report(
+                result_type,
+                target_type,
+                label_span,
+                "2322",
+                |s, t| format!("Type '{s}' is not assignable to type '{t}'."),
+            );
+            return result_type;
+        }
+
+        // Fallback for any unhandled operator variant
         self.get_type_of_expression(&assign.right, contextual_type)
     }
 }

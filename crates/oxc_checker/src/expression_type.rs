@@ -1447,9 +1447,76 @@ impl Checker<'_> {
         self.any_type
     }
 
+    /// Resolve the type of an assignment target (LHS of `=` or `op=`).
+    ///
+    /// Dispatches to the appropriate `get_type_of_*` method based on the
+    /// target variant, which may emit diagnostics (e.g., TS2339 for
+    /// non-existent properties on member expression targets).
+    ///
+    /// Mirrors tsgo's approach of calling `checkExpressionEx(left)` on the
+    /// LHS of assignments before checking assignability.
+    pub(crate) fn get_type_of_assignment_target(
+        &mut self,
+        target: &oxc_ast::ast::AssignmentTarget<'_>,
+    ) -> TypeId {
+        use oxc_ast::ast::AssignmentTarget;
+        match target {
+            AssignmentTarget::AssignmentTargetIdentifier(ident) => {
+                self.get_type_of_identifier(ident)
+            }
+            AssignmentTarget::StaticMemberExpression(expr) => {
+                self.get_type_of_static_member_expression(expr)
+            }
+            AssignmentTarget::ComputedMemberExpression(expr) => {
+                self.get_type_of_computed_member_expression(expr)
+            }
+            AssignmentTarget::TSNonNullExpression(expr) => {
+                self.get_type_of_expression(&expr.expression, None)
+            }
+            AssignmentTarget::TSAsExpression(expr) => {
+                // The asserted type is what the LHS is declared as
+                self.get_type_from_type_node(&expr.type_annotation)
+            }
+            AssignmentTarget::TSTypeAssertion(expr) => {
+                self.get_type_from_type_node(&expr.type_annotation)
+            }
+            AssignmentTarget::TSSatisfiesExpression(expr) => {
+                self.get_type_of_expression(&expr.expression, None)
+            }
+            // Destructuring patterns — not yet supported
+            AssignmentTarget::ArrayAssignmentTarget(_)
+            | AssignmentTarget::ObjectAssignmentTarget(_)
+            | AssignmentTarget::PrivateFieldExpression(_) => self.any_type,
+        }
+    }
+
     /// Get the result type of a binary expression.
     fn get_type_of_binary_expression(&mut self, expr: &BinaryExpression<'_>) -> TypeId {
-        match expr.operator {
+        // Fast path: comparison, equality, in, instanceof always return boolean.
+        // Skip evaluating operand types to avoid unnecessary flow analysis
+        // (critical for files with many consecutive conditions).
+        if expr.operator.is_compare()
+            || expr.operator.is_equality()
+            || expr.operator.is_relational()
+        {
+            return self.boolean_type;
+        }
+        let left_type = self.get_type_of_expression(&expr.left, None);
+        let right_type = self.get_type_of_expression(&expr.right, None);
+        self.get_result_type_of_binary_operation(expr.operator, left_type, right_type)
+    }
+
+    /// Compute the result type of `left_type <op> right_type`.
+    ///
+    /// Used by both binary expressions and compound assignment operators
+    /// (e.g., `+=` maps to `Addition`).
+    pub(crate) fn get_result_type_of_binary_operation(
+        &self,
+        op: BinaryOperator,
+        left_type: TypeId,
+        right_type: TypeId,
+    ) -> TypeId {
+        match op {
             // Comparison and equality operators always return boolean
             BinaryOperator::Equality
             | BinaryOperator::Inequality
@@ -1474,8 +1541,6 @@ impl Checker<'_> {
             | BinaryOperator::BitwiseOR
             | BinaryOperator::BitwiseXOR
             | BinaryOperator::BitwiseAnd => {
-                let left_type = self.get_type_of_expression(&expr.left, None);
-                let right_type = self.get_type_of_expression(&expr.right, None);
                 let left_flags = self.type_arena.get_flags(left_type);
                 let right_flags = self.type_arena.get_flags(right_type);
                 if left_flags.intersects(TypeFlags::BigIntLike)
@@ -1489,8 +1554,6 @@ impl Checker<'_> {
 
             // + is special: string concat if either side is string-like, otherwise number
             BinaryOperator::Addition => {
-                let left_type = self.get_type_of_expression(&expr.left, None);
-                let right_type = self.get_type_of_expression(&expr.right, None);
                 let left_flags = self.type_arena.get_flags(left_type);
                 let right_flags = self.type_arena.get_flags(right_type);
                 if left_flags.intersects(TypeFlags::StringLike)
