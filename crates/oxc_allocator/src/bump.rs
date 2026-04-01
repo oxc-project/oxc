@@ -11,11 +11,6 @@
 #[doc(hidden)]
 pub extern crate alloc as core_alloc;
 
-#[cfg(feature = "boxed")]
-pub mod boxed;
-#[cfg(feature = "collections")]
-pub mod collections;
-
 mod alloc;
 
 use core::cell::Cell;
