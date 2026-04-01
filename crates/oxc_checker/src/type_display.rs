@@ -14,6 +14,33 @@ impl Checker<'_> {
         self.host.get_symbol_name(file_idx, symbol_id).map(|s| s.to_string())
     }
 
+    /// Format a type parameter list as `<T, U extends Foo, V = Bar>`.
+    /// Returns an empty string when the list is empty.
+    fn type_params_to_string(&self, type_params: &[TypeId]) -> String {
+        if type_params.is_empty() {
+            return String::new();
+        }
+        let params = type_params
+            .iter()
+            .map(|&tp_id| {
+                let mut s = self.type_to_string(tp_id);
+                if let TypeData::TypeParameter(tp) = self.type_arena().get_data(tp_id) {
+                    if let Some(constraint) = tp.constraint {
+                        s.push_str(" extends ");
+                        s.push_str(&self.type_to_string(constraint));
+                    }
+                    if let Some(default) = tp.resolved_default_type {
+                        s.push_str(" = ");
+                        s.push_str(&self.type_to_string(default));
+                    }
+                }
+                s
+            })
+            .collect::<Vec<_>>()
+            .join(", ");
+        format!("<{params}>")
+    }
+
     /// Convert a `TypeId` to its string representation, matching tsc's output.
     ///
     /// For example: `"string"`, `"number"`, `"true"`, `"string | number"`.
@@ -124,6 +151,7 @@ impl Checker<'_> {
             }
             TypeData::Function(f) => {
                 if let Some(sig) = f.signatures.first() {
+                    let type_params = self.type_params_to_string(&sig.type_parameters);
                     let params = sig
                         .parameters
                         .iter()
@@ -140,7 +168,7 @@ impl Checker<'_> {
                         .collect::<Vec<_>>()
                         .join(", ");
                     let ret = self.type_to_string(sig.return_type);
-                    format!("({params}) => {ret}")
+                    format!("{type_params}({params}) => {ret}")
                 } else {
                     "() => any".to_string()
                 }
