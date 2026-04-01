@@ -1150,6 +1150,8 @@ fn run_checker_single(
     }
 
     // Parse source → semantic → checker
+    let type_arena = oxc_types::TypeArena::with_capacity(64);
+    let project = oxc_project::Project::new(&type_arena);
     let allocator = Allocator::default();
     let parsed = Parser::new(&allocator, source, source_type).parse();
     if !parsed.errors.is_empty() {
@@ -1160,8 +1162,7 @@ fn run_checker_single(
     }
     let program = &parsed.program;
     let semantic = SemanticBuilder::new().build(program).semantic;
-    let type_arena = oxc_types::TypeArena::with_capacity(64);
-    let mut checker = Checker::new(semantic, &type_arena);
+    let mut checker = Checker::new_with_host(&semantic, &type_arena, &project, String::new(), 1);
 
     // Collect computed types from AST
     let actual = collect_checker_types(&mut checker, program, source);
@@ -1232,7 +1233,7 @@ fn collect_checker_types<'a>(
 ) -> Vec<(String, String)> {
     use oxc::ast_visit::Visit;
 
-    let mut walker = TypeCollectorVisitor { checker, source, results: Vec::new() };
+    let mut walker = TypeCollectorVisitor { checker, source, results: Vec::new(), last_expression_type: None };
     walker.visit_program(program);
     walker.results
 }
@@ -1241,6 +1242,10 @@ struct TypeCollectorVisitor<'a, 'b> {
     checker: &'b mut oxc_checker::Checker<'a>,
     source: &'b str,
     results: Vec<(String, String)>,
+    /// Stashed type string from the last visit_expression, so
+    /// visit_static_member_expression can emit the property name
+    /// with the same type as the parent member expression.
+    last_expression_type: Option<String>,
 }
 
 impl<'a> oxc::ast_visit::Visit<'a> for TypeCollectorVisitor<'a, '_> {
@@ -1251,12 +1256,37 @@ impl<'a> oxc::ast_visit::Visit<'a> for TypeCollectorVisitor<'a, '_> {
         let span = expr.span();
         if (span.start as usize) < self.source.len() && (span.end as usize) <= self.source.len() {
             let expr_text = &self.source[span.start as usize..span.end as usize];
-            let type_id = self.checker.get_type_of_expression(expr);
-            self.results.push((expr_text.to_string(), self.checker.type_to_string(type_id)));
+            let type_id = self.checker.get_type_of_expression(expr, None);
+            let type_str = self.checker.type_to_string(type_id);
+            self.results.push((expr_text.to_string(), type_str.clone()));
+            // Stash for visit_static_member_expression to pick up
+            self.last_expression_type = Some(type_str);
         }
 
         // Continue walking into sub-expressions
         oxc::ast_visit::walk::walk_expression(self, expr);
+    }
+
+    fn visit_static_member_expression(&mut self, expr: &oxc::ast::ast::StaticMemberExpression<'a>) {
+        use oxc::span::GetSpan as _;
+
+        // tsc emits the property name with the type of the member access.
+        // e.g., for `this.ships`, baseline has both:
+        //   >this.ships : Ship[]     (from visit_expression on the parent)
+        //   >ships : Ship[]          (this handler — the property name)
+        // The type was stashed by visit_expression just before walk_expression
+        // recursed into this node.
+        if let Some(parent_type) = self.last_expression_type.take() {
+            let prop_span = expr.property.span();
+            if (prop_span.start as usize) < self.source.len()
+                && (prop_span.end as usize) <= self.source.len()
+            {
+                let prop_text = &self.source[prop_span.start as usize..prop_span.end as usize];
+                self.results.push((prop_text.to_string(), parent_type));
+            }
+        }
+
+        oxc::ast_visit::walk::walk_static_member_expression(self, expr);
     }
 
     fn visit_object_property(&mut self, prop: &oxc::ast::ast::ObjectProperty<'a>) {
@@ -1270,7 +1300,7 @@ impl<'a> oxc::ast_visit::Visit<'a> for TypeCollectorVisitor<'a, '_> {
                 if (key_span.start as usize) < self.source.len()
                     && (key_span.end as usize) <= self.source.len()
                 {
-                    let prop_type = self.checker.get_type_of_expression(&prop.value);
+                    let prop_type = self.checker.get_type_of_expression(&prop.value, None);
                     let widened = self.checker.get_widened_literal_type(prop_type);
                     let key_text =
                         &self.source[key_span.start as usize..key_span.end as usize];
@@ -1294,7 +1324,7 @@ impl<'a> oxc::ast_visit::Visit<'a> for TypeCollectorVisitor<'a, '_> {
                 let prop_type = if let Some(ann) = &prop.type_annotation {
                     self.checker.get_type_from_type_node(&ann.type_annotation)
                 } else if let Some(init) = &prop.value {
-                    self.checker.get_type_of_expression(init)
+                    self.checker.get_type_of_expression(init, None)
                 } else {
                     self.checker.any_type
                 };
@@ -1378,7 +1408,7 @@ impl<'a> oxc::ast_visit::Visit<'a> for TypeCollectorVisitor<'a, '_> {
             && (name_span.end as usize) <= self.source.len()
         {
             let member_type = if let Some(init) = &member.initializer {
-                self.checker.get_type_of_expression(init)
+                self.checker.get_type_of_expression(init, None)
             } else {
                 self.checker.any_type
             };
@@ -1413,6 +1443,7 @@ impl<'a> oxc::ast_visit::Visit<'a> for TypeCollectorVisitor<'a, '_> {
 
         oxc::ast_visit::walk::walk_binding_identifier(self, id);
     }
+
 }
 
 // ================================
@@ -1449,6 +1480,8 @@ fn run_checker_errors_single(
     use oxc_checker::Checker;
 
     // Parse source → semantic → checker
+    let type_arena = oxc_types::TypeArena::with_capacity(64);
+    let project = oxc_project::Project::new(&type_arena);
     let allocator = Allocator::default();
     let parsed = Parser::new(&allocator, source, source_type).parse();
     if !parsed.errors.is_empty() {
@@ -1459,8 +1492,7 @@ fn run_checker_errors_single(
     }
     let program = &parsed.program;
     let semantic = SemanticBuilder::new().build(program).semantic;
-    let type_arena = oxc_types::TypeArena::with_capacity(64);
-    let mut checker = Checker::new(semantic, &type_arena);
+    let mut checker = Checker::new_with_host(&semantic, &type_arena, &project, String::new(), 1);
     checker.check_program(program);
     let diagnostics = checker.take_diagnostics();
 

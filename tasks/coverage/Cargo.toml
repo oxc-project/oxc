@@ -26,6 +26,7 @@ cow-utils = { workspace = true }
 oxc = { workspace = true, features = ["full", "isolated_declarations", "serialize", "conformance"] }
 oxc_checker = { workspace = true }
 oxc_estree_tokens = { workspace = true }
+oxc_project = { workspace = true }
 oxc_formatter = { workspace = true }
 oxc_types = { workspace = true }
 oxc_tasks_common = { workspace = true }

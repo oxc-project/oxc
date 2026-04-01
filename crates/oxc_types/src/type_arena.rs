@@ -73,7 +73,9 @@ pub struct TypeArena {
     /// Type-specific data (variant payload).
     data: AppendOnlyVec<TypeData>,
     /// Optional associated symbol (the declaration that produced this type).
-    symbols: AppendOnlyVec<Option<SymbolId>>,
+    /// The `u16` is the file index — identifies which file's Semantic the
+    /// SymbolId indexes into.
+    symbols: AppendOnlyVec<Option<(u16, SymbolId)>>,
 }
 
 impl std::fmt::Debug for TypeArena {
@@ -124,7 +126,7 @@ impl TypeArena {
         flags: TypeFlags,
         object_flags: ObjectFlags,
         data: TypeData,
-        symbol: Option<SymbolId>,
+        symbol: Option<(u16, SymbolId)>,
     ) -> TypeId {
         let idx = self.flags.push(flags);
         self.object_flags.push(object_flags);
@@ -156,8 +158,10 @@ impl TypeArena {
     }
 
     /// Get the associated symbol for a type, if any.
+    /// Returns `(file_idx, symbol_id)` — the file index identifies which
+    /// file's Semantic the SymbolId indexes into.
     #[inline]
-    pub fn get_symbol(&self, id: TypeId) -> Option<SymbolId> {
+    pub fn get_symbol(&self, id: TypeId) -> Option<(u16, SymbolId)> {
         self.symbols[id.index()]
     }
 }

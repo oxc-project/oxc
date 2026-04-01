@@ -92,11 +92,7 @@ impl Checker<'_> {
     /// Get property names of a concrete type as a union of string literal types.
     fn get_property_names_as_union(&mut self, type_id: TypeId) -> TypeId {
         let names: Vec<TypeId> = match self.type_arena.get_data(type_id) {
-            TypeData::Object(obj) => obj.properties
-                .iter()
-                .map(|p| self.get_or_create_string_literal_type(&p.name))
-                .collect(),
-            TypeData::Interface(iface) => iface.properties
+            TypeData::Structured(s) => s.properties
                 .iter()
                 .map(|p| self.get_or_create_string_literal_type(&p.name))
                 .collect(),
@@ -193,11 +189,7 @@ impl Checker<'_> {
     /// Used by `T[keyof T]` to produce the union of all value types.
     fn get_all_property_types_as_union(&mut self, type_id: TypeId) -> TypeId {
         let prop_types: Vec<TypeId> = match self.type_arena.get_data(type_id) {
-            TypeData::Object(obj) => obj.properties
-                .iter()
-                .map(|p| p.type_id)
-                .collect(),
-            TypeData::Interface(iface) => iface.properties
+            TypeData::Structured(s) => s.properties
                 .iter()
                 .map(|p| p.type_id)
                 .collect(),

@@ -1806,15 +1806,26 @@ dependencies = [
  "oxc_allocator",
  "oxc_ast",
  "oxc_ast_visit",
+ "oxc_checker_host",
  "oxc_diagnostics",
  "oxc_index",
  "oxc_parser",
+ "oxc_project",
  "oxc_semantic",
  "oxc_span",
  "oxc_syntax",
  "oxc_types",
  "rustc-hash",
  "smallvec",
+]
+
+[[package]]
+name = "oxc_checker_host"
+version = "0.115.0"
+dependencies = [
+ "oxc_span",
+ "oxc_syntax",
+ "oxc_types",
 ]
 
 [[package]]
@@ -1877,6 +1888,7 @@ dependencies = [
  "oxc_checker",
  "oxc_estree_tokens",
  "oxc_formatter",
+ "oxc_project",
  "oxc_tasks_common",
  "oxc_tasks_transform_checker",
  "oxc_types",
@@ -2273,12 +2285,16 @@ dependencies = [
  "oxc_allocator",
  "oxc_ast",
  "oxc_checker",
+ "oxc_checker_host",
+ "oxc_diagnostics",
  "oxc_parser",
+ "oxc_resolver",
  "oxc_semantic",
  "oxc_span",
  "oxc_syntax",
  "oxc_types",
  "rustc-hash",
+ "self_cell",
  "smallvec",
 ]
 

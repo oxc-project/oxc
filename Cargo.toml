@@ -140,6 +140,7 @@ oxc_traverse = { version = "0.115.0", path = "crates/oxc_traverse" } # AST trave
 
 # publish = false
 oxc_checker = { path = "crates/oxc_checker" } # TypeScript type checker
+oxc_checker_host = { path = "crates/oxc_checker_host" } # Shared trait for checker ↔ project
 oxc_project = { path = "crates/oxc_project" } # Cross-file type checking coordination
 oxc_types = { path = "crates/oxc_types" } # Type checker type representation
 oxc_formatter = { path = "crates/oxc_formatter" } # Code formatting

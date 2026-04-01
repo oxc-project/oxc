@@ -8,11 +8,11 @@
 //! Resolution happens when a mapped type is instantiated with concrete type
 //! arguments (e.g., `Partial<{a: string}>`) and its properties are accessed.
 //! The deferred MappedType stores the constraint, template, and modifiers;
-//! this module resolves them into a concrete ObjectType.
+//! this module resolves them into a concrete StructuredType.
 
 use oxc_span::CompactStr;
 use oxc_types::{
-    MappedTypeModifier, ObjectFlags, ObjectType, PropertyInfo, TypeData, TypeFlags, TypeId,
+    MappedTypeModifier, ObjectFlags, PropertyInfo, StructuredType, StructuredTypeKind, TypeData, TypeFlags, TypeId,
     build_member_map,
 };
 
@@ -124,8 +124,7 @@ impl Checker<'_> {
     fn get_property_info_of_type(&self, type_id: TypeId, name: &str) -> Option<(TypeId, bool, bool)> {
         // Check member_map first for O(1) existence check
         let (properties, member_map) = match self.type_arena.get_data(type_id) {
-            TypeData::Object(obj) => (&obj.properties, &obj.member_map),
-            TypeData::Interface(iface) => (&iface.properties, &iface.member_map),
+            TypeData::Structured(s) => (&s.properties, &s.member_map),
             _ => return None,
         };
         member_map.get(name)?;
@@ -156,7 +155,7 @@ impl Checker<'_> {
         type_id
     }
 
-    /// Build an ObjectType from resolved mapped type properties.
+    /// Build a StructuredType from resolved mapped type properties.
     pub(crate) fn build_mapped_object_type(
         &mut self,
         target: TypeId,
@@ -166,12 +165,14 @@ impl Checker<'_> {
         self.type_arena.new_type(
             TypeFlags::Object,
             ObjectFlags::Anonymous | ObjectFlags::Mapped,
-            TypeData::Object(ObjectType {
-                target: Some(target),
+            TypeData::Structured(StructuredType {
                 properties,
                 member_map,
+                string_index_type: None,
+                number_index_type: None,
                 call_signatures: Vec::new(),
                 construct_signatures: Vec::new(),
+                kind: StructuredTypeKind::Anonymous { target: Some(target) },
             }),
             None,
         )

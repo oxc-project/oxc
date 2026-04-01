@@ -1,6 +1,6 @@
 use oxc_span::CompactStr;
 use oxc_syntax::symbol::SymbolId;
-use oxc_types::{InterfaceType, LiteralType, ObjectFlags, PropertyInfo, Signature, TypeData, TypeFlags, TypeId, TypeParameterType, build_member_map};
+use oxc_types::{LiteralType, ObjectFlags, PropertyInfo, Signature, StructuredType, StructuredTypeKind, TypeData, TypeFlags, TypeId, TypeParameterType, build_member_map};
 use smallvec::SmallVec;
 
 use crate::Checker;
@@ -29,6 +29,12 @@ impl Checker<'_> {
     /// Resolve the declared type from a type-namespace declaration.
     fn resolve_declared_type(&mut self, symbol_id: SymbolId) -> TypeId {
         use oxc_ast::AstKind;
+
+        // Import binding — resolve via host (cross-file)
+        let symbol_flags = self.semantic().scoping().symbol_flags(symbol_id);
+        if symbol_flags.is_import() {
+            return self.resolve_import_type(symbol_id);
+        }
 
         let node_id = self.semantic().scoping().symbol_declaration(symbol_id);
         let node = self.semantic().nodes().get_node(node_id);
@@ -74,6 +80,8 @@ impl Checker<'_> {
         let mut properties = Vec::new();
         let mut call_signatures = Vec::new();
         let construct_signatures: Vec<Signature> = Vec::new();
+        let mut string_index_type: Option<TypeId> = None;
+        let mut number_index_type: Option<TypeId> = None;
 
         for sig in &decl.body.body {
             use oxc_ast::ast::TSSignature;
@@ -94,18 +102,26 @@ impl Checker<'_> {
                     }
                 }
                 TSSignature::TSCallSignatureDeclaration(call_sig) => {
-                    let sig = self.build_signature_from_params(
+                    let tp = self.get_type_parameters_from_declaration(
+                        call_sig.type_parameters.as_deref(),
+                    );
+                    let mut sig = self.build_signature_from_params(
                         &call_sig.params,
                         call_sig.return_type.as_deref(),
                     );
+                    sig.type_parameters = tp;
                     call_signatures.push(sig);
                 }
                 TSSignature::TSMethodSignature(method) => {
                     if let Some(name) = method.key.static_name() {
-                        let sig = self.build_signature_from_params(
+                        let tp = self.get_type_parameters_from_declaration(
+                            method.type_parameters.as_deref(),
+                        );
+                        let mut sig = self.build_signature_from_params(
                             &method.params,
                             method.return_type.as_deref(),
                         );
+                        sig.type_parameters = tp;
                         let method_type = self.create_function_type(sig);
                         properties.push(PropertyInfo {
                             name: CompactStr::new(&name),
@@ -115,7 +131,17 @@ impl Checker<'_> {
                         });
                     }
                 }
-                // TODO: index signatures, construct signatures
+                TSSignature::TSIndexSignature(idx_sig) => {
+                    let value_type = self.get_type_from_type_node(&idx_sig.type_annotation.type_annotation);
+                    if let Some(param) = idx_sig.parameters.first() {
+                        let key_type = self.get_type_from_type_node(&param.type_annotation.type_annotation);
+                        if self.type_arena.get_flags(key_type).intersects(TypeFlags::Number) {
+                            number_index_type = Some(value_type);
+                        } else {
+                            string_index_type = Some(value_type);
+                        }
+                    }
+                }
                 _ => {}
             }
         }
@@ -123,23 +149,27 @@ impl Checker<'_> {
         self.type_arena.new_type(
             TypeFlags::Object,
             ObjectFlags::Interface,
-            TypeData::Interface(InterfaceType {
-                target: None,
-                resolved_type_arguments: SmallVec::new(),
-                all_type_parameters: type_parameters,
-                this_type: None,
-                resolved_base_types: SmallVec::new(),
+            TypeData::Structured(StructuredType {
                 member_map: build_member_map(&properties),
                 properties,
+                string_index_type,
+                number_index_type,
                 call_signatures,
                 construct_signatures,
+                kind: StructuredTypeKind::Interface {
+                    target: None,
+                    resolved_type_arguments: SmallVec::new(),
+                    all_type_parameters: type_parameters,
+                    this_type: None,
+                    resolved_base_types: SmallVec::new(),
+                },
             }),
-            Some(symbol_id),
+            Some((self.file_idx, symbol_id)),
         )
     }
 
     /// Build a class instance type from a Class declaration.
-    /// Uses InterfaceType with ObjectFlags::Class, matching tsc/tsgo's model.
+    /// Uses StructuredType with Interface kind and ObjectFlags::Class, matching tsc/tsgo's model.
     pub(crate) fn get_type_of_class_declaration(
         &mut self,
         decl: &oxc_ast::ast::Class<'_>,
@@ -162,7 +192,7 @@ impl Checker<'_> {
                         let prop_type = if let Some(ann) = &prop.type_annotation {
                             self.get_type_from_type_node(&ann.type_annotation)
                         } else if let Some(init) = &prop.value {
-                            self.get_type_of_expression(init)
+                            self.get_type_of_expression(init, None)
                         } else {
                             self.any_type
                         };
@@ -195,7 +225,7 @@ impl Checker<'_> {
         // Handle extends clause — resolve base types
         let mut resolved_base_types = SmallVec::new();
         if let Some(super_class) = &decl.super_class {
-            let base_type = self.get_type_of_expression(super_class);
+            let base_type = self.get_type_of_expression(super_class, None);
             if base_type != self.any_type {
                 resolved_base_types.push(base_type);
             }
@@ -204,18 +234,22 @@ impl Checker<'_> {
         self.type_arena.new_type(
             TypeFlags::Object,
             ObjectFlags::Class,
-            TypeData::Interface(InterfaceType {
-                target: None,
-                resolved_type_arguments: SmallVec::new(),
-                all_type_parameters: type_parameters,
-                this_type: None,
-                resolved_base_types,
+            TypeData::Structured(StructuredType {
                 member_map: build_member_map(&properties),
                 properties,
+                string_index_type: None,
+                number_index_type: None,
                 call_signatures: Vec::new(),
                 construct_signatures: Vec::new(),
+                kind: StructuredTypeKind::Interface {
+                    target: None,
+                    resolved_type_arguments: SmallVec::new(),
+                    all_type_parameters: type_parameters,
+                    this_type: None,
+                    resolved_base_types,
+                },
             }),
-            Some(symbol_id),
+            Some((self.file_idx, symbol_id)),
         )
     }
 
@@ -232,7 +266,7 @@ impl Checker<'_> {
 
         for member in &decl.body.members {
             let member_type = if let Some(init) = &member.initializer {
-                let init_type = self.get_type_of_expression(init);
+                let init_type = self.get_type_of_expression(init, None);
                 if let TypeData::Literal(LiteralType::Number(n)) =
                     self.type_arena.get_data(init_type)
                 {
@@ -267,7 +301,7 @@ impl Checker<'_> {
             TypeFlags::Union,
             ObjectFlags::None,
             TypeData::Union(oxc_types::UnionType { types: key }),
-            Some(symbol_id),
+            Some((self.file_idx, symbol_id)),
         )
     }
 
@@ -317,7 +351,7 @@ impl Checker<'_> {
                         is_this_type: false,
                         resolved_default_type: None, // resolved lazily
                     }),
-                    symbol_id, // store symbol for lazy constraint lookup
+                    symbol_id.map(|s| (self.file_idx, s)), // store file-indexed symbol for lazy constraint lookup
                 );
 
                 // Cache the type parameter against its symbol so that
@@ -352,8 +386,13 @@ impl Checker<'_> {
             }
         }
 
-        // Find the symbol → declaration → AST constraint
-        let symbol_id = self.type_arena.get_symbol(type_param_id)?;
+        // Find the symbol → declaration → AST constraint.
+        // Use file index to determine if the symbol is from this file or another.
+        let (file_idx, symbol_id) = self.type_arena.get_symbol(type_param_id)?;
+        if file_idx != self.file_idx {
+            // Cross-file type parameter — use the host's constraint cache
+            return self.host.get_type_param_constraint(type_param_id);
+        }
         let node_id = self.semantic().scoping().symbol_declaration(symbol_id);
         let node = self.semantic().nodes().get_node(node_id);
 

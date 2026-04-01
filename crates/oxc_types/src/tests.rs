@@ -121,11 +121,11 @@ fn arena_symbol_association() {
         TypeFlags::Object,
         ObjectFlags::Class,
         TypeData::Intrinsic(IntrinsicType { intrinsic_name: "MyClass" }),
-        Some(symbol_id),
+        Some((0, symbol_id)),
     );
 
     assert_eq!(arena.get_symbol(type_without_symbol), None);
-    assert_eq!(arena.get_symbol(type_with_symbol), Some(symbol_id));
+    assert_eq!(arena.get_symbol(type_with_symbol), Some((0, symbol_id)));
     assert_eq!(arena.get_object_flags(type_with_symbol), ObjectFlags::Class);
 }
 

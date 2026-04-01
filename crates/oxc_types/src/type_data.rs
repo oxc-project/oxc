@@ -25,14 +25,13 @@ pub enum TypeData {
     /// Unique ES symbol type: `unique symbol`.
     UniqueESSymbol(UniqueESSymbolType),
 
-    /// Object type (anonymous object literals, computed results, etc.).
-    Object(ObjectType),
+    /// Structured type: object literal, interface, or class with properties.
+    /// Unifies the old Object and Interface variants. The `kind` field on
+    /// `StructuredType` distinguishes anonymous objects from named interfaces.
+    Structured(StructuredType),
 
     /// Type reference: instantiation of a generic type or interface.
     TypeReference(TypeReferenceType),
-
-    /// Interface type (named interface or class).
-    Interface(InterfaceType),
 
     /// Tuple type: `[string, number, ...boolean[]]`.
     Tuple(TupleType),
@@ -133,26 +132,49 @@ impl PropertyInfo {
     }
 }
 
-/// An anonymous object type (object literals, computed results).
+/// A structured type: object literal, interface, or class with properties.
 ///
-/// Corresponds to tsgo's `ObjectType`. In Go this is a base struct for
-/// TypeReference, InterfaceType, MappedType, etc. via embedding.
-/// Here we store the shared "structured" fields inline.
+/// Unifies tsgo's `ObjectType` and `InterfaceType`. Shared fields (properties,
+/// member_map, signatures, index types) live directly on this struct. The
+/// `kind` field carries variant-specific data (interface type parameters,
+/// base types, etc.). This eliminates duplicate match arms throughout the
+/// checker — code that just needs properties works on `&StructuredType`
+/// without caring whether it's an object or interface.
+///
+/// Follows the same pattern as `FlowEntry { kind: FlowNodeKind }`.
 #[derive(Debug, Clone)]
-pub struct ObjectType {
-    /// Target type for instantiated generics.
-    pub target: Option<TypeId>,
-    /// Named properties, ordered. Used for iteration (structural comparison,
-    /// display, instantiation).
+pub struct StructuredType {
+    /// Named properties, ordered.
     pub properties: Vec<PropertyInfo>,
     /// Property lookup map: O(1) access by name.
-    /// Mirrors tsgo's `StructuredType.members` (`map[string]*Symbol`).
-    /// Built at type creation time via `build_member_map`.
     pub member_map: FxHashMap<CompactStr, TypeId>,
-    /// Call signatures (e.g., from type literals with call signatures).
+    /// String index signature value type: `{ [key: string]: T }` → T.
+    pub string_index_type: Option<TypeId>,
+    /// Number index signature value type: `{ [idx: number]: T }` → T.
+    pub number_index_type: Option<TypeId>,
+    /// Call signatures.
     pub call_signatures: Vec<Signature>,
-    /// Construct signatures (e.g., `new (...) => T`).
+    /// Construct signatures.
     pub construct_signatures: Vec<Signature>,
+    /// Variant-specific data.
+    pub kind: StructuredTypeKind,
+}
+
+/// Variant-specific data for structured types.
+#[derive(Debug, Clone)]
+pub enum StructuredTypeKind {
+    /// Anonymous object (object literal, resolved mapped type, instantiated properties).
+    Anonymous {
+        target: Option<TypeId>,
+    },
+    /// Named interface or class with generics and inheritance.
+    Interface {
+        target: Option<TypeId>,
+        resolved_type_arguments: SmallVec<[TypeId; 4]>,
+        all_type_parameters: SmallVec<[TypeId; 4]>,
+        this_type: Option<TypeId>,
+        resolved_base_types: SmallVec<[TypeId; 4]>,
+    },
 }
 
 /// A type reference — an instantiation of a generic type.
@@ -164,32 +186,6 @@ pub struct TypeReferenceType {
     pub target: Option<TypeId>,
     /// Resolved type arguments for the instantiation.
     pub resolved_type_arguments: SmallVec<[TypeId; 4]>,
-    // TODO: node reference
-}
-
-/// An interface or class type with declared members.
-///
-/// Corresponds to tsgo's `InterfaceType` (embeds `TypeReference`).
-#[derive(Debug, Clone)]
-pub struct InterfaceType {
-    /// Target type for instantiated generics.
-    pub target: Option<TypeId>,
-    /// Resolved type arguments.
-    pub resolved_type_arguments: SmallVec<[TypeId; 4]>,
-    /// All type parameters (outer + local + thisType).
-    pub all_type_parameters: SmallVec<[TypeId; 4]>,
-    /// The `this` type, if any.
-    pub this_type: Option<TypeId>,
-    /// Resolved base types.
-    pub resolved_base_types: SmallVec<[TypeId; 4]>,
-    /// Declared properties, ordered.
-    pub properties: Vec<PropertyInfo>,
-    /// Property lookup map: O(1) access by name.
-    pub member_map: FxHashMap<CompactStr, TypeId>,
-    /// Call signatures (for callable interfaces).
-    pub call_signatures: Vec<Signature>,
-    /// Construct signatures (for newable interfaces).
-    pub construct_signatures: Vec<Signature>,
 }
 
 /// A tuple type: `[string, number, ...boolean[]]`.
@@ -436,7 +432,9 @@ pub struct Signature {
     pub parameters: Vec<ParameterInfo>,
     /// The return type of the signature.
     pub return_type: TypeId,
-    // Deferred: type_parameters, this_parameter, mapper, type_predicate
+    /// Type parameters for generic signatures (e.g., `<T>` in `function id<T>(x: T): T`).
+    pub type_parameters: SmallVec<[TypeId; 4]>,
+    // Deferred: this_parameter, mapper, type_predicate
 }
 
 /// Info about a single parameter in a signature.

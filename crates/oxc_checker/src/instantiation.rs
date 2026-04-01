@@ -1,4 +1,4 @@
-use oxc_types::{InterfaceType, ObjectFlags, ObjectType, PropertyInfo, TypeData, TypeFlags, TypeId, build_member_map};
+use oxc_types::{ObjectFlags, PropertyInfo, StructuredType, StructuredTypeKind, TypeData, TypeFlags, TypeId, build_member_map};
 use smallvec::SmallVec;
 
 use crate::Checker;
@@ -100,12 +100,12 @@ impl<'a> Checker<'a> {
     /// member_map. Results are cached in `instantiation_cache`.
     ///
     /// For `Array<string>`, this looks up `Array<T>`'s declared members,
-    /// substitutes T→string, creates a new InterfaceType in the arena with
+    /// substitutes T→string, creates a new StructuredType in the arena with
     /// the instantiated properties + member_map, and caches the result.
     /// Subsequent calls for the same TypeReference return the cached type.
     ///
     /// Mirrors tsgo's lazy `resolveStructuredTypeMembers` +
-    /// `ObjectType.instantiations` cache.
+    /// instantiation cache.
     pub(crate) fn resolve_type_reference(&mut self, type_ref_id: TypeId) -> TypeId {
         if let Some(&cached) = self.instantiation_cache.get(&type_ref_id) {
             return cached;
@@ -119,9 +119,9 @@ impl<'a> Checker<'a> {
 
         // Dispatch based on target type kind
         match self.type_arena.get_data(target) {
-            TypeData::Interface(iface) => {
+            TypeData::Structured(StructuredType { kind: StructuredTypeKind::Interface { all_type_parameters, .. }, .. }) => {
                 let Some(mapper) = TypeMapper::from_type_parameters(
-                    &iface.all_type_parameters,
+                    all_type_parameters,
                     type_args,
                 ) else {
                     self.instantiation_cache.insert(type_ref_id, target);
@@ -129,7 +129,8 @@ impl<'a> Checker<'a> {
                 };
 
                 // Instantiate properties. Arena references are stable (AppendOnlyVec).
-                let instantiated_props: Vec<PropertyInfo> = iface.properties
+                let TypeData::Structured(s) = self.type_arena.get_data(target) else { unreachable!() };
+                let instantiated_props: Vec<PropertyInfo> = s.properties
                     .iter()
                     .map(|p| {
                         PropertyInfo {
@@ -145,16 +146,20 @@ impl<'a> Checker<'a> {
                 let resolved_id = self.type_arena.new_type(
                     TypeFlags::Object,
                     ObjectFlags::Interface,
-                    TypeData::Interface(InterfaceType {
-                        target: Some(target),
-                        resolved_type_arguments: type_args.clone(),
-                        all_type_parameters: SmallVec::new(),
-                        this_type: None,
-                        resolved_base_types: SmallVec::new(),
+                    TypeData::Structured(StructuredType {
                         properties: instantiated_props,
                         member_map,
+                        string_index_type: None,
+                        number_index_type: None,
                         call_signatures: Vec::new(),
                         construct_signatures: Vec::new(),
+                        kind: StructuredTypeKind::Interface {
+                            target: Some(target),
+                            resolved_type_arguments: type_args.clone(),
+                            all_type_parameters: SmallVec::new(),
+                            this_type: None,
+                            resolved_base_types: SmallVec::new(),
+                        },
                     }),
                     None,
                 );
@@ -326,13 +331,8 @@ impl Checker<'_> {
                 )
             }
 
-            TypeData::Interface(iface) => {
-                let properties = &iface.properties;
-                self.instantiate_properties(type_id, properties, mapper)
-            }
-
-            TypeData::Object(obj) => {
-                let properties = &obj.properties;
+            TypeData::Structured(s) => {
+                let properties = &s.properties;
                 self.instantiate_properties(type_id, properties, mapper)
             }
 
@@ -407,12 +407,14 @@ impl Checker<'_> {
         self.type_arena.new_type(
             TypeFlags::Object,
             oxc_types::ObjectFlags::None,
-            TypeData::Object(ObjectType {
-                target: Some(type_id),
+            TypeData::Structured(StructuredType {
                 member_map: build_member_map(&new_props),
                 properties: new_props,
+                string_index_type: None,
+                number_index_type: None,
                 call_signatures: Vec::new(),
                 construct_signatures: Vec::new(),
+                kind: StructuredTypeKind::Anonymous { target: Some(type_id) },
             }),
             None,
         )
@@ -526,33 +528,43 @@ impl Checker<'_> {
             // Tuples: map each element type, preserve tuple structure.
             // Partial<[string, number]> → [string?, number?]
             if let TypeData::Tuple(tuple) = self.type_arena.get_data(concrete) {
-                let element_infos = tuple.element_infos.clone();
                 let readonly = tuple.readonly;
-                let new_elements: Vec<oxc_types::TupleElementInfo> = element_infos
-                    .iter()
-                    .map(|info| {
-                        let mapped_elem = self.instantiate_mapped_element_type(
-                            info.element_type, template, type_param,
-                            optional_mod, outer_mapper,
-                        );
-                        let new_flags = match optional_mod {
-                            oxc_types::MappedTypeModifier::Add => {
-                                (info.flags - oxc_types::ElementFlags::Required)
-                                    | oxc_types::ElementFlags::Optional
-                            }
-                            oxc_types::MappedTypeModifier::Remove => {
-                                (info.flags - oxc_types::ElementFlags::Optional)
-                                    | oxc_types::ElementFlags::Required
-                            }
-                            oxc_types::MappedTypeModifier::None => info.flags,
-                        };
-                        oxc_types::TupleElementInfo {
-                            element_type: mapped_elem,
-                            flags: new_flags,
-                            label_name: info.label_name.clone(),
+                let num_elements = tuple.element_infos.len();
+                let mut new_elements = Vec::with_capacity(num_elements);
+                for i in 0..num_elements {
+                    // Re-access tuple from arena each iteration. The arena is
+                    // append-only so the reference is stable, but the for loop
+                    // avoids holding a closure that borrows both the arena ref
+                    // and &mut self simultaneously.
+                    let TypeData::Tuple(tuple) = self.type_arena.get_data(concrete) else {
+                        unreachable!()
+                    };
+                    let info = &tuple.element_infos[i];
+                    let elem_type = info.element_type;
+                    let flags = info.flags;
+                    let label_name = info.label_name.clone();
+
+                    let mapped_elem = self.instantiate_mapped_element_type(
+                        elem_type, template, type_param,
+                        optional_mod, outer_mapper,
+                    );
+                    let new_flags = match optional_mod {
+                        oxc_types::MappedTypeModifier::Add => {
+                            (flags - oxc_types::ElementFlags::Required)
+                                | oxc_types::ElementFlags::Optional
                         }
-                    })
-                    .collect();
+                        oxc_types::MappedTypeModifier::Remove => {
+                            (flags - oxc_types::ElementFlags::Optional)
+                                | oxc_types::ElementFlags::Required
+                        }
+                        oxc_types::MappedTypeModifier::None => flags,
+                    };
+                    new_elements.push(oxc_types::TupleElementInfo {
+                        element_type: mapped_elem,
+                        flags: new_flags,
+                        label_name,
+                    });
+                }
 
                 let min_length = new_elements
                     .iter()

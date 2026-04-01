@@ -11,7 +11,7 @@ use oxc_syntax::symbol::SymbolId;
 use oxc_types::{FunctionType, ObjectFlags, ParameterInfo, Signature, SignatureFlags, TypeArena, TypeData, TypeFlags, TypeId, TypeParameterType, UnionType};
 use smallvec::SmallVec;
 
-use crate::host::CheckerHost;
+use oxc_checker_host::CheckerHost;
 
 /// TypeScript type checker.
 ///
@@ -36,16 +36,22 @@ use crate::host::CheckerHost;
 /// `&mut TypeArena` — but the arena handed to it may be thread-local.
 pub struct Checker<'a> {
     /// The semantic analysis result for the program being checked.
-    pub(crate) semantic: Semantic<'a>,
+    /// Borrowed (not owned) so the Semantic can outlive the Checker —
+    /// this is required for multi-file checking where Semantics are kept
+    /// alive in the Project for cross-file resolution.
+    pub(crate) semantic: &'a Semantic<'a>,
 
     /// Path of the file being checked. Used to identify this file when
     /// calling `host.resolve_import(from_file, ...)`.
     pub(crate) file_path: String,
 
-    /// Optional host for cross-file resolution (global types, imports).
-    /// When `None`, the checker falls back to its local `global_types` HashMap.
-    /// When `Some`, global type queries and import resolution go through the host.
-    host: Option<&'a dyn CheckerHost>,
+    /// Host for global type lookups and cross-file import resolution.
+    /// Provided by the Project.
+    pub(crate) host: &'a dyn CheckerHost,
+
+    /// Index of the file being checked. Stored on types created by this
+    /// checker so cross-file lookups know which Semantic to query.
+    pub(crate) file_idx: u16,
 
     /// Borrowed arena storing all types created during checking.
     /// Shared with global types (from lib.d.ts) and other checkers via
@@ -123,15 +129,6 @@ pub struct Checker<'a> {
     /// `TypeParameter.constraint` field (nil until first access).
     pub(crate) type_param_constraints: FxHashMap<TypeId, TypeId>,
 
-    /// Global types from lib.d.ts (Array, Promise, etc.).
-    /// Used as fallback when no host is provided.
-    pub(crate) global_types: FxHashMap<CompactStr, TypeId>,
-
-    /// Reverse mapping from TypeId to name for global types (lib.d.ts).
-    /// Used for display since SymbolIds from lib.d.ts are cleared after
-    /// bootstrap extraction and are not valid in the user's Semantic.
-    pub(crate) global_type_names: FxHashMap<TypeId, CompactStr>,
-
     /// Stack of return types for enclosing functions.
     /// `Some(type_id)` = function has a declared return type annotation.
     /// `None` = function has no return type annotation (returns are unchecked).
@@ -176,50 +173,23 @@ pub struct Checker<'a> {
 }
 
 impl<'a> Checker<'a> {
-    /// Create a new type checker for standalone (single-file) use.
-    ///
-    /// The caller provides a mutable reference to a `TypeArena`.
-    /// Without a host, the checker parses lib.d.ts itself for global types
-    /// and cannot resolve cross-file imports.
-    pub fn new(semantic: Semantic<'a>, type_arena: &'a TypeArena) -> Self {
-        use crate::global_types::allocate_intrinsics;
-        let intrinsics = allocate_intrinsics(type_arena);
-        let global_types =
-            crate::global_types::GlobalTypes::from_lib(type_arena, &intrinsics);
-        let base_count = type_arena.len() as u32;
-        Self::new_inner(semantic, type_arena, global_types.types, global_types.type_names, None, intrinsics, base_count)
-    }
-
     /// Create a new type checker with a host for cross-file resolution.
     ///
     /// The host provides global types (lib.d.ts) and cross-file import
-    /// resolution. When a host is provided, the checker's local
-    /// `global_types` HashMap is empty — all global lookups go through
-    /// the host.
+    /// resolution. All global type lookups go through the host.
     ///
     /// The `type_arena` should be the same arena that the host's global
     /// types were allocated into, ensuring all TypeIds are compatible.
     pub fn new_with_host(
-        semantic: Semantic<'a>,
+        semantic: &'a Semantic<'a>,
         type_arena: &'a TypeArena,
         host: &'a dyn CheckerHost,
+        file_path: String,
+        file_idx: u16,
     ) -> Self {
-        use crate::global_types::allocate_intrinsics;
-        let intrinsics = allocate_intrinsics(type_arena);
+        let intrinsics = host.get_intrinsics();
         let base_count = type_arena.len() as u32;
-        Self::new_inner(semantic, type_arena, FxHashMap::default(), FxHashMap::default(), Some(host), intrinsics, base_count)
-    }
 
-    pub(crate) fn new_inner(
-        semantic: Semantic<'a>,
-        type_arena: &'a TypeArena,
-        global_types: FxHashMap<CompactStr, TypeId>,
-        global_type_names: FxHashMap<TypeId, CompactStr>,
-        host: Option<&'a dyn CheckerHost>,
-        intrinsics: crate::global_types::IntrinsicIds,
-        base_count: u32,
-    ) -> Self {
-        // Allocate the implicit `this` type parameter
         let this_type = type_arena.new_type(
             TypeFlags::TypeParameter,
             ObjectFlags::None,
@@ -233,17 +203,14 @@ impl<'a> Checker<'a> {
             None,
         );
 
-        // Pre-compute values that need semantic/global_types before they're moved
         let symbols_len = semantic.scoping().symbols_len();
-        let array_type = if let Some(host) = host {
-            host.get_global_type("Array").unwrap_or(intrinsics.any_type)
-        } else {
-            global_types.get("Array").copied().unwrap_or(intrinsics.any_type)
-        };
+        let array_type = host.get_global_type("Array").unwrap_or(intrinsics.any_type);
 
         Self {
             semantic,
+            file_path,
             host,
+            file_idx,
             type_arena,
             base_count,
             diagnostics: Vec::new(),
@@ -260,8 +227,6 @@ impl<'a> Checker<'a> {
             instantiation_cache: FxHashMap::default(),
             mapped_type_cache: FxHashMap::default(),
             type_param_constraints: FxHashMap::default(),
-            global_types,
-            global_type_names,
             return_type_stack: Vec::new(),
             class_type_stack: Vec::new(),
             current_flow_graph: crate::flow::FlowGraph::empty(),
@@ -305,6 +270,30 @@ impl<'a> Checker<'a> {
     /// Drain and return all collected diagnostics.
     pub fn take_diagnostics(&mut self) -> Vec<OxcDiagnostic> {
         std::mem::take(&mut self.diagnostics)
+    }
+
+    /// Extract the type parameter constraint cache.
+    ///
+    /// Used by Project to accumulate constraints from all files into a
+    /// global cache, so per-file checkers can look up constraints for
+    /// type parameters declared in other files.
+    pub fn take_type_param_constraints(&mut self) -> FxHashMap<TypeId, TypeId> {
+        std::mem::take(&mut self.type_param_constraints)
+    }
+
+    /// Eagerly resolve all type parameter constraints in the arena.
+    ///
+    /// Used after checking lib.d.ts to ensure all constraints are cached
+    /// before the per-file Checker (and its Semantic) are dropped. Without
+    /// this, constraints like `K extends keyof any` in `Record<K, T>`
+    /// would be unresolvable by per-file checkers.
+    pub fn eagerly_resolve_type_param_constraints(&mut self) {
+        for idx in 0..self.type_arena.len() {
+            let type_id = TypeId::from_usize(idx);
+            if self.type_arena.get_flags(type_id).contains(TypeFlags::TypeParameter) {
+                self.get_constraint_of_type_parameter(type_id);
+            }
+        }
     }
 
     /// Check a single AST node, dispatching by kind.
@@ -454,18 +443,26 @@ impl<'a> Checker<'a> {
         &mut self,
         decl: &oxc_ast::ast::VariableDeclarator<'a>,
     ) {
-        // Always evaluate the initializer type — this triggers diagnostics
-        // like TS2339 (property does not exist) even without a type annotation.
-        let init_type = decl.init.as_ref().map(|init| self.get_type_of_expression(init));
+        // Compute declared type first so it can be used as contextual type
+        // for the initializer (enables callback parameter inference, tuple context, etc.)
+        let declared_type = decl
+            .type_annotation
+            .as_ref()
+            .map(|ann| self.get_type_from_type_node(&ann.type_annotation));
 
-        let Some(annotation) = &decl.type_annotation else {
+        // Evaluate the initializer with the declared type as context.
+        // This triggers diagnostics (e.g., TS2339) even without a type annotation.
+        let init_type = decl
+            .init
+            .as_ref()
+            .map(|init| self.get_type_of_expression(init, declared_type));
+
+        let Some(declared_type) = declared_type else {
             return;
         };
         let Some(init_type) = init_type else {
             return;
         };
-
-        let declared_type = self.get_type_from_type_node(&annotation.type_annotation);
 
         if !self.is_type_assignable_to(init_type, declared_type) {
             let source_str = self.type_to_string(init_type);
@@ -562,7 +559,7 @@ impl<'a> Checker<'a> {
         };
 
         let actual_type = if let Some(arg) = &ret.argument {
-            self.get_type_of_expression(arg)
+            self.get_type_of_expression(arg, Some(expected_return_type))
         } else {
             self.undefined_type
         };
@@ -581,17 +578,10 @@ impl<'a> Checker<'a> {
     }
 
     /// Look up a global type by name (e.g., "Array", "Promise").
-    /// Tries the host first (if available), then falls back to the local
-    /// `global_types` HashMap. Returns `any_type` if not found anywhere.
+    /// Returns `any_type` if not found.
     pub fn get_global_type(&self, name: &str) -> TypeId {
-        if let Some(host) = self.host {
-            if let Some(type_id) = host.get_global_type(name) {
-                return type_id;
-            }
-        }
-        self.global_types
-            .get(name)
-            .copied()
+        self.host
+            .get_global_type(name)
             .unwrap_or(self.any_type)
     }
 
@@ -602,7 +592,17 @@ impl<'a> Checker<'a> {
 
     /// Get the semantic analysis result.
     pub fn semantic(&self) -> &Semantic<'a> {
-        &self.semantic
+        self.semantic
+    }
+
+    /// Get the cached type for a symbol (value-side), if resolved.
+    pub fn get_cached_symbol_type(&self, symbol_id: oxc_syntax::symbol::SymbolId) -> Option<TypeId> {
+        self.symbol_type_cache[symbol_id]
+    }
+
+    /// Get the cached declared type for a symbol (type-side), if resolved.
+    pub fn get_cached_declared_type(&self, symbol_id: oxc_syntax::symbol::SymbolId) -> Option<TypeId> {
+        self.declared_type_cache[symbol_id]
     }
 
     /// Get or create a deduplicated union type from a list of constituent type IDs.
@@ -772,14 +772,7 @@ impl<'a> Checker<'a> {
     /// Used for function declarations, function expressions, and arrow functions.
     /// When there is no return type annotation, infers the return type from the body.
     pub fn build_signature_from_function(&mut self, func: &Function<'_>) -> Signature {
-        let mut sig = self.build_signature_from_params(&func.params, func.return_type.as_deref());
-        // Infer return type from body when there's no annotation.
-        if func.return_type.is_none() {
-            if let Some(body) = &func.body {
-                sig.return_type = self.infer_return_type_from_body(&body.statements);
-            }
-        }
-        sig
+        self.build_signature_from_function_with_context(func, None)
     }
 
     /// Build a Signature from formal parameters and an optional return type annotation.
@@ -788,17 +781,39 @@ impl<'a> Checker<'a> {
         params: &oxc_ast::ast::FormalParameters<'_>,
         return_type_ann: Option<&oxc_ast::ast::TSTypeAnnotation<'_>>,
     ) -> Signature {
+        self.build_signature_from_params_with_context(params, return_type_ann, None)
+    }
+
+    /// Build a Signature from formal parameters with contextual type information.
+    ///
+    /// When a contextual signature is provided (e.g., from a variable declaration
+    /// annotation or a call site parameter type), parameters without type annotations
+    /// use the corresponding type from the contextual signature.
+    pub fn build_signature_from_params_with_context(
+        &mut self,
+        params: &oxc_ast::ast::FormalParameters<'_>,
+        return_type_ann: Option<&oxc_ast::ast::TSTypeAnnotation<'_>>,
+        contextual_sig: Option<&Signature>,
+    ) -> Signature {
         let mut parameters = Vec::new();
         let mut min_argument_count: u32 = 0;
         let mut has_rest = false;
 
-        for param in &params.items {
+        for (i, param) in params.items.iter().enumerate() {
             let name = match &param.pattern {
                 BindingPattern::BindingIdentifier(id) => CompactStr::new(id.name.as_str()),
                 _ => CompactStr::new("_"),
             };
             let type_id = if let Some(ann) = &param.type_annotation {
+                // Explicit annotation takes priority
                 self.get_type_from_type_node(&ann.type_annotation)
+            } else if let Some(ctx_sig) = contextual_sig {
+                // Fall back to contextual parameter type
+                ctx_sig
+                    .parameters
+                    .get(i)
+                    .map(|p| p.type_id)
+                    .unwrap_or(self.any_type)
             } else {
                 self.any_type
             };
@@ -850,7 +865,38 @@ impl<'a> Checker<'a> {
             min_argument_count,
             parameters,
             return_type,
+            type_parameters: SmallVec::new(),
         }
+    }
+
+    /// Build a Signature from a function declaration/expression with contextual typing.
+    ///
+    /// Like `build_signature_from_function`, but passes through a contextual signature
+    /// for parameter type inference.
+    pub fn build_signature_from_function_with_context(
+        &mut self,
+        func: &Function<'_>,
+        contextual_sig: Option<&Signature>,
+    ) -> Signature {
+        // Create type parameters FIRST so that parameter/return type annotations
+        // that reference them (e.g., `T` in `function id<T>(x: T): T`) resolve
+        // to the correct TypeParameter TypeIds via the declared_type_cache.
+        let type_parameters = self.get_type_parameters_from_declaration(
+            func.type_parameters.as_deref(),
+        );
+        let mut sig = self.build_signature_from_params_with_context(
+            &func.params,
+            func.return_type.as_deref(),
+            contextual_sig,
+        );
+        sig.type_parameters = type_parameters;
+        // Infer return type from body when there's no annotation.
+        if func.return_type.is_none() {
+            if let Some(body) = &func.body {
+                sig.return_type = self.infer_return_type_from_body(&body.statements);
+            }
+        }
+        sig
     }
 
     /// Infer the return type of a function from its body.
@@ -902,7 +948,7 @@ impl<'a> Checker<'a> {
         match stmt {
             Statement::ReturnStatement(ret) => {
                 let return_type = if let Some(arg) = &ret.argument {
-                    self.get_type_of_expression(arg)
+                    self.get_type_of_expression(arg, None)
                 } else {
                     self.undefined_type
                 };

@@ -1,6 +1,6 @@
 use oxc_ast::ast::TSType;
 use oxc_span::CompactStr;
-use oxc_types::{ElementFlags, MappedType, MappedTypeModifier, ObjectFlags, ObjectType, PropertyInfo, TupleElementInfo, TupleType, TypeData, TypeFlags, TypeId, TypeParameterType, TypeReferenceType, build_member_map};
+use oxc_types::{ElementFlags, MappedType, MappedTypeModifier, ObjectFlags, PropertyInfo, StructuredType, StructuredTypeKind, TupleElementInfo, TupleType, TypeData, TypeFlags, TypeId, TypeParameterType, TypeReferenceType, build_member_map};
 use smallvec::SmallVec;
 
 use crate::Checker;
@@ -74,10 +74,14 @@ impl Checker<'_> {
 
             // Function type: `(x: number) => string`
             TSType::TSFunctionType(func_type) => {
-                let sig = self.build_signature_from_params(
+                let tp = self.get_type_parameters_from_declaration(
+                    func_type.type_parameters.as_deref(),
+                );
+                let mut sig = self.build_signature_from_params(
                     &func_type.params,
                     Some(&func_type.return_type),
                 );
+                sig.type_parameters = tp;
                 self.create_function_type(sig)
             }
 
@@ -205,7 +209,7 @@ impl Checker<'_> {
         }
     }
 
-    /// Resolve a type literal (`{ x: number; y: string }`) to an ObjectType.
+    /// Resolve a type literal (`{ x: number; y: string }`) to a StructuredType.
     fn get_type_from_type_literal(
         &mut self,
         lit: &oxc_ast::ast::TSTypeLiteral<'_>,
@@ -215,6 +219,8 @@ impl Checker<'_> {
         let mut properties = Vec::new();
         let mut call_signatures = Vec::new();
         let construct_signatures: Vec<oxc_types::Signature> = Vec::new();
+        let mut string_index_type: Option<TypeId> = None;
+        let mut number_index_type: Option<TypeId> = None;
 
         for sig in &lit.members {
             match sig {
@@ -234,18 +240,26 @@ impl Checker<'_> {
                     }
                 }
                 TSSignature::TSCallSignatureDeclaration(call_sig) => {
-                    let sig = self.build_signature_from_params(
+                    let tp = self.get_type_parameters_from_declaration(
+                        call_sig.type_parameters.as_deref(),
+                    );
+                    let mut sig = self.build_signature_from_params(
                         &call_sig.params,
                         call_sig.return_type.as_deref(),
                     );
+                    sig.type_parameters = tp;
                     call_signatures.push(sig);
                 }
                 TSSignature::TSMethodSignature(method) => {
                     if let Some(name) = method.key.static_name() {
-                        let sig = self.build_signature_from_params(
+                        let tp = self.get_type_parameters_from_declaration(
+                            method.type_parameters.as_deref(),
+                        );
+                        let mut sig = self.build_signature_from_params(
                             &method.params,
                             method.return_type.as_deref(),
                         );
+                        sig.type_parameters = tp;
                         let method_type = self.create_function_type(sig);
                         properties.push(PropertyInfo {
                             name: CompactStr::new(&name),
@@ -255,7 +269,18 @@ impl Checker<'_> {
                         });
                     }
                 }
-                // TODO: TSIndexSignature, TSConstructSignatureDeclaration
+                TSSignature::TSIndexSignature(idx_sig) => {
+                    let value_type = self.get_type_from_type_node(&idx_sig.type_annotation.type_annotation);
+                    if let Some(param) = idx_sig.parameters.first() {
+                        let key_type = self.get_type_from_type_node(&param.type_annotation.type_annotation);
+                        if self.type_arena.get_flags(key_type).intersects(TypeFlags::Number) {
+                            number_index_type = Some(value_type);
+                        } else {
+                            string_index_type = Some(value_type);
+                        }
+                    }
+                }
+                // TODO: TSConstructSignatureDeclaration
                 _ => {}
             }
         }
@@ -263,12 +288,14 @@ impl Checker<'_> {
         self.type_arena.new_type(
             TypeFlags::Object,
             ObjectFlags::Anonymous,
-            TypeData::Object(ObjectType {
-                target: None,
+            TypeData::Structured(StructuredType {
                 member_map: build_member_map(&properties),
                 properties,
+                string_index_type,
+                number_index_type,
                 call_signatures,
                 construct_signatures,
+                kind: StructuredTypeKind::Anonymous { target: None },
             }),
             None,
         )
@@ -329,7 +356,7 @@ impl Checker<'_> {
     ///
     /// Type aliases are transparent: `Partial<{a: string}>` directly
     /// instantiates the mapped type body with T = {a: string}, producing
-    /// a concrete ObjectType. No TypeReference wrapper is created.
+    /// a concrete StructuredType. No TypeReference wrapper is created.
     ///
     /// If there are no type arguments, returns the target as-is.
     fn maybe_instantiate_type_alias(
@@ -508,7 +535,7 @@ impl Checker<'_> {
         // the type arguments are extraneous (e.g., `string<number>`).
         // In that case, just return the target.
         let has_type_params = match self.type_arena.get_data(target) {
-            TypeData::Interface(iface) => !iface.all_type_parameters.is_empty(),
+            TypeData::Structured(StructuredType { kind: StructuredTypeKind::Interface { all_type_parameters, .. }, .. }) => !all_type_parameters.is_empty(),
             _ => false,
         };
 

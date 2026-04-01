@@ -3,6 +3,7 @@ use oxc_span::GetSpan;
 use oxc_syntax::operator::AssignmentOperator;
 
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_types::TypeId;
 
 use crate::Checker;
 
@@ -10,7 +11,7 @@ impl Checker<'_> {
     /// Check an expression statement.
     /// Equivalent to tsgo's `checkExpressionStatement`.
     pub(crate) fn check_expression_statement(&mut self, stmt: &ExpressionStatement<'_>) {
-        self.check_expression(&stmt.expression);
+        self.check_expression(&stmt.expression, None);
     }
 
     /// Check an expression, dispatching by kind.
@@ -20,13 +21,17 @@ impl Checker<'_> {
     /// recursively walks sub-expressions and emits diagnostics (TS2339, TS2345,
     /// TS2349, TS2554, etc.) along the way. Assignment expressions need
     /// special handling for LHS type checking.
-    pub(crate) fn check_expression(&mut self, expr: &Expression<'_>) {
+    pub(crate) fn check_expression(
+        &mut self,
+        expr: &Expression<'_>,
+        contextual_type: Option<TypeId>,
+    ) {
         match expr {
             Expression::AssignmentExpression(assign) => {
                 self.check_assignment_expression(assign);
             }
             _ => {
-                self.get_type_of_expression(expr);
+                self.get_type_of_expression(expr, contextual_type);
             }
         }
     }
@@ -49,7 +54,7 @@ impl Checker<'_> {
         };
 
         let target_type = self.get_type_of_identifier(ident);
-        let value_type = self.get_type_of_expression(&assign.right);
+        let value_type = self.get_type_of_expression(&assign.right, Some(target_type));
 
         if !self.is_type_assignable_to(value_type, target_type) {
             let source_str = self.type_to_string(value_type);

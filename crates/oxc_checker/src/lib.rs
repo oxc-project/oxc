@@ -16,6 +16,7 @@ mod flow_analysis;
 mod flow_builder;
 mod global_types;
 mod host;
+mod inference;
 mod instantiation;
 mod keyof;
 mod mapped_types;
@@ -23,8 +24,9 @@ mod type_display;
 mod type_from_type_node;
 
 pub use checker::Checker;
-pub use global_types::{GlobalTypes, allocate_intrinsics};
-pub use host::CheckerHost;
+pub use global_types::{allocate_intrinsics, find_lib_source};
+// Re-export from oxc_checker_host so downstream crates use the same trait/struct
+pub use oxc_checker_host::{CheckerHost, IntrinsicIds};
 
 #[cfg(test)]
 mod tests;

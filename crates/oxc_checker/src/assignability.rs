@@ -157,15 +157,25 @@ impl<'a> Checker<'a> {
             return result;
         }
 
-        // Check call signature compatibility
-        let target_sigs = self.get_call_signatures_of_type(target);
+        // Check call signature compatibility.
+        // Access arena directly (not through &self helper) so the returned
+        // references have lifetime 'a and don't conflict with &mut self.
+        let target_sigs: &[Signature] = match self.type_arena.get_data(target) {
+            TypeData::Function(f) => &f.signatures,
+            TypeData::Structured(s) => &s.call_signatures,
+            _ => &[],
+        };
         if !target_sigs.is_empty() {
-            let source_sigs = self.get_call_signatures_of_type(source);
+            let source_sigs: &[Signature] = match self.type_arena.get_data(source) {
+                TypeData::Function(f) => &f.signatures,
+                TypeData::Structured(s) => &s.call_signatures,
+                _ => &[],
+            };
             if source_sigs.is_empty() {
                 return false;
             }
-            // Each target signature must be matched by at least one source signature
-            for t_sig in &target_sigs {
+            // Each target signature must be matched by at least one source signature.
+            for t_sig in target_sigs {
                 let matched = source_sigs.iter().any(|s_sig| {
                     self.is_signature_assignable_to(s_sig, t_sig)
                 });
@@ -182,10 +192,10 @@ impl<'a> Checker<'a> {
             target
         };
 
-        // Get target properties (iterate ordered Vec)
+        // Get target properties (iterate ordered Vec).
+        // Direct arena access: reference has lifetime 'a, independent of &mut self.
         let target_props: &[oxc_types::PropertyInfo] = match self.type_arena.get_data(resolved_target) {
-            TypeData::Object(obj) => &obj.properties,
-            TypeData::Interface(iface) => &iface.properties,
+            TypeData::Structured(s) => &s.properties,
             _ => return true,
         };
         if target_props.is_empty() {
@@ -211,15 +221,6 @@ impl<'a> Checker<'a> {
         true
     }
 
-    /// Get call signatures from a type (Function, Interface, or Object with call sigs).
-    fn get_call_signatures_of_type(&self, type_id: TypeId) -> Vec<Signature> {
-        match self.type_arena.get_data(type_id) {
-            TypeData::Function(f) => f.signatures.to_vec(),
-            TypeData::Interface(i) => i.call_signatures.clone(),
-            TypeData::Object(o) => o.call_signatures.clone(),
-            _ => Vec::new(),
-        }
-    }
 
     /// Check if a source signature is assignable to a target signature.
     ///
@@ -255,11 +256,13 @@ impl<'a> Checker<'a> {
             }
         }
 
-        // Check return type (covariant)
+        // Check return type (covariant).
+        // Void target return means "don't care about return value" — anything is assignable.
         let s_ret = source.return_type;
         let t_ret = target.return_type;
-        if !self.type_arena.get_flags(s_ret).intersects(TypeFlags::Any)
-            && !self.type_arena.get_flags(t_ret).intersects(TypeFlags::Any)
+        let t_ret_flags = self.type_arena.get_flags(t_ret);
+        if !t_ret_flags.intersects(TypeFlags::Void | TypeFlags::Any)
+            && !self.type_arena.get_flags(s_ret).intersects(TypeFlags::Any)
         {
             if !self.is_type_assignable_to(s_ret, t_ret) {
                 return false;

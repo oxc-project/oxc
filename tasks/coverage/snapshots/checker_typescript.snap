@@ -2,7 +2,7 @@ commit: 34725489
 
 checker_typescript Summary:
 AST Parsed     : 3811/3811 (100.00%)
-Positive Passed: 456/3811 (11.97%)
+Positive Passed: 460/3811 (12.07%)
 checker: tasks/coverage/typescript/tests/cases/compiler/2dArrays.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/ClassDeclarationWithInvalidConstOnPropertyDeclaration2.ts
@@ -1949,10 +1949,6 @@ checker: tasks/coverage/typescript/tests/cases/compiler/genericOverloadSignature
 
 checker: tasks/coverage/typescript/tests/cases/compiler/genericPrototypeProperty2.ts
 
-checker: tasks/coverage/typescript/tests/cases/compiler/genericSignatureInheritance.ts
-
-checker: tasks/coverage/typescript/tests/cases/compiler/genericSignatureInheritance2.ts
-
 checker: tasks/coverage/typescript/tests/cases/compiler/genericSpecializationToTypeLiteral1.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/genericStaticAnyTypeFunction.ts
@@ -3241,13 +3237,9 @@ checker: tasks/coverage/typescript/tests/cases/compiler/recursiveReturns.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/recursiveReverseMappedType.ts
 
-checker: tasks/coverage/typescript/tests/cases/compiler/recursiveSpecializationOfExtendedTypeWithError.ts
-
 checker: tasks/coverage/typescript/tests/cases/compiler/recursiveSpecializationOfSignatures.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/recursiveTypeAliasWithSpreadConditionalReturnNotCircular.ts
-
-checker: tasks/coverage/typescript/tests/cases/compiler/recursiveTypeIdentity.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/recursiveUnionTypeInference.ts
 

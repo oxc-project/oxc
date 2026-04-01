@@ -1,16 +1,17 @@
-use oxc_types::{ObjectFlags, TypeData, TypeId};
+use oxc_types::{ObjectFlags, StructuredTypeKind, TypeData, TypeId};
 
 use crate::Checker;
 
 impl Checker<'_> {
-    /// Safely look up a symbol name. Returns None if the SymbolId is out of
-    /// bounds (e.g., from lib.d.ts bootstrap, not valid in user's semantic).
-    fn try_symbol_name(&self, symbol_id: oxc_syntax::symbol::SymbolId) -> Option<&str> {
-        if symbol_id.index() < self.semantic().scoping().symbols_len() {
-            Some(self.semantic().scoping().symbol_name(symbol_id))
-        } else {
-            None
+    /// Look up a type's display name via its file-indexed SymbolId.
+    /// If the symbol is from this file, look up directly in our Semantic.
+    /// If from another file, ask the host.
+    fn resolve_type_name(&self, type_id: TypeId) -> Option<String> {
+        let (file_idx, symbol_id) = self.type_arena().get_symbol(type_id)?;
+        if file_idx == self.file_idx {
+            return Some(self.semantic().scoping().symbol_name(symbol_id).to_string());
         }
+        self.host.get_symbol_name(file_idx, symbol_id).map(|s| s.to_string())
     }
 
     /// Convert a `TypeId` to its string representation, matching tsc's output.
@@ -41,13 +42,8 @@ impl Checker<'_> {
             },
             TypeData::Union(u) => {
                 // Named unions (e.g., enums) display by name
-                if let Some(name) = self.global_type_names.get(&type_id) {
-                    return name.to_string();
-                }
-                if let Some(symbol_id) = self.type_arena().get_symbol(type_id) {
-                    if let Some(name) = self.try_symbol_name(symbol_id) {
-                        return name.to_string();
-                    }
+                if let Some(name) = self.resolve_type_name(type_id) {
+                    return name;
                 }
                 u.types
                     .iter()
@@ -62,54 +58,23 @@ impl Checker<'_> {
                     .collect::<Vec<_>>()
                     .join(" & ")
             }
-            TypeData::Object(_) => {
-                if let Some(name) = self.global_type_names.get(&type_id) {
-                    return name.to_string();
-                }
-                if let Some(symbol_id) = self.type_arena().get_symbol(type_id) {
-                    if let Some(name) = self.try_symbol_name(symbol_id) {
+            TypeData::Structured(s) => {
+                if let Some(name) = self.resolve_type_name(type_id) {
+                    // Anonymous object types with a class/function/enum symbol display
+                    // as "typeof X" — these represent the constructor/namespace value.
+                    if matches!(s.kind, StructuredTypeKind::Anonymous { .. }) {
                         let obj_flags = self.type_arena().get_object_flags(type_id);
-                        // Anonymous object types with a class/function/enum symbol display
-                        // as "typeof X" — these represent the constructor/namespace value.
                         if obj_flags == ObjectFlags::Anonymous {
                             return format!("typeof {name}");
                         }
-                        return name.to_string();
                     }
+                    return name;
                 }
-                // Anonymous object — display structurally
-                let TypeData::Object(obj) = self.type_arena().get_data(type_id) else {
-                    unreachable!()
-                };
-                if obj.properties.is_empty() {
+                // Anonymous — display structurally
+                if s.properties.is_empty() {
                     return "{}".to_string();
                 }
-                let props = obj
-                    .properties
-                    .iter()
-                    .map(|p| format!("{}: {}", p.name, self.type_to_string(p.type_id)))
-                    .collect::<Vec<_>>()
-                    .join("; ");
-                format!("{{ {}; }}", props)
-            }
-            TypeData::Interface(_) => {
-                // Named types (classes, interfaces) display by name
-                if let Some(name) = self.global_type_names.get(&type_id) {
-                    return name.to_string();
-                }
-                if let Some(symbol_id) = self.type_arena().get_symbol(type_id) {
-                    if let Some(name) = self.try_symbol_name(symbol_id) {
-                        return name.to_string();
-                    }
-                }
-                // Anonymous interface — display structurally
-                let TypeData::Interface(iface) = self.type_arena().get_data(type_id) else {
-                    unreachable!()
-                };
-                if iface.properties.is_empty() {
-                    return "{}".to_string();
-                }
-                let props = iface
+                let props = s
                     .properties
                     .iter()
                     .map(|p| format!("{}: {}", p.name, self.type_to_string(p.type_id)))
