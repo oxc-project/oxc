@@ -136,7 +136,8 @@ impl Checker<'_> {
                 self.type_arena.get_data(index_type)
             {
                 let name = s.to_string();
-                return self.get_property_of_type(object_type, &name);
+                // TODO: should return `never` or emit an error when property doesn't exist
+                return self.get_property_of_type(object_type, &name).unwrap_or(self.any_type);
             }
         }
 

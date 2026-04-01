@@ -520,7 +520,8 @@ impl Checker<'_> {
             BindingPattern::ObjectPattern(obj) => {
                 for prop in &obj.properties {
                     if let Some(name) = prop.key.static_name() {
-                        let prop_type = self.get_property_of_type(init_type, &name);
+                        // TODO: should emit an error or return `undefined` when property doesn't exist
+                        let prop_type = self.get_property_of_type(init_type, &name).unwrap_or(self.any_type);
                         if let Some(result) = self.resolve_destructured_binding_type(
                             &prop.value,
                             prop_type,
@@ -644,8 +645,7 @@ impl Checker<'_> {
                     if let Some(name) = prop.key.static_name() {
                         // Look up contextual type for this property
                         let prop_contextual_type = contextual_type.and_then(|ct| {
-                            let pt = self.get_property_of_type(ct, &name);
-                            if pt != self.any_type { Some(pt) } else { None }
+                            self.get_property_of_type(ct, &name)
                         });
                         let prop_type =
                             self.get_type_of_expression(&prop.value, prop_contextual_type);
@@ -687,9 +687,7 @@ impl Checker<'_> {
         let object_type = self.get_type_of_expression(&expr.object, None);
         let prop_name = expr.property.name.as_str();
         let result = self.get_property_of_type(object_type, prop_name);
-        if result == self.any_type
-            && !self.type_arena.get_flags(object_type).intersects(TypeFlags::Any)
-        {
+        if result.is_none() {
             let type_str = self.type_to_string(object_type);
             self.diagnostics.push(
                 OxcDiagnostic::error(format!(
@@ -699,7 +697,7 @@ impl Checker<'_> {
                 .with_label(expr.property.span),
             );
         }
-        result
+        result.unwrap_or(self.any_type)
     }
 
     /// Look up a property by name on a type. O(1) via HashMap.
@@ -707,27 +705,27 @@ impl Checker<'_> {
     /// Handles Object, Interface, TypeReference, and Union types.
     /// For TypeReferences, resolves to the instantiated type first
     /// (cached via `instantiation_cache`).
-    /// Returns `any_type` if the property is not found or the type
+    /// Returns `None` if the property is not found or the type
     /// doesn't support property access.
-    pub(crate) fn get_property_of_type(&mut self, type_id: TypeId, name: &str) -> TypeId {
+    pub(crate) fn get_property_of_type(&mut self, type_id: TypeId, name: &str) -> Option<TypeId> {
         let flags = self.type_arena.get_flags(type_id);
 
         // any.prop → any
         if flags.intersects(TypeFlags::Any) {
-            return self.any_type;
+            return Some(self.any_type);
         }
 
         // Union type: look up property on each constituent, union the results
         if flags.intersects(TypeFlags::Union) {
             if let TypeData::Union(u) = self.type_arena.get_data(type_id) {
-                let prop_types: Vec<TypeId> = u.types
-                    .iter()
-                    .map(|&m| self.get_property_of_type(m, name))
-                    .collect();
-                if prop_types.iter().any(|&t| t == self.any_type) {
-                    return self.any_type;
+                let mut concrete = Vec::with_capacity(u.types.len());
+                for &m in u.types.iter() {
+                    match self.get_property_of_type(m, name) {
+                        None => return None,
+                        Some(t) => concrete.push(t),
+                    }
                 }
-                return self.get_or_create_union_type(prop_types);
+                return Some(self.get_or_create_union_type(concrete));
             }
         }
 
@@ -742,26 +740,25 @@ impl Checker<'_> {
         match self.type_arena.get_data(resolved_id) {
             TypeData::Structured(s) => {
                 if let Some(&prop_type) = s.member_map.get(name) {
-                    return prop_type;
+                    return Some(prop_type);
                 }
                 // Walk base types (interface inheritance)
                 if let StructuredTypeKind::Interface { resolved_base_types, .. } = &s.kind {
                     for base in resolved_base_types.iter() {
-                        let prop = self.get_property_of_type(*base, name);
-                        if prop != self.any_type {
-                            return prop;
+                        if let Some(prop) = self.get_property_of_type(*base, name) {
+                            return Some(prop);
                         }
                     }
                 }
                 // Fall back to index signature
                 if let Some(idx_type) = s.string_index_type {
-                    return idx_type;
+                    return Some(idx_type);
                 }
             }
             _ => {}
         }
 
-        self.any_type
+        None
     }
 
     /// Get the type of an array literal expression.
@@ -937,9 +934,7 @@ impl Checker<'_> {
         // String literal index → property lookup
         if let Expression::StringLiteral(lit) = &expr.expression {
             let result = self.get_property_of_type(object_type, &lit.value);
-            if result == self.any_type
-                && !self.type_arena.get_flags(object_type).intersects(TypeFlags::Any)
-            {
+            if result.is_none() {
                 let type_str = self.type_to_string(object_type);
                 let prop_name = &lit.value;
                 self.diagnostics.push(
@@ -950,7 +945,7 @@ impl Checker<'_> {
                     .with_label(lit.span()),
                 );
             }
-            return result;
+            return result.unwrap_or(self.any_type);
         }
         // TODO: numeric index on arrays/tuples, keyof, index signatures
         self.any_type

@@ -506,6 +506,19 @@ fn check_program_union_mismatch() {
     });
 }
 
+#[test]
+fn union_property_access_with_any_member() {
+    // {x: any} | {x: string} → accessing .x should give any | string, not "not found"
+    with_checker!(
+        "interface A { x: any } interface B { x: string } declare let u: A | B; let v = u.x",
+        |checker, program| {
+            checker.check_program(program);
+            let diagnostics = checker.take_diagnostics();
+            assert!(diagnostics.is_empty(), "should not error: x exists on both members");
+        }
+    );
+}
+
 // --- Assignment expression checking ---
 
 #[test]
@@ -1090,6 +1103,45 @@ fn object_to_interface_missing_prop() {
             checker.check_program(program);
         let diagnostics = checker.take_diagnostics();
             assert!(!diagnostics.is_empty(), "should error: missing property y");
+        }
+    );
+}
+
+#[test]
+fn object_to_interface_optional_prop_missing_ok() {
+    // {a: string} should be assignable to {a: string, b?: number}
+    with_checker!(
+        "interface Target { a: string; b?: number } let t: Target = { a: 'hello' }",
+        |checker, program| {
+            checker.check_program(program);
+            let diagnostics = checker.take_diagnostics();
+            assert!(diagnostics.is_empty(), "should not error: b is optional");
+        }
+    );
+}
+
+#[test]
+fn object_to_interface_optional_prop_present_ok() {
+    // {a: string, b: number} should be assignable to {a: string, b?: number}
+    with_checker!(
+        "interface Target { a: string; b?: number } let t: Target = { a: 'hello', b: 42 }",
+        |checker, program| {
+            checker.check_program(program);
+            let diagnostics = checker.take_diagnostics();
+            assert!(diagnostics.is_empty(), "should not error: b is present and compatible");
+        }
+    );
+}
+
+#[test]
+fn object_to_interface_required_prop_still_required() {
+    // {b: number} should NOT be assignable to {a: string, b?: number} (missing required a)
+    with_checker!(
+        "interface Target { a: string; b?: number } let t: Target = { b: 42 }",
+        |checker, program| {
+            checker.check_program(program);
+            let diagnostics = checker.take_diagnostics();
+            assert!(!diagnostics.is_empty(), "should error: required property a is missing");
         }
     );
 }

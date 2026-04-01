@@ -205,16 +205,18 @@ impl<'a> Checker<'a> {
         // For each target property, O(1) lookup in source via get_property_of_type
         // (which uses member_map internally). This replaces the old O(P*Q) pattern.
         for prop in target_props {
-            let source_prop_type = self.get_property_of_type(source, &prop.name);
-            // If source doesn't have this property (returned any_type but source isn't any)
-            if source_prop_type == self.any_type {
-                let source_flags = self.type_arena.get_flags(source);
-                if !source_flags.intersects(TypeFlags::Any) {
-                    return false;
+            match self.get_property_of_type(source, &prop.name) {
+                None => {
+                    // Optional target properties don't need to exist on source
+                    if !prop.optional {
+                        return false;
+                    }
                 }
-            }
-            if !self.is_type_assignable_to(source_prop_type, prop.type_id) {
-                return false;
+                Some(source_prop_type) => {
+                    if !self.is_type_assignable_to(source_prop_type, prop.type_id) {
+                        return false;
+                    }
+                }
             }
         }
 

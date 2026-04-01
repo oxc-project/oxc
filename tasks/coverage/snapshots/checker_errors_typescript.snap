@@ -2,7 +2,7 @@ commit: 34725489
 
 checker_errors_typescript Summary:
 AST Parsed     : 6430/6430 (100.00%)
-Positive Passed: 246/6430 (3.83%)
+Positive Passed: 243/6430 (3.78%)
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/ArrowFunctionExpression1.ts
 'public' modifier cannot appear on a parameter.
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration10.ts
@@ -1243,6 +1243,8 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/controlFlowForFun
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/controlFlowForIndexSignatures.ts
 
+checker_errors: tasks/coverage/typescript/tests/cases/compiler/controlFlowForStatementContinueIntoIncrementor1.ts
+
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/controlFlowJavascript.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/controlFlowNoImplicitAny.ts
@@ -1724,8 +1726,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/dynamicRequire.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/elaboratedErrors.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/elaborationForPossiblyCallableTypeStillReferencesArgumentAtTopLevel.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/emitAccessExpressionOfCastedObjectLiteralExpressionInArrowFunctionES5.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/emitBundleWithPrologueDirectives1.ts
@@ -2064,6 +2064,8 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/excessiveStackDep
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/excessivelyLargeTupleSpread.ts
 
+checker_errors: tasks/coverage/typescript/tests/cases/compiler/exhaustiveSwitchCheckCircularity.ts
+
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/exhaustiveSwitchImplicitReturn.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/expandoFunctionContextualTypesNoValue.ts
@@ -2270,7 +2272,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/for.ts
 Expected `;` but found `)`
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/forIn.ts
 
+checker_errors: tasks/coverage/typescript/tests/cases/compiler/forIn2.ts
+
+checker_errors: tasks/coverage/typescript/tests/cases/compiler/forInStatement2.ts
+
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/forInStatement4.ts
+
+checker_errors: tasks/coverage/typescript/tests/cases/compiler/forInStatement7.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/forInStrictNullChecksNoError.ts
 
@@ -5573,8 +5581,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/typePredicateInLo
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/typePredicateInherit.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/typePredicatesInUnion3.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/typeResolution.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/typeUsedAsTypeLiteralIndex.ts
@@ -6330,8 +6336,6 @@ A 'yield' expression is only allowed in a generator body.
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractAccessor.ts
 Accessor 'aa' cannot have an implementation because it is marked abstract.
 Accessor 'bb' cannot have an implementation because it is marked abstract.
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractAssignabilityConstructorFunction.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractClinterfaceAssignability.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractConstructor.ts
@@ -7095,8 +7099,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/conformance/controlFlow/co
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/controlFlow/controlFlowConditionalExpression.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/controlFlow/controlFlowDeleteOperator.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/controlFlow/controlFlowDoWhileStatement.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/controlFlow/controlFlowForInStatement.ts
 
@@ -9213,6 +9215,8 @@ checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/ty
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardsInClassMethods.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardsInExternalModule.ts
+
+checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardsInForStatement.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardsInFunction.ts
 
@@ -13042,6 +13046,8 @@ checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/typeRela
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeInference/genericCallToOverloadedMethodWithOverloadedArguments.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeInference/genericCallWithConstraintsTypeArgumentInference2.ts
+
+checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeInference/genericCallWithConstructorTypedArguments5.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeInference/genericCallWithFunctionTypedArguments2.ts
 

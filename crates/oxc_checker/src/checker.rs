@@ -8,7 +8,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::Semantic;
 use oxc_span::{CompactStr, GetSpan};
 use oxc_syntax::symbol::SymbolId;
-use oxc_types::{FunctionType, ObjectFlags, ParameterInfo, Signature, SignatureFlags, TypeArena, TypeData, TypeFlags, TypeId, TypeParameterType, UnionType};
+use oxc_types::{FunctionType, ObjectFlags, ParameterInfo, Signature, SignatureFlags, StructuredType, StructuredTypeKind, TypeArena, TypeData, TypeFlags, TypeId, TypeParameterType, UnionType};
 use smallvec::SmallVec;
 
 use oxc_checker_host::CheckerHost;
@@ -1128,6 +1128,24 @@ impl<'a> Checker<'a> {
             ObjectFlags::Anonymous,
             TypeData::Function(FunctionType {
                 signatures: smallvec::smallvec![signature],
+            }),
+            None,
+        )
+    }
+
+    /// Create a constructor type from a single construct signature.
+    pub fn create_constructor_type(&mut self, signature: Signature) -> TypeId {
+        self.type_arena.new_type(
+            TypeFlags::Object,
+            ObjectFlags::Anonymous,
+            TypeData::Structured(StructuredType {
+                properties: Vec::new(),
+                member_map: FxHashMap::default(),
+                string_index_type: None,
+                number_index_type: None,
+                call_signatures: Vec::new(),
+                construct_signatures: vec![signature],
+                kind: StructuredTypeKind::Anonymous { target: None },
             }),
             None,
         )
