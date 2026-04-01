@@ -8,6 +8,18 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
+#![expect(
+    clippy::collapsible_if,
+    clippy::equatable_if_let,
+    clippy::legacy_numeric_constants,
+    clippy::missing_safety_doc,
+    clippy::redundant_closure_for_method_calls,
+    clippy::undocumented_unsafe_blocks,
+    clippy::uninlined_format_args,
+    clippy::unnecessary_literal_bound,
+    clippy::unused_self,
+    unsafe_op_in_unsafe_fn
+)]
 #![allow(unstable_name_collisions)]
 #![allow(dead_code)]
 #![allow(deprecated)]

@@ -3,6 +3,30 @@
 //! This module was originally copied from `bumpalo` at commit a47f6d6b7b5fee9c99a285f0de80257a0a982ef3
 //! (2 commits after 3.20.2 release). Changes have been made since.
 
+#![expect(
+    clippy::borrow_as_ptr,
+    clippy::cast_ptr_alignment,
+    clippy::cast_sign_loss,
+    clippy::elidable_lifetime_names,
+    clippy::filter_map_next,
+    clippy::inconsistent_struct_constructor,
+    clippy::inline_always,
+    clippy::manual_div_ceil,
+    clippy::map_unwrap_or,
+    clippy::mut_from_ref,
+    clippy::needless_lifetimes,
+    clippy::ptr_as_ptr,
+    clippy::ptr_cast_constness,
+    clippy::redundant_pub_crate,
+    clippy::ref_as_ptr,
+    clippy::semicolon_if_nothing_returned,
+    clippy::undocumented_unsafe_blocks,
+    clippy::uninlined_format_args,
+    clippy::unnecessary_safety_comment,
+    clippy::unused_self,
+    clippy::single_match_else,
+    unsafe_op_in_unsafe_fn
+)]
 #![deny(missing_debug_implementations)]
 #![deny(missing_docs)]
 
