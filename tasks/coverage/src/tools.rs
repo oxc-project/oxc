@@ -1163,8 +1163,9 @@ fn run_checker_single(
     let program = &parsed.program;
     let semantic = SemanticBuilder::new().build(program).semantic;
     let mut checker = Checker::new_with_host(&semantic, &type_arena, &project, String::new(), 1);
+    checker.check_program(program);
 
-    // Collect computed types from AST
+    // Collect computed types from AST (uses cached types from check_program)
     let actual = collect_checker_types(&mut checker, program, source);
 
     // Match assertions against actual
@@ -1256,7 +1257,7 @@ impl<'a> oxc::ast_visit::Visit<'a> for TypeCollectorVisitor<'a, '_> {
         let span = expr.span();
         if (span.start as usize) < self.source.len() && (span.end as usize) <= self.source.len() {
             let expr_text = &self.source[span.start as usize..span.end as usize];
-            let type_id = self.checker.get_type_of_expression(expr, None);
+            let type_id = self.checker.get_type_at_location(expr);
             let type_str = self.checker.type_to_string(type_id);
             self.results.push((expr_text.to_string(), type_str.clone()));
             // Stash for visit_static_member_expression to pick up

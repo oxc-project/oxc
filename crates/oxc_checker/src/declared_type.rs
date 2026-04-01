@@ -1,6 +1,6 @@
 use oxc_span::CompactStr;
 use oxc_syntax::symbol::SymbolId;
-use oxc_types::{LiteralType, ObjectFlags, PropertyInfo, Signature, SignatureFlags, StructuredType, StructuredTypeKind, TypeData, TypeFlags, TypeId, TypeParameterType, build_member_map};
+use oxc_types::{LiteralType, ObjectFlags, PropertyInfo, Signature, StructuredType, StructuredTypeKind, TypeData, TypeFlags, TypeId, TypeParameterType, build_member_map};
 use smallvec::SmallVec;
 
 use crate::Checker;
@@ -79,7 +79,7 @@ impl Checker<'_> {
 
         let mut properties = Vec::new();
         let mut call_signatures = Vec::new();
-        let mut construct_signatures: Vec<Signature> = Vec::new();
+        let construct_signatures: Vec<Signature> = Vec::new();
         let mut string_index_type: Option<TypeId> = None;
         let mut number_index_type: Option<TypeId> = None;
 
@@ -131,18 +131,6 @@ impl Checker<'_> {
                         });
                     }
                 }
-                TSSignature::TSConstructSignatureDeclaration(ctor_sig) => {
-                    let tp = self.get_type_parameters_from_declaration(
-                        ctor_sig.type_parameters.as_deref(),
-                    );
-                    let mut sig = self.build_signature_from_params(
-                        &ctor_sig.params,
-                        ctor_sig.return_type.as_deref(),
-                    );
-                    sig.type_parameters = tp;
-                    sig.flags |= SignatureFlags::Construct;
-                    construct_signatures.push(sig);
-                }
                 TSSignature::TSIndexSignature(idx_sig) => {
                     let value_type = self.get_type_from_type_node(&idx_sig.type_annotation.type_annotation);
                     if let Some(param) = idx_sig.parameters.first() {
@@ -154,6 +142,7 @@ impl Checker<'_> {
                         }
                     }
                 }
+                _ => {}
             }
         }
 

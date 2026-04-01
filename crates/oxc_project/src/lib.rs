@@ -173,7 +173,7 @@ impl Project {
         let intrinsics = allocate_intrinsics(arena);
         let lib_source = find_lib_source();
 
-        let mut project = Self {
+        let project = Self {
             intrinsics,
             resolver: None,
             // lib.d.ts is file 0
@@ -236,7 +236,7 @@ impl Project {
             ..ResolveOptions::default()
         });
 
-        let mut project = Self {
+        let project = Self {
             intrinsics,
             resolver: Some(resolver),
             file_paths,
@@ -504,6 +504,7 @@ impl Project {
     }
 
     /// Resolve a module specifier from a given file to a file index.
+    #[allow(dead_code)]
     fn resolve_module_to_index(&self, _from_idx: usize, specifier: &str) -> Option<usize> {
         let resolver = self.resolver.as_ref()?;
         let from_dir = self.file_paths[_from_idx].parent()?;

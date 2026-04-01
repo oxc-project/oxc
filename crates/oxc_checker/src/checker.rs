@@ -3,7 +3,7 @@ use std::sync::Arc;
 use oxc_index::IndexVec;
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use oxc_ast::ast::{BindingPattern, Declaration, ForStatementInit, ForStatementLeft, Function, Program, Statement};
+use oxc_ast::ast::{BindingPattern, Declaration, Expression, ForStatementInit, ForStatementLeft, Function, Program, Statement};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::Semantic;
 use oxc_span::{CompactStr, GetSpan};
@@ -139,8 +139,6 @@ pub struct Checker<'a> {
     /// Empty = we're at the top level (return statements are invalid but the
     /// parser handles that).
     pub(crate) return_type_stack: Vec<Option<TypeId>>,
-    /// Stack of enclosing class instance types for resolving `this`.
-    pub(crate) class_type_stack: Vec<TypeId>,
 
     /// The flow graph for the currently-checked function/program scope.
     /// Built as a pre-pass before type-checking, consumed by the backward
@@ -151,6 +149,14 @@ pub struct Checker<'a> {
     /// (FlowNodeId, SymbolId) so that nodes used as antecedents by multiple
     /// successors don't re-traverse the same subgraph. Cleared per scope.
     pub(crate) flow_type_cache: FxHashMap<(crate::flow::FlowNodeId, SymbolId), TypeId>,
+
+    /// Cache of expression types computed during `check_program()`.
+    /// Keyed by packed span `(start << 32 | end)` as u64.
+    /// Populated at checking call sites where flow graphs and contextual
+    /// types are active — mirrors tsgo's `typeNodeLinks.resolvedType`.
+    /// Queried by `get_type_at_location()` for post-checking type queries
+    /// (conformance harness, LSP, etc.).
+    pub(crate) expression_type_cache: FxHashMap<u64, TypeId>,
 
     // Well-known types, pre-allocated during construction.
     pub any_type: TypeId,
@@ -233,9 +239,9 @@ impl<'a> Checker<'a> {
             mapped_type_cache: FxHashMap::default(),
             type_param_constraints: FxHashMap::default(),
             return_type_stack: Vec::new(),
-            class_type_stack: Vec::new(),
             current_flow_graph: crate::flow::FlowGraph::empty(),
             flow_type_cache: FxHashMap::default(),
+            expression_type_cache: FxHashMap::default(),
             any_type: intrinsics.any_type,
             unknown_type: intrinsics.unknown_type,
             string_type: intrinsics.string_type,
@@ -275,6 +281,22 @@ impl<'a> Checker<'a> {
     /// Drain and return all collected diagnostics.
     pub fn take_diagnostics(&mut self) -> Vec<OxcDiagnostic> {
         std::mem::take(&mut self.diagnostics)
+    }
+
+    /// Get the type of an expression, using cached results from `check_program()`
+    /// when available. Falls back to `get_type_of_expression` for cache misses
+    /// (e.g., dead code or expressions in unchecked paths).
+    ///
+    /// This is the primary API for querying expression types after checking —
+    /// used by the conformance harness and (future) LSP.
+    /// Mirrors tsgo's `GetTypeAtLocation`.
+    pub fn get_type_at_location(&mut self, expr: &Expression<'a>) -> TypeId {
+        let span = expr.span();
+        let key = (span.start as u64) << 32 | span.end as u64;
+        if let Some(&cached) = self.expression_type_cache.get(&key) {
+            return cached;
+        }
+        self.get_type_of_expression(expr, None)
     }
 
     /// Extract the type parameter constraint cache.
@@ -522,16 +544,12 @@ impl<'a> Checker<'a> {
     }
 
     /// Check a function's body with the return type context pushed.
-    /// Regular functions create a new `this` context (unlike arrow functions),
-    /// so the class type stack is saved and cleared.
     fn check_function_body(&mut self, func: &Function<'a>) {
         let return_type = func
             .return_type
             .as_ref()
             .map(|rt| self.get_type_from_type_node(&rt.type_annotation));
         self.return_type_stack.push(return_type);
-        // Regular functions don't inherit `this` from the enclosing class.
-        let prev_class_stack = std::mem::take(&mut self.class_type_stack);
         if let Some(body) = &func.body {
             // Build per-function flow graph, saving the outer one for nested functions.
             let flow_graph = crate::flow_builder::FlowGraphBuilder::build(
@@ -544,20 +562,11 @@ impl<'a> Checker<'a> {
             self.current_flow_graph = prev_graph;
             self.flow_type_cache = prev_cache;
         }
-        self.class_type_stack = prev_class_stack;
         self.return_type_stack.pop();
     }
 
     /// Check a class declaration's method bodies.
     fn check_class_declaration(&mut self, class: &oxc_ast::ast::Class<'a>) {
-        // Resolve the class instance type and push it onto the stack
-        // so that `this` in methods resolves correctly.
-        if let Some(ident) = &class.id {
-            if let Some(symbol_id) = ident.symbol_id.get() {
-                let class_type = self.get_declared_type_of_symbol(symbol_id);
-                self.class_type_stack.push(class_type);
-            }
-        }
         for element in &class.body.body {
             use oxc_ast::ast::ClassElement;
             if let ClassElement::MethodDefinition(method) = element {
@@ -579,37 +588,36 @@ impl<'a> Checker<'a> {
                 }
             }
         }
-        // Pop class type if we pushed one
-        if class.id.as_ref().is_some_and(|id| id.symbol_id.get().is_some()) {
-            self.class_type_stack.pop();
-        }
         // TODO: check property initializer types against annotations
         // TODO: check that abstract members are implemented in subclasses
     }
 
     /// Check a return statement against the enclosing function's return type.
+    ///
+    /// Always evaluates the return expression (to catch errors like bad property
+    /// accesses even in functions without return type annotations).
+    /// Only checks assignability when there is a declared return type.
     fn check_return_statement(&mut self, ret: &oxc_ast::ast::ReturnStatement<'a>) {
-        let Some(Some(expected_return_type)) = self.return_type_stack.last().copied() else {
-            // No enclosing function or no return type annotation — skip
+        let expected_return_type = self.return_type_stack.last().copied().flatten();
+
+        let Some(arg) = &ret.argument else {
             return;
         };
 
-        let actual_type = if let Some(arg) = &ret.argument {
-            self.get_type_of_expression(arg, Some(expected_return_type))
-        } else {
-            self.undefined_type
-        };
+        let actual_type = self.get_type_of_expression(arg, expected_return_type);
 
-        if !self.is_type_assignable_to(actual_type, expected_return_type) {
-            let source_str = self.type_to_string(actual_type);
-            let target_str = self.type_to_string(expected_return_type);
-            self.diagnostics.push(
-                OxcDiagnostic::error(format!(
-                    "Type '{source_str}' is not assignable to type '{target_str}'."
-                ))
-                .with_error_code("ts", "2322")
-                .with_label(ret.span),
-            );
+        if let Some(expected) = expected_return_type {
+            if !self.is_type_assignable_to(actual_type, expected) {
+                let source_str = self.type_to_string(actual_type);
+                let target_str = self.type_to_string(expected);
+                self.diagnostics.push(
+                    OxcDiagnostic::error(format!(
+                        "Type '{source_str}' is not assignable to type '{target_str}'."
+                    ))
+                    .with_error_code("ts", "2322")
+                    .with_label(ret.span),
+                );
+            }
         }
     }
 

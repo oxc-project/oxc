@@ -3,6 +3,7 @@ use oxc_ast::ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{CompactStr, GetSpan};
+use oxc_syntax::node::NodeId;
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 use oxc_syntax::symbol::SymbolId;
 use oxc_types::{LiteralType, ObjectFlags, PropertyInfo, StructuredType, StructuredTypeKind, TypeData, TypeFlags, TypeId, build_member_map};
@@ -29,6 +30,17 @@ impl Checker<'_> {
         self.recursion_depth += 1;
         let result = self.get_type_of_expression_inner(expr, contextual_type);
         self.recursion_depth -= 1;
+
+        // Cache if we're inside check_program() (flow graph is active).
+        // This captures flow-narrowed and contextually-typed results so
+        // post-checking queries via get_type_at_location() return the
+        // same types the checker computed.
+        if !self.current_flow_graph.node_flow_map.is_empty() {
+            let span = expr.span();
+            let key = (span.start as u64) << 32 | span.end as u64;
+            self.expression_type_cache.insert(key, result);
+        }
+
         result
     }
 
@@ -146,13 +158,11 @@ impl Checker<'_> {
             // /regex/ — always RegExp
             Expression::RegExpLiteral(_) => self.get_global_type("RegExp"),
 
-            // this — returns the enclosing class type or the implicit `this` type parameter
-            Expression::ThisExpression(_) => {
-                if let Some(&class_type) = self.class_type_stack.last() {
-                    class_type
-                } else {
-                    self.this_type
-                }
+            // this — resolve from AST ancestors: find the enclosing class,
+            // stopping at regular functions (which reset `this`).
+            // Arrow functions inherit `this` so we skip past them.
+            Expression::ThisExpression(this_expr) => {
+                self.resolve_this_type(this_expr.node_id())
             }
 
             // These need more infrastructure (call signatures, generators, modules)
@@ -737,20 +747,21 @@ impl Checker<'_> {
                 let constituents: SmallVec<[TypeId; 4]> = i.types.clone();
                 let mut prop_types = Vec::new();
                 for &member in &constituents {
-                    let prop = self.get_property_of_type(member, name);
-                    if prop != self.any_type
-                        || self.type_arena.get_flags(member).intersects(TypeFlags::Any)
-                    {
-                        prop_types.push(prop);
+                    if let Some(prop) = self.get_property_of_type(member, name) {
+                        if prop != self.any_type
+                            || self.type_arena.get_flags(member).intersects(TypeFlags::Any)
+                        {
+                            prop_types.push(prop);
+                        }
                     }
                 }
                 if prop_types.is_empty() {
-                    return self.any_type;
+                    return None;
                 }
                 if prop_types.len() == 1 {
-                    return prop_types[0];
+                    return Some(prop_types[0]);
                 }
-                return self.get_or_create_intersection_type(prop_types);
+                return Some(self.get_or_create_intersection_type(prop_types));
             }
         }
 
@@ -784,6 +795,55 @@ impl Checker<'_> {
         }
 
         None
+    }
+
+    /// Resolve the type of `this` by walking up AST ancestors from the given node.
+    ///
+    /// - Stops at a `Class` node and returns its declared type.
+    /// - Stops at a standalone `Function` (which resets `this` context) and returns
+    ///   the generic `this` type parameter.
+    /// - Skips `Function` nodes that belong to a `MethodDefinition` (class methods).
+    /// - Skips `ArrowFunctionExpression` nodes (arrows inherit `this`).
+    pub(crate) fn resolve_this_type(&mut self, node_id: NodeId) -> TypeId {
+        use oxc_ast::AstKind;
+
+        // First pass: walk ancestors (immutable borrow) to find the class symbol.
+        let class_symbol = {
+            let mut saw_function = false;
+            let mut result = None;
+            for ancestor in self.semantic().nodes().ancestor_kinds(node_id) {
+                match ancestor {
+                    AstKind::Class(class) => {
+                        result = class
+                            .id
+                            .as_ref()
+                            .and_then(|id| id.symbol_id.get());
+                        break;
+                    }
+                    AstKind::Function(_) => {
+                        saw_function = true;
+                    }
+                    AstKind::MethodDefinition(_) => {
+                        saw_function = false;
+                    }
+                    AstKind::ArrowFunctionExpression(_) => {}
+                    AstKind::Program(_) => break,
+                    _ => {
+                        if saw_function {
+                            break;
+                        }
+                    }
+                }
+            }
+            result
+        };
+
+        // Second pass: resolve the symbol to a type (mutable borrow).
+        if let Some(symbol_id) = class_symbol {
+            self.get_declared_type_of_symbol(symbol_id)
+        } else {
+            self.this_type
+        }
     }
 
     /// Get the type of an array literal expression.
@@ -1244,47 +1304,15 @@ impl Checker<'_> {
 
     /// Get the type of a `new` expression (`new Foo()`).
     ///
-    /// Checks construct signatures on the callee type first, then falls back
-    /// to class-based resolution.
+    /// If the callee resolves to a class, returns the class's instance type
+    /// (declared type). Otherwise returns `any`.
     fn get_type_of_new_expression(
         &mut self,
         new_expr: &oxc_ast::ast::NewExpression<'_>,
     ) -> TypeId {
         use oxc_ast::AstKind;
 
-        // Resolve callee type
-        let callee_type = self.get_type_of_expression(&new_expr.callee, None);
-        let callee_flags = self.type_arena.get_flags(callee_type);
-
-        // any → any
-        if callee_flags.intersects(TypeFlags::Any) {
-            for arg in &new_expr.arguments {
-                if let Some(expr) = arg.as_expression() {
-                    self.get_type_of_expression(expr, None);
-                }
-            }
-            return self.any_type;
-        }
-
-        // Check for construct signatures on the callee type
-        let construct_return = match self.type_arena.get_data(callee_type) {
-            TypeData::Structured(s) if !s.construct_signatures.is_empty() => {
-                Some(s.construct_signatures[0].return_type)
-            }
-            _ => None,
-        };
-
-        if let Some(return_type) = construct_return {
-            // Evaluate arguments for diagnostics
-            for arg in &new_expr.arguments {
-                if let Some(expr) = arg.as_expression() {
-                    self.get_type_of_expression(expr, None);
-                }
-            }
-            return return_type;
-        }
-
-        // Fall back to class-based resolution
+        // Resolve callee: only handle simple identifiers for now
         let Expression::Identifier(ident) = &new_expr.callee else {
             return self.any_type;
         };

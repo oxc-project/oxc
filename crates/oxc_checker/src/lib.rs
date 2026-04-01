@@ -15,7 +15,6 @@ mod flow;
 mod flow_analysis;
 mod flow_builder;
 mod global_types;
-mod host;
 mod inference;
 mod instantiation;
 mod keyof;

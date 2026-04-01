@@ -3563,17 +3563,101 @@ fn intersection_property_type_resolution() {
             let ann = first_var_type_annotation(program).unwrap();
             let t = checker.get_type_from_type_node(ann);
             // Property 'a' should exist and be string
-            let a_type = checker.get_property_of_type(t, "a");
+            let a_type = checker.get_property_of_type(t, "a").expect("property 'a' should exist");
             assert_eq!(
                 checker.type_to_string(a_type), "string",
                 "property 'a' on intersection should be string"
             );
             // Property 'b' should exist and be number
-            let b_type = checker.get_property_of_type(t, "b");
+            let b_type = checker.get_property_of_type(t, "b").expect("property 'b' should exist");
             assert_eq!(
                 checker.type_to_string(b_type), "number",
                 "property 'b' on intersection should be number"
             );
+        }
+    );
+}
+
+// --- `this` resolution ---
+
+/// Helper: collect NodeIds of all ThisExpression nodes.
+fn find_this_node_ids(checker: &Checker<'_>) -> Vec<oxc_syntax::node::NodeId> {
+    use oxc_ast::AstKind;
+    checker.semantic().nodes().iter()
+        .filter_map(|node| {
+            if let AstKind::ThisExpression(this_expr) = node.kind() {
+                Some(this_expr.node_id())
+            } else {
+                None
+            }
+        })
+        .collect()
+}
+
+#[test]
+fn this_in_class_method_resolves_to_class() {
+    with_checker!(
+        r#"
+        class Foo { x: number = 1; bar() { return this; } }
+        "#,
+        |checker, _program| {
+            let ids = find_this_node_ids(&checker);
+            assert_eq!(ids.len(), 1, "should find exactly one ThisExpression");
+            let t = checker.resolve_this_type(ids[0]);
+            assert_eq!(checker.type_to_string(t), "Foo",
+                "this in class method should resolve to class type");
+        }
+    );
+}
+
+#[test]
+fn this_in_arrow_inside_method_resolves_to_class() {
+    with_checker!(
+        r#"
+        class Foo { x: number = 1; bar() { const f = () => this; } }
+        "#,
+        |checker, _program| {
+            let ids = find_this_node_ids(&checker);
+            assert_eq!(ids.len(), 1);
+            let t = checker.resolve_this_type(ids[0]);
+            assert_eq!(checker.type_to_string(t), "Foo",
+                "this in arrow inside method should inherit class type");
+        }
+    );
+}
+
+#[test]
+fn this_in_standalone_function_inside_method_is_generic() {
+    with_checker!(
+        r#"
+        class Foo {
+            bar() {
+                function inner() { return this; }
+            }
+        }
+        "#,
+        |checker, _program| {
+            let ids = find_this_node_ids(&checker);
+            assert_eq!(ids.len(), 1);
+            let t = checker.resolve_this_type(ids[0]);
+            assert_eq!(checker.type_to_string(t), "this",
+                "this in standalone function should NOT resolve to Foo");
+        }
+    );
+}
+
+#[test]
+fn this_at_top_level_is_generic() {
+    with_checker!(
+        r#"
+        const x = this;
+        "#,
+        |checker, _program| {
+            let ids = find_this_node_ids(&checker);
+            assert_eq!(ids.len(), 1);
+            let t = checker.resolve_this_type(ids[0]);
+            assert_eq!(checker.type_to_string(t), "this",
+                "top-level this should be generic this type");
         }
     );
 }

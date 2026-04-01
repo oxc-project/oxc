@@ -39,6 +39,7 @@ pub struct FlowEntry {
 /// The different kinds of flow graph nodes. Each variant carries exactly
 /// the data it needs — no optional fields.
 #[derive(Debug)]
+#[allow(dead_code)]
 pub enum FlowNodeKind {
     /// Function/program entry point. Backward walk returns declared type here.
     Start,
@@ -72,6 +73,7 @@ pub enum FlowNodeKind {
 
 /// Per-function flow graph. Stores all flow nodes in a contiguous `IndexVec`
 /// with index-based references instead of pointers.
+#[allow(dead_code)]
 pub struct FlowGraph {
     /// All flow nodes for this function.
     pub nodes: oxc_index::IndexVec<FlowNodeId, FlowEntry>,
