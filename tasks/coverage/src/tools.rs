@@ -1480,28 +1480,54 @@ fn run_checker_errors_single(
     use oxc::semantic::SemanticBuilder;
     use oxc_checker::Checker;
 
-    // Parse source → semantic → checker
+    // Collect error codes from all phases: parser, semantic, and checker.
+    // tsc's .errors.txt baselines include errors from all compiler phases,
+    // so we must do the same to get accurate conformance results.
+    let mut actual_codes: Vec<String> = Vec::new();
+
     let type_arena = oxc_types::TypeArena::with_capacity(64);
     let project = oxc_project::Project::new(&type_arena);
     let allocator = Allocator::default();
     let parsed = Parser::new(&allocator, source, source_type).parse();
-    if !parsed.errors.is_empty() {
+
+    // Collect TS error codes from parser diagnostics
+    for d in &parsed.errors {
+        if let Some(code) = d.code.number.as_ref() {
+            actual_codes.push(code.to_string());
+        }
+    }
+
+    // If the parser panicked (unrecoverable), we can't build an AST to continue
+    if parsed.panicked {
         return TestResult::ParseError(
             parsed.errors.iter().map(|e| e.message.to_string()).collect::<Vec<_>>().join("\n"),
             false,
         );
     }
-    let program = &parsed.program;
-    let semantic = SemanticBuilder::new().build(program).semantic;
-    let mut checker = Checker::new_with_host(&semantic, &type_arena, &project, String::new(), 1);
-    checker.check_program(program);
-    let diagnostics = checker.take_diagnostics();
 
-    // Extract error codes from our diagnostics
-    let mut actual_codes: Vec<String> = diagnostics
-        .iter()
-        .filter_map(|d| d.code.number.as_ref().map(|n| n.to_string()))
-        .collect();
+    // Run semantic and checker even if there were (recoverable) parser errors,
+    // since tsc continues analysis and may emit additional errors
+    let program = &parsed.program;
+    let semantic_ret = SemanticBuilder::new().build(program);
+
+    // Collect TS error codes from semantic diagnostics
+    for d in &semantic_ret.errors {
+        if let Some(code) = d.code.number.as_ref() {
+            actual_codes.push(code.to_string());
+        }
+    }
+
+    let mut checker =
+        Checker::new_with_host(&semantic_ret.semantic, &type_arena, &project, String::new(), 1);
+    checker.check_program(program);
+
+    // Collect TS error codes from checker diagnostics
+    for d in &checker.take_diagnostics() {
+        if let Some(code) = d.code.number.as_ref() {
+            actual_codes.push(code.to_string());
+        }
+    }
+
     actual_codes.sort();
     actual_codes.dedup();
 
@@ -1509,24 +1535,9 @@ fn run_checker_errors_single(
     let mut expected_sorted: Vec<&str> = expected_codes.iter().map(|s| s.as_str()).collect();
     expected_sorted.sort();
 
-    // "Passed" if our error codes are exactly the expected set
-    // For now, count as passed if we produced at least one matching error code
-    let matching: Vec<&str> = actual_codes
-        .iter()
-        .filter(|c| expected_sorted.contains(&c.as_str()))
-        .map(|s| s.as_str())
-        .collect();
-
-    if matching.is_empty() && !expected_sorted.is_empty() {
-        TestResult::Mismatch(
-            "checker_errors",
-            format!("actual: [{}]", actual_codes.join(", ")),
-            format!("expected: [{}]", expected_sorted.join(", ")),
-        )
-    } else if actual_codes.iter().map(|s| s.as_str()).collect::<Vec<_>>() == expected_sorted {
+    if actual_codes.iter().map(|s| s.as_str()).collect::<Vec<_>>() == expected_sorted {
         TestResult::Passed
     } else {
-        // Partial match — we got some right but not all
         TestResult::Mismatch(
             "checker_errors",
             format!("actual: [{}]", actual_codes.join(", ")),
