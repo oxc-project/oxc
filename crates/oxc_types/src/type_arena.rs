@@ -164,6 +164,20 @@ impl TypeArena {
     pub fn get_symbol(&self, id: TypeId) -> Option<(u16, SymbolId)> {
         self.symbols[id.index()]
     }
+
+    /// Create a copy of an existing type with a different symbol association.
+    /// Used to attach a type alias name to a type after creation.
+    #[inline]
+    pub fn clone_type_with_symbol(
+        &self,
+        id: TypeId,
+        symbol: Option<(u16, SymbolId)>,
+    ) -> TypeId {
+        let flags = self.flags[id.index()];
+        let object_flags = self.object_flags[id.index()];
+        let data = self.data[id.index()].clone();
+        self.new_type(flags, object_flags, data, symbol)
+    }
 }
 
 impl Default for TypeArena {

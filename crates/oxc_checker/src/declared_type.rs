@@ -51,7 +51,19 @@ impl Checker<'_> {
                 // via declared_type_cache. Instantiation with concrete type args
                 // happens later in maybe_instantiate_type_alias (type aliases are
                 // transparent — no TypeReference wrapper).
-                self.get_type_from_type_node(&decl.type_annotation)
+                let body_type = self.get_type_from_type_node(&decl.type_annotation);
+
+                // Attach the alias symbol so `type_to_string` can display the alias name.
+                // If the body type already has a symbol (e.g., an interface reference),
+                // keep the original. Only attach for "anonymous" types like unions/intersections.
+                if self.type_arena.get_symbol(body_type).is_none() {
+                    self.type_arena.clone_type_with_symbol(
+                        body_type,
+                        Some((self.file_idx, symbol_id)),
+                    )
+                } else {
+                    body_type
+                }
             }
             AstKind::TSInterfaceDeclaration(decl) => {
                 self.get_type_of_interface_declaration(decl, symbol_id)
