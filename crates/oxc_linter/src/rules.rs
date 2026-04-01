@@ -402,6 +402,7 @@ pub(crate) mod react {
     pub mod jsx_no_comment_textnodes;
     pub mod jsx_no_constructed_context_values;
     pub mod jsx_no_duplicate_props;
+    pub mod jsx_no_leaked_render;
     pub mod jsx_no_script_url;
     pub mod jsx_no_target_blank;
     pub mod jsx_no_undef;
