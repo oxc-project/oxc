@@ -153,6 +153,19 @@ impl Checker<'_> {
             }
         }
 
+        // Resolve extends clause — populate base types.
+        // Must happen before arena insertion since types are immutable once created.
+        // Cycle detection relies on the `resolving_symbols` set in `get_declared_type_of_symbol`:
+        // if A extends B and B extends A, the circular reference resolves to `any_type`
+        // and is filtered out here.
+        let mut resolved_base_types = SmallVec::new();
+        for heritage in &decl.extends {
+            let base_type = self.get_type_from_heritage_element(heritage);
+            if base_type != self.any_type {
+                resolved_base_types.push(base_type);
+            }
+        }
+
         self.type_arena.new_type(
             TypeFlags::Object,
             ObjectFlags::Interface,
@@ -168,11 +181,63 @@ impl Checker<'_> {
                     resolved_type_arguments: SmallVec::new(),
                     all_type_parameters: type_parameters,
                     this_type: None,
-                    resolved_base_types: SmallVec::new(),
+                    resolved_base_types,
                 },
             }),
             Some((self.file_idx, symbol_id)),
         )
+    }
+
+    /// Resolve a heritage element (from an interface `extends` clause) to a TypeId.
+    ///
+    /// Heritage elements have an `expression` (typically an IdentifierReference)
+    /// and optional `type_arguments`. This mirrors `get_type_from_type_reference`
+    /// but operates on `TSInterfaceHeritage` AST nodes.
+    ///
+    /// Handles both interfaces (creates TypeReference for lazy instantiation)
+    /// and type aliases (instantiates body directly, since aliases are transparent).
+    fn get_type_from_heritage_element(
+        &mut self,
+        heritage: &oxc_ast::ast::TSInterfaceHeritage<'_>,
+    ) -> TypeId {
+        use oxc_ast::AstKind;
+        use oxc_ast::ast::Expression;
+
+        // Only handle simple identifier references (not `A.B.C`)
+        let Expression::Identifier(ident) = &heritage.expression else {
+            return self.any_type;
+        };
+
+        let Some(reference_id) = ident.reference_id.get() else {
+            return self.any_type;
+        };
+
+        let reference = self.semantic().scoping().get_reference(reference_id);
+        let Some(symbol_id) = reference.symbol_id() else {
+            // Unresolved — could be a global type
+            let target = self.get_global_type(&ident.name);
+            return self
+                .maybe_create_type_reference_from_args(target, heritage.type_arguments.as_deref());
+        };
+
+        // Type aliases are transparent — instantiate body directly
+        let node_id = self.semantic().scoping().symbol_declaration(symbol_id);
+        let is_type_alias = matches!(
+            self.semantic().nodes().get_node(node_id).kind(),
+            AstKind::TSTypeAliasDeclaration(_)
+        );
+
+        let target = self.get_declared_type_of_symbol(symbol_id);
+
+        if is_type_alias {
+            return self.maybe_instantiate_type_alias_from_args(
+                target,
+                symbol_id,
+                heritage.type_arguments.as_deref(),
+            );
+        }
+
+        self.maybe_create_type_reference_from_args(target, heritage.type_arguments.as_deref())
     }
 
     /// Build a class instance type from a Class declaration.

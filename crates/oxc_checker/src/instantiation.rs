@@ -140,6 +140,19 @@ impl<'a> Checker<'a> {
                     .collect();
                 let member_map = build_member_map(&instantiated_props);
 
+                // Instantiate base types through the mapper so that
+                // `interface Child<T> extends Base<T>` instantiated as
+                // `Child<string>` gets `Base<string>` as its base type.
+                let instantiated_base_types: SmallVec<[TypeId; 4]> =
+                    if let StructuredTypeKind::Interface { resolved_base_types, .. } = &s.kind {
+                        resolved_base_types
+                            .iter()
+                            .map(|&bt| self.instantiate_type(bt, &mapper))
+                            .collect()
+                    } else {
+                        SmallVec::new()
+                    };
+
                 let resolved_id = self.type_arena.new_type(
                     TypeFlags::Object,
                     ObjectFlags::Interface,
@@ -155,7 +168,7 @@ impl<'a> Checker<'a> {
                             resolved_type_arguments: type_args.clone(),
                             all_type_parameters: SmallVec::new(),
                             this_type: None,
-                            resolved_base_types: SmallVec::new(),
+                            resolved_base_types: instantiated_base_types,
                         },
                     }),
                     None,
@@ -574,6 +587,37 @@ impl Checker<'_> {
             })
             .collect();
 
+        // Instantiate resolved_base_types in the kind if present
+        let new_kind = if let StructuredTypeKind::Interface { resolved_base_types, .. } = kind {
+            if resolved_base_types.is_empty() {
+                kind.clone()
+            } else {
+                let mut bases_changed = false;
+                let instantiated_bases: SmallVec<[TypeId; 4]> = resolved_base_types
+                    .iter()
+                    .map(|&bt| {
+                        let new_bt = self.instantiate_type(bt, mapper);
+                        if new_bt != bt {
+                            bases_changed = true;
+                        }
+                        new_bt
+                    })
+                    .collect();
+                if bases_changed {
+                    changed = true;
+                    let mut cloned = kind.clone();
+                    if let StructuredTypeKind::Interface { resolved_base_types, .. } = &mut cloned {
+                        *resolved_base_types = instantiated_bases;
+                    }
+                    cloned
+                } else {
+                    kind.clone()
+                }
+            }
+        } else {
+            kind.clone()
+        };
+
         if !changed {
             return type_id;
         }
@@ -588,7 +632,7 @@ impl Checker<'_> {
                 number_index_type,
                 call_signatures: new_call_sigs,
                 construct_signatures: new_construct_sigs,
-                kind: kind.clone(),
+                kind: new_kind,
             }),
             None,
         )

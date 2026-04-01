@@ -440,9 +440,9 @@ fn ts2454_emitted_for_conditional_assignment_in_loop() {
         |checker, program| {
             checker.check_program(program);
             let diagnostics = checker.take_diagnostics();
-            let has_2454 = diagnostics.iter().any(|d|
-                d.message.to_string().contains("used before being assigned")
-            );
+            let has_2454 = diagnostics
+                .iter()
+                .any(|d| d.message.to_string().contains("used before being assigned"));
             assert!(
                 has_2454,
                 "should emit TS2454 for conditional assignment in loop, got: {diagnostics:?}"
@@ -3986,4 +3986,198 @@ fn global_value_type_resolves_in_expression() {
         let s = checker.type_to_string(t);
         assert_ne!(s, "any", "JSON in expression position should not be any, got: {s}");
     });
+}
+
+// ---- Interface extends tests ----
+
+#[test]
+fn interface_extends_basic_property_access() {
+    with_checker!(
+        r#"
+        interface Base { x: number }
+        interface Child extends Base { y: string }
+        declare let c: Child;
+        let v = c.x;
+        "#,
+        |checker, program| {
+            checker.check_program(program);
+            let diagnostics = checker.take_diagnostics();
+            assert!(
+                diagnostics.is_empty(),
+                "accessing inherited property should produce no errors: {diagnostics:?}"
+            );
+        }
+    );
+}
+
+#[test]
+fn interface_extends_assignability() {
+    with_checker!(
+        r#"
+        interface Base { x: number }
+        interface Child extends Base { y: string }
+        let c: Child = { x: 1, y: "hi" };
+        "#,
+        |checker, program| {
+            checker.check_program(program);
+            let diagnostics = checker.take_diagnostics();
+            assert!(
+                diagnostics.is_empty(),
+                "object literal with all inherited + direct properties should be assignable: {diagnostics:?}"
+            );
+        }
+    );
+}
+
+#[test]
+fn interface_extends_missing_inherited_property() {
+    with_checker!(
+        r#"
+        interface Base { x: number }
+        interface Child extends Base { y: string }
+        let c: Child = { y: "hi" };
+        "#,
+        |checker, program| {
+            checker.check_program(program);
+            let diagnostics = checker.take_diagnostics();
+            assert!(
+                !diagnostics.is_empty(),
+                "missing inherited required property should produce an error"
+            );
+        }
+    );
+}
+
+#[test]
+fn interface_extends_multiple() {
+    with_checker!(
+        r#"
+        interface A { a: number }
+        interface B { b: string }
+        interface C extends A, B { c: boolean }
+        let v: C = { a: 1, b: "hi", c: true };
+        "#,
+        |checker, program| {
+            checker.check_program(program);
+            let diagnostics = checker.take_diagnostics();
+            assert!(diagnostics.is_empty(), "multiple extends should work: {diagnostics:?}");
+        }
+    );
+}
+
+#[test]
+fn interface_extends_generic() {
+    with_checker!(
+        r#"
+        interface Base<T> { value: T }
+        interface Child extends Base<string> { label: string }
+        let c: Child = { value: "hello", label: "world" };
+        "#,
+        |checker, program| {
+            checker.check_program(program);
+            let diagnostics = checker.take_diagnostics();
+            assert!(
+                diagnostics.is_empty(),
+                "generic base type should be instantiated: {diagnostics:?}"
+            );
+        }
+    );
+}
+
+#[test]
+fn interface_extends_generic_type_mismatch() {
+    with_checker!(
+        r#"
+        interface Base<T> { value: T }
+        interface Child extends Base<string> { label: string }
+        let c: Child = { value: 42, label: "world" };
+        "#,
+        |checker, program| {
+            checker.check_program(program);
+            let diagnostics = checker.take_diagnostics();
+            assert!(
+                !diagnostics.is_empty(),
+                "number should not be assignable to inherited string property"
+            );
+        }
+    );
+}
+
+#[test]
+fn interface_extends_chain() {
+    with_checker!(
+        r#"
+        interface A { a: number }
+        interface B extends A { b: string }
+        interface C extends B { c: boolean }
+        let v: C = { a: 1, b: "hi", c: true };
+        "#,
+        |checker, program| {
+            checker.check_program(program);
+            let diagnostics = checker.take_diagnostics();
+            assert!(
+                diagnostics.is_empty(),
+                "multi-level inheritance chain should work: {diagnostics:?}"
+            );
+        }
+    );
+}
+
+#[test]
+fn interface_extends_excess_property_known_in_base() {
+    // Excess property check should recognize properties from base types as "known"
+    with_checker!(
+        r#"
+        interface Base { x: number }
+        interface Child extends Base { y: string }
+        let c: Child = { x: 1, y: "hi", z: true };
+        "#,
+        |checker, program| {
+            checker.check_program(program);
+            let diagnostics = checker.take_diagnostics();
+            assert!(
+                !diagnostics.is_empty(),
+                "excess property 'z' should be caught even with inherited properties"
+            );
+        }
+    );
+}
+
+#[test]
+fn interface_extends_chain_override_shadowing() {
+    // B overrides `x: string` from A to `x: number`.
+    // C extends B — should require `x: number`, not `x: string`.
+    with_checker!(
+        r#"
+        interface A { x: string }
+        interface B extends A { x: number }
+        interface C extends B { y: boolean }
+        let v: C = { x: 42, y: true };
+        "#,
+        |checker, program| {
+            checker.check_program(program);
+            let diagnostics = checker.take_diagnostics();
+            assert!(
+                diagnostics.is_empty(),
+                "overridden property type from intermediate base should be used: {diagnostics:?}"
+            );
+        }
+    );
+}
+
+#[test]
+fn interface_extends_type_alias() {
+    // Heritage can reference a type alias, not just an interface
+    with_checker!(
+        r#"
+        type Base<T> = { value: T }
+        interface Child extends Base<string> { label: string }
+        let c: Child = { value: "hello", label: "world" };
+        "#,
+        |checker, program| {
+            checker.check_program(program);
+            let diagnostics = checker.take_diagnostics();
+            assert!(diagnostics.is_empty(), "type alias as base type should work: {diagnostics:?}");
+        }
+    );
 }
