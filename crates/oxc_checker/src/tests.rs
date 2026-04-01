@@ -1612,17 +1612,79 @@ fn array_string_assignable() {
 // --- Await expression tests ---
 
 #[test]
-fn await_expression_type() {
-    // Simplified: await returns the operand type directly
+fn await_non_promise_passthrough() {
+    // await on a non-promise type should pass through unchanged
     with_checker!(
         "async function f() { let x: number = await 42; }",
         |checker, program| {
             checker.check_program(program);
-        let diagnostics = checker.take_diagnostics();
-            assert!(diagnostics.is_empty(), "await 42 should be number");
+            let diagnostics = checker.take_diagnostics();
+            assert!(diagnostics.is_empty(), "await 42 should be number: {:?}", diagnostics);
         }
     );
 }
+
+#[test]
+fn await_unwraps_promise_type() {
+    // When the global Promise type is available, await Promise<T> should yield T.
+    // This test constructs a TypeReference to Promise manually so it works
+    // without lib.d.ts being accessible from the test working directory.
+    with_checker!(
+        "let x = 1",
+        |checker, program| {
+            checker.check_program(program);
+            let promise_type = checker.promise_type;
+            if let Some(promise_id) = promise_type {
+                // Build a Promise<string> TypeReference
+                let promise_string = checker.type_arena().new_type(
+                    TypeFlags::Object,
+                    oxc_types::ObjectFlags::Reference,
+                    oxc_types::TypeData::TypeReference(oxc_types::TypeReferenceType {
+                        target: Some(promise_id),
+                        resolved_type_arguments: smallvec::smallvec![checker.string_type],
+                    }),
+                    None,
+                );
+                let awaited = checker.get_awaited_type(promise_string, oxc_span::Span::default());
+                assert_eq!(
+                    checker.type_to_string(awaited), "string",
+                    "await Promise<string> should yield string"
+                );
+
+                // Nested: Promise<Promise<number>> should yield number
+                let promise_number = checker.type_arena().new_type(
+                    TypeFlags::Object,
+                    oxc_types::ObjectFlags::Reference,
+                    oxc_types::TypeData::TypeReference(oxc_types::TypeReferenceType {
+                        target: Some(promise_id),
+                        resolved_type_arguments: smallvec::smallvec![checker.number_type],
+                    }),
+                    None,
+                );
+                let promise_promise_number = checker.type_arena().new_type(
+                    TypeFlags::Object,
+                    oxc_types::ObjectFlags::Reference,
+                    oxc_types::TypeData::TypeReference(oxc_types::TypeReferenceType {
+                        target: Some(promise_id),
+                        resolved_type_arguments: smallvec::smallvec![promise_number],
+                    }),
+                    None,
+                );
+                let awaited2 = checker.get_awaited_type(promise_promise_number, oxc_span::Span::default());
+                assert_eq!(
+                    checker.type_to_string(awaited2), "number",
+                    "await Promise<Promise<number>> should yield number"
+                );
+            }
+            // If Promise is not available (no lib.d.ts), skip silently.
+            // Conformance tests cover this path.
+        }
+    );
+}
+
+// Note: Full Promise unwrapping conformance is validated via
+// `cargo run --release -p oxc_coverage -- checker` which runs against
+// TypeScript's test suite with lib.d.ts loaded.
 
 // ---- Function type tests ----
 

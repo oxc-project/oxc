@@ -152,8 +152,11 @@ impl Checker<'_> {
                 self.get_type_of_computed_member_expression(expr)
             }
 
-            // await expr — simplified: returns operand type directly
-            Expression::AwaitExpression(expr) => self.get_type_of_expression(&expr.argument, None),
+            // await expr — unwrap Promise<T> to T
+            Expression::AwaitExpression(expr) => {
+                let operand_type = self.get_type_of_expression(&expr.argument, None);
+                self.get_awaited_type(operand_type, expr.span)
+            }
 
             // /regex/ — always RegExp
             Expression::RegExpLiteral(_) => self.get_global_type("RegExp"),

@@ -6,6 +6,7 @@
 #![warn(clippy::wildcard_enum_match_arm)]
 
 mod assignability;
+mod awaited_type;
 mod check_expression;
 mod checker;
 mod conditional_types;
