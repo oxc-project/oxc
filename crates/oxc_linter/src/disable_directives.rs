@@ -261,14 +261,14 @@ pub struct DisableDirectives {
     /// Spans of unused enable directives
     unused_enable_comments: Box<[(DirectivePrefix, Option<String>, Span)]>,
     /// Number of tracked disable entries that have not been matched yet.
-    remaining_unused_disable_directives: Cell<usize>,
+    unused_directives_remaining: Cell<usize>,
     /// Disable directives that were matched by at least one diagnostic, keyed by `used_index`.
     used_disable_comments: RefCell<Vec<bool>>,
 }
 
 impl DisableDirectives {
     fn mark_disable_directive_used(&self, disable_directive: &DisabledRule) {
-        let remaining = self.remaining_unused_disable_directives.get();
+        let remaining = self.unused_directives_remaining.get();
         if remaining == 0 {
             return;
         }
@@ -286,7 +286,7 @@ impl DisableDirectives {
         }
 
         if was_inserted {
-            self.remaining_unused_disable_directives.set(remaining - 1);
+            self.unused_directives_remaining.set(remaining - 1);
         }
     }
 
@@ -360,7 +360,7 @@ impl DisableDirectives {
     }
 
     fn has_unused_disable_comments(&self) -> bool {
-        self.remaining_unused_disable_directives.get() != 0
+        self.unused_directives_remaining.get() != 0
     }
 
     pub fn collect_unused_disable_comments(&self) -> Vec<DisableRuleComment> {
@@ -456,7 +456,7 @@ impl DisableDirectivesBuilder {
             intervals: self.intervals,
             disable_rule_comments: self.disable_rule_comments.into_boxed_slice(),
             unused_enable_comments: self.unused_enable_comments.into_boxed_slice(),
-            remaining_unused_disable_directives: Cell::new(self.tracked_disable_directives_count),
+            unused_directives_remaining: Cell::new(self.tracked_disable_directives_count),
             used_disable_comments: RefCell::new(vec![false; self.tracked_disable_directives_count]),
         }
     }
