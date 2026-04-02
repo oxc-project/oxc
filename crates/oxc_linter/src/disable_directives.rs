@@ -1673,6 +1673,30 @@ mod tests {
     }
 
     #[test]
+    fn duplicate_disable_all_comments_are_preserved() {
+        test_directives(
+            |prefix| {
+                format!(
+                    r"
+                    /* {prefix}-disable */
+                    /* {prefix}-disable */
+                    console.log();
+                    "
+                )
+            },
+            |_source_text, comments, directives| {
+                let unused = directives.collect_unused_disable_comments();
+
+                assert_eq!(unused.len(), 2);
+                assert_eq!(unused[0].span, comments[0].span);
+                assert!(matches!(unused[0].r#type, RuleCommentType::All { .. }));
+                assert_eq!(unused[1].span, comments[1].span);
+                assert!(matches!(unused[1].r#type, RuleCommentType::All { .. }));
+            },
+        );
+    }
+
+    #[test]
     fn no_unused_disable() {
         test_directives(
             |prefix| {
