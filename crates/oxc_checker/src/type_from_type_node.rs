@@ -98,7 +98,7 @@ impl Checker<'_> {
             TSType::TSTypeQuery(query) => self.get_type_from_type_query(query),
 
             // `this` type in type position
-            TSType::TSThisType(_) => self.this_type,
+            TSType::TSThisType(_) => self.caches.this_type,
 
             // Type operator: `keyof T`, `readonly T`, `unique symbol`
             TSType::TSTypeOperatorType(op) => {
@@ -649,7 +649,7 @@ impl Checker<'_> {
         // If the key binding has a symbol, cache the type parameter against it
         // so references to P within the template resolve correctly.
         if let Some(symbol_id) = mapped.key.symbol_id.get() {
-            self.declared_type_cache[symbol_id] = Some(type_param);
+            self.caches.declared_type_cache[symbol_id] = Some(type_param);
         }
 
         // Resolve the constraint (e.g., `keyof T`) and template (e.g., `T[P]`).
@@ -706,7 +706,7 @@ impl Checker<'_> {
         // Reuse cached TypeParameter if already created (e.g., multiple
         // references to the same infer param within the extends clause).
         if let Some(sid) = symbol_id {
-            if let Some(cached) = self.declared_type_cache[sid] {
+            if let Some(cached) = self.caches.declared_type_cache[sid] {
                 if self.type_arena.get_flags(cached).intersects(TypeFlags::TypeParameter) {
                     self.current_infer_type_params.push(cached);
                     return cached;
@@ -730,7 +730,7 @@ impl Checker<'_> {
 
         // Cache so that references in the true branch resolve to this TypeId.
         if let Some(symbol_id) = symbol_id {
-            self.declared_type_cache[symbol_id] = Some(type_id);
+            self.caches.declared_type_cache[symbol_id] = Some(type_id);
         }
 
         self.current_infer_type_params.push(type_id);

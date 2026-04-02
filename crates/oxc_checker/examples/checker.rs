@@ -81,7 +81,7 @@ fn main() -> ExitCode {
             &arena,
             &project,
             file_paths[0].to_string_lossy().to_string(),
-            1,
+            project.lib_file_count() as u16,
             oxc_checker::CheckerOptions::default(),
         );
         checker.check_program(&parsed.program);

@@ -36,7 +36,7 @@ impl Checker<'_> {
 
         let key: Arc<SmallVec<[TypeId; 4]>> = SmallVec::from_vec(types).into();
 
-        let type_id = self.union_types.entry(key.clone()).or_insert_with_key(|key| {
+        let type_id = self.caches.union_types.entry(key.clone()).or_insert_with_key(|key| {
             // Propagate CouldContainTypeVariables so is_generic_type
             // can check a single flag instead of walking constituents.
             let has_instantiable = key.iter().any(|&t| {
@@ -160,7 +160,7 @@ impl Checker<'_> {
 
         let key: SmallVec<[TypeId; 4]> = SmallVec::from_vec(types);
 
-        let type_id = self.intersection_types.entry(key).or_insert_with_key(|key| {
+        let type_id = self.caches.intersection_types.entry(key).or_insert_with_key(|key| {
             let has_instantiable = key.iter().any(|&t| {
                 let f = self.type_arena.get_flags(t);
                 f.intersects(TypeFlags::Instantiable)
@@ -195,7 +195,7 @@ impl Checker<'_> {
         type_args: SmallVec<[TypeId; 4]>,
     ) -> TypeId {
         let key = (target, type_args);
-        if let Some(&existing) = self.type_reference_types.get(&key) {
+        if let Some(&existing) = self.caches.type_reference_types.get(&key) {
             return existing;
         }
 
@@ -223,14 +223,14 @@ impl Checker<'_> {
             }),
             None,
         );
-        self.type_reference_types.insert(key, type_id);
+        self.caches.type_reference_types.insert(key, type_id);
         type_id
     }
 
     /// Get or create a deduplicated string literal type.
     pub fn get_or_create_string_literal_type(&mut self, value: &str) -> TypeId {
         let key = CompactStr::new(value);
-        let type_id = self.string_literal_types.entry(key).or_insert_with_key(|key| {
+        let type_id = self.caches.string_literal_types.entry(key).or_insert_with_key(|key| {
             self.type_arena.new_type(
                 TypeFlags::StringLiteral,
                 ObjectFlags::None,
@@ -244,7 +244,7 @@ impl Checker<'_> {
     /// Get or create a deduplicated number literal type.
     pub fn get_or_create_number_literal_type(&mut self, value: f64) -> TypeId {
         let key = value.to_bits();
-        let type_id = self.number_literal_types.entry(key).or_insert_with(|| {
+        let type_id = self.caches.number_literal_types.entry(key).or_insert_with(|| {
             self.type_arena.new_type(
                 TypeFlags::NumberLiteral,
                 ObjectFlags::None,
@@ -258,7 +258,7 @@ impl Checker<'_> {
     /// Get or create a deduplicated bigint literal type.
     pub fn get_or_create_bigint_literal_type(&mut self, value: &str) -> TypeId {
         let key = CompactStr::new(value);
-        let type_id = self.bigint_literal_types.entry(key).or_insert_with_key(|key| {
+        let type_id = self.caches.bigint_literal_types.entry(key).or_insert_with_key(|key| {
             self.type_arena.new_type(
                 TypeFlags::BigIntLiteral,
                 ObjectFlags::None,
@@ -287,7 +287,7 @@ impl Checker<'_> {
         if self.type_arena.get_object_flags(type_id).intersects(ObjectFlags::FreshLiteral) {
             return type_id;
         }
-        if let Some(&fresh) = self.fresh_literal_map.get(&type_id) {
+        if let Some(&fresh) = self.caches.fresh_literal_map.get(&type_id) {
             return fresh;
         }
         let data = self.type_arena.get_data(type_id).clone();
@@ -297,8 +297,8 @@ impl Checker<'_> {
             data,
             self.type_arena.get_symbol(type_id),
         );
-        self.fresh_literal_map.insert(type_id, fresh_id);
-        self.regular_literal_map.insert(fresh_id, type_id);
+        self.caches.fresh_literal_map.insert(type_id, fresh_id);
+        self.caches.regular_literal_map.insert(fresh_id, type_id);
         fresh_id
     }
 
@@ -310,7 +310,7 @@ impl Checker<'_> {
         if flags.intersects(TypeFlags::Freshable) {
             let obj_flags = self.type_arena.get_object_flags(type_id);
             if obj_flags.intersects(ObjectFlags::FreshLiteral) {
-                if let Some(&regular) = self.regular_literal_map.get(&type_id) {
+                if let Some(&regular) = self.caches.regular_literal_map.get(&type_id) {
                     return regular;
                 }
             }
@@ -509,11 +509,11 @@ impl Checker<'_> {
         if !obj_flags.intersects(ObjectFlags::RequiresWidening) {
             return type_id;
         }
-        if let Some(&cached) = self.widened_type_cache.get(&type_id) {
+        if let Some(&cached) = self.caches.widened_type_cache.get(&type_id) {
             return cached;
         }
         let result = self.get_widened_type_worker(type_id);
-        self.widened_type_cache.insert(type_id, result);
+        self.caches.widened_type_cache.insert(type_id, result);
         result
     }
 
@@ -826,7 +826,7 @@ impl Checker<'_> {
         }
 
         // Merge index signatures
-        let string_index = if left == self.empty_object_type {
+        let string_index = if left == self.caches.empty_object_type {
             r_str_idx
         } else {
             match (l_str_idx, r_str_idx) {
@@ -834,7 +834,7 @@ impl Checker<'_> {
                 (some, None) | (None, some) => some,
             }
         };
-        let number_index = if left == self.empty_object_type {
+        let number_index = if left == self.caches.empty_object_type {
             r_num_idx
         } else {
             match (l_num_idx, r_num_idx) {

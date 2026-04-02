@@ -1179,20 +1179,30 @@ pub fn run_checker_typescript(files: &[TypeScriptFile]) -> Vec<CoverageResult> {
             let options = checker_options_from_settings(&f.settings);
             let target = target_from_settings(&f.settings);
 
-            let result = if f.units.len() == 1 {
-                run_checker_single(
-                    &f.units[0].content,
-                    f.units[0].source_type,
-                    &baseline_content,
-                    options,
-                    target,
-                )
-            } else {
-                run_checker_multi(
-                    &f.units,
-                    &baseline_content,
-                    options,
-                )
+            // Catch panics from individual tests to prevent killing the
+            // rayon thread pool (e.g., semantic index-out-of-bounds on
+            // certain multi-file tests).
+            let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                if f.units.len() == 1 {
+                    run_checker_single(
+                        &f.units[0].content,
+                        f.units[0].source_type,
+                        &baseline_content,
+                        options,
+                        target,
+                    )
+                } else {
+                    run_checker_multi(
+                        &f.units,
+                        &baseline_content,
+                        options,
+                    )
+                }
+            }));
+
+            let result = match result {
+                Ok(r) => r,
+                Err(_) => TestResult::ParseError("panic during checking".to_string(), true),
             };
 
             Some(CoverageResult { path: f.path.clone(), should_fail: false, result })
@@ -1207,34 +1217,33 @@ fn run_checker_single(
     options: oxc_checker::CheckerOptions,
     target: Option<oxc_project::ScriptTarget>,
 ) -> TestResult {
-    use oxc::semantic::SemanticBuilder;
-    use oxc_checker::Checker;
-
     // Parse the .types baseline
     let assertions = parse_types_baseline(baseline_content);
     if assertions.is_empty() {
         return TestResult::Passed;
     }
 
-    // Parse source → semantic → checker
+    // Create a Project with the single user file. The Project handles
+    // parsing, binding, and checking with correct file indices (no
+    // collision with lib file indices).
     let type_arena = oxc_types::TypeArena::with_capacity(64);
-    let project = oxc_project::Project::new_with_target(&type_arena, target);
-    let allocator = Allocator::default();
-    let parsed = Parser::new(&allocator, source, source_type).parse();
-    if !parsed.errors.is_empty() {
-        return TestResult::ParseError(
-            parsed.errors.iter().map(|e| e.message.to_string()).collect::<Vec<_>>().join("\n"),
-            false,
-        );
-    }
-    let program = &parsed.program;
-    let semantic = SemanticBuilder::new().build(program).semantic;
-    let mut checker =
-        Checker::new_with_host(&semantic, &type_arena, &project, String::new(), 1, options);
-    checker.check_program(program);
+    let files = vec![(
+        PathBuf::from("/virtual/test.ts"),
+        source.to_string(),
+        source_type,
+    )];
+    let mut project =
+        oxc_project::Project::new_multi_from_sources_with_target(&type_arena, files, options, target);
+    project.check_all();
 
-    // Collect computed types from AST (uses cached types from check_program)
-    let actual = collect_checker_types(&mut checker, program, source);
+    // Collect types from the checked file via with_checker
+    let file_idx = project.lib_file_count(); // first user file
+    let actual = project.with_checker(file_idx, |checker, program| {
+        collect_checker_types(checker, program, source)
+    });
+    let Some(actual) = actual else {
+        return TestResult::ParseError("file not checked".to_string(), false);
+    };
 
     // Match assertions against actual
     let mut actual_iter = actual.iter();
@@ -1267,16 +1276,14 @@ fn run_checker_single(
 
 /// Multi-unit types baseline test.
 ///
-/// Creates a `Project` from virtual files for cross-file resolution, then
-/// checks each unit with a standalone `Checker` to collect type information.
+/// Creates a `Project` from virtual files, checks all files via the Project
+/// (with correct cross-file resolution), then uses `with_checker()` to
+/// reconstruct Checkers for type collection.
 fn run_checker_multi(
     units: &[crate::typescript::meta::TestUnitData],
     baseline_content: &str,
     options: oxc_checker::CheckerOptions,
 ) -> TestResult {
-    use oxc::semantic::SemanticBuilder;
-    use oxc_checker::Checker;
-
     let assertions = parse_types_baseline(baseline_content);
     if assertions.is_empty() {
         return TestResult::Passed;
@@ -1292,38 +1299,29 @@ fn run_checker_multi(
         return TestResult::Passed;
     }
 
+    // Keep source text for type collection (Project takes ownership of its copy)
+    let unit_sources: Vec<&str> = ts_units.iter().map(|u| u.content.as_str()).collect();
+
     let files: Vec<(PathBuf, String, SourceType)> = ts_units
         .iter()
         .map(|u| (virtual_path_from_unit_name(&u.name), u.content.clone(), u.source_type))
         .collect();
 
-    // Create Project for cross-file resolution (global types + imports)
+    // Create Project and check all files (lib + user)
     let type_arena = oxc_types::TypeArena::with_capacity(64);
-    let project = oxc_project::Project::new_multi_from_sources(&type_arena, files, options);
+    let mut project = oxc_project::Project::new_multi_from_sources(&type_arena, files, options);
+    project.check_all();
 
-    // Check each unit with a standalone Checker, collecting types
+    // Collect types from each user file via with_checker
     let mut all_types: Vec<(String, String)> = Vec::new();
-    for unit in &ts_units {
-        let allocator = Allocator::default();
-        let parsed = Parser::new(&allocator, &unit.content, unit.source_type).parse();
-        if !parsed.errors.is_empty() {
-            return TestResult::ParseError(
-                parsed.errors.iter().map(|e| e.message.to_string()).collect::<Vec<_>>().join("\n"),
-                false,
-            );
+    for (i, file_idx) in project.user_file_range().enumerate() {
+        let source = unit_sources[i];
+        let types = project.with_checker(file_idx, |checker, program| {
+            collect_checker_types(checker, program, source)
+        });
+        if let Some(types) = types {
+            all_types.extend(types);
         }
-        let program = &parsed.program;
-        let semantic = SemanticBuilder::new().build(program).semantic;
-        let mut checker = Checker::new_with_host(
-            &semantic,
-            &type_arena,
-            &project,
-            String::new(),
-            1,
-            options,
-        );
-        checker.check_program(program);
-        all_types.extend(collect_checker_types(&mut checker, program, &unit.content));
     }
 
     // Match assertions against collected types
@@ -1668,24 +1666,29 @@ pub fn run_checker_errors_typescript(files: &[TypeScriptFile]) -> Vec<CoverageRe
             let compiler_options_list = compiler_options_from_settings(&f.settings);
             let target = target_from_settings(&f.settings);
 
-            let result = if f.units.len() == 1 {
-                // Single-unit: fast path (standalone Checker, no Project overhead)
-                run_checker_errors_single(
-                    &f.units[0].content,
-                    f.units[0].source_type,
-                    &f.error_codes,
-                    options,
-                    &compiler_options_list,
-                    target,
-                )
-            } else {
-                // Multi-unit: use Project with virtual file paths
-                run_checker_errors_multi(
-                    &f.units,
-                    &f.error_codes,
-                    options,
-                    &compiler_options_list,
-                )
+            let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                if f.units.len() == 1 {
+                    run_checker_errors_single(
+                        &f.units[0].content,
+                        f.units[0].source_type,
+                        &f.error_codes,
+                        options,
+                        &compiler_options_list,
+                        target,
+                    )
+                } else {
+                    run_checker_errors_multi(
+                        &f.units,
+                        &f.error_codes,
+                        options,
+                        &compiler_options_list,
+                    )
+                }
+            }));
+
+            let result = match result {
+                Ok(r) => r,
+                Err(_) => TestResult::ParseError("panic during checking".to_string(), true),
             };
 
             Some(CoverageResult { path: f.path.clone(), should_fail: false, result })
@@ -1701,16 +1704,9 @@ fn run_checker_errors_single(
     compiler_options_list: &[oxc_project::CompilerOptions],
     target: Option<oxc_project::ScriptTarget>,
 ) -> TestResult {
-    use oxc::semantic::SemanticBuilder;
-    use oxc_checker::Checker;
-
-    // Collect error codes from all phases: config validation, parser, semantic, and checker.
-    // tsc's .errors.txt baselines include errors from all compiler phases,
-    // so we must do the same to get accurate conformance results.
     let mut actual_codes: Vec<String> = Vec::new();
 
     // Validate compiler options (emits e.g. TS5107 for deprecated target=ES5).
-    // For multi-target tests, validate each variant to match the aggregated baselines.
     for compiler_options in compiler_options_list {
         for d in &oxc_project::validate_compiler_options(compiler_options) {
             if let Some(code) = d.code.number.as_ref() {
@@ -1719,59 +1715,31 @@ fn run_checker_errors_single(
         }
     }
 
+    // Create a Project with the single user file. The Project collects
+    // parser, semantic, and checker diagnostics — matching tsc's behavior
+    // of reporting errors from all compiler phases.
     let type_arena = oxc_types::TypeArena::with_capacity(64);
-    let project = oxc_project::Project::new_with_target(&type_arena, target);
-    let allocator = Allocator::default();
-    let parsed = Parser::new(&allocator, source, source_type).parse();
+    let files = vec![(
+        PathBuf::from("/virtual/test.ts"),
+        source.to_string(),
+        source_type,
+    )];
+    let mut project =
+        oxc_project::Project::new_multi_from_sources_with_target(&type_arena, files, options, target);
+    let result = project.check_all();
 
-    // Collect TS error codes from parser diagnostics
-    for d in &parsed.errors {
-        if let Some(code) = d.code.number.as_ref() {
-            actual_codes.push(code.to_string());
-        }
-    }
-
-    // If the parser panicked (unrecoverable), we can't build an AST to continue
-    if parsed.panicked {
-        return TestResult::ParseError(
-            parsed.errors.iter().map(|e| e.message.to_string()).collect::<Vec<_>>().join("\n"),
-            false,
-        );
-    }
-
-    // Run semantic and checker even if there were (recoverable) parser errors,
-    // since tsc continues analysis and may emit additional errors
-    let program = &parsed.program;
-    let semantic_ret = SemanticBuilder::new().build(program);
-
-    // Collect TS error codes from semantic diagnostics
-    for d in &semantic_ret.errors {
-        if let Some(code) = d.code.number.as_ref() {
-            actual_codes.push(code.to_string());
-        }
-    }
-
-    let mut checker = Checker::new_with_host(
-        &semantic_ret.semantic,
-        &type_arena,
-        &project,
-        String::new(),
-        1,
-        options,
-    );
-    checker.check_program(program);
-
-    // Collect TS error codes from checker diagnostics
-    for d in &checker.take_diagnostics() {
-        if let Some(code) = d.code.number.as_ref() {
-            actual_codes.push(code.to_string());
+    // Collect error codes from all files' diagnostics
+    for (_path, diagnostics) in &result.diagnostics {
+        for d in diagnostics {
+            if let Some(code) = d.code.number.as_ref() {
+                actual_codes.push(code.to_string());
+            }
         }
     }
 
     actual_codes.sort();
     actual_codes.dedup();
 
-    // Check if our actual codes match expected codes
     let mut expected_sorted: Vec<&str> = expected_codes.iter().map(|s| s.as_str()).collect();
     expected_sorted.sort();
 

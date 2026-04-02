@@ -39,7 +39,7 @@ impl Checker<'_> {
     /// caching and `pushTypeResolution`/`popTypeResolution` cycle detection.
     pub fn get_type_of_symbol(&mut self, symbol_id: SymbolId) -> TypeId {
         // Check cache (IndexVec: O(1) array indexing)
-        if let Some(cached) = self.symbol_type_cache[symbol_id] {
+        if let Some(cached) = self.caches.symbol_type_cache[symbol_id] {
             return cached;
         }
 
@@ -51,7 +51,7 @@ impl Checker<'_> {
         // Resolve, remove from resolution set, cache
         let result = self.resolve_symbol_type(symbol_id);
         self.resolving_symbols.remove(&symbol_id);
-        self.symbol_type_cache[symbol_id] = Some(result);
+        self.caches.symbol_type_cache[symbol_id] = Some(result);
         result
     }
 

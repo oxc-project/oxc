@@ -33,7 +33,7 @@ impl Checker<'_> {
         // is requested, to avoid interfering with live checking. Matches tsgo's
         // getTypeOfExpression reading flowTypeCache before computing.
         if self.current_flow_graph.node_flow_map.is_empty() && contextual_type.is_none() {
-            if let Some(&cached) = self.expression_type_cache.get(&key) {
+            if let Some(&cached) = self.caches.expression_type_cache.get(&key) {
                 return cached;
             }
         }
@@ -50,7 +50,7 @@ impl Checker<'_> {
         // This captures flow-narrowed and contextually-typed results so
         // post-checking queries return the same types the checker computed.
         if !self.current_flow_graph.node_flow_map.is_empty() {
-            self.expression_type_cache.insert(key, result);
+            self.caches.expression_type_cache.insert(key, result);
         }
 
         result
@@ -377,14 +377,14 @@ impl Checker<'_> {
         symbol_id: SymbolId,
         declared_type: TypeId,
     ) -> (bool, TypeId) {
-        if let Some(cached) = self.definite_assignment_cache[symbol_id] {
+        if let Some(cached) = self.caches.definite_assignment_cache[symbol_id] {
             return cached;
         }
         let is_uninit = self.is_symbol_potentially_uninitialized(symbol_id);
         let initial_type =
             if is_uninit { self.get_optional_type(declared_type) } else { declared_type };
         let result = (is_uninit, initial_type);
-        self.definite_assignment_cache[symbol_id] = Some(result);
+        self.caches.definite_assignment_cache[symbol_id] = Some(result);
         result
     }
 
@@ -435,7 +435,7 @@ impl Checker<'_> {
         }
 
         // Declared type must not be any/unknown (those are always "safe")
-        if let Some(dt) = self.symbol_type_cache[symbol_id] {
+        if let Some(dt) = self.caches.symbol_type_cache[symbol_id] {
             let flags = self.type_arena.get_flags(dt);
             if flags.intersects(TypeFlags::Any | TypeFlags::Unknown) {
                 return false;
@@ -517,7 +517,7 @@ impl Checker<'_> {
         if let Some(symbol_id) = class_symbol {
             self.get_declared_type_of_symbol(symbol_id)
         } else {
-            self.this_type
+            self.caches.this_type
         }
     }
 
@@ -570,7 +570,7 @@ impl Checker<'_> {
     ) -> TypeId {
         use oxc_ast::ast::{ObjectPropertyKind, PropertyKind};
 
-        let mut spread = self.empty_object_type;
+        let mut spread = self.caches.empty_object_type;
         let mut properties = Vec::new();
         let mut has_spread = false;
 
@@ -631,7 +631,7 @@ impl Checker<'_> {
         }
 
         // If no spread was actually merged, produce a fresh empty literal
-        if spread == self.empty_object_type {
+        if spread == self.caches.empty_object_type {
             return self.create_object_literal_type(Vec::new());
         }
 
@@ -1125,7 +1125,7 @@ impl Checker<'_> {
         }
 
         // Check the operand is assignable to number | bigint
-        if !self.is_type_assignable_to(operand_type, self.number_or_bigint_type) {
+        if !self.is_type_assignable_to(operand_type, self.caches.number_or_bigint_type) {
             if !check_mode.contains(CheckMode::TYPE_ONLY) {
                 self.diagnostics.push(
                     OxcDiagnostic::error(
@@ -1150,7 +1150,7 @@ impl Checker<'_> {
         ty: TypeId,
         is_left: bool,
     ) -> bool {
-        if self.is_type_assignable_to(ty, self.number_or_bigint_type) {
+        if self.is_type_assignable_to(ty, self.caches.number_or_bigint_type) {
             return true;
         }
         let (code, msg) = if is_left {
@@ -1235,8 +1235,8 @@ impl Checker<'_> {
             return;
         }
 
-        let left_numeric = self.is_type_assignable_to(left_type, self.number_or_bigint_type);
-        let right_numeric = self.is_type_assignable_to(right_type, self.number_or_bigint_type);
+        let left_numeric = self.is_type_assignable_to(left_type, self.caches.number_or_bigint_type);
+        let right_numeric = self.is_type_assignable_to(right_type, self.caches.number_or_bigint_type);
 
         // Both numeric → OK; both non-numeric → check structural comparability.
         if left_numeric && right_numeric {

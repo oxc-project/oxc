@@ -18,7 +18,7 @@ impl<'a> Checker<'a> {
     /// Mirrors tsgo's lazy `resolveStructuredTypeMembers` +
     /// instantiation cache.
     pub(crate) fn resolve_type_reference(&mut self, type_ref_id: TypeId) -> TypeId {
-        if let Some(&cached) = self.instantiation_cache.get(&type_ref_id) {
+        if let Some(&cached) = self.caches.instantiation_cache.get(&type_ref_id) {
             return cached;
         }
 
@@ -34,12 +34,12 @@ impl<'a> Checker<'a> {
         match self.type_arena.get_data(target) {
             TypeData::Structured(s) => {
                 let StructuredTypeKind::Interface { all_type_parameters, .. } = &s.kind else {
-                    self.instantiation_cache.insert(type_ref_id, target);
+                    self.caches.instantiation_cache.insert(type_ref_id, target);
                     return target;
                 };
                 let Some(mapper) = TypeMapper::from_type_parameters(all_type_parameters, type_args)
                 else {
-                    self.instantiation_cache.insert(type_ref_id, target);
+                    self.caches.instantiation_cache.insert(type_ref_id, target);
                     return target;
                 };
 
@@ -113,12 +113,12 @@ impl<'a> Checker<'a> {
                     None,
                 );
 
-                self.instantiation_cache.insert(type_ref_id, resolved_id);
+                self.caches.instantiation_cache.insert(type_ref_id, resolved_id);
                 resolved_id
             }
 
             _ => {
-                self.instantiation_cache.insert(type_ref_id, type_ref_id);
+                self.caches.instantiation_cache.insert(type_ref_id, type_ref_id);
                 type_ref_id
             }
         }
@@ -381,7 +381,7 @@ impl Checker<'_> {
 
         // Cache check
         let cache_key = (mapped_type_id.index() as u64) << 32 | concrete.index() as u64;
-        if let Some(&cached) = self.mapped_type_cache.get(&cache_key) {
+        if let Some(&cached) = self.caches.mapped_type_cache.get(&cache_key) {
             return cached;
         }
 
@@ -401,7 +401,7 @@ impl Checker<'_> {
                 | TypeFlags::Null
                 | TypeFlags::Never,
         ) {
-            self.mapped_type_cache.insert(cache_key, concrete);
+            self.caches.mapped_type_cache.insert(cache_key, concrete);
             return concrete;
         }
 
@@ -425,7 +425,7 @@ impl Checker<'_> {
                     })
                     .collect();
                 let result = self.get_or_create_union_type(results);
-                self.mapped_type_cache.insert(cache_key, result);
+                self.caches.mapped_type_cache.insert(cache_key, result);
                 return result;
             }
         }
@@ -447,7 +447,7 @@ impl Checker<'_> {
                         self.array_type,
                         smallvec::smallvec![mapped_elem],
                     );
-                    self.mapped_type_cache.insert(cache_key, result);
+                    self.caches.mapped_type_cache.insert(cache_key, result);
                     return result;
                 }
             }
@@ -533,7 +533,7 @@ impl Checker<'_> {
                     })),
                     None,
                 );
-                self.mapped_type_cache.insert(cache_key, result);
+                self.caches.mapped_type_cache.insert(cache_key, result);
                 return result;
             }
         }
@@ -554,7 +554,7 @@ impl Checker<'_> {
         };
 
         let result = self.build_mapped_object_type(mapped_type_id, properties);
-        self.mapped_type_cache.insert(cache_key, result);
+        self.caches.mapped_type_cache.insert(cache_key, result);
         result
     }
 

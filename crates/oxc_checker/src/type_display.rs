@@ -1,37 +1,79 @@
-use oxc_types::{ObjectFlags, StructuredTypeKind, TypeData, TypeId};
+use oxc_checker_host::CheckerHost;
+use oxc_types::{ObjectFlags, StructuredTypeKind, TypeArena, TypeData, TypeId};
 
 use crate::Checker;
 
-impl Checker<'_> {
+/// Standalone type formatter that can work without a live Checker.
+///
+/// Used for post-check type display (diagnostics, LSP hover, conformance
+/// harness) where only the arena and host are needed — no mutable Checker
+/// state required.
+///
+/// Construct via `TypePrinter::new()` (from Project) or
+/// `Checker::type_printer()` (during checking).
+pub struct TypePrinter<'a> {
+    arena: &'a TypeArena,
+    host: &'a dyn CheckerHost,
+    /// When checking a specific file, symbol lookups for the current file
+    /// can go directly through the Semantic (faster than the host indirection).
+    local_file: Option<(u16, &'a oxc_semantic::Semantic<'a>)>,
+    /// Global `Array` type for `T[]` display. `None` if Array is unavailable
+    /// (e.g., no lib loaded). When `None`, arrays display as `Array<T>`.
+    array_type: Option<TypeId>,
+}
+
+impl<'a> TypePrinter<'a> {
+    /// Create a TypePrinter for post-check use (no local file optimization).
+    /// All symbol lookups go through the host.
+    pub fn new(
+        arena: &'a TypeArena,
+        host: &'a dyn CheckerHost,
+        array_type: Option<TypeId>,
+    ) -> Self {
+        Self { arena, host, local_file: None, array_type }
+    }
+
+    /// Create a TypePrinter with local file optimization for during-check use.
+    pub(crate) fn with_local_file(
+        arena: &'a TypeArena,
+        host: &'a dyn CheckerHost,
+        file_idx: u16,
+        semantic: &'a oxc_semantic::Semantic<'a>,
+        array_type: Option<TypeId>,
+    ) -> Self {
+        Self { arena, host, local_file: Some((file_idx, semantic)), array_type }
+    }
+
     /// Look up a symbol's display name by file index + symbol ID.
+    /// Tries the local Semantic first (if in the same file), falls back
+    /// to the host for cross-file lookups.
     fn symbol_name(
         &self,
         file_idx: u16,
         symbol_id: oxc_syntax::symbol::SymbolId,
     ) -> Option<String> {
-        if file_idx == self.file_idx {
-            Some(self.semantic().scoping().symbol_name(symbol_id).to_string())
-        } else {
-            self.host.get_symbol_name(file_idx, symbol_id).map(|s| s.to_string())
+        if let Some((local_idx, semantic)) = self.local_file {
+            if file_idx == local_idx {
+                return Some(semantic.scoping().symbol_name(symbol_id).to_string());
+            }
         }
+        self.host.get_symbol_name(file_idx, symbol_id).map(|s| s.to_string())
     }
 
     /// Look up the alias name for a type (from a type alias declaration).
     /// Alias names never get a "typeof" prefix.
     fn resolve_alias_name(&self, type_id: TypeId) -> Option<String> {
-        let (file_idx, symbol_id) = self.type_arena().get_alias_symbol(type_id)?;
+        let (file_idx, symbol_id) = self.arena.get_alias_symbol(type_id)?;
         self.symbol_name(file_idx, symbol_id)
     }
 
     /// Look up the intrinsic name for a type (interface, class, enum symbol).
     /// These may get a "typeof" prefix for anonymous structured types.
     fn resolve_symbol_name(&self, type_id: TypeId) -> Option<String> {
-        let (file_idx, symbol_id) = self.type_arena().get_symbol(type_id)?;
+        let (file_idx, symbol_id) = self.arena.get_symbol(type_id)?;
         self.symbol_name(file_idx, symbol_id)
     }
 
-    /// Format a type parameter list as `<T, U extends Foo, V = Bar>`.
-    /// Returns an empty string when the list is empty.
     fn type_params_to_string(&self, type_params: &[TypeId]) -> String {
         if type_params.is_empty() {
             return String::new();
@@ -40,7 +82,7 @@ impl Checker<'_> {
             .iter()
             .map(|&tp_id| {
                 let mut s = self.type_to_string(tp_id);
-                if let TypeData::TypeParameter(tp) = self.type_arena().get_data(tp_id) {
+                if let TypeData::TypeParameter(tp) = self.arena.get_data(tp_id) {
                     if let Some(constraint) = tp.constraint {
                         s.push_str(" extends ");
                         s.push_str(&self.type_to_string(constraint));
@@ -61,7 +103,7 @@ impl Checker<'_> {
     ///
     /// For example: `"string"`, `"number"`, `"true"`, `"string | number"`.
     pub fn type_to_string(&self, type_id: TypeId) -> String {
-        match self.type_arena().get_data(type_id) {
+        match self.arena.get_data(type_id) {
             TypeData::Intrinsic(t) => t.intrinsic_name.to_string(),
             TypeData::Literal(lit) => match lit {
                 oxc_types::LiteralType::String(s) => format!("\"{s}\""),
@@ -104,7 +146,7 @@ impl Checker<'_> {
                     // Anonymous object types with a class/function/enum symbol display
                     // as "typeof X" — these represent the constructor/namespace value.
                     if matches!(s.kind, StructuredTypeKind::Anonymous { .. }) {
-                        let obj_flags = self.type_arena().get_object_flags(type_id);
+                        let obj_flags = self.arena.get_object_flags(type_id);
                         if obj_flags == ObjectFlags::Anonymous {
                             return format!("typeof {name}");
                         }
@@ -130,8 +172,7 @@ impl Checker<'_> {
                         target_str
                     } else {
                         // Check if this is Array<T> — display as T[]
-                        let is_array =
-                            self.array_type != self.any_type && target == self.array_type;
+                        let is_array = self.array_type == Some(target);
                         if is_array && tr.resolved_type_arguments.len() == 1 {
                             let elem_str = self.type_to_string(tr.resolved_type_arguments[0]);
                             format!("{elem_str}[]")
@@ -208,8 +249,35 @@ impl Checker<'_> {
                     "{...}".to_string()
                 }
             }
-            // TODO: implement display for remaining type variants
             _ => "{...}".to_string(),
         }
+    }
+}
+
+// -- Checker delegation --
+
+impl<'a> Checker<'a> {
+    /// Create a TypePrinter for the current file.
+    pub fn type_printer(&self) -> TypePrinter<'_> {
+        // array_type is any_type when Array wasn't found in lib.d.ts —
+        // treat that as "no Array type" for display purposes.
+        let array_type = if self.array_type != self.any_type {
+            Some(self.array_type)
+        } else {
+            None
+        };
+        TypePrinter::with_local_file(
+            self.type_arena,
+            self.host,
+            self.file_idx,
+            self.semantic,
+            array_type,
+        )
+    }
+
+    /// Convert a `TypeId` to its string representation.
+    /// Delegates to `TypePrinter` for the actual formatting.
+    pub fn type_to_string(&self, type_id: TypeId) -> String {
+        self.type_printer().type_to_string(type_id)
     }
 }

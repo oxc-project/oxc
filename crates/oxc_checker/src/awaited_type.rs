@@ -30,7 +30,7 @@ impl Checker<'_> {
         }
 
         // Check cache
-        if let Some(&cached) = self.awaited_type_cache.get(&type_id) {
+        if let Some(&cached) = self.caches.awaited_type_cache.get(&type_id) {
             return cached;
         }
 
@@ -53,7 +53,7 @@ impl Checker<'_> {
                     members.iter().map(|&m| self.get_awaited_type_worker(m, error_span)).collect();
                 self.awaited_type_stack.pop();
                 let result = self.get_or_create_union_type(awaited_members);
-                self.awaited_type_cache.insert(type_id, result);
+                self.caches.awaited_type_cache.insert(type_id, result);
                 return result;
             }
         }
@@ -77,12 +77,12 @@ impl Checker<'_> {
             self.awaited_type_stack.push(type_id);
             let awaited = self.get_awaited_type_worker(promised_type, error_span);
             self.awaited_type_stack.pop();
-            self.awaited_type_cache.insert(type_id, awaited);
+            self.caches.awaited_type_cache.insert(type_id, awaited);
             return awaited;
         }
 
         // Not a promise — return the type unchanged
-        self.awaited_type_cache.insert(type_id, type_id);
+        self.caches.awaited_type_cache.insert(type_id, type_id);
         type_id
     }
 

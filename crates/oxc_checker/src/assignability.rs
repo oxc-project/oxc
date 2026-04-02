@@ -86,7 +86,7 @@ impl<'a> Checker<'a> {
 
         // For non-trivial checks (unions, intersections, structural), use cache
         let cache_key = (source.index() as u64) << 32 | target.index() as u64;
-        if let Some(&cached) = self.assignability_cache.get(&cache_key) {
+        if let Some(&cached) = self.caches.assignability_cache.get(&cache_key) {
             return cached;
         }
 
@@ -99,7 +99,7 @@ impl<'a> Checker<'a> {
 
         let result = self.is_type_assignable_to_slow(source, target, s, t);
         self.in_flight_assignability.remove(&cache_key);
-        self.assignability_cache.insert(cache_key, result);
+        self.caches.assignability_cache.insert(cache_key, result);
         result
     }
 
@@ -506,7 +506,7 @@ impl<'a> Checker<'a> {
     /// intersection of that property's type across all constituents that have it.
     /// Results are cached via `intersection_resolved_cache`.
     fn resolve_intersection_properties(&mut self, intersection_id: TypeId) -> TypeId {
-        if let Some(&cached) = self.intersection_resolved_cache.get(&intersection_id) {
+        if let Some(&cached) = self.caches.intersection_resolved_cache.get(&intersection_id) {
             return cached;
         }
 
@@ -587,7 +587,7 @@ impl<'a> Checker<'a> {
             })),
             None,
         );
-        self.intersection_resolved_cache.insert(intersection_id, resolved_id);
+        self.caches.intersection_resolved_cache.insert(intersection_id, resolved_id);
         resolved_id
     }
 }
