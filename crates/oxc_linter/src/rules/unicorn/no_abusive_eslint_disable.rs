@@ -80,7 +80,7 @@ impl Rule for NoAbusiveEslintDisable {
     fn run_once(&self, ctx: &LintContext) {
         for comment in ctx.disable_directives().disable_rule_comments() {
             match &comment.r#type {
-                RuleCommentType::All => {
+                RuleCommentType::All { .. } => {
                     ctx.diagnostic(no_abusive_eslint_disable_diagnostic(comment.span));
                 }
                 RuleCommentType::Single(rules) => {

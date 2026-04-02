@@ -318,7 +318,7 @@ pub fn create_unused_directives_report(
         let span = unused_comment.span;
         let fix_span = unused_comment.fix_span;
         match unused_comment.r#type {
-            RuleCommentType::All => {
+            RuleCommentType::All { .. } => {
                 reports.push(build_unused_disable_diagnostic_report(
                     unused_comment.directive_prefix.unused_disable_message(),
                     span,

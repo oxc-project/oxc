@@ -341,7 +341,8 @@ impl<'a> ContextHost<'a> {
             let span = unused_disable_comment.span;
             let fix_span = unused_disable_comment.fix_span;
             match &unused_disable_comment.r#type {
-                RuleCommentType::All => {
+                RuleCommentType::All { .. } => {
+                    // eslint-disable
                     self.push_diagnostic(Message::new(
                         OxcDiagnostic::error(
                             unused_disable_comment.directive_prefix.unused_disable_message(),
