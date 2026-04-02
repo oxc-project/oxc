@@ -118,7 +118,9 @@ impl Checker<'_> {
         // Infer return type from body when there's no annotation.
         if func.return_type.is_none() {
             if let Some(body) = &func.body {
-                sig.return_type = self.infer_return_type_from_body(&body.statements);
+                let contextual_return_type = contextual_sig.map(|s| s.return_type);
+                sig.return_type =
+                    self.infer_return_type_from_body(&body.statements, contextual_return_type);
             }
         }
         sig
@@ -129,7 +131,11 @@ impl Checker<'_> {
     /// Collects all return expression types, checks end-of-function reachability
     /// via the flow graph, and produces a union type. If the function end is
     /// reachable (implicit return), `void` is included in the union.
-    pub(crate) fn infer_return_type_from_body(&mut self, stmts: &[Statement<'_>]) -> TypeId {
+    pub(crate) fn infer_return_type_from_body(
+        &mut self,
+        stmts: &[Statement<'_>],
+        contextual_return_type: Option<TypeId>,
+    ) -> TypeId {
         // Collect types from all return statements (non-recursive into nested functions).
         let mut return_types = Vec::new();
         self.collect_return_types(stmts, &mut return_types);
@@ -147,7 +153,8 @@ impl Checker<'_> {
             return self.void_type;
         }
 
-        self.get_or_create_union_type(return_types)
+        let return_type = self.get_or_create_union_type(return_types);
+        self.widen_return_type(return_type, contextual_return_type)
     }
 
     /// Walk statements collecting return expression types.
