@@ -17,8 +17,9 @@ pub struct TypePrinter<'a> {
     /// When checking a specific file, symbol lookups for the current file
     /// can go directly through the Semantic (faster than the host indirection).
     local_file: Option<(u16, &'a oxc_semantic::Semantic<'a>)>,
-    array_type: TypeId,
-    any_type: TypeId,
+    /// Global `Array` type for `T[]` display. `None` if Array is unavailable
+    /// (e.g., no lib loaded). When `None`, arrays display as `Array<T>`.
+    array_type: Option<TypeId>,
 }
 
 impl<'a> TypePrinter<'a> {
@@ -27,10 +28,9 @@ impl<'a> TypePrinter<'a> {
     pub fn new(
         arena: &'a TypeArena,
         host: &'a dyn CheckerHost,
-        array_type: TypeId,
-        any_type: TypeId,
+        array_type: Option<TypeId>,
     ) -> Self {
-        Self { arena, host, local_file: None, array_type, any_type }
+        Self { arena, host, local_file: None, array_type }
     }
 
     /// Create a TypePrinter with local file optimization for during-check use.
@@ -39,12 +39,14 @@ impl<'a> TypePrinter<'a> {
         host: &'a dyn CheckerHost,
         file_idx: u16,
         semantic: &'a oxc_semantic::Semantic<'a>,
-        array_type: TypeId,
-        any_type: TypeId,
+        array_type: Option<TypeId>,
     ) -> Self {
-        Self { arena, host, local_file: Some((file_idx, semantic)), array_type, any_type }
+        Self { arena, host, local_file: Some((file_idx, semantic)), array_type }
     }
 
+    /// Look up a symbol's display name by file index + symbol ID.
+    /// Tries the local Semantic first (if in the same file), falls back
+    /// to the host for cross-file lookups.
     fn symbol_name(
         &self,
         file_idx: u16,
@@ -58,11 +60,15 @@ impl<'a> TypePrinter<'a> {
         self.host.get_symbol_name(file_idx, symbol_id).map(|s| s.to_string())
     }
 
+    /// Look up the alias name for a type (from a type alias declaration).
+    /// Alias names never get a "typeof" prefix.
     fn resolve_alias_name(&self, type_id: TypeId) -> Option<String> {
         let (file_idx, symbol_id) = self.arena.get_alias_symbol(type_id)?;
         self.symbol_name(file_idx, symbol_id)
     }
 
+    /// Look up the intrinsic name for a type (interface, class, enum symbol).
+    /// These may get a "typeof" prefix for anonymous structured types.
     fn resolve_symbol_name(&self, type_id: TypeId) -> Option<String> {
         let (file_idx, symbol_id) = self.arena.get_symbol(type_id)?;
         self.symbol_name(file_idx, symbol_id)
@@ -94,6 +100,8 @@ impl<'a> TypePrinter<'a> {
     }
 
     /// Convert a `TypeId` to its string representation, matching tsc's output.
+    ///
+    /// For example: `"string"`, `"number"`, `"true"`, `"string | number"`.
     pub fn type_to_string(&self, type_id: TypeId) -> String {
         match self.arena.get_data(type_id) {
             TypeData::Intrinsic(t) => t.intrinsic_name.to_string(),
@@ -106,6 +114,7 @@ impl<'a> TypePrinter<'a> {
                         "-Infinity".to_string()
                     } else {
                         let s = n.to_string();
+                        // Remove trailing ".0" to match tsc output (e.g., "42" not "42.0")
                         if s.ends_with(".0") { s[..s.len() - 2].to_string() } else { s }
                     }
                 }
@@ -113,6 +122,7 @@ impl<'a> TypePrinter<'a> {
                 oxc_types::LiteralType::Boolean(b) => b.to_string(),
             },
             TypeData::Union(u) => {
+                // Named unions (e.g., enums, type aliases) display by name
                 if let Some(name) =
                     self.resolve_alias_name(type_id).or_else(|| self.resolve_symbol_name(type_id))
                 {
@@ -121,16 +131,20 @@ impl<'a> TypePrinter<'a> {
                 u.types.iter().map(|&t| self.type_to_string(t)).collect::<Vec<_>>().join(" | ")
             }
             TypeData::Intersection(i) => {
+                // Named intersections (from type aliases) display by name
                 if let Some(name) = self.resolve_alias_name(type_id) {
                     return name;
                 }
                 i.types.iter().map(|&t| self.type_to_string(t)).collect::<Vec<_>>().join(" & ")
             }
             TypeData::Structured(s) => {
+                // Alias names never get "typeof" prefix
                 if let Some(name) = self.resolve_alias_name(type_id) {
                     return name;
                 }
                 if let Some(name) = self.resolve_symbol_name(type_id) {
+                    // Anonymous object types with a class/function/enum symbol display
+                    // as "typeof X" — these represent the constructor/namespace value.
                     if matches!(s.kind, StructuredTypeKind::Anonymous { .. }) {
                         let obj_flags = self.arena.get_object_flags(type_id);
                         if obj_flags == ObjectFlags::Anonymous {
@@ -139,6 +153,7 @@ impl<'a> TypePrinter<'a> {
                     }
                     return name;
                 }
+                // Anonymous — display structurally in declaration order
                 if s.properties.is_empty() {
                     return "{}".to_string();
                 }
@@ -156,8 +171,8 @@ impl<'a> TypePrinter<'a> {
                     if tr.resolved_type_arguments.is_empty() {
                         target_str
                     } else {
-                        let is_array =
-                            self.array_type != self.any_type && target == self.array_type;
+                        // Check if this is Array<T> — display as T[]
+                        let is_array = self.array_type == Some(target);
                         if is_array && tr.resolved_type_arguments.len() == 1 {
                             let elem_str = self.type_to_string(tr.resolved_type_arguments[0]);
                             format!("{elem_str}[]")
@@ -244,13 +259,19 @@ impl<'a> TypePrinter<'a> {
 impl<'a> Checker<'a> {
     /// Create a TypePrinter for the current file.
     pub fn type_printer(&self) -> TypePrinter<'_> {
+        // array_type is any_type when Array wasn't found in lib.d.ts —
+        // treat that as "no Array type" for display purposes.
+        let array_type = if self.array_type != self.any_type {
+            Some(self.array_type)
+        } else {
+            None
+        };
         TypePrinter::with_local_file(
             self.type_arena,
             self.host,
             self.file_idx,
             self.semantic,
-            self.array_type,
-            self.any_type,
+            array_type,
         )
     }
 

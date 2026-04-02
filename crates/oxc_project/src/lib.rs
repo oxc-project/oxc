@@ -162,7 +162,16 @@ pub struct Project {
     checked: RefCell<FxHashSet<usize>>,
 
     /// Shared type arena reference for on-demand checking.
-    /// Set during check_all, None otherwise.
+    ///
+    /// Raw pointer because the arena ownership model will change for the
+    /// parallel design (per-thread local arenas + shared read-only base,
+    /// likely behind `Arc`). A lifetime parameter would be correct for v1
+    /// but would need to be removed for that transition. The raw pointer
+    /// accurately represents "this will change."
+    ///
+    /// Safety invariant: the caller-owned TypeArena outlives the Project.
+    /// Dereferenced in `ensure_file_checked`, `with_checker`, and
+    /// `type_printer`.
     arena: Option<*const TypeArena>,
 
     /// Checker options passed to each per-file Checker.
@@ -527,9 +536,8 @@ impl Project {
         // SAFETY: arena pointer was set during construction and the caller
         // owns the TypeArena, which outlives this Project.
         let arena = unsafe { &*self.arena.unwrap() };
-        let intrinsics = self.intrinsics;
-        let array_type = self.get_global_type("Array").unwrap_or(intrinsics.any_type);
-        oxc_checker::TypePrinter::new(arena, self, array_type, intrinsics.any_type)
+        let array_type = self.get_global_type("Array");
+        oxc_checker::TypePrinter::new(arena, self, array_type)
     }
 
     /// Range of user file indices (lib_file_count..total_files).

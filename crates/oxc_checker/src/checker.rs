@@ -64,6 +64,15 @@ impl CheckMode {
 /// 4. Stored in `Project::checker_caches` for later use.
 /// 5. For post-check queries, `Project::with_checker()` takes the caches
 ///    out, reconstructs a Checker, runs the callback, then puts them back.
+///
+/// # Future parallelism note
+///
+/// Caches contain `TypeId`s that point into the shared `TypeArena`. This
+/// is correct in the current single-threaded model (one arena, all files).
+/// With per-thread arenas, stored caches would reference thread-local
+/// TypeIds that become invalid after arena merging. The parallel design
+/// will need either cache remapping (rewrite TypeIds after merge) or
+/// cache invalidation (drop computation caches, keep only query caches).
 pub struct CheckerCaches {
     // -- Dedup caches --
     /// Cache for deduplicating union types. Key is sorted constituent TypeIds.
@@ -200,19 +209,24 @@ impl CheckerCaches {
             None,
         );
 
-        let number_or_bigint_type = {
-            let types: SmallVec<[TypeId; 4]> =
-                smallvec::smallvec![intrinsics.number_type, intrinsics.bigint_type];
-            type_arena.new_type(
-                TypeFlags::Union,
-                ObjectFlags::None,
-                TypeData::Union(UnionType { types: types.into() }),
-                None,
-            )
-        };
+        // Create number | bigint and seed the union dedup cache so that
+        // get_or_create_union_type(vec![number, bigint]) finds this TypeId
+        // instead of creating a duplicate.
+        let mut sorted_key: SmallVec<[TypeId; 4]> =
+            smallvec::smallvec![intrinsics.number_type, intrinsics.bigint_type];
+        sorted_key.sort();
+        let key: Arc<SmallVec<[TypeId; 4]>> = sorted_key.into();
+        let number_or_bigint_type = type_arena.new_type(
+            TypeFlags::Union,
+            ObjectFlags::None,
+            TypeData::Union(UnionType { types: key.clone() }),
+            None,
+        );
+        let mut union_types = FxHashMap::default();
+        union_types.insert(key, number_or_bigint_type);
 
         Self {
-            union_types: FxHashMap::default(),
+            union_types,
             intersection_types: FxHashMap::default(),
             type_reference_types: FxHashMap::default(),
             string_literal_types: FxHashMap::default(),

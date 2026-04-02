@@ -1202,7 +1202,7 @@ pub fn run_checker_typescript(files: &[TypeScriptFile]) -> Vec<CoverageResult> {
 
             let result = match result {
                 Ok(r) => r,
-                Err(_) => TestResult::ParseError("panic during checking".to_string(), false),
+                Err(_) => TestResult::ParseError("panic during checking".to_string(), true),
             };
 
             Some(CoverageResult { path: f.path.clone(), should_fail: false, result })
@@ -1688,7 +1688,7 @@ pub fn run_checker_errors_typescript(files: &[TypeScriptFile]) -> Vec<CoverageRe
 
             let result = match result {
                 Ok(r) => r,
-                Err(_) => TestResult::ParseError("panic during checking".to_string(), false),
+                Err(_) => TestResult::ParseError("panic during checking".to_string(), true),
             };
 
             Some(CoverageResult { path: f.path.clone(), should_fail: false, result })
