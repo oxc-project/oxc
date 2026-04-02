@@ -38,6 +38,19 @@ impl Checker<'_> {
         contextual_type: Option<TypeId>,
         check_mode: CheckMode,
     ) -> TypeId {
+        let span = expr.span();
+        let key = (span.start as u64) << 32 | span.end as u64;
+
+        // Post-checking fallback: read the cache populated during check_program().
+        // Only used when the flow graph is gone (post-check) and no contextual type
+        // is requested, to avoid interfering with live checking. Matches tsgo's
+        // getTypeOfExpression reading flowTypeCache before computing.
+        if self.current_flow_graph.node_flow_map.is_empty() && contextual_type.is_none() {
+            if let Some(&cached) = self.expression_type_cache.get(&key) {
+                return cached;
+            }
+        }
+
         // Guard against infinite recursion (e.g., `const x = x`)
         if self.recursion_depth > 100 {
             return self.any_type;
@@ -48,11 +61,8 @@ impl Checker<'_> {
 
         // Cache if we're inside check_program() (flow graph is active).
         // This captures flow-narrowed and contextually-typed results so
-        // post-checking queries via get_type_at_location() return the
-        // same types the checker computed.
+        // post-checking queries return the same types the checker computed.
         if !self.current_flow_graph.node_flow_map.is_empty() {
-            let span = expr.span();
-            let key = (span.start as u64) << 32 | span.end as u64;
             self.expression_type_cache.insert(key, result);
         }
 
