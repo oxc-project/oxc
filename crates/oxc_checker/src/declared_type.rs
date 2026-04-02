@@ -6,8 +6,8 @@ use oxc_types::{
 };
 use smallvec::SmallVec;
 
-use crate::checker::CheckMode;
 use crate::Checker;
+use crate::checker::CheckMode;
 
 impl Checker<'_> {
     /// Get the declared type of a type-namespace symbol (type alias, interface,
@@ -56,11 +56,13 @@ impl Checker<'_> {
                 let body_type = self.get_type_from_type_node(&decl.type_annotation);
 
                 // Attach the alias symbol so `type_to_string` can display the alias name.
-                // If the body type already has a symbol (e.g., an interface reference),
-                // keep the original. Only attach for "anonymous" types like unions/intersections.
-                if self.type_arena.get_symbol(body_type).is_none() {
-                    self.type_arena
-                        .clone_type_with_symbol(body_type, Some((self.file_idx, symbol_id)))
+                // Only attach when the body has no intrinsic name (no symbol) and no
+                // existing alias. If the body already has a name (e.g., an interface
+                // reference or another type alias), keep it — that name takes priority.
+                if self.type_arena.get_symbol(body_type).is_none()
+                    && self.type_arena.get_alias_symbol(body_type).is_none()
+                {
+                    self.type_arena.clone_type_with_alias(body_type, (self.file_idx, symbol_id))
                 } else {
                     body_type
                 }

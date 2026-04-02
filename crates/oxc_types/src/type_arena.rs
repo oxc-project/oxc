@@ -76,13 +76,22 @@ pub struct TypeArena {
     /// The `u16` is the file index — identifies which file's Semantic the
     /// SymbolId indexes into.
     symbols: AppendOnlyVec<Option<(u16, SymbolId)>>,
+    /// Optional alias symbol — the type alias declaration that named this type.
+    ///
+    /// Separate from `symbols` to distinguish between:
+    /// - "This type IS symbol X" (interface, class, enum) — stored in `symbols`
+    /// - "This type is ALIASED as X" — stored here
+    ///
+    /// This separation matters for display: intrinsic symbols on anonymous
+    /// structured types produce `typeof X` (class constructors, enum namespaces),
+    /// while alias symbols always display as just the name.
+    /// Mirrors tsgo's `aliasSymbol` field on types.
+    alias_symbols: AppendOnlyVec<Option<(u16, SymbolId)>>,
 }
 
 impl std::fmt::Debug for TypeArena {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("TypeArena")
-            .field("len", &self.flags.len())
-            .finish()
+        f.debug_struct("TypeArena").field("len", &self.flags.len()).finish()
     }
 }
 
@@ -94,6 +103,7 @@ impl TypeArena {
             object_flags: AppendOnlyVec::new(),
             data: AppendOnlyVec::new(),
             symbols: AppendOnlyVec::new(),
+            alias_symbols: AppendOnlyVec::new(),
         }
     }
 
@@ -132,6 +142,7 @@ impl TypeArena {
         self.object_flags.push(object_flags);
         self.data.push(data);
         self.symbols.push(symbol);
+        self.alias_symbols.push(None);
         TypeId::from_usize(idx)
     }
 
@@ -165,18 +176,40 @@ impl TypeArena {
         self.symbols[id.index()]
     }
 
-    /// Create a copy of an existing type with a different symbol association.
-    /// Used to attach a type alias name to a type after creation.
+    /// Get the alias symbol for a type, if any.
+    ///
+    /// Alias symbols are set on types that are the body of a type alias
+    /// declaration (e.g., the `{ type: "A" }` in `type A = { type: "A" }`).
+    /// Returns `(file_idx, symbol_id)` of the alias declaration.
     #[inline]
-    pub fn clone_type_with_symbol(
-        &self,
-        id: TypeId,
-        symbol: Option<(u16, SymbolId)>,
-    ) -> TypeId {
+    pub fn get_alias_symbol(&self, id: TypeId) -> Option<(u16, SymbolId)> {
+        self.alias_symbols[id.index()]
+    }
+
+    /// Create a copy of an existing type with a different symbol association.
+    /// Used by fresh literal creation to preserve the original type's symbol.
+    #[inline]
+    pub fn clone_type_with_symbol(&self, id: TypeId, symbol: Option<(u16, SymbolId)>) -> TypeId {
         let flags = self.flags[id.index()];
         let object_flags = self.object_flags[id.index()];
         let data = self.data[id.index()].clone();
         self.new_type(flags, object_flags, data, symbol)
+    }
+
+    /// Create a copy of an existing type with an alias symbol.
+    ///
+    /// Used to attach a type alias name to a type body. The original type's
+    /// intrinsic symbol (if any) is preserved; the alias symbol is stored
+    /// separately so that display logic can distinguish "typeof X" (intrinsic)
+    /// from plain "X" (alias).
+    #[inline]
+    pub fn clone_type_with_alias(&self, id: TypeId, alias_symbol: (u16, SymbolId)) -> TypeId {
+        let idx = self.flags.push(self.flags[id.index()]);
+        self.object_flags.push(self.object_flags[id.index()]);
+        self.data.push(self.data[id.index()].clone());
+        self.symbols.push(self.symbols[id.index()]);
+        self.alias_symbols.push(Some(alias_symbol));
+        TypeId::from_usize(idx)
     }
 }
 

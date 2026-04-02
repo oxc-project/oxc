@@ -3,15 +3,31 @@ use oxc_types::{ObjectFlags, StructuredTypeKind, TypeData, TypeId};
 use crate::Checker;
 
 impl Checker<'_> {
-    /// Look up a type's display name via its file-indexed SymbolId.
-    /// If the symbol is from this file, look up directly in our Semantic.
-    /// If from another file, ask the host.
-    fn resolve_type_name(&self, type_id: TypeId) -> Option<String> {
-        let (file_idx, symbol_id) = self.type_arena().get_symbol(type_id)?;
+    /// Look up a symbol's display name by file index + symbol ID.
+    fn symbol_name(
+        &self,
+        file_idx: u16,
+        symbol_id: oxc_syntax::symbol::SymbolId,
+    ) -> Option<String> {
         if file_idx == self.file_idx {
-            return Some(self.semantic().scoping().symbol_name(symbol_id).to_string());
+            Some(self.semantic().scoping().symbol_name(symbol_id).to_string())
+        } else {
+            self.host.get_symbol_name(file_idx, symbol_id).map(|s| s.to_string())
         }
-        self.host.get_symbol_name(file_idx, symbol_id).map(|s| s.to_string())
+    }
+
+    /// Look up the alias name for a type (from a type alias declaration).
+    /// Alias names never get a "typeof" prefix.
+    fn resolve_alias_name(&self, type_id: TypeId) -> Option<String> {
+        let (file_idx, symbol_id) = self.type_arena().get_alias_symbol(type_id)?;
+        self.symbol_name(file_idx, symbol_id)
+    }
+
+    /// Look up the intrinsic name for a type (interface, class, enum symbol).
+    /// These may get a "typeof" prefix for anonymous structured types.
+    fn resolve_symbol_name(&self, type_id: TypeId) -> Option<String> {
+        let (file_idx, symbol_id) = self.type_arena().get_symbol(type_id)?;
+        self.symbol_name(file_idx, symbol_id)
     }
 
     /// Format a type parameter list as `<T, U extends Foo, V = Bar>`.
@@ -65,16 +81,26 @@ impl Checker<'_> {
             },
             TypeData::Union(u) => {
                 // Named unions (e.g., enums, type aliases) display by name
-                if let Some(name) = self.resolve_type_name(type_id) {
+                if let Some(name) =
+                    self.resolve_alias_name(type_id).or_else(|| self.resolve_symbol_name(type_id))
+                {
                     return name;
                 }
                 u.types.iter().map(|&t| self.type_to_string(t)).collect::<Vec<_>>().join(" | ")
             }
             TypeData::Intersection(i) => {
+                // Named intersections (from type aliases) display by name
+                if let Some(name) = self.resolve_alias_name(type_id) {
+                    return name;
+                }
                 i.types.iter().map(|&t| self.type_to_string(t)).collect::<Vec<_>>().join(" & ")
             }
             TypeData::Structured(s) => {
-                if let Some(name) = self.resolve_type_name(type_id) {
+                // Alias names never get "typeof" prefix
+                if let Some(name) = self.resolve_alias_name(type_id) {
+                    return name;
+                }
+                if let Some(name) = self.resolve_symbol_name(type_id) {
                     // Anonymous object types with a class/function/enum symbol display
                     // as "typeof X" — these represent the constructor/namespace value.
                     if matches!(s.kind, StructuredTypeKind::Anonymous { .. }) {
