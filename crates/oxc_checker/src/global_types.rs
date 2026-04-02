@@ -1,3 +1,4 @@
+use std::path::PathBuf;
 use std::sync::OnceLock;
 
 use oxc_checker_host::IntrinsicIds;
@@ -8,11 +9,71 @@ use oxc_types::{IntrinsicType, ObjectFlags, TypeArena, TypeData, TypeFlags};
 /// the source into their own arena.
 static LIB_SOURCE_CACHE: OnceLock<Option<String>> = OnceLock::new();
 
+/// Cached lib directory path. Found once, reused for multi-lib loading.
+static LIB_DIR_CACHE: OnceLock<Option<PathBuf>> = OnceLock::new();
+
 /// Get the lib.d.ts source text, finding and caching it from disk if needed.
 ///
 /// Used by `Project` (which checks lib.d.ts as a regular file).
 pub fn find_lib_source() -> Option<String> {
     LIB_SOURCE_CACHE.get_or_init(find_and_read_lib).clone()
+}
+
+/// Find and read multiple lib files for a target.
+///
+/// Returns a Vec of (display_name, source_text) in dependency order.
+/// Uses the cached lib directory from `find_lib_dir()`.
+pub fn find_lib_sources(lib_names: &[&str]) -> Vec<(String, String)> {
+    let Some(lib_dir) = find_lib_dir() else {
+        return Vec::new();
+    };
+    lib_names
+        .iter()
+        .filter_map(|name| {
+            let path = lib_dir.join(format!("lib.{name}.d.ts"));
+            let source = std::fs::read_to_string(&path).ok()?;
+            Some((format!("<lib.{name}.d.ts>"), source))
+        })
+        .collect()
+}
+
+/// Find the TypeScript lib directory on disk. Cached after first call.
+fn find_lib_dir() -> Option<PathBuf> {
+    LIB_DIR_CACHE.get_or_init(find_lib_dir_inner).clone()
+}
+
+fn find_lib_dir_inner() -> Option<PathBuf> {
+    let mut dir = std::env::current_dir().ok()?;
+    loop {
+        let lib_dir = dir.join("node_modules").join("typescript").join("lib");
+        if lib_dir.join("lib.es5.d.ts").exists() {
+            return Some(lib_dir);
+        }
+        // Also check pnpm structure
+        let pnpm_dir = dir.join("node_modules").join(".pnpm");
+        if pnpm_dir.exists() {
+            if let Ok(entries) = std::fs::read_dir(&pnpm_dir) {
+                for entry in entries.flatten() {
+                    let name = entry.file_name();
+                    let name_str = name.to_string_lossy();
+                    if name_str.starts_with("typescript@") {
+                        let lib_dir = entry
+                            .path()
+                            .join("node_modules")
+                            .join("typescript")
+                            .join("lib");
+                        if lib_dir.join("lib.es5.d.ts").exists() {
+                            return Some(lib_dir);
+                        }
+                    }
+                }
+            }
+        }
+        if !dir.pop() {
+            break;
+        }
+    }
+    None
 }
 
 /// Allocate all intrinsic types in the arena. Call once during Project
@@ -90,39 +151,10 @@ pub fn allocate_intrinsics(arena: &TypeArena) -> IntrinsicIds {
     }
 }
 
-/// Try to find lib.es5.d.ts on disk.
+/// Try to find and read lib.es5.d.ts on disk.
 fn find_and_read_lib() -> Option<String> {
-    let mut dir = std::env::current_dir().ok()?;
-    loop {
-        let candidate =
-            dir.join("node_modules").join("typescript").join("lib").join("lib.es5.d.ts");
-        if candidate.exists() {
-            return std::fs::read_to_string(candidate).ok();
-        }
-        // Also check pnpm structure
-        let pnpm_dir = dir.join("node_modules").join(".pnpm");
-        if pnpm_dir.exists() {
-            if let Ok(entries) = std::fs::read_dir(&pnpm_dir) {
-                for entry in entries.flatten() {
-                    let name = entry.file_name();
-                    let name_str = name.to_string_lossy();
-                    if name_str.starts_with("typescript@") {
-                        let candidate = entry
-                            .path()
-                            .join("node_modules")
-                            .join("typescript")
-                            .join("lib")
-                            .join("lib.es5.d.ts");
-                        if candidate.exists() {
-                            return std::fs::read_to_string(candidate).ok();
-                        }
-                    }
-                }
-            }
-        }
-        if !dir.pop() {
-            break;
-        }
-    }
-    None
+    find_lib_sources(&["es5"])
+        .into_iter()
+        .next()
+        .map(|(_, src)| src)
 }

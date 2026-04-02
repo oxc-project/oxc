@@ -17,7 +17,7 @@ use oxc_types::{
 };
 
 use crate::Checker;
-use crate::instantiation::TypeMapper;
+use oxc_types::TypeMapper;
 
 impl Checker<'_> {
     /// Resolve a mapped type's constraint and template into concrete properties.

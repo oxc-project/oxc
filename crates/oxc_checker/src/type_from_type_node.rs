@@ -426,7 +426,7 @@ impl Checker<'_> {
 
         // Build mapper from alias type params → type arguments
         let Some(mapper) =
-            crate::instantiation::TypeMapper::from_type_parameters(&type_params, &type_arguments)
+            oxc_types::TypeMapper::from_type_parameters(&type_params, &type_arguments)
         else {
             return target;
         };

@@ -21,7 +21,7 @@ use smallvec::SmallVec;
 
 use crate::Checker;
 use crate::inference::InferenceContext;
-use crate::instantiation::TypeMapper;
+use oxc_types::TypeMapper;
 
 impl Checker<'_> {
     /// Resolve or defer a conditional type.
