@@ -20,7 +20,12 @@ mod inference;
 mod instantiation;
 mod keyof;
 mod mapped_types;
+mod nullable;
+mod property_access;
 mod relater;
+mod signature;
+mod symbol_type;
+mod type_factory;
 mod type_display;
 mod type_from_type_node;
 
