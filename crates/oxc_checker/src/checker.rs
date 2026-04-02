@@ -146,14 +146,21 @@ pub struct Checker<'a> {
     /// order (unlike unions which are sorted), matching tsgo's approach.
     intersection_types: FxHashMap<SmallVec<[TypeId; 4]>, TypeId>,
 
-    /// Cache for deduplicating string literal types. Key is the string value.
+    /// Cache for deduplicating string literal types (regular/non-fresh). Key is the string value.
     string_literal_types: FxHashMap<CompactStr, TypeId>,
 
-    /// Cache for deduplicating number literal types. Key is f64::to_bits().
+    /// Cache for deduplicating number literal types (regular/non-fresh). Key is f64::to_bits().
     number_literal_types: FxHashMap<u64, TypeId>,
 
-    /// Cache for deduplicating bigint literal types. Key is the bigint string value.
+    /// Cache for deduplicating bigint literal types (regular/non-fresh). Key is the bigint string value.
     bigint_literal_types: FxHashMap<CompactStr, TypeId>,
+
+    /// Maps regular (non-fresh) literal TypeId → fresh literal TypeId.
+    ///
+    /// Fresh literals are created from source-code literal expressions (e.g., `"foo"`,
+    /// `42`, `true`). They widen to their base types for mutable variables (`let`/`var`).
+    /// Non-fresh literals (from type annotations, narrowing, etc.) do NOT widen.
+    fresh_literal_map: FxHashMap<TypeId, TypeId>,
 
     /// Cache for assignability relation results. Key is packed
     /// `(source_id << 32) | target_id` as u64. Avoids recomputing
@@ -410,6 +417,7 @@ impl<'a> Checker<'a> {
             union_types: FxHashMap::default(),
             intersection_types: FxHashMap::default(),
             string_literal_types: FxHashMap::default(),
+            fresh_literal_map: FxHashMap::default(),
             number_literal_types: FxHashMap::default(),
             bigint_literal_types: FxHashMap::default(),
             assignability_cache: FxHashMap::default(),
@@ -1251,30 +1259,90 @@ impl<'a> Checker<'a> {
         *type_id
     }
 
-    /// Widen a literal type to its base type.
+    /// Get the fresh version of a literal type.
     ///
-    /// `1` → `number`, `"hello"` → `string`, `true` → `boolean`, `1n` → `bigint`.
-    /// Unions have each constituent widened. Non-literal types are returned unchanged.
+    /// Fresh literals are created from source-code literal expressions and will
+    /// widen to their base type for mutable bindings. Non-fresh literals (from
+    /// type annotations, narrowing, etc.) do not widen.
+    ///
+    /// Mirrors tsgo's `getFreshTypeOfLiteralType`.
+    pub fn get_fresh_type_of_literal(&mut self, type_id: TypeId) -> TypeId {
+        let flags = self.type_arena.get_flags(type_id);
+        if !flags.intersects(TypeFlags::Freshable) {
+            return type_id;
+        }
+        if let Some(&fresh) = self.fresh_literal_map.get(&type_id) {
+            return fresh;
+        }
+        let data = self.type_arena.get_data(type_id).clone();
+        let fresh_id = self.type_arena.new_type(
+            flags,
+            ObjectFlags::FreshLiteral,
+            data,
+            self.type_arena.get_symbol(type_id),
+        );
+        self.fresh_literal_map.insert(type_id, fresh_id);
+        fresh_id
+    }
+
+    /// Get the regular (non-fresh) version of a literal type.
+    ///
+    /// Mirrors tsgo's `getRegularTypeOfLiteralType`.
+    pub fn get_regular_type_of_literal(&mut self, type_id: TypeId) -> TypeId {
+        let flags = self.type_arena.get_flags(type_id);
+        if flags.intersects(TypeFlags::Freshable) {
+            let obj_flags = self.type_arena.get_object_flags(type_id);
+            if obj_flags.intersects(ObjectFlags::FreshLiteral) {
+                for (&regular, &fresh) in &self.fresh_literal_map {
+                    if fresh == type_id {
+                        return regular;
+                    }
+                }
+            }
+            return type_id;
+        }
+        if flags.intersects(TypeFlags::Union) {
+            if let TypeData::Union(u) = self.type_arena.get_data(type_id) {
+                let types = u.types.clone();
+                let regular: Vec<TypeId> =
+                    types.iter().map(|&m| self.get_regular_type_of_literal(m)).collect();
+                return self.get_or_create_union_type(regular);
+            }
+        }
+        type_id
+    }
+
+    /// Widen a fresh literal type to its base type.
+    ///
+    /// Only widens types marked with `ObjectFlags::FreshLiteral` (from source-code
+    /// literal expressions). Non-fresh literals are returned unchanged.
+    ///
+    /// Mirrors tsgo's `getWidenedLiteralType`.
     pub fn get_widened_literal_type(&mut self, type_id: TypeId) -> TypeId {
         let flags = self.type_arena.get_flags(type_id);
-        if flags.intersects(TypeFlags::StringLiteral) {
-            self.string_type
-        } else if flags.intersects(TypeFlags::NumberLiteral) {
-            self.number_type
-        } else if flags.intersects(TypeFlags::BigIntLiteral) {
-            self.bigint_type
-        } else if flags.intersects(TypeFlags::BooleanLiteral) {
-            self.boolean_type
-        } else if flags.intersects(TypeFlags::Union) {
+        if flags.intersects(TypeFlags::Freshable) {
+            let obj_flags = self.type_arena.get_object_flags(type_id);
+            if !obj_flags.intersects(ObjectFlags::FreshLiteral) {
+                return type_id;
+            }
+            if flags.intersects(TypeFlags::StringLiteral) {
+                return self.string_type;
+            } else if flags.intersects(TypeFlags::NumberLiteral) {
+                return self.number_type;
+            } else if flags.intersects(TypeFlags::BigIntLiteral) {
+                return self.bigint_type;
+            } else if flags.intersects(TypeFlags::BooleanLiteral) {
+                return self.boolean_type;
+            }
+        }
+        if flags.intersects(TypeFlags::Union) {
             if let TypeData::Union(u) = self.type_arena.get_data(type_id) {
                 let widened: Vec<TypeId> =
                     u.types.iter().map(|&m| self.get_widened_literal_type(m)).collect();
                 return self.get_or_create_union_type(widened);
             }
-            type_id
-        } else {
-            type_id
         }
+        type_id
     }
 
     // ── Spread type validation ─────────────────────────────────────────

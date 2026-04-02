@@ -66,17 +66,21 @@ impl Checker<'_> {
         check_mode: CheckMode,
     ) -> TypeId {
         match expr {
-            Expression::StringLiteral(lit) => self.get_or_create_string_literal_type(&lit.value),
-            Expression::NumericLiteral(lit) => self.get_or_create_number_literal_type(lit.value),
+            Expression::StringLiteral(lit) => {
+                let regular = self.get_or_create_string_literal_type(&lit.value);
+                self.get_fresh_type_of_literal(regular)
+            }
+            Expression::NumericLiteral(lit) => {
+                let regular = self.get_or_create_number_literal_type(lit.value);
+                self.get_fresh_type_of_literal(regular)
+            }
             Expression::BigIntLiteral(lit) => {
-                self.get_or_create_bigint_literal_type(lit.value.as_str())
+                let regular = self.get_or_create_bigint_literal_type(lit.value.as_str());
+                self.get_fresh_type_of_literal(regular)
             }
             Expression::BooleanLiteral(lit) => {
-                if lit.value {
-                    self.true_type
-                } else {
-                    self.false_type
-                }
+                let regular = if lit.value { self.true_type } else { self.false_type };
+                self.get_fresh_type_of_literal(regular)
             }
             Expression::NullLiteral(_) => self.null_type,
             Expression::Identifier(ident) => self.get_type_of_identifier(ident),
@@ -1437,7 +1441,10 @@ impl Checker<'_> {
                 .with_label(expr.property.span),
             );
         }
-        result.unwrap_or(self.any_type)
+        // Freshen literal results so they widen correctly for mutable bindings
+        // (e.g., `var x = Colors.Cornflower` should widen from `0` to `number`).
+        let t = result.unwrap_or(self.any_type);
+        self.get_fresh_type_of_literal(t)
     }
 
     /// Get the apparent type of a type.
@@ -1894,13 +1901,20 @@ impl Checker<'_> {
                 self.boolean_type
             }
 
-            // Equality operators: no checkNonNullType (null/undefined comparisons are valid).
+            // Equality operators: evaluate operands to cache flow-narrowed types
+            // for subexpressions (e.g., `x` in `else if (x !== "bar")`) so
+            // post-checking queries return the narrowed type.
             // TODO: checkNaNEquality, isTypeEqualityComparableTo, literal object checks
             BinaryOperator::Equality
             | BinaryOperator::Inequality
             | BinaryOperator::StrictEquality
-            | BinaryOperator::StrictInequality
-            | BinaryOperator::In
+            | BinaryOperator::StrictInequality => {
+                self.get_type_of_expression(&expr.left, None, check_mode);
+                self.get_type_of_expression(&expr.right, None, check_mode);
+                self.boolean_type
+            }
+
+            BinaryOperator::In
             | BinaryOperator::Instanceof => self.boolean_type,
 
             // Arithmetic operators (not +): validate operands and return number or bigint.
