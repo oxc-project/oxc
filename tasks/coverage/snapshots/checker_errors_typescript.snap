@@ -2,7 +2,7 @@ commit: 34725489
 
 checker_errors_typescript Summary:
 AST Parsed     : 7643/7643 (100.00%)
-Positive Passed: 1249/7643 (16.34%)
+Positive Passed: 1252/7643 (16.38%)
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/ArrowFunctionExpression1.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration10.ts
@@ -882,15 +882,21 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/commentsBeforeVar
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/commentsClassMembers.ts
 
+checker_errors: tasks/coverage/typescript/tests/cases/compiler/commentsExternalModules.ts
+
+checker_errors: tasks/coverage/typescript/tests/cases/compiler/commentsExternalModules2.ts
+
+checker_errors: tasks/coverage/typescript/tests/cases/compiler/commentsExternalModules3.ts
+
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/commentsInheritance.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/commentsInterface.ts
 
+checker_errors: tasks/coverage/typescript/tests/cases/compiler/commentsModules.ts
+
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/commentsOnObjectLiteral1.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/commentsOnObjectLiteral2.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/commentsOverloads.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/commentsdoNotEmitComments.ts
 
@@ -2326,8 +2332,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/functionOverloadI
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/functionOverloadImplementationOfWrongName2.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/functionOverloads.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/functionOverloads1.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/functionOverloads11.ts
@@ -2342,11 +2346,7 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/functionOverloads
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/functionOverloads20.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/functionOverloads27.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/functionOverloads3.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/compiler/functionOverloads32.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/functionOverloads4.ts
 
@@ -5678,6 +5678,8 @@ checker_errors: tasks/coverage/typescript/tests/cases/compiler/typeArgInference.
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/typeArgInference2.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/typeArgInferenceWithNull.ts
+
+checker_errors: tasks/coverage/typescript/tests/cases/compiler/typeArgumentConstraintResolution1.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/typeArgumentDefaultUsesConstraintOnCircularDefault.ts
 
@@ -9452,15 +9454,11 @@ checker_errors: tasks/coverage/typescript/tests/cases/conformance/interfaces/int
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/interfaces/interfaceDeclarations/interfaceWithMultipleBaseTypes2.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/interfaces/interfaceDeclarations/interfaceWithOverloadedCallAndConstructSignatures.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/interfaces/interfaceDeclarations/interfaceWithPropertyOfEveryType.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/interfaces/interfaceDeclarations/interfaceWithPropertyThatIsPrivateInBaseType.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/interfaces/interfaceDeclarations/interfaceWithPropertyThatIsPrivateInBaseType2.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/interfaces/interfaceDeclarations/interfaceWithSpecializedCallAndConstructSignatures.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/interfaces/interfaceDeclarations/interfaceWithStringIndexerHidingBaseTypeIndexer.ts
 
@@ -12370,8 +12368,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/stringLi
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/stringLiteral/stringLiteralTypesOverloadAssignability05.ts
 
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/stringLiteral/stringLiteralTypesOverloads03.ts
-
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/stringLiteral/stringLiteralTypesOverloads05.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/stringLiteral/stringLiteralTypesWithVariousOperators02.ts
@@ -12860,8 +12856,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/uniqueSy
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/unknown/unknownControlFlow.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/unknown/unknownType1.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/unknown/unknownType2.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/types/witness/witness.ts
 

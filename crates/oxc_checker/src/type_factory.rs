@@ -629,6 +629,23 @@ impl Checker<'_> {
         )
     }
 
+    /// Create a function type from multiple signatures (overloaded functions).
+    pub fn create_function_type_from_signatures(
+        &mut self,
+        signatures: smallvec::SmallVec<[Signature; 1]>,
+    ) -> TypeId {
+        let mut obj_flags = ObjectFlags::Anonymous;
+        if signatures.iter().any(|s| self.signature_could_contain_type_variables(s)) {
+            obj_flags |= ObjectFlags::CouldContainTypeVariables;
+        }
+        self.type_arena.new_type(
+            TypeFlags::Object,
+            obj_flags,
+            TypeData::Function(Box::new(FunctionType { signatures })),
+            None,
+        )
+    }
+
     /// Create a constructor type from a single construct signature.
     pub fn create_constructor_type(&mut self, signature: Signature) -> TypeId {
         let mut obj_flags = ObjectFlags::Anonymous;

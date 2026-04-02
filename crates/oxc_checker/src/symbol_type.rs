@@ -1,8 +1,9 @@
 use oxc_span::CompactStr;
+use oxc_syntax::node::NodeId;
 use oxc_syntax::symbol::SymbolId;
 use oxc_types::{
-    LiteralType, ObjectFlags, PropertyInfo, StructuredType, StructuredTypeKind, TypeData,
-    TypeFlags, TypeId, sort_properties,
+    LiteralType, ObjectFlags, PropertyInfo, Signature, StructuredType, StructuredTypeKind,
+    TypeData, TypeFlags, TypeId, sort_properties,
 };
 use smallvec::SmallVec;
 
@@ -252,9 +253,14 @@ impl Checker<'_> {
                     self.any_type
                 }
             }
-            AstKind::Function(func) => {
-                let sig = self.build_signature_from_function(func);
-                self.create_function_type(sig)
+            AstKind::Function(_) => {
+                let sigs = self.get_signatures_of_symbol(symbol_id);
+                if sigs.len() == 1 {
+                    let sig = sigs.into_iter().next().unwrap();
+                    self.create_function_type(sig)
+                } else {
+                    self.create_function_type_from_signatures(sigs)
+                }
             }
             _ => {
                 // For merged symbols (e.g., interface + declare var), the primary
@@ -263,6 +269,69 @@ impl Checker<'_> {
                 self.resolve_value_from_redeclarations(symbol_id)
             }
         }
+    }
+
+    /// Collect all overload signatures for a function symbol.
+    ///
+    /// Iterates the symbol's declarations, builds a `Signature` for each
+    /// overload declaration (bodyless function), and skips the implementation
+    /// (function with body). Returns signatures in source order.
+    ///
+    /// Mirrors tsgo's `getSignaturesOfSymbol`.
+    fn get_signatures_of_symbol(&mut self, symbol_id: SymbolId) -> SmallVec<[Signature; 1]> {
+        use oxc_ast::AstKind;
+
+        let redeclarations = self.semantic().scoping().symbol_redeclarations(symbol_id);
+
+        if redeclarations.is_empty() {
+            // Single declaration — no overloads possible.
+            let node_id = self.semantic().scoping().symbol_declaration(symbol_id);
+            let node = self.semantic().nodes().get_node(node_id);
+            if let AstKind::Function(func) = node.kind() {
+                let sig = self.build_signature_from_function(func);
+                return smallvec::smallvec![sig];
+            }
+            return SmallVec::new();
+        }
+
+        // Multiple declarations — collect function NodeIds first to release
+        // the semantic borrow before calling &mut self methods.
+        let func_node_ids: SmallVec<[NodeId; 4]> = redeclarations
+            .iter()
+            .filter(|r| r.flags.is_function())
+            .map(|r| r.declaration)
+            .collect();
+
+        let mut signatures = SmallVec::new();
+        let mut impl_node_id = None;
+
+        for &node_id in &func_node_ids {
+            let node = self.semantic().nodes().get_node(node_id);
+            if let AstKind::Function(func) = node.kind() {
+                if func.body.is_some() {
+                    // Implementation — remember as fallback.
+                    impl_node_id = Some(node_id);
+                } else {
+                    // Overload signature (no body).
+                    let sig = self.build_signature_from_function(func);
+                    signatures.push(sig);
+                }
+            }
+        }
+
+        // Fallback: if no overload signatures found, use the implementation
+        // (non-overloaded function that has redeclarations for other reasons).
+        if signatures.is_empty() {
+            if let Some(impl_id) = impl_node_id {
+                let node = self.semantic().nodes().get_node(impl_id);
+                if let AstKind::Function(func) = node.kind() {
+                    let sig = self.build_signature_from_function(func);
+                    signatures.push(sig);
+                }
+            }
+        }
+
+        signatures
     }
 
     /// Search a symbol's redeclarations for a value-side declaration node.
@@ -275,19 +344,30 @@ impl Checker<'_> {
         use oxc_ast::AstKind;
         use oxc_syntax::symbol::SymbolFlags;
 
-        // Extract only (NodeId, flags) to release the borrow on semantic
+        // Extract (NodeId, flags) to release the borrow on semantic
         // before entering mutable type resolution below.
-        let value_decl_node = self
+        let value_decl = self
             .semantic()
             .scoping()
             .symbol_redeclarations(symbol_id)
             .iter()
             .find(|r| r.flags.intersects(SymbolFlags::Variable | SymbolFlags::Function))
-            .map(|r| r.declaration);
+            .map(|r| (r.declaration, r.flags));
 
-        let Some(node_id) = value_decl_node else {
+        let Some((node_id, flags)) = value_decl else {
             return self.any_type;
         };
+
+        // Function redeclarations — delegate to get_signatures_of_symbol
+        // which collects all overload signatures.
+        if flags.is_function() {
+            let sigs = self.get_signatures_of_symbol(symbol_id);
+            if sigs.len() == 1 {
+                let sig = sigs.into_iter().next().unwrap();
+                return self.create_function_type(sig);
+            }
+            return self.create_function_type_from_signatures(sigs);
+        }
 
         let node = self.semantic().nodes().get_node(node_id);
         match node.kind() {
@@ -299,10 +379,6 @@ impl Checker<'_> {
                     return self.get_type_of_expression(init, None, CheckMode::TYPE_ONLY);
                 }
                 self.any_type
-            }
-            AstKind::Function(func) => {
-                let sig = self.build_signature_from_function(func);
-                self.create_function_type(sig)
             }
             _ => self.any_type,
         }
