@@ -245,6 +245,68 @@ impl Checker<'_> {
         self.maybe_create_type_reference_from_args(target, heritage.type_arguments.as_deref())
     }
 
+    /// Resolve the base (instance) type from a class `extends` clause.
+    ///
+    /// Class `extends` uses an Expression + optional type arguments, unlike
+    /// interface `extends` which uses `TSInterfaceHeritage`. The logic mirrors
+    /// `get_type_from_heritage_element`: resolve symbol → declared type →
+    /// type reference with args.
+    ///
+    /// For complex expressions (mixins), falls back to extracting the instance
+    /// type from the constructor's construct signatures.
+    fn resolve_class_base_type(
+        &mut self,
+        super_class: &oxc_ast::ast::Expression<'_>,
+        super_type_args: Option<&oxc_ast::ast::TSTypeParameterInstantiation<'_>>,
+    ) -> TypeId {
+        use oxc_ast::AstKind;
+        use oxc_ast::ast::Expression;
+
+        // Fast path: identifier → declared type (same pattern as interface heritage)
+        if let Expression::Identifier(ident) = super_class {
+            if let Some(reference_id) = ident.reference_id.get() {
+                let reference = self.semantic().scoping().get_reference(reference_id);
+                if let Some(symbol_id) = reference.symbol_id() {
+                    let node_id = self.semantic().scoping().symbol_declaration(symbol_id);
+                    let is_type_alias = matches!(
+                        self.semantic().nodes().get_node(node_id).kind(),
+                        AstKind::TSTypeAliasDeclaration(_)
+                    );
+
+                    let target = self.get_declared_type_of_symbol(symbol_id);
+
+                    if is_type_alias {
+                        return self.maybe_instantiate_type_alias_from_args(
+                            target,
+                            symbol_id,
+                            super_type_args,
+                        );
+                    }
+
+                    return self
+                        .maybe_create_type_reference_from_args(target, super_type_args);
+                }
+
+                // Unresolved — could be a global type
+                let target = self.get_global_type(&ident.name);
+                return self
+                    .maybe_create_type_reference_from_args(target, super_type_args);
+            }
+        }
+
+        // Slow path: complex expression (e.g., `extends Mixin(Base)`)
+        // Get the constructor type, then extract the instance type from its
+        // first construct signature's return type.
+        let constructor_type =
+            self.get_type_of_expression(super_class, None, CheckMode::TYPE_ONLY);
+        if let TypeData::Structured(s) = self.type_arena.get_data(constructor_type) {
+            if let Some(sig) = s.construct_signatures.first() {
+                return sig.return_type;
+            }
+        }
+        self.any_type
+    }
+
     /// Build a class instance type from a Class declaration.
     /// Uses StructuredType with Interface kind and ObjectFlags::Class, matching tsc/tsgo's model.
     pub(crate) fn get_type_of_class_declaration(
@@ -299,10 +361,13 @@ impl Checker<'_> {
             }
         }
 
-        // Handle extends clause — resolve base types
+        // Handle extends clause — resolve base types (instance type, not constructor)
         let mut resolved_base_types = SmallVec::new();
         if let Some(super_class) = &decl.super_class {
-            let base_type = self.get_type_of_expression(super_class, None, CheckMode::TYPE_ONLY);
+            let base_type = self.resolve_class_base_type(
+                super_class,
+                decl.super_type_arguments.as_deref(),
+            );
             if base_type != self.any_type {
                 resolved_base_types.push(base_type);
             }
