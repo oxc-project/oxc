@@ -726,7 +726,7 @@ fn symbol_type_cached() {
         let t1 = checker.get_type_of_symbol(symbol_id);
         let t2 = checker.get_type_of_symbol(symbol_id);
         assert_eq!(t1, t2, "cached type should be identical");
-        assert_eq!(checker.symbol_type_cache.len(), 1);
+        assert_eq!(checker.caches.symbol_type_cache.len(), 1);
     });
 }
 

@@ -16,7 +16,7 @@ impl Checker<'_> {
     /// `getDeclaredTypeOfSymbol`.
     pub fn get_declared_type_of_symbol(&mut self, symbol_id: SymbolId) -> TypeId {
         // Check cache (IndexVec: O(1) array indexing)
-        if let Some(cached) = self.declared_type_cache[symbol_id] {
+        if let Some(cached) = self.caches.declared_type_cache[symbol_id] {
             return cached;
         }
 
@@ -27,7 +27,7 @@ impl Checker<'_> {
 
         let result = self.resolve_declared_type(symbol_id);
         self.resolving_symbols.remove(&symbol_id);
-        self.declared_type_cache[symbol_id] = Some(result);
+        self.caches.declared_type_cache[symbol_id] = Some(result);
         result
     }
 
@@ -163,7 +163,7 @@ impl Checker<'_> {
                 if let Some(tp_decl) = &decl.type_parameters {
                     for (i, param) in tp_decl.params.iter().enumerate() {
                         if let Some(sid) = param.name.symbol_id.get() {
-                            self.declared_type_cache[sid] = Some(type_parameters[i]);
+                            self.caches.declared_type_cache[sid] = Some(type_parameters[i]);
                         }
                     }
                 }
@@ -591,7 +591,7 @@ impl Checker<'_> {
                 // mapper in maybe_instantiate_type_alias won't match and
                 // instantiation silently does nothing.
                 if let Some(sid) = symbol_id {
-                    if let Some(cached) = self.declared_type_cache[sid] {
+                    if let Some(cached) = self.caches.declared_type_cache[sid] {
                         if self.type_arena.get_flags(cached).intersects(TypeFlags::TypeParameter) {
                             return cached;
                         }
@@ -616,7 +616,7 @@ impl Checker<'_> {
                 // references to `T` within the interface/class body resolve
                 // to this TypeParameter type via get_declared_type_of_symbol.
                 if let Some(symbol_id) = symbol_id {
-                    self.declared_type_cache[symbol_id] = Some(type_id);
+                    self.caches.declared_type_cache[symbol_id] = Some(type_id);
                 }
 
                 type_id
@@ -636,7 +636,7 @@ impl Checker<'_> {
         type_param_id: TypeId,
     ) -> Option<TypeId> {
         // Check the side cache first
-        if let Some(&cached) = self.type_param_constraints.get(&type_param_id) {
+        if let Some(&cached) = self.caches.type_param_constraints.get(&type_param_id) {
             return Some(cached);
         }
 
@@ -666,7 +666,7 @@ impl Checker<'_> {
         };
 
         // Cache for subsequent accesses
-        self.type_param_constraints.insert(type_param_id, constraint_type);
+        self.caches.type_param_constraints.insert(type_param_id, constraint_type);
         Some(constraint_type)
     }
 }

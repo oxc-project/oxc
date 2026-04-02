@@ -29,7 +29,8 @@ mod type_factory;
 mod type_display;
 mod type_from_type_node;
 
-pub use checker::{CheckMode, Checker};
+pub use checker::{CheckMode, Checker, CheckerCaches};
+pub use type_display::TypePrinter;
 pub use global_types::{allocate_intrinsics, find_lib_source, find_lib_sources};
 // Re-export from oxc_checker_host so downstream crates use the same trait/struct
 pub use oxc_checker_host::{CheckerHost, CheckerOptions, IntrinsicIds};

@@ -48,6 +48,196 @@ impl CheckMode {
     }
 }
 
+/// Per-file checker state that survives across `Checker` lifetimes.
+///
+/// Contains all type caches (dedup, resolution, assignability) and
+/// per-checker types (this_type, empty_object_type, etc.) that accumulate
+/// during checking. After checking completes, the `Project` stores this
+/// struct so that a new `Checker` can be reconstructed for post-check
+/// queries (conformance harness, LSP hover) without losing cached state.
+///
+/// # Ownership flow
+///
+/// 1. Created by `CheckerCaches::new()` before the Checker.
+/// 2. Passed into `Checker::new_with_caches()` which takes ownership.
+/// 3. After checking, extracted via `Checker::into_caches()`.
+/// 4. Stored in `Project::checker_caches` for later use.
+/// 5. For post-check queries, `Project::with_checker()` takes the caches
+///    out, reconstructs a Checker, runs the callback, then puts them back.
+pub struct CheckerCaches {
+    // -- Dedup caches --
+    /// Cache for deduplicating union types. Key is sorted constituent TypeIds.
+    pub(crate) union_types: FxHashMap<Arc<SmallVec<[TypeId; 4]>>, TypeId>,
+    /// Cache for deduplicating intersection types. Key preserves constituent
+    /// order (unlike unions which are sorted), matching tsgo's approach.
+    pub(crate) intersection_types: FxHashMap<SmallVec<[TypeId; 4]>, TypeId>,
+    /// Cache for deduplicating TypeReference types. Key is (target, type_args).
+    /// Ensures `Array<string>` is one TypeId regardless of how many code paths
+    /// create it (type annotation, array literal inference, mapper instantiation).
+    pub(crate) type_reference_types: FxHashMap<(TypeId, SmallVec<[TypeId; 4]>), TypeId>,
+    /// Cache for deduplicating string literal types (regular/non-fresh). Key is the string value.
+    pub(crate) string_literal_types: FxHashMap<CompactStr, TypeId>,
+    /// Cache for deduplicating number literal types (regular/non-fresh). Key is f64::to_bits().
+    pub(crate) number_literal_types: FxHashMap<u64, TypeId>,
+    /// Cache for deduplicating bigint literal types (regular/non-fresh).
+    pub(crate) bigint_literal_types: FxHashMap<CompactStr, TypeId>,
+    /// Maps regular (non-fresh) literal TypeId → fresh literal TypeId.
+    ///
+    /// Fresh literals are created from source-code literal expressions (e.g., `"foo"`,
+    /// `42`, `true`). They widen to their base types for mutable variables (`let`/`var`).
+    /// Non-fresh literals (from type annotations, narrowing, etc.) do NOT widen.
+    pub(crate) fresh_literal_map: FxHashMap<TypeId, TypeId>,
+    /// Reverse map: fresh literal TypeId → regular literal TypeId.
+    pub(crate) regular_literal_map: FxHashMap<TypeId, TypeId>,
+
+    // -- Resolution caches --
+    /// Cache for assignability relation results. Key is packed
+    /// `(source_id << 32) | target_id` as u64. Avoids recomputing
+    /// expensive structural comparisons.
+    pub(crate) assignability_cache: FxHashMap<u64, bool>,
+    /// Cache of resolved intersection types. Maps an intersection TypeId to
+    /// a StructuredType TypeId with merged properties from all constituents.
+    pub(crate) intersection_resolved_cache: FxHashMap<TypeId, TypeId>,
+    /// Cache of resolved TypeReference types. When a TypeReference like
+    /// `Array<string>` has its members resolved (properties instantiated),
+    /// the result is a new type in the arena with populated member_map.
+    /// This cache maps the original TypeReference TypeId to the resolved
+    /// type TypeId. Mirrors tsgo's `ObjectType.instantiations` cache and
+    /// lazy `resolveStructuredTypeMembers`.
+    pub(crate) instantiation_cache: FxHashMap<TypeId, TypeId>,
+    /// Cache of resolved mapped type instantiations. Keyed by packed
+    /// `(mapped_type_id, constraint_type_id)` as u64 (same packing as
+    /// assignability_cache). Avoids recomputing `Partial<Foo>` when the
+    /// same mapped type is instantiated with the same constraint twice.
+    pub(crate) mapped_type_cache: FxHashMap<u64, TypeId>,
+    /// Cache of awaited types. Maps a type to its "awaited" form — the result
+    /// of `await`ing it. `Promise<T>` → `T`, non-promises → themselves.
+    /// Avoids recomputing recursive Promise unwrapping.
+    pub(crate) awaited_type_cache: FxHashMap<TypeId, TypeId>,
+    /// Cache for `get_widened_type` results — prevents re-widening and
+    /// ensures stable TypeIds for the same widened type.
+    pub(crate) widened_type_cache: FxHashMap<TypeId, TypeId>,
+
+    // -- Per-symbol caches --
+    /// Cache of resolved symbol types. Each symbol's type is computed at most
+    /// once and stored here. Mirrors tsgo's valueSymbolLinks.resolvedType.
+    /// Uses IndexVec for O(1) array indexing (standard oxc pattern for per-symbol data).
+    pub(crate) symbol_type_cache: IndexVec<SymbolId, Option<TypeId>>,
+    /// Per-symbol cache for definite-assignment analysis (TS2454).
+    /// `None` = not yet computed.
+    /// `Some((false, _))` = symbol is NOT potentially uninitialized.
+    /// `Some((true, initial_type))` = symbol IS potentially uninitialized;
+    ///   `initial_type` is `declared_type | undefined`.
+    /// The scope-walk (outer-variable check) is still done per-reference.
+    pub(crate) definite_assignment_cache: IndexVec<SymbolId, Option<(bool, TypeId)>>,
+    /// Cache of declared types for type-namespace symbols (type aliases,
+    /// interfaces, classes, enums). Mirrors tsgo's getDeclaredTypeOfSymbol
+    /// caching. Uses IndexVec for O(1) array indexing.
+    pub(crate) declared_type_cache: IndexVec<SymbolId, Option<TypeId>>,
+
+    // -- Type query caches --
+    /// Cache of expression types computed during `check_program()`.
+    /// Keyed by packed span `(start << 32 | end)` as u64.
+    /// Populated at checking call sites where flow graphs and contextual
+    /// types are active — mirrors tsgo's `typeNodeLinks.resolvedType`.
+    /// Queried by `get_type_at_location()` for post-checking type queries
+    /// (conformance harness, LSP, etc.).
+    pub(crate) expression_type_cache: FxHashMap<u64, TypeId>,
+
+    // -- Type parameter state --
+    /// Lazily resolved type parameter constraints. Keyed by TypeParameter
+    /// TypeId, value is the resolved constraint TypeId. Populated on first
+    /// access via `get_constraint_of_type_parameter`. Mirrors tsgo's
+    /// `TypeParameter.constraint` field (nil until first access).
+    pub(crate) type_param_constraints: FxHashMap<TypeId, TypeId>,
+
+    // -- Per-checker types --
+    // These are allocated in the arena during construction and compared by
+    // TypeId identity. They MUST be preserved across Checker reconstructions.
+    /// The implicit `this` type parameter (displays as "this").
+    pub(crate) this_type: TypeId,
+    /// Empty anonymous object type `{}` — initial accumulator for spread.
+    pub(crate) empty_object_type: TypeId,
+    /// Cached `number | bigint` union type for arithmetic operand validation.
+    pub(crate) number_or_bigint_type: TypeId,
+}
+
+impl CheckerCaches {
+    /// Create empty caches for a file with `symbols_len` symbols.
+    ///
+    /// Allocates per-checker types (`this_type`, `empty_object_type`,
+    /// `number_or_bigint_type`) in the given `type_arena`. The `intrinsics`
+    /// are needed to create the `number | bigint` union type.
+    pub fn new(
+        symbols_len: usize,
+        type_arena: &TypeArena,
+        intrinsics: oxc_checker_host::IntrinsicIds,
+    ) -> Self {
+        let this_type = type_arena.new_type(
+            TypeFlags::TypeParameter,
+            ObjectFlags::None,
+            TypeData::TypeParameter(Box::new(TypeParameterType {
+                name: None,
+                constraint: None,
+                target: None,
+                is_this_type: true,
+                resolved_default_type: None,
+            })),
+            None,
+        );
+
+        let empty_object_type = type_arena.new_type(
+            TypeFlags::Object,
+            ObjectFlags::Anonymous,
+            TypeData::Structured(Box::new(StructuredType {
+                properties: Vec::new(),
+                string_index_type: None,
+                number_index_type: None,
+                call_signatures: Vec::new(),
+                construct_signatures: Vec::new(),
+                kind: StructuredTypeKind::Anonymous { target: None },
+            })),
+            None,
+        );
+
+        let number_or_bigint_type = {
+            let types: SmallVec<[TypeId; 4]> =
+                smallvec::smallvec![intrinsics.number_type, intrinsics.bigint_type];
+            type_arena.new_type(
+                TypeFlags::Union,
+                ObjectFlags::None,
+                TypeData::Union(UnionType { types: types.into() }),
+                None,
+            )
+        };
+
+        Self {
+            union_types: FxHashMap::default(),
+            intersection_types: FxHashMap::default(),
+            type_reference_types: FxHashMap::default(),
+            string_literal_types: FxHashMap::default(),
+            number_literal_types: FxHashMap::default(),
+            bigint_literal_types: FxHashMap::default(),
+            fresh_literal_map: FxHashMap::default(),
+            regular_literal_map: FxHashMap::default(),
+            assignability_cache: FxHashMap::default(),
+            intersection_resolved_cache: FxHashMap::default(),
+            instantiation_cache: FxHashMap::default(),
+            mapped_type_cache: FxHashMap::default(),
+            awaited_type_cache: FxHashMap::default(),
+            widened_type_cache: FxHashMap::default(),
+            symbol_type_cache: IndexVec::from_vec(vec![None; symbols_len]),
+            definite_assignment_cache: IndexVec::from_vec(vec![None; symbols_len]),
+            declared_type_cache: IndexVec::from_vec(vec![None; symbols_len]),
+            expression_type_cache: FxHashMap::default(),
+            type_param_constraints: FxHashMap::default(),
+            this_type,
+            empty_object_type,
+            number_or_bigint_type,
+        }
+    }
+}
+
 /// TypeScript type checker.
 ///
 /// The checker runs after semantic analysis and resolves types for all
@@ -56,19 +246,19 @@ impl CheckMode {
 /// Types are stored in a borrowed `TypeArena` and referenced by `TypeId`.
 /// Well-known types (primitives) are pre-allocated during construction.
 ///
+/// # Cache ownership
+///
+/// Mutable checker state (all caches, dedup maps, per-checker types) lives
+/// in the `caches: CheckerCaches` field. After checking, call
+/// `into_caches()` to extract the caches for storage in the `Project`.
+/// To reconstruct a Checker for post-check queries, pass the stored caches
+/// back via `new_with_caches()`.
+///
 /// # Arena ownership
 ///
 /// The checker borrows `&'a TypeArena` — it does not own the arena.
 /// This allows multiple checkers (across files) to share a single arena,
 /// keeping all TypeIds compatible. The caller (or `Project`) owns the arena.
-///
-/// ## Future parallelism note
-///
-/// For parallel checking, the single `&'a TypeArena` will be replaced
-/// with per-thread arenas (each checker gets its own arena for temporary
-/// types created during body checking). After all files are checked, arenas
-/// are merged. The Checker's public API won't change — it still takes
-/// `&mut TypeArena` — but the arena handed to it may be thread-local.
 pub struct Checker<'a> {
     /// The semantic analysis result for the program being checked.
     /// Borrowed (not owned) so the Semantic can outlive the Checker —
@@ -140,41 +330,11 @@ pub struct Checker<'a> {
     /// Recursion depth counter to prevent stack overflow.
     pub(crate) recursion_depth: u32,
 
-    /// Cache for deduplicating union types. Key is sorted constituent TypeIds.
-    pub(crate) union_types: FxHashMap<Arc<SmallVec<[TypeId; 4]>>, TypeId>,
+    /// All persistent mutable state — caches, dedup maps, per-checker types.
+    /// Extracted via `into_caches()` after checking for storage in `Project`.
+    pub(crate) caches: CheckerCaches,
 
-    /// Cache for deduplicating intersection types. Key preserves constituent
-    /// order (unlike unions which are sorted), matching tsgo's approach.
-    pub(crate) intersection_types: FxHashMap<SmallVec<[TypeId; 4]>, TypeId>,
-
-    /// Cache for deduplicating TypeReference types. Key is (target, type_args).
-    /// Ensures `Array<string>` is one TypeId regardless of how many code paths
-    /// create it (type annotation, array literal inference, mapper instantiation).
-    pub(crate) type_reference_types: FxHashMap<(TypeId, SmallVec<[TypeId; 4]>), TypeId>,
-
-    /// Cache for deduplicating string literal types (regular/non-fresh). Key is the string value.
-    pub(crate) string_literal_types: FxHashMap<CompactStr, TypeId>,
-
-    /// Cache for deduplicating number literal types (regular/non-fresh). Key is f64::to_bits().
-    pub(crate) number_literal_types: FxHashMap<u64, TypeId>,
-
-    /// Cache for deduplicating bigint literal types (regular/non-fresh). Key is the bigint string value.
-    pub(crate) bigint_literal_types: FxHashMap<CompactStr, TypeId>,
-
-    /// Maps regular (non-fresh) literal TypeId → fresh literal TypeId.
-    ///
-    /// Fresh literals are created from source-code literal expressions (e.g., `"foo"`,
-    /// `42`, `true`). They widen to their base types for mutable variables (`let`/`var`).
-    /// Non-fresh literals (from type annotations, narrowing, etc.) do NOT widen.
-    /// Maps regular literal TypeId → fresh literal TypeId.
-    pub(crate) fresh_literal_map: FxHashMap<TypeId, TypeId>,
-    /// Reverse map: fresh literal TypeId → regular literal TypeId.
-    pub(crate) regular_literal_map: FxHashMap<TypeId, TypeId>,
-
-    /// Cache for assignability relation results. Key is packed
-    /// `(source_id << 32) | target_id` as u64. Avoids recomputing
-    /// expensive structural comparisons.
-    pub(crate) assignability_cache: FxHashMap<u64, bool>,
+    // -- Session-scoped state (not preserved across Checker lifetimes) --
 
     /// Set of `(source, target)` pairs currently being checked for
     /// assignability. Used to detect cycles (e.g., TypeParameter
@@ -183,54 +343,11 @@ pub struct Checker<'a> {
     /// pattern for symbol resolution cycle detection.
     pub(crate) in_flight_assignability: FxHashSet<u64>,
 
-    /// Cache of resolved intersection types. Maps an intersection TypeId to
-    /// a StructuredType TypeId with merged properties from all constituents.
-    pub(crate) intersection_resolved_cache: FxHashMap<TypeId, TypeId>,
-
-    /// Cache of resolved symbol types. Each symbol's type is computed at most
-    /// once and stored here. Mirrors tsgo's valueSymbolLinks.resolvedType.
-    /// Uses IndexVec for O(1) array indexing (standard oxc pattern for per-symbol data).
-    pub(crate) symbol_type_cache: IndexVec<SymbolId, Option<TypeId>>,
-
-    /// Per-symbol cache for definite-assignment analysis (TS2454).
-    /// `None` = not yet computed.
-    /// `Some((false, _))` = symbol is NOT potentially uninitialized.
-    /// `Some((true, initial_type))` = symbol IS potentially uninitialized;
-    ///   `initial_type` is `declared_type | undefined`.
-    /// The scope-walk (outer-variable check) is still done per-reference.
-    pub(crate) definite_assignment_cache: IndexVec<SymbolId, Option<(bool, TypeId)>>,
-
     /// Set of symbols currently being resolved, for cycle detection.
     /// If we encounter a symbol already in this set, we have a circular
     /// reference and return `any_type` to break the cycle.
     /// Mirrors tsgo's pushTypeResolution/popTypeResolution.
     pub(crate) resolving_symbols: FxHashSet<SymbolId>,
-
-    /// Cache of declared types for type-namespace symbols (type aliases,
-    /// interfaces, classes, enums). Mirrors tsgo's getDeclaredTypeOfSymbol
-    /// caching.
-    /// Uses IndexVec for O(1) array indexing.
-    pub(crate) declared_type_cache: IndexVec<SymbolId, Option<TypeId>>,
-
-    /// Cache of resolved TypeReference types. When a TypeReference like
-    /// `Array<string>` has its members resolved (properties instantiated),
-    /// the result is a new type in the arena with populated member_map.
-    /// This cache maps the original TypeReference TypeId to the resolved
-    /// type TypeId. Mirrors tsgo's `ObjectType.instantiations` cache and
-    /// lazy `resolveStructuredTypeMembers`.
-    pub(crate) instantiation_cache: FxHashMap<TypeId, TypeId>,
-
-    /// Cache of resolved mapped type instantiations. Keyed by packed
-    /// `(mapped_type_id, constraint_type_id)` as u64 (same packing as
-    /// assignability_cache). Avoids recomputing `Partial<Foo>` when the
-    /// same mapped type is instantiated with the same constraint twice.
-    pub(crate) mapped_type_cache: FxHashMap<u64, TypeId>,
-
-    /// Lazily resolved type parameter constraints. Keyed by TypeParameter
-    /// TypeId, value is the resolved constraint TypeId. Populated on first
-    /// access via `get_constraint_of_type_parameter`. Mirrors tsgo's
-    /// `TypeParameter.constraint` field (nil until first access).
-    pub(crate) type_param_constraints: FxHashMap<TypeId, TypeId>,
 
     /// Buffer for collecting `infer` type parameters during extends clause
     /// processing. Swapped to an empty vec before processing each conditional
@@ -238,15 +355,11 @@ pub struct Checker<'a> {
     /// Supports nesting (nested conditionals swap/restore the buffer).
     pub(crate) current_infer_type_params: Vec<TypeId>,
 
-    /// Cache of awaited types. Maps a type to its "awaited" form — the result
-    /// of `await`ing it. `Promise<T>` → `T`, non-promises → themselves.
-    /// Avoids recomputing recursive Promise unwrapping.
-    pub(crate) awaited_type_cache: FxHashMap<TypeId, TypeId>,
-
     /// Stack of types currently being unwrapped by `get_awaited_type`.
     /// Used to detect circular self-referencing promises. Mirrors tsgo's
     /// `awaitedTypeStack` field.
     pub(crate) awaited_type_stack: Vec<TypeId>,
+
     /// Stack of return types for enclosing functions.
     /// `Some(type_id)` = function has a declared return type annotation.
     /// `None` = function has no return type annotation (returns are unchecked).
@@ -264,18 +377,25 @@ pub struct Checker<'a> {
     /// successors don't re-traverse the same subgraph. Cleared per scope.
     pub(crate) flow_type_cache: FxHashMap<(crate::flow::FlowNodeId, SymbolId), TypeId>,
 
-    /// Cache of expression types computed during `check_program()`.
-    /// Keyed by packed span `(start << 32 | end)` as u64.
-    /// Populated at checking call sites where flow graphs and contextual
-    /// types are active — mirrors tsgo's `typeNodeLinks.resolvedType`.
-    /// Queried by `get_type_at_location()` for post-checking type queries
-    /// (conformance harness, LSP, etc.).
-    pub(crate) expression_type_cache: FxHashMap<u64, TypeId>,
-    /// Cache for `get_widened_type` results — prevents re-widening and
-    /// ensures stable TypeIds for the same widened type.
-    pub(crate) widened_type_cache: FxHashMap<TypeId, TypeId>,
+    /// Deferred function expression and arrow function bodies to check after
+    /// all top-level statements have been processed. Mirrors tsgo's
+    /// `deferredNodes` queue.
+    ///
+    /// Function expression bodies are deferred so that the enclosing scope is
+    /// fully resolved before the body is checked — this ensures recursive and
+    /// forward references inside the body find cached symbol types.
+    ///
+    /// Stores `NodeId` values which are looked up from `semantic.nodes()` at
+    /// processing time, yielding `&'a Function<'a>` / `&'a ArrowFunctionExpression<'a>`
+    /// with the correct lifetime without requiring lifetime annotations on the
+    /// methods that queue them.
+    deferred_bodies: Vec<NodeId>,
+    /// Set for O(1) deduplication when queuing deferred bodies. A function
+    /// expression may be encountered multiple times during type resolution
+    /// (assignability, CFA, etc.) but should only be body-checked once.
+    deferred_bodies_set: FxHashSet<NodeId>,
 
-    // Well-known types, pre-allocated during construction.
+    // -- Well-known types, pre-allocated during construction. --
     pub any_type: TypeId,
     pub unknown_type: TypeId,
     pub string_type: TypeId,
@@ -300,17 +420,12 @@ pub struct Checker<'a> {
     pub true_type: TypeId,
     /// The `false` literal type.
     pub false_type: TypeId,
-    /// The implicit `this` type parameter (displays as "this").
-    pub this_type: TypeId,
     /// Cached global `Array` type for display and array literal creation.
     pub(crate) array_type: TypeId,
     /// Cached global `Promise` type for await unwrapping.
     pub(crate) promise_type: Option<TypeId>,
     /// Cached global `PromiseLike` type for await unwrapping.
     pub(crate) promise_like_type: Option<TypeId>,
-    /// Empty anonymous object type `{}` — used as the initial accumulator
-    /// for spread type folding.
-    pub(crate) empty_object_type: TypeId,
     /// Cached global `String` interface (apparent type for `string`/string literals).
     pub(crate) global_string_type: Option<TypeId>,
     /// Cached global `Number` interface (apparent type for `number`/number literals).
@@ -321,86 +436,22 @@ pub struct Checker<'a> {
     pub(crate) global_bigint_type: Option<TypeId>,
     /// Cached global `Symbol` interface (apparent type for `symbol`).
     pub(crate) global_es_symbol_type: Option<TypeId>,
-    /// Cached `number | bigint` union type for arithmetic operand validation.
-    pub(crate) number_or_bigint_type: TypeId,
-
-    /// Deferred function expression and arrow function bodies to check after
-    /// all top-level statements have been processed. Mirrors tsgo's
-    /// `deferredNodes` queue.
-    ///
-    /// Function expression bodies are deferred so that the enclosing scope is
-    /// fully resolved before the body is checked — this ensures recursive and
-    /// forward references inside the body find cached symbol types.
-    ///
-    /// Stores `NodeId` values which are looked up from `semantic.nodes()` at
-    /// processing time, yielding `&'a Function<'a>` / `&'a ArrowFunctionExpression<'a>`
-    /// with the correct lifetime without requiring lifetime annotations on the
-    /// methods that queue them.
-    deferred_bodies: Vec<NodeId>,
-    /// Set for O(1) deduplication when queuing deferred bodies. A function
-    /// expression may be encountered multiple times during type resolution
-    /// (assignability, CFA, etc.) but should only be body-checked once.
-    deferred_bodies_set: FxHashSet<NodeId>,
 }
 
 impl<'a> Checker<'a> {
-    /// Create a new type checker with a host for cross-file resolution.
-    ///
-    /// The host provides global types (lib.d.ts) and cross-file import
-    /// resolution. All global type lookups go through the host.
-    ///
-    /// The `type_arena` should be the same arena that the host's global
-    /// types were allocated into, ensuring all TypeIds are compatible.
-    pub fn new_with_host(
+    /// Build the session-scoped (non-cache) fields common to both constructors.
+    fn build_session(
         semantic: &'a Semantic<'a>,
         type_arena: &'a TypeArena,
         host: &'a dyn CheckerHost,
         file_path: String,
         file_idx: u16,
         options: CheckerOptions,
+        caches: CheckerCaches,
     ) -> Self {
         let intrinsics = host.get_intrinsics();
         let base_count = type_arena.len() as u32;
 
-        let this_type = type_arena.new_type(
-            TypeFlags::TypeParameter,
-            ObjectFlags::None,
-            TypeData::TypeParameter(Box::new(TypeParameterType {
-                name: None,
-                constraint: None,
-                target: None,
-                is_this_type: true,
-                resolved_default_type: None,
-            })),
-            None,
-        );
-
-        let empty_object_type = type_arena.new_type(
-            TypeFlags::Object,
-            ObjectFlags::Anonymous,
-            TypeData::Structured(Box::new(StructuredType {
-                properties: Vec::new(),
-                string_index_type: None,
-                number_index_type: None,
-                call_signatures: Vec::new(),
-                construct_signatures: Vec::new(),
-                kind: StructuredTypeKind::Anonymous { target: None },
-            })),
-            None,
-        );
-
-        let number_or_bigint_type = {
-            let types: SmallVec<[TypeId; 4]> =
-                smallvec::smallvec![intrinsics.number_type, intrinsics.bigint_type];
-            type_arena.new_type(
-                TypeFlags::Union,
-                ObjectFlags::None,
-                TypeData::Union(UnionType { types: types.into() }),
-                None,
-            )
-        };
-
-        let symbols_len = semantic.scoping().symbols_len();
         let array_type = host.get_global_type("Array").unwrap_or(intrinsics.any_type);
         let promise_type = host.get_global_type("Promise");
         let promise_like_type = host.get_global_type("PromiseLike");
@@ -410,7 +461,6 @@ impl<'a> Checker<'a> {
         let global_bigint_type = host.get_global_type("BigInt");
         let global_es_symbol_type = host.get_global_type("Symbol");
 
-        // Resolve strict-family options: explicit value wins, otherwise inherit from `strict`.
         let resolve_strict = |opt: Option<bool>| opt.unwrap_or(options.strict);
         let strict_null_checks = resolve_strict(options.strict_null_checks);
 
@@ -419,7 +469,6 @@ impl<'a> Checker<'a> {
             file_path,
             host,
             file_idx,
-            // Resolved compiler options
             allow_unreachable_code: options.allow_unreachable_code,
             allow_unused_labels: options.allow_unused_labels,
             strict_null_checks,
@@ -433,32 +482,18 @@ impl<'a> Checker<'a> {
             base_count,
             diagnostics: Vec::new(),
             recursion_depth: 0,
-            union_types: FxHashMap::default(),
-            intersection_types: FxHashMap::default(),
-            type_reference_types: FxHashMap::default(),
-            string_literal_types: FxHashMap::default(),
-            fresh_literal_map: FxHashMap::default(),
-            regular_literal_map: FxHashMap::default(),
-            number_literal_types: FxHashMap::default(),
-            bigint_literal_types: FxHashMap::default(),
-            assignability_cache: FxHashMap::default(),
+            caches,
+            // Session-scoped state
             in_flight_assignability: FxHashSet::default(),
-            intersection_resolved_cache: FxHashMap::default(),
-            symbol_type_cache: IndexVec::from_vec(vec![None; symbols_len]),
-            definite_assignment_cache: IndexVec::from_vec(vec![None; symbols_len]),
             resolving_symbols: FxHashSet::default(),
-            declared_type_cache: IndexVec::from_vec(vec![None; symbols_len]),
-            instantiation_cache: FxHashMap::default(),
-            mapped_type_cache: FxHashMap::default(),
-            type_param_constraints: FxHashMap::default(),
             current_infer_type_params: Vec::new(),
-            awaited_type_cache: FxHashMap::default(),
             awaited_type_stack: Vec::new(),
             return_type_stack: Vec::new(),
             current_flow_graph: crate::flow::FlowGraph::empty(),
             flow_type_cache: FxHashMap::default(),
-            expression_type_cache: FxHashMap::default(),
-            widened_type_cache: FxHashMap::default(),
+            deferred_bodies: Vec::new(),
+            deferred_bodies_set: FxHashSet::default(),
+            // Well-known types from intrinsics
             any_type: intrinsics.any_type,
             unknown_type: intrinsics.unknown_type,
             string_type: intrinsics.string_type,
@@ -469,30 +504,66 @@ impl<'a> Checker<'a> {
             void_type: intrinsics.void_type,
             undefined_type: intrinsics.undefined_type,
             null_type: intrinsics.null_type,
-            // Widening types are ALWAYS used for null/undefined literal
-            // expressions — TypeScript widens standalone null/undefined to
-            // `any` for mutable declarations regardless of strictNullChecks.
-            // The strictNullChecks flag affects assignability, not widening.
             null_widening_type: intrinsics.null_widening_type,
             undefined_widening_type: intrinsics.undefined_widening_type,
             never_type: intrinsics.never_type,
             non_primitive_type: intrinsics.non_primitive_type,
             true_type: intrinsics.true_type,
             false_type: intrinsics.false_type,
-            this_type,
             array_type,
             promise_type,
             promise_like_type,
-            empty_object_type,
             global_string_type,
             global_number_type,
             global_boolean_type,
             global_bigint_type,
             global_es_symbol_type,
-            number_or_bigint_type,
-            deferred_bodies: Vec::new(),
-            deferred_bodies_set: FxHashSet::default(),
         }
+    }
+
+    /// Create a new type checker with fresh caches.
+    ///
+    /// Allocates per-checker types (this_type, empty_object_type,
+    /// number_or_bigint_type) in the arena and creates empty caches.
+    pub fn new_with_host(
+        semantic: &'a Semantic<'a>,
+        type_arena: &'a TypeArena,
+        host: &'a dyn CheckerHost,
+        file_path: String,
+        file_idx: u16,
+        options: CheckerOptions,
+    ) -> Self {
+        let intrinsics = host.get_intrinsics();
+        let symbols_len = semantic.scoping().symbols_len();
+        let caches = CheckerCaches::new(symbols_len, type_arena, intrinsics);
+        Self::build_session(semantic, type_arena, host, file_path, file_idx, options, caches)
+    }
+
+    /// Create a type checker with previously-stored caches.
+    ///
+    /// Used by `Project::with_checker()` to reconstruct a Checker for
+    /// post-check queries. The caches contain all state from the original
+    /// checking pass, so cache-dependent operations (expression type lookup,
+    /// type dedup, assignability) produce the same results.
+    pub fn new_with_caches(
+        semantic: &'a Semantic<'a>,
+        type_arena: &'a TypeArena,
+        host: &'a dyn CheckerHost,
+        file_path: String,
+        file_idx: u16,
+        options: CheckerOptions,
+        caches: CheckerCaches,
+    ) -> Self {
+        Self::build_session(semantic, type_arena, host, file_path, file_idx, options, caches)
+    }
+
+    /// Consume the checker and return its caches for storage.
+    ///
+    /// The returned `CheckerCaches` contains all accumulated state
+    /// (type caches, dedup maps, per-checker types). Pass it to
+    /// `new_with_caches()` to reconstruct a Checker later.
+    pub fn into_caches(self) -> CheckerCaches {
+        self.caches
     }
 
     /// Run the type checker on a program.
@@ -528,7 +599,7 @@ impl<'a> Checker<'a> {
     pub fn get_type_at_location(&mut self, expr: &Expression<'a>) -> TypeId {
         let span = expr.span();
         let key = (span.start as u64) << 32 | span.end as u64;
-        if let Some(&cached) = self.expression_type_cache.get(&key) {
+        if let Some(&cached) = self.caches.expression_type_cache.get(&key) {
             return cached;
         }
         self.get_type_of_expression(expr, None, CheckMode::TYPE_ONLY)
@@ -540,7 +611,7 @@ impl<'a> Checker<'a> {
     /// global cache, so per-file checkers can look up constraints for
     /// type parameters declared in other files.
     pub fn take_type_param_constraints(&mut self) -> FxHashMap<TypeId, TypeId> {
-        std::mem::take(&mut self.type_param_constraints)
+        std::mem::take(&mut self.caches.type_param_constraints)
     }
 
     /// Check assignability with excess property checking support.
@@ -1166,7 +1237,7 @@ impl<'a> Checker<'a> {
         &self,
         symbol_id: oxc_syntax::symbol::SymbolId,
     ) -> Option<TypeId> {
-        self.symbol_type_cache[symbol_id]
+        self.caches.symbol_type_cache[symbol_id]
     }
 
     /// Get the cached declared type for a symbol (type-side), if resolved.
@@ -1174,6 +1245,6 @@ impl<'a> Checker<'a> {
         &self,
         symbol_id: oxc_syntax::symbol::SymbolId,
     ) -> Option<TypeId> {
-        self.declared_type_cache[symbol_id]
+        self.caches.declared_type_cache[symbol_id]
     }
 }

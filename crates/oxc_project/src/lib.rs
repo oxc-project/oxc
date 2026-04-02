@@ -149,6 +149,12 @@ pub struct Project {
     /// Accumulated type parameter constraints from all checked files.
     type_param_constraints: RefCell<FxHashMap<TypeId, TypeId>>,
 
+    /// Per-file checker caches, extracted from each Checker after checking.
+    /// Enables post-check type queries via `with_checker()` by reconstructing
+    /// a Checker with restored caches (all operations are pointer-sized swaps).
+    /// Indexed by file index. `None` for unchecked files.
+    checker_caches: RefCell<Vec<Option<oxc_checker::CheckerCaches>>>,
+
     /// Set of files currently being checked, for circular import detection.
     checking: RefCell<FxHashSet<usize>>,
 
@@ -236,6 +242,7 @@ impl Project {
             exports: RefCell::new(FxHashMap::default()),
             global_exports: RefCell::new(FxHashMap::default()),
             type_param_constraints: RefCell::new(FxHashMap::default()),
+            checker_caches: RefCell::new((0..file_count).map(|_| None).collect()),
             checking: RefCell::new(FxHashSet::default()),
             checked: RefCell::new(FxHashSet::default()),
             arena: Some(arena as *const TypeArena),
@@ -306,6 +313,7 @@ impl Project {
             exports: RefCell::new(FxHashMap::default()),
             global_exports: RefCell::new(FxHashMap::default()),
             type_param_constraints: RefCell::new(FxHashMap::default()),
+            checker_caches: RefCell::new((0..file_count).map(|_| None).collect()),
             checking: RefCell::new(FxHashSet::default()),
             checked: RefCell::new(FxHashSet::default()),
             arena: Some(arena as *const TypeArena),
@@ -370,6 +378,7 @@ impl Project {
             exports: RefCell::new(FxHashMap::default()),
             global_exports: RefCell::new(FxHashMap::default()),
             type_param_constraints: RefCell::new(FxHashMap::default()),
+            checker_caches: RefCell::new((0..file_count).map(|_| None).collect()),
             checking: RefCell::new(FxHashSet::default()),
             checked: RefCell::new(FxHashSet::default()),
             arena: Some(arena as *const TypeArena),
@@ -492,6 +501,92 @@ impl Project {
         }
     }
 
+    /// Number of lib files in this project. User files start at this index.
+    pub fn lib_file_count(&self) -> usize {
+        self.lib_file_count
+    }
+
+    /// Construct a `TypePrinter` for post-check type display.
+    ///
+    /// All symbol lookups go through `CheckerHost::get_symbol_name`.
+    /// The `arena` pointer must still be valid.
+    pub fn type_printer(&self) -> oxc_checker::TypePrinter<'_> {
+        // SAFETY: arena pointer was set during construction and the caller
+        // owns the TypeArena, which outlives this Project.
+        let arena = unsafe { &*self.arena.unwrap() };
+        let intrinsics = self.intrinsics;
+        let array_type = self.get_global_type("Array").unwrap_or(intrinsics.any_type);
+        oxc_checker::TypePrinter::new(arena, self, array_type, intrinsics.any_type)
+    }
+
+    /// Range of user file indices (lib_file_count..total_files).
+    pub fn user_file_range(&self) -> std::ops::Range<usize> {
+        self.lib_file_count..self.file_paths.len()
+    }
+
+    /// Access a checked file's Program and Semantic for post-check AST walking.
+    ///
+    /// The callback receives references to the Program and Semantic stored in
+    /// the FileCell. Returns `None` if the file hasn't been checked.
+    pub fn with_file<F, R>(&self, file_idx: usize, f: F) -> Option<R>
+    where
+        F: FnOnce(&oxc_ast::ast::Program<'_>, &oxc_semantic::Semantic<'_>) -> R,
+    {
+        let cells = self.file_cells.borrow();
+        let cell = cells.get(file_idx)?.as_ref()?;
+        let borrowed = cell.borrow_dependent();
+        Some(f(borrowed.program, &borrowed.semantic))
+    }
+
+    /// Reconstruct a Checker for post-check type queries on a checked file.
+    ///
+    /// Takes the stored `CheckerCaches` for `file_idx`, creates a new Checker
+    /// with full capabilities (expression type lookup, type resolution,
+    /// assignability, type-to-string), runs the callback, then stores the
+    /// caches back. All cache state is preserved across calls.
+    ///
+    /// Returns `None` if the file hasn't been checked or has no stored caches.
+    ///
+    /// # Panics
+    ///
+    /// Panics if called for the same file_idx from within the callback
+    /// (the caches are temporarily taken from the RefCell).
+    pub fn with_checker<F, R>(&self, file_idx: usize, f: F) -> Option<R>
+    where
+        F: for<'a> FnOnce(&mut Checker<'a>, &oxc_ast::ast::Program<'a>) -> R,
+    {
+        // Borrow the FileCell to get Semantic + Program
+        let cells = self.file_cells.borrow();
+        let cell = cells.get(file_idx)?.as_ref()?;
+        let borrowed = cell.borrow_dependent();
+
+        // SAFETY: arena pointer was set during construction and the caller
+        // owns the TypeArena, which outlives this Project.
+        let arena = unsafe { &*self.arena? };
+
+        // Move caches out of storage (O(1) — pointer swap via Option::take)
+        let caches = self.checker_caches.borrow_mut().get_mut(file_idx)?.take()?;
+
+        // Reconstruct a Checker with the restored caches
+        let file_path = self.file_paths[file_idx].to_string_lossy().to_string();
+        let mut checker = Checker::new_with_caches(
+            &borrowed.semantic,
+            arena,
+            self,
+            file_path,
+            file_idx as u16,
+            self.checker_options,
+            caches,
+        );
+
+        let result = f(&mut checker, borrowed.program);
+
+        // Put caches back (O(1) — pointer swap)
+        self.checker_caches.borrow_mut()[file_idx] = Some(checker.into_caches());
+
+        Some(result)
+    }
+
     /// Ensure a file has been checked, checking it on demand if needed.
     /// Handles circular imports via cycle detection (returns without
     /// checking if the file is already being checked).
@@ -601,10 +696,20 @@ impl Project {
                 checker.eagerly_resolve_type_param_constraints();
             }
 
-            // Extract caches from checker before it's dropped.
+            // Extract constraints and diagnostics BEFORE into_caches(), which
+            // consumes the Checker. take_type_param_constraints() empties
+            // caches.type_param_constraints via mem::take — this is intentional:
+            // the constraints are merged into Project.type_param_constraints,
+            // and when with_checker() reconstructs a Checker later, constraint
+            // lookups fall back to host.get_type_param_constraint() (the
+            // Project's merged cache).
             file_constraints = checker.take_type_param_constraints();
             diagnostics = checker.take_diagnostics();
-        } // checker dropped; FileCell borrow released
+
+            // Store checker caches for post-check queries via with_checker().
+            let caches = checker.into_caches();
+            self.checker_caches.borrow_mut()[file_idx] = Some(caches);
+        } // FileCell borrow released
         *self.check_ms.borrow_mut() += check_start.elapsed().as_secs_f64() * 1000.0;
 
         // Store FileCell — Semantic stays alive for future cross-file access.

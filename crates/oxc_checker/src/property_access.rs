@@ -142,7 +142,7 @@ impl Checker<'_> {
         // Check instantiation_cache first — if another path (assignability, keyof) already
         // resolved this TypeReference eagerly, reuse that for O(1) lookup.
         if let TypeData::TypeReference(_) = self.type_arena.get_data(type_id) {
-            if let Some(&cached) = self.instantiation_cache.get(&type_id) {
+            if let Some(&cached) = self.caches.instantiation_cache.get(&type_id) {
                 return self.get_property_of_structured(cached, name);
             }
             return self.get_property_of_type_reference(type_id, name);
@@ -449,7 +449,7 @@ impl Checker<'_> {
 
                 let TypeData::Structured(s) = self.type_arena.get_data(target) else {
                     // Non-structured target — check instantiation cache or resolve
-                    if let Some(&cached) = self.instantiation_cache.get(&object_type) {
+                    if let Some(&cached) = self.caches.instantiation_cache.get(&object_type) {
                         return self.get_applicable_index_type(cached, index_type, idx_flags);
                     }
                     let resolved = self.resolve_type_reference(object_type);

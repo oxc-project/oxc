@@ -1179,20 +1179,30 @@ pub fn run_checker_typescript(files: &[TypeScriptFile]) -> Vec<CoverageResult> {
             let options = checker_options_from_settings(&f.settings);
             let target = target_from_settings(&f.settings);
 
-            let result = if f.units.len() == 1 {
-                run_checker_single(
-                    &f.units[0].content,
-                    f.units[0].source_type,
-                    &baseline_content,
-                    options,
-                    target,
-                )
-            } else {
-                run_checker_multi(
-                    &f.units,
-                    &baseline_content,
-                    options,
-                )
+            // Catch panics from individual tests to prevent killing the
+            // rayon thread pool (e.g., semantic index-out-of-bounds on
+            // certain multi-file tests).
+            let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                if f.units.len() == 1 {
+                    run_checker_single(
+                        &f.units[0].content,
+                        f.units[0].source_type,
+                        &baseline_content,
+                        options,
+                        target,
+                    )
+                } else {
+                    run_checker_multi(
+                        &f.units,
+                        &baseline_content,
+                        options,
+                    )
+                }
+            }));
+
+            let result = match result {
+                Ok(r) => r,
+                Err(_) => TestResult::ParseError("panic during checking".to_string(), false),
             };
 
             Some(CoverageResult { path: f.path.clone(), should_fail: false, result })
@@ -1267,16 +1277,14 @@ fn run_checker_single(
 
 /// Multi-unit types baseline test.
 ///
-/// Creates a `Project` from virtual files for cross-file resolution, then
-/// checks each unit with a standalone `Checker` to collect type information.
+/// Creates a `Project` from virtual files, checks all files via the Project
+/// (with correct cross-file resolution), then uses `with_checker()` to
+/// reconstruct Checkers for type collection.
 fn run_checker_multi(
     units: &[crate::typescript::meta::TestUnitData],
     baseline_content: &str,
     options: oxc_checker::CheckerOptions,
 ) -> TestResult {
-    use oxc::semantic::SemanticBuilder;
-    use oxc_checker::Checker;
-
     let assertions = parse_types_baseline(baseline_content);
     if assertions.is_empty() {
         return TestResult::Passed;
@@ -1292,38 +1300,29 @@ fn run_checker_multi(
         return TestResult::Passed;
     }
 
+    // Keep source text for type collection (Project takes ownership of its copy)
+    let unit_sources: Vec<&str> = ts_units.iter().map(|u| u.content.as_str()).collect();
+
     let files: Vec<(PathBuf, String, SourceType)> = ts_units
         .iter()
         .map(|u| (virtual_path_from_unit_name(&u.name), u.content.clone(), u.source_type))
         .collect();
 
-    // Create Project for cross-file resolution (global types + imports)
+    // Create Project and check all files (lib + user)
     let type_arena = oxc_types::TypeArena::with_capacity(64);
-    let project = oxc_project::Project::new_multi_from_sources(&type_arena, files, options);
+    let mut project = oxc_project::Project::new_multi_from_sources(&type_arena, files, options);
+    project.check_all();
 
-    // Check each unit with a standalone Checker, collecting types
+    // Collect types from each user file via with_checker
     let mut all_types: Vec<(String, String)> = Vec::new();
-    for unit in &ts_units {
-        let allocator = Allocator::default();
-        let parsed = Parser::new(&allocator, &unit.content, unit.source_type).parse();
-        if !parsed.errors.is_empty() {
-            return TestResult::ParseError(
-                parsed.errors.iter().map(|e| e.message.to_string()).collect::<Vec<_>>().join("\n"),
-                false,
-            );
+    for (i, file_idx) in project.user_file_range().enumerate() {
+        let source = unit_sources[i];
+        let types = project.with_checker(file_idx, |checker, program| {
+            collect_checker_types(checker, program, source)
+        });
+        if let Some(types) = types {
+            all_types.extend(types);
         }
-        let program = &parsed.program;
-        let semantic = SemanticBuilder::new().build(program).semantic;
-        let mut checker = Checker::new_with_host(
-            &semantic,
-            &type_arena,
-            &project,
-            String::new(),
-            1,
-            options,
-        );
-        checker.check_program(program);
-        all_types.extend(collect_checker_types(&mut checker, program, &unit.content));
     }
 
     // Match assertions against collected types
@@ -1668,24 +1667,29 @@ pub fn run_checker_errors_typescript(files: &[TypeScriptFile]) -> Vec<CoverageRe
             let compiler_options_list = compiler_options_from_settings(&f.settings);
             let target = target_from_settings(&f.settings);
 
-            let result = if f.units.len() == 1 {
-                // Single-unit: fast path (standalone Checker, no Project overhead)
-                run_checker_errors_single(
-                    &f.units[0].content,
-                    f.units[0].source_type,
-                    &f.error_codes,
-                    options,
-                    &compiler_options_list,
-                    target,
-                )
-            } else {
-                // Multi-unit: use Project with virtual file paths
-                run_checker_errors_multi(
-                    &f.units,
-                    &f.error_codes,
-                    options,
-                    &compiler_options_list,
-                )
+            let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                if f.units.len() == 1 {
+                    run_checker_errors_single(
+                        &f.units[0].content,
+                        f.units[0].source_type,
+                        &f.error_codes,
+                        options,
+                        &compiler_options_list,
+                        target,
+                    )
+                } else {
+                    run_checker_errors_multi(
+                        &f.units,
+                        &f.error_codes,
+                        options,
+                        &compiler_options_list,
+                    )
+                }
+            }));
+
+            let result = match result {
+                Ok(r) => r,
+                Err(_) => TestResult::ParseError("panic during checking".to_string(), false),
             };
 
             Some(CoverageResult { path: f.path.clone(), should_fail: false, result })
