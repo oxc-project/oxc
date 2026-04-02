@@ -199,7 +199,7 @@ impl Checker<'_> {
                 } else {
                     self.check_non_null_type(object_type, &expr.object)
                 };
-                self.resolve_computed_member_type(object_type, expr)
+                self.resolve_computed_member_type(object_type, expr, check_mode)
             }
 
             // await expr — unwrap Promise<T> to T
@@ -790,7 +790,7 @@ impl Checker<'_> {
             }
             ChainElement::ComputedMemberExpression(e) => {
                 let object_type = self.get_type_of_expression(&e.object, None, check_mode);
-                self.resolve_computed_member_type(object_type, e)
+                self.resolve_computed_member_type(object_type, e, check_mode)
             }
             ChainElement::TSNonNullExpression(e) => {
                 self.get_type_of_expression(&e.expression, None, check_mode)
@@ -826,7 +826,7 @@ impl Checker<'_> {
             }
             AssignmentTarget::ComputedMemberExpression(expr) => {
                 let object_type = self.get_assignment_target_object_type(&expr.object);
-                self.resolve_computed_member_type(object_type, expr)
+                self.resolve_computed_member_type(object_type, expr, CheckMode::NORMAL)
             }
             AssignmentTarget::TSNonNullExpression(expr) => {
                 self.get_type_of_expression(&expr.expression, None, CheckMode::NORMAL)

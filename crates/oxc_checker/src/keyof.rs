@@ -127,17 +127,6 @@ impl Checker<'_> {
             return self.never_type;
         }
 
-        // Index is a string literal: direct property lookup
-        if idx_flags.intersects(TypeFlags::StringLiteral) {
-            if let TypeData::Literal(oxc_types::LiteralType::String(s)) =
-                self.type_arena.get_data(index_type)
-            {
-                let name = s.to_string();
-                // TODO: should return `never` or emit an error when property doesn't exist
-                return self.get_property_of_type(object_type, &name).unwrap_or(self.any_type);
-            }
-        }
-
         // Index is a union: distribute T["a" | "b"] → T["a"] | T["b"]
         if idx_flags.intersects(TypeFlags::Union) {
             if let TypeData::Union(u) = self.type_arena.get_data(index_type) {
@@ -177,10 +166,10 @@ impl Checker<'_> {
             );
         }
 
-        // Fallback: try resolving if object is a TypeReference
-        if let TypeData::TypeReference(_) = self.type_arena.get_data(object_type) {
-            let resolved = self.resolve_type_reference(object_type);
-            return self.get_indexed_access_type(resolved, index_type);
+        // Concrete resolution: literal property lookup, tuple/array element access,
+        // index signature fallback. Shared with expression-level computed member access.
+        if let Some(result) = self.get_property_type_for_index_type(object_type, index_type) {
+            return result;
         }
 
         self.any_type
