@@ -1,6 +1,5 @@
-use std::cell::RefCell;
+use std::cell::{Cell, RefCell};
 
-use itertools::Itertools;
 use oxc_ast::Comment;
 use oxc_span::Span;
 use rust_lapper::{Interval, Lapper};
@@ -119,20 +118,6 @@ enum DisabledRule {
 }
 
 impl DisabledRule {
-    pub fn comment_span(&self) -> &Span {
-        match self {
-            DisabledRule::All { comment_span, .. } | DisabledRule::Single { comment_span, .. } => {
-                comment_span
-            }
-        }
-    }
-
-    pub fn fix_span(&self) -> &Span {
-        match self {
-            DisabledRule::All { fix_span, .. } | DisabledRule::Single { fix_span, .. } => fix_span,
-        }
-    }
-
     pub fn is_next_line(&self) -> bool {
         match self {
             DisabledRule::All { is_next_line, .. } | DisabledRule::Single { is_next_line, .. } => {
@@ -284,15 +269,27 @@ pub struct DisableDirectives {
     disable_rule_comments: Box<[DisableRuleComment]>,
     /// Spans of unused enable directives
     unused_enable_comments: Box<[(DirectivePrefix, Option<String>, Span)]>,
+    /// Number of tracked disable entries that have not been matched yet.
+    remaining_unused_disable_directives: Cell<usize>,
     /// Disable directives that were matched by at least one diagnostic.
     used_disable_comments: RefCell<FxHashSet<UsedDisableDirective>>,
 }
 
 impl DisableDirectives {
     fn mark_disable_directive_used(&self, disable_directive: &DisabledRule) {
-        self.used_disable_comments
+        let remaining = self.remaining_unused_disable_directives.get();
+        if remaining == 0 {
+            return;
+        }
+
+        let was_inserted = self
+            .used_disable_comments
             .borrow_mut()
             .insert(UsedDisableDirective::from(disable_directive));
+
+        if was_inserted {
+            self.remaining_unused_disable_directives.set(remaining - 1);
+        }
     }
 
     pub fn contains(&self, rule_name: &str, span: Span) -> bool {
@@ -364,69 +361,56 @@ impl DisableDirectives {
         &self.unused_enable_comments
     }
 
+    fn has_unused_disable_comments(&self) -> bool {
+        self.remaining_unused_disable_directives.get() != 0
+    }
+
     pub fn collect_unused_disable_comments(&self) -> Vec<DisableRuleComment> {
+        if !self.has_unused_disable_comments() {
+            return Vec::new();
+        }
+
         let used = self.used_disable_comments.borrow();
 
-        self.intervals
+        self.disable_rule_comments
             .iter()
-            // 1. group intervals with the same interval.val.comment_span() together
-            .chunk_by(|interval| interval.val.comment_span())
-            .into_iter()
-            // 2. iterate over all groups
-            // 3. check if the group has only one , ore all entries with the comment span are used with `used.contains(&interval.val))`
-            // 4. if all entries are used, map to RuleCommentType::All comment, otherwise map to RuleCommentType::Single comment.
-            .filter_map(|(comment_span, group)| {
-                let group_vec: Vec<_> = group.collect();
+            .filter_map(|comment| match &comment.r#type {
+                RuleCommentType::All => (!used
+                    .contains(&UsedDisableDirective::All { comment_span: comment.span }))
+                .then_some(DisableRuleComment {
+                    directive_prefix: comment.directive_prefix,
+                    span: comment.span,
+                    fix_span: comment.fix_span,
+                    r#type: RuleCommentType::All,
+                }),
+                RuleCommentType::Single(rules) => {
+                    let unused_rules = rules
+                        .iter()
+                        .filter(|rule| {
+                            !used.contains(&UsedDisableDirective::Single {
+                                name_span: rule.name_span,
+                            })
+                        })
+                        .cloned()
+                        .collect::<Vec<_>>();
 
-                if group_vec.is_empty() {
-                    return None;
-                }
+                    if unused_rules.is_empty() {
+                        return None;
+                    }
 
-                // All intervals in the group share the same comment, so they have the same fix_span.
-                let fix_span = *group_vec[0].val.fix_span();
+                    let comment_type = if unused_rules.len() == rules.len() {
+                        RuleCommentType::All
+                    } else {
+                        RuleCommentType::Single(unused_rules)
+                    };
 
-                let rules: Vec<RuleCommentRule> = group_vec
-                    .iter()
-                    .filter_map(|interval| {
-                        if used.contains(&UsedDisableDirective::from(&interval.val)) {
-                            return None;
-                        }
-                        match &interval.val {
-                            DisabledRule::Single { rule_name, name_span, .. } => {
-                                Some(RuleCommentRule {
-                                    directive_prefix: interval.val.directive_prefix(),
-                                    rule_name: rule_name.clone(),
-                                    name_span: *name_span,
-                                })
-                            }
-                            DisabledRule::All { .. } => Some(RuleCommentRule {
-                                directive_prefix: interval.val.directive_prefix(),
-                                rule_name: "all".to_string(),
-                                name_span: *comment_span,
-                            }),
-                        }
+                    Some(DisableRuleComment {
+                        directive_prefix: comment.directive_prefix,
+                        span: comment.span,
+                        fix_span: comment.fix_span,
+                        r#type: comment_type,
                     })
-                    .collect::<Vec<_>>();
-
-                if rules.is_empty() {
-                    return None;
                 }
-
-                if rules.len() == group_vec.len() {
-                    return Some(DisableRuleComment {
-                        directive_prefix: group_vec[0].val.directive_prefix(),
-                        span: *comment_span,
-                        fix_span,
-                        r#type: RuleCommentType::All,
-                    });
-                }
-
-                Some(DisableRuleComment {
-                    directive_prefix: group_vec[0].val.directive_prefix(),
-                    span: *comment_span,
-                    fix_span,
-                    r#type: RuleCommentType::Single(rules),
-                })
             })
             .collect()
     }
@@ -443,6 +427,8 @@ pub struct DisableDirectivesBuilder {
     disable_start_map: FxHashMap<String, (u32, DirectivePrefix, Span, Span, Span)>,
     /// All comments that disable one or more specific rules
     disable_rule_comments: Vec<DisableRuleComment>,
+    /// Number of individually trackable disable entries.
+    tracked_disable_directives_count: usize,
     /// Spans of unused enable directives
     unused_enable_comments: Vec<(DirectivePrefix, Option<String>, Span)>,
 }
@@ -455,6 +441,7 @@ impl DisableDirectivesBuilder {
             disable_all_start: None,
             disable_start_map: FxHashMap::default(),
             disable_rule_comments: vec![],
+            tracked_disable_directives_count: 0,
             unused_enable_comments: vec![],
         }
     }
@@ -475,6 +462,7 @@ impl DisableDirectivesBuilder {
             intervals: self.intervals,
             disable_rule_comments: self.disable_rule_comments.into_boxed_slice(),
             unused_enable_comments: self.unused_enable_comments.into_boxed_slice(),
+            remaining_unused_disable_directives: Cell::new(self.tracked_disable_directives_count),
             used_disable_comments: RefCell::new(FxHashSet::default()),
         }
     }
@@ -559,9 +547,10 @@ impl DisableDirectivesBuilder {
                             comment_fix_span,
                         ));
                     }
+                    self.tracked_disable_directives_count += 1;
                     self.disable_rule_comments.push(DisableRuleComment {
                         directive_prefix,
-                        span: comment_span,
+                        span: outer_span,
                         fix_span: comment_fix_span,
                         r#type: RuleCommentType::All,
                     });
@@ -597,9 +586,10 @@ impl DisableDirectivesBuilder {
                                 is_next_line: true,
                             },
                         );
+                        self.tracked_disable_directives_count += 1;
                         self.disable_rule_comments.push(DisableRuleComment {
                             directive_prefix,
-                            span: comment_span,
+                            span: outer_span,
                             fix_span: comment_fix_span,
                             r#type: RuleCommentType::All,
                         });
@@ -626,9 +616,10 @@ impl DisableDirectivesBuilder {
                                 name_span,
                             });
                         });
+                        self.tracked_disable_directives_count += rules.len();
                         self.disable_rule_comments.push(DisableRuleComment {
                             directive_prefix,
-                            span: comment_span,
+                            span: outer_span,
                             fix_span: comment_fix_span,
                             r#type: RuleCommentType::Single(rules),
                         });
@@ -659,9 +650,10 @@ impl DisableDirectivesBuilder {
                                 is_next_line: true,
                             },
                         );
+                        self.tracked_disable_directives_count += 1;
                         self.disable_rule_comments.push(DisableRuleComment {
                             directive_prefix,
-                            span: comment_span,
+                            span: outer_span,
                             fix_span: comment_fix_span,
                             r#type: RuleCommentType::All,
                         });
@@ -688,9 +680,10 @@ impl DisableDirectivesBuilder {
                                 name_span,
                             });
                         });
+                        self.tracked_disable_directives_count += rules.len();
                         self.disable_rule_comments.push(DisableRuleComment {
                             directive_prefix,
-                            span: comment_span,
+                            span: outer_span,
                             fix_span: comment_fix_span,
                             r#type: RuleCommentType::Single(rules),
                         });
@@ -718,9 +711,10 @@ impl DisableDirectivesBuilder {
                             name_span,
                         });
                     });
+                    self.tracked_disable_directives_count += rules.len();
                     self.disable_rule_comments.push(DisableRuleComment {
                         directive_prefix,
-                        span: comment_span,
+                        span: outer_span,
                         fix_span: comment_fix_span,
                         r#type: RuleCommentType::Single(rules),
                     });
