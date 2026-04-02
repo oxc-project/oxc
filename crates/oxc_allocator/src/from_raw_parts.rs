@@ -14,7 +14,7 @@ use std::{
 
 use crate::{Allocator, bump::Bump};
 
-/// Minimum alignment for allocator chunks.
+/// Minimum alignment for allocator chunks. Same as for `Bump`.
 const MIN_ALIGN: usize = 16;
 
 const CHUNK_FOOTER_SIZE: usize = size_of::<ChunkFooter>();
