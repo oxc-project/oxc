@@ -130,6 +130,42 @@ fn arena_symbol_association() {
 }
 
 #[test]
+fn arena_alias_symbol() {
+    use oxc_syntax::symbol::SymbolId;
+
+    let arena = TypeArena::new();
+
+    // Create an anonymous body type (like a type literal { x: number })
+    let body_type = arena.new_type(
+        TypeFlags::Object,
+        ObjectFlags::Anonymous,
+        TypeData::Intrinsic(IntrinsicType { intrinsic_name: "anonymous" }),
+        None,
+    );
+
+    // Body type has no symbol or alias
+    assert_eq!(arena.get_symbol(body_type), None);
+    assert_eq!(arena.get_alias_symbol(body_type), None);
+
+    // Clone with alias (like attaching `type A = { x: number }`)
+    let alias_symbol = SymbolId::from_usize(7);
+    let aliased_type = arena.clone_type_with_alias(body_type, (0, alias_symbol));
+
+    // Aliased type has the alias but no intrinsic symbol
+    assert_eq!(arena.get_symbol(aliased_type), None);
+    assert_eq!(arena.get_alias_symbol(aliased_type), Some((0, alias_symbol)));
+    // Flags are preserved
+    assert_eq!(arena.get_flags(aliased_type), TypeFlags::Object);
+    assert_eq!(arena.get_object_flags(aliased_type), ObjectFlags::Anonymous);
+
+    // clone_type_with_symbol does NOT set alias
+    let intrinsic_symbol = SymbolId::from_usize(8);
+    let symbol_type = arena.clone_type_with_symbol(body_type, Some((0, intrinsic_symbol)));
+    assert_eq!(arena.get_symbol(symbol_type), Some((0, intrinsic_symbol)));
+    assert_eq!(arena.get_alias_symbol(symbol_type), None);
+}
+
+#[test]
 fn arena_with_capacity() {
     let arena = TypeArena::with_capacity(100);
     assert!(arena.is_empty());
