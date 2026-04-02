@@ -355,8 +355,11 @@ fn apply_walk_settings(builder: &mut ignore::WalkBuilder) -> &mut ignore::WalkBu
         .git_ignore(true)
         // Also do not respect `.git/info/exclude`
         .git_exclude(false)
-        // Git is not required
-        .require_git(false)
+        // Enforce standard git-boundary semantics: the ignore crate stops reading
+        // .gitignore rules at the innermost .git boundary, preventing outer repos'
+        // rules from bleeding into nested repos. Trade-off: .gitignore no longer
+        // applies in directories with no .git ancestor (reverts #17375).
+        .require_git(true)
 }
 
 // ---

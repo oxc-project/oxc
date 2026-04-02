@@ -102,8 +102,13 @@ impl Walk {
             .git_global(false)
             .git_ignore(true)
             .follow_links(true)
+            .parents(true)
             .hidden(false)
-            .require_git(false)
+            // Enforce standard git-boundary semantics: the ignore crate stops reading
+            // .gitignore rules at the innermost .git boundary, preventing outer repos'
+            // rules from bleeding into nested repos. Trade-off: .gitignore no longer
+            // applies in directories with no .git ancestor (reverts #17375).
+            .require_git(true)
             .build_parallel();
         Self { inner, extensions: Extensions::default() }
     }
@@ -174,41 +179,39 @@ mod test {
     }
 
     #[test]
-    fn test_gitignore_without_git_repo() {
-        // Validate that `.gitignore` files are respected even when no `.git` directory is present.
+    fn test_gitignore_nested_git_repo_isolation() {
+        // Validate that a parent repo's .gitignore does not bleed into a nested repo.
+        // This is the core bug fixed by using require_git(true) inside git repos.
 
         let temp_dir = tempfile::tempdir().unwrap();
-        let temp_path = temp_dir.path();
+        let parent_path = temp_dir.path();
+        let child_path = parent_path.join("child");
 
-        // Create test files
-        fs::write(temp_path.join("included.js"), "debugger;").unwrap();
-        fs::write(temp_path.join("ignored.js"), "debugger;").unwrap();
+        // Parent repo: .gitignore excludes all .js files
+        fs::create_dir(parent_path.join(".git")).unwrap();
+        fs::write(parent_path.join(".gitignore"), "*.js\n").unwrap();
 
-        // Create .gitignore to ignore one file
-        fs::write(temp_path.join(".gitignore"), "ignored.js\n").unwrap();
+        // Child (nested) repo: contains a .js file that must NOT be excluded
+        fs::create_dir(&child_path).unwrap();
+        fs::create_dir(child_path.join(".git")).unwrap();
+        fs::write(child_path.join("foo.js"), "debugger;").unwrap();
 
-        // Verify no .git directory exists
-        assert!(!temp_path.join(".git").exists());
-
-        // Use empty ignore_path to rely on auto-discovery, not explicit loading
         let ignore_options = IgnoreOptions {
             no_ignore: false,
-            ignore_path: OsString::from(""), // Empty = rely on auto-discovery
+            ignore_path: OsString::from(""),
             ignore_pattern: vec![],
         };
 
-        let override_builder = OverrideBuilder::new(temp_path).build().unwrap();
+        let override_builder = OverrideBuilder::new(&child_path).build().unwrap();
 
         let mut paths =
-            Walk::new(&[temp_path.to_path_buf()], &ignore_options, Some(override_builder))
+            Walk::new(&[child_path.clone()], &ignore_options, Some(override_builder))
                 .with_extensions(Extensions(["js"].to_vec()))
                 .paths()
                 .into_iter()
                 .map(|path| {
                     Path::new(&path)
-                        .strip_prefix(temp_path)
-                        .unwrap()
-                        .file_name()
+                        .strip_prefix(&child_path)
                         .unwrap()
                         .to_string_lossy()
                         .to_string()
@@ -217,8 +220,8 @@ mod test {
 
         paths.sort();
 
-        // Only included.js should be found; ignored.js should be filtered by auto-discovered .gitignore
-        // Without .git_ignore(true) and .require_git(false), both files would be found
-        assert_eq!(paths, vec!["included.js"]);
+        // foo.js must be found: require_git(true) stops add_parents at child/.git so the
+        // parent's *.js rule is never loaded. With require_git(false) this would return [].
+        assert_eq!(paths, vec!["foo.js"]);
     }
 }
