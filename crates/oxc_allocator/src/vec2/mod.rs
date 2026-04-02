@@ -25,17 +25,17 @@
 //!
 //! You can explicitly create a [`Vec<'a, T>`] with [`new_in`]:
 //!
-//! ```text
+//! ```ignore
 //! use bumpalo::{Bump, collections::Vec};
 //!
 //! let b = Bump::new();
 //! let v: Vec<i32> = Vec::new_in(&b);
-//! ```text
+//! ```
 //!
 //! You can [`push`] values onto the end of a vector (which will grow the vector
 //! as needed):
 //!
-//! ```text
+//! ```ignore
 //! use bumpalo::{Bump, collections::Vec};
 //!
 //! let b = Bump::new();
@@ -43,11 +43,11 @@
 //! let mut v = Vec::new_in(&b);
 //!
 //! v.push(1);
-//! ```text
+//! ```
 //!
 //! Popping values works in much the same way:
 //!
-//! ```text
+//! ```ignore
 //! use bumpalo::{Bump, collections::Vec};
 //!
 //! let b = Bump::new();
@@ -55,11 +55,11 @@
 //! let mut v = Vec::from_iter_in([1, 2], &b);
 //!
 //! assert_eq!(v.pop(), Some(2));
-//! ```text
+//! ```
 //!
 //! Vectors also support indexing (through the [`Index`] and [`IndexMut`] traits):
 //!
-//! ```text
+//! ```ignore
 //! use bumpalo::{Bump, collections::Vec};
 //!
 //! let b = Bump::new();
@@ -68,7 +68,7 @@
 //! assert_eq!(v[2], 3);
 //! v[1] += 5;
 //! assert_eq!(v, [1, 7, 3]);
-//! ```text
+//! ```
 //!
 //! [`Vec<'a, T>`]: Vec
 //! [`new_in`]: Vec::new_in
@@ -233,7 +233,7 @@ where
 ///
 /// # Examples
 ///
-/// ```text
+/// ```ignore
 /// use bumpalo::{Bump, collections::Vec};
 ///
 /// let b = Bump::new();
@@ -257,11 +257,11 @@ where
 ///     println!("{}", x);
 /// }
 /// assert_eq!(vec, [7, 1, 2, 3]);
-/// ```text
+/// ```
 ///
 /// Use a `Vec<'a, T>` as an efficient stack:
 ///
-/// ```text
+/// ```ignore
 /// use bumpalo::{Bump, collections::Vec};
 ///
 /// let b = Bump::new();
@@ -276,33 +276,33 @@ where
 ///     // Prints 3, 2, 1
 ///     println!("{}", top);
 /// }
-/// ```text
+/// ```
 ///
 /// # Indexing
 ///
 /// The `Vec` type allows accessing values by index, because it implements the
 /// [`Index`] trait. An example will be more explicit:
 ///
-/// ```text
+/// ```ignore
 /// use bumpalo::{Bump, collections::Vec};
 ///
 /// let b = Bump::new();
 ///
 /// let v = Vec::from_iter_in([0, 2, 4, 6], &b);
 /// println!("{}", v[1]); // it will display '2'
-/// ```text
+/// ```
 ///
 /// However be careful: if you try to access an index which isn't in the `Vec`,
 /// your software will panic! You cannot do this:
 ///
-/// ```text
+/// ```ignore
 /// use bumpalo::{Bump, collections::Vec};
 ///
 /// let b = Bump::new();
 ///
 /// let v = Vec::from_iter_in([0, 2, 4, 6], &b);
 /// println!("{}", v[6]); // it will panic!
-/// ```text
+/// ```
 ///
 /// In conclusion: always check if the index you want to get really exists
 /// before doing it.
@@ -312,7 +312,7 @@ where
 /// A `Vec` can be mutable. Slices, on the other hand, are read-only objects.
 /// To get a slice, use `&`. Example:
 ///
-/// ```text
+/// ```ignore
 /// use bumpalo::{Bump, collections::Vec};
 ///
 /// fn read_slice(slice: &[usize]) {
@@ -327,7 +327,7 @@ where
 /// // ... and that's all!
 /// // you can also do it like this:
 /// let x : &[usize] = &v;
-/// ```text
+/// ```
 ///
 /// In Rust, it's more common to pass slices as arguments rather than vectors
 /// when you just want to provide a read access. The same goes for [`String`] and
@@ -458,13 +458,13 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
+    /// ```ignore
     /// # #![allow(unused_mut)]
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let b = Bump::new();
     /// let mut vec: Vec<i32> = Vec::new_in(&b);
-    /// ```text
+    /// ```
     #[inline]
     pub fn new_in(alloc: &'a A) -> Vec<'a, T, A> {
         Vec { buf: RawVec::new_in(alloc) }
@@ -484,7 +484,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let b = Bump::new();
@@ -501,7 +501,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// // ...but this may make the vector reallocate
     /// vec.push(11);
-    /// ```text
+    /// ```
     #[inline]
     pub fn with_capacity_in(capacity: usize, alloc: &'a A) -> Vec<'a, T, A> {
         Vec { buf: RawVec::with_capacity_in(capacity, alloc) }
@@ -511,14 +511,14 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     /// use std::iter;
     ///
     /// let b = Bump::new();
     /// let v = Vec::from_iter_in(iter::repeat(7).take(3), &b);
     /// assert_eq!(v, [7, 7, 7]);
-    /// ```text
+    /// ```
     pub fn from_iter_in<I: IntoIterator<Item = T>>(iter: I, alloc: &'a A) -> Vec<'a, T, A> {
         let mut v = Vec::new_in(alloc);
         v.extend(iter);
@@ -552,7 +552,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// use std::ptr;
@@ -581,7 +581,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///     let rebuilt = Vec::from_raw_parts_in(p, len, cap, &b);
     ///     assert_eq!(rebuilt, [4, 5, 6]);
     /// }
-    /// ```text
+    /// ```
     pub unsafe fn from_raw_parts_in(
         ptr: *mut T,
         length: usize,
@@ -595,14 +595,14 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let b = Bump::new();
     ///
     /// let a = Vec::from_iter_in([1, 2, 3], &b);
     /// assert_eq!(a.len(), 3);
-    /// ```text
+    /// ```
     #[inline]
     pub fn len(&self) -> usize {
         self.buf.len_usize()
@@ -624,13 +624,13 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let b = Bump::new();
     /// let vec: Vec<i32> = Vec::with_capacity_in(10, &b);
     /// assert_eq!(vec.capacity(), 10);
-    /// ```text
+    /// ```
     #[inline]
     pub fn capacity(&self) -> usize {
         self.buf.capacity_usize()
@@ -663,7 +663,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// use std::ptr;
@@ -677,12 +677,12 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///     vec.set_len(3);
     /// }
     /// assert_eq!(vec, ['r', 'u', 's']);
-    /// ```text
+    /// ```
     ///
     /// In this example, there is a memory leak since the memory locations
     /// owned by the inner vectors were not freed prior to the `set_len` call:
     ///
-    /// ```text
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let b = Bump::new();
@@ -693,13 +693,13 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     /// unsafe {
     ///     vec.set_len(0);
     /// }
-    /// ```text
+    /// ```
     ///
     /// In this example, the vector gets expanded from zero to four items
     /// but we directly initialize uninitialized memory:
     ///
     // TODO: rely upon `spare_capacity_mut`
-    /// ```text
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let len = 4;
@@ -717,7 +717,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     /// }
     ///
     /// assert_eq!(b"aaaa", &*vec);
-    /// ```text
+    /// ```
     #[inline]
     pub unsafe fn set_len(&mut self, new_len: usize) {
         // Caller guarantees `new_len <= u32::MAX`, so `new_len as u32` cannot truncate `new_len`
@@ -738,14 +738,14 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let b = Bump::new();
     /// let mut vec = Vec::from_iter_in([1], &b);
     /// vec.reserve(10);
     /// assert!(vec.capacity() >= 11);
-    /// ```text
+    /// ```
     pub fn reserve(&mut self, additional: usize) {
         self.buf.reserve(self.len_u32(), additional);
     }
@@ -765,14 +765,14 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let b = Bump::new();
     /// let mut vec = Vec::from_iter_in([1], &b);
     /// vec.reserve_exact(10);
     /// assert!(vec.capacity() >= 11);
-    /// ```text
+    /// ```
     pub fn reserve_exact(&mut self, additional: usize) {
         self.buf.reserve_exact(self.len_u32(), additional);
     }
@@ -789,14 +789,14 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let b = Bump::new();
     /// let mut vec = Vec::from_iter_in([1], &b);
     /// vec.try_reserve(10).unwrap();
     /// assert!(vec.capacity() >= 11);
-    /// ```text
+    /// ```
     pub fn try_reserve(&mut self, additional: usize) -> Result<(), AllocError> {
         self.buf.try_reserve(self.len_u32(), additional)
     }
@@ -816,14 +816,14 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let b = Bump::new();
     /// let mut vec = Vec::from_iter_in([1], &b);
     /// vec.try_reserve_exact(10).unwrap();
     /// assert!(vec.capacity() >= 11);
-    /// ```text
+    /// ```
     pub fn try_reserve_exact(&mut self, additional: usize) -> Result<(), AllocError> {
         self.buf.try_reserve_exact(self.len_u32(), additional)
     }
@@ -835,7 +835,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let b = Bump::new();
@@ -845,7 +845,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     /// assert_eq!(vec.capacity(), 10);
     /// vec.shrink_to_fit();
     /// assert!(vec.capacity() >= 3);
-    /// ```text
+    /// ```
     pub fn shrink_to_fit(&mut self) {
         if self.len_u32() != self.capacity_u32() {
             self.buf.shrink_to_fit(self.len_u32());
@@ -856,7 +856,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let b = Bump::new();
@@ -864,7 +864,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// let slice = v.into_bump_slice();
     /// assert_eq!(slice, [1, 2, 3]);
-    /// ```text
+    /// ```
     pub fn into_bump_slice(self) -> &'a [T] {
         unsafe {
             let ptr = self.as_ptr();
@@ -878,7 +878,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let b = Bump::new();
@@ -890,7 +890,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     /// slice[2] = 1;
     ///
     /// assert_eq!(slice, [3, 2, 1]);
-    /// ```text
+    /// ```
     pub fn into_bump_slice_mut(mut self) -> &'a mut [T] {
         let ptr = self.as_mut_ptr();
         let len = self.len_usize();
@@ -915,7 +915,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// Truncating a five element vector to two elements:
     ///
-    /// ```text
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let b = Bump::new();
@@ -923,12 +923,12 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     /// let mut vec = Vec::from_iter_in([1, 2, 3, 4, 5], &b);
     /// vec.truncate(2);
     /// assert_eq!(vec, [1, 2]);
-    /// ```text
+    /// ```
     ///
     /// No truncation occurs when `len` is greater than the vector's current
     /// length:
     ///
-    /// ```text
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let b = Bump::new();
@@ -936,12 +936,12 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     /// let mut vec = Vec::from_iter_in([1, 2, 3], &b);
     /// vec.truncate(8);
     /// assert_eq!(vec, [1, 2, 3]);
-    /// ```text
+    /// ```
     ///
     /// Truncating when `len == 0` is equivalent to calling the [`clear`]
     /// method.
     ///
-    /// ```text
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let b = Bump::new();
@@ -949,7 +949,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     /// let mut vec = Vec::from_iter_in([1, 2, 3], &b);
     /// vec.truncate(0);
     /// assert_eq!(vec, []);
-    /// ```text
+    /// ```
     ///
     /// [`clear`]: #method.clear
     /// [`drain`]: #method.drain
@@ -969,7 +969,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     /// use std::io::{self, Write};
     ///
@@ -977,7 +977,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// let buffer = Vec::from_iter_in([1, 2, 3, 5, 8], &b);
     /// io::sink().write(buffer.as_slice()).unwrap();
-    /// ```text
+    /// ```
     #[inline]
     pub fn as_slice(&self) -> &[T] {
         self
@@ -989,14 +989,14 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     /// use std::io::{self, Read};
     ///
     /// let b = Bump::new();
     /// let mut buffer = Vec::from_iter_in([0; 3], &b);
     /// io::repeat(0b101).read_exact(buffer.as_mut_slice()).unwrap();
-    /// ```text
+    /// ```
     #[inline]
     pub fn as_mut_slice(&mut self) -> &mut [T] {
         self
@@ -1016,7 +1016,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let arena = Bump::new();
@@ -1029,7 +1029,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///         assert_eq!(*x_ptr.add(i), 1 << i);
     ///     }
     /// }
-    /// ```text
+    /// ```
     ///
     /// [`as_mut_ptr`]: Vec::as_mut_ptr
     #[inline]
@@ -1053,7 +1053,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let arena = Bump::new();
@@ -1071,7 +1071,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///     x.set_len(size);
     /// }
     /// assert_eq!(&*x, &[0, 1, 2, 3]);
-    /// ```text
+    /// ```
     #[inline]
     pub fn as_mut_ptr(&mut self) -> *mut T {
         // We shadow the slice method of the same name to avoid going through
@@ -1095,7 +1095,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let b = Bump::new();
@@ -1107,7 +1107,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// assert_eq!(v.swap_remove(0), "foo");
     /// assert_eq!(v, ["baz", "qux"]);
-    /// ```text
+    /// ```
     #[inline]
     pub fn swap_remove(&mut self, index: usize) -> T {
         unsafe {
@@ -1130,7 +1130,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let b = Bump::new();
@@ -1140,7 +1140,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     /// assert_eq!(vec, [1, 4, 2, 3]);
     /// vec.insert(4, 5);
     /// assert_eq!(vec, [1, 4, 2, 3, 5]);
-    /// ```text
+    /// ```
     pub fn insert(&mut self, index: usize, element: T) {
         let len = self.len_usize();
         assert!(index <= len);
@@ -1175,7 +1175,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let b = Bump::new();
@@ -1183,7 +1183,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     /// let mut v = Vec::from_iter_in([1, 2, 3], &b);
     /// assert_eq!(v.remove(1), 2);
     /// assert_eq!(v, [1, 3]);
-    /// ```text
+    /// ```
     pub fn remove(&mut self, index: usize) -> T {
         let len = self.len_usize();
         assert!(index < len);
@@ -1213,18 +1213,18 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
+    /// ```ignore
     /// use bumpalo::Bump;
     /// let arena = Bump::new();
     /// let mut vec = Vec::from_iter_in([1, 2, 3, 4], &arena);
     /// vec.retain(|&x| x % 2 == 0);
     /// assert_eq!(vec, [2, 4]);
-    /// ```text
+    /// ```
     ///
     /// Because the elements are visited exactly once in the original order,
     /// external state may be used to decide which elements to keep.
     ///
-    /// ```text
+    /// ```ignore
     /// use bumpalo::Bump;
     /// let arena = Bump::new();
     /// let mut vec = Vec::from_iter_in([1, 2, 3, 4, 5], &arena);
@@ -1232,7 +1232,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     /// let mut iter = keep.iter();
     /// vec.retain(|_| *iter.next().unwrap());
     /// assert_eq!(vec, [2, 3, 5]);
-    /// ```text
+    /// ```
     pub fn retain<F>(&mut self, mut f: F)
     where
         F: FnMut(&T) -> bool,
@@ -1248,7 +1248,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let b = Bump::new();
@@ -1261,7 +1261,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///     false
     /// });
     /// assert_eq!(vec, [2, 3, 4]);
-    /// ```text
+    /// ```
     // The implementation is based on the [`std::vec::Vec::retain_mut`].
     //
     // Allowing the following clippy rules just to make the code same as the original implementation.
@@ -1370,7 +1370,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
+    /// ```ignore
     /// use bumpalo::Bump;
     /// use bumpalo::collections::{CollectIn, Vec};
     ///
@@ -1382,7 +1382,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// assert_eq!(numbers, &[1, 3, 5]);
     /// assert_eq!(evens, &[2, 4]);
-    /// ```text
+    /// ```
     pub fn drain_filter<'v, F>(&'v mut self, filter: F) -> DrainFilter<'a, 'v, T, A, F>
     where
         F: FnMut(&mut T) -> bool,
@@ -1404,7 +1404,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let b = Bump::new();
@@ -1414,7 +1414,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     /// vec.dedup_by_key(|i| *i / 10);
     ///
     /// assert_eq!(vec, [10, 20, 30, 20]);
-    /// ```text
+    /// ```
     #[inline]
     pub fn dedup_by_key<F, K>(&mut self, mut key: F)
     where
@@ -1435,7 +1435,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let b = Bump::new();
@@ -1445,7 +1445,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     /// vec.dedup_by(|a, b| a.eq_ignore_ascii_case(b));
     ///
     /// assert_eq!(vec, ["foo", "bar", "baz", "bar"]);
-    /// ```text
+    /// ```
     pub fn dedup_by<F>(&mut self, same_bucket: F)
     where
         F: FnMut(&mut T, &mut T) -> bool,
@@ -1467,7 +1467,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let b = Bump::new();
@@ -1475,7 +1475,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     /// let mut vec = Vec::from_iter_in([1, 2], &b);
     /// vec.push(3);
     /// assert_eq!(vec, [1, 2, 3]);
-    /// ```text
+    /// ```
     ///
     /// [`push_fast`]: Self::push_fast
     #[inline]
@@ -1505,7 +1505,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let b = Bump::new();
@@ -1514,7 +1514,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     /// vec.pop();
     /// vec.push_fast(4);
     /// assert_eq!(vec, [1, 2, 4]);
-    /// ```text
+    /// ```
     ///
     /// [`push`]: Self::push
     #[inline]
@@ -1555,7 +1555,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let b = Bump::new();
@@ -1563,7 +1563,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     /// let mut vec = Vec::from_iter_in([1, 2, 3], &b);
     /// assert_eq!(vec.pop(), Some(3));
     /// assert_eq!(vec, [1, 2]);
-    /// ```text
+    /// ```
     #[inline]
     pub fn pop(&mut self) -> Option<T> {
         if self.len_u32() == 0 {
@@ -1585,7 +1585,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let b = Bump::new();
@@ -1595,7 +1595,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     /// vec.append(&mut vec2);
     /// assert_eq!(vec, [1, 2, 3, 4, 5, 6]);
     /// assert_eq!(vec2, []);
-    /// ```text
+    /// ```
     #[inline]
     pub fn append(&mut self, other: &mut Self) {
         unsafe {
@@ -1646,7 +1646,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
+    /// ```ignore
     /// use bumpalo::Bump;
     /// use bumpalo::collections::{CollectIn, Vec};
     ///
@@ -1662,7 +1662,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     /// // A full range clears the vector
     /// v.drain(..);
     /// assert_eq!(v, &[]);
-    /// ```text
+    /// ```
     pub fn drain<R>(&mut self, range: R) -> Drain<'_, '_, T, A>
     where
         R: RangeBounds<usize>,
@@ -1713,7 +1713,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let b = Bump::new();
@@ -1723,7 +1723,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     /// v.clear();
     ///
     /// assert!(v.is_empty());
-    /// ```text
+    /// ```
     #[inline]
     pub fn clear(&mut self) {
         self.truncate(0)
@@ -1733,7 +1733,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let b = Bump::new();
@@ -1743,7 +1743,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// v.push(1);
     /// assert!(!v.is_empty());
-    /// ```text
+    /// ```
     pub fn is_empty(&self) -> bool {
         self.len_u32() == 0
     }
@@ -1761,7 +1761,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let b = Bump::new();
@@ -1770,7 +1770,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     /// let vec2 = vec.split_off(1);
     /// assert_eq!(vec, [1]);
     /// assert_eq!(vec2, [2, 3]);
-    /// ```text
+    /// ```
     #[inline]
     #[must_use]
     pub fn split_off(&mut self, at: usize) -> Self {
@@ -1804,7 +1804,7 @@ impl<'a, T> Vec<'a, T> {
     ///
     /// # Examples
     ///
-    /// ```text
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec, vec};
     ///
     /// let b = Bump::new();
@@ -1812,7 +1812,7 @@ impl<'a, T> Vec<'a, T> {
     /// let v = Vec::from_iter_in([1, 2, 3], &b);
     ///
     /// let slice = v.into_boxed_slice();
-    /// ```text
+    /// ```
     pub fn into_boxed_slice(mut self) -> crate::boxed::Box<'a, [T]> {
         use crate::boxed::Box;
 
@@ -1840,7 +1840,7 @@ impl<'a, T: 'a + Clone, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let b = Bump::new();
@@ -1852,7 +1852,7 @@ impl<'a, T: 'a + Clone, A: Alloc> Vec<'a, T, A> {
     /// let mut vec = Vec::from_iter_in([1, 2, 3, 4], &b);
     /// vec.resize(2, 0);
     /// assert_eq!(vec, [1, 2]);
-    /// ```text
+    /// ```
     ///
     /// [`Clone`]: https://doc.rust-lang.org/std/clone/trait.Clone.html
     /// [`Default`]: https://doc.rust-lang.org/std/default/trait.Default.html
@@ -1879,7 +1879,7 @@ impl<'a, T: 'a + Clone, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let b = Bump::new();
@@ -1887,7 +1887,7 @@ impl<'a, T: 'a + Clone, A: Alloc> Vec<'a, T, A> {
     /// let mut vec = Vec::from_iter_in([1], &b);
     /// vec.extend_from_slice(&[2, 3, 4]);
     /// assert_eq!(vec, [1, 2, 3, 4]);
-    /// ```text
+    /// ```
     ///
     /// [`extend`]: #method.extend
     pub fn extend_from_slice(&mut self, other: &[T]) {
@@ -1934,7 +1934,7 @@ impl<'a, T: 'a + Copy, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let b = Bump::new();
@@ -1942,9 +1942,9 @@ impl<'a, T: 'a + Copy, A: Alloc> Vec<'a, T, A> {
     /// let mut vec = Vec::from_iter_in([1], &b);
     /// vec.extend_from_slice_copy(&[2, 3, 4]);
     /// assert_eq!(vec, [1, 2, 3, 4]);
-    /// ```text
+    /// ```
     ///
-    /// ```text
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let b = Bump::new();
@@ -1952,7 +1952,7 @@ impl<'a, T: 'a + Copy, A: Alloc> Vec<'a, T, A> {
     /// let mut vec = Vec::from_iter_in(['H' as u8], &b);
     /// vec.extend_from_slice_copy("ello, world!".as_bytes());
     /// assert_eq!(vec, "Hello, world!".as_bytes());
-    /// ```text
+    /// ```
     ///
     /// [`extend_from_slice`]: #method.extend_from_slice
     /// [`extend_from_slices_copy`]: #method.extend_from_slices_copy
@@ -1983,7 +1983,7 @@ impl<'a, T: 'a + Copy, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let b = Bump::new();
@@ -1991,9 +1991,9 @@ impl<'a, T: 'a + Copy, A: Alloc> Vec<'a, T, A> {
     /// let mut vec = Vec::from_iter_in([1], &b);
     /// vec.extend_from_slices_copy(&[&[2, 3], &[], &[4]]);
     /// assert_eq!(vec, [1, 2, 3, 4]);
-    /// ```text
+    /// ```
     ///
-    /// ```text
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let b = Bump::new();
@@ -2001,7 +2001,7 @@ impl<'a, T: 'a + Copy, A: Alloc> Vec<'a, T, A> {
     /// let mut vec = Vec::from_iter_in(['H' as u8], &b);
     /// vec.extend_from_slices_copy(&["ello,".as_bytes(), &[], " world!".as_bytes()]);
     /// assert_eq!(vec, "Hello, world!".as_bytes());
-    /// ```text
+    /// ```
     ///
     /// [`extend_from_slice_copy`]: #method.extend_from_slice_copy
     pub fn extend_from_slices_copy(&mut self, slices: &[&[T]]) {
@@ -2091,7 +2091,7 @@ impl<'a, T: 'a + PartialEq, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let b = Bump::new();
@@ -2101,7 +2101,7 @@ impl<'a, T: 'a + PartialEq, A: Alloc> Vec<'a, T, A> {
     /// vec.dedup();
     ///
     /// assert_eq!(vec, [1, 2, 3, 2]);
-    /// ```text
+    /// ```
     #[inline]
     pub fn dedup(&mut self) {
         self.dedup_by(|a, b| a == b)
@@ -2167,7 +2167,7 @@ impl<'a, T: 'a, A: Alloc> IntoIterator for Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let b = Bump::new();
@@ -2177,7 +2177,7 @@ impl<'a, T: 'a, A: Alloc> IntoIterator for Vec<'a, T, A> {
     ///     // s has type String, not &String
     ///     println!("{}", s);
     /// }
-    /// ```text
+    /// ```
     #[inline]
     fn into_iter(mut self) -> IntoIter<'a, T> {
         unsafe {
@@ -2287,7 +2287,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let b = Bump::new();
@@ -2297,7 +2297,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     /// let u: Vec<_> = Vec::from_iter_in(v.splice(..2, new.iter().cloned()), &b);
     /// assert_eq!(v, &[7, 8, 3]);
     /// assert_eq!(u, &[1, 2]);
-    /// ```text
+    /// ```
     #[inline]
     pub fn splice<R, I>(&mut self, range: R, replace_with: I) -> Splice<'_, '_, I::IntoIter, A>
     where
@@ -2483,7 +2483,7 @@ impl<'a, T: 'a> IntoIter<'a, T> {
     ///
     /// # Examples
     ///
-    /// ```text
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let b = Bump::new();
@@ -2493,7 +2493,7 @@ impl<'a, T: 'a> IntoIter<'a, T> {
     /// assert_eq!(into_iter.as_slice(), &['a', 'b', 'c']);
     /// let _ = into_iter.next().unwrap();
     /// assert_eq!(into_iter.as_slice(), &['b', 'c']);
-    /// ```text
+    /// ```
     pub fn as_slice(&self) -> &[T] {
         unsafe { slice::from_raw_parts(self.ptr, self.len()) }
     }
@@ -2502,7 +2502,7 @@ impl<'a, T: 'a> IntoIter<'a, T> {
     ///
     /// # Examples
     ///
-    /// ```text
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let b = Bump::new();
@@ -2514,7 +2514,7 @@ impl<'a, T: 'a> IntoIter<'a, T> {
     /// assert_eq!(into_iter.next().unwrap(), 'a');
     /// assert_eq!(into_iter.next().unwrap(), 'b');
     /// assert_eq!(into_iter.next().unwrap(), 'z');
-    /// ```text
+    /// ```
     pub fn as_mut_slice(&mut self) -> &mut [T] {
         unsafe { slice::from_raw_parts_mut(self.ptr as *mut T, self.len()) }
     }
