@@ -2110,7 +2110,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
             // Set the new chunk as our new current chunk.
             self.current_chunk_footer.set(new_footer);
 
-            // And then we can rely on `tray_alloc_layout_fast` to allocate
+            // And then we can rely on `try_alloc_layout_fast` to allocate
             // space within this chunk.
             let ptr = self.try_alloc_layout_fast(layout);
             debug_assert!(ptr.is_some());
