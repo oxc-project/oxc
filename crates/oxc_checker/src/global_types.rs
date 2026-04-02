@@ -53,6 +53,23 @@ pub fn allocate_intrinsics(arena: &TypeArena) -> IntrinsicIds {
         None,
     );
 
+    // Widening variants of null/undefined — same TypeFlags and intrinsic_name
+    // as the regular ones, so type_to_string displays identically. The only
+    // difference is ObjectFlags::ContainsWideningType, which triggers
+    // get_widened_type to map them to `any` when strictNullChecks is off.
+    let null_widening_type = arena.new_type(
+        TypeFlags::Null,
+        ObjectFlags::ContainsWideningType,
+        TypeData::Intrinsic(IntrinsicType { intrinsic_name: "null" }),
+        None,
+    );
+    let undefined_widening_type = arena.new_type(
+        TypeFlags::Undefined,
+        ObjectFlags::ContainsWideningType,
+        TypeData::Intrinsic(IntrinsicType { intrinsic_name: "undefined" }),
+        None,
+    );
+
     IntrinsicIds {
         any_type,
         unknown_type,
@@ -68,6 +85,8 @@ pub fn allocate_intrinsics(arena: &TypeArena) -> IntrinsicIds {
         non_primitive_type,
         true_type,
         false_type,
+        null_widening_type,
+        undefined_widening_type,
     }
 }
 

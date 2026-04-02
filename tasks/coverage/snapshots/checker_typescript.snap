@@ -2,7 +2,7 @@ commit: 34725489
 
 checker_typescript Summary:
 AST Parsed     : 4439/4439 (100.00%)
-Positive Passed: 571/4439 (12.86%)
+Positive Passed: 573/4439 (12.91%)
 checker: tasks/coverage/typescript/tests/cases/compiler/2dArrays.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/ClassDeclarationWithInvalidConstOnPropertyDeclaration2.ts
@@ -1112,8 +1112,6 @@ checker: tasks/coverage/typescript/tests/cases/compiler/declFileModuleWithProper
 checker: tasks/coverage/typescript/tests/cases/compiler/declFileOptionalInterfaceMethod.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/declFilePrivateMethodOverloads.ts
-
-checker: tasks/coverage/typescript/tests/cases/compiler/declFileRegressionTests.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/declFileRestParametersOfFunctionAndFunctionType.ts
 
@@ -4632,8 +4630,6 @@ checker: tasks/coverage/typescript/tests/cases/compiler/varInFunctionInVarInitia
 checker: tasks/coverage/typescript/tests/cases/compiler/vardecl.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/variableDeclarationDeclarationEmitUniqueSymbolPartialStatement.ts
-
-checker: tasks/coverage/typescript/tests/cases/compiler/variableDeclarationInnerCommentEmit.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/variableDeclarator1.ts
 

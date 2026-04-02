@@ -488,10 +488,137 @@ impl Checker<'_> {
             );
         }
 
-        // Step 2: Object literal widening (Phase 2)
-        // result = self.get_widened_type(result);
+        // Step 2: Object literal / null/undefined widening
+        result = self.get_widened_type(result);
 
         result
+    }
+
+    // ── Type widening (null/undefined → any) ─────────────────────────────
+
+    /// Widen a type: null/undefined with widening marks → any,
+    /// object literals → recursively widened properties.
+    ///
+    /// Fast-path: returns immediately if the type has no `RequiresWidening` flags.
+    /// Mirrors tsgo's `getWidenedType` / `getWidenedTypeWithContext` (without
+    /// the `WideningContext` parameter, which handles advanced union-property
+    /// widening and can be added later).
+    pub fn get_widened_type(&mut self, type_id: TypeId) -> TypeId {
+        let obj_flags = self.type_arena.get_object_flags(type_id);
+        if !obj_flags.intersects(ObjectFlags::RequiresWidening) {
+            return type_id;
+        }
+        if let Some(&cached) = self.widened_type_cache.get(&type_id) {
+            return cached;
+        }
+        let result = self.get_widened_type_worker(type_id);
+        self.widened_type_cache.insert(type_id, result);
+        result
+    }
+
+    /// Inner widening dispatch — called only when `RequiresWidening` is set.
+    fn get_widened_type_worker(&mut self, type_id: TypeId) -> TypeId {
+        let flags = self.type_arena.get_flags(type_id);
+        let obj_flags = self.type_arena.get_object_flags(type_id);
+
+        // null/undefined with widening mark → any
+        if flags.intersects(TypeFlags::Nullable)
+            && obj_flags.intersects(ObjectFlags::ContainsWideningType)
+        {
+            return self.any_type;
+        }
+
+        // Object literal → recursively widen properties
+        if flags.intersects(TypeFlags::Object)
+            && obj_flags.intersects(ObjectFlags::ObjectLiteral)
+        {
+            return self.get_widened_type_of_object_literal(type_id);
+        }
+
+        // TODO: Union → map over constituents, filter widening nullable
+        // TODO: Intersection → map over constituents
+        // TODO: Array/Tuple TypeReference → widen type arguments
+
+        type_id
+    }
+
+    /// Widen an object literal type by recursively widening each property.
+    ///
+    /// Creates a new `StructuredType` with property types replaced by their
+    /// widened versions. The result has `ObjectLiteral` but not `FreshLiteral`
+    /// or `RequiresWidening` — it is the resolved form.
+    fn get_widened_type_of_object_literal(&mut self, type_id: TypeId) -> TypeId {
+        // Arena references have lifetime 'a (tied to the arena, not &self),
+        // so we can hold them while calling &mut self methods like get_widened_type.
+        let TypeData::Structured(s) = self.type_arena.get_data(type_id) else {
+            return type_id;
+        };
+
+        let mut any_changed = false;
+        let mut widened_props: Vec<PropertyInfo> = Vec::with_capacity(s.properties.len());
+        for p in &s.properties {
+            let widened_type = self.get_widened_type(p.type_id);
+            if widened_type != p.type_id {
+                any_changed = true;
+            }
+            widened_props.push(PropertyInfo {
+                name: p.name.clone(),
+                type_id: widened_type,
+                optional: p.optional,
+                readonly: p.readonly,
+                decl_order: p.decl_order,
+            });
+        }
+
+        // If no property changed, return the original type to avoid
+        // allocating a duplicate in the arena.
+        if !any_changed {
+            return type_id;
+        }
+
+        // Widen index signature value types too (tsgo does this).
+        let string_index_type = s.string_index_type.map(|t| self.get_widened_type(t));
+        let number_index_type = s.number_index_type.map(|t| self.get_widened_type(t));
+
+        // Properties are already sorted (inherited from the original).
+        self.type_arena.new_type(
+            TypeFlags::Object,
+            ObjectFlags::Anonymous | ObjectFlags::ObjectLiteral,
+            TypeData::Structured(Box::new(StructuredType {
+                properties: widened_props,
+                string_index_type,
+                number_index_type,
+                call_signatures: Vec::new(),
+                construct_signatures: Vec::new(),
+                kind: StructuredTypeKind::Anonymous { target: None },
+            })),
+            None,
+        )
+    }
+
+    // ── Flag propagation ────────────────────────────────────────────────
+
+    /// Collect propagating `ObjectFlags` from a slice of types.
+    ///
+    /// ORs `get_object_flags(t)` for each type whose `TypeFlags` don't intersect
+    /// `exclude_kind`, then masks the result with `ObjectFlags::PropagatingFlags`.
+    /// Mirrors tsgo's `getPropagatingFlagsOfTypes`.
+    #[allow(dead_code)] // Used when union/intersection widening is added
+    pub(crate) fn get_propagating_flags_of_types(
+        &self,
+        types: &[TypeId],
+        exclude_kind: TypeFlags,
+    ) -> ObjectFlags {
+        let mut result = ObjectFlags::None;
+        for &t in types {
+            if !exclude_kind.is_empty()
+                && self.type_arena.get_flags(t).intersects(exclude_kind)
+            {
+                continue;
+            }
+            result |= self.type_arena.get_object_flags(t);
+        }
+        result & ObjectFlags::PropagatingFlags
     }
 
     // ── Spread type validation ─────────────────────────────────────────

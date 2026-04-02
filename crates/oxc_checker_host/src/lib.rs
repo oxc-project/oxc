@@ -44,6 +44,14 @@ pub struct IntrinsicIds {
     pub non_primitive_type: TypeId,
     pub true_type: TypeId,
     pub false_type: TypeId,
+    /// Widening null type — same TypeFlags/name as `null_type` but with
+    /// `ObjectFlags::ContainsWideningType`. Used for null literal expressions
+    /// when `strictNullChecks` is false; `getWidenedType` maps it to `any`.
+    pub null_widening_type: TypeId,
+    /// Widening undefined type — same TypeFlags/name as `undefined_type` but
+    /// with `ObjectFlags::ContainsWideningType`. Used for undefined/void
+    /// expressions when `strictNullChecks` is false.
+    pub undefined_widening_type: TypeId,
 }
 
 /// Compiler options that affect type-checking behavior.
