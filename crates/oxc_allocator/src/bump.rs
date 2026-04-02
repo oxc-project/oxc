@@ -2206,7 +2206,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     pub fn iter_allocated_chunks(&mut self) -> ChunkIter<'_, MIN_ALIGN> {
         // Safety: Ensured by mutable borrow of `self`.
         let raw = unsafe { self.iter_allocated_chunks_raw() };
-        ChunkIter { raw, bump: PhantomData }
+        ChunkIter { raw }
     }
 
     /// Returns an iterator over raw pointers to chunks of allocated memory that
@@ -2441,7 +2441,6 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
 #[derive(Debug)]
 pub struct ChunkIter<'a, const MIN_ALIGN: usize = 1> {
     raw: ChunkRawIter<'a, MIN_ALIGN>,
-    bump: PhantomData<&'a mut Bump>,
 }
 
 impl<'a, const MIN_ALIGN: usize> Iterator for ChunkIter<'a, MIN_ALIGN> {
