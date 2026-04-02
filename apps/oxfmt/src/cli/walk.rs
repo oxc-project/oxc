@@ -190,7 +190,7 @@ impl Walk {
             true
         });
 
-        let inner = apply_walk_settings(&mut inner).build_parallel();
+        let inner = apply_walk_settings(&mut inner, target_paths.iter().any(|p| is_in_git_repo(p))).build_parallel();
         Ok(Some(Self { inner }))
     }
 
@@ -291,7 +291,7 @@ fn expand_glob_patterns(
     });
 
     let paths = Mutex::new(vec![]);
-    apply_walk_settings(&mut builder).build_parallel().run(|| {
+    apply_walk_settings(&mut builder, is_in_git_repo(cwd)).build_parallel().run(|| {
         Box::new(|entry| {
             match entry {
                 Ok(entry) => {
@@ -334,9 +334,25 @@ fn load_ignore_paths(cwd: &Path, ignore_paths: &[PathBuf]) -> Result<Vec<PathBuf
         .collect())
 }
 
+fn is_in_git_repo(path: &Path) -> bool {
+    let start = if path.is_file() { path.parent().unwrap_or(path) } else { path };
+    let mut current = start.to_path_buf();
+    loop {
+        if current.join(".git").exists() {
+            return true;
+        }
+        if !current.pop() {
+            return false;
+        }
+    }
+}
+
 /// Apply common walk settings.
 /// This ensures consistent behavior across glob expansion and main walk.
-fn apply_walk_settings(builder: &mut ignore::WalkBuilder) -> &mut ignore::WalkBuilder {
+fn apply_walk_settings(
+    builder: &mut ignore::WalkBuilder,
+    in_git_repo: bool,
+) -> &mut ignore::WalkBuilder {
     builder
         // Do not follow symlinks like Prettier does.
         // See https://github.com/prettier/prettier/pull/14627
@@ -355,8 +371,11 @@ fn apply_walk_settings(builder: &mut ignore::WalkBuilder) -> &mut ignore::WalkBu
         .git_ignore(true)
         // Also do not respect `.git/info/exclude`
         .git_exclude(false)
-        // Git is not required
-        .require_git(false)
+        // Inside a git repo: enforce git-boundary semantics so outer repos'
+        // .gitignore rules do not bleed into nested repos.
+        // Outside a git repo: disable the requirement so .gitignore files are
+        // still respected without a .git ancestor (see #17375).
+        .require_git(in_git_repo)
 }
 
 // ---
