@@ -1,19 +1,17 @@
-use oxc_ast::ast::{
-    BinaryExpression, ChainExpression, Expression, UnaryExpression,
-};
+use oxc_ast::ast::{BinaryExpression, ChainExpression, Expression, UnaryExpression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{CompactStr, GetSpan};
 use oxc_syntax::node::NodeId;
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 use oxc_syntax::symbol::SymbolId;
 use oxc_types::{
-    ObjectFlags, PropertyInfo, StructuredType, StructuredTypeKind, TypeData,
-    TypeFlags, TypeId, sort_properties,
+    ObjectFlags, PropertyInfo, StructuredType, StructuredTypeKind, TypeData, TypeFlags, TypeId,
+    sort_properties,
 };
 
+use crate::Checker;
 use crate::checker::CheckMode;
 use crate::nullable::NullableErrorReporter;
-use crate::Checker;
 
 impl Checker<'_> {
     /// Get the type of an expression.
@@ -87,22 +85,18 @@ impl Checker<'_> {
                 self.get_type_of_expression(&paren.expression, contextual_type, check_mode)
             }
             // Type assertions
-            Expression::TSAsExpression(expr) => {
-                self.check_assertion(
-                    &expr.expression,
-                    &expr.type_annotation,
-                    contextual_type,
-                    check_mode,
-                )
-            }
-            Expression::TSTypeAssertion(expr) => {
-                self.check_assertion(
-                    &expr.expression,
-                    &expr.type_annotation,
-                    contextual_type,
-                    check_mode,
-                )
-            }
+            Expression::TSAsExpression(expr) => self.check_assertion(
+                &expr.expression,
+                &expr.type_annotation,
+                contextual_type,
+                check_mode,
+            ),
+            Expression::TSTypeAssertion(expr) => self.check_assertion(
+                &expr.expression,
+                &expr.type_annotation,
+                contextual_type,
+                check_mode,
+            ),
             // `satisfies` checks but returns the expression's type, not the annotation
             Expression::TSSatisfiesExpression(expr) => {
                 self.get_type_of_expression(&expr.expression, contextual_type, check_mode)
@@ -156,7 +150,9 @@ impl Checker<'_> {
 
             // ++x, x++ etc — returns number or bigint depending on operand
             // TODO: add check_non_null_type once it supports SimpleAssignmentTarget
-            Expression::UpdateExpression(_) => self.number_type,
+            Expression::UpdateExpression(update) => {
+                self.check_update_expression(update, check_mode)
+            }
 
             // Object literal: `{ x: 1, y: "hello" }`
             Expression::ObjectExpression(obj) => {
@@ -518,7 +514,11 @@ impl Checker<'_> {
     }
 
     /// Get the result type of a unary expression.
-    fn get_type_of_unary_expression(&mut self, expr: &UnaryExpression<'_>, check_mode: CheckMode) -> TypeId {
+    fn get_type_of_unary_expression(
+        &mut self,
+        expr: &UnaryExpression<'_>,
+        check_mode: CheckMode,
+    ) -> TypeId {
         match expr.operator {
             // typeof always returns a string
             UnaryOperator::Typeof => self.string_type,
@@ -575,8 +575,11 @@ impl Checker<'_> {
                     if let Some(name) = prop.key.static_name() {
                         let prop_contextual_type =
                             contextual_type.and_then(|ct| self.get_property_of_type(ct, &name));
-                        let prop_type =
-                            self.get_type_of_expression(&prop.value, prop_contextual_type, check_mode);
+                        let prop_type = self.get_type_of_expression(
+                            &prop.value,
+                            prop_contextual_type,
+                            check_mode,
+                        );
                         let widened = self.get_widened_literal_type(prop_type);
                         properties.push(PropertyInfo::new(CompactStr::new(&name), widened));
                     }
@@ -589,7 +592,8 @@ impl Checker<'_> {
                             self.create_object_literal_type(std::mem::take(&mut properties));
                         spread = self.get_spread_type(spread, segment);
                     }
-                    let spread_type = self.get_type_of_expression(&spread_prop.argument, None, check_mode);
+                    let spread_type =
+                        self.get_type_of_expression(&spread_prop.argument, None, check_mode);
                     if self.is_valid_spread_type(spread_type) {
                         spread = self.get_spread_type(spread, spread_type);
                     } else {
@@ -669,7 +673,8 @@ impl Checker<'_> {
             match element {
                 ArrayExpressionElement::SpreadElement(spread) => {
                     // TODO: extract element type from spread
-                    let spread_type = self.get_type_of_expression(&spread.argument, None, check_mode);
+                    let spread_type =
+                        self.get_type_of_expression(&spread.argument, None, check_mode);
                     element_types.push(spread_type);
                 }
                 ArrayExpressionElement::Elision(_) => {
@@ -780,7 +785,11 @@ impl Checker<'_> {
     ///
     /// Resolves the inner expression type and unions with `undefined`
     /// since the chain may short-circuit.
-    fn get_type_of_chain_expression(&mut self, chain: &ChainExpression<'_>, check_mode: CheckMode) -> TypeId {
+    fn get_type_of_chain_expression(
+        &mut self,
+        chain: &ChainExpression<'_>,
+        check_mode: CheckMode,
+    ) -> TypeId {
         use oxc_ast::ast::ChainElement;
 
         let inner_type = match &chain.expression {
@@ -849,7 +858,11 @@ impl Checker<'_> {
     }
 
     /// Get the result type of a binary expression.
-    fn get_type_of_binary_expression(&mut self, expr: &BinaryExpression<'_>, check_mode: CheckMode) -> TypeId {
+    fn get_type_of_binary_expression(
+        &mut self,
+        expr: &BinaryExpression<'_>,
+        check_mode: CheckMode,
+    ) -> TypeId {
         match expr.operator {
             // Relational operators: validate operands (checkNonNullType, comparability).
             // Emits TS18050 for null/undefined literals, TS2365 for incompatible types.
@@ -889,8 +902,7 @@ impl Checker<'_> {
                 self.boolean_type
             }
 
-            BinaryOperator::In
-            | BinaryOperator::Instanceof => self.boolean_type,
+            BinaryOperator::In | BinaryOperator::Instanceof => self.boolean_type,
 
             // Arithmetic operators (not +): validate operands and return number or bigint.
             // Emits TS2362 (left) / TS2363 (right) for invalid operands,
@@ -1059,6 +1071,57 @@ impl Checker<'_> {
         }
     }
 
+    /// Check an update expression (`++x`, `x++`, `--x`, `x--`).
+    ///
+    /// Resolves the operand type and returns `number` or `bigint` accordingly.
+    /// Emits TS2356 if the operand is not a numeric type (unless in TYPE_ONLY mode).
+    fn check_update_expression(
+        &mut self,
+        update: &oxc_ast::ast::UpdateExpression<'_>,
+        check_mode: CheckMode,
+    ) -> TypeId {
+        use oxc_ast::ast::SimpleAssignmentTarget;
+        // Get the operand type from the SimpleAssignmentTarget
+        let operand_type = match &update.argument {
+            SimpleAssignmentTarget::AssignmentTargetIdentifier(ident) => {
+                self.get_type_of_identifier(ident)
+            }
+            SimpleAssignmentTarget::ComputedMemberExpression(expr) => {
+                let object_type = self.get_type_of_expression(&expr.object, None, check_mode);
+                self.resolve_computed_member_type(object_type, expr)
+            }
+            SimpleAssignmentTarget::StaticMemberExpression(expr) => {
+                let object_type = self.get_type_of_expression(&expr.object, None, check_mode);
+                self.resolve_static_member_type(object_type, expr)
+            }
+            _ => self.any_type,
+        };
+
+        let flags = self.type_arena.get_flags(operand_type);
+
+        // any → number (match tsc behavior)
+        if flags.intersects(TypeFlags::AnyOrUnknown) {
+            return self.number_type;
+        }
+
+        // Check the operand is assignable to number | bigint
+        if !self.is_type_assignable_to(operand_type, self.number_or_bigint_type) {
+            if !check_mode.contains(CheckMode::TYPE_ONLY) {
+                self.diagnostics.push(
+                    OxcDiagnostic::error(
+                        "An arithmetic operand must be of type 'any', 'number', 'bigint' or an enum type.",
+                    )
+                    .with_error_code("ts", "2356")
+                    .with_label(update.span),
+                );
+            }
+            return self.number_type;
+        }
+
+        // Return bigint if operand is bigint-like, otherwise number
+        if flags.intersects(TypeFlags::BigIntLike) { self.bigint_type } else { self.number_type }
+    }
+
     /// Validate that an operand is assignable to `number | bigint`.
     /// Emits TS2362 (left-hand side) or TS2363 (right-hand side) if not.
     fn check_arithmetic_operand_type(
@@ -1112,7 +1175,9 @@ impl Checker<'_> {
     /// Mirrors tsgo's `getBaseTypeOfLiteralTypeForComparison`.
     fn get_base_type_for_comparison(&mut self, type_id: TypeId) -> TypeId {
         let flags = self.type_arena.get_flags(type_id);
-        if flags.intersects(TypeFlags::StringLiteral | TypeFlags::TemplateLiteral | TypeFlags::StringMapping) {
+        if flags.intersects(
+            TypeFlags::StringLiteral | TypeFlags::TemplateLiteral | TypeFlags::StringMapping,
+        ) {
             self.string_type
         } else if flags.intersects(TypeFlags::NumberLiteral | TypeFlags::Enum) {
             self.number_type
@@ -1180,7 +1245,11 @@ impl Checker<'_> {
     }
 
     /// Get the type of a call expression, checking for TS2349, TS2554, TS2345.
-    fn get_type_of_call_expression(&mut self, call: &oxc_ast::ast::CallExpression<'_>, check_mode: CheckMode) -> TypeId {
+    fn get_type_of_call_expression(
+        &mut self,
+        call: &oxc_ast::ast::CallExpression<'_>,
+        check_mode: CheckMode,
+    ) -> TypeId {
         use oxc_ast::ast::Argument;
 
         let callee_type = self.get_type_of_expression(&call.callee, None, check_mode);

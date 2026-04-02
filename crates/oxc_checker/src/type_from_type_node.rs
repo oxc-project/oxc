@@ -1,4 +1,5 @@
 use oxc_ast::ast::TSType;
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::CompactStr;
 use oxc_types::{
     ElementFlags, MappedType, MappedTypeModifier, ObjectFlags, PropertyInfo, SignatureFlags,
@@ -421,6 +422,8 @@ impl Checker<'_> {
             return target;
         }
 
+        self.check_type_argument_count(&type_params, &type_arguments, target, type_args_node.span);
+
         // Build mapper from alias type params → type arguments
         let Some(mapper) =
             crate::instantiation::TypeMapper::from_type_parameters(&type_params, &type_arguments)
@@ -570,17 +573,26 @@ impl Checker<'_> {
         // Check the target actually has type parameters — if not,
         // the type arguments are extraneous (e.g., `string<number>`).
         // In that case, just return the target.
-        let has_type_params = match self.type_arena.get_data(target) {
-            TypeData::Structured(s) => matches!(
-                &s.kind,
-                StructuredTypeKind::Interface { all_type_parameters, .. } if !all_type_parameters.is_empty()
-            ),
-            _ => false,
+        let type_param_ids: SmallVec<[TypeId; 4]> = match self.type_arena.get_data(target) {
+            TypeData::Structured(s) => match &s.kind {
+                StructuredTypeKind::Interface { all_type_parameters, .. } => {
+                    all_type_parameters.clone()
+                }
+                _ => SmallVec::new(),
+            },
+            _ => SmallVec::new(),
         };
 
-        if !has_type_params {
+        if type_param_ids.is_empty() {
             return target;
         }
+
+        self.check_type_argument_count(
+            &type_param_ids,
+            &type_arguments,
+            target,
+            type_args_node.span,
+        );
 
         // Create a TypeReference for lazy instantiation.
         // Properties are not instantiated now — they're resolved lazily
@@ -723,5 +735,47 @@ impl Checker<'_> {
 
         self.current_infer_type_params.push(type_id);
         type_id
+    }
+
+    /// TS2314: Emit diagnostic if the number of type arguments is outside the
+    /// valid range [min_required, max_total] for the given type parameters.
+    ///
+    /// `min_required` = number of type parameters without a default.
+    /// Type parameters with `resolved_default_type` are optional.
+    fn check_type_argument_count(
+        &mut self,
+        type_param_ids: &[TypeId],
+        type_arguments: &[TypeId],
+        target: TypeId,
+        span: oxc_span::Span,
+    ) {
+        let max_count = type_param_ids.len();
+        let min_count = type_param_ids
+            .iter()
+            .filter(|&&tp| {
+                if let TypeData::TypeParameter(p) = self.type_arena.get_data(tp) {
+                    p.resolved_default_type.is_none()
+                } else {
+                    true // non-TypeParameter → required
+                }
+            })
+            .count();
+
+        let arg_count = type_arguments.len();
+        if arg_count < min_count || arg_count > max_count {
+            let type_name = self.type_to_string(target);
+            let expected = if min_count == max_count {
+                format!("{max_count}")
+            } else {
+                format!("{min_count} to {max_count}")
+            };
+            self.diagnostics.push(
+                OxcDiagnostic::error(format!(
+                    "Generic type '{type_name}' requires {expected} type argument(s).",
+                ))
+                .with_error_code("ts", "2314")
+                .with_label(span),
+            );
+        }
     }
 }
