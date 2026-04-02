@@ -3,7 +3,7 @@ use oxc_span::CompactStr;
 use oxc_types::{
     ElementFlags, MappedType, MappedTypeModifier, ObjectFlags, PropertyInfo, SignatureFlags,
     StructuredType, StructuredTypeKind, TupleElementInfo, TupleType, TypeData, TypeFlags, TypeId,
-    TypeParameterType, TypeReferenceType, build_member_map,
+    TypeParameterType, sort_properties,
 };
 use smallvec::SmallVec;
 
@@ -57,14 +57,9 @@ impl Checker<'_> {
                 if self.array_type == self.any_type {
                     return self.any_type;
                 }
-                self.type_arena.new_type(
-                    TypeFlags::Object,
-                    ObjectFlags::Reference,
-                    TypeData::TypeReference(TypeReferenceType {
-                        target: Some(self.array_type),
-                        resolved_type_arguments: smallvec::smallvec![element_type],
-                    }),
-                    None,
+                self.get_or_create_type_reference(
+                    self.array_type,
+                    smallvec::smallvec![element_type],
                 )
             }
 
@@ -248,6 +243,7 @@ impl Checker<'_> {
                             type_id: prop_type,
                             optional: prop.optional,
                             readonly: prop.readonly,
+                            decl_order: 0,
                         });
                     }
                 }
@@ -277,6 +273,7 @@ impl Checker<'_> {
                             type_id: method_type,
                             optional: method.optional,
                             readonly: false,
+                            decl_order: 0,
                         });
                     }
                 }
@@ -307,18 +304,18 @@ impl Checker<'_> {
             }
         }
 
+        sort_properties(&mut properties);
         self.type_arena.new_type(
             TypeFlags::Object,
             ObjectFlags::Anonymous,
-            TypeData::Structured(StructuredType {
-                member_map: build_member_map(&properties),
+            TypeData::Structured(Box::new(StructuredType {
                 properties,
                 string_index_type,
                 number_index_type,
                 call_signatures,
                 construct_signatures,
                 kind: StructuredTypeKind::Anonymous { target: None },
-            }),
+            })),
             None,
         )
     }
@@ -500,7 +497,7 @@ impl Checker<'_> {
         self.type_arena.new_type(
             TypeFlags::Object,
             obj_flags,
-            TypeData::Tuple(TupleType {
+            TypeData::Tuple(Box::new(TupleType {
                 target: None,
                 resolved_type_arguments: type_arguments,
                 element_infos,
@@ -508,7 +505,7 @@ impl Checker<'_> {
                 fixed_length,
                 combined_flags,
                 readonly: false,
-            }),
+            })),
             None,
         )
     }
@@ -574,10 +571,10 @@ impl Checker<'_> {
         // the type arguments are extraneous (e.g., `string<number>`).
         // In that case, just return the target.
         let has_type_params = match self.type_arena.get_data(target) {
-            TypeData::Structured(StructuredType {
-                kind: StructuredTypeKind::Interface { all_type_parameters, .. },
-                ..
-            }) => !all_type_parameters.is_empty(),
+            TypeData::Structured(s) => matches!(
+                &s.kind,
+                StructuredTypeKind::Interface { all_type_parameters, .. } if !all_type_parameters.is_empty()
+            ),
             _ => false,
         };
 
@@ -588,15 +585,7 @@ impl Checker<'_> {
         // Create a TypeReference for lazy instantiation.
         // Properties are not instantiated now — they're resolved lazily
         // when accessed (e.g., during structural assignability checks).
-        self.type_arena.new_type(
-            TypeFlags::Object,
-            ObjectFlags::Reference,
-            TypeData::TypeReference(TypeReferenceType {
-                target: Some(target),
-                resolved_type_arguments: type_arguments,
-            }),
-            None,
-        )
+        self.get_or_create_type_reference(target, type_arguments)
     }
 
     /// Resolve `typeof x` in type position to the value-side type of `x`.

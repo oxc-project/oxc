@@ -1,6 +1,6 @@
 use oxc_types::{
     LiteralType, ObjectFlags, PropertyInfo, Signature, StructuredType, StructuredTypeKind,
-    TypeData, TypeFlags, TypeId, build_member_map,
+    TypeData, TypeFlags, TypeId, sort_properties,
 };
 use rustc_hash::FxHashSet;
 use smallvec::SmallVec;
@@ -131,8 +131,7 @@ impl<'a> Checker<'a> {
         // Target is intersection → source must be assignable to ALL constituents
         if t.intersects(TypeFlags::Intersection) {
             if let TypeData::Intersection(i) = self.type_arena.get_data(target) {
-                let members: SmallVec<[TypeId; 4]> = i.types.clone();
-                return members.iter().all(|&m| self.is_type_assignable_to(source, m));
+                return i.types.iter().all(|&m| self.is_type_assignable_to(source, m));
             }
         }
 
@@ -140,8 +139,7 @@ impl<'a> Checker<'a> {
         // to target, succeed without structural comparison.
         if s.intersects(TypeFlags::Intersection) {
             if let TypeData::Intersection(i) = self.type_arena.get_data(source) {
-                let members: SmallVec<[TypeId; 4]> = i.types.clone();
-                if members.iter().any(|&m| self.is_type_assignable_to(m, target)) {
+                if i.types.iter().any(|&m| self.is_type_assignable_to(m, target)) {
                     return true;
                 }
             }
@@ -512,15 +510,15 @@ impl<'a> Checker<'a> {
             return cached;
         }
 
-        let constituents: SmallVec<[TypeId; 4]> = match self.type_arena.get_data(intersection_id) {
-            TypeData::Intersection(i) => i.types.clone(),
+        let constituents: &SmallVec<[TypeId; 4]> = match self.type_arena.get_data(intersection_id) {
+            TypeData::Intersection(i) => &i.types,
             _ => return intersection_id,
         };
 
         // Collect all unique property names from all constituents.
         let mut all_names: Vec<oxc_span::CompactStr> = Vec::new();
         let mut seen_names = rustc_hash::FxHashSet::default();
-        for &constituent in &constituents {
+        for &constituent in constituents {
             // Resolve TypeReference to access properties
             let resolved = if let TypeData::TypeReference(_) = self.type_arena.get_data(constituent)
             {
@@ -550,7 +548,7 @@ impl<'a> Checker<'a> {
         let mut construct_signatures = Vec::new();
         let mut string_index_type: Option<TypeId> = None;
         let mut number_index_type: Option<TypeId> = None;
-        for &constituent in &constituents {
+        for &constituent in constituents {
             let resolved = if let TypeData::TypeReference(_) = self.type_arena.get_data(constituent)
             {
                 self.resolve_type_reference(constituent)
@@ -575,19 +573,18 @@ impl<'a> Checker<'a> {
             }
         }
 
-        let member_map = build_member_map(&properties);
+        sort_properties(&mut properties);
         let resolved_id = self.type_arena.new_type(
             TypeFlags::Object,
             ObjectFlags::Anonymous,
-            TypeData::Structured(StructuredType {
-                member_map,
+            TypeData::Structured(Box::new(StructuredType {
                 properties,
                 string_index_type,
                 number_index_type,
                 call_signatures,
                 construct_signatures,
                 kind: StructuredTypeKind::Anonymous { target: Some(intersection_id) },
-            }),
+            })),
             None,
         );
         self.intersection_resolved_cache.insert(intersection_id, resolved_id);

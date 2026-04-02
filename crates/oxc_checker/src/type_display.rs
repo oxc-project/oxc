@@ -85,12 +85,12 @@ impl Checker<'_> {
                     }
                     return name;
                 }
-                // Anonymous — display structurally
+                // Anonymous — display structurally in declaration order
                 if s.properties.is_empty() {
                     return "{}".to_string();
                 }
                 let props = s
-                    .properties
+                    .properties_in_decl_order()
                     .iter()
                     .map(|p| format!("{}: {}", p.name, self.type_to_string(p.type_id)))
                     .collect::<Vec<_>>()
