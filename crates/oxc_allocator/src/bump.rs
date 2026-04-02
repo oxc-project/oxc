@@ -518,9 +518,10 @@ const OVERHEAD: usize = match round_up_to(MALLOC_OVERHEAD + FOOTER_SIZE, CHUNK_A
     None => panic!(),
 };
 
-// The target size of our first allocation, including our overhead. The
-// available bump capacity will be smaller.
-const FIRST_ALLOCATION_GOAL: usize = 1 << 9;
+// The target size of our first allocation, including our overhead.
+// The available bump capacity will be slightly smaller.
+// 16 KiB covers the majority of real-world JS/TS files.
+const FIRST_ALLOCATION_GOAL: usize = 16 * 1024;
 
 // The actual size of the first allocation is going to be a bit smaller than the
 // goal. We need to make room for the footer, and we also need take the
@@ -752,7 +753,10 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
 
         let chunk_footer = unsafe {
             Self::new_chunk(
-                Self::new_chunk_memory_details(None, layout).ok_or(AllocErr)?,
+                // `new_size_without_footer` here was `None` in original `bumpalo` code.
+                // Changed to `Some(capacity)` when we increased `FIRST_ALLOCATION_GOAL` to 16 KiB,
+                // to avoid `Bump::with_capacity` allocating 16 KiB even when requested `capacity` is much smaller.
+                Self::new_chunk_memory_details(Some(capacity), layout).ok_or(AllocErr)?,
                 layout,
                 EMPTY_CHUNK.get(),
             )
@@ -2610,7 +2614,12 @@ mod tests {
     // Uses private `DEFAULT_CHUNK_SIZE_WITHOUT_FOOTER` and `FOOTER_SIZE`.
     #[test]
     fn allocated_bytes() {
-        let mut b = Bump::with_capacity(1);
+        let mut b = Bump::new();
+
+        assert_eq!(b.allocated_bytes(), 0);
+        assert_eq!(b.allocated_bytes_including_metadata(), 0);
+
+        b.alloc(0u8);
 
         assert_eq!(b.allocated_bytes(), DEFAULT_CHUNK_SIZE_WITHOUT_FOOTER);
         assert_eq!(
