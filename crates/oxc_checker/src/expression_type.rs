@@ -248,8 +248,9 @@ impl Checker<'_> {
                     let return_contextual_type = contextual_sig.map(|s| s.return_type);
                     sig.return_type = if arrow.expression {
                         // Expression body: () => expr — return type is the expression type
-                        if let Some(oxc_ast::ast::Statement::ExpressionStatement(expr_stmt)) =
-                            arrow.body.statements.first()
+                        let raw = if let Some(oxc_ast::ast::Statement::ExpressionStatement(
+                            expr_stmt,
+                        )) = arrow.body.statements.first()
                         {
                             self.get_type_of_expression(
                                 &expr_stmt.expression,
@@ -258,10 +259,17 @@ impl Checker<'_> {
                             )
                         } else {
                             self.void_type
-                        }
+                        };
+                        // Apply return-type widening (expression body doesn't go
+                        // through infer_return_type_from_body, so widen here).
+                        self.widen_return_type(raw, return_contextual_type)
                     } else {
                         // Block body: () => { ... } — infer from return statements
-                        self.infer_return_type_from_body(&arrow.body.statements)
+                        // (widening is applied inside infer_return_type_from_body)
+                        self.infer_return_type_from_body(
+                            &arrow.body.statements,
+                            return_contextual_type,
+                        )
                     };
                 }
                 self.create_function_type(sig)
@@ -1162,21 +1170,6 @@ impl Checker<'_> {
         }
 
         self.report_operator_error(left_type, operator, right_type, span);
-    }
-
-    /// Check if a type could contain a constituent matching the given flags.
-    /// For union types, checks each member. Otherwise checks the type's own flags.
-    fn maybe_type_of_kind(&self, type_id: TypeId, kind: TypeFlags) -> bool {
-        let flags = self.type_arena.get_flags(type_id);
-        if flags.intersects(kind) {
-            return true;
-        }
-        if flags.intersects(TypeFlags::Union) {
-            if let TypeData::Union(u) = self.type_arena.get_data(type_id) {
-                return u.types.iter().any(|&t| self.type_arena.get_flags(t).intersects(kind));
-            }
-        }
-        false
     }
 
     /// Get the type of a call expression, checking for TS2349, TS2554, TS2345.

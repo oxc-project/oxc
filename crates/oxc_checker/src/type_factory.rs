@@ -359,6 +359,141 @@ impl Checker<'_> {
         type_id
     }
 
+    // ── Type queries ──────────────────────────────────────────────────
+
+    /// Check if a type is a unit type (single literal, enum, unique symbol, or nullable).
+    ///
+    /// Mirrors tsgo's `isUnitType`.
+    pub fn is_unit_type(&self, type_id: TypeId) -> bool {
+        self.type_arena.get_flags(type_id).intersects(TypeFlags::Unit)
+    }
+
+    /// Check if a type could contain a constituent matching the given flags.
+    /// For union types, checks each member. Otherwise checks the type's own flags.
+    ///
+    /// Mirrors tsgo's `maybeTypeOfKind`.
+    pub fn maybe_type_of_kind(&self, type_id: TypeId, kind: TypeFlags) -> bool {
+        let flags = self.type_arena.get_flags(type_id);
+        if flags.intersects(kind) {
+            return true;
+        }
+        if flags.intersects(TypeFlags::Union) {
+            if let TypeData::Union(u) = self.type_arena.get_data(type_id) {
+                return u.types.iter().any(|&t| self.type_arena.get_flags(t).intersects(kind));
+            }
+        }
+        false
+    }
+
+    // ── Contextual literal widening ───────────────────────────────────
+
+    /// Check if a literal type should be preserved (not widened) because the
+    /// contextual type expects a literal of the same kind.
+    ///
+    /// For example, if the contextual type is `"hello" | "world"` and the candidate
+    /// is `"hello"`, the literal is preserved. If there's no contextual type,
+    /// the literal is always widened.
+    ///
+    /// Mirrors tsgo's `isLiteralOfContextualType`.
+    fn is_literal_of_contextual_type(
+        &mut self,
+        candidate: TypeId,
+        contextual: Option<TypeId>,
+    ) -> bool {
+        let Some(ctx) = contextual else { return false };
+        let ctx_flags = self.type_arena.get_flags(ctx);
+
+        // Union/intersection: any constituent preserves → preserve
+        if ctx_flags.intersects(TypeFlags::UnionOrIntersection) {
+            return match self.type_arena.get_data(ctx) {
+                TypeData::Union(u) => {
+                    u.types.iter().any(|&t| self.is_literal_of_contextual_type(candidate, Some(t)))
+                }
+                TypeData::Intersection(i) => {
+                    i.types.iter().any(|&t| self.is_literal_of_contextual_type(candidate, Some(t)))
+                }
+                _ => false,
+            };
+        }
+
+        // Type parameter constrained to a primitive: check constraint.
+        // Mirrors tsgo: if getBaseConstraintOfType returns nil, use unknownType.
+        if ctx_flags.intersects(TypeFlags::InstantiableNonPrimitive) {
+            let constraint = self
+                .get_base_constraint_of_type(ctx)
+                .unwrap_or(self.unknown_type);
+            return (self.maybe_type_of_kind(constraint, TypeFlags::String)
+                && self.maybe_type_of_kind(candidate, TypeFlags::StringLiteral))
+                || (self.maybe_type_of_kind(constraint, TypeFlags::Number)
+                    && self.maybe_type_of_kind(candidate, TypeFlags::NumberLiteral))
+                || (self.maybe_type_of_kind(constraint, TypeFlags::BigInt)
+                    && self.maybe_type_of_kind(candidate, TypeFlags::BigIntLiteral))
+                || (self.maybe_type_of_kind(constraint, TypeFlags::ESSymbol)
+                    && self.maybe_type_of_kind(candidate, TypeFlags::UniqueESSymbol))
+                || self.is_literal_of_contextual_type(candidate, Some(constraint));
+        }
+
+        // Direct literal matching: contextual type is a literal of the same kind
+        let cand_flags = self.type_arena.get_flags(candidate);
+        (ctx_flags.intersects(
+            TypeFlags::StringLiteral
+                | TypeFlags::Index
+                | TypeFlags::TemplateLiteral
+                | TypeFlags::StringMapping,
+        ) && cand_flags.intersects(TypeFlags::StringLiteral))
+            || (ctx_flags.intersects(TypeFlags::NumberLiteral)
+                && cand_flags.intersects(TypeFlags::NumberLiteral))
+            || (ctx_flags.intersects(TypeFlags::BigIntLiteral)
+                && cand_flags.intersects(TypeFlags::BigIntLiteral))
+            || (ctx_flags.intersects(TypeFlags::BooleanLiteral)
+                && cand_flags.intersects(TypeFlags::BooleanLiteral))
+            || (ctx_flags.intersects(TypeFlags::UniqueESSymbol)
+                && cand_flags.intersects(TypeFlags::UniqueESSymbol))
+    }
+
+    /// Widen a literal type unless the contextual type preserves it.
+    ///
+    /// Mirrors tsgo's `getWidenedLiteralLikeTypeForContextualType`.
+    pub fn get_widened_literal_like_type_for_contextual_type(
+        &mut self,
+        type_id: TypeId,
+        contextual_type: Option<TypeId>,
+    ) -> TypeId {
+        if !self.is_literal_of_contextual_type(type_id, contextual_type) {
+            let widened = self.get_widened_literal_type(type_id);
+            // TODO: get_widened_unique_es_symbol_type(widened)
+            return self.get_regular_type_of_literal(widened);
+        }
+        self.get_regular_type_of_literal(type_id)
+    }
+
+    /// Apply TypeScript's return-type widening pipeline.
+    ///
+    /// Step 1: Contextual literal widening — only for unit types.
+    /// Step 2: Object literal widening (TODO: `get_widened_type`).
+    ///
+    /// Mirrors the widening steps in tsgo's `getReturnTypeFromBody`.
+    pub fn widen_return_type(
+        &mut self,
+        return_type: TypeId,
+        contextual_return_type: Option<TypeId>,
+    ) -> TypeId {
+        let mut result = return_type;
+
+        // Step 1: Contextual literal widening — only for unit types
+        if self.is_unit_type(result) {
+            result = self.get_widened_literal_like_type_for_contextual_type(
+                result,
+                contextual_return_type,
+            );
+        }
+
+        // Step 2: Object literal widening (Phase 2)
+        // result = self.get_widened_type(result);
+
+        result
+    }
+
     // ── Spread type validation ─────────────────────────────────────────
 
     /// Check whether a type is valid as the argument of an object spread (`{ ...x }`).
@@ -397,22 +532,28 @@ impl Checker<'_> {
         flags.intersects(TypeFlags::Never)
     }
 
+    /// Resolve the base constraint of an instantiable type (e.g. type parameter).
+    /// Returns `None` if no constraint exists or the type is not instantiable.
+    ///
+    /// Mirrors TypeScript's `getBaseConstraintOfType`.
+    fn get_base_constraint_of_type(&mut self, type_id: TypeId) -> Option<TypeId> {
+        let flags = self.type_arena.get_flags(type_id);
+
+        if flags.intersects(TypeFlags::TypeParameter) {
+            return self.get_constraint_of_type_parameter(type_id);
+        }
+        // TODO: handle other instantiable types (conditional, substitution,
+        // indexed access, index, template literal, string mapping)
+        // and unions/intersections of such types.
+        None
+    }
+
     /// If `type_id` is an instantiable type (e.g. type parameter), resolve its
     /// base constraint; otherwise return the type unchanged.
     ///
     /// Mirrors TypeScript's `getBaseConstraintOrType`.
     fn get_base_constraint_or_type(&mut self, type_id: TypeId) -> TypeId {
-        let flags = self.type_arena.get_flags(type_id);
-
-        if flags.intersects(TypeFlags::TypeParameter) {
-            if let Some(constraint) = self.get_constraint_of_type_parameter(type_id) {
-                return constraint;
-            }
-        }
-        // TODO: handle other instantiable types (conditional, substitution,
-        // indexed access, index, template literal, string mapping)
-        // and unions/intersections of such types.
-        type_id
+        self.get_base_constraint_of_type(type_id).unwrap_or(type_id)
     }
 
     /// Filter out definitely-falsy constituents (null, undefined, void,
