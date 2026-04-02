@@ -1379,7 +1379,13 @@ fn collect_checker_types<'a>(
 ) -> Vec<(String, String)> {
     use oxc::ast_visit::Visit;
 
-    let mut walker = TypeCollectorVisitor { checker, source, results: Vec::new(), last_expression_type: None };
+    let mut walker = TypeCollectorVisitor {
+        checker,
+        source,
+        results: Vec::new(),
+        last_expression_type: None,
+        super_class_types: rustc_hash::FxHashMap::default(),
+    };
     walker.visit_program(program);
     walker.results
 }
@@ -1392,9 +1398,43 @@ struct TypeCollectorVisitor<'a, 'b> {
     /// visit_static_member_expression can emit the property name
     /// with the same type as the parent member expression.
     last_expression_type: Option<String>,
+    /// Pre-computed base types for class super_class expressions.
+    /// Keyed by span key `(start << 32) | end`. tsc's .types walker
+    /// reports the instance type (not `typeof X`) for heritage expressions;
+    /// this map provides the override for visit_expression.
+    super_class_types: rustc_hash::FxHashMap<u64, oxc_types::TypeId>,
 }
 
 impl<'a> oxc::ast_visit::Visit<'a> for TypeCollectorVisitor<'a, '_> {
+    fn visit_class(&mut self, class: &oxc::ast::ast::Class<'a>) {
+        use oxc::span::GetSpan as _;
+
+        // Pre-compute the base type for the super_class expression.
+        // tsc's .types walker reports the instance type (e.g., "Base")
+        // for heritage expressions, not the constructor type ("typeof Base").
+        // See tsgo type_symbol_baseline.go:369-375.
+        if let (Some(id), Some(super_class)) = (&class.id, &class.super_class) {
+            if let Some(symbol_id) = id.symbol_id.get() {
+                let class_type = self.checker.get_declared_type_of_symbol(symbol_id);
+                if let oxc_types::TypeData::Structured(s) =
+                    self.checker.type_arena().get_data(class_type)
+                {
+                    if let oxc_types::StructuredTypeKind::Interface {
+                        resolved_base_types, ..
+                    } = &s.kind
+                    {
+                        if let Some(&base_type) = resolved_base_types.first() {
+                            let span = super_class.span();
+                            let key = (span.start as u64) << 32 | span.end as u64;
+                            self.super_class_types.insert(key, base_type);
+                        }
+                    }
+                }
+            }
+        }
+        oxc::ast_visit::walk::walk_class(self, class);
+    }
+
     fn visit_expression(&mut self, expr: &oxc::ast::ast::Expression<'a>) {
         use oxc::span::GetSpan as _;
 
@@ -1402,7 +1442,13 @@ impl<'a> oxc::ast_visit::Visit<'a> for TypeCollectorVisitor<'a, '_> {
         let span = expr.span();
         if (span.start as usize) < self.source.len() && (span.end as usize) <= self.source.len() {
             let expr_text = &self.source[span.start as usize..span.end as usize];
-            let type_id = self.checker.get_type_at_location(expr);
+            // For class extends expressions, use the pre-computed base type
+            let key = (span.start as u64) << 32 | span.end as u64;
+            let type_id = if let Some(&base_type) = self.super_class_types.get(&key) {
+                base_type
+            } else {
+                self.checker.get_type_at_location(expr)
+            };
             let type_str = self.checker.type_to_string(type_id);
             self.results.push((expr_text.to_string(), type_str.clone()));
             // Stash for visit_static_member_expression to pick up
