@@ -2606,9 +2606,17 @@ mod tests {
     use super::*;
 
     // Uses private type `ChunkFooter`.
+    #[cfg(target_pointer_width = "64")]
     #[test]
-    fn chunk_footer_is_five_words() {
+    fn chunk_footer_is_six_words_on_64_bit() {
         assert_eq!(mem::size_of::<ChunkFooter>(), mem::size_of::<usize>() * 6);
+    }
+
+    // Uses private type `ChunkFooter`.
+    #[cfg(target_pointer_width = "32")]
+    #[test]
+    fn chunk_footer_is_eight_words_on_32_bit() {
+        assert_eq!(mem::size_of::<ChunkFooter>(), mem::size_of::<usize>() * 8);
     }
 
     // Uses private `DEFAULT_CHUNK_SIZE_WITHOUT_FOOTER` and `FOOTER_SIZE`.
