@@ -177,7 +177,6 @@ pub struct StructuredType {
     /// NOT declaration order. When building a new type from these properties
     /// or displaying them, use [`StructuredType::properties_in_decl_order`]
     /// to get the original source ordering.
-    /// Use [`StructuredType::properties_in_decl_order`] for display.
     pub properties: Vec<PropertyInfo>,
     /// String index signature value type: `{ [key: string]: T }` → T.
     pub string_index_type: Option<TypeId>,
@@ -511,7 +510,7 @@ pub fn sort_properties(properties: &mut [PropertyInfo]) {
     for (i, p) in properties.iter_mut().enumerate() {
         p.decl_order = i as u16;
     }
-    properties.sort_by(|a, b| a.name.as_str().cmp(b.name.as_str()));
+    properties.sort_unstable_by(|a, b| a.name.as_str().cmp(b.name.as_str()));
 }
 
 impl StructuredType {
@@ -530,11 +529,11 @@ impl StructuredType {
 
     /// Iterate properties in original declaration order (for display).
     ///
-    /// Returns an iterator that yields properties sorted by `decl_order`.
-    /// Allocates a temporary sorted index.
+    /// Allocates a temporary Vec and sorts it — O(N log N). Use only for
+    /// display/diagnostics, not in hot paths like assignability or inference.
     pub fn properties_in_decl_order(&self) -> Vec<&PropertyInfo> {
         let mut ordered: Vec<&PropertyInfo> = self.properties.iter().collect();
-        ordered.sort_by_key(|p| p.decl_order);
+        ordered.sort_unstable_by_key(|p| p.decl_order);
         ordered
     }
 }
