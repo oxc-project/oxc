@@ -1271,6 +1271,12 @@ impl<'a> Checker<'a> {
         if !flags.intersects(TypeFlags::Freshable) {
             return type_id;
         }
+        // Already fresh — return as-is. Without this, passing a fresh TypeId
+        // would miss the map lookup (keyed by regular ids) and create a
+        // spurious fresh-of-fresh duplicate in the arena.
+        if self.type_arena.get_object_flags(type_id).intersects(ObjectFlags::FreshLiteral) {
+            return type_id;
+        }
         if let Some(&fresh) = self.fresh_literal_map.get(&type_id) {
             return fresh;
         }
