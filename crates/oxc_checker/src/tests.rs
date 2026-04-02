@@ -27,7 +27,7 @@ macro_rules! with_checker {
             &type_arena,
             &project,
             String::new(),
-            1,
+            project.lib_file_count() as u16,
             oxc_checker_host::CheckerOptions::default(),
         );
         $body
