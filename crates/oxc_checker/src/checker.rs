@@ -721,13 +721,16 @@ impl<'a> Checker<'a> {
                 self.check_expression(&throw_stmt.argument, None);
             }
 
+            Statement::TSInterfaceDeclaration(decl) => {
+                self.check_interface_declaration(decl);
+            }
+
             // Leaf statements / not yet implemented — no-op
             Statement::BreakStatement(_)
             | Statement::ContinueStatement(_)
             | Statement::DebuggerStatement(_)
             | Statement::EmptyStatement(_)
             | Statement::TSTypeAliasDeclaration(_)
-            | Statement::TSInterfaceDeclaration(_)
             | Statement::TSModuleDeclaration(_)
             | Statement::TSGlobalDeclaration(_)
             | Statement::TSImportEqualsDeclaration(_)
@@ -759,9 +762,11 @@ impl<'a> Checker<'a> {
             Declaration::ClassDeclaration(class) => {
                 self.check_class_declaration(class);
             }
+            Declaration::TSInterfaceDeclaration(decl) => {
+                self.check_interface_declaration(decl);
+            }
             Declaration::TSEnumDeclaration(_) => {}
             Declaration::TSTypeAliasDeclaration(_)
-            | Declaration::TSInterfaceDeclaration(_)
             | Declaration::TSModuleDeclaration(_)
             | Declaration::TSGlobalDeclaration(_)
             | Declaration::TSImportEqualsDeclaration(_) => {}
@@ -889,10 +894,8 @@ impl<'a> Checker<'a> {
                         .as_ref()
                         .map(|ann| self.get_type_from_type_node(&ann.type_annotation));
 
-                    let init_type = prop
-                        .value
-                        .as_ref()
-                        .map(|init| self.check_expression(init, declared_type));
+                    let init_type =
+                        prop.value.as_ref().map(|init| self.check_expression(init, declared_type));
 
                     if let (Some(declared_type), Some(init_type)) = (declared_type, init_type) {
                         let label_span = prop.key.span();
@@ -908,7 +911,108 @@ impl<'a> Checker<'a> {
                 _ => {}
             }
         }
+        // TS2416: Check that each property in the derived class is assignable to
+        // the same property in the base class.
+        self.check_class_heritage_members(class);
         // TODO: check that abstract members are implemented in subclasses
+    }
+
+    /// Check that each property in a class is compatible with the same-named
+    /// property in its base class. Emits TS2416 on mismatch.
+    fn check_class_heritage_members(&mut self, class: &oxc_ast::ast::Class<'a>) {
+        // Get the class symbol to look up its declared type (which has base types)
+        let Some(ident) = &class.id else { return };
+        let Some(symbol_id) = ident.symbol_id.get() else { return };
+        let class_type = self.get_declared_type_of_symbol(symbol_id);
+
+        // Extract base types and own properties in a single arena read.
+        // Both are needed for the check loop which calls &mut self methods.
+        let (base_types, own_properties) = {
+            let TypeData::Structured(s) = self.type_arena.get_data(class_type) else {
+                return;
+            };
+            let StructuredTypeKind::Interface { resolved_base_types, .. } = &s.kind else {
+                return;
+            };
+            if resolved_base_types.is_empty() {
+                return;
+            }
+            let bases: SmallVec<[TypeId; 4]> = resolved_base_types.clone();
+            let props: Vec<(CompactStr, TypeId)> =
+                s.properties.iter().map(|p| (p.name.clone(), p.type_id)).collect();
+            (bases, props)
+        };
+
+        let class_name = &ident.name;
+
+        // For each own property, check assignability against base type properties
+        for (prop_name, prop_type) in &own_properties {
+            for &base_type in &base_types {
+                if let Some(base_prop_type) = self.get_property_of_type(base_type, prop_name) {
+                    if base_prop_type != self.any_type
+                        && !self.is_type_assignable_to(*prop_type, base_prop_type)
+                    {
+                        let base_type_str = self.type_to_string(base_type);
+                        self.diagnostics.push(
+                            OxcDiagnostic::error(format!(
+                                "Property '{prop_name}' in type '{class_name}' is not assignable to the same property in base type '{base_type_str}'.",
+                            ))
+                            .with_error_code("ts", "2416")
+                            .with_label(ident.span),
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    /// Check an interface declaration's heritage for compatibility.
+    /// Emits TS2430 when the interface has properties that conflict with base types.
+    fn check_interface_declaration(&mut self, decl: &oxc_ast::ast::TSInterfaceDeclaration<'a>) {
+        // Resolve the interface type (triggers type building if not cached)
+        let Some(symbol_id) = decl.id.symbol_id.get() else { return };
+        let iface_type = self.get_declared_type_of_symbol(symbol_id);
+
+        // Extract base types and own properties in a single arena read.
+        let (base_types, own_properties) = {
+            let TypeData::Structured(s) = self.type_arena.get_data(iface_type) else {
+                return;
+            };
+            let StructuredTypeKind::Interface { resolved_base_types, .. } = &s.kind else {
+                return;
+            };
+            if resolved_base_types.is_empty() {
+                return;
+            }
+            let bases: SmallVec<[TypeId; 4]> = resolved_base_types.clone();
+            let props: Vec<(CompactStr, TypeId)> =
+                s.properties.iter().map(|p| (p.name.clone(), p.type_id)).collect();
+            (bases, props)
+        };
+
+        let iface_name = &decl.id.name;
+
+        // For each own property, check assignability against base type properties
+        for (prop_name, prop_type) in &own_properties {
+            for &base_type in &base_types {
+                if let Some(base_prop_type) = self.get_property_of_type(base_type, prop_name) {
+                    if base_prop_type != self.any_type
+                        && !self.is_type_assignable_to(*prop_type, base_prop_type)
+                    {
+                        let base_type_str = self.type_to_string(base_type);
+                        self.diagnostics.push(
+                            OxcDiagnostic::error(format!(
+                                "Interface '{iface_name}' incorrectly extends interface '{base_type_str}'.",
+                            ))
+                            .with_error_code("ts", "2430")
+                            .with_label(decl.id.span),
+                        );
+                        // Only emit one TS2430 per base type mismatch (tsc emits one per base)
+                        break;
+                    }
+                }
+            }
+        }
     }
 
     /// Check a return statement against the enclosing function's return type.
@@ -1052,5 +1156,4 @@ impl<'a> Checker<'a> {
     ) -> Option<TypeId> {
         self.declared_type_cache[symbol_id]
     }
-
 }

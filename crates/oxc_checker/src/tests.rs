@@ -5,8 +5,8 @@ use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
 use oxc_types::{StructuredTypeKind, TypeData, TypeFlags};
 
-use crate::checker::CheckMode;
 use crate::Checker;
+use crate::checker::CheckMode;
 
 /// Helper macro to set up parser -> semantic -> checker in a single scope,
 /// avoiding lifetime issues with the allocator and AST.
@@ -1341,7 +1341,8 @@ fn property_access_on_object_literal() {
                 for declarator in &decl.declarations {
                     if count == 1 {
                         if let Some(init) = &declarator.init {
-                            let type_id = checker.get_type_of_expression(init, None, CheckMode::NORMAL);
+                            let type_id =
+                                checker.get_type_of_expression(init, None, CheckMode::NORMAL);
                             let flags = checker.type_arena().get_flags(type_id);
                             assert!(
                                 flags.intersects(TypeFlags::Number),
@@ -1368,7 +1369,8 @@ fn property_access_on_interface() {
                     for declarator in &decl.declarations {
                         if count == 1 {
                             if let Some(init) = &declarator.init {
-                                let type_id = checker.get_type_of_expression(init, None, CheckMode::NORMAL);
+                                let type_id =
+                                    checker.get_type_of_expression(init, None, CheckMode::NORMAL);
                                 assert_eq!(checker.type_to_string(type_id), "number");
                             }
                         }
@@ -1389,7 +1391,8 @@ fn property_access_unknown_property() {
                 for declarator in &decl.declarations {
                     if count == 1 {
                         if let Some(init) = &declarator.init {
-                            let type_id = checker.get_type_of_expression(init, None, CheckMode::NORMAL);
+                            let type_id =
+                                checker.get_type_of_expression(init, None, CheckMode::NORMAL);
                             let flags = checker.type_arena().get_flags(type_id);
                             assert!(
                                 flags.intersects(TypeFlags::Any),
@@ -1440,7 +1443,8 @@ fn property_access_on_type_literal() {
                 for declarator in &decl.declarations {
                     if count == 1 {
                         if let Some(init) = &declarator.init {
-                            let type_id = checker.get_type_of_expression(init, None, CheckMode::NORMAL);
+                            let type_id =
+                                checker.get_type_of_expression(init, None, CheckMode::NORMAL);
                             assert_eq!(checker.type_to_string(type_id), "string");
                         }
                     }
@@ -1495,7 +1499,8 @@ fn computed_member_string_literal() {
                 for declarator in &decl.declarations {
                     if count == 1 {
                         if let Some(init) = &declarator.init {
-                            let type_id = checker.get_type_of_expression(init, None, CheckMode::NORMAL);
+                            let type_id =
+                                checker.get_type_of_expression(init, None, CheckMode::NORMAL);
                             let flags = checker.type_arena().get_flags(type_id);
                             assert!(
                                 flags.intersects(TypeFlags::Number),
@@ -1522,7 +1527,8 @@ fn chain_expression_member() {
                 for declarator in &decl.declarations {
                     if count == 1 {
                         if let Some(init) = &declarator.init {
-                            let type_id = checker.get_type_of_expression(init, None, CheckMode::NORMAL);
+                            let type_id =
+                                checker.get_type_of_expression(init, None, CheckMode::NORMAL);
                             let flags = checker.type_arena().get_flags(type_id);
                             // Should be a union containing undefined
                             assert!(
@@ -4153,7 +4159,8 @@ fn interface_extends_excess_property_known_in_base() {
 #[test]
 fn interface_extends_chain_override_shadowing() {
     // B overrides `x: string` from A to `x: number`.
-    // C extends B — should require `x: number`, not `x: string`.
+    // This is an error (TS2430) because `number` is not assignable to `string`.
+    // C extends B — should require `x: number` from B's declaration.
     with_checker!(
         r#"
         interface A { x: string }
@@ -4164,9 +4171,10 @@ fn interface_extends_chain_override_shadowing() {
         |checker, program| {
             checker.check_program(program);
             let diagnostics = checker.take_diagnostics();
+            // B extending A with incompatible `x` produces TS2430
             assert!(
-                diagnostics.is_empty(),
-                "overridden property type from intermediate base should be used: {diagnostics:?}"
+                diagnostics.iter().any(|d| d.code.number.as_deref() == Some("2430")),
+                "expected TS2430 for incompatible override, got: {diagnostics:?}"
             );
         }
     );
@@ -4197,7 +4205,9 @@ fn check_non_null_type_negate_null_emits_ts18050() {
         checker.check_program(program);
         let diagnostics = checker.take_diagnostics();
         assert!(
-            diagnostics.iter().any(|d| d.message.to_string().contains("The value 'null' cannot be used here")),
+            diagnostics
+                .iter()
+                .any(|d| d.message.to_string().contains("The value 'null' cannot be used here")),
             "expected TS18050 for -null, got: {diagnostics:?}"
         );
     });
@@ -4209,7 +4219,10 @@ fn check_non_null_type_negate_undefined_emits_ts18050() {
         checker.check_program(program);
         let diagnostics = checker.take_diagnostics();
         assert!(
-            diagnostics.iter().any(|d| d.message.to_string().contains("The value 'undefined' cannot be used here")),
+            diagnostics.iter().any(|d| d
+                .message
+                .to_string()
+                .contains("The value 'undefined' cannot be used here")),
             "expected TS18050 for -undefined, got: {diagnostics:?}"
         );
     });
@@ -4221,7 +4234,9 @@ fn check_non_null_type_plus_null_emits_ts18050() {
         checker.check_program(program);
         let diagnostics = checker.take_diagnostics();
         assert!(
-            diagnostics.iter().any(|d| d.message.to_string().contains("The value 'null' cannot be used here")),
+            diagnostics
+                .iter()
+                .any(|d| d.message.to_string().contains("The value 'null' cannot be used here")),
             "expected TS18050 for +null, got: {diagnostics:?}"
         );
     });
@@ -4233,7 +4248,10 @@ fn check_non_null_type_bitwise_not_undefined_emits_ts18050() {
         checker.check_program(program);
         let diagnostics = checker.take_diagnostics();
         assert!(
-            diagnostics.iter().any(|d| d.message.to_string().contains("The value 'undefined' cannot be used here")),
+            diagnostics.iter().any(|d| d
+                .message
+                .to_string()
+                .contains("The value 'undefined' cannot be used here")),
             "expected TS18050 for ~undefined, got: {diagnostics:?}"
         );
     });
@@ -4244,10 +4262,7 @@ fn check_non_null_type_negate_number_no_error() {
     with_checker!("var x = -42;", |checker, program| {
         checker.check_program(program);
         let diagnostics = checker.take_diagnostics();
-        assert!(
-            diagnostics.is_empty(),
-            "expected no errors for -42, got: {diagnostics:?}"
-        );
+        assert!(diagnostics.is_empty(), "expected no errors for -42, got: {diagnostics:?}");
     });
 }
 
@@ -4256,61 +4271,46 @@ fn check_non_null_type_negate_any_no_error() {
     with_checker!("var y: any; var x = -y;", |checker, program| {
         checker.check_program(program);
         let diagnostics = checker.take_diagnostics();
-        assert!(
-            diagnostics.is_empty(),
-            "expected no errors for -any, got: {diagnostics:?}"
-        );
+        assert!(diagnostics.is_empty(), "expected no errors for -any, got: {diagnostics:?}");
     });
 }
 
 #[test]
 fn check_non_null_type_property_access_on_possibly_undefined_emits_ts18048() {
-    with_checker!(
-        "declare var x: string | undefined; x.length;",
-        |checker, program| {
-            checker.check_program(program);
-            let diagnostics = checker.take_diagnostics();
-            assert!(
-                diagnostics
-                    .iter()
-                    .any(|d| d.message.to_string().contains("'x' is possibly 'undefined'.")),
-                "expected TS18048 for identifier with undefined, got: {diagnostics:?}"
-            );
-        }
-    );
+    with_checker!("declare var x: string | undefined; x.length;", |checker, program| {
+        checker.check_program(program);
+        let diagnostics = checker.take_diagnostics();
+        assert!(
+            diagnostics
+                .iter()
+                .any(|d| d.message.to_string().contains("'x' is possibly 'undefined'.")),
+            "expected TS18048 for identifier with undefined, got: {diagnostics:?}"
+        );
+    });
 }
 
 #[test]
 fn check_non_null_type_property_access_on_possibly_null_emits_ts18047() {
-    with_checker!(
-        "declare var x: string | null; x.length;",
-        |checker, program| {
-            checker.check_program(program);
-            let diagnostics = checker.take_diagnostics();
-            assert!(
-                diagnostics
-                    .iter()
-                    .any(|d| d.message.to_string().contains("'x' is possibly 'null'.")),
-                "expected TS18047 for identifier with null, got: {diagnostics:?}"
-            );
-        }
-    );
+    with_checker!("declare var x: string | null; x.length;", |checker, program| {
+        checker.check_program(program);
+        let diagnostics = checker.take_diagnostics();
+        assert!(
+            diagnostics.iter().any(|d| d.message.to_string().contains("'x' is possibly 'null'.")),
+            "expected TS18047 for identifier with null, got: {diagnostics:?}"
+        );
+    });
 }
 
 #[test]
 fn check_non_null_type_property_access_on_possibly_null_or_undefined_emits_ts18049() {
-    with_checker!(
-        "declare var x: string | null | undefined; x.length;",
-        |checker, program| {
-            checker.check_program(program);
-            let diagnostics = checker.take_diagnostics();
-            assert!(
-                diagnostics.iter().any(|d| d
-                    .message
-                    .to_string()
-                    .contains("'x' is possibly 'null' or 'undefined'.")),
-                "expected TS18049 for identifier with null|undefined, got: {diagnostics:?}"
-            );
-        }
-    );
+    with_checker!("declare var x: string | null | undefined; x.length;", |checker, program| {
+        checker.check_program(program);
+        let diagnostics = checker.take_diagnostics();
+        assert!(
+            diagnostics
+                .iter()
+                .any(|d| d.message.to_string().contains("'x' is possibly 'null' or 'undefined'.")),
+            "expected TS18049 for identifier with null|undefined, got: {diagnostics:?}"
+        );
+    });
 }
