@@ -1181,8 +1181,6 @@ impl Checker<'_> {
 
     /// Get the type of a call expression, checking for TS2349, TS2554, TS2345.
     fn get_type_of_call_expression(&mut self, call: &oxc_ast::ast::CallExpression<'_>, check_mode: CheckMode) -> TypeId {
-        use oxc_ast::ast::Argument;
-
         let callee_type = self.get_type_of_expression(&call.callee, None, check_mode);
         let callee_flags = self.type_arena.get_flags(callee_type);
 
@@ -1231,10 +1229,27 @@ impl Checker<'_> {
             return self.any_type;
         }
 
-        // Use the first signature (overload resolution deferred).
-        // No clone needed: `signatures` borrows from `self.type_arena` (lifetime 'a),
-        // which is independent of `&mut self` borrows on the checker.
-        let sig = &signatures[0];
+        // Fast path: single signature (no overload resolution needed).
+        if signatures.len() == 1 {
+            return self.check_call_against_signature(&signatures[0], call, check_mode);
+        }
+
+        // Multi-signature: overload resolution.
+        self.resolve_overloaded_call(signatures, call, check_mode)
+    }
+
+    /// Check a call expression against a single resolved signature.
+    ///
+    /// Evaluates arguments with contextual typing from the signature's parameter
+    /// types, checks arity (TS2554), handles generics, and checks argument
+    /// assignability (TS2345). Returns the effective return type.
+    fn check_call_against_signature(
+        &mut self,
+        sig: &oxc_types::Signature,
+        call: &oxc_ast::ast::CallExpression<'_>,
+        check_mode: CheckMode,
+    ) -> TypeId {
+        use oxc_ast::ast::Argument;
 
         // Extract signature info before any &mut self calls.
         let sig_flags = sig.flags;
@@ -1274,8 +1289,6 @@ impl Checker<'_> {
         }
 
         // --- Evaluate argument types once ---
-        // Collect all argument types up front to avoid double evaluation.
-        // For generic calls, these are used for both inference and checking.
         let arg_types: smallvec::SmallVec<[TypeId; 8]> = call
             .arguments
             .iter()
@@ -1295,45 +1308,20 @@ impl Checker<'_> {
             .collect();
 
         // --- Generic call handling ---
-        // If the signature has type parameters, infer or use explicit type arguments,
-        // then instantiate parameter/return types before checking.
-        let (effective_param_types, effective_return_type) = if !sig_type_params.is_empty() {
-            let type_args = if let Some(type_arg_node) = &call.type_arguments {
-                // Explicit type arguments: id<string>("hello")
-                type_arg_node
-                    .params
-                    .iter()
-                    .map(|t| self.get_type_from_type_node(t))
-                    .collect::<smallvec::SmallVec<[TypeId; 4]>>()
-            } else {
-                // Infer from arguments
-                let mut infer_ctx = crate::inference::InferenceContext::new(&sig_type_params);
-
-                for (i, &arg_type) in arg_types.iter().enumerate() {
-                    let raw_param_type = self.get_param_type_at(&param_type_ids, i, sig_flags);
-                    if let Some(param_type) = raw_param_type {
-                        self.infer_from_types(&mut infer_ctx, arg_type, param_type);
-                    }
-                }
-                self.get_inferred_types(&mut infer_ctx)
-            };
-
-            if let Some(mapper) =
-                crate::instantiation::TypeMapper::from_type_parameters(&sig_type_params, &type_args)
-            {
-                let instantiated_params: smallvec::SmallVec<[TypeId; 8]> =
-                    param_type_ids.iter().map(|&p| self.instantiate_type(p, &mapper)).collect();
-                let instantiated_return = self.instantiate_type(sig_return_type, &mapper);
-                (instantiated_params, instantiated_return)
-            } else {
-                (param_type_ids, sig_return_type)
-            }
-        } else {
-            (param_type_ids, sig_return_type)
-        };
+        let explicit_type_args: Option<smallvec::SmallVec<[TypeId; 4]>> =
+            call.type_arguments.as_ref().map(|ta| {
+                ta.params.iter().map(|t| self.get_type_from_type_node(t)).collect()
+            });
+        let (effective_param_types, effective_return_type) = self.instantiate_signature_for_call(
+            &sig_type_params,
+            param_type_ids,
+            sig_return_type,
+            sig_flags,
+            &arg_types,
+            &explicit_type_args,
+        );
 
         // --- Argument type checking (TS2345) ---
-        // Check each argument against the (possibly instantiated) parameter type.
         for (i, (arg, &arg_type)) in call.arguments.iter().zip(arg_types.iter()).enumerate() {
             let param_type = self.get_param_type_at(&effective_param_types, i, sig_flags);
 
@@ -1352,6 +1340,229 @@ impl Checker<'_> {
         }
 
         effective_return_type
+    }
+
+    /// Resolve an overloaded call expression.
+    ///
+    /// Iterates candidate signatures in declaration order. For each candidate:
+    /// 1. Check argument count (arity).
+    /// 2. Check type argument arity (if explicit type args provided).
+    /// 3. If generic: infer/validate type args, instantiate.
+    /// 4. Check each argument type against parameter type (applicability).
+    /// First fully matching candidate wins.
+    ///
+    /// If no candidate matches, emits diagnostics from the best failing candidate.
+    fn resolve_overloaded_call(
+        &mut self,
+        signatures: &[oxc_types::Signature],
+        call: &oxc_ast::ast::CallExpression<'_>,
+        check_mode: CheckMode,
+    ) -> TypeId {
+        use oxc_ast::ast::Argument;
+
+        let actual_args = call.arguments.len();
+
+        // Phase 1: Evaluate all argument types once without contextual typing
+        // from any specific overload.
+        let arg_types: smallvec::SmallVec<[TypeId; 8]> = call
+            .arguments
+            .iter()
+            .map(|arg| match arg {
+                Argument::SpreadElement(spread) => {
+                    self.get_type_of_expression(&spread.argument, None, check_mode)
+                }
+                _ => {
+                    let expr = arg.to_expression();
+                    self.get_type_of_expression(expr, None, check_mode)
+                }
+            })
+            .collect();
+
+        // Extract explicit type arguments once (same across all candidates).
+        let explicit_type_args: Option<smallvec::SmallVec<[TypeId; 4]>> =
+            call.type_arguments.as_ref().map(|ta| {
+                ta.params.iter().map(|t| self.get_type_from_type_node(t)).collect()
+            });
+
+        // Phase 2: Try each candidate.
+        // Track failures separately: argument arity errors produce better
+        // diagnostics (TS2554) than type argument arity errors.
+        let mut last_arg_arity_failed: Option<usize> = None;
+        let mut last_type_arg_arity_failed: Option<usize> = None;
+        let mut last_type_failed: Option<usize> = None;
+
+        for (i, sig) in signatures.iter().enumerate() {
+            // 2.1 Arity check
+            let sig_min_args = sig.min_argument_count as usize;
+            let max_args = if sig.flags.intersects(oxc_types::SignatureFlags::HasRestParameter) {
+                usize::MAX
+            } else {
+                sig.parameters.len()
+            };
+            if actual_args < sig_min_args || actual_args > max_args {
+                last_arg_arity_failed = Some(i);
+                continue;
+            }
+
+            // 2.2 Type argument arity check
+            if let Some(ref ta) = explicit_type_args {
+                if ta.len() != sig.type_parameters.len() {
+                    last_type_arg_arity_failed = Some(i);
+                    continue;
+                }
+            }
+
+            // Extract parameter info from the arena-borrowed signature before
+            // making &mut self calls.
+            let sig_flags = sig.flags;
+            let sig_return_type = sig.return_type;
+            let sig_type_params: smallvec::SmallVec<[TypeId; 4]> = sig.type_parameters.clone();
+            let param_type_ids: smallvec::SmallVec<[TypeId; 8]> =
+                sig.parameters.iter().map(|p| p.type_id).collect();
+
+            // 2.3 Generic handling + instantiation
+            let (effective_params, effective_return) = self.instantiate_signature_for_call(
+                &sig_type_params,
+                param_type_ids,
+                sig_return_type,
+                sig_flags,
+                &arg_types,
+                &explicit_type_args,
+            );
+
+            // 2.4 Applicability check
+            let mut applicable = true;
+            for (j, &arg_type) in arg_types.iter().enumerate() {
+                let param_type = self.get_param_type_at(&effective_params, j, sig_flags);
+                if let Some(param_type) = param_type {
+                    if !self.type_arena.get_flags(param_type).intersects(TypeFlags::Any)
+                        && !self.is_type_assignable_to(arg_type, param_type)
+                    {
+                        applicable = false;
+                        break;
+                    }
+                }
+            }
+
+            if !applicable {
+                last_type_failed = Some(i);
+                continue;
+            }
+
+            // 2.5 Match found — return without diagnostics.
+            return effective_return;
+        }
+
+        // Phase 3: No match — emit diagnostics from the best failing candidate.
+        // Priority: argument type error > argument arity error > type arg arity error.
+        let error_idx = last_type_failed
+            .or(last_arg_arity_failed)
+            .or(last_type_arg_arity_failed)
+            .unwrap_or(signatures.len() - 1);
+
+        let error_sig = &signatures[error_idx];
+        let sig_flags = error_sig.flags;
+        let sig_min_args = error_sig.min_argument_count as usize;
+        let sig_param_count = error_sig.parameters.len();
+        let sig_return_type = error_sig.return_type;
+        let sig_type_params: smallvec::SmallVec<[TypeId; 4]> = error_sig.type_parameters.clone();
+        let param_type_ids: smallvec::SmallVec<[TypeId; 8]> =
+            error_sig.parameters.iter().map(|p| p.type_id).collect();
+
+        // Arity diagnostic (TS2554)
+        let max_args = if sig_flags.intersects(oxc_types::SignatureFlags::HasRestParameter) {
+            usize::MAX
+        } else {
+            sig_param_count
+        };
+        if actual_args < sig_min_args || actual_args > max_args {
+            let expected = if sig_min_args == max_args {
+                format!("{}", sig_min_args)
+            } else if max_args == usize::MAX {
+                format!("at least {}", sig_min_args)
+            } else {
+                format!("{}-{max_args}", sig_min_args)
+            };
+            self.diagnostics.push(
+                OxcDiagnostic::error(format!(
+                    "Expected {expected} arguments, but got {actual_args}."
+                ))
+                .with_error_code("ts", "2554")
+                .with_label(call.span),
+            );
+        }
+
+        // Instantiate error signature if generic, computing both params and return.
+        let (effective_params, effective_return) = self.instantiate_signature_for_call(
+            &sig_type_params,
+            param_type_ids,
+            sig_return_type,
+            sig_flags,
+            &arg_types,
+            &explicit_type_args,
+        );
+
+        // Argument type diagnostics (TS2345)
+        for (j, (arg, &arg_type)) in call.arguments.iter().zip(arg_types.iter()).enumerate() {
+            let param_type = self.get_param_type_at(&effective_params, j, sig_flags);
+            if let Some(param_type) = param_type {
+                if !self.type_arena.get_flags(param_type).intersects(TypeFlags::Any) {
+                    let span = match arg {
+                        Argument::SpreadElement(s) => s.span,
+                        _ => arg.to_expression().span(),
+                    };
+                    self.check_type_assignable_to_and_report(
+                        arg_type, param_type, span, "2345",
+                        |s, t| format!("Argument of type '{s}' is not assignable to parameter of type '{t}'."),
+                    );
+                }
+            }
+        }
+
+        effective_return
+    }
+
+    /// Instantiate a signature's parameter and return types for a call.
+    ///
+    /// If the signature has type parameters, uses explicit type arguments or
+    /// infers them from `arg_types`, then instantiates via `TypeMapper`.
+    /// Non-generic signatures are returned unchanged.
+    fn instantiate_signature_for_call(
+        &mut self,
+        sig_type_params: &[TypeId],
+        param_type_ids: smallvec::SmallVec<[TypeId; 8]>,
+        sig_return_type: TypeId,
+        sig_flags: oxc_types::SignatureFlags,
+        arg_types: &[TypeId],
+        explicit_type_args: &Option<smallvec::SmallVec<[TypeId; 4]>>,
+    ) -> (smallvec::SmallVec<[TypeId; 8]>, TypeId) {
+        if sig_type_params.is_empty() {
+            return (param_type_ids, sig_return_type);
+        }
+
+        let type_args = if let Some(ta) = explicit_type_args {
+            ta.clone()
+        } else {
+            let mut infer_ctx = crate::inference::InferenceContext::new(sig_type_params);
+            for (i, &arg_type) in arg_types.iter().enumerate() {
+                let raw_param = self.get_param_type_at(&param_type_ids, i, sig_flags);
+                if let Some(param_type) = raw_param {
+                    self.infer_from_types(&mut infer_ctx, arg_type, param_type);
+                }
+            }
+            self.get_inferred_types(&mut infer_ctx)
+        };
+
+        if let Some(mapper) =
+            crate::instantiation::TypeMapper::from_type_parameters(sig_type_params, &type_args)
+        {
+            let inst_params: smallvec::SmallVec<[TypeId; 8]> =
+                param_type_ids.iter().map(|&p| self.instantiate_type(p, &mapper)).collect();
+            let inst_return = self.instantiate_type(sig_return_type, &mapper);
+            (inst_params, inst_return)
+        } else {
+            (param_type_ids, sig_return_type)
+        }
     }
 
     /// Get the parameter TypeId at a given argument index, handling rest parameters.
