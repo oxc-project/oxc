@@ -2,7 +2,7 @@ commit: 34725489
 
 checker_errors_typescript Summary:
 AST Parsed     : 7643/7643 (100.00%)
-Positive Passed: 1266/7643 (16.56%)
+Positive Passed: 1267/7643 (16.58%)
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/ArrowFunctionExpression1.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration10.ts
@@ -8693,8 +8693,6 @@ checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/co
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/contextualTyping/getSetAccessorContextualTyping.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/contextualTyping/objectLiteralContextualTyping.ts
-
-checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/contextualTyping/parenthesizedContexualTyping1.ts
 
 checker_errors: tasks/coverage/typescript/tests/cases/conformance/expressions/contextualTyping/parenthesizedContexualTyping2.ts
 
