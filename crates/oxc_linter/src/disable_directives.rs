@@ -4,7 +4,7 @@ use itertools::Itertools;
 use oxc_ast::Comment;
 use oxc_span::Span;
 use rust_lapper::{Interval, Lapper};
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::{FixKind, fixer::Fix};
 
@@ -149,6 +149,21 @@ impl DisabledRule {
     }
 }
 
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
+enum UsedDisableDirective {
+    All { comment_span: Span },
+    Single { name_span: Span },
+}
+
+impl From<&DisabledRule> for UsedDisableDirective {
+    fn from(value: &DisabledRule) -> Self {
+        match value {
+            DisabledRule::All { comment_span, .. } => Self::All { comment_span: *comment_span },
+            DisabledRule::Single { name_span, .. } => Self::Single { name_span: *name_span },
+        }
+    }
+}
+
 /// Represents a single rule within a disable/enable comment directive.
 ///
 /// Used when reporting unused disable directives or creating fixes to remove
@@ -269,13 +284,15 @@ pub struct DisableDirectives {
     disable_rule_comments: Box<[DisableRuleComment]>,
     /// Spans of unused enable directives
     unused_enable_comments: Box<[(DirectivePrefix, Option<String>, Span)]>,
-    /// Spans of used enable directives, to filter out unused
-    used_disable_comments: RefCell<Vec<DisabledRule>>,
+    /// Disable directives that were matched by at least one diagnostic.
+    used_disable_comments: RefCell<FxHashSet<UsedDisableDirective>>,
 }
 
 impl DisableDirectives {
-    fn mark_disable_directive_used(&self, disable_directive: DisabledRule) {
-        self.used_disable_comments.borrow_mut().push(disable_directive);
+    fn mark_disable_directive_used(&self, disable_directive: &DisabledRule) {
+        self.used_disable_comments
+            .borrow_mut()
+            .insert(UsedDisableDirective::from(disable_directive));
     }
 
     pub fn contains(&self, rule_name: &str, span: Span) -> bool {
@@ -332,7 +349,7 @@ impl DisableDirectives {
             };
 
             if span_covered {
-                self.mark_disable_directive_used(interval.val.clone());
+                self.mark_disable_directive_used(&interval.val);
                 has_match = true;
             }
         }
@@ -371,7 +388,7 @@ impl DisableDirectives {
                 let rules: Vec<RuleCommentRule> = group_vec
                     .iter()
                     .filter_map(|interval| {
-                        if used.contains(&interval.val) {
+                        if used.contains(&UsedDisableDirective::from(&interval.val)) {
                             return None;
                         }
                         match &interval.val {
@@ -458,7 +475,7 @@ impl DisableDirectivesBuilder {
             intervals: self.intervals,
             disable_rule_comments: self.disable_rule_comments.into_boxed_slice(),
             unused_enable_comments: self.unused_enable_comments.into_boxed_slice(),
-            used_disable_comments: RefCell::new(Vec::new()),
+            used_disable_comments: RefCell::new(FxHashSet::default()),
         }
     }
 
@@ -1677,7 +1694,7 @@ mod tests {
                 let fix_span_0 = comment_fix_span(&comments[0], source_text);
                 let fix_span_1 = comment_fix_span(&comments[1], source_text);
 
-                directives.mark_disable_directive_used(DisabledRule::Single {
+                directives.mark_disable_directive_used(&DisabledRule::Single {
                     directive_prefix: directive_prefix_for_comment(&comments[0], source_text),
                     rule_name: "no-console".to_string(),
                     name_span: Span::sized(comments[0].content_span().start + 16, 10),
@@ -1685,7 +1702,7 @@ mod tests {
                     fix_span: fix_span_0,
                     is_next_line: false,
                 });
-                directives.mark_disable_directive_used(DisabledRule::Single {
+                directives.mark_disable_directive_used(&DisabledRule::Single {
                     directive_prefix: directive_prefix_for_comment(&comments[1], source_text),
                     rule_name: "no-debugger".to_string(),
                     name_span: Span::sized(comments[1].content_span().start + 16, 11),
