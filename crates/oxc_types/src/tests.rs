@@ -135,3 +135,14 @@ fn arena_with_capacity() {
     assert!(arena.is_empty());
     assert_eq!(arena.len(), 0);
 }
+
+#[test]
+fn type_data_size() {
+    use crate::TypeData;
+    let size = std::mem::size_of::<TypeData>();
+    println!("TypeData size: {size} bytes");
+    assert!(
+        size <= 40,
+        "TypeData enum grew beyond 40 bytes: {size} bytes. Consider boxing large variants.",
+    );
+}

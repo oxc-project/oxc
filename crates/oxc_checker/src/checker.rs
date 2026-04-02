@@ -353,13 +353,13 @@ impl<'a> Checker<'a> {
         let this_type = type_arena.new_type(
             TypeFlags::TypeParameter,
             ObjectFlags::None,
-            TypeData::TypeParameter(TypeParameterType {
+            TypeData::TypeParameter(Box::new(TypeParameterType {
                 name: None,
                 constraint: None,
                 target: None,
                 is_this_type: true,
                 resolved_default_type: None,
-            }),
+            })),
             None,
         );
 

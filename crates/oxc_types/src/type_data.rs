@@ -28,11 +28,11 @@ pub enum TypeData {
     /// Unifies the old Object and Interface variants. The `kind` field on
     /// `StructuredType` distinguishes anonymous objects from named interfaces.
     ///
-    /// Boxed to keep the `TypeData` enum compact (~56 bytes instead of 208).
-    /// `StructuredType` is the largest variant (208 bytes) due to its Vec/HashMap
-    /// fields, but represents only ~15% of types in a typical codebase. Boxing
-    /// avoids penalizing the 85% of types that are small (intrinsics, literals,
-    /// unions, type parameters, etc.).
+    /// Boxed to keep the `TypeData` enum compact (~40 bytes instead of 208).
+    /// `StructuredType` is the largest variant (176 bytes) due to its Vec fields,
+    /// but represents only ~15% of types in a typical codebase. Boxing avoids
+    /// penalizing the 85% of types that are small (intrinsics, literals, unions,
+    /// type parameters, etc.).
     Structured(Box<StructuredType>),
 
     /// Type reference: instantiation of a generic type or interface.
@@ -64,7 +64,11 @@ pub enum TypeData {
     Intersection(IntersectionType),
 
     /// Type parameter: `T` in `<T>`.
-    TypeParameter(TypeParameterType),
+    ///
+    /// Boxed because `TypeParameterType` (56 bytes due to `Option<CompactStr>`)
+    /// would otherwise be the largest unboxed variant. Type parameters are
+    /// infrequently accessed in hot paths (assignability, inference).
+    TypeParameter(Box<TypeParameterType>),
 
     /// Index type: `keyof T`.
     Index(IndexType),
@@ -73,7 +77,10 @@ pub enum TypeData {
     IndexedAccess(IndexedAccessType),
 
     /// Template literal type: `` `hello ${string}` ``.
-    TemplateLiteral(TemplateLiteralType),
+    ///
+    /// Boxed because `TemplateLiteralType` (48 bytes) contains a `Vec` and
+    /// `SmallVec` that already heap-allocate. Template literal types are rare.
+    TemplateLiteral(Box<TemplateLiteralType>),
 
     /// String mapping type: `Uppercase<T>`, `Lowercase<T>`, etc.
     StringMapping(StringMappingType),
@@ -82,7 +89,11 @@ pub enum TypeData {
     Substitution(SubstitutionType),
 
     /// Conditional type: `T extends U ? X : Y`.
-    Conditional(ConditionalType),
+    ///
+    /// Boxed because `ConditionalType` (48 bytes due to `SmallVec` for infer
+    /// type parameters) would otherwise dominate the enum size. Conditional
+    /// types are created infrequently (2 sites) and matched rarely.
+    Conditional(Box<ConditionalType>),
 
     /// Function type (arrow function, function expression, function declaration).
     /// Most functions have exactly 1 call signature.

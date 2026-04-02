@@ -79,14 +79,14 @@ impl Checker<'_> {
         self.type_arena.new_type(
             TypeFlags::Conditional,
             ObjectFlags::None,
-            TypeData::Conditional(ConditionalType {
+            TypeData::Conditional(Box::new(ConditionalType {
                 check_type,
                 extends_type,
                 true_type,
                 false_type,
                 is_distributive,
                 infer_type_parameters,
-            }),
+            })),
             None,
         )
     }
@@ -135,14 +135,14 @@ impl Checker<'_> {
             return self.type_arena.new_type(
                 TypeFlags::Conditional,
                 ObjectFlags::None,
-                TypeData::Conditional(ConditionalType {
+                TypeData::Conditional(Box::new(ConditionalType {
                     check_type,
                     extends_type: resolved_extends,
                     true_type: resolved_true,
                     false_type,
                     is_distributive,
                     infer_type_parameters: SmallVec::from_slice(infer_params),
-                }),
+                })),
                 None,
             );
         }

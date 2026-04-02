@@ -624,13 +624,13 @@ impl Checker<'_> {
         let type_param = self.type_arena.new_type(
             TypeFlags::TypeParameter,
             ObjectFlags::None,
-            TypeData::TypeParameter(TypeParameterType {
+            TypeData::TypeParameter(Box::new(TypeParameterType {
                 name: Some(CompactStr::new(mapped.key.name.as_str())),
                 constraint: None, // set after resolving constraint
                 target: None,
                 is_this_type: false,
                 resolved_default_type: None,
-            }),
+            })),
             None,
         );
 
@@ -706,13 +706,13 @@ impl Checker<'_> {
         let type_id = self.type_arena.new_type(
             TypeFlags::TypeParameter,
             ObjectFlags::None,
-            TypeData::TypeParameter(TypeParameterType {
+            TypeData::TypeParameter(Box::new(TypeParameterType {
                 name: Some(param_name),
                 constraint: None, // resolved lazily via get_constraint_of_type_parameter
                 target: None,
                 is_this_type: false,
                 resolved_default_type: None,
-            }),
+            })),
             symbol_id.map(|s| (self.file_idx, s)),
         );
 
