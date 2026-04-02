@@ -39,6 +39,19 @@ impl Checker<'_> {
         contextual_type: Option<TypeId>,
         check_mode: CheckMode,
     ) -> TypeId {
+        let span = expr.span();
+        let key = (span.start as u64) << 32 | span.end as u64;
+
+        // Post-checking fallback: read the cache populated during check_program().
+        // Only used when the flow graph is gone (post-check) and no contextual type
+        // is requested, to avoid interfering with live checking. Matches tsgo's
+        // getTypeOfExpression reading flowTypeCache before computing.
+        if self.current_flow_graph.node_flow_map.is_empty() && contextual_type.is_none() {
+            if let Some(&cached) = self.expression_type_cache.get(&key) {
+                return cached;
+            }
+        }
+
         // Guard against infinite recursion (e.g., `const x = x`)
         if self.recursion_depth > 100 {
             return self.any_type;
@@ -49,11 +62,8 @@ impl Checker<'_> {
 
         // Cache if we're inside check_program() (flow graph is active).
         // This captures flow-narrowed and contextually-typed results so
-        // post-checking queries via get_type_at_location() return the
-        // same types the checker computed.
+        // post-checking queries return the same types the checker computed.
         if !self.current_flow_graph.node_flow_map.is_empty() {
-            let span = expr.span();
-            let key = (span.start as u64) << 32 | span.end as u64;
             self.expression_type_cache.insert(key, result);
         }
 
@@ -67,17 +77,21 @@ impl Checker<'_> {
         check_mode: CheckMode,
     ) -> TypeId {
         match expr {
-            Expression::StringLiteral(lit) => self.get_or_create_string_literal_type(&lit.value),
-            Expression::NumericLiteral(lit) => self.get_or_create_number_literal_type(lit.value),
+            Expression::StringLiteral(lit) => {
+                let regular = self.get_or_create_string_literal_type(&lit.value);
+                self.get_fresh_type_of_literal(regular)
+            }
+            Expression::NumericLiteral(lit) => {
+                let regular = self.get_or_create_number_literal_type(lit.value);
+                self.get_fresh_type_of_literal(regular)
+            }
             Expression::BigIntLiteral(lit) => {
-                self.get_or_create_bigint_literal_type(lit.value.as_str())
+                let regular = self.get_or_create_bigint_literal_type(lit.value.as_str());
+                self.get_fresh_type_of_literal(regular)
             }
             Expression::BooleanLiteral(lit) => {
-                if lit.value {
-                    self.true_type
-                } else {
-                    self.false_type
-                }
+                let regular = if lit.value { self.true_type } else { self.false_type };
+                self.get_fresh_type_of_literal(regular)
             }
             Expression::NullLiteral(_) => self.null_type,
             Expression::Identifier(ident) => self.get_type_of_identifier(ident),
@@ -1027,15 +1041,14 @@ impl Checker<'_> {
             return self.type_arena.new_type(
                 TypeFlags::Object,
                 ObjectFlags::Anonymous,
-                TypeData::Structured(StructuredType {
-                    member_map: build_member_map(&properties),
+                TypeData::Structured(Box::new(StructuredType {
                     properties,
                     string_index_type: None,
                     number_index_type: None,
                     call_signatures: Vec::new(),
                     construct_signatures: Vec::new(),
                     kind: StructuredTypeKind::Anonymous { target: None },
-                }),
+                })),
                 Some((self.file_idx, symbol_id)),
             );
         };
@@ -1067,15 +1080,14 @@ impl Checker<'_> {
         self.type_arena.new_type(
             TypeFlags::Object,
             ObjectFlags::Anonymous,
-            TypeData::Structured(StructuredType {
-                member_map: build_member_map(&properties),
+            TypeData::Structured(Box::new(StructuredType {
                 properties,
                 string_index_type: None,
                 number_index_type: None,
                 call_signatures: Vec::new(),
                 construct_signatures: Vec::new(),
                 kind: StructuredTypeKind::Anonymous { target: None },
-            }),
+            })),
             Some((self.file_idx, symbol_id)),
         )
     }
@@ -1439,7 +1451,10 @@ impl Checker<'_> {
                 .with_label(expr.property.span),
             );
         }
-        result.unwrap_or(self.any_type)
+        // Freshen literal results so they widen correctly for mutable bindings
+        // (e.g., `var x = Colors.Cornflower` should widen from `0` to `number`).
+        let t = result.unwrap_or(self.any_type);
+        self.get_fresh_type_of_literal(t)
     }
 
     /// Get the apparent type of a type.
@@ -1955,13 +1970,20 @@ impl Checker<'_> {
                 self.boolean_type
             }
 
-            // Equality operators: no checkNonNullType (null/undefined comparisons are valid).
+            // Equality operators: evaluate operands to cache flow-narrowed types
+            // for subexpressions (e.g., `x` in `else if (x !== "bar")`) so
+            // post-checking queries return the narrowed type.
             // TODO: checkNaNEquality, isTypeEqualityComparableTo, literal object checks
             BinaryOperator::Equality
             | BinaryOperator::Inequality
             | BinaryOperator::StrictEquality
-            | BinaryOperator::StrictInequality
-            | BinaryOperator::In
+            | BinaryOperator::StrictInequality => {
+                self.get_type_of_expression(&expr.left, None, check_mode);
+                self.get_type_of_expression(&expr.right, None, check_mode);
+                self.boolean_type
+            }
+
+            BinaryOperator::In
             | BinaryOperator::Instanceof => self.boolean_type,
 
             // Arithmetic operators (not +): validate operands and return number or bigint.

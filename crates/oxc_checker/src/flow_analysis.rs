@@ -132,6 +132,12 @@ impl Checker<'_> {
                 FlowNodeKind::TrueCondition { node_id, antecedent } => {
                     let node_id = *node_id;
                     let antecedent = *antecedent;
+                    // Always check cache for condition nodes — they're expensive
+                    // (involve narrowing) and frequently re-walked in consecutive
+                    // conditions like `if (x === a) {} if (x === b) {} ...`.
+                    if let Some(&cached) = self.flow_type_cache.get(&(current_id, symbol_id)) {
+                        return cached;
+                    }
                     let result = self.handle_condition_flow(
                         flow_graph,
                         antecedent,
@@ -142,15 +148,16 @@ impl Checker<'_> {
                         declared_type,
                         current_depth,
                     );
-                    if is_shared {
-                        self.flow_type_cache.insert((current_id, symbol_id), result);
-                    }
+                    self.flow_type_cache.insert((current_id, symbol_id), result);
                     return result;
                 }
 
                 FlowNodeKind::FalseCondition { node_id, antecedent } => {
                     let node_id = *node_id;
                     let antecedent = *antecedent;
+                    if let Some(&cached) = self.flow_type_cache.get(&(current_id, symbol_id)) {
+                        return cached;
+                    }
                     let result = self.handle_condition_flow(
                         flow_graph,
                         antecedent,
@@ -161,9 +168,7 @@ impl Checker<'_> {
                         declared_type,
                         current_depth,
                     );
-                    if is_shared {
-                        self.flow_type_cache.insert((current_id, symbol_id), result);
-                    }
+                    self.flow_type_cache.insert((current_id, symbol_id), result);
                     return result;
                 }
 
@@ -543,7 +548,10 @@ impl Checker<'_> {
 
     // ── Equality narrowing ─────────────────────────────────────────────
 
-    /// Try to narrow via `expr === null` / `expr !== undefined`.
+    /// Try to narrow a type via an equality comparison (`===`, `!==`, `==`, `!=`).
+    ///
+    /// Handles null/undefined narrowing and general literal value narrowing.
+    /// Mirrors tsgo's `narrowTypeByEquality`.
     fn try_narrow_by_equality(
         &mut self,
         type_id: TypeId,
@@ -564,16 +572,217 @@ impl Checker<'_> {
             return None;
         }
 
-        // value_expr must be null or undefined.
+        // null/undefined: use specialized path (handles strict vs loose semantics).
         let is_null = matches!(value_expr, Expression::NullLiteral(_));
         let is_undefined =
             matches!(value_expr, Expression::Identifier(id) if id.name == "undefined");
-
-        if !is_null && !is_undefined {
-            return None;
+        if is_null || is_undefined {
+            return Some(self.narrow_by_null_undefined(type_id, is_null, assume_eq, is_strict));
         }
 
-        Some(self.narrow_by_null_undefined(type_id, is_null, assume_eq, is_strict))
+        // Get the type of the value expression for general equality narrowing.
+        // Uses a non-flow-narrowing lookup to avoid recursive narrowing chains.
+        let value_type = self.get_type_for_narrowing_value(value_expr);
+
+        Some(self.narrow_by_value_equality(type_id, value_type, assume_eq, is_strict))
+    }
+
+    /// Get the type of an expression for use as a narrowing comparison value.
+    ///
+    /// Uses non-flow-narrowing lookups for identifiers to avoid recursive
+    /// narrowing chains (narrowing `x` by `x === y` evaluating `y`'s flow type
+    /// at the same condition). For literals, returns the type directly.
+    fn get_type_for_narrowing_value(&mut self, expr: &Expression<'_>) -> TypeId {
+        match expr {
+            Expression::StringLiteral(lit) => self.get_or_create_string_literal_type(&lit.value),
+            Expression::NumericLiteral(lit) => self.get_or_create_number_literal_type(lit.value),
+            Expression::BigIntLiteral(lit) => {
+                self.get_or_create_bigint_literal_type(lit.value.as_str())
+            }
+            Expression::BooleanLiteral(lit) => {
+                if lit.value { self.true_type } else { self.false_type }
+            }
+            Expression::Identifier(ident) => {
+                // Use the symbol's declared type, not the flow-narrowed type.
+                if let Some(ref_id) = ident.reference_id.get() {
+                    let reference = self.semantic().scoping().get_reference(ref_id);
+                    if let Some(sym_id) = reference.symbol_id() {
+                        return self.get_type_of_symbol(sym_id);
+                    }
+                }
+                self.any_type
+            }
+            Expression::UnaryExpression(unary)
+                if unary.operator == oxc_syntax::operator::UnaryOperator::UnaryNegation =>
+            {
+                if let Expression::NumericLiteral(lit) = &unary.argument {
+                    return self.get_or_create_number_literal_type(-lit.value);
+                }
+                self.get_type_of_expression(expr, None, CheckMode::TYPE_ONLY)
+            }
+            _ => self.get_type_of_expression(expr, None, CheckMode::TYPE_ONLY),
+        }
+    }
+
+    /// Narrow a type by equality comparison with a non-null/non-undefined value.
+    ///
+    /// True branch (`assume_eq`): filter to types comparable to value, then
+    /// replace broad primitives with their specific literal equivalents.
+    /// False branch (`!assume_eq`): if value is a unit type, filter out
+    /// matching unit-like types.
+    ///
+    /// Mirrors tsgo's `narrowTypeByEquality` (non-nullable branch).
+    fn narrow_by_value_equality(
+        &mut self,
+        type_id: TypeId,
+        value_type: TypeId,
+        assume_eq: bool,
+        is_strict: bool,
+    ) -> TypeId {
+        let type_flags = self.type_arena.get_flags(type_id);
+
+        // Don't narrow `any`.
+        if type_flags.intersects(TypeFlags::Any) {
+            return type_id;
+        }
+
+        // For strict equality with `unknown`, narrow to the value type directly.
+        if is_strict && type_flags.intersects(TypeFlags::Unknown) {
+            let value_flags = self.type_arena.get_flags(value_type);
+            if assume_eq
+                && value_flags.intersects(TypeFlags::Primitive | TypeFlags::NonPrimitive)
+            {
+                return value_type;
+            }
+        }
+
+        if assume_eq {
+            let filtered = self.filter_type_by_comparability(type_id, value_type);
+            return self.replace_primitives_with_literals(filtered, value_type);
+        }
+
+        // False branch: remove matching unit types.
+        let value_flags = self.type_arena.get_flags(value_type);
+        if value_flags.intersects(TypeFlags::Unit) {
+            return self.filter_out_comparable_unit_type(type_id, value_type);
+        }
+
+        type_id
+    }
+
+    /// Filter a type to keep only constituents comparable to `value_type`.
+    fn filter_type_by_comparability(&mut self, type_id: TypeId, value_type: TypeId) -> TypeId {
+        let flags = self.type_arena.get_flags(type_id);
+        if flags.intersects(TypeFlags::Union) {
+            let constituents = match self.type_arena.get_data(type_id) {
+                TypeData::Union(u) => u.types.clone(),
+                _ => return type_id,
+            };
+            let filtered: Vec<TypeId> = constituents
+                .iter()
+                .copied()
+                .filter(|&t| self.are_types_comparable(t, value_type))
+                .collect();
+            if filtered.is_empty() {
+                return self.never_type;
+            }
+            return self.get_or_create_union_type(filtered);
+        }
+        if self.are_types_comparable(type_id, value_type) {
+            type_id
+        } else {
+            self.never_type
+        }
+    }
+
+    /// Filter out unit-like types comparable to `value_type` (false branch).
+    fn filter_out_comparable_unit_type(&mut self, type_id: TypeId, value_type: TypeId) -> TypeId {
+        let flags = self.type_arena.get_flags(type_id);
+        if flags.intersects(TypeFlags::Union) {
+            let constituents = match self.type_arena.get_data(type_id) {
+                TypeData::Union(u) => u.types.clone(),
+                _ => return type_id,
+            };
+            let filtered: Vec<TypeId> = constituents
+                .iter()
+                .copied()
+                .filter(|&t| {
+                    let t_flags = self.type_arena.get_flags(t);
+                    !(t_flags.intersects(TypeFlags::Unit)
+                        && self.are_types_comparable(t, value_type))
+                })
+                .collect();
+            if filtered.is_empty() {
+                return self.never_type;
+            }
+            return self.get_or_create_union_type(filtered);
+        }
+        if flags.intersects(TypeFlags::Unit) && self.are_types_comparable(type_id, value_type) {
+            self.never_type
+        } else {
+            type_id
+        }
+    }
+
+    /// Replace broad primitive types with corresponding literal types from the value.
+    ///
+    /// E.g., if filtered type is `string` and value is `"foo"`, returns `"foo"`.
+    /// Mirrors tsgo's `replacePrimitivesWithLiterals`.
+    fn replace_primitives_with_literals(
+        &mut self,
+        type_with_primitives: TypeId,
+        type_with_literals: TypeId,
+    ) -> TypeId {
+        let prim_flags = self.type_arena.get_flags(type_with_primitives);
+        let lit_flags = self.type_arena.get_flags(type_with_literals);
+
+        let has_replaceable = prim_flags
+            .intersects(TypeFlags::String | TypeFlags::Number | TypeFlags::BigInt);
+        let has_literals = lit_flags.intersects(
+            TypeFlags::StringLiteral | TypeFlags::NumberLiteral | TypeFlags::BigIntLiteral,
+        );
+        if !has_replaceable || !has_literals {
+            return type_with_primitives;
+        }
+
+        if prim_flags.intersects(TypeFlags::Union) {
+            let constituents = match self.type_arena.get_data(type_with_primitives) {
+                TypeData::Union(u) => u.types.clone(),
+                _ => return type_with_primitives,
+            };
+            let mapped: Vec<TypeId> = constituents
+                .iter()
+                .copied()
+                .map(|t| self.replace_single_primitive(t, type_with_literals))
+                .collect();
+            return self.get_or_create_union_type(mapped);
+        }
+
+        self.replace_single_primitive(type_with_primitives, type_with_literals)
+    }
+
+    /// Replace a single primitive type with a literal type from the source.
+    fn replace_single_primitive(&self, primitive: TypeId, literal_source: TypeId) -> TypeId {
+        let prim_flags = self.type_arena.get_flags(primitive);
+        let lit_flags = self.type_arena.get_flags(literal_source);
+
+        if prim_flags.intersects(TypeFlags::String)
+            && lit_flags.intersects(TypeFlags::StringLiteral)
+        {
+            return literal_source;
+        }
+        if prim_flags.intersects(TypeFlags::Number)
+            && lit_flags.intersects(TypeFlags::NumberLiteral)
+        {
+            return literal_source;
+        }
+        if prim_flags.intersects(TypeFlags::BigInt)
+            && lit_flags.intersects(TypeFlags::BigIntLiteral)
+        {
+            return literal_source;
+        }
+
+        primitive
     }
 
     /// Narrow a type by null/undefined equality check.
