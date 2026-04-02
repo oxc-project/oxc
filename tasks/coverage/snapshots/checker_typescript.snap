@@ -2,7 +2,7 @@ commit: 34725489
 
 checker_typescript Summary:
 AST Parsed     : 4439/4439 (100.00%)
-Positive Passed: 642/4439 (14.46%)
+Positive Passed: 657/4439 (14.80%)
 checker: tasks/coverage/typescript/tests/cases/compiler/2dArrays.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/ClassDeclarationWithInvalidConstOnPropertyDeclaration2.ts
@@ -1071,8 +1071,6 @@ checker: tasks/coverage/typescript/tests/cases/compiler/declFileForClassWithPriv
 
 checker: tasks/coverage/typescript/tests/cases/compiler/declFileForExportedImport.ts
 
-checker: tasks/coverage/typescript/tests/cases/compiler/declFileForFunctionTypeAsTypeParameter.ts
-
 checker: tasks/coverage/typescript/tests/cases/compiler/declFileForInterfaceWithRestParams.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/declFileGenericType2.ts
@@ -1598,8 +1596,6 @@ checker: tasks/coverage/typescript/tests/cases/compiler/doubleUnderscoreMappedTy
 checker: tasks/coverage/typescript/tests/cases/compiler/doubleUnderscoreReactNamespace.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/dtsEmitTripleSlashAvoidUnnecessaryResolutionMode.ts
-
-checker: tasks/coverage/typescript/tests/cases/compiler/duplicateConstructorOverloadSignature2.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/duplicateLabel3.ts
 
@@ -2147,8 +2143,6 @@ checker: tasks/coverage/typescript/tests/cases/compiler/genericClassImplementing
 
 checker: tasks/coverage/typescript/tests/cases/compiler/genericClassPropertyInheritanceSpecialization.ts
 
-checker: tasks/coverage/typescript/tests/cases/compiler/genericClassStaticMethod.ts
-
 checker: tasks/coverage/typescript/tests/cases/compiler/genericClasses4.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/genericClassesInModule.ts
@@ -2200,8 +2194,6 @@ checker: tasks/coverage/typescript/tests/cases/compiler/genericObjectCreationWit
 checker: tasks/coverage/typescript/tests/cases/compiler/genericObjectSpreadResultInSwitch.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/genericOverloadSignatures.ts
-
-checker: tasks/coverage/typescript/tests/cases/compiler/genericPrototypeProperty2.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/genericSpecializationToTypeLiteral1.ts
 
@@ -3375,8 +3367,6 @@ checker: tasks/coverage/typescript/tests/cases/compiler/objectLiteralArraySpecia
 
 checker: tasks/coverage/typescript/tests/cases/compiler/objectLiteralComputedNameNoDeclarationError.ts
 
-checker: tasks/coverage/typescript/tests/cases/compiler/objectLiteralDeclarationGeneration1.ts
-
 checker: tasks/coverage/typescript/tests/cases/compiler/objectLiteralEnumPropertyNames.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/objectLiteralIndexerNoImplicitAny.ts
@@ -3541,8 +3531,6 @@ checker: tasks/coverage/typescript/tests/cases/compiler/privacyTypeParametersOfC
 
 checker: tasks/coverage/typescript/tests/cases/compiler/privacyTypeParametersOfClassDeclFile.ts
 
-checker: tasks/coverage/typescript/tests/cases/compiler/privacyTypeParametersOfInterface.ts
-
 checker: tasks/coverage/typescript/tests/cases/compiler/privacyTypeParametersOfInterfaceDeclFile.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/privatePropertyInUnion.ts
@@ -3682,8 +3670,6 @@ checker: tasks/coverage/typescript/tests/cases/compiler/recursiveSpecializationO
 checker: tasks/coverage/typescript/tests/cases/compiler/recursiveTypeAliasWithSpreadConditionalReturnNotCircular.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/recursiveUnionTypeInference.ts
-
-checker: tasks/coverage/typescript/tests/cases/compiler/recursivelySpecializedConstructorDeclaration.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/redeclarationOfVarWithGenericType.ts
 
@@ -4000,8 +3986,6 @@ checker: tasks/coverage/typescript/tests/cases/compiler/staticMemberAccessOffDer
 checker: tasks/coverage/typescript/tests/cases/compiler/staticMemberWithStringAndNumberNames.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/staticMethodWithTypeParameterExtendsClauseDeclFile.ts
-
-checker: tasks/coverage/typescript/tests/cases/compiler/staticPrototypePropertyOnClass.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/stradac.ts
 
@@ -4343,11 +4327,7 @@ checker: tasks/coverage/typescript/tests/cases/compiler/typeParameterFixingWithC
 
 checker: tasks/coverage/typescript/tests/cases/compiler/typeParameterFixingWithContextSensitiveArguments5.ts
 
-checker: tasks/coverage/typescript/tests/cases/compiler/typeParameterInConstraint1.ts
-
 checker: tasks/coverage/typescript/tests/cases/compiler/typeParameterLeak.ts
-
-checker: tasks/coverage/typescript/tests/cases/compiler/typeParameterListWithTrailingComma1.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/typePartameterConstraintInstantiatedWithDefaultWhenCheckingDefault.ts
 
@@ -4518,8 +4498,6 @@ checker: tasks/coverage/typescript/tests/cases/compiler/unusedLocalsInRecursiveR
 checker: tasks/coverage/typescript/tests/cases/compiler/unusedParameterInCatchClause.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/unusedSetterInClass2.ts
-
-checker: tasks/coverage/typescript/tests/cases/compiler/unusedTypeParameters6.ts
 
 checker: tasks/coverage/typescript/tests/cases/compiler/unusedTypeParametersNotCheckedByNoUnusedLocals.ts
 
@@ -4748,8 +4726,6 @@ checker: tasks/coverage/typescript/tests/cases/conformance/classes/classStaticBl
 checker: tasks/coverage/typescript/tests/cases/conformance/classes/classStaticBlock/classStaticBlockUseBeforeDef4.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/classes/constructorDeclarations/constructorParameters/constructorImplementationWithDefaultValues.ts
-
-checker: tasks/coverage/typescript/tests/cases/conformance/classes/constructorDeclarations/constructorParameters/constructorOverloadsWithOptionalParameters.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/classes/constructorDeclarations/quotedConstructors.ts
 
@@ -6598,12 +6574,6 @@ checker: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Er
 checker: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/ArrowFunctions/parserX_ArrowFunction4.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Fuzz/parser768531.ts
-
-checker: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Generics/parserGenericClass1.ts
-
-checker: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Generics/parserGenericClass2.ts
-
-checker: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Generics/parserGenericConstraint1.ts
 
 checker: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Generics/parserGreaterThanTokenAmbiguity10.ts
 

@@ -536,14 +536,38 @@ impl Checker<'_> {
             UnaryOperator::LogicalNot => self.boolean_type,
             // delete returns boolean
             UnaryOperator::Delete => self.boolean_type,
-            // +x always returns number
+            // +x returns number; preserves literal type for numeric literals
             UnaryOperator::UnaryPlus => {
+                if let Expression::NumericLiteral(lit) = &expr.argument {
+                    let regular = self.get_or_create_number_literal_type(lit.value);
+                    return self.get_fresh_type_of_literal(regular);
+                }
                 let operand_type = self.get_type_of_expression(&expr.argument, None, check_mode);
                 self.check_non_null_type(operand_type, &expr.argument);
                 self.number_type
             }
-            // -x and ~x return number or bigint depending on operand
-            UnaryOperator::UnaryNegation | UnaryOperator::BitwiseNot => {
+            // -x returns number or bigint; preserves literal type for numeric/bigint literals
+            UnaryOperator::UnaryNegation => {
+                if let Expression::NumericLiteral(lit) = &expr.argument {
+                    let regular = self.get_or_create_number_literal_type(-lit.value);
+                    return self.get_fresh_type_of_literal(regular);
+                }
+                if let Expression::BigIntLiteral(lit) = &expr.argument {
+                    let negated = format!("-{}", lit.value.as_str());
+                    let regular = self.get_or_create_bigint_literal_type(&negated);
+                    return self.get_fresh_type_of_literal(regular);
+                }
+                let operand_type = self.get_type_of_expression(&expr.argument, None, check_mode);
+                self.check_non_null_type(operand_type, &expr.argument);
+                let operand_flags = self.type_arena.get_flags(operand_type);
+                if operand_flags.intersects(TypeFlags::BigIntLike) {
+                    self.bigint_type
+                } else {
+                    self.number_type
+                }
+            }
+            // ~x returns number or bigint depending on operand
+            UnaryOperator::BitwiseNot => {
                 let operand_type = self.get_type_of_expression(&expr.argument, None, check_mode);
                 self.check_non_null_type(operand_type, &expr.argument);
                 let operand_flags = self.type_arena.get_flags(operand_type);
