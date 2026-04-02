@@ -17,7 +17,7 @@ impl Checker<'_> {
     /// lib.d.ts), falls back to type-side (interface), then `any`.
     pub(crate) fn get_type_of_global_identifier(&self, name: &str) -> TypeId {
         match name {
-            "undefined" => self.undefined_type,
+            "undefined" => self.undefined_widening_type,
             _ => {
                 // Prefer value-side (declare var, declare function)
                 if let Some(t) = self.host.get_global_value_type(name) {
@@ -86,9 +86,10 @@ impl Checker<'_> {
                     let resolved = self
                         .resolve_destructured_binding_type(&decl.id, overall_type, symbol_id)
                         .unwrap_or(self.any_type);
-                    // Widen literal types for let/var destructured bindings
+                    // Widen literal types for let/var, then widen null/undefined → any
                     return if decl.kind != oxc_ast::ast::VariableDeclarationKind::Const {
-                        self.get_widened_literal_type(resolved)
+                        let widened = self.get_widened_literal_type(resolved);
+                        self.get_widened_type(widened)
                     } else {
                         resolved
                     };
@@ -97,9 +98,10 @@ impl Checker<'_> {
                     self.get_type_from_type_node(&annotation.type_annotation)
                 } else if let Some(init) = &decl.init {
                     let inferred = self.get_type_of_expression(init, None, CheckMode::TYPE_ONLY);
-                    // Widen literal types for non-const declarations
+                    // Widen literal types for non-const, then widen null/undefined → any
                     if decl.kind != oxc_ast::ast::VariableDeclarationKind::Const {
-                        self.get_widened_literal_type(inferred)
+                        let widened = self.get_widened_literal_type(inferred);
+                        self.get_widened_type(widened)
                     } else {
                         inferred
                     }

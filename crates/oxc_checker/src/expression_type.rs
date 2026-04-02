@@ -79,7 +79,7 @@ impl Checker<'_> {
                 let regular = if lit.value { self.true_type } else { self.false_type };
                 self.get_fresh_type_of_literal(regular)
             }
-            Expression::NullLiteral(_) => self.null_type,
+            Expression::NullLiteral(_) => self.null_widening_type,
             Expression::Identifier(ident) => self.get_type_of_identifier(ident),
             Expression::ParenthesizedExpression(paren) => {
                 self.get_type_of_expression(&paren.expression, contextual_type, check_mode)
@@ -633,9 +633,21 @@ impl Checker<'_> {
     /// Create a fresh object literal type from a list of properties.
     fn create_object_literal_type(&mut self, mut properties: Vec<PropertyInfo>) -> TypeId {
         sort_properties(&mut properties);
+        // Propagate widening/inferrability flags from property types upward
+        // (e.g., ContainsWideningType from null/undefined widening properties).
+        // Computed inline to avoid allocating an intermediate Vec of TypeIds.
+        let mut propagated = ObjectFlags::None;
+        for p in &properties {
+            propagated |= self.type_arena.get_object_flags(p.type_id);
+        }
+        propagated &= ObjectFlags::PropagatingFlags;
         self.type_arena.new_type(
             TypeFlags::Object,
-            ObjectFlags::Anonymous | ObjectFlags::ObjectLiteral | ObjectFlags::FreshLiteral,
+            ObjectFlags::Anonymous
+                | ObjectFlags::ObjectLiteral
+                | ObjectFlags::FreshLiteral
+                | ObjectFlags::ContainsObjectOrArrayLiteral
+                | propagated,
             TypeData::Structured(Box::new(StructuredType {
                 properties,
                 string_index_type: None,

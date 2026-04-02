@@ -99,6 +99,8 @@ pub struct Checker<'a> {
     #[allow(dead_code)]
     pub(crate) allow_unused_labels: Option<bool>,
     /// Resolved `strictNullChecks` (from option or inherited from `strict`).
+    /// Used at init to select widening vs regular null/undefined types;
+    /// the field is retained for future use by assignability checks.
     #[allow(dead_code)]
     pub(crate) strict_null_checks: bool,
     /// Resolved `strictPropertyInitialization` (from option or `strict`).
@@ -269,6 +271,9 @@ pub struct Checker<'a> {
     /// Queried by `get_type_at_location()` for post-checking type queries
     /// (conformance harness, LSP, etc.).
     pub(crate) expression_type_cache: FxHashMap<u64, TypeId>,
+    /// Cache for `get_widened_type` results — prevents re-widening and
+    /// ensures stable TypeIds for the same widened type.
+    pub(crate) widened_type_cache: FxHashMap<TypeId, TypeId>,
 
     // Well-known types, pre-allocated during construction.
     pub any_type: TypeId,
@@ -281,6 +286,13 @@ pub struct Checker<'a> {
     pub void_type: TypeId,
     pub undefined_type: TypeId,
     pub null_type: TypeId,
+    /// Widening null type: equals `null_type` in strict mode, carries
+    /// `ContainsWideningType` in non-strict mode. Returned by null literal
+    /// expressions; `get_widened_type` maps it to `any`.
+    pub(crate) null_widening_type: TypeId,
+    /// Widening undefined type: equals `undefined_type` in strict mode,
+    /// carries `ContainsWideningType` in non-strict mode.
+    pub(crate) undefined_widening_type: TypeId,
     pub never_type: TypeId,
     /// The `object` non-primitive type (not `Object` interface).
     pub non_primitive_type: TypeId,
@@ -400,6 +412,7 @@ impl<'a> Checker<'a> {
 
         // Resolve strict-family options: explicit value wins, otherwise inherit from `strict`.
         let resolve_strict = |opt: Option<bool>| opt.unwrap_or(options.strict);
+        let strict_null_checks = resolve_strict(options.strict_null_checks);
 
         Self {
             semantic,
@@ -409,7 +422,7 @@ impl<'a> Checker<'a> {
             // Resolved compiler options
             allow_unreachable_code: options.allow_unreachable_code,
             allow_unused_labels: options.allow_unused_labels,
-            strict_null_checks: resolve_strict(options.strict_null_checks),
+            strict_null_checks,
             strict_property_initialization: resolve_strict(options.strict_property_initialization),
             strict_function_types: resolve_strict(options.strict_function_types),
             no_implicit_any: resolve_strict(options.no_implicit_any),
@@ -445,6 +458,7 @@ impl<'a> Checker<'a> {
             current_flow_graph: crate::flow::FlowGraph::empty(),
             flow_type_cache: FxHashMap::default(),
             expression_type_cache: FxHashMap::default(),
+            widened_type_cache: FxHashMap::default(),
             any_type: intrinsics.any_type,
             unknown_type: intrinsics.unknown_type,
             string_type: intrinsics.string_type,
@@ -455,6 +469,12 @@ impl<'a> Checker<'a> {
             void_type: intrinsics.void_type,
             undefined_type: intrinsics.undefined_type,
             null_type: intrinsics.null_type,
+            // Widening types are ALWAYS used for null/undefined literal
+            // expressions — TypeScript widens standalone null/undefined to
+            // `any` for mutable declarations regardless of strictNullChecks.
+            // The strictNullChecks flag affects assignability, not widening.
+            null_widening_type: intrinsics.null_widening_type,
+            undefined_widening_type: intrinsics.undefined_widening_type,
             never_type: intrinsics.never_type,
             non_primitive_type: intrinsics.non_primitive_type,
             true_type: intrinsics.true_type,
