@@ -29,6 +29,7 @@
 //! schedules execution. `RefCell` on the export map swaps to `DashMap`.
 
 mod compiler_options;
+mod type_merge;
 
 pub use compiler_options::{CompilerOptions, ScriptTarget, validate_compiler_options};
 
@@ -36,7 +37,7 @@ use std::cell::RefCell;
 use std::path::{Path, PathBuf};
 use std::time::Instant;
 
-use oxc_checker::{Checker, allocate_intrinsics, find_lib_source};
+use oxc_checker::{Checker, allocate_intrinsics, find_lib_source, find_lib_sources};
 use oxc_checker_host::{CheckerHost, CheckerOptions, ExportedBinding, IntrinsicIds};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_resolver::{ResolveOptions, Resolver};
@@ -97,9 +98,6 @@ pub struct CheckResult {
     pub files_checked: usize,
 }
 
-/// Index of lib.d.ts in the file arrays. Always slot 0.
-const LIB_FILE_INDEX: usize = 0;
-
 /// Project-level state for cross-file type checking.
 pub struct Project {
     /// Shared intrinsic type IDs allocated once and reused by all per-file
@@ -109,23 +107,26 @@ pub struct Project {
     /// Module resolver (None for single-file mode or virtual files).
     resolver: Option<Resolver>,
 
+    /// Number of lib files at the start of `file_paths`.
+    /// Lib files occupy indices 0..lib_file_count. User files start after.
+    lib_file_count: usize,
+
     /// Ordered file paths in the project.
-    /// Index 0 is always the lib.d.ts slot (synthetic path).
-    /// User files start at index 1.
+    /// Indices 0..lib_file_count are lib files (e.g., lib.es5.d.ts,
+    /// lib.es2015.core.d.ts). User files start at lib_file_count.
     file_paths: Vec<PathBuf>,
 
     /// Resolved path → index into file_paths.
     file_index: FxHashMap<PathBuf, usize>,
 
     /// Source text for each file (read once, taken when FileCell is created).
-    /// Index 0 is lib.d.ts source (or None if not found).
     /// Uses RefCell so `ensure_file_checked` can take ownership of the
     /// source text without requiring `&mut self`.
     sources: RefCell<Vec<Option<String>>>,
 
     /// Explicit per-file SourceType overrides (from `new_multi_from_sources`).
     /// When `Some`, `ensure_file_checked` uses these instead of inferring
-    /// from file path extensions. Index 0 is lib.d.ts (always d.ts).
+    /// from file path extensions.
     source_types: Option<Vec<SourceType>>,
 
     /// Parsed and bound files, kept alive for cross-file Semantic access.
@@ -134,18 +135,18 @@ pub struct Project {
 
     /// Cross-file export map: (file_index, export_name) → ExportedBinding.
     /// Each binding has separate type-side and value-side types.
-    /// For lib.d.ts (index 0): all root scope declared + value types.
+    /// For lib files: all root scope declared + value types.
     /// For user files: ES module exports.
-    /// Uses RefCell for interior mutability — checkers hold &self (via
-    /// CheckerHost) while exports are being populated. Swappable to
-    /// DashMap for the parallel version.
     exports: RefCell<FxHashMap<(usize, CompactStr), ExportedBinding>>,
 
+    /// Merged global exports from all lib files.
+    /// Built by `merge_global_exports()` after all lib files are checked.
+    /// When multiple lib files export the same interface name, their types
+    /// are merged via `merge_interface_types`. `get_global_type` reads from
+    /// this map instead of the per-file export map.
+    global_exports: RefCell<FxHashMap<CompactStr, ExportedBinding>>,
+
     /// Accumulated type parameter constraints from all checked files.
-    /// Keyed by TypeParameter TypeId → constraint TypeId. Since TypeIds
-    /// are globally unique (shared arena), there are no collisions.
-    /// Per-file checkers query this via `get_type_param_constraint` when
-    /// they encounter a type parameter from another file.
     type_param_constraints: RefCell<FxHashMap<TypeId, TypeId>>,
 
     /// Set of files currently being checked, for circular import detection.
@@ -177,25 +178,63 @@ unsafe impl Send for Project {}
 unsafe impl Sync for Project {}
 
 impl Project {
-    /// Create a project with lib.d.ts as file 0.
+    /// Prepare lib file paths and sources from find_lib_sources results.
+    /// Falls back to find_lib_source (single file) if no lib files found.
+    fn prepare_lib_files(
+        lib_files: Vec<(String, String)>,
+    ) -> (Vec<PathBuf>, Vec<Option<String>>, usize) {
+        if lib_files.is_empty() {
+            let lib_source = find_lib_source();
+            (
+                vec![PathBuf::from("<lib.es5.d.ts>")],
+                vec![lib_source],
+                1,
+            )
+        } else {
+            let count = lib_files.len();
+            let paths: Vec<PathBuf> =
+                lib_files.iter().map(|(name, _)| PathBuf::from(name)).collect();
+            let srcs: Vec<Option<String>> =
+                lib_files.into_iter().map(|(_, src)| Some(src)).collect();
+            (paths, srcs, count)
+        }
+    }
+
+    /// Create a project with lib.es5.d.ts only.
     ///
     /// lib.d.ts is checked eagerly so the Project is immediately usable
     /// as a `CheckerHost` (global types available, intrinsics allocated).
-    /// The arena pointer is retained for lazy `resolve_import` calls.
     pub fn new(arena: &TypeArena) -> Self {
-        let intrinsics = allocate_intrinsics(arena);
-        let lib_source = find_lib_source();
+        Self::new_with_target(arena, None)
+    }
 
+    /// Create a project with lib files for the given target.
+    ///
+    /// If `target` is `None`, loads only lib.es5.d.ts (same as `new`).
+    /// If `target` is e.g. `Some(ScriptTarget::ES2015)`, loads lib.es5.d.ts
+    /// plus all ES2015 sub-libs, and merges overlapping interface declarations.
+    pub fn new_with_target(arena: &TypeArena, target: Option<ScriptTarget>) -> Self {
+        let intrinsics = allocate_intrinsics(arena);
+
+        // Determine which lib files to load
+        let lib_names = target
+            .map(|t| t.default_libs())
+            .unwrap_or(&["es5"]);
+        let lib_files = find_lib_sources(lib_names);
+        let (file_paths, sources, lib_count) = Self::prepare_lib_files(lib_files);
+
+        let file_count = file_paths.len();
         let project = Self {
             intrinsics,
             resolver: None,
-            // lib.d.ts is file 0
-            file_paths: vec![PathBuf::from("<lib.es5.d.ts>")],
+            lib_file_count: lib_count,
+            file_paths,
             file_index: FxHashMap::default(),
-            sources: RefCell::new(vec![lib_source]),
+            sources: RefCell::new(sources),
             source_types: None,
-            file_cells: RefCell::new(vec![None]),
+            file_cells: RefCell::new((0..file_count).map(|_| None).collect()),
             exports: RefCell::new(FxHashMap::default()),
+            global_exports: RefCell::new(FxHashMap::default()),
             type_param_constraints: RefCell::new(FxHashMap::default()),
             checking: RefCell::new(FxHashSet::default()),
             checked: RefCell::new(FxHashSet::default()),
@@ -206,37 +245,41 @@ impl Project {
             check_ms: RefCell::new(0.0),
             all_diagnostics: RefCell::new(Vec::new()),
         };
-        project.ensure_file_checked(LIB_FILE_INDEX);
+
+        // Check all lib files sequentially, then merge their exports
+        for i in 0..lib_count {
+            project.ensure_file_checked(i);
+        }
+        project.merge_global_exports();
+
         project
     }
 
     /// Create a project for multi-file checking.
     ///
-    /// lib.d.ts is prepended as file 0. User files start at index 1.
+    /// Lib files are prepended at indices 0..N. User files start after.
     pub fn new_multi(arena: &TypeArena, user_file_paths: Vec<PathBuf>) -> Self {
         let intrinsics = allocate_intrinsics(arena);
-        let lib_source = find_lib_source();
 
-        // Prepend lib.d.ts as file 0, user files start at index 1
-        let mut file_paths = Vec::with_capacity(1 + user_file_paths.len());
-        file_paths.push(PathBuf::from("<lib.es5.d.ts>"));
+        // Load lib files (ES5 only for this constructor)
+        let lib_files = find_lib_sources(&["es5"]);
+        let (mut file_paths, mut sources, lib_count) =
+            Self::prepare_lib_files(lib_files);
+
+        // Append user files after lib files
         file_paths.extend(user_file_paths);
+        for path in file_paths.iter().skip(lib_count) {
+            sources.push(std::fs::read_to_string(path).ok());
+        }
 
         // File index maps canonical paths to indices (for module resolution).
-        // lib.d.ts uses a synthetic path and isn't resolved via imports.
+        // Lib files use synthetic paths and aren't resolved via imports.
         let file_index: FxHashMap<PathBuf, usize> = file_paths
             .iter()
             .enumerate()
-            .skip(1) // skip lib.d.ts synthetic path
+            .skip(lib_count)
             .map(|(i, p)| (p.clone(), i))
             .collect();
-
-        // Read all sources upfront. Index 0 is lib.d.ts.
-        let mut sources = Vec::with_capacity(file_paths.len());
-        sources.push(lib_source);
-        for path in file_paths.iter().skip(1) {
-            sources.push(std::fs::read_to_string(path).ok());
-        }
 
         let file_count = file_paths.len();
 
@@ -254,12 +297,14 @@ impl Project {
         let project = Self {
             intrinsics,
             resolver: Some(resolver),
+            lib_file_count: lib_count,
             file_paths,
             file_index,
             sources: RefCell::new(sources),
             source_types: None,
             file_cells: RefCell::new((0..file_count).map(|_| None).collect()),
             exports: RefCell::new(FxHashMap::default()),
+            global_exports: RefCell::new(FxHashMap::default()),
             type_param_constraints: RefCell::new(FxHashMap::default()),
             checking: RefCell::new(FxHashSet::default()),
             checked: RefCell::new(FxHashSet::default()),
@@ -270,7 +315,10 @@ impl Project {
             check_ms: RefCell::new(0.0),
             all_diagnostics: RefCell::new(Vec::new()),
         };
-        project.ensure_file_checked(LIB_FILE_INDEX);
+        for i in 0..lib_count {
+            project.ensure_file_checked(i);
+        }
+        project.merge_global_exports();
         project
     }
 
@@ -285,16 +333,15 @@ impl Project {
         checker_options: CheckerOptions,
     ) -> Self {
         let intrinsics = allocate_intrinsics(arena);
-        let lib_source = find_lib_source();
 
-        let mut file_paths = Vec::with_capacity(1 + files.len());
-        file_paths.push(PathBuf::from("<lib.es5.d.ts>"));
+        // Load lib files (ES5 only for this constructor)
+        let lib_files = find_lib_sources(&["es5"]);
+        let (mut file_paths, mut sources, lib_count) =
+            Self::prepare_lib_files(lib_files);
 
-        let mut sources = Vec::with_capacity(1 + files.len());
-        sources.push(lib_source);
-
-        let mut source_type_vec = Vec::with_capacity(1 + files.len());
-        source_type_vec.push(SourceType::d_ts()); // lib.d.ts
+        // Source types: lib files are .d.ts, user files use provided types
+        let mut source_type_vec: Vec<SourceType> =
+            (0..lib_count).map(|_| SourceType::d_ts()).collect();
 
         for (path, source, source_type) in files {
             file_paths.push(path);
@@ -305,7 +352,7 @@ impl Project {
         let file_index: FxHashMap<PathBuf, usize> = file_paths
             .iter()
             .enumerate()
-            .skip(1)
+            .skip(lib_count)
             .map(|(i, p)| (p.clone(), i))
             .collect();
 
@@ -314,12 +361,14 @@ impl Project {
         let project = Self {
             intrinsics,
             resolver: None,
+            lib_file_count: lib_count,
             file_paths,
             file_index,
             sources: RefCell::new(sources),
             source_types: Some(source_type_vec),
             file_cells: RefCell::new((0..file_count).map(|_| None).collect()),
             exports: RefCell::new(FxHashMap::default()),
+            global_exports: RefCell::new(FxHashMap::default()),
             type_param_constraints: RefCell::new(FxHashMap::default()),
             checking: RefCell::new(FxHashSet::default()),
             checked: RefCell::new(FxHashSet::default()),
@@ -330,28 +379,106 @@ impl Project {
             check_ms: RefCell::new(0.0),
             all_diagnostics: RefCell::new(Vec::new()),
         };
-        project.ensure_file_checked(LIB_FILE_INDEX);
+        for i in 0..lib_count {
+            project.ensure_file_checked(i);
+        }
+        project.merge_global_exports();
         project
+    }
+
+    /// Merge exports from all lib files into `global_exports`.
+    ///
+    /// Called after all lib files are checked. For each name exported by
+    /// any lib file, if multiple lib files export the same name, their
+    /// type-side types are merged via `merge_interface_types` (combining
+    /// properties, call signatures, etc. with type parameter remapping).
+    /// Value-side types use the later file's version (last wins).
+    fn merge_global_exports(&self) {
+        use oxc_types::{ObjectFlags, TypeFlags};
+
+        let exports = self.exports.borrow();
+        let mut merged: FxHashMap<CompactStr, ExportedBinding> = FxHashMap::default();
+
+        // SAFETY: arena pointer is valid for the duration of the Project
+        let arena = unsafe { &*self.arena.unwrap() };
+        let mut ctx = type_merge::MergeContext::new(arena, self.intrinsics);
+
+        // Group exports by lib file index using a per-lib Vec, then merge.
+        // Single pass over the export map — O(total_exports), not O(lib_count * total_exports).
+        let mut per_lib: Vec<Vec<(CompactStr, ExportedBinding)>> =
+            (0..self.lib_file_count).map(|_| Vec::new()).collect();
+        for ((idx, name), binding) in exports.iter() {
+            if *idx < self.lib_file_count {
+                per_lib[*idx].push((name.clone(), *binding));
+            }
+        }
+
+        for lib_exports in &per_lib {
+            for (name, binding) in lib_exports {
+                use std::collections::hash_map::Entry;
+                match merged.entry(name.clone()) {
+                    Entry::Vacant(e) => {
+                        e.insert(*binding);
+                    }
+                    Entry::Occupied(mut e) => {
+                        // Merge type-side: only call merge_interface_types if both
+                        // are actually interfaces (skip type aliases, enums, etc.)
+                        if let (Some(existing), Some(new_type)) =
+                            (e.get().type_type, binding.type_type)
+                        {
+                            let existing_is_interface = arena
+                                .get_flags(existing)
+                                .intersects(TypeFlags::Object)
+                                && arena
+                                    .get_object_flags(existing)
+                                    .intersects(ObjectFlags::Interface);
+                            let new_is_interface = arena
+                                .get_flags(new_type)
+                                .intersects(TypeFlags::Object)
+                                && arena
+                                    .get_object_flags(new_type)
+                                    .intersects(ObjectFlags::Interface);
+
+                            if existing_is_interface && new_is_interface {
+                                let merged_type = type_merge::merge_interface_types(
+                                    &mut ctx, existing, new_type,
+                                );
+                                e.get_mut().type_type = Some(merged_type);
+                            }
+                            // If not both interfaces, keep the existing type
+                        } else if binding.type_type.is_some() {
+                            e.get_mut().type_type = binding.type_type;
+                        }
+                        // Value-side: later lib file wins
+                        if binding.value_type.is_some() {
+                            e.get_mut().value_type = binding.value_type;
+                        }
+                    }
+                }
+            }
+        }
+
+        *self.global_exports.borrow_mut() = merged;
     }
 
     /// Check all files in the project.
     ///
-    /// lib.d.ts (index 0) was already checked during construction.
+    /// Lib files were already checked during construction.
     /// User files are checked sequentially. Import dependencies are
     /// resolved lazily — when a checker needs a type from another file,
     /// that file is checked on demand.
     pub fn check_all(&mut self) -> CheckResult {
         let total_start = Instant::now();
 
-        // Check all files. Index 0 (lib.d.ts) is already checked.
+        // Check all files. Lib files are already checked.
         // Files may trigger on-demand checking of dependencies via
         // resolve_import → ensure_file_checked.
         for i in 0..self.file_paths.len() {
             self.ensure_file_checked(i);
         }
         let total_ms = total_start.elapsed().as_secs_f64() * 1000.0;
-        // Don't count lib.d.ts in the user-facing file count
-        let files_checked = self.checked.borrow().len().saturating_sub(1);
+        // Don't count lib files in the user-facing file count
+        let files_checked = self.checked.borrow().len().saturating_sub(self.lib_file_count);
 
         CheckResult {
             diagnostics: self.all_diagnostics.take(),
@@ -389,7 +516,7 @@ impl Project {
         // SAFETY: arena pointer is valid for the duration of check_all
         let arena = unsafe { &*self.arena.unwrap() };
 
-        let is_lib = file_idx == LIB_FILE_INDEX;
+        let is_lib = file_idx < self.lib_file_count;
         let source_type = if let Some(ref types) = self.source_types {
             types[file_idx]
         } else if is_lib {
@@ -668,18 +795,16 @@ impl CheckerHost for Project {
     }
 
     fn get_global_type(&self, name: &str) -> Option<TypeId> {
-        self.ensure_file_checked(LIB_FILE_INDEX);
-        self.exports
+        self.global_exports
             .borrow()
-            .get(&(LIB_FILE_INDEX, CompactStr::new(name)))
+            .get(&CompactStr::new(name))
             .and_then(|b| b.type_type)
     }
 
     fn get_global_value_type(&self, name: &str) -> Option<TypeId> {
-        self.ensure_file_checked(LIB_FILE_INDEX);
-        self.exports
+        self.global_exports
             .borrow()
-            .get(&(LIB_FILE_INDEX, CompactStr::new(name)))
+            .get(&CompactStr::new(name))
             .and_then(|b| b.value_type)
     }
 
@@ -739,5 +864,147 @@ mod tests {
         let project = Project::new(&arena);
         let host: &dyn CheckerHost = &project;
         assert!(host.resolve_import("test.ts", "./foo", "x").is_none());
+    }
+
+    #[test]
+    fn merge_interfaces_combines_properties() {
+        use oxc_types::TypeData;
+
+        let arena = TypeArena::with_capacity(64);
+        let options = CheckerOptions::default();
+
+        // Two ambient .d.ts files declaring the same interface
+        let files = vec![
+            (
+                PathBuf::from("/test/a.d.ts"),
+                "interface Foo { x: string; }".to_string(),
+                SourceType::d_ts(),
+            ),
+            (
+                PathBuf::from("/test/b.d.ts"),
+                "interface Foo { y: number; }".to_string(),
+                SourceType::d_ts(),
+            ),
+        ];
+
+        let mut project = Project::new_multi_from_sources(&arena, files, options);
+        project.check_all();
+
+        // Both files export "Foo" as a type
+        let foo_a = project.exports.borrow().get(&(1, CompactStr::new("Foo")))
+            .and_then(|b| b.type_type);
+        let foo_b = project.exports.borrow().get(&(2, CompactStr::new("Foo")))
+            .and_then(|b| b.type_type);
+
+        assert!(foo_a.is_some(), "file a should export Foo");
+        assert!(foo_b.is_some(), "file b should export Foo");
+
+        let foo_a = foo_a.unwrap();
+        let foo_b = foo_b.unwrap();
+
+        // Merge them
+        let intrinsics = project.intrinsics;
+        let mut ctx = type_merge::MergeContext::new(&arena, intrinsics);
+        let merged = type_merge::merge_interface_types(&mut ctx, foo_a, foo_b);
+
+        // Verify merged type has both properties
+        let TypeData::Structured(s) = arena.get_data(merged) else {
+            panic!("merged type should be Structured");
+        };
+        let prop_names: Vec<&str> = s.properties.iter().map(|p| p.name.as_str()).collect();
+        assert!(prop_names.contains(&"x"), "merged should have property x, got: {prop_names:?}");
+        assert!(prop_names.contains(&"y"), "merged should have property y, got: {prop_names:?}");
+        assert_eq!(s.properties.len(), 2, "merged should have exactly 2 properties");
+    }
+
+    #[test]
+    fn merge_generic_interfaces_remaps_type_params() {
+        use oxc_types::TypeData;
+
+        let arena = TypeArena::with_capacity(64);
+        let options = CheckerOptions::default();
+
+        // Two ambient files with a generic interface
+        let files = vec![
+            (
+                PathBuf::from("/test/a.d.ts"),
+                "interface Box<T> { value: T; }".to_string(),
+                SourceType::d_ts(),
+            ),
+            (
+                PathBuf::from("/test/b.d.ts"),
+                "interface Box<T> { unwrap(): T; }".to_string(),
+                SourceType::d_ts(),
+            ),
+        ];
+
+        let mut project = Project::new_multi_from_sources(&arena, files, options);
+        project.check_all();
+
+        let box_a = project.exports.borrow().get(&(1, CompactStr::new("Box")))
+            .and_then(|b| b.type_type).expect("file a should export Box");
+        let box_b = project.exports.borrow().get(&(2, CompactStr::new("Box")))
+            .and_then(|b| b.type_type).expect("file b should export Box");
+
+        // Get type parameters from both — they should be different TypeIds
+        let TypeData::Structured(a_s) = arena.get_data(box_a) else { panic!() };
+        let TypeData::Structured(b_s) = arena.get_data(box_b) else { panic!() };
+        let a_params = match &a_s.kind {
+            oxc_types::StructuredTypeKind::Interface { all_type_parameters, .. } => {
+                all_type_parameters.clone()
+            }
+            _ => panic!("expected Interface kind"),
+        };
+        let b_params = match &b_s.kind {
+            oxc_types::StructuredTypeKind::Interface { all_type_parameters, .. } => {
+                all_type_parameters.clone()
+            }
+            _ => panic!("expected Interface kind"),
+        };
+        assert_eq!(a_params.len(), 1, "Box<T> should have 1 type param");
+        assert_eq!(b_params.len(), 1, "Box<T> should have 1 type param");
+        assert_ne!(a_params[0], b_params[0], "different files should have different TypeParameter IDs");
+
+        // Merge
+        let mut ctx = type_merge::MergeContext::new(&arena, project.intrinsics);
+        let merged = type_merge::merge_interface_types(&mut ctx, box_a, box_b);
+
+        // Verify merged type has base's type parameter (a_params[0])
+        let TypeData::Structured(merged_s) = arena.get_data(merged) else { panic!() };
+        let merged_params = match &merged_s.kind {
+            oxc_types::StructuredTypeKind::Interface { all_type_parameters, .. } => {
+                all_type_parameters.clone()
+            }
+            _ => panic!("expected Interface kind"),
+        };
+        assert_eq!(merged_params.len(), 1);
+        assert_eq!(merged_params[0], a_params[0], "merged should use base's type parameter");
+
+        // Verify `value` property references base's T (a_params[0])
+        let value_prop = merged_s.properties.iter().find(|p| p.name.as_str() == "value");
+        assert!(value_prop.is_some(), "merged should have 'value' property");
+        assert_eq!(
+            value_prop.unwrap().type_id, a_params[0],
+            "'value' should reference base's T"
+        );
+
+        // Verify `unwrap` method's return type references base's T
+        // unwrap() is a method, so it's a PropertyInfo with a Function type
+        let unwrap_prop = merged_s.properties.iter().find(|p| p.name.as_str() == "unwrap");
+        assert!(unwrap_prop.is_some(), "merged should have 'unwrap' property");
+        let unwrap_type = unwrap_prop.unwrap().type_id;
+        // The unwrap method is a Function type — check its return type is base's T
+        if let TypeData::Function(func) = arena.get_data(unwrap_type) {
+            assert_eq!(
+                func.signatures[0].return_type, a_params[0],
+                "unwrap() should return base's T, not extension's T"
+            );
+        } else {
+            // Method might be stored differently — just check it's not b's T
+            assert_ne!(
+                unwrap_type, b_params[0],
+                "unwrap type should not reference extension's T directly"
+            );
+        }
     }
 }

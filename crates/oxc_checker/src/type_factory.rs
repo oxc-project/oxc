@@ -3,7 +3,8 @@ use std::sync::Arc;
 use oxc_span::CompactStr;
 use oxc_types::{
     FunctionType, ObjectFlags, PropertyInfo, Signature, StructuredType, StructuredTypeKind,
-    TypeData, TypeFlags, TypeId, TypeReferenceType, UnionType, sort_properties,
+    TypeArena, TypeData, TypeFactory, TypeFlags, TypeId, TypeMapper, TypeReferenceType, UnionType,
+    instantiate_type_common, sort_properties,
 };
 use rustc_hash::{FxHashMap, FxHashSet};
 use smallvec::SmallVec;
@@ -648,5 +649,42 @@ impl Checker<'_> {
             })),
             None,
         )
+    }
+}
+
+impl TypeFactory for Checker<'_> {
+    fn never_type(&self) -> TypeId {
+        self.never_type
+    }
+
+    fn instantiate_type_recursive(
+        &mut self,
+        arena: &TypeArena,
+        type_id: TypeId,
+        mapper: &TypeMapper,
+    ) -> TypeId {
+        // Try common cases (TypeParameter, Union, Intersection, TypeRef, Structured, Function)
+        if let Some(result) = instantiate_type_common(arena, self, type_id, mapper) {
+            return result;
+        }
+
+        // Complex cases not handled by common code
+        self.instantiate_type_complex(type_id, mapper)
+    }
+
+    fn create_union(&mut self, types: Vec<TypeId>) -> TypeId {
+        self.get_or_create_union_type(types)
+    }
+
+    fn create_intersection(&mut self, types: Vec<TypeId>) -> TypeId {
+        self.get_or_create_intersection_type(types)
+    }
+
+    fn create_type_reference(
+        &mut self,
+        target: TypeId,
+        args: SmallVec<[TypeId; 4]>,
+    ) -> TypeId {
+        self.get_or_create_type_reference(target, args)
     }
 }

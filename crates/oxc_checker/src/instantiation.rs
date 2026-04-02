@@ -1,92 +1,10 @@
 use oxc_types::{
-    ObjectFlags, ParameterInfo, PropertyInfo, Signature, StructuredType, StructuredTypeKind,
-    TypeData, TypeFlags, TypeId, sort_properties,
+    ObjectFlags, PropertyInfo, StructuredType, StructuredTypeKind, TypeData, TypeFactory,
+    TypeFlags, TypeId, TypeMapper, sort_properties,
 };
 use smallvec::SmallVec;
 
 use crate::Checker;
-
-/// A type mapper: maps type parameters to concrete types.
-///
-/// Mirrors tsgo's `TypeMapper` (mapper.go). We use a Rust enum
-/// instead of Go's interface dispatch (see checker_architecture.md §7).
-///
-/// All variants are flat (no Box/heap indirection). Clone is a cheap
-/// SmallVec stack copy for ≤4 type parameters (the common case).
-#[derive(Debug, Clone)]
-pub enum TypeMapper {
-    /// Single substitution: one type parameter → one type argument.
-    /// Covers: `Array<string>`, `Promise<number>`.
-    Simple { source: TypeId, target: TypeId },
-
-    /// Multiple substitutions: N type parameters → N type arguments.
-    /// Covers: `Map<string, number>`, `Record<K, V>`, and composed mappers.
-    Array { sources: SmallVec<[TypeId; 4]>, targets: SmallVec<[TypeId; 4]> },
-}
-
-impl TypeMapper {
-    /// Create a mapper from type parameter list and type argument list.
-    pub fn from_type_parameters(type_params: &[TypeId], type_args: &[TypeId]) -> Option<Self> {
-        if type_params.is_empty() || type_params.len() != type_args.len() {
-            return None;
-        }
-
-        if type_params.len() == 1 {
-            Some(Self::Simple { source: type_params[0], target: type_args[0] })
-        } else {
-            Some(Self::Array {
-                sources: SmallVec::from_slice(type_params),
-                targets: SmallVec::from_slice(type_args),
-            })
-        }
-    }
-
-    /// Map a type through this mapper. Returns `None` if the type
-    /// is not a type parameter in this mapper (meaning "leave it alone").
-    pub fn map(&self, t: TypeId) -> Option<TypeId> {
-        match self {
-            Self::Simple { source, target } => {
-                if t == *source {
-                    Some(*target)
-                } else {
-                    None
-                }
-            }
-            Self::Array { sources, targets } => {
-                sources.iter().position(|s| *s == t).map(|i| targets[i])
-            }
-        }
-    }
-
-    /// Return a new mapper with an additional or overridden mapping.
-    /// If `source` already exists in the mapper, its target is replaced.
-    /// Otherwise the mapping is appended.
-    ///
-    /// Clone is cheap (SmallVec stack copy for ≤4 params). No heap allocation.
-    pub fn with_mapping(self, source: TypeId, target: TypeId) -> Self {
-        match self {
-            Self::Simple { source: s, target: t } => {
-                if s == source {
-                    Self::Simple { source, target }
-                } else {
-                    Self::Array {
-                        sources: smallvec::smallvec![s, source],
-                        targets: smallvec::smallvec![t, target],
-                    }
-                }
-            }
-            Self::Array { mut sources, mut targets } => {
-                if let Some(pos) = sources.iter().position(|&s| s == source) {
-                    targets[pos] = target;
-                } else {
-                    sources.push(source);
-                    targets.push(target);
-                }
-                Self::Array { sources, targets }
-            }
-        }
-    }
-}
 
 impl<'a> Checker<'a> {
     /// Resolve a TypeReference to a fully-instantiated type with populated
@@ -125,7 +43,7 @@ impl<'a> Checker<'a> {
                     return target;
                 };
 
-                // Instantiate properties. Arena references are stable (AppendOnlyVec).
+                // Instantiate all members. Arena references are stable (AppendOnlyVec).
                 let TypeData::Structured(s) = self.type_arena.get_data(target) else {
                     unreachable!()
                 };
@@ -141,6 +59,26 @@ impl<'a> Checker<'a> {
                     })
                     .collect();
                 sort_properties(&mut instantiated_props);
+
+                // Instantiate call and construct signatures
+                let instantiated_call_sigs: Vec<oxc_types::Signature> = s
+                    .call_signatures
+                    .iter()
+                    .map(|sig| oxc_types::instantiate_signature(self.type_arena, self, sig, &mapper))
+                    .collect();
+                let instantiated_construct_sigs: Vec<oxc_types::Signature> = s
+                    .construct_signatures
+                    .iter()
+                    .map(|sig| oxc_types::instantiate_signature(self.type_arena, self, sig, &mapper))
+                    .collect();
+
+                // Instantiate index signatures
+                let instantiated_string_index = s
+                    .string_index_type
+                    .map(|t| self.instantiate_type(t, &mapper));
+                let instantiated_number_index = s
+                    .number_index_type
+                    .map(|t| self.instantiate_type(t, &mapper));
 
                 // Instantiate base types through the mapper so that
                 // `interface Child<T> extends Base<T>` instantiated as
@@ -160,10 +98,10 @@ impl<'a> Checker<'a> {
                     ObjectFlags::Interface,
                     TypeData::Structured(Box::new(StructuredType {
                         properties: instantiated_props,
-                        string_index_type: None,
-                        number_index_type: None,
-                        call_signatures: Vec::new(),
-                        construct_signatures: Vec::new(),
+                        string_index_type: instantiated_string_index,
+                        number_index_type: instantiated_number_index,
+                        call_signatures: instantiated_call_sigs,
+                        construct_signatures: instantiated_construct_sigs,
                         kind: StructuredTypeKind::Interface {
                             target: Some(target),
                             resolved_type_arguments: type_args.clone(),
@@ -190,49 +128,27 @@ impl<'a> Checker<'a> {
 impl Checker<'_> {
     /// Instantiate a type by applying a type mapper.
     ///
-    /// Recursively walks the type structure, substituting type parameters
-    /// according to the mapper. Uses flag-based quick reject to skip
-    /// types that can't contain type parameters.
-    ///
-    /// Results are cached in `instantiation_cache` so each unique
-    /// (type, mapper-target-list) combination is only computed once.
+    /// Convenience wrapper that calls through the `TypeFactory` trait,
+    /// which delegates common cases to `instantiate_type_common` and
+    /// handles complex cases (Conditional, Mapped, Tuple, Index,
+    /// IndexedAccess) in `instantiate_type_complex`.
     pub fn instantiate_type(&mut self, type_id: TypeId, mapper: &TypeMapper) -> TypeId {
+        let arena = self.type_arena;
+        self.instantiate_type_recursive(arena, type_id, mapper)
+    }
+
+    /// Handle complex instantiation cases not covered by `instantiate_type_common`:
+    /// Mapped, Tuple, Index, IndexedAccess, Conditional.
+    pub(crate) fn instantiate_type_complex(
+        &mut self,
+        type_id: TypeId,
+        mapper: &TypeMapper,
+    ) -> TypeId {
         let flags = self.type_arena.get_flags(type_id);
 
-        // Quick reject: types that can never contain type parameters.
-        // StructuredOrInstantiable covers Object, Union, Intersection,
-        // TypeParameter, IndexedAccess, Conditional, Substitution,
-        // Index, TemplateLiteral, StringMapping.
-        if !flags.intersects(TypeFlags::StructuredOrInstantiable) {
-            return type_id;
-        }
-
-        // Type parameter — base case: apply the mapper
-        if flags.intersects(TypeFlags::TypeParameter) {
-            return mapper.map(type_id).unwrap_or(type_id);
-        }
-
-        // Union — instantiate each constituent
-        if flags.intersects(TypeFlags::Union) {
-            if let TypeData::Union(u) = self.type_arena.get_data(type_id) {
-                let new_members: Vec<TypeId> =
-                    u.types.iter().map(|&t| self.instantiate_type(t, mapper)).collect();
-                return self.get_or_create_union_type(new_members);
-            }
-        }
-
-        // Intersection — instantiate each constituent
-        if flags.intersects(TypeFlags::Intersection) {
-            if let TypeData::Intersection(i) = self.type_arena.get_data(type_id) {
-                let new_members: Vec<TypeId> =
-                    i.types.iter().map(|&t| self.instantiate_type(t, mapper)).collect();
-                return self.get_or_create_intersection_type(new_members);
-            }
-        }
-
-        // Object types: TypeReference or Interface/Object with properties
+        // Complex object types: Mapped, Tuple
         if flags.intersects(TypeFlags::Object) {
-            return self.instantiate_object_type(type_id, mapper);
+            return self.instantiate_object_type_complex(type_id, mapper);
         }
 
         // keyof T — instantiate target, then resolve
@@ -258,9 +174,7 @@ impl Checker<'_> {
             }
         }
 
-        // Conditional: T extends U ? X : Y — instantiate all parts, then resolve.
-        // Root fields (is_distributive, infer_type_parameters) are carried
-        // inline on the ConditionalType.
+        // Conditional: T extends U ? X : Y
         if flags.intersects(TypeFlags::Conditional) {
             if let TypeData::Conditional(cond) = self.type_arena.get_data(type_id) {
                 let orig_check = cond.check_type;
@@ -273,10 +187,7 @@ impl Checker<'_> {
                 let new_check = self.instantiate_type(orig_check, mapper);
 
                 // Distribution: if distributive and check resolved to a union,
-                // distribute over each member. Each member gets its own mapper
-                // where the check type parameter maps to that specific member
-                // (overriding the union mapping), so true/false branches see
-                // the individual member, not the whole union.
+                // distribute over each member.
                 if is_distributive {
                     let check_flags = self.type_arena.get_flags(new_check);
                     if check_flags.intersects(TypeFlags::Union) {
@@ -286,7 +197,6 @@ impl Checker<'_> {
                             let results: Vec<TypeId> = members
                                 .iter()
                                 .map(|&member| {
-                                    // Override: check_param → member
                                     let per_member =
                                         mapper.clone().with_mapping(orig_check, member);
                                     let ext = self.instantiate_type(orig_extends, &per_member);
@@ -327,74 +237,14 @@ impl Checker<'_> {
         type_id
     }
 
-    /// Instantiate an object type (interface, type reference, or anonymous object).
-    fn instantiate_object_type(&mut self, type_id: TypeId, mapper: &TypeMapper) -> TypeId {
+    /// Handle complex object type instantiation: Mapped and Tuple.
+    /// (TypeReference, Structured, Function are handled by common code.)
+    fn instantiate_object_type_complex(
+        &mut self,
+        type_id: TypeId,
+        mapper: &TypeMapper,
+    ) -> TypeId {
         match self.type_arena.get_data(type_id) {
-            TypeData::TypeReference(tr) => {
-                // Instantiate the type arguments, keep the same target.
-                // e.g., if we have Wrapper<T> where T→string, and a property
-                // typed as Array<T>, we instantiate to Array<string>.
-                let target = tr.target;
-                let new_args: SmallVec<[TypeId; 4]> = tr
-                    .resolved_type_arguments
-                    .iter()
-                    .map(|&t| self.instantiate_type(t, mapper))
-                    .collect();
-
-                if new_args[..] == tr.resolved_type_arguments[..] {
-                    return type_id; // no change
-                }
-
-                let Some(target) = target else { return type_id };
-                self.get_or_create_type_reference(target, new_args)
-            }
-
-            TypeData::Structured(s) => {
-                let string_index_type = s.string_index_type;
-                let number_index_type = s.number_index_type;
-                self.instantiate_structured_type(
-                    type_id,
-                    &s.properties,
-                    &s.call_signatures,
-                    &s.construct_signatures,
-                    &s.kind,
-                    string_index_type,
-                    number_index_type,
-                    mapper,
-                )
-            }
-
-            TypeData::Function(func) => {
-                let sigs: SmallVec<[oxc_types::Signature; 1]> = func
-                    .signatures
-                    .iter()
-                    .map(|sig| self.instantiate_signature(sig, mapper))
-                    .collect();
-                // Check if anything actually changed
-                let changed = sigs.iter().zip(func.signatures.iter()).any(|(new, old)| {
-                    new.return_type != old.return_type
-                        || new.parameters.len() != old.parameters.len()
-                        || new
-                            .parameters
-                            .iter()
-                            .zip(old.parameters.iter())
-                            .any(|(np, op)| np.type_id != op.type_id)
-                });
-                if !changed {
-                    return type_id;
-                }
-                let mut obj_flags = oxc_types::ObjectFlags::Anonymous;
-                if sigs.iter().any(|s| self.signature_could_contain_type_variables(s)) {
-                    obj_flags |= oxc_types::ObjectFlags::CouldContainTypeVariables;
-                }
-                self.type_arena.new_type(
-                    TypeFlags::Object,
-                    obj_flags,
-                    TypeData::Function(Box::new(oxc_types::FunctionType { signatures: sigs })),
-                    None,
-                )
-            }
-
             TypeData::Mapped(mapped) => {
                 let constraint = mapped.constraint_type.unwrap_or(self.never_type);
                 let template = mapped.template_type;
@@ -487,146 +337,6 @@ impl Checker<'_> {
 
             _ => type_id,
         }
-    }
-
-    /// Instantiate a signature with a type mapper.
-    fn instantiate_signature(&mut self, sig: &Signature, mapper: &TypeMapper) -> Signature {
-        let new_params: Vec<ParameterInfo> = sig
-            .parameters
-            .iter()
-            .map(|p| ParameterInfo {
-                name: p.name.clone(),
-                type_id: self.instantiate_type(p.type_id, mapper),
-                is_optional: p.is_optional,
-                is_rest: p.is_rest,
-            })
-            .collect();
-        let new_return = self.instantiate_type(sig.return_type, mapper);
-        Signature {
-            flags: sig.flags,
-            min_argument_count: sig.min_argument_count,
-            parameters: new_params,
-            return_type: new_return,
-            type_parameters: sig.type_parameters.clone(),
-        }
-    }
-
-    /// Instantiate a structured type: properties, call/construct signatures,
-    /// and index types. Returns the original type_id if nothing changed.
-    #[allow(clippy::too_many_arguments)]
-    fn instantiate_structured_type(
-        &mut self,
-        type_id: TypeId,
-        properties: &[PropertyInfo],
-        call_signatures: &[Signature],
-        construct_signatures: &[Signature],
-        kind: &StructuredTypeKind,
-        string_index_type: Option<TypeId>,
-        number_index_type: Option<TypeId>,
-        mapper: &TypeMapper,
-    ) -> TypeId {
-        let mut changed = false;
-
-        let mut new_props: Vec<PropertyInfo> = properties
-            .iter()
-            .map(|p| {
-                let new_type_id = self.instantiate_type(p.type_id, mapper);
-                if new_type_id != p.type_id {
-                    changed = true;
-                }
-                PropertyInfo {
-                    name: p.name.clone(),
-                    type_id: new_type_id,
-                    optional: p.optional,
-                    readonly: p.readonly,
-                    decl_order: 0,
-                }
-            })
-            .collect();
-
-        let new_call_sigs: Vec<Signature> = call_signatures
-            .iter()
-            .map(|sig| {
-                let new_sig = self.instantiate_signature(sig, mapper);
-                if new_sig.return_type != sig.return_type
-                    || new_sig
-                        .parameters
-                        .iter()
-                        .zip(sig.parameters.iter())
-                        .any(|(n, o)| n.type_id != o.type_id)
-                {
-                    changed = true;
-                }
-                new_sig
-            })
-            .collect();
-
-        let new_construct_sigs: Vec<Signature> = construct_signatures
-            .iter()
-            .map(|sig| {
-                let new_sig = self.instantiate_signature(sig, mapper);
-                if new_sig.return_type != sig.return_type
-                    || new_sig
-                        .parameters
-                        .iter()
-                        .zip(sig.parameters.iter())
-                        .any(|(n, o)| n.type_id != o.type_id)
-                {
-                    changed = true;
-                }
-                new_sig
-            })
-            .collect();
-
-        // Instantiate resolved_base_types in the kind if present
-        let new_kind = if let StructuredTypeKind::Interface { resolved_base_types, .. } = kind {
-            if resolved_base_types.is_empty() {
-                kind.clone()
-            } else {
-                let mut bases_changed = false;
-                let instantiated_bases: SmallVec<[TypeId; 4]> = resolved_base_types
-                    .iter()
-                    .map(|&bt| {
-                        let new_bt = self.instantiate_type(bt, mapper);
-                        if new_bt != bt {
-                            bases_changed = true;
-                        }
-                        new_bt
-                    })
-                    .collect();
-                if bases_changed {
-                    changed = true;
-                    let mut cloned = kind.clone();
-                    if let StructuredTypeKind::Interface { resolved_base_types, .. } = &mut cloned {
-                        *resolved_base_types = instantiated_bases;
-                    }
-                    cloned
-                } else {
-                    kind.clone()
-                }
-            }
-        } else {
-            kind.clone()
-        };
-
-        if !changed {
-            return type_id;
-        }
-
-        sort_properties(&mut new_props);
-        self.type_arena.new_type(
-            TypeFlags::Object,
-            oxc_types::ObjectFlags::None,
-            TypeData::Structured(Box::new(StructuredType {
-                properties: new_props,
-                string_index_type,
-                number_index_type,
-                call_signatures: new_call_sigs,
-                construct_signatures: new_construct_sigs,
-                kind: new_kind,
-            })),
-            None,
-        )
     }
 
     /// Detect if a mapped type is homomorphic: constraint is `keyof T` where

@@ -1319,7 +1319,7 @@ impl Checker<'_> {
             };
 
             if let Some(mapper) =
-                crate::instantiation::TypeMapper::from_type_parameters(&sig_type_params, &type_args)
+                oxc_types::TypeMapper::from_type_parameters(&sig_type_params, &type_args)
             {
                 let instantiated_params: smallvec::SmallVec<[TypeId; 8]> =
                     param_type_ids.iter().map(|&p| self.instantiate_type(p, &mapper)).collect();

@@ -4,7 +4,7 @@ use oxc_span::GetSpan;
 use oxc_types::{TypeData, TypeFlags, TypeId};
 use smallvec::SmallVec;
 
-use crate::instantiation::TypeMapper;
+use oxc_types::TypeMapper;
 use crate::Checker;
 
 impl Checker<'_> {

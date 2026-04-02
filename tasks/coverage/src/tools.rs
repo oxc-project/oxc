@@ -1146,6 +1146,16 @@ fn compiler_options_from_settings(
     }
 }
 
+/// Extract the first target from test settings for lib file loading.
+fn target_from_settings(
+    settings: &crate::typescript::meta::CompilerSettings,
+) -> Option<oxc_project::ScriptTarget> {
+    settings
+        .targets
+        .first()
+        .and_then(|t| oxc_project::ScriptTarget::from_str_option(t))
+}
+
 // ================================
 // Checker (.types baseline conformance)
 // ================================
@@ -1167,6 +1177,7 @@ pub fn run_checker_typescript(files: &[TypeScriptFile]) -> Vec<CoverageResult> {
             let baseline_content = fs::read_to_string(&baseline_path).ok()?;
 
             let options = checker_options_from_settings(&f.settings);
+            let target = target_from_settings(&f.settings);
 
             let result = if f.units.len() == 1 {
                 run_checker_single(
@@ -1174,6 +1185,7 @@ pub fn run_checker_typescript(files: &[TypeScriptFile]) -> Vec<CoverageResult> {
                     f.units[0].source_type,
                     &baseline_content,
                     options,
+                    target,
                 )
             } else {
                 run_checker_multi(
@@ -1193,6 +1205,7 @@ fn run_checker_single(
     source_type: SourceType,
     baseline_content: &str,
     options: oxc_checker::CheckerOptions,
+    target: Option<oxc_project::ScriptTarget>,
 ) -> TestResult {
     use oxc::semantic::SemanticBuilder;
     use oxc_checker::Checker;
@@ -1205,7 +1218,7 @@ fn run_checker_single(
 
     // Parse source → semantic → checker
     let type_arena = oxc_types::TypeArena::with_capacity(64);
-    let project = oxc_project::Project::new(&type_arena);
+    let project = oxc_project::Project::new_with_target(&type_arena, target);
     let allocator = Allocator::default();
     let parsed = Parser::new(&allocator, source, source_type).parse();
     if !parsed.errors.is_empty() {
@@ -1607,6 +1620,7 @@ pub fn run_checker_errors_typescript(files: &[TypeScriptFile]) -> Vec<CoverageRe
 
             let options = checker_options_from_settings(&f.settings);
             let compiler_options_list = compiler_options_from_settings(&f.settings);
+            let target = target_from_settings(&f.settings);
 
             let result = if f.units.len() == 1 {
                 // Single-unit: fast path (standalone Checker, no Project overhead)
@@ -1616,6 +1630,7 @@ pub fn run_checker_errors_typescript(files: &[TypeScriptFile]) -> Vec<CoverageRe
                     &f.error_codes,
                     options,
                     &compiler_options_list,
+                    target,
                 )
             } else {
                 // Multi-unit: use Project with virtual file paths
@@ -1638,6 +1653,7 @@ fn run_checker_errors_single(
     expected_codes: &[String],
     options: oxc_checker::CheckerOptions,
     compiler_options_list: &[oxc_project::CompilerOptions],
+    target: Option<oxc_project::ScriptTarget>,
 ) -> TestResult {
     use oxc::semantic::SemanticBuilder;
     use oxc_checker::Checker;
@@ -1658,7 +1674,7 @@ fn run_checker_errors_single(
     }
 
     let type_arena = oxc_types::TypeArena::with_capacity(64);
-    let project = oxc_project::Project::new(&type_arena);
+    let project = oxc_project::Project::new_with_target(&type_arena, target);
     let allocator = Allocator::default();
     let parsed = Parser::new(&allocator, source, source_type).parse();
 

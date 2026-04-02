@@ -1,4 +1,5 @@
 use oxc_span::CompactStr;
+use oxc_syntax::node::NodeId;
 use oxc_syntax::symbol::SymbolId;
 use oxc_types::{
     LiteralType, ObjectFlags, PropertyInfo, Signature, StructuredType, StructuredTypeKind,
@@ -6,8 +7,8 @@ use oxc_types::{
 };
 use smallvec::SmallVec;
 
-use crate::checker::CheckMode;
 use crate::Checker;
+use crate::checker::CheckMode;
 
 impl Checker<'_> {
     /// Get the declared type of a type-namespace symbol (type alias, interface,
@@ -40,6 +41,14 @@ impl Checker<'_> {
             return self.resolve_import_as_type(symbol_id);
         }
 
+        // Interface — may have multiple declarations that need merging.
+        // Dispatched by flag rather than AST kind so that merged interface+var
+        // symbols (where the primary declaration might be the var) are handled
+        // correctly.
+        if symbol_flags.is_interface() {
+            return self.get_type_of_merged_interface(symbol_id);
+        }
+
         let node_id = self.semantic().scoping().symbol_declaration(symbol_id);
         let node = self.semantic().nodes().get_node(node_id);
 
@@ -65,33 +74,174 @@ impl Checker<'_> {
                     body_type
                 }
             }
-            AstKind::TSInterfaceDeclaration(decl) => {
-                self.get_type_of_interface_declaration(decl, symbol_id)
-            }
             AstKind::Class(decl) => self.get_type_of_class_declaration(decl, symbol_id),
             AstKind::TSEnumDeclaration(decl) => self.get_type_of_enum_declaration(decl, symbol_id),
             _ => self.any_type,
         }
     }
 
-    /// Build an interface type from a TSInterfaceDeclaration.
-    fn get_type_of_interface_declaration(
-        &mut self,
-        decl: &oxc_ast::ast::TSInterfaceDeclaration<'_>,
-        symbol_id: SymbolId,
-    ) -> TypeId {
-        // Extract type parameters (e.g., T in interface Foo<T>)
-        let type_parameters =
-            self.get_type_parameters_from_declaration(decl.type_parameters.as_deref());
+    /// Build an interface type from one or more same-file interface declarations.
+    ///
+    /// When a symbol has multiple interface declarations (e.g., `interface Foo { x: string }`
+    /// + `interface Foo { y: number }`), this method merges all declarations into a single
+    /// StructuredType with the combined properties, call signatures, index signatures,
+    /// and base types.
+    ///
+    /// Type parameters from the first declaration are canonical. Subsequent declarations'
+    /// type parameter SymbolIds are aliased to the first declaration's TypeParameter TypeIds
+    /// so that body member types resolve correctly.
+    ///
+    /// Call signature ordering follows TypeScript semantics: later declarations' signatures
+    /// come first in overload resolution.
+    fn get_type_of_merged_interface(&mut self, symbol_id: SymbolId) -> TypeId {
+        use oxc_ast::AstKind;
 
+        // Collect all interface declaration NodeIds into owned storage,
+        // releasing the borrow on symbol_redeclarations.
+        let redeclarations = self.semantic().scoping().symbol_redeclarations(symbol_id);
+        let interface_node_ids: SmallVec<[NodeId; 4]> = if redeclarations.is_empty() {
+            // No redeclarations — single declaration (common fast path)
+            SmallVec::from_elem(self.semantic().scoping().symbol_declaration(symbol_id), 1)
+        } else {
+            // Filter to interface-only (skip `declare var` in merged interface+var symbols)
+            redeclarations
+                .iter()
+                .filter(|r| r.flags.is_interface())
+                .map(|r| r.declaration)
+                .collect()
+        };
+
+        // Phase 1: Process type parameters from the first declaration.
+        // These become the canonical TypeParameter TypeIds for the merged type.
+        let first_node = self.semantic().nodes().get_node(interface_node_ids[0]);
+        let first_decl = match first_node.kind() {
+            AstKind::TSInterfaceDeclaration(decl) => decl,
+            _ => return self.any_type,
+        };
+        let type_parameters =
+            self.get_type_parameters_from_declaration(first_decl.type_parameters.as_deref());
+
+        // Phase 2: Collect members from all declarations.
+        let is_merged = interface_node_ids.len() > 1;
         let mut properties = Vec::new();
-        let mut call_signatures = Vec::new();
+        // Track call signatures per-declaration only when merging (need reverse ordering).
+        // For single declarations, collect directly into a flat vec.
+        let mut per_decl_call_sigs: Vec<Vec<Signature>> = if is_merged {
+            Vec::with_capacity(interface_node_ids.len())
+        } else {
+            Vec::new()
+        };
+        let mut flat_call_sigs: Vec<Signature> = Vec::new();
         let construct_signatures: Vec<Signature> = Vec::new();
         let mut string_index_type: Option<TypeId> = None;
         let mut number_index_type: Option<TypeId> = None;
+        let mut resolved_base_types: SmallVec<[TypeId; 4]> = SmallVec::new();
 
-        for sig in &decl.body.body {
-            use oxc_ast::ast::TSSignature;
+        for (decl_idx, &node_id) in interface_node_ids.iter().enumerate() {
+            let node = self.semantic().nodes().get_node(node_id);
+            let AstKind::TSInterfaceDeclaration(decl) = node.kind() else {
+                continue;
+            };
+
+            // For subsequent declarations, alias their type parameters to the
+            // first declaration's canonical TypeParameter TypeIds. This ensures
+            // that references to `T` in any declaration body resolve to the
+            // same TypeParameter type.
+            if decl_idx > 0 {
+                let subsequent_arity = decl
+                    .type_parameters
+                    .as_ref()
+                    .map_or(0, |tp| tp.params.len());
+                if subsequent_arity != type_parameters.len() {
+                    // Arity mismatch (includes generic vs non-generic) — skip
+                    // this declaration's body. TS2428 diagnostic deferred.
+                    continue;
+                }
+                // Alias subsequent type parameter SymbolIds to the canonical ones
+                if let Some(tp_decl) = &decl.type_parameters {
+                    for (i, param) in tp_decl.params.iter().enumerate() {
+                        if let Some(sid) = param.name.symbol_id.get() {
+                            self.declared_type_cache[sid] = Some(type_parameters[i]);
+                        }
+                    }
+                }
+            }
+
+            // Collect body members (properties, call signatures, index signatures)
+            if is_merged {
+                let mut decl_call_sigs = Vec::new();
+                self.collect_interface_body_members(
+                    &decl.body,
+                    &mut properties,
+                    &mut decl_call_sigs,
+                    &mut string_index_type,
+                    &mut number_index_type,
+                );
+                per_decl_call_sigs.push(decl_call_sigs);
+            } else {
+                self.collect_interface_body_members(
+                    &decl.body,
+                    &mut properties,
+                    &mut flat_call_sigs,
+                    &mut string_index_type,
+                    &mut number_index_type,
+                );
+            }
+
+            // Collect base types from extends clause.
+            // Cycle detection via `resolving_symbols` in `get_declared_type_of_symbol`.
+            for heritage in &decl.extends {
+                let base_type = self.get_type_from_heritage_element(heritage);
+                if base_type != self.any_type {
+                    resolved_base_types.push(base_type);
+                }
+            }
+        }
+
+        // Merge call signatures: later declarations' signatures come first
+        // (TypeScript overload resolution order).
+        let call_signatures = if is_merged {
+            per_decl_call_sigs.into_iter().rev().flatten().collect()
+        } else {
+            flat_call_sigs
+        };
+
+        sort_properties(&mut properties);
+        self.type_arena.new_type(
+            TypeFlags::Object,
+            ObjectFlags::Interface,
+            TypeData::Structured(Box::new(StructuredType {
+                properties,
+                string_index_type,
+                number_index_type,
+                call_signatures,
+                construct_signatures,
+                kind: StructuredTypeKind::Interface {
+                    target: None,
+                    resolved_type_arguments: SmallVec::new(),
+                    all_type_parameters: type_parameters,
+                    this_type: None,
+                    resolved_base_types,
+                },
+            })),
+            Some((self.file_idx, symbol_id)),
+        )
+    }
+
+    /// Collect properties, call signatures, and index signatures from an
+    /// interface body. Used by `get_type_of_merged_interface` to process
+    /// each declaration's body independently.
+    fn collect_interface_body_members(
+        &mut self,
+        body: &oxc_ast::ast::TSInterfaceBody<'_>,
+        properties: &mut Vec<PropertyInfo>,
+        call_signatures: &mut Vec<Signature>,
+        string_index_type: &mut Option<TypeId>,
+        number_index_type: &mut Option<TypeId>,
+    ) {
+        use oxc_ast::ast::TSSignature;
+
+        for sig in &body.body {
             match sig {
                 TSSignature::TSPropertySignature(prop) => {
                     if let Some(name) = prop.key.static_name() {
@@ -146,49 +296,15 @@ impl Checker<'_> {
                         let key_type =
                             self.get_type_from_type_node(&param.type_annotation.type_annotation);
                         if self.type_arena.get_flags(key_type).intersects(TypeFlags::Number) {
-                            number_index_type = Some(value_type);
+                            *number_index_type = Some(value_type);
                         } else {
-                            string_index_type = Some(value_type);
+                            *string_index_type = Some(value_type);
                         }
                     }
                 }
                 _ => {}
             }
         }
-
-        // Resolve extends clause — populate base types.
-        // Must happen before arena insertion since types are immutable once created.
-        // Cycle detection relies on the `resolving_symbols` set in `get_declared_type_of_symbol`:
-        // if A extends B and B extends A, the circular reference resolves to `any_type`
-        // and is filtered out here.
-        let mut resolved_base_types = SmallVec::new();
-        for heritage in &decl.extends {
-            let base_type = self.get_type_from_heritage_element(heritage);
-            if base_type != self.any_type {
-                resolved_base_types.push(base_type);
-            }
-        }
-
-        sort_properties(&mut properties);
-        self.type_arena.new_type(
-            TypeFlags::Object,
-            ObjectFlags::Interface,
-            TypeData::Structured(Box::new(StructuredType {
-                properties,
-                string_index_type,
-                number_index_type,
-                call_signatures,
-                construct_signatures,
-                kind: StructuredTypeKind::Interface {
-                    target: None,
-                    resolved_type_arguments: SmallVec::new(),
-                    all_type_parameters: type_parameters,
-                    this_type: None,
-                    resolved_base_types,
-                },
-            })),
-            Some((self.file_idx, symbol_id)),
-        )
     }
 
     /// Resolve a heritage element (from an interface `extends` clause) to a TypeId.
