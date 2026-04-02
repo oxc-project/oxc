@@ -1217,34 +1217,33 @@ fn run_checker_single(
     options: oxc_checker::CheckerOptions,
     target: Option<oxc_project::ScriptTarget>,
 ) -> TestResult {
-    use oxc::semantic::SemanticBuilder;
-    use oxc_checker::Checker;
-
     // Parse the .types baseline
     let assertions = parse_types_baseline(baseline_content);
     if assertions.is_empty() {
         return TestResult::Passed;
     }
 
-    // Parse source → semantic → checker
+    // Create a Project with the single user file. The Project handles
+    // parsing, binding, and checking with correct file indices (no
+    // collision with lib file indices).
     let type_arena = oxc_types::TypeArena::with_capacity(64);
-    let project = oxc_project::Project::new_with_target(&type_arena, target);
-    let allocator = Allocator::default();
-    let parsed = Parser::new(&allocator, source, source_type).parse();
-    if !parsed.errors.is_empty() {
-        return TestResult::ParseError(
-            parsed.errors.iter().map(|e| e.message.to_string()).collect::<Vec<_>>().join("\n"),
-            false,
-        );
-    }
-    let program = &parsed.program;
-    let semantic = SemanticBuilder::new().build(program).semantic;
-    let mut checker =
-        Checker::new_with_host(&semantic, &type_arena, &project, String::new(), 1, options);
-    checker.check_program(program);
+    let files = vec![(
+        PathBuf::from("/virtual/test.ts"),
+        source.to_string(),
+        source_type,
+    )];
+    let mut project =
+        oxc_project::Project::new_multi_from_sources_with_target(&type_arena, files, options, target);
+    project.check_all();
 
-    // Collect computed types from AST (uses cached types from check_program)
-    let actual = collect_checker_types(&mut checker, program, source);
+    // Collect types from the checked file via with_checker
+    let file_idx = project.lib_file_count(); // first user file
+    let actual = project.with_checker(file_idx, |checker, program| {
+        collect_checker_types(checker, program, source)
+    });
+    let Some(actual) = actual else {
+        return TestResult::ParseError("file not checked".to_string(), false);
+    };
 
     // Match assertions against actual
     let mut actual_iter = actual.iter();
@@ -1705,16 +1704,9 @@ fn run_checker_errors_single(
     compiler_options_list: &[oxc_project::CompilerOptions],
     target: Option<oxc_project::ScriptTarget>,
 ) -> TestResult {
-    use oxc::semantic::SemanticBuilder;
-    use oxc_checker::Checker;
-
-    // Collect error codes from all phases: config validation, parser, semantic, and checker.
-    // tsc's .errors.txt baselines include errors from all compiler phases,
-    // so we must do the same to get accurate conformance results.
     let mut actual_codes: Vec<String> = Vec::new();
 
     // Validate compiler options (emits e.g. TS5107 for deprecated target=ES5).
-    // For multi-target tests, validate each variant to match the aggregated baselines.
     for compiler_options in compiler_options_list {
         for d in &oxc_project::validate_compiler_options(compiler_options) {
             if let Some(code) = d.code.number.as_ref() {
@@ -1723,59 +1715,31 @@ fn run_checker_errors_single(
         }
     }
 
+    // Create a Project with the single user file. The Project collects
+    // parser, semantic, and checker diagnostics — matching tsc's behavior
+    // of reporting errors from all compiler phases.
     let type_arena = oxc_types::TypeArena::with_capacity(64);
-    let project = oxc_project::Project::new_with_target(&type_arena, target);
-    let allocator = Allocator::default();
-    let parsed = Parser::new(&allocator, source, source_type).parse();
+    let files = vec![(
+        PathBuf::from("/virtual/test.ts"),
+        source.to_string(),
+        source_type,
+    )];
+    let mut project =
+        oxc_project::Project::new_multi_from_sources_with_target(&type_arena, files, options, target);
+    let result = project.check_all();
 
-    // Collect TS error codes from parser diagnostics
-    for d in &parsed.errors {
-        if let Some(code) = d.code.number.as_ref() {
-            actual_codes.push(code.to_string());
-        }
-    }
-
-    // If the parser panicked (unrecoverable), we can't build an AST to continue
-    if parsed.panicked {
-        return TestResult::ParseError(
-            parsed.errors.iter().map(|e| e.message.to_string()).collect::<Vec<_>>().join("\n"),
-            false,
-        );
-    }
-
-    // Run semantic and checker even if there were (recoverable) parser errors,
-    // since tsc continues analysis and may emit additional errors
-    let program = &parsed.program;
-    let semantic_ret = SemanticBuilder::new().build(program);
-
-    // Collect TS error codes from semantic diagnostics
-    for d in &semantic_ret.errors {
-        if let Some(code) = d.code.number.as_ref() {
-            actual_codes.push(code.to_string());
-        }
-    }
-
-    let mut checker = Checker::new_with_host(
-        &semantic_ret.semantic,
-        &type_arena,
-        &project,
-        String::new(),
-        1,
-        options,
-    );
-    checker.check_program(program);
-
-    // Collect TS error codes from checker diagnostics
-    for d in &checker.take_diagnostics() {
-        if let Some(code) = d.code.number.as_ref() {
-            actual_codes.push(code.to_string());
+    // Collect error codes from all files' diagnostics
+    for (_path, diagnostics) in &result.diagnostics {
+        for d in diagnostics {
+            if let Some(code) = d.code.number.as_ref() {
+                actual_codes.push(code.to_string());
+            }
         }
     }
 
     actual_codes.sort();
     actual_codes.dedup();
 
-    // Check if our actual codes match expected codes
     let mut expected_sorted: Vec<&str> = expected_codes.iter().map(|s| s.as_str()).collect();
     expected_sorted.sort();
 

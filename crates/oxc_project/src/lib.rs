@@ -340,10 +340,23 @@ impl Project {
         files: Vec<(PathBuf, String, SourceType)>,
         checker_options: CheckerOptions,
     ) -> Self {
+        Self::new_multi_from_sources_with_target(arena, files, checker_options, None)
+    }
+
+    /// Like `new_multi_from_sources`, but with a specific script target for
+    /// lib file selection (e.g., ES2015 loads additional lib files).
+    pub fn new_multi_from_sources_with_target(
+        arena: &TypeArena,
+        files: Vec<(PathBuf, String, SourceType)>,
+        checker_options: CheckerOptions,
+        target: Option<ScriptTarget>,
+    ) -> Self {
         let intrinsics = allocate_intrinsics(arena);
 
-        // Load lib files (ES5 only for this constructor)
-        let lib_files = find_lib_sources(&["es5"]);
+        let lib_names = target
+            .map(|t| t.default_libs())
+            .unwrap_or(&["es5"]);
+        let lib_files = find_lib_sources(lib_names);
         let (mut file_paths, mut sources, lib_count) =
             Self::prepare_lib_files(lib_files);
 
