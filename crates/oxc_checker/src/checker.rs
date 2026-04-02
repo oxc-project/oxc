@@ -160,7 +160,10 @@ pub struct Checker<'a> {
     /// Fresh literals are created from source-code literal expressions (e.g., `"foo"`,
     /// `42`, `true`). They widen to their base types for mutable variables (`let`/`var`).
     /// Non-fresh literals (from type annotations, narrowing, etc.) do NOT widen.
+    /// Maps regular literal TypeId → fresh literal TypeId.
     fresh_literal_map: FxHashMap<TypeId, TypeId>,
+    /// Reverse map: fresh literal TypeId → regular literal TypeId.
+    regular_literal_map: FxHashMap<TypeId, TypeId>,
 
     /// Cache for assignability relation results. Key is packed
     /// `(source_id << 32) | target_id` as u64. Avoids recomputing
@@ -418,6 +421,7 @@ impl<'a> Checker<'a> {
             intersection_types: FxHashMap::default(),
             string_literal_types: FxHashMap::default(),
             fresh_literal_map: FxHashMap::default(),
+            regular_literal_map: FxHashMap::default(),
             number_literal_types: FxHashMap::default(),
             bigint_literal_types: FxHashMap::default(),
             assignability_cache: FxHashMap::default(),
@@ -1288,6 +1292,7 @@ impl<'a> Checker<'a> {
             self.type_arena.get_symbol(type_id),
         );
         self.fresh_literal_map.insert(type_id, fresh_id);
+        self.regular_literal_map.insert(fresh_id, type_id);
         fresh_id
     }
 
@@ -1299,10 +1304,8 @@ impl<'a> Checker<'a> {
         if flags.intersects(TypeFlags::Freshable) {
             let obj_flags = self.type_arena.get_object_flags(type_id);
             if obj_flags.intersects(ObjectFlags::FreshLiteral) {
-                for (&regular, &fresh) in &self.fresh_literal_map {
-                    if fresh == type_id {
-                        return regular;
-                    }
+                if let Some(&regular) = self.regular_literal_map.get(&type_id) {
+                    return regular;
                 }
             }
             return type_id;
