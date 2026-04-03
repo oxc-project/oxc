@@ -199,7 +199,7 @@ language-tags = "0.3.2" # Language tag parsing
 lazy-regex = "3.5.1" # Lazy regex compilation
 markdown = "1.0.0" # Markdown parsing
 memchr = "2.7.6" # Fast byte searching
-miette = { package = "oxc-miette", version = "2.7.0", features = [
+miette = { package = "oxc-miette", version = "2.7.1", features = [
   "fancy-no-syscall",
 ] } # Error reporting
 mimalloc-safe = "0.1.56" # Fast allocator

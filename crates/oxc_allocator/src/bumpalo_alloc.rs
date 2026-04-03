@@ -8,34 +8,26 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-//! Memory allocation APIs.
-//!
-//! This module was originally derived from bumpalo and Rust's allocator APIs.
-
-#![allow(
+#![expect(
     clippy::collapsible_if,
-    clippy::doc_markdown,
     clippy::equatable_if_let,
-    clippy::inline_always,
     clippy::legacy_numeric_constants,
-    clippy::missing_errors_doc,
-    clippy::missing_panics_doc,
     clippy::missing_safety_doc,
-    clippy::must_use_candidate,
     clippy::redundant_closure_for_method_calls,
-    clippy::redundant_else,
-    clippy::similar_names,
     clippy::undocumented_unsafe_blocks,
     clippy::uninlined_format_args,
     clippy::unnecessary_literal_bound,
     clippy::unused_self,
-    dead_code,
-    deprecated,
-    unstable_name_collisions,
     unsafe_op_in_unsafe_fn
 )]
+#![allow(unstable_name_collisions)]
+#![allow(dead_code)]
+#![allow(deprecated)]
 
 //! Memory allocation APIs
+//!
+//! This module was originally copied from `bumpalo` at commit a47f6d6b7b5fee9c99a285f0de80257a0a982ef3
+//! (2 commits after 3.20.2 release). Changes have been made since.
 
 use core::cmp;
 use core::fmt;
@@ -46,7 +38,6 @@ use core::usize;
 pub use core::alloc::{Layout, LayoutErr};
 
 #[cold]
-#[inline(never)]
 fn new_layout_err() -> LayoutErr {
     Layout::from_size_align(1, 3).unwrap_err()
 }
@@ -344,7 +335,7 @@ pub unsafe trait Alloc {
     // realloc. alloc_excess, realloc_excess
 
     /// Returns a pointer suitable for holding data described by
-    /// a new layout with `layout`'s alignment and a size given
+    /// a new layout with `layout`’s alignment and a size given
     /// by `new_size`. To
     /// accomplish this, this may extend or shrink the allocation
     /// referenced by `ptr` to fit the new layout.

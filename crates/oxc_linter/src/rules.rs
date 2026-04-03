@@ -173,6 +173,7 @@ pub(crate) mod eslint {
     pub mod no_unused_private_class_members;
     pub mod no_unused_vars;
     pub mod no_use_before_define;
+    pub mod no_useless_assignment;
     pub mod no_useless_backreference;
     pub mod no_useless_call;
     pub mod no_useless_catch;
@@ -186,6 +187,7 @@ pub(crate) mod eslint {
     pub mod no_void;
     pub mod no_warning_comments;
     pub mod no_with;
+    pub mod object_shorthand;
     pub mod operator_assignment;
     pub mod prefer_const;
     pub mod prefer_destructuring;
@@ -364,6 +366,7 @@ pub(crate) mod jest {
     pub mod prefer_lowercase_title;
     pub mod prefer_mock_promise_shorthand;
     pub mod prefer_mock_return_shorthand;
+    pub mod prefer_snapshot_hint;
     pub mod prefer_spy_on;
     pub mod prefer_strict_equal;
     pub mod prefer_to_be;
@@ -429,6 +432,7 @@ pub(crate) mod react {
     pub mod no_will_update_set_state;
     pub mod only_export_components;
     pub mod prefer_es6_class;
+    pub mod prefer_function_component;
     pub mod react_in_jsx_scope;
     pub mod require_render_return;
     pub mod rules_of_hooks;
@@ -569,6 +573,7 @@ pub(crate) mod unicorn {
     pub mod require_number_to_fixed_digits_argument;
     pub mod require_post_message_target_origin;
     pub mod switch_case_braces;
+    pub mod switch_case_break_position;
     pub mod text_encoding_identifier_case;
     pub mod throw_new_error;
 }

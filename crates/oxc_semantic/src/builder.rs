@@ -419,7 +419,7 @@ impl<'a> SemanticBuilder<'a> {
         includes: SymbolFlags,
         excludes: SymbolFlags,
     ) -> SymbolId {
-        if let Some(symbol_id) = self.check_redeclaration(scope_id, span, name, excludes, true) {
+        if let Some(symbol_id) = self.check_redeclaration(scope_id, span, name, excludes) {
             self.add_redeclare_variable(symbol_id, includes, span);
             self.scoping.union_symbol_flag(symbol_id, includes);
             return symbol_id;
@@ -445,15 +445,12 @@ impl<'a> SemanticBuilder<'a> {
 
     /// Check if a symbol with the same name has already been declared in the
     /// current scope. Returns the symbol ID if it exists and is not excluded by `excludes`.
-    ///
-    /// Only records a redeclaration error if `report_error` is `true`.
     pub(crate) fn check_redeclaration(
         &self,
         scope_id: ScopeId,
         span: Span,
         name: Ident<'_>,
         excludes: SymbolFlags,
-        report_error: bool,
     ) -> Option<SymbolId> {
         let symbol_id = self.scoping.get_binding(scope_id, name).or_else(|| {
             self.hoisting_variables.get(&scope_id).and_then(|symbols| symbols.get(&name).copied())
@@ -475,12 +472,10 @@ impl<'a> SemanticBuilder<'a> {
             return None;
         }
 
-        if report_error {
-            let flags = self.scoping.symbol_flags(symbol_id);
-            if flags.intersects(excludes) {
-                let symbol_span = self.scoping.symbol_span(symbol_id);
-                self.error(redeclaration(&name, symbol_span, span));
-            }
+        let flags = self.scoping.symbol_flags(symbol_id);
+        if flags.intersects(excludes) {
+            let symbol_span = self.scoping.symbol_span(symbol_id);
+            self.error(redeclaration(&name, symbol_span, span));
         }
 
         Some(symbol_id)
@@ -774,13 +769,14 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         self.visit_decorators(&class.decorators);
         self.enter_scope(ScopeFlags::StrictMode, &class.scope_id);
-        if let Some(id) = &class.id {
-            self.visit_binding_identifier(id);
-        }
 
         if class.is_expression() {
-            // We need to bind class expression in the class scope
+            // We need to bind class expressions in the class scope before visiting the identifier.
             class.bind(self);
+        }
+
+        if let Some(id) = &class.id {
+            self.visit_binding_identifier(id);
         }
 
         if let Some(type_parameters) = &class.type_parameters {

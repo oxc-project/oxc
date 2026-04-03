@@ -334,6 +334,22 @@ mod tests {
     }
 
     #[test]
+    fn repeated_build_with_named_class_expression_and_syntax_checks() {
+        let allocator = Allocator::default();
+        let source = "export const X = class Base {};";
+        let source_type = SourceType::ts();
+        let parse = oxc_parser::Parser::new(&allocator, source, source_type).parse();
+
+        assert!(parse.errors.is_empty());
+
+        let first = SemanticBuilder::new().with_check_syntax_error(true).build(&parse.program);
+        assert!(first.errors.is_empty());
+
+        let second = SemanticBuilder::new().with_check_syntax_error(true).build(&parse.program);
+        assert!(second.errors.is_empty());
+    }
+
+    #[test]
     fn test_is_global() {
         let source = "
             var a = 0;

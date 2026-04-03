@@ -7,7 +7,7 @@ use oxc_allocator::{
     ident_hash, pack_len_hash,
 };
 #[cfg(feature = "serialize")]
-use oxc_estree::{ESTree, Serializer as ESTreeSerializer};
+use oxc_estree::{ESTree, JsonSafeString, Serializer as ESTreeSerializer};
 #[cfg(feature = "serialize")]
 use serde::{Serialize, Serializer as SerdeSerializer};
 
@@ -435,7 +435,8 @@ impl Serialize for Ident<'_> {
 impl ESTree for Ident<'_> {
     #[inline] // Because it just delegates
     fn serialize<S: ESTreeSerializer>(&self, serializer: S) {
-        ESTree::serialize(self.as_str(), serializer);
+        // `Ident`s are always JSON-safe
+        ESTree::serialize(&JsonSafeString(self.as_str()), serializer);
     }
 }
 

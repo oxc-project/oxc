@@ -236,7 +236,6 @@ pub use match_expression;
 pub struct IdentifierName<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
-    #[estree(json_safe)]
     pub name: Ident<'a>,
 }
 
@@ -257,7 +256,6 @@ pub struct IdentifierReference<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
     /// The name of the identifier being referenced.
-    #[estree(json_safe)]
     pub name: Ident<'a>,
     /// Reference ID
     ///
@@ -287,7 +285,6 @@ pub struct BindingIdentifier<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
     /// The identifier name being bound.
-    #[estree(json_safe)]
     pub name: Ident<'a>,
     /// Unique identifier for this binding.
     ///
@@ -314,7 +311,6 @@ pub struct BindingIdentifier<'a> {
 pub struct LabelIdentifier<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
-    #[estree(json_safe)]
     pub name: Ident<'a>,
 }
 

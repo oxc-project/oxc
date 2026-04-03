@@ -89,7 +89,9 @@ pub fn is_jestlike_file(path: &Path) -> bool {
 }
 
 pub fn has_vitest_imports(module_record: &ModuleRecord) -> bool {
-    module_record.import_entries.iter().any(|entry| entry.module_request.name() == "vitest")
+    module_record.import_entries.iter().any(|entry| {
+        entry.module_request.name() == "vitest" || entry.module_request.name() == "vite-plus/test"
+    })
 }
 
 pub fn has_jest_imports(module_record: &ModuleRecord) -> bool {

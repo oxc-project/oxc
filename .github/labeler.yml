@@ -1,3 +1,7 @@
+A-allocator:
+  - changed-files:
+      - any-glob-to-any-file: ["crates/oxc_allocator/**"]
+
 A-ast:
   - changed-files:
       - any-glob-to-any-file: ["crates/oxc_ast/**"]

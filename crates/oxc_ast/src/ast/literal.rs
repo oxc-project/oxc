@@ -65,7 +65,7 @@ pub struct NumericLiteral<'a> {
     ///
     /// `None` when this ast node is not constructed from the parser.
     #[content_eq(skip)]
-    #[estree(json_safe)]
+    #[estree(json_safe, from_span)]
     pub raw: Option<Str<'a>>,
     /// The base representation used by the literal in source code
     #[content_eq(skip)]
@@ -95,6 +95,7 @@ pub struct StringLiteral<'a> {
     ///
     /// `None` when this ast node is not constructed from the parser.
     #[content_eq(skip)]
+    #[estree(from_span)]
     pub raw: Option<Str<'a>>,
 
     /// The string value contains lone surrogates.
@@ -122,7 +123,7 @@ pub struct BigIntLiteral<'a> {
     pub value: Str<'a>,
     /// The bigint as it appears in source code
     #[content_eq(skip)]
-    #[estree(json_safe)]
+    #[estree(json_safe, from_span)]
     pub raw: Option<Str<'a>>,
     /// The base representation used by the literal in source code
     #[content_eq(skip)]
@@ -153,6 +154,7 @@ pub struct RegExpLiteral<'a> {
     ///
     /// `None` when this ast node is not constructed from the parser.
     #[content_eq(skip)]
+    #[estree(from_span)]
     pub raw: Option<Str<'a>>,
 }
 

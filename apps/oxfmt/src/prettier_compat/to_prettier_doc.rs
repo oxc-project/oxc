@@ -81,7 +81,7 @@ struct PrinterState {
     /// Mirrors the printer's `pending_space` flag.
     /// See: `PrinterState::pending_space` in `printer/mod.rs`
     ///
-    /// Set by `Space`/`HardSpace` elements.
+    /// Set by `Space` elements.
     /// Consumed (flushed as `" "`) before the next visible content.
     /// Boolean semantics naturally deduplicates consecutive spaces.
     pending_space: bool,
@@ -124,7 +124,7 @@ fn convert_elements(
 
     for element in elements {
         match element {
-            FormatElement::Space | FormatElement::HardSpace => {
+            FormatElement::Space => {
                 printer.pending_space = true;
                 printer.last_was_hardline = false;
             }
@@ -262,11 +262,7 @@ fn convert_elements(
                     // This mirrors the printer's boolean idempotency (`Space + Space` = one space).
                     if !matches!(
                         interned.first(),
-                        Some(
-                            FormatElement::Space
-                                | FormatElement::HardSpace
-                                | FormatElement::Line(LineMode::SoftOrSpace)
-                        )
+                        Some(FormatElement::Space | FormatElement::Line(LineMode::SoftOrSpace))
                     ) {
                         concat_string(current_children_mut(&mut stack)?, " ");
                     }

@@ -225,7 +225,10 @@ fn collect_ids_referenced_to_import<'a, 'c>(
                 };
                 let name = semantic.scoping().symbol_name(symbol_id);
 
-                if matches!(import_decl.source.value.as_str(), "@jest/globals" | "vitest") {
+                if matches!(
+                    import_decl.source.value.as_str(),
+                    "@jest/globals" | "vitest" | "vite-plus/test"
+                ) {
                     let original = find_original_name(import_decl, name);
                     let ret = reference_ids
                         .iter()

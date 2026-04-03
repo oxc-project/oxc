@@ -83,9 +83,22 @@ impl FormatService {
 
             // Write back if needed
             if matches!(self.format_mode, OutputMode::Write) && is_changed {
-                fs::write(path, code)
-                    .map_err(|_| format!("Failed to write to '{}'", path.to_string_lossy()))
-                    .unwrap();
+                match fs::write(path, &code) {
+                    Ok(()) => (),
+                    Err(err) => {
+                        let diagnostics = DiagnosticService::wrap_diagnostics(
+                            self.cwd.clone(),
+                            path,
+                            "",
+                            vec![oxc_diagnostics::OxcDiagnostic::error(format!(
+                                "Failed to save '{}': {err}",
+                                path.display()
+                            ))],
+                        );
+                        tx_error.send(diagnostics).unwrap();
+                        return;
+                    }
+                }
             }
 
             // Report result

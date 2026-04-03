@@ -63,7 +63,7 @@ pub struct FormatConfig {
     /// Specify the number of spaces per indentation-level.
     ///
     /// - Default: `2`
-    /// - Overrides `.editorconfig.indent_size`
+    /// - Overrides `.editorconfig.indent_size` (falls back to `.editorconfig.tab_width`)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tab_width: Option<u8>,
     /// Which end of line characters to apply.

@@ -10,8 +10,6 @@ use crate::core::{ExternalFormatter, JsConfigLoaderCb};
 
 mod options;
 mod server_formatter;
-#[cfg(test)]
-mod tester;
 
 fn get_file_extension_from_language_id(language_id: &LanguageId) -> Option<&'static str> {
     match language_id.as_str() {

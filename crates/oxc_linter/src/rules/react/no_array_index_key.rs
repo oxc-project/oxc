@@ -112,7 +112,7 @@ fn check_react_clone_element<'a>(
             if key_ident.name.as_str() == "key"
                 && span_contains_symbol_reference(ctx, index_param_symbol_id, prop.value.span())
             {
-                ctx.diagnostic(no_array_index_key_diagnostic(obj_expr.span));
+                ctx.diagnostic(no_array_index_key_diagnostic(prop.span));
             }
         }
     }
@@ -268,6 +268,12 @@ fn test() {
         ",
         r"things.map((thing, index) => (
             React.cloneElement(thing, { key: index })
+          ));
+        ",
+        r"things.map((thing, index) => (
+            React.cloneElement(thing, {
+              key: index
+            })
           ));
         ",
         r"things.map((thing, index) => (

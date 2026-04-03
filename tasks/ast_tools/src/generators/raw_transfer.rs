@@ -143,7 +143,7 @@ fn generate_deserializers(
         import {{ comments, initComments }} from '../plugins/comments.js';
         /* END_IF */
 
-        let uint8, uint32, float64, sourceText, sourceIsAscii, sourceStartPos, sourceEndPos;
+        let uint8, uint32, float64, sourceText, sourceIsAscii, sourceStartPos, sourceEndPos, firstNonAsciiPos;
 
         let parent = null;
         let getLoc;
@@ -187,6 +187,23 @@ fn generate_deserializers(
 
             sourceText = sourceTextInput;
             sourceIsAscii = sourceText.length === sourceByteLen;
+
+            if (!sourceIsAscii) {{
+                // Find first non-ASCII byte in source region.
+                // `sourceText.substr()` can be used for strings ending before this position,
+                // since byte offsets equal char offsets in the all-ASCII prefix.
+                if (LINTER) {{
+                    firstNonAsciiPos = sourceByteLen;
+                    for (let i = sourceStartPos, e = sourceStartPos + sourceByteLen; i < e; i++) {{
+                        if (uint8[i] >= 128) {{ firstNonAsciiPos = i - sourceStartPos; break; }}
+                    }}
+                }} else {{
+                    firstNonAsciiPos = sourceByteLen;
+                    for (let i = 0; i < sourceByteLen; i++) {{
+                        if (uint8[i] >= 128) {{ firstNonAsciiPos = i; break; }}
+                    }}
+                }}
+            }}
 
             if (LOC) getLoc = getLocInput;
 
@@ -684,6 +701,45 @@ impl<'s> StructDeserializerGenerator<'s> {
             }
 
             field_name.clone()
+        } else if field.estree.from_span {
+            // Derive value from `sourceText.slice(start, end)` instead of deserializing.
+            // Field must be `Str`, `Ident`, `&str`, or `Option` containing one of those types.
+            let (inner_type, prefix) = if let TypeDef::Option(option_def) = field_type {
+                let inner_type = option_def.inner_type(self.schema);
+                let (none_condition, _) =
+                    get_option_none_condition_and_offset(option_def, inner_type, field_offset);
+                (inner_type, format!("({none_condition}) ? null : "))
+            } else {
+                (field_type, String::new())
+            };
+
+            if inner_type.as_primitive().is_none_or(|primitive_def| {
+                !matches!(primitive_def.name(), "Str" | "Ident" | "&str")
+            }) {
+                panic!(
+                    "`#[estree(from_span)]` can only be on a field of type `Str`, `Ident`, `&str`, or `Option` containing one of those types: `{}::{}`",
+                    struct_def.name(),
+                    field.name(),
+                );
+            }
+
+            // Check that struct has a `span: Span` field, and that it is flattened, so `start` and `end` are available
+            assert!(
+                struct_def.fields.iter().any(|field| {
+                    field.type_id == self.span_type_id
+                        && field.name() == "span"
+                        && should_flatten_field(field, self.schema)
+                }),
+                "`#[estree(from_span)]` can only be used on a field of a struct with a flattened `span: Span` field: `{}::{}`",
+                struct_def.name(),
+                field.name(),
+            );
+
+            inline = true;
+            self.dependent_field_names.insert("start".to_string());
+            self.dependent_field_names.insert("end".to_string());
+
+            format!("{prefix}sourceText.slice(start, end)")
         } else if let Some(converter_name) = &field.estree.via {
             let converter = self.schema.meta_by_name(converter_name);
             self.apply_converter(converter, struct_def, struct_offset).unwrap()
@@ -874,15 +930,17 @@ static STR_DESERIALIZER_BODY: &str = "
     pos = uint32[pos32];
 
     if (LINTER) {
-        if (sourceIsAscii && pos >= sourceStartPos) return sourceText.substr(pos - sourceStartPos, len);
+        if (pos >= sourceStartPos && (sourceIsAscii || pos - sourceStartPos + len <= firstNonAsciiPos))
+            return sourceText.substr(pos - sourceStartPos, len);
     } else {
-        if (sourceIsAscii && pos < sourceEndPos) return sourceText.substr(pos, len);
+        if (pos < sourceEndPos && (sourceIsAscii || pos + len <= firstNonAsciiPos))
+            return sourceText.substr(pos, len);
     }
 
-    // Longer strings use `TextDecoder`
-    // TODO: Find best switch-over point
+    // Use `TextDecoder` for strings longer than 9 bytes.
+    // For shorter strings, the byte-by-byte loop below avoids native call overhead.
     const end = pos + len;
-    if (len > 50) return decodeStr(uint8.subarray(pos, end));
+    if (len > 9) return decodeStr(uint8.subarray(pos, end));
 
     // Shorter strings decode by hand to avoid native call
     let out = '',
@@ -914,40 +972,51 @@ fn generate_option(
 
     let fn_name = option_def.deser_name(schema);
     let inner_fn_name = inner_type.deser_name(schema);
+
+    let (none_condition, payload_offset) =
+        get_option_none_condition_and_offset(option_def, inner_type, 0);
+
+    #[rustfmt::skip]
+    write_it!(code, "
+        function {fn_name}(pos) {{
+            return ({none_condition}) ? null : {inner_fn_name}({payload_offset});
+        }}
+    ");
+}
+
+/// Get condition for `Option`'s `None` value and offset of `Option`'s payload.
+fn get_option_none_condition_and_offset(
+    option_def: &OptionDef,
+    inner_type: &TypeDef,
+    offset: u32,
+) -> (String, Cow<'static, str>) {
     let inner_layout = inner_type.layout_64();
 
-    let (none_condition, payload_offset) = if option_def.layout_64().size == inner_layout.size {
+    if option_def.layout_64().size == inner_layout.size {
         let niche = inner_layout.niche.clone().unwrap();
+        let niche_offset = offset + niche.offset;
         let none_condition = match niche.size {
-            1 => format!("uint8[{}] === {}", pos_offset(niche.offset), niche.value()),
-            // 2 => format!("uint16[{}] === {}", pos_offset_shift(niche.offset, 1), niche.value()),
-            4 => format!("uint32[{}] === {}", pos_offset_shift(niche.offset, 2), niche.value()),
+            1 => format!("uint8[{}] === {}", pos_offset(niche_offset), niche.value()),
+            // 2 => format!("uint16[{}] === {}", pos_offset_shift(offset, 1), niche.value()),
+            4 => format!("uint32[{}] === {}", pos_offset_shift(niche_offset, 2), niche.value()),
             8 => {
                 // TODO: Use `float64[pos >> 3] === 0` instead of
                 // `uint32[pos >> 2] === 0 && uint32[(pos + 4) >> 2] === 0`?
                 let value = niche.value();
                 format!(
                     "uint32[{}] === {} && uint32[{}] === {}",
-                    pos_offset_shift(niche.offset, 2),
+                    pos_offset_shift(niche_offset, 2),
                     value & u128::from(u32::MAX),
-                    pos_offset_shift(niche.offset + 4, 2),
+                    pos_offset_shift(niche_offset + 4, 2),
                     value >> 32,
                 )
             }
             size => panic!("Invalid niche size: {size}"),
         };
-        (none_condition, Cow::Borrowed("pos"))
+        (none_condition, pos_offset(offset))
     } else {
-        ("uint8[pos] === 0".to_string(), pos_offset(inner_layout.align))
-    };
-
-    #[rustfmt::skip]
-    write_it!(code, "
-        function {fn_name}(pos) {{
-            if ({none_condition}) return null;
-            return {inner_fn_name}({payload_offset});
-        }}
-    ");
+        (format!("uint8[{}] === 0", pos_offset(offset)), pos_offset(offset + inner_layout.align))
+    }
 }
 
 /// Generate deserialize function for a `Box`.

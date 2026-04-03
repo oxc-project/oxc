@@ -28,8 +28,6 @@ oxc_parser = { workspace = true, optional = true }
 oxc_span = { workspace = true, features = ["serialize"], optional = true }
 oxc_syntax = { workspace = true, features = ["serialize"], optional = true }
 
-oxc_data_structures = { workspace = true, features = ["slice_iter"] }
-
 bitflags = { workspace = true }
 bpaf = { workspace = true, features = ["autocomplete", "bright-color", "derive"] }
 convert_case = { workspace = true }

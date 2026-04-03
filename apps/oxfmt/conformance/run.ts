@@ -96,8 +96,6 @@ const categories: Category[] = [
         "js-in-html(`<script>`)-in-js needs lot more work; Please see oxc_formatter/src/print/template/embed/html.rs",
       "webawesome/relative-time/relative-time.test.ts":
         "html-in-js: Need to solve `label({ embed, hug }))` + `shouldExpandLastArg`",
-      "webawesome/slider/slider.ts":
-        "`@decorator` + union type: https://github.com/oxc-project/oxc/issues/20519",
     },
   },
   {

@@ -517,5 +517,6 @@ pub struct JSXText<'a> {
     ///
     /// `None` when this ast node is not constructed from the parser.
     #[content_eq(skip)]
+    #[estree(from_span)]
     pub raw: Option<Str<'a>>,
 }

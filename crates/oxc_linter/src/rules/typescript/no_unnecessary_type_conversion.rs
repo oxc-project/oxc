@@ -28,7 +28,7 @@ declare_oxc_lint!(
     /// ```
     NoUnnecessaryTypeConversion(tsgolint),
     typescript,
-    nursery,
+    suspicious,
 );
 
 impl Rule for NoUnnecessaryTypeConversion {}
