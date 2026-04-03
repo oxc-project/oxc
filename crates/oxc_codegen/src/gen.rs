@@ -3128,12 +3128,12 @@ impl Gen for TSArrayType<'_> {
 
 impl Gen for TSTupleType<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
+        let ctx = ctx.without_ts_type_alias_rhs_leading();
         p.print_ascii_byte(b'[');
         p.print_list(&self.element_types, ctx);
         p.print_ascii_byte(b']');
     }
 }
-
 
 fn parenthesize_check_type_of_union_type(ty: &TSType<'_>) -> bool {
     match ty {
@@ -3171,6 +3171,7 @@ impl Gen for TSUnionType<'_> {
         let Some((first, rest)) = self.types.split_first() else {
             return;
         };
+        let ctx_rest = ctx.without_ts_type_alias_rhs_leading();
         p.wrap(parenthesize_check_type_of_union_type(first), |p| {
             first.print(p, ctx);
         });
@@ -3179,7 +3180,7 @@ impl Gen for TSUnionType<'_> {
             p.print_ascii_byte(b'|');
             p.print_soft_space();
             p.wrap(parenthesize_check_type_of_union_type(item), |p| {
-                item.print(p, ctx);
+                item.print(p, ctx_rest);
             });
         }
     }
@@ -3188,7 +3189,7 @@ impl Gen for TSUnionType<'_> {
 impl Gen for TSParenthesizedType<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_ascii_byte(b'(');
-        self.type_annotation.print(p, ctx);
+        self.type_annotation.print(p, ctx.without_ts_type_alias_rhs_leading());
         p.print_ascii_byte(b')');
     }
 }
@@ -3198,6 +3199,7 @@ impl Gen for TSIntersectionType<'_> {
         let Some((first, rest)) = self.types.split_first() else {
             return;
         };
+        let ctx_rest = ctx.without_ts_type_alias_rhs_leading();
         p.wrap(parenthesize_check_type_of_intersection_type(first), |p| {
             first.print(p, ctx);
         });
@@ -3206,7 +3208,7 @@ impl Gen for TSIntersectionType<'_> {
             p.print_ascii_byte(b'&');
             p.print_soft_space();
             p.wrap(parenthesize_check_type_of_intersection_type(item), |p| {
-                item.print(p, ctx);
+                item.print(p, ctx_rest);
             });
         }
     }
@@ -3214,6 +3216,7 @@ impl Gen for TSIntersectionType<'_> {
 
 impl Gen for TSConditionalType<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
+        let ctx = ctx.without_ts_type_alias_rhs_leading();
         p.wrap(
             matches!(
                 &self.check_type,
@@ -3239,7 +3242,7 @@ impl Gen for TSConditionalType<'_> {
 impl Gen for TSInferType<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_str("infer ");
-        self.type_parameter.print(p, ctx);
+        self.type_parameter.print(p, ctx.without_ts_type_alias_rhs_leading());
     }
 }
 
@@ -3249,13 +3252,14 @@ impl Gen for TSIndexedAccessType<'_> {
             self.object_type.print(p, ctx);
         });
         p.print_ascii_byte(b'[');
-        self.index_type.print(p, ctx);
+        self.index_type.print(p, ctx.without_ts_type_alias_rhs_leading());
         p.print_ascii_byte(b']');
     }
 }
 
 impl Gen for TSMappedType<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
+        let ctx = ctx.without_ts_type_alias_rhs_leading();
         p.print_ascii_byte(b'{');
         p.print_soft_space();
         match self.readonly {
@@ -3302,6 +3306,7 @@ impl Gen for TSTypeOperator<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_str(self.operator.to_str());
         p.print_hard_space();
+        let ctx_ty = ctx.without_ts_type_alias_rhs_leading();
         p.wrap(
             matches!(
                 &self.type_annotation,
@@ -3312,7 +3317,7 @@ impl Gen for TSTypeOperator<'_> {
                     | TSType::TSConditionalType(_)
             ),
             |p| {
-                self.type_annotation.print(p, ctx);
+                self.type_annotation.print(p, ctx_ty);
             },
         );
     }
@@ -3333,20 +3338,21 @@ impl Gen for TSTypePredicate<'_> {
         }
         if let Some(type_annotation) = &self.type_annotation {
             p.print_str(" is ");
-            type_annotation.print(p, ctx);
+            type_annotation.print(p, ctx.without_ts_type_alias_rhs_leading());
         }
     }
 }
 
 impl Gen for TSTypeReference<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
-        let needs_parens = ctx.contains(Context::IN_TYPE_ALIAS_RHS)
+        let needs_parens = ctx.contains(Context::TS_TYPE_ALIAS_RHS_LEADING)
             && self.type_arguments.is_none()
             && matches!(&self.type_name, TSTypeName::IdentifierReference(id) if id.name == "intrinsic");
+        let ctx_inner = ctx.without_ts_type_alias_rhs_leading();
         p.wrap(needs_parens, |p| {
-            self.type_name.print(p, ctx);
+            self.type_name.print(p, ctx_inner);
             if let Some(type_parameters) = &self.type_arguments {
-                type_parameters.print(p, ctx);
+                type_parameters.print(p, ctx_inner);
             }
         });
     }
@@ -3354,6 +3360,7 @@ impl Gen for TSTypeReference<'_> {
 
 impl Gen for JSDocNullableType<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
+        let ctx = ctx.without_ts_type_alias_rhs_leading();
         if self.postfix {
             self.type_annotation.print(p, ctx);
             p.print_ascii_byte(b'?');
@@ -3366,6 +3373,7 @@ impl Gen for JSDocNullableType<'_> {
 
 impl Gen for JSDocNonNullableType<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
+        let ctx = ctx.without_ts_type_alias_rhs_leading();
         if self.postfix {
             self.type_annotation.print(p, ctx);
             p.print_ascii_byte(b'!');
@@ -3378,6 +3386,7 @@ impl Gen for JSDocNonNullableType<'_> {
 
 impl Gen for TSTemplateLiteralType<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
+        let ctx = ctx.without_ts_type_alias_rhs_leading();
         p.print_ascii_byte(b'`');
         for (index, item) in self.quasis.iter().enumerate() {
             if index != 0
@@ -3395,6 +3404,7 @@ impl Gen for TSTemplateLiteralType<'_> {
 
 impl Gen for TSTypeLiteral<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
+        let ctx = ctx.without_ts_type_alias_rhs_leading();
         p.print_curly_braces(self.span, self.members.is_empty(), |p| {
             for item in &self.members {
                 p.print_leading_comments(item.span().start);
@@ -3450,6 +3460,7 @@ impl Gen for TSTypeParameter<'_> {
             p.print_str("out ");
         }
         self.name.print(p, ctx);
+        let ctx = ctx.without_ts_type_alias_rhs_leading();
         if let Some(constraint) = &self.constraint {
             p.print_str(" extends ");
             constraint.print(p, ctx);
@@ -3465,6 +3476,7 @@ impl Gen for TSTypeParameter<'_> {
 
 impl Gen for TSFunctionType<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
+        let ctx = ctx.without_ts_type_alias_rhs_leading();
         if let Some(type_parameters) = &self.type_parameters {
             type_parameters.print(p, ctx);
         }
@@ -3624,6 +3636,7 @@ impl Gen for TSPropertySignature<'_> {
 
 impl Gen for TSTypeQuery<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
+        let ctx = ctx.without_ts_type_alias_rhs_leading();
         p.print_str("typeof ");
         self.expr_name.print(p, ctx);
         if let Some(type_params) = &self.type_arguments {
@@ -3643,6 +3656,7 @@ impl Gen for TSTypeQueryExprName<'_> {
 
 impl Gen for TSImportType<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
+        let ctx_ty = ctx.without_ts_type_alias_rhs_leading();
         p.print_str("import(");
         p.print_string_literal(&self.source, false);
         if let Some(options) = &self.options {
@@ -3652,10 +3666,10 @@ impl Gen for TSImportType<'_> {
         p.print_ascii_byte(b')');
         if let Some(qualifier) = &self.qualifier {
             p.print_ascii_byte(b'.');
-            qualifier.print(p, ctx);
+            qualifier.print(p, ctx_ty);
         }
         if let Some(type_parameters) = &self.type_arguments {
-            type_parameters.print(p, ctx);
+            type_parameters.print(p, ctx_ty);
         }
     }
 }
@@ -3683,6 +3697,7 @@ impl Gen for TSImportTypeQualifiedName<'_> {
 
 impl Gen for TSTypeParameterInstantiation<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
+        let ctx = ctx.without_ts_type_alias_rhs_leading();
         p.print_ascii_byte(b'<');
         p.print_list(&self.params, ctx);
         p.print_ascii_byte(b'>');
@@ -3691,6 +3706,7 @@ impl Gen for TSTypeParameterInstantiation<'_> {
 
 impl Gen for TSIndexSignature<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
+        let ctx = ctx.without_ts_type_alias_rhs_leading();
         if self.r#static {
             p.print_str("static ");
         }
@@ -3826,7 +3842,7 @@ impl Gen for TSTypeAliasDeclaration<'_> {
         p.print_soft_space();
         p.print_ascii_byte(b'=');
         p.print_soft_space();
-        self.type_annotation.print(p, ctx | Context::IN_TYPE_ALIAS_RHS);
+        self.type_annotation.print(p, ctx | Context::TS_TYPE_ALIAS_RHS_LEADING);
     }
 }
 
@@ -3930,6 +3946,7 @@ impl Gen for TSEnumMember<'_> {
 
 impl Gen for TSConstructorType<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
+        let ctx = ctx.without_ts_type_alias_rhs_leading();
         if self.r#abstract {
             p.print_str("abstract ");
         }

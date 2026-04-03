@@ -1,5 +1,5 @@
 use oxc_ast::ast::*;
-use oxc_span::GetSpan;
+use oxc_span::{GetSpan, Span};
 
 use super::NeedsParentheses;
 use crate::{

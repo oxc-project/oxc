@@ -26,8 +26,12 @@ bitflags! {
         ///
         /// When set, TypeScript syntax features are enabled in the output.
         const TYPESCRIPT  = 1 << 2;
-        /// Inside a type alias RHS, where bare `intrinsic` needs parentheses.
-        const IN_TYPE_ALIAS_RHS = 1 << 3;
+        /// The type subtree is at the leading print position of a type alias RHS (`type N = …`).
+        ///
+        /// Propagates through union/intersection first members, array element types, and indexed
+        /// access object types so bare `intrinsic` type references are parenthesized only where
+        /// re-parsing would otherwise yield `TSIntrinsicKeyword` instead of `TSTypeReference`.
+        const TS_TYPE_ALIAS_RHS_LEADING = 1 << 3;
     }
 }
 
@@ -50,6 +54,13 @@ impl Context {
     pub fn with_typescript(mut self) -> Self {
         self |= Self::TYPESCRIPT;
         self
+    }
+
+    /// Clears [`Self::TS_TYPE_ALIAS_RHS_LEADING`].
+    #[inline]
+    #[must_use]
+    pub fn without_ts_type_alias_rhs_leading(self) -> Self {
+        self - Self::TS_TYPE_ALIAS_RHS_LEADING
     }
 
     /// Conditionally set or unset the `FORBID_IN` flag
