@@ -5,11 +5,15 @@ use crate::{ConcurrentHashMap, LanguageId, TextDocument};
 #[derive(Debug, Default)]
 pub struct LSPFileSystem {
     files: ConcurrentHashMap<Uri, (LanguageId, String)>,
+    /// Tracks the LSP document version for each open file.
+    /// Updated on `textDocument/didOpen` and `textDocument/didChange`.
+    versions: ConcurrentHashMap<Uri, i32>,
 }
 
 impl LSPFileSystem {
     pub fn clear(&self) {
         self.files.pin().clear();
+        self.versions.pin().clear();
     }
 
     pub fn set(&self, uri: Uri, content: String) {
@@ -19,6 +23,16 @@ impl LSPFileSystem {
 
     pub fn set_with_language(&self, uri: Uri, language_id: LanguageId, content: String) {
         self.files.pin().insert(uri, (language_id, content));
+    }
+
+    /// Store the LSP document version for the given URI.
+    pub fn set_version(&self, uri: &Uri, version: i32) {
+        self.versions.pin().insert(uri.clone(), version);
+    }
+
+    /// Retrieve the last stored LSP document version for the given URI.
+    pub fn get_version(&self, uri: &Uri) -> Option<i32> {
+        self.versions.pin().get(uri).copied()
     }
 
     pub fn get_language_id(&self, uri: &Uri) -> Option<LanguageId> {
@@ -38,6 +52,7 @@ impl LSPFileSystem {
 
     pub fn remove(&self, uri: &Uri) {
         self.files.pin().remove(uri);
+        self.versions.pin().remove(uri);
     }
 
     pub fn keys(&self) -> Vec<Uri> {

@@ -15,7 +15,7 @@ use tower_lsp_server::{
 use tracing::debug;
 
 use crate::{
-    TextDocument, ToolRestartChanges,
+    ConcurrentHashMap, TextDocument, ToolRestartChanges,
     capabilities::DiagnosticMode,
     file_system::LSPFileSystem,
     tool::{DiagnosticResult, Tool, ToolBuilder},
@@ -38,6 +38,10 @@ pub struct WorkspaceWorker {
     diagnostic_mode: DiagnosticMode,
     // Keep track of published diagnostics to clear them on shutdown (only in push mode)
     published_diagnostics: Mutex<FxHashSet<Uri>>,
+    // Tracks the document version at which diagnostics were last computed for each URI.
+    // Used to detect stale state when code actions are requested but diagnostic
+    // requests have not been sent (e.g. the editor stopped calling textDocument/diagnostic).
+    last_diagnosed_versions: ConcurrentHashMap<Uri, i32>,
 }
 
 impl WorkspaceWorker {
@@ -56,6 +60,7 @@ impl WorkspaceWorker {
             options: Mutex::new(None),
             diagnostic_mode,
             published_diagnostics: Mutex::new(FxHashSet::default()),
+            last_diagnosed_versions: ConcurrentHashMap::default(),
         }
     }
 
@@ -102,6 +107,25 @@ impl WorkspaceWorker {
         if let Some(tool) = self.tool.read().await.as_ref() {
             tool.remove_uri_cache(uri);
         }
+        self.last_diagnosed_versions.pin().remove(uri);
+    }
+
+    /// Record the document version at which diagnostics were last successfully computed for a URI.
+    pub fn update_last_diagnosed_version(&self, uri: &Uri, version: i32) {
+        self.last_diagnosed_versions.pin().insert(uri.clone(), version);
+    }
+
+    /// Returns `true` if the diagnostics for the given URI may be stale.
+    ///
+    /// Diagnostics are considered stale when a current document version is known but either no
+    /// diagnostic run has been recorded for the URI yet, or the recorded version differs from the
+    /// current one.
+    pub fn is_uri_diagnostic_stale(&self, uri: &Uri, current_version: Option<i32>) -> bool {
+        let Some(current_version) = current_version else {
+            // No file version tracked – cannot determine staleness.
+            return false;
+        };
+        self.last_diagnosed_versions.pin().get(uri).is_none_or(|v| *v != current_version)
     }
 
     /// Common aggregator for tool-provided diagnostics.
@@ -887,5 +911,55 @@ mod tests {
             .unwrap_err();
 
         assert_eq!(error, "Fake diagnostic error");
+    }
+
+    #[test]
+    fn test_is_uri_diagnostic_stale() {
+        let worker = WorkspaceWorker::new(
+            Uri::from_str("file:///root/").unwrap(),
+            create_builder(),
+            DiagnosticMode::None,
+        );
+        let uri = Uri::from_str("file:///root/file.js").unwrap();
+
+        // No file version known → not considered stale (cannot determine)
+        assert!(!worker.is_uri_diagnostic_stale(&uri, None));
+
+        // File version known but no diagnostics have been run → stale
+        assert!(worker.is_uri_diagnostic_stale(&uri, Some(1)));
+
+        // Record version 1 as last diagnosed
+        worker.update_last_diagnosed_version(&uri, 1);
+
+        // Same version → not stale
+        assert!(!worker.is_uri_diagnostic_stale(&uri, Some(1)));
+
+        // File has been updated to version 2 → stale
+        assert!(worker.is_uri_diagnostic_stale(&uri, Some(2)));
+
+        // Update to version 2
+        worker.update_last_diagnosed_version(&uri, 2);
+        assert!(!worker.is_uri_diagnostic_stale(&uri, Some(2)));
+    }
+
+    #[tokio::test]
+    async fn test_remove_uri_cache_clears_last_diagnosed_version() {
+        let worker = WorkspaceWorker::new(
+            Uri::from_str("file:///root/").unwrap(),
+            create_builder(),
+            DiagnosticMode::None,
+        );
+        worker.start_worker(serde_json::Value::Null).await;
+        let uri = Uri::from_str("file:///root/file.js").unwrap();
+
+        // Record a diagnosed version
+        worker.update_last_diagnosed_version(&uri, 1);
+        assert!(!worker.is_uri_diagnostic_stale(&uri, Some(1)));
+
+        // Removing the URI cache should also clear the last diagnosed version
+        worker.remove_uri_cache(&uri).await;
+
+        // After cache removal, the same version is considered stale again
+        assert!(worker.is_uri_diagnostic_stale(&uri, Some(1)));
     }
 }

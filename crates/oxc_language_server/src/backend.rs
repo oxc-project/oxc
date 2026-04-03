@@ -601,6 +601,11 @@ impl LanguageServer for Backend {
                     }
                 }
                 Ok(diagnostics) => {
+                    // did_save params carry no version number; use the last stored file version.
+                    let version = self.file_system.read().await.get_version(&uri);
+                    if let Some(version) = version {
+                        worker.update_last_diagnosed_version(&uri, version);
+                    }
                     if !diagnostics.is_empty() {
                         self.publish_all_diagnostics(diagnostics, ConcurrentHashMap::default())
                             .await;
@@ -626,6 +631,7 @@ impl LanguageServer for Backend {
         {
             self.file_system.write().await.set(uri.clone(), content);
         }
+        self.file_system.read().await.set_version(&uri, params.text_document.version);
 
         let document = self.file_system.read().await.get_document(&uri);
 
@@ -638,6 +644,7 @@ impl LanguageServer for Backend {
                     }
                 }
                 Ok(diagnostics) => {
+                    worker.update_last_diagnosed_version(&uri, params.text_document.version);
                     if !diagnostics.is_empty() {
                         let version_map = ConcurrentHashMap::default();
                         version_map.pin().insert(uri.clone(), params.text_document.version);
@@ -687,6 +694,7 @@ impl LanguageServer for Backend {
             LanguageId::new(params.text_document.language_id),
             content,
         );
+        self.file_system.read().await.set_version(&uri, params.text_document.version);
 
         let document = self.file_system.read().await.get_document(&uri);
 
@@ -699,6 +707,7 @@ impl LanguageServer for Backend {
                     }
                 }
                 Ok(diagnostics) => {
+                    worker.update_last_diagnosed_version(&uri, params.text_document.version);
                     if !diagnostics.is_empty() {
                         let version_map = ConcurrentHashMap::default();
                         version_map.pin().insert(uri.clone(), params.text_document.version);
@@ -765,12 +774,35 @@ impl LanguageServer for Backend {
     /// It will return code actions or commands for the given range.
     /// The client can send `context.only` to `source.fixAll.oxc` to fix all diagnostics of the file.
     ///
+    /// If the diagnostics for the requested URI are stale (e.g. the editor stopped sending
+    /// `textDocument/diagnostic` requests), the cache is cleared and diagnostics are re-computed
+    /// before the code actions are collected.
+    ///
     /// See: <https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_codeAction>
     async fn code_action(&self, params: CodeActionParams) -> Result<Option<CodeActionResponse>> {
         let uri = &params.text_document.uri;
         let Some(worker) = self.worker_manager.get_worker_for_uri(uri).await else {
             return Ok(None);
         };
+
+        // If the document has been modified since diagnostics were last run (for example because
+        // the editor stopped sending `textDocument/diagnostic` requests), clear the stale cache
+        // and re-compute diagnostics so that the returned code actions reflect the current state.
+        let current_version = self.file_system.read().await.get_version(uri);
+        if worker.is_uri_diagnostic_stale(uri, current_version) {
+            worker.remove_uri_cache(uri).await;
+            let document = self.file_system.read().await.get_document(uri);
+            match worker.run_diagnostic(&document).await {
+                Ok(_) => {
+                    if let Some(version) = current_version {
+                        worker.update_last_diagnosed_version(uri, version);
+                    }
+                }
+                Err(err) => {
+                    error!("running diagnostics for {} failed: {err}", uri.as_str());
+                }
+            }
+        }
 
         let code_actions =
             worker.get_code_actions_or_commands(uri, &params.range, &params.context).await;
@@ -837,6 +869,13 @@ impl LanguageServer for Backend {
             }
             Ok(diagnostics) => diagnostics,
         };
+
+        // Record the version at which diagnostics were computed so that subsequent
+        // `textDocument/codeAction` requests can detect stale state.
+        let version = self.file_system.read().await.get_version(uri);
+        if let Some(version) = version {
+            worker.update_last_diagnosed_version(uri, version);
+        }
 
         let uri_diagnostics = diagnostics
             .iter()

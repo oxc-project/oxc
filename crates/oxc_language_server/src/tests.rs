@@ -1673,7 +1673,54 @@ mod test_suite {
         server.shutdown(4).await;
     }
 
-    // ── Single-file mode (no workspace folders / root URI on initialize) ──────
+    /// Tests that `textDocument/codeAction` still returns correct results in pull-mode when
+    /// the editor stops sending `textDocument/diagnostic` requests after a `textDocument/didChange`.
+    ///
+    /// In this scenario the diagnostic cache inside the tool becomes stale (it was computed for
+    /// version 1 but the document is now at version 2). The `code_action` handler must detect the
+    /// version mismatch, clear the stale cache, and re-run diagnostics before collecting code
+    /// actions.
+    #[tokio::test]
+    async fn test_code_action_refreshes_stale_diagnostics_in_pull_mode() {
+        let init_options = InitializeRequestOptions { pull_mode: true, ..Default::default() };
+
+        let mut server = TestServer::new_initialized(
+            |client| {
+                Backend::new(
+                    client,
+                    server_info(),
+                    Arc::new(FakeToolBuilder::new(DiagnosticMode::Pull)),
+                )
+            },
+            initialize_request(init_options),
+        )
+        .await;
+
+        let file = format!("{WORKSPACE}/code_action.config");
+
+        // Open the file at version 1 and pull diagnostics once.
+        server.send_request(did_open(&file, "initial content")).await;
+        server.send_request(diagnostic(3, &file)).await;
+        let _diag_response = server.recv_response().await;
+
+        // Simulate the editor changing the document (version 2) but no longer sending
+        // `textDocument/diagnostic` – so the cached diagnostic state is now stale.
+        server.send_request(did_change(&file, "updated content")).await;
+
+        // Despite the missing `textDocument/diagnostic` call, `textDocument/codeAction` should
+        // still return the expected code actions (the server re-runs diagnostics internally).
+        server.send_request(code_action(5, &file)).await;
+        let response = server.recv_response().await;
+        assert!(response.is_ok());
+        assert_eq!(response.id(), &Id::Number(5));
+        let actions: Vec<serde_json::Value> =
+            serde_json::from_value(response.result().unwrap().clone()).unwrap();
+        assert_eq!(actions.len(), 1);
+        assert_eq!(actions[0]["title"], "Code Action title");
+
+        server.shutdown(6).await;
+    }
+
     #[cfg(not(target_os = "windows"))] // TODO: fix Windows paths in single-file mode tests, first guess it the uri->path->uri conversation with non-windows paths
     mod single_file_mode {
         use super::*;
