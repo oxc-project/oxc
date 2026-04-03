@@ -1396,6 +1396,7 @@ fn collect_checker_types<'a>(
         results: Vec::new(),
         last_expression_type: None,
         super_class_types: rustc_hash::FxHashMap::default(),
+        class_type_stack: Vec::new(),
     };
     walker.visit_program(program);
     walker.results
@@ -1414,36 +1415,45 @@ struct TypeCollectorVisitor<'a, 'b> {
     /// reports the instance type (not `typeof X`) for heritage expressions;
     /// this map provides the override for visit_expression.
     super_class_types: rustc_hash::FxHashMap<u64, oxc_types::TypeId>,
+    /// Stack of class instance types for resolving property types from the
+    /// class type rather than re-inferring from the AST. Matches tsgo's
+    /// `GetTypeAtLocation` behavior which goes through the unified widening path.
+    class_type_stack: Vec<Option<oxc_types::TypeId>>,
 }
 
 impl<'a> oxc::ast_visit::Visit<'a> for TypeCollectorVisitor<'a, '_> {
     fn visit_class(&mut self, class: &oxc::ast::ast::Class<'a>) {
         use oxc::span::GetSpan as _;
 
+        // Resolve the class instance type for property type lookups.
+        let class_instance_type = class.id.as_ref().and_then(|id| {
+            id.symbol_id.get().map(|sid| self.checker.get_declared_type_of_symbol(sid))
+        });
+
         // Pre-compute the base type for the super_class expression.
         // tsc's .types walker reports the instance type (e.g., "Base")
         // for heritage expressions, not the constructor type ("typeof Base").
         // See tsgo type_symbol_baseline.go:369-375.
-        if let (Some(id), Some(super_class)) = (&class.id, &class.super_class) {
-            if let Some(symbol_id) = id.symbol_id.get() {
-                let class_type = self.checker.get_declared_type_of_symbol(symbol_id);
-                if let oxc_types::TypeData::Structured(s) =
-                    self.checker.type_arena().get_data(class_type)
+        if let (Some(class_type), Some(super_class)) = (class_instance_type, &class.super_class) {
+            if let oxc_types::TypeData::Structured(s) =
+                self.checker.type_arena().get_data(class_type)
+            {
+                if let oxc_types::StructuredTypeKind::Interface {
+                    resolved_base_types, ..
+                } = &s.kind
                 {
-                    if let oxc_types::StructuredTypeKind::Interface {
-                        resolved_base_types, ..
-                    } = &s.kind
-                    {
-                        if let Some(&base_type) = resolved_base_types.first() {
-                            let span = super_class.span();
-                            let key = (span.start as u64) << 32 | span.end as u64;
-                            self.super_class_types.insert(key, base_type);
-                        }
+                    if let Some(&base_type) = resolved_base_types.first() {
+                        let span = super_class.span();
+                        let key = (span.start as u64) << 32 | span.end as u64;
+                        self.super_class_types.insert(key, base_type);
                     }
                 }
             }
         }
+
+        self.class_type_stack.push(class_instance_type);
         oxc::ast_visit::walk::walk_class(self, class);
+        self.class_type_stack.pop();
     }
 
     fn visit_expression(&mut self, expr: &oxc::ast::ast::Expression<'a>) {
@@ -1518,19 +1528,55 @@ impl<'a> oxc::ast_visit::Visit<'a> for TypeCollectorVisitor<'a, '_> {
 
     fn visit_property_definition(&mut self, prop: &oxc::ast::ast::PropertyDefinition<'a>) {
         use oxc::span::GetSpan as _;
-        // Emit the property key's type for class property definitions
-        if let Some(_name) = prop.key.static_name() {
+        // Emit the property key's type for class property definitions.
+        // Look up the property type from the class instance/constructor type
+        // so that widening applied during type construction is reflected.
+        // This matches tsgo's GetTypeAtLocation which goes through the
+        // unified getWidenedTypeForVariableLikeDeclaration path.
+        if let Some(name) = prop.key.static_name() {
             let key_span = prop.key.span();
             if (key_span.start as usize) < self.source.len()
                 && (key_span.end as usize) <= self.source.len()
             {
-                let prop_type = if let Some(ann) = &prop.type_annotation {
-                    self.checker.get_type_from_type_node(&ann.type_annotation)
-                } else if let Some(init) = &prop.value {
-                    self.checker.get_type_of_expression(init, None, oxc_checker::CheckMode::TYPE_ONLY)
+                // Try to look up property from the class type (instance or constructor)
+                let prop_type = if !prop.r#static {
+                    // Instance property: look up from the class instance type
+                    self.class_type_stack
+                        .last()
+                        .copied()
+                        .flatten()
+                        .and_then(|ct| self.checker.get_property_of_type(ct, &name))
                 } else {
-                    self.checker.any_type
+                    // Static property: look up from the constructor (value) type
+                    // via get_type_of_symbol on the class symbol
+                    self.class_type_stack
+                        .last()
+                        .copied()
+                        .flatten()
+                        .and_then(|ct| {
+                            let sym = self.checker.type_arena().get_symbol(ct);
+                            sym.map(|(_, sid)| self.checker.get_type_of_symbol(sid))
+                        })
+                        .and_then(|ctor_type| {
+                            self.checker.get_property_of_type(ctor_type, &name)
+                        })
                 };
+
+                // Fall back to re-inferring from the AST if lookup failed
+                let prop_type = prop_type.unwrap_or_else(|| {
+                    if let Some(ann) = &prop.type_annotation {
+                        self.checker.get_type_from_type_node(&ann.type_annotation)
+                    } else if let Some(init) = &prop.value {
+                        self.checker.get_type_of_expression(
+                            init,
+                            None,
+                            oxc_checker::CheckMode::TYPE_ONLY,
+                        )
+                    } else {
+                        self.checker.any_type
+                    }
+                });
+
                 let key_text =
                     &self.source[key_span.start as usize..key_span.end as usize];
                 self.results

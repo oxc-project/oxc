@@ -446,7 +446,12 @@ impl Checker<'_> {
                         let prop_type = if let Some(ann) = &prop.type_annotation {
                             self.get_type_from_type_node(&ann.type_annotation)
                         } else if let Some(init) = &prop.value {
-                            self.get_type_of_expression(init, None, CheckMode::TYPE_ONLY)
+                            let inferred = self.get_type_of_expression(
+                                init,
+                                None,
+                                CheckMode::TYPE_ONLY,
+                            );
+                            self.get_widened_type_for_initializer(inferred, prop.readonly)
                         } else {
                             self.any_type
                         };

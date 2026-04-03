@@ -360,6 +360,29 @@ impl Checker<'_> {
         type_id
     }
 
+    /// Widen the inferred type for a variable-like declaration's initializer.
+    ///
+    /// Unified decision point for literal widening on variables, parameters,
+    /// and class/interface properties. Mirrors tsgo's
+    /// `getWidenedLiteralTypeForInitializer` + the widening portion of
+    /// `widenTypeForVariableLikeDeclaration`.
+    ///
+    /// `is_const_like` should be `true` for `const` variables, `readonly`
+    /// properties, and enum members — these preserve literal types. All other
+    /// mutable declarations widen fresh literals to their base type and apply
+    /// null/undefined → any widening.
+    pub fn get_widened_type_for_initializer(
+        &mut self,
+        init_type: TypeId,
+        is_const_like: bool,
+    ) -> TypeId {
+        if is_const_like {
+            return init_type;
+        }
+        let widened = self.get_widened_literal_type(init_type);
+        self.get_widened_type(widened)
+    }
+
     // ── Type queries ──────────────────────────────────────────────────
 
     /// Check if a type is a unit type (single literal, enum, unique symbol, or nullable).
