@@ -416,7 +416,7 @@ impl ConfigStoreBuilder {
     /// and `-D`/`-W`/`-A` filters.
     pub fn with_cli_rules(
         mut self,
-        rules: OxlintRules,
+        rules: &OxlintRules,
         external_plugin_store: &mut ExternalPluginStore,
     ) -> Result<Self, ConfigBuilderError> {
         let all_rules = self.get_all_rules();

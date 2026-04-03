@@ -20,7 +20,7 @@ pub struct LintCommand {
     #[bpaf(external(lint_filter), map(LintFilter::into_tuple), many, hide_usage)]
     pub filter: Vec<(AllowWarnDeny, String)>,
 
-    /// Configure a rule with severity and options (e.g. 'no-var: error' or 'eqeqeq: ["error", "always"]')
+    /// Configure a rule with severity and options (e.g. `no-var: error` or `eqeqeq: ["error", "always"]`)
     #[bpaf(long("rule"), argument("RULE_CONFIG"), many, hide_usage)]
     pub cli_rules: Vec<String>,
 

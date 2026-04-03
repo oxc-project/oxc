@@ -303,27 +303,19 @@ impl CliRunner {
         let config_builder = if cli_rules.is_empty() {
             config_builder
         } else {
-            let parsed_rules: Vec<_> = {
-                let mut parsed = Vec::with_capacity(cli_rules.len());
-                for rule_str in &cli_rules {
-                    match oxc_linter::parse_cli_rule(rule_str) {
-                        Ok(rule) => parsed.push(rule),
-                        Err(e) => {
-                            print_and_flush_stdout(
-                                stdout,
-                                &format!("Invalid --rule argument: {e}\n"),
-                            );
-                            return CliRunResult::InvalidOptionConfig;
-                        }
+            let mut parsed_rules = Vec::with_capacity(cli_rules.len());
+            for rule_str in &cli_rules {
+                match oxc_linter::parse_cli_rule(rule_str) {
+                    Ok(rule) => parsed_rules.push(rule),
+                    Err(e) => {
+                        print_and_flush_stdout(stdout, &format!("Invalid --rule argument: {e}\n"));
+                        return CliRunResult::InvalidOptionConfig;
                     }
                 }
-                parsed
-            };
+            }
 
-            match config_builder.with_cli_rules(
-                oxc_linter::OxlintRules::new(parsed_rules),
-                &mut external_plugin_store,
-            ) {
+            let cli_oxlint_rules = oxc_linter::OxlintRules::new(parsed_rules);
+            match config_builder.with_cli_rules(&cli_oxlint_rules, &mut external_plugin_store) {
                 Ok(builder) => builder,
                 Err(e) => {
                     print_and_flush_stdout(
