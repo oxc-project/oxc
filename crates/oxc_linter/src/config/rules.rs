@@ -453,6 +453,42 @@ fn failed_to_parse_rule_value(value: &str, err: &str) -> OxcDiagnostic {
     OxcDiagnostic::error(format!("Failed to rule value {value:?} with error {err:?}"))
 }
 
+/// Parses a `--rule` CLI argument string into an [`ESLintRule`].
+///
+/// Accepts formats like:
+/// - `"no-var: error"`
+/// - `"eqeqeq: [\"error\", \"always\"]"`
+/// - `"import/no-cycle: [\"error\", {\"maxDepth\": 1}]"`
+pub fn parse_cli_rule(input: &str) -> Result<ESLintRule, String> {
+    let colon_pos = input.find(':').ok_or_else(|| {
+        format!(
+            "Invalid --rule format: '{input}'. Expected 'rule-name: severity' or 'rule-name: [severity, ...options]'"
+        )
+    })?;
+
+    let rule_key = input[..colon_pos].trim();
+    let value_str = input[colon_pos + 1..].trim();
+
+    if rule_key.is_empty() {
+        return Err("Rule name cannot be empty".into());
+    }
+    if value_str.is_empty() {
+        return Err(format!("Missing severity for rule '{rule_key}'"));
+    }
+
+    let (plugin_name, rule_name) = parse_rule_key(rule_key);
+
+    // Try to parse as JSON first; if that fails, treat as a bare severity word
+    let json_value = serde_json::from_str::<serde_json::Value>(value_str)
+        .or_else(|_| serde_json::from_str::<serde_json::Value>(&format!("\"{value_str}\"")))
+        .map_err(|e| format!("Failed to parse rule value for '{rule_key}': {e}"))?;
+
+    let (severity, config) = parse_rule_value(json_value)
+        .map_err(|e| format!("Failed to parse severity for '{rule_key}': {e}"))?;
+
+    Ok(ESLintRule { plugin_name, rule_name, severity, config })
+}
+
 impl ESLintRule {
     /// Returns `<plugin_name>/<rule_name>` for non-eslint rules. For eslint rules, returns
     /// `<rule_name>`.
@@ -924,5 +960,77 @@ mod test {
             builtin_rules.iter().any(|(r, _)| r.name() == "forbid-dom-props"),
             "forbid-dom-props should be in the rule set"
         );
+    }
+
+    #[test]
+    fn test_parse_cli_rule_bare_severity() {
+        let rule = super::parse_cli_rule("no-var: error").unwrap();
+        assert_eq!(rule.plugin_name, "eslint");
+        assert_eq!(rule.rule_name, "no-var");
+        assert_eq!(rule.severity, AllowWarnDeny::Deny);
+        assert!(rule.config.is_empty());
+    }
+
+    #[test]
+    fn test_parse_cli_rule_off() {
+        let rule = super::parse_cli_rule("no-var: off").unwrap();
+        assert_eq!(rule.severity, AllowWarnDeny::Allow);
+        assert!(rule.config.is_empty());
+    }
+
+    #[test]
+    fn test_parse_cli_rule_numeric_severity() {
+        let rule = super::parse_cli_rule("no-var: 2").unwrap();
+        assert_eq!(rule.severity, AllowWarnDeny::Deny);
+        assert!(rule.config.is_empty());
+    }
+
+    #[test]
+    fn test_parse_cli_rule_with_options() {
+        let rule = super::parse_cli_rule(r#"eqeqeq: ["error", "always"]"#).unwrap();
+        assert_eq!(rule.plugin_name, "eslint");
+        assert_eq!(rule.rule_name, "eqeqeq");
+        assert_eq!(rule.severity, AllowWarnDeny::Deny);
+        assert_eq!(rule.config.len(), 1);
+        assert_eq!(rule.config[0], json!("always"));
+    }
+
+    #[test]
+    fn test_parse_cli_rule_plugin_prefix() {
+        let rule = super::parse_cli_rule(r#"import/no-cycle: ["error", {"maxDepth": 1}]"#).unwrap();
+        assert_eq!(rule.plugin_name, "import");
+        assert_eq!(rule.rule_name, "no-cycle");
+        assert_eq!(rule.severity, AllowWarnDeny::Deny);
+        assert_eq!(rule.config.len(), 1);
+        assert_eq!(rule.config[0], json!({"maxDepth": 1}));
+    }
+
+    #[test]
+    fn test_parse_cli_rule_typescript_alias() {
+        let rule = super::parse_cli_rule("@typescript-eslint/no-explicit-any: warn").unwrap();
+        assert_eq!(rule.plugin_name, "typescript");
+        assert_eq!(rule.rule_name, "no-explicit-any");
+        assert_eq!(rule.severity, AllowWarnDeny::Warn);
+    }
+
+    #[test]
+    fn test_parse_cli_rule_error_missing_colon() {
+        let result = super::parse_cli_rule("no-var error");
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("Invalid --rule format"));
+    }
+
+    #[test]
+    fn test_parse_cli_rule_error_empty_name() {
+        let result = super::parse_cli_rule(": error");
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("Rule name cannot be empty"));
+    }
+
+    #[test]
+    fn test_parse_cli_rule_error_empty_value() {
+        let result = super::parse_cli_rule("no-var:");
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("Missing severity"));
     }
 }

@@ -410,6 +410,27 @@ impl ConfigStoreBuilder {
         self
     }
 
+    /// Apply `--rule` CLI overrides with full rule configuration support.
+    ///
+    /// These are applied with the highest precedence, after config file loading
+    /// and `-D`/`-W`/`-A` filters.
+    pub fn with_cli_rules(
+        mut self,
+        rules: OxlintRules,
+        external_plugin_store: &mut ExternalPluginStore,
+    ) -> Result<Self, ConfigBuilderError> {
+        let all_rules = self.get_all_rules();
+        rules
+            .override_rules(
+                &mut self.rules,
+                &mut self.external_rules,
+                &all_rules,
+                external_plugin_store,
+            )
+            .map_err(|errors| ConfigBuilderError::RuleConfigurationErrors { errors })?;
+        Ok(self)
+    }
+
     /// Warn/Deny a let of rules based on some predicate. Rules already in `self.rules` get
     /// re-configured, while those that are not are added. Affects rules where `query` returns
     /// `true`.

@@ -20,7 +20,7 @@ pub use ignore_matcher::LintIgnoreMatcher;
 pub use overrides::OxlintOverrides;
 pub use oxlintrc::Oxlintrc;
 pub use plugins::LintPlugins;
-pub use rules::{ESLintRule, OxlintRules};
+pub use rules::{ESLintRule, OxlintRules, parse_cli_rule};
 pub use settings::{OxlintSettings, ReactVersion, jsdoc::JSDocPluginSettings};
 
 use crate::config::oxlintrc::OxlintOptions;

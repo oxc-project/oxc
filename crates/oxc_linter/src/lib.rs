@@ -69,7 +69,7 @@ pub use crate::disable_directives::{
 pub use crate::{
     config::{
         Config, ConfigBuilderError, ConfigStore, ConfigStoreBuilder, ESLintRule, LintIgnoreMatcher,
-        LintPlugins, Oxlintrc, ResolvedLinterState,
+        LintPlugins, OxlintRules, Oxlintrc, ResolvedLinterState, parse_cli_rule,
     },
     context::{ContextSubHost, LintContext},
     external_linter::{

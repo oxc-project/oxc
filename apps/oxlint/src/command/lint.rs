@@ -20,6 +20,10 @@ pub struct LintCommand {
     #[bpaf(external(lint_filter), map(LintFilter::into_tuple), many, hide_usage)]
     pub filter: Vec<(AllowWarnDeny, String)>,
 
+    /// Configure a rule with severity and options (e.g. 'no-var: error' or 'eqeqeq: ["error", "always"]')
+    #[bpaf(long("rule"), argument("RULE_CONFIG"), many, hide_usage)]
+    pub cli_rules: Vec<String>,
+
     #[bpaf(external)]
     pub enable_plugins: EnablePlugins,
 
@@ -614,6 +618,18 @@ mod lint_options {
         assert!(result.is_err_and(
             |err| err.unwrap_stderr() == "couldn't parse `asdf`: 'asdf' is not a known format"
         ));
+    }
+
+    #[test]
+    fn cli_rule_single() {
+        let options = get_lint_options("--rule no-var:error .");
+        assert_eq!(options.cli_rules, vec!["no-var:error"]);
+    }
+
+    #[test]
+    fn cli_rule_multiple() {
+        let options = get_lint_options("--rule no-var:error --rule eqeqeq:warn .");
+        assert_eq!(options.cli_rules, vec!["no-var:error", "eqeqeq:warn"]);
     }
 
     #[test]
