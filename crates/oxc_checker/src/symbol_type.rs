@@ -86,25 +86,15 @@ impl Checker<'_> {
                     let resolved = self
                         .resolve_destructured_binding_type(&decl.id, overall_type, symbol_id)
                         .unwrap_or(self.any_type);
-                    // Widen literal types for let/var, then widen null/undefined → any
-                    return if decl.kind != oxc_ast::ast::VariableDeclarationKind::Const {
-                        let widened = self.get_widened_literal_type(resolved);
-                        self.get_widened_type(widened)
-                    } else {
-                        resolved
-                    };
+                    let is_const = decl.kind == oxc_ast::ast::VariableDeclarationKind::Const;
+                    return self.get_widened_type_for_initializer(resolved, is_const);
                 }
                 if let Some(annotation) = &decl.type_annotation {
                     self.get_type_from_type_node(&annotation.type_annotation)
                 } else if let Some(init) = &decl.init {
                     let inferred = self.get_type_of_expression(init, None, CheckMode::TYPE_ONLY);
-                    // Widen literal types for non-const, then widen null/undefined → any
-                    if decl.kind != oxc_ast::ast::VariableDeclarationKind::Const {
-                        let widened = self.get_widened_literal_type(inferred);
-                        self.get_widened_type(widened)
-                    } else {
-                        inferred
-                    }
+                    let is_const = decl.kind == oxc_ast::ast::VariableDeclarationKind::Const;
+                    self.get_widened_type_for_initializer(inferred, is_const)
                 } else {
                     // No annotation and no initializer — check for for-of/for-in context
                     self.get_type_from_for_loop_context(node_id)
@@ -136,7 +126,15 @@ impl Checker<'_> {
                                 let prop_type = if let Some(ann) = &prop.type_annotation {
                                     self.get_type_from_type_node(&ann.type_annotation)
                                 } else if let Some(init) = &prop.value {
-                                    self.get_type_of_expression(init, None, CheckMode::TYPE_ONLY)
+                                    let inferred = self.get_type_of_expression(
+                                        init,
+                                        None,
+                                        CheckMode::TYPE_ONLY,
+                                    );
+                                    self.get_widened_type_for_initializer(
+                                        inferred,
+                                        prop.readonly,
+                                    )
                                 } else {
                                     self.any_type
                                 };

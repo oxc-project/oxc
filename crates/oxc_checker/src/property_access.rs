@@ -87,7 +87,7 @@ impl Checker<'_> {
     /// tsgo's `getPropertyOfTypeEx`). If a raw property lookup without
     /// apparent type mapping is ever needed, split this into a raw version
     /// and an `_ex` variant, or add a `skip_apparent_type` parameter.
-    pub(crate) fn get_property_of_type(&mut self, type_id: TypeId, name: &str) -> Option<TypeId> {
+    pub fn get_property_of_type(&mut self, type_id: TypeId, name: &str) -> Option<TypeId> {
         let flags = self.type_arena.get_flags(type_id);
 
         // any.prop → any
