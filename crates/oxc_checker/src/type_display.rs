@@ -151,6 +151,23 @@ impl<'a> TypePrinter<'a> {
                             return format!("typeof {name}");
                         }
                     }
+                    // Generic declared types display with their type parameters:
+                    // e.g., `class C<T>` displays as `C<T>`, not just `C`.
+                    // Only parameter names are shown (no constraints or defaults),
+                    // matching tsc's behavior for declared type display.
+                    if let StructuredTypeKind::Interface {
+                        all_type_parameters, ..
+                    } = &s.kind
+                    {
+                        if !all_type_parameters.is_empty() {
+                            let params = all_type_parameters
+                                .iter()
+                                .map(|&tp_id| self.type_to_string(tp_id))
+                                .collect::<Vec<_>>()
+                                .join(", ");
+                            return format!("{name}<{params}>");
+                        }
+                    }
                     return name;
                 }
                 // Anonymous — display structurally in declaration order
@@ -167,7 +184,11 @@ impl<'a> TypePrinter<'a> {
             }
             TypeData::TypeReference(tr) => {
                 if let Some(target) = tr.target {
-                    let target_str = self.type_to_string(target);
+                    // Use the target's name only, not its full type_to_string
+                    // (which would include type parameters on the declared type).
+                    let target_str = self.resolve_alias_name(target)
+                        .or_else(|| self.resolve_symbol_name(target))
+                        .unwrap_or_else(|| self.type_to_string(target));
                     if tr.resolved_type_arguments.is_empty() {
                         target_str
                     } else {
