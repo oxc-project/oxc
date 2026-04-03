@@ -1,6 +1,6 @@
 use std::{
     ffi::OsStr,
-    path::{Path, PathBuf},
+    path::{Component, Path, PathBuf},
     sync::{Arc, mpsc},
 };
 
@@ -261,6 +261,31 @@ pub struct ConfigLoader<'a> {
 }
 
 impl<'a> ConfigLoader<'a> {
+    /// Normalize an explicit config path lexically so later matching against linted
+    /// files uses the config directory without any `.` or `..` segments.
+    fn normalize_explicit_config_path(cwd: &Path, config_path: &Path) -> PathBuf {
+        let joined_path = if config_path.is_absolute() {
+            config_path.to_path_buf()
+        } else {
+            cwd.join(config_path)
+        };
+
+        let mut normalized_path = PathBuf::new();
+        for component in joined_path.components() {
+            match component {
+                Component::CurDir => {}
+                Component::ParentDir => {
+                    normalized_path.pop();
+                }
+                _ => {
+                    normalized_path.push(component.as_os_str());
+                }
+            }
+        }
+
+        normalized_path
+    }
+
     /// Create a new ConfigLoader
     ///
     /// # Arguments
@@ -591,7 +616,8 @@ impl<'a> ConfigLoader<'a> {
         cwd: &Path,
         config_path: &Path,
     ) -> Result<Oxlintrc, OxcDiagnostic> {
-        let full_path = cwd.join(config_path);
+        let full_path = Self::normalize_explicit_config_path(cwd, config_path);
+
         if is_js_config_path(&full_path) {
             return self.load_root_js_config(&full_path)?.ok_or_else(|| {
                 OxcDiagnostic::error(format!(
@@ -885,6 +911,15 @@ mod test {
                 config.path.file_name().unwrap().to_str().unwrap(),
                 "eslintrc.json",
                 "Config file name should be preserved after path resolution"
+            );
+            assert!(
+                !config.path.components().any(|component| {
+                    matches!(
+                        component,
+                        std::path::Component::CurDir | std::path::Component::ParentDir
+                    )
+                }),
+                "Config path should be normalized after path resolution"
             );
         }
     }
