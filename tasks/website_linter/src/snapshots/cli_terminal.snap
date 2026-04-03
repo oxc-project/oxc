@@ -95,6 +95,8 @@ Available positional items:
     PATH                      Single file, single path or list of paths
 
 Available options:
+        --rule=RULE_CONFIG    Configure a rule with severity and options (e.g. `no-var: error` or
+                              `eqeqeq: ["error", "always"]`)
         --rules               List all the rules that are currently registered
         --lsp                 Start the language server
         --disable-nested-config  Disable the automatic loading of nested configuration files

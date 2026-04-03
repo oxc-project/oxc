@@ -151,6 +151,8 @@ Arguments:
 
 
 ## Available options:
+- **`    --rule`**=_`RULE_CONFIG`_ &mdash; 
+  Configure a rule with severity and options (e.g. `no-var: error` or `eqeqeq: ["error", "always"]`)
 - **`    --rules`** &mdash; 
   List all the rules that are currently registered
 - **`    --lsp`** &mdash; 
