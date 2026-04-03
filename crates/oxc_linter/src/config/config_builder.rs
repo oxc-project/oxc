@@ -431,7 +431,7 @@ impl ConfigStoreBuilder {
         Ok(self)
     }
 
-    /// Warn/Deny a let of rules based on some predicate. Rules already in `self.rules` get
+    /// Warn/Deny a set of rules based on some predicate. Rules already in `self.rules` get
     /// re-configured, while those that are not are added. Affects rules where `query` returns
     /// `true`.
     fn get_all_rules(&self) -> Vec<RuleEnum> {

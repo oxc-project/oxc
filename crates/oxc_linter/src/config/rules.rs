@@ -450,7 +450,7 @@ fn parse_rule_value(
 }
 
 fn failed_to_parse_rule_value(value: &str, err: &str) -> OxcDiagnostic {
-    OxcDiagnostic::error(format!("Failed to rule value {value:?} with error {err:?}"))
+    OxcDiagnostic::error(format!("Failed to parse rule value {value:?} with error {err:?}"))
 }
 
 /// Parses a `--rule` CLI argument string into an [`ESLintRule`].
