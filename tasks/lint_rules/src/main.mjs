@@ -53,8 +53,7 @@ void (async () => {
   // Load linter and all plugins
   //
   const linter = createESLintLinter();
-  // Include type-aware rules so the generated issue tracks their status as well.
-  loadTargetPluginRules(linter, true);
+  loadTargetPluginRules(linter);
 
   //
   // Generate entry and update status
