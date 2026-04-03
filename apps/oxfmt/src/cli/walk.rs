@@ -190,7 +190,8 @@ impl Walk {
             true
         });
 
-        let inner = apply_walk_settings(&mut inner, target_paths.iter().any(|p| is_in_git_repo(p))).build_parallel();
+        let inner = apply_walk_settings(&mut inner, target_paths.iter().any(|p| is_in_git_repo(p)))
+            .build_parallel();
         Ok(Some(Self { inner }))
     }
 
