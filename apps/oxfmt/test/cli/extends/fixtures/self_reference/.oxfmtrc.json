@@ -1,0 +1,4 @@
+{
+  "extends": ["./.oxfmtrc.json"],
+  "semi": true
+}

@@ -62,6 +62,15 @@ export interface Oxfmtrc {
    */
   endOfLine?: EndOfLineConfig;
   /**
+   * Paths of configuration files that this configuration file extends (inherits from).
+   * The files are resolved relative to the location of the configuration file that contains
+   * the `extends` property. The configuration files are merged from the first to the last,
+   * with the last file overriding the previous ones. The current file always takes precedence.
+   *
+   * - Default: `[]`
+   */
+  extends?: string[];
+  /**
    * Specify the global whitespace sensitivity for HTML, Vue, Angular, and Handlebars.
    *
    * - Default: `"css"`

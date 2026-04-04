@@ -62,4 +62,36 @@ describe("extends", () => {
     const snapshot = await runAndSnapshot(cwd, [["--check", "."]]);
     expect(snapshot).toMatchSnapshot();
   });
+
+  // .oxfmtrc.json:
+  //   extends: ["./does_not_exist.json"]
+  //
+  // Expected: error about missing file
+  it("missing extended file - error reported", async () => {
+    const cwd = join(fixturesDir, "missing_file");
+    const snapshot = await runAndSnapshot(cwd, [["--check", "test.js"]]);
+    expect(snapshot).toMatchSnapshot();
+  });
+
+  // .oxfmtrc.json:
+  //   extends: ["./.oxfmtrc.json"]   (self-reference)
+  //   semi: true
+  //
+  // Expected: error about circular extends
+  it("self-referencing extends - detected and reported", async () => {
+    const cwd = join(fixturesDir, "self_reference");
+    const snapshot = await runAndSnapshot(cwd, [["--check", "test.js"]]);
+    expect(snapshot).toMatchSnapshot();
+  });
+
+  // .oxfmtrc.json:
+  //   extends: ["./broken.json"]
+  //   broken.json: invalid JSON content
+  //
+  // Expected: error about invalid JSON
+  it("invalid JSON in extended file - error reported", async () => {
+    const cwd = join(fixturesDir, "invalid_json");
+    const snapshot = await runAndSnapshot(cwd, [["--check", "test.js"]]);
+    expect(snapshot).toMatchSnapshot();
+  });
 });

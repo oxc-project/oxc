@@ -1,0 +1,3 @@
+{
+  "extends": ["./does_not_exist.json"]
+}

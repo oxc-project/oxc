@@ -68,6 +68,19 @@ NOTE: `"auto"` is not supported.
 - Overrides `.editorconfig.end_of_line`
 
 
+## extends
+
+type: `string[]`
+
+
+Paths of configuration files that this configuration file extends (inherits from).
+The files are resolved relative to the location of the configuration file that contains
+the `extends` property. The configuration files are merged from the first to the last,
+with the last file overriding the previous ones. The current file always takes precedence.
+
+- Default: `[]`
+
+
 ## htmlWhitespaceSensitivity
 
 type: `"css" | "strict" | "ignore"`
