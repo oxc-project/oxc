@@ -368,6 +368,9 @@ impl ConfigStore {
             if let Some(config) = self.nested_configs.get(dir) {
                 return Some(config);
             }
+            if self.base.base.config.path.as_ref().is_some_and(|path| path.parent() == current) {
+              return Some(&self.base);
+            }
             current = dir.parent();
         }
         None
