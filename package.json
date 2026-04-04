@@ -16,5 +16,11 @@
     "oxlint": "^1.51.0",
     "oxlint-tsgolint": "0.19.0"
   },
+  "pnpm": {
+    "overrides": {
+      "@emnapi/core": "1.9.2",
+      "@emnapi/runtime": "1.9.2"
+    }
+  },
   "packageManager": "pnpm@10.33.0"
 }
