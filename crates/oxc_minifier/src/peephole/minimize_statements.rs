@@ -1250,6 +1250,13 @@ impl<'a> PeepholeOptimizations {
             let BindingPattern::BindingIdentifier(prev_decl_id) = &prev_decl.id else {
                 return true;
             };
+            // Don't inline `var e` inside `catch (e) { ... }`. Removing the var declarator
+            // would lose the function-scoped hoisting that `var` provides. The catch parameter
+            // and the var share one symbol (with CatchVariable flag) due to the redeclaration
+            // semantics in https://tc39.es/ecma262/#sec-variablestatements-in-catch-blocks
+            if ctx.scoping().symbol_flags(prev_decl_id.symbol_id()).is_catch_variable() {
+                return true;
+            }
             if ctx.is_expression_whose_name_needs_to_be_kept(prev_decl_init) {
                 return true;
             }

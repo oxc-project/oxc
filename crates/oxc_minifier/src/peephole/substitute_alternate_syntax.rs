@@ -4,6 +4,7 @@ use crate::generated::ancestor::Ancestor;
 use oxc_allocator::{CloneIn, TakeIn, Vec};
 use oxc_ast::{NONE, ast::*};
 use oxc_compat::ESFeature;
+use oxc_ecmascript::BoundNames;
 use oxc_ecmascript::constant_evaluation::{ConstantEvaluation, ConstantValue, DetermineValueType};
 use oxc_ecmascript::side_effects::MayHaveSideEffectsContext;
 use oxc_ecmascript::{ToJsString, ToNumber, side_effects::MayHaveSideEffects};
@@ -1581,8 +1582,88 @@ impl<'a> PeepholeOptimizations {
             && let Some(param) = &catch.param
             && let BindingPattern::BindingIdentifier(ident) = &param.pattern
             && (catch.body.body.is_empty() || ctx.scoping().symbol_is_unused(ident.symbol_id()))
+            // Don't remove catch parameter when the body has a `var` with the same name.
+            // In `catch (e) { var e = x }`, removing the catch param changes which binding
+            // the assignment targets, because `var e` inside `catch (e)` assigns to the
+            // catch parameter, not the function-scoped hoisted var.
+            && !Self::catch_body_has_var_with_same_name(&catch.body, &ident.name)
         {
             catch.param = None;
+        }
+    }
+
+    /// Check if a catch body (or any nested non-function scope) contains a `var`
+    /// declaration whose bound name matches `name`. Var declarations hoist out of
+    /// blocks/loops/etc. but NOT out of functions.
+    fn catch_body_has_var_with_same_name(body: &BlockStatement<'a>, name: &str) -> bool {
+        body.body.iter().any(|stmt| Self::stmt_has_var_with_name(stmt, name))
+    }
+
+    /// Check whether a `var` declaration binds `name` (handles destructuring patterns).
+    fn var_decl_binds_name(decl: &VariableDeclaration<'a>, name: &str) -> bool {
+        decl.kind.is_var() && {
+            let mut found = false;
+            decl.bound_names(&mut |ident| {
+                if ident.name == name {
+                    found = true;
+                }
+            });
+            found
+        }
+    }
+
+    /// Recursively check if `stmt` contains a `var` declaration binding `name`.
+    /// Only enters statement types where `var` can hoist; stops at function boundaries.
+    fn stmt_has_var_with_name(stmt: &Statement<'a>, name: &str) -> bool {
+        match stmt {
+            Statement::VariableDeclaration(decl) => Self::var_decl_binds_name(decl, name),
+            Statement::BlockStatement(s) => {
+                s.body.iter().any(|s| Self::stmt_has_var_with_name(s, name))
+            }
+            Statement::IfStatement(s) => {
+                Self::stmt_has_var_with_name(&s.consequent, name)
+                    || s.alternate
+                        .as_ref()
+                        .is_some_and(|alt| Self::stmt_has_var_with_name(alt, name))
+            }
+            Statement::ForStatement(s) => {
+                s.init
+                    .as_ref()
+                    .is_some_and(|init| match init {
+                        ForStatementInit::VariableDeclaration(decl) => {
+                            Self::var_decl_binds_name(decl, name)
+                        }
+                        _ => false,
+                    })
+                    || Self::stmt_has_var_with_name(&s.body, name)
+            }
+            Statement::ForInStatement(s) => {
+                matches!(&s.left, ForStatementLeft::VariableDeclaration(decl)
+                    if Self::var_decl_binds_name(decl, name))
+                    || Self::stmt_has_var_with_name(&s.body, name)
+            }
+            Statement::ForOfStatement(s) => {
+                matches!(&s.left, ForStatementLeft::VariableDeclaration(decl)
+                    if Self::var_decl_binds_name(decl, name))
+                    || Self::stmt_has_var_with_name(&s.body, name)
+            }
+            Statement::WhileStatement(s) => Self::stmt_has_var_with_name(&s.body, name),
+            Statement::DoWhileStatement(s) => Self::stmt_has_var_with_name(&s.body, name),
+            Statement::LabeledStatement(s) => Self::stmt_has_var_with_name(&s.body, name),
+            Statement::WithStatement(s) => Self::stmt_has_var_with_name(&s.body, name),
+            Statement::SwitchStatement(s) => s.cases.iter().any(|case| {
+                case.consequent.iter().any(|s| Self::stmt_has_var_with_name(s, name))
+            }),
+            Statement::TryStatement(s) => {
+                s.block.body.iter().any(|s| Self::stmt_has_var_with_name(s, name))
+                    || s.handler.as_ref().is_some_and(|h| {
+                        h.body.body.iter().any(|s| Self::stmt_has_var_with_name(s, name))
+                    })
+                    || s.finalizer.as_ref().is_some_and(|f| {
+                        f.body.iter().any(|s| Self::stmt_has_var_with_name(s, name))
+                    })
+            }
+            _ => false,
         }
     }
 

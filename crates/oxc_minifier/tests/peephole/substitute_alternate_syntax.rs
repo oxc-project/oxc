@@ -740,19 +740,51 @@ fn optional_catch_binding() {
     test_same("try { foo } catch([e]) {}");
     test_same("try { foo } catch({e}) {}");
     test_same("try { foo } catch(e) { var e = baz; bar(e) }");
-    test("try { foo } catch(e) { var e = 2 }", "try { foo } catch { var e = 2 }");
+    // catch param must be kept when body has a same-named var. Removing
+    // the param would change which binding the assignment targets.
+    test_same("try { foo } catch(e) { var e = 2 }");
     test_same("try { foo } catch(e) { var e = 2 } bar(e)");
+    // Same for destructuring var patterns: `var {e}` and `var [e]` also
+    // hoist `e` to function scope and assign to the catch parameter.
+    test_same("try { foo } catch(e) { var {e} = obj }");
+    test_same("try { foo } catch(e) { var [e] = arr }");
+    // var hoists from nested blocks inside catch, so catch param must be kept.
+    test(
+        "try { foo } catch(e) { if (true) { var e = 2 } }",
+        "try { foo } catch(e) { var e = 2 }",
+    );
+    test_same("try { foo } catch(e) { for (var e = 0;;) break }");
+    // var inside a function does NOT interact with the catch parameter;
+    // var doesn't hoist out of functions, so the catch param can be removed.
+    test(
+        "try { foo } catch(e) { (function() { var e = 2 })() }",
+        "try { foo } catch { (function() { var e = 2;})();}",
+    );
+    test(
+        "try { foo } catch(e) { function f() { var e = 2 } }",
+        "try { foo } catch { function f() { var e = 2 } }",
+    );
 
-    // FIXME catch(a) has no references but it cannot be removed.
-    // test_same(
-    // r#"var a = "PASS";
-    // try {
-    // throw "FAIL1";
-    // } catch (a) {
-    // var a = "FAIL2";
-    // }
-    // console.log(a);"#,
-    // );
+    test_same(
+        r#"var a = "PASS";
+    try {
+    throw "FAIL1";
+    } catch (a) {
+    var a = "FAIL2";
+    }
+    console.log(a);"#,
+    );
+
+    // Regression tests for https://github.com/oxc-project/oxc/issues/17307
+    // var inside nested catches must preserve hoisting so outer `e` reference works.
+    test(
+        "try {} catch (e) { try {} catch (e) { var e = 'e'; console.log(e === 'e') } } console.log(e === undefined)",
+        "try {} catch (e) { var e } console.log(e === void 0)",
+    );
+    test(
+        "try { throw 1 } catch (e) { try { throw 2 } catch (e) { var e = 'e'; console.log(e === 'e') } } console.log(e === undefined)",
+        "try { throw 1 } catch (e) { try { throw 2 } catch (e) { var e = 'e'; console.log(e === 'e') } } console.log(e === void 0)",
+    );
 
     test_target_same("try { foo } catch(e) {}", "chrome65");
 }
