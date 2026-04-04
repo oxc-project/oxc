@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -15,6 +15,14 @@ use crate::core::utils;
 pub struct Oxfmtrc {
     #[serde(flatten)]
     pub format_config: FormatConfig,
+    /// Paths of configuration files that this configuration file extends (inherits from).
+    /// The files are resolved relative to the location of the configuration file that contains
+    /// the `extends` property. The configuration files are merged from the first to the last,
+    /// with the last file overriding the previous ones. The current file always takes precedence.
+    ///
+    /// - Default: `[]`
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub extends: Vec<PathBuf>,
     /// File-specific overrides.
     /// When a file matches multiple overrides, the later override takes precedence (array order matters).
     ///
@@ -27,6 +35,44 @@ pub struct Oxfmtrc {
     /// - Default: `[]`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub ignore_patterns: Option<Vec<String>>,
+}
+
+impl Oxfmtrc {
+    /// Merge this config with an extended (parent) config.
+    ///
+    /// `self` is the current (child) config and takes priority.
+    /// `other` is the extended (parent) config and provides defaults.
+    ///
+    /// - `format_config`: deep merge, child's explicitly-set values win
+    /// - `overrides`: parent's overrides come first, child's come after (child takes precedence at apply time)
+    /// - `ignore_patterns`: child wins entirely
+    #[must_use]
+    pub fn merge(self, other: Self) -> Self {
+        // Start with parent as base, overlay child on top (child wins for set values)
+        let mut format_config = other.format_config;
+        format_config.merge(&self.format_config);
+
+        // Overrides: parent's first, then child's (later overrides win at apply time)
+        let overrides = match (self.overrides, other.overrides) {
+            (Some(child), Some(mut parent)) => {
+                parent.extend(child);
+                Some(parent)
+            }
+            (child @ Some(_), None) => child,
+            (None, parent @ Some(_)) => parent,
+            (None, None) => None,
+        };
+
+        // ignore_patterns: child wins if present, else fall back to parent
+        let ignore_patterns = self.ignore_patterns.or(other.ignore_patterns);
+
+        Self {
+            format_config,
+            extends: Vec::new(),
+            overrides,
+            ignore_patterns,
+        }
+    }
 }
 
 // ---
@@ -804,5 +850,92 @@ mod tests_json_deep_merge {
         let overlay = json!({ "semi": null });
         let merged = json_deep_merge(base, overlay);
         assert_eq!(merged, json!({ "semi": null, "tabWidth": 4 }));
+    }
+}
+
+#[cfg(test)]
+mod tests_oxfmtrc_merge {
+    use super::*;
+
+    fn make_config(semi: Option<bool>, tab_width: Option<u8>) -> Oxfmtrc {
+        Oxfmtrc {
+            format_config: FormatConfig { semi, tab_width, ..Default::default() },
+            extends: Vec::new(),
+            overrides: None,
+            ignore_patterns: None,
+        }
+    }
+
+    #[test]
+    fn child_values_win_over_parent() {
+        let child = make_config(Some(true), None);
+        let parent = make_config(Some(false), Some(4));
+
+        let merged = child.merge(parent);
+        assert_eq!(merged.format_config.semi, Some(true));
+        assert_eq!(merged.format_config.tab_width, Some(4));
+    }
+
+    #[test]
+    fn parent_fills_unset_child_values() {
+        let child = make_config(None, None);
+        let parent = make_config(Some(false), Some(4));
+
+        let merged = child.merge(parent);
+        assert_eq!(merged.format_config.semi, Some(false));
+        assert_eq!(merged.format_config.tab_width, Some(4));
+    }
+
+    #[test]
+    fn overrides_appended_parent_first() {
+        let child = Oxfmtrc {
+            overrides: Some(vec![OxfmtOverrideConfig {
+                files: vec!["child.js".to_string()],
+                exclude_files: None,
+                options: FormatConfig::default(),
+            }]),
+            ..Default::default()
+        };
+        let parent = Oxfmtrc {
+            overrides: Some(vec![OxfmtOverrideConfig {
+                files: vec!["parent.js".to_string()],
+                exclude_files: None,
+                options: FormatConfig::default(),
+            }]),
+            ..Default::default()
+        };
+
+        let merged = child.merge(parent);
+        let overrides = merged.overrides.unwrap();
+        assert_eq!(overrides.len(), 2);
+        assert_eq!(overrides[0].files[0], "parent.js");
+        assert_eq!(overrides[1].files[0], "child.js");
+    }
+
+    #[test]
+    fn ignore_patterns_child_wins() {
+        let child = Oxfmtrc {
+            ignore_patterns: Some(vec!["child_pattern".to_string()]),
+            ..Default::default()
+        };
+        let parent = Oxfmtrc {
+            ignore_patterns: Some(vec!["parent_pattern".to_string()]),
+            ..Default::default()
+        };
+
+        let merged = child.merge(parent);
+        assert_eq!(merged.ignore_patterns.unwrap(), vec!["child_pattern"]);
+    }
+
+    #[test]
+    fn extends_cleared_after_merge() {
+        let child = Oxfmtrc {
+            extends: vec![PathBuf::from("./base.json")],
+            ..Default::default()
+        };
+        let parent = Oxfmtrc::default();
+
+        let merged = child.merge(parent);
+        assert!(merged.extends.is_empty());
     }
 }

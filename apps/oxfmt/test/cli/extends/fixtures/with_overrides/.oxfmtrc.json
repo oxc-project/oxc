@@ -1,0 +1,9 @@
+{
+  "extends": ["./base.json"],
+  "overrides": [
+    {
+      "files": ["*.test.js"],
+      "options": { "singleQuote": true }
+    }
+  ]
+}

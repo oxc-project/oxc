@@ -1,5 +1,7 @@
 use std::path::{Path, PathBuf};
 
+use rustc_hash::FxHashSet;
+
 use editorconfig_parser::{
     EditorConfig, EditorConfigProperties, EditorConfigProperty, EndOfLine, IndentStyle,
     MaxLineLength,
@@ -382,6 +384,22 @@ impl ConfigResolver {
         let oxfmtrc: Oxfmtrc =
             serde_json::from_value(self.raw_config.clone()).map_err(|err| err.to_string())?;
 
+        // Resolve `extends` before processing the rest of the config
+        let oxfmtrc = if oxfmtrc.extends.is_empty() {
+            oxfmtrc
+        } else {
+            let mut visited = FxHashSet::default();
+            // Track the current config file path to detect cycles
+            if let Some(config_dir) = &self.config_dir {
+                visited.insert(config_dir.clone());
+            }
+            let merged = resolve_extends(oxfmtrc, self.config_dir.as_deref(), &mut visited)?;
+            // Update raw_config so the slow path (per-file overrides) uses merged values
+            self.raw_config = serde_json::to_value(&merged.format_config)
+                .expect("FormatConfig serialization should not fail");
+            merged
+        };
+
         // Resolve `overrides` from `Oxfmtrc` for later per-file matching
         let base_dir = self.config_dir.clone();
         self.oxfmtrc_overrides =
@@ -504,6 +522,88 @@ fn load_js_config(
     })?;
 
     Ok(if value.is_null() { None } else { Some(value) })
+}
+
+// ---
+
+/// Recursively resolve `extends` in an `Oxfmtrc` config.
+///
+/// Each extended config file is loaded, its own `extends` resolved recursively,
+/// and then merged into the current config (current config takes priority).
+///
+/// Extended configs are processed in reverse order so that the last entry in the
+/// `extends` array has highest priority among extended configs (matching oxlint behavior).
+///
+/// # Errors
+/// Returns error if an extended config file cannot be found, parsed, or if a cycle is detected.
+fn resolve_extends(
+    config: Oxfmtrc,
+    config_dir: Option<&Path>,
+    visited: &mut FxHashSet<PathBuf>,
+) -> Result<Oxfmtrc, String> {
+    let extends = config.extends.clone();
+    let mut result = Oxfmtrc { extends: Vec::new(), ..config };
+
+    // Process in reverse: last entry gets highest priority among extended configs
+    for extend_path in extends.iter().rev() {
+        let resolved_path = match config_dir {
+            Some(dir) => dir.join(extend_path),
+            None => extend_path.clone(),
+        };
+
+        // Canonicalize for reliable cycle detection
+        let canonical = resolved_path.canonicalize().map_err(|e| {
+            format!(
+                "Failed to resolve extends path \"{}\": {e}",
+                resolved_path.display()
+            )
+        })?;
+
+        if !visited.insert(canonical) {
+            return Err(format!(
+                "Circular extends detected: \"{}\" was already included in the extends chain",
+                resolved_path.display()
+            ));
+        }
+
+        // Load the extended config file (JSON/JSONC only)
+        let extended = load_oxfmtrc_from_file(&resolved_path)?;
+        let extended_dir = resolved_path.parent();
+
+        // Recursively resolve extends in the loaded config
+        let mut extended = resolve_extends(extended, extended_dir, visited)?;
+
+        // Resolve relative tailwind paths against the extended config's directory
+        // so they become absolute before merging into the current config.
+        if let Some(ext_dir) = extended_dir {
+            extended.format_config.resolve_tailwind_paths(ext_dir);
+        }
+
+        result = result.merge(extended);
+    }
+
+    Ok(result)
+}
+
+/// Load an `Oxfmtrc` from a JSON/JSONC file.
+///
+/// This is a simplified config loader used for resolving `extends` references.
+/// It reads and parses the file but does not resolve overrides or editorconfig.
+fn load_oxfmtrc_from_file(path: &Path) -> Result<Oxfmtrc, String> {
+    let mut json_string = utils::read_to_string(path)
+        .map_err(|_| format!("Failed to read extends config {}: File not found", path.display()))?;
+
+    json_strip_comments::strip(&mut json_string).map_err(|err| {
+        format!("Failed to strip comments from {}: {err}", path.display())
+    })?;
+
+    let raw: Value = serde_json::from_str(&json_string).map_err(|err| {
+        format!("Failed to parse extends config {}: {err}", path.display())
+    })?;
+
+    serde_json::from_value(raw).map_err(|err| {
+        format!("Failed to deserialize extends config {}: {err}", path.display())
+    })
 }
 
 // ---
