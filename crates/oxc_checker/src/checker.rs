@@ -774,6 +774,16 @@ impl<'a> Checker<'a> {
             Statement::TryStatement(try_stmt) => {
                 self.check_source_elements(&try_stmt.block.body);
                 if let Some(handler) = &try_stmt.handler {
+                    if let Some(ann) = handler.param.as_ref().and_then(|p| p.type_annotation.as_ref()) {
+                        let catch_type = self.get_type_from_type_node(&ann.type_annotation);
+                        if catch_type != self.any_type && catch_type != self.unknown_type {
+                            self.diagnostics.push(
+                                OxcDiagnostic::error("Catch clause variable type annotation must be 'any' or 'unknown' if specified.")
+                                    .with_error_code("ts", "1196")
+                                    .with_label(ann.span),
+                            );
+                        }
+                    }
                     self.check_source_elements(&handler.body.body);
                 }
                 if let Some(finalizer) = &try_stmt.finalizer {

@@ -1441,11 +1441,6 @@ pub fn run_checker_typescript(files: &[TypeScriptFile]) -> Vec<CoverageResult> {
     files
         .par_iter()
         .filter_map(|f| {
-            // Skip files with expected errors (they may not parse)
-            if !f.error_codes.is_empty() {
-                return None;
-            }
-
             // Skip tests with features tsgo doesn't support
             if should_skip_tsgo(&f.settings) {
                 return None;
