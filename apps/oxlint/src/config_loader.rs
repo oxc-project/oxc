@@ -54,23 +54,18 @@ pub fn discover_configs_in_ancestors<P: AsRef<Path>>(
 
     for file in files {
         let path = file.as_ref();
-        let mut base_config_found = false;
         // Start from the file's parent directory and walk up the tree
         let mut current = path.parent();
         while let Some(dir) = current {
-            if base_config_found {
-                // Stop if we've reached the base config file (e.g., root oxlintrc)
-                // to avoid duplicate loading and filling nested config with configs outside from the root config.
-                break;
-            }
             // Stop if we've already checked this directory (and its ancestors)
             let inserted = visited_dirs.insert(dir.to_path_buf());
             if !inserted {
                 break;
             }
-            for config in find_configs_in_directory(dir) {
+            if let Some(config) = find_configs_in_directory(dir) {
                 if config.path() == base_config_path {
-                    base_config_found = true;
+                    // Stop if we've reached the base config file (e.g., root oxlintrc)
+                    // to avoid duplicate loading and filling nested config with configs outside from the root config.
                     break;
                 }
                 config_paths.insert(config);
@@ -109,24 +104,22 @@ pub fn discover_configs_in_tree(
 }
 
 /// Check if a directory contains an oxlint config file.
-fn find_configs_in_directory(dir: &Path) -> Vec<DiscoveredConfig> {
-    let mut configs = Vec::new();
-
+fn find_configs_in_directory(dir: &Path) -> Option<DiscoveredConfig> {
     let json_path = dir.join(DEFAULT_OXLINTRC_NAME);
     if json_path.is_file() {
-        configs.push(DiscoveredConfig::Json(json_path));
+        return Some(DiscoveredConfig::Json(json_path));
     }
     let jsonc_path = dir.join(DEFAULT_JSONC_OXLINTRC_NAME);
     if jsonc_path.is_file() {
-        configs.push(DiscoveredConfig::Jsonc(jsonc_path));
+        return Some(DiscoveredConfig::Jsonc(jsonc_path));
     }
 
     let ts_path = dir.join(DEFAULT_TS_OXLINTRC_NAME);
     if ts_path.is_file() {
-        configs.push(DiscoveredConfig::Js(ts_path));
+        return Some(DiscoveredConfig::Js(ts_path));
     }
 
-    configs
+    None
 }
 
 // Helper types for parallel directory walking
