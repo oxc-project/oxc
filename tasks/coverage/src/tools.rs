@@ -1160,8 +1160,283 @@ fn target_from_settings(
 // Checker (.types baseline conformance)
 // ================================
 
+/// Check if a test should be skipped because ALL its compiler option combos
+/// use features tsgo doesn't support. When a test has multiple targets/modules,
+/// tsgo runs each combo separately and skips only the unsupported ones.
+/// We skip the whole test only when every combo would be skipped.
+fn should_skip_tsgo(settings: &crate::typescript::meta::CompilerSettings) -> bool {
+    // If all modules are unsupported, skip
+    let all_modules_unsupported = !settings.modules.is_empty() && settings.modules.iter().all(|m| {
+        let lower = m.to_lowercase();
+        lower == "amd" || lower == "umd" || lower == "system"
+    });
+    if all_modules_unsupported {
+        return true;
+    }
+
+    // If all targets are ES5, skip
+    let all_targets_unsupported = !settings.targets.is_empty() && settings.targets.iter().all(|t| {
+        t.to_lowercase() == "es5"
+    });
+    if all_targets_unsupported {
+        return true;
+    }
+
+    false
+}
+
+/// Get the tsgo baselines root directory.
+fn tsgo_baselines_dir() -> PathBuf {
+    PathBuf::from(
+        std::env::var("TSGO_BASELINES")
+            .unwrap_or_else(|_| {
+                let home = std::env::var("HOME").unwrap_or_default();
+                format!("{home}/dev/typescript-go/testdata/baselines/reference/submodule")
+            }),
+    )
+}
+
+/// Extract the relative path after `tests/cases/` without extension.
+/// e.g. `typescript/tests/cases/compiler/foo.ts` -> `compiler/foo`
+fn test_rel_stem(test_path: &Path) -> Option<String> {
+    let path_str = test_path.to_string_lossy();
+    let after_cases = path_str.split("tests/cases/").nth(1)?;
+    let without_ext = after_cases.strip_suffix(".ts")
+        .or_else(|| after_cases.strip_suffix(".tsx"))?;
+    Some(without_ext.to_string())
+}
+
+/// Resolve the tsgo baseline content for a given extension (e.g. ".types", ".errors.txt").
+/// If tsgo has a full baseline file, returns its content.
+/// If tsgo has a .diff file, applies it to the tsc baseline to reconstruct tsgo's expected output.
+/// Returns None if tsgo has no baseline for this test.
+fn resolve_tsgo_baseline_content(test_path: &Path, extension: &str, tsc_content: Option<&str>) -> Option<String> {
+    let tsgo_dir = tsgo_baselines_dir();
+    let rel_stem = test_rel_stem(test_path)?;
+
+    // Try full baseline first
+    let full_path = tsgo_dir.join(format!("{rel_stem}{extension}"));
+    if let Ok(content) = fs::read_to_string(&full_path) {
+        return Some(content);
+    }
+
+    // Try .diff file — apply it to the tsc baseline
+    let diff_path = tsgo_dir.join(format!("{rel_stem}{extension}.diff"));
+    if let Ok(diff_content) = fs::read_to_string(&diff_path) {
+        if let Some(tsc) = tsc_content {
+            return Some(apply_tsgo_diff(tsc, &diff_content));
+        }
+    }
+
+    None
+}
+
+/// Apply a tsgo-format diff to a base string.
+///
+/// The diff format uses:
+///   `@@= skipped -N, +N lines =@@` to skip N identical lines
+///   `-line` for lines only in old (removed)
+///   `+line` for lines only in new (added)
+///   ` line` (leading space) for context lines (unchanged)
+fn apply_tsgo_diff(base: &str, diff: &str) -> String {
+    use lazy_regex::{Lazy, Regex, lazy_regex};
+
+    static SKIP_RE: Lazy<Regex> = lazy_regex!(r"^@@= skipped -(\d+), \+(\d+) lines =@@$");
+
+    let base_lines: Vec<&str> = base.lines().collect();
+    let mut result: Vec<&str> = Vec::new();
+    let mut base_idx: usize = 0;
+
+    let diff_lines: Vec<&str> = diff.lines().collect();
+    let mut di = 0;
+
+    // Skip the header lines (--- old, +++ new)
+    while di < diff_lines.len() {
+        let line = diff_lines[di];
+        if line.starts_with("@@=") {
+            break;
+        }
+        di += 1;
+    }
+
+    while di < diff_lines.len() {
+        let line = diff_lines[di];
+
+        if let Some(cap) = SKIP_RE.captures(line) {
+            let skip_old: usize = cap[1].parse().unwrap();
+            // Copy skipped lines from base
+            let end = (base_idx + skip_old).min(base_lines.len());
+            for &bl in &base_lines[base_idx..end] {
+                result.push(bl);
+            }
+            base_idx = end;
+            di += 1;
+            continue;
+        }
+
+        if let Some(rest) = line.strip_prefix('-') {
+            // Removed line — skip it in the base
+            base_idx += 1;
+            let _ = rest; // consumed
+            di += 1;
+        } else if let Some(rest) = line.strip_prefix('+') {
+            // Added line — add to result (rest is owned by diff_lines which lives long enough)
+            result.push(rest);
+            di += 1;
+        } else if let Some(rest) = line.strip_prefix(' ') {
+            // Context line — copy from base, advance both
+            result.push(rest);
+            base_idx += 1;
+            di += 1;
+        } else {
+            // Empty line or unexpected — treat as context
+            if base_idx < base_lines.len() {
+                result.push(base_lines[base_idx]);
+                base_idx += 1;
+            }
+            di += 1;
+        }
+    }
+
+    // Copy remaining base lines
+    for &bl in &base_lines[base_idx..] {
+        result.push(bl);
+    }
+
+    result.join("\n")
+}
+
+/// Generate the full .types baseline text from collected type entries,
+/// matching tsgo's format: file header, source lines interleaved with
+/// `>expr_text : type_string` entries.
+fn generate_types_baseline(
+    filename: &str,
+    source: &str,
+    types: &[(u32, String, String)],
+) -> String {
+    let mut out = String::new();
+
+    // File header
+    out.push_str(&format!("//// [tests/cases/{filename}] ////\n"));
+    out.push('\n');
+
+    // Get just the filename part for the === header
+    let basename = Path::new(filename).file_name()
+        .map(|f| f.to_string_lossy().to_string())
+        .unwrap_or_else(|| filename.to_string());
+    out.push_str(&format!("=== {basename} ===\n"));
+
+    // Interleave source lines with type entries
+    let lines: Vec<&str> = source.split('\n').collect();
+    let mut type_idx = 0;
+
+    for (line_idx, line) in lines.iter().enumerate() {
+        out.push_str(line);
+        out.push('\n');
+
+        // Emit all type entries for this line
+        while type_idx < types.len() && types[type_idx].0 == line_idx as u32 {
+            let (_, ref expr_text, ref type_str) = types[type_idx];
+            out.push_str(&format!(">{expr_text} : {type_str}\n"));
+            type_idx += 1;
+        }
+    }
+
+    out
+}
+
+/// Generate the full .types baseline text for a multi-file test.
+fn generate_types_baseline_multi(
+    units: &[(&str, &str, &[(u32, String, String)])],
+    test_path: &str,
+) -> String {
+    let mut out = String::new();
+
+    // File header referencing the test source
+    out.push_str(&format!("//// [tests/cases/{test_path}] ////\n"));
+
+    for (filename, source, types) in units {
+        out.push('\n');
+        out.push_str(&format!("=== {filename} ===\n"));
+
+        let lines: Vec<&str> = source.split('\n').collect();
+        let mut type_idx = 0;
+
+        for (line_idx, line) in lines.iter().enumerate() {
+            out.push_str(line);
+            out.push('\n');
+
+            while type_idx < types.len() && types[type_idx].0 == line_idx as u32 {
+                let (_, ref expr_text, ref type_str) = types[type_idx];
+                out.push_str(&format!(">{expr_text} : {type_str}\n"));
+                type_idx += 1;
+            }
+        }
+    }
+
+    out
+}
+
+/// Normalize a .types baseline for comparison: strip \r, underline lines,
+/// and trailing whitespace.
+fn normalize_types_baseline(s: &str) -> String {
+    s.lines()
+        // Strip underline lines: lines like ">  : ^^^^^^"
+        .filter(|l| {
+            if let Some(rest) = l.strip_prefix('>') {
+                let trimmed = rest.trim_start();
+                if let Some(after_colon) = trimmed.strip_prefix(": ") {
+                    // If everything after ": " is just ^ and spaces, it's an underline
+                    if !after_colon.is_empty() && after_colon.chars().all(|c| c == '^' || c == ' ') {
+                        return false;
+                    }
+                }
+            }
+            true
+        })
+        .map(|l| l.trim_end())
+        .collect::<Vec<_>>()
+        .join("\n")
+        .trim_end()
+        .to_string()
+}
+
+/// Partial matching: sequential (expr, type) comparison.
+/// Returns Passed if all assertions match, or the first Mismatch.
+fn partial_match_types(
+    assertions: &[(String, String)],
+    actual: &[(u32, String, String)],
+) -> TestResult {
+    let mut actual_iter = actual.iter();
+    for (expr_text, expected_type) in assertions {
+        let mut found = false;
+        for (_, act_text, act_type) in actual_iter.by_ref() {
+            if act_text == expr_text {
+                if act_type != expected_type {
+                    return TestResult::Mismatch(
+                        "checker",
+                        format!(">{expr_text} : {act_type}"),
+                        format!(">{expr_text} : {expected_type}"),
+                    );
+                }
+                found = true;
+                break;
+            }
+        }
+        if !found {
+            return TestResult::Mismatch(
+                "checker",
+                String::new(),
+                format!(">{expr_text} : {expected_type}"),
+            );
+        }
+    }
+
+    TestResult::Passed
+}
+
 pub fn run_checker_typescript(files: &[TypeScriptFile]) -> Vec<CoverageResult> {
-    let baselines_dir = workspace_root().join("typescript/tests/baselines/reference");
+    let tsc_baselines_dir = workspace_root().join("typescript/tests/baselines/reference");
 
     files
         .par_iter()
@@ -1171,23 +1446,40 @@ pub fn run_checker_typescript(files: &[TypeScriptFile]) -> Vec<CoverageResult> {
                 return None;
             }
 
-            // Derive .types baseline path from source path
+            // Skip tests with features tsgo doesn't support
+            if should_skip_tsgo(&f.settings) {
+                return None;
+            }
+
             let stem = f.path.file_stem()?.to_str()?;
-            let baseline_path = baselines_dir.join(format!("{stem}.types"));
-            let baseline_content = fs::read_to_string(&baseline_path).ok()?;
+
+            // Use tsgo baseline when available, fall back to tsc baseline
+            // (tsgo stores no separate baseline when its output matches tsc)
+            let tsc_path = tsc_baselines_dir.join(format!("{stem}.types"));
+            let tsc_content = fs::read_to_string(&tsc_path).ok();
+            let baseline_content = resolve_tsgo_baseline_content(
+                &f.path,
+                ".types",
+                tsc_content.as_deref(),
+            ).or(tsc_content)?;
+
+            // Extract relative path for baseline generation (e.g. "compiler/foo.ts")
+            let test_rel_path = f.path.to_string_lossy()
+                .split("tests/cases/")
+                .nth(1)
+                .unwrap_or(&f.path.to_string_lossy())
+                .to_string();
 
             let options = checker_options_from_settings(&f.settings);
             let target = target_from_settings(&f.settings);
 
-            // Catch panics from individual tests to prevent killing the
-            // rayon thread pool (e.g., semantic index-out-of-bounds on
-            // certain multi-file tests).
             let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
                 if f.units.len() == 1 {
                     run_checker_single(
                         &f.units[0].content,
                         f.units[0].source_type,
                         &baseline_content,
+                        &test_rel_path,
                         options,
                         target,
                     )
@@ -1195,6 +1487,7 @@ pub fn run_checker_typescript(files: &[TypeScriptFile]) -> Vec<CoverageResult> {
                     run_checker_multi(
                         &f.units,
                         &baseline_content,
+                        &test_rel_path,
                         options,
                     )
                 }
@@ -1214,18 +1507,15 @@ fn run_checker_single(
     source: &str,
     source_type: SourceType,
     baseline_content: &str,
+    test_rel_path: &str,
     options: oxc_checker::CheckerOptions,
     target: Option<oxc_project::ScriptTarget>,
 ) -> TestResult {
-    // Parse the .types baseline
     let assertions = parse_types_baseline(baseline_content);
     if assertions.is_empty() {
         return TestResult::Passed;
     }
 
-    // Create a Project with the single user file. The Project handles
-    // parsing, binding, and checking with correct file indices (no
-    // collision with lib file indices).
     let type_arena = oxc_types::TypeArena::with_capacity(64);
     let files = vec![(
         PathBuf::from("/virtual/test.ts"),
@@ -1236,8 +1526,7 @@ fn run_checker_single(
         oxc_project::Project::new_multi_from_sources_with_target(&type_arena, files, options, target);
     project.check_all();
 
-    // Collect types from the checked file via with_checker
-    let file_idx = project.lib_file_count(); // first user file
+    let file_idx = project.lib_file_count();
     let actual = project.with_checker(file_idx, |checker, program| {
         collect_checker_types(checker, program, source)
     });
@@ -1245,43 +1534,31 @@ fn run_checker_single(
         return TestResult::ParseError("file not checked".to_string(), false);
     };
 
-    // Match assertions against actual
-    let mut actual_iter = actual.iter();
-    for (expr_text, expected_type) in &assertions {
-        let mut found = false;
-        for (act_text, act_type) in actual_iter.by_ref() {
-            if act_text == expr_text {
-                if act_type != expected_type {
-                    return TestResult::Mismatch(
-                        "checker",
-                        format!(">{expr_text} : {act_type}"),
-                        format!(">{expr_text} : {expected_type}"),
-                    );
-                }
-                found = true;
-                break;
-            }
-        }
-        if !found {
-            return TestResult::Mismatch(
-                "checker",
-                String::new(),
-                format!(">{expr_text} : {expected_type}"),
-            );
-        }
+    // Tier 1: Full text comparison
+    let actual_text = generate_types_baseline(test_rel_path, source, &actual);
+    if normalize_types_baseline(&actual_text) == normalize_types_baseline(baseline_content) {
+        return TestResult::Passed;
     }
 
-    TestResult::Passed
+    // Tier 2: Partial (expr, type) matching
+    let partial = partial_match_types(&assertions, &actual);
+    if partial == TestResult::Passed {
+        // Partial matched but full text didn't — flag it
+        return TestResult::Mismatch(
+            "checker_text",
+            actual_text,
+            baseline_content.to_string(),
+        );
+    }
+
+    // Tier 3: Fail
+    partial
 }
 
-/// Multi-unit types baseline test.
-///
-/// Creates a `Project` from virtual files, checks all files via the Project
-/// (with correct cross-file resolution), then uses `with_checker()` to
-/// reconstruct Checkers for type collection.
 fn run_checker_multi(
     units: &[crate::typescript::meta::TestUnitData],
     baseline_content: &str,
+    test_rel_path: &str,
     options: oxc_checker::CheckerOptions,
 ) -> TestResult {
     let assertions = parse_types_baseline(baseline_content);
@@ -1289,7 +1566,6 @@ fn run_checker_multi(
         return TestResult::Passed;
     }
 
-    // Build virtual file list (filter non-TS/JS units)
     let ts_units: Vec<_> = units
         .iter()
         .filter(|u| SourceType::from_path(Path::new(&u.name)).is_ok())
@@ -1299,7 +1575,6 @@ fn run_checker_multi(
         return TestResult::Passed;
     }
 
-    // Keep source text for type collection (Project takes ownership of its copy)
     let unit_sources: Vec<&str> = ts_units.iter().map(|u| u.content.as_str()).collect();
 
     let files: Vec<(PathBuf, String, SourceType)> = ts_units
@@ -1307,50 +1582,53 @@ fn run_checker_multi(
         .map(|u| (virtual_path_from_unit_name(&u.name), u.content.clone(), u.source_type))
         .collect();
 
-    // Create Project and check all files (lib + user)
     let type_arena = oxc_types::TypeArena::with_capacity(64);
     let mut project = oxc_project::Project::new_multi_from_sources(&type_arena, files, options);
     project.check_all();
 
-    // Collect types from each user file via with_checker
-    let mut all_types: Vec<(String, String)> = Vec::new();
+    // Collect types per file for baseline generation
+    let mut per_file_types: Vec<Vec<(u32, String, String)>> = Vec::new();
+    let mut all_types: Vec<(u32, String, String)> = Vec::new();
     for (i, file_idx) in project.user_file_range().enumerate() {
         let source = unit_sources[i];
         let types = project.with_checker(file_idx, |checker, program| {
             collect_checker_types(checker, program, source)
         });
-        if let Some(types) = types {
-            all_types.extend(types);
-        }
+        let types = types.unwrap_or_default();
+        all_types.extend(types.iter().cloned());
+        per_file_types.push(types);
     }
 
-    // Match assertions against collected types
-    let mut actual_iter = all_types.iter();
-    for (expr_text, expected_type) in &assertions {
-        let mut found = false;
-        for (act_text, act_type) in actual_iter.by_ref() {
-            if act_text == expr_text {
-                if act_type != expected_type {
-                    return TestResult::Mismatch(
-                        "checker",
-                        format!(">{expr_text} : {act_type}"),
-                        format!(">{expr_text} : {expected_type}"),
-                    );
-                }
-                found = true;
-                break;
-            }
-        }
-        if !found {
-            return TestResult::Mismatch(
-                "checker",
-                String::new(),
-                format!(">{expr_text} : {expected_type}"),
-            );
-        }
+    // Tier 1: Full text comparison
+    let unit_names: Vec<String> = ts_units.iter()
+        .map(|u| {
+            Path::new(&u.name).file_name()
+                .map(|f| f.to_string_lossy().to_string())
+                .unwrap_or_else(|| u.name.clone())
+        })
+        .collect();
+    let baseline_units: Vec<(&str, &str, &[(u32, String, String)])> = unit_names.iter()
+        .enumerate()
+        .map(|(i, name)| (name.as_str(), unit_sources[i], per_file_types[i].as_slice()))
+        .collect();
+
+    let actual_text = generate_types_baseline_multi(&baseline_units, test_rel_path);
+    if normalize_types_baseline(&actual_text) == normalize_types_baseline(baseline_content) {
+        return TestResult::Passed;
     }
 
-    TestResult::Passed
+    // Tier 2: Partial matching
+    let partial = partial_match_types(&assertions, &all_types);
+    if partial == TestResult::Passed {
+        return TestResult::Mismatch(
+            "checker_text",
+            actual_text,
+            baseline_content.to_string(),
+        );
+    }
+
+    // Tier 3: Fail
+    partial
 }
 
 /// Parse `.types` baseline content into `(expression_text, expected_type)` pairs.
@@ -1381,18 +1659,21 @@ fn parse_types_baseline(content: &str) -> Vec<(String, String)> {
     assertions
 }
 
-/// Walk the AST collecting `(source_text, type_string)` pairs for nodes
+/// Walk the AST collecting `(line, source_text, type_string)` tuples for nodes
 /// that tsc reports types for: expression nodes and declaration binding names.
+/// Line is 0-based.
 fn collect_checker_types<'a>(
     checker: &mut oxc_checker::Checker<'a>,
     program: &oxc::ast::ast::Program<'a>,
     source: &str,
-) -> Vec<(String, String)> {
+) -> Vec<(u32, String, String)> {
     use oxc::ast_visit::Visit;
 
+    let line_starts = compute_line_starts(source);
     let mut walker = TypeCollectorVisitor {
         checker,
         source,
+        line_starts: &line_starts,
         results: Vec::new(),
         last_expression_type: None,
         super_class_types: rustc_hash::FxHashMap::default(),
@@ -1405,7 +1686,8 @@ fn collect_checker_types<'a>(
 struct TypeCollectorVisitor<'a, 'b> {
     checker: &'b mut oxc_checker::Checker<'a>,
     source: &'b str,
-    results: Vec<(String, String)>,
+    line_starts: &'b [usize],
+    results: Vec<(u32, String, String)>,
     /// Stashed type string from the last visit_expression, so
     /// visit_static_member_expression can emit the property name
     /// with the same type as the parent member expression.
@@ -1419,6 +1701,13 @@ struct TypeCollectorVisitor<'a, 'b> {
     /// class type rather than re-inferring from the AST. Matches tsgo's
     /// `GetTypeAtLocation` behavior which goes through the unified widening path.
     class_type_stack: Vec<Option<oxc_types::TypeId>>,
+}
+
+impl TypeCollectorVisitor<'_, '_> {
+    /// Compute 0-based line index for a byte offset.
+    fn line_of(&self, offset: u32) -> u32 {
+        line_of_offset(self.line_starts, offset as usize) as u32
+    }
 }
 
 impl<'a> oxc::ast_visit::Visit<'a> for TypeCollectorVisitor<'a, '_> {
@@ -1471,7 +1760,8 @@ impl<'a> oxc::ast_visit::Visit<'a> for TypeCollectorVisitor<'a, '_> {
                 self.checker.get_type_at_location(expr)
             };
             let type_str = self.checker.type_to_string(type_id);
-            self.results.push((expr_text.to_string(), type_str.clone()));
+            let line = self.line_of(span.start);
+            self.results.push((line, expr_text.to_string(), type_str.clone()));
             // Stash for visit_static_member_expression to pick up
             self.last_expression_type = Some(type_str);
         }
@@ -1495,7 +1785,8 @@ impl<'a> oxc::ast_visit::Visit<'a> for TypeCollectorVisitor<'a, '_> {
                 && (prop_span.end as usize) <= self.source.len()
             {
                 let prop_text = &self.source[prop_span.start as usize..prop_span.end as usize];
-                self.results.push((prop_text.to_string(), parent_type));
+                let line = self.line_of(prop_span.start);
+                self.results.push((line, prop_text.to_string(), parent_type));
             }
         }
 
@@ -1517,8 +1808,9 @@ impl<'a> oxc::ast_visit::Visit<'a> for TypeCollectorVisitor<'a, '_> {
                     let widened = self.checker.get_widened_literal_type(prop_type);
                     let key_text =
                         &self.source[key_span.start as usize..key_span.end as usize];
+                    let line = self.line_of(key_span.start);
                     self.results
-                        .push((key_text.to_string(), self.checker.type_to_string(widened)));
+                        .push((line, key_text.to_string(), self.checker.type_to_string(widened)));
                 }
             }
         }
@@ -1579,8 +1871,9 @@ impl<'a> oxc::ast_visit::Visit<'a> for TypeCollectorVisitor<'a, '_> {
 
                 let key_text =
                     &self.source[key_span.start as usize..key_span.end as usize];
+                let line = self.line_of(key_span.start);
                 self.results
-                    .push((key_text.to_string(), self.checker.type_to_string(prop_type)));
+                    .push((line, key_text.to_string(), self.checker.type_to_string(prop_type)));
             }
         }
         oxc::ast_visit::walk::walk_property_definition(self, prop);
@@ -1598,8 +1891,9 @@ impl<'a> oxc::ast_visit::Visit<'a> for TypeCollectorVisitor<'a, '_> {
                 let method_type = self.checker.create_function_type(sig);
                 let key_text =
                     &self.source[key_span.start as usize..key_span.end as usize];
+                let line = self.line_of(key_span.start);
                 self.results
-                    .push((key_text.to_string(), self.checker.type_to_string(method_type)));
+                    .push((line, key_text.to_string(), self.checker.type_to_string(method_type)));
             }
         }
         oxc::ast_visit::walk::walk_method_definition(self, method);
@@ -1620,8 +1914,9 @@ impl<'a> oxc::ast_visit::Visit<'a> for TypeCollectorVisitor<'a, '_> {
                 };
                 let key_text =
                     &self.source[key_span.start as usize..key_span.end as usize];
+                let line = self.line_of(key_span.start);
                 self.results
-                    .push((key_text.to_string(), self.checker.type_to_string(prop_type)));
+                    .push((line, key_text.to_string(), self.checker.type_to_string(prop_type)));
             }
         }
         oxc::ast_visit::walk::walk_ts_property_signature(self, prop);
@@ -1642,8 +1937,9 @@ impl<'a> oxc::ast_visit::Visit<'a> for TypeCollectorVisitor<'a, '_> {
                 let method_type = self.checker.create_function_type(sig);
                 let key_text =
                     &self.source[key_span.start as usize..key_span.end as usize];
+                let line = self.line_of(key_span.start);
                 self.results
-                    .push((key_text.to_string(), self.checker.type_to_string(method_type)));
+                    .push((line, key_text.to_string(), self.checker.type_to_string(method_type)));
             }
         }
         oxc::ast_visit::walk::walk_ts_method_signature(self, method);
@@ -1663,8 +1959,9 @@ impl<'a> oxc::ast_visit::Visit<'a> for TypeCollectorVisitor<'a, '_> {
             };
             let name_text =
                 &self.source[name_span.start as usize..name_span.end as usize];
+            let line = self.line_of(name_span.start);
             self.results
-                .push((name_text.to_string(), self.checker.type_to_string(member_type)));
+                .push((line, name_text.to_string(), self.checker.type_to_string(member_type)));
         }
         oxc::ast_visit::walk::walk_ts_enum_member(self, member);
     }
@@ -1687,7 +1984,8 @@ impl<'a> oxc::ast_visit::Visit<'a> for TypeCollectorVisitor<'a, '_> {
                 }
                 _ => self.checker.get_type_of_symbol(symbol_id),
             };
-            self.results.push((id.name.to_string(), self.checker.type_to_string(type_id)));
+            let line = self.line_of(id.span.start);
+            self.results.push((line, id.name.to_string(), self.checker.type_to_string(type_id)));
         }
 
         oxc::ast_visit::walk::walk_binding_identifier(self, id);
@@ -1699,6 +1997,334 @@ impl<'a> oxc::ast_visit::Visit<'a> for TypeCollectorVisitor<'a, '_> {
 // Checker (.errors.txt error code conformance)
 // ================================
 
+/// A located error: (line, col, code). Line and col are 1-based to match tsc output.
+/// For file-less errors (e.g. compiler option validation), line=0, col=0.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+struct LocatedError {
+    line: u32,
+    col: u32,
+    code: String,
+}
+
+/// Parse (line, col, code) tuples from .errors.txt header lines.
+///
+/// Header lines look like:
+///   `filename(line,col): error TSxxxx: message`
+/// File-less errors look like:
+///   `error TSxxxx: message`
+fn parse_expected_locations(error_files: &[String]) -> Vec<LocatedError> {
+    use lazy_regex::{Lazy, Regex, lazy_regex};
+
+    // Matches header lines with location: "filename(line,col): error TSxxxx:"
+    static LOCATED: Lazy<Regex> =
+        lazy_regex!(r"^[^\s(]+\((\d+),(\d+)\):\s+error\s+TS(\d+):");
+    // Matches file-less errors: "error TSxxxx:" at start of line (no filename prefix)
+    static FILELESS: Lazy<Regex> =
+        lazy_regex!(r"^error\s+TS(\d+):");
+
+    let mut locations = Vec::new();
+    for error_file in error_files {
+        for line in error_file.lines() {
+            if let Some(cap) = LOCATED.captures(line) {
+                locations.push(LocatedError {
+                    line: cap[1].parse().unwrap(),
+                    col: cap[2].parse().unwrap(),
+                    code: cap[3].to_string(),
+                });
+            } else if let Some(cap) = FILELESS.captures(line) {
+                locations.push(LocatedError {
+                    line: 0,
+                    col: 0,
+                    code: cap[1].to_string(),
+                });
+            }
+        }
+    }
+    locations.sort();
+    locations
+}
+
+/// Compute line starts (byte offsets of each line's first character) for a source string.
+fn compute_line_starts(source: &str) -> Vec<usize> {
+    std::iter::once(0)
+        .chain(source.match_indices('\n').map(|(i, _)| i + 1))
+        .collect()
+}
+
+/// Find the 0-based line index for a byte offset using the line-starts table.
+fn line_of_offset(line_starts: &[usize], offset: usize) -> usize {
+    match line_starts.binary_search(&offset) {
+        Ok(i) => i,
+        Err(i) => i - 1,
+    }
+}
+
+/// Count UTF-16 code units in a string slice. This matches tsc's column counting
+/// (which uses UTF-16 offsets, not byte offsets or Unicode scalar counts).
+fn utf16_len(s: &str) -> u32 {
+    s.chars().map(|c| if c as u32 > 0xFFFF { 2u32 } else { 1u32 }).sum()
+}
+
+/// Extract (line, col, code) from our diagnostics. Line and col are 1-based.
+/// `sources` maps virtual file paths to their source text.
+fn extract_actual_locations(
+    diagnostics: &[(PathBuf, Vec<OxcDiagnostic>)],
+    sources: &[(PathBuf, String)],
+    option_diagnostics: &[OxcDiagnostic],
+) -> Vec<LocatedError> {
+    // Build a lookup from path to (source, line_starts)
+    let source_map: Vec<(&Path, &str, Vec<usize>)> = sources
+        .iter()
+        .map(|(path, src)| (path.as_path(), src.as_str(), compute_line_starts(src)))
+        .collect();
+
+    let mut locations = Vec::new();
+
+    // File-less diagnostics from compiler option validation
+    for d in option_diagnostics {
+        if let Some(code) = d.code.number.as_ref() {
+            locations.push(LocatedError {
+                line: 0,
+                col: 0,
+                code: code.to_string(),
+            });
+        }
+    }
+
+    for (path, diags) in diagnostics {
+        // Find the source for this file
+        let source_info = source_map.iter().find(|(p, _, _)| *p == path.as_path());
+
+        for d in diags {
+            let code = match d.code.number.as_ref() {
+                Some(c) => c.to_string(),
+                None => continue,
+            };
+
+            if let Some((_, src, line_starts)) = source_info {
+                if let Some(offset) = d.labels.as_ref().and_then(|labels| {
+                    labels.first().map(|l| l.offset())
+                }) {
+                    if offset < src.len() {
+                        let line_idx = line_of_offset(line_starts, offset);
+                        let line_start = line_starts[line_idx];
+                        // UTF-16 column, 1-based
+                        let col = utf16_len(&src[line_start..offset]) + 1;
+                        locations.push(LocatedError {
+                            line: (line_idx as u32) + 1,
+                            col,
+                            code,
+                        });
+                        continue;
+                    }
+                }
+            }
+
+            // No label or offset out of range — treat as file-less
+            locations.push(LocatedError { line: 0, col: 0, code });
+        }
+    }
+
+    locations.sort();
+    locations
+}
+
+/// Generate the full .errors.txt baseline text from diagnostics, matching tsc's format.
+///
+/// Format:
+/// 1. Header lines: `filename(line,col): error TSxxxx: message` (sorted by file, then offset)
+/// 2. Blank line separator
+/// 3. For each file: `==== filename (N errors) ====`
+///    followed by interleaved source lines + squiggle/error annotations
+fn generate_error_baseline(
+    diagnostics: &[(PathBuf, Vec<OxcDiagnostic>)],
+    sources: &[(PathBuf, String)],
+    option_diagnostics: &[OxcDiagnostic],
+) -> String {
+    let mut out = String::new();
+
+    // Collect all diagnostics with their file info for header lines
+    struct DiagEntry<'a> {
+        filename: String,
+        line: u32,       // 1-based
+        col: u32,        // 1-based, UTF-16
+        code: &'a str,
+        message: String,
+        offset: usize,   // byte offset in source (for squiggle generation)
+        len: usize,      // byte length of span
+    }
+
+    // Build source lookup
+    let source_map: Vec<(&Path, &str, Vec<usize>)> = sources
+        .iter()
+        .map(|(path, src)| (path.as_path(), src.as_str(), compute_line_starts(src)))
+        .collect();
+
+    let mut file_less_entries: Vec<String> = Vec::new();
+    // Map from source index -> list of diagnostics for that file
+    let mut per_file_entries: Vec<Vec<DiagEntry<'_>>> = (0..sources.len()).map(|_| Vec::new()).collect();
+
+    // File-less diagnostics from compiler option validation
+    for d in option_diagnostics {
+        if let Some(code) = d.code.number.as_ref() {
+            file_less_entries.push(format!("error TS{}: {}", code, d.message));
+        }
+    }
+
+    for (path, diags) in diagnostics {
+        let file_idx = source_map.iter().position(|(p, _, _)| *p == path.as_path());
+
+        for d in diags {
+            let code = match d.code.number.as_ref() {
+                Some(c) => &**c,
+                None => continue,
+            };
+
+            let msg = d.message.to_string();
+
+            if let Some(fi) = file_idx {
+                let (_, src, line_starts) = &source_map[fi];
+                if let Some((offset, len)) = d.labels.as_ref().and_then(|labels| {
+                    labels.first().map(|l| (l.offset(), l.len()))
+                }) {
+                    if offset < src.len() {
+                        let line_idx = line_of_offset(line_starts, offset);
+                        let line_start = line_starts[line_idx];
+                        let col = utf16_len(&src[line_start..offset]) + 1;
+
+                        // Get just the filename from the path
+                        let filename = path.file_name()
+                            .map(|f| f.to_string_lossy().to_string())
+                            .unwrap_or_else(|| path.to_string_lossy().to_string());
+
+                        per_file_entries[fi].push(DiagEntry {
+                            filename,
+                            line: (line_idx as u32) + 1,
+                            col,
+                            code,
+                            message: msg,
+                            offset,
+                            len,
+                        });
+                        continue;
+                    }
+                }
+            }
+
+            // No source location — file-less
+            file_less_entries.push(format!("error TS{code}: {msg}"));
+        }
+    }
+
+    // Sort per-file entries by offset
+    for entries in &mut per_file_entries {
+        entries.sort_by_key(|e| (e.offset, e.len));
+    }
+
+    // === Part 1: Header lines ===
+    // File-less errors first
+    for entry in &file_less_entries {
+        if !out.is_empty() {
+            out.push('\n');
+        }
+        out.push_str(entry);
+    }
+
+    // Then located errors, sorted by file order then offset
+    for entries in &per_file_entries {
+        for e in entries {
+            if !out.is_empty() {
+                out.push('\n');
+            }
+            out.push_str(&format!("{}({},{}): error TS{}: {}", e.filename, e.line, e.col, e.code, e.message));
+        }
+    }
+
+    // === Part 2: Blank line separator + interleaved source ===
+    // tsc emits two blank lines between the header block and the interleaved block
+    if !out.is_empty() {
+        out.push_str("\n\n\n");
+    }
+
+    // File-less errors appear as `!!! error` lines before any file sections
+    for entry in &file_less_entries {
+        out.push_str(&format!("!!! {entry}\n"));
+    }
+
+    for (fi, (_, src, line_starts)) in source_map.iter().enumerate() {
+        let entries = &per_file_entries[fi];
+        let error_count = entries.len();
+        let filename = sources[fi].0.file_name()
+            .map(|f| f.to_string_lossy().to_string())
+            .unwrap_or_else(|| sources[fi].0.to_string_lossy().to_string());
+
+        // File section header
+        if !out.is_empty() && !out.ends_with('\n') {
+            out.push('\n');
+        }
+        out.push_str(&format!("==== {filename} ({error_count} errors) ===="));
+
+        // Use split('\n') instead of lines() to match tsc's behavior:
+        // if source ends with '\n', tsc emits an extra indented empty line.
+        let lines: Vec<&str> = src.split('\n').collect();
+
+        for (line_idx, line) in lines.iter().enumerate() {
+            let this_line_start = line_starts[line_idx];
+            let next_line_start = if line_idx + 1 < line_starts.len() {
+                line_starts[line_idx + 1]
+            } else {
+                src.len()
+            };
+
+            // Emit source line
+            out.push('\n');
+            out.push_str("    ");
+            out.push_str(line);
+
+            // Find all diagnostics that overlap this line
+            for e in entries {
+                let err_end = e.offset + e.len;
+                if err_end >= this_line_start
+                    && (e.offset < next_line_start || line_idx == lines.len() - 1)
+                {
+                    let relative_offset = e.offset as isize - this_line_start as isize;
+                    let squiggle_start = relative_offset.max(0) as usize;
+                    let length = e.len - (this_line_start.saturating_sub(e.offset));
+                    let squiggle_end = squiggle_start + length;
+                    let squiggle_end = squiggle_end.min(line.len()).max(squiggle_start);
+
+                    // Preserve leading whitespace, replace non-whitespace with spaces
+                    let prefix: String = line[..squiggle_start]
+                        .chars()
+                        .map(|c| if c.is_whitespace() { c } else { ' ' })
+                        .collect();
+
+                    out.push('\n');
+                    out.push_str("    ");
+                    out.push_str(&prefix);
+                    // Use rune count for squiggle width (matching tsc)
+                    let squiggle_text = &line[squiggle_start..squiggle_end];
+                    let squiggle_count = squiggle_text.chars().count().max(1);
+                    out.push_str(&"~".repeat(squiggle_count));
+
+                    // Emit message if the error ends on this line
+                    if line_idx == lines.len() - 1 || next_line_start > err_end {
+                        out.push('\n');
+                        out.push_str(&format!("!!! error TS{}: {}", e.code, e.message));
+                    }
+                }
+            }
+        }
+
+        // Trailing newline after each file section
+        out.push('\n');
+    }
+
+    out
+}
+
+
+
 pub fn run_checker_errors_typescript(files: &[TypeScriptFile]) -> Vec<CoverageResult> {
     files
         .par_iter()
@@ -1708,16 +2334,46 @@ pub fn run_checker_errors_typescript(files: &[TypeScriptFile]) -> Vec<CoverageRe
                 return None;
             }
 
+            // Skip tests with features tsgo doesn't support
+            if should_skip_tsgo(&f.settings) {
+                return None;
+            }
+
+            // Use tsgo baseline when available, fall back to tsc baselines
+            // (tsgo stores no separate baseline when its output matches tsc)
+            let tsgo_content = resolve_tsgo_baseline_content(&f.path, ".errors.txt", None)
+                .or_else(|| {
+                    f.error_files.iter().find_map(|tsc_ef| {
+                        resolve_tsgo_baseline_content(&f.path, ".errors.txt", Some(tsc_ef))
+                    })
+                });
+
+            let error_files: Cow<'_, [String]> = match tsgo_content {
+                Some(content) => Cow::Owned(vec![content]),
+                None => Cow::Borrowed(f.error_files.as_slice()),
+            };
+
+            if error_files.is_empty() {
+                return None;
+            }
+
             let options = checker_options_from_settings(&f.settings);
             let compiler_options_list = compiler_options_from_settings(&f.settings);
             let target = target_from_settings(&f.settings);
+
+            // Extract the test filename (e.g. "accessorWithLineTerminator.ts")
+            // for use as the virtual path — must match baseline filenames.
+            let test_filename = f.path.file_name()
+                .map(|n| n.to_string_lossy().to_string())
+                .unwrap_or_else(|| "test.ts".to_string());
 
             let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
                 if f.units.len() == 1 {
                     run_checker_errors_single(
                         &f.units[0].content,
                         f.units[0].source_type,
-                        &f.error_codes,
+                        &error_files,
+                        &test_filename,
                         options,
                         &compiler_options_list,
                         target,
@@ -1725,7 +2381,7 @@ pub fn run_checker_errors_typescript(files: &[TypeScriptFile]) -> Vec<CoverageRe
                 } else {
                     run_checker_errors_multi(
                         &f.units,
-                        &f.error_codes,
+                        &error_files,
                         options,
                         &compiler_options_list,
                     )
@@ -1745,59 +2401,36 @@ pub fn run_checker_errors_typescript(files: &[TypeScriptFile]) -> Vec<CoverageRe
 fn run_checker_errors_single(
     source: &str,
     source_type: SourceType,
-    expected_codes: &[String],
+    error_files: &[String],
+    test_filename: &str,
     options: oxc_checker::CheckerOptions,
     compiler_options_list: &[oxc_project::CompilerOptions],
     target: Option<oxc_project::ScriptTarget>,
 ) -> TestResult {
-    let mut actual_codes: Vec<String> = Vec::new();
+    let mut option_diagnostics: Vec<OxcDiagnostic> = Vec::new();
 
     // Validate compiler options (emits e.g. TS5107 for deprecated target=ES5).
     for compiler_options in compiler_options_list {
-        for d in &oxc_project::validate_compiler_options(compiler_options) {
-            if let Some(code) = d.code.number.as_ref() {
-                actual_codes.push(code.to_string());
-            }
-        }
+        option_diagnostics.extend(oxc_project::validate_compiler_options(compiler_options));
     }
 
-    // Create a Project with the single user file. The Project collects
-    // parser, semantic, and checker diagnostics — matching tsc's behavior
-    // of reporting errors from all compiler phases.
+    // Use the original test filename as the virtual path so it matches
+    // the filenames in .errors.txt baselines.
     let type_arena = oxc_types::TypeArena::with_capacity(64);
-    let files = vec![(
-        PathBuf::from("/virtual/test.ts"),
-        source.to_string(),
-        source_type,
-    )];
+    let path = PathBuf::from(format!("/virtual/{test_filename}"));
+    let files = vec![(path.clone(), source.to_string(), source_type)];
     let mut project =
         oxc_project::Project::new_multi_from_sources_with_target(&type_arena, files, options, target);
     let result = project.check_all();
 
-    // Collect error codes from all files' diagnostics
-    for (_path, diagnostics) in &result.diagnostics {
-        for d in diagnostics {
-            if let Some(code) = d.code.number.as_ref() {
-                actual_codes.push(code.to_string());
-            }
-        }
-    }
+    let sources = vec![(path, source.to_string())];
 
-    actual_codes.sort();
-    actual_codes.dedup();
-
-    let mut expected_sorted: Vec<&str> = expected_codes.iter().map(|s| s.as_str()).collect();
-    expected_sorted.sort();
-
-    if actual_codes.iter().map(|s| s.as_str()).collect::<Vec<_>>() == expected_sorted {
-        TestResult::Passed
-    } else {
-        TestResult::Mismatch(
-            "checker_errors",
-            format!("actual: [{}]", actual_codes.join(", ")),
-            format!("expected: [{}]", expected_sorted.join(", ")),
-        )
-    }
+    compare_errors(
+        error_files,
+        &result.diagnostics,
+        &sources,
+        &option_diagnostics,
+    )
 }
 
 /// Convert a test unit filename to a virtual path under /virtual/.
@@ -1814,19 +2447,15 @@ fn virtual_path_from_unit_name(name: &str) -> PathBuf {
 
 fn run_checker_errors_multi(
     units: &[crate::typescript::meta::TestUnitData],
-    expected_codes: &[String],
+    error_files: &[String],
     options: oxc_checker::CheckerOptions,
     compiler_options_list: &[oxc_project::CompilerOptions],
 ) -> TestResult {
-    let mut actual_codes: Vec<String> = Vec::new();
+    let mut option_diagnostics: Vec<OxcDiagnostic> = Vec::new();
 
     // Validate compiler options (same as single-unit path)
     for compiler_options in compiler_options_list {
-        for d in &oxc_project::validate_compiler_options(compiler_options) {
-            if let Some(code) = d.code.number.as_ref() {
-                actual_codes.push(code.to_string());
-            }
-        }
+        option_diagnostics.extend(oxc_project::validate_compiler_options(compiler_options));
     }
 
     // Build virtual file list, filtering out non-TS/JS files (package.json, etc.)
@@ -1843,6 +2472,23 @@ fn run_checker_errors_multi(
         return TestResult::Passed;
     }
 
+    // Match tsc's baseline file ordering. When the last unit contains require()
+    // or triple-slash references, tsc treats it as the primary file (toBeCompiled)
+    // and lists it first, with other files following. Otherwise, all files stay
+    // in their original order.
+    let mut sources: Vec<(PathBuf, String)> = files.iter()
+        .map(|(path, src, _)| (path.clone(), src.clone()))
+        .collect();
+    if sources.len() > 1 {
+        let last_content = &units.last().map(|u| u.content.as_str()).unwrap_or("");
+        let has_require = last_content.contains("require(");
+        let has_reference = last_content.contains("/// <reference");
+        if has_require || has_reference {
+            let last = sources.pop().unwrap();
+            sources.insert(0, last);
+        }
+    }
+
     let type_arena = oxc_types::TypeArena::with_capacity(64);
     let mut project = oxc_project::Project::new_multi_from_sources(
         &type_arena,
@@ -1851,30 +2497,95 @@ fn run_checker_errors_multi(
     );
     let result = project.check_all();
 
-    // Collect error codes from all files' diagnostics
-    for (_path, diagnostics) in &result.diagnostics {
-        for d in diagnostics {
-            if let Some(code) = d.code.number.as_ref() {
-                actual_codes.push(code.to_string());
-            }
+    compare_errors(
+        error_files,
+        &result.diagnostics,
+        &sources,
+        &option_diagnostics,
+    )
+}
+
+/// Three-tier comparison of actual vs expected errors:
+/// 1. Location match: sorted multiset of (line, col, code)
+/// 2. Full text match: verbatim .errors.txt comparison
+///
+/// When multiple .errors.txt files exist (different compiler option combos),
+/// we compare against each independently — pass if any matches.
+///
+/// Returns Passed if location match passes, but uses "checker_errors_text"
+/// tag for Mismatch when location matches but full text doesn't.
+fn compare_errors(
+    error_files: &[String],
+    diagnostics: &[(PathBuf, Vec<OxcDiagnostic>)],
+    sources: &[(PathBuf, String)],
+    option_diagnostics: &[OxcDiagnostic],
+) -> TestResult {
+    let actual_locations = extract_actual_locations(diagnostics, sources, option_diagnostics);
+
+    // Check location match against each error file independently.
+    // Track which baseline(s) matched locations for the text comparison.
+    let mut matched_baseline_idx: Option<usize> = None;
+    for (i, ef) in error_files.iter().enumerate() {
+        let expected = parse_expected_locations(std::slice::from_ref(ef));
+        if expected == actual_locations {
+            matched_baseline_idx = Some(i);
+            break;
         }
     }
 
-    actual_codes.sort();
-    actual_codes.dedup();
+    if matched_baseline_idx.is_none() {
+        // Location mismatch — show diff against the first error file
+        let expected_locations = parse_expected_locations(std::slice::from_ref(
+            error_files.first().unwrap_or(&String::new()),
+        ));
+        let actual_str = actual_locations.iter()
+            .map(|e| format!("({},{}) TS{}", e.line, e.col, e.code))
+            .collect::<Vec<_>>()
+            .join("\n");
+        let expected_str = expected_locations.iter()
+            .map(|e| format!("({},{}) TS{}", e.line, e.col, e.code))
+            .collect::<Vec<_>>()
+            .join("\n");
+        return TestResult::Mismatch("checker_errors", actual_str, expected_str);
+    }
 
-    let mut expected_sorted: Vec<&str> = expected_codes.iter().map(|s| s.as_str()).collect();
-    expected_sorted.sort();
+    let matched_idx = matched_baseline_idx.unwrap();
 
-    if actual_codes.iter().map(|s| s.as_str()).collect::<Vec<_>>() == expected_sorted {
+    // Location match passed — now check full text
+    let actual_text = generate_error_baseline(diagnostics, sources, option_diagnostics);
+
+    // Compare text against the baseline whose locations matched
+    let matched_baseline = &error_files[matched_idx];
+    if normalize_baseline(matched_baseline) == normalize_baseline(&actual_text) {
+        return TestResult::Passed;
+    }
+
+    // Also check other baselines in case one matches text exactly
+    let text_matches = error_files.iter().any(|ef| {
+        normalize_baseline(ef) == normalize_baseline(&actual_text)
+    });
+
+    if text_matches {
         TestResult::Passed
     } else {
+        // Location matched but full text didn't — show the matched baseline
         TestResult::Mismatch(
-            "checker_errors",
-            format!("actual: [{}]", actual_codes.join(", ")),
-            format!("expected: [{}]", expected_sorted.join(", ")),
+            "checker_errors_text",
+            actual_text,
+            matched_baseline.clone(),
         )
     }
+}
+
+/// Normalize a baseline string for comparison: trim trailing whitespace per line,
+/// normalize line endings, trim trailing blank lines.
+fn normalize_baseline(s: &str) -> String {
+    s.lines()
+        .map(|l| l.trim_end())
+        .collect::<Vec<_>>()
+        .join("\n")
+        .trim_end()
+        .to_string()
 }
 
 fn parse_estree_json_blocks<'a>(content: &'a str, section_kind: &str) -> Vec<&'a str> {

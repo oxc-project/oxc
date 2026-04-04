@@ -223,6 +223,7 @@ fn load_typescript(filter: Option<&str>) -> Vec<TypeScriptFile> {
                 settings: content.settings,
                 should_fail,
                 error_codes: content.error_codes,
+                error_files: content.error_files,
             }
         })
         .collect()

@@ -155,6 +155,8 @@ pub struct TestCaseContent {
     pub tests: Vec<TestUnitData>,
     pub settings: CompilerSettings,
     pub error_codes: Vec<String>,
+    /// Raw content of .errors.txt baseline files for full-text comparison
+    pub error_files: Vec<String>,
 }
 
 impl TestCaseContent {
@@ -259,7 +261,7 @@ impl TestCaseContent {
             path.display(),
         );
 
-        Self { tests: test_unit_data, settings, error_codes }
+        Self { tests: test_unit_data, settings, error_codes, error_files }
     }
 
     fn get_source_type(path: &Path, options: &CompilerSettings) -> Option<SourceType> {

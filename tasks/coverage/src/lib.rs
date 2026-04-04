@@ -60,6 +60,8 @@ pub struct TypeScriptFile {
     pub should_fail: bool,
     /// Error codes from TypeScript baseline error files (used by semantic tests to skip files)
     pub error_codes: Vec<String>,
+    /// Raw content of .errors.txt baseline files for full-text comparison
+    pub error_files: Vec<String>,
 }
 
 pub struct MiscFile {
