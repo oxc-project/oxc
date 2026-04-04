@@ -24,11 +24,11 @@ pub type ConcurrentHashMap<K, V> = papaya::HashMap<K, V, FxBuildHasher>;
 pub struct TextDocument<'a> {
     pub uri: &'a Uri,
     pub language_id: LanguageId,
-    pub text: Option<String>,
+    pub text: Option<Arc<str>>,
 }
 
 impl<'a> TextDocument<'a> {
-    pub fn new(uri: &'a Uri, language_id: LanguageId, text: Option<String>) -> Self {
+    pub fn new(uri: &'a Uri, language_id: LanguageId, text: Option<Arc<str>>) -> Self {
         Self { uri, language_id, text }
     }
 }
