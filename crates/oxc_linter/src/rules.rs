@@ -354,6 +354,7 @@ pub(crate) mod jest {
     pub mod no_test_return_statement;
     pub mod no_unneeded_async_expect_function;
     pub mod no_untyped_mock_factory;
+    pub mod padding_around_after_all_blocks;
     pub mod padding_around_test_blocks;
     pub mod prefer_called_with;
     pub mod prefer_comparison_matcher;
