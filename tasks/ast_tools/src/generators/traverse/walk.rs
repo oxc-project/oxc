@@ -11,7 +11,7 @@ use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
 
 use crate::{
-    schema::{Def, EnumDef, FieldDef, Schema, StructDef, TypeDef},
+    schema::{Def, EnumDef, FieldDef, Schema, StructDef, StructOrEnum, TypeDef},
     utils::{create_ident, upper_case_first},
 };
 
@@ -60,18 +60,17 @@ pub(super) fn generate_walk(schema: &Schema, config: &WalkConfig) -> TokenStream
     let ctx_ty = &config.ctx_ty;
     let walk_generics = walk_generics_tokens(config);
 
-    for type_def in &schema.types {
+    for type_def in schema.structs_and_enums() {
         if !is_ast_type_with_visitor(type_def, schema) {
             continue;
         }
         match type_def {
-            TypeDef::Struct(struct_def) => {
+            StructOrEnum::Struct(struct_def) => {
                 walk_methods.extend(generate_walk_for_struct(struct_def, schema, config));
             }
-            TypeDef::Enum(enum_def) => {
+            StructOrEnum::Enum(enum_def) => {
                 walk_methods.extend(generate_walk_for_enum(enum_def, schema, config));
             }
-            _ => {}
         }
     }
 

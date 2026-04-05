@@ -2,7 +2,10 @@ use oxc_linter::FixKind;
 use tower_lsp_server::ls_types::{CodeAction, CodeActionKind, TextEdit, Uri, WorkspaceEdit};
 use tracing::debug;
 
-use crate::lsp::error_with_position::{FixedContent, FixedContentKind, LinterCodeAction};
+use crate::lsp::{
+    error_with_position::{FixedContent, FixedContentKind, LinterCodeAction},
+    utils::range_overlaps,
+};
 
 pub const CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC: CodeActionKind =
     CodeActionKind::new("source.fixAll.oxc");
@@ -99,12 +102,89 @@ pub fn fix_all_text_edit(actions: impl Iterator<Item = LinterCodeAction>) -> Vec
             continue;
         }
 
-        // when source.fixAll.oxc we collect all changes at ones
-        // and return them as one workspace edit.
-        // it is possible that one fix will change the range for the next fix
-        // see oxc-project/oxc#10422
         text_edits.push(TextEdit { range: fixed_content.range, new_text: fixed_content.code });
     }
 
-    text_edits
+    // LSP spec requires text edits in a WorkspaceEdit to be non-overlapping.
+    // Sort by start position so adjacent fixes are applied in order, then drop
+    // any edit whose range overlaps (or touches) the previous one via range_overlaps.
+    text_edits.sort_unstable_by(|a, b| {
+        a.range
+            .start
+            .line
+            .cmp(&b.range.start.line)
+            .then(a.range.start.character.cmp(&b.range.start.character))
+    });
+
+    let mut result: Vec<TextEdit> = Vec::with_capacity(text_edits.len());
+    for edit in text_edits {
+        if let Some(last) = result.last()
+            && range_overlaps(last.range, edit.range)
+        {
+            debug!("Skipping overlapping fix at {:?}", edit.range);
+            continue;
+        }
+        result.push(edit);
+    }
+    result
+}
+
+#[cfg(test)]
+mod tests {
+    use oxc_linter::FixKind;
+    use tower_lsp_server::ls_types::{Position, Range};
+
+    use crate::lsp::error_with_position::{FixedContent, FixedContentKind, LinterCodeAction};
+
+    use super::fix_all_text_edit;
+
+    fn make_action(
+        start_line: u32,
+        start_char: u32,
+        end_line: u32,
+        end_char: u32,
+    ) -> LinterCodeAction {
+        let range =
+            Range::new(Position::new(start_line, start_char), Position::new(end_line, end_char));
+        LinterCodeAction {
+            range,
+            fixed_content: vec![FixedContent {
+                message: "fix".to_string(),
+                code: String::new(),
+                range,
+                kind: FixKind::SafeFix,
+                lsp_kind: FixedContentKind::LintRule,
+            }],
+        }
+    }
+
+    #[test]
+    fn test_fix_all_text_edit_sorts_by_position() {
+        // Edits provided in reverse order should be sorted by start position.
+        let actions = vec![make_action(2, 0, 2, 5), make_action(0, 0, 0, 5)];
+        let result = fix_all_text_edit(actions.into_iter());
+        assert_eq!(result.len(), 2);
+        assert_eq!(result[0].range.start.line, 0);
+        assert_eq!(result[1].range.start.line, 2);
+    }
+
+    #[test]
+    fn test_fix_all_text_edit_drops_overlapping() {
+        // The second edit overlaps the first; only the first should be kept.
+        let actions = vec![make_action(0, 0, 0, 10), make_action(0, 5, 0, 15)];
+        let result = fix_all_text_edit(actions.into_iter());
+        assert_eq!(result.len(), 1);
+        assert_eq!(result[0].range.end.character, 10);
+    }
+
+    #[test]
+    fn test_fix_all_text_edit_drops_adjacent_edits() {
+        // range_overlaps uses non-strict comparisons, so adjacent edits (where the end of one
+        // equals the start of the next) are conservatively treated as overlapping and the second
+        // is dropped. This is a safe trade-off: the fix can be applied on the next invocation,
+        // and it avoids any risk of producing unexpected output for boundary-sharing edits.
+        let actions = vec![make_action(0, 0, 0, 5), make_action(0, 5, 0, 10)];
+        let result = fix_all_text_edit(actions.into_iter());
+        assert_eq!(result.len(), 1);
+    }
 }

@@ -24,7 +24,6 @@ src:
   - 'crates/oxc_ast_macros/src/lib.rs'
   - 'crates/oxc_ast_visit/src/**/*.rs'
   - 'crates/oxc_codegen/src/**/*.rs'
-  - 'crates/oxc_data_structures/src/**/*.rs'
   - 'crates/oxc_formatter/src/ast_nodes/generated/ast_nodes.rs'
   - 'crates/oxc_formatter/src/ast_nodes/generated/format.rs'
   - 'crates/oxc_linter/src/**/*.rs'

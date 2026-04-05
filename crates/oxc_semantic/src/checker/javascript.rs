@@ -387,7 +387,7 @@ pub fn check_number_literal(lit: &NumericLiteral, ctx: &SemanticBuilder<'_>) {
     // NumericLiteral :: legacy_octalIntegerLiteral
     // DecimalIntegerLiteral :: NonOctalDecimalIntegerLiteral
     // * It is a Syntax Error if the source text matched by this production is strict mode code.
-    fn leading_zero(s: Option<Atom>) -> bool {
+    fn leading_zero(s: Option<Str>) -> bool {
         if let Some(s) = s {
             let mut chars = s.bytes();
             if let Some(first) = chars.next()

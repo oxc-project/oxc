@@ -1185,7 +1185,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSParenthesizedType<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeOperator<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
-        write!(f, [self.operator().to_str(), hard_space(), self.type_annotation()]);
+        write!(f, [self.operator().to_str(), space(), self.type_annotation()]);
     }
 }
 

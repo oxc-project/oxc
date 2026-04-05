@@ -141,8 +141,8 @@ impl<'a> StringBuilder<'a> {
     /// This is more efficient than creating a `StringBuilder`, and then making multiple [`push`] calls
     /// to fill it.
     ///
-    /// If you're not altering the `StringBuilder` after this call, and just converting it to an `Atom`,
-    /// `Atom::from_strs_array_in` may be slightly more efficient.
+    /// If you're not altering the `StringBuilder` after this call, and just converting it to a `Str`,
+    /// `Str::from_strs_array_in` may be slightly more efficient.
     ///
     /// # Panics
     ///

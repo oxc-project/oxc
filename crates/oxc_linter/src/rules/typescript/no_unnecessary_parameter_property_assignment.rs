@@ -9,7 +9,7 @@ use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeFlags;
-use oxc_span::{Atom, Span};
+use oxc_span::{Span, Str};
 use rustc_hash::FxHashSet;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
@@ -110,8 +110,8 @@ impl Rule for NoUnnecessaryParameterPropertyAssignment {
 struct AssignmentVisitor<'a, 'b> {
     ctx: &'b LintContext<'a>,
     parameter_properties: Vec<&'b FormalParameter<'a>>,
-    assigned_before_unnecessary: FxHashSet<Atom<'a>>,
-    assigned_before_constructor: FxHashSet<Atom<'a>>,
+    assigned_before_unnecessary: FxHashSet<Str<'a>>,
+    assigned_before_constructor: FxHashSet<Str<'a>>,
 }
 
 impl<'a> Visit<'a> for AssignmentVisitor<'a, '_> {
@@ -226,7 +226,7 @@ fn is_unnecessary_assignment_operator(operator: AssignmentOperator) -> bool {
     )
 }
 
-fn get_property_name<'a>(assignment_target: &AssignmentTarget<'a>) -> Option<Atom<'a>> {
+fn get_property_name<'a>(assignment_target: &AssignmentTarget<'a>) -> Option<Str<'a>> {
     match assignment_target {
         AssignmentTarget::StaticMemberExpression(expr)
             if matches!(&expr.object, Expression::ThisExpression(_)) =>

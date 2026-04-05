@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.43.0] - 2026-03-30
+
+### 🚀 Features
+
+- 6ef440a oxfmt: Support bool for object style options (#20853) (leaysgur)
+
 ## [0.42.0] - 2026-03-24
 
 ### 🚀 Features

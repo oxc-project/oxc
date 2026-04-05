@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.123.0] - 2026-03-30
+
+### 🚀 Features
+
+- 59fd797 parser: Mark pure comments that cannot be applied (#20687) (Boshen)
+
+### 📚 Documentation
+
+- 868448e ast: Correct comment (#20837) (overlookmotel)
+
 ## [0.122.0] - 2026-03-23
 
 ### 🚀 Features

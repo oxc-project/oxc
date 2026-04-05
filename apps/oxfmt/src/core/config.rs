@@ -611,6 +611,7 @@ fn load_editorconfig(
 /// - end_of_line
 /// - indent_style
 /// - indent_size
+/// - tab_width
 /// - insert_final_newline
 fn has_editorconfig_overrides(editorconfig: &EditorConfig, path: &Path) -> bool {
     let sections = editorconfig.sections();
@@ -632,6 +633,7 @@ fn has_editorconfig_overrides(editorconfig: &EditorConfig, path: &Path) -> bool 
                 || resolved.end_of_line != root.end_of_line
                 || resolved.indent_style != root.indent_style
                 || resolved.indent_size != root.indent_size
+                || resolved.tab_width != root.tab_width
                 || resolved.insert_final_newline != root.insert_final_newline
         }
         // No `[*]` section means any resolved property is an override
@@ -640,6 +642,7 @@ fn has_editorconfig_overrides(editorconfig: &EditorConfig, path: &Path) -> bool 
                 || resolved.end_of_line != EditorConfigProperty::Unset
                 || resolved.indent_style != EditorConfigProperty::Unset
                 || resolved.indent_size != EditorConfigProperty::Unset
+                || resolved.tab_width != EditorConfigProperty::Unset
                 || resolved.insert_final_newline != EditorConfigProperty::Unset
         }
     }
@@ -676,11 +679,17 @@ fn apply_editorconfig(config: &mut FormatConfig, props: &EditorConfigProperties)
         });
     }
 
-    #[expect(clippy::cast_possible_truncation)]
-    if config.tab_width.is_none()
-        && let EditorConfigProperty::Value(size) = props.indent_size
-    {
-        config.tab_width = Some(size as u8);
+    if config.tab_width.is_none() {
+        // Match Prettier's behavior: Only use `indent_size` when `useTabs: false`.
+        // https://github.com/prettier/prettier/blob/90983f40dce5e20beea4e5618b5e0426a6a7f4f0/src/config/editorconfig/editorconfig-to-prettier.js#L25-L30
+        #[expect(clippy::cast_possible_truncation)]
+        if config.use_tabs == Some(false)
+            && let EditorConfigProperty::Value(size) = props.indent_size
+        {
+            config.tab_width = Some(size as u8);
+        } else if let EditorConfigProperty::Value(size) = props.tab_width {
+            config.tab_width = Some(size as u8);
+        }
     }
 
     if config.insert_final_newline.is_none()

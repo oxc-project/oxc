@@ -172,12 +172,11 @@ impl CliRunner {
         let source_formatter = source_formatter.with_external_formatter(self.external_formatter);
 
         let no_config = config_resolver.config_dir().is_none() && editorconfig_path.is_none();
-        let format_mode_clone = format_mode.clone();
 
         // Spawn a thread to run formatting service with streaming entries
         rayon::spawn(move || {
             let format_service =
-                FormatService::new(cwd, format_mode_clone, source_formatter, config_resolver);
+                FormatService::new(cwd, format_mode, source_formatter, config_resolver);
             format_service.run_streaming(rx_entry, &tx_error, &tx_success);
         });
 

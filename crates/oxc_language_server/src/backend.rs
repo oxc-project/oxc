@@ -106,9 +106,9 @@ impl LanguageServer for Backend {
 
         let mut capabilities = Capabilities::from(params.capabilities);
         let mut server_capabilities = server_capabilities();
-        for tool_builder in self.worker_manager.read_tool_builders() {
-            tool_builder.server_capabilities(&mut server_capabilities, &mut capabilities);
-        }
+        self.worker_manager
+            .read_tool_builder()
+            .server_capabilities(&mut server_capabilities, &mut capabilities);
 
         info!("initialize: {options:?}");
         info!(
@@ -629,6 +629,13 @@ impl LanguageServer for Backend {
 
         let document = self.file_system.read().await.get_document(&uri);
 
+        // Remove the internal cache for the document.
+        // When the editor requests `textDocument/codeAction`, it may use its diagnostic cache to generate actions.
+        // This could cause code actions to be generated with stale diagnostics if the cache is not cleared here.
+        // This should never happen, because this server expects `textDocument/diagnostic` is requested beforehand.
+        // Sadly, some editors/extensions have bugs, so we need to make sure the cache is cleared on change.
+        worker.remove_uri_cache(&uri).await;
+
         if self.capabilities.get().is_some_and(|cap| cap.diagnostic_mode == DiagnosticMode::Push) {
             match worker.run_diagnostic_on_change(&document).await {
                 Err(err) => {
@@ -906,11 +913,11 @@ impl Backend {
     /// The Backend will manage multiple [WorkspaceWorker]s and their configurations.
     /// It also holds the capabilities of the language server and an in-memory file system.
     /// The client is used to communicate with the LSP client.
-    pub fn new(client: Client, server_info: ServerInfo, tools: Vec<Box<dyn ToolBuilder>>) -> Self {
+    pub fn new(client: Client, server_info: ServerInfo, tool: Arc<dyn ToolBuilder>) -> Self {
         Self {
             client,
             server_info,
-            worker_manager: WorkerManager::new(Arc::from(tools)),
+            worker_manager: WorkerManager::new(tool),
             capabilities: OnceCell::new(),
             file_system: Arc::new(RwLock::new(LSPFileSystem::default())),
         }

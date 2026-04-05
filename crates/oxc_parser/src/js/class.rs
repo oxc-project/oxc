@@ -327,9 +327,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             false,
             |modifier, _| {
                 match modifier.kind {
-                    ModifierKind::Const => diagnostics::const_class_member(modifier.span),
+                    ModifierKind::Const => diagnostics::const_class_member(modifier.span()),
                     ModifierKind::In | ModifierKind::Out => {
-                        diagnostics::can_only_appear_on_a_type_parameter_of_a_class_interface_or_type_alias(modifier.kind, modifier.span)
+                        diagnostics::can_only_appear_on_a_type_parameter_of_a_class_interface_or_type_alias(modifier.kind, modifier.span())
                     }
                     _ => unreachable!(),
                 }
@@ -463,7 +463,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         decorators: Vec<'a, Decorator<'a>>,
     ) -> ClassElement<'a> {
         if let Some(modifier) = modifiers.get(ModifierKind::Declare) {
-            self.error(diagnostics::declare_constructor(modifier.span));
+            self.error(diagnostics::declare_constructor(modifier.span()));
         }
 
         let value = self.parse_method(

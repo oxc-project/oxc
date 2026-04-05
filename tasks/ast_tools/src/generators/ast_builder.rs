@@ -91,7 +91,7 @@ impl Generator for AstBuilderGenerator {
             };
 
             ///@@line_break
-            use oxc_span::{Atom, Ident};
+            use oxc_span::{Ident, Str};
 
             ///@@line_break
             use crate::{AstBuilder, ast::*};
@@ -105,7 +105,7 @@ impl Generator for AstBuilderGenerator {
             /// Escape special characters for template element raw value.
             ///
             /// Escapes: backticks, `${`, backslashes, and carriage returns.
-            fn escape_template_element_raw<'a>(raw: &str, ast: AstBuilder<'a>) -> Atom<'a> {
+            fn escape_template_element_raw<'a>(raw: &str, ast: AstBuilder<'a>) -> Str<'a> {
                 let bytes = raw.as_bytes();
                 // Calculate size needed for escaped string
                 let mut extra_bytes = 0usize;
@@ -117,7 +117,7 @@ impl Generator for AstBuilderGenerator {
                     };
                 }
                 if extra_bytes == 0 {
-                    return ast.atom(raw);
+                    return ast.str(raw);
                 }
                 // Allocate directly in arena
                 let len = bytes.len() + extra_bytes;
@@ -138,7 +138,7 @@ impl Generator for AstBuilderGenerator {
                             b => { *escaped.get_unchecked_mut(j) = b; j += 1; }
                         }
                     }
-                    Atom::from(std::str::from_utf8_unchecked(escaped))
+                    Str::from(std::str::from_utf8_unchecked(escaped))
                 }
             }
         };
@@ -166,7 +166,7 @@ struct Param<'d> {
     is_node_id: bool,
     /// * `None` if param is not generic.
     /// * `Some(GenericType::Into)` if is generic and uses `Into`
-    ///   e.g. `name: A where A: Into<Atom<'a>>`.
+    ///   e.g. `name: A where A: Into<Str<'a>>`.
     /// * `Some(GenericType::IntoIn)` if is generic and uses `IntoIn`
     ///   e.g. `type_annotation: T1 where T1: IntoIn<'a, Box<'a, TSTypeAnnotation<'a>>>`.
     generic_type: Option<GenericType>,
@@ -387,7 +387,7 @@ fn get_struct_params<'s>(
     bool,           // Has default fields
 ) {
     let mut generic_count = 0u32;
-    let mut atom_generic_count = 0u32;
+    let mut str_generic_count = 0u32;
     let mut has_default_fields = false;
 
     let mut generics = vec![];
@@ -415,10 +415,10 @@ fn get_struct_params<'s>(
 
             let generic_details = match type_def {
                 TypeDef::Primitive(primitive_def)
-                    if matches!(primitive_def.name(), "Atom" | "Ident") =>
+                    if matches!(primitive_def.name(), "Str" | "Ident") =>
                 {
-                    atom_generic_count += 1;
-                    Some((format_ident!("A{atom_generic_count}"), GenericType::Into))
+                    str_generic_count += 1;
+                    Some((format_ident!("A{str_generic_count}"), GenericType::Into))
                 }
                 TypeDef::Box(_) => {
                     generic_count += 1;

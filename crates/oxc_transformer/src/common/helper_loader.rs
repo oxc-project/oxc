@@ -76,7 +76,7 @@ use oxc_ast::{
     ast::{Argument, CallExpression, Expression},
 };
 use oxc_semantic::{ReferenceFlags, SymbolFlags};
-use oxc_span::{Atom, SPAN, Span};
+use oxc_span::{SPAN, Span, Str};
 use oxc_traverse::BoundIdentifier;
 
 use crate::context::TraverseCtx;
@@ -328,8 +328,8 @@ pub fn helper_load<'a>(helper: Helper, ctx: &mut TraverseCtx<'a>) -> Expression<
 // Internal methods
 impl<'a> HelperLoaderStore<'a> {
     // Construct string directly in arena without an intermediate temp allocation
-    fn get_runtime_source(&self, helper: Helper, ctx: &TraverseCtx<'a>) -> Atom<'a> {
-        ctx.ast.atom_from_strs_array([&self.module_name, "/helpers/", helper.name()])
+    fn get_runtime_source(&self, helper: Helper, ctx: &TraverseCtx<'a>) -> Str<'a> {
+        ctx.ast.str_from_strs_array([&self.module_name, "/helpers/", helper.name()])
     }
 
     fn transform_for_external_helper(helper: Helper, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {

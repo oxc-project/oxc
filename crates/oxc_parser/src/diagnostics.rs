@@ -849,7 +849,7 @@ pub fn modifier_cannot_be_used_here(
     allowed: Option<ModifierKinds>,
 ) -> OxcDiagnostic {
     OxcDiagnostic::error(format!("'{}' modifier cannot be used here.", modifier.kind))
-        .with_label(modifier.span)
+        .with_label(modifier.span())
         .with_allowed_modifier_help(allowed)
 }
 
@@ -865,14 +865,14 @@ pub fn modifier_only_on_property_declaration_or_index_signature(
             modifier.kind
         ),
     )
-    .with_label(modifier.span)
+    .with_label(modifier.span())
     .with_allowed_modifier_help(allowed)
 }
 
 #[cold]
 pub fn accessibility_modifier_already_seen(modifier: &Modifier) -> OxcDiagnostic {
     ts_error("1028", "Accessibility modifier already seen.")
-        .with_label(modifier.span)
+        .with_label(modifier.span())
         .with_help("Remove the duplicate modifier.")
 }
 
@@ -885,13 +885,13 @@ pub fn modifier_must_precede_other_modifier(
         "1029",
         format!("'{}' modifier must precede '{}' modifier.", modifier.kind, other_modifier),
     )
-    .with_label(modifier.span)
+    .with_label(modifier.span())
 }
 
 #[cold]
 pub fn modifier_already_seen(modifier: &Modifier) -> OxcDiagnostic {
     ts_error("1030", format!("'{}' modifier already seen.", modifier.kind))
-        .with_label(modifier.span)
+        .with_label(modifier.span())
         .with_help("Remove the duplicate modifier.")
 }
 
@@ -903,7 +903,7 @@ pub fn cannot_appear_on_class_elements(
         "1031",
         format!("'{}' modifier cannot appear on class elements of this kind.", modifier.kind),
     )
-    .with_label(modifier.span)
+    .with_label(modifier.span())
     .with_allowed_modifier_help(allowed)
 }
 
@@ -912,7 +912,7 @@ pub fn cannot_appear_on_a_type_member(
     allowed: Option<ModifierKinds>,
 ) -> OxcDiagnostic {
     ts_error("1070", format!("'{}' modifier cannot appear on a type member.", modifier.kind))
-        .with_label(modifier.span)
+        .with_label(modifier.span())
         .with_allowed_modifier_help(allowed)
 }
 
@@ -922,7 +922,7 @@ pub fn cannot_appear_on_a_type_parameter(
     allowed: Option<ModifierKinds>,
 ) -> OxcDiagnostic {
     ts_error("1273", format!("'{}' modifier cannot be used on a type parameter.", modifier.kind))
-        .with_label(modifier.span)
+        .with_label(modifier.span())
         .with_allowed_modifier_help(allowed)
 }
 
@@ -945,7 +945,7 @@ pub fn cannot_appear_on_a_parameter(
     allowed: Option<ModifierKinds>,
 ) -> OxcDiagnostic {
     ts_error("1090", format!("'{}' modifier cannot appear on a parameter.", modifier.kind))
-        .with_label(modifier.span)
+        .with_label(modifier.span())
         .with_allowed_modifier_help(allowed)
 }
 
@@ -960,7 +960,7 @@ pub fn cannot_appear_on_an_index_signature(
     allowed: Option<ModifierKinds>,
 ) -> OxcDiagnostic {
     ts_error("1071", format!("'{}' modifier cannot appear on an index signature.", modifier.kind))
-        .with_label(modifier.span)
+        .with_label(modifier.span())
         .with_allowed_modifier_help(allowed)
 }
 
@@ -969,7 +969,7 @@ pub fn accessor_modifier(modifier: &Modifier, allowed: Option<ModifierKinds>) ->
         "1243",
         format!("'accessor' modifier cannot be used with '{}' modifier.", modifier.kind),
     )
-    .with_label(modifier.span)
+    .with_label(modifier.span())
     .with_allowed_modifier_help(allowed.map(|a| a.without(ModifierKind::Accessor)))
 }
 
@@ -985,7 +985,7 @@ pub fn accessibility_modifier_on_private_property(
     _allowed: Option<ModifierKinds>,
 ) -> OxcDiagnostic {
     ts_error("18010", "An accessibility modifier cannot be used with a private identifier.")
-        .with_label(modifier.span)
+        .with_label(modifier.span())
         .with_help("Private identifiers are enforced at runtime, while accessibility modifiers only affect type checking, so using both is redundant.")
 }
 
@@ -1131,7 +1131,7 @@ pub fn parameter_modifiers_in_ts(
     allowed: Option<ModifierKinds>,
 ) -> OxcDiagnostic {
     ts_error("8012", "Parameter modifiers can only be used in TypeScript files.")
-        .with_label(modifier.span)
+        .with_label(modifier.span())
         .with_allowed_modifier_help(allowed)
 }
 
@@ -1243,7 +1243,7 @@ pub fn modifiers_cannot_appear_here(
     modifier: &Modifier,
     _: Option<ModifierKinds>,
 ) -> OxcDiagnostic {
-    ts_error("1184", "Modifiers cannot appear here.").with_label(modifier.span)
+    ts_error("1184", "Modifiers cannot appear here.").with_label(modifier.span())
 }
 
 #[cold]

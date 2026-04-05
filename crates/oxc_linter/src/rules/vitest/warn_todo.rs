@@ -140,6 +140,13 @@ fn test() {
         (vitest_context!(r#"describe.only.todo("foo", function () {})"#)),
         (vitest_context!(r#"it.only.todo("foo", function () {})"#)),
         (vitest_context!(r#"test.only.todo("foo", function () {})"#)),
+        // Issue #20955
+        r#"import { test as vpTest } from "vite-plus/test";
+        vpTest.todo(
+          "vite-plus/test does not have expected vitest/warn-todo lint error",
+          () => {},
+        );
+        "#,
     ];
 
     Tester::new(WarnTodo::NAME, WarnTodo::PLUGIN, pass, fail)

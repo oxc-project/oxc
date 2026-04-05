@@ -5,7 +5,7 @@ use rustc_hash::FxHashMap;
 
 use oxc_ast::ast::*;
 use oxc_ast_visit::{Visit, walk::*};
-use oxc_span::Atom;
+use oxc_span::Str;
 use oxc_syntax::scope::{ScopeFlags, ScopeId};
 
 bitflags! {
@@ -20,8 +20,8 @@ bitflags! {
 /// Declaration scope.
 #[derive(Debug)]
 struct Scope<'a> {
-    bindings: FxHashMap<Atom<'a>, KindFlags>,
-    references: FxHashMap<Atom<'a>, KindFlags>,
+    bindings: FxHashMap<Str<'a>, KindFlags>,
+    references: FxHashMap<Str<'a>, KindFlags>,
     flags: ScopeFlags,
 }
 
@@ -59,12 +59,12 @@ impl<'a> ScopeTree<'a> {
         scope.references.get(name).iter().any(|flags| flags.contains(KindFlags::Value))
     }
 
-    fn add_binding(&mut self, name: Atom<'a>, flags: KindFlags) {
+    fn add_binding(&mut self, name: Str<'a>, flags: KindFlags) {
         let scope = self.levels.last_mut().unwrap();
         scope.bindings.insert(name, flags);
     }
 
-    fn add_reference(&mut self, name: Atom<'a>, flags: KindFlags) {
+    fn add_reference(&mut self, name: Str<'a>, flags: KindFlags) {
         let scope = self.levels.last_mut().unwrap();
         scope.references.entry(name).and_modify(|f| *f |= flags).or_insert(flags);
     }

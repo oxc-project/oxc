@@ -167,7 +167,7 @@ impl<'a> RegExp {
             Argument::from(ctx.ast.expression_string_literal(SPAN, pattern_text, None)),
             Argument::from(ctx.ast.expression_string_literal(
                 SPAN,
-                ctx.ast.atom(flags.to_inline_string().as_str()),
+                ctx.ast.str(flags.to_inline_string().as_str()),
                 None,
             )),
         ]);

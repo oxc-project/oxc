@@ -17,7 +17,9 @@ pub use crate::utils::jest::parse_jest_fn::{
     MemberExpressionElement, ParsedExpectFnCall, ParsedGeneralJestFnCall,
     ParsedJestFnCall as ParsedJestFnCallNew, parse_jest_fn_call,
 };
+pub use padding_around_block::report_missing_padding_before_jest_block;
 
+mod padding_around_block;
 mod parse_jest_fn;
 
 const JEST_METHOD_NAMES: [&str; 19] = [
@@ -225,7 +227,10 @@ fn collect_ids_referenced_to_import<'a, 'c>(
                 };
                 let name = semantic.scoping().symbol_name(symbol_id);
 
-                if matches!(import_decl.source.value.as_str(), "@jest/globals" | "vitest") {
+                if matches!(
+                    import_decl.source.value.as_str(),
+                    "@jest/globals" | "vitest" | "vite-plus/test"
+                ) {
                     let original = find_original_name(import_decl, name);
                     let ret = reference_ids
                         .iter()

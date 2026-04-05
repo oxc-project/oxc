@@ -1,6 +1,6 @@
 use oxc_allocator::{Box, Vec};
 use oxc_ast::ast::*;
-use oxc_span::{Atom, GetSpan, Span};
+use oxc_span::{GetSpan, Span, Str};
 
 use super::{VariableDeclarationParent, grammar::CoverGrammar};
 use crate::{
@@ -19,7 +19,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.bump_any();
             let span = self.end_span(span);
             let src = &self.source_text[span.start as usize + 2..span.end as usize];
-            Some(self.ast.hashbang(span, Atom::from(src)))
+            Some(self.ast.hashbang(span, Str::from(src)))
         } else {
             None
         }
@@ -87,7 +87,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                         let src = &self.source_text
                             [string.span.start as usize + 1..string.span.end as usize - 1];
                         let directive =
-                            self.ast.directive(expr.span, (*string).clone(), Atom::from(src));
+                            self.ast.directive(expr.span, (*string).clone(), Str::from(src));
                         directives.push(directive);
                         continue;
                     }

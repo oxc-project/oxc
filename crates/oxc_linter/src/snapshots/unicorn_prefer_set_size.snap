@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+assertion_line: 444
 ---
 
   ⚠ eslint-plugin-unicorn(prefer-set-size): Use `Set#size` instead of converting a `Set` to an array and using its `length` property.
@@ -7,7 +8,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ [...new Set(array)].length
    ·                     ──────
    ╰────
-  help: Remove spread and replace with `Set.size`
+  help: Replace array conversion with direct `Set.size` access
 
   ⚠ eslint-plugin-unicorn(prefer-set-size): Use `Set#size` instead of converting a `Set` to an array and using its `length` property.
    ╭─[prefer_set_size.tsx:2:34]
@@ -15,7 +16,7 @@ source: crates/oxc_linter/src/tester.rs
  2 │             console.log([...foo].length);
    ·                                  ──────
    ╰────
-  help: Remove spread and replace with `Set.size`
+  help: Replace array conversion with direct `Set.size` access
 
   ⚠ eslint-plugin-unicorn(prefer-set-size): Use `Set#size` instead of converting a `Set` to an array and using its `length` property.
    ╭─[prefer_set_size.tsx:2:43]
@@ -24,28 +25,28 @@ source: crates/oxc_linter/src/tester.rs
    ·                                           ──────
  3 │             }
    ╰────
-  help: Remove spread and replace with `Set.size`
+  help: Replace array conversion with direct `Set.size` access
 
   ⚠ eslint-plugin-unicorn(prefer-set-size): Use `Set#size` instead of converting a `Set` to an array and using its `length` property.
    ╭─[prefer_set_size.tsx:1:22]
  1 │ [...new Set(array),].length
    ·                      ──────
    ╰────
-  help: Remove spread and replace with `Set.size`
+  help: Replace array conversion with direct `Set.size` access
 
   ⚠ eslint-plugin-unicorn(prefer-set-size): Use `Set#size` instead of converting a `Set` to an array and using its `length` property.
    ╭─[prefer_set_size.tsx:1:27]
  1 │ [...(( new Set(array) ))].length
    ·                           ──────
    ╰────
-  help: Remove spread and replace with `Set.size`
+  help: Replace array conversion with direct `Set.size` access
 
   ⚠ eslint-plugin-unicorn(prefer-set-size): Use `Set#size` instead of converting a `Set` to an array and using its `length` property.
    ╭─[prefer_set_size.tsx:1:27]
  1 │ (( [...new Set(array)] )).length
    ·                           ──────
    ╰────
-  help: Remove spread and replace with `Set.size`
+  help: Replace array conversion with direct `Set.size` access
 
   ⚠ eslint-plugin-unicorn(prefer-set-size): Use `Set#size` instead of converting a `Set` to an array and using its `length` property.
    ╭─[prefer_set_size.tsx:2:34]
@@ -53,18 +54,68 @@ source: crates/oxc_linter/src/tester.rs
  2 │             ;[...new Set(array)].length
    ·                                  ──────
    ╰────
-  help: Remove spread and replace with `Set.size`
+  help: Replace array conversion with direct `Set.size` access
 
   ⚠ eslint-plugin-unicorn(prefer-set-size): Use `Set#size` instead of converting a `Set` to an array and using its `length` property.
    ╭─[prefer_set_size.tsx:1:34]
  1 │ [/* comment */...new Set(array)].length
    ·                                  ──────
    ╰────
-  help: Remove spread and replace with `Set.size`
 
   ⚠ eslint-plugin-unicorn(prefer-set-size): Use `Set#size` instead of converting a `Set` to an array and using its `length` property.
    ╭─[prefer_set_size.tsx:1:35]
  1 │ [...new /* comment */ Set(array)].length
    ·                                   ──────
    ╰────
-  help: Remove spread and replace with `Set.size`
+  help: Replace array conversion with direct `Set.size` access
+
+  ⚠ eslint-plugin-unicorn(prefer-set-size): Use `Set#size` instead of converting a `Set` to an array and using its `length` property.
+   ╭─[prefer_set_size.tsx:1:28]
+ 1 │ Array.from(new Set(array)).length
+   ·                            ──────
+   ╰────
+  help: Replace array conversion with direct `Set.size` access
+
+  ⚠ eslint-plugin-unicorn(prefer-set-size): Use `Set#size` instead of converting a `Set` to an array and using its `length` property.
+   ╭─[prefer_set_size.tsx:2:41]
+ 1 │ const foo = new Set([]);
+ 2 │             console.log(Array.from(foo).length);
+   ·                                         ──────
+   ╰────
+  help: Replace array conversion with direct `Set.size` access
+
+  ⚠ eslint-plugin-unicorn(prefer-set-size): Use `Set#size` instead of converting a `Set` to an array and using its `length` property.
+   ╭─[prefer_set_size.tsx:1:34]
+ 1 │ Array.from((( new Set(array) ))).length
+   ·                                  ──────
+   ╰────
+  help: Replace array conversion with direct `Set.size` access
+
+  ⚠ eslint-plugin-unicorn(prefer-set-size): Use `Set#size` instead of converting a `Set` to an array and using its `length` property.
+   ╭─[prefer_set_size.tsx:1:34]
+ 1 │ (( Array.from(new Set(array)) )).length
+   ·                                  ──────
+   ╰────
+  help: Replace array conversion with direct `Set.size` access
+
+  ⚠ eslint-plugin-unicorn(prefer-set-size): Use `Set#size` instead of converting a `Set` to an array and using its `length` property.
+   ╭─[prefer_set_size.tsx:1:42]
+ 1 │ Array.from(/* comment */ new Set(array)).length
+   ·                                          ──────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-set-size): Use `Set#size` instead of converting a `Set` to an array and using its `length` property.
+   ╭─[prefer_set_size.tsx:1:42]
+ 1 │ Array.from(new /* comment */ Set(array)).length
+   ·                                          ──────
+   ╰────
+  help: Replace array conversion with direct `Set.size` access
+
+  ⚠ eslint-plugin-unicorn(prefer-set-size): Use `Set#size` instead of converting a `Set` to an array and using its `length` property.
+   ╭─[prefer_set_size.tsx:2:51]
+ 1 │ function isUnique(array) {
+ 2 │                 return Array.from(new Set(array)).length === array.length
+   ·                                                   ──────
+ 3 │             }
+   ╰────
+  help: Replace array conversion with direct `Set.size` access

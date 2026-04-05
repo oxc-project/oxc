@@ -371,14 +371,14 @@ impl<'a> LegacyDecorator<'a> {
 
                 let getter_key = PropertyKey::from(assignment);
                 let setter_key = PropertyKey::from(reference);
-                let storage_name = ctx.ast.atom_from_strs_array([
+                let storage_name = ctx.ast.str_from_strs_array([
                     "_",
                     &get_var_name_from_node(&setter_key),
                     "_computed_accessor_storage",
                 ]);
                 (storage_name, getter_key, setter_key)
             } else {
-                let storage_name = ctx.ast.atom_from_strs_array([
+                let storage_name = ctx.ast.str_from_strs_array([
                     "_",
                     &get_var_name_from_node(&accessor.key),
                     "_accessor_storage",
@@ -457,7 +457,7 @@ impl<'a> LegacyDecorator<'a> {
         kind: MethodDefinitionKind,
         computed: bool,
         is_static: bool,
-        storage_name: Atom<'a>,
+        storage_name: Str<'a>,
         object_binding: Option<&BoundIdentifier<'a>>,
         class_scope_id: ScopeId,
         ctx: &mut TraverseCtx<'a>,
@@ -494,7 +494,7 @@ impl<'a> LegacyDecorator<'a> {
             (params, stmt)
         } else {
             let value_binding = ctx.generate_binding(
-                Atom::from("value").into(),
+                Str::from("value").into(),
                 scope_id,
                 SymbolFlags::FunctionScopedVariable,
             );

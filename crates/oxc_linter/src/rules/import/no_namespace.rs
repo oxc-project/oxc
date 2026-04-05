@@ -100,7 +100,12 @@ impl Rule for NoNamespace {
 
                 if self.ignore.is_empty()
                     || self.ignore.iter().all(|pattern| {
-                        !glob_match(pattern.as_str(), source.trim_start_matches("./"))
+                        let target = if pattern.contains('/') {
+                            source
+                        } else {
+                            source.rsplit('/').next().unwrap_or(source)
+                        };
+                        !glob_match(pattern.as_str(), target)
                     })
                 {
                     ctx.diagnostic(no_namespace_diagnostic(entry.local_name.span));
@@ -129,6 +134,19 @@ fn test() {
               import * as baz from './other-module.ts'",
             Some(serde_json::json!([{ "ignore": ["*.js", "*.ts"] }])),
         ),
+        // https://github.com/oxc-project/oxc/issues/21011
+        (
+            r"import * as schema from 'src/db/schema'",
+            Some(serde_json::json!([{ "ignore": ["*schema"] }])),
+        ),
+        (
+            r"import * as schema from '../db/schema'",
+            Some(serde_json::json!([{ "ignore": ["*schema"] }])),
+        ),
+        (
+            r"import * as schema from './src/db/schema'",
+            Some(serde_json::json!([{ "ignore": ["./src/db/*"] }])),
+        ),
     ];
 
     let fail = vec![
@@ -141,6 +159,10 @@ fn test() {
             import * as DrizzleKit from 'drizzle-kit/api'
             ",
             Some(serde_json::json!([{ "ignore": ["zod"] }])),
+        ),
+        (
+            r"import * as schema from './src/db/schema'",
+            Some(serde_json::json!([{ "ignore": ["src/db/*"] }])),
         ),
     ];
 

@@ -107,6 +107,25 @@ describe("oxfmtrc overrides", () => {
   });
 
   // .oxfmtrc.json:
+  //   sortImports: { "order": "desc" }
+  //   overrides: [
+  //     { files: ["reset-to-default.js"], options: { sortImports: true } },
+  //     { files: ["disabled.js"], options: { sortImports: false } }
+  //   ]
+  //
+  // Expected:
+  // - desc-sorted.js: imports sorted in descending order (base config)
+  // - reset-to-default.js: imports sorted in ascending order (default, reset via `true`)
+  // - disabled.js: imports NOT sorted (disabled via `false`)
+  //
+  // This test verifies that `true`/`false` can be used to reset/disable an object option in overrides
+  it("object option reset to defaults via `true` in override", async () => {
+    const cwd = join(fixturesDir, "bool_reset_override");
+    const snapshot = await runAndSnapshot(cwd, [["--check", "."]]);
+    expect(snapshot).toMatchSnapshot();
+  });
+
+  // .oxfmtrc.json:
   //   experimentalTailwindcss: {}
   //   overrides: [
   //     { files: ["use-clsx.tsx"], options: { experimentalTailwindcss: { functions: ["clsx"] } } },

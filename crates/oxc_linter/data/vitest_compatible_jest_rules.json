@@ -31,6 +31,7 @@
   "prefer-lowercase-title",
   "prefer-mock-promise-shorthand",
   "prefer-mock-return-shorthand",
+  "prefer-snapshot-hint",
   "prefer-spy-on",
   "prefer-strict-equal",
   "prefer-to-be",
@@ -42,5 +43,6 @@
   "require-to-throw-message",
   "require-top-level-describe",
   "valid-describe-callback",
-  "valid-expect"
+  "valid-expect",
+  "valid-title"
 ]
