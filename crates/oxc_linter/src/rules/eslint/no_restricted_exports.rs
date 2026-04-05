@@ -1,4 +1,10 @@
-use lazy_regex::{Regex, RegexBuilder};
+use std::borrow::Borrow;
+
+use lazy_regex::Regex;
+use rustc_hash::FxHashSet;
+use schemars::JsonSchema;
+use serde::Deserialize;
+
 use oxc_ast::{
     AstKind,
     ast::{Declaration, ExportAllDeclaration, ExportDefaultDeclaration, ExportNamedDeclaration},
@@ -6,15 +12,12 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use rustc_hash::FxHashSet;
-use schemars::JsonSchema;
-use serde::Deserialize;
-use std::borrow::Borrow;
 
 use crate::{
     AstNode,
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
+    utils::deserialize_regex_option,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -54,7 +57,7 @@ pub struct NoRestrictedExports(Box<NoRestrictedExportsConfig>);
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoRestrictedExportsConfig {
     restricted_named_exports: FxHashSet<String>,
-    #[serde(deserialize_with = "deserialize_regex_pattern")]
+    #[serde(deserialize_with = "deserialize_regex_option")]
     restricted_named_exports_pattern: Option<Regex>,
     restrict_default_exports: RestrictDefaultExports,
 
@@ -84,18 +87,6 @@ impl std::ops::DerefMut for NoRestrictedExports {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.0
     }
-}
-
-fn deserialize_regex_pattern<'de, D>(deserializer: D) -> Result<Option<Regex>, D::Error>
-where
-    D: serde::Deserializer<'de>,
-{
-    use serde::de::Error;
-
-    Option::<String>::deserialize(deserializer)?
-        .map(|pattern| RegexBuilder::new(&pattern).build())
-        .transpose()
-        .map_err(D::Error::custom)
 }
 
 declare_oxc_lint!(
@@ -243,7 +234,6 @@ impl Rule for NoRestrictedExports {
                 // Cache if "default" is in restricted_named_exports
                 c.has_default_restricted_named_export =
                     c.restricted_named_exports.contains("default");
-
                 c
             })
     }
