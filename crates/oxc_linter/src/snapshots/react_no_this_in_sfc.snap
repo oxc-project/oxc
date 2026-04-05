@@ -80,6 +80,15 @@ source: crates/oxc_linter/src/tester.rs
   help: Use props and context directly as function parameters instead of accessing them through `this`
 
   ⚠ eslint-plugin-react(no-this-in-sfc): Stateless functional components should not use `this`
+   ╭─[no_this_in_sfc.tsx:3:36]
+ 2 │                     function Foo(props) {
+ 3 │                       return <div>{this["props"].foo}</div>;
+   ·                                    ────
+ 4 │                     }
+   ╰────
+  help: Use props and context directly as function parameters instead of accessing them through `this`
+
+  ⚠ eslint-plugin-react(no-this-in-sfc): Stateless functional components should not use `this`
    ╭─[no_this_in_sfc.tsx:6:54]
  5 │                       }
  6 │                       return <div onClick={onClick}>{this.props.foo}</div>;

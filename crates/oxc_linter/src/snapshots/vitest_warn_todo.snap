@@ -73,3 +73,12 @@ source: crates/oxc_linter/src/tester.rs
    ·           ────
    ╰────
   help: Write an actual test and remove the `.todo` modifier before pushing/merging your changes.
+
+  ⚠ eslint-plugin-vitest(warn-todo): The use of `.todo` is not recommended.
+   ╭─[warn_todo.tsx:2:16]
+ 1 │ import { test as vpTest } from "vite-plus/test";
+ 2 │         vpTest.todo(
+   ·                ────
+ 3 │           "vite-plus/test does not have expected vitest/warn-todo lint error",
+   ╰────
+  help: Write an actual test and remove the `.todo` modifier before pushing/merging your changes.

@@ -5,7 +5,9 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode, context::LintContext, rule::Rule, utils::is_string_raw_tagged_template_expression,
+};
 
 fn escape_case_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Use uppercase characters for the value of the escape sequence.")
@@ -133,7 +135,11 @@ impl Rule for EscapeCase {
                     });
                 }
             }
-            AstKind::TemplateLiteral(lit) => {
+            AstKind::TemplateLiteral(lit)
+                if !is_string_raw_tagged_template_expression(
+                    &ctx.nodes().parent_kind(lit.node_id()),
+                ) =>
+            {
                 lit.quasis.iter().for_each(|quasi| {
                     let text = quasi.span.source_text(ctx.source_text());
                     if let Some(fixed) = check_case(text, false) {
@@ -189,6 +195,7 @@ fn test() {
         r"const foo = `foo\\\\xbar`;",
         r"const foo = `foo\\\\ubarbaz`;",
         r"const foo = `\ca`;",
+        r"const foo = String.raw`\uAaAa`;",
         r"const foo = /foo\xA9/",
         r"const foo = /foo\uD834/",
         r"const foo = /foo\u{1D306}/u",

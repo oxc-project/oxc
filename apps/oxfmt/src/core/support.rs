@@ -82,6 +82,25 @@ impl FormatFileStrategy {
         }
     }
 
+    /// Returns `true` if this strategy supports the Tailwind CSS sorting plugin.
+    pub fn needs_tailwind_plugin(&self) -> bool {
+        match self {
+            Self::OxcFormatter { .. } => true,
+            #[cfg(feature = "napi")]
+            Self::ExternalFormatter { parser_name, .. } => TAILWIND_PARSERS.contains(parser_name),
+            _ => false,
+        }
+    }
+
+    /// Returns `true` if this strategy supports the `prettier-plugin-oxfmt` (js-in-xxx).
+    #[cfg(feature = "napi")]
+    pub fn needs_oxfmt_plugin(&self) -> bool {
+        matches!(
+            self,
+            Self::ExternalFormatter { parser_name, .. } if OXFMT_PARSERS.contains(parser_name)
+        )
+    }
+
     /// Resolve the stored path to an absolute path using the given `cwd`.
     /// CLI file walk already provides absolute paths,
     /// but stdin and NAPI entry points may receive relative paths from user input.
@@ -97,6 +116,29 @@ impl FormatFileStrategy {
         self
     }
 }
+
+/// Parsers(files) that benefit from Tailwind plugin.
+#[cfg(feature = "napi")]
+static TAILWIND_PARSERS: phf::Set<&'static str> = phf_set! {
+    "html",
+    "vue",
+    "angular",
+    "glimmer",
+    "css",
+    "scss",
+    "less",
+};
+
+/// Parsers(files) that can embed JS/TS code and benefit from oxfmt plugin.
+/// For now, expressions are not supported.
+/// - e.g. `__vue_expression` in `vue`, `__ng_directive` in `angular`
+#[cfg(feature = "napi")]
+static OXFMT_PARSERS: phf::Set<&'static str> = phf_set! {
+    // "html",
+    "vue",
+    // "markdown",
+    // "mdx",
+};
 
 static EXCLUDE_FILENAMES: phf::Set<&'static str> = phf_set! {
     // JSON, YAML lock files

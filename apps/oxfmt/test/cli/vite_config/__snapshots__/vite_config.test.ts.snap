@@ -17,10 +17,40 @@ Finished in <variable>ms on 1 files using 1 threads.
 --------------------"
 `;
 
+exports[`vite_config > error: auto-discovered vite.config.ts that fails to load 1`] = `
+"--------------------
+arguments: --check test.ts
+working directory: vite_config/fixtures/error_load_failure/child
+exit code: 1
+--- STDOUT ---------
+
+--- STDERR ---------
+Failed to load configuration file.
+<cwd>/vite.config.ts
+Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'non-existent-module' imported from <cwd>/vite.config.ts
+Ensure the file has a valid default export of a JSON-serializable configuration object.
+--------------------"
+`;
+
+exports[`vite_config > error: explicit --config vite.config.ts that fails to load 1`] = `
+"--------------------
+arguments: --check --config vite.config.ts test.ts
+working directory: vite_config/fixtures/error_load_failure/child
+exit code: 1
+--- STDOUT ---------
+
+--- STDERR ---------
+Failed to load configuration file.
+<cwd>/vite.config.ts
+Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'non-existent-module' imported from <cwd>/vite.config.ts
+Ensure the file has a valid default export of a JSON-serializable configuration object.
+--------------------"
+`;
+
 exports[`vite_config > error: explicit --config vite.config.ts without fmt field 1`] = `
 "--------------------
 arguments: --check --config vite.config.ts test.ts
-working directory: vite_config/fixtures/error_no_fmt_field
+working directory: vite_config/fixtures/no_fmt_field
 exit code: 1
 --- STDOUT ---------
 
@@ -65,7 +95,7 @@ Finished in <variable>ms on 1 files using 1 threads.
 exports[`vite_config > skip: auto-discovered vite.config.ts without fmt field uses defaults 1`] = `
 "--------------------
 arguments: --check test.ts
-working directory: vite_config/fixtures/error_no_fmt_field
+working directory: vite_config/fixtures/no_fmt_field
 exit code: 0
 --- STDOUT ---------
 Checking formatting...

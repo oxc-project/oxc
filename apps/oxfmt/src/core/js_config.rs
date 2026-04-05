@@ -41,7 +41,6 @@ pub fn create_js_config_loader(cb: JsLoadJsConfigCb) -> JsConfigLoaderCb {
             tokio::runtime::Handle::current()
                 .block_on(async move { cb.call_async(path).await?.into_future().await })
         });
-
-        res.map_err(|_| "failed to load".to_string())
+        res.map_err(|e| e.reason.clone())
     })
 }

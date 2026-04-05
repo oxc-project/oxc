@@ -1063,12 +1063,11 @@ impl Runtime {
         // If import plugin is enabled.
         if let Some(resolver) = &self.resolver {
             // Retrieve all dependent modules from this module.
-            let dir = path.parent().unwrap();
             resolved_module_requests = module_record
                 .requested_modules
                 .keys()
                 .filter_map(|specifier| {
-                    let resolution = resolver.resolve(dir, specifier).ok()?;
+                    let resolution = resolver.resolve_file(path, specifier).ok()?;
                     Some(ResolvedModuleRequest {
                         specifier: specifier.clone(),
                         resolved_requested_path: Arc::<OsStr>::from(resolution.path().as_os_str()),

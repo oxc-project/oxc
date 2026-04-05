@@ -167,7 +167,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ──────────────────
  5 │               </html>
    ╰────
-  help: Replace `<React.Fragment />` with ``.
+  help: Remove `<React.Fragment />`.
 
   ⚠ eslint-plugin-react(jsx-no-useless-fragment): Passing a fragment to a HTML element is useless.
    ╭─[jsx_no_useless_fragment.tsx:4:17]
@@ -176,7 +176,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ──────────────────
  5 │               </html>
    ╰────
-  help: Replace `<React.Fragment />` with ``.
+  help: Remove `<React.Fragment />`.
 
   ⚠ eslint-plugin-react(jsx-no-useless-fragment): Fragments should contain more than one child.
    ╭─[jsx_no_useless_fragment.tsx:1:1]

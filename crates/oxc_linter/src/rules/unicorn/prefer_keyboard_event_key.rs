@@ -421,7 +421,7 @@ impl PreferKeyboardEventKey {
                 let ast = AstBuilder::new(&alloc);
                 codegen.print_expression(&ast.expression_string_literal(
                     SPAN,
-                    ast.atom(&key_name),
+                    ast.str(&key_name),
                     None,
                 ));
                 let key_str = codegen.into_source_text();

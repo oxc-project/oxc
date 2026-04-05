@@ -4,6 +4,39 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.123.0] - 2026-03-30
+
+### 🚀 Features
+
+- 59fd797 parser: Mark pure comments that cannot be applied (#20687) (Boshen)
+
+### 📚 Documentation
+
+- 868448e ast: Correct comment (#20837) (overlookmotel)
+
+## [0.122.0] - 2026-03-23
+
+### 🚀 Features
+
+- 76cd0b1 ast: Add method to retrieve `SymbolId`s from BindingPattern (#20532) (camc314)
+
+### ⚡ Performance
+
+- 89946e1 ast: Mark `AstKind::address` as `#[inline]` (#20586) (overlookmotel)
+- 3420abb ast: Mark `AstKind::span` as `#[inline]` (#20585) (overlookmotel)
+- c6ea0a0 ast: Place `NodeId` field after `Span` in structs (#20584) (overlookmotel)
+- d176ecc napi/parser, oxlint/plugins: Shorten deserializer for `WithClause` (#20575) (overlookmotel)
+
+## [0.120.0] - 2026-03-16
+
+### 🐛 Bug Fixes
+
+- f8fbd6e linter/plugins: Remove `hashbang` property from AST (#20365) (overlookmotel)
+
+### ⚡ Performance
+
+- 9cd612f linter/plugins: Recycle comment objects (#20362) (overlookmotel)
+
 ## [0.114.0] - 2026-02-16
 
 ### 🚀 Features

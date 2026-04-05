@@ -169,16 +169,6 @@ impl ResolvedOptions {
             }
         }
     }
-
-    /// Set the filepath override for js-in-xxx flows.
-    /// See [`ResolvedOptions::OxcFormatter::filepath_override`] for details.
-    #[cfg(feature = "napi")]
-    pub fn set_filepath_override(&mut self, filepath: PathBuf) {
-        let ResolvedOptions::OxcFormatter { filepath_override, .. } = self else {
-            unreachable!("`filepath_override` is only applicable for `OxcFormatter` options");
-        };
-        *filepath_override = Some(filepath);
-    }
 }
 
 // ---
@@ -278,9 +268,15 @@ impl ConfigResolver {
 
         #[cfg(feature = "napi")]
         if is_js_config_file(path) {
-            let loader = js_config_loader
-                .expect("JS config loader must be set when `napi` feature is enabled");
-            let raw_config = load_js_config(loader, path)?.ok_or_else(|| {
+            // Load successful and `.fmt` field found -> Use it as config
+            // Load failed (e.g. syntax error, missing dependencies) -> Propagate error
+            let raw_config = load_js_config(
+                js_config_loader
+                    .expect("JS config loader must be set when `napi` feature is enabled"),
+                path,
+            )?
+            // Load successful but no `.fmt` field -> Error (explicitly specified config must have it)
+            .ok_or_else(|| {
                 format!("Expected a `fmt` field in the default export of {}", path.display())
             })?;
 
@@ -311,20 +307,18 @@ impl ConfigResolver {
                 // For `vite.config.ts`
                 #[cfg(feature = "napi")]
                 if is_vite_plus_config(&path) {
+                    // Load successful and `.fmt` field found -> Use it as config
+                    // Load failed (e.g. syntax error, missing dependencies) -> Propagate error
                     if let Some(raw_config) = load_js_config(
                         js_config_loader
                             .expect("JS config loader must be set when `napi` feature is enabled"),
                         &path,
                     )? {
                         let editorconfig = load_editorconfig(cwd, editorconfig_path)?;
-                        return Ok(Self::new(
-                            raw_config,
-                            path.parent().map(Path::to_path_buf),
-                            editorconfig,
-                        ));
+                        let config_dir = path.parent().map(Path::to_path_buf);
+                        return Ok(Self::new(raw_config, config_dir, editorconfig));
                     }
-                    // `load_js_config()` returns `None` if `.fmt` is missing.
-                    // Skip it and continue, otherwise `load_config_at()` would treat as an error.
+                    // Load successful but no `.fmt` field found -> Skip this file and continue searching.
                     continue;
                 }
 
@@ -502,9 +496,9 @@ fn load_js_config(
     js_config_loader: &JsConfigLoaderCb,
     path: &Path,
 ) -> Result<Option<Value>, String> {
-    let value = js_config_loader(path.to_string_lossy().into_owned()).map_err(|_| {
+    let value = js_config_loader(path.to_string_lossy().into_owned()).map_err(|err| {
         format!(
-            "{}\nEnsure the file has a valid default export of a JSON-serializable configuration object.",
+            "{}\n{err}\nEnsure the file has a valid default export of a JSON-serializable configuration object.",
             path.display()
         )
     })?;
@@ -617,6 +611,7 @@ fn load_editorconfig(
 /// - end_of_line
 /// - indent_style
 /// - indent_size
+/// - tab_width
 /// - insert_final_newline
 fn has_editorconfig_overrides(editorconfig: &EditorConfig, path: &Path) -> bool {
     let sections = editorconfig.sections();
@@ -638,6 +633,7 @@ fn has_editorconfig_overrides(editorconfig: &EditorConfig, path: &Path) -> bool 
                 || resolved.end_of_line != root.end_of_line
                 || resolved.indent_style != root.indent_style
                 || resolved.indent_size != root.indent_size
+                || resolved.tab_width != root.tab_width
                 || resolved.insert_final_newline != root.insert_final_newline
         }
         // No `[*]` section means any resolved property is an override
@@ -646,6 +642,7 @@ fn has_editorconfig_overrides(editorconfig: &EditorConfig, path: &Path) -> bool 
                 || resolved.end_of_line != EditorConfigProperty::Unset
                 || resolved.indent_style != EditorConfigProperty::Unset
                 || resolved.indent_size != EditorConfigProperty::Unset
+                || resolved.tab_width != EditorConfigProperty::Unset
                 || resolved.insert_final_newline != EditorConfigProperty::Unset
         }
     }
@@ -682,11 +679,17 @@ fn apply_editorconfig(config: &mut FormatConfig, props: &EditorConfigProperties)
         });
     }
 
-    #[expect(clippy::cast_possible_truncation)]
-    if config.tab_width.is_none()
-        && let EditorConfigProperty::Value(size) = props.indent_size
-    {
-        config.tab_width = Some(size as u8);
+    if config.tab_width.is_none() {
+        // Match Prettier's behavior: Only use `indent_size` when `useTabs: false`.
+        // https://github.com/prettier/prettier/blob/90983f40dce5e20beea4e5618b5e0426a6a7f4f0/src/config/editorconfig/editorconfig-to-prettier.js#L25-L30
+        #[expect(clippy::cast_possible_truncation)]
+        if config.use_tabs == Some(false)
+            && let EditorConfigProperty::Value(size) = props.indent_size
+        {
+            config.tab_width = Some(size as u8);
+        } else if let EditorConfigProperty::Value(size) = props.tab_width {
+            config.tab_width = Some(size as u8);
+        }
     }
 
     if config.insert_final_newline.is_none()

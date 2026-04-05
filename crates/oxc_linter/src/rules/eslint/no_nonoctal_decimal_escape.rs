@@ -23,7 +23,7 @@ pub struct NoNonoctalDecimalEscape;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This rule disallows \8 and \9 escape sequences in string literals
+    /// This rule disallows \8 and \9 escape sequences in string literals.
     ///
     /// ### Why is this bad?
     ///

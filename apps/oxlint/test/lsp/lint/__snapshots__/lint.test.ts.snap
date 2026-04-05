@@ -108,6 +108,17 @@ help: The promise must end with a call to .catch, or end with a call to .then wi
 --------------------"
 `;
 
+exports[`LSP linting > config options > should apply config from config-ts-stdout-pollution/test.js 1`] = `
+"--- FILE -----------
+config-ts-stdout-pollution/test.js
+--- Diagnostics ---------
+> 1 | debugger;
+    | ^^^^^^^^^ Error: \`debugger\` statement is not allowed
+help: Remove the debugger statement
+  2 |
+--------------------"
+`;
+
 exports[`LSP linting > config options > should apply config from config-ts-type-aware/test.ts 1`] = `
 "--- FILE -----------
 config-ts-type-aware/test.ts

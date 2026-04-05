@@ -12,15 +12,29 @@ describe("vite_config", () => {
   });
 
   it("error: explicit --config vite.config.ts without fmt field", async () => {
-    const cwd = join(fixturesDir, "error_no_fmt_field");
+    const cwd = join(fixturesDir, "no_fmt_field");
     const snapshot = await runAndSnapshot(cwd, [
       ["--check", "--config", "vite.config.ts", "test.ts"],
     ]);
     expect(snapshot).toMatchSnapshot();
   });
 
+  it("error: explicit --config vite.config.ts that fails to load", async () => {
+    const cwd = join(fixturesDir, "error_load_failure", "child");
+    const snapshot = await runAndSnapshot(cwd, [
+      ["--check", "--config", "vite.config.ts", "test.ts"],
+    ]);
+    expect(snapshot).toMatchSnapshot();
+  });
+
+  it("error: auto-discovered vite.config.ts that fails to load", async () => {
+    const cwd = join(fixturesDir, "error_load_failure", "child");
+    const snapshot = await runAndSnapshot(cwd, [["--check", "test.ts"]]);
+    expect(snapshot).toMatchSnapshot();
+  });
+
   it("skip: auto-discovered vite.config.ts without fmt field uses defaults", async () => {
-    const cwd = join(fixturesDir, "error_no_fmt_field");
+    const cwd = join(fixturesDir, "no_fmt_field");
     const snapshot = await runAndSnapshot(cwd, [["--check", "test.ts"]]);
     expect(snapshot).toMatchSnapshot();
   });

@@ -7,7 +7,7 @@ import { ast, initAst, initSourceText, sourceText } from "./source_code.ts";
 import visitorKeys from "../generated/keys.ts";
 import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 
-import type { NodeOrToken, Node, Comment } from "./types.ts";
+import type { NodeOrToken, Node } from "./types.ts";
 import type { Node as ESTreeNode } from "../generated/types.d.ts";
 
 /**
@@ -52,9 +52,15 @@ export interface LineColumn {
 const LINE_BREAK_PATTERN = /\r\n|[\r\n\u2028\u2029]/gu;
 
 // Lazily populated when `SOURCE_CODE.lines` is accessed.
-// `lineStartIndices` starts as `[0]`, and `resetLines` doesn't remove that initial element, so it's never empty.
+// `lineStartIndices` starts as `[0]`, and `resetLinesAndLocs` doesn't remove that initial element, so it's never empty.
 export const lines: string[] = [];
 export const lineStartIndices: number[] = [0];
+
+// Pool of `Location` objects, reused across files to reduce GC pressure.
+// Each `Location` contains `start` and `end` `LineColumn` sub-objects, which are also reused.
+// Never shrunk - `activeLocationsCount` tracks the active count to avoid freeing the backing store.
+const cachedLocations: Location[] = [];
+let activeLocationsCount = 0;
 
 /**
  * Split source text into lines.
@@ -82,7 +88,7 @@ export function initLines(): void {
    * and uses match.index to get the correct line start indices.
    */
 
-  // `lineStartIndices` starts as `[0]`, and is reset to length 1 in `resetLines`.
+  // `lineStartIndices` starts as `[0]`, and is reset to length 1 in `resetLinesAndLocs`.
   // Debug check that `lines` and `lineStartIndices` are not already initialized.
   debugAssert(lines.length === 0, "`lines` should be empty at start of `initLines`");
   debugAssert(
@@ -117,11 +123,14 @@ export function debugAssertLinesIsInitialized(): void {
 
 /**
  * Reset lines after file has been linted, to free memory.
+ * Reset `Location` object pool.
  */
-export function resetLines(): void {
+export function resetLinesAndLocs(): void {
   lines.length = 0;
   // Leave first entry (0) in place, discard the rest
   lineStartIndices.length = 1;
+
+  activeLocationsCount = 0;
 }
 
 /**
@@ -147,26 +156,18 @@ export function getLineColumnFromOffset(offset: number): LineColumn {
     );
   }
 
-  return getLineColumnFromOffsetUnchecked(offset);
-}
-
-/**
- * Convert a source text index into a (line, column) pair without:
- * 1. Checking type of `offset`, or that it's in range.
- * 2. Initializing `lineStartIndices`. Caller must do that before calling this method.
- *
- * @param offset - The index of a character in a file.
- * @returns `{line, column}` location object with 1-indexed line and 0-indexed column.
- */
-function getLineColumnFromOffsetUnchecked(offset: number): LineColumn {
-  debugAssertLinesIsInitialized();
-
-  // Binary search `lineStartIndices` for the line containing `offset`
+  // Find first line that starts *after* `offset`, via binary search of `lineStartIndices`.
+  // `lineStartIndices` is sorted and `lineStartIndices[0]` is always 0.
+  //
+  // After the loop, `low` is the index of the first line whose start is *past* `offset`.
+  // This is also the 1-indexed line number of the line containing `offset`.
+  // e.g. if `offset` is on the 3rd line, `low` = 3, and `lineStartIndices[2]` is that line's start.
+  // `do...while` is safe because `lineStartIndices` always has at least one entry, so `low < high` at start of loop.
   let low = 0,
     high = lineStartIndices.length,
     mid: number;
   do {
-    mid = ((low + high) / 2) | 0; // Use bitwise OR to floor the division
+    mid = (low + high) >>> 1;
     if (offset < lineStartIndices[mid]) {
       high = mid;
     } else {
@@ -174,7 +175,10 @@ function getLineColumnFromOffsetUnchecked(offset: number): LineColumn {
     }
   } while (low < high);
 
-  return { line: low, column: offset - lineStartIndices[low - 1] };
+  return {
+    line: low, // 1-indexed line number
+    column: offset - lineStartIndices[low - 1], // Offset from start of the line
+  };
 }
 
 /**
@@ -254,29 +258,30 @@ export function getRange(nodeOrToken: NodeOrToken): Range {
  * @param nodeOrToken - Node or token to get the location of
  * @returns Location of the node or token
  */
-// Both AST nodes and tokens handle lazy `loc` computation and caching via their respective getters
+// AST nodes, tokens, and comments handle lazy `loc` computation and caching via their respective getters
 // (AST nodes via `NodeProto` prototype getter which caches via `Object.defineProperty`,
-// tokens via `Token` class getter which caches in a private field).
-// So accessing `.loc` gives the right behavior for both, including stable object identity.
+// tokens and comments via `Token` / `Comment` class getters which cache in private fields).
+// So accessing `.loc` gives the right behavior for all 3, including stable object identity.
 export function getLoc(nodeOrToken: NodeOrToken): Location {
   return nodeOrToken.loc;
 }
 
 /**
- * Calculate the `Location` for an AST node or comment, and cache it on the node.
+ * Calculate the `Location` for an AST node, and cache it on the node.
  *
- * Used in `loc` getters on AST nodes and comments (not tokens - tokens use their own caching via `Token` class).
+ * Used in `loc` getter on AST nodes (not tokens or comments - they use their own caching
+ * via `Token` / `Comment` class private fields).
  *
- * Defines a `loc` property on the node/comment with the calculated `Location`, so accessing `loc` twice on same node
+ * Defines a `loc` property on the node with the calculated `Location`, so accessing `loc` twice on same node
  * results in the same object each time.
  *
  * For internal use only.
  *
- * @param nodeOrComment - AST node or comment
+ * @param node - AST node
  * @returns Location
  */
-export function getNodeLoc(nodeOrComment: Node | Comment): Location {
-  const loc = computeLoc(nodeOrComment.start, nodeOrComment.end);
+export function getNodeLoc(node: Node): Location {
+  const loc = computeLoc(node.start, node.end);
 
   // Define `loc` property with the calculated `Location`, so accessing `loc` twice on same node
   // results in the same object each time.
@@ -287,15 +292,26 @@ export function getNodeLoc(nodeOrComment: Node | Comment): Location {
   //
   // We also don't make it configurable, because deleting it wouldn't make `node.loc` evaluate to `undefined`,
   // because the access would fall through to the getter on the prototype.
-  Object.defineProperty(nodeOrComment, "loc", { value: loc, writable: true });
+  //
+  // Reuse `LOC_DESCRIPTOR` object to avoid unnecessarily creating a temporary object each time.
+  LOC_DESCRIPTOR.value = loc;
+  Object.defineProperty(node, "loc", LOC_DESCRIPTOR);
 
   return loc;
 }
 
+// Reusable property descriptor for `Object.defineProperty` in `getNodeLoc`.
+const LOC_DESCRIPTOR: PropertyDescriptor = {
+  value: null,
+  writable: true,
+  enumerable: false,
+  configurable: false,
+};
+
 /**
  * Compute a `Location` from `start` and `end` source offsets.
  *
- * Pure computation - does not cache the result.
+ * Returns a recycled `Location` object from the pool when possible, allocating only during warmup.
  * Initializes `lines` and `lineStartIndices` tables if they haven't been already.
  *
  * @param start - Start offset
@@ -303,11 +319,87 @@ export function getNodeLoc(nodeOrComment: Node | Comment): Location {
  * @returns Location
  */
 export function computeLoc(start: number, end: number): Location {
+  // All AST nodes, tokens and comments have `start < end`, with only one exception:
+  // `Program` node can have `start === end` if it has no directives or statements - either 0-length file,
+  // or purely comments and/or whitespace and/or hashbang. But `start > end` is impossible.
+  debugAssert(start <= end, "`start` must be <= `end`");
+
   if (lines.length === 0) initLines();
-  return {
-    start: getLineColumnFromOffsetUnchecked(start),
-    end: getLineColumnFromOffsetUnchecked(end),
-  };
+  debugAssertLinesIsInitialized();
+
+  // Reuse a cached `Location` object if available, otherwise create a new one.
+  // Note: The comparison `activeLocationsCount < cachedLocations.length` must be this way around
+  // so that V8 can remove the bounds check on `cachedLocations[activeLocationsCount]`.
+  // `cachedLocations.length > activeLocationsCount` would *not* remove the bounds check in Maglev compiler,
+  // even though it's semantically equivalent.
+  let loc: Location;
+  if (activeLocationsCount < cachedLocations.length) {
+    loc = cachedLocations[activeLocationsCount];
+  } else {
+    cachedLocations.push((loc = { start: { line: 0, column: 0 }, end: { line: 0, column: 0 } }));
+  }
+
+  activeLocationsCount++;
+
+  const linesLen = lineStartIndices.length;
+
+  // Find first line that starts *after* `start`, via binary search of `lineStartIndices`.
+  // `lineStartIndices` is sorted and `lineStartIndices[0]` is always 0.
+  //
+  // After the loop, `line` is the index of the first line whose start is *past* `start`.
+  // This is also the 1-indexed line number of the line containing `start`.
+  // e.g. if `start` is on the 3rd line, `line` = 3, and `lineStartIndices[2]` is that line's start.
+  // `do...while` is safe because `lineStartIndices` always has at least one entry, so `line < high` at start of loop.
+  let line = 0,
+    high = linesLen,
+    mid: number;
+  do {
+    mid = (line + high) >>> 1;
+    if (start < lineStartIndices[mid]) {
+      high = mid;
+    } else {
+      line = mid + 1;
+    }
+  } while (line < high);
+
+  const lineStart = lineStartIndices[line - 1];
+
+  const locStart = loc.start;
+  locStart.line = line;
+  locStart.column = start - lineStart;
+
+  // Fast path: If `end` is on the same line as `start`, skip the second binary search.
+  // Most tokens (and many small AST nodes) are on a single line, so this is the common case.
+  // `line` indexes the *next* line's start in `lineStartIndices`.
+  // If we're on the last line, or `end` is before the next line's start, `end` is on the same line as `start`.
+  const locEnd = loc.end;
+  if (line === linesLen || end < lineStartIndices[line]) {
+    locEnd.line = line;
+    locEnd.column = end - lineStart;
+  } else {
+    // `end` is on a later line than `start`.
+    //
+    // Find first line that starts *after* `end`, via binary search of `lineStartIndices`.
+    // Start search from the line after the one containing `start`, to narrow the search range.
+    //
+    // After the loop, `line` is the index of the first line whose start is *past* `end`.
+    // This is also the 1-indexed line number of the line containing `end`.
+    line++;
+    high = linesLen;
+    while (line < high) {
+      mid = (line + high) >>> 1;
+      if (end < lineStartIndices[mid]) {
+        high = mid;
+      } else {
+        line = mid + 1;
+      }
+    }
+
+    locEnd.line = line;
+    locEnd.column = end - lineStartIndices[line - 1];
+  }
+
+  return loc;
 }
 
 /**

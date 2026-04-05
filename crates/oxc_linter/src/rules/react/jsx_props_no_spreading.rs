@@ -60,7 +60,7 @@ impl std::ops::Deref for JsxPropsNoSpreading {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow JSX prop spreading
+    /// Disallow JSX prop spreading.
     ///
     /// ### Why is this bad?
     ///

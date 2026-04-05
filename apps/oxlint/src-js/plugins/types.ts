@@ -1,5 +1,6 @@
 import type { Span } from "./location.ts";
 import type { Token } from "./tokens.ts";
+import type { Comment } from "./comments.ts";
 
 import type { VisitorObject as Visitor } from "../generated/visitor.d.ts";
 export type { Visitor };
@@ -21,12 +22,6 @@ export type VisitorWithHooks = Visitor & {
 export interface Node extends Span {}
 
 export type NodeOrToken = Node | Token | Comment;
-
-// Comment.
-export interface Comment extends Span {
-  type: "Line" | "Block" | "Shebang";
-  value: string;
-}
 
 // Buffer with typed array views of itself stored as properties.
 export interface BufferWithArrays extends Uint8Array {

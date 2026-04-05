@@ -443,14 +443,14 @@ fn pure_comment() {
     );
     test("const foo /* #__PURE__ */ = pureOperation();", "const foo = pureOperation();\n"); // INVALID: "=" not allowed after annotation
 
-    test("/* #__PURE__ */ function foo() {}\n", "function foo() {}\n");
+    test_same("/* #__PURE__ */ function foo() {}\n"); // INVALID: not before a call/new expression
 
     test("/* @__PURE__ */ (foo());", "/* @__PURE__ */ foo();\n");
     test("/* @__PURE__ */ (new Foo());\n", "/* @__PURE__ */ new Foo();\n");
-    test("/*#__PURE__*/ (foo(), bar());", "foo(), bar();\n"); // INVALID, there is a comma expression in the parentheses
+    test("/*#__PURE__*/ (foo(), bar());", "/*#__PURE__*/ foo(), bar();\n"); // INVALID, there is a comma expression in the parentheses
 
     test_same("/* @__PURE__ */ a.b().c.d();\n");
-    test("/* @__PURE__ */ a().b;", "a().b;\n"); // INVALID, it does not end with a call
+    test("/* @__PURE__ */ a().b;", "/* @__PURE__ */ a().b;\n"); // INVALID, it does not end with a call
     test_same("(/* @__PURE__ */ a()).b;\n");
 
     // More
@@ -716,7 +716,7 @@ fn template_literal_escape_when_building_ast() {
     // backtick, ${, and backslash
     // Pass escape_raw: true to automatically escape the raw field
     let cooked = "hello`world${foo}\\bar";
-    let value = TemplateElementValue { raw: ast.atom(cooked), cooked: Some(ast.atom(cooked)) };
+    let value = TemplateElementValue { raw: ast.str(cooked), cooked: Some(ast.str(cooked)) };
     let element = ast.template_element(SPAN, value, true, true); // escape_raw: true
     let quasis = ast.vec1(element);
     let template_literal = ast.template_literal(SPAN, quasis, ast.vec());

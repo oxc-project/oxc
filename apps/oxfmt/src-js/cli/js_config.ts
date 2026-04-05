@@ -22,9 +22,10 @@ export async function loadJsConfig(path: string): Promise<object | null> {
   // Bypass Node.js module cache to allow reloading changed config files (used for LSP)
   const fileUrl = pathToFileURL(path);
   fileUrl.searchParams.set("cache", Date.now().toString());
+
   const { default: config } = await import(fileUrl.href);
 
-  if (config === undefined) throw new Error(`Configuration file has no default export: ${path}`);
+  if (config === undefined) throw new Error("Configuration file has no default export.");
 
   // Vite config: extract `.fmt` field
   if (pathBasename(path) === VITE_CONFIG_NAME) {
@@ -39,14 +40,14 @@ export async function loadJsConfig(path: string): Promise<object | null> {
 
     if (!isObject(fmtConfig)) {
       throw new Error(
-        `The \`${VITE_OXFMT_CONFIG_FIELD}\` field in the default export must be an object: ${path}`,
+        `The \`${VITE_OXFMT_CONFIG_FIELD}\` field in the default export must be an object.`,
       );
     }
     return fmtConfig;
   }
 
   if (!isObject(config)) {
-    throw new Error(`Configuration file must have a default export that is an object: ${path}`);
+    throw new Error("Configuration file must have a default export that is an object.");
   }
 
   return config;

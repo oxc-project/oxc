@@ -153,3 +153,17 @@ nested/deep/test.json
 
 --------------------"
 `;
+
+exports[`editorconfig > tab_width fallback when indent_size is not set 1`] = `
+"--- FILE -----------
+test.js
+--- BEFORE ---------
+if (condition) { console.log("hello world"); }
+
+--- AFTER ----------
+if (condition) {
+        console.log("hello world");
+}
+
+--------------------"
+`;

@@ -87,7 +87,7 @@ impl DiagnosticReporter for GraphicalReporter {
     }
 }
 
-fn get_diagnostic_result_output(result: &DiagnosticResult) -> String {
+pub(super) fn get_diagnostic_result_output(result: &DiagnosticResult) -> String {
     let mut output = String::new();
 
     if result.warnings_count() + result.errors_count() > 0 {

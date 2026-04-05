@@ -253,7 +253,7 @@ impl Allocator {
     /// [`Vec::new_in`]: crate::Vec::new_in
     /// [`HashMap::new_in`]: crate::HashMap::new_in
     //
-    // `#[inline(always)]` because it's a small function
+    // `#[inline(always)]` because just delegates to `Bump` method
     #[expect(clippy::inline_always)]
     #[inline(always)]
     pub fn new() -> Self {
@@ -268,7 +268,7 @@ impl Allocator {
     ///
     /// See [`Allocator`] docs for more information on efficient use of [`Allocator`].
     //
-    // `#[inline(always)]` because it's a small function
+    // `#[inline(always)]` because just delegates to `Bump` method
     #[expect(clippy::inline_always)]
     #[inline(always)]
     pub fn with_capacity(capacity: usize) -> Self {
@@ -506,7 +506,7 @@ impl Allocator {
     /// }
     /// ```
     //
-    // `#[inline(always)]` because it's a small function
+    // `#[inline(always)]` because just delegates to `Bump` method
     #[expect(clippy::inline_always)]
     #[inline(always)]
     pub fn reset(&mut self) {
@@ -536,7 +536,7 @@ impl Allocator {
     ///
     /// [`used_bytes`]: Allocator::used_bytes
     //
-    // `#[inline(always)]` because it's a small function
+    // `#[inline(always)]` because just delegates to `Bump` method
     #[expect(clippy::inline_always)]
     #[inline(always)]
     pub fn capacity(&self) -> usize {

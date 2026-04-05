@@ -23,7 +23,7 @@ use oxc_ast_visit::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{ReferenceId, ScopeId, Semantic, SymbolId};
-use oxc_span::{Atom, GetSpan, Span};
+use oxc_span::{GetSpan, Span, Str};
 use oxc_syntax::scope::ScopeFlags;
 
 use crate::{
@@ -894,11 +894,11 @@ impl<'a> From<&IdentifierReference<'a>> for Name<'a> {
 #[derive(Debug)]
 struct Dependency<'a> {
     span: Span,
-    name: Atom<'a>,
+    name: Str<'a>,
     reference_id: ReferenceId,
     // the symbol id that this dependency is referring to
     symbol_id: Option<SymbolId>,
-    chain: Vec<Atom<'a>>,
+    chain: Vec<Str<'a>>,
 }
 
 impl Hash for Dependency<'_> {
@@ -920,7 +920,7 @@ impl Eq for Dependency<'_> {}
 impl Dependency<'_> {
     #[expect(clippy::inherent_to_string)]
     fn to_string(&self) -> String {
-        std::iter::once(&self.name).chain(self.chain.iter()).map(oxc_span::Atom::as_str).join(".")
+        std::iter::once(&self.name).chain(self.chain.iter()).map(oxc_span::Str::as_str).join(".")
     }
 
     fn contains(&self, other: &Self) -> bool {
@@ -928,7 +928,7 @@ impl Dependency<'_> {
     }
 }
 
-fn chain_contains(a: &[Atom<'_>], b: &[Atom<'_>]) -> bool {
+fn chain_contains(a: &[Str<'_>], b: &[Str<'_>]) -> bool {
     for (index, part) in b.iter().enumerate() {
         let Some(other) = a.get(index) else { return false };
         if other != part {
@@ -970,7 +970,7 @@ fn concat_members<'a, 'b>(
         return Ok(None);
     };
 
-    let new_chain = Vec::from([Atom::from(member_expr.property.name)]);
+    let new_chain = Vec::from([Str::from(member_expr.property.name)]);
 
     Ok(Some(Dependency {
         span: member_expr.span,
@@ -982,7 +982,7 @@ fn concat_members<'a, 'b>(
 }
 
 fn is_identifier_a_dependency<'a>(
-    ident_name: Atom<'a>,
+    ident_name: Str<'a>,
     ident_reference_id: ReferenceId,
     ident_span: Span,
     ctx: &'_ LintContext<'a>,
@@ -999,7 +999,7 @@ fn is_identifier_a_dependency<'a>(
     )
 }
 fn is_identifier_a_dependency_impl<'a>(
-    ident_name: Atom<'a>,
+    ident_name: Str<'a>,
     ident_reference_id: ReferenceId,
     ident_span: Span,
     ctx: &'_ LintContext<'a>,
@@ -1059,7 +1059,7 @@ fn is_identifier_a_dependency_impl<'a>(
 // https://github.com/facebook/react/blob/fee786a057774ab687aff765345dd86fce534ab2/packages/eslint-plugin-react-hooks/src/ExhaustiveDeps.js#L164
 fn is_stable_value<'a, 'b>(
     node: &'b AstNode<'a>,
-    ident_name: Atom<'a>,
+    ident_name: Str<'a>,
     ident_reference_id: ReferenceId,
     ctx: &'b LintContext<'a>,
     component_scope_id: ScopeId,
@@ -1439,9 +1439,9 @@ impl<'a> Visit<'a> for ExhaustiveDepsVisitor<'a, '_> {
                 if is_parent_call_expr {
                     self.found_dependencies.insert(source);
                 } else {
-                    let new_chain = Vec::from([Atom::from(it.property.name)]);
+                    let new_chain = Vec::from([Str::from(it.property.name)]);
 
-                    let mut destructured_props: Vec<Atom<'a>> = vec![];
+                    let mut destructured_props: Vec<Str<'a>> = vec![];
                     let mut did_see_ref = false;
                     let needs_full_chain = self
                         .iter_destructure_bindings(|id| {
@@ -1514,7 +1514,7 @@ impl<'a> Visit<'a> for ExhaustiveDepsVisitor<'a, '_> {
         let reference_id = ident.reference_id();
         let symbol_id = self.semantic.scoping().get_reference(reference_id).symbol_id();
 
-        let mut destructured_props: Vec<Atom<'a>> = vec![];
+        let mut destructured_props: Vec<Str<'a>> = vec![];
         let mut did_see_ref = false;
         let needs_full_identifier = self
             .iter_destructure_bindings(|id| {
@@ -1614,7 +1614,7 @@ mod fix {
         AstBuilder,
         ast::{ArrayExpression, Expression},
     };
-    use oxc_span::{Atom, GetSpan, SPAN};
+    use oxc_span::{GetSpan, SPAN, Str};
 
     use crate::{
         fixer::{RuleFix, RuleFixer},
@@ -1636,7 +1636,7 @@ mod fix {
         for name in names {
             vec.push(
                 ast_builder
-                    .expression_identifier(SPAN, Atom::from_cow_in(&name.name, &alloc))
+                    .expression_identifier(SPAN, Str::from_cow_in(&name.name, &alloc))
                     .into(),
             );
         }

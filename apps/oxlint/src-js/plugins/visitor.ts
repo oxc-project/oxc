@@ -83,7 +83,6 @@
 // * `{ enter, exit }` objects which are stored in compiled visitor.
 // * `VisitProp` objects which are used while compiling visitor.
 // * `{ enter: [], exit: [] }` objects which are used while compiling visitor.
-// * Temporary array used to store multiple visit functions in `mergeVisitFns`.
 //
 // The aim is to reduce pressure on the garbage collector. All these recycled objects are long-lived
 // and will graduate to "old space", which leaves as much capacity as possible in "new space"
@@ -526,9 +525,15 @@ export function resetCompiledVisitor(): void {
   activeNonLeafVisitorsCount = 0;
 }
 
-// Array used by `mergeVisitFns` and `mergeCfgVisitFns` to store visit functions extracted from an array of `VisitProp`s.
-// This array is used ephemerally, so we re-use same array for each merge.
-const visitFns: (VisitFn | CfgVisitFn)[] = [];
+/**
+ * Merger that merges visit functions for an AST node type.
+ */
+type Merger = (visitProps: VisitProp[]) => VisitFn;
+
+/**
+ * Merger that merges handler functions for a CFG event.
+ */
+type CfgMerger = (visitProps: CfgVisitProp[]) => CfgVisitFn;
 
 /**
  * Merge array of visit functions into a single function, which calls each of input functions in turn.
@@ -571,31 +576,15 @@ function mergeVisitFns(visitProps: VisitProp[]): VisitFn {
     });
 
     // Get or create merger for merging `numVisitFns` functions
-    let merger: Merger | null;
-    if (mergers.length <= numVisitFns) {
-      while (mergers.length < numVisitFns) {
-        mergers.push(null);
-      }
-      merger = createMerger(numVisitFns);
-      mergers.push(merger);
-    } else {
-      merger = mergers[numVisitFns];
-      if (merger === null) merger = mergers[numVisitFns] = createMerger(numVisitFns);
+    while (mergers.length <= numVisitFns) {
+      mergers.push(null);
     }
 
-    // Merge functions.
-    // Reuse a temporary array to avoid creating a new array for each merge.
-    // TODO: Make merger functions take an array of `VisitProp`s to avoid this operation?
-    typeAssertIs<VisitFn[]>(visitFns);
-    debugAssert(visitFns.length === 0, "`visitFns` should be empty");
+    let merger = mergers[numVisitFns];
+    if (merger === null) merger = mergers[numVisitFns] = createMerger(numVisitFns, false);
 
-    for (let i = 0; i < numVisitFns; i++) {
-      debugAssertIsNonNull(visitProps[i].fn);
-      visitFns.push(visitProps[i].fn!);
-    }
-    mergedFn = merger(...visitFns);
-
-    visitFns.length = 0;
+    // Merge functions
+    mergedFn = merger(visitProps);
   }
 
   // Empty `visitProps` array, so it can be reused
@@ -603,56 +592,6 @@ function mergeVisitFns(visitProps: VisitProp[]): VisitFn {
 
   return mergedFn;
 }
-
-type Merger = (...visitFns: VisitFn[]) => VisitFn;
-
-/**
- * Create a merger function that merges `fnCount` functions.
- *
- * @param fnCount - Number of functions to be merged
- * @returns Function to merge `fnCount` functions
- */
-function createMerger(fnCount: number): Merger {
-  const args = [];
-  let body = "return node=>{";
-  for (let i = 1; i <= fnCount; i++) {
-    args.push(`visit${i}`);
-    body += `visit${i}(node);`;
-  }
-  body += "}";
-  args.push(body);
-  // oxlint-disable-next-line typescript-eslint/no-implied-eval
-  return new Function(...args) as Merger;
-}
-
-// Pre-defined mergers for merging up to 5 functions
-const mergers: (Merger | null)[] = [
-  null, // No merger for 0 functions
-  null, // No merger for 1 function
-  (visit1: VisitFn, visit2: VisitFn) => (node: Node) => {
-    visit1(node);
-    visit2(node);
-  },
-  (visit1: VisitFn, visit2: VisitFn, visit3: VisitFn) => (node: Node) => {
-    visit1(node);
-    visit2(node);
-    visit3(node);
-  },
-  (visit1: VisitFn, visit2: VisitFn, visit3: VisitFn, visit4: VisitFn) => (node: Node) => {
-    visit1(node);
-    visit2(node);
-    visit3(node);
-    visit4(node);
-  },
-  (visit1: VisitFn, visit2: VisitFn, visit3: VisitFn, visit4: VisitFn, visit5: VisitFn) =>
-    (node: Node) => {
-      visit1(node);
-      visit2(node);
-      visit3(node);
-      visit4(node);
-      visit5(node);
-    },
-];
 
 /**
  * Merge array of CFG visit functions into a single function, which calls each of input functions in turn.
@@ -668,10 +607,10 @@ const mergers: (Merger | null)[] = [
  * The merged function is statically defined and does not contain a loop, to hopefully allow
  * JS engine to heavily optimize it.
  *
- * `cfgMergers` contains pre-defined functions to merge up to 5 CFG visit functions.
- * Merger functions for merging more than 5 visit functions are created dynamically on demand.
+ * `cfgMergers` contains pre-defined functions to merge up to 3 CFG visit functions.
+ * Merger functions for merging more than 3 visit functions are created dynamically on demand.
  *
- * @param visitProps - Array of `VisitProp` objects
+ * @param visitProps - Array of `CfgVisitProp` objects
  * @returns Function which calls all CFG visit functions in turn
  */
 function mergeCfgVisitFns(visitProps: CfgVisitProp[]): CfgVisitFn {
@@ -688,31 +627,15 @@ function mergeCfgVisitFns(visitProps: CfgVisitProp[]): CfgVisitFn {
     // No need to sort in order of specificity, because each rule can only have 1 handler for each CFG event
 
     // Get or create merger for merging `numVisitFns` functions
-    let merger: CfgMerger | null;
-    if (cfgMergers.length <= numVisitFns) {
-      while (cfgMergers.length < numVisitFns) {
-        cfgMergers.push(null);
-      }
-      merger = createCfgMerger(numVisitFns);
-      cfgMergers.push(merger);
-    } else {
-      merger = cfgMergers[numVisitFns];
-      if (merger === null) merger = cfgMergers[numVisitFns] = createCfgMerger(numVisitFns);
+    while (cfgMergers.length <= numVisitFns) {
+      cfgMergers.push(null);
     }
 
-    // Merge functions.
-    // Reuse a temporary array to avoid creating a new array for each merge.
-    // TODO: Make merger functions take an array of `VisitProp`s to avoid this operation?
-    typeAssertIs<CfgVisitFn[]>(visitFns);
-    debugAssert(visitFns.length === 0, "`visitFns` should be empty");
+    let merger = cfgMergers[numVisitFns];
+    if (merger === null) merger = cfgMergers[numVisitFns] = createMerger(numVisitFns, true);
 
-    for (let i = 0; i < numVisitFns; i++) {
-      debugAssertIsNonNull(visitProps[i].fn);
-      visitFns.push(visitProps[i].fn!);
-    }
-    mergedFn = merger(...visitFns);
-
-    visitFns.length = 0;
+    // Merge functions
+    mergedFn = merger(visitProps);
   }
 
   // Empty `visitProps` array, so it can be reused
@@ -721,61 +644,143 @@ function mergeCfgVisitFns(visitProps: CfgVisitProp[]): CfgVisitFn {
   return mergedFn;
 }
 
-type CfgMerger = (...visitFns: CfgVisitFn[]) => CfgVisitFn;
-
 /**
- * Create a CFG merger function that merges `fnCount` functions.
+ * Create a merger function that merges `fnCount` functions.
+ *
+ * Generated code for `fnCount: 3`, `isCfg: false` (AST node visit function merger):
+ * ```js
+ * function(p) {
+ *   var v0 = p[0].fn,
+ *     v1 = p[1].fn,
+ *     v2 = p[2].fn;
+ *   return (n) => {
+ *     v0(n);
+ *     v1(n);
+ *     v2(n);
+ *   }
+ * }
+ * ```
+ *
+ * Generated code for `fnCount: 2`, `isCfg: true` (CFG event handler merger):
+ * ```js
+ * function(p) {
+ *   var v0 = p[0].fn,
+ *     v1 = p[1].fn;
+ *   return (...a) => {
+ *     v0(...a);
+ *     v1(...a);
+ *   }
+ * }
+ * ```
  *
  * @param fnCount - Number of functions to be merged
+ * @param isCfg - `true` if creating a merger for CFG event handlers
  * @returns Function to merge `fnCount` functions
  */
-function createCfgMerger(fnCount: number): CfgMerger {
-  const args = [];
-  let body = "return (...args)=>{";
-  for (let i = 1; i <= fnCount; i++) {
-    args.push(`visit${i}`);
-    body += `visit${i}(...args);`;
+function createMerger(fnCount: number, isCfg: false): Merger;
+function createMerger(fnCount: number, isCfg: true): CfgMerger;
+function createMerger(fnCount: number, isCfg: boolean): Merger | CfgMerger {
+  const visitArgs = isCfg ? "...a" : "n";
+  let body = "var ";
+  let fnBody = `;return (${visitArgs})=>{`;
+  for (let i = 0; i < fnCount; i++) {
+    if (i !== 0) body += ",";
+    body += `v${i}=p[${i}].fn`;
+    fnBody += `v${i}(${visitArgs});`;
   }
-  body += "}";
-  args.push(body);
+  fnBody += "}";
+
+  body += fnBody;
+
   // oxlint-disable-next-line typescript-eslint/no-implied-eval
-  return new Function(...args) as CfgMerger;
+  return new Function("p", body) as Merger | CfgMerger;
 }
 
-// Pre-defined CFG mergers for merging up to 5 functions
+// Pre-defined mergers for merging up to 5 functions.
+//
+// We use `var` statements instead of `const` to avoid the cost of TDZ checks, because merged functions
+// can be on a very hot path.
+const mergers: (Merger | null)[] = [
+  null, // No merger for 0 functions
+  null, // No merger for 1 function
+  (visitProps: VisitProp[]) => {
+    debugAssert(visitProps.length === 2, "`visitProps` should have 2 elements");
+    var visit1 = visitProps[0].fn!;
+    var visit2 = visitProps[1].fn!;
+    return (node: Node) => {
+      visit1(node);
+      visit2(node);
+    };
+  },
+  (visitProps: VisitProp[]) => {
+    debugAssert(visitProps.length === 3, "`visitProps` should have 3 elements");
+    var visit1 = visitProps[0].fn!;
+    var visit2 = visitProps[1].fn!;
+    var visit3 = visitProps[2].fn!;
+    return (node: Node) => {
+      visit1(node);
+      visit2(node);
+      visit3(node);
+    };
+  },
+  (visitProps: VisitProp[]) => {
+    debugAssert(visitProps.length === 4, "`visitProps` should have 4 elements");
+    var visit1 = visitProps[0].fn!;
+    var visit2 = visitProps[1].fn!;
+    var visit3 = visitProps[2].fn!;
+    var visit4 = visitProps[3].fn!;
+    return (node: Node) => {
+      visit1(node);
+      visit2(node);
+      visit3(node);
+      visit4(node);
+    };
+  },
+  (visitProps: VisitProp[]) => {
+    debugAssert(visitProps.length === 5, "`visitProps` should have 5 elements");
+    var visit1 = visitProps[0].fn!;
+    var visit2 = visitProps[1].fn!;
+    var visit3 = visitProps[2].fn!;
+    var visit4 = visitProps[3].fn!;
+    var visit5 = visitProps[4].fn!;
+    return (node: Node) => {
+      visit1(node);
+      visit2(node);
+      visit3(node);
+      visit4(node);
+      visit5(node);
+    };
+  },
+];
+
+// Pre-defined CFG mergers for merging up to 3 functions.
+//
+// CFG event handlers are rarely used, so we only pre-define mergers for up to 3 functions,
+// unlike the AST node visit fns, where we pre-define 5.
+//
+// We use `var` statements instead of `const` to avoid the cost of TDZ checks, because merged functions
+// can be on a very hot path.
 const cfgMergers: (CfgMerger | null)[] = [
   null, // No merger for 0 functions
   null, // No merger for 1 function
-  (visit1: CfgVisitFn, visit2: CfgVisitFn) =>
-    (...args: unknown[]) => {
+  (visitProps: CfgVisitProp[]) => {
+    debugAssert(visitProps.length === 2, "`visitProps` should have 2 elements");
+    var visit1 = visitProps[0].fn!;
+    var visit2 = visitProps[1].fn!;
+    return (...args: unknown[]) => {
       visit1(...args);
       visit2(...args);
-    },
-  (visit1: CfgVisitFn, visit2: CfgVisitFn, visit3: CfgVisitFn) =>
-    (...args: unknown[]) => {
-      visit1(...args);
-      visit2(...args);
-      visit3(...args);
-    },
-  (visit1: CfgVisitFn, visit2: CfgVisitFn, visit3: CfgVisitFn, visit4: CfgVisitFn) =>
-    (...args: unknown[]) => {
-      visit1(...args);
-      visit2(...args);
-      visit3(...args);
-      visit4(...args);
-    },
-  (
-    visit1: CfgVisitFn,
-    visit2: CfgVisitFn,
-    visit3: CfgVisitFn,
-    visit4: CfgVisitFn,
-    visit5: CfgVisitFn,
-  ) =>
-    (...args: unknown[]) => {
+    };
+  },
+  (visitProps: CfgVisitProp[]) => {
+    debugAssert(visitProps.length === 3, "`visitProps` should have 3 elements");
+    var visit1 = visitProps[0].fn!;
+    var visit2 = visitProps[1].fn!;
+    var visit3 = visitProps[2].fn!;
+    return (...args: unknown[]) => {
       visit1(...args);
       visit2(...args);
       visit3(...args);
-      visit4(...args);
-      visit5(...args);
-    },
+    };
+  },
 ];

@@ -1,0 +1,44 @@
+name: Issue Labeled
+
+on:
+  issues:
+    types: [labeled]
+
+jobs:
+  reply-labeled:
+    if: github.repository == 'oxc-project/oxc'
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+    steps:
+      - name: contribution welcome
+        if: github.event.label.name == 'good first issue' || github.event.label.name == 'E-Help Wanted'
+        uses: actions-cool/issues-helper@200c78641dbf33838311e5a1e0c31bbdb92d7cf0 # v3.8.0
+        with:
+          actions: "remove-labels"
+          token: ${{ secrets.GITHUB_TOKEN }}
+          issue-number: ${{ github.event.issue.number }}
+          labels: "pending triage, needs reproduction"
+
+      - name: needs reproduction
+        if: github.event.label.name == 'needs reproduction'
+        uses: actions-cool/issues-helper@200c78641dbf33838311e5a1e0c31bbdb92d7cf0 # v3.8.0
+        with:
+          actions: "create-comment, remove-labels"
+          token: ${{ secrets.GITHUB_TOKEN }}
+          issue-number: ${{ github.event.issue.number }}
+          labels: "pending triage"
+          body: |
+            Hello @${{ github.event.issue.user.login }}
+
+            Please provide a [minimal reproduction](https://stackoverflow.com/help/minimal-reproducible-example) using a GitHub repository or a link to the [Oxc Playground](https://playground.oxc.rs). This helps us understand and resolve your issue much faster.
+
+            **A good reproduction should be:**
+            - **Minimal** - include only the code necessary to demonstrate the issue
+            - **Complete** - contain everything needed to run and observe the problem
+            - **Reproducible** - consistently show the issue with clear steps
+
+            If no reproduction is provided, issues labeled `needs reproduction` will be closed after 3 days of inactivity.
+
+            For more context on why this is required, please read: https://antfu.me/posts/why-reproductions-are-required

@@ -14,7 +14,6 @@ describe("LSP formatting", () => {
       ["format/test.toml", "toml"],
       ["format/formatted.ts", "typescript"],
       ["format/test.txt", "plaintext"],
-      ["format/test.ts.txt", "typescript"],
     ])("should handle %s", async (path, languageId) => {
       expect(await formatFixture(FIXTURES_DIR, path, languageId)).toMatchSnapshot();
     });
@@ -32,6 +31,7 @@ describe("LSP formatting", () => {
       ["config-sort-tailwindcss/test.vue", "vue"],
       ["config-sort-both/test.jsx", "javascriptreact"],
       ["editorconfig/test.ts", "typescript"],
+      ["config-js-stdout-pollution/test.ts", "typescript"],
     ])("should apply config from %s", async (path, languageId) => {
       expect(await formatFixture(FIXTURES_DIR, path, languageId)).toMatchSnapshot();
     });

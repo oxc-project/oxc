@@ -4,6 +4,37 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.43.0] - 2026-03-30
+
+### 🚀 Features
+
+- 23050fa oxfmt: Support markdown-in-js substitution (#20683) (leaysgur)
+- 4087295 oxfmt: Support angular-in-js substitution (#20676) (leaysgur)
+
+## [0.42.0] - 2026-03-24
+
+### 🚀 Features
+
+- 4fec907 formatter: Add JSDoc comment formatting support (#19828) (Dunqing)
+- c21c5a7 oxfmt: Support html-in-js substitution (#20193) (leaysgur)
+- c5aeae4 formatter,oxfmt: Support `/* LANG */` comment for gql|html-in-js (#20224) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 399e629 formatter: Align more trailing comment cases with prettier (#20636) (#20643) (Andreas Lubbe)
+- 909fb4d formatter: Remove unnecessary parens around TSConstructorType in arrow function return type (#20573) (bab)
+- d35b25f formatter,oxfmt: Remove redundant space after soft_line_break_or_space (#20562) (leaysgur)
+- f8c452a formatter,oxfmt: Handle css-in-js comment inside template (#20452) (leaysgur)
+- 7c233f4 formatter,oxfmt: Handle nested `BinaryExpression` for tailwind trailing spaces (#20450) (leaysgur)
+- 71628e6 formatter,oxfmt: Sort imports should not flush Empty line (#20443) (leaysgur)
+
+## [0.41.0] - 2026-03-16
+
+### 🐛 Bug Fixes
+
+- ce65099 formatter: Preserve parentheses around as expression before private field access (#20419) (bab)
+- 4ef93ea formatter: Honor trailing ignore comments after list separators (#19925) (Andreas Lubbe)
+
 ## [0.37.0] - 2026-03-09
 
 ### 🚀 Features

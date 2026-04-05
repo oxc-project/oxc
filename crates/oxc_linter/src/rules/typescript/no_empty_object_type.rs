@@ -123,7 +123,7 @@ declare_oxc_lint!(
     /// The `{}`, or "empty object" type in TypeScript is a common source of confusion for developers unfamiliar with TypeScript's structural typing. `{}` represents any non-nullish value, including literals like 0 and "".
     /// Often, developers writing `{}` actually mean either:
     /// - object: representing any object value
-    /// - unknown: representing any value at all, including null and undefined
+    /// - unknown: representing any value at all, including `null` and `undefined`
     /// In other words, the "empty object" type {}` really means "any value that is defined". That includes arrays, class instances, functions, and primitives such as string and symbol.
     ///
     /// Note that this rule does not report on:

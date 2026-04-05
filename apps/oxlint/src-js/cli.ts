@@ -174,6 +174,13 @@ if (!process.stdout.isTTY) {
   process.stdout._handle?.setBlocking?.(true);
 }
 
+// LSP uses stdout for communication, so write logs to stderr to avoid breaking the protocol.
+// Since LSP is handled on the Rust side, we have to check the flag here. (`lint()` starts the server and waits)
+// Also, for Oxlint, this actually affects:
+// - loading JS/TS config files
+// - Execution of JS plugins
+if (args.includes("--lsp")) process.stdout.write = process.stderr.write.bind(process.stderr);
+
 // Call Rust, passing callbacks and CLI arguments
 const success = await lint(
   args,

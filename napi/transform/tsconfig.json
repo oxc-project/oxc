@@ -1,9 +1,4 @@
 {
-  "compilerOptions": {
-    "lib": ["ESNext"],
-    "module": "Preserve",
-    "moduleResolution": "Bundler",
-    "noEmit": true,
-    "target": "ESNext"
-  }
+  "files": [],
+  "references": [{ "path": "./tsconfig.node.json" }]
 }

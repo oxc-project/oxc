@@ -481,6 +481,53 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
     }
 
+    pub(crate) fn parse_delimited_list_into<F, T>(
+        &mut self,
+        list: &mut Vec<'a, T>,
+        close: Kind,
+        separator: Kind,
+        opening_span: Span,
+        mut f: F,
+    ) -> Option<u32>
+    where
+        F: FnMut(&mut Self) -> T,
+    {
+        // Cache cur_kind() to avoid redundant calls in compound checks
+        let kind = self.cur_kind();
+        if kind == close
+            || matches!(kind, Kind::Eof | Kind::Undetermined)
+            || self.fatal_error.is_some()
+        {
+            return None;
+        }
+        list.push(f(self));
+        loop {
+            let kind = self.cur_kind();
+            if kind == close
+                || matches!(kind, Kind::Eof | Kind::Undetermined)
+                || self.fatal_error.is_some()
+            {
+                return None;
+            }
+            if !self.at(separator) {
+                self.set_fatal_error(diagnostics::expect_closing_or_separator(
+                    close.to_str(),
+                    separator.to_str(),
+                    kind.to_str(),
+                    self.cur_token().span(),
+                    opening_span,
+                ));
+                return None;
+            }
+            self.advance(separator);
+            if self.cur_kind() == close {
+                let trailing_separator = self.prev_token_end - 1;
+                return Some(trailing_separator);
+            }
+            list.push(f(self));
+        }
+    }
+
     pub(crate) fn parse_delimited_list_with_rest<E, A, R, D>(
         &mut self,
         close: Kind,

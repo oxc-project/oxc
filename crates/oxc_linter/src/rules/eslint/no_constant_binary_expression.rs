@@ -19,7 +19,7 @@ pub struct NoConstantBinaryExpression;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow expressions where the operation doesn't affect the value
+    /// Disallow expressions where the operation doesn't affect the value.
     ///
     /// ### Why is this bad?
     ///

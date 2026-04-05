@@ -1,8 +1,8 @@
 import { basename as pathBasename } from "node:path";
 
 import { getErrorMessage } from "./utils/utils.ts";
-import { isDefineConfig } from "./package/config.ts";
 import { DateNow, JSONStringify } from "./utils/globals.ts";
+import { getUnsupportedTypeScriptModuleLoadHintForError } from "./utils/node_version.ts";
 
 interface JsConfigResult {
   path: string;
@@ -135,12 +135,6 @@ export async function loadJsConfigs(paths: string[]): Promise<string> {
         if (!isObject(config)) {
           throw new Error(`Configuration file must have a default export that is an object.`);
         }
-
-        if (!isDefineConfig(config)) {
-          throw new Error(
-            `Configuration file must wrap its default export with defineConfig() from "oxlint".`,
-          );
-        }
         validateConfigExtends(config as object);
         return { path, config };
       }),
@@ -154,7 +148,15 @@ export async function loadJsConfigs(paths: string[]): Promise<string> {
       if (result.status === "fulfilled") {
         successes.push(result.value);
       } else {
-        errors.push({ path: paths[i], error: getErrorMessage(result.reason) });
+        const path = paths[i];
+        const unsupportedNodeHint = getUnsupportedTypeScriptModuleLoadHintForError(
+          result.reason,
+          path,
+        );
+        errors.push({
+          path,
+          error: unsupportedNodeHint ?? getErrorMessage(result.reason),
+        });
       }
     }
 

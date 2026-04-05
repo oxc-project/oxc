@@ -20,7 +20,6 @@ const source = `https://github.com/oxc-project/oxc/blob/${ data }/crates/oxc_lin
 
 <RuleHeader />
 
-
 ### What it does
 
 Disallows variable declarations, imports, or type declarations that are
@@ -324,7 +323,7 @@ Fine-grained auto-fix controls for `no-unused-vars`.
 
 #### fix.imports
 
-type: `"off" | "suggestion" | "fix"`
+type: `"off" | "suggestion" | "fix" | "safe-fix"`
 
 
 
@@ -349,11 +348,19 @@ Emit suggestion-style fixes (current behavior).
 
 
 Emit fix-style fixes.
+
+
+##### `"safe-fix"`
+
+
+
+Like `Fix`, but does not mark them as dangerous.
+Only applicable for imports, unavailable for variables.
 
 
 #### fix.variables
 
-type: `"off" | "suggestion" | "fix"`
+type: `"off" | "suggestion" | "fix" | "safe-fix"`
 
 
 
@@ -378,6 +385,14 @@ Emit suggestion-style fixes (current behavior).
 
 
 Emit fix-style fixes.
+
+
+##### `"safe-fix"`
+
+
+
+Like `Fix`, but does not mark them as dangerous.
+Only applicable for imports, unavailable for variables.
 
 
 ### ignoreClassWithStaticInitBlock
@@ -595,29 +610,10 @@ console.log(b);
 
 
 ## How to use
-
-To **enable** this rule using the config file or in the CLI, you can use:
-
-::: code-group
-
-```json [Config (.oxlintrc.json)]
-{
-    "rules": {
-        "no-unused-vars": "error"
-    }
-}
-```
-
-```bash [CLI]
-oxlint --deny no-unused-vars
-```
-
-:::
-
+<RuleHowToUse />
 
 ## References
-
-- <a v-bind:href="source" target="_blank" rel="noreferrer">Rule Source</a>
+<RuleReferences />
 
 
 --- import/namespace.md ---
@@ -637,7 +633,6 @@ const source = `https://github.com/oxc-project/oxc/blob/${ data }/crates/oxc_lin
 </script>
 
 <RuleHeader />
-
 
 ### What it does
 
@@ -707,30 +702,10 @@ Whether to allow computed references to an imported namespace.
 
 
 ## How to use
-
-To **enable** this rule using the config file or in the CLI, you can use:
-
-::: code-group
-
-```json [Config (.oxlintrc.json)]
-{
-    "plugins": ["import"],
-    "rules": {
-        "import/namespace": "error"
-    }
-}
-```
-
-```bash [CLI]
-oxlint --deny import/namespace --import-plugin
-```
-
-:::
-
+<RuleHowToUse />
 
 ## References
-
-- <a v-bind:href="source" target="_blank" rel="noreferrer">Rule Source</a>
+<RuleReferences />
 
 
 --- jest/expect-expect.md ---
@@ -750,7 +725,6 @@ const source = `https://github.com/oxc-project/oxc/blob/${ data }/crates/oxc_lin
 </script>
 
 <RuleHeader />
-
 
 ### What it does
 
@@ -811,30 +785,10 @@ NOTE: The default value is `["expect"]` for Jest and
 
 
 ## How to use
-
-To **enable** this rule using the config file or in the CLI, you can use:
-
-::: code-group
-
-```json [Config (.oxlintrc.json)]
-{
-    "plugins": ["jest"],
-    "rules": {
-        "jest/expect-expect": "error"
-    }
-}
-```
-
-```bash [CLI]
-oxlint --deny jest/expect-expect --jest-plugin
-```
-
-:::
-
+<RuleHowToUse />
 
 ## References
-
-- <a v-bind:href="source" target="_blank" rel="noreferrer">Rule Source</a>
+<RuleReferences />
 
 
 --- nextjs/no-duplicate-head.md ---
@@ -854,7 +808,6 @@ const source = `https://github.com/oxc-project/oxc/blob/${ data }/crates/oxc_lin
 </script>
 
 <RuleHeader />
-
 
 ### What it does
 
@@ -911,30 +864,10 @@ export default MyDocument
 
 
 ## How to use
-
-To **enable** this rule using the config file or in the CLI, you can use:
-
-::: code-group
-
-```json [Config (.oxlintrc.json)]
-{
-    "plugins": ["nextjs"],
-    "rules": {
-        "nextjs/no-duplicate-head": "error"
-    }
-}
-```
-
-```bash [CLI]
-oxlint --deny nextjs/no-duplicate-head --nextjs-plugin
-```
-
-:::
-
+<RuleHowToUse />
 
 ## References
-
-- <a v-bind:href="source" target="_blank" rel="noreferrer">Rule Source</a>
+<RuleReferences />
 
 
 --- promise/no-callback-in-promise.md ---
@@ -954,7 +887,6 @@ const source = `https://github.com/oxc-project/oxc/blob/${ data }/crates/oxc_lin
 </script>
 
 <RuleHeader />
-
 
 ### What it does
 
@@ -1025,30 +957,10 @@ Boolean as to whether callbacks in timeout functions like `setTimeout` will err.
 
 
 ## How to use
-
-To **enable** this rule using the config file or in the CLI, you can use:
-
-::: code-group
-
-```json [Config (.oxlintrc.json)]
-{
-    "plugins": ["promise"],
-    "rules": {
-        "promise/no-callback-in-promise": "error"
-    }
-}
-```
-
-```bash [CLI]
-oxlint --deny promise/no-callback-in-promise --promise-plugin
-```
-
-:::
-
+<RuleHowToUse />
 
 ## References
-
-- <a v-bind:href="source" target="_blank" rel="noreferrer">Rule Source</a>
+<RuleReferences />
 
 
 --- react/no-will-update-set-state.md ---
@@ -1068,7 +980,6 @@ const source = `https://github.com/oxc-project/oxc/blob/${ data }/crates/oxc_lin
 </script>
 
 <RuleHeader />
-
 
 ### What it does
 
@@ -1117,30 +1028,10 @@ type: `"allowed" | "disallow-in-func"`
 
 
 ## How to use
-
-To **enable** this rule using the config file or in the CLI, you can use:
-
-::: code-group
-
-```json [Config (.oxlintrc.json)]
-{
-    "plugins": ["react"],
-    "rules": {
-        "react/no-will-update-set-state": "error"
-    }
-}
-```
-
-```bash [CLI]
-oxlint --deny react/no-will-update-set-state --react-plugin
-```
-
-:::
-
+<RuleHowToUse />
 
 ## References
-
-- <a v-bind:href="source" target="_blank" rel="noreferrer">Rule Source</a>
+<RuleReferences />
 
 
 --- typescript/no-floating-promises.md ---
@@ -1161,7 +1052,6 @@ const tsgolintSource = `https://github.com/oxc-project/tsgolint/blob/main/intern
 </script>
 
 <RuleHeader />
-
 
 ### What it does
 
@@ -1416,30 +1306,10 @@ Ignore Promises that are void expressions.
 
 
 ## How to use
-
-To **enable** this rule using the config file or in the CLI, you can use:
-
-::: code-group
-
-```json [Config (.oxlintrc.json)]
-{
-    "rules": {
-        "typescript/no-floating-promises": "error"
-    }
-}
-```
-
-```bash [CLI]
-oxlint --type-aware --deny typescript/no-floating-promises
-```
-
-:::
-
+<RuleHowToUse />
 
 ## References
-
-- <a v-bind:href="source" target="_blank" rel="noreferrer">Rule Source</a>
-- <a v-bind:href="tsgolintSource" target="_blank" rel="noreferrer">Rule Source (tsgolint)</a>
+<RuleReferences />
 
 
 --- vue/no-lifecycle-after-await.md ---
@@ -1459,7 +1329,6 @@ const source = `https://github.com/oxc-project/oxc/blob/${ data }/crates/oxc_lin
 </script>
 
 <RuleHeader />
-
 
 ### What it does
 
@@ -1501,30 +1370,10 @@ export default {
 
 
 ## How to use
-
-To **enable** this rule using the config file or in the CLI, you can use:
-
-::: code-group
-
-```json [Config (.oxlintrc.json)]
-{
-    "plugins": ["vue"],
-    "rules": {
-        "vue/no-lifecycle-after-await": "error"
-    }
-}
-```
-
-```bash [CLI]
-oxlint --deny vue/no-lifecycle-after-await --vue-plugin
-```
-
-:::
-
+<RuleHowToUse />
 
 ## References
-
-- <a v-bind:href="source" target="_blank" rel="noreferrer">Rule Source</a>
+<RuleReferences />
 
 
 --- unicorn/prefer-array-find.md ---
@@ -1544,7 +1393,6 @@ const source = `https://github.com/oxc-project/oxc/blob/${ data }/crates/oxc_lin
 </script>
 
 <RuleHeader />
-
 
 ### What it does
 
@@ -1573,29 +1421,10 @@ const match = users.find(fn);
 
 
 ## How to use
-
-To **enable** this rule using the config file or in the CLI, you can use:
-
-::: code-group
-
-```json [Config (.oxlintrc.json)]
-{
-    "rules": {
-        "unicorn/prefer-array-find": "error"
-    }
-}
-```
-
-```bash [CLI]
-oxlint --deny unicorn/prefer-array-find
-```
-
-:::
-
+<RuleHowToUse />
 
 ## References
-
-- <a v-bind:href="source" target="_blank" rel="noreferrer">Rule Source</a>
+<RuleReferences />
 
 
 --- oxc/no-barrel-file.md ---
@@ -1615,7 +1444,6 @@ const source = `https://github.com/oxc-project/oxc/blob/${ data }/crates/oxc_lin
 </script>
 
 <RuleHeader />
-
 
 ### What it does
 
@@ -1671,29 +1499,10 @@ before the rule is triggered.
 
 
 ## How to use
-
-To **enable** this rule using the config file or in the CLI, you can use:
-
-::: code-group
-
-```json [Config (.oxlintrc.json)]
-{
-    "rules": {
-        "oxc/no-barrel-file": "error"
-    }
-}
-```
-
-```bash [CLI]
-oxlint --deny oxc/no-barrel-file
-```
-
-:::
-
+<RuleHowToUse />
 
 ## References
-
-- <a v-bind:href="source" target="_blank" rel="noreferrer">Rule Source</a>
+<RuleReferences />
 
 
 --- react/forbid-dom-props.md ---
@@ -1713,7 +1522,6 @@ const source = `https://github.com/oxc-project/oxc/blob/${ data }/crates/oxc_lin
 </script>
 
 <RuleHeader />
-
 
 ### What it does
 
@@ -1806,30 +1614,10 @@ The name of the prop to forbid.
 
 
 ## How to use
-
-To **enable** this rule using the config file or in the CLI, you can use:
-
-::: code-group
-
-```json [Config (.oxlintrc.json)]
-{
-    "plugins": ["react"],
-    "rules": {
-        "react/forbid-dom-props": "error"
-    }
-}
-```
-
-```bash [CLI]
-oxlint --deny react/forbid-dom-props --react-plugin
-```
-
-:::
-
+<RuleHowToUse />
 
 ## References
-
-- <a v-bind:href="source" target="_blank" rel="noreferrer">Rule Source</a>
+<RuleReferences />
 
 
 --- typescript/no-explicit-any.md ---
@@ -1849,7 +1637,6 @@ const source = `https://github.com/oxc-project/oxc/blob/${ data }/crates/oxc_lin
 </script>
 
 <RuleHeader />
-
 
 ### What it does
 
@@ -1920,29 +1707,10 @@ Whether to ignore rest parameter arrays.
 
 
 ## How to use
-
-To **enable** this rule using the config file or in the CLI, you can use:
-
-::: code-group
-
-```json [Config (.oxlintrc.json)]
-{
-    "rules": {
-        "typescript/no-explicit-any": "error"
-    }
-}
-```
-
-```bash [CLI]
-oxlint --deny typescript/no-explicit-any
-```
-
-:::
-
+<RuleHowToUse />
 
 ## References
-
-- <a v-bind:href="source" target="_blank" rel="noreferrer">Rule Source</a>
+<RuleReferences />
 
 
 --- jsdoc/require-returns.md ---
@@ -1962,7 +1730,6 @@ const source = `https://github.com/oxc-project/oxc/blob/${ data }/crates/oxc_lin
 </script>
 
 <RuleHeader />
-
 
 ### What it does
 
@@ -2047,30 +1814,10 @@ Whether to require a `@returns` tag for async functions.
 
 
 ## How to use
-
-To **enable** this rule using the config file or in the CLI, you can use:
-
-::: code-group
-
-```json [Config (.oxlintrc.json)]
-{
-    "plugins": ["jsdoc"],
-    "rules": {
-        "jsdoc/require-returns": "error"
-    }
-}
-```
-
-```bash [CLI]
-oxlint --deny jsdoc/require-returns --jsdoc-plugin
-```
-
-:::
-
+<RuleHowToUse />
 
 ## References
-
-- <a v-bind:href="source" target="_blank" rel="noreferrer">Rule Source</a>
+<RuleReferences />
 
 
 --- react/rules-of-hooks.md ---
@@ -2090,7 +1837,6 @@ const source = `https://github.com/oxc-project/oxc/blob/${ data }/crates/oxc_lin
 </script>
 
 <RuleHeader />
-
 
 ### What it does
 
@@ -2152,30 +1898,10 @@ function useCustomHook() {
 
 
 ## How to use
-
-To **enable** this rule using the config file or in the CLI, you can use:
-
-::: code-group
-
-```json [Config (.oxlintrc.json)]
-{
-    "plugins": ["react"],
-    "rules": {
-        "react/rules-of-hooks": "error"
-    }
-}
-```
-
-```bash [CLI]
-oxlint --deny react/rules-of-hooks --react-plugin
-```
-
-:::
-
+<RuleHowToUse />
 
 ## References
-
-- <a v-bind:href="source" target="_blank" rel="noreferrer">Rule Source</a>
+<RuleReferences />
 
 
 --- typescript/class-literal-property-style.md ---
@@ -2195,7 +1921,6 @@ const source = `https://github.com/oxc-project/oxc/blob/${ data }/crates/oxc_lin
 </script>
 
 <RuleHeader />
-
 
 ### What it does
 
@@ -2234,26 +1959,7 @@ type: `"fields" | "getters"`
 
 
 ## How to use
-
-To **enable** this rule using the config file or in the CLI, you can use:
-
-::: code-group
-
-```json [Config (.oxlintrc.json)]
-{
-    "rules": {
-        "typescript/class-literal-property-style": "error"
-    }
-}
-```
-
-```bash [CLI]
-oxlint --deny typescript/class-literal-property-style
-```
-
-:::
-
+<RuleHowToUse />
 
 ## References
-
-- <a v-bind:href="source" target="_blank" rel="noreferrer">Rule Source</a>
+<RuleReferences />

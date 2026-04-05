@@ -20,7 +20,7 @@ pub struct PreferStringRaw;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Prefers use of String.raw to avoid escaping \.
+    /// Prefers use of `String.raw` to avoid escaping `\`.
     ///
     /// ### Why is this bad?
     ///

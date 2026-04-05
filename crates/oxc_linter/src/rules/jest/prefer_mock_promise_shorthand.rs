@@ -4,7 +4,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{Atom, Span};
+use oxc_span::{Span, Str};
 
 use crate::{context::LintContext, fixer::RuleFixer, rule::Rule, utils::get_node_name};
 
@@ -170,7 +170,7 @@ impl PreferMockPromiseShorthand {
         // if arguments is more than one, just report it instead of fixing it.
         if call_expr.arguments.len() <= 1 {
             ctx.diagnostic_with_fix(
-                use_mock_shorthand(Atom::from(prefer_name).as_str(), property_span),
+                use_mock_shorthand(Str::from(prefer_name).as_str(), property_span),
                 |fixer| {
                     let content = Self::fix(fixer, prefer_name, call_expr);
                     let span = Span::new(property_span.start, fix_span.end);
@@ -178,7 +178,7 @@ impl PreferMockPromiseShorthand {
                 },
             );
         } else {
-            ctx.diagnostic(use_mock_shorthand(Atom::from(prefer_name).as_str(), property_span));
+            ctx.diagnostic(use_mock_shorthand(Str::from(prefer_name).as_str(), property_span));
         }
     }
 

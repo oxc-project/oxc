@@ -28,7 +28,7 @@
 import { readdirSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
 import { join as pathJoin, basename, relative as pathRelative } from "node:path";
 import { createRequire } from "node:module";
-import { execFileSync } from "node:child_process";
+import { execSync } from "node:child_process";
 import serialize from "serialize-javascript";
 
 import type { CreateRule } from "../src-js/plugins/load.ts";
@@ -137,7 +137,7 @@ export default function generatePluginEslint(): void {
   // Format generated index file with oxfmt to clean up unnecessary quotes around property names.
   // This isn't necessary, as it gets minified and bundled anyway, but it makes generated code easier to read
   // when debugging.
-  execFileSync("pnpm", ["exec", "oxfmt", "--write", indexFilePath], { cwd: rootDirPath });
+  execSync(`pnpm exec oxfmt --write ${JSON.stringify(indexFilePath)}`, { cwd: rootDirPath });
 
   // Generate the rule_names.ts file for use in tsdown config
   const ruleNamesCode = [

@@ -11,7 +11,7 @@ use oxc_allocator::{Allocator, BitSet, HashSet, Vec};
 use oxc_ast::ast::{Declaration, Program, Statement};
 use oxc_data_structures::inline_string::InlineString;
 use oxc_semantic::{AstNodes, Reference, Scoping, Semantic, SemanticBuilder, SymbolId};
-use oxc_span::{Atom, CompactStr, Ident, SourceType};
+use oxc_span::{CompactStr, Ident, SourceType, Str};
 
 pub(crate) mod base54;
 mod keep_names;
@@ -605,7 +605,7 @@ impl<'t> Mangler<'t> {
         program: &Program<'a>,
         allocator: &'a Allocator,
         symbols_len: usize,
-    ) -> (HashSet<'a, Atom<'a>>, Option<BitSet<'a>>) {
+    ) -> (HashSet<'a, Str<'a>>, Option<BitSet<'a>>) {
         let mut exported_symbols = BitSet::new_in(symbols_len, allocator);
         let mut exported_names = HashSet::new_in(allocator);
         for statement in &program.body {
@@ -614,12 +614,12 @@ impl<'t> Mangler<'t> {
             if let Declaration::VariableDeclaration(decl) = decl {
                 for decl in &decl.declarations {
                     if let Some(id) = decl.id.get_binding_identifier() {
-                        exported_names.insert(id.name.as_atom());
+                        exported_names.insert(id.name.as_arena_str());
                         exported_symbols.set_bit(id.symbol_id().index());
                     }
                 }
             } else if let Some(id) = decl.id() {
-                exported_names.insert(id.name.as_atom());
+                exported_names.insert(id.name.as_arena_str());
                 exported_symbols.set_bit(id.symbol_id().index());
             }
         }

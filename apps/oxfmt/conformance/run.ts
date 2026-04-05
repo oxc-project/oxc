@@ -9,8 +9,6 @@ import { format } from "../dist/index.js";
 const CONFORMANCE_DIR = import.meta.dirname;
 const FIXTURES_DIR = join(CONFORMANCE_DIR, "fixtures");
 const SNAPSHOTS_DIR = join(CONFORMANCE_DIR, "snapshots");
-const PRETTIER_FIXTURES_DIR = join(FIXTURES_DIR, "prettier");
-const EDGE_CASES_DIR = join(FIXTURES_DIR, "edge-cases");
 
 type Category = {
   name: string;
@@ -31,51 +29,117 @@ const categories: Category[] = [
   {
     name: "js-in-vue",
     sources: [
-      { dir: PRETTIER_FIXTURES_DIR, ext: ".vue" },
-      { dir: join(EDGE_CASES_DIR, "js-in-vue") },
+      { dir: join(FIXTURES_DIR, "prettier"), ext: ".vue" },
+      { dir: join(FIXTURES_DIR, "vue-vben-admin"), ext: ".vue" },
+      { dir: join(FIXTURES_DIR, "edge-cases", "js-in-vue") },
     ],
     optionSets: [
       { printWidth: 80 },
       { printWidth: 100, vueIndentScriptAndStyle: true, singleQuote: true },
     ],
     notes: {
-      "vue/multiparser/lang-tsx.vue": "`lang=tsx` is not supported",
+      "prettier/vue/multiparser/lang-tsx.vue": "`lang=tsx` is not supported",
+      "vue-vben-admin/effects/common-ui/src/components/api-component/api-component.vue":
+        "`<T = any,>() => {}` comma in generic param is removed even in .ts(x) file",
     },
   },
   {
     name: "gql-in-js",
     sources: [
       {
-        dir: join(PRETTIER_FIXTURES_DIR, "js/multiparser-graphql"),
+        dir: join(FIXTURES_DIR, "prettier", "js/multiparser-graphql"),
         ext: ".js",
         excludes: ["format.test.js"],
       },
-      { dir: join(EDGE_CASES_DIR, "gql-in-js") },
+      { dir: join(FIXTURES_DIR, "edge-cases", "gql-in-js") },
     ],
     optionSets: [{ printWidth: 80 }, { printWidth: 100 }],
-    notes: {
-      "comment-tag.js": "`/* GraphQL */` comment tag not yet supported",
-    },
+    notes: {},
   },
   {
     name: "css-in-js",
     sources: [
       {
-        dir: join(PRETTIER_FIXTURES_DIR, "js/multiparser-css"),
+        dir: join(FIXTURES_DIR, "prettier", "js/multiparser-css"),
         ext: ".js",
         excludes: ["format.test.js"],
       },
       {
-        dir: join(PRETTIER_FIXTURES_DIR, "jsx/embed"),
+        dir: join(FIXTURES_DIR, "prettier", "jsx/embed"),
         ext: ".js",
         excludes: ["format.test.js"],
       },
-      { dir: join(EDGE_CASES_DIR, "css-in-js") },
+      { dir: join(FIXTURES_DIR, "edge-cases", "css-in-js") },
     ],
     optionSets: [{ printWidth: 80 }, { printWidth: 100 }],
     notes: {
-      "styled-components.js": "`Xxx.extend` not recognized as tag",
+      "prettier/js/multiparser-css/styled-components.js": "`Xxx.extend` not recognized as tag",
     },
+  },
+  {
+    name: "html-in-js",
+    sources: [
+      {
+        dir: join(FIXTURES_DIR, "prettier", "js/multiparser-html"),
+        ext: ".js",
+        excludes: ["format.test.js"],
+      },
+      {
+        dir: join(FIXTURES_DIR, "webawesome"),
+        ext: ".ts",
+      },
+      { dir: join(FIXTURES_DIR, "edge-cases", "html-in-js") },
+    ],
+    optionSets: [{ printWidth: 80 }, { printWidth: 100, htmlWhitespaceSensitivity: "ignore" }],
+    notes: {
+      "prettier/js/multiparser-html/issue-10691.js":
+        "js-in-html(`<script>`)-in-js needs lot more work; Please see oxc_formatter/src/print/template/embed/html.rs",
+      "webawesome/relative-time/relative-time.test.ts":
+        "html-in-js: Need to solve `label({ embed, hug }))` + `shouldExpandLastArg`",
+    },
+  },
+  {
+    name: "angular-in-js",
+    sources: [
+      {
+        dir: join(FIXTURES_DIR, "prettier", "typescript/angular-component-examples"),
+        ext: ".ts",
+      },
+      { dir: join(FIXTURES_DIR, "edge-cases", "angular-in-js") },
+    ],
+    optionSets: [{ printWidth: 80 }, { printWidth: 100, htmlWhitespaceSensitivity: "ignore" }],
+    notes: {},
+  },
+  {
+    name: "md-in-js",
+    sources: [
+      {
+        dir: join(FIXTURES_DIR, "prettier", "js/multiparser-markdown"),
+        ext: ".js",
+        excludes: ["format.test.js"],
+      },
+      { dir: join(FIXTURES_DIR, "edge-cases", "md-in-js") },
+    ],
+    optionSets: [{ printWidth: 80 }, { printWidth: 100, proseWrap: "always" }],
+    notes: {},
+  },
+  {
+    name: "xxx-in-js-comment",
+    sources: [
+      {
+        dir: join(FIXTURES_DIR, "prettier", "js/multiparser-html/language-comment"),
+        ext: ".js",
+        excludes: ["format.test.js"],
+      },
+      {
+        dir: join(FIXTURES_DIR, "prettier", "js/multiparser-comments"),
+        ext: ".js",
+        excludes: ["format.test.js"],
+      },
+      { dir: join(FIXTURES_DIR, "edge-cases", "xxx-in-js-comment") },
+    ],
+    optionSets: [{ printWidth: 80 }, { printWith: 100 }],
+    notes: {},
   },
 ];
 
@@ -137,7 +201,7 @@ function collectFixtures(sources: Source[]): Fixture[] {
       if (source.ext && !entry.name.endsWith(source.ext)) continue;
 
       const fullPath = join(entry.parentPath, entry.name);
-      const relPath = relative(source.dir, fullPath);
+      const relPath = relative(FIXTURES_DIR, fullPath);
       if (source.excludes?.some((s) => relPath.includes(s))) continue;
 
       results.push({ name: relPath, fullPath });

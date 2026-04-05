@@ -17,7 +17,7 @@ pub struct NoSelfCompare;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow comparisons where both sides are exactly the same
+    /// Disallow comparisons where both sides are exactly the same.
     ///
     /// ### Why is this bad?
     ///

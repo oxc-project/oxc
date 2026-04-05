@@ -24,7 +24,7 @@ pub struct NoArrayCallbackReference;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Prevents passing a function reference directly to iterator methods
+    /// Prevents passing a function reference directly to iterator methods.
     ///
     /// ### Why is this bad?
     ///

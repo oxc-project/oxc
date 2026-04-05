@@ -7,16 +7,16 @@ use oxc_allocator::Allocator;
 use oxc_ast::ast::*;
 use oxc_formatter::{
     AstNode, AstNodes, FormatOptions, FormatVueBindingParams, FormatVueScriptGeneric, Formatter,
-    get_parse_options,
+    enable_jsx_source_type, get_parse_options,
 };
 use oxc_parser::{Parser, ParserReturn};
 use oxc_span::SourceType;
 
 use crate::{
     core::{
-        ExternalFormatter, FormatFileStrategy, FormatResult, JsFormatEmbeddedCb,
-        JsFormatEmbeddedDocCb, JsFormatFileCb, JsInitExternalFormatterCb, JsSortTailwindClassesCb,
-        ResolvedOptions, SourceFormatter, resolve_options_from_value,
+        ExternalFormatter, FormatFileStrategy, JsFormatEmbeddedCb, JsFormatEmbeddedDocCb,
+        JsFormatFileCb, JsInitExternalFormatterCb, JsSortTailwindClassesCb, ResolvedOptions,
+        resolve_options_from_value,
     },
     prettier_compat::to_prettier_doc,
 };
@@ -85,8 +85,16 @@ pub fn run(
 // ---
 
 /// Full mode:
-/// - Format entire source as text
-/// - Return hardline-joined Doc string
+/// - Format entire source as IR
+/// - Convert IR to Prettier Doc
+///
+/// NOTE: Why we need to convert IR to Doc instead of just splitting by lines:
+/// A simple line-splitting approach might seem sufficient and can cover most cases,
+/// but it fails to handle newlines that appear within string, such as `TemplateLiteral`.
+///
+/// This is critical for `vueIndentScriptAndStyle: true`, (Prettier wraps the `<script>` content with `indent()`)
+/// `literalline` (used for template literal content) is not affected by `indent()`,
+/// while `hardline` (used for normal code) is.
 #[instrument(level = "debug", name = "oxfmt::text_to_doc::full", skip_all, fields(%source_ext))]
 fn run_full(
     source_ext: &str,
@@ -124,33 +132,60 @@ fn run_full(
         }
     }
 
+    let source_type = enable_jsx_source_type(
+        SourceType::from_extension(source_ext)
+            .expect("source_ext should be a valid JS/TS extension"),
+    );
+
     let strategy = FormatFileStrategy::OxcFormatter {
         path: format!("embedded.{source_ext}").into(),
-        source_type: SourceType::from_extension(source_ext)
-            .expect("source_ext should be a valid JS/TS extension"),
+        source_type,
     };
-    let mut resolved_options = resolve_options_from_value(options, &strategy, None)
+    let resolved_options = resolve_options_from_value(options, &strategy, None)
         .expect("`_oxfmtPluginOptionsJson` should contain valid config");
-    // Override filepath so external callbacks (e.g., Tailwind sorter) receive the parent
-    // file path (e.g., `App.vue`) instead of the dummy `embedded.ts` path.
-    resolved_options.set_filepath_override(parent_filepath);
-
-    let formatter = SourceFormatter::new(num_of_threads)
-        .with_external_formatter(Some(external_formatter.clone()));
-
-    let code = match tokio::task::block_in_place(|| {
-        formatter.format(&strategy, source_text, resolved_options)
-    }) {
-        FormatResult::Success { code, .. } => code,
-        FormatResult::Error(diagnostics) => {
-            debug!("`formatter.format()` failed: {diagnostics:?}");
-            external_formatter.cleanup();
-            return None;
-        }
+    let ResolvedOptions::OxcFormatter {
+        format_options,
+        mut external_options,
+        filepath_override,
+        ..
+    } = resolved_options
+    else {
+        unreachable!("OxcFormatter strategy should always resolve to OxcFormatter options");
     };
+
+    // Set filepath on external options for Prettier plugins and Tailwind sorter.
+    // Use the filepath override (parent filepath, e.g., `App.vue`) if available,
+    // otherwise fall back to the parent filepath from plugin options.
+    let filepath = filepath_override.as_deref().unwrap_or(&parent_filepath);
+    if let Value::Object(ref mut map) = external_options {
+        map.insert("filepath".to_string(), Value::String(filepath.to_string_lossy().to_string()));
+    }
+
+    let external_callbacks =
+        external_formatter.to_external_callbacks(&format_options, external_options);
+
+    let allocator = Allocator::default();
+    let ret =
+        Parser::new(&allocator, source_text, source_type).with_options(get_parse_options()).parse();
+    if !ret.errors.is_empty() {
+        debug!("`Parser::new().parse()` failed: {:?}", ret.errors);
+        external_formatter.cleanup();
+        return None;
+    }
+
+    let base_formatter = Formatter::new(&allocator, *format_options);
+    let formatted = tokio::task::block_in_place(|| {
+        base_formatter.format_with_external_callbacks(&ret.program, Some(external_callbacks))
+    });
+
+    let (elements, sorted_tailwind_classes) =
+        formatted.into_document().into_elements_and_tailwind_classes();
 
     external_formatter.cleanup();
-    Some(to_prettier_doc::printed_string_to_hardline_doc(&code))
+    Some(
+        to_prettier_doc::format_elements_to_prettier_doc(elements, &sorted_tailwind_classes)
+            .expect("Formatter IR to Prettier Doc conversion should not fail"),
+    )
 }
 
 // ---
