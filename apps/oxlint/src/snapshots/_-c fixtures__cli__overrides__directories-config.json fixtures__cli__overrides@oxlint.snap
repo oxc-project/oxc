@@ -1,5 +1,6 @@
 ---
 source: apps/oxlint/src/tester.rs
+assertion_line: 142
 ---
 ########## 
 arguments: -c fixtures/cli/overrides/directories-config.json fixtures/cli/overrides
@@ -35,7 +36,7 @@ working directory:
   help: Remove the debugger statement
 
 Found 2 warnings and 2 errors.
-Finished in <variable>ms on 7 files with 92 rules using 1 threads.
+Finished in <variable>ms on 7 files using 1 threads.
 ----------
 CLI result: LintFoundErrors
 ----------

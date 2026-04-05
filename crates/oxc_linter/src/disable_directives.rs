@@ -306,6 +306,18 @@ impl DisableDirectives {
     }
 }
 
+#[derive(Debug, Clone, Copy)]
+pub struct RawDirectiveComment<'a> {
+    /// Span of the full comment, including delimiters.
+    pub span: Span,
+    /// Span of the comment content, without delimiters.
+    ///
+    /// When `None`, `span` is treated as the content span for backward-compatible callers.
+    pub content_span: Option<Span>,
+    /// Raw comment content text, without delimiters.
+    pub text: &'a str,
+}
+
 pub struct DisableDirectivesBuilder {
     /// All the disabled rules with their corresponding covering spans
     intervals: Lapper<u32, DisabledRule>,
@@ -331,6 +343,32 @@ impl DisableDirectivesBuilder {
     }
 
     pub fn build(mut self, source_text: &str, comments: &[Comment]) -> DisableDirectives {
+        let raw_comments = comments
+            .iter()
+            .map(|comment| {
+                let span = comment.content_span();
+                RawDirectiveComment {
+                    span,
+                    content_span: None,
+                    text: span.source_text(source_text),
+                }
+            })
+            .collect::<Vec<_>>();
+        self.build_impl(source_text, &raw_comments);
+
+        DisableDirectives {
+            intervals: self.intervals,
+            disable_rule_comments: self.disable_rule_comments.into_boxed_slice(),
+            unused_enable_comments: self.unused_enable_comments.into_boxed_slice(),
+            used_disable_comments: RefCell::new(Vec::new()),
+        }
+    }
+
+    pub fn build_raw_comments(
+        mut self,
+        source_text: &str,
+        comments: &[RawDirectiveComment<'_>],
+    ) -> DisableDirectives {
         self.build_impl(source_text, comments);
 
         DisableDirectives {
@@ -346,7 +384,7 @@ impl DisableDirectivesBuilder {
     }
 
     #[expect(clippy::cast_possible_truncation)] // for `as u32`
-    fn build_impl(&mut self, source_text: &str, comments: &[Comment]) {
+    fn build_impl(&mut self, source_text: &str, comments: &[RawDirectiveComment<'_>]) {
         let source_len = source_text.len() as u32;
         // This algorithm iterates through the comments and builds all intervals
         // for matching disable and enable pairs.
@@ -361,10 +399,11 @@ impl DisableDirectivesBuilder {
         let mut unused_enable_directives: Vec<(Option<String>, Span)> = vec![];
 
         for comment in comments {
-            let comment_span = comment.content_span();
-            let text_source = comment_span.source_text(source_text);
+            let comment_span = comment.span;
+            let content_span = comment.content_span.unwrap_or(comment_span);
+            let text_source = comment.text;
             let text = text_source.trim_start();
-            let mut rule_name_start = comment_span.start + (text_source.len() - text.len()) as u32;
+            let mut rule_name_start = content_span.start + (text_source.len() - text.len()) as u32;
 
             if let Some(text) =
                 text.strip_prefix("eslint-disable").or_else(|| text.strip_prefix("oxlint-disable"))
@@ -1078,7 +1117,7 @@ mod tests {
 
     use crate::disable_directives::{DisabledRule, RuleCommentRule, RuleCommentType};
 
-    use super::{DisableDirectives, DisableDirectivesBuilder};
+    use super::{DisableDirectives, DisableDirectivesBuilder, RawDirectiveComment};
 
     fn process_source<'a>(allocator: &'a Allocator, source_text: &'a str) -> Semantic<'a> {
         let source_type = SourceType::default();
@@ -1290,6 +1329,48 @@ mod tests {
         test_directive_span("// eslint-disable-next-line max-params    \r\n ABC", 42, 48);
         test_directive_span("// eslint-disable-next-line max-params    \n ABC \n", 42, 48);
         test_directive_span("// eslint-disable-next-line max-params    \r\n ABC \r\n", 42, 49);
+    }
+
+    #[test]
+    fn next_line_span_of_html_comment() {
+        let source_text = "<!-- eslint-disable-next-line no-console -->
+<h1>Hello</h1>
+";
+        let comment_start = 4;
+        let comment_end = source_text.find("-->").unwrap() as u32;
+        let comment = RawDirectiveComment {
+            span: Span::new(0, source_text.find("-->").unwrap() as u32 + 3),
+            content_span: Some(Span::new(comment_start, comment_end)),
+            text: &source_text[comment_start as usize..comment_end as usize],
+        };
+        let directives =
+            DisableDirectivesBuilder::new().build_raw_comments(source_text, &[comment]);
+
+        let h1_start = source_text.find("<h1>").unwrap() as u32;
+        let h1_span = Span::new(h1_start, h1_start + 4);
+        assert!(
+            directives.contains("no-console", h1_span),
+            "HTML-comment disable-next-line should suppress diagnostics on the next line"
+        );
+    }
+
+    #[test]
+    fn unused_html_disable_comment_keeps_outer_span() {
+        let source_text = "<!-- eslint-disable-next-line -->
+<h1>Hello</h1>
+";
+        let comment_end = source_text.find("-->").unwrap() as u32 + 3;
+        let comment = RawDirectiveComment {
+            span: Span::new(0, comment_end),
+            content_span: Some(Span::new(4, comment_end - 3)),
+            text: &source_text[4..(comment_end - 3) as usize],
+        };
+        let directives =
+            DisableDirectivesBuilder::new().build_raw_comments(source_text, &[comment]);
+
+        let unused = directives.collect_unused_disable_comments();
+        assert_eq!(unused.len(), 1);
+        assert_eq!(unused[0].span, Span::new(0, comment_end));
     }
 
     #[test]

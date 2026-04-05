@@ -23,6 +23,39 @@ pub struct SourceFormatter {
     external_formatter: Option<super::ExternalFormatter>,
 }
 
+fn trim_single_trailing_linebreak_len(text: &str) -> Option<usize> {
+    text.strip_suffix("\r\n")
+        .map(str::len)
+        .or_else(|| text.strip_suffix('\n').map(str::len))
+        .or_else(|| text.strip_suffix('\r').map(str::len))
+}
+
+fn should_preserve_external_missing_final_newline(
+    entry: &FormatFileStrategy,
+    source_text: &str,
+    formatted_text: &str,
+) -> bool {
+    if !matches!(
+        entry,
+        FormatFileStrategy::ExternalFormatter { .. }
+            | FormatFileStrategy::ExternalFormatterPackageJson { .. }
+    ) || source_text.ends_with('\n')
+        || source_text.ends_with('\r')
+    {
+        return false;
+    }
+
+    if source_text == formatted_text {
+        return true;
+    }
+
+    let Some(trimmed_len) = trim_single_trailing_linebreak_len(formatted_text) else {
+        return false;
+    };
+
+    source_text == &formatted_text[..trimmed_len]
+}
+
 impl SourceFormatter {
     pub fn new(num_of_threads: usize) -> Self {
         Self {
@@ -95,13 +128,12 @@ impl SourceFormatter {
 
         match result {
             Ok(mut code) => {
-                // NOTE: `insert_final_newline` relies on the fact that:
-                // - each formatter already ensures there is traliling newline
-                // - each formatter does not have an option to disable trailing newline
-                // So we can trim it here without allocating new string.
-                if !insert_final_newline {
-                    let trimmed_len = code.trim_end().len();
-                    code.truncate(trimmed_len);
+                if insert_final_newline
+                    && should_preserve_external_missing_final_newline(entry, source_text, &code)
+                {
+                    preserve_external_missing_final_newline(&mut code);
+                } else {
+                    apply_final_newline(&mut code, insert_final_newline);
                 }
 
                 FormatResult::Success { is_changed: source_text != code, code }
@@ -294,5 +326,135 @@ impl SourceFormatter {
         };
 
         self.format_by_external_formatter(&source_text, path, parser_name, external_options)
+    }
+}
+
+fn preserve_external_missing_final_newline(code: &mut String) {
+    if let Some(trimmed_len) = trim_single_trailing_linebreak_len(code) {
+        code.truncate(trimmed_len);
+    }
+}
+
+fn apply_final_newline(code: &mut String, insert_final_newline: bool) {
+    if insert_final_newline {
+        if !code.ends_with('\n') {
+            code.push('\n');
+        }
+        return;
+    }
+
+    let trimmed_len = code.trim_end().len();
+    code.truncate(trimmed_len);
+}
+
+#[cfg(test)]
+mod tests {
+    use std::{borrow::Cow, path::PathBuf};
+
+    use crate::core::FormatFileStrategy;
+
+    use super::{
+        apply_final_newline, preserve_external_missing_final_newline,
+        should_preserve_external_missing_final_newline, trim_single_trailing_linebreak_len,
+    };
+
+    #[test]
+    fn adds_missing_final_newline_when_enabled() {
+        let mut code = "<h1>Hello</h1>".to_string();
+        apply_final_newline(&mut code, true);
+        assert_eq!(code, "<h1>Hello</h1>\n");
+    }
+
+    #[test]
+    fn keeps_existing_final_newline_when_enabled() {
+        let mut code = "<h1>Hello</h1>\n".to_string();
+        apply_final_newline(&mut code, true);
+        assert_eq!(code, "<h1>Hello</h1>\n");
+    }
+
+    #[test]
+    fn trims_trailing_whitespace_when_disabled() {
+        let mut code = "<h1>Hello</h1>\n\n".to_string();
+        apply_final_newline(&mut code, false);
+        assert_eq!(code, "<h1>Hello</h1>");
+    }
+
+    #[test]
+    fn preserves_external_missing_final_newline_without_panicking_when_formatter_returns_same_text() {
+        let mut code = String::new();
+        preserve_external_missing_final_newline(&mut code);
+        assert_eq!(code, "");
+
+        let mut code = "<h1>Hello</h1>".to_string();
+        preserve_external_missing_final_newline(&mut code);
+        assert_eq!(code, "<h1>Hello</h1>");
+    }
+
+    #[test]
+    fn trims_external_missing_final_newline_when_formatter_added_one() {
+        let mut code = "<h1>Hello</h1>\r\n".to_string();
+        preserve_external_missing_final_newline(&mut code);
+        assert_eq!(code, "<h1>Hello</h1>");
+    }
+
+    #[test]
+    fn preserves_external_formatter_newline_only_diffs() {
+        let entry = FormatFileStrategy::ExternalFormatter {
+            path: PathBuf::from("AlreadyFormattedNoFinalNewline.svelte"),
+            parser_name: Cow::Borrowed("svelte"),
+        };
+
+        assert!(should_preserve_external_missing_final_newline(
+            &entry,
+            "<h1>Hello</h1>",
+            "<h1>Hello</h1>",
+        ));
+        assert!(should_preserve_external_missing_final_newline(
+            &entry,
+            "",
+            "",
+        ));
+        assert!(should_preserve_external_missing_final_newline(
+            &entry,
+            "<h1>Hello</h1>",
+            "<h1>Hello</h1>\n",
+        ));
+        assert!(should_preserve_external_missing_final_newline(
+            &entry,
+            "<h1>Hello</h1>",
+            "<h1>Hello</h1>\r\n",
+        ));
+        assert_eq!(
+            trim_single_trailing_linebreak_len("<h1>Hello</h1>\r\n"),
+            Some("<h1>Hello</h1>".len()),
+        );
+    }
+
+    #[test]
+    fn does_not_preserve_external_newline_when_other_text_changes() {
+        let entry = FormatFileStrategy::ExternalFormatterPackageJson {
+            path: PathBuf::from("package.json"),
+            parser_name: Cow::Borrowed("json-stringify"),
+        };
+
+        assert!(!should_preserve_external_missing_final_newline(
+            &entry,
+            "{\"a\":1}",
+            "{\n  \"a\": 1\n}\n",
+        ));
+    }
+
+    #[test]
+    fn does_not_preserve_for_non_external_entries() {
+        let entry = FormatFileStrategy::OxcFormatter {
+            path: PathBuf::from("a.ts"),
+            source_type: oxc_span::SourceType::default().with_module(true),
+        };
+
+        assert!(!should_preserve_external_missing_final_newline(
+            &entry,
+            "const answer = 42;",
+            "const answer = 42;\n",
+        ));
     }
 }

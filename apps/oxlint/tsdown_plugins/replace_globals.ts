@@ -54,6 +54,23 @@ const plugin: Plugin = {
       const magicString = meta.magicString!;
       const program = parse(path, code);
 
+      const existingGlobalImportLocals = new Set<string>();
+      for (const stmt of program.body) {
+        if (stmt.type !== "ImportDeclaration") continue;
+
+        const source = stmt.source.value;
+        if (!source.endsWith("/globals.ts") && !source.endsWith("/globals.js")) continue;
+
+        const importedId = await this.resolve(source, path);
+        if (importedId === null || importedId.id !== GLOBALS_PATH) continue;
+
+        for (const specifier of stmt.specifiers) {
+          if ("local" in specifier && specifier.local.type === "Identifier") {
+            existingGlobalImportLocals.add(specifier.local.name);
+          }
+        }
+      }
+
       // Visit AST and replace all references to globals with top-level vars
       const varNames = new Set<string>(),
         visitedMemberExpressions = new Set(),
@@ -138,6 +155,9 @@ const plugin: Plugin = {
         );
       }
 
+      for (const localName of existingGlobalImportLocals) {
+        varNames.delete(localName);
+      }
       if (varNames.size === 0) return;
 
       // Some globals were found. Import them from `utils/globals.ts`.

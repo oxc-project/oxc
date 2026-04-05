@@ -281,7 +281,7 @@ mod tests {
 
         let strategy = FormatFileStrategy::ExternalFormatter {
             path: PathBuf::from("/tmp/foo/bar/App.vue"),
-            parser_name: "vue",
+            parser_name: "vue".into(),
         };
         finalize_external_options(&mut raw_config, &strategy);
 

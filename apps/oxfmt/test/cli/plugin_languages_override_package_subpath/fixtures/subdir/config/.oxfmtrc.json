@@ -1,0 +1,11 @@
+{
+  "overrides": [
+    {
+      "files": ["*.svelte"],
+      "options": {
+        "plugins": ["prettier-plugin-svelte/subpath"],
+        "svelteSortOrder": "scripts-markup-styles"
+      }
+    }
+  ]
+}

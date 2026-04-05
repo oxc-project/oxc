@@ -122,7 +122,7 @@ fn run_full(
     );
 
     // Use `block_in_place()` to avoid nested async runtime access
-    match tokio::task::block_in_place(|| external_formatter.init(num_of_threads)) {
+    match tokio::task::block_in_place(|| external_formatter.init(num_of_threads, &[])) {
         // TODO: Plugins support
         Ok(_) => {}
         Err(err) => {

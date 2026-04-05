@@ -299,6 +299,9 @@ export interface Oxlintrc {
 /**
  * Configure an entire category of rules all at once.
  *
+ * Use a severity such as `"warn"` or `"error"` to apply every enabled rule in that category.
+ * Use `"recommended"` to apply Oxlint's built-in category-default subset for that category (core ESLint plus default built-in plugins) at `"warn"` severity.
+ *
  * Rules enabled or disabled this way will be overwritten by individual rules in the `rules` field.
  *
  * Example
@@ -306,7 +309,8 @@ export interface Oxlintrc {
  * {
  *   "$schema": "./node_modules/oxlint/configuration_schema.json",
  *   "categories": {
- *     "correctness": "warn"
+ *     "correctness": "warn",
+ *     "suspicious": "recommended"
  *   },
  *   "rules": {
  *     "eslint/no-unused-vars": "error"
@@ -314,14 +318,16 @@ export interface Oxlintrc {
  * }
  * ```
  */
+export type RuleCategoryConfig = AllowWarnDeny | "recommended";
+
 export interface RuleCategories {
-  correctness?: AllowWarnDeny;
-  nursery?: AllowWarnDeny;
-  pedantic?: AllowWarnDeny;
-  perf?: AllowWarnDeny;
-  restriction?: AllowWarnDeny;
-  style?: AllowWarnDeny;
-  suspicious?: AllowWarnDeny;
+  correctness?: RuleCategoryConfig;
+  nursery?: RuleCategoryConfig;
+  pedantic?: RuleCategoryConfig;
+  perf?: RuleCategoryConfig;
+  restriction?: RuleCategoryConfig;
+  style?: RuleCategoryConfig;
+  suspicious?: RuleCategoryConfig;
 }
 /**
  * Predefine global variables.

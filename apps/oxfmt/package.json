@@ -15,11 +15,28 @@
     "build-napi-release": "pnpm run build-napi --release --features allocator",
     "build-js": "node scripts/build.js",
     "test": "vitest --dir test run",
-    "conformance": "node conformance/run.ts",
+    "conformance": "node --experimental-strip-types conformance/run.ts",
     "download-fixtures": "node conformance/download-fixtures.js",
-    "generate-config-types": "node scripts/generate-config-types.ts"
+    "generate-config-types": "node --experimental-strip-types scripts/generate-config-types.ts",
+    "clean:svelte-real-packages": "node --experimental-strip-types scripts/cleanup-real-svelte-packages.ts",
+    "setup:svelte-real-packages": "node --experimental-strip-types scripts/install-real-svelte-packages.ts",
+    "check:svelte-real-packages": "node --experimental-strip-types scripts/check-real-svelte-packages.ts",
+    "test:svelte-real-packages:api": "vitest run test/api/plugin_languages_runtime_real_package.test.ts",
+    "test:svelte-real-packages:cli": "vitest run test/cli/plugin_languages_runtime_real_package/plugin_languages_runtime_real_package.test.ts",
+    "test:svelte-real-packages:lsp": "vitest run test/lsp/plugin_languages_runtime_real_package.test.ts",
+    "test:svelte-real-packages": "pnpm run setup:svelte-real-packages && pnpm run check:svelte-real-packages && pnpm run test:svelte-real-packages:api && pnpm run test:svelte-real-packages:cli && pnpm run test:svelte-real-packages:lsp && pnpm run test:svelte-real-packages:smoke",
+    "test:svelte-real-packages:managed": "node --experimental-strip-types scripts/run-real-svelte-package-tests.ts",
+    "setup:svelte-real-packages:latest-svelte": "node --experimental-strip-types scripts/install-real-svelte-packages.ts --profile latest-svelte",
+    "check:svelte-real-packages:latest-svelte": "node --experimental-strip-types scripts/check-real-svelte-packages.ts --profile latest-svelte",
+    "test:svelte-real-packages:managed:latest-svelte": "node --experimental-strip-types scripts/run-real-svelte-package-tests.ts --profile latest-svelte",
+    "report:svelte-real-packages": "node --experimental-strip-types scripts/report-real-svelte-packages.ts",
+    "report:svelte-real-packages:latest-svelte": "node --experimental-strip-types scripts/report-real-svelte-packages.ts --profile latest-svelte",
+    "annotate:svelte-real-packages": "node --experimental-strip-types scripts/annotate-real-svelte-packages.ts",
+    "annotate:svelte-real-packages:latest-svelte": "node --experimental-strip-types scripts/annotate-real-svelte-packages.ts --profile latest-svelte",
+    "test:svelte-real-packages:smoke": "vitest run test/svelte_real_package_smoke.test.ts"
   },
   "dependencies": {
+    "js-yaml": "4.1.1",
     "prettier": "3.8.1",
     "prettier-plugin-tailwindcss": "0.0.0-insiders.3997fbd",
     "tinypool": "2.1.0"
@@ -35,7 +52,8 @@
     "tsdown": "catalog:",
     "vitest": "catalog:",
     "vscode-languageserver-protocol": "^3.17.5",
-    "vscode-languageserver-textdocument": "^1.0.12"
+    "vscode-languageserver-textdocument": "^1.0.12",
+    "tsx": "^4.21.0"
   },
   "napi": {
     "binaryName": "oxfmt",

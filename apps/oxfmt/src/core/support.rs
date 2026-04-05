@@ -1,11 +1,79 @@
-use std::path::{Path, PathBuf};
+use std::{
+    borrow::Cow,
+    collections::HashMap,
+    path::{Path, PathBuf},
+};
 
 use phf::phf_set;
+use serde::Deserialize;
 
 use oxc_formatter::get_supported_source_type;
 use oxc_span::SourceType;
 
 use super::utils;
+
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
+pub struct ExternalPluginSupport {
+    parser_by_filename: HashMap<String, String>,
+    parser_by_extension: HashMap<String, String>,
+}
+
+#[derive(Debug, Default, Clone, Deserialize)]
+struct ExternalPluginLanguage {
+    #[serde(default)]
+    parsers: Vec<String>,
+    #[serde(default)]
+    extensions: Vec<String>,
+    #[serde(default)]
+    filenames: Vec<String>,
+}
+
+impl ExternalPluginSupport {
+    #[must_use]
+    pub fn from_language_json_strings(language_jsons: &[String]) -> Self {
+        let mut support = Self::default();
+
+        for language_json in language_jsons {
+            let Ok(language) = serde_json::from_str::<ExternalPluginLanguage>(language_json) else {
+                continue;
+            };
+            let Some(parser_name) = language.parsers.first().filter(|name| !name.is_empty()) else {
+                continue;
+            };
+
+            for filename in language.filenames {
+                if filename.is_empty() {
+                    continue;
+                }
+                support.parser_by_filename.entry(filename).or_insert_with(|| parser_name.clone());
+            }
+
+            for extension in language.extensions {
+                let normalized = extension.trim_start_matches('.');
+                if normalized.is_empty() {
+                    continue;
+                }
+                support
+                    .parser_by_extension
+                    .entry(normalized.to_string())
+                    .or_insert_with(|| parser_name.clone());
+            }
+        }
+
+        support
+    }
+
+    pub fn parser_for_path(&self, path: &Path) -> Option<&str> {
+        if let Some(file_name) = path.file_name().and_then(|f| f.to_str())
+            && let Some(parser_name) = self.parser_by_filename.get(file_name)
+        {
+            return Some(parser_name);
+        }
+
+        let extension = path.extension().and_then(|ext| ext.to_str())?;
+        self.parser_by_extension.get(extension).map(String::as_str)
+    }
+}
 
 pub enum FormatFileStrategy {
     OxcFormatter {
@@ -18,19 +86,20 @@ pub enum FormatFileStrategy {
     },
     ExternalFormatter {
         path: PathBuf,
-        parser_name: &'static str,
+        parser_name: Cow<'static, str>,
     },
     /// `package.json` is special: sorted by `sort-package-json` then formatted by external formatter.
     ExternalFormatterPackageJson {
         path: PathBuf,
-        parser_name: &'static str,
+        parser_name: Cow<'static, str>,
     },
 }
 
-impl TryFrom<PathBuf> for FormatFileStrategy {
-    type Error = ();
-
-    fn try_from(path: PathBuf) -> Result<Self, Self::Error> {
+impl FormatFileStrategy {
+    pub fn from_path_with_external_support(
+        path: PathBuf,
+        external_plugin_support: &ExternalPluginSupport,
+    ) -> Result<Self, ()> {
         // Check JS/TS files first
         // TODO: This logic should(can) move to this file, after LSP support is also moved here.
         if let Some(source_type) = get_supported_source_type(&path) {
@@ -55,15 +124,33 @@ impl TryFrom<PathBuf> for FormatFileStrategy {
         // Then external formatter files
         // `package.json` is special: sorted then formatted
         if file_name == "package.json" {
-            return Ok(Self::ExternalFormatterPackageJson { path, parser_name: "json-stringify" });
+            return Ok(Self::ExternalFormatterPackageJson {
+                path,
+                parser_name: Cow::Borrowed("json-stringify"),
+            });
         }
 
         let extension = path.extension().and_then(|ext| ext.to_str());
         if let Some(parser_name) = get_external_parser_name(file_name, extension) {
-            return Ok(Self::ExternalFormatter { path, parser_name });
+            return Ok(Self::ExternalFormatter { path, parser_name: Cow::Borrowed(parser_name) });
+        }
+
+        if let Some(parser_name) = external_plugin_support.parser_for_path(&path) {
+            return Ok(Self::ExternalFormatter {
+                path,
+                parser_name: Cow::Owned(parser_name.to_string()),
+            });
         }
 
         Err(())
+    }
+}
+
+impl TryFrom<PathBuf> for FormatFileStrategy {
+    type Error = ();
+
+    fn try_from(path: PathBuf) -> Result<Self, Self::Error> {
+        Self::from_path_with_external_support(path, &ExternalPluginSupport::default())
     }
 }
 
@@ -87,7 +174,9 @@ impl FormatFileStrategy {
         match self {
             Self::OxcFormatter { .. } => true,
             #[cfg(feature = "napi")]
-            Self::ExternalFormatter { parser_name, .. } => TAILWIND_PARSERS.contains(parser_name),
+            Self::ExternalFormatter { parser_name, .. } => {
+                TAILWIND_PARSERS.contains(parser_name.as_ref())
+            }
             _ => false,
         }
     }
@@ -97,7 +186,8 @@ impl FormatFileStrategy {
     pub fn needs_oxfmt_plugin(&self) -> bool {
         matches!(
             self,
-            Self::ExternalFormatter { parser_name, .. } if OXFMT_PARSERS.contains(parser_name)
+            Self::ExternalFormatter { parser_name, .. }
+                if OXFMT_PARSERS.contains(parser_name.as_ref())
         )
     }
 
@@ -478,6 +568,29 @@ mod tests {
             let result = get_parser_name(file_name);
             assert_eq!(result, expected, "`{file_name}` should be parsed as {expected:?}");
         }
+    }
+
+    #[test]
+    fn test_external_plugin_support_detects_svelte_files() {
+        let languages = vec![
+            r#"{"parsers":["svelte"],"extensions":[".svelte"],"filenames":["Component.svelte"]}"#
+                .to_string(),
+        ];
+        let support = ExternalPluginSupport::from_language_json_strings(&languages);
+
+        assert_eq!(support.parser_for_path(Path::new("App.svelte")), Some("svelte"));
+        assert_eq!(support.parser_for_path(Path::new("Component.svelte")), Some("svelte"));
+
+        let strategy = FormatFileStrategy::from_path_with_external_support(
+            PathBuf::from("App.svelte"),
+            &support,
+        )
+        .unwrap();
+        assert!(matches!(
+            strategy,
+            FormatFileStrategy::ExternalFormatter { parser_name, .. }
+                if parser_name.as_ref() == "svelte"
+        ));
     }
 
     #[test]

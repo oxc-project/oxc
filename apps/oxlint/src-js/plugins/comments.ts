@@ -19,6 +19,14 @@ import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 
 import type { Location, Span } from "./location.ts";
 
+interface ExternalCommentInput {
+  type?: unknown;
+  value?: unknown;
+  range?: unknown;
+  start?: unknown;
+  end?: unknown;
+}
+
 /**
  * Comment.
  */
@@ -144,6 +152,139 @@ class Comment implements Span {
 
 // Make `loc` property enumerable so `for (const key in comment) ...` includes `loc`
 Object.defineProperty(Comment.prototype, "loc", { enumerable: true });
+
+function normalizeExternalCommentRange(
+  comment: ExternalCommentInput,
+): [number, number] | null {
+  const { range } = comment;
+  if (
+    Array.isArray(range) &&
+    range.length === 2 &&
+    typeof range[0] === "number" &&
+    typeof range[1] === "number" &&
+    range[0] >= 0 &&
+    range[1] >= range[0]
+  ) {
+    return [range[0], range[1]];
+  }
+
+  if (
+    typeof comment.start === "number" &&
+    typeof comment.end === "number" &&
+    comment.start >= 0 &&
+    comment.end >= comment.start
+  ) {
+    return [comment.start, comment.end];
+  }
+
+  return null;
+}
+
+function deriveExternalCommentValue(
+  type: CommentType["type"],
+  start: number,
+  end: number,
+  sourceTextInput: string,
+): string {
+  const commentText = sourceTextInput.slice(start, end);
+
+  if (type === "Shebang" && commentText.startsWith("#!")) {
+    return commentText.slice(2);
+  }
+
+  if (commentText.startsWith("<!--") && commentText.endsWith("-->")) {
+    return commentText.slice(4, -3);
+  }
+
+  if (type === "Line") {
+    return commentText.startsWith("//") ? commentText.slice(2) : commentText;
+  }
+
+  return commentText.startsWith("/*") && commentText.endsWith("*/")
+    ? commentText.slice(2, -2)
+    : commentText;
+}
+
+/**
+ * Initialize comment state for a whole-file external parser AST.
+ */
+export function setupExternalCommentsForFile(
+  commentsInput: unknown[] | null | undefined,
+  sourceTextInput: string,
+): CommentType[] {
+  const normalizedComments: Array<{
+    start: number;
+    end: number;
+    type: CommentType["type"];
+    value: string;
+  }> = [];
+
+  for (const commentInput of commentsInput ?? []) {
+    if (typeof commentInput !== "object" || commentInput === null) continue;
+
+    const comment = commentInput as ExternalCommentInput;
+    const range = normalizeExternalCommentRange(comment);
+    if (range === null) continue;
+
+    const [start, end] = range;
+    const type =
+      comment.type === "Line" || comment.type === "Block" || comment.type === "Shebang"
+        ? comment.type
+        : "Block";
+    const value =
+      typeof comment.value === "string"
+        ? comment.value
+        : deriveExternalCommentValue(type, start, end, sourceTextInput);
+    normalizedComments.push({ start, end, type, value });
+  }
+
+  normalizedComments.sort((comment1, comment2) =>
+    comment1.start === comment2.start ? comment1.end - comment2.end : comment1.start - comment2.start,
+  );
+
+  commentsLen = normalizedComments.length;
+  allCommentsDeserialized = true;
+  deserializedCommentsLen = 0;
+
+  if (commentsLen === 0) {
+    comments = EMPTY_COMMENTS;
+    commentsUint8 = EMPTY_UINT8_ARRAY;
+    commentsUint32 = EMPTY_UINT32_ARRAY;
+    return comments;
+  }
+
+  if (cachedComments.length < commentsLen) {
+    do {
+      cachedComments.push(new Comment());
+    } while (cachedComments.length < commentsLen);
+  }
+
+  const commentsBuffer = new ArrayBuffer(commentsLen << COMMENT_SIZE_SHIFT);
+  commentsUint8 = new Uint8Array(commentsBuffer);
+  commentsUint32 = new Uint32Array(commentsBuffer);
+  comments = cachedComments.slice(0, commentsLen);
+
+  for (let i = 0; i < commentsLen; i++) {
+    const normalizedComment = normalizedComments[i];
+    const comment = cachedComments[i];
+    comment.type = normalizedComment.type;
+    comment.value = normalizedComment.value;
+    comment.range[0] = comment.start = normalizedComment.start;
+    comment.range[1] = comment.end = normalizedComment.end;
+
+    const pos = i << COMMENT_SIZE_SHIFT;
+    const pos32 = pos >> 2;
+    commentsUint32[pos32] = normalizedComment.start;
+    commentsUint32[pos32 + 1] = normalizedComment.end;
+    commentsUint8[pos + COMMENT_KIND_OFFSET] =
+      normalizedComment.type === "Line" || normalizedComment.type === "Shebang"
+        ? COMMENT_LINE_KIND
+        : COMMENT_LINE_KIND + 1;
+    commentsUint8[pos + DESERIALIZED_FLAG_OFFSET] = FLAG_DESERIALIZED;
+  }
+
+  return comments;
+}
 
 /**
  * Deserialize all comments and build the `comments` array.

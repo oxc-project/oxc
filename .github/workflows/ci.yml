@@ -235,7 +235,7 @@ jobs:
       - uses: ./.github/actions/check-changes
         id: filter
         with:
-          paths: apps/oxlint/,npm/oxlint/,npm/oxlint-plugin-eslint/,npm/oxlint-plugins/,npm/oxc-types/,pnpm-lock.yaml,package.json
+          paths: apps/oxlint/,npm/oxlint/,npm/oxlint-plugin-eslint/,npm/oxlint-plugins/,npm/oxc-types/,pnpm-lock.yaml,package.json,.github/workflows/ci.yml
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
       - uses: oxc-project/setup-node@4c26e7cb3605b6bdef5450dacd02c434b10fd8ba # v1.2.0
@@ -256,6 +256,48 @@ jobs:
         run: |
           git diff --exit-code # Must commit everything
 
+  test-napi-oxlint-svelte:
+    name: Test NAPI Oxlint Svelte real packages
+    runs-on: namespace-profile-linux-x64-default
+    steps:
+      - uses: taiki-e/checkout-action@83ed61bfbe2b8abbb3c66e8b65b1335484c70009 # v1.4.1
+      - uses: ./.github/actions/check-changes
+        id: filter
+        with:
+          paths: apps/oxlint/,npm/oxlint/,npm/oxlint-plugin-eslint/,npm/oxlint-plugins/,npm/oxc-types/,pnpm-lock.yaml,package.json,.github/workflows/ci.yml
+          token: ${{ secrets.GITHUB_TOKEN }}
+          pr-number: ${{ github.event.pull_request.number }}
+      - uses: oxc-project/setup-node@4c26e7cb3605b6bdef5450dacd02c434b10fd8ba # v1.2.0
+        if: steps.filter.outputs.changed == 'true'
+      - uses: namespacelabs/nscloud-cache-action@a90bb5d4b27522ce881c6e98eebd7d7e6d1653f9 # v1.4.2
+        if: steps.filter.outputs.changed == 'true'
+        with:
+          path: /home/runner/.rustup
+          cache: |
+            rust
+            pnpm
+      - if: steps.filter.outputs.changed == 'true'
+        name: Run managed real-package Svelte lint lane
+        run: |
+          pnpm --filter "./apps/oxlint" run test:svelte-real-packages:managed -- --build --report-mode failure --append-summary
+      - if: ${{ failure() && steps.filter.outputs.changed == 'true' }}
+        name: Emit real-package Svelte annotations
+        run: |
+          pnpm --filter "./apps/oxlint" run annotate:svelte-real-packages
+      - if: ${{ failure() && steps.filter.outputs.changed == 'true' }}
+        name: Upload real-package Svelte diagnostics
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: oxlint-svelte-real-package-diagnostics-linux
+          path: |
+            apps/oxlint/test/.real-svelte-packages-report.md
+            apps/oxlint/test/.real-svelte-packages-report.json
+            apps/oxlint/test/.real-svelte-packages-state.json
+          if-no-files-found: warn
+      - if: steps.filter.outputs.changed == 'true'
+        run: |
+          git diff --exit-code # Must commit everything
+
   test-napi-oxfmt:
     name: Test NAPI Oxfmt
     runs-on: namespace-profile-linux-x64-default
@@ -264,7 +306,7 @@ jobs:
       - uses: ./.github/actions/check-changes
         id: filter
         with:
-          paths: apps/oxfmt/,npm/oxfmt/,pnpm-lock.yaml,package.json
+          paths: apps/oxfmt/,npm/oxfmt/,pnpm-lock.yaml,package.json,.github/workflows/ci.yml
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
       - uses: oxc-project/setup-node@4c26e7cb3605b6bdef5450dacd02c434b10fd8ba # v1.2.0
@@ -281,6 +323,24 @@ jobs:
         run: |
           pnpm --filter "./apps/oxfmt" build-test
           pnpm --filter "./apps/oxfmt" test
+      - if: steps.filter.outputs.changed == 'true'
+        name: Run managed real-package Svelte formatter lane
+        run: |
+          pnpm --filter "./apps/oxfmt" run test:svelte-real-packages:managed -- --report-mode failure --append-summary
+      - if: ${{ failure() && steps.filter.outputs.changed == 'true' }}
+        name: Emit real-package Svelte formatter annotations
+        run: |
+          pnpm --filter "./apps/oxfmt" run annotate:svelte-real-packages
+      - if: ${{ failure() && steps.filter.outputs.changed == 'true' }}
+        name: Upload real-package Svelte formatter diagnostics
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: oxfmt-svelte-real-package-diagnostics
+          path: |
+            apps/oxfmt/test/.real-svelte-packages-report.md
+            apps/oxfmt/test/.real-svelte-packages-report.json
+            apps/oxfmt/test/.real-svelte-packages-state.json
+          if-no-files-found: warn
       - if: steps.filter.outputs.changed == 'true'
         run: |
           git diff --exit-code # Must commit everything
@@ -350,7 +410,7 @@ jobs:
       - uses: ./.github/actions/check-changes
         id: filter
         with:
-          paths: apps/oxlint/,npm/oxlint/,npm/oxlint-plugin-eslint/,npm/oxlint-plugins/,npm/oxc-types/,pnpm-lock.yaml,package.json
+          paths: apps/oxlint/,npm/oxlint/,npm/oxlint-plugin-eslint/,npm/oxlint-plugins/,npm/oxc-types/,pnpm-lock.yaml,package.json,.github/workflows/ci.yml
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
       - uses: oxc-project/setup-node@4c26e7cb3605b6bdef5450dacd02c434b10fd8ba # v1.2.0
@@ -376,6 +436,26 @@ jobs:
           pnpm --filter "./apps/oxlint" build-test
           pnpm --filter "./apps/oxlint" test
       - if: steps.filter.outputs.changed == 'true'
+        name: Run managed real-package Svelte lint lane
+        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
+        run: |
+          pnpm --filter "./apps/oxlint" run test:svelte-real-packages:managed -- --report-mode failure --append-summary
+      - if: ${{ failure() && steps.filter.outputs.changed == 'true' }}
+        name: Emit real-package Svelte annotations
+        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
+        run: |
+          pnpm --filter "./apps/oxlint" run annotate:svelte-real-packages
+      - if: ${{ failure() && steps.filter.outputs.changed == 'true' }}
+        name: Upload real-package Svelte diagnostics
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: oxlint-svelte-real-package-diagnostics-windows
+          path: |
+            ${{ env.DEV_DRIVE_WORKSPACE }}/apps/oxlint/test/.real-svelte-packages-report.md
+            ${{ env.DEV_DRIVE_WORKSPACE }}/apps/oxlint/test/.real-svelte-packages-report.json
+            ${{ env.DEV_DRIVE_WORKSPACE }}/apps/oxlint/test/.real-svelte-packages-state.json
+          if-no-files-found: warn
+      - if: steps.filter.outputs.changed == 'true'
         working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
         run: |
           git diff --exit-code # Must commit everything
@@ -390,7 +470,7 @@ jobs:
       - uses: ./.github/actions/check-changes
         id: filter
         with:
-          paths: apps/oxfmt/,npm/oxfmt/,pnpm-lock.yaml,package.json
+          paths: apps/oxfmt/,npm/oxfmt/,pnpm-lock.yaml,package.json,.github/workflows/ci.yml
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
       - uses: oxc-project/setup-node@4c26e7cb3605b6bdef5450dacd02c434b10fd8ba # v1.2.0
@@ -415,6 +495,26 @@ jobs:
         run: |
           pnpm --filter "./apps/oxfmt" build-test
           pnpm --filter "./apps/oxfmt" test
+      - if: steps.filter.outputs.changed == 'true'
+        name: Run managed real-package Svelte formatter lane
+        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
+        run: |
+          pnpm --filter "./apps/oxfmt" run test:svelte-real-packages:managed -- --report-mode failure --append-summary
+      - if: ${{ failure() && steps.filter.outputs.changed == 'true' }}
+        name: Emit real-package Svelte formatter annotations
+        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
+        run: |
+          pnpm --filter "./apps/oxfmt" run annotate:svelte-real-packages
+      - if: ${{ failure() && steps.filter.outputs.changed == 'true' }}
+        name: Upload real-package Svelte formatter diagnostics
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: oxfmt-svelte-real-package-diagnostics-windows
+          path: |
+            ${{ env.DEV_DRIVE_WORKSPACE }}/apps/oxfmt/test/.real-svelte-packages-report.md
+            ${{ env.DEV_DRIVE_WORKSPACE }}/apps/oxfmt/test/.real-svelte-packages-report.json
+            ${{ env.DEV_DRIVE_WORKSPACE }}/apps/oxfmt/test/.real-svelte-packages-state.json
+          if-no-files-found: warn
       - if: steps.filter.outputs.changed == 'true'
         working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
         run: |

@@ -7,7 +7,7 @@ use oxc_napi::OxcError;
 use crate::core::{
     ExternalFormatter, FormatFileStrategy, FormatResult, JsFormatEmbeddedCb, JsFormatEmbeddedDocCb,
     JsFormatFileCb, JsInitExternalFormatterCb, JsSortTailwindClassesCb, SourceFormatter,
-    resolve_options_from_value,
+    extract_external_plugin_specs, resolve_options_from_value,
 };
 
 pub struct ApiFormatResult {
@@ -43,10 +43,14 @@ pub fn run(
         sort_tailwind_classes_cb,
     );
 
+    let raw_options = options.unwrap_or_default();
+    let plugin_specs = extract_external_plugin_specs(&raw_options, Some(&cwd));
+
     // Use `block_in_place()` to avoid nested async runtime access
-    match tokio::task::block_in_place(|| external_formatter.init(num_of_threads)) {
-        // TODO: Plugins support
-        Ok(_) => {}
+    let external_plugin_support = match tokio::task::block_in_place(|| {
+        external_formatter.init(num_of_threads, &plugin_specs)
+    }) {
+        Ok(languages) => crate::core::ExternalPluginSupport::from_language_json_strings(&languages),
         Err(err) => {
             external_formatter.cleanup();
             return ApiFormatResult {
@@ -54,12 +58,14 @@ pub fn run(
                 errors: vec![OxcError::new(format!("Failed to setup external formatter: {err}"))],
             };
         }
-    }
+    };
 
     // Determine format strategy from file path
-    let Ok(strategy) = FormatFileStrategy::try_from(PathBuf::from(filename))
-        .map(|s| s.resolve_relative_path(&cwd))
-    else {
+    let Ok(strategy) = FormatFileStrategy::from_path_with_external_support(
+        PathBuf::from(filename),
+        &external_plugin_support,
+    )
+    .map(|s| s.resolve_relative_path(&cwd)) else {
         external_formatter.cleanup();
         return ApiFormatResult {
             code: source_text,
@@ -68,17 +74,16 @@ pub fn run(
     };
 
     // Resolve format options directly from the provided options
-    let resolved_options =
-        match resolve_options_from_value(options.unwrap_or_default(), &strategy, Some(&cwd)) {
-            Ok(options) => options,
-            Err(err) => {
-                external_formatter.cleanup();
-                return ApiFormatResult {
-                    code: source_text,
-                    errors: vec![OxcError::new(format!("Failed to parse configuration: {err}"))],
-                };
-            }
-        };
+    let resolved_options = match resolve_options_from_value(raw_options, &strategy, Some(&cwd)) {
+        Ok(options) => options,
+        Err(err) => {
+            external_formatter.cleanup();
+            return ApiFormatResult {
+                code: source_text,
+                errors: vec![OxcError::new(format!("Failed to parse configuration: {err}"))],
+            };
+        }
+    };
 
     // Create formatter and format
     let formatter = SourceFormatter::new(num_of_threads)

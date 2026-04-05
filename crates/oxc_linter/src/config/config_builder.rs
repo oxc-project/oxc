@@ -12,7 +12,7 @@ use oxc_span::{CompactStr, format_compact_str};
 
 use crate::{
     AllowWarnDeny, ExternalPluginStore, LintConfig, LintFilter, LintFilterKind, Oxlintrc,
-    RuleCategory, RuleEnum,
+    OxlintrcExtendsEntry, RuleCategory, RuleEnum,
     config::{
         ESLintRule, OxlintOverrides, OxlintRules,
         external_plugins::ExternalPluginEntry,
@@ -27,7 +27,7 @@ use crate::{
 
 use super::{
     Config,
-    categories::OxlintCategories,
+    categories::{CategoryConfig, OxlintCategories, is_category_default_rule},
     config_store::{ResolvedOxlintOverride, ResolvedOxlintOverrideRules, ResolvedOxlintOverrides},
 };
 
@@ -145,63 +145,164 @@ impl ConfigStoreBuilder {
             Ok(())
         }
 
+        fn is_json_like_config_path(path: &Path) -> bool {
+            path.extension()
+                .and_then(|extension| extension.to_str())
+                .is_some_and(|extension| extension == "json" || extension == "jsonc")
+        }
+
+        fn is_package_extends_specifier(path: &Path) -> bool {
+            !path.is_absolute()
+                && matches!(path.components().next(), Some(PathComponent::Normal(_)))
+        }
+
+        fn normalize_config_path(path: PathBuf) -> PathBuf {
+            path.components().fold(PathBuf::new(), |mut normalized, component| {
+                match component {
+                    PathComponent::CurDir => {}
+                    _ => normalized.push(component.as_os_str()),
+                }
+                normalized
+            })
+        }
+
+        fn resolve_extended_config_path(
+            specifier: &Path,
+            config_dir: Option<&Path>,
+            resolver: &Resolver,
+        ) -> Result<Option<PathBuf>, ConfigBuilderError> {
+            let specifier = specifier.to_string_lossy();
+            let resolve_dir = config_dir.unwrap_or_else(|| Path::new("."));
+
+            let candidate = if specifier.is_empty() || specifier.as_ref() == "." {
+                resolve_dir.to_path_buf()
+            } else {
+                resolve_dir.join(specifier.as_ref())
+            };
+
+            if candidate.is_file() {
+                return Ok(Some(normalize_config_path(candidate)));
+            }
+
+            if candidate.extension().is_none() {
+                for extension in ["json", "jsonc"] {
+                    let candidate = candidate.with_extension(extension);
+                    if candidate.is_file() {
+                        return Ok(Some(normalize_config_path(candidate)));
+                    }
+                }
+            }
+
+            match resolver.resolve(resolve_dir, specifier.as_ref()) {
+                Ok(resolved) => {
+                    let resolved_path = resolved.full_path();
+                    if is_json_like_config_path(&resolved_path) {
+                        Ok(Some(resolved_path.to_path_buf()))
+                    } else if is_package_extends_specifier(Path::new(specifier.as_ref())) {
+                        Ok(None)
+                    } else {
+                        Err(ConfigBuilderError::InvalidConfigFile {
+                            file: specifier.to_string(),
+                            reason: format!(
+                                "Extended config `{specifier}` resolved to `{}`, but only JSON configuration files are supported",
+                                resolved_path.display()
+                            ),
+                        })
+                    }
+                }
+                Err(_) if !specifier.contains('.') => Ok(None),
+                Err(error) => Err(ConfigBuilderError::InvalidConfigFile {
+                    file: specifier.to_string(),
+                    reason: format!("Failed to resolve extended config `{specifier}`: {error}"),
+                }),
+            }
+        }
+
         fn resolve_oxlintrc_config(
             config: Oxlintrc,
             in_object_extends: bool,
+            inherited_config_dir: Option<&Path>,
+            resolver: &Resolver,
         ) -> Result<(Oxlintrc, Vec<PathBuf>), ConfigBuilderError> {
             if in_object_extends {
                 check_no_relative_js_plugins_in_extends(&config)?;
             }
 
             let path = config.path.clone();
-            let root_path = path.parent();
-            let extends = config.extends.clone();
-            let extends_configs = config.extends_configs.clone();
+            let config_dir = path.parent().or(inherited_config_dir);
+
+            let extends_entries = if config.extends_entries.is_empty() {
+                config
+                    .extends_configs
+                    .iter()
+                    .cloned()
+                    .map(OxlintrcExtendsEntry::Config)
+                    .chain(config.extends.iter().cloned().map(OxlintrcExtendsEntry::Path))
+                    .collect::<Vec<_>>()
+            } else {
+                config.extends_entries.clone()
+            };
             let mut extended_paths = Vec::new();
 
             let mut oxlintrc = config;
 
-            for config in extends_configs.into_iter().rev() {
-                let (extends, extends_paths) = resolve_oxlintrc_config(config, true)?;
-                oxlintrc = oxlintrc.merge(extends);
-                extended_paths.extend(extends_paths);
-            }
-
-            for path in extends.iter().rev() {
-                if path.starts_with("eslint:") || path.starts_with("plugin:") {
-                    // `eslint:` and `plugin:` named configs are not supported
-                    continue;
-                }
-                // if path does not include a ".", then we will heuristically skip it since it
-                // kind of looks like it might be a named config
-                if !path.to_string_lossy().contains('.') {
-                    continue;
-                }
-
-                let path = match root_path {
-                    Some(p) => &p.join(path),
-                    None => path,
-                };
-
-                let extends_oxlintrc = Oxlintrc::from_file(path).map_err(|e| {
-                    ConfigBuilderError::InvalidConfigFile {
-                        file: path.display().to_string(),
-                        reason: e.to_string(),
+            for entry in extends_entries.into_iter().rev() {
+                match entry {
+                    OxlintrcExtendsEntry::Config(config) => {
+                        let (extends, extends_paths) =
+                            resolve_oxlintrc_config(config, true, config_dir, resolver)?;
+                        oxlintrc = oxlintrc.merge(extends);
+                        extended_paths.extend(extends_paths);
                     }
-                })?;
+                    OxlintrcExtendsEntry::Path(path) => {
+                        if path.starts_with("eslint:") || path.starts_with("plugin:") {
+                            // `eslint:` and `plugin:` named configs are not supported
+                            continue;
+                        }
 
-                extended_paths.push(path.clone());
+                        let Some(path) = resolve_extended_config_path(&path, config_dir, resolver)?
+                        else {
+                            // Unresolved bare specifiers are treated as named configs for
+                            // backwards compatibility, e.g. `prettier` or
+                            // `next/core-web-vitals`.
+                            continue;
+                        };
 
-                let (extends, extends_paths) = resolve_oxlintrc_config(extends_oxlintrc, false)?;
+                        let extends_oxlintrc = Oxlintrc::from_file(&path).map_err(|e| {
+                            ConfigBuilderError::InvalidConfigFile {
+                                file: path.display().to_string(),
+                                reason: e.to_string(),
+                            }
+                        })?;
 
-                oxlintrc = oxlintrc.merge(extends);
-                extended_paths.extend(extends_paths);
+                        extended_paths.push(path.clone());
+
+                        let (extends, extends_paths) =
+                            resolve_oxlintrc_config(extends_oxlintrc, false, None, resolver)?;
+
+                        oxlintrc = oxlintrc.merge(extends);
+                        extended_paths.extend(extends_paths);
+                    }
+                }
             }
 
             Ok((oxlintrc, extended_paths))
         }
 
-        let (oxlintrc, extended_paths) = resolve_oxlintrc_config(oxlintrc, false)?;
+        let extends_resolver = Resolver::new(ResolveOptions {
+            extensions: vec![".json".into(), ".jsonc".into()],
+            main_fields: vec!["oxlint".into(), "main".into()],
+            condition_names: vec![
+                "default".into(),
+                "node".into(),
+                "import".into(),
+                "require".into(),
+            ],
+            ..ResolveOptions::default()
+        });
+
+        let (oxlintrc, extended_paths) =
+            resolve_oxlintrc_config(oxlintrc, false, None, &extends_resolver)?;
 
         // Collect external plugins from both base config and overrides
         let mut external_plugins: FxHashSet<&ExternalPluginEntry> = FxHashSet::default();
@@ -249,14 +350,17 @@ impl ConfigStoreBuilder {
 
         let plugins = oxlintrc.plugins.unwrap_or_default();
 
-        let rules =
-            if start_empty { FxHashMap::default() } else { Self::warn_correctness(plugins) };
-
         let mut categories = oxlintrc.categories.clone();
 
         if !start_empty {
-            categories.insert(RuleCategory::Correctness, AllowWarnDeny::Warn);
+            categories
+                .entry(RuleCategory::Correctness)
+                .or_insert(CategoryConfig::Severity(AllowWarnDeny::Warn));
         }
+
+        let category_configs =
+            categories.iter().map(|(category, config)| (*category, *config)).collect::<Vec<_>>();
+        let rules = FxHashMap::default();
 
         let config = LintConfig {
             plugins,
@@ -265,6 +369,8 @@ impl ConfigStoreBuilder {
             globals: oxlintrc.globals,
             path: Some(oxlintrc.path),
             options: oxlintrc.options,
+            js_language_options_ids: oxlintrc.language_options_ids,
+            js_has_custom_parser: oxlintrc.language_options_has_parser.unwrap_or(false),
         };
 
         let mut builder = Self {
@@ -276,8 +382,8 @@ impl ConfigStoreBuilder {
             extended_paths,
         };
 
-        for filter in oxlintrc.categories.filters() {
-            builder = builder.with_filter(&filter);
+        for (category, config) in category_configs {
+            builder = builder.apply_category_config(category, config);
         }
 
         {
@@ -374,6 +480,21 @@ impl ConfigStoreBuilder {
         for filter in filters {
             self = self.with_filter(filter);
         }
+        self
+    }
+
+    fn apply_category_config(mut self, category: RuleCategory, config: CategoryConfig) -> Self {
+        match config {
+            CategoryConfig::Severity(severity) => {
+                self = self.with_filter(&LintFilter::new(severity, category).unwrap());
+            }
+            CategoryConfig::Recommended => {
+                self.upsert_where(AllowWarnDeny::Warn, |rule| {
+                    rule.category() == category && is_category_default_rule(rule)
+                });
+            }
+        }
+
         self
     }
 
@@ -542,7 +663,10 @@ impl ConfigStoreBuilder {
                     files: override_config.files,
                     env: override_config.env,
                     globals: override_config.globals,
+                    settings: override_config.settings,
                     plugins: override_config.plugins,
+                    language_options_id: override_config.language_options_id,
+                    language_options_has_parser: override_config.language_options_has_parser,
                     rules: ResolvedOxlintOverrideRules { builtin_rules, external_rules },
                 })
             })
@@ -1137,6 +1261,314 @@ mod test {
     }
 
     #[test]
+    fn test_correctness_category_override_is_preserved_for_new_override_plugins() {
+        let expected_react_correctness_rules = RULES
+            .iter()
+            .filter(|rule| {
+                rule.category() == RuleCategory::Correctness && rule.plugin_name() == "react"
+            })
+            .collect::<Vec<_>>();
+        assert!(
+            !expected_react_correctness_rules.is_empty(),
+            "expected at least one React correctness rule"
+        );
+
+        let oxlintrc: Oxlintrc = serde_json::from_str(
+            r#"
+        {
+            "categories": {
+                "correctness": "deny"
+            },
+            "overrides": [
+                {
+                    "files": ["*.jsx"],
+                    "plugins": ["react"]
+                }
+            ]
+        }
+        "#,
+        )
+        .unwrap();
+
+        let mut external_plugin_store = ExternalPluginStore::default();
+        let config = ConfigStoreBuilder::from_oxlintrc(
+            false,
+            oxlintrc,
+            None,
+            &mut external_plugin_store,
+            None,
+        )
+        .unwrap()
+        .build(&mut external_plugin_store)
+        .unwrap();
+
+        let override_state = config.apply_overrides("App.jsx".as_ref());
+
+        for rule in expected_react_correctness_rules {
+            assert!(override_state.rules.iter().any(|(configured_rule, severity)| {
+                configured_rule.plugin_name() == rule.plugin_name()
+                    && configured_rule.name() == rule.name()
+                    && *severity == AllowWarnDeny::Deny
+            }));
+        }
+    }
+
+    #[test]
+    fn test_correctness_category_recommended_enables_builtin_subset_only() {
+        let has_react_correctness_rule = RULES.iter().any(|rule| {
+            rule.category() == RuleCategory::Correctness && rule.plugin_name() == "react"
+        });
+        assert!(has_react_correctness_rule, "expected at least one React correctness rule");
+
+        let expected_recommended_rules = RULES
+            .iter()
+            .filter(|rule| {
+                rule.category() == RuleCategory::Correctness && is_category_default_rule(rule)
+            })
+            .collect::<Vec<_>>();
+        assert!(
+            !expected_recommended_rules.is_empty(),
+            "expected at least one built-in recommended correctness rule"
+        );
+
+        let oxlintrc: Oxlintrc = serde_json::from_str(
+            r#"
+        {
+            "plugins": ["react", "typescript", "unicorn", "oxc"],
+            "categories": {
+                "correctness": "recommended"
+            }
+        }
+        "#,
+        )
+        .unwrap();
+
+        let mut external_plugin_store = ExternalPluginStore::default();
+        let config = ConfigStoreBuilder::from_oxlintrc(
+            false,
+            oxlintrc,
+            None,
+            &mut external_plugin_store,
+            None,
+        )
+        .unwrap()
+        .build(&mut external_plugin_store)
+        .unwrap();
+
+        for rule in expected_recommended_rules {
+            assert!(config.rules().iter().any(|(configured_rule, severity)| {
+                configured_rule.plugin_name() == rule.plugin_name()
+                    && configured_rule.name() == rule.name()
+                    && *severity == AllowWarnDeny::Warn
+            }));
+        }
+
+        assert!(!config.rules().iter().any(|(rule, _)| {
+            rule.category() == RuleCategory::Correctness && rule.plugin_name() == "react"
+        }));
+    }
+
+    #[test]
+    fn test_correctness_category_recommended_is_preserved_for_new_override_plugins() {
+        let expected_recommended_rules = RULES
+            .iter()
+            .filter(|rule| {
+                rule.category() == RuleCategory::Correctness && is_category_default_rule(rule)
+            })
+            .collect::<Vec<_>>();
+        assert!(
+            !expected_recommended_rules.is_empty(),
+            "expected at least one built-in recommended correctness rule"
+        );
+
+        let oxlintrc: Oxlintrc = serde_json::from_str(
+            r#"
+        {
+            "categories": {
+                "correctness": "recommended"
+            },
+            "overrides": [
+                {
+                    "files": ["*.jsx"],
+                    "plugins": ["react"]
+                }
+            ]
+        }
+        "#,
+        )
+        .unwrap();
+
+        let mut external_plugin_store = ExternalPluginStore::default();
+        let config = ConfigStoreBuilder::from_oxlintrc(
+            false,
+            oxlintrc,
+            None,
+            &mut external_plugin_store,
+            None,
+        )
+        .unwrap()
+        .build(&mut external_plugin_store)
+        .unwrap();
+
+        let override_state = config.apply_overrides("App.jsx".as_ref());
+
+        for rule in expected_recommended_rules {
+            assert!(override_state.rules.iter().any(|(configured_rule, severity)| {
+                configured_rule.plugin_name() == rule.plugin_name()
+                    && configured_rule.name() == rule.name()
+                    && *severity == AllowWarnDeny::Warn
+            }));
+        }
+
+        assert!(
+            !override_state.rules.iter().any(|(rule, _)| rule.plugin_name() == "react"),
+            r#"non-built-in plugins should stay disabled for correctness: "recommended""#
+        );
+    }
+
+    #[test]
+    fn test_categories_recommended_enables_builtin_subset_only() {
+        let has_react_suspicious_rule = RULES.iter().any(|rule| {
+            rule.category() == RuleCategory::Suspicious && rule.plugin_name() == "react"
+        });
+        assert!(has_react_suspicious_rule, "expected at least one suspicious React rule");
+
+        let expected_recommended_rules = RULES
+            .iter()
+            .filter(|rule| {
+                rule.category() == RuleCategory::Suspicious && is_category_default_rule(rule)
+            })
+            .collect::<Vec<_>>();
+        assert!(
+            !expected_recommended_rules.is_empty(),
+            "expected at least one built-in recommended suspicious rule"
+        );
+
+        let oxlintrc: Oxlintrc = serde_json::from_str(
+            r#"
+        {
+            "plugins": ["react", "typescript", "unicorn", "oxc"],
+            "categories": {
+                "suspicious": "recommended"
+            }
+        }
+        "#,
+        )
+        .unwrap();
+
+        let mut external_plugin_store = ExternalPluginStore::default();
+        let config = ConfigStoreBuilder::from_oxlintrc(
+            true,
+            oxlintrc,
+            None,
+            &mut external_plugin_store,
+            None,
+        )
+        .unwrap()
+        .build(&mut external_plugin_store)
+        .unwrap();
+
+        for rule in expected_recommended_rules {
+            assert!(config.rules().iter().any(|(configured_rule, severity)| {
+                configured_rule.plugin_name() == rule.plugin_name()
+                    && configured_rule.name() == rule.name()
+                    && *severity == AllowWarnDeny::Warn
+            }));
+        }
+
+        assert!(!config.rules().iter().any(|(rule, _)| {
+            rule.category() == RuleCategory::Suspicious && rule.plugin_name() == "react"
+        }));
+    }
+
+    #[test]
+    fn test_categories_recommended_still_allow_individual_nonrecommended_rules() {
+        let selected_react_rule = RULES
+            .iter()
+            .find(|rule| {
+                rule.category() == RuleCategory::Suspicious && rule.plugin_name() == "react"
+            })
+            .expect("expected at least one suspicious React rule");
+
+        let oxlintrc = serde_json::from_str::<Oxlintrc>(
+            format!(
+                r#"
+        {{
+            "plugins": ["react", "typescript", "unicorn", "oxc"],
+            "categories": {{
+                "suspicious": "recommended"
+            }},
+            "rules": {{
+                "{}/{}": "deny"
+            }}
+        }}
+        "#,
+                selected_react_rule.plugin_name(),
+                selected_react_rule.name(),
+            )
+            .as_str(),
+        )
+        .unwrap();
+
+        let mut external_plugin_store = ExternalPluginStore::default();
+        let config = ConfigStoreBuilder::from_oxlintrc(
+            true,
+            oxlintrc,
+            None,
+            &mut external_plugin_store,
+            None,
+        )
+        .unwrap()
+        .build(&mut external_plugin_store)
+        .unwrap();
+
+        let react_suspicious_rules = config
+            .rules()
+            .iter()
+            .filter(|(rule, _)| {
+                rule.category() == RuleCategory::Suspicious && rule.plugin_name() == "react"
+            })
+            .collect::<Vec<_>>();
+
+        assert_eq!(
+            react_suspicious_rules.len(),
+            1,
+            "expected only the explicitly configured React rule to be enabled"
+        );
+        assert!(react_suspicious_rules.iter().any(|(rule, severity)| {
+            rule.name() == selected_react_rule.name() && *severity == AllowWarnDeny::Deny
+        }));
+    }
+
+    #[test]
+    fn test_resolve_final_config_file_preserves_recommended_categories() {
+        let oxlintrc: Oxlintrc = serde_json::from_str(
+            r#"
+        {
+            "categories": {
+                "suspicious": "recommended"
+            }
+        }
+        "#,
+        )
+        .unwrap();
+
+        let mut external_plugin_store = ExternalPluginStore::default();
+        let builder = ConfigStoreBuilder::from_oxlintrc(
+            false,
+            oxlintrc.clone(),
+            None,
+            &mut external_plugin_store,
+            None,
+        )
+        .unwrap();
+
+        let resolved: serde_json::Value =
+            serde_json::from_str(&builder.resolve_final_config_file(oxlintrc)).unwrap();
+
+        assert_eq!(resolved["categories"]["suspicious"], serde_json::json!("recommended"));
+    }
+
     fn test_extends_rules_single() {
         let base_config = config_store_from_path("fixtures/extends_config/rules_config.json");
         let derived_config = config_store_from_str(
@@ -1269,6 +1701,244 @@ mod test {
                 .rules()
                 .iter()
                 .any(|(r, severity)| r.name() == "no-null" && *severity == AllowWarnDeny::Deny)
+        );
+    }
+
+    #[test]
+    fn test_extends_from_node_modules() {
+        let oxlintrc =
+            Oxlintrc::from_file(&PathBuf::from("fixtures/extends_config/node_modules/root.json"))
+                .unwrap();
+
+        let mut external_plugin_store = ExternalPluginStore::default();
+        let builder = ConfigStoreBuilder::from_oxlintrc(
+            true,
+            oxlintrc,
+            None,
+            &mut external_plugin_store,
+            None,
+        )
+        .unwrap();
+
+        let extended_paths = builder
+            .extended_paths
+            .iter()
+            .map(|path| path.to_string_lossy().replace('\\', "/"))
+            .collect::<Vec<_>>();
+
+        assert!(extended_paths.iter().any(|path| {
+            path.ends_with(
+                "fixtures/extends_config/node_modules/node_modules/oxlint-config-main/config/index.json"
+            )
+        }));
+        assert!(extended_paths.iter().any(|path| {
+            path.ends_with(
+                "fixtures/extends_config/node_modules/node_modules/oxlint-config-main/config/shared/base.json"
+            )
+        }));
+        assert!(extended_paths.iter().any(|path| {
+            path.ends_with(
+                "fixtures/extends_config/node_modules/node_modules/@scope/oxlint-config-exports/config/index.json"
+            )
+        }));
+        assert!(extended_paths.iter().any(|path| {
+            path.ends_with(
+                "fixtures/extends_config/node_modules/node_modules/oxlint-config-oxlint/config/index.json"
+            )
+        }));
+
+        let config = builder.build(&mut external_plugin_store).unwrap();
+
+        assert_eq!(config.plugins(), LintPlugins::JEST | LintPlugins::REACT);
+        assert_eq!(
+            config
+                .rules()
+                .iter()
+                .find(|(rule, _)| rule.plugin_name() == "eslint" && rule.name() == "no-alert")
+                .map(|(_, severity)| *severity),
+            Some(AllowWarnDeny::Warn)
+        );
+        assert_eq!(
+            config
+                .rules()
+                .iter()
+                .find(|(rule, _)| rule.plugin_name() == "eslint" && rule.name() == "no-debugger")
+                .map(|(_, severity)| *severity),
+            Some(AllowWarnDeny::Warn)
+        );
+        assert_eq!(
+            config
+                .rules()
+                .iter()
+                .find(|(rule, _)| rule.plugin_name() == "react" && rule.name() == "jsx-key")
+                .map(|(_, severity)| *severity),
+            Some(AllowWarnDeny::Warn)
+        );
+        assert_eq!(
+            config
+                .rules()
+                .iter()
+                .find(|(rule, _)| rule.plugin_name() == "eslint" && rule.name() == "no-console")
+                .map(|(_, severity)| *severity),
+            Some(AllowWarnDeny::Deny)
+        );
+    }
+
+    #[test]
+    fn test_extends_from_node_modules_ignores_non_json_entrypoints() {
+        let oxlintrc = Oxlintrc::from_file(&PathBuf::from(
+            "fixtures/extends_config/node_modules/root-with-js-entry.json",
+        ))
+        .unwrap();
+
+        let mut external_plugin_store = ExternalPluginStore::default();
+        let builder = ConfigStoreBuilder::from_oxlintrc(
+            true,
+            oxlintrc,
+            None,
+            &mut external_plugin_store,
+            None,
+        )
+        .unwrap();
+
+        let extended_paths = builder
+            .extended_paths
+            .iter()
+            .map(|path| path.to_string_lossy().replace('\\', "/"))
+            .collect::<Vec<_>>();
+
+        assert!(extended_paths.iter().any(|path| {
+            path.ends_with(
+                "fixtures/extends_config/node_modules/node_modules/oxlint-config-main/config/index.json"
+            )
+        }));
+        assert!(
+            !extended_paths.iter().any(|path| path.ends_with("node_modules/prettier/index.js"))
+        );
+
+        let config = builder.build(&mut external_plugin_store).unwrap();
+
+        assert_eq!(config.plugins(), LintPlugins::JEST);
+        assert_eq!(
+            config
+                .rules()
+                .iter()
+                .find(|(rule, _)| rule.plugin_name() == "eslint" && rule.name() == "no-alert")
+                .map(|(_, severity)| *severity),
+            Some(AllowWarnDeny::Warn)
+        );
+        assert!(
+            !config
+                .rules()
+                .iter()
+                .any(|(rule, _)| { rule.plugin_name() == "eslint" && rule.name() == "no-undef" })
+        );
+    }
+
+    #[test]
+    fn test_extends_from_package_directory_node_modules() {
+        let config = config_store_from_path("fixtures/extends_config/packages/app/oxlintrc.json");
+
+        assert_eq!(config.plugins(), LintPlugins::JEST | LintPlugins::REACT);
+        assert_eq!(
+            config
+                .rules()
+                .iter()
+                .find(|(rule, _)| rule.plugin_name() == "eslint" && rule.name() == "no-alert")
+                .map(|(_, severity)| *severity),
+            Some(AllowWarnDeny::Warn)
+        );
+        assert_eq!(
+            config
+                .rules()
+                .iter()
+                .find(|(rule, _)| rule.plugin_name() == "eslint" && rule.name() == "no-debugger")
+                .map(|(_, severity)| *severity),
+            Some(AllowWarnDeny::Warn)
+        );
+        assert_eq!(
+            config
+                .rules()
+                .iter()
+                .find(|(rule, _)| rule.plugin_name() == "react" && rule.name() == "jsx-key")
+                .map(|(_, severity)| *severity),
+            Some(AllowWarnDeny::Warn)
+        );
+        assert_eq!(
+            config
+                .rules()
+                .iter()
+                .find(|(rule, _)| rule.plugin_name() == "eslint" && rule.name() == "no-console")
+                .map(|(_, severity)| *severity),
+            Some(AllowWarnDeny::Warn)
+        );
+    }
+
+    #[test]
+    fn test_js_config_path_extends_from_package_directory_node_modules() {
+        let mut oxlintrc: Oxlintrc = serde_json::from_str(
+            r#"
+        {
+            "extends": [
+                "oxlint-config-main",
+                "@scope/oxlint-config-exports",
+                "oxlint-config-oxlint"
+            ],
+            "rules": {
+                "no-console": "warn"
+            }
+        }
+        "#,
+        )
+        .unwrap();
+        oxlintrc.path = PathBuf::from("fixtures/extends_config/packages/app/oxlint.config.ts");
+        let config_dir = oxlintrc.path.parent().unwrap().to_path_buf();
+        oxlintrc.set_config_dir(&config_dir);
+
+        let mut external_plugin_store = ExternalPluginStore::default();
+        let config = ConfigStoreBuilder::from_oxlintrc(
+            true,
+            oxlintrc,
+            None,
+            &mut external_plugin_store,
+            None,
+        )
+        .unwrap()
+        .build(&mut external_plugin_store)
+        .unwrap();
+
+        assert_eq!(config.plugins(), LintPlugins::JEST | LintPlugins::REACT);
+        assert_eq!(
+            config
+                .rules()
+                .iter()
+                .find(|(rule, _)| rule.plugin_name() == "eslint" && rule.name() == "no-alert")
+                .map(|(_, severity)| *severity),
+            Some(AllowWarnDeny::Warn)
+        );
+        assert_eq!(
+            config
+                .rules()
+                .iter()
+                .find(|(rule, _)| rule.plugin_name() == "eslint" && rule.name() == "no-debugger")
+                .map(|(_, severity)| *severity),
+            Some(AllowWarnDeny::Warn)
+        );
+        assert_eq!(
+            config
+                .rules()
+                .iter()
+                .find(|(rule, _)| rule.plugin_name() == "react" && rule.name() == "jsx-key")
+                .map(|(_, severity)| *severity),
+            Some(AllowWarnDeny::Warn)
+        );
+        assert_eq!(
+            config
+                .rules()
+                .iter()
+                .find(|(rule, _)| rule.plugin_name() == "eslint" && rule.name() == "no-console")
+                .map(|(_, severity)| *severity),
+            Some(AllowWarnDeny::Warn)
         );
     }
 

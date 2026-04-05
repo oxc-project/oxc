@@ -1,3 +1,5 @@
+#[cfg(feature = "napi")]
+use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 
 use editorconfig_parser::{
@@ -63,6 +65,168 @@ pub fn resolve_editorconfig_path(cwd: &Path) -> Option<PathBuf> {
     cwd.ancestors().map(|dir| dir.join(".editorconfig")).find(|p| p.exists())
 }
 
+const EXTERNAL_PLUGIN_SPEC_WITH_RESOLVE_FROM_PREFIX: &str = "__OXFMT_PLUGIN_SPEC__";
+const REGISTERED_EXTERNAL_PLUGIN_SPEC_PREFIX: &str = "__OXFMT_REGISTERED_PLUGIN__";
+
+fn is_relative_external_plugin_path_spec(spec: &str) -> bool {
+    matches!(spec, "." | "..")
+        || spec.starts_with("./")
+        || spec.starts_with("../")
+        || spec.starts_with(".\\")
+        || spec.starts_with("..\\")
+}
+
+fn is_windows_absolute_plugin_path_spec(spec: &str) -> bool {
+    let bytes = spec.as_bytes();
+    bytes.len() >= 3
+        && bytes[0].is_ascii_alphabetic()
+        && bytes[1] == b':'
+        && matches!(bytes[2], b'/' | b'\\')
+}
+
+fn encode_external_plugin_spec_with_resolve_from(spec: &str, base_dir: &Path) -> String {
+    format!(
+        "{EXTERNAL_PLUGIN_SPEC_WITH_RESOLVE_FROM_PREFIX}{}",
+        serde_json::json!({
+            "spec": spec,
+            "resolveFrom": base_dir.to_string_lossy(),
+        })
+    )
+}
+
+fn resolve_external_plugin_spec(spec: &str, base_dir: Option<&Path>) -> String {
+    if spec.starts_with(EXTERNAL_PLUGIN_SPEC_WITH_RESOLVE_FROM_PREFIX)
+        || spec.starts_with(REGISTERED_EXTERNAL_PLUGIN_SPEC_PREFIX)
+    {
+        return spec.to_string();
+    }
+
+    let Some(base_dir) = base_dir else {
+        return spec.to_string();
+    };
+
+    if spec.starts_with("file:") {
+        return spec.to_string();
+    }
+
+    if is_windows_absolute_plugin_path_spec(spec) {
+        return spec.to_string();
+    }
+
+    let path = Path::new(spec);
+    if path.is_absolute() || is_relative_external_plugin_path_spec(spec) {
+        return utils::normalize_relative_path(base_dir, path).to_string_lossy().to_string();
+    }
+
+    encode_external_plugin_spec_with_resolve_from(spec, base_dir)
+}
+
+fn resolve_external_plugin_paths(raw_config: &mut Value, base_dir: Option<&Path>) {
+    let Some(base_dir) = base_dir else {
+        return;
+    };
+    let Some(obj) = raw_config.as_object_mut() else {
+        return;
+    };
+    let Some(plugins) = obj.get_mut("plugins") else {
+        return;
+    };
+
+    match plugins {
+        Value::String(spec) => {
+            *spec = resolve_external_plugin_spec(spec, Some(base_dir));
+        }
+        Value::Array(items) => {
+            for item in items {
+                if let Some(spec) = item.as_str() {
+                    *item = Value::String(resolve_external_plugin_spec(spec, Some(base_dir)));
+                }
+            }
+        }
+        _ => {}
+    }
+}
+
+fn merge_external_options(mut raw_config: Value, format_config: &FormatConfig) -> Value {
+    if !raw_config.is_object() {
+        raw_config = Value::Object(serde_json::Map::new());
+    }
+
+    let Value::Object(format_obj) =
+        serde_json::to_value(format_config).expect("FormatConfig serialization should not fail")
+    else {
+        unreachable!("FormatConfig must serialize to a JSON object")
+    };
+
+    let obj = raw_config
+        .as_object_mut()
+        .expect("Raw config should be converted to a JSON object before merging");
+    obj.extend(format_obj);
+    raw_config
+}
+
+fn merge_raw_external_override_options(
+    raw_config: &mut Value,
+    raw_options: &Value,
+    base_dir: Option<&Path>,
+) {
+    let Some(obj) = raw_config.as_object_mut() else {
+        return;
+    };
+
+    let mut raw_options = raw_options.clone();
+    resolve_external_plugin_paths(&mut raw_options, base_dir);
+    let Some(raw_options_obj) = raw_options.as_object() else {
+        return;
+    };
+
+    obj.extend(raw_options_obj.clone());
+}
+
+#[cfg(feature = "napi")]
+pub fn extract_external_plugin_specs(raw_config: &Value, base_dir: Option<&Path>) -> Vec<String> {
+    let mut specs = extract_external_plugin_specs_from_options(raw_config, base_dir);
+
+    if let Some(overrides) =
+        raw_config.as_object().and_then(|obj| obj.get("overrides")).and_then(Value::as_array)
+    {
+        for override_entry in overrides {
+            let Some(options) = override_entry.as_object().and_then(|entry| entry.get("options"))
+            else {
+                continue;
+            };
+            specs.extend(extract_external_plugin_specs_from_options(options, base_dir));
+        }
+    }
+
+    let mut seen = HashSet::new();
+    specs.retain(|spec| seen.insert(spec.clone()));
+    specs
+}
+
+#[cfg(feature = "napi")]
+fn extract_external_plugin_specs_from_options(
+    raw_config: &Value,
+    base_dir: Option<&Path>,
+) -> Vec<String> {
+    let Some(obj) = raw_config.as_object() else {
+        return vec![];
+    };
+    let Some(plugins) = obj.get("plugins") else {
+        return vec![];
+    };
+
+    match plugins {
+        Value::String(spec) => vec![resolve_external_plugin_spec(spec, base_dir)],
+        Value::Array(items) => items
+            .iter()
+            .filter_map(Value::as_str)
+            .map(|spec| resolve_external_plugin_spec(spec, base_dir))
+            .collect(),
+        _ => vec![],
+    }
+}
+
 /// Resolve format options directly from a raw JSON config value.
 ///
 /// This is the simplified path for the NAPI `format()` API,
@@ -75,14 +239,16 @@ pub fn resolve_options_from_value(
     strategy: &FormatFileStrategy,
     cwd: Option<&Path>,
 ) -> Result<ResolvedOptions, String> {
+    let mut raw_config = raw_config;
+    resolve_external_plugin_paths(&mut raw_config, cwd);
+
     let mut format_config: FormatConfig =
-        serde_json::from_value(raw_config).map_err(|err| err.to_string())?;
+        serde_json::from_value(raw_config.clone()).map_err(|err| err.to_string())?;
     if let Some(cwd) = cwd {
         format_config.resolve_tailwind_paths(cwd);
     }
 
-    let mut external_options =
-        serde_json::to_value(&format_config).expect("FormatConfig serialization should not fail");
+    let mut external_options = merge_external_options(raw_config, &format_config);
     let oxfmt_options = to_oxfmt_options(format_config)?;
 
     sync_external_options(&oxfmt_options.format_options, &mut external_options);
@@ -210,6 +376,11 @@ impl ConfigResolver {
     /// Returns the directory containing the config file, if any was loaded.
     pub fn config_dir(&self) -> Option<&Path> {
         self.config_dir.as_deref()
+    }
+
+    #[cfg(feature = "napi")]
+    pub fn external_plugin_specs(&self) -> Vec<String> {
+        extract_external_plugin_specs(&self.raw_config, self.config_dir.as_deref())
     }
 
     /// Create a resolver, handling both JSON/JSONC and JS/TS config files.
@@ -384,8 +555,10 @@ impl ConfigResolver {
 
         // Resolve `overrides` from `Oxfmtrc` for later per-file matching
         let base_dir = self.config_dir.clone();
-        self.oxfmtrc_overrides =
-            oxfmtrc.overrides.map(|overrides| OxfmtrcOverrides::new(overrides, base_dir));
+        let raw_overrides = self.raw_config.get("overrides").and_then(Value::as_array);
+        self.oxfmtrc_overrides = oxfmtrc
+            .overrides
+            .map(|overrides| OxfmtrcOverrides::new(overrides, raw_overrides, base_dir));
 
         let mut format_config = oxfmtrc.format_config;
 
@@ -403,14 +576,11 @@ impl ConfigResolver {
             format_config.resolve_tailwind_paths(config_dir);
         }
 
-        // NOTE: Revisit this when adding Prettier plugin support.
-        // We use `format_config` directly instead of merging with `raw_config`.
-        // To preserve plugin-specific options,
-        // we would need to merge `raw_config` first, then apply `format_config` values on top.
-        // Or we could keep track of plugin options separately in `FormatConfig` itself,
-        // like how Tailwindcss options are handled currently.
-        let mut external_options = serde_json::to_value(&format_config)
-            .expect("FormatConfig serialization should not fail");
+        // Preserve top-level plugin options from the raw config, then apply the resolved
+        // `FormatConfig` values on top so `.editorconfig` and Oxfmt-compatible settings win.
+        let mut raw_external_config = self.raw_config.clone();
+        resolve_external_plugin_paths(&mut raw_external_config, self.config_dir.as_deref());
+        let mut external_options = merge_external_options(raw_external_config, &format_config);
 
         // Convert `FormatConfig` to `OxfmtOptions`, applying defaults where needed
         let oxfmt_options = to_oxfmt_options(format_config)?;
@@ -476,8 +646,18 @@ impl ConfigResolver {
         }
 
         // NOTE: See `build_and_validate()` for details about `external_options` handling
-        let mut external_options = serde_json::to_value(&format_config)
-            .expect("FormatConfig serialization should not fail");
+        let mut raw_external_config = self.raw_config.clone();
+        resolve_external_plugin_paths(&mut raw_external_config, self.config_dir.as_deref());
+        if let Some(overrides) = &self.oxfmtrc_overrides {
+            for raw_options in overrides.get_matching_raw_options(path) {
+                merge_raw_external_override_options(
+                    &mut raw_external_config,
+                    raw_options,
+                    self.config_dir.as_deref(),
+                );
+            }
+        }
+        let mut external_options = merge_external_options(raw_external_config, &format_config);
         let oxfmt_options = to_oxfmt_options(format_config)
             .expect("If this fails, there is an issue with override values");
 
@@ -517,7 +697,11 @@ struct OxfmtrcOverrides {
 }
 
 impl OxfmtrcOverrides {
-    fn new(overrides: Vec<OxfmtOverrideConfig>, base_dir: Option<PathBuf>) -> Self {
+    fn new(
+        overrides: Vec<OxfmtOverrideConfig>,
+        raw_overrides: Option<&Vec<Value>>,
+        base_dir: Option<PathBuf>,
+    ) -> Self {
         // Normalize glob patterns by adding `**/` prefix to patterns without `/`.
         // This matches ESLint/Prettier behavior.
         let normalize_patterns = |patterns: Vec<String>| {
@@ -535,10 +719,17 @@ impl OxfmtrcOverrides {
             base_dir,
             entries: overrides
                 .into_iter()
-                .map(|o| OxfmtrcOverrideEntry {
+                .enumerate()
+                .map(|(index, o)| OxfmtrcOverrideEntry {
                     files: normalize_patterns(o.files),
                     exclude_files: o.exclude_files.map(normalize_patterns).unwrap_or_default(),
                     options: o.options,
+                    raw_options: raw_overrides
+                        .and_then(|overrides| overrides.get(index))
+                        .and_then(Value::as_object)
+                        .and_then(|entry| entry.get("options"))
+                        .cloned()
+                        .unwrap_or_else(|| Value::Object(serde_json::Map::new())),
                 })
                 .collect(),
         }
@@ -554,6 +745,15 @@ impl OxfmtrcOverrides {
     fn get_matching(&self, path: &Path) -> impl Iterator<Item = &FormatConfig> + '_ {
         let relative = self.relative_path(path);
         self.entries.iter().filter(move |e| Self::is_entry_match(e, &relative)).map(|e| &e.options)
+    }
+
+    /// Get all matching raw override option objects for a given path.
+    fn get_matching_raw_options(&self, path: &Path) -> impl Iterator<Item = &Value> + '_ {
+        let relative = self.relative_path(path);
+        self.entries
+            .iter()
+            .filter(move |e| Self::is_entry_match(e, &relative))
+            .map(|e| &e.raw_options)
     }
 
     /// NOTE: On Windows, `to_string_lossy()` produces `\`-separated paths.
@@ -580,6 +780,7 @@ struct OxfmtrcOverrideEntry {
     files: Vec<String>,
     exclude_files: Vec<String>,
     options: FormatConfig,
+    raw_options: Value,
 }
 
 // ---
@@ -696,5 +897,245 @@ fn apply_editorconfig(config: &mut FormatConfig, props: &EditorConfigProperties)
         && let EditorConfigProperty::Value(v) = props.insert_final_newline
     {
         config.insert_final_newline = Some(v);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use serde_json::{Value, json};
+
+    use super::*;
+
+    #[cfg(feature = "napi")]
+    fn decode_encoded_external_plugin_spec(spec: &str) -> Value {
+        let payload = spec
+            .strip_prefix(EXTERNAL_PLUGIN_SPEC_WITH_RESOLVE_FROM_PREFIX)
+            .expect("expected encoded external plugin spec");
+        serde_json::from_str(payload).expect("expected JSON payload")
+    }
+
+    #[cfg(feature = "napi")]
+    #[test]
+    fn test_extract_external_plugin_specs_resolves_relative_paths_and_encodes_package_specs() {
+        let raw_config = json!({
+            "plugins": [
+                "./plugins/prettier-plugin-svelte.mjs",
+                "prettier-plugin-tailwindcss",
+                "@sveltejs/prettier-plugin-svelte",
+                "prettier-plugin-svelte/subpath",
+            ],
+        });
+
+        let specs =
+            extract_external_plugin_specs(&raw_config, Some(Path::new("/tmp/project/config")));
+
+        assert_eq!(specs[0], "/tmp/project/config/plugins/prettier-plugin-svelte.mjs");
+        assert_eq!(
+            decode_encoded_external_plugin_spec(&specs[1]),
+            json!({
+                "spec": "prettier-plugin-tailwindcss",
+                "resolveFrom": "/tmp/project/config",
+            })
+        );
+        assert_eq!(
+            decode_encoded_external_plugin_spec(&specs[2]),
+            json!({
+                "spec": "@sveltejs/prettier-plugin-svelte",
+                "resolveFrom": "/tmp/project/config",
+            })
+        );
+        assert_eq!(
+            decode_encoded_external_plugin_spec(&specs[3]),
+            json!({
+                "spec": "prettier-plugin-svelte/subpath",
+                "resolveFrom": "/tmp/project/config",
+            })
+        );
+    }
+
+    #[cfg(feature = "napi")]
+    #[test]
+    fn test_extract_external_plugin_specs_includes_override_plugins() {
+        let raw_config = json!({
+            "overrides": [
+                {
+                    "files": ["*.svelte"],
+                    "options": {
+                        "plugins": [
+                            "prettier-plugin-svelte/subpath",
+                            "prettier-plugin-svelte/subpath"
+                        ],
+                        "svelteSortOrder": "scripts-markup-styles"
+                    }
+                }
+            ],
+        });
+
+        let specs =
+            extract_external_plugin_specs(&raw_config, Some(Path::new("/tmp/project/config")));
+
+        assert_eq!(specs.len(), 1);
+        assert_eq!(
+            decode_encoded_external_plugin_spec(&specs[0]),
+            json!({
+                "spec": "prettier-plugin-svelte/subpath",
+                "resolveFrom": "/tmp/project/config",
+            })
+        );
+    }
+
+    #[cfg(feature = "napi")]
+    #[test]
+    fn test_config_resolver_resolve_merges_raw_override_plugin_options() {
+        let raw_config = json!({
+            "singleQuote": true,
+            "overrides": [
+                {
+                    "files": ["*.svelte"],
+                    "options": {
+                        "plugins": ["prettier-plugin-svelte/subpath"],
+                        "svelteSortOrder": "scripts-markup-styles"
+                    }
+                }
+            ],
+        });
+        let mut resolver = ConfigResolver::new(
+            raw_config,
+            Some(PathBuf::from("/tmp/project/subdir/config")),
+            None,
+        );
+        resolver.build_and_validate().unwrap();
+
+        let strategy = FormatFileStrategy::ExternalFormatter {
+            path: PathBuf::from("/tmp/project/subdir/config/App.svelte"),
+            parser_name: "svelte".into(),
+        };
+        let ResolvedOptions::ExternalFormatter { external_options, .. } =
+            resolver.resolve(&strategy)
+        else {
+            panic!("Expected external formatter options");
+        };
+
+        let obj = external_options.as_object().expect("expected object options");
+        let plugins = obj.get("plugins").and_then(Value::as_array).expect("expected plugins array");
+
+        assert_eq!(
+            decode_encoded_external_plugin_spec(plugins[0].as_str().unwrap()),
+            json!({
+                "spec": "prettier-plugin-svelte/subpath",
+                "resolveFrom": "/tmp/project/subdir/config",
+            })
+        );
+        assert_eq!(obj.get("svelteSortOrder"), Some(&json!("scripts-markup-styles")));
+        assert_eq!(obj.get("singleQuote"), Some(&json!(true)));
+        assert_eq!(obj.get("printWidth"), Some(&json!(100)));
+        assert!(!obj.contains_key("overrides"));
+    }
+    #[cfg(feature = "napi")]
+    #[test]
+    fn test_resolve_options_from_value_preserves_plugins_and_plugin_options() {
+        let raw_config = json!({
+            "plugins": ["./plugins/prettier-plugin-svelte.mjs"],
+            "svelteSortOrder": "scripts-markup-styles",
+            "singleQuote": true,
+        });
+        let strategy = FormatFileStrategy::ExternalFormatter {
+            path: PathBuf::from("App.svelte"),
+            parser_name: "svelte".into(),
+        };
+
+        let resolved =
+            resolve_options_from_value(raw_config, &strategy, Some(Path::new("/tmp/project")))
+                .unwrap();
+
+        let ResolvedOptions::ExternalFormatter { external_options, .. } = resolved else {
+            panic!("Expected external formatter options");
+        };
+
+        let obj = external_options.as_object().unwrap();
+        assert_eq!(
+            obj.get("plugins"),
+            Some(&json!(["/tmp/project/plugins/prettier-plugin-svelte.mjs"]))
+        );
+        assert_eq!(obj.get("svelteSortOrder"), Some(&json!("scripts-markup-styles")));
+        assert_eq!(obj.get("singleQuote"), Some(&json!(true)));
+    }
+
+    #[cfg(feature = "napi")]
+    #[test]
+    fn test_extract_external_plugin_specs_preserves_registered_plugin_specs() {
+        let raw_config = json!({
+            "plugins": ["__OXFMT_REGISTERED_PLUGIN__7"],
+        });
+
+        let specs =
+            extract_external_plugin_specs(&raw_config, Some(Path::new("/tmp/project/config")));
+
+        assert_eq!(specs, vec!["__OXFMT_REGISTERED_PLUGIN__7"]);
+    }
+
+    #[cfg(feature = "napi")]
+    #[test]
+    fn test_resolve_options_from_value_preserves_registered_plugin_specs() {
+        let raw_config = json!({
+            "plugins": ["__OXFMT_REGISTERED_PLUGIN__3"],
+            "svelteSortOrder": "scripts-markup-styles",
+        });
+        let strategy = FormatFileStrategy::ExternalFormatter {
+            path: PathBuf::from("App.svelte"),
+            parser_name: "svelte".into(),
+        };
+
+        let resolved =
+            resolve_options_from_value(raw_config, &strategy, Some(Path::new("/tmp/project")))
+                .unwrap();
+
+        let ResolvedOptions::ExternalFormatter { external_options, .. } = resolved else {
+            panic!("Expected external formatter options");
+        };
+
+        let obj = external_options.as_object().unwrap();
+        assert_eq!(obj.get("plugins"), Some(&json!(["__OXFMT_REGISTERED_PLUGIN__3"])));
+        assert_eq!(obj.get("svelteSortOrder"), Some(&json!("scripts-markup-styles")));
+    }
+
+    #[cfg(feature = "napi")]
+    #[test]
+    fn test_resolve_options_from_value_encodes_package_plugins_with_resolve_from() {
+        let raw_config = json!({
+            "plugins": ["prettier-plugin-svelte", "@sveltejs/prettier-plugin-svelte"],
+            "svelteSortOrder": "scripts-markup-styles",
+        });
+        let strategy = FormatFileStrategy::ExternalFormatter {
+            path: PathBuf::from("App.svelte"),
+            parser_name: "svelte".into(),
+        };
+
+        let resolved =
+            resolve_options_from_value(raw_config, &strategy, Some(Path::new("/tmp/project")))
+                .unwrap();
+
+        let ResolvedOptions::ExternalFormatter { external_options, .. } = resolved else {
+            panic!("Expected external formatter options");
+        };
+
+        let obj = external_options.as_object().unwrap();
+        let plugins = obj.get("plugins").and_then(Value::as_array).expect("expected plugins array");
+
+        assert_eq!(
+            decode_encoded_external_plugin_spec(plugins[0].as_str().unwrap()),
+            json!({
+                "spec": "prettier-plugin-svelte",
+                "resolveFrom": "/tmp/project",
+            })
+        );
+        assert_eq!(
+            decode_encoded_external_plugin_spec(plugins[1].as_str().unwrap()),
+            json!({
+                "spec": "@sveltejs/prettier-plugin-svelte",
+                "resolveFrom": "/tmp/project",
+            })
+        );
+        assert_eq!(obj.get("svelteSortOrder"), Some(&json!("scripts-markup-styles")));
     }
 }

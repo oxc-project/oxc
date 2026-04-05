@@ -5,7 +5,7 @@
 import { filePath } from "./context.ts";
 import { getFixes, getSuggestions } from "./fix.ts";
 import { initLines, lines, lineStartIndices, debugAssertLinesIsInitialized } from "./location.ts";
-import { sourceText } from "./source_code.ts";
+import { initSourceText, sourceText } from "./source_code.ts";
 import { debugAssertIsNonNull, typeAssertIs } from "../utils/asserts.ts";
 
 import type { RequireAtLeastOne } from "type-fest";
@@ -150,6 +150,10 @@ export function report(
         throw new TypeError("`loc.end` must be an object or null/undefined");
       }
 
+      if (end < start) {
+        throw new RangeError("`loc.end` must be greater than or equal to `loc.start`");
+      }
+
       if (CONFORMANCE) conformedLoc = loc;
     } else {
       typeAssertIs<LineColumn>(loc);
@@ -164,28 +168,30 @@ export function report(
     if (node == null) throw new TypeError("Either `node` or `loc` is required");
     if (typeof node !== "object") throw new TypeError("`node` must be an object");
 
-    // ESLint uses `loc` here instead of `range`.
-    // We can't do that because AST nodes don't have `loc` property yet. In any case, `range` is preferable,
-    // as otherwise we have to convert `loc` to `range` which is expensive at present.
-    // TODO: Revisit this once we have `loc` support in AST, and a fast translation table to convert `loc` to `range`.
-    const { range } = node;
-    if (range === null || typeof range !== "object") {
-      throw new TypeError("`node.range` must be present");
-    }
-    start = range[0];
-    end = range[1];
+    const nodeLocResult = tryGetOffsetsFromNodeLoc(node as { loc?: unknown });
+    if (nodeLocResult !== null) {
+      ({ start, end } = nodeLocResult);
+      if (CONFORMANCE) conformedLoc = nodeLocResult.conformedLoc;
+    } else {
+      const { range } = node;
+      if (range === null || typeof range !== "object") {
+        throw new TypeError("`node.range` must be present");
+      }
+      start = range[0];
+      end = range[1];
 
-    // Do type validation checks here, to ensure no error in serialization / deserialization.
-    // Range validation happens on Rust side.
-    if (
-      typeof start !== "number" ||
-      typeof end !== "number" ||
-      start < 0 ||
-      end < 0 ||
-      (start | 0) !== start ||
-      (end | 0) !== end
-    ) {
-      throw new TypeError("`node.range[0]` and `node.range[1]` must be non-negative integers");
+      if (
+        typeof start !== "number" ||
+        typeof end !== "number" ||
+        start < 0 ||
+        end < 0 ||
+        (start | 0) !== start ||
+        (end | 0) !== end
+      ) {
+        throw new TypeError("`node.range[0]` and `node.range[1]` must be non-negative integers");
+      }
+
+      validateNodeRange(start, end);
     }
   }
 
@@ -235,6 +241,56 @@ function convertLegacyCallArgs(node: unknown, extraArgs: unknown[]): Diagnostic 
     data: extraArgs[2],
     fix: extraArgs[3],
   } as Diagnostic;
+}
+
+function tryGetOffsetsFromNodeLoc(
+  node: { loc?: unknown },
+): { start: number; end: number; conformedLoc: LocationWithOptionalEnd | null } | null {
+  const { loc } = node;
+  if (loc == null || typeof loc !== "object") return null;
+
+  try {
+    if (Object.hasOwn(loc, "start")) {
+      typeAssertIs<LocationWithOptionalEnd>(loc);
+      const { start: startLineCol, end: endLineCol } = loc;
+
+      if (startLineCol === null || typeof startLineCol !== "object") return null;
+      const start = getOffsetFromLineColumn(startLineCol);
+      let end = start;
+      if (endLineCol != null) {
+        if (typeof endLineCol !== "object") {
+          throw new TypeError("`loc.end` must be an object or null/undefined");
+        }
+        end = getOffsetFromLineColumn(endLineCol);
+      }
+      if (end < start) return null;
+
+      return { start, end, conformedLoc: CONFORMANCE ? loc : null };
+    }
+
+    typeAssertIs<LineColumn>(loc);
+    const start = getOffsetFromLineColumn(loc);
+    return {
+      start,
+      end: start,
+      conformedLoc: CONFORMANCE ? { start: loc, end: null } : null,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function validateNodeRange(start: number, end: number): void {
+  if (sourceText === null) initSourceText();
+  debugAssertIsNonNull(sourceText);
+
+  if (end < start) {
+    throw new RangeError("`node.range[1]` must be greater than or equal to `node.range[0]`");
+  }
+
+  if (end > sourceText.length) {
+    throw new RangeError("`node.range` must be within source text bounds");
+  }
 }
 
 /**

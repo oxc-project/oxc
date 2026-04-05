@@ -12,6 +12,10 @@
  * and avoiding redundant dynamic imports within the same process.
  */
 
+import { createRequire } from "node:module";
+import { isAbsolute, join } from "node:path";
+import { pathToFileURL } from "node:url";
+import { getRegisteredPlugin } from "../plugin_registry.ts";
 import type { Options, Plugin } from "prettier";
 
 const CACHES = {
@@ -59,16 +63,128 @@ async function loadPrettier(): Promise<typeof import("prettier")> {
 
 // ---
 
+type ExternalPluginLanguage = {
+  parsers?: string[];
+  extensions?: string[];
+  filenames?: string[];
+};
+
+type ExternalPlugin = Plugin & {
+  languages?: ExternalPluginLanguage[];
+};
+
+const externalPluginCache = new Map<string, ExternalPlugin>();
+
+const EXTERNAL_PLUGIN_SPEC_WITH_RESOLVE_FROM_PREFIX = "__OXFMT_PLUGIN_SPEC__";
+
+type ExternalPluginSpecifier = {
+  spec: string;
+  resolveFrom?: string;
+};
+
+function decodePluginSpecifier(rawSpec: string): ExternalPluginSpecifier {
+  if (!rawSpec.startsWith(EXTERNAL_PLUGIN_SPEC_WITH_RESOLVE_FROM_PREFIX)) return { spec: rawSpec };
+
+  try {
+    const parsed = JSON.parse(
+      rawSpec.slice(EXTERNAL_PLUGIN_SPEC_WITH_RESOLVE_FROM_PREFIX.length),
+    ) as { spec?: unknown; resolveFrom?: unknown };
+
+    if (typeof parsed.spec !== "string" || parsed.spec.length === 0) return { spec: rawSpec };
+
+    return {
+      spec: parsed.spec,
+      resolveFrom: (typeof parsed.resolveFrom === "string" && parsed.resolveFrom.length > 0)
+        ? parsed.resolveFrom
+        : undefined,
+    };
+  } catch {
+    return { spec: rawSpec };
+  }
+}
+
+function getPluginImportSpecifier(rawSpec: string): string {
+  const { spec, resolveFrom } = decodePluginSpecifier(rawSpec);
+
+  if (spec.startsWith("file:")) return spec;
+  if (isAbsolute(spec)) return pathToFileURL(spec).href;
+
+  if (resolveFrom) {
+    const requireFrom = createRequire(join(resolveFrom, "__oxfmt_plugin_resolver__.cjs"));
+    const resolvedSpec = requireFrom.resolve(spec);
+    return isAbsolute(resolvedSpec) ? pathToFileURL(resolvedSpec).href : resolvedSpec;
+  }
+
+  return spec;
+}
+
+function getConfiguredPluginSpecs(options: Options): string[] {
+  const rawPlugins = (options as Options & { plugins?: unknown }).plugins;
+  if (typeof rawPlugins === "string") return [rawPlugins];
+  if (!Array.isArray(rawPlugins)) return [];
+  return rawPlugins.filter((plugin): plugin is string => typeof plugin === "string");
+}
+
+function getConfiguredPluginObjects(options: Options): Plugin[] {
+  const rawPlugins = (options as Options & { plugins?: unknown }).plugins;
+  if (!Array.isArray(rawPlugins)) return [];
+  return rawPlugins.filter((plugin): plugin is Plugin => typeof plugin === "object" && plugin !== null);
+}
+
+async function loadExternalPlugin(spec: string): Promise<ExternalPlugin> {
+  const registeredPlugin = getRegisteredPlugin(spec);
+  if (registeredPlugin) {
+    const cached = externalPluginCache.get(spec);
+    if (cached) return cached;
+
+    const plugin = registeredPlugin as ExternalPlugin;
+    externalPluginCache.set(spec, plugin);
+    return plugin;
+  }
+
+  const cacheKey = getPluginImportSpecifier(spec);
+  const cached = externalPluginCache.get(cacheKey);
+  if (cached) return cached;
+
+  const imported = (await import(cacheKey)) as Record<string, unknown>;
+  const plugin = ((typeof imported.default === "object" && imported.default !== null)
+    ? imported.default
+    : imported) as ExternalPlugin;
+
+  externalPluginCache.set(cacheKey, plugin);
+  return plugin;
+}
+
+async function loadConfiguredPlugins(pluginSpecs: string[]): Promise<ExternalPlugin[]> {
+  return Promise.all(pluginSpecs.map((spec) => loadExternalPlugin(spec)));
+}
+
+function serializePluginLanguage(language: ExternalPluginLanguage): string {
+  return JSON.stringify({
+    parsers: Array.isArray(language.parsers) ? language.parsers : [],
+    extensions: Array.isArray(language.extensions) ? language.extensions : [],
+    filenames: Array.isArray(language.filenames) ? language.filenames : [],
+  });
+}
+
+async function setupConfiguredPlugins(options: Options): Promise<void> {
+  const pluginSpecs = getConfiguredPluginSpecs(options);
+  if (pluginSpecs.length === 0) return;
+
+  const loadedPlugins = await loadConfiguredPlugins(pluginSpecs);
+  options.plugins = [...getConfiguredPluginObjects(options), ...loadedPlugins];
+}
+
 /**
- * TODO: Plugins support
- * - Read `plugins` field
- * - Load plugins dynamically and parse `languages` field
- * - Map file extensions and filenames to Prettier parsers
- *
- * @returns Array of loaded plugin's `languages` info
+ * Resolve configured external plugins and return their serialized `languages` metadata.
  */
-export async function resolvePlugins(): Promise<string[]> {
-  return [];
+export async function resolvePlugins(pluginSpecs: string[] = []): Promise<string[]> {
+  if (pluginSpecs.length === 0) return [];
+
+  const plugins = await loadConfiguredPlugins(pluginSpecs);
+  return plugins.flatMap((plugin) =>
+    Array.isArray(plugin.languages) ? plugin.languages.map(serializePluginLanguage) : [],
+  );
 }
 
 // ---
@@ -85,6 +201,8 @@ export type FormatFileParam = {
  */
 export async function formatFile({ code, options }: FormatFileParam): Promise<string> {
   const prettier = CACHES.prettier ?? (await loadPrettier());
+
+  await setupConfiguredPlugins(options);
 
   // Enable Tailwind CSS plugin for non-JS files if needed
   if ("_useTailwindPlugin" in options) await setupTailwindPlugin(options);
@@ -114,6 +232,8 @@ export async function formatEmbeddedCode({
   options,
 }: FormatEmbeddedCodeParam): Promise<string> {
   const prettier = CACHES.prettier ?? (await loadPrettier());
+
+  await setupConfiguredPlugins(options);
 
   // Enable Tailwind CSS plugin for embedded code (e.g., html`...` in JS) if needed
   if ("_useTailwindPlugin" in options) await setupTailwindPlugin(options);
@@ -148,6 +268,8 @@ export async function formatEmbeddedDoc({
   options,
 }: FormatEmbeddedDocParam): Promise<string[]> {
   const prettier = CACHES.prettier ?? (await loadPrettier());
+
+  await setupConfiguredPlugins(options);
 
   // Enable Tailwind CSS plugin for embedded code (e.g., html`...` in JS) if needed
   if ("_useTailwindPlugin" in options) await setupTailwindPlugin(options);

@@ -5,7 +5,7 @@ use std::{
 
 use rustc_hash::{FxHashMap, FxHashSet};
 use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 
 use oxc_diagnostics::OxcDiagnostic;
 
@@ -20,6 +20,12 @@ use super::{
     rules::OxlintRules,
     settings::OxlintSettings,
 };
+
+#[derive(Debug, Clone)]
+pub enum OxlintrcExtendsEntry {
+    Path(PathBuf),
+    Config(Oxlintrc),
+}
 
 /// Options for the linter.
 #[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
@@ -159,7 +165,7 @@ impl OxlintOptions {
 ///   ]
 /// });
 /// ```
-#[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
+#[derive(Debug, Default, Clone, Serialize, JsonSchema)]
 #[serde(default, deny_unknown_fields)]
 #[non_exhaustive]
 pub struct Oxlintrc {
@@ -262,6 +268,22 @@ pub struct Oxlintrc {
     /// Oxlint config options.
     #[serde(skip_serializing_if = "OxlintOptions::is_empty")]
     pub options: OxlintOptions,
+    /// Internal IDs for `languageOptions` objects loaded from `oxlint.config.ts`.
+    ///
+    /// These are kept out of the public schema and are only used to preserve
+    /// non-serializable parser objects and parser options on the JS side.
+    #[serde(
+        rename = "_languageOptionsId",
+        default,
+        deserialize_with = "deserialize_language_options_ids",
+        skip_serializing
+    )]
+    #[schemars(skip)]
+    pub language_options_ids: Vec<u32>,
+    /// Internal parser-presence flag for `languageOptions` loaded from `oxlint.config.ts`.
+    #[serde(rename = "_languageOptionsHasParser", default, skip_serializing)]
+    #[schemars(skip)]
+    pub language_options_has_parser: Option<bool>,
     /// Absolute path to the configuration file.
     #[serde(skip)]
     pub path: PathBuf,
@@ -282,6 +304,108 @@ pub struct Oxlintrc {
     #[serde(skip)]
     #[schemars(skip)]
     pub extends_configs: Vec<Oxlintrc>,
+    /// Ordered `extends` entries (string paths and inline objects) from `oxlint.config.ts`.
+    ///
+    /// JSON configs only populate `extends`; this field is reserved for JS loader internals so
+    /// mixed extends order can be preserved.
+    #[serde(skip)]
+    #[schemars(skip)]
+    pub extends_entries: Vec<OxlintrcExtendsEntry>,
+}
+
+#[derive(Debug, Default, Deserialize)]
+#[serde(default, deny_unknown_fields)]
+struct PublicOxlintrc {
+    #[serde(rename = "$schema", default)]
+    pub schema: Option<String>,
+    pub plugins: Option<LintPlugins>,
+    #[serde(rename = "jsPlugins", default)]
+    pub external_plugins: Option<FxHashSet<ExternalPluginEntry>>,
+    pub categories: OxlintCategories,
+    pub rules: OxlintRules,
+    pub settings: OxlintSettings,
+    pub env: OxlintEnv,
+    pub globals: OxlintGlobals,
+    pub overrides: OxlintOverrides,
+    pub options: OxlintOptions,
+    #[serde(rename = "ignorePatterns")]
+    pub ignore_patterns: Vec<String>,
+    pub extends: Vec<PathBuf>,
+}
+
+#[derive(Debug, Default, Deserialize)]
+#[serde(default)]
+struct InternalOxlintrc {
+    #[serde(rename = "$schema", default)]
+    pub schema: Option<String>,
+    pub plugins: Option<LintPlugins>,
+    #[serde(rename = "jsPlugins", default)]
+    pub external_plugins: Option<FxHashSet<ExternalPluginEntry>>,
+    pub categories: OxlintCategories,
+    pub rules: OxlintRules,
+    pub settings: OxlintSettings,
+    pub env: OxlintEnv,
+    pub globals: OxlintGlobals,
+    pub overrides: OxlintOverrides,
+    pub options: OxlintOptions,
+    #[serde(
+        rename = "_languageOptionsId",
+        default,
+        deserialize_with = "deserialize_language_options_ids"
+    )]
+    pub language_options_ids: Vec<u32>,
+    #[serde(rename = "_languageOptionsHasParser", default)]
+    pub language_options_has_parser: Option<bool>,
+    #[serde(rename = "ignorePatterns")]
+    pub ignore_patterns: Vec<String>,
+    pub extends: Vec<PathBuf>,
+}
+
+fn strip_internal_language_options_fields(value: &mut serde_json::Value) {
+    if let serde_json::Value::Object(object) = value {
+        object.remove("_languageOptionsId");
+        object.remove("_languageOptionsHasParser");
+    }
+}
+
+impl<'de> Deserialize<'de> for Oxlintrc {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let raw_value = serde_json::Value::deserialize(deserializer)?;
+        let mut public_value = raw_value.clone();
+        strip_internal_language_options_fields(&mut public_value);
+
+        let _: PublicOxlintrc =
+            serde_json::from_value(public_value).map_err(serde::de::Error::custom)?;
+        let raw: InternalOxlintrc =
+            serde_json::from_value(raw_value).map_err(serde::de::Error::custom)?;
+
+        Ok(Self {
+            schema: raw.schema,
+            plugins: raw.plugins,
+            external_plugins: raw.external_plugins,
+            categories: raw.categories,
+            rules: raw.rules,
+            settings: raw.settings,
+            env: raw.env,
+            globals: raw.globals,
+            overrides: raw.overrides,
+            options: raw.options,
+            language_options_ids: raw.language_options_ids,
+            language_options_has_parser: raw.language_options_has_parser,
+            path: PathBuf::default(),
+            ignore_patterns: raw.ignore_patterns,
+            extends: raw.extends,
+            extends_configs: Vec::new(),
+            extends_entries: Vec::new(),
+        })
+    }
+}
+
+fn deserialize_language_options_ids<'de, D>(deserializer: D) -> Result<Vec<u32>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    Ok(Option::<u32>::deserialize(deserializer)?.into_iter().collect())
 }
 
 impl Oxlintrc {
@@ -375,9 +499,14 @@ impl Oxlintrc {
             .map(|rule| (**rule).clone())
             .collect::<Vec<_>>();
 
-        let settings = self.settings.clone();
-        let env = self.env.clone();
-        let globals = self.globals.clone();
+        let mut settings = other.settings.clone();
+        self.settings.override_settings(&mut settings);
+
+        let mut env = other.env.clone();
+        self.env.override_envs(&mut env);
+
+        let mut globals = other.globals.clone();
+        self.globals.override_globals(&mut globals);
 
         let mut overrides = other.overrides;
         overrides.extend(self.overrides.clone());
@@ -399,6 +528,10 @@ impl Oxlintrc {
 
         let schema = self.schema.clone().or(other.schema);
         let options = self.options.merge(&other.options);
+        let mut language_options_ids = other.language_options_ids;
+        language_options_ids.extend(self.language_options_ids.iter().copied());
+        let language_options_has_parser =
+            self.language_options_has_parser.or(other.language_options_has_parser);
 
         Oxlintrc {
             schema,
@@ -411,10 +544,13 @@ impl Oxlintrc {
             globals,
             overrides,
             options,
+            language_options_ids,
+            language_options_has_parser,
             path: self.path.clone(),
             ignore_patterns: self.ignore_patterns.clone(),
             extends: self.extends.clone(),
             extends_configs: self.extends_configs.clone(),
+            extends_entries: self.extends_entries.clone(),
         }
     }
 
@@ -448,6 +584,11 @@ impl Oxlintrc {
         for config in &mut self.extends_configs {
             config.set_config_dir(config_dir);
         }
+        for entry in &mut self.extends_entries {
+            if let OxlintrcExtendsEntry::Config(config) = entry {
+                config.set_config_dir(config_dir);
+            }
+        }
     }
 }
 
@@ -460,9 +601,124 @@ mod test {
     use rustc_hash::FxHashSet;
     use serde_json::json;
 
-    use crate::config::{external_plugins::ExternalPluginEntry, plugins::LintPlugins};
+    use crate::{
+        RuleCategory,
+        config::{
+            categories::CategoryConfig, external_plugins::ExternalPluginEntry, plugins::LintPlugins,
+        },
+    };
 
     use super::*;
+
+    #[test]
+    fn test_merge_preserves_language_options_ids_order() {
+        let parent: Oxlintrc = serde_json::from_value(json!({ "_languageOptionsId": 1 })).unwrap();
+        let child: Oxlintrc = serde_json::from_value(json!({ "_languageOptionsId": 2 })).unwrap();
+
+        let merged = child.merge(parent);
+        assert_eq!(merged.language_options_ids, vec![1, 2]);
+    }
+
+    #[test]
+    fn test_merge_prefers_child_custom_parser_flag() {
+        let parent: Oxlintrc =
+            serde_json::from_value(json!({ "_languageOptionsHasParser": false })).unwrap();
+        let child: Oxlintrc =
+            serde_json::from_value(json!({ "_languageOptionsHasParser": true })).unwrap();
+
+        let merged = child.merge(parent);
+        assert_eq!(merged.language_options_has_parser, Some(true));
+    }
+
+    #[test]
+    fn test_unknown_root_field_error_omits_internal_language_options_fields() {
+        let err = serde_json::from_value::<Oxlintrc>(json!({
+            "x": true,
+            "_languageOptionsId": 1,
+            "_languageOptionsHasParser": true,
+        }))
+        .unwrap_err()
+        .to_string();
+
+        assert!(err.contains("unknown field `x`"));
+        assert!(!err.contains("_languageOptionsId"));
+        assert!(!err.contains("_languageOptionsHasParser"));
+    }
+
+    #[test]
+    fn test_merge_extends_merges_settings_deeply() {
+        let parent: Oxlintrc = serde_json::from_value(json!({
+            "settings": {
+                "custom": {
+                    "fromParent": true,
+                    "shared": "parent"
+                },
+                "react": {
+                    "version": "18.2.0"
+                }
+            }
+        }))
+        .unwrap();
+        let child: Oxlintrc = serde_json::from_value(json!({
+            "settings": {
+                "custom": {
+                    "fromChild": true,
+                    "shared": "child"
+                }
+            }
+        }))
+        .unwrap();
+
+        let merged = child.merge(parent);
+        let settings_json = merged.settings.json.expect("merged settings should preserve json");
+        assert_eq!(
+            settings_json.get("custom"),
+            Some(&json!({
+                "fromParent": true,
+                "shared": "child",
+                "fromChild": true
+            }))
+        );
+        assert_eq!(settings_json.get("react"), Some(&json!({ "version": "18.2.0" })));
+    }
+
+    #[test]
+    fn test_merge_extends_merges_env_and_globals() {
+        let parent: Oxlintrc = serde_json::from_value(json!({
+            "env": {
+                "browser": true,
+                "node": true
+            },
+            "globals": {
+                "Promise": "readonly",
+                "URL": "writable"
+            }
+        }))
+        .unwrap();
+        let child: Oxlintrc = serde_json::from_value(json!({
+            "env": {
+                "browser": false,
+                "worker": true
+            },
+            "globals": {
+                "Promise": "off",
+                "window": "readonly"
+            }
+        }))
+        .unwrap();
+
+        let merged = child.merge(parent);
+        assert!(!merged.env.contains("browser"));
+        assert!(merged.env.contains("node"));
+        assert!(merged.env.contains("worker"));
+
+        assert_eq!(merged.globals.get("Promise"), Some(&crate::config::globals::GlobalValue::Off));
+        assert_eq!(merged.globals.get("URL"), Some(&crate::config::globals::GlobalValue::Writable));
+        assert_eq!(
+            merged.globals.get("window"),
+            Some(&crate::config::globals::GlobalValue::Readonly)
+        );
+    }
 
     #[test]
     fn test_oxlintrc_de_empty() {
@@ -567,6 +823,68 @@ mod test {
         let config: Result<Oxlintrc, _> =
             serde_json::from_value(json!({ "reportUnusedDisableDirectives": "warn" }));
         assert!(config.is_err());
+    }
+
+    #[test]
+    fn test_oxlintrc_deserializes_recommended_categories() {
+        let config: Oxlintrc = serde_json::from_value(json!({
+            "categories": {
+                "suspicious": "recommended"
+            }
+        }))
+        .unwrap();
+
+        assert_eq!(
+            config.categories.get(&RuleCategory::Suspicious),
+            Some(&CategoryConfig::Recommended)
+        );
+    }
+
+    #[test]
+    fn test_oxlintrc_merge_categories_preserves_recommended() {
+        let mut root: Oxlintrc = serde_json::from_value(json!({
+            "categories": {
+                "suspicious": "recommended"
+            }
+        }))
+        .unwrap();
+        root.path = PathBuf::from("/root/.oxlintrc.json");
+
+        let mut base: Oxlintrc = serde_json::from_value(json!({
+            "categories": {
+                "correctness": "deny",
+                "suspicious": "warn"
+            }
+        }))
+        .unwrap();
+        base.path = PathBuf::from("/root/base.json");
+
+        let merged = root.merge(base);
+        assert_eq!(
+            merged.categories.get(&RuleCategory::Suspicious),
+            Some(&CategoryConfig::Recommended)
+        );
+        assert_eq!(
+            merged.categories.get(&RuleCategory::Correctness),
+            Some(&CategoryConfig::Severity(AllowWarnDeny::Deny))
+        );
+
+        let mut root: Oxlintrc = serde_json::from_value(json!({})).unwrap();
+        root.path = PathBuf::from("/root/.oxlintrc.json");
+
+        let mut base: Oxlintrc = serde_json::from_value(json!({
+            "categories": {
+                "suspicious": "recommended"
+            }
+        }))
+        .unwrap();
+        base.path = PathBuf::from("/root/base.json");
+
+        let merged = root.merge(base);
+        assert_eq!(
+            merged.categories.get(&RuleCategory::Suspicious),
+            Some(&CategoryConfig::Recommended)
+        );
     }
 
     #[test]

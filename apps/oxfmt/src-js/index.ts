@@ -1,6 +1,7 @@
 // napi-JS `oxfmt` API entry point
 
 import { format as napiFormat, jsTextToDoc as napiJsTextToDoc } from "./bindings";
+import { normalizePluginObjectsForRust } from "./plugin_registry.ts";
 import {
   resolvePlugins,
   formatFile,
@@ -70,11 +71,13 @@ export async function format(fileName: string, sourceText: string, options?: For
   if (typeof fileName !== "string") throw new TypeError("`fileName` must be a string");
   if (typeof sourceText !== "string") throw new TypeError("`sourceText` must be a string");
 
+  const normalizedOptions = options ? normalizePluginObjectsForRust(options) : {};
+
   return napiFormat(
     fileName,
     sourceText,
-    options ?? {},
-    resolvePlugins,
+    normalizedOptions,
+    (_numThreads, plugins) => resolvePlugins(plugins),
     (options, code) => formatFile({ options, code }),
     (options, code) => formatEmbeddedCode({ options, code }),
     (options, texts) => formatEmbeddedDoc({ options, texts }),
@@ -96,7 +99,7 @@ export async function jsTextToDoc(
     sourceText,
     oxfmtPluginOptionsJson,
     parentContext,
-    resolvePlugins,
+    (_numThreads, plugins) => resolvePlugins(plugins),
     (_options, _code) => Promise.reject(/* Unreachable */),
     (options, code) => formatEmbeddedCode({ options, code }),
     (options, texts) => formatEmbeddedDoc({ options, texts }),

@@ -53,12 +53,17 @@ pub type ExternalLinterLintFileCb = Arc<
                 String,
                 // Globals JSON
                 String,
+                // Internal JS-side languageOptions IDs for this file.
+                Vec<u32>,
                 // Workspace URI (e.g. `file:///path/to/workspace`).
                 // `None` in CLI mode (single workspace), `Some` in LSP mode.
                 Option<String>,
+                // Original source text for whole-file external parser runs.
+                // `None` when Rust raw-transfer AST path is used.
+                Option<String>,
                 // Allocator
                 &Allocator,
-            ) -> Result<Vec<LintFileResult>, String>
+            ) -> Result<LintFilePayload, String>
             + Sync
             + Send,
     >,
@@ -81,6 +86,60 @@ pub struct LintFileResult {
     pub end: u32,
     pub fixes: Option<Vec<JsFix>>,
     pub suggestions: Option<Vec<JsSuggestion>>,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LintFileParseError {
+    pub message: String,
+    pub start: u32,
+    pub end: u32,
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
+#[serde(rename_all = "PascalCase")]
+pub enum ExternalCommentKind {
+    Line,
+    Block,
+    Shebang,
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct ExternalComment {
+    pub start: u32,
+    pub end: u32,
+    #[serde(rename = "type")]
+    pub kind: ExternalCommentKind,
+}
+
+#[derive(Clone, Debug, Default, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LintFilePayload {
+    #[serde(default)]
+    pub diagnostics: Vec<LintFileResult>,
+    #[serde(default)]
+    pub comments: Vec<ExternalComment>,
+    #[serde(default)]
+    pub parse_error: Option<LintFileParseError>,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+#[serde(untagged)]
+pub enum LintFileSuccessPayload {
+    Diagnostics(Vec<LintFileResult>),
+    Payload(LintFilePayload),
+}
+
+impl From<LintFileSuccessPayload> for LintFilePayload {
+    fn from(value: LintFileSuccessPayload) -> Self {
+        match value {
+            LintFileSuccessPayload::Diagnostics(diagnostics) => {
+                Self { diagnostics, comments: vec![], parse_error: None }
+            }
+            LintFileSuccessPayload::Payload(payload) => payload,
+        }
+    }
 }
 
 /// Fix in form sent from JS to Rust.

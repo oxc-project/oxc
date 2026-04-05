@@ -1,0 +1,4 @@
+{
+  "plugins": ["./plugins/prettier-plugin-svelte.mjs"],
+  "svelteSortOrder": "scripts-markup-styles"
+}

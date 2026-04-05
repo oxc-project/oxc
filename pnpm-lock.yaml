@@ -59,6 +59,9 @@ importers:
 
   apps/oxfmt:
     dependencies:
+      js-yaml:
+        specifier: 4.1.1
+        version: 4.1.1
       prettier:
         specifier: 3.8.1
         version: 3.8.1
@@ -93,6 +96,9 @@ importers:
       tsdown:
         specifier: 'catalog:'
         version: 0.21.7(@arethetypeswrong/core@0.18.2)(@emnapi/core@1.8.1)(@emnapi/runtime@1.8.1)(publint@0.3.18)(typescript@5.9.3)
+      tsx:
+        specifier: ^4.21.0
+        version: 4.21.0
       vitest:
         specifier: 'catalog:'
         version: 4.1.2(@types/node@24.1.0)(@vitest/browser-playwright@4.1.2)(happy-dom@20.0.11)(vite@7.3.0(@types/node@24.1.0)(jiti@2.6.1)(terser@5.44.1)(tsx@4.21.0))
@@ -289,6 +295,9 @@ importers:
 
   npm/oxfmt:
     dependencies:
+      js-yaml:
+        specifier: 4.1.1
+        version: 4.1.1
       tinypool:
         specifier: 2.1.0
         version: 2.1.0

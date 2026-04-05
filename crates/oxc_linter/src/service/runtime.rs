@@ -641,6 +641,46 @@ impl Runtime {
                             .collect();
 
                         if context_sub_hosts.is_empty() {
+                            let mut messages = me.linter.run_external_only_on_source_text(
+                                path,
+                                dep.source_text,
+                                allocator_guard,
+                            );
+
+                            if me.linter.options().fix.is_some() {
+                                let fix_result = Fixer::new(
+                                    dep.source_text,
+                                    messages,
+                                    SourceType::from_path(path).ok().map(|st| {
+                                        if st.is_javascript() { st.with_jsx(true) } else { st }
+                                    }),
+                                )
+                                .fix();
+                                if fix_result.fixed {
+                                    let start = 0;
+                                    let end = start + dep.source_text.len();
+                                    new_source_text
+                                        .to_mut()
+                                        .replace_range(start..end, &fix_result.fixed_code);
+                                }
+                                messages = fix_result.messages;
+                            }
+
+                            if !messages.is_empty() {
+                                let errors = messages.into_iter().map(Into::into).collect();
+                                let diagnostics = DiagnosticService::wrap_diagnostics(
+                                    &me.cwd,
+                                    path,
+                                    dep.source_text,
+                                    errors,
+                                );
+                                tx_error.send(diagnostics).unwrap();
+                            }
+
+                            if let Cow::Owned(new_source_text) = &new_source_text {
+                                file_system.write_file(path, new_source_text).unwrap();
+                            }
+
                             return;
                         }
 
@@ -650,6 +690,7 @@ impl Runtime {
                                 context_sub_hosts,
                                 allocator_guard,
                                 me.js_allocator_pool(),
+                                Some(dep.source_text),
                             );
 
                         // Store the disable directives for this file
@@ -725,7 +766,7 @@ impl Runtime {
                 None,
                 |me, mut module_to_lint| {
                     module_to_lint.content.with_dependent_mut(
-                    |allocator_guard, ModuleContentDependent { source_text: _, section_contents }| {
+                    |allocator_guard, ModuleContentDependent { source_text, section_contents }| {
                         assert_eq!(
                             module_to_lint.section_module_records.len(),
                             section_contents.len()
@@ -758,15 +799,28 @@ impl Runtime {
                             })
                             .collect();
 
+                        let path = Path::new(&module_to_lint.path);
+
                         if context_sub_hosts.is_empty() {
+                            messages.lock().unwrap().extend(
+                                me.linter.run_external_only_on_source_text(
+                                    path,
+                                    source_text,
+                                    allocator_guard,
+                                )
+                            );
                             return;
                         }
 
-                        let path = Path::new(&module_to_lint.path);
-
                         let (section_messages, disable_directives) = me
                             .linter
-                            .run_with_disable_directives(path, context_sub_hosts, allocator_guard, me.js_allocator_pool());
+                            .run_with_disable_directives(
+                                path,
+                                context_sub_hosts,
+                                allocator_guard,
+                                me.js_allocator_pool(),
+                                Some(source_text),
+                            );
 
                         if let Some(disable_directives) = disable_directives {
                             me.disable_directives_map
@@ -804,7 +858,7 @@ impl Runtime {
         rayon::scope(|scope| {
             self.resolve_modules(file_system, &paths_set, scope, check_syntax_errors, Some(tx_error), |me, mut module| {
                 module.content.with_dependent_mut(
-                    |allocator_guard, ModuleContentDependent { source_text: _, section_contents }| {
+                    |allocator_guard, ModuleContentDependent { source_text, section_contents }| {
                         assert_eq!(module.section_module_records.len(), section_contents.len());
 
                         let context_sub_hosts: Vec<ContextSubHost<'_>> = module
@@ -835,15 +889,24 @@ impl Runtime {
                             .collect();
 
                         if context_sub_hosts.is_empty() {
+                            messages.lock().unwrap().extend(
+                                me.linter.run_external_only_on_source_text(
+                                    Path::new(&module.path),
+                                    source_text,
+                                    allocator_guard,
+                                )
+                            );
                             return;
                         }
 
                         messages.lock().unwrap().extend(
-                            me.linter.run(
+                            me.linter.run_with_disable_directives(
                                 Path::new(&module.path),
                                 context_sub_hosts,
-                                allocator_guard
-                            )
+                                allocator_guard,
+                                None,
+                                Some(source_text),
+                            ).0
                             ,
                         );
                     },

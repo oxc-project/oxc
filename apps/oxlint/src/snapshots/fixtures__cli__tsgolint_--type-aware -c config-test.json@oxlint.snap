@@ -1,5 +1,6 @@
 ---
 source: apps/oxlint/src/tester.rs
+assertion_line: 142
 ---
 ########## 
 arguments: --type-aware -c config-test.json
@@ -40,7 +41,7 @@ working directory: fixtures/cli/tsgolint
   help: Remove the debugger statement
 
 Found 2 warnings and 2 errors.
-Finished in <variable>ms on 60 files with 1 rules using 1 threads.
+Finished in <variable>ms on 60 files using 1 threads.
 ----------
 CLI result: LintFoundErrors
 ----------

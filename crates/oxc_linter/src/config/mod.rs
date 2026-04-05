@@ -1,8 +1,8 @@
 use std::path::PathBuf;
 
-mod categories;
+pub(crate) mod categories;
 mod config_builder;
-mod config_store;
+pub(crate) mod config_store;
 mod env;
 mod external_plugins;
 mod globals;
@@ -12,13 +12,14 @@ mod oxlintrc;
 pub mod plugins;
 mod rules;
 mod settings;
+pub(crate) use categories::is_category_default_rule;
 pub use config_builder::{ConfigBuilderError, ConfigStoreBuilder};
 pub use config_store::{Config, ConfigStore, ResolvedLinterState};
 pub use env::OxlintEnv;
 pub use globals::{GlobalValue, OxlintGlobals};
 pub use ignore_matcher::LintIgnoreMatcher;
 pub use overrides::OxlintOverrides;
-pub use oxlintrc::Oxlintrc;
+pub use oxlintrc::{Oxlintrc, OxlintrcExtendsEntry};
 pub use plugins::LintPlugins;
 pub use rules::{ESLintRule, OxlintRules};
 pub use settings::{OxlintSettings, ReactVersion, jsdoc::JSDocPluginSettings};
@@ -37,6 +38,10 @@ pub struct LintConfig {
     pub(crate) path: Option<PathBuf>,
     /// Options for the linter.
     pub(crate) options: OxlintOptions,
+    /// Internal IDs for JS-side `languageOptions` objects.
+    pub(crate) js_language_options_ids: Vec<u32>,
+    /// `true` if the resolved JS-side `languageOptions` select a custom parser.
+    pub(crate) js_has_custom_parser: bool,
 }
 
 impl From<Oxlintrc> for LintConfig {
@@ -48,6 +53,8 @@ impl From<Oxlintrc> for LintConfig {
             globals: config.globals,
             path: Some(config.path),
             options: config.options,
+            js_language_options_ids: config.language_options_ids,
+            js_has_custom_parser: config.language_options_has_parser.unwrap_or(false),
         }
     }
 }

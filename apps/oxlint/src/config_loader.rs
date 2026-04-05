@@ -811,7 +811,7 @@ fn nested_report_unused_disable_directives_not_supported(path: &Path) -> OxcDiag
 mod test {
     use std::path::{Path, PathBuf};
 
-    use oxc_linter::{ConfigStoreBuilder, ExternalPluginStore};
+    use oxc_linter::{AllowWarnDeny, ConfigStoreBuilder, ExternalPluginStore};
 
     use super::{ConfigLoadError, ConfigLoader, DiscoveredConfig, is_js_config_path};
     #[cfg(feature = "napi")]
@@ -846,16 +846,38 @@ mod test {
     }
 
     #[cfg(feature = "napi")]
-    fn make_js_config_with_rules(path: PathBuf, rules: &serde_json::Value) -> JsConfigResult {
-        let mut config: oxc_linter::Oxlintrc = serde_json::from_value(serde_json::json!({
-            "rules": rules
-        }))
-        .unwrap();
+    fn make_js_config_from_value(path: PathBuf, value: serde_json::Value) -> JsConfigResult {
+        let mut config: oxc_linter::Oxlintrc = serde_json::from_value(value).unwrap();
         config.path = path.clone();
         if let Some(config_dir) = path.parent() {
             config.set_config_dir(config_dir);
         }
         JsConfigResult { path, config: Some(config) }
+    }
+
+    #[cfg(feature = "napi")]
+    fn make_js_config_with_rules(path: PathBuf, rules: &serde_json::Value) -> JsConfigResult {
+        make_js_config_from_value(
+            path,
+            serde_json::json!({
+                "rules": rules
+            }),
+        )
+    }
+
+    #[cfg(feature = "napi")]
+    fn make_js_config_with_extends_and_rules(
+        path: PathBuf,
+        extends: &[&str],
+        rules: &serde_json::Value,
+    ) -> JsConfigResult {
+        make_js_config_from_value(
+            path,
+            serde_json::json!({
+                "extends": extends,
+                "rules": rules
+            }),
+        )
     }
 
     #[test]
@@ -1056,6 +1078,131 @@ mod test {
 
     #[cfg(feature = "napi")]
     #[test]
+    fn test_root_oxlint_config_ts_resolves_package_extends() {
+        use std::fs;
+
+        let root_dir = tempfile::tempdir().unwrap();
+        let root_path = root_dir.path().join("oxlint.config.ts");
+        fs::write(&root_path, "export default {};").unwrap();
+
+        let main_config = root_dir.path().join("node_modules/oxlint-config-main/config/index.json");
+        let main_shared_base =
+            root_dir.path().join("node_modules/oxlint-config-main/config/shared/base.json");
+        fs::create_dir_all(main_shared_base.parent().unwrap()).unwrap();
+        fs::write(
+            root_dir.path().join("node_modules/oxlint-config-main/package.json"),
+            r#"{ "name": "oxlint-config-main", "main": "config/index.json" }"#,
+        )
+        .unwrap();
+        fs::write(
+            &main_config,
+            r#"{ "extends": ["./shared/base.json"], "rules": { "no-debugger": "warn" } }"#,
+        )
+        .unwrap();
+        fs::write(&main_shared_base, r#"{ "rules": { "no-alert": "warn" } }"#).unwrap();
+
+        let scoped_config =
+            root_dir.path().join("node_modules/@scope/oxlint-config-exports/config/index.json");
+        fs::create_dir_all(scoped_config.parent().unwrap()).unwrap();
+        fs::write(
+            root_dir.path().join("node_modules/@scope/oxlint-config-exports/package.json"),
+            r#"{ "name": "@scope/oxlint-config-exports", "exports": { ".": { "default": "./config/index.json" } } }"#,
+        )
+        .unwrap();
+        fs::write(
+            &scoped_config,
+            r#"{ "plugins": ["react"], "rules": { "react/jsx-key": "warn" } }"#,
+        )
+        .unwrap();
+
+        let oxlint_config =
+            root_dir.path().join("node_modules/oxlint-config-oxlint/config/index.json");
+        fs::create_dir_all(oxlint_config.parent().unwrap()).unwrap();
+        fs::write(
+            root_dir.path().join("node_modules/oxlint-config-oxlint/package.json"),
+            r#"{ "name": "oxlint-config-oxlint", "oxlint": "config/index.json" }"#,
+        )
+        .unwrap();
+        fs::write(&oxlint_config, r#"{ "rules": { "no-console": "warn" } }"#).unwrap();
+
+        let mut external_plugin_store = ExternalPluginStore::new(false);
+        let js_loader = make_js_loader({
+            let root_path = root_path.clone();
+            move |paths| {
+                assert_eq!(paths, vec![root_path.to_string_lossy().to_string()]);
+                Ok(vec![make_js_config_with_extends_and_rules(
+                    root_path.clone(),
+                    &["oxlint-config-main", "@scope/oxlint-config-exports", "oxlint-config-oxlint"],
+                    &serde_json::json!({ "no-console": "error" }),
+                )])
+            }
+        });
+
+        let oxlintrc = {
+            let loader = ConfigLoader::new(None, &mut external_plugin_store, &[], None);
+            let loader = loader.with_js_config_loader(Some(&js_loader));
+            loader
+                .load_root_config(root_dir.path(), Some(&PathBuf::from("oxlint.config.ts")))
+                .unwrap()
+        };
+
+        let builder = ConfigStoreBuilder::from_oxlintrc(
+            true,
+            oxlintrc,
+            None,
+            &mut external_plugin_store,
+            None,
+        )
+        .unwrap();
+
+        let extended_paths = builder
+            .extended_paths
+            .iter()
+            .map(|path| path.to_string_lossy().replace('\\', "/"))
+            .collect::<Vec<_>>();
+        assert!(
+            extended_paths.iter().any(|path| {
+                path.ends_with("node_modules/oxlint-config-main/config/index.json")
+            })
+        );
+        assert!(extended_paths.iter().any(|path| {
+            path.ends_with("node_modules/oxlint-config-main/config/shared/base.json")
+        }));
+        assert!(extended_paths.iter().any(|path| {
+            path.ends_with("node_modules/@scope/oxlint-config-exports/config/index.json")
+        }));
+        assert!(
+            extended_paths.iter().any(|path| {
+                path.ends_with("node_modules/oxlint-config-oxlint/config/index.json")
+            })
+        );
+
+        let config = builder.build(&mut external_plugin_store).unwrap();
+
+        assert!(config.rules().iter().any(|(rule, severity)| {
+            rule.plugin_name() == "eslint"
+                && rule.name() == "no-debugger"
+                && *severity == AllowWarnDeny::Warn
+        }));
+        assert!(config.rules().iter().any(|(rule, severity)| {
+            rule.plugin_name() == "eslint"
+                && rule.name() == "no-alert"
+                && *severity == AllowWarnDeny::Warn
+        }));
+        assert!(config.rules().iter().any(|(rule, severity)| {
+            rule.plugin_name() == "react"
+                && rule.name() == "jsx-key"
+                && *severity == AllowWarnDeny::Warn
+        }));
+        assert!(config.rules().iter().any(|(rule, severity)| {
+            rule.plugin_name() == "eslint"
+                && rule.name() == "no-console"
+                && *severity == AllowWarnDeny::Deny
+        }));
+    }
+
+    #[cfg(feature = "napi")]
+    #[test]
     fn test_root_oxlint_config_ts_rejects_missing_builtin_rule() {
         let root_dir = tempfile::tempdir().unwrap();
         let root_path = root_dir.path().join("oxlint.config.ts");
@@ -1090,6 +1237,130 @@ mod test {
         .unwrap_err();
 
         assert_eq!(err.to_string(), "Rule 'no-console-typo' not found in plugin 'eslint'");
+    }
+
+    #[cfg(feature = "napi")]
+    #[test]
+    fn test_root_oxlint_config_ts_builds_string_extends_and_recommended_categories() {
+        use oxc_linter::{AllowWarnDeny, RuleCategory, rules::RULES};
+
+        let root_dir = tempfile::tempdir().unwrap();
+        let root_path = root_dir.path().join("oxlint.config.ts");
+        let base_path = root_dir.path().join("base.json");
+        std::fs::write(&root_path, "export default {};").unwrap();
+        std::fs::write(&base_path, r#"{ "rules": { "no-var": "error" } }"#).unwrap();
+
+        let mut external_plugin_store = ExternalPluginStore::new(false);
+        let js_loader = make_js_loader({
+            let root_path = root_path.clone();
+            move |paths| {
+                assert_eq!(paths, vec![root_path.to_string_lossy().to_string()]);
+                Ok(vec![make_js_config_from_value(
+                    root_path.clone(),
+                    serde_json::json!({
+                        "extends": ["./base.json"],
+                        "categories": { "suspicious": "recommended" }
+                    }),
+                )])
+            }
+        });
+
+        let oxlintrc = {
+            let loader = ConfigLoader::new(None, &mut external_plugin_store, &[], None);
+            let loader = loader.with_js_config_loader(Some(&js_loader));
+            loader
+                .load_root_config(root_dir.path(), Some(&PathBuf::from("oxlint.config.ts")))
+                .unwrap()
+        };
+
+        assert_eq!(oxlintrc.extends, vec![PathBuf::from("./base.json")]);
+        assert_eq!(
+            serde_json::to_value(&oxlintrc.categories).unwrap(),
+            serde_json::json!({ "suspicious": "recommended" })
+        );
+
+        let config = ConfigStoreBuilder::from_oxlintrc(
+            true,
+            oxlintrc,
+            None,
+            &mut external_plugin_store,
+            None,
+        )
+        .unwrap()
+        .build(&mut external_plugin_store)
+        .unwrap();
+
+        assert_eq!(
+            config
+                .rules()
+                .iter()
+                .find(|(rule, _)| rule.plugin_name() == "eslint" && rule.name() == "no-var")
+                .map(|(_, severity)| *severity),
+            Some(AllowWarnDeny::Deny)
+        );
+
+        let builtin_suspicious_rule = RULES
+            .iter()
+            .find(|rule| {
+                rule.category() == RuleCategory::Suspicious && rule.plugin_name() == "eslint"
+            })
+            .unwrap();
+        assert_eq!(
+            config
+                .rules()
+                .iter()
+                .find(|(rule, _)| *rule == *builtin_suspicious_rule)
+                .map(|(_, severity)| *severity),
+            Some(AllowWarnDeny::Warn)
+        );
+    }
+
+    #[cfg(feature = "napi")]
+    #[test]
+    fn test_nested_oxlint_config_ts_builds_recommended_correctness_subset() {
+        use oxc_linter::{AllowWarnDeny, RuleCategory, rules::RULES};
+
+        let root_dir = tempfile::tempdir().unwrap();
+        let nested_path = root_dir.path().join("nested/oxlint.config.ts");
+        std::fs::create_dir_all(nested_path.parent().unwrap()).unwrap();
+        std::fs::write(&nested_path, "export default {};").unwrap();
+
+        let mut external_plugin_store = ExternalPluginStore::new(false);
+        let mut loader = ConfigLoader::new(None, &mut external_plugin_store, &[], None);
+        let js_loader = make_js_loader({
+            let nested_path = nested_path.clone();
+            move |paths| {
+                assert_eq!(paths, vec![nested_path.to_string_lossy().to_string()]);
+                Ok(vec![make_js_config_from_value(
+                    nested_path.clone(),
+                    serde_json::json!({
+                        "categories": { "correctness": "recommended" }
+                    }),
+                )])
+            }
+        });
+        loader = loader.with_js_config_loader(Some(&js_loader));
+
+        let (configs, errors) = loader
+            .load_discovered_with_root_dir(root_dir.path(), [DiscoveredConfig::Js(nested_path)]);
+        assert!(errors.is_empty());
+        assert_eq!(configs.len(), 1);
+
+        let config = &configs[0].config;
+        let plugin_only_correctness_rule = RULES
+            .iter()
+            .find(|rule| {
+                rule.category() == RuleCategory::Correctness && rule.plugin_name() == "react"
+            })
+            .unwrap();
+
+        assert!(config.rules().iter().any(|(rule, severity)| {
+            rule.category() == RuleCategory::Correctness && *severity == AllowWarnDeny::Warn
+        }));
+        assert!(
+            config.rules().iter().all(|(rule, _)| *rule != *plugin_only_correctness_rule),
+            "non-built-in plugin correctness rules should stay disabled for category-level recommended"
+        );
     }
 
     #[cfg(feature = "napi")]

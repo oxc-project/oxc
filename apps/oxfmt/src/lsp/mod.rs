@@ -31,6 +31,7 @@ fn get_file_extension_from_language_id(language_id: &LanguageId) -> Option<&'sta
         "scss" => Some("scss"),
         "less" => Some("less"),
         "vue" => Some("vue"),
+        "svelte" => Some("svelte"),
         "yaml" => Some("yaml"),
         "angular" => Some("component.html"),
         _ => None,
@@ -58,4 +59,36 @@ pub async fn run_lsp(js_config_loader: JsConfigLoaderCb, external_formatter: Ext
         )),
     )
     .await;
+}
+
+#[cfg(test)]
+mod tests {
+    use std::{path::Path, str::FromStr};
+
+    use oxc_language_server::LanguageId;
+    use tower_lsp_server::ls_types::Uri;
+
+    use super::create_fake_file_path_from_language_id;
+
+    #[test]
+    fn test_create_fake_file_path_from_svelte_language_id() {
+        let root = Path::new("/tmp/workspace");
+        let uri = Uri::from_str("untitled://Untitled-svelte").unwrap();
+        let language_id = LanguageId::new("svelte".to_string());
+
+        let path = create_fake_file_path_from_language_id(&language_id, root, &uri);
+
+        assert_eq!(path, Some(root.join("Untitled-svelte.svelte")));
+    }
+
+    #[test]
+    fn test_create_fake_file_path_from_unknown_language_id() {
+        let root = Path::new("/tmp/workspace");
+        let uri = Uri::from_str("untitled://Untitled-custom").unwrap();
+        let language_id = LanguageId::new("custom-language".to_string());
+
+        let path = create_fake_file_path_from_language_id(&language_id, root, &uri);
+
+        assert_eq!(path, None);
+    }
 }

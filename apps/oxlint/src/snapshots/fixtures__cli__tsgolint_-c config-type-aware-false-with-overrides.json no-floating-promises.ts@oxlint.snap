@@ -1,5 +1,6 @@
 ---
 source: apps/oxlint/src/tester.rs
+assertion_line: 142
 ---
 ########## 
 arguments: -c config-type-aware-false-with-overrides.json no-floating-promises.ts
@@ -16,7 +17,7 @@ working directory: fixtures/cli/tsgolint
   help: Consider using this expression or removing it
 
 Found 1 warning and 0 errors.
-Finished in <variable>ms on 1 file with 93 rules using 1 threads.
+Finished in <variable>ms on 1 file using 1 threads.
 ----------
 CLI result: LintSucceeded
 ----------

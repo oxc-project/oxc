@@ -10,10 +10,19 @@ import {
   TOKENS_OFFSET_POS_32,
   TOKENS_LEN_POS_32,
 } from "../generated/constants.ts";
-import { EMPTY_UINT32_ARRAY } from "../utils/typed_arrays.ts";
+import { EMPTY_UINT8_ARRAY, EMPTY_UINT32_ARRAY } from "../utils/typed_arrays.ts";
 import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 
 import type { Location, Span } from "./location.ts";
+
+interface ExternalTokenInput {
+  type?: unknown;
+  value?: unknown;
+  regex?: unknown;
+  range?: unknown;
+  start?: unknown;
+  end?: unknown;
+}
 
 /**
  * AST token type.
@@ -256,6 +265,150 @@ const IS_ESCAPED_FIELD_OFFSET = 10;
 //   `Token` / `Comment` object may be uninitialized, or contain stale data.
 export const FLAG_NOT_DESERIALIZED = 0;
 export const FLAG_DESERIALIZED = 1;
+
+function normalizeExternalTokenRange(token: ExternalTokenInput): [number, number] | null {
+  const { range } = token;
+  if (
+    Array.isArray(range) &&
+    range.length === 2 &&
+    typeof range[0] === "number" &&
+    typeof range[1] === "number" &&
+    range[0] >= 0 &&
+    range[1] >= range[0]
+  ) {
+    return [range[0], range[1]];
+  }
+
+  if (
+    typeof token.start === "number" &&
+    typeof token.end === "number" &&
+    token.start >= 0 &&
+    token.end >= token.start
+  ) {
+    return [token.start, token.end];
+  }
+
+  return null;
+}
+
+function deriveExternalRegex(
+  token: ExternalTokenInput,
+  value: string,
+): Regex | undefined {
+  if (token.type !== "RegularExpression") return undefined;
+
+  const regex = token.regex;
+  if (
+    typeof regex === "object" &&
+    regex !== null &&
+    typeof (regex as { pattern?: unknown }).pattern === "string" &&
+    typeof (regex as { flags?: unknown }).flags === "string"
+  ) {
+    return {
+      pattern: (regex as { pattern: string }).pattern,
+      flags: (regex as { flags: string }).flags,
+    };
+  }
+
+  const lastSlash = value.lastIndexOf("/");
+  if (lastSlash > 0) {
+    return { pattern: value.slice(1, lastSlash), flags: value.slice(lastSlash + 1) };
+  }
+
+  return { pattern: value, flags: "" };
+}
+
+/**
+ * Initialize token state for a whole-file external parser AST.
+ */
+export function setupExternalTokensForFile(
+  tokensInput: unknown[] | null | undefined,
+  sourceTextInput: string,
+): TokenType[] {
+  const normalizedTokens: Array<{
+    start: number;
+    end: number;
+    type: TokenType["type"] | string;
+    value: string;
+    regex?: Regex;
+  }> = [];
+
+  for (const tokenInput of tokensInput ?? []) {
+    if (typeof tokenInput !== "object" || tokenInput === null) continue;
+
+    const token = tokenInput as ExternalTokenInput;
+    const range = normalizeExternalTokenRange(token);
+    if (range === null) continue;
+
+    const [start, end] = range;
+    const type = typeof token.type === "string" ? token.type : "Identifier";
+    const value = typeof token.value === "string" ? token.value : sourceTextInput.slice(start, end);
+    normalizedTokens.push({ start, end, type, value, regex: deriveExternalRegex(token, value) });
+  }
+
+  normalizedTokens.sort((token1, token2) =>
+    token1.start === token2.start ? token1.end - token2.end : token1.start - token2.start,
+  );
+
+  tokensLen = normalizedTokens.length;
+  allTokensDeserialized = true;
+  deserializedTokensLen = 0;
+  activeTokensWithRegexCount = 0;
+
+  if (tokensLen === 0) {
+    tokens = [] as TokenType[];
+    tokensUint8 = EMPTY_UINT8_ARRAY;
+    tokensUint32 = EMPTY_UINT32_ARRAY;
+    return tokens;
+  }
+
+  if (cachedTokens.length < tokensLen) {
+    do {
+      cachedTokens.push(new Token());
+    } while (cachedTokens.length < tokensLen);
+  }
+
+  if (tokensWithRegexIndexes.length < tokensLen) {
+    tokensWithRegexIndexes = new Uint32Array(
+      Math.max(
+        tokensLen,
+        tokensWithRegexIndexes.length === 0 ? REGEX_INDEXES_MIN_CAPACITY : tokensWithRegexIndexes.length << 1,
+      ),
+    );
+  }
+
+  const tokensBuffer = new ArrayBuffer(tokensLen << TOKEN_SIZE_SHIFT);
+  tokensUint8 = new Uint8Array(tokensBuffer);
+  tokensUint32 = new Uint32Array(tokensBuffer);
+  tokens = cachedTokens.slice(0, tokensLen) as TokenType[];
+
+  for (let i = 0; i < tokensLen; i++) {
+    const normalizedToken = normalizedTokens[i];
+    const token = cachedTokens[i];
+    token.type = normalizedToken.type as TokenType["type"];
+    token.value = normalizedToken.value;
+    token.range[0] = token.start = normalizedToken.start;
+    token.range[1] = token.end = normalizedToken.end;
+
+    if (normalizedToken.regex === undefined) {
+      token.regex = undefined;
+    } else {
+      token.regex = {
+        pattern: normalizedToken.regex.pattern,
+        flags: normalizedToken.regex.flags,
+      };
+      tokensWithRegexIndexes[activeTokensWithRegexCount++] = i;
+    }
+
+    const pos = i << TOKEN_SIZE_SHIFT;
+    const pos32 = pos >> 2;
+    tokensUint32[pos32] = normalizedToken.start;
+    tokensUint32[pos32 + 1] = normalizedToken.end;
+    tokensUint8[pos + DESERIALIZED_FLAG_OFFSET] = FLAG_DESERIALIZED;
+  }
+
+  return tokens;
+}
 
 /**
  * Deserialize all tokens and build the `tokens` array.

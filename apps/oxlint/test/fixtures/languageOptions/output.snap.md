@@ -26,10 +26,11 @@
    `----
 
   x language-options-plugin(lang): parser:
-  | object keys: name,version,parse,VisitorKeys,Syntax,latestEcmaVersion,supportedEcmaVersions
+  | object keys: name,version,parse,parseForESLint,VisitorKeys,Syntax,latestEcmaVersion,supportedEcmaVersions
   | name: oxlint
   | typeof version: string
   | typeof parse: function
+  | typeof parseForESLint: function
   | latestEcmaVersion: 17
   | supportedEcmaVersions: 3,5,6,7,8,9,10,11,12,13,14,15,16,17
   | Syntax: {

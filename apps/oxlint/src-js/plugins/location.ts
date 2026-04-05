@@ -3,8 +3,7 @@
  * Functions for converting between `LineColumn` and offsets, and splitting source text into lines.
  */
 
-import { ast, initAst, initSourceText, sourceText } from "./source_code.ts";
-import visitorKeys from "../generated/keys.ts";
+import { ast, getVisitorKeysForNode, initAst, initSourceText, sourceText } from "./source_code.ts";
 import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 
 import type { NodeOrToken, Node } from "./types.ts";
@@ -435,7 +434,7 @@ function traverse(node: ESTreeNode): ESTreeNode {
   // Decorators in that position have spans outside of the `export` node's span.
   // ESLint doesn't handle this case correctly, so not a big deal that we don't at present either.
 
-  const keys = (visitorKeys as Record<string, readonly string[]>)[node.type];
+  const keys = getVisitorKeysForNode(node as unknown as Record<string, unknown> & { type: string });
 
   // All nodes' properties are in source order, so we could use binary search here.
   // But the max number of visitable properties is 5, so linear search is fine. Possibly linear is faster anyway.

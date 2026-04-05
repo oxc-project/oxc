@@ -8,7 +8,17 @@
     "build-wasm-dev": "pnpm --workspace-concurrency=1 --filter \"./napi/*\" build-wasm-dev",
     "test": "pnpm --workspace-concurrency=1 --filter \"./napi/*\" --filter \"./apps/*\" test",
     "fmt": "oxfmt -c oxfmtrc.jsonc",
-    "lint": "oxlint -c oxlintrc.json --deny-warnings --report-unused-disable-directives"
+    "lint": "oxlint -c oxlintrc.json --deny-warnings --report-unused-disable-directives",
+    "report:svelte-beta": "node ./scripts/report-svelte-beta.mjs",
+    "report:svelte-beta:latest-svelte": "node ./scripts/report-svelte-beta.mjs --profile latest-svelte",
+    "test:svelte-beta": "node ./scripts/run-svelte-beta.mjs",
+    "test:svelte-beta:latest-svelte": "node ./scripts/run-svelte-beta.mjs --profile latest-svelte",
+    "report:svelte-beta:soak": "node ./scripts/report-svelte-beta-soak.mjs --input ./.svelte-beta-soak/report.json",
+    "report:svelte-support": "node ./scripts/report-svelte-support.mjs",
+    "report:svelte-readiness": "node ./scripts/report-svelte-release-readiness.mjs",
+    "test:svelte-beta:soak": "node ./scripts/run-svelte-beta-soak.mjs --manifest ./svelte-beta-repos.json",
+    "check:svelte-support": "node ./scripts/report-svelte-support.mjs --strict",
+    "check:svelte-readiness": "node ./scripts/report-svelte-release-readiness.mjs --strict"
   },
   "devDependencies": {
     "@napi-rs/cli": "catalog:",

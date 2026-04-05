@@ -8,7 +8,12 @@ export type {
   ExternalPluginEntry,
   OxlintGlobals,
   RuleCategories,
+  RuleCategoryConfig,
   ExternalPluginsConfig,
   OxlintConfig,
+  OxlintExtendsEntry,
+  OxlintFlatCompatConfig,
+  OxlintFlatCompatPlugin,
+  OxlintLanguageOptions,
   OxlintOverride,
 } from "./package/config.ts";

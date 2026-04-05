@@ -1,0 +1,6 @@
+{
+  "plugins": ["react"],
+  "categories": {
+    "suspicious": "recommended"
+  }
+}

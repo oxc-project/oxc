@@ -80,10 +80,15 @@ impl StdinRunner {
             }
         }
 
+        let plugin_specs = config_resolver.external_plugin_specs();
+
         // Use `block_in_place()` to avoid nested async runtime access
-        match tokio::task::block_in_place(|| self.external_formatter.init(num_of_threads)) {
-            // TODO: Plugins support
-            Ok(_) => {}
+        let external_plugin_support = match tokio::task::block_in_place(|| {
+            self.external_formatter.init(num_of_threads, &plugin_specs)
+        }) {
+            Ok(languages) => {
+                crate::core::ExternalPluginSupport::from_language_json_strings(&languages)
+            }
             Err(err) => {
                 utils::print_and_flush(
                     stderr,
@@ -91,11 +96,12 @@ impl StdinRunner {
                 );
                 return CliRunResult::InvalidOptionConfig;
             }
-        }
+        };
 
         // Determine format strategy from filepath
         let Ok(strategy) =
-            FormatFileStrategy::try_from(filepath).map(|s| s.resolve_relative_path(&cwd))
+            FormatFileStrategy::from_path_with_external_support(filepath, &external_plugin_support)
+                .map(|s| s.resolve_relative_path(&cwd))
         else {
             utils::print_and_flush(stderr, "Unsupported file type for stdin-filepath\n");
             return CliRunResult::InvalidOptionConfig;

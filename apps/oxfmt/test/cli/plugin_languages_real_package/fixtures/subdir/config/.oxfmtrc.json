@@ -1,0 +1,12 @@
+{
+  "overrides": [
+    {
+      "files": ["*.svelte"],
+      "options": {
+        "plugins": ["prettier-plugin-svelte"],
+        "svelteSortOrder": "scripts-markup-styles-options",
+        "tabWidth": 2
+      }
+    }
+  ]
+}

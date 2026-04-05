@@ -2,7 +2,7 @@ use std::{borrow::Cow, fmt::Write};
 
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::{RuleCategory, RuleFixMeta, rules::RULES};
+use crate::{RuleCategory, RuleFixMeta, config::is_category_default_rule, rules::RULES};
 
 pub struct RuleTable {
     pub sections: Vec<RuleTableSection>,
@@ -42,13 +42,10 @@ impl RuleTable {
     #[expect(clippy::allow_attributes)]
     #[allow(unused, unused_mut)]
     pub fn new(mut generator: Option<&mut schemars::SchemaGenerator>) -> Self {
-        let default_plugin_names = ["eslint", "unicorn", "typescript", "oxc"];
-
         let default_rules = RULES
             .iter()
             .filter(|rule| {
-                rule.category() == RuleCategory::Correctness
-                    && default_plugin_names.contains(&rule.plugin_name())
+                rule.category() == RuleCategory::Correctness && is_category_default_rule(rule)
             })
             .map(super::rules::RuleEnum::name)
             .collect::<FxHashSet<&str>>();

@@ -1,0 +1,48 @@
+name: Oxlint Svelte upstream canary
+
+permissions: {}
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 7 * * 1"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref_name || github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  oxlint-svelte-upstream-canary:
+    name: Oxlint Svelte upstream canary (latest-svelte)
+    runs-on: namespace-profile-linux-x64-default
+    env:
+      OXLINT_SVELTE_REAL_PACKAGES_PROFILE: latest-svelte
+    steps:
+      - uses: taiki-e/checkout-action@83ed61bfbe2b8abbb3c66e8b65b1335484c70009 # v1.4.1
+      - uses: oxc-project/setup-node@4c26e7cb3605b6bdef5450dacd02c434b10fd8ba # v1.2.0
+      - uses: namespacelabs/nscloud-cache-action@a90bb5d4b27522ce881c6e98eebd7d7e6d1653f9 # v1.4.2
+        with:
+          path: /home/runner/.rustup
+          cache: |
+            rust
+            pnpm
+      - name: Run latest-upstream real-package Svelte lane
+        run: |
+          pnpm --filter "./apps/oxlint" run test:svelte-real-packages:managed -- --profile "$OXLINT_SVELTE_REAL_PACKAGES_PROFILE" --build --report-mode always --append-summary
+      - if: ${{ failure() }}
+        name: Emit latest-upstream Svelte annotations
+        run: |
+          pnpm --filter "./apps/oxlint" run annotate:svelte-real-packages:latest-svelte
+      - if: ${{ always() }}
+        name: Upload latest-upstream Svelte diagnostics
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: oxlint-svelte-real-package-diagnostics-latest-svelte
+          path: |
+            apps/oxlint/test/.real-svelte-packages.latest-svelte-report.md
+            apps/oxlint/test/.real-svelte-packages.latest-svelte-report.json
+            apps/oxlint/test/.real-svelte-packages.latest-svelte-state.json
+          if-no-files-found: warn
+      - if: ${{ always() }}
+        run: |
+          git diff --exit-code # Must commit everything

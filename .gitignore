@@ -50,3 +50,26 @@ tasks/prettier_conformance/prettier/
 # See also
 # * https://stackoverflow.com/a/7335487
 # * https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files#configuring-ignored-files-for-all-repositories-on-your-computer
+
+# Oxlint real-package Svelte CI helper artifacts
+/apps/oxlint/test/.real-svelte-packages*/
+/apps/oxlint/test/node_modules/
+/apps/oxlint/test/fixtures/js_config_svelte_real_comments_tokens_whole_file/node_modules/
+/apps/oxlint/test/fixtures/js_config_svelte_real_disable_directives_whole_file/node_modules/
+/apps/oxlint/test/fixtures/js_config_svelte_real_fixes_suggestions_whole_file/node_modules/
+/apps/oxlint/test/fixtures/js_config_svelte_real_parser_whole_file/node_modules/
+/apps/oxlint/test/fixtures/js_config_svelte_real_recommended_whole_file/node_modules/
+/apps/oxlint/test/fixtures/js_config_svelte_real_unused_disable_directives_whole_file/node_modules/
+/apps/oxlint/test/fixtures/js_config_svelte_type_aware_whole_file/node_modules/
+
+/apps/oxlint/test/.real-svelte-packages*-report.md
+/apps/oxlint/test/.real-svelte-packages*-report.json
+/apps/oxlint/test/.real-svelte-packages*-state.json
+/apps/oxfmt/test/.real-svelte-packages*
+/apps/oxfmt/test/cli/plugin_languages_runtime_real_package/fixtures/node_modules/
+# Combined Svelte beta validation artifacts
+.svelte-beta/
+.svelte-beta/support-matrix.json
+.svelte-beta/support-matrix.md
+.svelte-beta-soak/
+svelte-beta-repos.json

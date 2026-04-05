@@ -1,0 +1,36 @@
+{
+  "repos": [
+    {
+      "name": "sveltejs/svelte",
+      "root": "../svelte",
+      "lint": {
+        "args": [
+          ".",
+          "--type-aware"
+        ]
+      },
+      "format": {
+        "args": [
+          "--check",
+          "."
+        ]
+      }
+    },
+    {
+      "name": "sveltejs/kit",
+      "root": "../kit",
+      "lint": {
+        "args": [
+          "packages",
+          "--type-aware"
+        ]
+      },
+      "format": {
+        "args": [
+          "--check",
+          "packages"
+        ]
+      }
+    }
+  ]
+}

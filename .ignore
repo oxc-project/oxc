@@ -12,3 +12,15 @@ apps/**/dist
 **/*.snap
 
 crates/oxc_transformer/src/options/es_features.rs
+
+**/.real-svelte-packages*/**
+**/.real-svelte-packages*-report.md
+**/.real-svelte-packages*-report.json
+**/.real-svelte-packages*-state.json
+**/plugin_languages_runtime_real_package/fixtures/node_modules/**
+# Combined Svelte beta validation artifacts
+.svelte-beta/
+.svelte-beta/support-matrix.json
+.svelte-beta/support-matrix.md
+.svelte-beta-soak/
+svelte-beta-repos.json

@@ -1,0 +1,69 @@
+name: Svelte beta validation
+
+permissions: {}
+
+on:
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: Real-package profile to validate
+        type: choice
+        options:
+          - pinned
+          - latest-svelte
+        default: pinned
+      tools:
+        description: Which tools to validate
+        type: choice
+        options:
+          - both
+          - oxlint
+          - oxfmt
+        default: both
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref_name || github.run_id }}-${{ inputs.profile }}-${{ inputs.tools }}
+  cancel-in-progress: false
+
+jobs:
+  svelte-beta-validation:
+    name: Svelte beta validation (${{ inputs.profile }}, ${{ inputs.tools }})
+    runs-on: namespace-profile-linux-x64-default
+    steps:
+      - uses: taiki-e/checkout-action@83ed61bfbe2b8abbb3c66e8b65b1335484c70009 # v1.4.1
+      - uses: oxc-project/setup-node@4c26e7cb3605b6bdef5450dacd02c434b10fd8ba # v1.2.0
+      - uses: namespacelabs/nscloud-cache-action@a90bb5d4b27522ce881c6e98eebd7d7e6d1653f9 # v1.4.2
+        with:
+          path: /home/runner/.rustup
+          cache: |
+            rust
+            pnpm
+      - name: Run Svelte beta validation
+        run: |
+          pnpm run test:svelte-beta -- --profile "${{ inputs.profile }}" --tools "${{ inputs.tools }}" --build --report-mode always --append-summary
+      - if: ${{ failure() }}
+        name: Emit Oxlint Svelte annotations
+        run: |
+          pnpm --filter "./apps/oxlint" run annotate:svelte-real-packages -- --profile "${{ inputs.profile }}"
+      - if: ${{ failure() }}
+        name: Emit Oxfmt Svelte annotations
+        run: |
+          pnpm --filter "./apps/oxfmt" run annotate:svelte-real-packages -- --profile "${{ inputs.profile }}"
+      - if: ${{ always() }}
+        name: Upload Svelte beta diagnostics
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: svelte-beta-validation-${{ inputs.profile }}-${{ inputs.tools }}
+          path: |
+            .svelte-beta/*.md
+            .svelte-beta/*.json
+            apps/oxlint/test/.real-svelte-packages*-report.md
+            apps/oxlint/test/.real-svelte-packages*-report.json
+            apps/oxlint/test/.real-svelte-packages*-state.json
+            apps/oxfmt/test/.real-svelte-packages*-report.md
+            apps/oxfmt/test/.real-svelte-packages*-report.json
+            apps/oxfmt/test/.real-svelte-packages*-state.json
+          if-no-files-found: warn
+      - if: ${{ always() }}
+        run: |
+          git diff --exit-code # Must commit everything

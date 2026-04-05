@@ -13,27 +13,86 @@ declare global {
   }
 }
 
-const CLI_PATH = join(import.meta.dirname, "..", "..", "dist", "cli.js");
+const PACKAGE_ROOT_PATH = join(import.meta.dirname, "..", "..");
+const BUILT_CLI_PATH = join(PACKAGE_ROOT_PATH, "dist", "cli.js");
+const RAW_CLI_PATH = join(PACKAGE_ROOT_PATH, "src-js", "cli.ts");
+const TSX_CLI_PATH = join(PACKAGE_ROOT_PATH, "node_modules", "tsx", "dist", "cli.mjs");
 
-export function runCli(cwd: string, args: string[]) {
-  return execa("node", [CLI_PATH, ...args, "--threads=1"], {
+export type CliLaunchMode = "built" | "raw";
+
+type RunCliStdinOptions = {
+  cwd?: string;
+  pipe?: string;
+  args?: string[];
+};
+
+function getCliCommand(launchMode: CliLaunchMode): { command: string; args: string[] } {
+  return launchMode === "built"
+    ? { command: "node", args: [BUILT_CLI_PATH] }
+    : { command: process.execPath, args: [TSX_CLI_PATH, RAW_CLI_PATH] };
+}
+
+export function runCliWithLaunchMode(cwd: string, args: string[], launchMode: CliLaunchMode) {
+  const cliCommand = getCliCommand(launchMode);
+  return execa(cliCommand.command, [...cliCommand.args, ...args, "--threads=1"], {
     cwd,
     reject: false,
     timeout: 5000,
   });
 }
 
-export function runCliStdin(input: string, filepath: string, pipe?: string) {
-  let cmd = `node ${CLI_PATH} --stdin-filepath=${filepath}`;
-  if (pipe) cmd += ` | ${pipe}`;
-  return execa({ shell: true, reject: false, input })`${cmd}`;
+export function runCli(cwd: string, args: string[]) {
+  return runCliWithLaunchMode(cwd, args, "built");
+}
+
+function quoteShellArg(arg: string): string {
+  return `'${arg.replaceAll("'", `'"'"'`)}'`;
+}
+
+export function runCliStdinWithLaunchMode(
+  input: string,
+  filepath: string,
+  launchMode: CliLaunchMode,
+  pipeOrOptions?: string | RunCliStdinOptions,
+) {
+  const options =
+    typeof pipeOrOptions === "string"
+      ? { pipe: pipeOrOptions }
+      : pipeOrOptions ?? {};
+
+  const cliArgs = [...(options.args ?? []), `--stdin-filepath=${filepath}`];
+  const cliCommand = getCliCommand(launchMode);
+
+  if (options.pipe) {
+    const cmd = [cliCommand.command, ...cliCommand.args, ...cliArgs].map(quoteShellArg).join(" ");
+    return execa({ shell: true, reject: false, input, cwd: options.cwd, stripFinalNewline: false })`${cmd} | ${options.pipe}`;
+  }
+
+  return execa(cliCommand.command, [...cliCommand.args, ...cliArgs], {
+    cwd: options.cwd,
+    reject: false,
+    input,
+    stripFinalNewline: false,
+  });
+}
+
+export function runCliStdin(
+  input: string,
+  filepath: string,
+  pipeOrOptions?: string | RunCliStdinOptions,
+) {
+  return runCliStdinWithLaunchMode(input, filepath, "built", pipeOrOptions);
 }
 
 // Test function for running the CLI with various arguments
-export async function runAndSnapshot(cwd: string, testCases: string[][]): Promise<string> {
+export async function runAndSnapshot(
+  cwd: string,
+  testCases: string[][],
+  launchMode: CliLaunchMode = "built",
+): Promise<string> {
   const snapshot = [];
   for (const args of testCases) {
-    const result = await runCli(cwd, args);
+    const result = await runCliWithLaunchMode(cwd, args, launchMode);
     snapshot.push(formatSnapshot(cwd, args, result));
   }
   return normalizeOutput(snapshot.join("\n"), cwd);
@@ -44,6 +103,7 @@ export async function runWriteModeAndSnapshot(
   fixtureDir: string,
   files: string[],
   args: string[] = [],
+  launchMode: CliLaunchMode = "built",
 ): Promise<string> {
   const tempDir = await fs.mkdtemp(join(tmpdir(), "oxfmt-test-"));
 
@@ -56,7 +116,7 @@ export async function runWriteModeAndSnapshot(
 
       const beforeContent = await fs.readFile(filePath, "utf8");
 
-      await runCli(tempDir, [...args, file]); // Write by default
+      await runCliWithLaunchMode(tempDir, [...args, file], launchMode); // Write by default
       const afterContent = await fs.readFile(filePath, "utf8");
 
       snapshot.push(

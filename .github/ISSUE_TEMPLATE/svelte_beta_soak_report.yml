@@ -1,0 +1,83 @@
+name: Svelte beta soak report
+description: Report a finding from the real-repo Svelte beta soak process.
+title: "svelte beta soak: "
+labels:
+  - C-formatter
+  - C-linter
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form for issues found while running the Svelte beta-soak process on real repositories.
+
+  - type: input
+    id: repo
+    attributes:
+      label: Repository
+      description: Which repository was used for the soak?
+      placeholder: sveltejs/svelte
+    validations:
+      required: true
+
+  - type: dropdown
+    id: tool
+    attributes:
+      label: Which tool is affected?
+      options:
+        - Oxlint
+        - Oxfmt
+        - Both
+    validations:
+      required: true
+
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Which surface is affected?
+      options:
+        - CLI
+        - LSP / editor
+        - Migration
+        - API
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: command
+    attributes:
+      label: Command(s) run
+      description: Paste the exact soak command or generated command line.
+      placeholder: pnpm run test:svelte-beta:soak -- --repos sveltejs/svelte --tools oxlint --build
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected result
+      placeholder: The repo should lint cleanly with the upstream Svelte config shape.
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual result
+      placeholder: The run failed with a parser resolution error.
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs or report excerpt
+      description: Paste the relevant section from `.svelte-beta-soak/report.md` or attach the log snippet.
+    validations:
+      required: true
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Extra notes
+      description: Mention whether this reproduces in multiple repos or only this one.

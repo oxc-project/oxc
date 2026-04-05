@@ -14,9 +14,14 @@ import visitorKeys from "../generated/keys.ts";
 import { resetComments } from "./comments.ts";
 import * as commentMethods from "./comments_methods.ts";
 import { ecmaVersion } from "./context.ts";
+import {
+  getInferredExternalChildKeys,
+  mergeExternalChildKeys,
+  sanitizeExternalVisitorKeysRecord,
+} from "./external_ast_utils.ts";
 import * as locationMethods from "./location.ts";
-import { initLines, lines, lineStartIndices, resetLinesAndLocs } from "./location.ts";
-import { resetScopeManager, SCOPE_MANAGER } from "./scope.ts";
+import { getNodeLoc, initLines, lines, lineStartIndices, resetLinesAndLocs } from "./location.ts";
+import { resetScopeManager, SCOPE_MANAGER, setParserScopeManagerForFile } from "./scope.ts";
 import * as scopeMethods from "./scope.ts";
 import { resetTokens } from "./tokens.ts";
 import * as tokenMethods from "./tokens_methods.ts";
@@ -30,13 +35,18 @@ import type { ScopeManager } from "./scope.ts";
 import type { Token } from "./tokens.ts";
 import type { BufferWithArrays, Node } from "./types.ts";
 
-const { utf8Slice } = Buffer.prototype;
+const EMPTY_PARSER_SERVICES = Object.freeze({} as Record<string, unknown>);
+
+// Text decoder, for decoding source text from buffer
+const textDecoder = new TextDecoder("utf-8", { ignoreBOM: true });
 
 // Buffer containing AST. Set before linting a file by `setupSourceForFile`.
 export let buffer: BufferWithArrays | null = null;
 
 // Indicates if the original source text has a BOM. Set before linting a file by `setupSourceForFile`.
 let hasBOM = false;
+let isJsx = false;
+let isTs = false;
 
 // Lazily populated when `SOURCE_CODE.text` or `SOURCE_CODE.ast` is accessed,
 // or `initAst()` is called before the AST is walked.
@@ -44,6 +54,35 @@ export let sourceText: string | null = null;
 let sourceStartPos: number = 0;
 let sourceByteLen: number = 0;
 export let ast: Program | null = null;
+let currentVisitorKeys: Readonly<Record<string, readonly string[]>> = visitorKeys;
+let currentParserServices: Readonly<Record<string, unknown>> = EMPTY_PARSER_SERVICES;
+let currentScopeManager: ScopeManager = SCOPE_MANAGER;
+export function getCurrentVisitorKeys(): Readonly<Record<string, readonly string[]>> {
+  return currentVisitorKeys;
+}
+
+export function getVisitorKeysForNode(node: Record<string, unknown> & { type: string }): readonly string[] {
+  const inferredKeys = getInferredExternalChildKeys(node);
+  return mergeExternalChildKeys(inferredKeys, currentVisitorKeys[node.type]);
+}
+
+export function setParserMetadataForFile(metadata?: {
+  visitorKeys?: Readonly<Record<string, readonly string[]>> | null;
+  parserServices?: Record<string, unknown> | null;
+  scopeManager?: ScopeManager | null;
+}): void {
+  currentVisitorKeys = sanitizeExternalVisitorKeysRecord(metadata?.visitorKeys) ?? visitorKeys;
+  currentParserServices = metadata?.parserServices ?? EMPTY_PARSER_SERVICES;
+  currentScopeManager = metadata?.scopeManager ?? SCOPE_MANAGER;
+  setParserScopeManagerForFile(metadata?.scopeManager ?? null);
+}
+
+export function resetParserMetadataForFile(): void {
+  currentVisitorKeys = visitorKeys;
+  currentParserServices = EMPTY_PARSER_SERVICES;
+  currentScopeManager = SCOPE_MANAGER;
+  setParserScopeManagerForFile(null);
+}
 
 /**
  * Set up source for the file about to be linted.
@@ -53,6 +92,22 @@ export let ast: Program | null = null;
 export function setupSourceForFile(bufferInput: BufferWithArrays, hasBOMInput: boolean): void {
   buffer = bufferInput;
   hasBOM = hasBOMInput;
+  isJsx = bufferInput[IS_JSX_FLAG_POS] === 1;
+  isTs = bufferInput[IS_TS_FLAG_POS] === 1;
+}
+
+export function setupExternalSourceForFile(
+  sourceTextInput: string,
+  astInput: Program,
+  hasBOMInput: boolean,
+  flags?: { isJsx?: boolean | null; isTs?: boolean | null } | null,
+): void {
+  buffer = null;
+  hasBOM = hasBOMInput;
+  sourceText = sourceTextInput;
+  ast = astInput;
+  isJsx = flags?.isJsx === true;
+  isTs = flags?.isTs === true;
 }
 
 /**
@@ -64,7 +119,7 @@ export function initSourceText(): void {
     programPos = uint32[DATA_POINTER_POS_32];
   sourceStartPos = uint32[(programPos + SOURCE_START_OFFSET) >> 2];
   sourceByteLen = uint32[(programPos + SOURCE_LEN_OFFSET) >> 2];
-  sourceText = utf8Slice.call(buffer, sourceStartPos, sourceStartPos + sourceByteLen);
+  sourceText = textDecoder.decode(buffer.subarray(sourceStartPos, sourceStartPos + sourceByteLen));
 }
 
 /**
@@ -75,7 +130,7 @@ export function initAst(): void {
   debugAssertIsNonNull(sourceText);
   debugAssertIsNonNull(buffer);
 
-  ast = deserializeProgramOnly(buffer, sourceText, sourceStartPos, sourceByteLen);
+  ast = deserializeProgramOnly(buffer, sourceText, sourceStartPos, sourceByteLen, getNodeLoc);
 
   // In conformance tests, fix AST when parsing as ES3
   if (CONFORMANCE) fixES3Ast();
@@ -134,9 +189,13 @@ export function resetSourceAndAst(): void {
   buffer = null;
   sourceText = null;
   ast = null;
+  hasBOM = false;
+  isJsx = false;
+  isTs = false;
   resetBuffer();
   resetLinesAndLocs();
   resetScopeManager();
+  resetParserMetadataForFile();
   resetTokens();
   resetComments();
   resetTokensAndComments();
@@ -147,9 +206,7 @@ export function resetSourceAndAst(): void {
  * @returns `true` if file is JSX, `false` if not
  */
 export function fileIsJsx(): boolean {
-  debugAssertIsNonNull(buffer);
-  // Flag is `bool` in Rust, so 0 = false, 1 = true
-  return buffer[IS_JSX_FLAG_POS] === 1;
+  return buffer === null ? isJsx : buffer[IS_JSX_FLAG_POS] === 1;
 }
 
 /**
@@ -157,9 +214,7 @@ export function fileIsJsx(): boolean {
  * @returns `true` if file is TypeScript, `false` if not
  */
 export function fileIsTs(): boolean {
-  debugAssertIsNonNull(buffer);
-  // Flag is `bool` in Rust, so 0 = false, 1 = true
-  return buffer[IS_TS_FLAG_POS] === 1;
+  return buffer === null ? isTs : buffer[IS_TS_FLAG_POS] === 1;
 }
 
 // `SourceCode` object.
@@ -208,22 +263,22 @@ export const SOURCE_CODE = Object.freeze({
    * `ScopeManager` for the file.
    */
   get scopeManager(): ScopeManager {
-    return SCOPE_MANAGER;
+    return currentScopeManager;
   },
 
   /**
    * Visitor keys to traverse this AST.
    */
   get visitorKeys(): Readonly<Record<string, readonly string[]>> {
-    return visitorKeys;
+    return currentVisitorKeys;
   },
 
   /**
    * Parser services for the file.
-   *
-   * Oxlint does not offer any parser services.
    */
-  parserServices: Object.freeze({} as Record<string, unknown>),
+  get parserServices(): Readonly<Record<string, unknown>> {
+    return currentParserServices;
+  },
 
   /**
    * Source text as array of lines, split according to specification's definition of line breaks.

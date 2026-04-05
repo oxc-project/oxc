@@ -1,0 +1,9 @@
+{
+  "plugins": ["react"],
+  "categories": {
+    "suspicious": "recommended"
+  },
+  "rules": {
+    "react/react-in-jsx-scope": "error"
+  }
+}

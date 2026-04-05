@@ -47,6 +47,7 @@ const plugin: Plugin = {
               // Don't include `version` in the message, as it'll change each time we do a release
               `typeof version: ${typeof parser.version}\n` +
               `typeof parse: ${typeof parser.parse}\n` +
+              `typeof parseForESLint: ${typeof parser.parseForESLint}\n` +
               `latestEcmaVersion: ${parser.latestEcmaVersion}\n` +
               // oxlint-disable-next-line typescript/restrict-template-expressions
               `supportedEcmaVersions: ${parser.supportedEcmaVersions}\n` +

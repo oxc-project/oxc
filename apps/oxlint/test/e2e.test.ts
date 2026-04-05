@@ -1,6 +1,11 @@
 import { join as pathJoin } from "node:path";
 import { describe, it } from "vitest";
-import { PACKAGE_ROOT_PATH, getFixtures, testFixtureWithCommand } from "./utils.ts";
+import {
+  PACKAGE_ROOT_PATH,
+  getFixtures,
+  getMissingPackagesForFixture,
+  testFixtureWithCommand,
+} from "./utils.ts";
 
 import type { ExpectStatic } from "vitest";
 import type { Fixture } from "./utils.ts";
@@ -30,6 +35,15 @@ describe("oxlint CLI", { concurrent: process.platform !== "win32" }, () => {
   const fixtures = getFixtures();
   for (const fixture of fixtures) {
     if (!fixture.options.oxlint) continue;
+
+    const missingPackages = getMissingPackagesForFixture(fixture);
+    if (missingPackages.length > 0) {
+      it.skip(
+        `fixture: ${fixture.name} (missing packages: ${missingPackages.join(", ")})`,
+        () => {},
+      );
+      continue;
+    }
 
     // oxlint-disable-next-line jest/expect-expect
     it(

@@ -1,0 +1,6 @@
+{
+  "fix": true,
+  "fixSuggestions": true,
+  "singleThread": true,
+  "requiredPackages": ["svelte", "svelte-eslint-parser"]
+}

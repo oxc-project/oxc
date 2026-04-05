@@ -10,10 +10,11 @@ use ignore::{
 };
 use rustc_hash::FxHashSet;
 
-use crate::core::{FormatFileStrategy, utils::normalize_relative_path};
+use crate::core::{ExternalPluginSupport, FormatFileStrategy, utils::normalize_relative_path};
 
 pub struct Walk {
     inner: ignore::WalkParallel,
+    external_plugin_support: ExternalPluginSupport,
 }
 
 impl Walk {
@@ -24,6 +25,7 @@ impl Walk {
         with_node_modules: bool,
         config_dir: Option<&Path>,
         ignore_patterns: &[String],
+        external_plugin_support: ExternalPluginSupport,
     ) -> Result<Option<Self>, String> {
         //
         // Classify and normalize specified paths
@@ -191,17 +193,18 @@ impl Walk {
         });
 
         let inner = apply_walk_settings(&mut inner).build_parallel();
-        Ok(Some(Self { inner }))
+        Ok(Some(Self { inner, external_plugin_support }))
     }
 
     /// Stream entries through a channel as they are discovered
     pub fn stream_entries(self) -> mpsc::Receiver<FormatFileStrategy> {
         let (sender, receiver) = mpsc::channel::<FormatFileStrategy>();
+        let Self { inner, external_plugin_support } = self;
 
         // Spawn the walk operation in a separate thread
         rayon::spawn(move || {
-            let mut builder = WalkBuilder { sender };
-            self.inner.visit(&mut builder);
+            let mut builder = WalkBuilder { sender, external_plugin_support };
+            inner.visit(&mut builder);
             // Channel will be closed when builder is dropped
         });
 
@@ -363,16 +366,21 @@ fn apply_walk_settings(builder: &mut ignore::WalkBuilder) -> &mut ignore::WalkBu
 
 struct WalkBuilder {
     sender: mpsc::Sender<FormatFileStrategy>,
+    external_plugin_support: ExternalPluginSupport,
 }
 
 impl<'s> ignore::ParallelVisitorBuilder<'s> for WalkBuilder {
     fn build(&mut self) -> Box<dyn ignore::ParallelVisitor + 's> {
-        Box::new(WalkVisitor { sender: self.sender.clone() })
+        Box::new(WalkVisitor {
+            sender: self.sender.clone(),
+            external_plugin_support: self.external_plugin_support.clone(),
+        })
     }
 }
 
 struct WalkVisitor {
     sender: mpsc::Sender<FormatFileStrategy>,
+    external_plugin_support: ExternalPluginSupport,
 }
 
 impl ignore::ParallelVisitor for WalkVisitor {
@@ -392,7 +400,10 @@ impl ignore::ParallelVisitor for WalkVisitor {
                     // Tier 3 = `.html`, `.json`, etc: Other files supported by Prettier
                     // (Tier 4 = `.astro`, `.svelte`, etc: Other files supported by Prettier plugins)
                     // Everything else: Ignored
-                    let Ok(strategy) = FormatFileStrategy::try_from(entry.into_path()) else {
+                    let Ok(strategy) = FormatFileStrategy::from_path_with_external_support(
+                        entry.into_path(),
+                        &self.external_plugin_support,
+                    ) else {
                         return ignore::WalkState::Continue;
                     };
 

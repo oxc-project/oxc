@@ -38,7 +38,7 @@ use crate::{
 pub async fn run_cli(
     args: Vec<String>,
     #[napi(ts_arg_type = "(path: string) => Promise<any>")] load_js_config_cb: JsLoadJsConfigCb,
-    #[napi(ts_arg_type = "(numThreads: number) => Promise<string[]>")]
+    #[napi(ts_arg_type = "(numThreads: number, plugins: string[]) => Promise<string[]>")]
     init_external_formatter_cb: JsInitExternalFormatterCb,
     #[napi(ts_arg_type = "(options: Record<string, any>, code: string) => Promise<string>")]
     format_file_cb: JsFormatFileCb,
@@ -156,7 +156,7 @@ pub async fn format(
     filename: String,
     source_text: String,
     options: Option<Value>,
-    #[napi(ts_arg_type = "(numThreads: number) => Promise<string[]>")]
+    #[napi(ts_arg_type = "(numThreads: number, plugins: string[]) => Promise<string[]>")]
     init_external_formatter_cb: JsInitExternalFormatterCb,
     #[napi(ts_arg_type = "(options: Record<string, any>, code: string) => Promise<string>")]
     format_file_cb: JsFormatFileCb,
@@ -199,7 +199,7 @@ pub async fn js_text_to_doc(
     source_text: String,
     oxfmt_plugin_options_json: String,
     parent_context: String,
-    #[napi(ts_arg_type = "(numThreads: number) => Promise<string[]>")]
+    #[napi(ts_arg_type = "(numThreads: number, plugins: string[]) => Promise<string[]>")]
     init_external_formatter_cb: JsInitExternalFormatterCb,
     #[napi(ts_arg_type = "(options: Record<string, any>, code: string) => Promise<string>")]
     format_file_cb: JsFormatFileCb,

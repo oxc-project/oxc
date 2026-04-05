@@ -3981,6 +3981,236 @@ describe("RuleTester", () => {
     });
   });
 
+  describe("`languageOptions.parser` option", () => {
+    it("supports the default parser object's `parse()` method", () => {
+      const parserReporterRule: Rule = {
+        create(context) {
+          return {
+            Program(node) {
+              const parsed = context.languageOptions.parser.parse?.("let foo = 1;", {
+                sourceType: "module",
+              }) as {
+                body: Array<{ type: string }>;
+              };
+
+              context.report({
+                message:
+                  `bodyLength: ${parsed.body.length}\n` +
+                  `nodeType: ${parsed.body[0].type}`,
+                node,
+              });
+            },
+          };
+        },
+      };
+
+      const tester = new RuleTester();
+      tester.run("parser-parse", parserReporterRule, {
+        valid: [],
+        invalid: [
+          {
+            code: "let x = 1;",
+            errors: [
+              {
+                message: "bodyLength: 1\nnodeType: VariableDeclaration",
+              },
+            ],
+          },
+        ],
+      });
+
+      expect(runCases()).toEqual([null]);
+    });
+
+    it("supports custom parser objects in RuleTester", () => {
+      const parserServices = Object.freeze({ isCustom: true });
+      const visitorKeys = Object.freeze({ Program: Object.freeze(["body"]) });
+      const scopeManager = {
+        scopes: [],
+        globalScope: null,
+        acquire: vi.fn(() => null),
+        getDeclaredVariables: vi.fn(() => []),
+      } as any;
+      const parseForESLint = vi.fn(() => ({
+        ast: { type: "Program", body: [], sourceType: "script", start: 0, end: 0, range: [0, 0] },
+        services: parserServices,
+        visitorKeys,
+        scopeManager,
+      }));
+      const parser = {
+        name: "custom-parser",
+        parseForESLint,
+        VisitorKeys: visitorKeys,
+      };
+      const parserReporterRule: Rule = {
+        create(context) {
+          return {
+            Program(node) {
+              context.report({
+                message:
+                  `sameParser: ${context.languageOptions.parser === parser}\n` +
+                  `sameParserServices: ${context.sourceCode.parserServices === parserServices}\n` +
+                  `sameVisitorKeys: ${context.sourceCode.visitorKeys === visitorKeys}\n` +
+                  `sameScopeManager: ${context.sourceCode.scopeManager === scopeManager}`,
+                node,
+              });
+            },
+          };
+        },
+      };
+
+      const tester = new RuleTester();
+      tester.run("custom-parser", parserReporterRule, {
+        valid: [],
+        invalid: [
+          {
+            code: "let x = 1;",
+            languageOptions: { parser },
+            errors: [
+              {
+                message:
+                  "sameParser: true\n" +
+                  "sameParserServices: true\n" +
+                  "sameVisitorKeys: true\n" +
+                  "sameScopeManager: true",
+              },
+            ],
+          },
+        ],
+      });
+
+      expect(runCases()).toEqual([null]);
+      expect(parseForESLint).toHaveBeenCalledTimes(1);
+      expect(parseForESLint).toHaveBeenCalledWith(
+        "let x = 1;",
+        expect.objectContaining({
+          filePath: expect.any(String),
+          eslintVisitorKeys: true,
+          eslintScopeManager: true,
+        }),
+      );
+    });
+
+    it("passes ESLint parser feature-detection flags to custom parsers", () => {
+      const parseForESLint = vi.fn(() => ({
+        ast: { type: "Program", body: [], sourceType: "script", start: 0, end: 0, range: [0, 0] },
+      }));
+      const parser = {
+        name: "custom-parser",
+        parseForESLint,
+      };
+      const reporterRule: Rule = {
+        create(context) {
+          return {
+            Program(node) {
+              const [options] = parseForESLint.mock.calls[0]?.slice(1) ?? [];
+              const parserCallOptions = options as Record<string, unknown> | undefined;
+              context.report({
+                node,
+                message:
+                  `visitorFlag: ${parserCallOptions?.eslintVisitorKeys === true}\n` +
+                  `scopeFlag: ${parserCallOptions?.eslintScopeManager === true}\n` +
+                  `filePath: ${typeof parserCallOptions?.filePath === "string"}`,
+              });
+            },
+          };
+        },
+      };
+
+      const tester = new RuleTester();
+      tester.run("custom-parser-flags", reporterRule, {
+        valid: [],
+        invalid: [
+          {
+            code: "let x = 1;",
+            languageOptions: {
+              parser,
+              parserOptions: {
+                eslintVisitorKeys: false,
+                eslintScopeManager: false,
+              } as Record<string, unknown>,
+            },
+            errors: [
+              {
+                message: "visitorFlag: true\nscopeFlag: true\nfilePath: true",
+              },
+            ],
+          },
+        ],
+      });
+
+      expect(runCases()).toEqual([null]);
+      expect(parseForESLint).toHaveBeenCalledTimes(1);
+    });
+
+    it("passes core AST metadata flags to custom parsers", () => {
+      const parseForESLint = vi.fn(() => ({
+        ast: { type: "Program", body: [], sourceType: "script", start: 0, end: 0, range: [0, 0] },
+      }));
+      const parser = {
+        name: "custom-parser",
+        parseForESLint,
+      };
+      const reporterRule: Rule = {
+        create(context) {
+          return {
+            Program(node) {
+              const [options] = parseForESLint.mock.calls[0]?.slice(1) ?? [];
+              const parserCallOptions = options as Record<string, unknown> | undefined;
+              context.report({
+                node,
+                message:
+                  `locFlag: ${parserCallOptions?.loc === true}
+` +
+                  `rangeFlag: ${parserCallOptions?.range === true}
+` +
+                  `rawFlag: ${parserCallOptions?.raw === true}
+` +
+                  `commentFlag: ${parserCallOptions?.comment === true}
+` +
+                  `tokenFlag: ${parserCallOptions?.tokens === true}`,
+              });
+            },
+          };
+        },
+      };
+
+      const tester = new RuleTester();
+      tester.run("custom-parser-ast-metadata-flags", reporterRule, {
+        valid: [],
+        invalid: [
+          {
+            code: "let x = 1;",
+            languageOptions: {
+              parser,
+              parserOptions: {
+                loc: false,
+                range: false,
+                raw: false,
+                comment: false,
+                tokens: false,
+              } as Record<string, unknown>,
+            },
+            errors: [
+              {
+                message: [
+                  "locFlag: true",
+                  "rangeFlag: true",
+                  "rawFlag: true",
+                  "commentFlag: true",
+                  "tokenFlag: true",
+                ].join("\n"),
+              },
+            ],
+          },
+        ],
+      });
+
+      expect(runCases()).toEqual([null]);
+      expect(parseForESLint).toHaveBeenCalledTimes(1);
+    });
+  });
+
   describe("`cwd` option", () => {
     const cwdReporterRule: Rule = {
       create(context) {

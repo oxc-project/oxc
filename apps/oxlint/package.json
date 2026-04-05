@@ -7,9 +7,18 @@
   "type": "module",
   "main": "dist/index.js",
   "imports": {
-    "#oxlint": "./dist/index.js",
-    "#oxlint/plugins": "./dist-pkg-plugins/index.js",
-    "#oxlint/plugins-dev": "./dist/plugins-dev.js"
+    "#oxlint": {
+      "code": "./src-js/index.ts",
+      "default": "./dist/index.js"
+    },
+    "#oxlint/plugins": {
+      "code": "./src-js/plugins.ts",
+      "default": "./dist-pkg-plugins/index.js"
+    },
+    "#oxlint/plugins-dev": {
+      "code": "./src-js/plugins-dev.ts",
+      "default": "./dist/plugins-dev.js"
+    }
   },
   "exports": {
     ".": {
@@ -25,15 +34,35 @@
     "build": "pnpm run build-napi-release && pnpm run build-js",
     "build-dev": "pnpm run build-napi && cross-env DEBUG=true pnpm run build-js",
     "build-test": "pnpm run build-napi-test && cross-env DEBUG=true pnpm run build-js",
+    "setup:svelte-real-packages": "node --experimental-strip-types ./scripts/install-real-svelte-packages.ts",
+    "setup:svelte-real-packages:latest-svelte": "node --experimental-strip-types ./scripts/install-real-svelte-packages.ts --profile latest-svelte",
+    "check:svelte-real-packages": "node --experimental-strip-types ./scripts/check-real-svelte-packages.ts",
+    "check:svelte-real-packages:latest-svelte": "node --experimental-strip-types ./scripts/check-real-svelte-packages.ts --profile latest-svelte",
+    "report:svelte-real-packages": "node --experimental-strip-types ./scripts/report-real-svelte-packages.ts",
+    "report:svelte-real-packages:latest-svelte": "node --experimental-strip-types ./scripts/report-real-svelte-packages.ts --profile latest-svelte",
+    "annotate:svelte-real-packages": "node --experimental-strip-types ./scripts/annotate-real-svelte-packages.ts",
+    "annotate:svelte-real-packages:latest-svelte": "node --experimental-strip-types ./scripts/annotate-real-svelte-packages.ts --profile latest-svelte",
+    "clean:svelte-real-packages": "node --experimental-strip-types ./scripts/cleanup-real-svelte-packages.ts",
+    "test:svelte-real-packages": "pnpm run check:svelte-real-packages && pnpm run test:svelte-real-packages:runtime && pnpm run test:svelte-real-packages:fixtures && pnpm run test:svelte-real-packages:smoke && pnpm run test:svelte-real-packages:lsp && pnpm run test:svelte-real-packages:lsp-smoke",
+    "test:svelte-real-packages:managed": "node --experimental-strip-types ./scripts/run-real-svelte-package-tests.ts",
+    "test:svelte-real-packages:latest-svelte": "node --experimental-strip-types ./scripts/run-real-svelte-package-tests.ts --profile latest-svelte",
+    "test:svelte-real-packages:latest-svelte:debug": "cross-env OXLINT_SVELTE_REAL_PACKAGES_KEEP_ON_FAILURE=1 node --experimental-strip-types ./scripts/run-real-svelte-package-tests.ts --profile latest-svelte",
+    "test:svelte-real-packages:debug": "cross-env OXLINT_SVELTE_REAL_PACKAGES_KEEP_ON_FAILURE=1 node --experimental-strip-types ./scripts/run-real-svelte-package-tests.ts",
+    "test:svelte-real-packages:fresh": "pnpm run test:svelte-real-packages:managed",
     "build-conformance": "pnpm run build-napi-test && cross-env CONFORMANCE=true pnpm run build-js",
     "build-napi": "napi build --esm --platform --js ./bindings.js --dts ./bindings.d.ts --output-dir src-js --no-dts-cache",
     "build-napi-test": "pnpm run build-napi --features testing --profile coverage",
     "build-napi-release": "pnpm run build-napi --release --features allocator",
-    "build-js": "node scripts/build.ts",
-    "generate-config-types": "node scripts/generate-config-types.ts",
+    "build-js": "node --experimental-strip-types scripts/build.ts",
+    "generate-config-types": "node --experimental-strip-types scripts/generate-config-types.ts",
     "test": "vitest --dir ./test run",
     "init-conformance": "cd conformance; ./init.sh",
-    "conformance": "cross-env NODE_DISABLE_COLORS=1 tsx --conditions=code ./conformance/src/index.ts"
+    "conformance": "cross-env NODE_DISABLE_COLORS=1 CONFORMANCE=true tsx --conditions=code ./conformance/src/index.ts",
+    "test:svelte-real-packages:runtime": "cross-env OXLINT_SVELTE_REAL_PACKAGES_CI=1 vitest run ./test/real_svelte_parser_whole_file.test.ts ./test/real_svelte_plugin_whole_file.test.ts ./test/svelte_real_package_manifest.test.ts",
+    "test:svelte-real-packages:fixtures": "cross-env OXLINT_SVELTE_REAL_PACKAGES_CI=1 vitest run ./test/svelte_real_package_e2e.test.ts",
+    "test:svelte-real-packages:smoke": "cross-env OXLINT_SVELTE_REAL_PACKAGES_CI=1 vitest run ./test/svelte_real_package_smoke.test.ts",
+    "test:svelte-real-packages:lsp": "cross-env OXLINT_SVELTE_REAL_PACKAGES_CI=1 vitest run ./test/lsp/real_svelte_package.test.ts",
+    "test:svelte-real-packages:lsp-smoke": "cross-env OXLINT_SVELTE_REAL_PACKAGES_CI=1 vitest run ./test/lsp/real_svelte_package_smoke.test.ts"
   },
   "devDependencies": {
     "@arethetypeswrong/core": "catalog:",

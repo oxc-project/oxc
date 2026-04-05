@@ -12,15 +12,24 @@ import { join as pathJoin, isAbsolute as isAbsolutePath, dirname } from "node:pa
 import util from "node:util";
 import stableJsonStringify from "json-stable-stringify-without-jsonify";
 import { applyFixes } from "../bindings.js";
-import { ecmaFeaturesOverride, setEcmaVersion, ECMA_VERSION } from "../plugins/context.ts";
+import { registerLanguageOptions } from "../js_language_options_registry.ts";
+import {
+  ecmaFeaturesOverride,
+  setEcmaVersion,
+  normalizeEcmaVersionForLanguageOptions,
+  setParserForFile,
+} from "../plugins/context.ts";
 import { registerPlugin, registeredRules } from "../plugins/load.ts";
 import { lintFileImpl, resetStateAfterError } from "../plugins/lint.ts";
+import { createRequiredParserCallOptions } from "../plugins/parser_call_options.ts";
 import { getLineColumnFromOffset, getNodeByRangeIndex } from "../plugins/location.ts";
 import { allOptions, setOptions, DEFAULT_OPTIONS_ID } from "../plugins/options.ts";
 import { diagnostics, replacePlaceholders, PLACEHOLDER_REGEX } from "../plugins/report.ts";
+import { setParserMetadataForFile } from "../plugins/source_code.ts";
 import { parse } from "./parse.ts";
 
 import type { RequireAtLeastOne } from "type-fest";
+import type { ExternalParser } from "../plugins/context.ts";
 import type { FixReport } from "../plugins/fix.ts";
 import type { Plugin, Rule } from "../plugins/load.ts";
 import type { Options } from "../plugins/options.ts";
@@ -171,10 +180,7 @@ interface LanguageOptions {
  */
 export interface LanguageOptionsInternal extends LanguageOptions {
   ecmaVersion?: number | "latest";
-  parser?: {
-    parse?: (code: string, options?: Record<string, unknown>) => unknown;
-    parseForESLint?: (code: string, options?: Record<string, unknown>) => unknown;
-  };
+  parser?: ExternalParser;
   parserOptions?: ParserOptionsInternal;
 }
 
@@ -1226,6 +1232,8 @@ function mergeGlobals(
 function lint(test: TestCase, plugin: Plugin): Diagnostic[] {
   // Get parse options
   const parseOptions = getParseOptions(test);
+  const languageOptions = test.languageOptions as LanguageOptionsInternal | undefined;
+  const useWholeFileCustomParser = shouldUseWholeFileCustomParser(languageOptions);
 
   // Determine path and CWD.
   // If not provided, use default filename based on `parseOptions.lang`,
@@ -1258,8 +1266,15 @@ function lint(test: TestCase, plugin: Plugin): Diagnostic[] {
     // Set up options
     const optionsId = setupOptions(test, cwd);
 
-    // Parse file into buffer
-    parse(path, test.code, parseOptions);
+    // Parse file into buffer for the raw-transfer lane.
+    // Custom parsers run through the whole-file lane instead so the AST, parser object,
+    // parser services, visitor keys, and scope manager all come from the same parser result.
+    if (!useWholeFileCustomParser) {
+      parse(path, test.code, parseOptions);
+
+      // Set parser object and any parser-provided metadata visible to rules.
+      setupParserForTestCase(test, path, parseOptions);
+    }
 
     // In conformance tests, set `context.languageOptions.ecmaVersion`.
     // This is not supported outside of conformance tests.
@@ -1271,7 +1286,20 @@ function lint(test: TestCase, plugin: Plugin): Diagnostic[] {
 
     // Lint file.
     // Buffer is stored already, at index 0. No need to pass it.
-    lintFileImpl(path, 0, null, [0], [optionsId], settingsJSON, globalsJSON, null);
+    const languageOptionsIds =
+      test.languageOptions == null ? [] : [registerLanguageOptions(test.languageOptions)];
+    lintFileImpl(
+      path,
+      0,
+      null,
+      [0],
+      [optionsId],
+      settingsJSON,
+      globalsJSON,
+      languageOptionsIds,
+      null,
+      useWholeFileCustomParser ? test.code : null,
+    );
 
     // Return diagnostics
     const ruleId = `${plugin.meta!.name!}/${Object.keys(plugin.rules)[0]}`;
@@ -1321,6 +1349,14 @@ function lint(test: TestCase, plugin: Plugin): Diagnostic[] {
   }
 }
 
+function shouldUseWholeFileCustomParser(
+  languageOptions: LanguageOptionsInternal | undefined,
+): boolean {
+  const parser = languageOptions?.parser;
+  return parser != null &&
+    (typeof parser.parseForESLint === "function" || typeof parser.parse === "function");
+}
+
 /**
  * Get parse options for a test case.
  * @param test - Test case
@@ -1331,9 +1367,6 @@ function getParseOptions(test: TestCase): ParseOptions {
 
   let languageOptions = test.languageOptions as LanguageOptionsInternal | undefined;
   if (languageOptions == null) languageOptions = EMPTY_LANGUAGE_OPTIONS;
-
-  // Throw error if custom parser is provided
-  if (languageOptions.parser != null) throw new Error("Custom parsers are not supported");
 
   // Handle `languageOptions.sourceType`
   const { sourceType } = languageOptions;
@@ -1452,6 +1485,79 @@ function getGlobalsJson(test: TestCase): string {
   return JSON.stringify({ globals, envs });
 }
 
+
+function setupParserForTestCase(test: TestCase, path: string, parseOptions: ParseOptions): void {
+  const languageOptions = test.languageOptions as LanguageOptionsInternal | undefined;
+  const parser = languageOptions?.parser ?? null;
+  const parserOptions = languageOptions?.parserOptions ?? null;
+  const parserCallOptions = getParserCallOptions(languageOptions, parseOptions, path);
+
+  setParserForFile(parser, parserOptions);
+
+  if (parser === null) return;
+
+  const metadata = getParserMetadata(parser, test.code, parserCallOptions);
+  if (metadata !== null) {
+    setParserMetadataForFile(metadata as Parameters<typeof setParserMetadataForFile>[0]);
+  }
+}
+
+function getParserCallOptions(
+  languageOptions: LanguageOptionsInternal | undefined,
+  parseOptions: ParseOptions,
+  path: string,
+): Record<string, unknown> {
+  return createRequiredParserCallOptions(
+    path,
+    languageOptions?.parserOptions as Record<string, unknown> | null | undefined,
+    parseOptions.sourceType,
+    languageOptions?.ecmaVersion,
+  );
+}
+
+function getParserMetadata(
+  parser: ExternalParser,
+  code: string,
+  parserOptions: Record<string, unknown> | null,
+): {
+  visitorKeys?: Readonly<Record<string, readonly string[]>> | null;
+  parserServices?: Record<string, unknown> | null;
+  scopeManager?: unknown;
+} | null {
+  if (parser.parseForESLint == null) {
+    return parser.VisitorKeys == null ? null : { visitorKeys: parser.VisitorKeys };
+  }
+
+  const result = parser.parseForESLint(code, parserOptions);
+  const visitorKeys =
+    isObjectRecord(result) && isVisitorKeys(result.visitorKeys)
+      ? result.visitorKeys
+      : (parser.VisitorKeys ?? null);
+  const parserServices =
+    isObjectRecord(result) && isObjectRecord(result.services)
+      ? result.services
+      : isObjectRecord(result) && isObjectRecord(result.parserServices)
+        ? result.parserServices
+        : null;
+  const scopeManager = isObjectRecord(result) ? (result.scopeManager ?? null) : null;
+
+  if (visitorKeys == null && parserServices == null && scopeManager == null) return null;
+  return { visitorKeys, parserServices, scopeManager };
+}
+
+function isObjectRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function isVisitorKeys(
+  value: unknown,
+): value is Readonly<Record<string, readonly string[]>> {
+  if (!isObjectRecord(value)) return false;
+  return Object.values(value).every(
+    (keys) => Array.isArray(keys) && keys.every((key) => typeof key === "string"),
+  );
+}
+
 /**
  * Set up options for the test case.
  *
@@ -1521,13 +1627,7 @@ function setEcmaVersionAndFeatures(test: TestCase) {
   // In ESLint, the branch for `undefined` is actually dead code, because `undefined` is replaced by default value
   // in an early step of config parsing.
   const languageOptions = test.languageOptions as LanguageOptionsInternal | undefined;
-  let ecmaVersion = languageOptions?.ecmaVersion;
-
-  if (typeof ecmaVersion === "number") {
-    if (ecmaVersion > 5 && ecmaVersion < 2015) ecmaVersion += 2009;
-  } else {
-    ecmaVersion = ECMA_VERSION;
-  }
+  const ecmaVersion = normalizeEcmaVersionForLanguageOptions(languageOptions?.ecmaVersion);
   setEcmaVersion(ecmaVersion);
 
   // Set `globalReturn` and `impliedStrict` in scope analyzer options

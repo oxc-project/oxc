@@ -104,27 +104,29 @@ impl CliRunner {
             }
         };
 
-        // Use `block_in_place()` to avoid nested async runtime access
         #[cfg(feature = "napi")]
-        match tokio::task::block_in_place(|| {
-            self.external_formatter
-                .as_ref()
-                .expect("External formatter must be set when `napi` feature is enabled")
-                .init(num_of_threads)
-        }) {
-            // TODO: Plugins support
-            // - Parse returned `languages`
-            // - Allow its `extensions` and `filenames` in `walk.rs`
-            // - Pass `parser` to `SourceFormatter`
-            Ok(_) => {}
-            Err(err) => {
-                utils::print_and_flush(
-                    stderr,
-                    &format!("Failed to setup external formatter.\n{err}\n"),
-                );
-                return CliRunResult::InvalidOptionConfig;
+        let external_plugin_support = {
+            let plugin_specs = config_resolver.external_plugin_specs();
+            match tokio::task::block_in_place(|| {
+                self.external_formatter
+                    .as_ref()
+                    .expect("External formatter must be set when `napi` feature is enabled")
+                    .init(num_of_threads, &plugin_specs)
+            }) {
+                Ok(languages) => {
+                    crate::core::ExternalPluginSupport::from_language_json_strings(&languages)
+                }
+                Err(err) => {
+                    utils::print_and_flush(
+                        stderr,
+                        &format!("Failed to setup external formatter.\n{err}\n"),
+                    );
+                    return CliRunResult::InvalidOptionConfig;
+                }
             }
-        }
+        };
+        #[cfg(not(feature = "napi"))]
+        let external_plugin_support = crate::core::ExternalPluginSupport::default();
 
         let walker = match Walk::build(
             &cwd,
@@ -133,6 +135,7 @@ impl CliRunner {
             ignore_options.with_node_modules,
             config_resolver.config_dir(),
             &ignore_patterns,
+            external_plugin_support,
         ) {
             Ok(Some(walker)) => walker,
             // All target paths are ignored

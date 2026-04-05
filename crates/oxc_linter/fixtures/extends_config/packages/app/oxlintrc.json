@@ -1,0 +1,11 @@
+{
+  "extends": [
+    "oxlint-config-main",
+    "@scope/oxlint-config-exports",
+    "prettier",
+    "oxlint-config-oxlint"
+  ],
+  "rules": {
+    "no-console": "warn"
+  }
+}

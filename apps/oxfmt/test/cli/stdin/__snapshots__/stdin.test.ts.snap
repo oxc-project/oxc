@@ -14,14 +14,16 @@ exports[`--stdin-filepath > should format GraphQL code from stdin 1`] = `
   user(id: 1) {
     name
   }
-}",
+}
+",
 }
 `;
 
 exports[`--stdin-filepath > should format TS code from stdin 1`] = `
 {
   "exitCode": 0,
-  "stdout": "const x: number = 1;",
+  "stdout": "const x: number = 1;
+",
 }
 `;
 

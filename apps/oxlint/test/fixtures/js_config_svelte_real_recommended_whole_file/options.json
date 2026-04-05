@@ -1,0 +1,3 @@
+{
+  "requiredPackages": ["svelte", "svelte-eslint-parser", "eslint-plugin-svelte"]
+}

@@ -1,0 +1,4 @@
+{
+  "args": ["--report-unused-disable-directives"],
+  "requiredPackages": ["svelte", "svelte-eslint-parser"]
+}

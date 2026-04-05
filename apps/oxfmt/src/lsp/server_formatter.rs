@@ -10,8 +10,8 @@ use oxc_language_server::{
 };
 
 use crate::core::{
-    ConfigResolver, ExternalFormatter, FormatFileStrategy, FormatResult, JsConfigLoaderCb,
-    SourceFormatter, all_config_file_names, resolve_editorconfig_path, utils,
+    ConfigResolver, ExternalFormatter, ExternalPluginSupport, FormatFileStrategy, FormatResult,
+    JsConfigLoaderCb, SourceFormatter, all_config_file_names, resolve_editorconfig_path, utils,
 };
 use crate::lsp::create_fake_file_path_from_language_id;
 use crate::lsp::options::FormatOptions as LSPFormatOptions;
@@ -64,14 +64,17 @@ impl ServerFormatterBuilder {
         };
 
         let num_of_threads = 1; // Single threaded for LSP
+        let plugin_specs = config_resolver.external_plugin_specs();
         // Use `block_in_place()` to avoid nested async runtime access
-        match tokio::task::block_in_place(|| self.external_formatter.init(num_of_threads)) {
-            // TODO: Plugins support
-            Ok(_) => {}
+        let external_plugin_support = match tokio::task::block_in_place(|| {
+            self.external_formatter.init(num_of_threads, &plugin_specs)
+        }) {
+            Ok(languages) => ExternalPluginSupport::from_language_json_strings(&languages),
             Err(err) => {
                 error!("Failed to setup external formatter.\n{err}\n");
+                ExternalPluginSupport::default()
             }
-        }
+        };
         let source_formatter = SourceFormatter::new(num_of_threads)
             .with_external_formatter(Some(self.external_formatter.clone()));
 
@@ -80,6 +83,7 @@ impl ServerFormatterBuilder {
             source_formatter,
             config_resolver,
             gitignore_glob,
+            external_plugin_support,
         )
     }
 }
@@ -163,6 +167,7 @@ pub struct ServerFormatter {
     source_formatter: SourceFormatter,
     config_resolver: ConfigResolver,
     gitignore_glob: Option<Gitignore>,
+    external_plugin_support: ExternalPluginSupport,
 }
 
 impl Tool for ServerFormatter {
@@ -293,8 +298,15 @@ impl ServerFormatter {
         source_formatter: SourceFormatter,
         config_resolver: ConfigResolver,
         gitignore_glob: Option<Gitignore>,
+        external_plugin_support: ExternalPluginSupport,
     ) -> Self {
-        Self { root_path, source_formatter, config_resolver, gitignore_glob }
+        Self {
+            root_path,
+            source_formatter,
+            config_resolver,
+            gitignore_glob,
+            external_plugin_support,
+        }
     }
 
     fn is_ignored(&self, path: &Path) -> bool {
@@ -316,7 +328,10 @@ impl ServerFormatter {
         }
 
         // Determine format strategy from file path (supports JS/TS, JSON, YAML, CSS, etc.)
-        let Ok(strategy) = FormatFileStrategy::try_from(path.to_path_buf()) else {
+        let Ok(strategy) = FormatFileStrategy::from_path_with_external_support(
+            path.to_path_buf(),
+            &self.external_plugin_support,
+        ) else {
             debug!("Unsupported file type for formatting: {}", path.display());
             return None;
         };
@@ -342,7 +357,10 @@ impl ServerFormatter {
             return None;
         };
 
-        let Ok(strategy) = FormatFileStrategy::try_from(path.clone()) else {
+        let Ok(strategy) = FormatFileStrategy::from_path_with_external_support(
+            path.clone(),
+            &self.external_plugin_support,
+        ) else {
             debug!("Unsupported file type for formatting: {}", path.display());
             return None;
         };
