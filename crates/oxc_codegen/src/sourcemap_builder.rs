@@ -49,9 +49,12 @@ pub struct ColumnOffsets {
 pub struct SourcemapBuilder<'a> {
     source_id: u32,
     original_source: &'a str,
+    line_offset_tables: Option<LineOffsetTables>,
+    original_position: u32,
+    original_line: u32,
+    original_column: u32,
     last_generated_update: usize,
     last_position: Option<u32>,
-    line_offset_tables: LineOffsetTables,
     sourcemap_builder: oxc_sourcemap::SourceMapBuilder,
     generated_line: u32,
     generated_column: u32,
@@ -64,15 +67,17 @@ pub struct SourcemapBuilder<'a> {
 impl<'a> SourcemapBuilder<'a> {
     pub fn new(path: &Path, source_text: &'a str) -> Self {
         let mut sourcemap_builder = oxc_sourcemap::SourceMapBuilder::default();
-        let line_offset_tables = Self::generate_line_offset_tables(source_text);
         let source_id =
             sourcemap_builder.set_source_and_content(path.to_string_lossy().as_ref(), source_text);
         Self {
             source_id,
             original_source: source_text,
+            line_offset_tables: None,
+            original_position: 0,
+            original_line: 0,
+            original_column: 0,
             last_generated_update: 0,
             last_position: None,
-            line_offset_tables,
             sourcemap_builder,
             generated_line: 0,
             generated_column: 0,
@@ -119,15 +124,22 @@ impl<'a> SourcemapBuilder<'a> {
 
     #[expect(clippy::cast_possible_truncation)]
     fn search_original_line_and_column(&mut self, position: u32) -> (u32, u32) {
+        if self.line_offset_tables.is_none() && self.can_use_sequential_original_lookup(position) {
+            self.advance_original_position(position);
+            return (self.original_line, self.original_column);
+        }
+
+        self.ensure_line_offset_tables();
         let original_line = self.search_original_line(position);
 
         // Store line index as starting point for next search
         self.last_line_lookup = original_line as u32;
 
-        let line = &self.line_offset_tables.lines[original_line];
+        let line_offset_tables = self.line_offset_tables.as_ref().unwrap();
+        let line = &line_offset_tables.lines[original_line];
         let mut original_column = position - line.byte_offset_to_start_of_line;
         if let Some(column_offsets_id) = line.column_offsets_id {
-            let column_offsets = &self.line_offset_tables.column_offsets[column_offsets_id];
+            let column_offsets = &line_offset_tables.column_offsets[column_offsets_id];
             if original_column >= column_offsets.byte_offset_to_first {
                 original_column = column_offsets.columns
                     [(original_column - column_offsets.byte_offset_to_first) as usize];
@@ -144,7 +156,7 @@ impl<'a> SourcemapBuilder<'a> {
     /// So do fast linear search first over a few lines, and fallback to slower binary search
     /// if this doesn't find the line.
     fn search_original_line(&self, position: u32) -> usize {
-        let lines = &self.line_offset_tables.lines;
+        let lines = &self.line_offset_tables.as_ref().unwrap().lines;
         let idx = self.last_line_lookup as usize;
 
         if position >= lines[idx].byte_offset_to_start_of_line {
@@ -160,7 +172,7 @@ impl<'a> SourcemapBuilder<'a> {
     /// Search forwards, looking for first line which starts *after* `position`.
     /// `position` then must be on the line before that one.
     fn search_original_line_forwards(&self, position: u32) -> usize {
-        let lines = &self.line_offset_tables.lines;
+        let lines = &self.line_offset_tables.as_ref().unwrap().lines;
         let last_idx = self.last_line_lookup as usize;
 
         let start_idx = last_idx + 1;
@@ -196,7 +208,7 @@ impl<'a> SourcemapBuilder<'a> {
 
     #[cold]
     fn search_original_line_forwards_when_few_lines(&self, position: u32) -> usize {
-        let lines = &self.line_offset_tables.lines;
+        let lines = &self.line_offset_tables.as_ref().unwrap().lines;
         let last_idx = self.last_line_lookup as usize;
         let start_idx = last_idx + 1;
 
@@ -212,7 +224,7 @@ impl<'a> SourcemapBuilder<'a> {
     }
 
     fn search_original_line_backwards(&self, position: u32) -> usize {
-        let lines = &self.line_offset_tables.lines;
+        let lines = &self.line_offset_tables.as_ref().unwrap().lines;
         let mut idx = self.last_line_lookup as usize;
 
         while lines[idx].byte_offset_to_start_of_line > position {
@@ -226,6 +238,82 @@ impl<'a> SourcemapBuilder<'a> {
         }
 
         idx
+    }
+
+    fn can_use_sequential_original_lookup(&self, position: u32) -> bool {
+        position >= self.original_position
+            && self.original_source.is_char_boundary(self.original_position as usize)
+            && self.original_source.is_char_boundary(position as usize)
+    }
+
+    fn ensure_line_offset_tables(&mut self) {
+        if self.line_offset_tables.is_none() {
+            self.line_offset_tables = Some(Self::generate_line_offset_tables(self.original_source));
+        }
+    }
+
+    #[expect(clippy::cast_possible_truncation)]
+    fn advance_original_position(&mut self, position: u32) {
+        let bytes = self.original_source.as_bytes();
+        let mut idx = self.original_position as usize;
+        let end = position as usize;
+
+        while idx < end {
+            let skipped = skip_ascii_without_line_breaks(bytes, idx, end);
+            idx += skipped;
+            self.original_column += skipped as u32;
+            if idx >= end {
+                break;
+            }
+
+            match bytes[idx] {
+                b'\n' => {
+                    idx += 1;
+                    self.original_line += 1;
+                    self.original_column = 0;
+                }
+                b'\r' => {
+                    if bytes.get(idx + 1) == Some(&b'\n') {
+                        if idx + 1 < end {
+                            idx += 2;
+                            self.original_line += 1;
+                            self.original_column = 0;
+                        } else {
+                            idx += 1;
+                            self.original_column += 1;
+                        }
+                    } else {
+                        idx += 1;
+                        self.original_line += 1;
+                        self.original_column = 0;
+                    }
+                }
+                b if b.is_ascii() => {
+                    idx += 1;
+                    self.original_column += 1;
+                }
+                LS_OR_PS_FIRST_BYTE => {
+                    let next_two_bytes = bytes.get(idx + 1..idx + 3);
+                    if next_two_bytes == Some(&LS_LAST_2_BYTES[..])
+                        || next_two_bytes == Some(&PS_LAST_2_BYTES[..])
+                    {
+                        idx += 3;
+                        self.original_line += 1;
+                        self.original_column = 0;
+                    } else {
+                        idx += 3;
+                        self.original_column += 1;
+                    }
+                }
+                byte => {
+                    let char_len = utf8_char_width(byte);
+                    idx += char_len;
+                    self.original_column += if char_len == 4 { 2 } else { 1 };
+                }
+            }
+        }
+
+        self.original_position = position;
     }
 
     #[expect(clippy::cast_possible_truncation)]
@@ -452,6 +540,56 @@ impl<'a> SourcemapBuilder<'a> {
 
         LineOffsetTables { lines, column_offsets }
     }
+}
+
+#[inline]
+fn utf8_char_width(byte: u8) -> usize {
+    debug_assert!(!byte.is_ascii());
+    match byte {
+        0xC0..=0xDF => 2,
+        0xE0..=0xEF => 3,
+        0xF0..=0xF7 => 4,
+        _ => unreachable!("valid UTF-8 char boundary expected"),
+    }
+}
+
+#[inline]
+fn skip_ascii_without_line_breaks(bytes: &[u8], start: usize, end: usize) -> usize {
+    const USIZE_BYTES: usize = std::mem::size_of::<usize>();
+    const LO_BITS: usize = usize::MAX / 0xFF;
+    const HI_BITS: usize = LO_BITS << 7;
+    const NEWLINE_MASK: usize = LO_BITS * (b'\n' as usize);
+    const CARRIAGE_RETURN_MASK: usize = LO_BITS * (b'\r' as usize);
+
+    #[inline]
+    fn contains_zero_byte(word: usize) -> bool {
+        const LO_BITS: usize = usize::MAX / 0xFF;
+        const HI_BITS: usize = LO_BITS << 7;
+        ((word.wrapping_sub(LO_BITS)) & !word & HI_BITS) != 0
+    }
+
+    let mut idx = start;
+    while idx + USIZE_BYTES <= end {
+        #[expect(clippy::cast_possible_truncation)]
+        let word = usize::from_ne_bytes(bytes[idx..idx + USIZE_BYTES].try_into().unwrap());
+        if (word & HI_BITS) != 0
+            || contains_zero_byte(word ^ NEWLINE_MASK)
+            || contains_zero_byte(word ^ CARRIAGE_RETURN_MASK)
+        {
+            break;
+        }
+        idx += USIZE_BYTES;
+    }
+
+    while idx < end {
+        let byte = bytes[idx];
+        if !byte.is_ascii() || matches!(byte, b'\n' | b'\r') {
+            break;
+        }
+        idx += 1;
+    }
+
+    idx - start
 }
 
 #[cfg(test)]
