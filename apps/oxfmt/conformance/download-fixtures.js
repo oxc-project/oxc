@@ -40,7 +40,7 @@ await Promise.all(
     rmSync(dest, { recursive: true, force: true });
 
     console.log(`Downloading ${name}@${version} fixtures...`);
-    await execAsync(`pnpm exec degit ${repo}#${version} "${dest}"`, { cwd });
+    await execAsync(`vp exec degit ${repo}#${version} "${dest}"`, { cwd });
     console.log(`Done: ${name}`);
   }),
 );

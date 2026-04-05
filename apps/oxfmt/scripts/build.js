@@ -9,7 +9,7 @@ const oxfmtDirPath = join(import.meta.dirname, ".."),
 
 // Build with tsdown
 console.log("Building with tsdown...");
-execSync("pnpm tsdown", { stdio: "inherit", cwd: oxfmtDirPath });
+execSync("vp exec tsdown", { stdio: "inherit", cwd: oxfmtDirPath });
 
 // Copy native `.node` files from `src-js`
 console.log("Copying `.node` files...");

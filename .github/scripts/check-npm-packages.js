@@ -51,7 +51,7 @@ function dryRunPublish(packageDir) {
   try {
     const flags = "--provenance --access public --no-git-checks";
     console.log(`Running dry-run publish for ${packageDir}...`);
-    execSync(`pnpm publish ${packageDir}/ ${flags} --dry-run`, {
+    execSync(`vp pm publish ${packageDir}/ ${flags} --dry-run`, {
       stdio: "inherit",
     });
     return true;

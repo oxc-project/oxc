@@ -3,6 +3,6 @@
 Node.js runtime tests for transformer and minifier.
 
 ```
-pnpm run build-dev
-pnpm run test
+vp run build-dev
+vp run test
 ```

@@ -23,4 +23,4 @@ jobs:
     with:
       name: parser
     permissions:
-      id-token: write # for `pnpm publish --provenance`
+      id-token: write # for `vp pm publish --provenance`
