@@ -83,7 +83,7 @@ impl Rule for PaddingAroundTestBlocks {
         if kind != JestGeneralFnKind::Test {
             return;
         }
-        report_missing_padding_before_jest_block(node, ctx, name.as_ref());
+        report_missing_padding_before_jest_block(node, ctx, name);
     }
 }
 
