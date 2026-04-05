@@ -1143,6 +1143,14 @@ mod test {
     }
 
     #[test]
+    fn test_nested_config_subdirectory_as_cwd() {
+        let args = &[];
+        Tester::new()
+            .with_cwd("fixtures/cli/nested_config/package4-as-cwd".into())
+            .test_and_snapshot(args);
+    }
+
+    #[test]
     fn test_nested_config_explicit_config_precedence() {
         // `--config` takes absolute precedence over nested configs, and will be used for
         // linting all files rather than the nested configuration files.

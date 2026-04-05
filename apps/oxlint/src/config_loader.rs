@@ -54,9 +54,15 @@ pub fn discover_configs_in_ancestors<P: AsRef<Path>>(
 
     for file in files {
         let path = file.as_ref();
+        let mut base_config_found = false;
         // Start from the file's parent directory and walk up the tree
         let mut current = path.parent();
         while let Some(dir) = current {
+            if base_config_found {
+                // Stop if we've reached the base config file (e.g., root oxlintrc)
+                // to avoid duplicate loading and filling nested config with configs outside from the root config.
+                break;
+            }
             // Stop if we've already checked this directory (and its ancestors)
             let inserted = visited_dirs.insert(dir.to_path_buf());
             if !inserted {
@@ -64,8 +70,8 @@ pub fn discover_configs_in_ancestors<P: AsRef<Path>>(
             }
             for config in find_configs_in_directory(dir) {
                 if config.path() == base_config_path {
-                    // Skip the base config file (e.g., root oxlintrc) to avoid duplicate loading
-                    continue;
+                    base_config_found = true;
+                    break;
                 }
                 config_paths.insert(config);
             }

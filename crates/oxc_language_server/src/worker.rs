@@ -726,7 +726,7 @@ mod tests {
             .run_diagnostic(&TextDocument::new(
                 &uri,
                 LanguageId::default(),
-                Some("helloworld".to_string()),
+                Some(Arc::from("helloworld")),
             ))
             .await
             .unwrap();
@@ -790,7 +790,7 @@ mod tests {
             .run_diagnostic_on_change(&TextDocument::new(
                 &uri,
                 LanguageId::default(),
-                Some("helloworld".to_string()),
+                Some(Arc::from("helloworld")),
             ))
             .await
             .unwrap();
@@ -853,7 +853,7 @@ mod tests {
             .run_diagnostic_on_save(&TextDocument::new(
                 &uri,
                 LanguageId::default(),
-                Some("helloworld".to_string()),
+                Some(Arc::from("helloworld")),
             ))
             .await
             .unwrap();
