@@ -114,14 +114,16 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
 
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         if ctx.state.changed {
-            // Remove unused references by visiting the AST again and diff the collected references.
-            let refs_before =
-                ctx.scoping().resolved_references().flatten().copied().collect::<FxHashSet<_>>();
+            // Remove stale references by collecting the set of live references from
+            // the AST and retaining only those in each symbol's reference list.
+            // This is done as a batch rather than deleting references one at a time,
+            // because individual deletion (`delete_resolved_reference`) uses a linear
+            // scan (`.position()`) per call, so removing many references to the same
+            // symbol is O(n²) (happens in bundler output with thousands of unused
+            // `var import_X = __toESM(require_Y())` declarations).
             let mut counter = ReferencesCounter::default();
             counter.visit_program(program);
-            for reference_id_to_remove in refs_before.difference(&counter.refs) {
-                ctx.scoping_mut().delete_reference(*reference_id_to_remove);
-            }
+            ctx.scoping_mut().retain_resolved_references(&counter.refs);
         }
         // Only check class_symbols_stack in full optimization mode (not DCE mode)
         debug_assert!(ctx.state.dce || ctx.state.class_symbols_stack.is_exhausted());

@@ -10,6 +10,7 @@ use oxc_ecmascript::{
 };
 use oxc_semantic::ScopeFlags;
 use oxc_span::{ContentEq, GetSpan};
+use oxc_syntax::symbol::SymbolId;
 
 use crate::{TraverseCtx, keep_var::KeepVar};
 
@@ -1287,6 +1288,21 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
+    /// Check if a symbol is mutated, using the O(1) cached `write_references_count`
+    /// from `SymbolValue` when available, falling back to the O(num_refs) scan in
+    /// `Scoping::symbol_is_mutated` for symbols without cached values.
+    ///
+    /// Only variable declarators have cached values (populated during
+    /// `exit_variable_declarator` → `init_symbol_value`); function declarations
+    /// and other binding kinds still take the fallback path.
+    fn is_symbol_mutated(symbol_id: SymbolId, ctx: &TraverseCtx<'a>) -> bool {
+        if let Some(sv) = ctx.state.symbol_values.get_symbol_value(symbol_id) {
+            sv.write_references_count > 0
+        } else {
+            ctx.scoping().symbol_is_mutated(symbol_id)
+        }
+    }
+
     /// Returns Some(true) when the expression is successfully replaced.
     /// Returns Some(false) when the expression is not replaced, and cannot try the subsequent expressions.
     /// Return None when the expression is not replaced, and can try the subsequent expressions.
@@ -1308,7 +1324,7 @@ impl<'a> PeepholeOptimizations {
                 // If the identifier is not a getter and the identifier is read-only,
                 // we know that the value is same even if we reordered the expression.
                 if let Some(symbol_id) = ctx.scoping().get_reference(id.reference_id()).symbol_id()
-                    && !ctx.scoping().symbol_is_mutated(symbol_id)
+                    && !Self::is_symbol_mutated(symbol_id, ctx)
                 {
                     return None;
                 }

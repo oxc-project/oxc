@@ -565,6 +565,20 @@ impl Scoping {
         });
     }
 
+    /// Retain only resolved references that are in the given set.
+    ///
+    /// This is an O(n) batch operation across all symbols, much more efficient than
+    /// calling `delete_resolved_reference` repeatedly when many references from the
+    /// same symbol need to be removed (which would be O(n²) due to the linear scan
+    /// in each deletion).
+    pub fn retain_resolved_references(&mut self, live_references: &FxHashSet<ReferenceId>) {
+        self.cell.with_dependent_mut(|_allocator, cell| {
+            for reference_ids in &mut cell.resolved_references {
+                reference_ids.retain(|id| live_references.contains(id));
+            }
+        });
+    }
+
     /// Reserve additional capacity for symbols, references, and scopes.
     pub fn reserve(
         &mut self,
