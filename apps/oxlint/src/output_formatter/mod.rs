@@ -27,8 +27,8 @@ use crate::output_formatter::{default::DefaultOutputFormatter, json::JsonOutputF
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum OutputFormat {
-    /// Minimal plain-text format optimized for AI agent consumption.
-    /// Groups diagnostics by file, includes help text, uses minimal tokens.
+    /// One-line-per-diagnostic format optimized for AI agent consumption.
+    /// Each line is `file:line:col severity rule: message (help: ...)` for greppability.
     Agent,
     Default,
     /// GitHub Check Annotation
