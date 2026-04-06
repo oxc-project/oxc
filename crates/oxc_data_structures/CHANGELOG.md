@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.124.0] - 2026-04-06
+
+### 📚 Documentation
+
+- b1da750 allocator, data_structures: Correct comments (#20966) (overlookmotel)
+
 ## [0.116.0] - 2026-03-02
 
 ### 🚀 Features
