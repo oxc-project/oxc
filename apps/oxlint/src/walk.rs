@@ -316,7 +316,7 @@ mod test {
 
         let override_builder = OverrideBuilder::new(&child_path).build().unwrap();
 
-        let mut paths = Walk::new(&[child_path.clone()], &ignore_options, Some(override_builder))
+        let mut paths = Walk::new(std::slice::from_ref(&child_path), &ignore_options, Some(override_builder))
             .with_extensions(Extensions(["js"].to_vec()))
             .paths()
             .into_iter()
