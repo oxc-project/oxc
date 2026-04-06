@@ -1504,6 +1504,55 @@ impl<'a> PeepholeOptimizations {
         ctx.state.changed = true;
     }
 
+    /// Flatten the spread of constant array literals inside array expressions:
+    /// `[a, ...[1, 2, 3]]` -> `[a, 1, 2, 3]`
+    ///
+    /// Elisions inside the spread source are converted to `void 0` to match iterator
+    /// semantics (spreading an elision should result in `undefined`):
+    /// `[a, ...[1, , 3]]` -> `[a, 1, void 0, 3]`
+    pub fn try_flatten_array_expression_elements(
+        expr: &mut Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let Expression::ArrayExpression(array) = expr else {
+            return;
+        };
+
+        if !array.elements.iter().any(|el| {
+            matches!(el, ArrayExpressionElement::SpreadElement(s)
+                if matches!(&s.argument, Expression::ArrayExpression(_)))
+        }) {
+            return;
+        }
+
+        let mut new_elements = ctx.ast.vec();
+
+        for elem in array.elements.take_in(ctx.ast) {
+            match elem {
+                ArrayExpressionElement::SpreadElement(mut spread_elem) => {
+                    match spread_elem.argument.take_in(ctx.ast) {
+                        Expression::ArrayExpression(mut inner_array) => {
+                            for inner_el in inner_array.elements.drain(..) {
+                                match inner_el {
+                                    ArrayExpressionElement::Elision(elision) => {
+                                        new_elements.push(ArrayExpressionElement::from(
+                                            ctx.ast.void_0(elision.span),
+                                        ));
+                                    }
+                                    _ => new_elements.push(inner_el),
+                                }
+                            }
+                        }
+                        _ => new_elements.push(ArrayExpressionElement::SpreadElement(spread_elem)),
+                    }
+                }
+                _ => new_elements.push(elem),
+            }
+        }
+        array.elements = new_elements;
+        ctx.state.changed = true;
+    }
+
     /// Transforms long array expression with string literals to `"str1,str2".split(',')`
     pub fn substitute_array_expression(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         // this threshold is chosen by hand by checking the minsize output

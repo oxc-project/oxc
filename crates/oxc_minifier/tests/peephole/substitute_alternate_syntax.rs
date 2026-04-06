@@ -929,3 +929,22 @@ fn test_flatten_nested_chain_expression() {
     test_same("a?.b?.c");
     test_same("(a?.b).c");
 }
+
+#[test]
+fn test_flatten_array_spread_elements() {
+    test("var y = [3, 4, ...[1, 2]]", "var y = [3, 4, 1, 2]");
+    test("var y = [...[1, 2], 3, 4]", "var y = [1, 2, 3, 4]");
+    test("var y = [...[1, 2], ...[3, 4]]", "var y = [1, 2, 3, 4]");
+    test("var y = [1, ...[], 2]", "var y = [1, 2]");
+    test("var y = [...[1, , 3]]", "var y = [1, void 0, 3]");
+    test("var y = [...[1, ...[2, 3]]]", "var y = [1, 2, 3]");
+    test("var y = [1, , ...[2, 3]]", "var y = [1, , 2, 3]");
+    test_same("var y = [...x]");
+    test_same("var y = [1, ...x, 2]");
+    test("var x = [1, 2]; var y = [3, 4, ...x]", "var y = [3, 4, 1, 2]");
+    test("var x = [1, 2]; var y = [0, ...x, ...x]", "var x = [1, 2], y = [0, ...x, ...x]");
+    test("var x = [1, ...[2, 3]]; var y = [4, ...x]", "var y = [4, 1, 2, 3]");
+    test("var x = [1, , 3]; var y = [0, ...x]", "var y = [0, 1, void 0, 3]");
+    test("var x = []; var y = [1, ...x, 2]", "var y = [1, 2]");
+    test("var x = [1, 2]; var y = [0, , ...x]", "var y = [0, , 1, 2]");
+}
