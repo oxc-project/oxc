@@ -276,7 +276,7 @@ pub fn create_unused_directives_report(
         match unused_comment.r#type {
             RuleCommentType::All => {
                 reports.push(build_unused_disable_diagnostic_report(
-                    "Unused eslint-disable directive (no problems were reported).".to_string(),
+                    "Unused oxlint-disable directive (no problems were reported).".to_string(),
                     span,
                     severity,
                     source_text,
@@ -288,7 +288,7 @@ pub fn create_unused_directives_report(
                 for rule in rules {
                     reports.push(build_unused_disable_diagnostic_report(
                         format!(
-                            "Unused eslint-disable directive (no problems were reported from {}).",
+                            "Unused oxlint-disable directive (no problems were reported from {}).",
                             rule.rule_name
                         ),
                         rule.name_span,
@@ -307,10 +307,10 @@ pub fn create_unused_directives_report(
     for (rule_name, span) in unused_enable {
         let message = if let Some(rule_name) = rule_name {
             format!(
-                "Unused eslint-enable directive (no matching eslint-disable directives were found for {rule_name})."
+                "Unused oxlint-enable directive (no matching oxlint-disable directives were found for {rule_name})."
             )
         } else {
-            "Unused eslint-enable directive (no matching eslint-disable directives were found)."
+            "Unused oxlint-enable directive (no matching oxlint-disable directives were found)."
                 .to_string()
         };
         reports.push(build_unused_disable_diagnostic_report(
