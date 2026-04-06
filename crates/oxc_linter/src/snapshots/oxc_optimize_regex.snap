@@ -1,0 +1,53 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 444
+---
+
+  ⚠ oxc(optimize-regex): This regular expression can be simplified.
+   ╭─[optimize_regex.ts:1:17]
+ 1 │ const digits = /[0-9]+/;
+   ·                 ─────
+   ╰────
+  help: Replace this fragment with `\d`.
+
+  ⚠ oxc(optimize-regex): This regular expression can be simplified.
+   ╭─[optimize_regex.ts:1:21]
+ 1 │ const not_digits = /[^0-9]+/;
+   ·                     ──────
+   ╰────
+  help: Replace this fragment with `\D`.
+
+  ⚠ oxc(optimize-regex): This regular expression can be simplified.
+   ╭─[optimize_regex.ts:1:15]
+ 1 │ const word = /[A-Z_a-z0-9]+/;
+   ·               ────────────
+   ╰────
+  help: Replace this fragment with `\w`.
+
+  ⚠ oxc(optimize-regex): This regular expression can be simplified.
+   ╭─[optimize_regex.ts:1:19]
+ 1 │ const not_word = /[^a-zA-Z0-9_]+/;
+   ·                   ─────────────
+   ╰────
+  help: Replace this fragment with `\W`.
+
+  ⚠ oxc(optimize-regex): This regular expression can be simplified.
+   ╭─[optimize_regex.ts:1:19]
+ 1 │ const repeated = /aaaaaa/;
+   ·                   ──────
+   ╰────
+  help: Replace this fragment with `a{6}`.
+
+  ⚠ oxc(optimize-regex): This regular expression can be simplified.
+   ╭─[optimize_regex.ts:1:18]
+ 1 │ const escaped = /\.\.\./;
+   ·                  ──────
+   ╰────
+  help: Replace this fragment with `\.{3}`.
+
+  ⚠ oxc(optimize-regex): This regular expression can be simplified.
+   ╭─[optimize_regex.ts:1:20]
+ 1 │ const nested = /(?=[0-9])foo/;
+   ·                    ─────
+   ╰────
+  help: Replace this fragment with `\d`.

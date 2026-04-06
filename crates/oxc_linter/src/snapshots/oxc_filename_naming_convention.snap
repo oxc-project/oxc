@@ -1,0 +1,24 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 444
+---
+
+  ⚠ oxc(filename-naming-convention): Filename `fileRead.ts` does not match the configured naming convention.
+   ╭─[filename_naming_convention.tsx:1:1]
+   ╰────
+  help: Rename the file so its basename matches the case style `KEBAB_CASE` for this path.
+
+  ⚠ oxc(filename-naming-convention): Filename `FileRead.ts` does not match the configured naming convention.
+   ╭─[filename_naming_convention.tsx:1:1]
+   ╰────
+  help: Rename the file so its basename matches the case style `KEBAB_CASE` for this path.
+
+  ⚠ oxc(filename-naming-convention): Filename `fileRead.test.ts` does not match the configured naming convention.
+   ╭─[filename_naming_convention.tsx:1:1]
+   ╰────
+  help: Rename the file so its basename matches the case style `KEBAB_CASE` for this path.
+
+  ⚠ oxc(filename-naming-convention): Filename `file-read.test.ts` does not match the configured naming convention.
+   ╭─[filename_naming_convention.tsx:1:1]
+   ╰────
+  help: Rename the file so its basename matches the case style `KEBAB_CASE` for this path.

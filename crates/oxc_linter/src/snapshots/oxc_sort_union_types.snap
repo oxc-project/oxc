@@ -1,0 +1,45 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 444
+---
+
+  ⚠ oxc(sort-union-types): Union types should be sorted alphabetically.
+   ╭─[sort_union_types.ts:1:15]
+ 1 │ type Status = 'pending' | 'active' | 'archived';
+   ·               ─────────
+   ╰────
+  help: Replace `'pending' | 'active' | 'archived'` with `'active' | 'archived' | 'pending'`.
+
+  ⚠ oxc(sort-union-types): Union types should be sorted alphabetically.
+   ╭─[sort_union_types.ts:1:15]
+ 1 │ type Result = string | Error | Promise<string>;
+   ·               ──────
+   ╰────
+  help: Replace `string | Error | Promise<string>` with `Error | Promise<string> | string`.
+
+  ⚠ oxc(sort-union-types): Union types should be sorted alphabetically.
+   ╭─[sort_union_types.ts:2:5]
+ 1 │ type Status =
+ 2 │   | 'pending'
+   ·     ─────────
+ 3 │   | 'active'
+   ╰────
+  help: Replace `| 'pending'
+          | 'active'
+          | 'archived'` with `| 'active'
+          | 'archived'
+          | 'pending'`.
+
+  ⚠ oxc(sort-union-types): Union types should be sorted alphabetically.
+   ╭─[sort_union_types.ts:1:15]
+ 1 │ type Status = 'active' | 'archived' | 'pending';
+   ·               ────────
+   ╰────
+  help: Replace `'active' | 'archived' | 'pending'` with `'pending' | 'archived' | 'active'`.
+
+  ⚠ oxc(sort-union-types): Union types should be sorted alphabetically.
+   ╭─[sort_union_types.ts:1:15]
+ 1 │ type Status = 'pending' | 'archived' | 'Active';
+   ·               ─────────
+   ╰────
+  help: Replace `'pending' | 'archived' | 'Active'` with `'Active' | 'archived' | 'pending'`.

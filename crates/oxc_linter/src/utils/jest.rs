@@ -337,6 +337,7 @@ mod test {
             Rc::new(ContextHost::new(
                 path,
                 vec![ContextSubHost::new(semantic, Arc::new(ModuleRecord::default()), 0)],
+                "",
                 LintOptions::default(),
                 Arc::default(),
             ))

@@ -1,0 +1,39 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 444
+---
+
+  ⚠ oxc(avoid-barrel-files): Avoid barrel files, they slow down performance, and cause large module graphs with modules that go unused.
+   ╭─[avoid_barrel_files.ts:1:1]
+ 1 │ ╭─▶ 
+ 2 │ │               import { bar, baz, qux } from "foo";
+ 3 │ │               let foo;
+ 4 │ │               export { foo, bar, baz, qux };
+ 5 │ ╰─▶             
+   ╰────
+  help: Prefer importing and re-exporting only the concrete symbols you actually need.
+
+  ⚠ oxc(avoid-barrel-files): Avoid barrel files, they slow down performance, and cause large module graphs with modules that go unused.
+   ╭─[avoid_barrel_files.ts:1:1]
+ 1 │ ╭─▶ 
+ 2 │ │               export * from "foo";
+ 3 │ │               export * from "bar";
+ 4 │ │               export * from "baz";
+ 5 │ │               export * from "qux";
+ 6 │ ╰─▶             
+   ╰────
+  help: Prefer importing and re-exporting only the concrete symbols you actually need.
+
+  ⚠ oxc(avoid-barrel-files): Avoid barrel files, they slow down performance, and cause large module graphs with modules that go unused.
+   ╭─[avoid_barrel_files.ts:1:1]
+ 1 │ export { foo, bar, baz } from "foo";
+   · ────────────────────────────────────
+   ╰────
+  help: Prefer importing and re-exporting only the concrete symbols you actually need.
+
+  ⚠ oxc(avoid-barrel-files): Avoid barrel files, they slow down performance, and cause large module graphs with modules that go unused.
+   ╭─[avoid_barrel_files.ts:1:1]
+ 1 │ export default { var1, var2, var3, var4 };
+   · ──────────────────────────────────────────
+   ╰────
+  help: Prefer importing and re-exporting only the concrete symbols you actually need.

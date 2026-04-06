@@ -1,0 +1,18 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 444
+---
+
+  ⚠ oxc(no-unknown-files): File does not match any configured element pattern.
+   ╭─[/Users/alexeylyakhov/projects/oxc/crates/oxc_linter/fixtures/import/boundaries-app/src/routes/public/known.ts:1:1]
+ 1 │ export const value = 1;
+   · ▲
+   ╰────
+  help: Move the file into a configured architectural element or extend `boundaries/elements`.
+
+  ⚠ oxc(no-unknown-files): File does not match any configured element pattern.
+   ╭─[/Users/alexeylyakhov/projects/oxc/crates/oxc_linter/fixtures/import/boundaries-app/src/routes/public/known.ts:1:1]
+ 1 │ export const value = 1;
+   · ▲
+   ╰────
+  help: Move the file into a configured architectural element or extend `boundaries/elements`.

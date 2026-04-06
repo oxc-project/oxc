@@ -1,0 +1,25 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 444
+---
+
+  ⚠ oxc(package-json-no-redundant-publish-config): `publishConfig.access` is redundant for unscoped packages because they are always public.
+   ╭─[/Users/alexeylyakhov/projects/oxc/crates/oxc_linter/fixtures/import/package.json:1:1]
+ 1 │ {"name":"demo","publishConfig":{"access":"public"}}
+   · ─
+   ╰────
+  help: Remove the redundant `publishConfig.access` field.
+
+  ⚠ oxc(package-json-no-redundant-publish-config): `publishConfig.access` is redundant for unscoped packages because they are always public.
+   ╭─[/Users/alexeylyakhov/projects/oxc/crates/oxc_linter/fixtures/import/package.json:1:1]
+ 1 │ {"name":"demo","publishConfig":{"access":"restricted"}}
+   · ─
+   ╰────
+  help: Remove the redundant `publishConfig.access` field.
+
+  ⚠ oxc(package-json-no-redundant-publish-config): `publishConfig.access` is redundant for unscoped packages because they are always public.
+   ╭─[/Users/alexeylyakhov/projects/oxc/crates/oxc_linter/fixtures/import/package.json:1:1]
+ 1 │ {"name":"demo","publishConfig":{"access":"public","registry":"https://example.com"}}
+   · ─
+   ╰────
+  help: Remove the redundant `publishConfig.access` field.

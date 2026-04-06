@@ -192,9 +192,34 @@ impl Linter {
         allocator: &'a Allocator,
         js_allocator_pool: Option<&AllocatorPool>,
     ) -> (Vec<Message>, Option<DisableDirectives>) {
+        let full_source_text =
+            context_sub_hosts.first().map_or("", |sub_host| sub_host.semantic().source_text());
+        self.run_with_full_source_text_and_disable_directives(
+            path,
+            context_sub_hosts,
+            full_source_text,
+            allocator,
+            js_allocator_pool,
+        )
+    }
+
+    pub(crate) fn run_with_full_source_text_and_disable_directives<'a>(
+        &self,
+        path: &Path,
+        context_sub_hosts: Vec<ContextSubHost<'a>>,
+        full_source_text: &'a str,
+        allocator: &'a Allocator,
+        js_allocator_pool: Option<&AllocatorPool>,
+    ) -> (Vec<Message>, Option<DisableDirectives>) {
         let ResolvedLinterState { rules, config, external_rules } = self.config.resolve(path);
 
-        let mut ctx_host = Rc::new(ContextHost::new(path, context_sub_hosts, self.options, config));
+        let mut ctx_host = Rc::new(ContextHost::new(
+            path,
+            context_sub_hosts,
+            full_source_text,
+            self.options,
+            config,
+        ));
 
         #[cfg(debug_assertions)]
         let mut current_diagnostic_index = 0;
@@ -202,12 +227,18 @@ impl Linter {
         let is_partial_loader_file = ctx_host
             .file_extension()
             .is_some_and(|ext| LINT_PARTIAL_LOADER_EXTENSIONS.iter().any(|e| e == &ext));
+        let is_json_file =
+            ctx_host.file_extension().is_some_and(|ext| ext.eq_ignore_ascii_case("json"));
 
         loop {
             let semantic = ctx_host.semantic();
             let rules = rules
                 .iter()
                 .filter(|(rule, _)| {
+                    if is_json_file && rule.plugin_name() != "oxc" {
+                        return false;
+                    }
+
                     if rule.is_tsgolint_rule() {
                         return false;
                     }

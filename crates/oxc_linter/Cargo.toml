@@ -73,6 +73,7 @@ serde_json = { workspace = true, features = [
 ] } # preserve_order: print config with ordered keys.
 simdutf8 = { workspace = true }
 smallvec = { workspace = true }
+spdx = { workspace = true }
 url = { workspace = true }
 
 [dev-dependencies]

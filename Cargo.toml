@@ -227,6 +227,7 @@ simdutf8 = { version = "0.1.5", features = ["aarch64_neon"] } # SIMD UTF-8 valid
 similar = "2.7.0" # Text diffing
 similar-asserts = "1.7.0" # Test diff assertions
 smallvec = { version = "1.15.1", features = ["union", "serde"] } # Stack-allocated vectors
+spdx = "0.13.4" # SPDX expression and identifier validation
 tempfile = "3.24.0" # Temporary files
 tokio = { version = "1.49.0", default-features = false } # Async runtime
 toml = { version = "1.0.0" }

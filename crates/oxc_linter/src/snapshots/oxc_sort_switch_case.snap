@@ -1,0 +1,51 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 444
+---
+
+  ⚠ oxc(sort-switch-case): Switch cases should be sorted alphabetically.
+   ╭─[sort_switch_case.tsx:1:19]
+ 1 │ switch (status) { case 'pending': return 1; case 'active': return 2; }
+   ·                   ─────────────────────────
+   ╰────
+  help: Replace `case 'pending': return 1; case 'active': return 2;` with `case 'active': return 2; case 'pending': return 1;`.
+
+  ⚠ oxc(sort-switch-case): Switch cases should be sorted alphabetically.
+   ╭─[sort_switch_case.tsx:1:19]
+ 1 │ switch (status) { case 'pending': return 1; case 'archived': return 2; case 'zebra': return 3; }
+   ·                   ─────────────────────────
+   ╰────
+  help: Replace `case 'pending': return 1; case 'archived': return 2; case 'zebra': return 3;` with `case 'archived': return 2; case 'pending': return 1; case 'zebra': return 3;`.
+
+  ⚠ oxc(sort-switch-case): Switch cases should be sorted alphabetically.
+   ╭─[sort_switch_case.tsx:1:45]
+ 1 │ switch (status) { case 'pending': return 1; default: return 2; case 'zebra': return 3; }
+   ·                                             ──────────────────
+   ╰────
+  help: Replace `case 'pending': return 1; default: return 2; case 'zebra': return 3;` with `case 'pending': return 1; case 'zebra': return 3; default: return 2;`.
+
+  ⚠ oxc(sort-switch-case): Switch cases should be sorted alphabetically.
+   ╭─[sort_switch_case.tsx:1:19]
+ 1 │ switch (status) { case 'pending': case 'archived': return 1; case 'zebra': return 2; }
+   ·                   ───────────────
+   ╰────
+
+  ⚠ oxc(sort-switch-case): Switch cases should be sorted alphabetically.
+   ╭─[sort_switch_case.tsx:1:19]
+ 1 │ switch (status) { case 'b': case 'a': return 1; case 'z': return 2; }
+   ·                   ─────────
+   ╰────
+
+  ⚠ oxc(sort-switch-case): Switch cases should be sorted alphabetically.
+   ╭─[sort_switch_case.tsx:1:19]
+ 1 │ switch (status) { case 'active': return 1; case 'pending': return 2; }
+   ·                   ────────────────────────
+   ╰────
+  help: Replace `case 'active': return 1; case 'pending': return 2;` with `case 'pending': return 2; case 'active': return 1;`.
+
+  ⚠ oxc(sort-switch-case): Switch cases should be sorted alphabetically.
+   ╭─[sort_switch_case.tsx:1:19]
+ 1 │ switch (status) { case 'pending': return 1; case 'Active': return 2; }
+   ·                   ─────────────────────────
+   ╰────
+  help: Replace `case 'pending': return 1; case 'Active': return 2;` with `case 'Active': return 2; case 'pending': return 1;`.

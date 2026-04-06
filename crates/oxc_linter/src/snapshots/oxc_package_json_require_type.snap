@@ -1,0 +1,18 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 444
+---
+
+  ⚠ oxc(package-json-require-type): package.json should declare a `type` field.
+   ╭─[/Users/alexeylyakhov/projects/oxc/crates/oxc_linter/fixtures/import/package.json:1:1]
+ 1 │ {"name":"demo"}
+   · ─
+   ╰────
+  help: Add `"type": "module"` or `"type": "commonjs"` to package.json.
+
+  ⚠ oxc(package-json-require-type): package.json should declare a `type` field.
+   ╭─[/Users/alexeylyakhov/projects/oxc/crates/oxc_linter/fixtures/import/package.json:1:1]
+ 1 │ {"version":"1.0.0"}
+   · ─
+   ╰────
+  help: Add `"type": "module"` or `"type": "commonjs"` to package.json.

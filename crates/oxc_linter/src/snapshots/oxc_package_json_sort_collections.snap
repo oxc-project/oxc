@@ -1,0 +1,25 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 444
+---
+
+  ⚠ oxc(package-json-sort-collections): Entries in `dependencies` are not in lexicographical order.
+   ╭─[/Users/alexeylyakhov/projects/oxc/crates/oxc_linter/fixtures/import/package.json:1:1]
+ 1 │ {"dependencies":{"b":"1","a":"1"}}
+   · ─
+   ╰────
+  help: Sort the collection consistently to reduce noisy diffs.
+
+  ⚠ oxc(package-json-sort-collections): Entries in `scripts` are not in lifecycle-aware lexicographical order.
+   ╭─[/Users/alexeylyakhov/projects/oxc/crates/oxc_linter/fixtures/import/package.json:1:1]
+ 1 │ {"scripts":{"build":"x","postbuild":"x","prebuild":"x"}}
+   · ─
+   ╰────
+  help: Group `pre<name>`, `<name>`, and `post<name>` scripts together in a stable order.
+
+  ⚠ oxc(package-json-sort-collections): Entries in `pnpm.patchedDependencies` are not in lexicographical order.
+   ╭─[/Users/alexeylyakhov/projects/oxc/crates/oxc_linter/fixtures/import/package.json:1:1]
+ 1 │ {"pnpm":{"patchedDependencies":{"b":"patch","a":"patch"}}}
+   · ─
+   ╰────
+  help: Sort the collection consistently to reduce noisy diffs.

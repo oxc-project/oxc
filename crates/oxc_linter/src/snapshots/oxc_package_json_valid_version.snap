@@ -1,0 +1,32 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 444
+---
+
+  ⚠ oxc(package-json-valid-version): The `version` field in package.json must be a valid semver string.
+   ╭─[/Users/alexeylyakhov/projects/oxc/crates/oxc_linter/fixtures/import/package.json:1:1]
+ 1 │ {"version":"1.0"}
+   · ─
+   ╰────
+  help: Use a version like `1.0.0`, `1.2.3-beta.1`, or `1.0.0+build.5`.
+
+  ⚠ oxc(package-json-valid-version): The `version` field in package.json must be a valid semver string.
+   ╭─[/Users/alexeylyakhov/projects/oxc/crates/oxc_linter/fixtures/import/package.json:1:1]
+ 1 │ {"version":"v1.0.0"}
+   · ─
+   ╰────
+  help: Use a version like `1.0.0`, `1.2.3-beta.1`, or `1.0.0+build.5`.
+
+  ⚠ oxc(package-json-valid-version): The `version` field in package.json must be a valid semver string.
+   ╭─[/Users/alexeylyakhov/projects/oxc/crates/oxc_linter/fixtures/import/package.json:1:1]
+ 1 │ {"version":"01.0.0"}
+   · ─
+   ╰────
+  help: Use a version like `1.0.0`, `1.2.3-beta.1`, or `1.0.0+build.5`.
+
+  ⚠ oxc(package-json-valid-version): The `version` field in package.json must be a valid semver string.
+   ╭─[/Users/alexeylyakhov/projects/oxc/crates/oxc_linter/fixtures/import/package.json:1:1]
+ 1 │ {"version":1}
+   · ─
+   ╰────
+  help: Use a version like `1.0.0`, `1.2.3-beta.1`, or `1.0.0+build.5`.

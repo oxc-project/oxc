@@ -1,0 +1,58 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 444
+---
+
+  ⚠ oxc(boundaries-dependencies): Dependency from `public-routes` to `admin-routes` is not allowed.
+   ╭─[boundaries-app/src/routes/public/landing.ts:2:44]
+ 1 │ 
+ 2 │             import { adminDashboard } from "../admin/dashboard.ts";
+   ·                                            ───────────────────────
+ 3 │             import { userProfile } from "../user/profile.ts";
+   ╰────
+  help: Remove the import of `../admin/dashboard.ts` or move the dependency to an allowed architectural layer.
+
+  ⚠ oxc(boundaries-dependencies): Dependency from `public-routes` to `user-routes` is not allowed.
+   ╭─[boundaries-app/src/routes/public/landing.ts:3:41]
+ 2 │             import { adminDashboard } from "../admin/dashboard.ts";
+ 3 │             import { userProfile } from "../user/profile.ts";
+   ·                                         ────────────────────
+ 4 │             import { adminCard } from "../../components/admin-card.ts";
+   ╰────
+  help: Remove the import of `../user/profile.ts` or move the dependency to an allowed architectural layer.
+
+  ⚠ oxc(boundaries-dependencies): Dependency from `public-routes` to `admin-components` is not allowed.
+   ╭─[boundaries-app/src/routes/public/landing.ts:4:39]
+ 3 │             import { userProfile } from "../user/profile.ts";
+ 4 │             import { adminCard } from "../../components/admin-card.ts";
+   ·                                       ────────────────────────────────
+ 5 │             import { userCard } from "../../components/user-card.ts";
+   ╰────
+  help: Remove the import of `../../components/admin-card.ts` or move the dependency to an allowed architectural layer.
+
+  ⚠ oxc(boundaries-dependencies): Dependency from `public-routes` to `user-components` is not allowed.
+   ╭─[boundaries-app/src/routes/public/landing.ts:5:38]
+ 4 │             import { adminCard } from "../../components/admin-card.ts";
+ 5 │             import { userCard } from "../../components/user-card.ts";
+   ·                                      ───────────────────────────────
+ 6 │             import { userProfileApi } from "../../api/user/profile.ts";
+   ╰────
+  help: Remove the import of `../../components/user-card.ts` or move the dependency to an allowed architectural layer.
+
+  ⚠ oxc(boundaries-dependencies): Dependency from `public-routes` to `api-user` is not allowed.
+   ╭─[boundaries-app/src/routes/public/landing.ts:6:44]
+ 5 │             import { userCard } from "../../components/user-card.ts";
+ 6 │             import { userProfileApi } from "../../api/user/profile.ts";
+   ·                                            ───────────────────────────
+ 7 │             import { adminUsersApi } from "../../api/admin/users.ts";
+   ╰────
+  help: Remove the import of `../../api/user/profile.ts` or move the dependency to an allowed architectural layer.
+
+  ⚠ oxc(boundaries-dependencies): Dependency from `public-routes` to `api-admin` is not allowed.
+   ╭─[boundaries-app/src/routes/public/landing.ts:7:43]
+ 6 │             import { userProfileApi } from "../../api/user/profile.ts";
+ 7 │             import { adminUsersApi } from "../../api/admin/users.ts";
+   ·                                           ──────────────────────────
+ 8 │ 
+   ╰────
+  help: Remove the import of `../../api/admin/users.ts` or move the dependency to an allowed architectural layer.

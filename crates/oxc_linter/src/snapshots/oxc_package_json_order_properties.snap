@@ -1,0 +1,25 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 444
+---
+
+  ⚠ oxc(package-json-order-properties): Top-level property `version` is not ordered in the standard way.
+   ╭─[/Users/alexeylyakhov/projects/oxc/crates/oxc_linter/fixtures/import/package.json:1:1]
+ 1 │ {"version":"1.0.0","name":"demo"}
+   · ─
+   ╰────
+  help: Reorder top-level package.json properties consistently.
+
+  ⚠ oxc(package-json-order-properties): Top-level property `description` is not ordered in the standard way.
+   ╭─[/Users/alexeylyakhov/projects/oxc/crates/oxc_linter/fixtures/import/package.json:1:1]
+ 1 │ {"description":"x","name":"demo","version":"1.0.0"}
+   · ─
+   ╰────
+  help: Reorder top-level package.json properties consistently.
+
+  ⚠ oxc(package-json-order-properties): Top-level property `foo` is not ordered in the standard way.
+   ╭─[/Users/alexeylyakhov/projects/oxc/crates/oxc_linter/fixtures/import/package.json:1:1]
+ 1 │ {"foo":"x","name":"demo","version":"1.0.0"}
+   · ─
+   ╰────
+  help: Reorder top-level package.json properties consistently.

@@ -1,0 +1,39 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 444
+---
+
+  ⚠ oxc(detect-object-injection): Variable Assigned to Object Injection Sink
+   ╭─[detect_object_injection.ts:1:15]
+ 1 │ const value = obj[key];
+   ·               ────────
+   ╰────
+  help: Avoid indexing objects with untrusted dynamic keys without validating the key first.
+
+  ⚠ oxc(detect-object-injection): Function Call Object Injection Sink
+   ╭─[detect_object_injection.ts:1:5]
+ 1 │ foo(obj[key]);
+   ·     ────────
+   ╰────
+  help: Avoid passing dynamically indexed object access into security-sensitive flows without validating the key first.
+
+  ⚠ oxc(detect-object-injection): Generic Object Injection Sink
+   ╭─[detect_object_injection.ts:1:1]
+ 1 │ obj[key] = nextValue;
+   · ────────
+   ╰────
+  help: Avoid indexing objects with untrusted dynamic keys without validating the key first.
+
+  ⚠ oxc(detect-object-injection): Generic Object Injection Sink
+   ╭─[detect_object_injection.ts:1:8]
+ 1 │ return obj[key];
+   ·        ────────
+   ╰────
+  help: Avoid indexing objects with untrusted dynamic keys without validating the key first.
+
+  ⚠ oxc(detect-object-injection): Function Call Object Injection Sink
+   ╭─[detect_object_injection.ts:1:1]
+ 1 │ obj[key]();
+   · ────────
+   ╰────
+  help: Avoid passing dynamically indexed object access into security-sensitive flows without validating the key first.

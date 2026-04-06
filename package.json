@@ -8,7 +8,12 @@
     "build-wasm-dev": "pnpm --workspace-concurrency=1 --filter \"./napi/*\" build-wasm-dev",
     "test": "pnpm --workspace-concurrency=1 --filter \"./napi/*\" --filter \"./apps/*\" test",
     "fmt": "oxfmt -c oxfmtrc.jsonc",
-    "lint": "oxlint -c oxlintrc.json --deny-warnings --report-unused-disable-directives"
+    "lint": "oxlint -c oxlintrc.json --deny-warnings --report-unused-disable-directives",
+    "ollama:install": "curl -fsSL https://ollama.com/install.sh | sh",
+    "ollama:run:gemma4:26b": "ollama run gemma4:26b",
+    "ollama:run:gemma4:31b": "ollama run gemma4:31b",
+    "codex": "ollama launch codex",
+    "claude": "ollama launch claude"
   },
   "devDependencies": {
     "@napi-rs/cli": "catalog:",

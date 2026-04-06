@@ -614,6 +614,8 @@ pub(crate) mod jsx_a11y {
 
 pub(crate) mod oxc {
     pub mod approx_constant;
+    pub mod avoid_barrel_files;
+    pub mod avoid_re_export_all;
     pub mod bad_array_method_on_arguments;
     pub mod bad_bitwise_operator;
     pub mod bad_char_at_comparison;
@@ -621,24 +623,61 @@ pub(crate) mod oxc {
     pub mod bad_min_max_func;
     pub mod bad_object_literal_comparison;
     pub mod bad_replace_all_arg;
+    pub mod boundaries_dependencies;
+    mod boundary_utils;
     pub mod branches_sharing_code;
     pub mod const_comparisons;
+    pub mod detect_object_injection;
     pub mod double_comparisons;
     pub mod erasing_op;
+    pub mod filename_naming_convention;
+    pub mod folder_naming_convention;
+    pub mod identical_keys;
+    pub mod json_parse_validation;
+    mod json_utils;
     pub mod misrefactored_assign_op;
     pub mod missing_throw;
     pub mod no_accumulating_spread;
     pub mod no_async_await;
     pub mod no_async_endpoint_handlers;
     pub mod no_barrel_file;
+    pub mod no_block_in_inline;
     pub mod no_const_enum;
+    pub mod no_inline_type_annotations;
+    pub mod no_literal_string;
     pub mod no_map_spread;
     pub mod no_optional_chaining;
     pub mod no_rest_spread_properties;
+    pub mod no_secrets;
     pub mod no_this_in_exported_function;
+    pub mod no_unknown;
+    pub mod no_unknown_files;
     pub mod number_arg_out_of_range;
     pub mod only_used_in_recursion;
+    pub mod optimize_regex;
+    pub mod package_json_no_empty_fields;
+    pub mod package_json_no_redundant_publish_config;
+    pub mod package_json_order_properties;
+    pub mod package_json_repository_shorthand;
+    pub mod package_json_require_type;
+    pub mod package_json_require_version;
+    pub mod package_json_sort_collections;
+    pub mod package_json_valid_bin;
+    pub mod package_json_valid_description;
+    pub mod package_json_valid_license;
+    pub mod package_json_valid_man;
+    pub mod package_json_valid_name;
+    pub mod package_json_valid_private;
+    pub mod package_json_valid_repository;
+    pub mod package_json_valid_type;
+    pub mod package_json_valid_version;
+    pub mod sort_interfaces;
+    pub mod sort_switch_case;
+    pub mod sort_union_types;
+    pub mod sorted_json_keys;
     pub mod uninvoked_array_callback;
+    pub mod valid_json;
+    pub mod valid_message_syntax;
 }
 
 pub(crate) mod nextjs {
