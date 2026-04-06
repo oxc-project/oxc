@@ -1,14 +1,15 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, BindingIdentifier, CallExpression, Expression, JSXAttributeItem,
-        JSXAttributeName, JSXAttributeValue, JSXElement, ObjectPropertyKind, PropertyKey,
+        Argument, BinaryExpression, BindingIdentifier, CallExpression, Expression,
+        JSXAttributeItem, JSXAttributeName, JSXAttributeValue, JSXElement, JSXExpression,
+        ObjectPropertyKind, PropertyKey,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::SymbolId;
-use oxc_span::{GetSpan, Span};
+use oxc_span::Span;
 
 use crate::{AstNode, ast_util::is_method_call, context::LintContext, rule::Rule};
 
@@ -80,7 +81,7 @@ fn check_jsx_element<'a>(
             continue;
         };
 
-        if span_contains_symbol_reference(ctx, index_param_symbol_id, container.expression.span()) {
+        if jsx_expression_uses_index(ctx, index_param_symbol_id, &container.expression) {
             ctx.diagnostic(no_array_index_key_diagnostic(attr.span));
         }
     }
@@ -110,7 +111,7 @@ fn check_react_clone_element<'a>(
             };
 
             if key_ident.name.as_str() == "key"
-                && span_contains_symbol_reference(ctx, index_param_symbol_id, prop.value.span())
+                && expression_uses_index(ctx, index_param_symbol_id, &prop.value)
             {
                 ctx.diagnostic(no_array_index_key_diagnostic(prop.span));
             }
@@ -118,12 +119,69 @@ fn check_react_clone_element<'a>(
     }
 }
 
-fn span_contains_symbol_reference(ctx: &LintContext, symbol_id: SymbolId, span: Span) -> bool {
-    ctx.scoping().get_resolved_reference_ids(symbol_id).iter().any(|&reference_id| {
-        let reference = ctx.scoping().get_reference(reference_id);
-        let reference_span = ctx.nodes().get_node(reference.node_id()).span();
-        span.contains_inclusive(reference_span)
-    })
+fn is_index_reference(ctx: &LintContext, symbol_id: SymbolId, expr: &Expression) -> bool {
+    if let Expression::Identifier(ident) = expr.get_inner_expression()
+        && ctx.scoping().get_reference(ident.reference_id()).symbol_id() == Some(symbol_id)
+    {
+        return true;
+    }
+    false
+}
+
+fn binary_expression_uses_index(
+    ctx: &LintContext,
+    symbol_id: SymbolId,
+    bin: &BinaryExpression,
+) -> bool {
+    is_index_reference(ctx, symbol_id, &bin.left)
+        || is_index_reference(ctx, symbol_id, &bin.right)
+        || matches!(&bin.left, Expression::BinaryExpression(l) if binary_expression_uses_index(ctx, symbol_id, l))
+        || matches!(&bin.right, Expression::BinaryExpression(r) if binary_expression_uses_index(ctx, symbol_id, r))
+}
+
+fn expression_uses_index(ctx: &LintContext, symbol_id: SymbolId, expr: &Expression) -> bool {
+    // key={index}
+    if is_index_reference(ctx, symbol_id, expr) {
+        return true;
+    }
+
+    match expr {
+        // key={`abc${index}`}
+        Expression::TemplateLiteral(tmpl) => {
+            tmpl.expressions.iter().any(|e| expression_uses_index(ctx, symbol_id, e))
+        }
+        // key={1 + index}
+        Expression::BinaryExpression(bin) => binary_expression_uses_index(ctx, symbol_id, bin),
+        Expression::CallExpression(call) => {
+            // key={index.toString()}
+            if let Expression::StaticMemberExpression(member) = &call.callee
+                && member.property.name == "toString"
+                && is_index_reference(ctx, symbol_id, &member.object)
+            {
+                return true;
+            }
+            // key={String(index)}
+            if let Expression::Identifier(callee) = &call.callee
+                && callee.name == "String"
+                && call
+                    .arguments
+                    .first()
+                    .and_then(Argument::as_expression)
+                    .is_some_and(|arg| is_index_reference(ctx, symbol_id, arg))
+            {
+                return true;
+            }
+            false
+        }
+        _ => false,
+    }
+}
+
+fn jsx_expression_uses_index(ctx: &LintContext, symbol_id: SymbolId, expr: &JSXExpression) -> bool {
+    match expr {
+        JSXExpression::EmptyExpression(_) => false,
+        _ => expr.as_expression().is_some_and(|e| expression_uses_index(ctx, symbol_id, e)),
+    }
 }
 
 fn find_index_param_symbol_id<'a>(node: &'a AstNode, ctx: &'a LintContext) -> Option<SymbolId> {
@@ -247,6 +305,15 @@ fn test() {
             collection.concat(<Hello key={thing.id} />)
           ), []);
         ",
+        // https://github.com/oxc-project/oxc/issues/20939
+        r"things.map((thing, index) => (
+            <Hello key={getKey(thing.id, index)} />
+          ));
+        ",
+        r"things.map((thing, index) => (
+            React.cloneElement(thing, { key: getKey(thing.id, index) })
+          ));
+        ",
     ];
 
     let fail = vec![
@@ -319,6 +386,30 @@ fn test() {
         r"things.reduceRight((collection, thing, index) => (
             collection.concat(<Hello key={index} />)
           ), []);
+        ",
+        r"things.map((thing, index) => (
+            <Hello key={index.toString()} />
+          ));
+        ",
+        r"things.map((thing, index) => (
+            <Hello key={String(index)} />
+          ));
+        ",
+        r"things.map((thing, index) => (
+            <Hello key={`abc${String(index)}`} />
+          ));
+        ",
+        r"things.map((thing, index) => (
+            React.cloneElement(thing, { key: index.toString() })
+          ));
+        ",
+        r"things.map((thing, index) => (
+            React.cloneElement(thing, { key: String(index) })
+          ));
+        ",
+        r"things.map((thing, index) => (
+            React.cloneElement(thing, { key: `abc${index.toString()}` })
+          ));
         ",
     ];
 

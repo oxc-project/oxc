@@ -36,8 +36,17 @@ working directory: fixtures/cli/nested_config
    `----
   help: Delete this console statement.
 
-Found 0 warnings and 4 errors.
-Finished in <variable>ms on 7 files with 1 rules using 1 threads.
+  x eslint(no-console): Unexpected console statement.
+   ,-[package4-as-cwd/component.js:2:3]
+ 1 | export function Component() {
+ 2 |   console.log("hello");
+   :   ^^^^^^^^^^^
+ 3 | }
+   `----
+  help: Delete this console statement.
+
+Found 0 warnings and 5 errors.
+Finished in <variable>ms on 8 files with 1 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
 ----------

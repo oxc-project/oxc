@@ -42,7 +42,8 @@
     "./plugins-dev": {
       "types": "./dist/plugins-dev.d.ts",
       "default": "./dist/plugins-dev.js"
-    }
+    },
+    "./package.json": "./package.json"
   },
   "peerDependencies": {
     "oxlint-tsgolint": ">=0.18.0"

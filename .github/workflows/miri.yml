@@ -40,7 +40,7 @@ jobs:
       MIRI_TOOLCHAIN: nightly-2026-02-11
     steps:
       - name: Checkout
-        uses: taiki-e/checkout-action@83ed61bfbe2b8abbb3c66e8b65b1335484c70009 # v1.4.1
+        uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
 
       - uses: ./.github/actions/check-changes
         id: filter
