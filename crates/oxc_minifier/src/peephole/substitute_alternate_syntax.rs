@@ -1525,12 +1525,26 @@ impl<'a> PeepholeOptimizations {
             return;
         }
 
-        let mut new_elements = ctx.ast.vec();
+        let new_size = array.elements.iter().fold(0usize, |acc, el| {
+            acc + if let ArrayExpressionElement::SpreadElement(s) = el {
+                if let Expression::ArrayExpression(inner) = &s.argument {
+                    inner.elements.len()
+                } else {
+                    1
+                }
+            } else {
+                1
+            }
+        });
 
-        for elem in array.elements.take_in(ctx.ast) {
+        let old_elements =
+            std::mem::replace(&mut array.elements, ctx.ast.vec_with_capacity(new_size));
+        let new_elements = &mut array.elements;
+
+        for elem in old_elements {
             match elem {
-                ArrayExpressionElement::SpreadElement(mut spread_elem) => {
-                    match spread_elem.argument.take_in(ctx.ast) {
+                ArrayExpressionElement::SpreadElement(mut spread_el) => {
+                    match spread_el.argument.take_in(ctx.ast) {
                         Expression::ArrayExpression(mut inner_array) => {
                             for inner_el in inner_array.elements.drain(..) {
                                 match inner_el {
@@ -1543,13 +1557,19 @@ impl<'a> PeepholeOptimizations {
                                 }
                             }
                         }
-                        _ => new_elements.push(ArrayExpressionElement::SpreadElement(spread_elem)),
+                        argument => {
+                            new_elements.push(
+                                ctx.ast.array_expression_element_spread_element(
+                                    spread_el.span,
+                                    argument,
+                                ),
+                            );
+                        }
                     }
                 }
                 _ => new_elements.push(elem),
             }
         }
-        array.elements = new_elements;
         ctx.state.changed = true;
     }
 
