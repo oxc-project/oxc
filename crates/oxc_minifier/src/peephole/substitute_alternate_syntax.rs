@@ -1518,24 +1518,24 @@ impl<'a> PeepholeOptimizations {
             return;
         };
 
-        if !array.elements.iter().any(|el| {
-            matches!(el, ArrayExpressionElement::SpreadElement(s)
-                if matches!(&s.argument, Expression::ArrayExpression(_)))
-        }) {
-            return;
-        }
-
-        let new_size = array.elements.iter().fold(0usize, |acc, el| {
-            acc + if let ArrayExpressionElement::SpreadElement(s) = el {
-                if let Expression::ArrayExpression(inner) = &s.argument {
-                    inner.elements.len()
+        let (new_size, should_fold) =
+            array.elements.iter().fold((0, false), |(mut new_size, mut should_fold), arg| {
+                new_size += if let ArrayExpressionElement::SpreadElement(spread_el) = arg {
+                    if let Expression::ArrayExpression(array_expr) = &spread_el.argument {
+                        should_fold = true;
+                        array_expr.elements.len()
+                    } else {
+                        1
+                    }
                 } else {
                     1
-                }
-            } else {
-                1
-            }
-        });
+                };
+
+                (new_size, should_fold)
+            });
+        if !should_fold {
+            return;
+        }
 
         let old_elements =
             std::mem::replace(&mut array.elements, ctx.ast.vec_with_capacity(new_size));
