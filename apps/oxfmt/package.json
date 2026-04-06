@@ -14,7 +14,7 @@
     "build-napi-test": "pnpm run build-napi --profile coverage",
     "build-napi-release": "pnpm run build-napi --release --features allocator",
     "build-js": "node scripts/build.js",
-    "test": "vitest --dir test run",
+    "test": "vitest run",
     "conformance": "node conformance/run.ts",
     "download-fixtures": "node conformance/download-fixtures.js",
     "generate-config-types": "node scripts/generate-config-types.ts"

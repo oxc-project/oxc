@@ -1,5 +1,6 @@
 import { basename as pathBasename } from "node:path";
 import { pathToFileURL } from "node:url";
+import { getUnsupportedTypeScriptModuleLoadHint } from "./node_version";
 
 const isObject = (v: unknown) => typeof v === "object" && v !== null && !Array.isArray(v);
 
@@ -23,7 +24,11 @@ export async function loadJsConfig(path: string): Promise<object | null> {
   const fileUrl = pathToFileURL(path);
   fileUrl.searchParams.set("cache", Date.now().toString());
 
-  const { default: config } = await import(fileUrl.href);
+  const { default: config } = await import(fileUrl.href).catch((err) => {
+    const hint = getUnsupportedTypeScriptModuleLoadHint(err, path);
+    if (hint && err instanceof Error) err.message += `\n\n${hint}`;
+    throw err;
+  });
 
   if (config === undefined) throw new Error("Configuration file has no default export.");
 
