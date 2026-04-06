@@ -106,6 +106,15 @@ jobs:
             build: pnpm run build-napi-release --target powerpc64le-unknown-linux-gnu --use-napi-cross
 
           - os: ubuntu-latest
+            target: loongarch64-unknown-linux-gnu
+            build: |
+              sudo apt-get update
+              sudo apt-get install gcc-14-loongarch64-linux-gnu g++-14-loongarch64-linux-gnu -y
+              export TARGET_CC=loongarch64-linux-gnu-gcc-14
+              export CXX=loongarch64-linux-gnu-g++-14
+              pnpm run build-napi-release --target loongarch64-unknown-linux-gnu
+
+          - os: ubuntu-latest
             target: riscv64gc-unknown-linux-gnu
             build: |
               sudo apt-get update
@@ -113,6 +122,15 @@ jobs:
               export TARGET_CC=riscv64-linux-gnu-gcc
               export CXX=riscv64-linux-gnu-g++
               pnpm run build-napi-release --target riscv64gc-unknown-linux-gnu
+
+          - os: ubuntu-latest
+            target: loongarch64-unknown-linux-musl
+            build: |
+              sudo apt-get update
+              sudo apt-get install gcc-14-loongarch64-linux-gnu g++-14-loongarch64-linux-gnu -y
+              export TARGET_CC=loongarch64-linux-gnu-gcc-14
+              export CXX=loongarch64-linux-gnu-g++-14
+              pnpm run build-napi-release --target loongarch64-unknown-linux-musl -x
 
           - os: ubuntu-latest
             target: riscv64gc-unknown-linux-musl
