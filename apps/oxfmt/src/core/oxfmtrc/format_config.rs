@@ -63,7 +63,7 @@ pub struct FormatConfig {
     /// Specify the number of spaces per indentation-level.
     ///
     /// - Default: `2`
-    /// - Overrides `.editorconfig.indent_size`
+    /// - Overrides `.editorconfig.indent_size` (falls back to `.editorconfig.tab_width`)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tab_width: Option<u8>,
     /// Which end of line characters to apply.
@@ -197,10 +197,12 @@ pub struct FormatConfig {
     /// Using the similar algorithm as [eslint-plugin-perfectionist/sort-imports](https://perfectionist.dev/rules/sort-imports).
     /// For details, see each field's documentation.
     ///
+    /// Pass `true` or an object to enable with defaults, or omit/set `false` to disable.
+    ///
     /// - Default: Disabled
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(alias = "experimentalSortImports")]
-    pub sort_imports: Option<SortImportsConfig>,
+    pub sort_imports: Option<SortImportsUserConfig>,
 
     /// Sort `package.json` keys.
     ///
@@ -219,10 +221,24 @@ pub struct FormatConfig {
     /// Option names omit the `tailwind` prefix used in the original plugin (e.g., `config` instead of `tailwindConfig`).
     /// For details, see each field's documentation.
     ///
+    /// Pass `true` or an object to enable with defaults, or omit/set `false` to disable.
+    ///
     /// - Default: Disabled
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(alias = "experimentalTailwindcss")]
-    pub sort_tailwindcss: Option<SortTailwindcssConfig>,
+    pub sort_tailwindcss: Option<SortTailwindcssUserConfig>,
+
+    /// Enable JSDoc comment formatting.
+    ///
+    /// When enabled, JSDoc comments are normalized and reformatted:
+    /// tag aliases are canonicalized, descriptions are capitalized,
+    /// long lines are wrapped, and short comments are collapsed to single-line.
+    ///
+    /// Pass `true` or an object to enable with defaults, or omit/set `false` to disable.
+    ///
+    /// - Default: Disabled
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub jsdoc: Option<JsdocUserConfig>,
 }
 
 impl FormatConfig {
@@ -230,7 +246,7 @@ impl FormatConfig {
     /// Otherwise, the plugin tries to resolve the Prettier's configuration file, not Oxfmt's.
     /// <https://github.com/tailwindlabs/prettier-plugin-tailwindcss/blob/125a8bc77639529a5a0c7e4e8a02174d7ed2d70b/src/config.ts#L50-L54>
     pub fn resolve_tailwind_paths(&mut self, base_dir: &Path) {
-        let Some(ref mut tw) = self.sort_tailwindcss else {
+        let Some(SortTailwindcssUserConfig::Object(ref mut tw)) = self.sort_tailwindcss else {
             return;
         };
 
@@ -327,6 +343,23 @@ pub enum HtmlWhitespaceSensitivityConfig {
 }
 
 // ---
+
+#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
+#[serde(untagged)]
+pub enum SortImportsUserConfig {
+    Bool(bool),
+    Object(SortImportsConfig),
+}
+
+impl SortImportsUserConfig {
+    pub fn into_config(self) -> Option<SortImportsConfig> {
+        match self {
+            Self::Bool(true) => Some(SortImportsConfig::default()),
+            Self::Bool(false) => None,
+            Self::Object(config) => Some(config),
+        }
+    }
+}
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default)]
@@ -567,6 +600,23 @@ impl SortPackageJsonConfig {
 
 // ---
 
+#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
+#[serde(untagged)]
+pub enum SortTailwindcssUserConfig {
+    Bool(bool),
+    Object(SortTailwindcssConfig),
+}
+
+impl SortTailwindcssUserConfig {
+    pub fn into_config(self) -> Option<SortTailwindcssConfig> {
+        match self {
+            Self::Bool(true) => Some(SortTailwindcssConfig::default()),
+            Self::Bool(false) => None,
+            Self::Object(config) => Some(config),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Default, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default)]
 pub struct SortTailwindcssConfig {
@@ -612,6 +662,92 @@ pub struct SortTailwindcssConfig {
     /// - Default: `false`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub preserve_duplicates: Option<bool>,
+}
+
+// ---
+
+#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
+#[serde(untagged)]
+pub enum JsdocUserConfig {
+    Bool(bool),
+    Object(JsdocConfig),
+}
+
+impl JsdocUserConfig {
+    pub fn into_config(self) -> Option<JsdocConfig> {
+        match self {
+            Self::Bool(true) => Some(JsdocConfig::default()),
+            Self::Bool(false) => None,
+            Self::Object(config) => Some(config),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct JsdocConfig {
+    /// Capitalize the first letter of tag descriptions.
+    ///
+    /// - Default: `true`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub capitalize_descriptions: Option<bool>,
+    /// Add a trailing dot to the end of descriptions.
+    ///
+    /// - Default: `false`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub description_with_dot: Option<bool>,
+    /// Append default values to `@param` descriptions (e.g. "Default is `value`").
+    ///
+    /// - Default: `true`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub add_default_to_description: Option<bool>,
+    /// Use fenced code blocks (```` ``` ````) instead of 4-space indentation for code without a language tag.
+    ///
+    /// - Default: `false`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub prefer_code_fences: Option<bool>,
+    /// Strategy for wrapping description lines at print width.
+    ///
+    /// - `"greedy"` — Always re-wrap text to fit within print width.
+    /// - `"balance"` — Preserve original line breaks if all lines fit within print width.
+    ///
+    /// - Default: `"greedy"`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub line_wrapping_style: Option<String>,
+    /// How to format comment blocks.
+    ///
+    /// - `"singleLine"` — Convert to single-line `/** content */` when possible.
+    /// - `"multiline"` — Always use multi-line format.
+    /// - `"keep"` — Preserve original formatting.
+    ///
+    /// - Default: `"singleLine"`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub comment_line_strategy: Option<String>,
+    /// Add blank lines between different tag groups (e.g. between `@param` and `@returns`).
+    ///
+    /// - Default: `false`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub separate_tag_groups: Option<bool>,
+    /// Add a blank line between the last `@param` and `@returns`.
+    ///
+    /// - Default: `false`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub separate_returns_from_param: Option<bool>,
+    /// Add spaces inside JSDoc type braces: `{string}` → `{ string }`.
+    ///
+    /// - Default: `false`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub bracket_spacing: Option<bool>,
+    /// Emit `@description` tag instead of inline description.
+    ///
+    /// - Default: `false`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub description_tag: Option<bool>,
+    /// Preserve indentation in unparsable `@example` code.
+    ///
+    /// - Default: `false`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub keep_unparsable_example_indent: Option<bool>,
 }
 
 // ---

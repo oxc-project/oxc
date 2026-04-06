@@ -319,17 +319,17 @@ impl<'a> PeepholeOptimizations {
                     debug_assert_eq!(quasi_strs.len(), 1);
                     return Some(ctx.ast.expression_string_literal(
                         span,
-                        ctx.ast.atom_from_cow(&quasi_strs.pop().unwrap()),
+                        ctx.ast.str_from_cow(&quasi_strs.pop().unwrap()),
                         None,
                     ));
                 }
 
                 let mut quasis = ctx.ast.vec_from_iter(quasi_strs.into_iter().map(|s| {
-                    let cooked = ctx.ast.atom_from_cow(&s);
+                    let cooked = ctx.ast.str_from_cow(&s);
                     ctx.ast.template_element(
                         SPAN,
                         TemplateElementValue {
-                            raw: ctx.ast.atom(&Self::escape_string_for_template_literal(&s)),
+                            raw: ctx.ast.str(&Self::escape_string_for_template_literal(&s)),
                             cooked: Some(cooked),
                         },
                         false,
@@ -562,7 +562,7 @@ impl<'a> PeepholeOptimizations {
                     s.value.as_str().char_at(Some(property.into()))
                 {
                     s.span = span;
-                    s.value = ctx.ast.atom(&c.to_string());
+                    s.value = ctx.ast.str(&c.to_string());
                     s.raw = None;
                     Some(object.take_in(ctx.ast))
                 } else {

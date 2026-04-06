@@ -15,7 +15,7 @@ pub fn create_member_callee<'a>(
     span: Span,
     ctx: &TraverseCtx<'a>,
 ) -> Expression<'a> {
-    let property = ctx.ast.identifier_name(SPAN, Atom::from(property));
+    let property = ctx.ast.identifier_name(SPAN, Str::from(property));
     Expression::from(ctx.ast.member_expression_static(span, object, property, false))
 }
 
@@ -82,7 +82,7 @@ pub fn create_prototype_member<'a>(
     span: Span,
     ctx: &TraverseCtx<'a>,
 ) -> Expression<'a> {
-    let property = ctx.ast.identifier_name(SPAN, Atom::from("prototype"));
+    let property = ctx.ast.identifier_name(SPAN, Str::from("prototype"));
     let static_member = ctx.ast.member_expression_static(span, object, property, false);
     Expression::from(static_member)
 }
@@ -94,7 +94,7 @@ pub fn create_property_access<'a>(
     property: &str,
     ctx: &TraverseCtx<'a>,
 ) -> Expression<'a> {
-    let property = ctx.ast.identifier_name(SPAN, ctx.ast.atom(property));
+    let property = ctx.ast.identifier_name(SPAN, ctx.ast.str(property));
     Expression::from(ctx.ast.member_expression_static(span, object, property, false))
 }
 
@@ -195,13 +195,38 @@ pub fn create_class_constructor_with_params<'a>(
     scope_id: ScopeId,
     ctx: &TraverseCtx<'a>,
 ) -> ClassElement<'a> {
+    create_class_method(
+        ctx.ast.vec(),
+        PropertyKey::StaticIdentifier(
+            ctx.ast.alloc_identifier_name(SPAN, Str::from("constructor")),
+        ),
+        MethodDefinitionKind::Constructor,
+        params,
+        stmts,
+        false,
+        false,
+        scope_id,
+        ctx,
+    )
+}
+
+/// Create a `MethodDefinition` class element wrapping a function expression.
+pub fn create_class_method<'a>(
+    decorators: ArenaVec<'a, Decorator<'a>>,
+    key: PropertyKey<'a>,
+    kind: MethodDefinitionKind,
+    params: ArenaBox<'a, FormalParameters<'a>>,
+    stmts: ArenaVec<'a, Statement<'a>>,
+    computed: bool,
+    is_static: bool,
+    scope_id: ScopeId,
+    ctx: &TraverseCtx<'a>,
+) -> ClassElement<'a> {
     ClassElement::MethodDefinition(ctx.ast.alloc_method_definition(
         SPAN,
         MethodDefinitionType::MethodDefinition,
-        ctx.ast.vec(),
-        PropertyKey::StaticIdentifier(
-            ctx.ast.alloc_identifier_name(SPAN, Atom::from("constructor")),
-        ),
+        decorators,
+        key,
         ctx.ast.alloc_function_with_scope_id(
             SPAN,
             FunctionType::FunctionExpression,
@@ -216,9 +241,9 @@ pub fn create_class_constructor_with_params<'a>(
             Some(ctx.ast.alloc_function_body(SPAN, ctx.ast.vec(), stmts)),
             scope_id,
         ),
-        MethodDefinitionKind::Constructor,
-        false,
-        false,
+        kind,
+        computed,
+        is_static,
         false,
         false,
         None,

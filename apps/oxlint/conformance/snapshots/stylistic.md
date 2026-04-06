@@ -195,4 +195,5 @@ TypeError: Cannot read properties of undefined (reading 'end')
     at hasEmptyLines (apps/oxlint/conformance/submodules/stylistic/packages/eslint-plugin/rules/jsx-props-no-multi-spaces/jsx-props-no-multi-spaces.ts:63:44)
     at checkSpacing (apps/oxlint/conformance/submodules/stylistic/packages/eslint-plugin/rules/jsx-props-no-multi-spaces/jsx-props-no-multi-spaces.ts:71:11)
     at <anonymous> (apps/oxlint/conformance/submodules/stylistic/packages/eslint-plugin/rules/jsx-props-no-multi-spaces/jsx-props-no-multi-spaces.ts:132:11)
+    at Array.reduce (<anonymous>)
 

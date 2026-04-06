@@ -6,7 +6,7 @@ use tower_lsp_server::{
     },
 };
 
-use crate::{LanguageId, capabilities::Capabilities};
+use crate::{TextDocument, capabilities::Capabilities};
 
 pub trait ToolBuilder: Send + Sync {
     /// Modify the server capabilities to include capabilities provided by this tool.
@@ -57,13 +57,8 @@ pub trait Tool: Send + Sync {
         options: serde_json::Value,
     ) -> ToolRestartChanges;
 
-    /// Check if this tool is responsible for handling the given command.
-    fn is_responsible_for_command(&self, _command: &str) -> bool {
-        false
-    }
-
     /// Tries to execute the given command with the provided arguments.
-    /// If the command is not recognized, returns `Ok(None)`.
+    /// If the command is not recognized, returns `Err(ErrorCode)`.
     /// If the command is recognized and executed it can return:
     /// - `Ok(Some(WorkspaceEdit))` if the command was executed successfully and produced a workspace edit.
     /// - `Ok(None)` if the command was executed successfully but did not produce any workspace edit.
@@ -75,7 +70,7 @@ pub trait Tool: Send + Sync {
         _command: &str,
         _arguments: Vec<serde_json::Value>,
     ) -> Result<Option<WorkspaceEdit>, ErrorCode> {
-        Ok(None)
+        Err(ErrorCode::InvalidParams)
     }
 
     /// Get code actions or commands provided by this tool for the given URI and range.
@@ -91,52 +86,55 @@ pub trait Tool: Send + Sync {
         Vec::new()
     }
 
-    /// Format the content of the given URI.
-    /// If `content` is `None`, the tool should read the content from the file system.
+    /// Format the given text document.
+    ///
+    /// Implementors should use `document.text` as the source to format, and may use
+    /// `document.uri` and `document.language_id` to determine how to format the content.
     /// Returns a vector of `TextEdit` representing the formatting changes.
     ///
-    /// Not all tools will implement formatting, so the default implementation returns empty vector.
+    /// Not all tools will implement formatting, so the default implementation returns an empty vector.
     ///
     /// # Errors
-    /// Return [`Err`] when an error occurs, ignoring formatting should return [`Ok`] with an empty vector.
-    fn run_format(
-        &self,
-        _uri: &Uri,
-        _language_id: &LanguageId,
-        _content: Option<&str>,
-    ) -> Result<Vec<TextEdit>, String> {
+    /// Return [`Err`] when an error occurs; ignoring formatting should return [`Ok`] with an empty vector.
+    fn run_format(&self, _document: &TextDocument) -> Result<Vec<TextEdit>, String> {
         Ok(Vec::new())
     }
 
-    /// Run diagnostics on the content of the given URI.
-    /// If `content` is `None`, the tool should read the content from the file system.
+    /// Run diagnostics on the given text document.
+    ///
+    /// Implementors should inspect `document.text` to produce diagnostics, and may use
+    /// `document.uri` and `document.language_id` to provide accurate locations and rules.
     /// Not all tools will implement diagnostics, so the default implementation returns [`Ok`] with an empty vector.
     ///
     /// # Errors
-    /// Return [`Err`] when an error occurs, ignoring diagnostics should return [`Ok`] with an empty vector.
-    fn run_diagnostic(&self, _uri: &Uri, _content: Option<&str>) -> DiagnosticResult {
+    /// Return [`Err`] when an error occurs; ignoring diagnostics should return [`Ok`] with an empty vector.
+    fn run_diagnostic(&self, _document: &TextDocument) -> DiagnosticResult {
         Ok(Vec::new())
     }
 
-    /// Run diagnostics on save for the content of the given URI.
-    /// If `content` is `None`, the tool should read the content from the file system.
-    /// Returns a vector of a Uri-Diagnostic tuple representing the diagnostic results.
+    /// Run diagnostics on save for the given text document.
+    ///
+    /// Implementors should inspect `document.text` to produce diagnostics, and may use
+    /// `document.uri` and `document.language_id` to determine how and where diagnostics apply.
+    /// Returns a vector of `(Uri, Vec<Diagnostic>)` tuples representing the diagnostic results.
     /// Not all tools will implement diagnostics on save, so the default implementation returns [`Ok`] with an empty vector.
     ///
     /// # Errors
-    /// Return [`Err`] when an error occurs, ignoring diagnostics should return [`Ok`] with an empty vector.
-    fn run_diagnostic_on_save(&self, _uri: &Uri, _content: Option<&str>) -> DiagnosticResult {
+    /// Return [`Err`] when an error occurs; ignoring diagnostics should return [`Ok`] with an empty vector.
+    fn run_diagnostic_on_save(&self, _document: &TextDocument) -> DiagnosticResult {
         Ok(Vec::new())
     }
 
-    /// Run diagnostics on change for the content of the given URI.
-    /// If `content` is `None`, the tool should read the content from the file system.
-    /// Returns a vector of a Uri-Diagnostic tuple representing the diagnostic results.
+    /// Run diagnostics on change for the given text document.
+    ///
+    /// Implementors should inspect `document.text` to produce diagnostics, and may use
+    /// `document.uri` and `document.language_id` to determine how and where diagnostics apply.
+    /// Returns a vector of `(Uri, Vec<Diagnostic>)` tuples representing the diagnostic results.
     /// Not all tools will implement diagnostics on change, so the default implementation returns [`Ok`] with an empty vector.
     ///
     /// # Errors
-    /// Return [`Err`] when an error occurs, ignoring diagnostics should return [`Ok`] with an empty vector.
-    fn run_diagnostic_on_change(&self, _uri: &Uri, _content: Option<&str>) -> DiagnosticResult {
+    /// Return [`Err`] when an error occurs; ignoring diagnostics should return [`Ok`] with an empty vector.
+    fn run_diagnostic_on_change(&self, _document: &TextDocument) -> DiagnosticResult {
         Ok(Vec::new())
     }
 

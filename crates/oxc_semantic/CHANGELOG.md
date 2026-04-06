@@ -4,6 +4,22 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.123.0] - 2026-03-30
+
+### 🐛 Bug Fixes
+
+- ffacf99 semantic: Report error on await inside block inside static block (#20750) (camc314)
+- ccf9301 semantic: Report error on for-await inside block inside static block (#20749) (camc314)
+- 9a5ff73 semantic: Hoist Annex B block-scoped function declarations to var scope (#20728) (Dunqing)
+- 2bad7f5 semantic: Report error on await-using inside nested static block (#20746) (camc314)
+
+## [0.122.0] - 2026-03-23
+
+### 🚀 Features
+
+- 07128b0 semantic: Report error for `await using` in class static block (#20535) (camc314)
+- 728fc8d semantic: Improve diagnostic for `await` in static block (#20534) (camc314)
+
 ## [0.119.0] - 2026-03-14
 
 ### ⚡ Performance

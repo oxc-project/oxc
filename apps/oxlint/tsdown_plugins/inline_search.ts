@@ -32,13 +32,13 @@ const { fnParams, returnParamIndex, fnBodySource } = extractInlinedFunction(
  *
  * ```ts
  * // Original code
- * const index = firstTokenAtOrAfter(tokenList, rangeStart, searchFromIndex);
+ * const index = firstTokenAtOrAfter(uint32, rangeStart, searchFromIndex, length);
  *
  * // After transform
  * let index = searchFromIndex;
- * for (let endIndex = tokenList.length; index < endIndex; ) {
+ * for (let endIndex = length; index < endIndex; ) {
  *   const mid = (index + endIndex) >> 1;
- *   if (tokenList[mid].start < rangeStart) {
+ *   if (uint32[mid << 2] < rangeStart) {
  *     index = mid + 1;
  *   } else {
  *     endIndex = mid;

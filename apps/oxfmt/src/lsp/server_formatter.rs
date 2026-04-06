@@ -5,7 +5,9 @@ use tower_lsp_server::ls_types::{Pattern, Position, Range, ServerCapabilities, T
 use tracing::{debug, error, warn};
 
 use oxc_data_structures::rope::{Rope, get_line_column};
-use oxc_language_server::{Capabilities, LanguageId, Tool, ToolBuilder, ToolRestartChanges};
+use oxc_language_server::{
+    Capabilities, LanguageId, TextDocument, Tool, ToolBuilder, ToolRestartChanges,
+};
 
 use crate::core::{
     ConfigResolver, ExternalFormatter, FormatFileStrategy, FormatResult, JsConfigLoaderCb,
@@ -38,15 +40,7 @@ impl ServerFormatterBuilder {
     /// # Panics
     /// Panics if the root URI cannot be converted to a file path.
     pub fn build(&self, root_uri: &Uri, options: serde_json::Value) -> ServerFormatter {
-        let options = match serde_json::from_value::<LSPFormatOptions>(options) {
-            Ok(opts) => opts,
-            Err(err) => {
-                warn!(
-                    "Failed to deserialize LSPFormatOptions from JSON: {err}, falling back to default options"
-                );
-                LSPFormatOptions::default()
-            }
-        };
+        let options = deserialize_lsp_options(options);
 
         let root_path = root_uri.to_file_path().unwrap();
         debug!("root_path = {:?}", root_path.display());
@@ -185,27 +179,8 @@ impl Tool for ServerFormatter {
         old_options_json: &serde_json::Value,
         new_options_json: serde_json::Value,
     ) -> ToolRestartChanges {
-        let old_option = match serde_json::from_value::<LSPFormatOptions>(old_options_json.clone())
-        {
-            Ok(opts) => opts,
-            Err(e) => {
-                warn!(
-                    "Failed to deserialize LSPFormatOptions from JSON: {e}. Falling back to default options."
-                );
-                LSPFormatOptions::default()
-            }
-        };
-
-        let new_option = match serde_json::from_value::<LSPFormatOptions>(new_options_json.clone())
-        {
-            Ok(opts) => opts,
-            Err(e) => {
-                warn!(
-                    "Failed to deserialize LSPFormatOptions from JSON: {e}. Falling back to default options."
-                );
-                LSPFormatOptions::default()
-            }
-        };
+        let old_option = deserialize_lsp_options(old_options_json.clone());
+        let new_option = deserialize_lsp_options(new_options_json.clone());
 
         if old_option == new_option {
             return ToolRestartChanges { tool: None, watch_patterns: None };
@@ -218,15 +193,7 @@ impl Tool for ServerFormatter {
     }
 
     fn get_watcher_patterns(&self, options: serde_json::Value) -> Vec<Pattern> {
-        let options = match serde_json::from_value::<LSPFormatOptions>(options) {
-            Ok(opts) => opts,
-            Err(e) => {
-                warn!(
-                    "Failed to deserialize LSPFormatOptions from JSON: {e}. Falling back to default options."
-                );
-                LSPFormatOptions::default()
-            }
-        };
+        let options = deserialize_lsp_options(options);
 
         let mut patterns: Vec<Pattern> =
             if let Some(config_path) = options.config_path.as_ref().filter(|s| !s.is_empty()) {
@@ -257,17 +224,14 @@ impl Tool for ServerFormatter {
         }
     }
 
-    fn run_format(
-        &self,
-        uri: &Uri,
-        language_id: &LanguageId,
-        content: Option<&str>,
-    ) -> Result<Vec<TextEdit>, String> {
+    fn run_format(&self, document: &TextDocument) -> Result<Vec<TextEdit>, String> {
         let file_content;
-        let (result, source_text) = if uri.scheme().as_str() == "file" {
-            let Some(path) = uri.to_file_path() else { return Err("Invalid file URI".to_string()) };
+        let (result, source_text) = if document.uri.scheme().as_str() == "file" {
+            let Some(path) = document.uri.to_file_path() else {
+                return Err("Invalid file URI".to_string());
+            };
 
-            let source_text = if let Some(c) = content {
+            let source_text = if let Some(c) = document.text.as_deref() {
                 c
             } else {
                 file_content = utils::read_to_string(&path)
@@ -275,16 +239,20 @@ impl Tool for ServerFormatter {
                 &file_content
             };
 
-            let Some(result) = self.format_file(&path, source_text, language_id) else {
+            let Some(result) = self.format_file(&path, source_text) else {
                 return Ok(vec![]); // No formatting for this file (unsupported or ignored)
             };
 
             (result, source_text)
         } else {
-            let source_text =
-                content.ok_or_else(|| "In-memory formatting requires content".to_string())?;
+            let source_text = document
+                .text
+                .as_deref()
+                .ok_or_else(|| "In-memory formatting requires content".to_string())?;
 
-            let Some(result) = self.format_in_memory(uri, source_text, language_id) else {
+            let Some(result) =
+                self.format_in_memory(document.uri, source_text, &document.language_id)
+            else {
                 return Ok(vec![]); // currently not supported
             };
             (result, source_text)
@@ -341,27 +309,18 @@ impl ServerFormatter {
         }
     }
 
-    fn format_file(
-        &self,
-        path: &Path,
-        source_text: &str,
-        language_id: &LanguageId,
-    ) -> Option<FormatResult> {
+    fn format_file(&self, path: &Path, source_text: &str) -> Option<FormatResult> {
         if self.is_ignored(path) {
             debug!("File is ignored: {}", path.display());
             return None;
         }
 
-        // Prefer language_id over file extension to determine the format strategy.
-        // This allows e.g. a `.txt` file opened as `typescript` to be formatted.
-        let strategy_opt = super::apply_language_id_extension(language_id, path)
-            .and_then(|p| FormatFileStrategy::try_from(p).ok())
-            .or_else(|| FormatFileStrategy::try_from(path.to_path_buf()).ok());
-
-        let Some(strategy) = strategy_opt else {
+        // Determine format strategy from file path (supports JS/TS, JSON, YAML, CSS, etc.)
+        let Ok(strategy) = FormatFileStrategy::try_from(path.to_path_buf()) else {
             debug!("Unsupported file type for formatting: {}", path.display());
             return None;
         };
+
         // Resolve options for this file
         let resolved_options = self.config_resolver.resolve(&strategy);
         debug!("resolved_options = {resolved_options:?}");
@@ -399,6 +358,19 @@ impl ServerFormatter {
 }
 
 // ---
+
+/// Deserialize `LSPFormatOptions` from JSON, falling back to defaults on failure.
+fn deserialize_lsp_options(value: serde_json::Value) -> LSPFormatOptions {
+    match serde_json::from_value::<LSPFormatOptions>(value) {
+        Ok(opts) => opts,
+        Err(err) => {
+            warn!(
+                "Failed to deserialize LSPFormatOptions from JSON: {err}, falling back to default options"
+            );
+            LSPFormatOptions::default()
+        }
+    }
+}
 
 /// Returns the minimal text edit (start, end, replacement) to transform `source_text` into `formatted_text`
 #[expect(clippy::cast_possible_truncation)]
@@ -469,40 +441,6 @@ mod tests_builder {
         builder.server_capabilities(&mut capabilities, &mut Capabilities::default());
 
         assert_eq!(capabilities.document_formatting_provider, Some(OneOf::Left(true)));
-    }
-}
-
-#[cfg(test)]
-mod test_watchers {
-    // formatter file watcher-system does not depend on the actual file system,
-    // so we can use a fake directory for testing.
-    const FAKE_DIR: &str = "fixtures/formatter/watchers";
-
-    mod handle_configuration_change {
-        use crate::lsp::{server_formatter::test_watchers::FAKE_DIR, tester::Tester};
-        use oxc_language_server::ToolRestartChanges;
-        use serde_json::json;
-
-        #[test]
-        fn test_no_change() {
-            let ToolRestartChanges { watch_patterns, .. } =
-                Tester::new(FAKE_DIR, json!({})).handle_configuration_change(json!({}));
-
-            assert!(watch_patterns.is_none());
-        }
-
-        #[test]
-        fn test_formatter_custom_config_path() {
-            let ToolRestartChanges { watch_patterns, .. } = Tester::new(FAKE_DIR, json!({}))
-                .handle_configuration_change(json!({
-                    "fmt.configPath": "configs/formatter.json"
-                }));
-
-            assert!(watch_patterns.is_some());
-            assert_eq!(watch_patterns.as_ref().unwrap().len(), 2);
-            assert_eq!(watch_patterns.as_ref().unwrap()[0], "configs/formatter.json");
-            assert_eq!(watch_patterns.as_ref().unwrap()[1], ".editorconfig");
-        }
     }
 }
 

@@ -29,8 +29,7 @@
 //! * Babel plugin implementation: <https://github.com/babel/babel/blob/v7.26.2/packages/babel-plugin-transform-react-jsx-self/src/index.ts>
 
 use oxc_ast::ast::*;
-use oxc_diagnostics::OxcDiagnostic;
-use oxc_span::{SPAN, Span};
+use oxc_span::SPAN;
 use oxc_traverse::{Ancestor, Traverse};
 
 use crate::{context::TraverseCtx, state::TransformState};
@@ -56,11 +55,6 @@ impl<'a> Traverse<'a, TransformState<'a>> for JsxSelf {
 }
 
 impl<'a> JsxSelf {
-    pub fn report_error(span: Span, ctx: &mut TraverseCtx<'a>) {
-        let error = OxcDiagnostic::warn("Duplicate __self prop found.").with_label(span);
-        ctx.state.error(error);
-    }
-
     fn is_inside_constructor(ctx: &TraverseCtx<'a>) -> bool {
         for scope_id in ctx.ancestor_scopes() {
             let flags = ctx.scoping().scope_flags(scope_id);
@@ -96,17 +90,14 @@ impl<'a> JsxSelf {
 
     /// `<div __self={this} />`
     ///       ^^^^^^^^^^^^^
-    #[expect(clippy::unused_self)]
+    #[expect(clippy::unused_self, clippy::needless_pass_by_ref_mut)]
     fn add_self_this_attribute(&self, elem: &mut JSXOpeningElement<'a>, ctx: &mut TraverseCtx<'a>) {
-        // Check if `__self` attribute already exists
-        for item in &elem.attributes {
-            if let JSXAttributeItem::Attribute(attribute) = item
-                && let JSXAttributeName::Identifier(ident) = &attribute.name
-                && ident.name == SELF
-            {
-                Self::report_error(ident.span, ctx);
-                return;
-            }
+        // Don't add `__self` if it already exists
+        if elem.attributes.iter().any(|item| {
+            matches!(item, JSXAttributeItem::Attribute(attribute)
+                if matches!(&attribute.name, JSXAttributeName::Identifier(ident) if ident.name == SELF))
+        }) {
+            return;
         }
 
         let name = ctx.ast.jsx_attribute_name_identifier(SPAN, SELF);

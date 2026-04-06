@@ -2,7 +2,7 @@
 
 use std::fmt::{self, Display};
 
-use oxc_span::Atom;
+use oxc_span::Str;
 
 use crate::ast::*;
 
@@ -41,7 +41,7 @@ impl<'a> JSXElementName<'a> {
         }
     }
 
-    /// Get this [`JSXElementName`]'s identifier as an [`Atom`], if it is a plain identifier
+    /// Get this [`JSXElementName`]'s identifier as a [`Str`], if it is a plain identifier
     /// or identifier reference.
     ///
     /// e.g. `Foo` in `<Foo>`, or `div` in `<div>`.
@@ -50,7 +50,7 @@ impl<'a> JSXElementName<'a> {
     /// * `<this>`
     /// * `<Foo.bar>`
     /// * `<Foo:Bar>` - [namespaced identifiers](JSXElementName::NamespacedName)
-    pub fn get_identifier_name(&self) -> Option<Atom<'a>> {
+    pub fn get_identifier_name(&self) -> Option<Str<'a>> {
         match self {
             Self::Identifier(id) => Some(id.as_ref().name),
             Self::IdentifierReference(id) => Some(id.as_ref().name.into()),

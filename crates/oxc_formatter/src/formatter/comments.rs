@@ -451,6 +451,17 @@ impl<'a> Comments<'a> {
         )
     }
 
+    /// Checks if there is a type cast comment in the given range,
+    /// searching all comments regardless of print state.
+    pub fn has_type_cast_comment_in_range(&self, start: u32, end: u32) -> bool {
+        self.inner.iter().skip_while(|c| c.span.end < start).take_while(|c| c.span.end <= end).any(
+            |comment| {
+                self.source_text.next_non_whitespace_byte_is(comment.span.end, b'(')
+                    && self.is_type_cast_comment(comment)
+            },
+        )
+    }
+
     /// Marks the given span as a type cast node.
     pub fn mark_as_type_cast_node(&mut self, node: &impl GetSpan) {
         self.type_cast_node_span = node.span();

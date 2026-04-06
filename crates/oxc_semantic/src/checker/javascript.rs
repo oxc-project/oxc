@@ -387,7 +387,7 @@ pub fn check_number_literal(lit: &NumericLiteral, ctx: &SemanticBuilder<'_>) {
     // NumericLiteral :: legacy_octalIntegerLiteral
     // DecimalIntegerLiteral :: NonOctalDecimalIntegerLiteral
     // * It is a Syntax Error if the source text matched by this production is strict mode code.
-    fn leading_zero(s: Option<Atom>) -> bool {
+    fn leading_zero(s: Option<Str>) -> bool {
         if let Some(s) = s {
             let mut chars = s.bytes();
             if let Some(first) = chars.next()
@@ -560,6 +560,9 @@ pub fn check_variable_declaration(decl: &VariableDeclaration, ctx: &SemanticBuil
         && ctx.current_scope_flags().contains(ScopeFlags::Top)
     {
         ctx.error(diagnostics::using_declaration_not_allowed_in_script(decl.span));
+    }
+    if decl.kind.is_await() && is_in_class_static_block(ctx) {
+        ctx.error(diagnostics::class_static_block_await_using(decl.span));
     }
 }
 
@@ -978,8 +981,8 @@ pub fn check_for_statement_left(
 pub fn check_for_of_statement(stmt: &ForOfStatement, ctx: &SemanticBuilder<'_>) {
     // ClassStaticBlockBody : ClassStaticBlockStatementList
     //   It is a Syntax Error if ClassStaticBlockStatementList Contains await is true.
-    if stmt.r#await && ctx.scoping.scope_flags(ctx.current_scope_id).is_class_static_block() {
-        ctx.error(diagnostics::class_static_block_await(stmt.span));
+    if stmt.r#await && is_in_class_static_block(ctx) {
+        ctx.error(diagnostics::class_static_block_for_await(stmt.span));
     }
 }
 
@@ -1364,12 +1367,28 @@ fn is_in_formal_parameters(ctx: &SemanticBuilder<'_>) -> bool {
     false
 }
 
+fn is_in_class_static_block(ctx: &SemanticBuilder<'_>) -> bool {
+    ctx.scoping
+        .scope_ancestors(ctx.current_scope_id)
+        .map(|scope_id| ctx.scoping.scope_flags(scope_id))
+        .find_map(|flags| {
+            if flags.is_class_static_block() {
+                return Some(true);
+            }
+            if flags.is_function() {
+                return Some(false);
+            }
+            None
+        })
+        .unwrap_or(false)
+}
+
 pub fn check_await_expression(expr: &AwaitExpression, ctx: &SemanticBuilder<'_>) {
     if is_in_formal_parameters(ctx) {
         ctx.error(diagnostics::await_or_yield_in_parameter("await", expr.span));
     }
     // It is a Syntax Error if ClassStaticBlockStatementList Contains await is true.
-    if ctx.scoping.scope_flags(ctx.current_scope_id).is_class_static_block() {
+    if is_in_class_static_block(ctx) {
         let start = expr.span.start;
         ctx.error(diagnostics::class_static_block_await(Span::sized(start, 5)));
     }

@@ -2,7 +2,7 @@
 
 use std::{ffi::OsStr, ops::Deref, path::Path, rc::Rc};
 
-use javascript_globals::GLOBALS;
+use javascript_globals::{GLOBALS, GLOBALS_BUILTIN, GLOBALS_ES2026};
 
 use oxc_ast::ast::IdentifierReference;
 use oxc_cfg::ControlFlowGraph;
@@ -242,7 +242,7 @@ impl<'a> LintContext<'a> {
 
     fn get_env_global_entry(&self, var: &str) -> Option<GlobalValue> {
         // builtin is always readonly
-        if GLOBALS["builtin"].contains_key(var) {
+        if GLOBALS_BUILTIN.contains_key(var) {
             return Some(GlobalValue::Readonly);
         }
 
@@ -279,11 +279,11 @@ impl<'a> LintContext<'a> {
             return false;
         }
 
-        GLOBALS["es2026"].contains_key(var) || GLOBALS["builtin"].contains_key(var)
+        GLOBALS_ES2026.contains_key(var) || GLOBALS_BUILTIN.contains_key(var)
     }
 
     fn env_contains_var(&self, var: &str) -> bool {
-        if GLOBALS["builtin"].contains_key(var) {
+        if GLOBALS_BUILTIN.contains_key(var) {
             return true;
         }
         for env in self.env().iter() {

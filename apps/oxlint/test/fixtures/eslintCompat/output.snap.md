@@ -328,8 +328,24 @@
    :        ^
    `----
 
-Found 0 warnings and 45 errors.
-Finished in Xms on 2 files with 8 rules using X threads.
+  x eslint-compat-plugin(create-once-cfg): after hook:
+  | filename: <fixture>/files/cfg.js
+   ,-[files/cfg.js:1:1]
+ 1 | for (let i = 0; i < 3; i++) {
+   : ^
+ 2 |   console.log(i);
+   `----
+
+  x eslint-compat-plugin(create-once-cfg2): after hook:
+  | filename: <fixture>/files/cfg.js
+   ,-[files/cfg.js:1:1]
+ 1 | for (let i = 0; i < 3; i++) {
+   : ^
+ 2 |   console.log(i);
+   `----
+
+Found 0 warnings and 47 errors.
+Finished in Xms on 3 files with 0 rules using X threads.
 ```
 
 # stderr

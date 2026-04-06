@@ -205,7 +205,6 @@ impl<'a> Format<'a> for &[FormatElement<'a>] {
 
             match element {
                 element @ (FormatElement::Space
-                | FormatElement::HardSpace
                 | FormatElement::Token { .. }
                 | FormatElement::Text { .. }) => {
                     if !in_text {
@@ -215,7 +214,7 @@ impl<'a> Format<'a> for &[FormatElement<'a>] {
                     in_text = true;
 
                     match element {
-                        FormatElement::Space | FormatElement::HardSpace => {
+                        FormatElement::Space => {
                             write!(f, [token(" ")]);
                         }
                         element if element.is_text() => {

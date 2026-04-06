@@ -13,7 +13,7 @@ use oxc_allocator::{Allocator, CloneIn, Vec as ArenaVec};
 use oxc_ast::{AstBuilder, NONE, ast::*};
 use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_span::{Atom, GetSpan, IdentHashSet, SPAN, SourceType};
+use oxc_span::{GetSpan, IdentHashSet, SPAN, SourceType, Str};
 
 use crate::{diagnostics::function_with_assigning_properties, scope::ScopeTree};
 
@@ -432,12 +432,12 @@ impl<'a> IsolatedDeclarations<'a> {
     }
 
     fn remove_function_overloads_implementation(stmts: &mut Vec<&Statement<'a>>) {
-        let mut last_function_name: Option<Atom<'a>> = None;
+        let mut last_function_name: Option<Str<'a>> = None;
         let mut is_export_default_function_overloads = false;
 
         stmts.retain(move |&stmt| match stmt {
             Statement::FunctionDeclaration(func) => {
-                let name: Atom<'a> = func
+                let name: Str<'a> = func
                     .id
                     .as_ref()
                     .unwrap_or_else(|| {
@@ -459,7 +459,7 @@ impl<'a> IsolatedDeclarations<'a> {
             }
             Statement::ExportNamedDeclaration(decl) => {
                 if let Some(Declaration::FunctionDeclaration(func)) = &decl.declaration {
-                    let name: Atom<'a> = func
+                    let name: Str<'a> = func
                         .id
                         .as_ref()
                         .unwrap_or_else(|| {
@@ -501,7 +501,7 @@ impl<'a> IsolatedDeclarations<'a> {
     /// Collect exported names from a namespace declaration into `assignable_properties`.
     fn collect_namespace_properties(
         decl: &TSModuleDeclaration<'a>,
-        assignable_properties: &mut FxHashMap<&'a str, FxHashSet<Atom<'a>>>,
+        assignable_properties: &mut FxHashMap<&'a str, FxHashSet<Str<'a>>>,
     ) {
         if decl.kind != TSModuleDeclarationKind::Namespace {
             return;
@@ -549,7 +549,7 @@ impl<'a> IsolatedDeclarations<'a> {
     }
 
     fn report_error_for_expando_function(&self, stmts: &ArenaVec<'a, Statement<'a>>) {
-        let mut assignable_properties_for_namespace = FxHashMap::<&str, FxHashSet<Atom>>::default();
+        let mut assignable_properties_for_namespace = FxHashMap::<&str, FxHashSet<Str>>::default();
         let mut can_expando_function_names = IdentHashSet::default();
         for stmt in stmts {
             match stmt {

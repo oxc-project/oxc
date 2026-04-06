@@ -31,3 +31,10 @@ source: crates/oxc_linter/src/tester.rs
  4 │             
    ╰────
   help: Use named or default imports
+
+  ⚠ eslint-plugin-import(no-namespace): Usage of namespaced aka wildcard "*" imports prohibited
+   ╭─[index.js:1:13]
+ 1 │ import * as schema from './src/db/schema'
+   ·             ──────
+   ╰────
+  help: Use named or default imports

@@ -44,7 +44,7 @@ declare_oxc_lint!(
     /// ```
     ConsistentTypeExports(tsgolint),
     typescript,
-    nursery,
+    style,
     config = ConsistentTypeExportsConfig,
 );
 

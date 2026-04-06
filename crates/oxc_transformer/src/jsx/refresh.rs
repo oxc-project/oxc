@@ -17,7 +17,7 @@ use oxc_ast_visit::{
     walk::{walk_call_expression, walk_declaration},
 };
 use oxc_semantic::{ReferenceFlags, ScopeFlags, ScopeId, SymbolFlags, SymbolId};
-use oxc_span::{Atom, GetSpan, Ident, SPAN};
+use oxc_span::{GetSpan, Ident, SPAN, Str};
 use oxc_syntax::operator::AssignmentOperator;
 use oxc_traverse::{Ancestor, BoundIdentifier, Traverse};
 
@@ -46,7 +46,7 @@ impl<'a> RefreshIdentifierResolver<'a> {
         let first_part = parts.next().unwrap();
         let Some(second_part) = parts.next() else {
             // Handle simple identifier reference
-            return Self::Identifier(ast.identifier_reference(SPAN, ast.atom(input)));
+            return Self::Identifier(ast.identifier_reference(SPAN, ast.str(input)));
         };
 
         if first_part == "import" {
@@ -54,13 +54,13 @@ impl<'a> RefreshIdentifierResolver<'a> {
             let mut expr = ast.expression_meta_property(
                 SPAN,
                 ast.identifier_name(SPAN, "import"),
-                ast.identifier_name(SPAN, ast.atom(second_part)),
+                ast.identifier_name(SPAN, ast.str(second_part)),
             );
             if let Some(property) = parts.next() {
                 expr = Expression::from(ast.member_expression_static(
                     SPAN,
                     expr,
-                    ast.identifier_name(SPAN, ast.atom(property)),
+                    ast.identifier_name(SPAN, ast.str(property)),
                     false,
                 ));
             }
@@ -68,8 +68,8 @@ impl<'a> RefreshIdentifierResolver<'a> {
         }
 
         // Handle `window.$RefreshReg$` member expression
-        let object = ast.identifier_reference(SPAN, ast.atom(first_part));
-        let property = ast.identifier_name(SPAN, ast.atom(second_part));
+        let object = ast.identifier_reference(SPAN, ast.str(first_part));
+        let property = ast.identifier_name(SPAN, ast.str(second_part));
         Self::Member((object, property))
     }
 
@@ -116,7 +116,7 @@ pub struct ReactRefresh<'a> {
     refresh_sig: RefreshIdentifierResolver<'a>,
     emit_full_signatures: bool,
     // States
-    registrations: Vec<(BoundIdentifier<'a>, Atom<'a>)>,
+    registrations: Vec<(BoundIdentifier<'a>, Str<'a>)>,
     /// Used to wrap call expression with signature.
     /// (eg: hoc(() => {}) -> _s1(hoc(_s1(() => {}))))
     last_signature: Option<(BindingIdentifier<'a>, ArenaVec<'a, Argument<'a>>)>,
@@ -318,7 +318,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a> {
             return;
         }
 
-        let hook_name: Atom = match &call_expr.callee {
+        let hook_name: Str = match &call_expr.callee {
             Expression::Identifier(ident) => ident.name.into(),
             Expression::StaticMemberExpression(member) => member.property.name.into(),
             _ => return,
@@ -423,7 +423,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a> {
 impl<'a> ReactRefresh<'a> {
     fn create_registration(
         &mut self,
-        persistent_id: Atom<'a>,
+        persistent_id: Str<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> AssignmentTarget<'a> {
         let binding = ctx.generate_uid_in_root_scope("c", SymbolFlags::FunctionScopedVariable);
@@ -509,7 +509,7 @@ impl<'a> ReactRefresh<'a> {
             *expr = ctx.ast.expression_assignment(
                 SPAN,
                 AssignmentOperator::Assign,
-                self.create_registration(ctx.ast.atom(inferred_name), ctx),
+                self.create_registration(ctx.ast.str(inferred_name), ctx),
                 expr.take_in(ctx.ast),
             );
         }
@@ -539,7 +539,7 @@ impl<'a> ReactRefresh<'a> {
         let key = self.function_signature_keys.remove(&scope_id)?;
 
         let key = if self.emit_full_signatures {
-            ctx.ast.atom(&key)
+            ctx.ast.str(&key)
         } else {
             // Prefer to hash when we can (e.g. outside of ASTExplorer).
             // This makes it deterministically compact, even if there's
@@ -576,7 +576,7 @@ impl<'a> ReactRefresh<'a> {
             let hashed_key_bytes = unsafe { hashed_key.as_mut_str().as_bytes_mut() };
             let encoded_bytes = BASE64_STANDARD.encode_slice(hash, hashed_key_bytes).unwrap();
             debug_assert_eq!(encoded_bytes, ENCODED_LEN);
-            Atom::from(hashed_key)
+            Str::from(hashed_key)
         };
 
         let callee_list = self.non_builtin_hooks_callee.remove(&scope_id).unwrap_or_default();

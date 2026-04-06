@@ -9,7 +9,7 @@ use oxc_ast::ast::{
     ExportAllDeclaration, ExportNamedDeclaration, Expression, ImportDeclaration, ImportExpression,
     StringLiteral, TemplateLiteral,
 };
-use oxc_span::Atom;
+use oxc_span::Str;
 use oxc_traverse::Traverse;
 
 use crate::{TypeScriptOptions, context::TraverseCtx, state::TransformState};
@@ -20,13 +20,13 @@ pub struct TypeScriptRewriteExtensions {
     mode: RewriteExtensionsMode,
 }
 
-/// Given a specifier value, compute the replacement atom if the extension
+/// Given a specifier value, compute the replacement `Str` if the extension
 /// should be rewritten/removed. Returns `None` when no rewriting is needed.
 fn rewritten_specifier<'a>(
     value: &'a str,
     mode: RewriteExtensionsMode,
     ctx: &TraverseCtx<'a>,
-) -> Option<Atom<'a>> {
+) -> Option<Str<'a>> {
     if !value.contains(['/', '\\']) {
         return None;
     }
@@ -41,9 +41,9 @@ fn rewritten_specifier<'a>(
     };
 
     Some(if mode.is_remove() {
-        Atom::from(without_extension)
+        Str::from(without_extension)
     } else {
-        ctx.ast.atom_from_strs_array([without_extension, replace])
+        ctx.ast.str_from_strs_array([without_extension, replace])
     })
 }
 

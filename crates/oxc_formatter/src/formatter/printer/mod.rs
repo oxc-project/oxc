@@ -95,7 +95,7 @@ impl<'a> Printer<'a> {
 
         let args = stack.top();
         match element {
-            FormatElement::Space | FormatElement::HardSpace => {
+            FormatElement::Space => {
                 if self.state.line_width > 0 {
                     self.state.pending_space = true;
                 }
@@ -974,12 +974,6 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
                     self.state.pending_space = true;
                 }
             }
-            FormatElement::HardSpace => {
-                self.state.line_width += 1;
-                if self.state.line_width > usize::from(self.options().print_width) {
-                    return Ok(Fits::No);
-                }
-            }
             FormatElement::Line(line_mode) => {
                 if args.mode().is_flat() {
                     match line_mode {
@@ -1037,6 +1031,17 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
                     // is what the mode's initialized to by default
                     // This means, the printer is outside of the current element at this point and any
                     // line break should be printed as regular line break -> Fits
+                    //
+                    // Before returning, resolve any pending space so the width check is accurate.
+                    // Without this, a deferred `Space` before a group boundary can be lost when
+                    // the fits measurer exits early via an expanded-mode line break, causing the
+                    // measured width to be off by one.
+                    if self.state.pending_space {
+                        self.state.line_width += 1;
+                        if self.state.line_width > usize::from(self.options().print_width) {
+                            return Ok(Fits::No);
+                        }
+                    }
                     return Ok(Fits::Yes);
                 }
             }

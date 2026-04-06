@@ -13,8 +13,7 @@ import {
 
 // Initialize linter and load plugin rules
 const linter = createESLintLinter();
-// Include type-checked rules, for accurate counting of the total implemented number.
-loadTargetPluginRules(linter, true);
+loadTargetPluginRules(linter);
 
 // Build rule entries and update statuses
 const ruleEntries = createRuleEntries(linter.getRules());

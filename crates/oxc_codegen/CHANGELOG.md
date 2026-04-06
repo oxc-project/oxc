@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.123.0] - 2026-03-30
+
+### 🚀 Features
+
+- 59fd797 parser: Mark pure comments that cannot be applied (#20687) (Boshen)
+
+### 🐛 Bug Fixes
+
+- 77abf54 codegen: Preserve coverage comments before `ConditionalExpression` alternate and between `SwitchCase`s (#20718) (Boshen)
+
 ## [0.117.0] - 2026-03-09
 
 ### 🐛 Bug Fixes

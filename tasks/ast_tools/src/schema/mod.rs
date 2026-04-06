@@ -5,7 +5,6 @@ use rustc_hash::FxHashMap;
 #[expect(unused_imports)]
 use serde::Serialize;
 
-use oxc_data_structures::slice_iter::SliceIter;
 use oxc_index::{IndexVec, define_index_type};
 
 mod defs;
@@ -95,6 +94,16 @@ impl Schema {
     /// Get iterator over all structs and enums.
     pub fn structs_and_enums(&self) -> StructsAndEnums<'_> {
         StructsAndEnums::new(self)
+    }
+
+    /// Get iterator over all structs.
+    pub fn structs(&self) -> Structs<'_> {
+        Structs::new(self)
+    }
+
+    /// Get iterator over all structs as mutable references.
+    pub fn structs_mut(&mut self) -> StructsMut<'_> {
+        StructsMut::new(self)
     }
 }
 
@@ -247,21 +256,78 @@ impl<'s> Iterator for StructsAndEnums<'s> {
     type Item = StructOrEnum<'s>;
 
     fn next(&mut self) -> Option<StructOrEnum<'s>> {
-        if let Some(type_def) = self.iter.next() {
-            match type_def {
-                TypeDef::Struct(struct_def) => Some(StructOrEnum::Struct(struct_def)),
-                TypeDef::Enum(enum_def) => Some(StructOrEnum::Enum(enum_def)),
-                _ => {
-                    // Structs and enums are always first in `Schema::types`,
-                    // so if we encounter a different type, iteration is done.
-                    self.iter.advance_to_end();
-                    None
-                }
+        let type_def = self.iter.next()?;
+
+        match type_def {
+            TypeDef::Struct(struct_def) => Some(StructOrEnum::Struct(struct_def)),
+            TypeDef::Enum(enum_def) => Some(StructOrEnum::Enum(enum_def)),
+            _ => {
+                // Structs and enums are always first in `Schema::types`,
+                // so if we encounter a different type, iteration is done
+                None
             }
-        } else {
-            None
         }
     }
 }
 
 impl FusedIterator for StructsAndEnums<'_> {}
+
+/// Iterator over structs.
+pub struct Structs<'s> {
+    iter: slice::Iter<'s, TypeDef>,
+}
+
+impl<'s> Structs<'s> {
+    fn new(schema: &'s Schema) -> Self {
+        Self { iter: schema.types.iter() }
+    }
+}
+
+impl<'s> Iterator for Structs<'s> {
+    type Item = &'s StructDef;
+
+    fn next(&mut self) -> Option<&'s StructDef> {
+        for type_def in &mut self.iter {
+            match type_def {
+                TypeDef::Struct(struct_def) => return Some(struct_def),
+                TypeDef::Enum(_) => {}
+                // Structs and enums are always first in `Schema::types`,
+                // so if we encounter a different type, iteration is done
+                _ => break,
+            }
+        }
+        None
+    }
+}
+
+impl FusedIterator for Structs<'_> {}
+
+/// Iterator over structs, which produces mutable references.
+pub struct StructsMut<'s> {
+    iter: slice::IterMut<'s, TypeDef>,
+}
+
+impl<'s> StructsMut<'s> {
+    fn new(schema: &'s mut Schema) -> Self {
+        Self { iter: schema.types.iter_mut() }
+    }
+}
+
+impl<'s> Iterator for StructsMut<'s> {
+    type Item = &'s mut StructDef;
+
+    fn next(&mut self) -> Option<&'s mut StructDef> {
+        for type_def in &mut self.iter {
+            match type_def {
+                TypeDef::Struct(struct_def) => return Some(struct_def),
+                TypeDef::Enum(_) => {}
+                // Structs and enums are always first in `Schema::types`,
+                // so if we encounter a different type, iteration is done
+                _ => break,
+            }
+        }
+        None
+    }
+}
+
+impl FusedIterator for StructsMut<'_> {}

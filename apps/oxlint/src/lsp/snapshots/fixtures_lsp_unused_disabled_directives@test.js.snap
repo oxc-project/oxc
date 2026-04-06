@@ -58,6 +58,24 @@ tags: None
 
 ########### Code Actions/Commands
 CodeAction: 
+Title: Delete this code.
+Is Preferred: Some(true)
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 9,
+            character: 0,
+        },
+        end: Position {
+            line: 9,
+            character: 29,
+        },
+    },
+    new_text: "",
+}
+
+
+CodeAction: 
 Title: Disable no-console for this line
 Is Preferred: Some(false)
 TextEdit: TextEdit {
@@ -208,12 +226,12 @@ Is Preferred: Some(true)
 TextEdit: TextEdit {
     range: Range {
         start: Position {
-            line: 2,
+            line: 0,
             character: 2,
         },
         end: Position {
-            line: 2,
-            character: 11,
+            line: 0,
+            character: 56,
         },
     },
     new_text: "",
@@ -221,12 +239,12 @@ TextEdit: TextEdit {
 TextEdit: TextEdit {
     range: Range {
         start: Position {
-            line: 0,
+            line: 2,
             character: 2,
         },
         end: Position {
-            line: 0,
-            character: 56,
+            line: 2,
+            character: 11,
         },
     },
     new_text: "",
@@ -253,6 +271,19 @@ TextEdit: TextEdit {
         end: Position {
             line: 8,
             character: 52,
+        },
+    },
+    new_text: "",
+}
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 9,
+            character: 0,
+        },
+        end: Position {
+            line: 9,
+            character: 29,
         },
     },
     new_text: "",

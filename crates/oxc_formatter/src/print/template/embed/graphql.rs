@@ -92,7 +92,7 @@ pub(super) fn format_graphql_doc<'a>(
         let Some(Ok(crate::external_formatter::EmbeddedDocResult::MultipleDocs(irs))) = f
             .context()
             .external_callbacks()
-            .format_embedded_doc(allocator, group_id_builder, "tagged-graphql", &texts_to_format)
+            .format_embedded_doc(allocator, group_id_builder, "graphql", &texts_to_format)
         else {
             return false;
         };

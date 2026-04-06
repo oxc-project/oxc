@@ -548,71 +548,6 @@ pub const fn space() -> Space {
     Space
 }
 
-/// Inserts a single space.
-/// The main difference with space is that
-/// it always adds a space even when it's the last element of a group.
-///
-/// # Examples
-///
-/// ```text
-/// use biome_formatter::{format, format_args, LineWidth, SimpleFormatOptions};
-/// use biome_formatter::prelude::*;
-///
-/// # fn test() {
-/// let context = SimpleFormatContext::new(SimpleFormatOptions {
-///     line_width: LineWidth::try_from(20).unwrap(),
-///     ..SimpleFormatOptions::default()
-/// });
-///
-/// let elements = format!(context, [
-///     group(&format_args![
-///         token("nineteen_characters"),
-///         soft_line_break(),
-///         token("1"),
-///         hard_space(),
-///     ])
-/// ])?;
-/// assert_eq!(
-///     "nineteen_characters\n1",
-///     elements.print()?.as_code()
-/// );
-/// # Ok(())
-/// # }
-/// ```
-/// # Examples
-///
-/// Without HardSpace
-///
-/// ```text
-/// use biome_formatter::{format, format_args, LineWidth, SimpleFormatOptions};
-/// use biome_formatter::prelude::*;
-///
-/// # fn test() {
-/// let context = SimpleFormatContext::new(SimpleFormatOptions {
-///     line_width: LineWidth::try_from(20).unwrap(),
-///     ..SimpleFormatOptions::default()
-/// });
-///
-/// let elements = format!(context, [
-///     group(&format_args![
-///         token("nineteen_characters"),
-///         soft_line_break(),
-///         token("1"),
-///         space(),
-///     ])
-/// ])?;
-/// assert_eq!(
-///     "nineteen_characters1",
-///     elements.print()?.as_code()
-/// );
-/// # Ok(())
-/// # }
-/// ```
-#[inline]
-pub const fn hard_space() -> HardSpace {
-    HardSpace
-}
-
 /// Optionally inserts a single space if the given condition is true.
 ///
 /// # Examples
@@ -644,14 +579,6 @@ impl Format<'_> for Space {
     }
 }
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
-pub struct HardSpace;
-
-impl Format<'_> for HardSpace {
-    fn fmt(&self, f: &mut Formatter) {
-        f.write_element(FormatElement::HardSpace);
-    }
-}
 /// It adds a level of indentation to the given content
 ///
 /// It doesn't add any line breaks at the edges of the content, meaning that
@@ -1372,104 +1299,6 @@ pub fn soft_line_indent_or_space<'ast>(content: &impl Format<'ast>) -> BlockInde
     BlockIndent { content: Argument::new(content), mode: IndentMode::SoftLineOrSpace }
 }
 
-/// It functions similarly to soft_line_indent_or_space, but instead of a regular space, it inserts a hard space.
-///
-/// # Examples
-///
-/// Indents the content by one level and puts in new lines if the enclosing `Group` doesn't
-/// fit on a single line. Otherwise, just inserts a space.
-///
-/// ```text
-/// use biome_formatter::{format, format_args, LineWidth, SimpleFormatOptions};
-/// use biome_formatter::prelude::*;
-///
-/// # fn test() {
-/// let context = SimpleFormatContext::new(SimpleFormatOptions {
-///     line_width: LineWidth::try_from(10).unwrap(),
-///     ..SimpleFormatOptions::default()
-/// });
-///
-/// let elements = format!(context, [
-///     group(&format_args![
-///         token("name"),
-///         space(),
-///         token("="),
-///         soft_line_indent_or_hard_space(&format_args![
-///             token("firstName"),
-///             space(),
-///             token("+"),
-///             space(),
-///             token("lastName"),
-///         ]),
-///     ])
-/// ])?;
-///
-/// assert_eq!(
-///     "name =\n\tfirstName + lastName",
-///     elements.print()?.as_code()
-/// );
-/// # Ok(())
-/// # }
-/// ```
-///
-/// Only adds a space if the enclosing `Group` fits on a single line
-/// ```text
-/// use biome_formatter::{format, format_args};
-/// use biome_formatter::prelude::*;
-///
-/// # fn test() {
-/// let elements = format!(SimpleFormatContext::default(), [
-///     group(&format_args![
-///         token("a"),
-///         space(),
-///         token("="),
-///         soft_line_indent_or_hard_space(&token("10")),
-///     ])
-/// ])?;
-///
-/// assert_eq!(
-///     "a = 10",
-///     elements.print()?.as_code()
-/// );
-/// # Ok(())
-/// # }
-/// ```
-///
-/// It enforces a space after the "=" assignment operators
-/// ```text
-/// use biome_formatter::{format, format_args, LineWidth, SimpleFormatOptions};
-/// use biome_formatter::prelude::*;
-///
-/// # fn test() {
-/// let context = SimpleFormatContext::new(SimpleFormatOptions {
-///     line_width: LineWidth::try_from(8).unwrap(),
-///     ..SimpleFormatOptions::default()
-/// });
-///
-/// let elements = format!(context, [
-///     group(&format_args![
-///         token("value"),
-///         soft_line_break_or_space(),
-///         token("="),
-///         soft_line_indent_or_hard_space(&format_args![
-///             token("10"),
-///         ]),
-///     ])
-/// ])?;
-///
-/// assert_eq!(
-///     "value\n=\n\t10",
-///     elements.print()?.as_code()
-/// );
-/// # Ok(())
-/// # }
-/// ```
-#[inline]
-#[expect(unused)]
-pub fn soft_line_indent_or_hard_space<'ast>(content: &impl Format<'ast>) -> BlockIndent<'_, 'ast> {
-    BlockIndent { content: Argument::new(content), mode: IndentMode::HardSpace }
-}
-
 #[derive(Copy, Clone)]
 pub struct BlockIndent<'fmt, 'ast> {
     content: Argument<'fmt, 'ast>,
@@ -1481,7 +1310,6 @@ enum IndentMode {
     Soft,
     Block,
     SoftSpace,
-    HardSpace,
     SoftLineOrSpace,
 }
 
@@ -1495,7 +1323,6 @@ impl<'ast> Format<'ast> for BlockIndent<'_, 'ast> {
             IndentMode::SoftLineOrSpace | IndentMode::SoftSpace => {
                 write!(f, soft_line_break_or_space());
             }
-            IndentMode::HardSpace => write!(f, [hard_space(), soft_line_break()]),
         }
 
         let elements_length = f.elements().len();
@@ -1514,7 +1341,7 @@ impl<'ast> Format<'ast> for BlockIndent<'_, 'ast> {
             IndentMode::Soft => write!(f, [soft_line_break()]),
             IndentMode::Block => write!(f, [hard_line_break()]),
             IndentMode::SoftSpace => write!(f, [soft_line_break_or_space()]),
-            IndentMode::SoftLineOrSpace | IndentMode::HardSpace => (),
+            IndentMode::SoftLineOrSpace => (),
         }
     }
 }
@@ -1526,7 +1353,6 @@ impl std::fmt::Debug for BlockIndent<'_, '_> {
             IndentMode::Block => "HardBlockIndent",
             IndentMode::SoftLineOrSpace => "SoftLineIndentOrSpace",
             IndentMode::SoftSpace => "SoftSpaceBlockIndent",
-            IndentMode::HardSpace => "HardSpaceBlockIndent",
         };
 
         f.debug_tuple(name).field(&"{{content}}").finish()

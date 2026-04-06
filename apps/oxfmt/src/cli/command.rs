@@ -101,7 +101,7 @@ fn mode() -> impl bpaf::Parser<Mode> {
 }
 
 /// Format output mode
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum OutputMode {
     /// Default - when no output option is specified, behaves like `--write` mode in Prettier
     Write,

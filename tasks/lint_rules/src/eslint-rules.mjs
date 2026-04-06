@@ -69,15 +69,10 @@ export const typescriptTypeCheckRules = new Map(
 
 /**
  * @param {import("eslint").Linter} linter
- * @param {boolean} includeTypeCheckRules
  * @returns {void}
  */
-const loadPluginTypeScriptRules = (linter, includeTypeCheckRules = false) => {
+const loadPluginTypeScriptRules = (linter) => {
   for (const [name, rule] of Object.entries(pluginTypeScriptAllRules)) {
-    if (!includeTypeCheckRules && typescriptTypeCheckRules.has(`@typescript-eslint/${name}`)) {
-      continue;
-    }
-
     const prefixedName = `typescript/${name}`;
 
     // Recommended can either be
@@ -315,11 +310,10 @@ export const createESLintLinter = () =>
 
 /**
  * @param {import("eslint").Linter} linter
- * @param {boolean} includeTypeCheckRules
  * @returns {void}
  */
-export const loadTargetPluginRules = (linter, includeTypeCheckRules = false) => {
-  loadPluginTypeScriptRules(linter, includeTypeCheckRules);
+export const loadTargetPluginRules = (linter) => {
+  loadPluginTypeScriptRules(linter);
   loadPluginNRules(linter);
   loadPluginUnicornRules(linter);
   loadPluginJSDocRules(linter);

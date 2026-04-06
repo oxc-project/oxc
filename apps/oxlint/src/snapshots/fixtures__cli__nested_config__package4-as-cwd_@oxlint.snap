@@ -1,0 +1,12 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: 
+working directory: fixtures/cli/nested_config/package4-as-cwd
+----------
+Found 0 warnings and 0 errors.
+Finished in <variable>ms on 1 file with 93 rules using 1 threads.
+----------
+CLI result: LintSucceeded
+----------

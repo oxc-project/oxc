@@ -49,7 +49,7 @@ pub struct LexerCheckpoint<'a> {
     token: Token,
     errors_snapshot: ErrorSnapshot,
     tokens_len: usize,
-    has_pure_comment: bool,
+    pure_comment: Option<usize>,
     has_no_side_effects_comment: bool,
 }
 
@@ -204,7 +204,7 @@ impl<'a, C: Config> Lexer<'a, C> {
             token: self.token,
             errors_snapshot,
             tokens_len: self.tokens.len(),
-            has_pure_comment: self.trivia_builder.has_pure_comment,
+            pure_comment: self.trivia_builder.pure_comment,
             has_no_side_effects_comment: self.trivia_builder.has_no_side_effects_comment,
         }
     }
@@ -222,7 +222,7 @@ impl<'a, C: Config> Lexer<'a, C> {
             token: self.token,
             errors_snapshot,
             tokens_len: self.tokens.len(),
-            has_pure_comment: self.trivia_builder.has_pure_comment,
+            pure_comment: self.trivia_builder.pure_comment,
             has_no_side_effects_comment: self.trivia_builder.has_no_side_effects_comment,
         }
     }
@@ -237,7 +237,7 @@ impl<'a, C: Config> Lexer<'a, C> {
         self.tokens.truncate(checkpoint.tokens_len);
         self.source.set_position(checkpoint.source_position);
         self.token = checkpoint.token;
-        self.trivia_builder.has_pure_comment = checkpoint.has_pure_comment;
+        self.trivia_builder.pure_comment = checkpoint.pure_comment;
         self.trivia_builder.has_no_side_effects_comment = checkpoint.has_no_side_effects_comment;
     }
 
@@ -481,7 +481,7 @@ impl<'a, C: Config> Lexer<'a, C> {
     /// Whitespace and line terminators are skipped
     #[inline] // Make sure is inlined into `next_token`
     fn read_next_token(&mut self) -> Kind {
-        self.trivia_builder.has_pure_comment = false;
+        self.trivia_builder.pure_comment = None;
         self.trivia_builder.has_no_side_effects_comment = false;
 
         let end_pos = self.source.end();

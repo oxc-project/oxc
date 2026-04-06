@@ -177,6 +177,14 @@ fn test_vars_self_use() {
         let cancel = () => {}
         export function close() { cancel = cancel?.() }
         ",
+        "
+        class Chain { extend() { return this; } }
+
+        let chain = new Chain();
+        for (let i = 0; i < 10; i++) {
+            chain = chain.extend();
+        }
+        ",
     ];
     let fail = vec![
         "
@@ -196,6 +204,12 @@ fn test_vars_self_use() {
         "
         let cancel = () => {};
         { cancel = cancel?.(); }
+        ",
+        "
+        class Chain { extend() { return this; } }
+
+        let chain = new Chain();
+        chain = chain.extend();
         ",
     ];
 
@@ -930,6 +944,7 @@ fn test_fix_options() {
             Some(json!([{ "fix": { "variables": "off" } }])),
             FixKind::DangerousSuggestion,
         ),
+        ("import foo from './foo';", "", None, FixKind::DangerousSuggestion),
         (
             "import foo from './foo';",
             "",
@@ -937,6 +952,18 @@ fn test_fix_options() {
             FixKind::DangerousFix,
         ),
         ("let a = 1;", "", Some(json!([{ "fix": { "variables": "fix" } }])), FixKind::DangerousFix),
+        (
+            "import foo from './foo';",
+            "",
+            Some(json!([{ "fix": { "imports": "safe-fix" } }])),
+            FixKind::SafeFix,
+        ),
+        (
+            "let a = 1;",
+            "",
+            Some(json!([{ "fix": { "variables": "safe-fix" } }])),
+            FixKind::DangerousFix, // safe-fix is not applicable to variables
+        ),
     ];
 
     Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail).expect_fix(fix).test();
