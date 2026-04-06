@@ -345,9 +345,10 @@ fn apply_walk_settings(builder: &mut ignore::WalkBuilder) -> &mut ignore::WalkBu
         .hidden(false)
         // Do not respect `.ignore` file
         .ignore(false)
-        // Do not search upward
+        // Search upward within the current git repo only; require_git(true) stops
+        // traversal at .git boundaries so outer repos cannot bleed in
         // NOTE: Prettier only searches current working directory
-        .parents(false)
+        .parents(true)
         // Also do not respect globals
         .git_global(false)
         // But respect downward nested `.gitignore` files
