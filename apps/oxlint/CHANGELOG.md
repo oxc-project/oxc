@@ -4,6 +4,40 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.59.0] - 2026-04-06
+
+### 💥 BREAKING CHANGES
+
+- 22ce6af oxlint/lsp: [**BREAKING**] Show/fix safe suggestions by default (#19816) (Sysix)
+
+### 🚀 Features
+
+- 7a7b7b8 oxlint/lsp: Add source.fixAllDangerous.oxc code action kind (#20526) (bab)
+- 1513a9f oxlint/lsp: Show note field for lsp diagnostic (#20983) (Sysix)
+- 0b84de1 oxlint: Support allow option for prefer-promise-reject-errors (#20934) (camc314)
+
+### 🐛 Bug Fixes
+
+- 9446dcc oxlint/lsp: Skip `node_modules` in oxlint config walker (#21004) (copilot-swe-agent)
+- 64a1a7e oxlint: Don't search for nested config outside base config (#21051) (Sysix)
+- 5c32fd1 lsp: Prevent corrupted autofix output from overlapping text edits (#19793) (Peter Wagenet)
+
+### ⚡ Performance
+
+- fb52383 napi/parser, linter/plugins: Clear buffers and source texts earlier (#21025) (overlookmotel)
+- 3b7dec4 napi/parser, linter/plugins: Use `utf8Slice` for decoding UTF-8 strings (#21022) (overlookmotel)
+- 012c924 napi/parser, linter/plugins: Speed up decoding strings in raw transfer (#21021) (overlookmotel)
+- 55e1e9b napi/parser, linter/plugins: Initialize vars as 0 (#21020) (overlookmotel)
+- c25ef02 napi/parser, linter/plugins: Simplify branch condition in `deserializeStr` (#21019) (overlookmotel)
+- 9f494c3 napi/parser, linter/plugins: Raw transfer use `String.fromCharCode` in string decoding (#21018) (overlookmotel)
+- 0503a78 napi/parser, linter/plugins: Faster deserialization of `raw` fields (#20923) (overlookmotel)
+- a24f75e napi/parser: Optimize string deserialization for non-ASCII sources (#20834) (Joshua Tuddenham)
+
+### 📚 Documentation
+
+- af72b80 oxlint: Fix typo for --tsconfig (#20889) (leaysgur)
+- 70c53b1 linter: Highlight that tsconfig is not respected in type aware linting (#20884) (camc314)
+
 ## [1.58.0] - 2026-03-30
 
 ### 💥 BREAKING CHANGES
