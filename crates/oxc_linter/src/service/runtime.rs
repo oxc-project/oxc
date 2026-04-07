@@ -1075,6 +1075,10 @@ impl Runtime {
         } else {
             ArenaBox::new_empty_boxed_slice()
         };
-        Ok((ResolvedModuleRecord { module_record, resolved_module_requests }, semantic, parser_tokens))
+        Ok((
+            ResolvedModuleRecord { module_record, resolved_module_requests },
+            semantic,
+            parser_tokens,
+        ))
     }
 }
