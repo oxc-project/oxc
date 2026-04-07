@@ -55,28 +55,19 @@ impl Rule for ConsistentTemplateLiteralEscape {
 
         for quasis in &template_literal.quasis {
             let value = quasis.value.raw.as_ref();
-            let chars: Vec<char> = value.chars().collect();
-            let len = value.len();
-            let mut i = 0;
+            for (start, _) in value.match_indices("$\\{") {
+                let backslash_count =
+                    value.as_bytes()[..start].iter().rev().take_while(|&&b| b == b'\\').count();
+                let start = if backslash_count % 2 == 1 { start - 1 } else { start };
+                let end = start + if backslash_count % 2 == 1 { 4 } else { 3 };
+                let start = u32::try_from(start).expect("Unable to convert to u32");
+                let end = u32::try_from(end).expect("Unable to convert to u32");
+                let error_span = Span::new(quasis.span.start + start, quasis.span.start + end);
 
-            while i < len {
-                if i + 2 < len && chars[i] == '$' && chars[i + 1] == '\\' && chars[i + 2] == '{' {
-                    let mut start_pos = u32::try_from(i).expect("Unable to convert to u32");
-                    let end_pos = u32::try_from(i + 3).expect("Unable to convert to u32");
-                    let prev_is_backslas = i > 0 && chars[i - 1] == '\\';
-
-                    if prev_is_backslas {
-                        start_pos -= 1;
-                    }
-                    let error_span =
-                        Span::new(quasis.span.start + start_pos, quasis.span.start + end_pos);
-
-                    ctx.diagnostic_with_fix(
-                        consistent_template_literal_escape_diagnostic(error_span),
-                        |fixer| fixer.replace(error_span, "\\${"),
-                    );
-                }
-                i += 1;
+                ctx.diagnostic_with_fix(
+                    consistent_template_literal_escape_diagnostic(error_span),
+                    |fixer| fixer.replace(error_span, "\\${"),
+                );
             }
         }
     }
@@ -98,6 +89,7 @@ fn test() {
         r"const foo = html`$\{a}`",
         r"const foo = `\\\${a}`",
         r"const foo = '$\{a}'",
+        r"const foo = `ééé\${a}`",
     ];
 
     let fail = vec![
@@ -109,16 +101,20 @@ fn test() {
         r"const foo = `$\{a}${expr}`",
         r"const foo = `${expr}$\{a}`",
         r"const foo = `$\{a}${expr}$\{b}`",
+        r"const foo = `ééé$\{a}`",
+        r"const foo = `ééé\\$\{a}`",
     ];
     let fix = vec![
         (r"const foo = `$\{a}`", r"const foo = `\${a}`"),
         (r"const foo = `\$\{a}`", r"const foo = `\${a}`"),
         (r"const foo = `$\{a} and $\{b}`", r"const foo = `\${a} and \${b}`"),
-        (r"const foo = `\\$\{a}`", r"const foo = `\\${a}`"),
+        (r"const foo = `\\$\{a}`", r"const foo = `\\\${a}`"),
         (r"const foo = `\\\$\{a}`", r"const foo = `\\\${a}`"),
         (r"const foo = `$\{a}${expr}`", r"const foo = `\${a}${expr}`"),
         (r"const foo = `${expr}$\{a}`", r"const foo = `${expr}\${a}`"),
         (r"const foo = `$\{a}${expr}$\{b}`", r"const foo = `\${a}${expr}\${b}`"),
+        (r"const foo = `ééé$\{a}`", r"const foo = `ééé\${a}`"),
+        (r"const foo = `ééé\\$\{a}`", r"const foo = `ééé\\\${a}`"),
     ];
 
     Tester::new(

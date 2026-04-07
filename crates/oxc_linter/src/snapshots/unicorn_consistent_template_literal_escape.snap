@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-assertion_line: 444
 ---
 
   ⚠ eslint-plugin-unicorn(consistent-template-literal-escape): Invalid escape sequence in template literal.
@@ -32,9 +31,9 @@ assertion_line: 444
   help: Use '\${' to escape '${' in template literals.
 
   ⚠ eslint-plugin-unicorn(consistent-template-literal-escape): Invalid escape sequence in template literal.
-   ╭─[consistent_template_literal_escape.tsx:1:15]
+   ╭─[consistent_template_literal_escape.tsx:1:16]
  1 │ const foo = `\\$\{a}`
-   ·               ────
+   ·                ───
    ╰────
   help: Use '\${' to escape '${' in template literals.
 
@@ -42,6 +41,20 @@ assertion_line: 444
    ╭─[consistent_template_literal_escape.tsx:1:16]
  1 │ const foo = `\\\$\{a}`
    ·                ────
+   ╰────
+  help: Use '\${' to escape '${' in template literals.
+
+  ⚠ eslint-plugin-unicorn(consistent-template-literal-escape): Invalid escape sequence in template literal.
+   ╭─[consistent_template_literal_escape.tsx:1:20]
+ 1 │ const foo = `ééé$\{a}`
+   ·                 ───
+   ╰────
+  help: Use '\${' to escape '${' in template literals.
+
+  ⚠ eslint-plugin-unicorn(consistent-template-literal-escape): Invalid escape sequence in template literal.
+   ╭─[consistent_template_literal_escape.tsx:1:22]
+ 1 │ const foo = `ééé\\$\{a}`
+   ·                   ───
    ╰────
   help: Use '\${' to escape '${' in template literals.
 
