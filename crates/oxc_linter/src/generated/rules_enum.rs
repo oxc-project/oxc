@@ -1166,13 +1166,13 @@ pub enum RuleEnum {
     ReactPerfJsxNoNewArrayAsProp(ReactPerfJsxNoNewArrayAsProp),
     ReactPerfJsxNoNewFunctionAsProp(ReactPerfJsxNoNewFunctionAsProp),
     ReactPerfJsxNoNewObjectAsProp(ReactPerfJsxNoNewObjectAsProp),
-    UnicornConsistentTemplateLiteralEscape(UnicornConsistentTemplateLiteralEscape),
     UnicornCatchErrorName(UnicornCatchErrorName),
     UnicornConsistentAssert(UnicornConsistentAssert),
     UnicornConsistentDateClone(UnicornConsistentDateClone),
     UnicornConsistentEmptyArraySpread(UnicornConsistentEmptyArraySpread),
     UnicornConsistentExistenceIndexCheck(UnicornConsistentExistenceIndexCheck),
     UnicornConsistentFunctionScoping(UnicornConsistentFunctionScoping),
+    UnicornConsistentTemplateLiteralEscape(UnicornConsistentTemplateLiteralEscape),
     UnicornCustomErrorDefinition(UnicornCustomErrorDefinition),
     UnicornEmptyBraceSpaces(UnicornEmptyBraceSpaces),
     UnicornErrorMessage(UnicornErrorMessage),
@@ -1935,9 +1935,7 @@ const REACT_PERF_JSX_NO_NEW_FUNCTION_AS_PROP_ID: usize =
     REACT_PERF_JSX_NO_NEW_ARRAY_AS_PROP_ID + 1usize;
 const REACT_PERF_JSX_NO_NEW_OBJECT_AS_PROP_ID: usize =
     REACT_PERF_JSX_NO_NEW_FUNCTION_AS_PROP_ID + 1usize;
-const UNICORN_CONSISTENT_TEMPLATE_LITERAL_ESCAPE_ID: usize =
-    REACT_PERF_JSX_NO_NEW_OBJECT_AS_PROP_ID + 1usize;
-const UNICORN_CATCH_ERROR_NAME_ID: usize = UNICORN_CONSISTENT_TEMPLATE_LITERAL_ESCAPE_ID + 1usize;
+const UNICORN_CATCH_ERROR_NAME_ID: usize = REACT_PERF_JSX_NO_NEW_OBJECT_AS_PROP_ID + 1usize;
 const UNICORN_CONSISTENT_ASSERT_ID: usize = UNICORN_CATCH_ERROR_NAME_ID + 1usize;
 const UNICORN_CONSISTENT_DATE_CLONE_ID: usize = UNICORN_CONSISTENT_ASSERT_ID + 1usize;
 const UNICORN_CONSISTENT_EMPTY_ARRAY_SPREAD_ID: usize = UNICORN_CONSISTENT_DATE_CLONE_ID + 1usize;
@@ -1945,7 +1943,10 @@ const UNICORN_CONSISTENT_EXISTENCE_INDEX_CHECK_ID: usize =
     UNICORN_CONSISTENT_EMPTY_ARRAY_SPREAD_ID + 1usize;
 const UNICORN_CONSISTENT_FUNCTION_SCOPING_ID: usize =
     UNICORN_CONSISTENT_EXISTENCE_INDEX_CHECK_ID + 1usize;
-const UNICORN_CUSTOM_ERROR_DEFINITION_ID: usize = UNICORN_CONSISTENT_FUNCTION_SCOPING_ID + 1usize;
+const UNICORN_CONSISTENT_TEMPLATE_LITERAL_ESCAPE_ID: usize =
+    UNICORN_CONSISTENT_FUNCTION_SCOPING_ID + 1usize;
+const UNICORN_CUSTOM_ERROR_DEFINITION_ID: usize =
+    UNICORN_CONSISTENT_TEMPLATE_LITERAL_ESCAPE_ID + 1usize;
 const UNICORN_EMPTY_BRACE_SPACES_ID: usize = UNICORN_CUSTOM_ERROR_DEFINITION_ID + 1usize;
 const UNICORN_ERROR_MESSAGE_ID: usize = UNICORN_EMPTY_BRACE_SPACES_ID + 1usize;
 const UNICORN_ESCAPE_CASE_ID: usize = UNICORN_ERROR_MESSAGE_ID + 1usize;
@@ -2768,9 +2769,6 @@ impl RuleEnum {
             Self::ReactPerfJsxNoNewArrayAsProp(_) => REACT_PERF_JSX_NO_NEW_ARRAY_AS_PROP_ID,
             Self::ReactPerfJsxNoNewFunctionAsProp(_) => REACT_PERF_JSX_NO_NEW_FUNCTION_AS_PROP_ID,
             Self::ReactPerfJsxNoNewObjectAsProp(_) => REACT_PERF_JSX_NO_NEW_OBJECT_AS_PROP_ID,
-            Self::UnicornConsistentTemplateLiteralEscape(_) => {
-                UNICORN_CONSISTENT_TEMPLATE_LITERAL_ESCAPE_ID
-            }
             Self::UnicornCatchErrorName(_) => UNICORN_CATCH_ERROR_NAME_ID,
             Self::UnicornConsistentAssert(_) => UNICORN_CONSISTENT_ASSERT_ID,
             Self::UnicornConsistentDateClone(_) => UNICORN_CONSISTENT_DATE_CLONE_ID,
@@ -2779,6 +2777,9 @@ impl RuleEnum {
                 UNICORN_CONSISTENT_EXISTENCE_INDEX_CHECK_ID
             }
             Self::UnicornConsistentFunctionScoping(_) => UNICORN_CONSISTENT_FUNCTION_SCOPING_ID,
+            Self::UnicornConsistentTemplateLiteralEscape(_) => {
+                UNICORN_CONSISTENT_TEMPLATE_LITERAL_ESCAPE_ID
+            }
             Self::UnicornCustomErrorDefinition(_) => UNICORN_CUSTOM_ERROR_DEFINITION_ID,
             Self::UnicornEmptyBraceSpaces(_) => UNICORN_EMPTY_BRACE_SPACES_ID,
             Self::UnicornErrorMessage(_) => UNICORN_ERROR_MESSAGE_ID,
@@ -3595,9 +3596,6 @@ impl RuleEnum {
             Self::ReactPerfJsxNoNewArrayAsProp(_) => ReactPerfJsxNoNewArrayAsProp::NAME,
             Self::ReactPerfJsxNoNewFunctionAsProp(_) => ReactPerfJsxNoNewFunctionAsProp::NAME,
             Self::ReactPerfJsxNoNewObjectAsProp(_) => ReactPerfJsxNoNewObjectAsProp::NAME,
-            Self::UnicornConsistentTemplateLiteralEscape(_) => {
-                UnicornConsistentTemplateLiteralEscape::NAME
-            }
             Self::UnicornCatchErrorName(_) => UnicornCatchErrorName::NAME,
             Self::UnicornConsistentAssert(_) => UnicornConsistentAssert::NAME,
             Self::UnicornConsistentDateClone(_) => UnicornConsistentDateClone::NAME,
@@ -3606,6 +3604,9 @@ impl RuleEnum {
                 UnicornConsistentExistenceIndexCheck::NAME
             }
             Self::UnicornConsistentFunctionScoping(_) => UnicornConsistentFunctionScoping::NAME,
+            Self::UnicornConsistentTemplateLiteralEscape(_) => {
+                UnicornConsistentTemplateLiteralEscape::NAME
+            }
             Self::UnicornCustomErrorDefinition(_) => UnicornCustomErrorDefinition::NAME,
             Self::UnicornEmptyBraceSpaces(_) => UnicornEmptyBraceSpaces::NAME,
             Self::UnicornErrorMessage(_) => UnicornErrorMessage::NAME,
@@ -4440,9 +4441,6 @@ impl RuleEnum {
             Self::ReactPerfJsxNoNewArrayAsProp(_) => ReactPerfJsxNoNewArrayAsProp::CATEGORY,
             Self::ReactPerfJsxNoNewFunctionAsProp(_) => ReactPerfJsxNoNewFunctionAsProp::CATEGORY,
             Self::ReactPerfJsxNoNewObjectAsProp(_) => ReactPerfJsxNoNewObjectAsProp::CATEGORY,
-            Self::UnicornConsistentTemplateLiteralEscape(_) => {
-                UnicornConsistentTemplateLiteralEscape::CATEGORY
-            }
             Self::UnicornCatchErrorName(_) => UnicornCatchErrorName::CATEGORY,
             Self::UnicornConsistentAssert(_) => UnicornConsistentAssert::CATEGORY,
             Self::UnicornConsistentDateClone(_) => UnicornConsistentDateClone::CATEGORY,
@@ -4453,6 +4451,9 @@ impl RuleEnum {
                 UnicornConsistentExistenceIndexCheck::CATEGORY
             }
             Self::UnicornConsistentFunctionScoping(_) => UnicornConsistentFunctionScoping::CATEGORY,
+            Self::UnicornConsistentTemplateLiteralEscape(_) => {
+                UnicornConsistentTemplateLiteralEscape::CATEGORY
+            }
             Self::UnicornCustomErrorDefinition(_) => UnicornCustomErrorDefinition::CATEGORY,
             Self::UnicornEmptyBraceSpaces(_) => UnicornEmptyBraceSpaces::CATEGORY,
             Self::UnicornErrorMessage(_) => UnicornErrorMessage::CATEGORY,
@@ -5288,9 +5289,6 @@ impl RuleEnum {
             Self::ReactPerfJsxNoNewArrayAsProp(_) => ReactPerfJsxNoNewArrayAsProp::FIX,
             Self::ReactPerfJsxNoNewFunctionAsProp(_) => ReactPerfJsxNoNewFunctionAsProp::FIX,
             Self::ReactPerfJsxNoNewObjectAsProp(_) => ReactPerfJsxNoNewObjectAsProp::FIX,
-            Self::UnicornConsistentTemplateLiteralEscape(_) => {
-                UnicornConsistentTemplateLiteralEscape::FIX
-            }
             Self::UnicornCatchErrorName(_) => UnicornCatchErrorName::FIX,
             Self::UnicornConsistentAssert(_) => UnicornConsistentAssert::FIX,
             Self::UnicornConsistentDateClone(_) => UnicornConsistentDateClone::FIX,
@@ -5299,6 +5297,9 @@ impl RuleEnum {
                 UnicornConsistentExistenceIndexCheck::FIX
             }
             Self::UnicornConsistentFunctionScoping(_) => UnicornConsistentFunctionScoping::FIX,
+            Self::UnicornConsistentTemplateLiteralEscape(_) => {
+                UnicornConsistentTemplateLiteralEscape::FIX
+            }
             Self::UnicornCustomErrorDefinition(_) => UnicornCustomErrorDefinition::FIX,
             Self::UnicornEmptyBraceSpaces(_) => UnicornEmptyBraceSpaces::FIX,
             Self::UnicornErrorMessage(_) => UnicornErrorMessage::FIX,
@@ -6214,9 +6215,6 @@ impl RuleEnum {
             Self::ReactPerfJsxNoNewObjectAsProp(_) => {
                 ReactPerfJsxNoNewObjectAsProp::documentation()
             }
-            Self::UnicornConsistentTemplateLiteralEscape(_) => {
-                UnicornConsistentTemplateLiteralEscape::documentation()
-            }
             Self::UnicornCatchErrorName(_) => UnicornCatchErrorName::documentation(),
             Self::UnicornConsistentAssert(_) => UnicornConsistentAssert::documentation(),
             Self::UnicornConsistentDateClone(_) => UnicornConsistentDateClone::documentation(),
@@ -6228,6 +6226,9 @@ impl RuleEnum {
             }
             Self::UnicornConsistentFunctionScoping(_) => {
                 UnicornConsistentFunctionScoping::documentation()
+            }
+            Self::UnicornConsistentTemplateLiteralEscape(_) => {
+                UnicornConsistentTemplateLiteralEscape::documentation()
             }
             Self::UnicornCustomErrorDefinition(_) => UnicornCustomErrorDefinition::documentation(),
             Self::UnicornEmptyBraceSpaces(_) => UnicornEmptyBraceSpaces::documentation(),
@@ -7854,10 +7855,6 @@ impl RuleEnum {
                 ReactPerfJsxNoNewObjectAsProp::config_schema(generator)
                     .or_else(|| ReactPerfJsxNoNewObjectAsProp::schema(generator))
             }
-            Self::UnicornConsistentTemplateLiteralEscape(_) => {
-                UnicornConsistentTemplateLiteralEscape::config_schema(generator)
-                    .or_else(|| UnicornConsistentTemplateLiteralEscape::schema(generator))
-            }
             Self::UnicornCatchErrorName(_) => UnicornCatchErrorName::config_schema(generator)
                 .or_else(|| UnicornCatchErrorName::schema(generator)),
             Self::UnicornConsistentAssert(_) => UnicornConsistentAssert::config_schema(generator)
@@ -7877,6 +7874,10 @@ impl RuleEnum {
             Self::UnicornConsistentFunctionScoping(_) => {
                 UnicornConsistentFunctionScoping::config_schema(generator)
                     .or_else(|| UnicornConsistentFunctionScoping::schema(generator))
+            }
+            Self::UnicornConsistentTemplateLiteralEscape(_) => {
+                UnicornConsistentTemplateLiteralEscape::config_schema(generator)
+                    .or_else(|| UnicornConsistentTemplateLiteralEscape::schema(generator))
             }
             Self::UnicornCustomErrorDefinition(_) => {
                 UnicornCustomErrorDefinition::config_schema(generator)
@@ -9126,13 +9127,13 @@ impl RuleEnum {
             Self::ReactPerfJsxNoNewArrayAsProp(_) => "react_perf",
             Self::ReactPerfJsxNoNewFunctionAsProp(_) => "react_perf",
             Self::ReactPerfJsxNoNewObjectAsProp(_) => "react_perf",
-            Self::UnicornConsistentTemplateLiteralEscape(_) => "unicorn",
             Self::UnicornCatchErrorName(_) => "unicorn",
             Self::UnicornConsistentAssert(_) => "unicorn",
             Self::UnicornConsistentDateClone(_) => "unicorn",
             Self::UnicornConsistentEmptyArraySpread(_) => "unicorn",
             Self::UnicornConsistentExistenceIndexCheck(_) => "unicorn",
             Self::UnicornConsistentFunctionScoping(_) => "unicorn",
+            Self::UnicornConsistentTemplateLiteralEscape(_) => "unicorn",
             Self::UnicornCustomErrorDefinition(_) => "unicorn",
             Self::UnicornEmptyBraceSpaces(_) => "unicorn",
             Self::UnicornErrorMessage(_) => "unicorn",
@@ -10798,11 +10799,6 @@ impl RuleEnum {
             Self::ReactPerfJsxNoNewObjectAsProp(_) => Ok(Self::ReactPerfJsxNoNewObjectAsProp(
                 ReactPerfJsxNoNewObjectAsProp::from_configuration(value)?,
             )),
-            Self::UnicornConsistentTemplateLiteralEscape(_) => {
-                Ok(Self::UnicornConsistentTemplateLiteralEscape(
-                    UnicornConsistentTemplateLiteralEscape::from_configuration(value)?,
-                ))
-            }
             Self::UnicornCatchErrorName(_) => {
                 Ok(Self::UnicornCatchErrorName(UnicornCatchErrorName::from_configuration(value)?))
             }
@@ -10825,6 +10821,11 @@ impl RuleEnum {
             Self::UnicornConsistentFunctionScoping(_) => {
                 Ok(Self::UnicornConsistentFunctionScoping(
                     UnicornConsistentFunctionScoping::from_configuration(value)?,
+                ))
+            }
+            Self::UnicornConsistentTemplateLiteralEscape(_) => {
+                Ok(Self::UnicornConsistentTemplateLiteralEscape(
+                    UnicornConsistentTemplateLiteralEscape::from_configuration(value)?,
                 ))
             }
             Self::UnicornCustomErrorDefinition(_) => Ok(Self::UnicornCustomErrorDefinition(
@@ -12161,13 +12162,13 @@ impl RuleEnum {
             Self::ReactPerfJsxNoNewArrayAsProp(rule) => rule.to_configuration(),
             Self::ReactPerfJsxNoNewFunctionAsProp(rule) => rule.to_configuration(),
             Self::ReactPerfJsxNoNewObjectAsProp(rule) => rule.to_configuration(),
-            Self::UnicornConsistentTemplateLiteralEscape(rule) => rule.to_configuration(),
             Self::UnicornCatchErrorName(rule) => rule.to_configuration(),
             Self::UnicornConsistentAssert(rule) => rule.to_configuration(),
             Self::UnicornConsistentDateClone(rule) => rule.to_configuration(),
             Self::UnicornConsistentEmptyArraySpread(rule) => rule.to_configuration(),
             Self::UnicornConsistentExistenceIndexCheck(rule) => rule.to_configuration(),
             Self::UnicornConsistentFunctionScoping(rule) => rule.to_configuration(),
+            Self::UnicornConsistentTemplateLiteralEscape(rule) => rule.to_configuration(),
             Self::UnicornCustomErrorDefinition(rule) => rule.to_configuration(),
             Self::UnicornEmptyBraceSpaces(rule) => rule.to_configuration(),
             Self::UnicornErrorMessage(rule) => rule.to_configuration(),
@@ -12884,13 +12885,13 @@ impl RuleEnum {
             Self::ReactPerfJsxNoNewArrayAsProp(rule) => rule.run(node, ctx),
             Self::ReactPerfJsxNoNewFunctionAsProp(rule) => rule.run(node, ctx),
             Self::ReactPerfJsxNoNewObjectAsProp(rule) => rule.run(node, ctx),
-            Self::UnicornConsistentTemplateLiteralEscape(rule) => rule.run(node, ctx),
             Self::UnicornCatchErrorName(rule) => rule.run(node, ctx),
             Self::UnicornConsistentAssert(rule) => rule.run(node, ctx),
             Self::UnicornConsistentDateClone(rule) => rule.run(node, ctx),
             Self::UnicornConsistentEmptyArraySpread(rule) => rule.run(node, ctx),
             Self::UnicornConsistentExistenceIndexCheck(rule) => rule.run(node, ctx),
             Self::UnicornConsistentFunctionScoping(rule) => rule.run(node, ctx),
+            Self::UnicornConsistentTemplateLiteralEscape(rule) => rule.run(node, ctx),
             Self::UnicornCustomErrorDefinition(rule) => rule.run(node, ctx),
             Self::UnicornEmptyBraceSpaces(rule) => rule.run(node, ctx),
             Self::UnicornErrorMessage(rule) => rule.run(node, ctx),
@@ -13605,13 +13606,13 @@ impl RuleEnum {
             Self::ReactPerfJsxNoNewArrayAsProp(rule) => rule.run_once(ctx),
             Self::ReactPerfJsxNoNewFunctionAsProp(rule) => rule.run_once(ctx),
             Self::ReactPerfJsxNoNewObjectAsProp(rule) => rule.run_once(ctx),
-            Self::UnicornConsistentTemplateLiteralEscape(rule) => rule.run_once(ctx),
             Self::UnicornCatchErrorName(rule) => rule.run_once(ctx),
             Self::UnicornConsistentAssert(rule) => rule.run_once(ctx),
             Self::UnicornConsistentDateClone(rule) => rule.run_once(ctx),
             Self::UnicornConsistentEmptyArraySpread(rule) => rule.run_once(ctx),
             Self::UnicornConsistentExistenceIndexCheck(rule) => rule.run_once(ctx),
             Self::UnicornConsistentFunctionScoping(rule) => rule.run_once(ctx),
+            Self::UnicornConsistentTemplateLiteralEscape(rule) => rule.run_once(ctx),
             Self::UnicornCustomErrorDefinition(rule) => rule.run_once(ctx),
             Self::UnicornEmptyBraceSpaces(rule) => rule.run_once(ctx),
             Self::UnicornErrorMessage(rule) => rule.run_once(ctx),
@@ -14398,9 +14399,6 @@ impl RuleEnum {
             Self::ReactPerfJsxNoNewArrayAsProp(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactPerfJsxNoNewFunctionAsProp(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactPerfJsxNoNewObjectAsProp(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornConsistentTemplateLiteralEscape(rule) => {
-                rule.run_on_jest_node(jest_node, ctx)
-            }
             Self::UnicornCatchErrorName(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornConsistentAssert(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornConsistentDateClone(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -14409,6 +14407,9 @@ impl RuleEnum {
                 rule.run_on_jest_node(jest_node, ctx)
             }
             Self::UnicornConsistentFunctionScoping(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::UnicornConsistentTemplateLiteralEscape(rule) => {
+                rule.run_on_jest_node(jest_node, ctx)
+            }
             Self::UnicornCustomErrorDefinition(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornEmptyBraceSpaces(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornErrorMessage(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -15149,13 +15150,13 @@ impl RuleEnum {
             Self::ReactPerfJsxNoNewArrayAsProp(rule) => rule.should_run(ctx),
             Self::ReactPerfJsxNoNewFunctionAsProp(rule) => rule.should_run(ctx),
             Self::ReactPerfJsxNoNewObjectAsProp(rule) => rule.should_run(ctx),
-            Self::UnicornConsistentTemplateLiteralEscape(rule) => rule.should_run(ctx),
             Self::UnicornCatchErrorName(rule) => rule.should_run(ctx),
             Self::UnicornConsistentAssert(rule) => rule.should_run(ctx),
             Self::UnicornConsistentDateClone(rule) => rule.should_run(ctx),
             Self::UnicornConsistentEmptyArraySpread(rule) => rule.should_run(ctx),
             Self::UnicornConsistentExistenceIndexCheck(rule) => rule.should_run(ctx),
             Self::UnicornConsistentFunctionScoping(rule) => rule.should_run(ctx),
+            Self::UnicornConsistentTemplateLiteralEscape(rule) => rule.should_run(ctx),
             Self::UnicornCustomErrorDefinition(rule) => rule.should_run(ctx),
             Self::UnicornEmptyBraceSpaces(rule) => rule.should_run(ctx),
             Self::UnicornErrorMessage(rule) => rule.should_run(ctx),
@@ -16044,9 +16045,6 @@ impl RuleEnum {
             Self::ReactPerfJsxNoNewObjectAsProp(_) => {
                 ReactPerfJsxNoNewObjectAsProp::IS_TSGOLINT_RULE
             }
-            Self::UnicornConsistentTemplateLiteralEscape(_) => {
-                UnicornConsistentTemplateLiteralEscape::IS_TSGOLINT_RULE
-            }
             Self::UnicornCatchErrorName(_) => UnicornCatchErrorName::IS_TSGOLINT_RULE,
             Self::UnicornConsistentAssert(_) => UnicornConsistentAssert::IS_TSGOLINT_RULE,
             Self::UnicornConsistentDateClone(_) => UnicornConsistentDateClone::IS_TSGOLINT_RULE,
@@ -16058,6 +16056,9 @@ impl RuleEnum {
             }
             Self::UnicornConsistentFunctionScoping(_) => {
                 UnicornConsistentFunctionScoping::IS_TSGOLINT_RULE
+            }
+            Self::UnicornConsistentTemplateLiteralEscape(_) => {
+                UnicornConsistentTemplateLiteralEscape::IS_TSGOLINT_RULE
             }
             Self::UnicornCustomErrorDefinition(_) => UnicornCustomErrorDefinition::IS_TSGOLINT_RULE,
             Self::UnicornEmptyBraceSpaces(_) => UnicornEmptyBraceSpaces::IS_TSGOLINT_RULE,
@@ -17014,9 +17015,6 @@ impl RuleEnum {
             Self::ReactPerfJsxNoNewArrayAsProp(_) => ReactPerfJsxNoNewArrayAsProp::HAS_CONFIG,
             Self::ReactPerfJsxNoNewFunctionAsProp(_) => ReactPerfJsxNoNewFunctionAsProp::HAS_CONFIG,
             Self::ReactPerfJsxNoNewObjectAsProp(_) => ReactPerfJsxNoNewObjectAsProp::HAS_CONFIG,
-            Self::UnicornConsistentTemplateLiteralEscape(_) => {
-                UnicornConsistentTemplateLiteralEscape::HAS_CONFIG
-            }
             Self::UnicornCatchErrorName(_) => UnicornCatchErrorName::HAS_CONFIG,
             Self::UnicornConsistentAssert(_) => UnicornConsistentAssert::HAS_CONFIG,
             Self::UnicornConsistentDateClone(_) => UnicornConsistentDateClone::HAS_CONFIG,
@@ -17028,6 +17026,9 @@ impl RuleEnum {
             }
             Self::UnicornConsistentFunctionScoping(_) => {
                 UnicornConsistentFunctionScoping::HAS_CONFIG
+            }
+            Self::UnicornConsistentTemplateLiteralEscape(_) => {
+                UnicornConsistentTemplateLiteralEscape::HAS_CONFIG
             }
             Self::UnicornCustomErrorDefinition(_) => UnicornCustomErrorDefinition::HAS_CONFIG,
             Self::UnicornEmptyBraceSpaces(_) => UnicornEmptyBraceSpaces::HAS_CONFIG,
@@ -17805,13 +17806,13 @@ impl RuleEnum {
             Self::ReactPerfJsxNoNewArrayAsProp(rule) => rule.types_info(),
             Self::ReactPerfJsxNoNewFunctionAsProp(rule) => rule.types_info(),
             Self::ReactPerfJsxNoNewObjectAsProp(rule) => rule.types_info(),
-            Self::UnicornConsistentTemplateLiteralEscape(rule) => rule.types_info(),
             Self::UnicornCatchErrorName(rule) => rule.types_info(),
             Self::UnicornConsistentAssert(rule) => rule.types_info(),
             Self::UnicornConsistentDateClone(rule) => rule.types_info(),
             Self::UnicornConsistentEmptyArraySpread(rule) => rule.types_info(),
             Self::UnicornConsistentExistenceIndexCheck(rule) => rule.types_info(),
             Self::UnicornConsistentFunctionScoping(rule) => rule.types_info(),
+            Self::UnicornConsistentTemplateLiteralEscape(rule) => rule.types_info(),
             Self::UnicornCustomErrorDefinition(rule) => rule.types_info(),
             Self::UnicornEmptyBraceSpaces(rule) => rule.types_info(),
             Self::UnicornErrorMessage(rule) => rule.types_info(),
@@ -18526,13 +18527,13 @@ impl RuleEnum {
             Self::ReactPerfJsxNoNewArrayAsProp(rule) => rule.run_info(),
             Self::ReactPerfJsxNoNewFunctionAsProp(rule) => rule.run_info(),
             Self::ReactPerfJsxNoNewObjectAsProp(rule) => rule.run_info(),
-            Self::UnicornConsistentTemplateLiteralEscape(rule) => rule.run_info(),
             Self::UnicornCatchErrorName(rule) => rule.run_info(),
             Self::UnicornConsistentAssert(rule) => rule.run_info(),
             Self::UnicornConsistentDateClone(rule) => rule.run_info(),
             Self::UnicornConsistentEmptyArraySpread(rule) => rule.run_info(),
             Self::UnicornConsistentExistenceIndexCheck(rule) => rule.run_info(),
             Self::UnicornConsistentFunctionScoping(rule) => rule.run_info(),
+            Self::UnicornConsistentTemplateLiteralEscape(rule) => rule.run_info(),
             Self::UnicornCustomErrorDefinition(rule) => rule.run_info(),
             Self::UnicornEmptyBraceSpaces(rule) => rule.run_info(),
             Self::UnicornErrorMessage(rule) => rule.run_info(),
@@ -19337,9 +19338,6 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::ReactPerfJsxNoNewArrayAsProp(ReactPerfJsxNoNewArrayAsProp::default()),
         RuleEnum::ReactPerfJsxNoNewFunctionAsProp(ReactPerfJsxNoNewFunctionAsProp::default()),
         RuleEnum::ReactPerfJsxNoNewObjectAsProp(ReactPerfJsxNoNewObjectAsProp::default()),
-        RuleEnum::UnicornConsistentTemplateLiteralEscape(
-            UnicornConsistentTemplateLiteralEscape::default(),
-        ),
         RuleEnum::UnicornCatchErrorName(UnicornCatchErrorName::default()),
         RuleEnum::UnicornConsistentAssert(UnicornConsistentAssert::default()),
         RuleEnum::UnicornConsistentDateClone(UnicornConsistentDateClone::default()),
@@ -19348,6 +19346,9 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
             UnicornConsistentExistenceIndexCheck::default(),
         ),
         RuleEnum::UnicornConsistentFunctionScoping(UnicornConsistentFunctionScoping::default()),
+        RuleEnum::UnicornConsistentTemplateLiteralEscape(
+            UnicornConsistentTemplateLiteralEscape::default(),
+        ),
         RuleEnum::UnicornCustomErrorDefinition(UnicornCustomErrorDefinition::default()),
         RuleEnum::UnicornEmptyBraceSpaces(UnicornEmptyBraceSpaces::default()),
         RuleEnum::UnicornErrorMessage(UnicornErrorMessage::default()),

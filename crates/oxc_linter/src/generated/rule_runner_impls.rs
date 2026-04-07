@@ -2740,13 +2740,6 @@ impl RuleRunner for crate::rules::react_perf::jsx_no_new_object_as_prop::JsxNoNe
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Unknown;
 }
 
-impl RuleRunner
-    for crate::rules::unicorn::consistent_template_literal_escape::ConsistentTemplateLiteralEscape
-{
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
-    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
-}
-
 impl RuleRunner for crate::rules::unicorn::catch_error_name::CatchErrorName {
     const NODE_TYPES: Option<&AstTypesBitset> =
         Some(&AstTypesBitset::from_types(&[AstType::CallExpression, AstType::CatchParameter]));
@@ -2784,6 +2777,14 @@ impl RuleRunner
 impl RuleRunner for crate::rules::unicorn::consistent_function_scoping::ConsistentFunctionScoping {
     const NODE_TYPES: Option<&AstTypesBitset> =
         Some(&AstTypesBitset::from_types(&[AstType::ArrowFunctionExpression, AstType::Function]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
+}
+
+impl RuleRunner
+    for crate::rules::unicorn::consistent_template_literal_escape::ConsistentTemplateLiteralEscape
+{
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::TemplateLiteral]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
