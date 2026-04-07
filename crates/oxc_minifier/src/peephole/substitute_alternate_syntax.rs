@@ -1542,32 +1542,20 @@ impl<'a> PeepholeOptimizations {
         let new_elements = &mut array.elements;
 
         for elem in old_elements {
-            match elem {
-                ArrayExpressionElement::SpreadElement(mut spread_el) => {
-                    match spread_el.argument.take_in(ctx.ast) {
-                        Expression::ArrayExpression(mut inner_array) => {
-                            for inner_el in inner_array.elements.drain(..) {
-                                match inner_el {
-                                    ArrayExpressionElement::Elision(elision) => {
-                                        new_elements.push(ArrayExpressionElement::from(
-                                            ctx.ast.void_0(elision.span),
-                                        ));
-                                    }
-                                    _ => new_elements.push(inner_el),
-                                }
-                            }
-                        }
-                        argument => {
-                            new_elements.push(
-                                ctx.ast.array_expression_element_spread_element(
-                                    spread_el.span,
-                                    argument,
-                                ),
-                            );
+            if let ArrayExpressionElement::SpreadElement(mut spread_el) = elem {
+                if let Expression::ArrayExpression(array_expr) = &mut spread_el.argument {
+                    for inner_el in array_expr.elements.drain(..) {
+                        if let ArrayExpressionElement::Elision(elision) = inner_el {
+                            new_elements.push(ctx.ast.void_0(elision.span).into());
+                        } else {
+                            new_elements.push(inner_el);
                         }
                     }
+                } else {
+                    new_elements.push(ArrayExpressionElement::SpreadElement(spread_el));
                 }
-                _ => new_elements.push(elem),
+            } else {
+                new_elements.push(elem);
             }
         }
         ctx.state.changed = true;
