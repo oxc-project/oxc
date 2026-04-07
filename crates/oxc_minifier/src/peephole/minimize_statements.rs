@@ -10,7 +10,6 @@ use oxc_ecmascript::{
 };
 use oxc_semantic::ScopeFlags;
 use oxc_span::{ContentEq, GetSpan};
-use oxc_syntax::symbol::SymbolId;
 
 use crate::{TraverseCtx, keep_var::KeepVar};
 
@@ -1285,21 +1284,6 @@ impl<'a> PeepholeOptimizations {
         match last_non_inlined_index {
             None => 0,
             Some(last_non_inlined_index) => last_non_inlined_index + 1,
-        }
-    }
-
-    /// Check if a symbol is mutated, using the O(1) cached `write_references_count`
-    /// from `SymbolValue` when available, falling back to the O(num_refs) scan in
-    /// `Scoping::symbol_is_mutated` for symbols without cached values.
-    ///
-    /// Only variable declarators have cached values (populated during
-    /// `exit_variable_declarator` → `init_symbol_value`); function declarations
-    /// and other binding kinds still take the fallback path.
-    fn is_symbol_mutated(symbol_id: SymbolId, ctx: &TraverseCtx<'a>) -> bool {
-        if let Some(sv) = ctx.state.symbol_values.get_symbol_value(symbol_id) {
-            sv.write_references_count > 0
-        } else {
-            ctx.scoping().symbol_is_mutated(symbol_id)
         }
     }
 

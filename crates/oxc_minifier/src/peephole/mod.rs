@@ -19,6 +19,7 @@ mod substitute_alternate_syntax;
 
 use oxc_ast_visit::Visit;
 use oxc_semantic::ReferenceId;
+use oxc_syntax::symbol::SymbolId;
 use rustc_hash::FxHashSet;
 
 use oxc_allocator::Vec;
@@ -95,13 +96,28 @@ impl<'a> PeepholeOptimizations {
             Expression::Identifier(id) => {
                 if let Some(symbol_id) = ctx.scoping().get_reference(id.reference_id()).symbol_id()
                 {
-                    ctx.scoping().symbol_is_mutated(symbol_id)
+                    Self::is_symbol_mutated(symbol_id, ctx)
                 } else {
                     true
                 }
             }
             Expression::ThisExpression(_) => false,
             _ => true,
+        }
+    }
+
+    /// Check if a symbol is mutated, using the O(1) cached `write_references_count`
+    /// from `SymbolValue` when available, falling back to the O(num_refs) scan in
+    /// `Scoping::symbol_is_mutated` for symbols without cached values.
+    ///
+    /// Only variable declarators have cached values (populated during
+    /// `exit_variable_declarator` → `init_symbol_value`); function declarations
+    /// and other binding kinds still take the fallback path.
+    fn is_symbol_mutated(symbol_id: SymbolId, ctx: &TraverseCtx<'a>) -> bool {
+        if let Some(sv) = ctx.state.symbol_values.get_symbol_value(symbol_id) {
+            sv.write_references_count > 0
+        } else {
+            ctx.scoping().symbol_is_mutated(symbol_id)
         }
     }
 }
