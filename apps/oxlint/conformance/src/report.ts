@@ -252,7 +252,7 @@ function cleanString(str: string): string {
 }
 
 const STACK_LINE_REGEX = /^    at ([^ ]+ \()(.+)(:\d+:\d+)\)$/u;
-const STACK_LINE_REGEX2 = /^    at (.+)(:\d+:\d+)$/u;
+const STACK_LINE_REGEX2 = /^    at (.+?)(:\d+:\d+)?$/u;
 
 /**
  * Format an error for markdown output.
@@ -296,6 +296,7 @@ function formatError(err: Error | null): string {
       match = line.match(STACK_LINE_REGEX2);
       if (!match) break;
       [, path, lineCol] = match;
+      if (lineCol === undefined) lineCol = "";
       prefix = "";
       postfix = "";
     }

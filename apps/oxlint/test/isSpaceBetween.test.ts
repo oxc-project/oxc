@@ -10,7 +10,7 @@ import {
   resetSourceAndAst,
   setupSourceForFile,
 } from "../src-js/plugins/source_code.ts";
-import { isSpaceBetween, isSpaceBetweenTokens } from "../src-js/plugins/tokens.ts";
+import { isSpaceBetween, isSpaceBetweenTokens } from "../src-js/plugins/tokens_methods.ts";
 import { debugAssertIsNonNull } from "../src-js/utils/asserts.ts";
 
 import type { ParseOptions } from "../src-js/package/parse.ts";

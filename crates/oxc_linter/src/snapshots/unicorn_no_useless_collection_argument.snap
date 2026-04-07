@@ -190,3 +190,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                       ──
    ╰────
   help: Delete this code.
+
+  ⚠ eslint-plugin-unicorn(no-useless-collection-argument): The empty array is useless
+   ╭─[no_useless_collection_argument.mjs:1:9]
+ 1 │ new Set([/**/])
+   ·         ──────
+   ╰────
+  help: Delete this code.

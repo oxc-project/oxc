@@ -313,6 +313,16 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScript<'a> {
         }
     }
 
+    fn enter_import_expression(
+        &mut self,
+        node: &mut ImportExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if let Some(rewrite_extensions) = &mut self.rewrite_extensions {
+            rewrite_extensions.enter_import_expression(node, ctx);
+        }
+    }
+
     fn enter_formal_parameter_rest(
         &mut self,
         node: &mut FormalParameterRest<'a>,

@@ -4,7 +4,7 @@ use oxc_span::Span;
 
 use crate::{
     context::LintContext,
-    module_record::{ExportImportName, ImportImportName},
+    module_record::{ExportEntry, ExportImportName, ImportImportName, ModuleRecord, NameSpan},
     rule::Rule,
 };
 
@@ -12,6 +12,37 @@ fn named_diagnostic(imported_name: &str, module_name: &str, span: Span) -> OxcDi
     OxcDiagnostic::warn(format!("named import {imported_name:?} not found"))
         .with_help(format!("Does {module_name:?} have the export {imported_name:?}?"))
         .with_label(span)
+}
+
+fn has_default_export(module_record: &ModuleRecord) -> bool {
+    module_record.export_default.is_some()
+        || module_record.exported_bindings.contains_key("default")
+}
+
+fn is_synthesized_indirect_export_entry(export_entry: &ExportEntry) -> bool {
+    !export_entry.statement_span.contains_inclusive(export_entry.span)
+}
+
+fn is_reexport_of_default_import(
+    module_record: &ModuleRecord,
+    export_entry: &ExportEntry,
+    import_name: &NameSpan,
+    remote_module_record: &ModuleRecord,
+) -> bool {
+    if !is_synthesized_indirect_export_entry(export_entry) {
+        return false;
+    }
+
+    let Some(module_request) = &export_entry.module_request else {
+        return false;
+    };
+
+    has_default_export(remote_module_record)
+        && module_record.import_entries.iter().any(|entry| {
+            entry.import_name.is_default()
+                && entry.module_request.name() == module_request.name()
+                && entry.local_name.name() == import_name.name()
+        })
 }
 
 // <https://github.com/import-js/eslint-plugin-import/blob/v2.29.1/docs/rules/named.md>
@@ -144,7 +175,15 @@ impl Rule for Named {
             // Check remote bindings
             let name = import_name.name();
             // `export { default as foo } from './source'` <> `export default xxx`
-            if name == "default" && remote_module_record.export_default.is_some() {
+            if name == "default" && has_default_export(&remote_module_record) {
+                continue;
+            }
+            if is_reexport_of_default_import(
+                module_record,
+                export_entry,
+                import_name,
+                &remote_module_record,
+            ) {
                 continue;
             }
             if remote_module_record.exported_bindings.contains_key(name) {
@@ -272,4 +311,34 @@ fn test() {
         .change_rule_path("index.js")
         .with_import_plugin(true)
         .test_and_snapshot();
+}
+
+#[test]
+fn regression_extensionless_default_import_barrel() {
+    use crate::tester::Tester;
+
+    let pass =
+        vec![("import defaultTarget from './default_target';\nexport { defaultTarget };", None)];
+
+    Tester::new(Named::NAME, Named::PLUGIN, pass, vec![])
+        .change_rule_path("extensionless_default_import/index.js")
+        .with_import_plugin(true)
+        .intentionally_allow_no_fix_tests()
+        .test();
+}
+
+#[test]
+fn regression_named_reexport_is_not_default_import_barrel() {
+    use crate::tester::Tester;
+
+    let fail = vec![(
+        "import defaultTarget from './default_target';\nexport { defaultTarget } from './default_target';",
+        None,
+    )];
+
+    Tester::new(Named::NAME, Named::PLUGIN, vec![], fail)
+        .change_rule_path("extensionless_default_import/index.js")
+        .with_import_plugin(true)
+        .intentionally_allow_no_fix_tests()
+        .test();
 }

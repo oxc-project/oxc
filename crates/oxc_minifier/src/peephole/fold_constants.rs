@@ -378,7 +378,7 @@ impl<'a> PeepholeOptimizations {
                     .span()
                     .merge_within(e.right.span(), e.span)
                     .unwrap_or(SPAN);
-                let value = ctx.ast.atom_from_strs_array([&left_str, &right_str]);
+                let value = ctx.ast.str_from_strs_array([&left_str, &right_str]);
                 let right = ctx.ast.expression_string_literal(span, value, None);
                 let left = left_binary_expr.left.take_in(ctx.ast);
                 return Some(ctx.ast.expression_binary(e.span, left, e.operator, right));
@@ -411,12 +411,14 @@ impl<'a> PeepholeOptimizations {
                     .quasis
                     .first_mut()
                     .expect("template literal must have at least one quasi");
-                let new_raw = left_last_quasi.value.raw.to_string() + &right_first_quasi.value.raw;
-                left_last_quasi.value.raw = ctx.ast.atom(&new_raw);
+                left_last_quasi.value.raw = ctx.ast.str_from_strs_array([
+                    left_last_quasi.value.raw.as_str(),
+                    right_first_quasi.value.raw.as_str(),
+                ]);
                 let new_cooked = if let (Some(cooked1), Some(cooked2)) =
                     (left_last_quasi.value.cooked, right_first_quasi.value.cooked)
                 {
-                    Some(ctx.ast.atom(&(cooked1.into_string() + cooked2.as_str())))
+                    Some(ctx.ast.str_from_strs_array([cooked1.as_str(), cooked2.as_str()]))
                 } else {
                     None
                 };
@@ -436,11 +438,11 @@ impl<'a> PeepholeOptimizations {
                     left.quasis.last_mut().expect("template literal must have at least one quasi");
                 let new_raw = last_quasi.value.raw.to_string()
                     + &Self::escape_string_for_template_literal(&right_str);
-                last_quasi.value.raw = ctx.ast.atom(&new_raw);
+                last_quasi.value.raw = ctx.ast.str(&new_raw);
                 let new_cooked = last_quasi
                     .value
                     .cooked
-                    .map(|cooked| ctx.ast.atom(&(cooked.as_str().to_string() + &right_str)));
+                    .map(|cooked| ctx.ast.str(&(cooked.as_str().to_string() + &right_str)));
                 last_quasi.value.cooked = new_cooked;
                 return Some(left_expr.take_in(ctx.ast));
             }
@@ -454,11 +456,11 @@ impl<'a> PeepholeOptimizations {
                     .expect("template literal must have at least one quasi");
                 let new_raw = Self::escape_string_for_template_literal(&left_str).into_owned()
                     + first_quasi.value.raw.as_str();
-                first_quasi.value.raw = ctx.ast.atom(&new_raw);
+                first_quasi.value.raw = ctx.ast.str(&new_raw);
                 let new_cooked = first_quasi
                     .value
                     .cooked
-                    .map(|cooked| ctx.ast.atom(&(left_str.into_owned() + cooked.as_str())));
+                    .map(|cooked| ctx.ast.str(&(left_str.into_owned() + cooked.as_str())));
                 first_quasi.value.cooked = new_cooked;
                 return Some(right_expr.take_in(ctx.ast));
             }
@@ -724,7 +726,7 @@ impl<'a> PeepholeOptimizations {
             return;
         }
 
-        let mut inline_exprs = Vec::new();
+        let mut inline_exprs = Vec::with_capacity(t.expressions.len());
         let new_exprs =
             ctx.ast.vec_from_iter(t.expressions.drain(..).enumerate().filter_map(|(idx, expr)| {
                 if expr.may_have_side_effects(ctx) {
@@ -744,16 +746,15 @@ impl<'a> PeepholeOptimizations {
             let idx = idx - i;
             let next_quasi = (idx + 1 < t.quasis.len()).then(|| t.quasis.remove(idx + 1));
             let quasi = &mut t.quasis[idx];
-            let new_raw = quasi.value.raw.into_string()
-                + &Self::escape_string_for_template_literal(&str)
-                + next_quasi.as_ref().map(|q| q.value.raw.as_str()).unwrap_or_default();
-            quasi.value.raw = ctx.ast.atom(&new_raw);
+            let escaped = Self::escape_string_for_template_literal(&str);
+            let next_raw = next_quasi.as_ref().map(|q| q.value.raw.as_str()).unwrap_or_default();
+            quasi.value.raw =
+                ctx.ast.str_from_strs_array([quasi.value.raw.as_str(), &escaped, next_raw]);
             let new_cooked = if let (Some(cooked1), Some(cooked2)) =
                 (quasi.value.cooked, next_quasi.as_ref().map(|q| q.value.cooked))
             {
-                let v =
-                    cooked1.into_string() + &str + cooked2.map(|c| c.as_str()).unwrap_or_default();
-                Some(ctx.ast.atom(&v))
+                let cooked2_str = cooked2.map(|c| c.as_str()).unwrap_or_default();
+                Some(ctx.ast.str_from_strs_array([cooked1.as_str(), &str, cooked2_str]))
             } else {
                 None
             };

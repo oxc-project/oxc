@@ -270,7 +270,7 @@ TextEdit: TextEdit {
 
 ########### Fix All Action
 CodeAction: 
-Title: quick fix
+Title: fix all safe fixable oxlint issues
 Is Preferred: Some(true)
 TextEdit: TextEdit {
     range: Range {
@@ -465,7 +465,7 @@ TextEdit: TextEdit {
 
 ########### Fix All Action
 CodeAction: 
-Title: quick fix
+Title: fix all safe fixable oxlint issues
 Is Preferred: Some(true)
 TextEdit: TextEdit {
     range: Range {
@@ -663,7 +663,7 @@ TextEdit: TextEdit {
 
 ########### Fix All Action
 CodeAction: 
-Title: quick fix
+Title: fix all safe fixable oxlint issues
 Is Preferred: Some(true)
 TextEdit: TextEdit {
     range: Range {
@@ -754,7 +754,7 @@ TextEdit: TextEdit {
 
 ########### Fix All Action
 CodeAction: 
-Title: quick fix
+Title: fix all safe fixable oxlint issues
 Is Preferred: Some(true)
 TextEdit: TextEdit {
     range: Range {

@@ -20,15 +20,16 @@ const alwaysRunRule: Rule = {
     // oxlint-disable-next-line typescript-eslint/no-this-alias
     const topLevelThis = this;
 
+    // Available but `null`
+    const { id, options } = context;
+
     // Check that these APIs throw here
-    const idError = tryCatch(() => context.id);
     const cwdError = tryCatch(() => context.cwd);
     const getCwdError = tryCatch(() => context.getCwd());
     const filenameError = tryCatch(() => context.filename);
     const getFilenameError = tryCatch(() => context.getFilename());
     const physicalFilenameError = tryCatch(() => context.physicalFilename);
     const getPhysicalFilenameError = tryCatch(() => context.getPhysicalFilename());
-    const optionsError = tryCatch(() => context.options);
     const sourceCodeError = tryCatch(() => context.sourceCode);
     const getSourceCodeError = tryCatch(() => context.getSourceCode());
     const settingsError = tryCatch(() => context.settings);
@@ -38,6 +39,8 @@ const alwaysRunRule: Rule = {
 
     return {
       before() {
+        context.report({ message: `createOnce: id: ${id}`, node: SPAN });
+        context.report({ message: `createOnce: options: ${JSON.stringify(options)}`, node: SPAN });
         context.report({ message: `createOnce: call count: ${createOnceCallCount}`, node: SPAN });
         context.report({
           message: `createOnce: this === rule: ${topLevelThis === alwaysRunRule}`,
@@ -48,7 +51,6 @@ const alwaysRunRule: Rule = {
           message: `createOnce: getCwd() error: ${getCwdError?.message}`,
           node: SPAN,
         });
-        context.report({ message: `createOnce: id error: ${idError?.message}`, node: SPAN });
         context.report({
           message: `createOnce: filename error: ${filenameError?.message}`,
           node: SPAN,
@@ -63,10 +65,6 @@ const alwaysRunRule: Rule = {
         });
         context.report({
           message: `createOnce: getPhysicalFilename() error: ${getPhysicalFilenameError?.message}`,
-          node: SPAN,
-        });
-        context.report({
-          message: `createOnce: options error: ${optionsError?.message}`,
           node: SPAN,
         });
         context.report({

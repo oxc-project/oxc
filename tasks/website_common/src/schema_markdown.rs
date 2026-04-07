@@ -216,16 +216,29 @@ impl Renderer {
                 let subschema = Self::get_schema_object(subschema);
                 let subschema = self.get_referenced_schema(subschema);
 
-                // If the resolved schema has its own anyOf, flatten it
-                if let Some(nested_subschemas) = &subschema.subschemas
-                    && let Some(nested_any_of) = &nested_subschemas.any_of
-                {
-                    for nested in nested_any_of {
-                        let nested = Self::get_schema_object(nested);
-                        let nested = self.get_referenced_schema(nested);
-                        flattened_schemas.push(nested);
+                if let Some(nested_subschemas) = &subschema.subschemas {
+                    // If the resolved schema has its own anyOf, flatten it
+                    if let Some(nested_any_of) = &nested_subschemas.any_of {
+                        for nested in nested_any_of {
+                            let nested = Self::get_schema_object(nested);
+                            let nested = self.get_referenced_schema(nested);
+                            flattened_schemas.push(nested);
+                        }
+                        continue;
                     }
-                    continue;
+
+                    // Handle allOf created by RemoveRefSiblings visitor: when a
+                    // $ref has sibling properties (e.g. description), schemars'
+                    // draft-07 visitor moves the $ref into an allOf wrapper.
+                    // Resolve through the allOf to find the referenced schema.
+                    if let Some(all_of) = &nested_subschemas.all_of {
+                        for nested in all_of {
+                            let nested = Self::get_schema_object(nested);
+                            let nested = self.get_referenced_schema(nested);
+                            flattened_schemas.push(nested);
+                        }
+                        continue;
+                    }
                 }
                 flattened_schemas.push(subschema);
             }

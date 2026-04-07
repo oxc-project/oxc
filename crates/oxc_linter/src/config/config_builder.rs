@@ -216,9 +216,10 @@ impl ConfigStoreBuilder {
             }
         }
 
-        // If external plugins are not enabled (language server), then skip loading JS plugins.
-        // This is so that a project can use JS plugins via `oxlint` CLI, and language server
-        // will just silently ignore them - rather than crashing.
+        // Only attempt to load external JS plugins when external plugins are enabled,
+        // i.e., when the external JS linter is available/initialized. If the store is
+        // disabled, configs that reference external plugins are accepted but the plugins
+        // themselves are not loaded, to avoid failing config parsing.
         if !external_plugins.is_empty() && external_plugin_store.is_enabled() {
             let Some(external_linter) = external_linter else {
                 #[expect(clippy::missing_panics_doc, reason = "infallible")]
@@ -342,6 +343,21 @@ impl ConfigStoreBuilder {
         self.config.options.type_check
     }
 
+    #[inline]
+    pub fn deny_warnings(&self) -> Option<bool> {
+        self.config.options.deny_warnings
+    }
+
+    #[inline]
+    pub fn max_warnings(&self) -> Option<usize> {
+        self.config.options.max_warnings
+    }
+
+    #[inline]
+    pub fn report_unused_disable_directives(&self) -> Option<AllowWarnDeny> {
+        self.config.options.report_unused_disable_directives
+    }
+
     #[cfg(test)]
     pub(crate) fn with_rule(mut self, rule: RuleEnum, severity: AllowWarnDeny) -> Self {
         self.rules.insert(rule, severity);
@@ -447,8 +463,11 @@ impl ConfigStoreBuilder {
     }
 
     /// Builds a [`Config`] from the current state of the builder.
+    ///
     /// # Errors
-    /// Returns [`ConfigBuilderError::UnknownRules`] if there are rules that could not be matched.
+    ///
+    /// Returns [`ConfigBuilderError`] if the configured rules or overrides
+    /// cannot be resolved.
     pub fn build(
         mut self,
         external_plugin_store: &mut ExternalPluginStore,
@@ -1415,6 +1434,53 @@ mod test {
             r#"{ "extends": ["fixtures/extends_config/options/type_check_false.json"] }"#,
         );
         assert_eq!(config.base.config.options.type_check, Some(false));
+
+        let config =
+            config_store_from_str(r#"{ "options": {"reportUnusedDisableDirectives": "error" } }"#);
+        assert_eq!(
+            config.base.config.options.report_unused_disable_directives,
+            Some(AllowWarnDeny::Deny)
+        );
+
+        let config = config_store_from_str(
+            r#"{ "extends": ["fixtures/extends_config/options/deny_warnings_true.json"] }"#,
+        );
+        assert_eq!(config.base.config.options.deny_warnings, Some(true));
+
+        let config = config_store_from_str(
+            r#"
+            {
+                "extends": ["fixtures/extends_config/options/deny_warnings_true.json"],
+                "options": {"denyWarnings": false }
+            }
+            "#,
+        );
+        assert_eq!(config.base.config.options.deny_warnings, Some(false));
+
+        let config = config_store_from_str(
+            r#"{ "extends": ["fixtures/extends_config/options/deny_warnings_false.json"] }"#,
+        );
+        assert_eq!(config.base.config.options.deny_warnings, Some(false));
+
+        let config = config_store_from_str(
+            r#"{ "extends": ["fixtures/extends_config/options/max_warnings_10.json"] }"#,
+        );
+        assert_eq!(config.base.config.options.max_warnings, Some(10));
+
+        let config = config_store_from_str(
+            r#"
+            {
+                "extends": ["fixtures/extends_config/options/max_warnings_10.json"],
+                "options": {"maxWarnings": 1 }
+            }
+            "#,
+        );
+        assert_eq!(config.base.config.options.max_warnings, Some(1));
+
+        let config = config_store_from_str(
+            r#"{ "extends": ["fixtures/extends_config/options/max_warnings_0.json"] }"#,
+        );
+        assert_eq!(config.base.config.options.max_warnings, Some(0));
     }
 
     #[test]
@@ -1474,6 +1540,64 @@ mod test {
             no_const_assign_rule.is_none(),
             "no-const-assign should be disabled (off) by current config's override, not error from extended config"
         );
+    }
+
+    #[test]
+    fn test_unknown_builtin_rule_errors_in_root_config() {
+        let oxlintrc: Oxlintrc = serde_json::from_str(
+            r#"
+            {
+                "rules": {
+                    "no-console-typo": "error"
+                }
+            }
+            "#,
+        )
+        .unwrap();
+
+        let mut external_plugin_store = ExternalPluginStore::default();
+        let err = ConfigStoreBuilder::from_oxlintrc(
+            true,
+            oxlintrc,
+            None,
+            &mut external_plugin_store,
+            None,
+        )
+        .unwrap_err();
+
+        assert_eq!(err.to_string(), "Rule 'no-console-typo' not found in plugin 'eslint'");
+    }
+
+    #[test]
+    fn test_unknown_builtin_rule_errors_in_overrides() {
+        let oxlintrc: Oxlintrc = serde_json::from_str(
+            r#"
+            {
+                "overrides": [
+                    {
+                        "files": ["*.js"],
+                        "rules": {
+                            "no-console-typo": "error"
+                        }
+                    }
+                ]
+            }
+            "#,
+        )
+        .unwrap();
+
+        let mut external_plugin_store = ExternalPluginStore::default();
+        let builder = ConfigStoreBuilder::from_oxlintrc(
+            true,
+            oxlintrc,
+            None,
+            &mut external_plugin_store,
+            None,
+        )
+        .unwrap();
+        let err = builder.build(&mut external_plugin_store).unwrap_err();
+
+        assert_eq!(err.to_string(), "Rule 'no-console-typo' not found in plugin 'eslint'");
     }
 
     fn config_store_from_path(path: &str) -> Config {

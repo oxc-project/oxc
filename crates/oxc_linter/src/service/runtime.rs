@@ -19,7 +19,7 @@ use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet, FxHasher};
 use self_cell::self_cell;
 use smallvec::SmallVec;
 
-use oxc_allocator::{Allocator, AllocatorGuard, AllocatorPool, Vec as ArenaVec};
+use oxc_allocator::{Allocator, AllocatorGuard, AllocatorPool, Box as ArenaBox};
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, Error, OxcDiagnostic};
 use oxc_parser::Token;
 use oxc_resolver::Resolver;
@@ -130,8 +130,9 @@ struct SectionContent<'a> {
     /// None if section parsing failed. The corresponding item with the same index in
     /// `ProcessedModule.section_module_records` would be `Err(Vec<OxcDiagnostic>)`.
     semantic: Option<Semantic<'a>>,
-    /// None if section parsing failed, or token collection was not requested.
-    parser_tokens: Option<ArenaVec<'a, Token>>,
+    /// Parser tokens for the section.
+    /// Empty if section parsing failed, or if token collection was not requested (no JS plugins).
+    parser_tokens: ArenaBox<'a, [Token]>,
 }
 
 /// A module with its source text and semantic, ready to be linted.
@@ -1016,7 +1017,7 @@ impl Runtime {
                         sections.push(SectionContent {
                             source: section_source,
                             semantic: None,
-                            parser_tokens: None,
+                            parser_tokens: ArenaBox::new_empty_boxed_slice(),
                         });
                     }
                 }
@@ -1033,7 +1034,7 @@ impl Runtime {
         check_syntax_errors: bool,
         collect_tokens: bool,
         parse_result: Result<LinterParseResult<'a>, Vec<OxcDiagnostic>>,
-    ) -> Result<(ResolvedModuleRecord, Semantic<'a>, Option<ArenaVec<'a, Token>>), Vec<OxcDiagnostic>>
+    ) -> Result<(ResolvedModuleRecord, Semantic<'a>, ArenaBox<'a, [Token]>), Vec<OxcDiagnostic>>
     {
         let parse_result = parse_result?;
 
@@ -1057,12 +1058,11 @@ impl Runtime {
         // If import plugin is enabled.
         if let Some(resolver) = &self.resolver {
             // Retrieve all dependent modules from this module.
-            let dir = path.parent().unwrap();
             resolved_module_requests = module_record
                 .requested_modules
                 .keys()
                 .filter_map(|specifier| {
-                    let resolution = resolver.resolve(dir, specifier).ok()?;
+                    let resolution = resolver.resolve_file(path, specifier).ok()?;
                     Some(ResolvedModuleRequest {
                         specifier: specifier.clone(),
                         resolved_requested_path: Arc::<OsStr>::from(resolution.path().as_os_str()),
@@ -1070,12 +1070,11 @@ impl Runtime {
                 })
                 .collect();
         }
-
-        let parser_tokens = collect_tokens.then_some(parse_result.tokens);
-        Ok((
-            ResolvedModuleRecord { module_record, resolved_module_requests },
-            semantic,
-            parser_tokens,
-        ))
+        let parser_tokens = if collect_tokens {
+            parse_result.tokens.into_boxed_slice()
+        } else {
+            ArenaBox::new_empty_boxed_slice()
+        };
+        Ok((ResolvedModuleRecord { module_record, resolved_module_requests }, semantic, parser_tokens))
     }
 }

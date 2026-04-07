@@ -10,7 +10,7 @@ use oxc_ecmascript::{
     },
 };
 use oxc_semantic::{IsGlobalReference, SymbolId};
-use oxc_span::format_atom;
+use oxc_span::format_str;
 use oxc_syntax::{reference::ReferenceId, scope::ScopeFlags};
 
 use crate::{
@@ -190,11 +190,11 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
                 self.ast.expression_numeric_literal(span, n, None, number_base)
             }
             ConstantValue::BigInt(bigint) => {
-                let value = format_atom!(self.ast.allocator, "{bigint}");
+                let value = format_str!(self.ast.allocator, "{bigint}");
                 self.ast.expression_big_int_literal(span, value, None, BigintBase::Decimal)
             }
             ConstantValue::String(s) => {
-                self.ast.expression_string_literal(span, self.ast.atom_from_cow(&s), None)
+                self.ast.expression_string_literal(span, self.ast.str_from_cow(&s), None)
             }
             ConstantValue::Boolean(b) => self.ast.expression_boolean_literal(span, b),
             ConstantValue::Undefined => self.ast.void_0(span),

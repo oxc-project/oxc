@@ -63,7 +63,6 @@ const _: () = {
 pub enum FormatElement<'a> {
     /// A space token, see [crate::builders::space] for documentation.
     Space,
-    HardSpace,
     /// A new line, see [crate::builders::soft_line_break], [crate::builders::hard_line_break], and [crate::builders::soft_line_break_or_space] for documentation.
     Line(LineMode),
 
@@ -71,15 +70,10 @@ pub enum FormatElement<'a> {
     ExpandParent,
 
     /// A ASCII only Token that contains no line breaks or tab characters.
-    Token {
-        text: &'static str,
-    },
+    Token { text: &'static str },
 
     /// An arbitrary text that can contain tabs, newlines, and unicode characters.
-    Text {
-        text: &'a str,
-        width: TextWidth,
-    },
+    Text { text: &'a str, width: TextWidth },
 
     /// Prevents that line suffixes move past this boundary. Forces the printer to print any pending
     /// line suffixes, potentially by inserting a hard line break.
@@ -105,7 +99,7 @@ pub enum FormatElement<'a> {
 impl std::fmt::Debug for FormatElement<'_> {
     fn fmt(&self, fmt: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            FormatElement::Space | FormatElement::HardSpace => fmt.write_str("Space"),
+            FormatElement::Space => fmt.write_str("Space"),
             FormatElement::Line(mode) => fmt.debug_tuple("Line").field(mode).finish(),
             FormatElement::ExpandParent => fmt.write_str("ExpandParent"),
             FormatElement::Token { text } => fmt.debug_tuple("Token").field(text).finish(),
@@ -286,7 +280,6 @@ impl FormatElements for FormatElement<'_> {
             | FormatElement::LineSuffixBoundary
             | FormatElement::Space
             | FormatElement::Tag(_)
-            | FormatElement::HardSpace
             | FormatElement::TailwindClass(_) => false,
         }
     }

@@ -29,7 +29,7 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// Empty import/export specifiers add no value and can be confusing.
+    /// Empty `import`/`export` specifiers add no value and can be confusing.
     /// If you want to import a module for side effects, use `import 'module'` instead.
     ///
     /// ### Examples

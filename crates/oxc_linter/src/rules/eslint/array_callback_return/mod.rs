@@ -131,7 +131,7 @@ pub struct ArrayCallbackReturn {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Enforce return statements in callbacks of array methods
+    /// Enforce return statements in callbacks of array methods.
     ///
     /// ### Why is this bad?
     ///
@@ -198,7 +198,7 @@ impl Rule for ArrayCallbackReturn {
             let return_status = if always_explicit_return {
                 StatementReturnStatus::AlwaysExplicit
             } else {
-                check_function_body(function_body)
+                check_function_body(node.id(), ctx.semantic())
             };
 
             match (array_method, self.check_for_each, self.allow_void, self.allow_implicit) {
@@ -665,6 +665,7 @@ const _test = fruits.map((fruit) => {
         ("foo.every(() => {})", None),
         ("foo.every(function() { if (a) return true; })", None),
         ("foo.every(function cb() { if (a) return true; })", None),
+        ("foo.map(() => { while (true) { if (a) break; return 1; } })", None),
         ("foo.every(function() { switch (a) { case 0: break; default: return true; } })", None),
         ("foo.every(function foo() { switch (a) { case 0: break; default: return true; } })", None),
         ("foo.every(function() { try { bar(); } catch (err) { return true; } })", None),

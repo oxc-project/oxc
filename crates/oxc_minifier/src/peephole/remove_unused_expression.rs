@@ -336,7 +336,12 @@ impl<'a> PeepholeOptimizations {
             return true;
         }
         if object_expr.properties.iter().all(ObjectPropertyKind::is_spread) {
-            return false;
+            // All-spread objects like `({...x})` can only be removed if
+            // the spread arguments themselves have no side effects.
+            return !object_expr
+                .properties
+                .iter()
+                .any(|property| property.may_have_side_effects(ctx));
         }
 
         let mut transformed_elements = ctx.ast.vec();

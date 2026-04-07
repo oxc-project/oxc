@@ -350,6 +350,21 @@ fn test() {
             None,
             None,
         ),
+        (
+            "
+                      /**
+                       * Random float in [min, max).
+                       * @param {number} min - Minimum float value.
+                       * @param {number} max - Maximum float value.
+                       * @returns {number} Random float in [min, max).
+                       */
+                      function randomRange(min, max) {
+                        return min + Math.random() * (max - min);
+                      }
+                  ",
+            None,
+            None,
+        ),
 
 ("
 			          /**

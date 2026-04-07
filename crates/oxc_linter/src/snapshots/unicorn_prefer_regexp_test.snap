@@ -199,6 +199,15 @@ source: crates/oxc_linter/src/tester.rs
   help: `RegExp#test()` exclusively returns a boolean and therefore is more efficient.
 
   ⚠ eslint-plugin-unicorn(prefer-regexp-test): Prefer `RegExp#test()` over `String#match()` and `RegExp#exec()`.
+   ╭─[prefer_regexp_test.tsx:2:25]
+ 1 │ async function a() {
+ 2 │                 if (foo.match(await bar())) {}
+   ·                         ─────
+ 3 │             }
+   ╰────
+  help: `RegExp#test()` exclusively returns a boolean and therefore is more efficient.
+
+  ⚠ eslint-plugin-unicorn(prefer-regexp-test): Prefer `RegExp#test()` over `String#match()` and `RegExp#exec()`.
    ╭─[prefer_regexp_test.tsx:1:11]
  1 │ if ((foo).match(/re/)) {}
    ·           ─────
@@ -234,9 +243,44 @@ source: crates/oxc_linter/src/tester.rs
   help: `RegExp#test()` exclusively returns a boolean and therefore is more efficient.
 
   ⚠ eslint-plugin-unicorn(prefer-regexp-test): Prefer `RegExp#test()` over `String#match()` and `RegExp#exec()`.
+   ╭─[prefer_regexp_test.tsx:2:27]
+ 1 │ async function a() {
+ 2 │                 if ((foo).match(await bar())) {}
+   ·                           ─────
+ 3 │             }
+   ╰────
+  help: `RegExp#test()` exclusively returns a boolean and therefore is more efficient.
+
+  ⚠ eslint-plugin-unicorn(prefer-regexp-test): Prefer `RegExp#test()` over `String#match()` and `RegExp#exec()`.
    ╭─[prefer_regexp_test.tsx:1:27]
  1 │ const re = [/a/]; if (foo.match([re][0])) {}
    ·                           ─────
+   ╰────
+  help: `RegExp#test()` exclusively returns a boolean and therefore is more efficient.
+
+  ⚠ eslint-plugin-unicorn(prefer-regexp-test): Prefer `RegExp#test()` over `String#match()` and `RegExp#exec()`.
+   ╭─[prefer_regexp_test.tsx:4:34]
+ 3 │                     /* 1 */ foo() /* 2 */
+ 4 │                         ./* 3 */ match /* 4 */ (
+   ·                                  ─────
+ 5 │                             /* 5 */ await /* 6 */ bar() /* 7 */
+   ╰────
+  help: `RegExp#test()` exclusively returns a boolean and therefore is more efficient.
+
+  ⚠ eslint-plugin-unicorn(prefer-regexp-test): Prefer `RegExp#test()` over `String#match()` and `RegExp#exec()`.
+   ╭─[prefer_regexp_test.tsx:2:21]
+ 1 │ const string = '[.!?]\\\\s*$';
+ 2 │             if (foo.match(string)) {
+   ·                     ─────
+ 3 │             }
+   ╰────
+  help: `RegExp#test()` exclusively returns a boolean and therefore is more efficient.
+
+  ⚠ eslint-plugin-unicorn(prefer-regexp-test): Prefer `RegExp#test()` over `String#match()` and `RegExp#exec()`.
+   ╭─[prefer_regexp_test.tsx:2:21]
+ 1 │ const regex = new RegExp('[.!?]\\\\s*$');
+ 2 │             if (foo.match(regex)) {}
+   ·                     ─────
    ╰────
   help: `RegExp#test()` exclusively returns a boolean and therefore is more efficient.
 
@@ -321,6 +365,46 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[prefer_regexp_test.tsx:1:26]
  1 │ if (new RegExp("a", "y").exec(foo));
    ·                          ────
+   ╰────
+  help: `RegExp#test()` exclusively returns a boolean and therefore is more efficient.
+
+  ⚠ eslint-plugin-unicorn(prefer-regexp-test): Prefer `RegExp#test()` over `String#match()` and `RegExp#exec()`.
+   ╭─[prefer_regexp_test.tsx:2:21]
+ 1 │ const regex = /weird/g;
+ 2 │             if (foo.match(regex));
+   ·                     ─────
+   ╰────
+  help: `RegExp#test()` exclusively returns a boolean and therefore is more efficient.
+
+  ⚠ eslint-plugin-unicorn(prefer-regexp-test): Prefer `RegExp#test()` over `String#match()` and `RegExp#exec()`.
+   ╭─[prefer_regexp_test.tsx:2:23]
+ 1 │ const regex = /weird/g;
+ 2 │             if (regex.exec(foo));
+   ·                       ────
+   ╰────
+  help: `RegExp#test()` exclusively returns a boolean and therefore is more efficient.
+
+  ⚠ eslint-plugin-unicorn(prefer-regexp-test): Prefer `RegExp#test()` over `String#match()` and `RegExp#exec()`.
+   ╭─[prefer_regexp_test.tsx:2:23]
+ 1 │ const regex = /weird/y;
+ 2 │             if (regex.exec(foo));
+   ·                       ────
+   ╰────
+  help: `RegExp#test()` exclusively returns a boolean and therefore is more efficient.
+
+  ⚠ eslint-plugin-unicorn(prefer-regexp-test): Prefer `RegExp#test()` over `String#match()` and `RegExp#exec()`.
+   ╭─[prefer_regexp_test.tsx:2:23]
+ 1 │ const regex = /weird/gyi;
+ 2 │             if (regex.exec(foo));
+   ·                       ────
+   ╰────
+  help: `RegExp#test()` exclusively returns a boolean and therefore is more efficient.
+
+  ⚠ eslint-plugin-unicorn(prefer-regexp-test): Prefer `RegExp#test()` over `String#match()` and `RegExp#exec()`.
+   ╭─[prefer_regexp_test.tsx:2:20]
+ 1 │ let re = new RegExp('foo', 'g');
+ 2 │             if(str.match(re));
+   ·                    ─────
    ╰────
   help: `RegExp#test()` exclusively returns a boolean and therefore is more efficient.
 

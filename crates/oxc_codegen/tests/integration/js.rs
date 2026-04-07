@@ -12,6 +12,7 @@ use crate::tester::{
 fn cases() {
     test_same_ignore_parse_errors("class C {\n\t@foo static accessor A = @bar class {};\n}\n");
     test_same_ignore_parse_errors("function foo(@foo x = @bar class {}) {}\n");
+    test_same_ignore_parse_errors("function foo(@foo ...rest) {}\n");
 }
 
 #[test]
@@ -29,11 +30,20 @@ fn module_decl() {
     test("import x from './foo.js' with {}", "import x from \"./foo.js\" with {};\n");
     test("import {} from './foo.js' with {}", "import {} from \"./foo.js\" with {};\n");
     test("export * from './foo.js' with {}", "export * from \"./foo.js\" with {};\n");
+    test(
+        "export { default } from './foo.js' with { type: 'json' }",
+        "export { default } from \"./foo.js\" with { type: \"json\" };\n",
+    );
+    test("export {} from './foo.js' with {}", "export {} from \"./foo.js\" with {};\n");
     test_minify("export { '☿' } from 'mod';", "export{\"☿\"}from\"mod\";");
     test_minify("export { '☿' as '☿' } from 'mod';", "export{\"☿\"}from\"mod\";");
     test_minify(
         "import x from './foo.custom' with { 'type': 'json' }",
         "import x from\"./foo.custom\"with{\"type\":\"json\"};",
+    );
+    test_minify(
+        "export { default } from './foo.js' with { type: 'json' }",
+        "export{default}from\"./foo.js\"with{type:\"json\"};",
     );
 }
 
@@ -433,14 +443,14 @@ fn pure_comment() {
     );
     test("const foo /* #__PURE__ */ = pureOperation();", "const foo = pureOperation();\n"); // INVALID: "=" not allowed after annotation
 
-    test("/* #__PURE__ */ function foo() {}\n", "function foo() {}\n");
+    test_same("/* #__PURE__ */ function foo() {}\n"); // INVALID: not before a call/new expression
 
     test("/* @__PURE__ */ (foo());", "/* @__PURE__ */ foo();\n");
     test("/* @__PURE__ */ (new Foo());\n", "/* @__PURE__ */ new Foo();\n");
-    test("/*#__PURE__*/ (foo(), bar());", "foo(), bar();\n"); // INVALID, there is a comma expression in the parentheses
+    test("/*#__PURE__*/ (foo(), bar());", "/*#__PURE__*/ foo(), bar();\n"); // INVALID, there is a comma expression in the parentheses
 
     test_same("/* @__PURE__ */ a.b().c.d();\n");
-    test("/* @__PURE__ */ a().b;", "a().b;\n"); // INVALID, it does not end with a call
+    test("/* @__PURE__ */ a().b;", "/* @__PURE__ */ a().b;\n"); // INVALID, it does not end with a call
     test_same("(/* @__PURE__ */ a()).b;\n");
 
     // More
@@ -706,7 +716,7 @@ fn template_literal_escape_when_building_ast() {
     // backtick, ${, and backslash
     // Pass escape_raw: true to automatically escape the raw field
     let cooked = "hello`world${foo}\\bar";
-    let value = TemplateElementValue { raw: ast.atom(cooked), cooked: Some(ast.atom(cooked)) };
+    let value = TemplateElementValue { raw: ast.str(cooked), cooked: Some(ast.str(cooked)) };
     let element = ast.template_element(SPAN, value, true, true); // escape_raw: true
     let quasis = ast.vec1(element);
     let template_literal = ast.template_literal(SPAN, quasis, ast.vec());

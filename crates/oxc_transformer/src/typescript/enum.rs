@@ -8,7 +8,7 @@ use oxc_ast_visit::{VisitMut, walk_mut};
 use oxc_data_structures::stack::NonEmptyStack;
 use oxc_ecmascript::{ToInt32, ToUint32};
 use oxc_semantic::{ScopeFlags, ScopeId};
-use oxc_span::{Atom, Ident, IdentHashMap, SPAN, Span};
+use oxc_span::{Ident, IdentHashMap, SPAN, Span, Str};
 use oxc_syntax::{
     number::{NumberBase, ToJsString},
     operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator},
@@ -20,7 +20,7 @@ use oxc_traverse::{BoundIdentifier, Traverse};
 use crate::{context::TraverseCtx, state::TransformState};
 
 /// enum member values (or None if it can't be evaluated at build time) keyed by names
-type PrevMembers<'a> = FxHashMap<Atom<'a>, Option<ConstantValue<'a>>>;
+type PrevMembers<'a> = FxHashMap<Str<'a>, Option<ConstantValue<'a>>>;
 
 pub struct TypeScriptEnum<'a> {
     enums: IdentHashMap<'a, PrevMembers<'a>>,
@@ -357,7 +357,7 @@ impl<'a> TypeScriptEnum<'a> {
 #[derive(Debug, Clone, Copy)]
 enum ConstantValue<'a> {
     Number(f64),
-    String(Atom<'a>),
+    String(Str<'a>),
 }
 
 impl<'a> TypeScriptEnum<'a> {
@@ -392,7 +392,7 @@ impl<'a> TypeScriptEnum<'a> {
                     return Some(ConstantValue::Number(f64::NAN));
                 }
 
-                if let Some(value) = prev_members.get(&Atom::from(ident.name)) {
+                if let Some(value) = prev_members.get(&Str::from(ident.name)) {
                     return *value;
                 }
 
@@ -440,7 +440,7 @@ impl<'a> TypeScriptEnum<'a> {
                             }
                         }
                     }
-                    Atom::from(value.into_str())
+                    Str::from(value.into_str())
                 };
                 Some(ConstantValue::String(value))
             }
@@ -466,16 +466,16 @@ impl<'a> TypeScriptEnum<'a> {
         {
             let left_string = match left {
                 ConstantValue::String(str) => str,
-                ConstantValue::Number(v) => ctx.ast.atom(&v.to_js_string()),
+                ConstantValue::Number(v) => ctx.ast.str(&v.to_js_string()),
             };
 
             let right_string = match right {
                 ConstantValue::String(str) => str,
-                ConstantValue::Number(v) => ctx.ast.atom(&v.to_js_string()),
+                ConstantValue::Number(v) => ctx.ast.str(&v.to_js_string()),
             };
 
             return Some(ConstantValue::String(
-                ctx.ast.atom_from_strs_array([&left_string, &right_string]),
+                ctx.ast.str_from_strs_array([&left_string, &right_string]),
             ));
         }
 
@@ -591,7 +591,7 @@ impl<'a, 'ctx, 'members> IdentifierReferenceRename<'a, 'ctx, 'members> {
 impl IdentifierReferenceRename<'_, '_, '_> {
     fn should_reference_enum_member(&self, ident: &IdentifierReference<'_>) -> bool {
         // Don't need to rename the identifier if it's not a member of the enum,
-        if !self.previous_enum_members.contains_key(&Atom::from(ident.name)) {
+        if !self.previous_enum_members.contains_key(&Str::from(ident.name)) {
             return false;
         }
 

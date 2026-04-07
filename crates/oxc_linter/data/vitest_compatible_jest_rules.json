@@ -31,15 +31,18 @@
   "prefer-lowercase-title",
   "prefer-mock-promise-shorthand",
   "prefer-mock-return-shorthand",
+  "prefer-snapshot-hint",
   "prefer-spy-on",
   "prefer-strict-equal",
   "prefer-to-be",
   "prefer-to-contain",
+  "prefer-to-have-been-called-times",
   "prefer-to-have-length",
   "prefer-todo",
   "require-hook",
   "require-to-throw-message",
   "require-top-level-describe",
   "valid-describe-callback",
-  "valid-expect"
+  "valid-expect",
+  "valid-title"
 ]

@@ -2,16 +2,16 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-vue(max-props): Component has too many props (2). Maximum allowed is 1.
+  ⚠ eslint-plugin-vue(max-props): This component has too many props (2). Maximum allowed is 1.
    ╭─[max_props.tsx:3:10]
  2 │                   <script setup>
  3 │                   defineProps({ prop1: '', prop2: '' })
    ·                   ─────────────────────────────────────
  4 │                   </script>
    ╰────
-  help: Consider refactoring the component by reducing the number of props.
+  help: Consider refactoring the component to reduce the number of props that are needed.
 
-  ⚠ eslint-plugin-vue(max-props): Component has too many props (2). Maximum allowed is 1.
+  ⚠ eslint-plugin-vue(max-props): This component has too many props (2). Maximum allowed is 1.
    ╭─[max_props.tsx:4:19]
  3 │                       export default {
  4 │ ╭─▶                     props: {
@@ -20,27 +20,27 @@ source: crates/oxc_linter/src/tester.rs
  7 │ ╰─▶                     }
  8 │                       }
    ╰────
-  help: Consider refactoring the component by reducing the number of props.
+  help: Consider refactoring the component to reduce the number of props that are needed.
 
-  ⚠ eslint-plugin-vue(max-props): Component has too many props (3). Maximum allowed is 2.
+  ⚠ eslint-plugin-vue(max-props): This component has too many props (3). Maximum allowed is 2.
    ╭─[max_props.tsx:3:10]
  2 │                   <script setup lang="ts">
  3 │                   defineProps<{ prop1: string, prop2: string, prop3: string }>();
    ·                   ──────────────────────────────────────────────────────────────
  4 │                   </script>
    ╰────
-  help: Consider refactoring the component by reducing the number of props.
+  help: Consider refactoring the component to reduce the number of props that are needed.
 
-  ⚠ eslint-plugin-vue(max-props): Component has too many props (3). Maximum allowed is 2.
+  ⚠ eslint-plugin-vue(max-props): This component has too many props (3). Maximum allowed is 2.
    ╭─[max_props.tsx:3:10]
  2 │                   <script setup lang="ts">
  3 │                   defineProps<{prop1: string, prop2: string} | {prop1: number, prop3: string}>()
    ·                   ──────────────────────────────────────────────────────────────────────────────
  4 │                   </script>
    ╰────
-  help: Consider refactoring the component by reducing the number of props.
+  help: Consider refactoring the component to reduce the number of props that are needed.
 
-  ⚠ eslint-plugin-vue(max-props): Component has too many props (3). Maximum allowed is 2.
+  ⚠ eslint-plugin-vue(max-props): This component has too many props (3). Maximum allowed is 2.
     ╭─[max_props.tsx:3:10]
   2 │                       <script setup lang="ts">
   3 │ ╭─▶                   defineProps<{
@@ -54,4 +54,4 @@ source: crates/oxc_linter/src/tester.rs
  11 │ ╰─▶                   }>()
  12 │                       </script>
     ╰────
-  help: Consider refactoring the component by reducing the number of props.
+  help: Consider refactoring the component to reduce the number of props that are needed.

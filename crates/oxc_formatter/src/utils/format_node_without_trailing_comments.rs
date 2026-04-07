@@ -1,6 +1,10 @@
 use oxc_span::GetSpan;
 
-use crate::{Format, formatter::Formatter};
+use crate::{
+    Format,
+    formatter::{Formatter, trivia::format_leading_comments},
+    utils::suppressed::FormatSuppressedNode,
+};
 
 /// Generic wrapper for formatting a node without its trailing comments.
 ///
@@ -15,6 +19,12 @@ where
 {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let node_end = self.0.span().end;
+
+        if f.comments().has_trailing_suppression_comment(node_end) {
+            format_leading_comments(self.0.span()).fmt(f);
+            FormatSuppressedNode(self.0.span()).fmt(f);
+            return;
+        }
 
         // Save the current comment view limit and temporarily restrict it
         // to hide comments that start at or after the node's end position

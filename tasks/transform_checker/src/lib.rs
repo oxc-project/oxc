@@ -101,7 +101,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::{Scoping, SemanticBuilder};
 use oxc_span::CompactStr;
 use oxc_syntax::{
-    reference::ReferenceId,
+    reference::{ReferenceFlags, ReferenceId},
     scope::{ScopeFlags, ScopeId},
     symbol::SymbolId,
 };
@@ -176,7 +176,7 @@ struct PostTransformChecker<'a, 's> {
     scope_ids_map: IdMapping<ScopeId>,
     symbol_ids_map: IdMapping<SymbolId>,
     reference_ids_map: IdMapping<ReferenceId>,
-    reference_names: Vec<Atom<'a>>,
+    reference_names: Vec<Str<'a>>,
     errors: Errors,
 }
 
@@ -457,9 +457,10 @@ impl PostTransformChecker<'_, '_> {
                 );
             }
 
-            // Check flags match
+            // Check flags match.
+            // Ignore `MemberWriteTarget` flag - it's set by `SemanticBuilder` but not by the transformer.
             let flags = self.get_pair(reference_ids, |scoping, reference_id| {
-                scoping.get_reference(reference_id).flags()
+                scoping.get_reference(reference_id).flags() - ReferenceFlags::MemberWriteTarget
             });
             if flags.is_mismatch() {
                 self.errors.push_mismatch(
@@ -576,7 +577,7 @@ struct SemanticIdsCollector<'a, 'e> {
     scope_ids: Vec<Option<ScopeId>>,
     symbol_ids: Vec<Option<SymbolId>>,
     reference_ids: Vec<Option<ReferenceId>>,
-    reference_names: Vec<Atom<'a>>,
+    reference_names: Vec<Str<'a>>,
     errors: &'e mut Errors,
 }
 
@@ -596,8 +597,7 @@ impl<'a, 'e> SemanticIdsCollector<'a, 'e> {
     fn collect(
         mut self,
         program: &Program<'a>,
-    ) -> (Vec<Option<ScopeId>>, Vec<Option<SymbolId>>, Vec<Option<ReferenceId>>, Vec<Atom<'a>>)
-    {
+    ) -> (Vec<Option<ScopeId>>, Vec<Option<SymbolId>>, Vec<Option<ReferenceId>>, Vec<Str<'a>>) {
         if !program.source_type.is_typescript_definition() {
             self.visit_program(program);
         }

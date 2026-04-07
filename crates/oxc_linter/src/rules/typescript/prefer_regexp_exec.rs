@@ -30,7 +30,7 @@ declare_oxc_lint!(
     /// ```
     PreferRegexpExec(tsgolint),
     typescript,
-    nursery,
+    style,
 );
 
 impl Rule for PreferRegexpExec {}

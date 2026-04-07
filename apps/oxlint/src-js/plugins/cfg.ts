@@ -17,9 +17,8 @@ import {
 import { ancestors } from "../generated/walk.js";
 import { debugAssert, debugAssertIsFunction } from "../utils/asserts.ts";
 
-import type { EnterExit } from "./visitor.ts";
+import type { CfgVisitFn, EnterExit, VisitFn } from "./visitor.ts";
 import type { Node, Program } from "../generated/types.d.ts";
-import type { CompiledVisitors } from "../generated/walk.js";
 
 /**
  * Offset added to type IDs for exit visits to distinguish them from enter visits.
@@ -89,7 +88,10 @@ export function resetCfgWalk(): void {
  * @param ast - AST
  * @param visitors - Visitors array
  */
-export function walkProgramWithCfg(ast: Program, visitors: CompiledVisitors): void {
+export function walkProgramWithCfg(
+  ast: Program,
+  visitors: (VisitFn | EnterExit | CfgVisitFn | null)[],
+): void {
   // Get the steps that need to be run to walk the AST
   prepareSteps(ast);
 
@@ -139,10 +141,10 @@ export function walkProgramWithCfg(ast: Program, visitors: CompiledVisitors): vo
       // Call method (CFG event). `typeId` is event type ID.
       debugAssert(Array.isArray(stepData[i]), "`stepData` should contain an array for CFG events");
 
-      const visit = visitors[typeId];
+      const visit = visitors[typeId] as CfgVisitFn;
       if (visit !== null) {
         debugAssertIsFunction(visit);
-        visit.apply(undefined, stepData[i]);
+        visit.apply(undefined, stepData[i] as unknown[]);
       }
     }
   }

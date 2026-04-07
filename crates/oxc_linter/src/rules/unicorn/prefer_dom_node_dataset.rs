@@ -259,7 +259,7 @@ fn to_string_literal_text(fixer: RuleFixer, text: &str) -> String {
     let mut codegen = fixer.codegen().with_options(CodegenOptions::default());
     let alloc = Allocator::default();
     let ast = AstBuilder::new(&alloc);
-    codegen.print_expression(&ast.expression_string_literal(SPAN, ast.atom(text), None));
+    codegen.print_expression(&ast.expression_string_literal(SPAN, ast.str(text), None));
     codegen.into_source_text()
 }
 
@@ -398,10 +398,10 @@ fn test() {
         "element.setAttribute('data-foo2', '🦄');",
         "element.setAttribute('data-foo:bar', 'zaz');",
         r#"element.setAttribute("data-foo:bar", "zaz");"#,
-        r"element.setAttribute('data-foo.bar', 'zaz');",
-        r"element.setAttribute('data-foo-bar', 'zaz');",
-        r"element.setAttribute('data-foo', /* comment */ 'bar');",
-        r"element.querySelector('#selector').setAttribute('data-AllowAccess', true);",
+        "element.setAttribute('data-foo.bar', 'zaz');",
+        "element.setAttribute('data-foo-bar', 'zaz');",
+        "element.setAttribute('data-foo', /* comment */ 'bar');",
+        "element.querySelector('#selector').setAttribute('data-AllowAccess', true);",
         r#"element.setAttribute("data-", "🦄");"#,
         r#"element.setAttribute("data--foo", "🦄");"#,
         r#"element.setAttribute("DATA--FOO", "🦄");"#,

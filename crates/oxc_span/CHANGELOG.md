@@ -4,6 +4,18 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.123.0] - 2026-03-30
+
+### 📚 Documentation
+
+- a147878 span: Remove `Atom` from README (#20836) (overlookmotel)
+
+## [0.116.0] - 2026-03-02
+
+### 🚀 Features
+
+- 655c38f semantic: Add "did you mean?" suggestions to undefined name errors (#19102) (copilot-swe-agent)
+
 ## [0.114.0] - 2026-02-16
 
 ### 🚀 Features

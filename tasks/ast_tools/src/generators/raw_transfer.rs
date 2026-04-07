@@ -62,8 +62,8 @@ const BLOCK_ALIGN: u64 = 1 << 32; // 4 GiB
 
 // Offsets of `Vec`'s fields.
 // `Vec` is `#[repr(transparent)]` and `RawVec` is `#[repr(C)]`, so these offsets are fixed.
-pub(super) const VEC_PTR_FIELD_OFFSET: usize = 0;
-pub(super) const VEC_LEN_FIELD_OFFSET: usize = 8;
+pub(super) const VEC_PTR_FIELD_OFFSET: u32 = 0;
+pub(super) const VEC_LEN_FIELD_OFFSET: u32 = 8;
 
 /// Generator for raw transfer deserializer.
 pub struct RawTransferGenerator;
@@ -140,24 +140,33 @@ fn generate_deserializers(
     let mut code = format!("
         /* IF LINTER */
         import {{ tokens, initTokens }} from '../plugins/tokens.js';
+        import {{ comments, initComments }} from '../plugins/comments.js';
+        import {{ getNodeLoc }} from '../plugins/location.js';
         /* END_IF */
 
-        let uint8, uint32, float64, sourceText, sourceIsAscii, sourceStartPos, sourceEndPos;
+        let uint8, uint32, float64, sourceText, sourceTextLatin,
+            sourceStartPos = 0, sourceEndPos = 0, firstNonAsciiPos = 0;
 
-        let astId = 0;
         let parent = null;
-        let getLoc;
 
-        const textDecoder = new TextDecoder('utf-8', {{ ignoreBOM: true }}),
-            decodeStr = textDecoder.decode.bind(textDecoder),
-            {{ fromCodePoint }} = String;
+        const {{ fromCharCode }} = String,
+            {{ utf8Slice, latin1Slice }} = Buffer.prototype;
 
-        /* IF LOC */
+        const STRING_DECODE_CROSSOVER = 64;
+
+        // Arrays used by `deserializeStr` for passing to `String.fromCharCode`.
+        // These arrays are reused over and over, avoiding allocating a new temporary array for each string.
+        const stringDecodeArrays = new Array(STRING_DECODE_CROSSOVER + 1).fill(null);
+        for (let i = 0; i <= STRING_DECODE_CROSSOVER; i++) {{
+            stringDecodeArrays[i] = new Array(i).fill(0);
+        }}
+
+        /* IF LINTER */
         const NodeProto = Object.create(Object.prototype, {{
             loc: {{
                 // Note: Not configurable
                 get() {{
-                    return getLoc(this);
+                    return getNodeLoc(this);
                 }},
                 enumerable: true,
             }}
@@ -167,40 +176,63 @@ fn generate_deserializers(
         /* IF !LINTER */
         export function deserialize(buffer, sourceText, sourceByteLen) {{
             sourceEndPos = sourceByteLen;
-            const data = deserializeWith(buffer, sourceText, sourceByteLen, null, deserializeRawTransferData);
-            resetBuffer();
-            return data;
+            return deserializeWith(buffer, sourceText, sourceByteLen, deserializeRawTransferData);
         }}
         /* END_IF */
 
         /* IF LINTER */
-        export function deserializeProgramOnly(buffer, sourceText, sourceStartPosInput, sourceByteLen, getLoc) {{
+        export function deserializeProgramOnly(buffer, sourceText, sourceStartPosInput, sourceByteLen) {{
             sourceStartPos = sourceStartPosInput;
-            return deserializeWith(buffer, sourceText, sourceByteLen, getLoc, deserializeProgram);
+            return deserializeWith(buffer, sourceText, sourceByteLen, deserializeProgram);
         }}
         /* END_IF */
 
-        function deserializeWith(buffer, sourceTextInput, sourceByteLen, getLocInput, deserialize) {{
+        function deserializeWith(buffer, sourceTextInput, sourceByteLen, deserialize) {{
             uint8 = buffer;
             uint32 = buffer.uint32;
             float64 = buffer.float64;
 
             sourceText = sourceTextInput;
-            sourceIsAscii = sourceText.length === sourceByteLen;
 
-            if (LOC) getLoc = getLocInput;
+            const sourceIsAscii = sourceText.length === sourceByteLen;
 
-            return deserialize(uint32[{data_pointer_pos_32}]);
+            // Find first non-ASCII byte in source region.
+            // `sourceText.substr()` can be used for strings which are within source text and ending before
+            // this position, since byte offsets equal char offsets in the all-ASCII prefix.
+            // Also decode source text as Latin-1 (or reuse `sourceText` if it's all ASCII).
+            if (LINTER) {{
+                if (sourceIsAscii === true) {{
+                    firstNonAsciiPos = sourceStartPos + sourceByteLen;
+                    sourceTextLatin = sourceText;
+                }} else {{
+                    let i = sourceStartPos;
+                    const sourceEndPos = sourceStartPos + sourceByteLen;
+                    for (; i < sourceEndPos && uint8[i] < 128; i++);
+                    firstNonAsciiPos = i;
+
+                    sourceTextLatin = latin1Slice.call(uint8, sourceStartPos, sourceEndPos);
+                }}
+            }} else {{
+                if (sourceIsAscii === true) {{
+                    firstNonAsciiPos = sourceByteLen;
+                    sourceTextLatin = sourceText;
+                }} else {{
+                    let i = 0;
+                    for (; i < sourceByteLen && uint8[i] < 128; i++);
+                    firstNonAsciiPos = i;
+
+                    sourceTextLatin = latin1Slice.call(uint8, 0, sourceByteLen);
+                }}
+            }}
+
+            const data = deserialize(uint32[{data_pointer_pos_32}]);
+            resetBuffer();
+            return data;
         }}
 
         export function resetBuffer() {{
-            // Clear buffer and source text string to allow them to be garbage collected
-            uint8 = uint32 = float64 = sourceText = undefined;
-
-            // Increment `astId` counter.
-            // This prevents `program.comments` being accessed after the AST is done with.
-            // (see `deserializeProgram`)
-            if (COMMENTS) astId++;
+            // Clear buffer and source text strings to allow them to be garbage collected
+            uint8 = uint32 = float64 = sourceText = sourceTextLatin = undefined;
         }}
     ");
 
@@ -208,17 +240,14 @@ fn generate_deserializers(
     #[rustfmt::skip]
     let code_type_definition_linter = "
         import type { Program } from './types.d.ts';
-        import type { Location as SourceLocation } from '../plugins/location.ts';
 
         type BufferWithArrays = Uint8Array & { uint32: Uint32Array; float64: Float64Array };
-        type GetLoc = (node: { range: [number, number] }) => SourceLocation;
 
         export declare function deserializeProgramOnly(
             buffer: BufferWithArrays,
             sourceText: string,
             sourceStartPosInput: number,
             sourceByteLen: number,
-            getLoc: GetLoc
         ): Program;
 
         export declare function resetBuffer(): void;
@@ -271,17 +300,17 @@ fn generate_deserializers(
     }
 
     // Create deserializers with various settings, by setting `IS_TS`, `RANGE`, `LOC`, `PARENT`,
-    // `PRESERVE_PARENS`, and `COMMENTS` consts, and running through minifier to shake out
+    // and `PRESERVE_PARENS` consts, and running through minifier to shake out
     // irrelevant code
     struct VariantGen {
         variant_paths: Vec<String>,
     }
 
-    impl VariantGenerator<7> for VariantGen {
-        const FLAG_NAMES: [&str; 7] =
-            ["IS_TS", "RANGE", "LOC", "PARENT", "PRESERVE_PARENS", "COMMENTS", "LINTER"];
+    impl VariantGenerator<6> for VariantGen {
+        const FLAG_NAMES: [&str; 6] =
+            ["IS_TS", "RANGE", "LOC", "PARENT", "PRESERVE_PARENS", "LINTER"];
 
-        fn variants(&mut self) -> Vec<[bool; 7]> {
+        fn variants(&mut self) -> Vec<[bool; 6]> {
             let mut variants = Vec::with_capacity(9);
 
             // Parser deserializers
@@ -297,8 +326,7 @@ fn generate_deserializers(
 
                         variants.push([
                             is_ts, range, /* loc */ false, parent,
-                            /* preserve_parens */ true, /* comments */ false,
-                            /* linter */ false,
+                            /* preserve_parens */ true, /* linter */ false,
                         ]);
                     }
                 }
@@ -308,8 +336,7 @@ fn generate_deserializers(
             self.variant_paths.push(format!("{OXLINT_APP_PATH}/src-js/generated/deserialize.js"));
             variants.push([
                 /* is_ts */ true, /* range */ true, /* loc */ true,
-                /* parent */ true, /* preserve_parens */ false, /* comments */ true,
-                /* linter */ true,
+                /* parent */ true, /* preserve_parens */ false, /* linter */ true,
             ]);
 
             variants
@@ -318,7 +345,7 @@ fn generate_deserializers(
         fn pre_process_variant<'a>(
             &self,
             program: &mut Program<'a>,
-            flags: [bool; 7],
+            flags: [bool; 6],
             allocator: &'a Allocator,
         ) {
             if flags[2] {
@@ -690,6 +717,45 @@ impl<'s> StructDeserializerGenerator<'s> {
             }
 
             field_name.clone()
+        } else if field.estree.from_span {
+            // Derive value from `sourceText.slice(start, end)` instead of deserializing.
+            // Field must be `Str`, `Ident`, `&str`, or `Option` containing one of those types.
+            let (inner_type, prefix) = if let TypeDef::Option(option_def) = field_type {
+                let inner_type = option_def.inner_type(self.schema);
+                let (none_condition, _) =
+                    get_option_none_condition_and_offset(option_def, inner_type, field_offset);
+                (inner_type, format!("({none_condition}) ? null : "))
+            } else {
+                (field_type, String::new())
+            };
+
+            if inner_type.as_primitive().is_none_or(|primitive_def| {
+                !matches!(primitive_def.name(), "Str" | "Ident" | "&str")
+            }) {
+                panic!(
+                    "`#[estree(from_span)]` can only be on a field of type `Str`, `Ident`, `&str`, or `Option` containing one of those types: `{}::{}`",
+                    struct_def.name(),
+                    field.name(),
+                );
+            }
+
+            // Check that struct has a `span: Span` field, and that it is flattened, so `start` and `end` are available
+            assert!(
+                struct_def.fields.iter().any(|field| {
+                    field.type_id == self.span_type_id
+                        && field.name() == "span"
+                        && should_flatten_field(field, self.schema)
+                }),
+                "`#[estree(from_span)]` can only be used on a field of a struct with a flattened `span: Span` field: `{}::{}`",
+                struct_def.name(),
+                field.name(),
+            );
+
+            inline = true;
+            self.dependent_field_names.insert("start".to_string());
+            self.dependent_field_names.insert("end".to_string());
+
+            format!("{prefix}sourceText.slice(start, end)")
         } else if let Some(converter_name) = &field.estree.via {
             let converter = self.schema.meta_by_name(converter_name);
             self.apply_converter(converter, struct_def, struct_offset).unwrap()
@@ -827,7 +893,7 @@ fn generate_primitive(primitive_def: &PrimitiveDef, code: &mut String, schema: &
     #[expect(clippy::match_same_arms)]
     let ret = match primitive_def.name() {
         // Reuse deserializer for `&str`
-        "Atom" | "Ident" => return,
+        "Str" | "Ident" => return,
         // Dummy type
         "PointerAlign" => return,
         "bool" => "return uint8[pos] === 1;",
@@ -875,35 +941,70 @@ fn generate_primitive(primitive_def: &PrimitiveDef, code: &mut String, schema: &
 static STR_DESERIALIZER_BODY: &str = "
     const pos32 = pos >> 2,
         len = uint32[pos32 + 2];
+
     if (len === 0) return '';
 
     pos = uint32[pos32];
 
-    if (LINTER) {
-        if (sourceIsAscii && pos >= sourceStartPos) return sourceText.substr(pos - sourceStartPos, len);
-    } else {
-        if (sourceIsAscii && pos < sourceEndPos) return sourceText.substr(pos, len);
+    const end = pos + len;
+
+    /* IF !LINTER */
+    if (end <= firstNonAsciiPos) return sourceTextLatin.substr(pos, len);
+    /* END_IF */
+
+    /* IF LINTER */
+    // Note: Tried reducing this check to a single branch by making the comparison the equivalent of this Rust:
+    // `end.wrapping_sub(sourceStartPos) <= firstNonAsciiOffset`.
+    //
+    // The JS versions tried were:
+    // - `((end - sourceStartPos) >>> 0) <= firstNonAsciiOffset`
+    // - `((end - sourceStartPos) & 0x7FFF_FFFF) <= firstNonAsciiOffset`
+    // But it turned out that these are both slower by 5-10% on files which are all ASCII.
+    //
+    // `>>>` is slower as V8 can't assume result fits in an SMI (which is a 32-bit *signed* integer),
+    // as result could be greater or equal to `2 ** 31`. So it converts both the comparison's operands to `float64`s
+    // and does float compare (which is slower than integer compare).
+    //
+    // `& 0x7FFF_FFFF` is slower as it has a longer chain of data dependencies than the 2 independent
+    // branch comparisons.
+    //
+    // Both branches are very predictable, so 2 branches wins.
+    const isInSourceRegion = pos >= sourceStartPos;
+    if (isInSourceRegion && end <= firstNonAsciiPos) {
+        return sourceTextLatin.substr(pos - sourceStartPos, len);
+    }
+    /* END_IF */
+
+    // Use `utf8Slice` for strings longer than 64 bytes
+    if (len > STRING_DECODE_CROSSOVER) return utf8Slice.call(uint8, pos, end);
+
+    // If string is in source region, use slice of `sourceTextLatin` if all ASCII
+    /* IF !LINTER */
+    const isInSourceRegion = pos < sourceEndPos;
+    /* END_IF */
+
+    if (isInSourceRegion) {
+        // Check if all bytes are ASCII, use `utf8Slice` if not
+        for (let i = pos; i < end; i++) {
+            if (uint8[i] >= 128) return utf8Slice.call(uint8, pos, end);
+        }
+
+        // String is all ASCII, so slice from `sourceTextLatin`
+        return sourceTextLatin.substr(LINTER ? pos - sourceStartPos : pos, len);
     }
 
-    // Longer strings use `TextDecoder`
-    // TODO: Find best switch-over point
-    const end = pos + len;
-    if (len > 50) return decodeStr(uint8.subarray(pos, end));
+    // String is not in source region - use `fromCharCode.apply` with a temp array of correct length.
+    // Copy bytes into temp array.
+    // If any byte is non-ASCII, use `utf8Slice`.
+    const arr = stringDecodeArrays[len];
+    for (let i = 0; i < len; i++) {
+        const b = uint8[pos + i];
+        if (b >= 128) return utf8Slice.call(uint8, pos, end);
+        arr[i] = b;
+    }
 
-    // Shorter strings decode by hand to avoid native call
-    let out = '',
-        c;
-    do {
-        c = uint8[pos++];
-        if (c < 0x80) {
-            out += fromCodePoint(c);
-        } else {
-            out += decodeStr(uint8.subarray(pos - 1, end));
-            break;
-        }
-    } while (pos < end);
-
-    return out;
+    // Call `fromCharCode` with temp array
+    return fromCharCode.apply(null, arr);
 ";
 
 /// Generate deserialize function for an `Option`.
@@ -920,40 +1021,51 @@ fn generate_option(
 
     let fn_name = option_def.deser_name(schema);
     let inner_fn_name = inner_type.deser_name(schema);
+
+    let (none_condition, payload_offset) =
+        get_option_none_condition_and_offset(option_def, inner_type, 0);
+
+    #[rustfmt::skip]
+    write_it!(code, "
+        function {fn_name}(pos) {{
+            return ({none_condition}) ? null : {inner_fn_name}({payload_offset});
+        }}
+    ");
+}
+
+/// Get condition for `Option`'s `None` value and offset of `Option`'s payload.
+fn get_option_none_condition_and_offset(
+    option_def: &OptionDef,
+    inner_type: &TypeDef,
+    offset: u32,
+) -> (String, Cow<'static, str>) {
     let inner_layout = inner_type.layout_64();
 
-    let (none_condition, payload_offset) = if option_def.layout_64().size == inner_layout.size {
+    if option_def.layout_64().size == inner_layout.size {
         let niche = inner_layout.niche.clone().unwrap();
+        let niche_offset = offset + niche.offset;
         let none_condition = match niche.size {
-            1 => format!("uint8[{}] === {}", pos_offset(niche.offset), niche.value()),
-            // 2 => format!("uint16[{}] === {}", pos_offset_shift(niche.offset, 1), niche.value()),
-            4 => format!("uint32[{}] === {}", pos_offset_shift(niche.offset, 2), niche.value()),
+            1 => format!("uint8[{}] === {}", pos_offset(niche_offset), niche.value()),
+            // 2 => format!("uint16[{}] === {}", pos_offset_shift(offset, 1), niche.value()),
+            4 => format!("uint32[{}] === {}", pos_offset_shift(niche_offset, 2), niche.value()),
             8 => {
                 // TODO: Use `float64[pos >> 3] === 0` instead of
                 // `uint32[pos >> 2] === 0 && uint32[(pos + 4) >> 2] === 0`?
                 let value = niche.value();
                 format!(
                     "uint32[{}] === {} && uint32[{}] === {}",
-                    pos_offset_shift(niche.offset, 2),
+                    pos_offset_shift(niche_offset, 2),
                     value & u128::from(u32::MAX),
-                    pos_offset_shift(niche.offset + 4, 2),
+                    pos_offset_shift(niche_offset + 4, 2),
                     value >> 32,
                 )
             }
             size => panic!("Invalid niche size: {size}"),
         };
-        (none_condition, Cow::Borrowed("pos"))
+        (none_condition, pos_offset(offset))
     } else {
-        ("uint8[pos] === 0".to_string(), pos_offset(inner_layout.align))
-    };
-
-    #[rustfmt::skip]
-    write_it!(code, "
-        function {fn_name}(pos) {{
-            if ({none_condition}) return null;
-            return {inner_fn_name}({payload_offset});
-        }}
-    ");
+        (format!("uint8[{}] === 0", pos_offset(offset)), pos_offset(offset + inner_layout.align))
+    }
 }
 
 /// Generate deserialize function for a `Box`.
@@ -1261,8 +1373,8 @@ impl_deser_name_concat!(VecDef, "Vec");
 impl DeserializeFunctionName for PrimitiveDef {
     fn plain_name<'s>(&'s self, _schema: &'s Schema) -> Cow<'s, str> {
         let type_name = self.name();
-        if matches!(type_name, "&str" | "Atom" | "Ident") {
-            // Use 1 deserializer for `&str`, `Atom`, and `Ident`
+        if matches!(type_name, "&str" | "Str" | "Ident") {
+            // Use 1 deserializer for `&str`, `Str`, and `Ident`
             Cow::Borrowed("Str")
         } else if let Some(type_name) = type_name.strip_prefix("NonZero") {
             // Use zeroed type's deserializer for `NonZero*` types
@@ -1305,9 +1417,9 @@ struct Constants {
     is_jsx_pos: u32,
     /// Offset within buffer of `bool` indicating if source text has BOM
     has_bom_pos: u32,
-    /// Offset within buffer of `u32` containing serialized ESTree tokens JSON start
+    /// Offset within buffer of `u32` containing position of lexer `Token`s
     tokens_offset_pos: u32,
-    /// Offset within buffer of `u32` containing serialized ESTree tokens JSON length
+    /// Offset within buffer of `u32` containing number of lexer `Token`s
     tokens_len_pos: u32,
     /// Offset of `Program` in buffer, relative to position of `RawTransferData`
     program_offset: u32,
@@ -1315,6 +1427,19 @@ struct Constants {
     source_start_offset: u32,
     /// Offset of `u32` source text length, relative to position of `Program`
     source_len_offset: u32,
+    /// Offset of comments `Vec` pointer, relative to position of `Program`
+    comments_offset: u32,
+    /// Offset of comments `Vec` length, relative to position of `Program`
+    comments_len_offset: u32,
+    /// Size of `Comment` struct in bytes
+    comment_size: u32,
+    /// Offset of `kind` field within `Comment` struct
+    comment_kind_offset: u32,
+    /// Offset of `content` field within `Comment` struct.
+    /// JS side uses this byte as a "deserialized" flag for lazy deserialization of tokens/comments.
+    deserialized_flag_offset: u32,
+    /// Discriminant value for `CommentKind::Line`
+    comment_line_kind: u8,
     /// Size of `RawTransferData` in bytes
     raw_metadata_size: u32,
 }
@@ -1333,6 +1458,12 @@ fn generate_constants(consts: Constants) -> (String, TokenStream) {
         program_offset,
         source_start_offset,
         source_len_offset,
+        comments_offset,
+        comments_len_offset,
+        comment_size,
+        comment_kind_offset,
+        deserialized_flag_offset,
+        comment_line_kind,
         raw_metadata_size,
     } = consts;
 
@@ -1342,18 +1473,98 @@ fn generate_constants(consts: Constants) -> (String, TokenStream) {
 
     #[rustfmt::skip]
     let js_output = format!("
+        /**
+         * Total size of the transfer buffer in bytes (block size minus allocator metadata).
+         */
         export const BUFFER_SIZE = {buffer_size};
+
+        /**
+         * Required alignment of the transfer buffer (4 GiB).
+         */
         export const BUFFER_ALIGN = {BLOCK_ALIGN};
+
+        /**
+         * Size of the active data area in bytes (buffer size minus raw metadata and chunk footer).
+         */
         export const ACTIVE_SIZE = {active_size};
+
+        /**
+         * Byte offset of the data pointer within the buffer, divided by 4 (for `Uint32Array` indexing).
+         */
         export const DATA_POINTER_POS_32 = {data_pointer_pos_32};
+
+        /**
+         * Byte offset of the `is_ts` flag within the buffer.
+         */
         export const IS_TS_FLAG_POS = {is_ts_pos};
+
+        /**
+         * Byte offset of the `is_jsx` flag within the buffer.
+         */
         export const IS_JSX_FLAG_POS = {is_jsx_pos};
+
+        /**
+         * Byte offset of the `has_bom` flag within the buffer.
+         */
         export const HAS_BOM_FLAG_POS = {has_bom_pos};
+
+        /**
+         * Byte offset of the tokens offset within the buffer, divided by 4 (for `Uint32Array` indexing).
+         */
         export const TOKENS_OFFSET_POS_32 = {tokens_offset_pos_32};
+
+        /**
+         * Byte offset of the tokens length within the buffer, divided by 4 (for `Uint32Array` indexing).
+         */
         export const TOKENS_LEN_POS_32 = {tokens_len_pos_32};
+
+        /**
+         * Byte offset of the `program` field, relative to start of `RawTransferData`.
+         */
         export const PROGRAM_OFFSET = {program_offset};
+
+        /**
+         * Byte offset of pointer to start of source text, relative to start of `Program`.
+         */
         export const SOURCE_START_OFFSET = {source_start_offset};
+
+        /**
+         * Byte offset of length of source text, relative to start of `Program`.
+         */
         export const SOURCE_LEN_OFFSET = {source_len_offset};
+
+        /**
+         * Byte offset of comments `Vec` pointer, relative to start of `Program`.
+         */
+        export const COMMENTS_OFFSET = {comments_offset};
+
+        /**
+         * Byte offset of comments `Vec` length, relative to start of `Program`.
+         */
+        export const COMMENTS_LEN_OFFSET = {comments_len_offset};
+
+        /**
+         * Size of `Comment` struct in bytes.
+         */
+        export const COMMENT_SIZE = {comment_size};
+
+        /**
+         * Byte offset of `kind` field, relative to start of `Comment` struct.
+         */
+        export const COMMENT_KIND_OFFSET = {comment_kind_offset};
+
+        /**
+         * Byte offset of the deserialized flag within each token/comment entry.
+         *
+         * Corresponds to `content` field of `Comment` struct, and unused bytes in `Token`.
+         * Initialized to 0 by Rust. JS side sets to 1 after deserialization.
+         */
+        export const DESERIALIZED_FLAG_OFFSET = {deserialized_flag_offset};
+
+        /**
+         * Discriminant value for `CommentKind::Line`.
+         */
+        export const COMMENT_LINE_KIND = {comment_line_kind};
     ");
 
     let block_size = number_lit(BLOCK_SIZE);
@@ -1439,14 +1650,23 @@ fn get_constants(schema: &Schema) -> Constants {
         .field_by_name("program")
         .offset_64();
 
-    let source_start_offset = schema
-        .type_by_name("Program")
-        .as_struct()
-        .unwrap()
-        .field_by_name("source_text")
-        .offset_64();
+    let program_struct = schema.type_by_name("Program").as_struct().unwrap();
 
+    let source_start_offset = program_struct.field_by_name("source_text").offset_64();
     let source_len_offset = source_start_offset + STR_LEN_OFFSET;
+
+    let comments_field_offset = program_struct.field_by_name("comments").offset_64();
+    let comments_offset = comments_field_offset + VEC_PTR_FIELD_OFFSET;
+    let comments_len_offset = comments_field_offset + VEC_LEN_FIELD_OFFSET;
+
+    let comment_struct = schema.type_by_name("Comment").as_struct().unwrap();
+    let comment_size = comment_struct.layout_64().size;
+    let comment_kind_offset = comment_struct.field_by_name("kind").offset_64();
+    let deserialized_flag_offset = comment_struct.field_by_name("content").offset_64();
+
+    let comment_kind_enum = schema.type_by_name("CommentKind").as_enum().unwrap();
+    let comment_line_kind =
+        comment_kind_enum.variants.iter().find(|v| v.name() == "Line").unwrap().discriminant;
 
     Constants {
         buffer_size,
@@ -1460,6 +1680,12 @@ fn get_constants(schema: &Schema) -> Constants {
         program_offset,
         source_start_offset,
         source_len_offset,
+        comments_offset,
+        comments_len_offset,
+        comment_size,
+        comment_kind_offset,
+        deserialized_flag_offset,
+        comment_line_kind,
         raw_metadata_size,
     }
 }

@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.117.0] - 2026-03-09
+
+### 🐛 Bug Fixes
+
+- 291d867 transformer_plugins: Unwrap ChainExpression after define replacement removes optional markers (#20058) (IWANABETHATGUY)
+
 ## [0.114.0] - 2026-02-16
 
 ### 🚀 Features

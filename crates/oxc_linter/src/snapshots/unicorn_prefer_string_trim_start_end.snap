@@ -37,6 +37,15 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace with `trimStart`
 
+  ⚠ eslint-plugin-unicorn(prefer-string-trim-start-end): Prefer `trimEnd` over `trimRight`
+   ╭─[prefer_string_trim_start_end.tsx:3:18]
+ 2 │                 // comment
+ 3 │                 .trimRight/* comment */(
+   ·                  ─────────
+ 4 │                     /* comment */
+   ╰────
+  help: Replace with `trimEnd`
+
   ⚠ eslint-plugin-unicorn(prefer-string-trim-start-end): Prefer `trimStart` over `trimLeft`
    ╭─[prefer_string_trim_start_end.tsx:1:6]
  1 │ foo?.trimLeft()

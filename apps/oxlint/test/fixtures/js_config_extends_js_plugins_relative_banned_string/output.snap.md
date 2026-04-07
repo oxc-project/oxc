@@ -3,7 +3,7 @@
 
 # stdout
 ```
-Failed to build configuration from <fixture>/oxlint.config.ts.
+Failed to parse oxlint configuration file.
 
   x Relative JS plugin specifiers are not supported in configs provided via `extends` in `oxlint.config.ts`.
   | 

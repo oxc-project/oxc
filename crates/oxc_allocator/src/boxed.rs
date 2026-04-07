@@ -7,7 +7,8 @@ use std::{
     fmt::{self, Debug, Display, Formatter},
     hash::{Hash, Hasher},
     marker::PhantomData,
-    ops::{self, Deref},
+    mem,
+    ops::{Deref, DerefMut},
     ptr::{self, NonNull},
 };
 
@@ -149,20 +150,77 @@ impl<T: ?Sized> Box<'_, T> {
     }
 }
 
-impl<T: ?Sized> ops::Deref for Box<'_, T> {
+impl<T> Box<'static, [T]> {
+    /// Create a new empty `Box<[T]>`.
+    ///
+    /// This method does not allocate. The returned boxed slice is represented by a dangling,
+    /// correctly-aligned pointer with length 0, similar to how `Vec::new_in` produces an empty vector.
+    #[inline]
+    pub fn new_empty_boxed_slice() -> Self {
+        const { Self::ASSERT_T_IS_NOT_DROP };
+
+        // `NonNull::<T>::dangling()` yields a non-null, properly aligned pointer.
+        // We pair it with length 0 to construct a `NonNull<[T]>` representing an empty slice.
+        // Correct alignment is the only requirement for it to be sound to dereference this pointer
+        // to a slice, because the slice is empty.
+        // See: https://doc.rust-lang.org/std/slice/fn.from_raw_parts.html
+        let ptr = NonNull::dangling();
+        let slice_ptr = NonNull::slice_from_raw_parts(ptr, 0);
+
+        Self(slice_ptr, PhantomData)
+    }
+}
+
+impl<'a, T> Box<'a, [T]> {
+    /// Convert a boxed slice [`Box<[T]>`] into slice [`&'a [T]`].
+    ///
+    /// The returned slice has the same lifetime as the allocator.
+    //
+    // `#[inline(always)]` because this is a no-op. `Box<[T]>` and `&[T]` have the same layout.
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    pub fn into_bump_slice(self) -> &'a [T] {
+        let r = self.as_ref();
+        // Extend lifetime of reference to lifetime of the allocator.
+        // SAFETY: `self` is consumed by this method, so there cannot be any mutable references to it.
+        // The reference lives until the allocator is dropped or reset (`'a` lifetime).
+        // Don't need `mem::forget(self)` here, because `Box` does not implement `Drop`.
+        unsafe { mem::transmute::<&[T], &'a [T]>(r) }
+    }
+
+    /// Convert a boxed slice [`Box<[T]>`] into mutable slice [`&'a mut [T]`].
+    ///
+    /// The returned slice has the same lifetime as the allocator.
+    //
+    // `#[inline(always)]` because this is a no-op. `Box<[T]>` and `&mut [T]` have the same layout.
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    pub fn into_bump_slice_mut(mut self) -> &'a mut [T] {
+        let r = self.as_mut();
+        // Extend lifetime of reference to lifetime of the allocator.
+        // SAFETY: `self` is consumed by this method, so there cannot be any other references to it.
+        // The reference lives until the allocator is dropped or reset (`'a` lifetime).
+        // Don't need `mem::forget(self)` here, because `Box` does not implement `Drop`.
+        unsafe { mem::transmute::<&mut [T], &'a mut [T]>(r) }
+    }
+}
+
+impl<T: ?Sized> Deref for Box<'_, T> {
     type Target = T;
 
     #[inline]
     fn deref(&self) -> &T {
-        // SAFETY: self.0 is always a unique reference allocated from a Bump in Box::new_in
+        // SAFETY: `self.0` is always a unique reference allocated from a `Bump` in `Box::new_in`,
+        // or an empty slice allocated from `Box::new_empty_boxed_slice`
         unsafe { self.0.as_ref() }
     }
 }
 
-impl<T: ?Sized> ops::DerefMut for Box<'_, T> {
+impl<T: ?Sized> DerefMut for Box<'_, T> {
     #[inline]
     fn deref_mut(&mut self) -> &mut T {
-        // SAFETY: self.0 is always a unique reference allocated from a Bump in Box::new_in
+        // SAFETY: `self.0` is always a unique reference allocated from a `Bump` in `Box::new_in`,
+        // or an empty slice allocated from `Box::new_empty_boxed_slice`
         unsafe { self.0.as_mut() }
     }
 }
@@ -230,8 +288,9 @@ impl<T: Hash> Hash for Box<'_, T> {
 mod test {
     use std::hash::{DefaultHasher, Hash, Hasher};
 
+    use crate::{Allocator, Vec};
+
     use super::Box;
-    use crate::Allocator;
 
     #[test]
     fn box_deref_mut() {
@@ -240,6 +299,33 @@ mod test {
         let b = &mut *b;
         *b = allocator.alloc("v");
         assert_eq!(*b, "v");
+    }
+
+    #[test]
+    fn new_empty_boxed_slice() {
+        let b = Box::<[u32]>::new_empty_boxed_slice();
+        assert!(b.is_empty());
+        assert_eq!(b.len(), 0);
+        assert_eq!(&*b, &[] as &[u32]);
+    }
+
+    #[test]
+    fn boxed_slice_into_bump_slice() {
+        let allocator = Allocator::default();
+        let v = Vec::from_iter_in([1, 2, 3], &allocator);
+        let b = v.into_boxed_slice();
+        let slice = b.into_bump_slice();
+        assert_eq!(slice, &[1, 2, 3]);
+    }
+
+    #[test]
+    fn boxed_slice_into_bump_slice_mut() {
+        let allocator = Allocator::default();
+        let v = Vec::from_iter_in([10, 20, 30], &allocator);
+        let b = v.into_boxed_slice();
+        let slice = b.into_bump_slice_mut();
+        slice[1] = 99;
+        assert_eq!(slice, &[10, 99, 30]);
     }
 
     #[test]

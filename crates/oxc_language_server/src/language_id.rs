@@ -1,12 +1,14 @@
 /// Represents language IDs passed from the client in `textDocument/didOpen` notifications.
 ///
 /// These are used to select the appropriate parser strategy for a given file.
-/// It is the tool's responsibility to use the correct parser strategy for a file
-/// based on its file extension, but newly created files may not have an extension,
-/// so we rely on the language ID to determine which parser strategy to use.
+/// The language ID should be preferred over the file extension for determining the language of the content.
+/// The tool can fall back to using the file extension or other heuristics, if the language ID is unrecognized or unsupported.
+/// Files like `.oxlintrc.json` can support comments like jsonc.
+/// The editor/IDE should know the preferred language for such files, and send the appropriate language ID to the server.
 ///
-/// For a more complete list of known language identifiers, see:
+/// For a starting list of known language identifiers, see:
 /// <https://code.visualstudio.com/docs/languages/identifiers#_known-language-identifiers>
+/// Extensions of an editor can also contribute new language identifiers, so this list is not exhaustive.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct LanguageId(String);
 

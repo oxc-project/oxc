@@ -129,6 +129,7 @@ pub fn run() -> Result<(), io::Error> {
 
     let mut parser_out = table_header.clone();
     let mut semantic_out = table_header.clone();
+    let mut transformer_out = table_header.clone();
     let mut minifier_out = table_header;
 
     let mut allocator = Allocator::default();
@@ -194,9 +195,22 @@ pub fn run() -> Result<(), io::Error> {
 
         // Transform TypeScript to ESNext before minifying (minifier only works on esnext)
         let transform_options = TransformOptions::from_target("esnext").unwrap();
-        let _ =
-            Transformer::new(&allocator, std::path::Path::new(&file.file_name), &transform_options)
-                .build_with_scoping(scoping, &mut parsed.program);
+        let ((), transformer_stats) = record_stats_in(&allocator, || {
+            let _ = Transformer::new(
+                &allocator,
+                std::path::Path::new(&file.file_name),
+                &transform_options,
+            )
+            .build_with_scoping(scoping, &mut parsed.program);
+        });
+
+        transformer_out.push_str(&format_table_row(
+            file.file_name.as_str(),
+            file.source_text.len(),
+            &transformer_stats,
+            fixture_width,
+            width,
+        ));
 
         let ((), minifier_stats) = record_stats_in(&allocator, || {
             Minifier::new(minifier_options).minify(&allocator, &mut parsed.program);
@@ -213,6 +227,7 @@ pub fn run() -> Result<(), io::Error> {
 
     write_snapshot("tasks/track_memory_allocations/allocs_parser.snap", &parser_out)?;
     write_snapshot("tasks/track_memory_allocations/allocs_semantic.snap", &semantic_out)?;
+    write_snapshot("tasks/track_memory_allocations/allocs_transformer.snap", &transformer_out)?;
     write_snapshot("tasks/track_memory_allocations/allocs_minifier.snap", &minifier_out)?;
 
     Ok(())

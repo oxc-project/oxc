@@ -7,12 +7,14 @@ source: crates/oxc_linter/src/tester.rs
  1 │ // @ts-expect-error
    ·   ─────────────────
    ╰────
+  help: Remove the @ts-expect-error directive and fix the underlying TypeScript error instead. If you must suppress an error, consider using @ts-expect-error with a descriptive comment explaining why it's necessary.
 
   ⚠ typescript-eslint(ban-ts-comment): Do not use @ts-expect-error because it alters compilation errors.
    ╭─[ban_ts_comment.tsx:1:3]
  1 │ /* @ts-expect-error */
    ·   ──────────────────
    ╰────
+  help: Remove the @ts-expect-error directive and fix the underlying TypeScript error instead. If you must suppress an error, consider using @ts-expect-error with a descriptive comment explaining why it's necessary.
 
   ⚠ typescript-eslint(ban-ts-comment): Do not use @ts-expect-error because it alters compilation errors.
    ╭─[ban_ts_comment.tsx:2:3]
@@ -21,6 +23,7 @@ source: crates/oxc_linter/src/tester.rs
  3 │ ╰─▶  @ts-expect-error */
  4 │             
    ╰────
+  help: Remove the @ts-expect-error directive and fix the underlying TypeScript error instead. If you must suppress an error, consider using @ts-expect-error with a descriptive comment explaining why it's necessary.
 
   ⚠ typescript-eslint(ban-ts-comment): Do not use @ts-expect-error because it alters compilation errors.
    ╭─[ban_ts_comment.tsx:2:3]
@@ -29,6 +32,7 @@ source: crates/oxc_linter/src/tester.rs
  3 │ ╰─▶  @ts-expect-error */
  4 │             
    ╰────
+  help: Remove the @ts-expect-error directive and fix the underlying TypeScript error instead. If you must suppress an error, consider using @ts-expect-error with a descriptive comment explaining why it's necessary.
 
   ⚠ typescript-eslint(ban-ts-comment): Do not use @ts-expect-error because it alters compilation errors.
    ╭─[ban_ts_comment.tsx:2:3]
@@ -37,6 +41,7 @@ source: crates/oxc_linter/src/tester.rs
  3 │ ╰─▶  * @ts-expect-error */
  4 │             
    ╰────
+  help: Remove the @ts-expect-error directive and fix the underlying TypeScript error instead. If you must suppress an error, consider using @ts-expect-error with a descriptive comment explaining why it's necessary.
 
   ⚠ typescript-eslint(ban-ts-comment): Include a description after the @ts-expect-error directive to explain why the @ts-expect-error is necessary. The description must be 10 characters or longer.
    ╭─[ban_ts_comment.tsx:2:3]
@@ -45,6 +50,8 @@ source: crates/oxc_linter/src/tester.rs
  3 │ ╰─▶  * @ts-expect-error: TODO */
  4 │             
    ╰────
+  help: Add a description after @ts-expect-error that is at least 10 characters long, explaining why the directive is necessary. For example: `// @ts-expect-error: TS2345 - This is a known limitation with third-party types`
+  note: Requiring descriptions ensures that developers document why they're suppressing TypeScript errors, making it easier for future maintainers to understand the context and decide if the suppression is still necessary.
 
   ⚠ typescript-eslint(ban-ts-comment): Include a description after the @ts-expect-error directive to explain why the @ts-expect-error is necessary. The description must be 25 characters or longer.
    ╭─[ban_ts_comment.tsx:2:3]
@@ -53,6 +60,8 @@ source: crates/oxc_linter/src/tester.rs
  3 │ ╰─▶  * @ts-expect-error: TS1234 because xyz */
  4 │             
    ╰────
+  help: Add a description after @ts-expect-error that is at least 25 characters long, explaining why the directive is necessary. For example: `// @ts-expect-error: TS2345 - This is a known limitation with third-party types`
+  note: Requiring descriptions ensures that developers document why they're suppressing TypeScript errors, making it easier for future maintainers to understand the context and decide if the suppression is still necessary.
 
   ⚠ typescript-eslint(ban-ts-comment): The description for the @ts-expect-error directive must match the ^: TS\d+ because .+$ format.
    ╭─[ban_ts_comment.tsx:2:3]
@@ -61,6 +70,7 @@ source: crates/oxc_linter/src/tester.rs
  3 │ ╰─▶  * @ts-expect-error: TS1234 */
  4 │             
    ╰────
+  help: Update the description after @ts-expect-error to match the required pattern: ^: TS\d+ because .+$.
 
   ⚠ typescript-eslint(ban-ts-comment): The description for the @ts-expect-error directive must match the ^: TS\d+ because .+$ format.
    ╭─[ban_ts_comment.tsx:2:3]
@@ -69,24 +79,28 @@ source: crates/oxc_linter/src/tester.rs
  3 │ ╰─▶  * @ts-expect-error    : TS1234 */
  4 │             
    ╰────
+  help: Update the description after @ts-expect-error to match the required pattern: ^: TS\d+ because .+$.
 
   ⚠ typescript-eslint(ban-ts-comment): Do not use @ts-expect-error because it alters compilation errors.
    ╭─[ban_ts_comment.tsx:1:3]
  1 │ /** @ts-expect-error */
    ·   ───────────────────
    ╰────
+  help: Remove the @ts-expect-error directive and fix the underlying TypeScript error instead. If you must suppress an error, consider using @ts-expect-error with a descriptive comment explaining why it's necessary.
 
   ⚠ typescript-eslint(ban-ts-comment): Do not use @ts-expect-error because it alters compilation errors.
    ╭─[ban_ts_comment.tsx:1:3]
  1 │ // @ts-expect-error: Suppress next line
    ·   ─────────────────────────────────────
    ╰────
+  help: Remove the @ts-expect-error directive and fix the underlying TypeScript error instead. If you must suppress an error, consider using @ts-expect-error with a descriptive comment explaining why it's necessary.
 
   ⚠ typescript-eslint(ban-ts-comment): Do not use @ts-expect-error because it alters compilation errors.
    ╭─[ban_ts_comment.tsx:1:3]
  1 │ /////@ts-expect-error: Suppress next line
    ·   ───────────────────────────────────────
    ╰────
+  help: Remove the @ts-expect-error directive and fix the underlying TypeScript error instead. If you must suppress an error, consider using @ts-expect-error with a descriptive comment explaining why it's necessary.
 
   ⚠ typescript-eslint(ban-ts-comment): Do not use @ts-expect-error because it alters compilation errors.
    ╭─[ban_ts_comment.tsx:3:7]
@@ -95,36 +109,45 @@ source: crates/oxc_linter/src/tester.rs
    ·       ─────────────────────────────────────────
  4 │     console.log('hello');
    ╰────
+  help: Remove the @ts-expect-error directive and fix the underlying TypeScript error instead. If you must suppress an error, consider using @ts-expect-error with a descriptive comment explaining why it's necessary.
 
   ⚠ typescript-eslint(ban-ts-comment): Include a description after the @ts-expect-error directive to explain why the @ts-expect-error is necessary. The description must be 3 characters or longer.
    ╭─[ban_ts_comment.tsx:1:3]
  1 │ // @ts-expect-error
    ·   ─────────────────
    ╰────
+  help: Add a description after @ts-expect-error that is at least 3 characters long, explaining why the directive is necessary. For example: `// @ts-expect-error: TS2345 - This is a known limitation with third-party types`
+  note: Requiring descriptions ensures that developers document why they're suppressing TypeScript errors, making it easier for future maintainers to understand the context and decide if the suppression is still necessary.
 
   ⚠ typescript-eslint(ban-ts-comment): Include a description after the @ts-expect-error directive to explain why the @ts-expect-error is necessary. The description must be 10 characters or longer.
    ╭─[ban_ts_comment.tsx:1:3]
  1 │ // @ts-expect-error: TODO
    ·   ───────────────────────
    ╰────
+  help: Add a description after @ts-expect-error that is at least 10 characters long, explaining why the directive is necessary. For example: `// @ts-expect-error: TS2345 - This is a known limitation with third-party types`
+  note: Requiring descriptions ensures that developers document why they're suppressing TypeScript errors, making it easier for future maintainers to understand the context and decide if the suppression is still necessary.
 
   ⚠ typescript-eslint(ban-ts-comment): Include a description after the @ts-expect-error directive to explain why the @ts-expect-error is necessary. The description must be 25 characters or longer.
    ╭─[ban_ts_comment.tsx:1:3]
  1 │ // @ts-expect-error: TS1234 because xyz
    ·   ─────────────────────────────────────
    ╰────
+  help: Add a description after @ts-expect-error that is at least 25 characters long, explaining why the directive is necessary. For example: `// @ts-expect-error: TS2345 - This is a known limitation with third-party types`
+  note: Requiring descriptions ensures that developers document why they're suppressing TypeScript errors, making it easier for future maintainers to understand the context and decide if the suppression is still necessary.
 
   ⚠ typescript-eslint(ban-ts-comment): The description for the @ts-expect-error directive must match the ^: TS\d+ because .+$ format.
    ╭─[ban_ts_comment.tsx:1:3]
  1 │ // @ts-expect-error: TS1234
    ·   ─────────────────────────
    ╰────
+  help: Update the description after @ts-expect-error to match the required pattern: ^: TS\d+ because .+$.
 
   ⚠ typescript-eslint(ban-ts-comment): The description for the @ts-expect-error directive must match the ^: TS\d+ because .+$ format.
    ╭─[ban_ts_comment.tsx:1:3]
  1 │ // @ts-expect-error    : TS1234 because xyz
    ·   ─────────────────────────────────────────
    ╰────
+  help: Update the description after @ts-expect-error to match the required pattern: ^: TS\d+ because .+$.
 
   ⚠ typescript-eslint(ban-ts-comment): Use "@ts-expect-error" instead of @ts-ignore, as "@ts-ignore" will do nothing if the following line is error-free.
    ╭─[ban_ts_comment.tsx:1:3]
@@ -234,54 +257,67 @@ source: crates/oxc_linter/src/tester.rs
  1 │ // @ts-ignore
    ·   ───────────
    ╰────
+  help: Add a description after @ts-ignore that is at least 3 characters long, explaining why the directive is necessary. For example: `// @ts-ignore: TS2345 - This is a known limitation with third-party types`
+  note: Requiring descriptions ensures that developers document why they're suppressing TypeScript errors, making it easier for future maintainers to understand the context and decide if the suppression is still necessary.
 
   ⚠ typescript-eslint(ban-ts-comment): Include a description after the @ts-ignore directive to explain why the @ts-ignore is necessary. The description must be 3 characters or longer.
    ╭─[ban_ts_comment.tsx:1:3]
  1 │ // @ts-ignore         
    ·   ────────────────────
    ╰────
+  help: Add a description after @ts-ignore that is at least 3 characters long, explaining why the directive is necessary. For example: `// @ts-ignore: TS2345 - This is a known limitation with third-party types`
+  note: Requiring descriptions ensures that developers document why they're suppressing TypeScript errors, making it easier for future maintainers to understand the context and decide if the suppression is still necessary.
 
   ⚠ typescript-eslint(ban-ts-comment): Include a description after the @ts-ignore directive to explain why the @ts-ignore is necessary. The description must be 3 characters or longer.
    ╭─[ban_ts_comment.tsx:1:3]
  1 │ // @ts-ignore    .
    ·   ────────────────
    ╰────
+  help: Add a description after @ts-ignore that is at least 3 characters long, explaining why the directive is necessary. For example: `// @ts-ignore: TS2345 - This is a known limitation with third-party types`
+  note: Requiring descriptions ensures that developers document why they're suppressing TypeScript errors, making it easier for future maintainers to understand the context and decide if the suppression is still necessary.
 
   ⚠ typescript-eslint(ban-ts-comment): Include a description after the @ts-ignore directive to explain why the @ts-ignore is necessary. The description must be 25 characters or longer.
    ╭─[ban_ts_comment.tsx:1:3]
  1 │ // @ts-ignore: TS1234 because xyz
    ·   ───────────────────────────────
    ╰────
+  help: Add a description after @ts-ignore that is at least 25 characters long, explaining why the directive is necessary. For example: `// @ts-ignore: TS2345 - This is a known limitation with third-party types`
+  note: Requiring descriptions ensures that developers document why they're suppressing TypeScript errors, making it easier for future maintainers to understand the context and decide if the suppression is still necessary.
 
   ⚠ typescript-eslint(ban-ts-comment): The description for the @ts-ignore directive must match the ^: TS\d+ because .+$ format.
    ╭─[ban_ts_comment.tsx:1:3]
  1 │ // @ts-ignore: TS1234
    ·   ───────────────────
    ╰────
+  help: Update the description after @ts-ignore to match the required pattern: ^: TS\d+ because .+$.
 
   ⚠ typescript-eslint(ban-ts-comment): The description for the @ts-ignore directive must match the ^: TS\d+ because .+$ format.
    ╭─[ban_ts_comment.tsx:1:3]
  1 │ // @ts-ignore    : TS1234 because xyz
    ·   ───────────────────────────────────
    ╰────
+  help: Update the description after @ts-ignore to match the required pattern: ^: TS\d+ because .+$.
 
   ⚠ typescript-eslint(ban-ts-comment): Do not use @ts-nocheck because it alters compilation errors.
    ╭─[ban_ts_comment.tsx:1:3]
  1 │ // @ts-nocheck
    ·   ────────────
    ╰────
+  help: Remove the @ts-nocheck directive and fix the underlying TypeScript error instead. If you must suppress an error, consider using @ts-expect-error with a descriptive comment explaining why it's necessary.
 
   ⚠ typescript-eslint(ban-ts-comment): Do not use @ts-nocheck because it alters compilation errors.
    ╭─[ban_ts_comment.tsx:1:3]
  1 │ // @ts-nocheck
    ·   ────────────
    ╰────
+  help: Remove the @ts-nocheck directive and fix the underlying TypeScript error instead. If you must suppress an error, consider using @ts-expect-error with a descriptive comment explaining why it's necessary.
 
   ⚠ typescript-eslint(ban-ts-comment): Do not use @ts-nocheck because it alters compilation errors.
    ╭─[ban_ts_comment.tsx:1:3]
  1 │ // @ts-nocheck: Suppress next line
    ·   ────────────────────────────────
    ╰────
+  help: Remove the @ts-nocheck directive and fix the underlying TypeScript error instead. If you must suppress an error, consider using @ts-expect-error with a descriptive comment explaining why it's necessary.
 
   ⚠ typescript-eslint(ban-ts-comment): Do not use @ts-nocheck because it alters compilation errors.
    ╭─[ban_ts_comment.tsx:3:7]
@@ -290,42 +326,51 @@ source: crates/oxc_linter/src/tester.rs
    ·       ────────────────────────────────────
  4 │     console.log('hello');
    ╰────
+  help: Remove the @ts-nocheck directive and fix the underlying TypeScript error instead. If you must suppress an error, consider using @ts-expect-error with a descriptive comment explaining why it's necessary.
 
   ⚠ typescript-eslint(ban-ts-comment): Include a description after the @ts-nocheck directive to explain why the @ts-nocheck is necessary. The description must be 3 characters or longer.
    ╭─[ban_ts_comment.tsx:1:3]
  1 │ // @ts-nocheck
    ·   ────────────
    ╰────
+  help: Add a description after @ts-nocheck that is at least 3 characters long, explaining why the directive is necessary. For example: `// @ts-nocheck: TS2345 - This is a known limitation with third-party types`
+  note: Requiring descriptions ensures that developers document why they're suppressing TypeScript errors, making it easier for future maintainers to understand the context and decide if the suppression is still necessary.
 
   ⚠ typescript-eslint(ban-ts-comment): Include a description after the @ts-nocheck directive to explain why the @ts-nocheck is necessary. The description must be 25 characters or longer.
    ╭─[ban_ts_comment.tsx:1:3]
  1 │ // @ts-nocheck: TS1234 because xyz
    ·   ────────────────────────────────
    ╰────
+  help: Add a description after @ts-nocheck that is at least 25 characters long, explaining why the directive is necessary. For example: `// @ts-nocheck: TS2345 - This is a known limitation with third-party types`
+  note: Requiring descriptions ensures that developers document why they're suppressing TypeScript errors, making it easier for future maintainers to understand the context and decide if the suppression is still necessary.
 
   ⚠ typescript-eslint(ban-ts-comment): The description for the @ts-nocheck directive must match the ^: TS\d+ because .+$ format.
    ╭─[ban_ts_comment.tsx:1:3]
  1 │ // @ts-nocheck: TS1234
    ·   ────────────────────
    ╰────
+  help: Update the description after @ts-nocheck to match the required pattern: ^: TS\d+ because .+$.
 
   ⚠ typescript-eslint(ban-ts-comment): The description for the @ts-nocheck directive must match the ^: TS\d+ because .+$ format.
    ╭─[ban_ts_comment.tsx:1:3]
  1 │ // @ts-nocheck    : TS1234 because xyz
    ·   ────────────────────────────────────
    ╰────
+  help: Update the description after @ts-nocheck to match the required pattern: ^: TS\d+ because .+$.
 
   ⚠ typescript-eslint(ban-ts-comment): Do not use @ts-check because it alters compilation errors.
    ╭─[ban_ts_comment.tsx:1:3]
  1 │ // @ts-check
    ·   ──────────
    ╰────
+  help: Remove the @ts-check directive and fix the underlying TypeScript error instead. If you must suppress an error, consider using @ts-expect-error with a descriptive comment explaining why it's necessary.
 
   ⚠ typescript-eslint(ban-ts-comment): Do not use @ts-check because it alters compilation errors.
    ╭─[ban_ts_comment.tsx:1:3]
  1 │ // @ts-check: Suppress next line
    ·   ──────────────────────────────
    ╰────
+  help: Remove the @ts-check directive and fix the underlying TypeScript error instead. If you must suppress an error, consider using @ts-expect-error with a descriptive comment explaining why it's necessary.
 
   ⚠ typescript-eslint(ban-ts-comment): Do not use @ts-check because it alters compilation errors.
    ╭─[ban_ts_comment.tsx:3:7]
@@ -334,27 +379,34 @@ source: crates/oxc_linter/src/tester.rs
    ·       ──────────────────────────────────
  4 │     console.log('hello');
    ╰────
+  help: Remove the @ts-check directive and fix the underlying TypeScript error instead. If you must suppress an error, consider using @ts-expect-error with a descriptive comment explaining why it's necessary.
 
   ⚠ typescript-eslint(ban-ts-comment): Include a description after the @ts-check directive to explain why the @ts-check is necessary. The description must be 3 characters or longer.
    ╭─[ban_ts_comment.tsx:1:3]
  1 │ // @ts-check
    ·   ──────────
    ╰────
+  help: Add a description after @ts-check that is at least 3 characters long, explaining why the directive is necessary. For example: `// @ts-check: TS2345 - This is a known limitation with third-party types`
+  note: Requiring descriptions ensures that developers document why they're suppressing TypeScript errors, making it easier for future maintainers to understand the context and decide if the suppression is still necessary.
 
   ⚠ typescript-eslint(ban-ts-comment): Include a description after the @ts-check directive to explain why the @ts-check is necessary. The description must be 25 characters or longer.
    ╭─[ban_ts_comment.tsx:1:3]
  1 │ // @ts-check: TS1234 because xyz
    ·   ──────────────────────────────
    ╰────
+  help: Add a description after @ts-check that is at least 25 characters long, explaining why the directive is necessary. For example: `// @ts-check: TS2345 - This is a known limitation with third-party types`
+  note: Requiring descriptions ensures that developers document why they're suppressing TypeScript errors, making it easier for future maintainers to understand the context and decide if the suppression is still necessary.
 
   ⚠ typescript-eslint(ban-ts-comment): The description for the @ts-check directive must match the ^: TS\d+ because .+$ format.
    ╭─[ban_ts_comment.tsx:1:3]
  1 │ // @ts-check: TS1234
    ·   ──────────────────
    ╰────
+  help: Update the description after @ts-check to match the required pattern: ^: TS\d+ because .+$.
 
   ⚠ typescript-eslint(ban-ts-comment): The description for the @ts-check directive must match the ^: TS\d+ because .+$ format.
    ╭─[ban_ts_comment.tsx:1:3]
  1 │ // @ts-check    : TS1234 because xyz
    ·   ──────────────────────────────────
    ╰────
+  help: Update the description after @ts-check to match the required pattern: ^: TS\d+ because .+$.

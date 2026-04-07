@@ -90,7 +90,7 @@ impl Rule for NoExtendNative {
                 let reference = symbols.get_reference(reference_id);
                 let name = ctx.semantic().reference_name(reference);
                 // If the referenced name does not appear to be a global object, skip it.
-                if !ctx.env_contains_var(name) {
+                if !ctx.is_ecma_script_global(name) {
                     continue;
                 }
                 // If the referenced name is explicitly allowed, skip it.
@@ -115,6 +115,7 @@ impl Rule for NoExtendNative {
                         OxcDiagnostic::error(format!(
                             "{name} prototype is read-only, properties should not be added."
                         ))
+                        .with_help("Consider using a utility function or a class that extends the built-in object instead of defining properties on the prototype.")
                         .with_label(prop_assign.span()),
                     );
                 }
@@ -126,6 +127,7 @@ impl Rule for NoExtendNative {
                         OxcDiagnostic::error(format!(
                             "{name} prototype is read-only, properties should not be added."
                         ))
+                        .with_help("Consider using a utility function or a class that extends the built-in object instead of defining properties on the prototype.")
                         .with_label(define_property_call.span()),
                     );
                 }

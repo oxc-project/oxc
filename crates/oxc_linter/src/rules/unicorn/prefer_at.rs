@@ -24,8 +24,9 @@ use crate::{
 };
 
 fn prefer_at_diagnostic(span: Span, method: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Prefer `.at()` over `{method}`"))
-        .with_help("Use `.at()` for index access")
+    OxcDiagnostic::warn(format!("Prefer `.at()` over `{method}`."))
+        .with_help("Use `.at()` for index access.")
+        .with_note("https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at")
         .with_label(span)
 }
 
@@ -54,12 +55,16 @@ impl std::ops::Deref for PreferAt {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Prefer `.at()` method for index access and `String#charAt()`.
+    /// Prefer the [`Array#at()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at) and
+    /// [`String#at()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/at)
+    /// methods for index access.
+    ///
+    /// This rule also discourages using [`String#charAt()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/charAt).
     ///
     /// ### Why is this bad?
     ///
     /// The `.at()` method is more readable and consistent for accessing elements by index,
-    /// especially for negative indices which access elements from the end.
+    /// especially for negative indices which access elements from the end of the array or string.
     ///
     /// ### Examples
     ///

@@ -1027,7 +1027,7 @@ impl<'a> ObjectRestSpread<'a> {
                 if expr.is_literal() {
                     let span = expr.span();
                     let s = expr.to_js_string(&WithoutGlobalReferenceInformation {}).unwrap();
-                    let s = ctx.ast.atom_from_cow(&s);
+                    let s = ctx.ast.str_from_cow(&s);
                     let expr = ctx.ast.expression_string_literal(span, s, None);
                     return Some(ArrayExpressionElement::from(expr));
                 }

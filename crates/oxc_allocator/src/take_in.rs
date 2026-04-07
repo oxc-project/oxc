@@ -23,6 +23,8 @@ pub trait TakeIn<'a>: Dummy<'a> {
 
 impl<'a, T> TakeIn<'a> for Vec<'a, T> {}
 
+impl<'a, T> TakeIn<'a> for Box<'a, [T]> {}
+
 /// A trait to create a dummy AST node.
 pub trait Dummy<'a>: Sized {
     /// Create a dummy node.
@@ -43,6 +45,14 @@ impl<'a, T: Dummy<'a>> Dummy<'a> for Box<'a, T> {
     #[inline]
     fn dummy(allocator: &'a Allocator) -> Self {
         Box::new_in(Dummy::dummy(allocator), allocator)
+    }
+}
+
+impl<'a, T> Dummy<'a> for Box<'a, [T]> {
+    /// Create a dummy empty [`Box<[T]>`] boxed slice.
+    #[inline]
+    fn dummy(_allocator: &'a Allocator) -> Self {
+        Box::new_empty_boxed_slice()
     }
 }
 

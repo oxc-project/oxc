@@ -14,6 +14,7 @@ This crate provides specialized data structures and utilities that are used thro
 - **Slice iterators**: Enhanced iteration capabilities for slices
 - **Rope data structure**: Efficient text manipulation for large documents
 - **Box macros**: Macros for creating boxed arrays / slices (similar to `vec!` macro)
+- **Fieldless enums macro**: Macro for creating enums with a `VARIANTS` constant listing all variants
 
 ## Architecture
 

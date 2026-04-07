@@ -19,6 +19,28 @@ babelHelpers.decorate([
   babelHelpers.decorateMetadata("design:returntype", String)
 ], Getter.prototype, "regularMethod", null);
 
+class UntypedGetter {
+  get myProp() {
+    return "hello";
+  }
+}
+
+babelHelpers.decorate([
+  dec,
+  babelHelpers.decorateMetadata("design:type", Object),
+  babelHelpers.decorateMetadata("design:paramtypes", [])
+], UntypedGetter.prototype, "myProp", null);
+
+class UntypedSetter {
+  set myProp(value) {}
+}
+
+babelHelpers.decorate([
+  dec,
+  babelHelpers.decorateMetadata("design:type", Object),
+  babelHelpers.decorateMetadata("design:paramtypes", [Object])
+], UntypedSetter.prototype, "myProp", null);
+
 class Setter {
   set address(value) {}
   regularMethod() {

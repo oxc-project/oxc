@@ -17,7 +17,7 @@ pub struct NoSelfCompare;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow comparisons where both sides are exactly the same
+    /// Disallow comparisons where both sides are exactly the same.
     ///
     /// ### Why is this bad?
     ///
@@ -66,33 +66,33 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        ("if (x === y) { }", None),
-        ("if (1 === 2) { }", None),
-        ("y=x*x", None),
-        ("foo.bar.baz === foo.bar.qux", None),
-        ("class C { #field; foo() { this.#field === this['#field']; } }", None),
-        ("class C { #field; foo() { this['#field'] === this.#field; } }", None),
+        "if (x === y) { }",
+        "if (1 === 2) { }",
+        "y=x*x",
+        "foo.bar.baz === foo.bar.qux",
+        "class C { #field; foo() { this.#field === this['#field']; } }", // { "ecmaVersion": 2022 },
+        "class C { #field; foo() { this['#field'] === this.#field; } }", // { "ecmaVersion": 2022 }
     ];
 
     let fail = vec![
-        ("if (x === x) { }", None),
-        ("if (x !== x) { }", None),
-        ("if (x > x) { }", None),
-        ("if ('x' > 'x') { }", None),
-        ("do {} while (x === x)", None),
-        ("x === x", None),
-        ("x !== x", None),
-        ("x == x", None),
-        ("x != x", None),
-        ("x > x", None),
-        ("x < x", None),
-        ("x >= x", None),
-        ("x <= x", None),
-        ("x > (x)", None),
-        ("(x) == x", None),
-        ("(x) >= ((x))", None),
-        ("foo.bar().baz.qux >= foo.bar ().baz .qux", None),
-        ("class C { #field; foo() { this.#field === this.#field; } }", None),
+        "if (x === x) { }",
+        "if (x !== x) { }",
+        "if (x > x) { }",
+        "if ('x' > 'x') { }",
+        "do {} while (x === x)",
+        "x === x",
+        "x !== x",
+        "x == x",
+        "x != x",
+        "x > x",
+        "x < x",
+        "x >= x",
+        "x <= x",
+        "x > (x)",
+        "(x) == x",
+        "(x) >= ((x))",
+        "foo.bar().baz.qux >= foo.bar ().baz .qux",
+        "class C { #field; foo() { this.#field === this.#field; } }", // { "ecmaVersion": 2022 }
     ];
 
     Tester::new(NoSelfCompare::NAME, NoSelfCompare::PLUGIN, pass, fail).test_and_snapshot();

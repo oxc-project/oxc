@@ -33,7 +33,7 @@ pub struct NoConfusingSetTimeout;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow confusing usages of jest.setTimeout
+    /// Disallow confusing usages of `jest.setTimeout`.
     ///
     /// ### Why is this bad?
     ///

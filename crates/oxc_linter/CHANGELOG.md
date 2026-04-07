@@ -4,6 +4,271 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.59.0] - 2026-04-06
+
+### 🚀 Features
+
+- 9cfe57e linter/unicorn: Implement prefer-import-meta-properties rule (#20662) (Irfan - ئىرفان)
+- 1edb391 linter/eslint: Implement `no-restricted-exports` rule (#20592) (Nicolas Le Cam)
+- 0f12bcd linter/react: Implement  `hook-use-state` rule (#20986) (Khaled Labeb)
+- 7fdf722 linter/unicorn: Implement `no-useless-iterator-to-array` rule (#20945) (Mikhail Baev)
+- 39c8f2c linter/jest: Implement padding-around-after-all-blocks (#21034) (Sapphire)
+- ac39e51 linter/eslint-vitest-plugin: Prefer importing vitest globals (#20960) (Said Atrahouch)
+- 0b84de1 oxlint: Support allow option for prefer-promise-reject-errors (#20934) (camc314)
+- 23db851 linter/consistent-return: Move rule from nursery to suspicious (#20920) (camc314)
+- 9a27e32 linter/no-unnecessary-type-conversion: Move rule from nursery to suspicious (#20919) (camc314)
+- 1ca7b58 linter/dot-notation: Move rule from nursery to style (#20918) (camc314)
+- 73ba81a linter/consistent-type-exports: Move rule from nursery to style (#20917) (camc314)
+- b9199b1 linter/unicorn: Implement switch-case-break-position (#20872) (Mikhail Baev)
+- 3435ff8 linter: Implements `prefer-snapshot-hint` rule in Jest and Vitest (#20870) (Said Atrahouch)
+- 98510d2 linter: Implement react/prefer-function-component (#19652) (Connor Shea)
+- 871f9d9 linter: Implement no-useless-assignment (#15466) (Zhaoting Zhou)
+- 0f01fbd linter: Implement eslint/object-shorthand (#17688) (yue)
+
+### 🐛 Bug Fixes
+
+- 9bc77dd linter/no-unused-private-class-members: False positive with await expr (#21067) (camc314)
+- 60a57cd linter/const-comparisons: Detect equality contradictions (#21065) (camc314)
+- 2bb2be2 linter/no-array-index-key: False positive when index is passed as function argument (#21012) (bab)
+- 6492953 linter/no-this-in-sfc: Only flag `this` used as member expression object (#20961) (bab)
+- af89923 linter/no-namespace: Support glob pattern matching against basename (#21031) (bab)
+- 3b953bc linter/button-has-type: Ignore `document.createElement` calls (#21008) (Said Atrahouch)
+- 8c36070 linter/unicorn: Add support for `Array.from()` for `prefer-set-size` rule (#21016) (Mikhail Baev)
+- c1a48f0 linter: Detect vitest import from vite-plus/test (#20976) (Said Atrahouch)
+- ca79960 linter/no-array-index-key: Move span to `key` property (#20947) (camc314)
+- 2098274 linter: Add suggestion for `jest/prefer-equality-matcher` (#20925) (eryue0220)
+- 6eb77ec linter: Allow default-import barrels in import/named (#20757) (Bazyli Brzóska)
+- 9c218ef linter/eslint-vitest-plugin: Remove pending fix status for require-local-test-context-for-concurrent-snapshot (#20890) (Said Atrahouch)
+
+## [1.58.0] - 2026-03-30
+
+### 💥 BREAKING CHANGES
+
+- c0ebbce linter: [**BREAKING**] Report error on unknown builtin rule (#20464) (camc314)
+
+### 🚀 Features
+
+- 04f85e5 linter/no-unused-vars: Add safe-fix option for import fixes (#20839) (Marcell Toth)
+- 32a3706 linter/eslint-vitest-plugin: Implements `require-test-timeout` rule (#20806) (Said Atrahouch)
+- ae03653 linter: Implement suggestion for `eslint/no-useless-computed-key` rule (#20805) (Mikhail Baev)
+- 6624513 linter/prefer-string-starts-ends-with: Move rule from nursery to style (#20797) (camc314)
+- 58941f8 linter/prefer-readonly: Move rule from nursery to style (#20796) (camc314)
+- 8837ffd linter/prefer-regexp-exec: Move rule from nursery to style (#20795) (camc314)
+- 7e88871 linter/prefer-find: Move rule out of nursery (#20794) (camc314)
+- ca6e5bc linter/vitest: Implement prefer-called-exactly-once-with (#17562) (Said Atrahouch)
+- e80c0bf linter/eslint-plugin-vitest: Implement `require-mock-type-parameters` (#20785) (Said Atrahouch)
+- cec8b8f linter/vitest: Implement require-awaited-expect-poll rule (#20702) (Said Atrahouch)
+- d8e9d01 linter/eslint-plugin-vitest: Set `prefer-to-have-been-called-times` compatible with jest (#20703) (Said Atrahouch)
+- caf8231 linter: Enhance import plugin diagnostics with help messages (#20766) (离谱)
+- 43f4827 linter: Add help text to jest and promise diagnostics (#20640) (kszongic)
+- 16516de linter: Enhance types for `DummyRule` (#20751) (camc314)
+- 8e34150 linter/eslint-plugin-vitest: Sync rule with JS implementation (#20679) (Said Atrahouch)
+
+### 🐛 Bug Fixes
+
+- df057d5 linter/no-noninteractive-tabindex: Add missing composite widget … (#20860) (bab)
+- bb34073 linter: Mark vitest/valid-title as a compatible jest rules (#20463) (Nicolas Le Cam)
+- bd2c76b linter: Handle shadowed locals in no-restricted-globals (#20811) (Ulrich Stark)
+- 62e39be linter: Sort nested object keys in fix of `eslint/sort-keys` in one pass (#20838) (Ulrich Stark)
+- ab1070d oxlint/cli: Skip parsing base config again for nested config search (#20809) (Sysix)
+- c610666 linter/no-shadow: Respect env settings when builtinGlobals is enabled (#20429) (vvnikita74)
+- 6bb502f linter/no-invalid-void-type: Allow void generic args in heritage clauses (#20780) (camc314)
+- 365bb7d linter: Skip typed nested literals in explicit-module-boundary-types (#20776) (camc314)
+- 7e394ec linter: Clarify empty replacement fixer help text (#20698) (camc314)
+- d15a99c linter/jsx-curly-brace-presence: Flag empty string literals (#20690) (camc314)
+
+### 📚 Documentation
+
+- c722495 linter: Update JS Plugins + LS references (#20843) (camc314)
+- e1f9748 linter/jsdoc/require-property: Fix typo (#20792) (Benjaming61001)
+- be3dcc1 linter: Add note about node version + custom TS plugin (#19381) (camc314)
+
+## [1.57.0] - 2026-03-24
+
+### 🚀 Features
+
+- 2244984 linter: Implement `vitest/prefer-strict-boolean-matchers` rule (#20603) (Mikhail Baev)
+- c5f0ed3 linter/array-callback-return: Use CFG for analysis (#20498) (camc314)
+- f9a63ca linter: Implement `unicorn/custom-error-definition` rule (#20520) (Mikhail Baev)
+
+### 🐛 Bug Fixes
+
+- 5e893d7 jsdoc: Parse tags after interval notation in descriptions (#20046) (camc314)
+- 525c398 linter: Detect no-cycle with auto-discovered tsconfig paths (#20566) (camc314)
+- 9519380 linter/no-noninteractive-tabindex: Handle numeric tabIndex values on non-interactive elements (#20538) (camc314)
+- 65a7c3c linter/hex-escape: False positive for `String.raw` (#20497) (camc314)
+- d3cdc82 linter/escape-case: False positive for `String.raw` (#20496) (camc314)
+- 50d59e9 linter/explicit-function-return-type: False negative with HOF detection (#20495) (camc314)
+- d78c55d linter/no-unused-vars: Handle loop-carried self-reassignments (#20457) (camc314)
+- 6a307d1 linter/explicit-module-boundary-types: Fix false positives for satisfies-wrapped members (#20439) (camc314)
+- 0c57312 tsgolint: Use primary span for the disable directive (#20436) (camc314)
+
+### ⚡ Performance
+
+- 9a622c7 linter/plugins: Lazy deserialize tokens and comments (#20474) (overlookmotel)
+- 57b2e82 linter/no-required-prop-with-default: Restructure so lintgen works (#20537) (camc314)
+- 9ddfb42 linter/no-const-assign: Use `BindingPattern::get_symbol_ids` (#20533) (camc314)
+
+### 📚 Documentation
+
+- 6022ddb linter: Add note about options to `react/jsx_key` (#20484) (connorshea)
+- 5c104ff linter/curly: Fix incorrect examples code (#20421) (KUAI)
+
+## [1.56.0] - 2026-03-16
+
+### 🚀 Features
+
+- 7a2a7d0 linter: Implement `n/handle-callback-err` rule (#19616) (Mikhail Baev)
+
+### 🐛 Bug Fixes
+
+- 6eb5b01 linter/prefer-await-to-then: Ignore Promise static methods (#20347) (camc314)
+- 3ad7f53 linter/explicit-module-boundary-types: False positive with satisfies expr (#20309) (camc314)
+- f547401 linter/no-unused-private-class-members: Treat switch discriminants as read (#20307) (camc314)
+
+### ⚡ Performance
+
+- e4f7248 linter: Remove unnecessary clone of owned String in drain loop (#20388) (Boshen)
+- 4a67f1d linter: Eliminate Vec allocation in disable directive matching (#20387) (Boshen)
+- b0125c5 linter/plugins: Deserialize comments without AST (#20364) (overlookmotel)
+- 5474d0a semantic: V8-style walk-up reference resolution (#20292) (Boshen)
+
+### 📚 Documentation
+
+- 24490b5 linter: Improve formatting for 80ish rules' docs. (#20411) (connorshea)
+
+## [1.55.0] - 2026-03-12
+
+### 📚 Documentation
+
+- f339f10 linter/plugins: Promote JS plugins to alpha status (#20281) (overlookmotel)
+
+## [1.54.0] - 2026-03-12
+
+### 🐛 Bug Fixes
+
+- 89b7ca9 linter/no-duplicate-imports: Only check aggregated exports (#20178) (kennytm)
+- 691f556 linter/explicit-module-boundary-types: Ignore constructor callbacks (#20221) (camc314)
+
+### 📚 Documentation
+
+- 0c7da4f linter: Fix extra closing brace in example config. (#20253) (connorshea)
+
+## [1.53.0] - 2026-03-11
+
+### 🚀 Features
+
+- 1735215 linter: Implement `react/no-clone-element` rule. (#20129) (connorshea)
+- 68e6f6f linter: Implement `react/no-react-children` rule. (#20104) (connorshea)
+
+### 🐛 Bug Fixes
+
+- 05f6a09 linter/no-inline-comments: Deserialize rule options with serde (#20207) (camc314)
+- c7eb09d linter/default-case: Deserialize rule options with serde (#20206) (camc314)
+- 44e24e0 linter/exhaustive-deps: Ignore type-only typeof deps (#20201) (camc314)
+- 0b04998 linter/no-fallthrough: Deserialize rule options with serde (#20192) (camc314)
+- a1031cb linter/new-cap: Deserialize rule options with serde (#20161) (camc314)
+- ad27fd6 linter: Add help messages to import plugin diagnostics (#20158) (John Costa)
+- a9acb2b linter: Check `globals` entry for `no-undef`, only check es2026 globals for `no-extend-native` and `no-constant-binary-expression` (#20089) (Sysix)
+- 5559f0d linter/no-unused-vars: `reportUsedIgnorePattern` should not report used rest siblings (#20108) (Don Isaac)
+
+### 📚 Documentation
+
+- 542a04a linter: Add a link to the cyclomatic complexity Wikipedia article in `eslint/complexity` (#20174) (connorshea)
+
+## [1.52.0] - 2026-03-09
+
+### 🚀 Features
+
+- 61bf388 linter: Add `options.reportUnusedDisableDirectives` to config file (#19799) (Peter Wagenet)
+- 0337c6d linter: Implement typescript/no-unecessary-type-conversion (#19955) (camc314)
+- 2919313 linter: Introduce denyWarnings config options (#19926) (camc314)
+- a607119 linter: Introduce maxWarnings config option (#19777) (camc314)
+
+### 🐛 Bug Fixes
+
+- b6e9499 linter: Fix the logic for `unicorn/prefer-dom-node-remove` to handle literal callees as well as arguments. (#20059) (connorshea)
+- 3874ae1 linter: Update `unicorn/prefer-query-selector` to also catch `getElementsByName()`. (#20060) (connorshea)
+- 77c93fb linter: Handle array-type shorthand inside union members (#20034) (camc314)
+- 50eb160 linter/no-unused-vars: Allow unused type params in ambient module blocks (#19615) (Don Isaac)
+- 1dd0d21 linter/no-restricted-imports: Apply regex pattern checks to side-effect imports (#20028) (camc314)
+- eea201c unicorn/prefer-string-slice: Avoid unsafe autofix for substr-to-slice (#20010) (camc314)
+- 753e27e linter/role-supports-aria-props: Add `aria-posinset` to supported `option` ARIA properties (#20003) (JongKyung Lee)
+- 27ee4fc linter/no-loss-of-precision: Avoid double rounding for negative exponents (#19999) (camc314)
+- 77a94bb linter: Avoid no-loss-of-precision false positive for 3e-308 (#19992) (camc314)
+- 6245c56 linter/no-unused-private-class-members: Treat logical lhs access as usage (#19991) (camc314)
+- 65891e3 linter: Avoid prefer-const false positive for mixed-scope destructuring (#19982) (camc314)
+- 89991fe linter: Avoid prefer-const false positive for operator reassignments (#19975) (camc314)
+- d40a942 linter/no-useless-constructor: Mark fixer as suggestion (#19961) (camc314)
+- ccbd959 linter/prefer-code-point: Report String.fromCharCode member references (#19931) (camc314)
+- 14fbbfc linter: Add help text to oxc/no-rest-spread-properties rule (#19900) (Subin Kim)
+
+### ⚡ Performance
+
+- 94b597a linter/plugins: Store tokens as a `Box<[Token]>` (#19969) (overlookmotel)
+
+### 📚 Documentation
+
+- 7538f09 linter: Improve `import/extensions` and `import/no-named-as-default` rule docs. (#20053) (connorshea)
+- 1f909cf linter: Improve docs for `unicorn/require-post-message-target-origin` rule. (#20061) (connorshea)
+- 6c0e0b5 linter: Add oxlint.config.ts to the config docs. (#19941) (connorshea)
+- 160e423 linter: Add a note that the typeAware and typeCheck options require oxlint-tsgolint (#19940) (connorshea)
+- d54c275 linter: Improve rule docs for 27 unicorn rules (#19903) (connorshea)
+
+## [1.51.0] - 2026-03-02
+
+### 🚀 Features
+
+- 2e0e1d0 linter/no-unused-vars: Add experimental fix mode controls (off|suggestion|fix) (#19774) (camc314)
+- f34f6fa linter: Introduce typeCheck config option (#19764) (camc314)
+- 694be7d linter: Introduce typeAware as config options (#19614) (camc314)
+- 655c38f semantic: Add "did you mean?" suggestions to undefined name errors (#19102) (copilot-swe-agent)
+- e97a57e linter/id-length: Use serde to deserialize rule options (#19636) (camc314)
+- c4a3677 parser: Report error for initializer in ambient context (#19187) (camc314)
+- 346045a linter/id-length: Add `checkGeneric` option (#19634) (camc314)
+
+### 🐛 Bug Fixes
+
+- 1b7a937 linter: Correct double-comparisons fix with swapped operands (#19846) (camc314)
+- c308857 linter/consistent_type_imports: Add missing help and notes to diagnostics (#19827) (Daniel Osmond)
+- 7682e5a linter/plugins: Decode escapes in identifier tokens (#19838) (overlookmotel)
+- f368fcd linter/consistent_type_assertions: Add missing with_help and with_note to diagnostics (#19826) (Daniel Osmond)
+- 86d5037 linter: Add help text to no-extend-native, no-useless-backreference (#19733) (Anthony Amaro)
+- 50e8eff linter: Add .with_help() to operator-assignment, no-nonoctal-decimal-escape (#19732) (Anthony Amaro)
+- 1417bdc linter/no-wrapper-object-types: Add help messages to missing diagnostics (#19771) (Daniel Osmond)
+- 0838477 linter/ban_ts_comment: Add help and notes to missing diagnostics (#19781) (Daniel Osmond)
+- e8c77cf linter/adjacent_overload_signatures: Add missing diagnostics (#19780) (Daniel Osmond)
+- 28834ac linter/ban_types: Add missing help and note to diagnostics (#19782) (Daniel Osmond)
+- fd938d3 linter/prefer-enum-initializers: Add help messages to missing diagnostics (#19772) (Daniel Osmond)
+- eb928ee linter/no-dynamic-delete: Add help messages to missing diagnostics (#19768) (Daniel Osmond)
+- a985666 linter/no-empty-interface: Add help messages to missing diagnostics (#19769) (Daniel Osmond)
+- 2dc0ceb linter/no-extra-non-null-assertion: Add help messages to missing diagnostics (#19770) (Daniel Osmond)
+- 95d5d66 linter/no-dupe-keys: Handle `__proto__` proto setters in  (#19762) (camc314)
+- 24ff0db linter/exhaustive-deps: False positive for member expressions in IIFEs (#19751) (Dennis Chen)
+- 7243a58 linter/no-use-before-define: Honor `ignoreTypeReferences` when value and type name collisions (#19747) (Dimava)
+- eefd818 linter/explicit-module-boundary-types: Add help messages to missing diagnostics (#19736) (Daniel Osmond)
+- 0440e9a linter: Add help text to no_control_regex, no_fallthrough, no_param_reassign (#19655) (Anthony Amaro)
+- e84cb2f react/display-name: Handle merged type+value context symbols (#19608) (camc314)
+- ce7e253 linter/prefer-object-from-entries: Require exact path match in unicorn helper (#19687) (camc314)
+- b2b7a55 estree/tokens: Generate tokens for files with BOM (#19535) (overlookmotel)
+- 0722721 linter/jsx-curly-brace-presence: False positive with prop & mixed quotes (#19674) (camc314)
+- 3496acd linter: Enhance diagnostic help messages for eslint rules (#19653) (Anthony Amaro)
+- e384e94 linter: Enhance help diagnostic messages for more eslint rules (#19658) (Anthony Amaro)
+- a4d5b34 linter: Avoid non-promise catch false positives (#19574) (camc314)
+- 5706f38 linter: `unicorn/no-array-callback-reference` skip `Effect.*` array-like methods name. (#19633) (Said Atrahouch)
+
+### ⚡ Performance
+
+- 05ccf9f linter/plugins: Transfer tokens via raw transfer (#19893) (overlookmotel)
+- 4b0611a estree/tokens: Introduce `ESTreeTokenConfig` trait (#19842) (overlookmotel)
+- ec88f6a estree/tokens: Serialize tokens while visiting AST (#19726) (overlookmotel)
+- 6a6513c linter/plugins: Use Oxc tokens in plugins (#19498) (camc314)
+
+### 📚 Documentation
+
+- d86f59e linter: Improve docs for no-useless-concat, mark as pending fixer. (#19859) (connorshea)
+- dc0ff73 linter/no-useless-constructor: Warn for parameter properties as well (#19638) (Ole Asteo)
+
 ## [1.50.0] - 2026-02-23
 
 ### 🚀 Features
