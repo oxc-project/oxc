@@ -4,6 +4,8 @@
 
 mod cmp;
 mod edit_distance;
+#[cfg(feature = "serialize")]
+mod serialize;
 mod source_type;
 mod span;
 
@@ -19,6 +21,10 @@ pub use source_type::{
     VALID_EXTENSIONS,
 };
 pub use span::{GetSpan, GetSpanMut, SPAN, Span};
+
+// Only here to make it available in `generated/assert_layouts` module
+#[cfg(debug_assertions)]
+use span::I32Dummy;
 
 mod generated {
     #[cfg(debug_assertions)]

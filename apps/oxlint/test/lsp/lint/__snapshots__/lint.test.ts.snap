@@ -145,7 +145,7 @@ exports[`LSP linting > config options > should apply config from unused-disable-
 unused-disable-directive-from-config/test.ts
 --- Diagnostics ---------
 > 1 | // oxlint-disable-next-line debugger
-    |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Error: Unused oxlint-disable directive (no problems were reported).
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Error: Unused oxlint-disable directive (no problems were reported).
   2 | console.log("This directive is not used");
   3 |
 --------------------"

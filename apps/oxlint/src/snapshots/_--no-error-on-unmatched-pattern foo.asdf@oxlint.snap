@@ -2,11 +2,10 @@
 source: apps/oxlint/src/tester.rs
 ---
 ########## 
-arguments: foo.asdf
+arguments: --no-error-on-unmatched-pattern foo.asdf
 working directory: 
 ----------
-No files found to lint. Please check your paths and ignore patterns.
 Finished in <variable>ms on 0 files with 93 rules using 1 threads.
 ----------
-CLI result: LintNoFilesFound
+CLI result: LintSucceeded
 ----------

@@ -330,6 +330,7 @@ impl<'a> ContextHost<'a> {
 
         for unused_disable_comment in unused_disable_comments {
             let span = unused_disable_comment.span;
+            let fix_span = unused_disable_comment.fix_span;
             match &unused_disable_comment.r#type {
                 RuleCommentType::All => {
                     // eslint-disable
@@ -338,7 +339,7 @@ impl<'a> ContextHost<'a> {
                             .with_label(span)
                             .with_severity(rule_severity),
                         PossibleFixes::Single(
-                            Fix::delete(span)
+                            Fix::delete(fix_span)
                                 .with_kind(FixKind::Suggestion)
                                 .with_message(fix_message),
                         ),

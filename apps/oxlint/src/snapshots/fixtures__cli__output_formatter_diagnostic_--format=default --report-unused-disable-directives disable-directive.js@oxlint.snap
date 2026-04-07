@@ -7,26 +7,26 @@ working directory: fixtures/cli/output_formatter_diagnostic
 ----------
 
   ! Unused eslint-disable directive (no problems were reported).
-    ,-[disable-directive.js:9:3]
+    ,-[disable-directive.js:9:1]
   8 | 
   9 | // eslint-disable-next-line no-debugger
-    :   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
  10 | const foo = 3;
     `----
 
   ! Unused eslint-disable directive (no problems were reported).
-    ,-[disable-directive.js:12:3]
+    ,-[disable-directive.js:12:1]
  11 | 
  12 | // oxlint-disable-next-line no-debugger
-    :   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
  13 | const bar = 3;
     `----
 
   ! Unused eslint-disable directive (no problems were reported).
-    ,-[disable-directive.js:15:3]
+    ,-[disable-directive.js:15:1]
  14 | 
  15 | // oxlint-disable-next-line eslint/no-debugger
-    :   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
  16 | const baz = 3;
     `----
 

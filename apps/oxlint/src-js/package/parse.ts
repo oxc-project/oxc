@@ -75,7 +75,7 @@ export function parse(path: string, sourceText: string, options?: ParseOptions) 
   // Check parsing succeeded.
   // 0 is used as sentinel value to indicate parsing failed.
   // TODO: Get parsing error details from Rust to display nicely.
-  const programOffset = buffer.uint32[DATA_POINTER_POS_32];
+  const programOffset = buffer.int32[DATA_POINTER_POS_32];
   if (programOffset === 0) throw new Error("Parsing failed");
 }
 
@@ -100,6 +100,7 @@ export function initBuffer() {
   const offset = getBufferOffset(new Uint8Array(arrayBuffer));
   buffer = new Uint8Array(arrayBuffer, offset, BUFFER_SIZE) as BufferWithArrays;
   buffer.uint32 = new Uint32Array(arrayBuffer, offset, BUFFER_SIZE / 4);
+  buffer.int32 = new Int32Array(arrayBuffer, offset, BUFFER_SIZE / 4);
   buffer.float64 = new Float64Array(arrayBuffer, offset, BUFFER_SIZE / 8);
 
   // Store in `buffers`, at index 0
