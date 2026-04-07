@@ -143,6 +143,7 @@ pub(crate) mod eslint {
     pub mod no_prototype_builtins;
     pub mod no_redeclare;
     pub mod no_regex_spaces;
+    pub mod no_restricted_exports;
     pub mod no_restricted_globals;
     pub mod no_restricted_imports;
     pub mod no_return_assign;
@@ -354,6 +355,7 @@ pub(crate) mod jest {
     pub mod no_test_return_statement;
     pub mod no_unneeded_async_expect_function;
     pub mod no_untyped_mock_factory;
+    pub mod padding_around_after_all_blocks;
     pub mod padding_around_test_blocks;
     pub mod prefer_called_with;
     pub mod prefer_comparison_matcher;
@@ -391,6 +393,7 @@ pub(crate) mod react {
     pub mod forbid_dom_props;
     pub mod forbid_elements;
     pub mod forward_ref_uses_ref;
+    pub mod hook_use_state;
     pub mod iframe_missing_sandbox;
     pub mod jsx_boolean_value;
     pub mod jsx_curly_brace_presence;
@@ -456,6 +459,7 @@ pub(crate) mod unicorn {
     pub mod consistent_empty_array_spread;
     pub mod consistent_existence_index_check;
     pub mod consistent_function_scoping;
+    pub mod consistent_template_literal_escape;
     pub mod custom_error_definition;
     pub mod empty_brace_spaces;
     pub mod error_message;
@@ -507,6 +511,7 @@ pub(crate) mod unicorn {
     pub mod no_useless_collection_argument;
     pub mod no_useless_error_capture_stack_trace;
     pub mod no_useless_fallback_in_spread;
+    pub mod no_useless_iterator_to_array;
     pub mod no_useless_length_check;
     pub mod no_useless_promise_resolve_reject;
     pub mod no_useless_spread;
@@ -535,6 +540,7 @@ pub(crate) mod unicorn {
     pub mod prefer_dom_node_text_content;
     pub mod prefer_event_target;
     pub mod prefer_global_this;
+    pub mod prefer_import_meta_properties;
     pub mod prefer_includes;
     pub mod prefer_keyboard_event_key;
     pub mod prefer_logical_operator_over_ternary;

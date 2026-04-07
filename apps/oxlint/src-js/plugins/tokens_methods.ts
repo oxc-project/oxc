@@ -1284,9 +1284,12 @@ export function getTokenByRangeStart<Options extends RangeOptions | null | undef
     len = tokensAndCommentsLen;
   }
 
-  // Binary search for token starting at the given index
+  // Binary search for token starting at the given index.
+  //
+  // Note: Source text is limited to 1 GiB max, so offsets cannot exceed 2^30.
+  // This makes it safe to use `>> 1` for division by 2 (which is faster than `>>> 1`).
   for (let lo = 0, hi = len; lo < hi; ) {
-    const mid = (lo + hi) >>> 1;
+    const mid = (lo + hi) >> 1;
     const tokenStart = uint32[mid << 2];
     if (tokenStart < offset) {
       lo = mid + 1;
@@ -1528,7 +1531,10 @@ function collectEntries(
  *
  * Returns `length` if all entries have `start` < `offset`.
  *
- * @param u32 - Uint32Array buffer (tokens, comments, or tokensAndComments)
+ * Note: Source text is limited to 1 GiB max, so number of tokens cannot exceed 2^30.
+ * This makes it safe to use `>> 1` for division by 2 below (which is faster than `>>> 1`).
+ *
+ * @param uint32 - Uint32Array buffer (tokens, comments, or tokensAndComments)
  * @param offset - Source offset to search for
  * @param startIndex - Starting entry index for the search
  * @param length - Total number of entries in the buffer
@@ -1541,7 +1547,7 @@ export function firstTokenAtOrAfter(
   length: number,
 ): number {
   for (let endIndex = length; startIndex < endIndex; ) {
-    const mid = (startIndex + endIndex) >>> 1;
+    const mid = (startIndex + endIndex) >> 1;
     if (uint32[mid << 2] < offset) {
       startIndex = mid + 1;
     } else {

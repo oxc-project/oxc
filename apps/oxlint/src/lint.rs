@@ -1143,6 +1143,14 @@ mod test {
     }
 
     #[test]
+    fn test_nested_config_subdirectory_as_cwd() {
+        let args = &[];
+        Tester::new()
+            .with_cwd("fixtures/cli/nested_config/package4-as-cwd".into())
+            .test_and_snapshot(args);
+    }
+
+    #[test]
     fn test_nested_config_explicit_config_precedence() {
         // `--config` takes absolute precedence over nested configs, and will be used for
         // linting all files rather than the nested configuration files.
@@ -1380,6 +1388,13 @@ mod test {
     #[cfg(not(target_endian = "big"))]
     fn test_tsgolint_type_check_via_config_file() {
         let args = &["-c", "config-type-check.json"];
+        Tester::new().with_cwd("fixtures/cli/tsgolint_type_error".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_tsgolint_type_check_with_zero_rules_enabled() {
+        let args = &["-c", "config-type-check-zero-rules.json"];
         Tester::new().with_cwd("fixtures/cli/tsgolint_type_error".into()).test_and_snapshot(args);
     }
 

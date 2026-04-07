@@ -111,6 +111,8 @@ pub struct ESTreeMeta {
     pub ts_type: Option<String>,
     /// JS code for raw transfer deserializer.
     pub raw_deser: Option<String>,
+    /// `true` if raw deserializer can be included inline in object definition.
+    pub raw_deser_inline: bool,
     /// `true` if meta type is for a struct field which is present only in JS AST.
     pub is_js: bool,
     /// `true` if meta type is for a struct field which is present only in TS AST.

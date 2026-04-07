@@ -32,11 +32,11 @@ use crate::{
 // This is advantageous for 2 reasons:
 //
 // 1. V8 stores small integers ("SMI"s) inline, rather than on heap, which is more performant.
-//    But when V8 pointer compression is enabled, 31 bits is the max integer considered an SMI.
-//    So using 32 bits for offsets would be a large perf hit when pointer compression is enabled.
+//    But 31 bits is the max positive integer considered an SMI.
+//
 // 2. JS bitwise operators work only on signed 32-bit integers, with 32nd bit as sign bit.
-//    So avoiding the 32nd bit being set enables using `>>` bitshift operator, which may be cheaper
-//    than `>>>`, without offsets being interpreted as negative.
+//    So avoiding the 32nd bit being set enables using `>>` bitshift operator,
+//    which is cheaper than `>>>`, and does not risk offsets being interpreted as negative.
 
 const BUMP_ALIGN: usize = 16;
 

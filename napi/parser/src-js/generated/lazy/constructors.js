@@ -13783,6 +13783,10 @@ function constructOptionU64(pos, ast) {
   return constructU64(pos + 8, ast);
 }
 
+function constructI32(pos, ast) {
+  return ast.buffer.int32[pos >> 2];
+}
+
 function constructOptionNameSpan(pos, ast) {
   if (ast.buffer.uint32[(pos + 8) >> 2] === 0 && ast.buffer.uint32[(pos + 12) >> 2] === 0)
     return null;

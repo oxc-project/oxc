@@ -629,6 +629,13 @@ impl LanguageServer for Backend {
 
         let document = self.file_system.read().await.get_document(&uri);
 
+        // Remove the internal cache for the document.
+        // When the editor requests `textDocument/codeAction`, it may use its diagnostic cache to generate actions.
+        // This could cause code actions to be generated with stale diagnostics if the cache is not cleared here.
+        // This should never happen, because this server expects `textDocument/diagnostic` is requested beforehand.
+        // Sadly, some editors/extensions have bugs, so we need to make sure the cache is cleared on change.
+        worker.remove_uri_cache(&uri).await;
+
         if self.capabilities.get().is_some_and(|cap| cap.diagnostic_mode == DiagnosticMode::Push) {
             match worker.run_diagnostic_on_change(&document).await {
                 Err(err) => {

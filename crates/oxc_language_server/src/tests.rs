@@ -1,4 +1,7 @@
-use std::collections::VecDeque;
+use std::{
+    collections::VecDeque,
+    sync::{Arc, Mutex},
+};
 
 use serde_json::{Value, json};
 use tokio::io::{AsyncReadExt, AsyncWriteExt, DuplexStream};
@@ -16,17 +19,22 @@ use crate::{
 #[derive(Default)]
 pub struct FakeToolBuilder {
     diagnostic_mode: DiagnosticMode,
+    cache_uris: Option<Arc<Mutex<Vec<Uri>>>>,
 }
 
 impl FakeToolBuilder {
     pub fn new(diagnostic_mode: DiagnosticMode) -> Self {
-        Self { diagnostic_mode }
+        Self { diagnostic_mode, cache_uris: None }
+    }
+
+    pub fn with_cache_tracking(self, cache_uris: Arc<Mutex<Vec<Uri>>>) -> Self {
+        Self { cache_uris: Some(cache_uris), ..self }
     }
 }
 
 impl ToolBuilder for FakeToolBuilder {
     fn build_boxed(&self, _root_uri: &Uri, _options: serde_json::Value) -> Box<dyn Tool> {
-        Box::new(FakeTool)
+        Box::new(FakeTool { cache_uris: self.cache_uris.clone() })
     }
 
     fn server_capabilities(
@@ -46,7 +54,9 @@ impl ToolBuilder for FakeToolBuilder {
     }
 }
 
-pub struct FakeTool;
+pub struct FakeTool {
+    cache_uris: Option<Arc<Mutex<Vec<Uri>>>>,
+}
 
 pub const FAKE_COMMAND: &str = "fake.command";
 
@@ -149,6 +159,9 @@ impl Tool for FakeTool {
     }
 
     fn run_diagnostic(&self, document: &TextDocument) -> DiagnosticResult {
+        if let Some(cache_uris) = &self.cache_uris {
+            cache_uris.lock().unwrap().push(document.uri.clone());
+        }
         if document.uri.as_str().ends_with("diagnostics.config") {
             return Ok(vec![(
                 document.uri.clone(),
@@ -177,6 +190,12 @@ impl Tool for FakeTool {
     fn run_diagnostic_on_save(&self, document: &TextDocument) -> DiagnosticResult {
         // For this fake tool, we use the same logic as run_diagnostic
         self.run_diagnostic(document)
+    }
+
+    fn remove_uri_cache(&self, uri: &Uri) {
+        if let Some(cache_uris) = &self.cache_uris {
+            cache_uris.lock().unwrap().retain(|cached_uri| cached_uri != uri);
+        }
     }
 }
 
@@ -564,7 +583,7 @@ fn diagnostic(id: i64, uri: &str) -> Request {
 
 #[cfg(test)]
 mod test_suite {
-    use std::sync::Arc;
+    use std::sync::{Arc, Mutex};
 
     use serde_json::{Value, json};
     use tower_lsp_server::{
@@ -1429,6 +1448,56 @@ mod test_suite {
         server.send_request(did_save(&file, "changed text")).await; // should be the same as last content
         server.send_request(did_close(&file)).await;
         server.shutdown(3).await;
+    }
+
+    #[tokio::test]
+    async fn test_did_change_clears_uri_cache() {
+        let init_options = InitializeRequestOptions { pull_mode: true, ..Default::default() };
+        let cache_uris = Arc::new(Mutex::new(Vec::new()));
+
+        let mut server = TestServer::new_initialized(
+            |client| {
+                Backend::new(
+                    client,
+                    server_info(),
+                    Arc::new(
+                        FakeToolBuilder::new(DiagnosticMode::Pull)
+                            .with_cache_tracking(Arc::clone(&cache_uris)),
+                    ),
+                )
+            },
+            initialize_request(init_options),
+        )
+        .await;
+
+        let file = format!("{WORKSPACE}/file.txt");
+        server.send_request(did_open(&file, "some text")).await;
+
+        server.send_request(diagnostic(3, &file)).await;
+        let diagnostic_response = server.recv_response().await;
+        assert!(diagnostic_response.is_ok());
+        assert_eq!(diagnostic_response.id(), &Id::Number(3));
+
+        {
+            let removed_cache_uris = cache_uris.lock().unwrap();
+            assert_eq!(removed_cache_uris.len(), 1);
+            assert_eq!(removed_cache_uris[0], file.parse().unwrap());
+        }
+
+        server.send_request(did_change(&file, "changed text")).await;
+
+        // didChange is a notification; use a follow-up request to ensure it was processed.
+        server.send_request(test_configuration_request(4)).await;
+        let response = server.recv_response().await;
+        assert!(response.is_ok());
+        assert_eq!(response.id(), &Id::Number(4));
+
+        {
+            let removed_cache_uris = cache_uris.lock().unwrap();
+            assert_eq!(removed_cache_uris.len(), 0);
+        }
+
+        server.shutdown(5).await;
     }
 
     #[tokio::test]

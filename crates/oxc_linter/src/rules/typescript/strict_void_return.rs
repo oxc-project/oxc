@@ -46,7 +46,7 @@ declare_oxc_lint!(
     /// ```
     StrictVoidReturn(tsgolint),
     typescript,
-    nursery,
+    pedantic,
     config = StrictVoidReturnConfig,
 );
 

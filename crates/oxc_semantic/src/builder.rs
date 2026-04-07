@@ -105,6 +105,9 @@ pub struct SemanticBuilder<'a> {
     stats: Option<Stats>,
     excess_capacity: f64,
 
+    /// Should enum member values be evaluated?
+    enum_eval: bool,
+
     /// Should additional syntax checks be performed?
     ///
     /// See: [`crate::checker::check`]
@@ -162,6 +165,7 @@ impl<'a> SemanticBuilder<'a> {
             jsdoc: JSDocBuilder::default(),
             stats: None,
             excess_capacity: 0.0,
+            enum_eval: false,
             check_syntax_error: false,
             #[cfg(feature = "cfg")]
             cfg: None,
@@ -183,6 +187,19 @@ impl<'a> SemanticBuilder<'a> {
     #[must_use]
     pub fn with_check_syntax_error(mut self, yes: bool) -> Self {
         self.check_syntax_error = yes;
+        self
+    }
+
+    /// Enable or disable evaluation of TypeScript enum member values.
+    ///
+    /// When enabled, enum member values are computed during semantic analysis
+    /// and stored in [`Scoping`], allowing the transformer to inline const enum
+    /// member accesses.
+    ///
+    /// By default, this is `false`.
+    #[must_use]
+    pub fn with_enum_eval(mut self, yes: bool) -> Self {
+        self.enum_eval = yes;
         self
     }
 
@@ -2012,7 +2029,15 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_member_expression(&mut self, it: &MemberExpression<'a>) {
         // A.B = 1;
         // ^^^ Can't treat A as a Write reference since it's A's property(B) that changes.
-        self.current_reference_flags -= ReferenceFlags::Write;
+        // For write-only references (simple `=` assignment), mark as MemberWriteTarget
+        // so the minifier can identify property-write-only references.
+        // Compound assignments (`+=`) and update expressions (`++`) have Read|Write flags,
+        // so `is_write_only()` is false and they correctly skip this branch.
+        if self.current_reference_flags.is_write_only() {
+            self.current_reference_flags = ReferenceFlags::Read | ReferenceFlags::MemberWriteTarget;
+        } else {
+            self.current_reference_flags -= ReferenceFlags::Write;
+        }
 
         match it {
             MemberExpression::ComputedMemberExpression(it) => {
@@ -2021,6 +2046,12 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             MemberExpression::StaticMemberExpression(it) => self.visit_static_member_expression(it),
             MemberExpression::PrivateFieldExpression(it) => self.visit_private_field_expression(it),
         }
+
+        // Clear any unconsumed flags to prevent leaking to sibling AST nodes.
+        // When the object is `this` or a call expression (not an IdentifierReference),
+        // the flags set above aren't consumed by `resolve_reference_usages`,
+        // and would incorrectly propagate to the next visited identifier (e.g., the RHS).
+        self.current_reference_flags = ReferenceFlags::empty();
     }
 
     fn visit_simple_assignment_target(&mut self, it: &SimpleAssignmentTarget<'a>) {
@@ -2372,6 +2403,10 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.visit_span(&decl.span);
         self.visit_binding_identifier(&decl.id);
         self.visit_ts_enum_body(&decl.body);
+        // Evaluate enum member values after all members are bound
+        if self.enum_eval {
+            crate::ts_enum::eval::evaluate_enum_members(decl, &mut self.scoping);
+        }
         self.leave_node(kind);
     }
 

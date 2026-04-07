@@ -171,8 +171,8 @@ impl ESTree for CatchParameterConverter<'_, '_> {
     ts_type = "ParamPattern[]",
     raw_deser = "
         const params = DESER[Vec<FormalParameter>](POS_OFFSET.items);
-        if (uint32[(POS_OFFSET.rest) >> 2] !== 0 && uint32[(POS_OFFSET.rest + 4) >> 2] !== 0) {
-            pos = uint32[(POS_OFFSET.rest) >> 2];
+        if (int32[(POS_OFFSET.rest) >> 2] !== 0 && int32[(POS_OFFSET.rest + 4) >> 2] !== 0) {
+            pos = int32[(POS_OFFSET.rest) >> 2];
 
             let start, end;
             const previousParent = parent;
@@ -185,8 +185,8 @@ impl ESTree for CatchParameterConverter<'_, '_> {
                     typeAnnotation: null,
                     value: null,
                 }),
-                start: start = DESER[u32]( POS_OFFSET<FormalParameterRest>.rest.span.start ),
-                end: end = DESER[u32]( POS_OFFSET<FormalParameterRest>.rest.span.end ),
+                start: start = DESER[i32]( POS_OFFSET<FormalParameterRest>.rest.span.start ),
+                end: end = DESER[i32]( POS_OFFSET<FormalParameterRest>.rest.span.end ),
                 ...(RANGE && { range: [start, end] }),
                 ...(PARENT && { parent: previousParent }),
             };
@@ -255,7 +255,7 @@ impl ESTree for FormalParameterRest<'_> {
     raw_deser = "
         let param;
         const previousParent = parent;
-        const hasInitializer = uint32[(POS_OFFSET.initializer) >> 2] !== 0 && uint32[(POS_OFFSET.initializer + 4) >> 2] !== 0;
+        const hasInitializer = int32[(POS_OFFSET.initializer) >> 2] !== 0 && int32[(POS_OFFSET.initializer + 4) >> 2] !== 0;
 
         if (IS_TS) {
             const accessibility = DESER[Option<TSAccessibility>](POS_OFFSET.accessibility),
@@ -273,8 +273,8 @@ impl ESTree for FormalParameterRest<'_> {
                         right: null,
                         optional,
                         typeAnnotation: null,
-                        start: start = DESER[u32]( POS_OFFSET.span.start ),
-                        end: end = DESER[u32]( POS_OFFSET.span.end ),
+                        start: start = DESER[i32]( POS_OFFSET.span.start ),
+                        end: end = DESER[i32]( POS_OFFSET.span.end ),
                         ...(RANGE && { range: [start, end] }),
                         ...(PARENT && { parent: previousParent }),
                     };
@@ -305,8 +305,8 @@ impl ESTree for FormalParameterRest<'_> {
                         param.end = typeAnnotation.end;
                         if (RANGE) param.range[1] = typeAnnotation.end;
                     } else if (optional) {
-                        param.end = DESER[u32]( POS_OFFSET.span.end );
-                        if (RANGE) param.range[1] = DESER[u32]( POS_OFFSET.span.end );
+                        param.end = DESER[i32]( POS_OFFSET.span.end );
+                        if (RANGE) param.range[1] = DESER[i32]( POS_OFFSET.span.end );
                     }
                     if (PARENT) parent = previousParent;
                 }
@@ -320,8 +320,8 @@ impl ESTree for FormalParameterRest<'_> {
                     parameter: null,
                     readonly,
                     static: false,
-                    start: start = DESER[u32]( POS_OFFSET.span.start ),
-                    end: end = DESER[u32]( POS_OFFSET.span.end ),
+                    start: start = DESER[i32]( POS_OFFSET.span.start ),
+                    end: end = DESER[i32]( POS_OFFSET.span.end ),
                     ...(RANGE && { range: [start, end] }),
                     ...(PARENT && { parent: previousParent }),
                 };
@@ -369,7 +369,7 @@ impl ESTree for FormalParameterRest<'_> {
                         param.parameter.end = paramTypeAnnotation.end;
                         if (RANGE) param.parameter.range[1] = paramTypeAnnotation.end;
                     } else if (paramOptional) {
-                        const paramEnd = DESER[u32]( POS_OFFSET.span.end );
+                        const paramEnd = DESER[i32]( POS_OFFSET.span.end );
                         const pattern = param.parameter;
                         param.parameter.end = paramEnd;
                         if (RANGE) param.parameter.range[1] = paramEnd;
@@ -384,8 +384,8 @@ impl ESTree for FormalParameterRest<'_> {
                     type: 'AssignmentPattern',
                     left: null,
                     right: null,
-                    start: start = DESER[u32]( POS_OFFSET.span.start ),
-                    end: end = DESER[u32]( POS_OFFSET.span.end ),
+                    start: start = DESER[i32]( POS_OFFSET.span.start ),
+                    end: end = DESER[i32]( POS_OFFSET.span.end ),
                     ...(RANGE && { range: [start, end] }),
                     ...(PARENT && { parent: previousParent }),
                 };
@@ -767,8 +767,8 @@ impl ESTree for AssignmentTargetPropertyIdentifierInit<'_> {
         node = parent = {
             type: 'ParenthesizedExpression',
             expression: null,
-            start: start = DESER[u32]( POS_OFFSET.span.start ),
-            end: end = DESER[u32]( POS_OFFSET.span.end ),
+            start: start = DESER[i32]( POS_OFFSET.span.start ),
+            end: end = DESER[i32]( POS_OFFSET.span.end ),
             ...(RANGE && { range: [start, end] }),
             ...(PARENT && { parent }),
         };

@@ -17,7 +17,7 @@ export const BUFFER_ALIGN = 4294967296;
 export const ACTIVE_SIZE = 2147483552;
 
 /**
- * Byte offset of the data pointer within the buffer, divided by 4 (for `Uint32Array` indexing).
+ * Byte offset of the data pointer within the buffer, divided by 4 (for `Int32Array` indexing).
  */
 export const DATA_POINTER_POS_32 = 536870900;
 
