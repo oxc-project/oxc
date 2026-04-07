@@ -1,10 +1,9 @@
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{Span, VALID_EXTENSIONS};
 
 use crate::{
     context::{ContextHost, LintContext},
-    loader::LINT_PARTIAL_LOADER_EXTENSIONS,
     rule::Rule,
     utils::is_empty_stmt,
 };
@@ -117,8 +116,7 @@ impl Rule for NoEmptyFile {
     }
 
     fn should_run(&self, ctx: &ContextHost) -> bool {
-        ctx.file_extension()
-            .is_some_and(|ext| !LINT_PARTIAL_LOADER_EXTENSIONS.iter().any(|e| *e == ext))
+        ctx.file_extension().is_some_and(|ext| VALID_EXTENSIONS.iter().any(|e| *e == ext))
     }
 }
 

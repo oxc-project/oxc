@@ -1,25 +1,34 @@
 use std::{error::Error, fmt, path::Path};
 
-use oxc_span::SourceType;
-
+mod parse;
 mod partial_loader;
 mod source;
-pub use partial_loader::{LINT_PARTIAL_LOADER_EXTENSIONS, LINTABLE_EXTENSIONS, PartialLoader};
+mod transform;
+use oxc_diagnostics::OxcDiagnostic;
+use oxc_span::VALID_EXTENSIONS;
+pub use parse::{LinterParseResult, parse_javascript_source, parse_vue_source};
+pub use partial_loader::{LINT_PARTIAL_LOADER_EXTENSIONS, PartialLoader};
 pub use source::JavaScriptSource;
+pub use transform::{LINT_TRANSFORM_LOADER_EXTENSIONS, TransformLoader};
 
 // TODO: use oxc_resolver::FileSystem. We can't do so until that crate exposes FileSystemOs
 // externally.
 #[derive(Default, Clone)]
 pub struct Loader;
 
+type PossibleParseResult<'a> =
+    Option<Vec<(Result<LinterParseResult<'a>, Vec<OxcDiagnostic>>, JavaScriptSource<'a>)>>;
+
+/// All valid JavaScript/TypeScript extensions, plus additional framework files that
+/// contain JavaScript/TypeScript code in them (e.g., Astro, Svelte, etc.).
+pub const LINTABLE_EXTENSIONS: &[&str] = constcat::concat_slices!([&str]: VALID_EXTENSIONS, LINT_TRANSFORM_LOADER_EXTENSIONS, LINT_PARTIAL_LOADER_EXTENSIONS);
+
 impl Loader {
     pub fn can_load<P: AsRef<Path>>(path: P) -> bool {
         let path = path.as_ref();
-        SourceType::from_path(path).is_ok()
-            || path
-                .extension()
-                .and_then(std::ffi::OsStr::to_str)
-                .is_some_and(|ext| LINT_PARTIAL_LOADER_EXTENSIONS.contains(&ext))
+        path.extension()
+            .and_then(std::ffi::OsStr::to_str)
+            .is_some_and(|ext| LINTABLE_EXTENSIONS.contains(&ext))
     }
 }
 

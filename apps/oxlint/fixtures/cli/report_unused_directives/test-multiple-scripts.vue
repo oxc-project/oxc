@@ -2,7 +2,7 @@
     <div>Hello World</div>
 </template>
 
-<script>
+<script lang="ts">
 // eslint-disable-next-line no-debugger
 console.log('regular script');
 
@@ -10,7 +10,7 @@ console.log('regular script');
 debugger;
 </script>
 
-<script setup>
+<script setup lang="ts">
 // eslint-disable
 const unusedVariable1 = 42;
 

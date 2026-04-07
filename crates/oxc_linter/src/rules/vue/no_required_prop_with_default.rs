@@ -17,8 +17,8 @@ use crate::{
     AstNode,
     context::LintContext,
     fixer::{RuleFix, RuleFixer},
-    frameworks::FrameworkOptions,
     rule::Rule,
+    utils::is_in_vue_setup,
 };
 
 fn no_required_prop_with_default_diagnostic(span: Span, prop_name: &str) -> OxcDiagnostic {
@@ -84,14 +84,14 @@ impl Rule for NoRequiredPropWithDefault {
         match node.kind() {
             AstKind::CallExpression(call_expr) => {
                 if ctx.file_extension().is_some_and(|ext| ext == "vue") {
-                    Self::run_on_vue(node.id(), call_expr, ctx);
+                    Self::run_on_vue(node, call_expr, ctx);
                 } else {
                     Self::check_define_component(call_expr, ctx);
                 }
             }
             AstKind::ExportDefaultDeclaration(export_default_decl)
                 if ctx.file_extension().is_some_and(|ext| ext == "vue")
-                    && ctx.frameworks_options() != FrameworkOptions::VueSetup =>
+                    && !is_in_vue_setup(ctx, node.scope_id()) =>
             {
                 Self::run_on_composition(export_default_decl, ctx);
             }
@@ -101,9 +101,9 @@ impl Rule for NoRequiredPropWithDefault {
 }
 
 impl NoRequiredPropWithDefault {
-    fn run_on_vue<'a>(node_id: NodeId, call_expr: &CallExpression<'a>, ctx: &LintContext<'a>) {
-        if ctx.frameworks_options() == FrameworkOptions::VueSetup {
-            Self::run_on_setup(node_id, call_expr, ctx);
+    fn run_on_vue<'a>(node: &AstNode<'a>, call_expr: &CallExpression<'a>, ctx: &LintContext<'a>) {
+        if is_in_vue_setup(ctx, node.scope_id()) {
+            Self::run_on_setup(node.id(), call_expr, ctx);
         } else {
             Self::check_define_component(call_expr, ctx);
         }

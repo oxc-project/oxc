@@ -9,7 +9,12 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{AstNode, context::LintContext, frameworks::FrameworkOptions, rule::Rule};
+use crate::{
+    AstNode,
+    context::{ContextHost, LintContext},
+    rule::Rule,
+    utils::is_in_vue_setup,
+};
 
 fn no_arrow_functions_in_watch_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("You should not use an arrow function to define a watcher.")
@@ -74,6 +79,10 @@ declare_oxc_lint!(
 
 impl Rule for NoArrowFunctionsInWatch {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        if is_in_vue_setup(ctx, node.scope_id()) {
+            return;
+        }
+
         match node.kind() {
             AstKind::ExportDefaultDeclaration(export_default_decl) => {
                 check_export_default_declaration(&export_default_decl.declaration, ctx);
@@ -85,8 +94,8 @@ impl Rule for NoArrowFunctionsInWatch {
         }
     }
 
-    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
-        ctx.frameworks_options() != FrameworkOptions::VueSetup
+    fn should_run(&self, ctx: &ContextHost) -> bool {
+        ctx.frameworks().is_vue()
     }
 }
 

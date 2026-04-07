@@ -13,7 +13,12 @@ use oxc_span::Span;
 use rustc_hash::FxHashMap;
 
 use crate::module_record::{ImportEntry, ImportImportName};
-use crate::{AstNode, context::LintContext, frameworks::FrameworkOptions, rule::Rule};
+use crate::{
+    AstNode,
+    context::{ContextHost, LintContext},
+    rule::Rule,
+    utils::is_in_vue_setup,
+};
 
 fn no_lifecycle_after_await_diagnostic(span: Span, hook_name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
@@ -85,6 +90,10 @@ const LIFECYCLE_HOOKS: &[&str] = &[
 
 impl Rule for NoLifecycleAfterAwait {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        if is_in_vue_setup(ctx, node.scope_id()) {
+            return;
+        }
+
         match node.kind() {
             // e.g. `export default { setup() {} }`
             AstKind::ExportDefaultDeclaration(export_decl) => {
@@ -108,9 +117,8 @@ impl Rule for NoLifecycleAfterAwait {
         }
     }
 
-    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
-        ctx.file_extension().is_some_and(|ext| ext == "vue")
-            && ctx.frameworks_options() != FrameworkOptions::VueSetup
+    fn should_run(&self, ctx: &ContextHost) -> bool {
+        ctx.frameworks().is_vue()
     }
 }
 

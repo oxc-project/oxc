@@ -1,2 +1,2 @@
 <script>debugger;</script>
-<script>debugger;</script>
+<script setup>debugger;</script>

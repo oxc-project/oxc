@@ -8,8 +8,8 @@ use serde::{Deserialize, Serialize};
 use crate::{
     AstNode,
     context::{ContextHost, LintContext},
-    frameworks::FrameworkOptions,
     rule::{DefaultRuleConfig, Rule},
+    utils::is_in_vue_setup,
 };
 
 fn use_runtime_declaration_diagnostic(span: Span) -> OxcDiagnostic {
@@ -95,6 +95,10 @@ impl Rule for DefinePropsDeclaration {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else { return };
 
+        if !is_in_vue_setup(ctx, node.scope_id()) {
+            return;
+        }
+
         // only check call Expression which is `defineProps`
         if call_expr
             .callee
@@ -119,7 +123,7 @@ impl Rule for DefinePropsDeclaration {
     }
 
     fn should_run(&self, ctx: &ContextHost<'_>) -> bool {
-        ctx.frameworks_options() == FrameworkOptions::VueSetup && ctx.source_type().is_typescript()
+        ctx.frameworks().is_vue() && ctx.source_type().is_typescript()
     }
 }
 
