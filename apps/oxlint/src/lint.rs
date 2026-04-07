@@ -1393,6 +1393,13 @@ mod test {
 
     #[test]
     #[cfg(not(target_endian = "big"))]
+    fn test_tsgolint_type_check_with_zero_rules_enabled() {
+        let args = &["-c", "config-type-check-zero-rules.json"];
+        Tester::new().with_cwd("fixtures/cli/tsgolint_type_error".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
     fn test_tsgolint_type_check_false_via_config_file() {
         let args = &["-c", "config-type-check-false.json"];
         Tester::new().with_cwd("fixtures/cli/tsgolint_type_error".into()).test_and_snapshot(args);

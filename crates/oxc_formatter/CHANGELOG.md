@@ -4,6 +4,14 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.44.0] - 2026-04-06
+
+### 🐛 Bug Fixes
+
+- 139ddd9 formatter: Handle leading comment after array elision (#20987) (leaysgur)
+- d10df39 formatter: Resolve pending space in fits measurer before expanded-mode early exit (#20954) (Dunqing)
+- f9ef1bd formatter: Avoid breaking after `=>` when arrow body has JSDoc type cast (#20857) (bab)
+
 ## [0.43.0] - 2026-03-30
 
 ### 🚀 Features

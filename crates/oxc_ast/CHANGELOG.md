@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.124.0] - 2026-04-06
+
+### ⚡ Performance
+
+- 0503a78 napi/parser, linter/plugins: Faster deserialization of `raw` fields (#20923) (overlookmotel)
+
 ## [0.123.0] - 2026-03-30
 
 ### 🚀 Features

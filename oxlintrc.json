@@ -29,7 +29,8 @@
     "unicode-bom": ["error", "never"],
     "typescript/consistent-indexed-object-style": ["error", "record"],
     "typescript/ban-ts-comment": ["error", { "ts-expect-error": "allow-with-description" }],
-    "vitest/require-mock-type-parameters": "off"
+    "vitest/require-mock-type-parameters": "off",
+    "vitest/prefer-snapshot-hint": "off"
   },
   "overrides": [
     {

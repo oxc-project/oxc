@@ -134,9 +134,9 @@ expression: json
       "markdownDescription": "Enforce single attribute per line in HTML, Vue, and JSX.\n\n- Default: `false`"
     },
     "singleQuote": {
-      "description": "Use single quotes instead of double quotes.\n\nFor JSX, you can set the `jsxSingleQuote` option.\n\n- Default: `false`",
+      "description": "Use single quotes instead of double quotes.\n\nFor JSX, you can set the `jsxSingleQuote` option.\n\n- Default: `false`\n- Overrides `.editorconfig.quote_type`",
       "type": "boolean",
-      "markdownDescription": "Use single quotes instead of double quotes.\n\nFor JSX, you can set the `jsxSingleQuote` option.\n\n- Default: `false`"
+      "markdownDescription": "Use single quotes instead of double quotes.\n\nFor JSX, you can set the `jsxSingleQuote` option.\n\n- Default: `false`\n- Overrides `.editorconfig.quote_type`"
     },
     "sortImports": {
       "description": "Sort import statements.\n\nUsing the similar algorithm as [eslint-plugin-perfectionist/sort-imports](https://perfectionist.dev/rules/sort-imports).\nFor details, see each field's documentation.\n\nPass `true` or an object to enable with defaults, or omit/set `false` to disable.\n\n- Default: Disabled",
@@ -363,9 +363,9 @@ expression: json
           "markdownDescription": "Enforce single attribute per line in HTML, Vue, and JSX.\n\n- Default: `false`"
         },
         "singleQuote": {
-          "description": "Use single quotes instead of double quotes.\n\nFor JSX, you can set the `jsxSingleQuote` option.\n\n- Default: `false`",
+          "description": "Use single quotes instead of double quotes.\n\nFor JSX, you can set the `jsxSingleQuote` option.\n\n- Default: `false`\n- Overrides `.editorconfig.quote_type`",
           "type": "boolean",
-          "markdownDescription": "Use single quotes instead of double quotes.\n\nFor JSX, you can set the `jsxSingleQuote` option.\n\n- Default: `false`"
+          "markdownDescription": "Use single quotes instead of double quotes.\n\nFor JSX, you can set the `jsxSingleQuote` option.\n\n- Default: `false`\n- Overrides `.editorconfig.quote_type`"
         },
         "sortImports": {
           "description": "Sort import statements.\n\nUsing the similar algorithm as [eslint-plugin-perfectionist/sort-imports](https://perfectionist.dev/rules/sort-imports).\nFor details, see each field's documentation.\n\nPass `true` or an object to enable with defaults, or omit/set `false` to disable.\n\n- Default: Disabled",

@@ -4,6 +4,18 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.44.0] - 2026-04-06
+
+### 🚀 Features
+
+- 35cf6e8 oxfmt: Add node version hint for ts config import failures (#21046) (camc314)
+
+### 🐛 Bug Fixes
+
+- 9d45511 oxfmt: Propagate file write errors instead of panicking (#20997) (leaysgur)
+- 4216380 oxfmt: Support `.editorconfig` `tab_width` fallback (#20988) (leaysgur)
+- d10df39 formatter: Resolve pending space in fits measurer before expanded-mode early exit (#20954) (Dunqing)
+
 ## [0.43.0] - 2026-03-30
 
 ### 🚀 Features

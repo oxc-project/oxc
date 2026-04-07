@@ -158,6 +158,7 @@ export interface Oxfmtrc {
    * For JSX, you can set the `jsxSingleQuote` option.
    *
    * - Default: `false`
+   * - Overrides `.editorconfig.quote_type`
    */
   singleQuote?: boolean;
   /**
@@ -435,6 +436,7 @@ export interface FormatConfig {
    * For JSX, you can set the `jsxSingleQuote` option.
    *
    * - Default: `false`
+   * - Overrides `.editorconfig.quote_type`
    */
   singleQuote?: boolean;
   /**

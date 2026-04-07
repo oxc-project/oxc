@@ -154,6 +154,20 @@ nested/deep/test.json
 --------------------"
 `;
 
+exports[`editorconfig > quote_type maps to singleQuote 1`] = `
+"--- FILE -----------
+test.js
+--- BEFORE ---------
+const a = "hello";
+const b = "world";
+
+--- AFTER ----------
+const a = 'hello';
+const b = 'world';
+
+--------------------"
+`;
+
 exports[`editorconfig > tab_width fallback when indent_size is not set 1`] = `
 "--- FILE -----------
 test.js
