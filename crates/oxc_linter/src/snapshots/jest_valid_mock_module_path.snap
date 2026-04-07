@@ -1,0 +1,52 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint-plugin-jest(valid-mock-module-path): Disallow mocking of non-existing module paths
+   ╭─[valid_mock_module_path.tsx:1:11]
+ 1 │ jest.mock('../module/does/not/exist')
+   ·           ──────────────────────────
+   ╰────
+  help: Module path '../module/does/not/exist' does not exist or is not exported
+
+  ⚠ eslint-plugin-jest(valid-mock-module-path): Disallow mocking of non-existing module paths
+   ╭─[valid_mock_module_path.tsx:1:11]
+ 1 │ jest.mock("../file/does/not/exist.ts")
+   ·           ───────────────────────────
+   ╰────
+  help: Module path "../file/does/not/exist.ts" does not exist or is not exported
+
+  ⚠ eslint-plugin-jest(valid-mock-module-path): Disallow mocking of non-existing module paths
+   ╭─[valid_mock_module_path.tsx:1:11]
+ 1 │ jest.mock("./fixtures/module/foo.jsx")
+   ·           ───────────────────────────
+   ╰────
+  help: Module path "./fixtures/module/foo.jsx" does not exist or is not exported
+
+  ⚠ eslint-plugin-jest(valid-mock-module-path): Disallow mocking of non-existing module paths
+   ╭─[valid_mock_module_path.tsx:1:11]
+ 1 │ jest.mock("./fixtures/module/foo.jsx")
+   ·           ───────────────────────────
+   ╰────
+  help: Module path "./fixtures/module/foo.jsx" does not exist or is not exported
+
+  ⚠ eslint-plugin-jest(valid-mock-module-path): Disallow mocking of non-existing module paths
+   ╭─[valid_mock_module_path.tsx:1:11]
+ 1 │ jest.mock("@doesnotexist/module")
+   ·           ──────────────────────
+   ╰────
+  help: Module path "@doesnotexist/module" does not exist or is not exported
+
+  ⚠ eslint-plugin-jest(valid-mock-module-path): Disallow mocking of non-existing module paths
+   ╭─[valid_mock_module_path.tsx:1:11]
+ 1 │ jest.mock("jest-util/build/isInteractive")
+   ·           ───────────────────────────────
+   ╰────
+  help: Module path "jest-util/build/isInteractive" does not exist or is not exported
+
+  ⚠ eslint-plugin-jest(valid-mock-module-path): Disallow mocking of non-existing module paths
+   ╭─[valid_mock_module_path.tsx:1:11]
+ 1 │ jest.mock("jackspeak/dist/commonjs/parse-args.js")
+   ·           ───────────────────────────────────────
+   ╰────
+  help: Module path "jackspeak/dist/commonjs/parse-args.js" does not exist or is not exported
