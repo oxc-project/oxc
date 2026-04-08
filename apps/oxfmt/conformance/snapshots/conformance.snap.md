@@ -83,13 +83,13 @@
 
 ## angular-in-js
 
-### Option 1: 6/6 (100.00%)
+### Option 1: 7/7 (100.00%)
 
 ```json
 {"printWidth":80}
 ```
 
-### Option 2: 6/6 (100.00%)
+### Option 2: 7/7 (100.00%)
 
 ```json
 {"printWidth":100,"htmlWhitespaceSensitivity":"ignore"}
