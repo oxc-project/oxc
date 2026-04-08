@@ -406,6 +406,7 @@ pub use crate::rules::react::jsx_max_depth::JsxMaxDepth as ReactJsxMaxDepth;
 pub use crate::rules::react::jsx_no_comment_textnodes::JsxNoCommentTextnodes as ReactJsxNoCommentTextnodes;
 pub use crate::rules::react::jsx_no_constructed_context_values::JsxNoConstructedContextValues as ReactJsxNoConstructedContextValues;
 pub use crate::rules::react::jsx_no_duplicate_props::JsxNoDuplicateProps as ReactJsxNoDuplicateProps;
+pub use crate::rules::react::jsx_no_leaked_render::JsxNoLeakedRender as ReactJsxNoLeakedRender;
 pub use crate::rules::react::jsx_no_script_url::JsxNoScriptUrl as ReactJsxNoScriptUrl;
 pub use crate::rules::react::jsx_no_target_blank::JsxNoTargetBlank as ReactJsxNoTargetBlank;
 pub use crate::rules::react::jsx_no_undef::JsxNoUndef as ReactJsxNoUndef;
@@ -1105,6 +1106,7 @@ pub enum RuleEnum {
     JestValidDescribeCallback(JestValidDescribeCallback),
     JestValidExpect(JestValidExpect),
     JestValidTitle(JestValidTitle),
+    ReactJsxNoLeakedRender(ReactJsxNoLeakedRender),
     ReactButtonHasType(ReactButtonHasType),
     ReactCheckedRequiresOnchangeOrReadonly(ReactCheckedRequiresOnchangeOrReadonly),
     ReactDisplayName(ReactDisplayName),
@@ -1870,7 +1872,8 @@ const JEST_REQUIRE_TOP_LEVEL_DESCRIBE_ID: usize = JEST_REQUIRE_TO_THROW_MESSAGE_
 const JEST_VALID_DESCRIBE_CALLBACK_ID: usize = JEST_REQUIRE_TOP_LEVEL_DESCRIBE_ID + 1usize;
 const JEST_VALID_EXPECT_ID: usize = JEST_VALID_DESCRIBE_CALLBACK_ID + 1usize;
 const JEST_VALID_TITLE_ID: usize = JEST_VALID_EXPECT_ID + 1usize;
-const REACT_BUTTON_HAS_TYPE_ID: usize = JEST_VALID_TITLE_ID + 1usize;
+const REACT_JSX_NO_LEAKED_RENDER_ID: usize = JEST_VALID_TITLE_ID + 1usize;
+const REACT_BUTTON_HAS_TYPE_ID: usize = REACT_JSX_NO_LEAKED_RENDER_ID + 1usize;
 const REACT_CHECKED_REQUIRES_ONCHANGE_OR_READONLY_ID: usize = REACT_BUTTON_HAS_TYPE_ID + 1usize;
 const REACT_DISPLAY_NAME_ID: usize = REACT_CHECKED_REQUIRES_ONCHANGE_OR_READONLY_ID + 1usize;
 const REACT_EXHAUSTIVE_DEPS_ID: usize = REACT_DISPLAY_NAME_ID + 1usize;
@@ -2702,6 +2705,7 @@ impl RuleEnum {
             Self::JestValidDescribeCallback(_) => JEST_VALID_DESCRIBE_CALLBACK_ID,
             Self::JestValidExpect(_) => JEST_VALID_EXPECT_ID,
             Self::JestValidTitle(_) => JEST_VALID_TITLE_ID,
+            Self::ReactJsxNoLeakedRender(_) => REACT_JSX_NO_LEAKED_RENDER_ID,
             Self::ReactButtonHasType(_) => REACT_BUTTON_HAS_TYPE_ID,
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => {
                 REACT_CHECKED_REQUIRES_ONCHANGE_OR_READONLY_ID
@@ -3531,6 +3535,7 @@ impl RuleEnum {
             Self::JestValidDescribeCallback(_) => JestValidDescribeCallback::NAME,
             Self::JestValidExpect(_) => JestValidExpect::NAME,
             Self::JestValidTitle(_) => JestValidTitle::NAME,
+            Self::ReactJsxNoLeakedRender(_) => ReactJsxNoLeakedRender::NAME,
             Self::ReactButtonHasType(_) => ReactButtonHasType::NAME,
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => {
                 ReactCheckedRequiresOnchangeOrReadonly::NAME
@@ -4374,6 +4379,7 @@ impl RuleEnum {
             Self::JestValidDescribeCallback(_) => JestValidDescribeCallback::CATEGORY,
             Self::JestValidExpect(_) => JestValidExpect::CATEGORY,
             Self::JestValidTitle(_) => JestValidTitle::CATEGORY,
+            Self::ReactJsxNoLeakedRender(_) => ReactJsxNoLeakedRender::CATEGORY,
             Self::ReactButtonHasType(_) => ReactButtonHasType::CATEGORY,
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => {
                 ReactCheckedRequiresOnchangeOrReadonly::CATEGORY
@@ -5224,6 +5230,7 @@ impl RuleEnum {
             Self::JestValidDescribeCallback(_) => JestValidDescribeCallback::FIX,
             Self::JestValidExpect(_) => JestValidExpect::FIX,
             Self::JestValidTitle(_) => JestValidTitle::FIX,
+            Self::ReactJsxNoLeakedRender(_) => ReactJsxNoLeakedRender::FIX,
             Self::ReactButtonHasType(_) => ReactButtonHasType::FIX,
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => {
                 ReactCheckedRequiresOnchangeOrReadonly::FIX
@@ -6142,6 +6149,7 @@ impl RuleEnum {
             Self::JestValidDescribeCallback(_) => JestValidDescribeCallback::documentation(),
             Self::JestValidExpect(_) => JestValidExpect::documentation(),
             Self::JestValidTitle(_) => JestValidTitle::documentation(),
+            Self::ReactJsxNoLeakedRender(_) => ReactJsxNoLeakedRender::documentation(),
             Self::ReactButtonHasType(_) => ReactButtonHasType::documentation(),
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => {
                 ReactCheckedRequiresOnchangeOrReadonly::documentation()
@@ -7694,6 +7702,8 @@ impl RuleEnum {
                 .or_else(|| JestValidExpect::schema(generator)),
             Self::JestValidTitle(_) => JestValidTitle::config_schema(generator)
                 .or_else(|| JestValidTitle::schema(generator)),
+            Self::ReactJsxNoLeakedRender(_) => ReactJsxNoLeakedRender::config_schema(generator)
+                .or_else(|| ReactJsxNoLeakedRender::schema(generator)),
             Self::ReactButtonHasType(_) => ReactButtonHasType::config_schema(generator)
                 .or_else(|| ReactButtonHasType::schema(generator)),
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => {
@@ -9066,6 +9076,7 @@ impl RuleEnum {
             Self::JestValidDescribeCallback(_) => "jest",
             Self::JestValidExpect(_) => "jest",
             Self::JestValidTitle(_) => "jest",
+            Self::ReactJsxNoLeakedRender(_) => "react",
             Self::ReactButtonHasType(_) => "react",
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => "react",
             Self::ReactDisplayName(_) => "react",
@@ -10612,6 +10623,9 @@ impl RuleEnum {
             Self::JestValidTitle(_) => {
                 Ok(Self::JestValidTitle(JestValidTitle::from_configuration(value)?))
             }
+            Self::ReactJsxNoLeakedRender(_) => {
+                Ok(Self::ReactJsxNoLeakedRender(ReactJsxNoLeakedRender::from_configuration(value)?))
+            }
             Self::ReactButtonHasType(_) => {
                 Ok(Self::ReactButtonHasType(ReactButtonHasType::from_configuration(value)?))
             }
@@ -12101,6 +12115,7 @@ impl RuleEnum {
             Self::JestValidDescribeCallback(rule) => rule.to_configuration(),
             Self::JestValidExpect(rule) => rule.to_configuration(),
             Self::JestValidTitle(rule) => rule.to_configuration(),
+            Self::ReactJsxNoLeakedRender(rule) => rule.to_configuration(),
             Self::ReactButtonHasType(rule) => rule.to_configuration(),
             Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => rule.to_configuration(),
             Self::ReactDisplayName(rule) => rule.to_configuration(),
@@ -12824,6 +12839,7 @@ impl RuleEnum {
             Self::JestValidDescribeCallback(rule) => rule.run(node, ctx),
             Self::JestValidExpect(rule) => rule.run(node, ctx),
             Self::JestValidTitle(rule) => rule.run(node, ctx),
+            Self::ReactJsxNoLeakedRender(rule) => rule.run(node, ctx),
             Self::ReactButtonHasType(rule) => rule.run(node, ctx),
             Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => rule.run(node, ctx),
             Self::ReactDisplayName(rule) => rule.run(node, ctx),
@@ -13545,6 +13561,7 @@ impl RuleEnum {
             Self::JestValidDescribeCallback(rule) => rule.run_once(ctx),
             Self::JestValidExpect(rule) => rule.run_once(ctx),
             Self::JestValidTitle(rule) => rule.run_once(ctx),
+            Self::ReactJsxNoLeakedRender(rule) => rule.run_once(ctx),
             Self::ReactButtonHasType(rule) => rule.run_once(ctx),
             Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => rule.run_once(ctx),
             Self::ReactDisplayName(rule) => rule.run_once(ctx),
@@ -14334,6 +14351,7 @@ impl RuleEnum {
             Self::JestValidDescribeCallback(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JestValidExpect(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JestValidTitle(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactJsxNoLeakedRender(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactButtonHasType(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => {
                 rule.run_on_jest_node(jest_node, ctx)
@@ -15089,6 +15107,7 @@ impl RuleEnum {
             Self::JestValidDescribeCallback(rule) => rule.should_run(ctx),
             Self::JestValidExpect(rule) => rule.should_run(ctx),
             Self::JestValidTitle(rule) => rule.should_run(ctx),
+            Self::ReactJsxNoLeakedRender(rule) => rule.should_run(ctx),
             Self::ReactButtonHasType(rule) => rule.should_run(ctx),
             Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => rule.should_run(ctx),
             Self::ReactDisplayName(rule) => rule.should_run(ctx),
@@ -15972,6 +15991,7 @@ impl RuleEnum {
             Self::JestValidDescribeCallback(_) => JestValidDescribeCallback::IS_TSGOLINT_RULE,
             Self::JestValidExpect(_) => JestValidExpect::IS_TSGOLINT_RULE,
             Self::JestValidTitle(_) => JestValidTitle::IS_TSGOLINT_RULE,
+            Self::ReactJsxNoLeakedRender(_) => ReactJsxNoLeakedRender::IS_TSGOLINT_RULE,
             Self::ReactButtonHasType(_) => ReactButtonHasType::IS_TSGOLINT_RULE,
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => {
                 ReactCheckedRequiresOnchangeOrReadonly::IS_TSGOLINT_RULE
@@ -16948,6 +16968,7 @@ impl RuleEnum {
             Self::JestValidDescribeCallback(_) => JestValidDescribeCallback::HAS_CONFIG,
             Self::JestValidExpect(_) => JestValidExpect::HAS_CONFIG,
             Self::JestValidTitle(_) => JestValidTitle::HAS_CONFIG,
+            Self::ReactJsxNoLeakedRender(_) => ReactJsxNoLeakedRender::HAS_CONFIG,
             Self::ReactButtonHasType(_) => ReactButtonHasType::HAS_CONFIG,
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => {
                 ReactCheckedRequiresOnchangeOrReadonly::HAS_CONFIG
@@ -17745,6 +17766,7 @@ impl RuleEnum {
             Self::JestValidDescribeCallback(rule) => rule.types_info(),
             Self::JestValidExpect(rule) => rule.types_info(),
             Self::JestValidTitle(rule) => rule.types_info(),
+            Self::ReactJsxNoLeakedRender(rule) => rule.types_info(),
             Self::ReactButtonHasType(rule) => rule.types_info(),
             Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => rule.types_info(),
             Self::ReactDisplayName(rule) => rule.types_info(),
@@ -18466,6 +18488,7 @@ impl RuleEnum {
             Self::JestValidDescribeCallback(rule) => rule.run_info(),
             Self::JestValidExpect(rule) => rule.run_info(),
             Self::JestValidTitle(rule) => rule.run_info(),
+            Self::ReactJsxNoLeakedRender(rule) => rule.run_info(),
             Self::ReactButtonHasType(rule) => rule.run_info(),
             Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => rule.run_info(),
             Self::ReactDisplayName(rule) => rule.run_info(),
@@ -19273,6 +19296,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::JestValidDescribeCallback(JestValidDescribeCallback::default()),
         RuleEnum::JestValidExpect(JestValidExpect::default()),
         RuleEnum::JestValidTitle(JestValidTitle::default()),
+        RuleEnum::ReactJsxNoLeakedRender(ReactJsxNoLeakedRender::default()),
         RuleEnum::ReactButtonHasType(ReactButtonHasType::default()),
         RuleEnum::ReactCheckedRequiresOnchangeOrReadonly(
             ReactCheckedRequiresOnchangeOrReadonly::default(),
