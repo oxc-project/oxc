@@ -1308,7 +1308,7 @@ impl<'a> PeepholeOptimizations {
                 // If the identifier is not a getter and the identifier is read-only,
                 // we know that the value is same even if we reordered the expression.
                 if let Some(symbol_id) = ctx.scoping().get_reference(id.reference_id()).symbol_id()
-                    && !ctx.scoping().symbol_is_mutated(symbol_id)
+                    && !Self::is_symbol_mutated(symbol_id, ctx)
                 {
                     return None;
                 }

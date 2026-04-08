@@ -27,12 +27,11 @@ impl Termination for CliRunResult {
             Self::None
             | Self::PrintConfigResult
             | Self::ConfigFileInitSucceeded
-            | Self::LintSucceeded
-            // ToDo: when oxc_linter (config) validates the configuration, we can use exit_code = 1 to fail
-            | Self::LintNoFilesFound => ExitCode::SUCCESS,
+            | Self::LintSucceeded => ExitCode::SUCCESS,
             Self::ConfigFileInitFailed
             | Self::JsPluginWorkspaceSetupFailed
             | Self::LintFoundErrors
+            | Self::LintNoFilesFound
             | Self::LintNoWarningsAllowed
             | Self::LintMaxWarningsExceeded
             | Self::InvalidOptionConfig

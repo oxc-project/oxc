@@ -459,6 +459,7 @@ pub(crate) mod unicorn {
     pub mod consistent_empty_array_spread;
     pub mod consistent_existence_index_check;
     pub mod consistent_function_scoping;
+    pub mod consistent_template_literal_escape;
     pub mod custom_error_definition;
     pub mod empty_brace_spaces;
     pub mod error_message;

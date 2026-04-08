@@ -90,6 +90,17 @@ describe("editorconfig", () => {
     expect(snapshot).toMatchSnapshot();
   });
 
+  // .editorconfig:
+  //   [*] quote_type=single
+  //
+  // Expected: singleQuote=true
+  // - String literals should use single quotes instead of double quotes
+  it("quote_type maps to singleQuote", async () => {
+    const cwd = join(fixturesDir, "quote_type");
+    const snapshot = await runWriteModeAndSnapshot(cwd, ["test.js"]);
+    expect(snapshot).toMatchSnapshot();
+  });
+
   // .editorconfig: (empty file)
   //
   // Expected: default settings (useTabs=false, tabWidth=2)

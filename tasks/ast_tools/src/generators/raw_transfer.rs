@@ -144,7 +144,7 @@ fn generate_deserializers(
         import {{ getNodeLoc }} from '../plugins/location.js';
         /* END_IF */
 
-        let uint8, uint32, float64, sourceText, sourceTextLatin,
+        let uint8, int32, float64, sourceText, sourceTextLatin,
             sourceStartPos = 0, sourceEndPos = 0, firstNonAsciiPos = 0;
 
         let parent = null;
@@ -189,7 +189,7 @@ fn generate_deserializers(
 
         function deserializeWith(buffer, sourceTextInput, sourceByteLen, deserialize) {{
             uint8 = buffer;
-            uint32 = buffer.uint32;
+            int32 = buffer.int32;
             float64 = buffer.float64;
 
             sourceText = sourceTextInput;
@@ -225,14 +225,14 @@ fn generate_deserializers(
                 }}
             }}
 
-            const data = deserialize(uint32[{data_pointer_pos_32}]);
+            const data = deserialize(int32[{data_pointer_pos_32}]);
             resetBuffer();
             return data;
         }}
 
         export function resetBuffer() {{
             // Clear buffer and source text strings to allow them to be garbage collected
-            uint8 = uint32 = float64 = sourceText = sourceTextLatin = undefined;
+            uint8 = int32 = float64 = sourceText = sourceTextLatin = undefined;
         }}
     ");
 
@@ -241,7 +241,10 @@ fn generate_deserializers(
     let code_type_definition_linter = "
         import type { Program } from './types.d.ts';
 
-        type BufferWithArrays = Uint8Array & { uint32: Uint32Array; float64: Float64Array };
+        type BufferWithArrays = Uint8Array & {
+            int32: Int32Array;
+            float64: Float64Array;
+        };
 
         export declare function deserializeProgramOnly(
             buffer: BufferWithArrays,
@@ -258,7 +261,10 @@ fn generate_deserializers(
     let code_type_definition_parser = "
         import type * as ESTree from '@oxc-project/types';
 
-        type BufferWithArrays = Uint8Array & { uint32: Uint32Array; float64: Float64Array };
+        type BufferWithArrays = Uint8Array & {
+            int32: Int32Array;
+            float64: Float64Array;
+        };
 
         export declare function deserialize(
             buffer: BufferWithArrays,
@@ -412,11 +418,17 @@ fn generate_struct(
 
     let body = struct_def.estree.via.as_deref().and_then(|converter_name| {
         let converter = schema.meta_by_name(converter_name);
-        generator.apply_converter(converter, struct_def, 0).map(|value| {
-            if generator.preamble.is_empty() {
+        generator.apply_converter(converter, struct_def, 0).map(|(value, _)| {
+            let preamble = if generator.inline_preamble.is_empty() {
+                generator.assignments_preamble.as_slice()
+            } else {
+                generator.inline_preamble.as_slice()
+            };
+
+            if preamble.is_empty() {
                 format!("return {value};")
             } else {
-                let preamble = generator.preamble.join("");
+                let preamble = preamble.join("");
                 format!(
                     "
                         {preamble}
@@ -500,7 +512,11 @@ fn generate_struct(
             }
         }
 
-        for preamble_part in generator.preamble {
+        for preamble_part in generator.inline_preamble {
+            inline_preamble_str.push_str(preamble_part.trim());
+        }
+
+        for preamble_part in generator.assignments_preamble {
             assignments_preamble_str.push_str(preamble_part.trim());
         }
 
@@ -542,8 +558,10 @@ struct StructDeserializerGenerator<'s> {
     /// Fields that should use inline assignment pattern: `let x; return { x: x = value };`
     /// This allows minifiers to eliminate unused variables when RANGE is false.
     inline_assignment_field_names: FxHashSet<String>,
-    /// Preamble
-    preamble: Vec<String>,
+    /// Preamble before object definition
+    inline_preamble: Vec<String>,
+    /// Preamble before assignments
+    assignments_preamble: Vec<String>,
     /// Fields, keyed by fields name (field name in ESTree AST)
     fields: FxIndexMap<String, StructFieldValue>,
     /// `TypeId` for `Span`
@@ -566,7 +584,8 @@ impl<'s> StructDeserializerGenerator<'s> {
         Self {
             dependent_field_names: FxHashSet::default(),
             inline_assignment_field_names: FxHashSet::default(),
-            preamble: vec![],
+            inline_preamble: vec![],
+            assignments_preamble: vec![],
             fields: FxIndexMap::default(),
             span_type_id,
             schema,
@@ -690,24 +709,24 @@ impl<'s> StructDeserializerGenerator<'s> {
                     TypeDef::Vec(vec_def) => {
                         let field_fn = vec_def.deser_name(self.schema);
                         if index == 0 {
-                            self.preamble
+                            self.assignments_preamble
                                 .push(format!("const {field_name} = {field_fn}({field_pos});"));
                         } else {
-                            self.preamble
+                            self.assignments_preamble
                                 .push(format!("{field_name}.push(...{field_fn}({field_pos}));"));
                         }
                     }
                     TypeDef::Option(option_def) => {
                         let option_field_name = get_struct_field_name(field).to_string();
                         let field_fn = option_def.deser_name(self.schema);
-                        self.preamble
+                        self.assignments_preamble
                             .push(format!("const {option_field_name} = {field_fn}({field_pos});"));
                         if index == 0 {
-                            self.preamble.push(format!(
+                            self.assignments_preamble.push(format!(
                                 "const {field_name} = {option_field_name} === null ? [] : [{option_field_name}];"
                             ));
                         } else {
-                            self.preamble.push(format!(
+                            self.assignments_preamble.push(format!(
                                 "if ({option_field_name} !== null) {field_name}.push({option_field_name});"
                             ));
                         }
@@ -758,7 +777,10 @@ impl<'s> StructDeserializerGenerator<'s> {
             format!("{prefix}sourceText.slice(start, end)")
         } else if let Some(converter_name) = &field.estree.via {
             let converter = self.schema.meta_by_name(converter_name);
-            self.apply_converter(converter, struct_def, struct_offset).unwrap()
+            let (value, can_inline) =
+                self.apply_converter(converter, struct_def, struct_offset).unwrap();
+            inline = can_inline;
+            value
         } else {
             // Primitives and fieldless enums can be inlined into object literal,
             // because they don't have a `parent` field
@@ -792,9 +814,8 @@ impl<'s> StructDeserializerGenerator<'s> {
             deser_type = DeserializerType::TsOnly;
         }
 
-        let value = self.apply_converter(converter, struct_def, struct_offset).unwrap();
-        self.fields
-            .insert(field_name.to_string(), StructFieldValue { value, deser_type, inline: false });
+        let (value, inline) = self.apply_converter(converter, struct_def, struct_offset).unwrap();
+        self.fields.insert(field_name.to_string(), StructFieldValue { value, deser_type, inline });
     }
 
     fn apply_converter(
@@ -802,8 +823,9 @@ impl<'s> StructDeserializerGenerator<'s> {
         converter: &MetaType,
         struct_def: &StructDef,
         struct_offset: u32,
-    ) -> Option<String> {
+    ) -> Option<(String, bool)> {
         let raw_deser = converter.estree.raw_deser.as_deref()?;
+        let inline = converter.estree.raw_deser_inline;
 
         let value = THIS_REGEX.replace_all(raw_deser, ThisReplacer::new(self));
         let value = DESER_REGEX.replace_all(&value, DeserReplacer::new(self.schema));
@@ -813,12 +835,16 @@ impl<'s> StructDeserializerGenerator<'s> {
         let value = value.cow_replace("SOURCE_TEXT", "sourceText");
 
         let value = if let Some((preamble, value)) = value.trim().rsplit_once('\n') {
-            self.preamble.push(preamble.to_string());
+            if inline {
+                self.inline_preamble.push(preamble.to_string());
+            } else {
+                self.assignments_preamble.push(preamble.to_string());
+            }
             value.trim().to_string()
         } else {
             value.trim().to_string()
         };
-        Some(value)
+        Some((value, inline))
     }
 }
 
@@ -899,22 +925,23 @@ fn generate_primitive(primitive_def: &PrimitiveDef, code: &mut String, schema: &
         "bool" => "return uint8[pos] === 1;",
         "u8" => "return uint8[pos];",
         // "u16" => "return uint16[pos >> 1];",
-        "u32" => "return uint32[pos >> 2];",
+        "u32" => "return int32[pos >> 2] >>> 0;",
+        "i32" => "return int32[pos >> 2];",
         // Will be approximate if larger than `Number.MAX_SAFE_INTEGER`
         #[rustfmt::skip]
         "u64" => "
             const pos32 = pos >> 2;
-            return uint32[pos32]
-                + uint32[pos32 + 1] * /* 2^32 */ 4294967296;
+            return (int32[pos32] >>> 0)
+                + (int32[pos32 + 1] >>> 0) * /* 2^32 */ 4294967296;
         ",
         // Will be approximate if larger than `Number.MAX_SAFE_INTEGER`
         #[rustfmt::skip]
         "u128" => "
             const pos32 = pos >> 2;
-            return uint32[pos32]
-                + uint32[pos32 + 1] * /* 2^32 */ 4294967296
-                + uint32[pos32 + 2] * /* 2^64 */ 18446744073709551616
-                + uint32[pos32 + 3] * /* 2^96 */ 79228162514264337593543950336;
+            return (int32[pos32] >>> 0)
+                + (int32[pos32 + 1] >>> 0) * /* 2^32 */ 4294967296
+                + (int32[pos32 + 2] >>> 0) * /* 2^64 */ 18446744073709551616
+                + (int32[pos32 + 3] >>> 0) * /* 2^96 */ 79228162514264337593543950336;
         ",
         "f64" => "return float64[pos >> 3];",
         "&str" => STR_DESERIALIZER_BODY,
@@ -940,11 +967,11 @@ fn generate_primitive(primitive_def: &PrimitiveDef, code: &mut String, schema: &
 // In linter, source text is towards the end of the buffer, and all other strings are before it.
 static STR_DESERIALIZER_BODY: &str = "
     const pos32 = pos >> 2,
-        len = uint32[pos32 + 2];
+        len = int32[pos32 + 2];
 
     if (len === 0) return '';
 
-    pos = uint32[pos32];
+    pos = int32[pos32];
 
     const end = pos + len;
 
@@ -1047,13 +1074,13 @@ fn get_option_none_condition_and_offset(
         let none_condition = match niche.size {
             1 => format!("uint8[{}] === {}", pos_offset(niche_offset), niche.value()),
             // 2 => format!("uint16[{}] === {}", pos_offset_shift(offset, 1), niche.value()),
-            4 => format!("uint32[{}] === {}", pos_offset_shift(niche_offset, 2), niche.value()),
+            4 => format!("int32[{}] === {}", pos_offset_shift(niche_offset, 2), niche.value()),
             8 => {
                 // TODO: Use `float64[pos >> 3] === 0` instead of
-                // `uint32[pos >> 2] === 0 && uint32[(pos + 4) >> 2] === 0`?
+                // `int32[pos >> 2] === 0 && int32[(pos >> 2) + 1] === 0`?
                 let value = niche.value();
                 format!(
-                    "uint32[{}] === {} && uint32[{}] === {}",
+                    "int32[{}] === {} && int32[{}] === {}",
                     pos_offset_shift(niche_offset, 2),
                     value & u128::from(u32::MAX),
                     pos_offset_shift(niche_offset + 4, 2),
@@ -1081,7 +1108,7 @@ fn generate_box(box_def: &BoxDef, code: &mut String, estree_derive_id: DeriveId,
     #[rustfmt::skip]
     write_it!(code, "
         function {fn_name}(pos) {{
-            return {inner_fn_name}(uint32[pos >> 2]);
+            return {inner_fn_name}(int32[pos >> 2]);
         }}
     ");
 }
@@ -1100,13 +1127,20 @@ fn generate_vec(vec_def: &VecDef, code: &mut String, estree_derive_id: DeriveId,
     let ptr_pos32 = pos32_offset(VEC_PTR_FIELD_OFFSET);
     let len_pos32 = pos32_offset(VEC_LEN_FIELD_OFFSET);
 
+    // Use shift if possible (stride is a power of 2)
+    let end_pos_offset = if inner_type_size.is_power_of_two() {
+        format!("(int32[{len_pos32}] << {})", inner_type_size.trailing_zeros())
+    } else {
+        format!("int32[{len_pos32}] * {inner_type_size}")
+    };
+
     #[rustfmt::skip]
     write_it!(code, "
         function {fn_name}(pos) {{
             const arr = [],
                 pos32 = pos >> 2;
-            pos = uint32[{ptr_pos32}];
-            const endPos = pos + uint32[{len_pos32}] * {inner_type_size};
+            pos = int32[{ptr_pos32}];
+            const endPos = pos + {end_pos_offset};
             while (pos !== endPos) {{
                 arr.push({inner_fn_name}(pos));
                 pos += {inner_type_size};
@@ -1151,7 +1185,7 @@ where
 /// * If `offset == 0` and `shift == 0` -> `pos`.
 /// * If `offset == 0` -> `pos >> <shift>` (e.g. `pos >> 2`).
 /// * If `shift == 0` -> `pos + <offset>` (e.g. `pos + 8`).
-/// * Otherwise -> `(pos + <offset>) >> <shift>` (e.g. `(pos + 8) >> 2`).
+/// * Otherwise -> `(pos >> <shift>) + <offset shifted>` (e.g. `(pos >> 2) + 2`).
 pub(super) fn pos_offset_shift<O, S>(offset: O, shift: S) -> Cow<'static, str>
 where
     O: TryInto<u64>,
@@ -1165,7 +1199,10 @@ where
         (0, 0) => Cow::Borrowed("pos"),
         (0, _) => format_cow!("pos >> {shift}"),
         (_, 0) => format_cow!("pos + {offset}"),
-        (_, _) => format_cow!("(pos + {offset}) >> {shift}"),
+        (_, _) => {
+            let shifted_offset = offset >> shift;
+            format_cow!("(pos >> {shift}) + {shifted_offset}")
+        }
     }
 }
 
@@ -1266,8 +1303,9 @@ impl Replacer for PosReplacer {
     }
 }
 
-static POS_OFFSET_REGEX: Lazy<Regex> =
-    lazy_regex!(r"POS_OFFSET(?:<([A-Za-z]+)>)?\.([a-zA-Z_]+(?:\.[a-zA-Z_]+)*)(?:\s*\+\s*(\d+))?");
+static POS_OFFSET_REGEX: Lazy<Regex> = lazy_regex!(
+    r"POS_OFFSET(?:<([A-Za-z]+)>)?\.([a-zA-Z_]+(?:\.[a-zA-Z_]+)*)(?:\s*(\+|>>)\s*(\d+))?"
+);
 
 struct PosOffsetReplacer<'s, 'd> {
     schema: &'s Schema,
@@ -1287,7 +1325,7 @@ impl<'s, 'd> PosOffsetReplacer<'s, 'd> {
 
 impl Replacer for PosOffsetReplacer<'_, '_> {
     fn replace_append(&mut self, caps: &Captures, dst: &mut String) {
-        assert_eq!(caps.len(), 4);
+        assert_eq!(caps.len(), 5);
 
         let struct_def = if let Some(struct_name) = caps.get(1) {
             self.schema.type_by_name(struct_name.as_str()).as_struct().unwrap()
@@ -1307,8 +1345,20 @@ impl Replacer for PosOffsetReplacer<'_, '_> {
             type_def = field.type_def(self.schema);
         }
 
-        if let Some(add) = caps.get(3) {
-            offset += str::parse::<u32>(add.as_str()).unwrap();
+        if let Some(operator) = caps.get(3) {
+            let right = str::parse::<u32>(caps.get(4).unwrap().as_str()).unwrap();
+
+            if operator.as_str() == ">>" {
+                if offset == 0 {
+                    write_it!(dst, "pos >> {right}");
+                } else {
+                    let offset_shifted = offset >> right;
+                    write_it!(dst, "(pos >> {right}) + {offset_shifted}");
+                }
+                return;
+            }
+
+            offset += right;
         }
 
         if offset == 0 {
@@ -1489,7 +1539,7 @@ fn generate_constants(consts: Constants) -> (String, TokenStream) {
         export const ACTIVE_SIZE = {active_size};
 
         /**
-         * Byte offset of the data pointer within the buffer, divided by 4 (for `Uint32Array` indexing).
+         * Byte offset of the data pointer within the buffer, divided by 4 (for `Int32Array` indexing).
          */
         export const DATA_POINTER_POS_32 = {data_pointer_pos_32};
 
@@ -1509,12 +1559,12 @@ fn generate_constants(consts: Constants) -> (String, TokenStream) {
         export const HAS_BOM_FLAG_POS = {has_bom_pos};
 
         /**
-         * Byte offset of the tokens offset within the buffer, divided by 4 (for `Uint32Array` indexing).
+         * Byte offset of the tokens offset within the buffer, divided by 4 (for `Int32Array` indexing).
          */
         export const TOKENS_OFFSET_POS_32 = {tokens_offset_pos_32};
 
         /**
-         * Byte offset of the tokens length within the buffer, divided by 4 (for `Uint32Array` indexing).
+         * Byte offset of the tokens length within the buffer, divided by 4 (for `Int32Array` indexing).
          */
         export const TOKENS_LEN_POS_32 = {tokens_len_pos_32};
 

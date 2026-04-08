@@ -204,6 +204,7 @@ fn parse_estree_attr(location: AttrLocation, part: AttrPart) -> Result<()> {
         AttrLocation::Meta(meta) => match part {
             AttrPart::String("ts_type", ts_type) => meta.estree.ts_type = Some(ts_type),
             AttrPart::String("raw_deser", raw_deser) => meta.estree.raw_deser = Some(raw_deser),
+            AttrPart::Tag("raw_deser_inline") => meta.estree.raw_deser_inline = true,
             _ => return Err(()),
         },
         _ => unreachable!(),

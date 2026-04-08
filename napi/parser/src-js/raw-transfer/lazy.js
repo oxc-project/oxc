@@ -98,7 +98,7 @@ function construct(buffer, sourceText, sourceByteLen, _options) {
   bufferRecycleRegistry.register(ast, buffer, ast);
 
   // Get root data class instance
-  const rawDataPos = buffer.uint32[DATA_POINTER_POS_32];
+  const rawDataPos = buffer.int32[DATA_POINTER_POS_32];
   const data = new RawTransferData(rawDataPos, ast);
 
   return {

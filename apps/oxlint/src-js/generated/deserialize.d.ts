@@ -3,7 +3,10 @@
 
 import type { Program } from "./types.d.ts";
 
-type BufferWithArrays = Uint8Array & { uint32: Uint32Array; float64: Float64Array };
+type BufferWithArrays = Uint8Array & {
+  int32: Int32Array;
+  float64: Float64Array;
+};
 
 export declare function deserializeProgramOnly(
   buffer: BufferWithArrays,

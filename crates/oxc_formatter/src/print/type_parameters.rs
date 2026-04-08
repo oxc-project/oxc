@@ -102,8 +102,9 @@ fn should_force_trailing_comma_for_arrow_function(
         return false;
     }
 
-    // Ignore type parameters with a constraint or default type.
-    if params.first().is_some_and(|t| t.constraint().is_some() || t.default().is_some()) {
+    // Ignore type parameters with a constraint (extends clause).
+    // A default type alone does not disambiguate from JSX, so the comma is still required.
+    if params.first().is_some_and(|t| t.constraint().is_some()) {
         return false;
     }
 

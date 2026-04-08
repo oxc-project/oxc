@@ -14,7 +14,7 @@
 ===================================================================
 --- prettier
 +++ oxfmt
-@@ -285,9 +285,9 @@
+@@ -274,9 +274,9 @@
    getOptions: () => unref(getOptions),
    /** 获取当前值 */
    getValue: () => unref(modelValue),
@@ -79,8 +79,6 @@ interface Props {
   alwaysLoad?: boolean;
   /** 在api请求之前的回调函数 */
   beforeFetch?: AnyPromiseFunction<any, any>;
-  /** 在api请求之前的判断是否允许请求的回调函数 */
-  shouldFetch?: AnyPromiseFunction<any, boolean>;
   /** 在api请求之后的回调函数 */
   afterFetch?: AnyPromiseFunction<any, any>;
   /** 直接传入选项数据，也作为api返回空数据时的后备数据 */
@@ -123,7 +121,6 @@ const props = withDefaults(defineProps<Props>(), {
   alwaysLoad: false,
   loadingSlot: "",
   beforeFetch: undefined,
-  shouldFetch: undefined,
   afterFetch: undefined,
   modelPropName: "modelValue",
   api: undefined,
@@ -195,7 +192,7 @@ const bindProps = computed(() => {
 });
 
 async function fetchApi() {
-  const { api, beforeFetch, shouldFetch, afterFetch, resultField } = props;
+  const { api, beforeFetch, afterFetch, resultField } = props;
 
   if (!api || !isFunction(api)) {
     return;
@@ -213,14 +210,6 @@ async function fetchApi() {
     let finalParams = unref(mergedParams);
     if (beforeFetch && isFunction(beforeFetch)) {
       finalParams = (await beforeFetch(cloneDeep(finalParams))) || finalParams;
-    }
-    // 判断是否需要控制执行中断
-    if (
-      shouldFetch &&
-      isFunction(shouldFetch) &&
-      !(await shouldFetch(finalParams))
-    ) {
-      return;
     }
     let res = await api(finalParams);
     if (afterFetch && isFunction(afterFetch)) {
@@ -395,8 +384,6 @@ interface Props {
   alwaysLoad?: boolean;
   /** 在api请求之前的回调函数 */
   beforeFetch?: AnyPromiseFunction<any, any>;
-  /** 在api请求之前的判断是否允许请求的回调函数 */
-  shouldFetch?: AnyPromiseFunction<any, boolean>;
   /** 在api请求之后的回调函数 */
   afterFetch?: AnyPromiseFunction<any, any>;
   /** 直接传入选项数据，也作为api返回空数据时的后备数据 */
@@ -439,7 +426,6 @@ const props = withDefaults(defineProps<Props>(), {
   alwaysLoad: false,
   loadingSlot: "",
   beforeFetch: undefined,
-  shouldFetch: undefined,
   afterFetch: undefined,
   modelPropName: "modelValue",
   api: undefined,
@@ -511,7 +497,7 @@ const bindProps = computed(() => {
 });
 
 async function fetchApi() {
-  const { api, beforeFetch, shouldFetch, afterFetch, resultField } = props;
+  const { api, beforeFetch, afterFetch, resultField } = props;
 
   if (!api || !isFunction(api)) {
     return;
@@ -529,14 +515,6 @@ async function fetchApi() {
     let finalParams = unref(mergedParams);
     if (beforeFetch && isFunction(beforeFetch)) {
       finalParams = (await beforeFetch(cloneDeep(finalParams))) || finalParams;
-    }
-    // 判断是否需要控制执行中断
-    if (
-      shouldFetch &&
-      isFunction(shouldFetch) &&
-      !(await shouldFetch(finalParams))
-    ) {
-      return;
     }
     let res = await api(finalParams);
     if (afterFetch && isFunction(afterFetch)) {
@@ -672,7 +650,7 @@ defineExpose({
 ===================================================================
 --- prettier
 +++ oxfmt
-@@ -266,9 +266,9 @@
+@@ -259,9 +259,9 @@
      getOptions: () => unref(getOptions),
      /** 获取当前值 */
      getValue: () => unref(modelValue),
@@ -737,8 +715,6 @@ defineExpose({
     alwaysLoad?: boolean;
     /** 在api请求之前的回调函数 */
     beforeFetch?: AnyPromiseFunction<any, any>;
-    /** 在api请求之前的判断是否允许请求的回调函数 */
-    shouldFetch?: AnyPromiseFunction<any, boolean>;
     /** 在api请求之后的回调函数 */
     afterFetch?: AnyPromiseFunction<any, any>;
     /** 直接传入选项数据，也作为api返回空数据时的后备数据 */
@@ -776,7 +752,6 @@ defineExpose({
     alwaysLoad: false,
     loadingSlot: '',
     beforeFetch: undefined,
-    shouldFetch: undefined,
     afterFetch: undefined,
     modelPropName: 'modelValue',
     api: undefined,
@@ -842,7 +817,7 @@ defineExpose({
   });
 
   async function fetchApi() {
-    const { api, beforeFetch, shouldFetch, afterFetch, resultField } = props;
+    const { api, beforeFetch, afterFetch, resultField } = props;
 
     if (!api || !isFunction(api)) {
       return;
@@ -860,10 +835,6 @@ defineExpose({
       let finalParams = unref(mergedParams);
       if (beforeFetch && isFunction(beforeFetch)) {
         finalParams = (await beforeFetch(cloneDeep(finalParams))) || finalParams;
-      }
-      // 判断是否需要控制执行中断
-      if (shouldFetch && isFunction(shouldFetch) && !(await shouldFetch(finalParams))) {
-        return;
       }
       let res = await api(finalParams);
       if (afterFetch && isFunction(afterFetch)) {
@@ -1034,8 +1005,6 @@ defineExpose({
     alwaysLoad?: boolean;
     /** 在api请求之前的回调函数 */
     beforeFetch?: AnyPromiseFunction<any, any>;
-    /** 在api请求之前的判断是否允许请求的回调函数 */
-    shouldFetch?: AnyPromiseFunction<any, boolean>;
     /** 在api请求之后的回调函数 */
     afterFetch?: AnyPromiseFunction<any, any>;
     /** 直接传入选项数据，也作为api返回空数据时的后备数据 */
@@ -1073,7 +1042,6 @@ defineExpose({
     alwaysLoad: false,
     loadingSlot: '',
     beforeFetch: undefined,
-    shouldFetch: undefined,
     afterFetch: undefined,
     modelPropName: 'modelValue',
     api: undefined,
@@ -1139,7 +1107,7 @@ defineExpose({
   });
 
   async function fetchApi() {
-    const { api, beforeFetch, shouldFetch, afterFetch, resultField } = props;
+    const { api, beforeFetch, afterFetch, resultField } = props;
 
     if (!api || !isFunction(api)) {
       return;
@@ -1157,10 +1125,6 @@ defineExpose({
       let finalParams = unref(mergedParams);
       if (beforeFetch && isFunction(beforeFetch)) {
         finalParams = (await beforeFetch(cloneDeep(finalParams))) || finalParams;
-      }
-      // 判断是否需要控制执行中断
-      if (shouldFetch && isFunction(shouldFetch) && !(await shouldFetch(finalParams))) {
-        return;
       }
       let res = await api(finalParams);
       if (afterFetch && isFunction(afterFetch)) {

@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.124.0] - 2026-04-06
+
+### 📚 Documentation
+
+- c78a57a syntax: Fix typo (#21044) (camc314)
+
 ## [0.114.0] - 2026-02-16
 
 ### 🚀 Features
