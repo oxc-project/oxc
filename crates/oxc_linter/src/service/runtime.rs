@@ -725,7 +725,7 @@ impl Runtime {
                 None,
                 |me, mut module_to_lint| {
                     module_to_lint.content.with_dependent_mut(
-                    |allocator_guard, ModuleContentDependent { source_text: _, section_contents }| {
+                    |allocator_guard, ModuleContentDependent { source_text, section_contents }| {
                         assert_eq!(
                             module_to_lint.section_module_records.len(),
                             section_contents.len()
@@ -766,7 +766,13 @@ impl Runtime {
 
                         let (section_messages, disable_directives) = me
                             .linter
-                            .run_with_disable_directives(path, context_sub_hosts, allocator_guard, me.js_allocator_pool());
+                            .run_with_full_source_text_and_disable_directives(
+                                path,
+                                context_sub_hosts,
+                                source_text,
+                                allocator_guard,
+                                me.js_allocator_pool(),
+                            );
 
                         if let Some(disable_directives) = disable_directives {
                             me.disable_directives_map
@@ -804,7 +810,7 @@ impl Runtime {
         rayon::scope(|scope| {
             self.resolve_modules(file_system, &paths_set, scope, check_syntax_errors, Some(tx_error), |me, mut module| {
                 module.content.with_dependent_mut(
-                    |allocator_guard, ModuleContentDependent { source_text: _, section_contents }| {
+                    |allocator_guard, ModuleContentDependent { source_text, section_contents }| {
                         assert_eq!(module.section_module_records.len(), section_contents.len());
 
                         let context_sub_hosts: Vec<ContextSubHost<'_>> = module
@@ -839,12 +845,15 @@ impl Runtime {
                         }
 
                         messages.lock().unwrap().extend(
-                            me.linter.run(
-                                Path::new(&module.path),
-                                context_sub_hosts,
-                                allocator_guard
-                            )
-                            ,
+                            me.linter
+                                .run_with_full_source_text_and_disable_directives(
+                                    Path::new(&module.path),
+                                    context_sub_hosts,
+                                    source_text,
+                                    allocator_guard,
+                                    None,
+                                )
+                                .0,
                         );
                     },
                 );

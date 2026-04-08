@@ -31,12 +31,14 @@ use oxc_span::Span;
 mod ast_util;
 mod config;
 mod context;
+pub mod css_parser;
 mod disable_directives;
 mod external_linter;
 mod external_plugin_store;
 mod fixer;
 mod frameworks;
 mod globals;
+pub mod json_parser;
 mod module_graph_visitor;
 mod module_record;
 mod options;
@@ -192,9 +194,34 @@ impl Linter {
         allocator: &'a Allocator,
         js_allocator_pool: Option<&AllocatorPool>,
     ) -> (Vec<Message>, Option<DisableDirectives>) {
+        let full_source_text =
+            context_sub_hosts.first().map_or("", |sub_host| sub_host.semantic().source_text());
+        self.run_with_full_source_text_and_disable_directives(
+            path,
+            context_sub_hosts,
+            full_source_text,
+            allocator,
+            js_allocator_pool,
+        )
+    }
+
+    pub(crate) fn run_with_full_source_text_and_disable_directives<'a>(
+        &self,
+        path: &Path,
+        context_sub_hosts: Vec<ContextSubHost<'a>>,
+        full_source_text: &'a str,
+        allocator: &'a Allocator,
+        js_allocator_pool: Option<&AllocatorPool>,
+    ) -> (Vec<Message>, Option<DisableDirectives>) {
         let ResolvedLinterState { rules, config, external_rules } = self.config.resolve(path);
 
-        let mut ctx_host = Rc::new(ContextHost::new(path, context_sub_hosts, self.options, config));
+        let mut ctx_host = Rc::new(ContextHost::new(
+            path,
+            context_sub_hosts,
+            full_source_text,
+            self.options,
+            config,
+        ));
 
         #[cfg(debug_assertions)]
         let mut current_diagnostic_index = 0;
@@ -202,12 +229,18 @@ impl Linter {
         let is_partial_loader_file = ctx_host
             .file_extension()
             .is_some_and(|ext| LINT_PARTIAL_LOADER_EXTENSIONS.iter().any(|e| e == &ext));
+        let is_json_file =
+            ctx_host.file_extension().is_some_and(|ext| ext.eq_ignore_ascii_case("json"));
 
         loop {
             let semantic = ctx_host.semantic();
             let rules = rules
                 .iter()
                 .filter(|(rule, _)| {
+                    if is_json_file && rule.plugin_name() != "oxc" {
+                        return false;
+                    }
+
                     if rule.is_tsgolint_rule() {
                         return false;
                     }
@@ -249,16 +282,35 @@ impl Linter {
                 //
                 // See https://github.com/oxc-project/oxc/pull/6600 for more context.
                 if semantic.nodes().len() > 200_000 {
-                    // TODO: It seems like there is probably a more intelligent way to preallocate space here. This will
-                    // likely incur quite a few unnecessary reallocs currently. We theoretically could compute this at
-                    // compile-time since we know all of the rules and their AST node type information ahead of time.
+                    // Pre-compute the number of rules that map to each AST type so we can
+                    // allocate buckets with the right capacity and avoid reallocs.
                     //
                     // Use boxed array to help compiler see that indexing into it with an `AstType`
                     // cannot go out of bounds, and remove bounds checks.
+                    let mut counts = boxed_array![0usize; AST_TYPE_MAX as usize + 1];
+                    let mut any_count = 0usize;
+                    for (rule, _) in &rules {
+                        let rule = *rule;
+                        let run_info = rule.run_info();
+                        if with_runtime_optimization
+                            && let Some(ast_types) = rule.types_info()
+                            && run_info.is_run_implemented()
+                        {
+                            for ty in ast_types {
+                                counts[ty as usize] += 1;
+                            }
+                        } else {
+                            any_count += 1;
+                        }
+                    }
+
                     let mut rules_by_ast_type = boxed_array![Vec::new(); AST_TYPE_MAX as usize + 1];
-                    // TODO: Compute needed capacity. This is a slight overestimate as not 100% of rules will need to run on all
-                    // node types, but it at least guarantees we won't need to realloc.
-                    let mut rules_any_ast_type = Vec::with_capacity(rules.len());
+                    for (i, count) in counts.iter().enumerate() {
+                        if *count > 0 {
+                            rules_by_ast_type[i] = Vec::with_capacity(*count);
+                        }
+                    }
+                    let mut rules_any_ast_type = Vec::with_capacity(any_count);
 
                     for (rule, ctx) in &rules {
                         let rule = *rule;

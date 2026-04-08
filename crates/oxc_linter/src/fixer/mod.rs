@@ -75,6 +75,12 @@ impl<'c, 'a: 'c> RuleFixer<'c, 'a> {
         self.ctx.source_range(span)
     }
 
+    /// Get a snippet of original file text covered by the given [`Span`].
+    #[inline]
+    pub fn full_source_range(&self, span: Span) -> &'a str {
+        self.ctx.full_source_range(span)
+    }
+
     /// Create a [`RuleFix`] that deletes the text covered by the given [`Span`]
     /// or AST node.
     #[inline]
@@ -125,6 +131,30 @@ impl<'c, 'a: 'c> RuleFixer<'c, 'a> {
 
             fixer.new_fix(CompositeFix::Single(fix), message)
         }
+        inner(self, target, replacement.into())
+    }
+
+    /// Replace a span in the original full file text.
+    pub fn replace_full_source_range<S: Into<Cow<'static, str>>>(
+        &self,
+        target: Span,
+        replacement: S,
+    ) -> RuleFix {
+        fn inner(
+            fixer: &RuleFixer<'_, '_>,
+            target: Span,
+            replacement: Cow<'static, str>,
+        ) -> RuleFix {
+            let fix = Fix::new(replacement, target);
+            let target_text = fixer.possibly_truncate_full_source_range(target);
+            let content = fixer.possibly_truncate_snippet(&fix.content);
+            let message = fixer.auto_message.then(|| {
+                Cow::Owned(format_replace_message(target_text.as_ref(), content.as_ref()))
+            });
+
+            fixer.new_fix(CompositeFix::Single(fix), message)
+        }
+
         inner(self, target, replacement.into())
     }
 
@@ -203,6 +233,11 @@ impl<'c, 'a: 'c> RuleFixer<'c, 'a> {
 
     fn possibly_truncate_range(&self, span: Span) -> Cow<'a, str> {
         let snippet = self.ctx.source_range(span);
+        self.possibly_truncate_snippet(snippet)
+    }
+
+    fn possibly_truncate_full_source_range(&self, span: Span) -> Cow<'a, str> {
+        let snippet = self.ctx.full_source_range(span);
         self.possibly_truncate_snippet(snippet)
     }
 

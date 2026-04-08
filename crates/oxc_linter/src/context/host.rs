@@ -150,6 +150,8 @@ pub struct ContextHost<'a> {
     pub(crate) fix: FixKind,
     /// Path to the file being linted.
     pub(super) file_path: Box<Path>,
+    /// Original full source text of the file being linted.
+    pub(super) full_source_text: &'a str,
     /// Extension of the file being linted.
     file_extension: Option<Box<OsStr>>,
     /// Global linter configuration, such as globals to include and the target
@@ -171,6 +173,7 @@ impl<'a> ContextHost<'a> {
     pub fn new<P: AsRef<Path>>(
         file_path: P,
         sub_hosts: Vec<ContextSubHost<'a>>,
+        full_source_text: &'a str,
         options: LintOptions,
         config: Arc<LintConfig>,
     ) -> Self {
@@ -190,6 +193,7 @@ impl<'a> ContextHost<'a> {
             diagnostics: RefCell::new(Vec::with_capacity(DIAGNOSTICS_INITIAL_CAPACITY)),
             fix: options.fix,
             file_path,
+            full_source_text,
             file_extension,
             config,
             frameworks: options.framework_hints,
@@ -252,6 +256,12 @@ impl<'a> ContextHost<'a> {
     #[inline]
     pub fn file_path(&self) -> &Path {
         &self.file_path
+    }
+
+    /// Original full source text of the file being linted.
+    #[inline]
+    pub fn full_source_text(&self) -> &'a str {
+        self.full_source_text
     }
 
     /// Extension of the file currently being linted, without the leading dot.
@@ -506,5 +516,41 @@ impl<'a> ContextHost<'a> {
 impl<'a> From<ContextHost<'a>> for Vec<Message> {
     fn from(ctx_host: ContextHost<'a>) -> Self {
         ctx_host.diagnostics.into_inner()
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use std::{rc::Rc, sync::Arc};
+
+    use oxc_allocator::Allocator;
+    use oxc_parser::Parser;
+    use oxc_semantic::SemanticBuilder;
+    use oxc_span::SourceType;
+
+    use super::{ContextHost, ContextSubHost};
+    use crate::{ModuleRecord, options::LintOptions};
+
+    #[test]
+    fn test_full_source_text_preserves_original_file_text() {
+        let allocator = Allocator::default();
+        let section_source = "const section = 1;";
+        let full_source = "header\nconst section = 1;\nfooter";
+
+        let parser_ret = Parser::new(&allocator, section_source, SourceType::default()).parse();
+        let program = allocator.alloc(parser_ret.program);
+        let semantic = SemanticBuilder::new().with_cfg(true).build(program).semantic;
+
+        let ctx = Rc::new(ContextHost::new(
+            "fixture.vue",
+            vec![ContextSubHost::new(semantic, Arc::new(ModuleRecord::default()), 7)],
+            full_source,
+            LintOptions::default(),
+            Arc::default(),
+        ))
+        .spawn_for_test();
+
+        assert_eq!(ctx.source_text(), section_source);
+        assert_eq!(ctx.full_source_text(), full_source);
     }
 }

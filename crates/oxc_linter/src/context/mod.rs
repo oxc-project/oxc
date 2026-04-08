@@ -133,6 +133,22 @@ impl<'a> LintContext<'a> {
         span.source_text(self.parent.semantic().source_text())
     }
 
+    /// Get a snippet of original file text covered by the given [`Span`].
+    #[inline]
+    pub fn full_source_range(&self, span: Span) -> &'a str {
+        span.source_text(self.parent.full_source_text())
+    }
+
+    /// Original full source text of the file currently being linted.
+    ///
+    /// This differs from the semantic source text for partial-loader files and
+    /// future non-JS file pipelines, where the parsed section may represent only
+    /// one part of the original file.
+    #[inline]
+    pub fn full_source_text(&self) -> &'a str {
+        self.parent.full_source_text()
+    }
+
     /// Finds the next occurrence of the given token in the source code,
     /// starting from the specified position, skipping over comments.
     #[expect(clippy::cast_possible_truncation)]
