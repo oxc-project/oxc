@@ -11,6 +11,40 @@ Oxlint is a high-performance linter that implements many popular ESLint rules na
 
 An official migration tool is available, and will be used by this skill: [`@oxlint/migrate`](https://github.com/oxc-project/oxlint-migrate)
 
+## Prerequisites
+
+Before migrating to Oxlint, ensure the following are completed if not already done:
+
+### ESLint Flat Config Migration
+
+The `@oxlint/migrate` tool requires an ESLint flat config (`eslint.config.js`). If the project still uses the legacy format (e.g., `.eslintrc.json`), migrate it first:
+
+```bash
+npx @eslint/migrate-config .eslintrc.json
+```
+
+This generates an `eslint.config.js` from the legacy config. Review and commit it before proceeding.
+
+### TypeScript 6 Migration (type-aware rules only)
+
+If you plan to use type-aware rules via `oxlint-tsgolint`, its TypeScript compiler requires a `tsconfig.json` compatible with TypeScript 6. If the project is still on TypeScript 5, migrate it first. See the [TypeScript 6 migration tracking issue](https://github.com/microsoft/TypeScript/issues/62508) for breaking changes and migration steps.
+
+Use [`@andrewbranch/ts5to6`](https://github.com/andrewbranch/ts5to6) to automate the two main breaking tsconfig changes:
+
+| Flag | What it does |
+| --- | --- |
+| `--fixBaseUrl` | Removes deprecated `baseUrl` (which existed solely to enable `paths`) and updates path mappings accordingly |
+| `--fixRootDir` | Explicitly sets `rootDir` to preserve TypeScript 5.x inference behavior under TypeScript 6's changed defaults |
+
+```bash
+npx @andrewbranch/ts5to6 --fixBaseUrl .
+npx @andrewbranch/ts5to6 --fixRootDir .
+```
+
+Run whichever fixes apply to the project — both can be run independently.
+
+---
+
 ## Step 1: Run Automated Migration
 
 Run the migration tool in the project root:
@@ -227,10 +261,39 @@ Additional oxlint options:
 
 - `--tsconfig <path>`: Specify tsconfig.json path, likely unnecessary unless you have a non-standard name for `tsconfig.json`.
 
+## Step 6: Finalize
+
+### Replace eslint-disable Comments
+
+Bulk-convert all `// eslint-disable` and `// eslint-disable-next-line` comments to their `oxlint-disable` equivalents:
+
+```bash
+npx @oxlint/migrate --replace-eslint-comments
+```
+
+### Clean Up Remaining ESLint References
+
+Search the entire project for leftover `eslint` strings:
+
+```bash
+grep -ri "eslint" . --exclude-dir=node_modules --exclude-dir=.git
+```
+
+For each match, decide whether to replace or remove it:
+
+| What | Action |
+| --- | --- |
+| `package.json` scripts | Replace with `oxlint` equivalent or remove |
+| `package.json` devDependencies | Remove all `eslint*` packages if no longer needed |
+| CI config files | Replace `eslint` invocations with `oxlint` |
+| `.eslintignore` | Migrate patterns into `ignorePatterns` in `.oxlintrc.json`, then delete the file |
+| `eslint.config.js` / `.eslintrc*` | Delete if ESLint is fully removed |
+| `// eslint-disable` comments | Should be gone after the `--replace-eslint-comments` step above; fix any remaining ones manually |
+| Documentation / README | Update to mention oxlint instead of ESLint |
+
 ## Tips
 
 - For ESLint core rules not yet natively in oxlint, prefer `oxlint-plugin-eslint` (see Step 4) over keeping a parallel ESLint process — it keeps all linting in one command and avoids ESLint dependencies. Running ESLint alongside oxlint is only necessary when you rely on third-party ESLint plugins that have no oxlint equivalent and do not work as oxlint JS plugins.
-- Disable comments work: `// eslint-disable` and `// eslint-disable-next-line` comments are supported by oxlint. Use `--replace-eslint-comments` when running @oxlint/migrate to convert them to `// oxlint-disable` equivalents if desired.
 - List available rules: Run `npx oxlint --rules` to see all supported rules, or refer to the [rule documentation](https://oxc.rs/docs/guide/usage/linter/rules.html).
 - Schema support: Add `"$schema": "./node_modules/oxlint/configuration_schema.json"` to `.oxlintrc.json` for editor autocompletion if the migration tool didn't do it automatically.
 - Output formats: `default`, `stylish`, `json`, `github`, `gitlab`, `junit`, `checkstyle`, `unix`
