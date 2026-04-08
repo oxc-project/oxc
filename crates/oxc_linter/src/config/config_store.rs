@@ -1,6 +1,6 @@
 use std::{
     path::{Path, PathBuf},
-    sync::Arc,
+    sync::{Arc, Mutex},
 };
 
 use rustc_hash::FxHashMap;
@@ -147,7 +147,6 @@ impl Config {
         let mut env = self.base.config.env.clone();
         let mut globals = self.base.config.globals.clone();
         let mut plugins = self.base.config.plugins;
-        let settings = self.base.config.settings.clone();
 
         for override_config in overrides_to_apply.clone() {
             if let Some(override_plugins) = override_config.plugins {
@@ -171,7 +170,6 @@ impl Config {
                 LintPlugins::try_from(rule.plugin_name())
                     .is_ok_and(|plugin| plugins.contains(plugin))
             })
-            .cloned()
             .collect::<Vec<_>>();
 
         // Build a hashmap of existing external rules keyed by rule id with value (options_id, severity)
@@ -203,7 +201,7 @@ impl Config {
                         if unconfigured_plugins.contains(rule_plugin) {
                             self.categories
                                 .get(&rule.category())
-                                .map(|severity| (rule.clone(), severity))
+                                .map(|severity| ((*rule).clone(), severity))
                         } else {
                             None
                         }
@@ -240,7 +238,6 @@ impl Config {
         let config: Arc<LintConfig> = if plugins == self.base.config.plugins
             && env == self.base.config.env
             && globals == self.base.config.globals
-            && settings == self.base.config.settings
         {
             Arc::clone(&self.base.config)
         } else {
@@ -249,7 +246,7 @@ impl Config {
             config.plugins = plugins;
             config.env = env;
             config.globals = globals;
-            config.settings = settings;
+            // settings is not modified by overrides, so no need to reassign
             Arc::new(config)
         };
 
@@ -275,11 +272,25 @@ impl Config {
 /// 2. any nested configurations (`nested_configs`)
 ///
 /// If an explicit config has been provided `-c config.json`, then `nested_configs` will be empty
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct ConfigStore {
     base: Config,
     nested_configs: FxHashMap<PathBuf, Config>,
     external_plugin_store: Arc<ExternalPluginStore>,
+    /// Cache mapping directory paths to the nearest config directory key (or `None` if no config found).
+    /// This avoids repeatedly walking up parent directories for files in the same directory.
+    nearest_config_cache: Mutex<FxHashMap<PathBuf, Option<PathBuf>>>,
+}
+
+impl Clone for ConfigStore {
+    fn clone(&self) -> Self {
+        Self {
+            base: self.base.clone(),
+            nested_configs: self.nested_configs.clone(),
+            external_plugin_store: self.external_plugin_store.clone(),
+            nearest_config_cache: Mutex::new(FxHashMap::default()),
+        }
+    }
 }
 
 impl ConfigStore {
@@ -292,6 +303,7 @@ impl ConfigStore {
             base: base_config,
             nested_configs,
             external_plugin_store: Arc::new(external_plugin_store),
+            nearest_config_cache: Mutex::new(FxHashMap::default()),
         }
     }
 
@@ -361,16 +373,32 @@ impl ConfigStore {
     }
 
     fn get_nearest_config(&self, path: &Path) -> Option<&Config> {
-        // TODO(perf): should we cache the computed nearest config for every directory,
-        // so we don't have to recompute it for every file?
-        let mut current = path.parent();
-        while let Some(dir) = current {
-            if let Some(config) = self.nested_configs.get(dir) {
-                return Some(config);
+        let dir = path.parent()?;
+
+        // Check cache first
+        if let Ok(cache) = self.nearest_config_cache.lock() {
+            if let Some(cached) = cache.get(dir) {
+                return cached.as_ref().and_then(|key| self.nested_configs.get(key));
             }
-            current = dir.parent();
         }
-        None
+
+        // Walk up parent directories to find the nearest config
+        let mut result = None;
+        let mut current = Some(dir);
+        while let Some(d) = current {
+            if self.nested_configs.contains_key(d) {
+                result = Some(d.to_path_buf());
+                break;
+            }
+            current = d.parent();
+        }
+
+        // Populate cache
+        if let Ok(mut cache) = self.nearest_config_cache.lock() {
+            cache.insert(dir.to_path_buf(), result.clone());
+        }
+
+        result.as_ref().and_then(|key| self.nested_configs.get(key))
     }
 
     pub(crate) fn resolve_plugin_rule_names(
