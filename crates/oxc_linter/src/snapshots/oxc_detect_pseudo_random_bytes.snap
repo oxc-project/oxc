@@ -1,0 +1,18 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 444
+---
+
+  ⚠ oxc(detect-pseudo-random-bytes): crypto.pseudoRandomBytes() is not cryptographically secure
+   ╭─[detect_pseudo_random_bytes.tsx:1:1]
+ 1 │ crypto.pseudoRandomBytes(16)
+   · ────────────────────────────
+   ╰────
+  help: Use crypto.randomBytes() instead of crypto.pseudoRandomBytes().
+
+  ⚠ oxc(detect-pseudo-random-bytes): crypto.pseudoRandomBytes() is not cryptographically secure
+   ╭─[detect_pseudo_random_bytes.tsx:1:1]
+ 1 │ obj.pseudoRandomBytes(32)
+   · ─────────────────────────
+   ╰────
+  help: Use crypto.randomBytes() instead of crypto.pseudoRandomBytes().

@@ -639,6 +639,21 @@ pub(crate) mod oxc {
     pub mod number_arg_out_of_range;
     pub mod only_used_in_recursion;
     pub mod uninvoked_array_callback;
+
+    pub mod depend_ban_dependencies;
+    pub mod detect_buffer_noassert;
+    pub mod detect_child_process;
+    pub mod detect_disable_mustache_escape;
+    pub mod detect_eval_with_expression;
+    pub mod detect_new_buffer;
+    pub mod detect_no_csrf_before_method_override;
+    pub mod detect_non_literal_fs_filename;
+    pub mod detect_non_literal_regexp;
+    pub mod detect_non_literal_require;
+    pub mod detect_object_injection;
+    pub mod detect_possible_timing_attacks;
+    pub mod detect_pseudo_random_bytes;
+    pub mod detect_unsafe_regex;
 }
 
 pub(crate) mod nextjs {

@@ -1,0 +1,25 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 444
+---
+
+  ⚠ oxc(detect-eval-with-expression): eval() called with a non-literal argument
+   ╭─[detect_eval_with_expression.tsx:1:1]
+ 1 │ eval(userInput)
+   · ───────────────
+   ╰────
+  help: Avoid calling eval() with dynamic expressions. This can lead to code injection vulnerabilities.
+
+  ⚠ oxc(detect-eval-with-expression): eval() called with a non-literal argument
+   ╭─[detect_eval_with_expression.tsx:1:1]
+ 1 │ eval(a + b)
+   · ───────────
+   ╰────
+  help: Avoid calling eval() with dynamic expressions. This can lead to code injection vulnerabilities.
+
+  ⚠ oxc(detect-eval-with-expression): eval() called with a non-literal argument
+   ╭─[detect_eval_with_expression.tsx:1:1]
+ 1 │ eval(getCode())
+   · ───────────────
+   ╰────
+  help: Avoid calling eval() with dynamic expressions. This can lead to code injection vulnerabilities.

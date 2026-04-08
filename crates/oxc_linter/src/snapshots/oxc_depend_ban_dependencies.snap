@@ -1,0 +1,39 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 444
+---
+
+  ⚠ oxc(depend-ban-dependencies): Package "moment" is banned: Use date-fns or dayjs instead
+   ╭─[depend_ban_dependencies.tsx:1:20]
+ 1 │ import moment from "moment";
+   ·                    ────────
+   ╰────
+  help: Remove the import of "moment" and use the suggested alternative.
+
+  ⚠ oxc(depend-ban-dependencies): Package "lodash" is banned: Use native Array/Object methods or lodash-es for tree-shaking
+   ╭─[depend_ban_dependencies.tsx:1:19]
+ 1 │ const _ = require("lodash");
+   ·                   ────────
+   ╰────
+  help: Remove the import of "lodash" and use the suggested alternative.
+
+  ⚠ oxc(depend-ban-dependencies): Package "underscore" is banned: Use native Array/Object methods instead
+   ╭─[depend_ban_dependencies.tsx:1:15]
+ 1 │ import _ from "underscore";
+   ·               ────────────
+   ╰────
+  help: Remove the import of "underscore" and use the suggested alternative.
+
+  ⚠ oxc(depend-ban-dependencies): Package "lodash" is banned: Use native Array/Object methods or lodash-es for tree-shaking
+   ╭─[depend_ban_dependencies.tsx:1:19]
+ 1 │ import merge from "lodash/merge";
+   ·                   ──────────────
+   ╰────
+  help: Remove the import of "lodash" and use the suggested alternative.
+
+  ⚠ oxc(depend-ban-dependencies): Package "my-banned-pkg" is banned: Use something else
+   ╭─[depend_ban_dependencies.tsx:1:20]
+ 1 │ import banned from "my-banned-pkg";
+   ·                    ───────────────
+   ╰────
+  help: Remove the import of "my-banned-pkg" and use the suggested alternative.

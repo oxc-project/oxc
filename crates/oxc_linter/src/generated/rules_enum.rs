@@ -353,6 +353,20 @@ pub use crate::rules::oxc::bad_object_literal_comparison::BadObjectLiteralCompar
 pub use crate::rules::oxc::bad_replace_all_arg::BadReplaceAllArg as OxcBadReplaceAllArg;
 pub use crate::rules::oxc::branches_sharing_code::BranchesSharingCode as OxcBranchesSharingCode;
 pub use crate::rules::oxc::const_comparisons::ConstComparisons as OxcConstComparisons;
+pub use crate::rules::oxc::depend_ban_dependencies::DependBanDependencies as OxcDependBanDependencies;
+pub use crate::rules::oxc::detect_buffer_noassert::DetectBufferNoassert as OxcDetectBufferNoassert;
+pub use crate::rules::oxc::detect_child_process::DetectChildProcess as OxcDetectChildProcess;
+pub use crate::rules::oxc::detect_disable_mustache_escape::DetectDisableMustacheEscape as OxcDetectDisableMustacheEscape;
+pub use crate::rules::oxc::detect_eval_with_expression::DetectEvalWithExpression as OxcDetectEvalWithExpression;
+pub use crate::rules::oxc::detect_new_buffer::DetectNewBuffer as OxcDetectNewBuffer;
+pub use crate::rules::oxc::detect_no_csrf_before_method_override::DetectNoCsrfBeforeMethodOverride as OxcDetectNoCsrfBeforeMethodOverride;
+pub use crate::rules::oxc::detect_non_literal_fs_filename::DetectNonLiteralFsFilename as OxcDetectNonLiteralFsFilename;
+pub use crate::rules::oxc::detect_non_literal_regexp::DetectNonLiteralRegexp as OxcDetectNonLiteralRegexp;
+pub use crate::rules::oxc::detect_non_literal_require::DetectNonLiteralRequire as OxcDetectNonLiteralRequire;
+pub use crate::rules::oxc::detect_object_injection::DetectObjectInjection as OxcDetectObjectInjection;
+pub use crate::rules::oxc::detect_possible_timing_attacks::DetectPossibleTimingAttacks as OxcDetectPossibleTimingAttacks;
+pub use crate::rules::oxc::detect_pseudo_random_bytes::DetectPseudoRandomBytes as OxcDetectPseudoRandomBytes;
+pub use crate::rules::oxc::detect_unsafe_regex::DetectUnsafeRegex as OxcDetectUnsafeRegex;
 pub use crate::rules::oxc::double_comparisons::DoubleComparisons as OxcDoubleComparisons;
 pub use crate::rules::oxc::erasing_op::ErasingOp as OxcErasingOp;
 pub use crate::rules::oxc::misrefactored_assign_op::MisrefactoredAssignOp as OxcMisrefactoredAssignOp;
@@ -1339,6 +1353,20 @@ pub enum RuleEnum {
     OxcNumberArgOutOfRange(OxcNumberArgOutOfRange),
     OxcOnlyUsedInRecursion(OxcOnlyUsedInRecursion),
     OxcUninvokedArrayCallback(OxcUninvokedArrayCallback),
+    OxcDependBanDependencies(OxcDependBanDependencies),
+    OxcDetectBufferNoassert(OxcDetectBufferNoassert),
+    OxcDetectChildProcess(OxcDetectChildProcess),
+    OxcDetectDisableMustacheEscape(OxcDetectDisableMustacheEscape),
+    OxcDetectEvalWithExpression(OxcDetectEvalWithExpression),
+    OxcDetectNewBuffer(OxcDetectNewBuffer),
+    OxcDetectNoCsrfBeforeMethodOverride(OxcDetectNoCsrfBeforeMethodOverride),
+    OxcDetectNonLiteralFsFilename(OxcDetectNonLiteralFsFilename),
+    OxcDetectNonLiteralRegexp(OxcDetectNonLiteralRegexp),
+    OxcDetectNonLiteralRequire(OxcDetectNonLiteralRequire),
+    OxcDetectObjectInjection(OxcDetectObjectInjection),
+    OxcDetectPossibleTimingAttacks(OxcDetectPossibleTimingAttacks),
+    OxcDetectPseudoRandomBytes(OxcDetectPseudoRandomBytes),
+    OxcDetectUnsafeRegex(OxcDetectUnsafeRegex),
     NextjsGoogleFontDisplay(NextjsGoogleFontDisplay),
     NextjsGoogleFontPreconnect(NextjsGoogleFontPreconnect),
     NextjsInlineScriptId(NextjsInlineScriptId),
@@ -2132,7 +2160,22 @@ const OXC_NO_THIS_IN_EXPORTED_FUNCTION_ID: usize = OXC_NO_REST_SPREAD_PROPERTIES
 const OXC_NUMBER_ARG_OUT_OF_RANGE_ID: usize = OXC_NO_THIS_IN_EXPORTED_FUNCTION_ID + 1usize;
 const OXC_ONLY_USED_IN_RECURSION_ID: usize = OXC_NUMBER_ARG_OUT_OF_RANGE_ID + 1usize;
 const OXC_UNINVOKED_ARRAY_CALLBACK_ID: usize = OXC_ONLY_USED_IN_RECURSION_ID + 1usize;
-const NEXTJS_GOOGLE_FONT_DISPLAY_ID: usize = OXC_UNINVOKED_ARRAY_CALLBACK_ID + 1usize;
+const OXC_DEPEND_BAN_DEPENDENCIES_ID: usize = OXC_UNINVOKED_ARRAY_CALLBACK_ID + 1usize;
+const OXC_DETECT_BUFFER_NOASSERT_ID: usize = OXC_DEPEND_BAN_DEPENDENCIES_ID + 1usize;
+const OXC_DETECT_CHILD_PROCESS_ID: usize = OXC_DETECT_BUFFER_NOASSERT_ID + 1usize;
+const OXC_DETECT_DISABLE_MUSTACHE_ESCAPE_ID: usize = OXC_DETECT_CHILD_PROCESS_ID + 1usize;
+const OXC_DETECT_EVAL_WITH_EXPRESSION_ID: usize = OXC_DETECT_DISABLE_MUSTACHE_ESCAPE_ID + 1usize;
+const OXC_DETECT_NEW_BUFFER_ID: usize = OXC_DETECT_EVAL_WITH_EXPRESSION_ID + 1usize;
+const OXC_DETECT_NO_CSRF_BEFORE_METHOD_OVERRIDE_ID: usize = OXC_DETECT_NEW_BUFFER_ID + 1usize;
+const OXC_DETECT_NON_LITERAL_FS_FILENAME_ID: usize =
+    OXC_DETECT_NO_CSRF_BEFORE_METHOD_OVERRIDE_ID + 1usize;
+const OXC_DETECT_NON_LITERAL_REGEXP_ID: usize = OXC_DETECT_NON_LITERAL_FS_FILENAME_ID + 1usize;
+const OXC_DETECT_NON_LITERAL_REQUIRE_ID: usize = OXC_DETECT_NON_LITERAL_REGEXP_ID + 1usize;
+const OXC_DETECT_OBJECT_INJECTION_ID: usize = OXC_DETECT_NON_LITERAL_REQUIRE_ID + 1usize;
+const OXC_DETECT_POSSIBLE_TIMING_ATTACKS_ID: usize = OXC_DETECT_OBJECT_INJECTION_ID + 1usize;
+const OXC_DETECT_PSEUDO_RANDOM_BYTES_ID: usize = OXC_DETECT_POSSIBLE_TIMING_ATTACKS_ID + 1usize;
+const OXC_DETECT_UNSAFE_REGEX_ID: usize = OXC_DETECT_PSEUDO_RANDOM_BYTES_ID + 1usize;
+const NEXTJS_GOOGLE_FONT_DISPLAY_ID: usize = OXC_DETECT_UNSAFE_REGEX_ID + 1usize;
 const NEXTJS_GOOGLE_FONT_PRECONNECT_ID: usize = NEXTJS_GOOGLE_FONT_DISPLAY_ID + 1usize;
 const NEXTJS_INLINE_SCRIPT_ID_ID: usize = NEXTJS_GOOGLE_FONT_PRECONNECT_ID + 1usize;
 const NEXTJS_NEXT_SCRIPT_FOR_GA_ID: usize = NEXTJS_INLINE_SCRIPT_ID_ID + 1usize;
@@ -2954,6 +2997,22 @@ impl RuleEnum {
             Self::OxcNumberArgOutOfRange(_) => OXC_NUMBER_ARG_OUT_OF_RANGE_ID,
             Self::OxcOnlyUsedInRecursion(_) => OXC_ONLY_USED_IN_RECURSION_ID,
             Self::OxcUninvokedArrayCallback(_) => OXC_UNINVOKED_ARRAY_CALLBACK_ID,
+            Self::OxcDependBanDependencies(_) => OXC_DEPEND_BAN_DEPENDENCIES_ID,
+            Self::OxcDetectBufferNoassert(_) => OXC_DETECT_BUFFER_NOASSERT_ID,
+            Self::OxcDetectChildProcess(_) => OXC_DETECT_CHILD_PROCESS_ID,
+            Self::OxcDetectDisableMustacheEscape(_) => OXC_DETECT_DISABLE_MUSTACHE_ESCAPE_ID,
+            Self::OxcDetectEvalWithExpression(_) => OXC_DETECT_EVAL_WITH_EXPRESSION_ID,
+            Self::OxcDetectNewBuffer(_) => OXC_DETECT_NEW_BUFFER_ID,
+            Self::OxcDetectNoCsrfBeforeMethodOverride(_) => {
+                OXC_DETECT_NO_CSRF_BEFORE_METHOD_OVERRIDE_ID
+            }
+            Self::OxcDetectNonLiteralFsFilename(_) => OXC_DETECT_NON_LITERAL_FS_FILENAME_ID,
+            Self::OxcDetectNonLiteralRegexp(_) => OXC_DETECT_NON_LITERAL_REGEXP_ID,
+            Self::OxcDetectNonLiteralRequire(_) => OXC_DETECT_NON_LITERAL_REQUIRE_ID,
+            Self::OxcDetectObjectInjection(_) => OXC_DETECT_OBJECT_INJECTION_ID,
+            Self::OxcDetectPossibleTimingAttacks(_) => OXC_DETECT_POSSIBLE_TIMING_ATTACKS_ID,
+            Self::OxcDetectPseudoRandomBytes(_) => OXC_DETECT_PSEUDO_RANDOM_BYTES_ID,
+            Self::OxcDetectUnsafeRegex(_) => OXC_DETECT_UNSAFE_REGEX_ID,
             Self::NextjsGoogleFontDisplay(_) => NEXTJS_GOOGLE_FONT_DISPLAY_ID,
             Self::NextjsGoogleFontPreconnect(_) => NEXTJS_GOOGLE_FONT_PRECONNECT_ID,
             Self::NextjsInlineScriptId(_) => NEXTJS_INLINE_SCRIPT_ID_ID,
@@ -3764,6 +3823,22 @@ impl RuleEnum {
             Self::OxcNumberArgOutOfRange(_) => OxcNumberArgOutOfRange::NAME,
             Self::OxcOnlyUsedInRecursion(_) => OxcOnlyUsedInRecursion::NAME,
             Self::OxcUninvokedArrayCallback(_) => OxcUninvokedArrayCallback::NAME,
+            Self::OxcDependBanDependencies(_) => OxcDependBanDependencies::NAME,
+            Self::OxcDetectBufferNoassert(_) => OxcDetectBufferNoassert::NAME,
+            Self::OxcDetectChildProcess(_) => OxcDetectChildProcess::NAME,
+            Self::OxcDetectDisableMustacheEscape(_) => OxcDetectDisableMustacheEscape::NAME,
+            Self::OxcDetectEvalWithExpression(_) => OxcDetectEvalWithExpression::NAME,
+            Self::OxcDetectNewBuffer(_) => OxcDetectNewBuffer::NAME,
+            Self::OxcDetectNoCsrfBeforeMethodOverride(_) => {
+                OxcDetectNoCsrfBeforeMethodOverride::NAME
+            }
+            Self::OxcDetectNonLiteralFsFilename(_) => OxcDetectNonLiteralFsFilename::NAME,
+            Self::OxcDetectNonLiteralRegexp(_) => OxcDetectNonLiteralRegexp::NAME,
+            Self::OxcDetectNonLiteralRequire(_) => OxcDetectNonLiteralRequire::NAME,
+            Self::OxcDetectObjectInjection(_) => OxcDetectObjectInjection::NAME,
+            Self::OxcDetectPossibleTimingAttacks(_) => OxcDetectPossibleTimingAttacks::NAME,
+            Self::OxcDetectPseudoRandomBytes(_) => OxcDetectPseudoRandomBytes::NAME,
+            Self::OxcDetectUnsafeRegex(_) => OxcDetectUnsafeRegex::NAME,
             Self::NextjsGoogleFontDisplay(_) => NextjsGoogleFontDisplay::NAME,
             Self::NextjsGoogleFontPreconnect(_) => NextjsGoogleFontPreconnect::NAME,
             Self::NextjsInlineScriptId(_) => NextjsInlineScriptId::NAME,
@@ -4616,6 +4691,22 @@ impl RuleEnum {
             Self::OxcNumberArgOutOfRange(_) => OxcNumberArgOutOfRange::CATEGORY,
             Self::OxcOnlyUsedInRecursion(_) => OxcOnlyUsedInRecursion::CATEGORY,
             Self::OxcUninvokedArrayCallback(_) => OxcUninvokedArrayCallback::CATEGORY,
+            Self::OxcDependBanDependencies(_) => OxcDependBanDependencies::CATEGORY,
+            Self::OxcDetectBufferNoassert(_) => OxcDetectBufferNoassert::CATEGORY,
+            Self::OxcDetectChildProcess(_) => OxcDetectChildProcess::CATEGORY,
+            Self::OxcDetectDisableMustacheEscape(_) => OxcDetectDisableMustacheEscape::CATEGORY,
+            Self::OxcDetectEvalWithExpression(_) => OxcDetectEvalWithExpression::CATEGORY,
+            Self::OxcDetectNewBuffer(_) => OxcDetectNewBuffer::CATEGORY,
+            Self::OxcDetectNoCsrfBeforeMethodOverride(_) => {
+                OxcDetectNoCsrfBeforeMethodOverride::CATEGORY
+            }
+            Self::OxcDetectNonLiteralFsFilename(_) => OxcDetectNonLiteralFsFilename::CATEGORY,
+            Self::OxcDetectNonLiteralRegexp(_) => OxcDetectNonLiteralRegexp::CATEGORY,
+            Self::OxcDetectNonLiteralRequire(_) => OxcDetectNonLiteralRequire::CATEGORY,
+            Self::OxcDetectObjectInjection(_) => OxcDetectObjectInjection::CATEGORY,
+            Self::OxcDetectPossibleTimingAttacks(_) => OxcDetectPossibleTimingAttacks::CATEGORY,
+            Self::OxcDetectPseudoRandomBytes(_) => OxcDetectPseudoRandomBytes::CATEGORY,
+            Self::OxcDetectUnsafeRegex(_) => OxcDetectUnsafeRegex::CATEGORY,
             Self::NextjsGoogleFontDisplay(_) => NextjsGoogleFontDisplay::CATEGORY,
             Self::NextjsGoogleFontPreconnect(_) => NextjsGoogleFontPreconnect::CATEGORY,
             Self::NextjsInlineScriptId(_) => NextjsInlineScriptId::CATEGORY,
@@ -5435,6 +5526,22 @@ impl RuleEnum {
             Self::OxcNumberArgOutOfRange(_) => OxcNumberArgOutOfRange::FIX,
             Self::OxcOnlyUsedInRecursion(_) => OxcOnlyUsedInRecursion::FIX,
             Self::OxcUninvokedArrayCallback(_) => OxcUninvokedArrayCallback::FIX,
+            Self::OxcDependBanDependencies(_) => OxcDependBanDependencies::FIX,
+            Self::OxcDetectBufferNoassert(_) => OxcDetectBufferNoassert::FIX,
+            Self::OxcDetectChildProcess(_) => OxcDetectChildProcess::FIX,
+            Self::OxcDetectDisableMustacheEscape(_) => OxcDetectDisableMustacheEscape::FIX,
+            Self::OxcDetectEvalWithExpression(_) => OxcDetectEvalWithExpression::FIX,
+            Self::OxcDetectNewBuffer(_) => OxcDetectNewBuffer::FIX,
+            Self::OxcDetectNoCsrfBeforeMethodOverride(_) => {
+                OxcDetectNoCsrfBeforeMethodOverride::FIX
+            }
+            Self::OxcDetectNonLiteralFsFilename(_) => OxcDetectNonLiteralFsFilename::FIX,
+            Self::OxcDetectNonLiteralRegexp(_) => OxcDetectNonLiteralRegexp::FIX,
+            Self::OxcDetectNonLiteralRequire(_) => OxcDetectNonLiteralRequire::FIX,
+            Self::OxcDetectObjectInjection(_) => OxcDetectObjectInjection::FIX,
+            Self::OxcDetectPossibleTimingAttacks(_) => OxcDetectPossibleTimingAttacks::FIX,
+            Self::OxcDetectPseudoRandomBytes(_) => OxcDetectPseudoRandomBytes::FIX,
+            Self::OxcDetectUnsafeRegex(_) => OxcDetectUnsafeRegex::FIX,
             Self::NextjsGoogleFontDisplay(_) => NextjsGoogleFontDisplay::FIX,
             Self::NextjsGoogleFontPreconnect(_) => NextjsGoogleFontPreconnect::FIX,
             Self::NextjsInlineScriptId(_) => NextjsInlineScriptId::FIX,
@@ -6432,6 +6539,28 @@ impl RuleEnum {
             Self::OxcNumberArgOutOfRange(_) => OxcNumberArgOutOfRange::documentation(),
             Self::OxcOnlyUsedInRecursion(_) => OxcOnlyUsedInRecursion::documentation(),
             Self::OxcUninvokedArrayCallback(_) => OxcUninvokedArrayCallback::documentation(),
+            Self::OxcDependBanDependencies(_) => OxcDependBanDependencies::documentation(),
+            Self::OxcDetectBufferNoassert(_) => OxcDetectBufferNoassert::documentation(),
+            Self::OxcDetectChildProcess(_) => OxcDetectChildProcess::documentation(),
+            Self::OxcDetectDisableMustacheEscape(_) => {
+                OxcDetectDisableMustacheEscape::documentation()
+            }
+            Self::OxcDetectEvalWithExpression(_) => OxcDetectEvalWithExpression::documentation(),
+            Self::OxcDetectNewBuffer(_) => OxcDetectNewBuffer::documentation(),
+            Self::OxcDetectNoCsrfBeforeMethodOverride(_) => {
+                OxcDetectNoCsrfBeforeMethodOverride::documentation()
+            }
+            Self::OxcDetectNonLiteralFsFilename(_) => {
+                OxcDetectNonLiteralFsFilename::documentation()
+            }
+            Self::OxcDetectNonLiteralRegexp(_) => OxcDetectNonLiteralRegexp::documentation(),
+            Self::OxcDetectNonLiteralRequire(_) => OxcDetectNonLiteralRequire::documentation(),
+            Self::OxcDetectObjectInjection(_) => OxcDetectObjectInjection::documentation(),
+            Self::OxcDetectPossibleTimingAttacks(_) => {
+                OxcDetectPossibleTimingAttacks::documentation()
+            }
+            Self::OxcDetectPseudoRandomBytes(_) => OxcDetectPseudoRandomBytes::documentation(),
+            Self::OxcDetectUnsafeRegex(_) => OxcDetectUnsafeRegex::documentation(),
             Self::NextjsGoogleFontDisplay(_) => NextjsGoogleFontDisplay::documentation(),
             Self::NextjsGoogleFontPreconnect(_) => NextjsGoogleFontPreconnect::documentation(),
             Self::NextjsInlineScriptId(_) => NextjsInlineScriptId::documentation(),
@@ -8313,6 +8442,50 @@ impl RuleEnum {
                 OxcUninvokedArrayCallback::config_schema(generator)
                     .or_else(|| OxcUninvokedArrayCallback::schema(generator))
             }
+            Self::OxcDependBanDependencies(_) => OxcDependBanDependencies::config_schema(generator)
+                .or_else(|| OxcDependBanDependencies::schema(generator)),
+            Self::OxcDetectBufferNoassert(_) => OxcDetectBufferNoassert::config_schema(generator)
+                .or_else(|| OxcDetectBufferNoassert::schema(generator)),
+            Self::OxcDetectChildProcess(_) => OxcDetectChildProcess::config_schema(generator)
+                .or_else(|| OxcDetectChildProcess::schema(generator)),
+            Self::OxcDetectDisableMustacheEscape(_) => {
+                OxcDetectDisableMustacheEscape::config_schema(generator)
+                    .or_else(|| OxcDetectDisableMustacheEscape::schema(generator))
+            }
+            Self::OxcDetectEvalWithExpression(_) => {
+                OxcDetectEvalWithExpression::config_schema(generator)
+                    .or_else(|| OxcDetectEvalWithExpression::schema(generator))
+            }
+            Self::OxcDetectNewBuffer(_) => OxcDetectNewBuffer::config_schema(generator)
+                .or_else(|| OxcDetectNewBuffer::schema(generator)),
+            Self::OxcDetectNoCsrfBeforeMethodOverride(_) => {
+                OxcDetectNoCsrfBeforeMethodOverride::config_schema(generator)
+                    .or_else(|| OxcDetectNoCsrfBeforeMethodOverride::schema(generator))
+            }
+            Self::OxcDetectNonLiteralFsFilename(_) => {
+                OxcDetectNonLiteralFsFilename::config_schema(generator)
+                    .or_else(|| OxcDetectNonLiteralFsFilename::schema(generator))
+            }
+            Self::OxcDetectNonLiteralRegexp(_) => {
+                OxcDetectNonLiteralRegexp::config_schema(generator)
+                    .or_else(|| OxcDetectNonLiteralRegexp::schema(generator))
+            }
+            Self::OxcDetectNonLiteralRequire(_) => {
+                OxcDetectNonLiteralRequire::config_schema(generator)
+                    .or_else(|| OxcDetectNonLiteralRequire::schema(generator))
+            }
+            Self::OxcDetectObjectInjection(_) => OxcDetectObjectInjection::config_schema(generator)
+                .or_else(|| OxcDetectObjectInjection::schema(generator)),
+            Self::OxcDetectPossibleTimingAttacks(_) => {
+                OxcDetectPossibleTimingAttacks::config_schema(generator)
+                    .or_else(|| OxcDetectPossibleTimingAttacks::schema(generator))
+            }
+            Self::OxcDetectPseudoRandomBytes(_) => {
+                OxcDetectPseudoRandomBytes::config_schema(generator)
+                    .or_else(|| OxcDetectPseudoRandomBytes::schema(generator))
+            }
+            Self::OxcDetectUnsafeRegex(_) => OxcDetectUnsafeRegex::config_schema(generator)
+                .or_else(|| OxcDetectUnsafeRegex::schema(generator)),
             Self::NextjsGoogleFontDisplay(_) => NextjsGoogleFontDisplay::config_schema(generator)
                 .or_else(|| NextjsGoogleFontDisplay::schema(generator)),
             Self::NextjsGoogleFontPreconnect(_) => {
@@ -9197,6 +9370,20 @@ impl RuleEnum {
             Self::OxcNumberArgOutOfRange(_) => "oxc",
             Self::OxcOnlyUsedInRecursion(_) => "oxc",
             Self::OxcUninvokedArrayCallback(_) => "oxc",
+            Self::OxcDependBanDependencies(_) => "oxc",
+            Self::OxcDetectBufferNoassert(_) => "oxc",
+            Self::OxcDetectChildProcess(_) => "oxc",
+            Self::OxcDetectDisableMustacheEscape(_) => "oxc",
+            Self::OxcDetectEvalWithExpression(_) => "oxc",
+            Self::OxcDetectNewBuffer(_) => "oxc",
+            Self::OxcDetectNoCsrfBeforeMethodOverride(_) => "oxc",
+            Self::OxcDetectNonLiteralFsFilename(_) => "oxc",
+            Self::OxcDetectNonLiteralRegexp(_) => "oxc",
+            Self::OxcDetectNonLiteralRequire(_) => "oxc",
+            Self::OxcDetectObjectInjection(_) => "oxc",
+            Self::OxcDetectPossibleTimingAttacks(_) => "oxc",
+            Self::OxcDetectPseudoRandomBytes(_) => "oxc",
+            Self::OxcDetectUnsafeRegex(_) => "oxc",
             Self::NextjsGoogleFontDisplay(_) => "nextjs",
             Self::NextjsGoogleFontPreconnect(_) => "nextjs",
             Self::NextjsInlineScriptId(_) => "nextjs",
@@ -11272,6 +11459,50 @@ impl RuleEnum {
             Self::OxcUninvokedArrayCallback(_) => Ok(Self::OxcUninvokedArrayCallback(
                 OxcUninvokedArrayCallback::from_configuration(value)?,
             )),
+            Self::OxcDependBanDependencies(_) => Ok(Self::OxcDependBanDependencies(
+                OxcDependBanDependencies::from_configuration(value)?,
+            )),
+            Self::OxcDetectBufferNoassert(_) => Ok(Self::OxcDetectBufferNoassert(
+                OxcDetectBufferNoassert::from_configuration(value)?,
+            )),
+            Self::OxcDetectChildProcess(_) => {
+                Ok(Self::OxcDetectChildProcess(OxcDetectChildProcess::from_configuration(value)?))
+            }
+            Self::OxcDetectDisableMustacheEscape(_) => Ok(Self::OxcDetectDisableMustacheEscape(
+                OxcDetectDisableMustacheEscape::from_configuration(value)?,
+            )),
+            Self::OxcDetectEvalWithExpression(_) => Ok(Self::OxcDetectEvalWithExpression(
+                OxcDetectEvalWithExpression::from_configuration(value)?,
+            )),
+            Self::OxcDetectNewBuffer(_) => {
+                Ok(Self::OxcDetectNewBuffer(OxcDetectNewBuffer::from_configuration(value)?))
+            }
+            Self::OxcDetectNoCsrfBeforeMethodOverride(_) => {
+                Ok(Self::OxcDetectNoCsrfBeforeMethodOverride(
+                    OxcDetectNoCsrfBeforeMethodOverride::from_configuration(value)?,
+                ))
+            }
+            Self::OxcDetectNonLiteralFsFilename(_) => Ok(Self::OxcDetectNonLiteralFsFilename(
+                OxcDetectNonLiteralFsFilename::from_configuration(value)?,
+            )),
+            Self::OxcDetectNonLiteralRegexp(_) => Ok(Self::OxcDetectNonLiteralRegexp(
+                OxcDetectNonLiteralRegexp::from_configuration(value)?,
+            )),
+            Self::OxcDetectNonLiteralRequire(_) => Ok(Self::OxcDetectNonLiteralRequire(
+                OxcDetectNonLiteralRequire::from_configuration(value)?,
+            )),
+            Self::OxcDetectObjectInjection(_) => Ok(Self::OxcDetectObjectInjection(
+                OxcDetectObjectInjection::from_configuration(value)?,
+            )),
+            Self::OxcDetectPossibleTimingAttacks(_) => Ok(Self::OxcDetectPossibleTimingAttacks(
+                OxcDetectPossibleTimingAttacks::from_configuration(value)?,
+            )),
+            Self::OxcDetectPseudoRandomBytes(_) => Ok(Self::OxcDetectPseudoRandomBytes(
+                OxcDetectPseudoRandomBytes::from_configuration(value)?,
+            )),
+            Self::OxcDetectUnsafeRegex(_) => {
+                Ok(Self::OxcDetectUnsafeRegex(OxcDetectUnsafeRegex::from_configuration(value)?))
+            }
             Self::NextjsGoogleFontDisplay(_) => Ok(Self::NextjsGoogleFontDisplay(
                 NextjsGoogleFontDisplay::from_configuration(value)?,
             )),
@@ -12198,6 +12429,20 @@ impl RuleEnum {
             Self::OxcNumberArgOutOfRange(rule) => rule.to_configuration(),
             Self::OxcOnlyUsedInRecursion(rule) => rule.to_configuration(),
             Self::OxcUninvokedArrayCallback(rule) => rule.to_configuration(),
+            Self::OxcDependBanDependencies(rule) => rule.to_configuration(),
+            Self::OxcDetectBufferNoassert(rule) => rule.to_configuration(),
+            Self::OxcDetectChildProcess(rule) => rule.to_configuration(),
+            Self::OxcDetectDisableMustacheEscape(rule) => rule.to_configuration(),
+            Self::OxcDetectEvalWithExpression(rule) => rule.to_configuration(),
+            Self::OxcDetectNewBuffer(rule) => rule.to_configuration(),
+            Self::OxcDetectNoCsrfBeforeMethodOverride(rule) => rule.to_configuration(),
+            Self::OxcDetectNonLiteralFsFilename(rule) => rule.to_configuration(),
+            Self::OxcDetectNonLiteralRegexp(rule) => rule.to_configuration(),
+            Self::OxcDetectNonLiteralRequire(rule) => rule.to_configuration(),
+            Self::OxcDetectObjectInjection(rule) => rule.to_configuration(),
+            Self::OxcDetectPossibleTimingAttacks(rule) => rule.to_configuration(),
+            Self::OxcDetectPseudoRandomBytes(rule) => rule.to_configuration(),
+            Self::OxcDetectUnsafeRegex(rule) => rule.to_configuration(),
             Self::NextjsGoogleFontDisplay(rule) => rule.to_configuration(),
             Self::NextjsGoogleFontPreconnect(rule) => rule.to_configuration(),
             Self::NextjsInlineScriptId(rule) => rule.to_configuration(),
@@ -12914,6 +13159,20 @@ impl RuleEnum {
             Self::OxcNumberArgOutOfRange(rule) => rule.run(node, ctx),
             Self::OxcOnlyUsedInRecursion(rule) => rule.run(node, ctx),
             Self::OxcUninvokedArrayCallback(rule) => rule.run(node, ctx),
+            Self::OxcDependBanDependencies(rule) => rule.run(node, ctx),
+            Self::OxcDetectBufferNoassert(rule) => rule.run(node, ctx),
+            Self::OxcDetectChildProcess(rule) => rule.run(node, ctx),
+            Self::OxcDetectDisableMustacheEscape(rule) => rule.run(node, ctx),
+            Self::OxcDetectEvalWithExpression(rule) => rule.run(node, ctx),
+            Self::OxcDetectNewBuffer(rule) => rule.run(node, ctx),
+            Self::OxcDetectNoCsrfBeforeMethodOverride(rule) => rule.run(node, ctx),
+            Self::OxcDetectNonLiteralFsFilename(rule) => rule.run(node, ctx),
+            Self::OxcDetectNonLiteralRegexp(rule) => rule.run(node, ctx),
+            Self::OxcDetectNonLiteralRequire(rule) => rule.run(node, ctx),
+            Self::OxcDetectObjectInjection(rule) => rule.run(node, ctx),
+            Self::OxcDetectPossibleTimingAttacks(rule) => rule.run(node, ctx),
+            Self::OxcDetectPseudoRandomBytes(rule) => rule.run(node, ctx),
+            Self::OxcDetectUnsafeRegex(rule) => rule.run(node, ctx),
             Self::NextjsGoogleFontDisplay(rule) => rule.run(node, ctx),
             Self::NextjsGoogleFontPreconnect(rule) => rule.run(node, ctx),
             Self::NextjsInlineScriptId(rule) => rule.run(node, ctx),
@@ -13628,6 +13887,20 @@ impl RuleEnum {
             Self::OxcNumberArgOutOfRange(rule) => rule.run_once(ctx),
             Self::OxcOnlyUsedInRecursion(rule) => rule.run_once(ctx),
             Self::OxcUninvokedArrayCallback(rule) => rule.run_once(ctx),
+            Self::OxcDependBanDependencies(rule) => rule.run_once(ctx),
+            Self::OxcDetectBufferNoassert(rule) => rule.run_once(ctx),
+            Self::OxcDetectChildProcess(rule) => rule.run_once(ctx),
+            Self::OxcDetectDisableMustacheEscape(rule) => rule.run_once(ctx),
+            Self::OxcDetectEvalWithExpression(rule) => rule.run_once(ctx),
+            Self::OxcDetectNewBuffer(rule) => rule.run_once(ctx),
+            Self::OxcDetectNoCsrfBeforeMethodOverride(rule) => rule.run_once(ctx),
+            Self::OxcDetectNonLiteralFsFilename(rule) => rule.run_once(ctx),
+            Self::OxcDetectNonLiteralRegexp(rule) => rule.run_once(ctx),
+            Self::OxcDetectNonLiteralRequire(rule) => rule.run_once(ctx),
+            Self::OxcDetectObjectInjection(rule) => rule.run_once(ctx),
+            Self::OxcDetectPossibleTimingAttacks(rule) => rule.run_once(ctx),
+            Self::OxcDetectPseudoRandomBytes(rule) => rule.run_once(ctx),
+            Self::OxcDetectUnsafeRegex(rule) => rule.run_once(ctx),
             Self::NextjsGoogleFontDisplay(rule) => rule.run_once(ctx),
             Self::NextjsGoogleFontPreconnect(rule) => rule.run_once(ctx),
             Self::NextjsInlineScriptId(rule) => rule.run_once(ctx),
@@ -14438,6 +14711,22 @@ impl RuleEnum {
             Self::OxcNumberArgOutOfRange(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::OxcOnlyUsedInRecursion(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::OxcUninvokedArrayCallback(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcDependBanDependencies(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcDetectBufferNoassert(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcDetectChildProcess(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcDetectDisableMustacheEscape(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcDetectEvalWithExpression(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcDetectNewBuffer(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcDetectNoCsrfBeforeMethodOverride(rule) => {
+                rule.run_on_jest_node(jest_node, ctx)
+            }
+            Self::OxcDetectNonLiteralFsFilename(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcDetectNonLiteralRegexp(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcDetectNonLiteralRequire(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcDetectObjectInjection(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcDetectPossibleTimingAttacks(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcDetectPseudoRandomBytes(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcDetectUnsafeRegex(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::NextjsGoogleFontDisplay(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::NextjsGoogleFontPreconnect(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::NextjsInlineScriptId(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -15156,6 +15445,20 @@ impl RuleEnum {
             Self::OxcNumberArgOutOfRange(rule) => rule.should_run(ctx),
             Self::OxcOnlyUsedInRecursion(rule) => rule.should_run(ctx),
             Self::OxcUninvokedArrayCallback(rule) => rule.should_run(ctx),
+            Self::OxcDependBanDependencies(rule) => rule.should_run(ctx),
+            Self::OxcDetectBufferNoassert(rule) => rule.should_run(ctx),
+            Self::OxcDetectChildProcess(rule) => rule.should_run(ctx),
+            Self::OxcDetectDisableMustacheEscape(rule) => rule.should_run(ctx),
+            Self::OxcDetectEvalWithExpression(rule) => rule.should_run(ctx),
+            Self::OxcDetectNewBuffer(rule) => rule.should_run(ctx),
+            Self::OxcDetectNoCsrfBeforeMethodOverride(rule) => rule.should_run(ctx),
+            Self::OxcDetectNonLiteralFsFilename(rule) => rule.should_run(ctx),
+            Self::OxcDetectNonLiteralRegexp(rule) => rule.should_run(ctx),
+            Self::OxcDetectNonLiteralRequire(rule) => rule.should_run(ctx),
+            Self::OxcDetectObjectInjection(rule) => rule.should_run(ctx),
+            Self::OxcDetectPossibleTimingAttacks(rule) => rule.should_run(ctx),
+            Self::OxcDetectPseudoRandomBytes(rule) => rule.should_run(ctx),
+            Self::OxcDetectUnsafeRegex(rule) => rule.should_run(ctx),
             Self::NextjsGoogleFontDisplay(rule) => rule.should_run(ctx),
             Self::NextjsGoogleFontPreconnect(rule) => rule.should_run(ctx),
             Self::NextjsInlineScriptId(rule) => rule.should_run(ctx),
@@ -16148,6 +16451,28 @@ impl RuleEnum {
             Self::OxcNumberArgOutOfRange(_) => OxcNumberArgOutOfRange::IS_TSGOLINT_RULE,
             Self::OxcOnlyUsedInRecursion(_) => OxcOnlyUsedInRecursion::IS_TSGOLINT_RULE,
             Self::OxcUninvokedArrayCallback(_) => OxcUninvokedArrayCallback::IS_TSGOLINT_RULE,
+            Self::OxcDependBanDependencies(_) => OxcDependBanDependencies::IS_TSGOLINT_RULE,
+            Self::OxcDetectBufferNoassert(_) => OxcDetectBufferNoassert::IS_TSGOLINT_RULE,
+            Self::OxcDetectChildProcess(_) => OxcDetectChildProcess::IS_TSGOLINT_RULE,
+            Self::OxcDetectDisableMustacheEscape(_) => {
+                OxcDetectDisableMustacheEscape::IS_TSGOLINT_RULE
+            }
+            Self::OxcDetectEvalWithExpression(_) => OxcDetectEvalWithExpression::IS_TSGOLINT_RULE,
+            Self::OxcDetectNewBuffer(_) => OxcDetectNewBuffer::IS_TSGOLINT_RULE,
+            Self::OxcDetectNoCsrfBeforeMethodOverride(_) => {
+                OxcDetectNoCsrfBeforeMethodOverride::IS_TSGOLINT_RULE
+            }
+            Self::OxcDetectNonLiteralFsFilename(_) => {
+                OxcDetectNonLiteralFsFilename::IS_TSGOLINT_RULE
+            }
+            Self::OxcDetectNonLiteralRegexp(_) => OxcDetectNonLiteralRegexp::IS_TSGOLINT_RULE,
+            Self::OxcDetectNonLiteralRequire(_) => OxcDetectNonLiteralRequire::IS_TSGOLINT_RULE,
+            Self::OxcDetectObjectInjection(_) => OxcDetectObjectInjection::IS_TSGOLINT_RULE,
+            Self::OxcDetectPossibleTimingAttacks(_) => {
+                OxcDetectPossibleTimingAttacks::IS_TSGOLINT_RULE
+            }
+            Self::OxcDetectPseudoRandomBytes(_) => OxcDetectPseudoRandomBytes::IS_TSGOLINT_RULE,
+            Self::OxcDetectUnsafeRegex(_) => OxcDetectUnsafeRegex::IS_TSGOLINT_RULE,
             Self::NextjsGoogleFontDisplay(_) => NextjsGoogleFontDisplay::IS_TSGOLINT_RULE,
             Self::NextjsGoogleFontPreconnect(_) => NextjsGoogleFontPreconnect::IS_TSGOLINT_RULE,
             Self::NextjsInlineScriptId(_) => NextjsInlineScriptId::IS_TSGOLINT_RULE,
@@ -17049,6 +17374,22 @@ impl RuleEnum {
             Self::OxcNumberArgOutOfRange(_) => OxcNumberArgOutOfRange::HAS_CONFIG,
             Self::OxcOnlyUsedInRecursion(_) => OxcOnlyUsedInRecursion::HAS_CONFIG,
             Self::OxcUninvokedArrayCallback(_) => OxcUninvokedArrayCallback::HAS_CONFIG,
+            Self::OxcDependBanDependencies(_) => OxcDependBanDependencies::HAS_CONFIG,
+            Self::OxcDetectBufferNoassert(_) => OxcDetectBufferNoassert::HAS_CONFIG,
+            Self::OxcDetectChildProcess(_) => OxcDetectChildProcess::HAS_CONFIG,
+            Self::OxcDetectDisableMustacheEscape(_) => OxcDetectDisableMustacheEscape::HAS_CONFIG,
+            Self::OxcDetectEvalWithExpression(_) => OxcDetectEvalWithExpression::HAS_CONFIG,
+            Self::OxcDetectNewBuffer(_) => OxcDetectNewBuffer::HAS_CONFIG,
+            Self::OxcDetectNoCsrfBeforeMethodOverride(_) => {
+                OxcDetectNoCsrfBeforeMethodOverride::HAS_CONFIG
+            }
+            Self::OxcDetectNonLiteralFsFilename(_) => OxcDetectNonLiteralFsFilename::HAS_CONFIG,
+            Self::OxcDetectNonLiteralRegexp(_) => OxcDetectNonLiteralRegexp::HAS_CONFIG,
+            Self::OxcDetectNonLiteralRequire(_) => OxcDetectNonLiteralRequire::HAS_CONFIG,
+            Self::OxcDetectObjectInjection(_) => OxcDetectObjectInjection::HAS_CONFIG,
+            Self::OxcDetectPossibleTimingAttacks(_) => OxcDetectPossibleTimingAttacks::HAS_CONFIG,
+            Self::OxcDetectPseudoRandomBytes(_) => OxcDetectPseudoRandomBytes::HAS_CONFIG,
+            Self::OxcDetectUnsafeRegex(_) => OxcDetectUnsafeRegex::HAS_CONFIG,
             Self::NextjsGoogleFontDisplay(_) => NextjsGoogleFontDisplay::HAS_CONFIG,
             Self::NextjsGoogleFontPreconnect(_) => NextjsGoogleFontPreconnect::HAS_CONFIG,
             Self::NextjsInlineScriptId(_) => NextjsInlineScriptId::HAS_CONFIG,
@@ -17775,6 +18116,20 @@ impl RuleEnum {
             Self::OxcNumberArgOutOfRange(rule) => rule.types_info(),
             Self::OxcOnlyUsedInRecursion(rule) => rule.types_info(),
             Self::OxcUninvokedArrayCallback(rule) => rule.types_info(),
+            Self::OxcDependBanDependencies(rule) => rule.types_info(),
+            Self::OxcDetectBufferNoassert(rule) => rule.types_info(),
+            Self::OxcDetectChildProcess(rule) => rule.types_info(),
+            Self::OxcDetectDisableMustacheEscape(rule) => rule.types_info(),
+            Self::OxcDetectEvalWithExpression(rule) => rule.types_info(),
+            Self::OxcDetectNewBuffer(rule) => rule.types_info(),
+            Self::OxcDetectNoCsrfBeforeMethodOverride(rule) => rule.types_info(),
+            Self::OxcDetectNonLiteralFsFilename(rule) => rule.types_info(),
+            Self::OxcDetectNonLiteralRegexp(rule) => rule.types_info(),
+            Self::OxcDetectNonLiteralRequire(rule) => rule.types_info(),
+            Self::OxcDetectObjectInjection(rule) => rule.types_info(),
+            Self::OxcDetectPossibleTimingAttacks(rule) => rule.types_info(),
+            Self::OxcDetectPseudoRandomBytes(rule) => rule.types_info(),
+            Self::OxcDetectUnsafeRegex(rule) => rule.types_info(),
             Self::NextjsGoogleFontDisplay(rule) => rule.types_info(),
             Self::NextjsGoogleFontPreconnect(rule) => rule.types_info(),
             Self::NextjsInlineScriptId(rule) => rule.types_info(),
@@ -18489,6 +18844,20 @@ impl RuleEnum {
             Self::OxcNumberArgOutOfRange(rule) => rule.run_info(),
             Self::OxcOnlyUsedInRecursion(rule) => rule.run_info(),
             Self::OxcUninvokedArrayCallback(rule) => rule.run_info(),
+            Self::OxcDependBanDependencies(rule) => rule.run_info(),
+            Self::OxcDetectBufferNoassert(rule) => rule.run_info(),
+            Self::OxcDetectChildProcess(rule) => rule.run_info(),
+            Self::OxcDetectDisableMustacheEscape(rule) => rule.run_info(),
+            Self::OxcDetectEvalWithExpression(rule) => rule.run_info(),
+            Self::OxcDetectNewBuffer(rule) => rule.run_info(),
+            Self::OxcDetectNoCsrfBeforeMethodOverride(rule) => rule.run_info(),
+            Self::OxcDetectNonLiteralFsFilename(rule) => rule.run_info(),
+            Self::OxcDetectNonLiteralRegexp(rule) => rule.run_info(),
+            Self::OxcDetectNonLiteralRequire(rule) => rule.run_info(),
+            Self::OxcDetectObjectInjection(rule) => rule.run_info(),
+            Self::OxcDetectPossibleTimingAttacks(rule) => rule.run_info(),
+            Self::OxcDetectPseudoRandomBytes(rule) => rule.run_info(),
+            Self::OxcDetectUnsafeRegex(rule) => rule.run_info(),
             Self::NextjsGoogleFontDisplay(rule) => rule.run_info(),
             Self::NextjsGoogleFontPreconnect(rule) => rule.run_info(),
             Self::NextjsInlineScriptId(rule) => rule.run_info(),
@@ -19317,6 +19686,22 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::OxcNumberArgOutOfRange(OxcNumberArgOutOfRange::default()),
         RuleEnum::OxcOnlyUsedInRecursion(OxcOnlyUsedInRecursion::default()),
         RuleEnum::OxcUninvokedArrayCallback(OxcUninvokedArrayCallback::default()),
+        RuleEnum::OxcDependBanDependencies(OxcDependBanDependencies::default()),
+        RuleEnum::OxcDetectBufferNoassert(OxcDetectBufferNoassert::default()),
+        RuleEnum::OxcDetectChildProcess(OxcDetectChildProcess::default()),
+        RuleEnum::OxcDetectDisableMustacheEscape(OxcDetectDisableMustacheEscape::default()),
+        RuleEnum::OxcDetectEvalWithExpression(OxcDetectEvalWithExpression::default()),
+        RuleEnum::OxcDetectNewBuffer(OxcDetectNewBuffer::default()),
+        RuleEnum::OxcDetectNoCsrfBeforeMethodOverride(
+            OxcDetectNoCsrfBeforeMethodOverride::default(),
+        ),
+        RuleEnum::OxcDetectNonLiteralFsFilename(OxcDetectNonLiteralFsFilename::default()),
+        RuleEnum::OxcDetectNonLiteralRegexp(OxcDetectNonLiteralRegexp::default()),
+        RuleEnum::OxcDetectNonLiteralRequire(OxcDetectNonLiteralRequire::default()),
+        RuleEnum::OxcDetectObjectInjection(OxcDetectObjectInjection::default()),
+        RuleEnum::OxcDetectPossibleTimingAttacks(OxcDetectPossibleTimingAttacks::default()),
+        RuleEnum::OxcDetectPseudoRandomBytes(OxcDetectPseudoRandomBytes::default()),
+        RuleEnum::OxcDetectUnsafeRegex(OxcDetectUnsafeRegex::default()),
         RuleEnum::NextjsGoogleFontDisplay(NextjsGoogleFontDisplay::default()),
         RuleEnum::NextjsGoogleFontPreconnect(NextjsGoogleFontPreconnect::default()),
         RuleEnum::NextjsInlineScriptId(NextjsInlineScriptId::default()),

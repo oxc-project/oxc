@@ -1,0 +1,200 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 444
+---
+
+  ⚠ oxc(detect-buffer-noassert): Buffer read/write called with noAssert flag
+   ╭─[detect_buffer_noassert.tsx:1:1]
+ 1 │ buf.readUInt8(0, true)
+   · ──────────────────────
+   ╰────
+  help: Do not pass true as the last argument (noAssert) to Buffer read/write methods. This disables bounds checking and can lead to out-of-bounds access.
+
+  ⚠ oxc(detect-buffer-noassert): Buffer read/write called with noAssert flag
+   ╭─[detect_buffer_noassert.tsx:1:1]
+ 1 │ buf.readUInt16LE(0, true)
+   · ─────────────────────────
+   ╰────
+  help: Do not pass true as the last argument (noAssert) to Buffer read/write methods. This disables bounds checking and can lead to out-of-bounds access.
+
+  ⚠ oxc(detect-buffer-noassert): Buffer read/write called with noAssert flag
+   ╭─[detect_buffer_noassert.tsx:1:1]
+ 1 │ buf.readUInt16BE(0, true)
+   · ─────────────────────────
+   ╰────
+  help: Do not pass true as the last argument (noAssert) to Buffer read/write methods. This disables bounds checking and can lead to out-of-bounds access.
+
+  ⚠ oxc(detect-buffer-noassert): Buffer read/write called with noAssert flag
+   ╭─[detect_buffer_noassert.tsx:1:1]
+ 1 │ buf.readUInt32LE(0, true)
+   · ─────────────────────────
+   ╰────
+  help: Do not pass true as the last argument (noAssert) to Buffer read/write methods. This disables bounds checking and can lead to out-of-bounds access.
+
+  ⚠ oxc(detect-buffer-noassert): Buffer read/write called with noAssert flag
+   ╭─[detect_buffer_noassert.tsx:1:1]
+ 1 │ buf.readUInt32BE(0, true)
+   · ─────────────────────────
+   ╰────
+  help: Do not pass true as the last argument (noAssert) to Buffer read/write methods. This disables bounds checking and can lead to out-of-bounds access.
+
+  ⚠ oxc(detect-buffer-noassert): Buffer read/write called with noAssert flag
+   ╭─[detect_buffer_noassert.tsx:1:1]
+ 1 │ buf.readInt8(0, true)
+   · ─────────────────────
+   ╰────
+  help: Do not pass true as the last argument (noAssert) to Buffer read/write methods. This disables bounds checking and can lead to out-of-bounds access.
+
+  ⚠ oxc(detect-buffer-noassert): Buffer read/write called with noAssert flag
+   ╭─[detect_buffer_noassert.tsx:1:1]
+ 1 │ buf.readInt16LE(0, true)
+   · ────────────────────────
+   ╰────
+  help: Do not pass true as the last argument (noAssert) to Buffer read/write methods. This disables bounds checking and can lead to out-of-bounds access.
+
+  ⚠ oxc(detect-buffer-noassert): Buffer read/write called with noAssert flag
+   ╭─[detect_buffer_noassert.tsx:1:1]
+ 1 │ buf.readInt16BE(0, true)
+   · ────────────────────────
+   ╰────
+  help: Do not pass true as the last argument (noAssert) to Buffer read/write methods. This disables bounds checking and can lead to out-of-bounds access.
+
+  ⚠ oxc(detect-buffer-noassert): Buffer read/write called with noAssert flag
+   ╭─[detect_buffer_noassert.tsx:1:1]
+ 1 │ buf.readInt32LE(0, true)
+   · ────────────────────────
+   ╰────
+  help: Do not pass true as the last argument (noAssert) to Buffer read/write methods. This disables bounds checking and can lead to out-of-bounds access.
+
+  ⚠ oxc(detect-buffer-noassert): Buffer read/write called with noAssert flag
+   ╭─[detect_buffer_noassert.tsx:1:1]
+ 1 │ buf.readInt32BE(0, true)
+   · ────────────────────────
+   ╰────
+  help: Do not pass true as the last argument (noAssert) to Buffer read/write methods. This disables bounds checking and can lead to out-of-bounds access.
+
+  ⚠ oxc(detect-buffer-noassert): Buffer read/write called with noAssert flag
+   ╭─[detect_buffer_noassert.tsx:1:1]
+ 1 │ buf.readFloatLE(0, true)
+   · ────────────────────────
+   ╰────
+  help: Do not pass true as the last argument (noAssert) to Buffer read/write methods. This disables bounds checking and can lead to out-of-bounds access.
+
+  ⚠ oxc(detect-buffer-noassert): Buffer read/write called with noAssert flag
+   ╭─[detect_buffer_noassert.tsx:1:1]
+ 1 │ buf.readFloatBE(0, true)
+   · ────────────────────────
+   ╰────
+  help: Do not pass true as the last argument (noAssert) to Buffer read/write methods. This disables bounds checking and can lead to out-of-bounds access.
+
+  ⚠ oxc(detect-buffer-noassert): Buffer read/write called with noAssert flag
+   ╭─[detect_buffer_noassert.tsx:1:1]
+ 1 │ buf.readDoubleLE(0, true)
+   · ─────────────────────────
+   ╰────
+  help: Do not pass true as the last argument (noAssert) to Buffer read/write methods. This disables bounds checking and can lead to out-of-bounds access.
+
+  ⚠ oxc(detect-buffer-noassert): Buffer read/write called with noAssert flag
+   ╭─[detect_buffer_noassert.tsx:1:1]
+ 1 │ buf.readDoubleBE(0, true)
+   · ─────────────────────────
+   ╰────
+  help: Do not pass true as the last argument (noAssert) to Buffer read/write methods. This disables bounds checking and can lead to out-of-bounds access.
+
+  ⚠ oxc(detect-buffer-noassert): Buffer read/write called with noAssert flag
+   ╭─[detect_buffer_noassert.tsx:1:1]
+ 1 │ buf.writeUInt8(0, 0, true)
+   · ──────────────────────────
+   ╰────
+  help: Do not pass true as the last argument (noAssert) to Buffer read/write methods. This disables bounds checking and can lead to out-of-bounds access.
+
+  ⚠ oxc(detect-buffer-noassert): Buffer read/write called with noAssert flag
+   ╭─[detect_buffer_noassert.tsx:1:1]
+ 1 │ buf.writeUInt16LE(0, 0, true)
+   · ─────────────────────────────
+   ╰────
+  help: Do not pass true as the last argument (noAssert) to Buffer read/write methods. This disables bounds checking and can lead to out-of-bounds access.
+
+  ⚠ oxc(detect-buffer-noassert): Buffer read/write called with noAssert flag
+   ╭─[detect_buffer_noassert.tsx:1:1]
+ 1 │ buf.writeUInt16BE(0, 0, true)
+   · ─────────────────────────────
+   ╰────
+  help: Do not pass true as the last argument (noAssert) to Buffer read/write methods. This disables bounds checking and can lead to out-of-bounds access.
+
+  ⚠ oxc(detect-buffer-noassert): Buffer read/write called with noAssert flag
+   ╭─[detect_buffer_noassert.tsx:1:1]
+ 1 │ buf.writeUInt32LE(0, 0, true)
+   · ─────────────────────────────
+   ╰────
+  help: Do not pass true as the last argument (noAssert) to Buffer read/write methods. This disables bounds checking and can lead to out-of-bounds access.
+
+  ⚠ oxc(detect-buffer-noassert): Buffer read/write called with noAssert flag
+   ╭─[detect_buffer_noassert.tsx:1:1]
+ 1 │ buf.writeUInt32BE(0, 0, true)
+   · ─────────────────────────────
+   ╰────
+  help: Do not pass true as the last argument (noAssert) to Buffer read/write methods. This disables bounds checking and can lead to out-of-bounds access.
+
+  ⚠ oxc(detect-buffer-noassert): Buffer read/write called with noAssert flag
+   ╭─[detect_buffer_noassert.tsx:1:1]
+ 1 │ buf.writeInt8(0, 0, true)
+   · ─────────────────────────
+   ╰────
+  help: Do not pass true as the last argument (noAssert) to Buffer read/write methods. This disables bounds checking and can lead to out-of-bounds access.
+
+  ⚠ oxc(detect-buffer-noassert): Buffer read/write called with noAssert flag
+   ╭─[detect_buffer_noassert.tsx:1:1]
+ 1 │ buf.writeInt16LE(0, 0, true)
+   · ────────────────────────────
+   ╰────
+  help: Do not pass true as the last argument (noAssert) to Buffer read/write methods. This disables bounds checking and can lead to out-of-bounds access.
+
+  ⚠ oxc(detect-buffer-noassert): Buffer read/write called with noAssert flag
+   ╭─[detect_buffer_noassert.tsx:1:1]
+ 1 │ buf.writeInt16BE(0, 0, true)
+   · ────────────────────────────
+   ╰────
+  help: Do not pass true as the last argument (noAssert) to Buffer read/write methods. This disables bounds checking and can lead to out-of-bounds access.
+
+  ⚠ oxc(detect-buffer-noassert): Buffer read/write called with noAssert flag
+   ╭─[detect_buffer_noassert.tsx:1:1]
+ 1 │ buf.writeInt32LE(0, 0, true)
+   · ────────────────────────────
+   ╰────
+  help: Do not pass true as the last argument (noAssert) to Buffer read/write methods. This disables bounds checking and can lead to out-of-bounds access.
+
+  ⚠ oxc(detect-buffer-noassert): Buffer read/write called with noAssert flag
+   ╭─[detect_buffer_noassert.tsx:1:1]
+ 1 │ buf.writeInt32BE(0, 0, true)
+   · ────────────────────────────
+   ╰────
+  help: Do not pass true as the last argument (noAssert) to Buffer read/write methods. This disables bounds checking and can lead to out-of-bounds access.
+
+  ⚠ oxc(detect-buffer-noassert): Buffer read/write called with noAssert flag
+   ╭─[detect_buffer_noassert.tsx:1:1]
+ 1 │ buf.writeFloatLE(0, 0, true)
+   · ────────────────────────────
+   ╰────
+  help: Do not pass true as the last argument (noAssert) to Buffer read/write methods. This disables bounds checking and can lead to out-of-bounds access.
+
+  ⚠ oxc(detect-buffer-noassert): Buffer read/write called with noAssert flag
+   ╭─[detect_buffer_noassert.tsx:1:1]
+ 1 │ buf.writeFloatBE(0, 0, true)
+   · ────────────────────────────
+   ╰────
+  help: Do not pass true as the last argument (noAssert) to Buffer read/write methods. This disables bounds checking and can lead to out-of-bounds access.
+
+  ⚠ oxc(detect-buffer-noassert): Buffer read/write called with noAssert flag
+   ╭─[detect_buffer_noassert.tsx:1:1]
+ 1 │ buf.writeDoubleLE(0, 0, true)
+   · ─────────────────────────────
+   ╰────
+  help: Do not pass true as the last argument (noAssert) to Buffer read/write methods. This disables bounds checking and can lead to out-of-bounds access.
+
+  ⚠ oxc(detect-buffer-noassert): Buffer read/write called with noAssert flag
+   ╭─[detect_buffer_noassert.tsx:1:1]
+ 1 │ buf.writeDoubleBE(0, 0, true)
+   · ─────────────────────────────
+   ╰────
+  help: Do not pass true as the last argument (noAssert) to Buffer read/write methods. This disables bounds checking and can lead to out-of-bounds access.

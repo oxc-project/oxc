@@ -1,0 +1,11 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 444
+---
+
+  ⚠ oxc(detect-no-csrf-before-method-override): CSRF middleware found before method-override
+   ╭─[detect_no_csrf_before_method_override.tsx:1:18]
+ 1 │ app.use(csrf()); app.use(methodOverride());
+   ·                  ─────────────────────────
+   ╰────
+  help: Ensure that CSRF protection middleware is applied after method-override, not before. Otherwise method-override can bypass CSRF checks.
