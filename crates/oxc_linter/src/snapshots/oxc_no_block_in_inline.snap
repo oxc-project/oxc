@@ -1,0 +1,32 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 444
+---
+
+  ⚠ oxc(no-block-in-inline): Block-level element `<div>` must not be nested inside inline element `<span>`.
+   ╭─[no_block_in_inline.tsx:1:18]
+ 1 │ const el = <span><div /></span>;
+   ·                  ───────
+   ╰────
+  help: Use a block parent instead, or replace the nested block element with inline markup.
+
+  ⚠ oxc(no-block-in-inline): Block-level element `<p>` must not be nested inside inline element `<a>`.
+   ╭─[no_block_in_inline.tsx:1:15]
+ 1 │ const el = <a><p>bad</p></a>;
+   ·               ───
+   ╰────
+  help: Use a block parent instead, or replace the nested block element with inline markup.
+
+  ⚠ oxc(no-block-in-inline): Block-level element `<section>` must not be nested inside inline element `<em>`.
+   ╭─[no_block_in_inline.tsx:1:22]
+ 1 │ const el = <span><em><section /></em></span>;
+   ·                      ───────────
+   ╰────
+  help: Use a block parent instead, or replace the nested block element with inline markup.
+
+  ⚠ oxc(no-block-in-inline): Block-level element `<custom-block>` must not be nested inside inline element `<custom-inline>`.
+   ╭─[no_block_in_inline.tsx:1:27]
+ 1 │ const el = <custom-inline><custom-block /></custom-inline>;
+   ·                           ────────────────
+   ╰────
+  help: Use a block parent instead, or replace the nested block element with inline markup.

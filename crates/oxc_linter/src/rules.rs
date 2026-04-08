@@ -639,6 +639,23 @@ pub(crate) mod oxc {
     pub mod number_arg_out_of_range;
     pub mod only_used_in_recursion;
     pub mod uninvoked_array_callback;
+
+    mod boundary_utils;
+    pub mod filename_naming_convention;
+    pub mod folder_naming_convention;
+    pub mod no_block_in_inline;
+    pub mod no_create_ref;
+    pub mod no_default_props;
+    pub mod no_inline_type_annotations;
+    pub mod no_leaked_conditional_rendering;
+    pub mod no_literal_string;
+    pub mod no_nested_components;
+    pub mod no_prop_types;
+    pub mod no_secrets;
+    pub mod no_unknown;
+    pub mod no_unknown_files;
+    pub mod no_unstable_default_props;
+    pub mod prefer_shorthand_boolean;
 }
 
 pub(crate) mod nextjs {

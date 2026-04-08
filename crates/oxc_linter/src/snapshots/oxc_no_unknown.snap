@@ -1,0 +1,31 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 444
+---
+
+  ⚠ oxc(no-unknown): Dependencies to unknown elements are not allowed.
+   ╭─[boundaries-app/src/routes/public/no-unknown.ts:2:37]
+ 1 │ 
+ 2 │             import { scratch } from "../../experimental/scratch.ts";
+   ·                                     ───────────────────────────────
+ 3 │             const required = require("../../experimental/scratch");
+   ╰────
+  help: Classify `../../experimental/scratch.ts` with `boundaries/elements` or move the dependency into a known architectural area.
+
+  ⚠ oxc(no-unknown): Dependencies to unknown elements are not allowed.
+   ╭─[boundaries-app/src/routes/public/no-unknown.ts:3:38]
+ 2 │             import { scratch } from "../../experimental/scratch.ts";
+ 3 │             const required = require("../../experimental/scratch");
+   ·                                      ────────────────────────────
+ 4 │             const lazy = import("../../experimental/scratch");
+   ╰────
+  help: Classify `../../experimental/scratch` with `boundaries/elements` or move the dependency into a known architectural area.
+
+  ⚠ oxc(no-unknown): Dependencies to unknown elements are not allowed.
+   ╭─[boundaries-app/src/routes/public/no-unknown.ts:4:33]
+ 3 │             const required = require("../../experimental/scratch");
+ 4 │             const lazy = import("../../experimental/scratch");
+   ·                                 ────────────────────────────
+ 5 │             export const unknown = [scratch, required, lazy];
+   ╰────
+  help: Classify `../../experimental/scratch` with `boundaries/elements` or move the dependency into a known architectural area.

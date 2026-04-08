@@ -355,19 +355,34 @@ pub use crate::rules::oxc::branches_sharing_code::BranchesSharingCode as OxcBran
 pub use crate::rules::oxc::const_comparisons::ConstComparisons as OxcConstComparisons;
 pub use crate::rules::oxc::double_comparisons::DoubleComparisons as OxcDoubleComparisons;
 pub use crate::rules::oxc::erasing_op::ErasingOp as OxcErasingOp;
+pub use crate::rules::oxc::filename_naming_convention::FilenameNamingConvention as OxcFilenameNamingConvention;
+pub use crate::rules::oxc::folder_naming_convention::FolderNamingConvention as OxcFolderNamingConvention;
 pub use crate::rules::oxc::misrefactored_assign_op::MisrefactoredAssignOp as OxcMisrefactoredAssignOp;
 pub use crate::rules::oxc::missing_throw::MissingThrow as OxcMissingThrow;
 pub use crate::rules::oxc::no_accumulating_spread::NoAccumulatingSpread as OxcNoAccumulatingSpread;
 pub use crate::rules::oxc::no_async_await::NoAsyncAwait as OxcNoAsyncAwait;
 pub use crate::rules::oxc::no_async_endpoint_handlers::NoAsyncEndpointHandlers as OxcNoAsyncEndpointHandlers;
 pub use crate::rules::oxc::no_barrel_file::NoBarrelFile as OxcNoBarrelFile;
+pub use crate::rules::oxc::no_block_in_inline::NoBlockInInline as OxcNoBlockInInline;
 pub use crate::rules::oxc::no_const_enum::NoConstEnum as OxcNoConstEnum;
+pub use crate::rules::oxc::no_create_ref::NoCreateRef as OxcNoCreateRef;
+pub use crate::rules::oxc::no_default_props::NoDefaultProps as OxcNoDefaultProps;
+pub use crate::rules::oxc::no_inline_type_annotations::NoInlineTypeAnnotations as OxcNoInlineTypeAnnotations;
+pub use crate::rules::oxc::no_leaked_conditional_rendering::NoLeakedConditionalRendering as OxcNoLeakedConditionalRendering;
+pub use crate::rules::oxc::no_literal_string::NoLiteralString as OxcNoLiteralString;
 pub use crate::rules::oxc::no_map_spread::NoMapSpread as OxcNoMapSpread;
+pub use crate::rules::oxc::no_nested_components::NoNestedComponents as OxcNoNestedComponents;
 pub use crate::rules::oxc::no_optional_chaining::NoOptionalChaining as OxcNoOptionalChaining;
+pub use crate::rules::oxc::no_prop_types::NoPropTypes as OxcNoPropTypes;
 pub use crate::rules::oxc::no_rest_spread_properties::NoRestSpreadProperties as OxcNoRestSpreadProperties;
+pub use crate::rules::oxc::no_secrets::NoSecrets as OxcNoSecrets;
 pub use crate::rules::oxc::no_this_in_exported_function::NoThisInExportedFunction as OxcNoThisInExportedFunction;
+pub use crate::rules::oxc::no_unknown::NoUnknown as OxcNoUnknown;
+pub use crate::rules::oxc::no_unknown_files::NoUnknownFiles as OxcNoUnknownFiles;
+pub use crate::rules::oxc::no_unstable_default_props::NoUnstableDefaultProps as OxcNoUnstableDefaultProps;
 pub use crate::rules::oxc::number_arg_out_of_range::NumberArgOutOfRange as OxcNumberArgOutOfRange;
 pub use crate::rules::oxc::only_used_in_recursion::OnlyUsedInRecursion as OxcOnlyUsedInRecursion;
+pub use crate::rules::oxc::prefer_shorthand_boolean::PreferShorthandBoolean as OxcPreferShorthandBoolean;
 pub use crate::rules::oxc::uninvoked_array_callback::UninvokedArrayCallback as OxcUninvokedArrayCallback;
 pub use crate::rules::promise::always_return::AlwaysReturn as PromiseAlwaysReturn;
 pub use crate::rules::promise::avoid_new::AvoidNew as PromiseAvoidNew;
@@ -1339,6 +1354,21 @@ pub enum RuleEnum {
     OxcNumberArgOutOfRange(OxcNumberArgOutOfRange),
     OxcOnlyUsedInRecursion(OxcOnlyUsedInRecursion),
     OxcUninvokedArrayCallback(OxcUninvokedArrayCallback),
+    OxcFilenameNamingConvention(OxcFilenameNamingConvention),
+    OxcFolderNamingConvention(OxcFolderNamingConvention),
+    OxcNoBlockInInline(OxcNoBlockInInline),
+    OxcNoCreateRef(OxcNoCreateRef),
+    OxcNoDefaultProps(OxcNoDefaultProps),
+    OxcNoInlineTypeAnnotations(OxcNoInlineTypeAnnotations),
+    OxcNoLeakedConditionalRendering(OxcNoLeakedConditionalRendering),
+    OxcNoLiteralString(OxcNoLiteralString),
+    OxcNoNestedComponents(OxcNoNestedComponents),
+    OxcNoPropTypes(OxcNoPropTypes),
+    OxcNoSecrets(OxcNoSecrets),
+    OxcNoUnknown(OxcNoUnknown),
+    OxcNoUnknownFiles(OxcNoUnknownFiles),
+    OxcNoUnstableDefaultProps(OxcNoUnstableDefaultProps),
+    OxcPreferShorthandBoolean(OxcPreferShorthandBoolean),
     NextjsGoogleFontDisplay(NextjsGoogleFontDisplay),
     NextjsGoogleFontPreconnect(NextjsGoogleFontPreconnect),
     NextjsInlineScriptId(NextjsInlineScriptId),
@@ -2132,7 +2162,22 @@ const OXC_NO_THIS_IN_EXPORTED_FUNCTION_ID: usize = OXC_NO_REST_SPREAD_PROPERTIES
 const OXC_NUMBER_ARG_OUT_OF_RANGE_ID: usize = OXC_NO_THIS_IN_EXPORTED_FUNCTION_ID + 1usize;
 const OXC_ONLY_USED_IN_RECURSION_ID: usize = OXC_NUMBER_ARG_OUT_OF_RANGE_ID + 1usize;
 const OXC_UNINVOKED_ARRAY_CALLBACK_ID: usize = OXC_ONLY_USED_IN_RECURSION_ID + 1usize;
-const NEXTJS_GOOGLE_FONT_DISPLAY_ID: usize = OXC_UNINVOKED_ARRAY_CALLBACK_ID + 1usize;
+const OXC_FILENAME_NAMING_CONVENTION_ID: usize = OXC_UNINVOKED_ARRAY_CALLBACK_ID + 1usize;
+const OXC_FOLDER_NAMING_CONVENTION_ID: usize = OXC_FILENAME_NAMING_CONVENTION_ID + 1usize;
+const OXC_NO_BLOCK_IN_INLINE_ID: usize = OXC_FOLDER_NAMING_CONVENTION_ID + 1usize;
+const OXC_NO_CREATE_REF_ID: usize = OXC_NO_BLOCK_IN_INLINE_ID + 1usize;
+const OXC_NO_DEFAULT_PROPS_ID: usize = OXC_NO_CREATE_REF_ID + 1usize;
+const OXC_NO_INLINE_TYPE_ANNOTATIONS_ID: usize = OXC_NO_DEFAULT_PROPS_ID + 1usize;
+const OXC_NO_LEAKED_CONDITIONAL_RENDERING_ID: usize = OXC_NO_INLINE_TYPE_ANNOTATIONS_ID + 1usize;
+const OXC_NO_LITERAL_STRING_ID: usize = OXC_NO_LEAKED_CONDITIONAL_RENDERING_ID + 1usize;
+const OXC_NO_NESTED_COMPONENTS_ID: usize = OXC_NO_LITERAL_STRING_ID + 1usize;
+const OXC_NO_PROP_TYPES_ID: usize = OXC_NO_NESTED_COMPONENTS_ID + 1usize;
+const OXC_NO_SECRETS_ID: usize = OXC_NO_PROP_TYPES_ID + 1usize;
+const OXC_NO_UNKNOWN_ID: usize = OXC_NO_SECRETS_ID + 1usize;
+const OXC_NO_UNKNOWN_FILES_ID: usize = OXC_NO_UNKNOWN_ID + 1usize;
+const OXC_NO_UNSTABLE_DEFAULT_PROPS_ID: usize = OXC_NO_UNKNOWN_FILES_ID + 1usize;
+const OXC_PREFER_SHORTHAND_BOOLEAN_ID: usize = OXC_NO_UNSTABLE_DEFAULT_PROPS_ID + 1usize;
+const NEXTJS_GOOGLE_FONT_DISPLAY_ID: usize = OXC_PREFER_SHORTHAND_BOOLEAN_ID + 1usize;
 const NEXTJS_GOOGLE_FONT_PRECONNECT_ID: usize = NEXTJS_GOOGLE_FONT_DISPLAY_ID + 1usize;
 const NEXTJS_INLINE_SCRIPT_ID_ID: usize = NEXTJS_GOOGLE_FONT_PRECONNECT_ID + 1usize;
 const NEXTJS_NEXT_SCRIPT_FOR_GA_ID: usize = NEXTJS_INLINE_SCRIPT_ID_ID + 1usize;
@@ -2954,6 +2999,21 @@ impl RuleEnum {
             Self::OxcNumberArgOutOfRange(_) => OXC_NUMBER_ARG_OUT_OF_RANGE_ID,
             Self::OxcOnlyUsedInRecursion(_) => OXC_ONLY_USED_IN_RECURSION_ID,
             Self::OxcUninvokedArrayCallback(_) => OXC_UNINVOKED_ARRAY_CALLBACK_ID,
+            Self::OxcFilenameNamingConvention(_) => OXC_FILENAME_NAMING_CONVENTION_ID,
+            Self::OxcFolderNamingConvention(_) => OXC_FOLDER_NAMING_CONVENTION_ID,
+            Self::OxcNoBlockInInline(_) => OXC_NO_BLOCK_IN_INLINE_ID,
+            Self::OxcNoCreateRef(_) => OXC_NO_CREATE_REF_ID,
+            Self::OxcNoDefaultProps(_) => OXC_NO_DEFAULT_PROPS_ID,
+            Self::OxcNoInlineTypeAnnotations(_) => OXC_NO_INLINE_TYPE_ANNOTATIONS_ID,
+            Self::OxcNoLeakedConditionalRendering(_) => OXC_NO_LEAKED_CONDITIONAL_RENDERING_ID,
+            Self::OxcNoLiteralString(_) => OXC_NO_LITERAL_STRING_ID,
+            Self::OxcNoNestedComponents(_) => OXC_NO_NESTED_COMPONENTS_ID,
+            Self::OxcNoPropTypes(_) => OXC_NO_PROP_TYPES_ID,
+            Self::OxcNoSecrets(_) => OXC_NO_SECRETS_ID,
+            Self::OxcNoUnknown(_) => OXC_NO_UNKNOWN_ID,
+            Self::OxcNoUnknownFiles(_) => OXC_NO_UNKNOWN_FILES_ID,
+            Self::OxcNoUnstableDefaultProps(_) => OXC_NO_UNSTABLE_DEFAULT_PROPS_ID,
+            Self::OxcPreferShorthandBoolean(_) => OXC_PREFER_SHORTHAND_BOOLEAN_ID,
             Self::NextjsGoogleFontDisplay(_) => NEXTJS_GOOGLE_FONT_DISPLAY_ID,
             Self::NextjsGoogleFontPreconnect(_) => NEXTJS_GOOGLE_FONT_PRECONNECT_ID,
             Self::NextjsInlineScriptId(_) => NEXTJS_INLINE_SCRIPT_ID_ID,
@@ -3764,6 +3824,21 @@ impl RuleEnum {
             Self::OxcNumberArgOutOfRange(_) => OxcNumberArgOutOfRange::NAME,
             Self::OxcOnlyUsedInRecursion(_) => OxcOnlyUsedInRecursion::NAME,
             Self::OxcUninvokedArrayCallback(_) => OxcUninvokedArrayCallback::NAME,
+            Self::OxcFilenameNamingConvention(_) => OxcFilenameNamingConvention::NAME,
+            Self::OxcFolderNamingConvention(_) => OxcFolderNamingConvention::NAME,
+            Self::OxcNoBlockInInline(_) => OxcNoBlockInInline::NAME,
+            Self::OxcNoCreateRef(_) => OxcNoCreateRef::NAME,
+            Self::OxcNoDefaultProps(_) => OxcNoDefaultProps::NAME,
+            Self::OxcNoInlineTypeAnnotations(_) => OxcNoInlineTypeAnnotations::NAME,
+            Self::OxcNoLeakedConditionalRendering(_) => OxcNoLeakedConditionalRendering::NAME,
+            Self::OxcNoLiteralString(_) => OxcNoLiteralString::NAME,
+            Self::OxcNoNestedComponents(_) => OxcNoNestedComponents::NAME,
+            Self::OxcNoPropTypes(_) => OxcNoPropTypes::NAME,
+            Self::OxcNoSecrets(_) => OxcNoSecrets::NAME,
+            Self::OxcNoUnknown(_) => OxcNoUnknown::NAME,
+            Self::OxcNoUnknownFiles(_) => OxcNoUnknownFiles::NAME,
+            Self::OxcNoUnstableDefaultProps(_) => OxcNoUnstableDefaultProps::NAME,
+            Self::OxcPreferShorthandBoolean(_) => OxcPreferShorthandBoolean::NAME,
             Self::NextjsGoogleFontDisplay(_) => NextjsGoogleFontDisplay::NAME,
             Self::NextjsGoogleFontPreconnect(_) => NextjsGoogleFontPreconnect::NAME,
             Self::NextjsInlineScriptId(_) => NextjsInlineScriptId::NAME,
@@ -4616,6 +4691,21 @@ impl RuleEnum {
             Self::OxcNumberArgOutOfRange(_) => OxcNumberArgOutOfRange::CATEGORY,
             Self::OxcOnlyUsedInRecursion(_) => OxcOnlyUsedInRecursion::CATEGORY,
             Self::OxcUninvokedArrayCallback(_) => OxcUninvokedArrayCallback::CATEGORY,
+            Self::OxcFilenameNamingConvention(_) => OxcFilenameNamingConvention::CATEGORY,
+            Self::OxcFolderNamingConvention(_) => OxcFolderNamingConvention::CATEGORY,
+            Self::OxcNoBlockInInline(_) => OxcNoBlockInInline::CATEGORY,
+            Self::OxcNoCreateRef(_) => OxcNoCreateRef::CATEGORY,
+            Self::OxcNoDefaultProps(_) => OxcNoDefaultProps::CATEGORY,
+            Self::OxcNoInlineTypeAnnotations(_) => OxcNoInlineTypeAnnotations::CATEGORY,
+            Self::OxcNoLeakedConditionalRendering(_) => OxcNoLeakedConditionalRendering::CATEGORY,
+            Self::OxcNoLiteralString(_) => OxcNoLiteralString::CATEGORY,
+            Self::OxcNoNestedComponents(_) => OxcNoNestedComponents::CATEGORY,
+            Self::OxcNoPropTypes(_) => OxcNoPropTypes::CATEGORY,
+            Self::OxcNoSecrets(_) => OxcNoSecrets::CATEGORY,
+            Self::OxcNoUnknown(_) => OxcNoUnknown::CATEGORY,
+            Self::OxcNoUnknownFiles(_) => OxcNoUnknownFiles::CATEGORY,
+            Self::OxcNoUnstableDefaultProps(_) => OxcNoUnstableDefaultProps::CATEGORY,
+            Self::OxcPreferShorthandBoolean(_) => OxcPreferShorthandBoolean::CATEGORY,
             Self::NextjsGoogleFontDisplay(_) => NextjsGoogleFontDisplay::CATEGORY,
             Self::NextjsGoogleFontPreconnect(_) => NextjsGoogleFontPreconnect::CATEGORY,
             Self::NextjsInlineScriptId(_) => NextjsInlineScriptId::CATEGORY,
@@ -5435,6 +5525,21 @@ impl RuleEnum {
             Self::OxcNumberArgOutOfRange(_) => OxcNumberArgOutOfRange::FIX,
             Self::OxcOnlyUsedInRecursion(_) => OxcOnlyUsedInRecursion::FIX,
             Self::OxcUninvokedArrayCallback(_) => OxcUninvokedArrayCallback::FIX,
+            Self::OxcFilenameNamingConvention(_) => OxcFilenameNamingConvention::FIX,
+            Self::OxcFolderNamingConvention(_) => OxcFolderNamingConvention::FIX,
+            Self::OxcNoBlockInInline(_) => OxcNoBlockInInline::FIX,
+            Self::OxcNoCreateRef(_) => OxcNoCreateRef::FIX,
+            Self::OxcNoDefaultProps(_) => OxcNoDefaultProps::FIX,
+            Self::OxcNoInlineTypeAnnotations(_) => OxcNoInlineTypeAnnotations::FIX,
+            Self::OxcNoLeakedConditionalRendering(_) => OxcNoLeakedConditionalRendering::FIX,
+            Self::OxcNoLiteralString(_) => OxcNoLiteralString::FIX,
+            Self::OxcNoNestedComponents(_) => OxcNoNestedComponents::FIX,
+            Self::OxcNoPropTypes(_) => OxcNoPropTypes::FIX,
+            Self::OxcNoSecrets(_) => OxcNoSecrets::FIX,
+            Self::OxcNoUnknown(_) => OxcNoUnknown::FIX,
+            Self::OxcNoUnknownFiles(_) => OxcNoUnknownFiles::FIX,
+            Self::OxcNoUnstableDefaultProps(_) => OxcNoUnstableDefaultProps::FIX,
+            Self::OxcPreferShorthandBoolean(_) => OxcPreferShorthandBoolean::FIX,
             Self::NextjsGoogleFontDisplay(_) => NextjsGoogleFontDisplay::FIX,
             Self::NextjsGoogleFontPreconnect(_) => NextjsGoogleFontPreconnect::FIX,
             Self::NextjsInlineScriptId(_) => NextjsInlineScriptId::FIX,
@@ -6432,6 +6537,23 @@ impl RuleEnum {
             Self::OxcNumberArgOutOfRange(_) => OxcNumberArgOutOfRange::documentation(),
             Self::OxcOnlyUsedInRecursion(_) => OxcOnlyUsedInRecursion::documentation(),
             Self::OxcUninvokedArrayCallback(_) => OxcUninvokedArrayCallback::documentation(),
+            Self::OxcFilenameNamingConvention(_) => OxcFilenameNamingConvention::documentation(),
+            Self::OxcFolderNamingConvention(_) => OxcFolderNamingConvention::documentation(),
+            Self::OxcNoBlockInInline(_) => OxcNoBlockInInline::documentation(),
+            Self::OxcNoCreateRef(_) => OxcNoCreateRef::documentation(),
+            Self::OxcNoDefaultProps(_) => OxcNoDefaultProps::documentation(),
+            Self::OxcNoInlineTypeAnnotations(_) => OxcNoInlineTypeAnnotations::documentation(),
+            Self::OxcNoLeakedConditionalRendering(_) => {
+                OxcNoLeakedConditionalRendering::documentation()
+            }
+            Self::OxcNoLiteralString(_) => OxcNoLiteralString::documentation(),
+            Self::OxcNoNestedComponents(_) => OxcNoNestedComponents::documentation(),
+            Self::OxcNoPropTypes(_) => OxcNoPropTypes::documentation(),
+            Self::OxcNoSecrets(_) => OxcNoSecrets::documentation(),
+            Self::OxcNoUnknown(_) => OxcNoUnknown::documentation(),
+            Self::OxcNoUnknownFiles(_) => OxcNoUnknownFiles::documentation(),
+            Self::OxcNoUnstableDefaultProps(_) => OxcNoUnstableDefaultProps::documentation(),
+            Self::OxcPreferShorthandBoolean(_) => OxcPreferShorthandBoolean::documentation(),
             Self::NextjsGoogleFontDisplay(_) => NextjsGoogleFontDisplay::documentation(),
             Self::NextjsGoogleFontPreconnect(_) => NextjsGoogleFontPreconnect::documentation(),
             Self::NextjsInlineScriptId(_) => NextjsInlineScriptId::documentation(),
@@ -8313,6 +8435,50 @@ impl RuleEnum {
                 OxcUninvokedArrayCallback::config_schema(generator)
                     .or_else(|| OxcUninvokedArrayCallback::schema(generator))
             }
+            Self::OxcFilenameNamingConvention(_) => {
+                OxcFilenameNamingConvention::config_schema(generator)
+                    .or_else(|| OxcFilenameNamingConvention::schema(generator))
+            }
+            Self::OxcFolderNamingConvention(_) => {
+                OxcFolderNamingConvention::config_schema(generator)
+                    .or_else(|| OxcFolderNamingConvention::schema(generator))
+            }
+            Self::OxcNoBlockInInline(_) => OxcNoBlockInInline::config_schema(generator)
+                .or_else(|| OxcNoBlockInInline::schema(generator)),
+            Self::OxcNoCreateRef(_) => OxcNoCreateRef::config_schema(generator)
+                .or_else(|| OxcNoCreateRef::schema(generator)),
+            Self::OxcNoDefaultProps(_) => OxcNoDefaultProps::config_schema(generator)
+                .or_else(|| OxcNoDefaultProps::schema(generator)),
+            Self::OxcNoInlineTypeAnnotations(_) => {
+                OxcNoInlineTypeAnnotations::config_schema(generator)
+                    .or_else(|| OxcNoInlineTypeAnnotations::schema(generator))
+            }
+            Self::OxcNoLeakedConditionalRendering(_) => {
+                OxcNoLeakedConditionalRendering::config_schema(generator)
+                    .or_else(|| OxcNoLeakedConditionalRendering::schema(generator))
+            }
+            Self::OxcNoLiteralString(_) => OxcNoLiteralString::config_schema(generator)
+                .or_else(|| OxcNoLiteralString::schema(generator)),
+            Self::OxcNoNestedComponents(_) => OxcNoNestedComponents::config_schema(generator)
+                .or_else(|| OxcNoNestedComponents::schema(generator)),
+            Self::OxcNoPropTypes(_) => OxcNoPropTypes::config_schema(generator)
+                .or_else(|| OxcNoPropTypes::schema(generator)),
+            Self::OxcNoSecrets(_) => {
+                OxcNoSecrets::config_schema(generator).or_else(|| OxcNoSecrets::schema(generator))
+            }
+            Self::OxcNoUnknown(_) => {
+                OxcNoUnknown::config_schema(generator).or_else(|| OxcNoUnknown::schema(generator))
+            }
+            Self::OxcNoUnknownFiles(_) => OxcNoUnknownFiles::config_schema(generator)
+                .or_else(|| OxcNoUnknownFiles::schema(generator)),
+            Self::OxcNoUnstableDefaultProps(_) => {
+                OxcNoUnstableDefaultProps::config_schema(generator)
+                    .or_else(|| OxcNoUnstableDefaultProps::schema(generator))
+            }
+            Self::OxcPreferShorthandBoolean(_) => {
+                OxcPreferShorthandBoolean::config_schema(generator)
+                    .or_else(|| OxcPreferShorthandBoolean::schema(generator))
+            }
             Self::NextjsGoogleFontDisplay(_) => NextjsGoogleFontDisplay::config_schema(generator)
                 .or_else(|| NextjsGoogleFontDisplay::schema(generator)),
             Self::NextjsGoogleFontPreconnect(_) => {
@@ -9197,6 +9363,21 @@ impl RuleEnum {
             Self::OxcNumberArgOutOfRange(_) => "oxc",
             Self::OxcOnlyUsedInRecursion(_) => "oxc",
             Self::OxcUninvokedArrayCallback(_) => "oxc",
+            Self::OxcFilenameNamingConvention(_) => "oxc",
+            Self::OxcFolderNamingConvention(_) => "oxc",
+            Self::OxcNoBlockInInline(_) => "oxc",
+            Self::OxcNoCreateRef(_) => "oxc",
+            Self::OxcNoDefaultProps(_) => "oxc",
+            Self::OxcNoInlineTypeAnnotations(_) => "oxc",
+            Self::OxcNoLeakedConditionalRendering(_) => "oxc",
+            Self::OxcNoLiteralString(_) => "oxc",
+            Self::OxcNoNestedComponents(_) => "oxc",
+            Self::OxcNoPropTypes(_) => "oxc",
+            Self::OxcNoSecrets(_) => "oxc",
+            Self::OxcNoUnknown(_) => "oxc",
+            Self::OxcNoUnknownFiles(_) => "oxc",
+            Self::OxcNoUnstableDefaultProps(_) => "oxc",
+            Self::OxcPreferShorthandBoolean(_) => "oxc",
             Self::NextjsGoogleFontDisplay(_) => "nextjs",
             Self::NextjsGoogleFontPreconnect(_) => "nextjs",
             Self::NextjsInlineScriptId(_) => "nextjs",
@@ -11272,6 +11453,51 @@ impl RuleEnum {
             Self::OxcUninvokedArrayCallback(_) => Ok(Self::OxcUninvokedArrayCallback(
                 OxcUninvokedArrayCallback::from_configuration(value)?,
             )),
+            Self::OxcFilenameNamingConvention(_) => Ok(Self::OxcFilenameNamingConvention(
+                OxcFilenameNamingConvention::from_configuration(value)?,
+            )),
+            Self::OxcFolderNamingConvention(_) => Ok(Self::OxcFolderNamingConvention(
+                OxcFolderNamingConvention::from_configuration(value)?,
+            )),
+            Self::OxcNoBlockInInline(_) => {
+                Ok(Self::OxcNoBlockInInline(OxcNoBlockInInline::from_configuration(value)?))
+            }
+            Self::OxcNoCreateRef(_) => {
+                Ok(Self::OxcNoCreateRef(OxcNoCreateRef::from_configuration(value)?))
+            }
+            Self::OxcNoDefaultProps(_) => {
+                Ok(Self::OxcNoDefaultProps(OxcNoDefaultProps::from_configuration(value)?))
+            }
+            Self::OxcNoInlineTypeAnnotations(_) => Ok(Self::OxcNoInlineTypeAnnotations(
+                OxcNoInlineTypeAnnotations::from_configuration(value)?,
+            )),
+            Self::OxcNoLeakedConditionalRendering(_) => Ok(Self::OxcNoLeakedConditionalRendering(
+                OxcNoLeakedConditionalRendering::from_configuration(value)?,
+            )),
+            Self::OxcNoLiteralString(_) => {
+                Ok(Self::OxcNoLiteralString(OxcNoLiteralString::from_configuration(value)?))
+            }
+            Self::OxcNoNestedComponents(_) => {
+                Ok(Self::OxcNoNestedComponents(OxcNoNestedComponents::from_configuration(value)?))
+            }
+            Self::OxcNoPropTypes(_) => {
+                Ok(Self::OxcNoPropTypes(OxcNoPropTypes::from_configuration(value)?))
+            }
+            Self::OxcNoSecrets(_) => {
+                Ok(Self::OxcNoSecrets(OxcNoSecrets::from_configuration(value)?))
+            }
+            Self::OxcNoUnknown(_) => {
+                Ok(Self::OxcNoUnknown(OxcNoUnknown::from_configuration(value)?))
+            }
+            Self::OxcNoUnknownFiles(_) => {
+                Ok(Self::OxcNoUnknownFiles(OxcNoUnknownFiles::from_configuration(value)?))
+            }
+            Self::OxcNoUnstableDefaultProps(_) => Ok(Self::OxcNoUnstableDefaultProps(
+                OxcNoUnstableDefaultProps::from_configuration(value)?,
+            )),
+            Self::OxcPreferShorthandBoolean(_) => Ok(Self::OxcPreferShorthandBoolean(
+                OxcPreferShorthandBoolean::from_configuration(value)?,
+            )),
             Self::NextjsGoogleFontDisplay(_) => Ok(Self::NextjsGoogleFontDisplay(
                 NextjsGoogleFontDisplay::from_configuration(value)?,
             )),
@@ -12198,6 +12424,21 @@ impl RuleEnum {
             Self::OxcNumberArgOutOfRange(rule) => rule.to_configuration(),
             Self::OxcOnlyUsedInRecursion(rule) => rule.to_configuration(),
             Self::OxcUninvokedArrayCallback(rule) => rule.to_configuration(),
+            Self::OxcFilenameNamingConvention(rule) => rule.to_configuration(),
+            Self::OxcFolderNamingConvention(rule) => rule.to_configuration(),
+            Self::OxcNoBlockInInline(rule) => rule.to_configuration(),
+            Self::OxcNoCreateRef(rule) => rule.to_configuration(),
+            Self::OxcNoDefaultProps(rule) => rule.to_configuration(),
+            Self::OxcNoInlineTypeAnnotations(rule) => rule.to_configuration(),
+            Self::OxcNoLeakedConditionalRendering(rule) => rule.to_configuration(),
+            Self::OxcNoLiteralString(rule) => rule.to_configuration(),
+            Self::OxcNoNestedComponents(rule) => rule.to_configuration(),
+            Self::OxcNoPropTypes(rule) => rule.to_configuration(),
+            Self::OxcNoSecrets(rule) => rule.to_configuration(),
+            Self::OxcNoUnknown(rule) => rule.to_configuration(),
+            Self::OxcNoUnknownFiles(rule) => rule.to_configuration(),
+            Self::OxcNoUnstableDefaultProps(rule) => rule.to_configuration(),
+            Self::OxcPreferShorthandBoolean(rule) => rule.to_configuration(),
             Self::NextjsGoogleFontDisplay(rule) => rule.to_configuration(),
             Self::NextjsGoogleFontPreconnect(rule) => rule.to_configuration(),
             Self::NextjsInlineScriptId(rule) => rule.to_configuration(),
@@ -12914,6 +13155,21 @@ impl RuleEnum {
             Self::OxcNumberArgOutOfRange(rule) => rule.run(node, ctx),
             Self::OxcOnlyUsedInRecursion(rule) => rule.run(node, ctx),
             Self::OxcUninvokedArrayCallback(rule) => rule.run(node, ctx),
+            Self::OxcFilenameNamingConvention(rule) => rule.run(node, ctx),
+            Self::OxcFolderNamingConvention(rule) => rule.run(node, ctx),
+            Self::OxcNoBlockInInline(rule) => rule.run(node, ctx),
+            Self::OxcNoCreateRef(rule) => rule.run(node, ctx),
+            Self::OxcNoDefaultProps(rule) => rule.run(node, ctx),
+            Self::OxcNoInlineTypeAnnotations(rule) => rule.run(node, ctx),
+            Self::OxcNoLeakedConditionalRendering(rule) => rule.run(node, ctx),
+            Self::OxcNoLiteralString(rule) => rule.run(node, ctx),
+            Self::OxcNoNestedComponents(rule) => rule.run(node, ctx),
+            Self::OxcNoPropTypes(rule) => rule.run(node, ctx),
+            Self::OxcNoSecrets(rule) => rule.run(node, ctx),
+            Self::OxcNoUnknown(rule) => rule.run(node, ctx),
+            Self::OxcNoUnknownFiles(rule) => rule.run(node, ctx),
+            Self::OxcNoUnstableDefaultProps(rule) => rule.run(node, ctx),
+            Self::OxcPreferShorthandBoolean(rule) => rule.run(node, ctx),
             Self::NextjsGoogleFontDisplay(rule) => rule.run(node, ctx),
             Self::NextjsGoogleFontPreconnect(rule) => rule.run(node, ctx),
             Self::NextjsInlineScriptId(rule) => rule.run(node, ctx),
@@ -13628,6 +13884,21 @@ impl RuleEnum {
             Self::OxcNumberArgOutOfRange(rule) => rule.run_once(ctx),
             Self::OxcOnlyUsedInRecursion(rule) => rule.run_once(ctx),
             Self::OxcUninvokedArrayCallback(rule) => rule.run_once(ctx),
+            Self::OxcFilenameNamingConvention(rule) => rule.run_once(ctx),
+            Self::OxcFolderNamingConvention(rule) => rule.run_once(ctx),
+            Self::OxcNoBlockInInline(rule) => rule.run_once(ctx),
+            Self::OxcNoCreateRef(rule) => rule.run_once(ctx),
+            Self::OxcNoDefaultProps(rule) => rule.run_once(ctx),
+            Self::OxcNoInlineTypeAnnotations(rule) => rule.run_once(ctx),
+            Self::OxcNoLeakedConditionalRendering(rule) => rule.run_once(ctx),
+            Self::OxcNoLiteralString(rule) => rule.run_once(ctx),
+            Self::OxcNoNestedComponents(rule) => rule.run_once(ctx),
+            Self::OxcNoPropTypes(rule) => rule.run_once(ctx),
+            Self::OxcNoSecrets(rule) => rule.run_once(ctx),
+            Self::OxcNoUnknown(rule) => rule.run_once(ctx),
+            Self::OxcNoUnknownFiles(rule) => rule.run_once(ctx),
+            Self::OxcNoUnstableDefaultProps(rule) => rule.run_once(ctx),
+            Self::OxcPreferShorthandBoolean(rule) => rule.run_once(ctx),
             Self::NextjsGoogleFontDisplay(rule) => rule.run_once(ctx),
             Self::NextjsGoogleFontPreconnect(rule) => rule.run_once(ctx),
             Self::NextjsInlineScriptId(rule) => rule.run_once(ctx),
@@ -14438,6 +14709,21 @@ impl RuleEnum {
             Self::OxcNumberArgOutOfRange(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::OxcOnlyUsedInRecursion(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::OxcUninvokedArrayCallback(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcFilenameNamingConvention(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcFolderNamingConvention(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcNoBlockInInline(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcNoCreateRef(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcNoDefaultProps(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcNoInlineTypeAnnotations(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcNoLeakedConditionalRendering(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcNoLiteralString(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcNoNestedComponents(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcNoPropTypes(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcNoSecrets(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcNoUnknown(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcNoUnknownFiles(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcNoUnstableDefaultProps(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcPreferShorthandBoolean(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::NextjsGoogleFontDisplay(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::NextjsGoogleFontPreconnect(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::NextjsInlineScriptId(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -15156,6 +15442,21 @@ impl RuleEnum {
             Self::OxcNumberArgOutOfRange(rule) => rule.should_run(ctx),
             Self::OxcOnlyUsedInRecursion(rule) => rule.should_run(ctx),
             Self::OxcUninvokedArrayCallback(rule) => rule.should_run(ctx),
+            Self::OxcFilenameNamingConvention(rule) => rule.should_run(ctx),
+            Self::OxcFolderNamingConvention(rule) => rule.should_run(ctx),
+            Self::OxcNoBlockInInline(rule) => rule.should_run(ctx),
+            Self::OxcNoCreateRef(rule) => rule.should_run(ctx),
+            Self::OxcNoDefaultProps(rule) => rule.should_run(ctx),
+            Self::OxcNoInlineTypeAnnotations(rule) => rule.should_run(ctx),
+            Self::OxcNoLeakedConditionalRendering(rule) => rule.should_run(ctx),
+            Self::OxcNoLiteralString(rule) => rule.should_run(ctx),
+            Self::OxcNoNestedComponents(rule) => rule.should_run(ctx),
+            Self::OxcNoPropTypes(rule) => rule.should_run(ctx),
+            Self::OxcNoSecrets(rule) => rule.should_run(ctx),
+            Self::OxcNoUnknown(rule) => rule.should_run(ctx),
+            Self::OxcNoUnknownFiles(rule) => rule.should_run(ctx),
+            Self::OxcNoUnstableDefaultProps(rule) => rule.should_run(ctx),
+            Self::OxcPreferShorthandBoolean(rule) => rule.should_run(ctx),
             Self::NextjsGoogleFontDisplay(rule) => rule.should_run(ctx),
             Self::NextjsGoogleFontPreconnect(rule) => rule.should_run(ctx),
             Self::NextjsInlineScriptId(rule) => rule.should_run(ctx),
@@ -16148,6 +16449,23 @@ impl RuleEnum {
             Self::OxcNumberArgOutOfRange(_) => OxcNumberArgOutOfRange::IS_TSGOLINT_RULE,
             Self::OxcOnlyUsedInRecursion(_) => OxcOnlyUsedInRecursion::IS_TSGOLINT_RULE,
             Self::OxcUninvokedArrayCallback(_) => OxcUninvokedArrayCallback::IS_TSGOLINT_RULE,
+            Self::OxcFilenameNamingConvention(_) => OxcFilenameNamingConvention::IS_TSGOLINT_RULE,
+            Self::OxcFolderNamingConvention(_) => OxcFolderNamingConvention::IS_TSGOLINT_RULE,
+            Self::OxcNoBlockInInline(_) => OxcNoBlockInInline::IS_TSGOLINT_RULE,
+            Self::OxcNoCreateRef(_) => OxcNoCreateRef::IS_TSGOLINT_RULE,
+            Self::OxcNoDefaultProps(_) => OxcNoDefaultProps::IS_TSGOLINT_RULE,
+            Self::OxcNoInlineTypeAnnotations(_) => OxcNoInlineTypeAnnotations::IS_TSGOLINT_RULE,
+            Self::OxcNoLeakedConditionalRendering(_) => {
+                OxcNoLeakedConditionalRendering::IS_TSGOLINT_RULE
+            }
+            Self::OxcNoLiteralString(_) => OxcNoLiteralString::IS_TSGOLINT_RULE,
+            Self::OxcNoNestedComponents(_) => OxcNoNestedComponents::IS_TSGOLINT_RULE,
+            Self::OxcNoPropTypes(_) => OxcNoPropTypes::IS_TSGOLINT_RULE,
+            Self::OxcNoSecrets(_) => OxcNoSecrets::IS_TSGOLINT_RULE,
+            Self::OxcNoUnknown(_) => OxcNoUnknown::IS_TSGOLINT_RULE,
+            Self::OxcNoUnknownFiles(_) => OxcNoUnknownFiles::IS_TSGOLINT_RULE,
+            Self::OxcNoUnstableDefaultProps(_) => OxcNoUnstableDefaultProps::IS_TSGOLINT_RULE,
+            Self::OxcPreferShorthandBoolean(_) => OxcPreferShorthandBoolean::IS_TSGOLINT_RULE,
             Self::NextjsGoogleFontDisplay(_) => NextjsGoogleFontDisplay::IS_TSGOLINT_RULE,
             Self::NextjsGoogleFontPreconnect(_) => NextjsGoogleFontPreconnect::IS_TSGOLINT_RULE,
             Self::NextjsInlineScriptId(_) => NextjsInlineScriptId::IS_TSGOLINT_RULE,
@@ -17049,6 +17367,21 @@ impl RuleEnum {
             Self::OxcNumberArgOutOfRange(_) => OxcNumberArgOutOfRange::HAS_CONFIG,
             Self::OxcOnlyUsedInRecursion(_) => OxcOnlyUsedInRecursion::HAS_CONFIG,
             Self::OxcUninvokedArrayCallback(_) => OxcUninvokedArrayCallback::HAS_CONFIG,
+            Self::OxcFilenameNamingConvention(_) => OxcFilenameNamingConvention::HAS_CONFIG,
+            Self::OxcFolderNamingConvention(_) => OxcFolderNamingConvention::HAS_CONFIG,
+            Self::OxcNoBlockInInline(_) => OxcNoBlockInInline::HAS_CONFIG,
+            Self::OxcNoCreateRef(_) => OxcNoCreateRef::HAS_CONFIG,
+            Self::OxcNoDefaultProps(_) => OxcNoDefaultProps::HAS_CONFIG,
+            Self::OxcNoInlineTypeAnnotations(_) => OxcNoInlineTypeAnnotations::HAS_CONFIG,
+            Self::OxcNoLeakedConditionalRendering(_) => OxcNoLeakedConditionalRendering::HAS_CONFIG,
+            Self::OxcNoLiteralString(_) => OxcNoLiteralString::HAS_CONFIG,
+            Self::OxcNoNestedComponents(_) => OxcNoNestedComponents::HAS_CONFIG,
+            Self::OxcNoPropTypes(_) => OxcNoPropTypes::HAS_CONFIG,
+            Self::OxcNoSecrets(_) => OxcNoSecrets::HAS_CONFIG,
+            Self::OxcNoUnknown(_) => OxcNoUnknown::HAS_CONFIG,
+            Self::OxcNoUnknownFiles(_) => OxcNoUnknownFiles::HAS_CONFIG,
+            Self::OxcNoUnstableDefaultProps(_) => OxcNoUnstableDefaultProps::HAS_CONFIG,
+            Self::OxcPreferShorthandBoolean(_) => OxcPreferShorthandBoolean::HAS_CONFIG,
             Self::NextjsGoogleFontDisplay(_) => NextjsGoogleFontDisplay::HAS_CONFIG,
             Self::NextjsGoogleFontPreconnect(_) => NextjsGoogleFontPreconnect::HAS_CONFIG,
             Self::NextjsInlineScriptId(_) => NextjsInlineScriptId::HAS_CONFIG,
@@ -17775,6 +18108,21 @@ impl RuleEnum {
             Self::OxcNumberArgOutOfRange(rule) => rule.types_info(),
             Self::OxcOnlyUsedInRecursion(rule) => rule.types_info(),
             Self::OxcUninvokedArrayCallback(rule) => rule.types_info(),
+            Self::OxcFilenameNamingConvention(rule) => rule.types_info(),
+            Self::OxcFolderNamingConvention(rule) => rule.types_info(),
+            Self::OxcNoBlockInInline(rule) => rule.types_info(),
+            Self::OxcNoCreateRef(rule) => rule.types_info(),
+            Self::OxcNoDefaultProps(rule) => rule.types_info(),
+            Self::OxcNoInlineTypeAnnotations(rule) => rule.types_info(),
+            Self::OxcNoLeakedConditionalRendering(rule) => rule.types_info(),
+            Self::OxcNoLiteralString(rule) => rule.types_info(),
+            Self::OxcNoNestedComponents(rule) => rule.types_info(),
+            Self::OxcNoPropTypes(rule) => rule.types_info(),
+            Self::OxcNoSecrets(rule) => rule.types_info(),
+            Self::OxcNoUnknown(rule) => rule.types_info(),
+            Self::OxcNoUnknownFiles(rule) => rule.types_info(),
+            Self::OxcNoUnstableDefaultProps(rule) => rule.types_info(),
+            Self::OxcPreferShorthandBoolean(rule) => rule.types_info(),
             Self::NextjsGoogleFontDisplay(rule) => rule.types_info(),
             Self::NextjsGoogleFontPreconnect(rule) => rule.types_info(),
             Self::NextjsInlineScriptId(rule) => rule.types_info(),
@@ -18489,6 +18837,21 @@ impl RuleEnum {
             Self::OxcNumberArgOutOfRange(rule) => rule.run_info(),
             Self::OxcOnlyUsedInRecursion(rule) => rule.run_info(),
             Self::OxcUninvokedArrayCallback(rule) => rule.run_info(),
+            Self::OxcFilenameNamingConvention(rule) => rule.run_info(),
+            Self::OxcFolderNamingConvention(rule) => rule.run_info(),
+            Self::OxcNoBlockInInline(rule) => rule.run_info(),
+            Self::OxcNoCreateRef(rule) => rule.run_info(),
+            Self::OxcNoDefaultProps(rule) => rule.run_info(),
+            Self::OxcNoInlineTypeAnnotations(rule) => rule.run_info(),
+            Self::OxcNoLeakedConditionalRendering(rule) => rule.run_info(),
+            Self::OxcNoLiteralString(rule) => rule.run_info(),
+            Self::OxcNoNestedComponents(rule) => rule.run_info(),
+            Self::OxcNoPropTypes(rule) => rule.run_info(),
+            Self::OxcNoSecrets(rule) => rule.run_info(),
+            Self::OxcNoUnknown(rule) => rule.run_info(),
+            Self::OxcNoUnknownFiles(rule) => rule.run_info(),
+            Self::OxcNoUnstableDefaultProps(rule) => rule.run_info(),
+            Self::OxcPreferShorthandBoolean(rule) => rule.run_info(),
             Self::NextjsGoogleFontDisplay(rule) => rule.run_info(),
             Self::NextjsGoogleFontPreconnect(rule) => rule.run_info(),
             Self::NextjsInlineScriptId(rule) => rule.run_info(),
@@ -19317,6 +19680,21 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::OxcNumberArgOutOfRange(OxcNumberArgOutOfRange::default()),
         RuleEnum::OxcOnlyUsedInRecursion(OxcOnlyUsedInRecursion::default()),
         RuleEnum::OxcUninvokedArrayCallback(OxcUninvokedArrayCallback::default()),
+        RuleEnum::OxcFilenameNamingConvention(OxcFilenameNamingConvention::default()),
+        RuleEnum::OxcFolderNamingConvention(OxcFolderNamingConvention::default()),
+        RuleEnum::OxcNoBlockInInline(OxcNoBlockInInline::default()),
+        RuleEnum::OxcNoCreateRef(OxcNoCreateRef::default()),
+        RuleEnum::OxcNoDefaultProps(OxcNoDefaultProps::default()),
+        RuleEnum::OxcNoInlineTypeAnnotations(OxcNoInlineTypeAnnotations::default()),
+        RuleEnum::OxcNoLeakedConditionalRendering(OxcNoLeakedConditionalRendering::default()),
+        RuleEnum::OxcNoLiteralString(OxcNoLiteralString::default()),
+        RuleEnum::OxcNoNestedComponents(OxcNoNestedComponents::default()),
+        RuleEnum::OxcNoPropTypes(OxcNoPropTypes::default()),
+        RuleEnum::OxcNoSecrets(OxcNoSecrets::default()),
+        RuleEnum::OxcNoUnknown(OxcNoUnknown::default()),
+        RuleEnum::OxcNoUnknownFiles(OxcNoUnknownFiles::default()),
+        RuleEnum::OxcNoUnstableDefaultProps(OxcNoUnstableDefaultProps::default()),
+        RuleEnum::OxcPreferShorthandBoolean(OxcPreferShorthandBoolean::default()),
         RuleEnum::NextjsGoogleFontDisplay(NextjsGoogleFontDisplay::default()),
         RuleEnum::NextjsGoogleFontPreconnect(NextjsGoogleFontPreconnect::default()),
         RuleEnum::NextjsInlineScriptId(NextjsInlineScriptId::default()),

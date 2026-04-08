@@ -1,0 +1,19 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 444
+---
+
+  ⚠ oxc(folder-naming-convention): Folder `core_utils` does not match the configured naming convention.
+   ╭─[folder_naming_convention.tsx:1:1]
+   ╰────
+  help: Rename the folder so matched path segments follow the case style `KEBAB_CASE`.
+
+  ⚠ oxc(folder-naming-convention): Folder `FeatureFlags` does not match the configured naming convention.
+   ╭─[folder_naming_convention.tsx:1:1]
+   ╰────
+  help: Rename the folder so matched path segments follow the case style `KEBAB_CASE`.
+
+  ⚠ oxc(folder-naming-convention): Folder `BadFolder` does not match the configured naming convention.
+   ╭─[folder_naming_convention.tsx:1:1]
+   ╰────
+  help: Rename the folder so matched path segments follow the case style `KEBAB_CASE`.

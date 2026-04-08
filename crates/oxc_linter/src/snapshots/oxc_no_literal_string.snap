@@ -1,0 +1,25 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 444
+---
+
+  ⚠ oxc(no-literal-string): Literal JSX text should be translated: `Hello world`.
+   ╭─[no_literal_string.tsx:1:17]
+ 1 │ const el = <div>Hello world</div>;
+   ·                 ───────────
+   ╰────
+  help: Wrap user-facing text in your translation layer instead of rendering it inline.
+
+  ⚠ oxc(no-literal-string): Literal JSX text should be translated: `Save`.
+   ╭─[no_literal_string.tsx:1:20]
+ 1 │ const el = <><span>Save</span></>;
+   ·                    ────
+   ╰────
+  help: Wrap user-facing text in your translation layer instead of rendering it inline.
+
+  ⚠ oxc(no-literal-string): Literal JSX text should be translated: `Submit`.
+   ╭─[no_literal_string.tsx:1:20]
+ 1 │ const el = <Button>Submit</Button>;
+   ·                    ──────
+   ╰────
+  help: Wrap user-facing text in your translation layer instead of rendering it inline.
