@@ -1,0 +1,31 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 444
+---
+
+  ⚠ oxc(boundaries-dependencies): Dependency from `public-routes` to `admin-routes` is not allowed.
+   ╭─[boundaries-app/src/routes/public/lazy.ts:3:43]
+ 2 │         async function loadPage() {
+ 3 │           const adminRoute = await import("../admin/dashboard");
+   ·                                           ────────────────────
+ 4 │           const userRoute = await import("../user/profile");
+   ╰────
+  help: Remove the import of `../admin/dashboard` or move the dependency to an allowed architectural layer.
+
+  ⚠ oxc(boundaries-dependencies): Dependency from `public-routes` to `user-routes` is not allowed.
+   ╭─[boundaries-app/src/routes/public/lazy.ts:4:42]
+ 3 │           const adminRoute = await import("../admin/dashboard");
+ 4 │           const userRoute = await import("../user/profile");
+   ·                                          ─────────────────
+ 5 │           const adminApi = require("../../api/admin/users");
+   ╰────
+  help: Remove the import of `../user/profile` or move the dependency to an allowed architectural layer.
+
+  ⚠ oxc(boundaries-dependencies): Dependency from `public-routes` to `api-admin` is not allowed.
+   ╭─[boundaries-app/src/routes/public/lazy.ts:5:36]
+ 4 │           const userRoute = await import("../user/profile");
+ 5 │           const adminApi = require("../../api/admin/users");
+   ·                                    ───────────────────────
+ 6 │           return [adminRoute, userRoute, adminApi];
+   ╰────
+  help: Remove the import of `../../api/admin/users` or move the dependency to an allowed architectural layer.

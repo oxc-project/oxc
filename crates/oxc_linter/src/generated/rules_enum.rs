@@ -344,6 +344,8 @@ pub use crate::rules::node::no_new_require::NoNewRequire as NodeNoNewRequire;
 pub use crate::rules::node::no_path_concat::NoPathConcat as NodeNoPathConcat;
 pub use crate::rules::node::no_process_env::NoProcessEnv as NodeNoProcessEnv;
 pub use crate::rules::oxc::approx_constant::ApproxConstant as OxcApproxConstant;
+pub use crate::rules::oxc::avoid_barrel_files::AvoidBarrelFiles as OxcAvoidBarrelFiles;
+pub use crate::rules::oxc::avoid_re_export_all::AvoidReExportAll as OxcAvoidReExportAll;
 pub use crate::rules::oxc::bad_array_method_on_arguments::BadArrayMethodOnArguments as OxcBadArrayMethodOnArguments;
 pub use crate::rules::oxc::bad_bitwise_operator::BadBitwiseOperator as OxcBadBitwiseOperator;
 pub use crate::rules::oxc::bad_char_at_comparison::BadCharAtComparison as OxcBadCharAtComparison;
@@ -351,8 +353,12 @@ pub use crate::rules::oxc::bad_comparison_sequence::BadComparisonSequence as Oxc
 pub use crate::rules::oxc::bad_min_max_func::BadMinMaxFunc as OxcBadMinMaxFunc;
 pub use crate::rules::oxc::bad_object_literal_comparison::BadObjectLiteralComparison as OxcBadObjectLiteralComparison;
 pub use crate::rules::oxc::bad_replace_all_arg::BadReplaceAllArg as OxcBadReplaceAllArg;
+pub use crate::rules::oxc::boundaries_dependencies::BoundariesDependencies as OxcBoundariesDependencies;
 pub use crate::rules::oxc::branches_sharing_code::BranchesSharingCode as OxcBranchesSharingCode;
 pub use crate::rules::oxc::const_comparisons::ConstComparisons as OxcConstComparisons;
+pub use crate::rules::oxc::css_no_duplicate_properties::CssNoDuplicateProperties as OxcCssNoDuplicateProperties;
+pub use crate::rules::oxc::css_no_empty_blocks::CssNoEmptyBlocks as OxcCssNoEmptyBlocks;
+pub use crate::rules::oxc::css_no_important::CssNoImportant as OxcCssNoImportant;
 pub use crate::rules::oxc::double_comparisons::DoubleComparisons as OxcDoubleComparisons;
 pub use crate::rules::oxc::erasing_op::ErasingOp as OxcErasingOp;
 pub use crate::rules::oxc::misrefactored_assign_op::MisrefactoredAssignOp as OxcMisrefactoredAssignOp;
@@ -368,6 +374,18 @@ pub use crate::rules::oxc::no_rest_spread_properties::NoRestSpreadProperties as 
 pub use crate::rules::oxc::no_this_in_exported_function::NoThisInExportedFunction as OxcNoThisInExportedFunction;
 pub use crate::rules::oxc::number_arg_out_of_range::NumberArgOutOfRange as OxcNumberArgOutOfRange;
 pub use crate::rules::oxc::only_used_in_recursion::OnlyUsedInRecursion as OxcOnlyUsedInRecursion;
+pub use crate::rules::oxc::optimize_regex::OptimizeRegex as OxcOptimizeRegex;
+pub use crate::rules::oxc::sort_enums::SortEnums as OxcSortEnums;
+pub use crate::rules::oxc::sort_imports::SortImports as OxcSortImports;
+pub use crate::rules::oxc::sort_interfaces::SortInterfaces as OxcSortInterfaces;
+pub use crate::rules::oxc::sort_intersection_types::SortIntersectionTypes as OxcSortIntersectionTypes;
+pub use crate::rules::oxc::sort_jsx_props::SortJsxProps as OxcSortJsxProps;
+pub use crate::rules::oxc::sort_named_exports::SortNamedExports as OxcSortNamedExports;
+pub use crate::rules::oxc::sort_named_imports::SortNamedImports as OxcSortNamedImports;
+pub use crate::rules::oxc::sort_object_types::SortObjectTypes as OxcSortObjectTypes;
+pub use crate::rules::oxc::sort_objects::SortObjects as OxcSortObjects;
+pub use crate::rules::oxc::sort_switch_case::SortSwitchCase as OxcSortSwitchCase;
+pub use crate::rules::oxc::sort_union_types::SortUnionTypes as OxcSortUnionTypes;
 pub use crate::rules::oxc::uninvoked_array_callback::UninvokedArrayCallback as OxcUninvokedArrayCallback;
 pub use crate::rules::promise::always_return::AlwaysReturn as PromiseAlwaysReturn;
 pub use crate::rules::promise::avoid_new::AvoidNew as PromiseAvoidNew;
@@ -1339,6 +1357,24 @@ pub enum RuleEnum {
     OxcNumberArgOutOfRange(OxcNumberArgOutOfRange),
     OxcOnlyUsedInRecursion(OxcOnlyUsedInRecursion),
     OxcUninvokedArrayCallback(OxcUninvokedArrayCallback),
+    OxcAvoidBarrelFiles(OxcAvoidBarrelFiles),
+    OxcAvoidReExportAll(OxcAvoidReExportAll),
+    OxcBoundariesDependencies(OxcBoundariesDependencies),
+    OxcCssNoDuplicateProperties(OxcCssNoDuplicateProperties),
+    OxcCssNoEmptyBlocks(OxcCssNoEmptyBlocks),
+    OxcCssNoImportant(OxcCssNoImportant),
+    OxcOptimizeRegex(OxcOptimizeRegex),
+    OxcSortEnums(OxcSortEnums),
+    OxcSortImports(OxcSortImports),
+    OxcSortInterfaces(OxcSortInterfaces),
+    OxcSortIntersectionTypes(OxcSortIntersectionTypes),
+    OxcSortJsxProps(OxcSortJsxProps),
+    OxcSortNamedExports(OxcSortNamedExports),
+    OxcSortNamedImports(OxcSortNamedImports),
+    OxcSortObjectTypes(OxcSortObjectTypes),
+    OxcSortObjects(OxcSortObjects),
+    OxcSortSwitchCase(OxcSortSwitchCase),
+    OxcSortUnionTypes(OxcSortUnionTypes),
     NextjsGoogleFontDisplay(NextjsGoogleFontDisplay),
     NextjsGoogleFontPreconnect(NextjsGoogleFontPreconnect),
     NextjsInlineScriptId(NextjsInlineScriptId),
@@ -2132,7 +2168,25 @@ const OXC_NO_THIS_IN_EXPORTED_FUNCTION_ID: usize = OXC_NO_REST_SPREAD_PROPERTIES
 const OXC_NUMBER_ARG_OUT_OF_RANGE_ID: usize = OXC_NO_THIS_IN_EXPORTED_FUNCTION_ID + 1usize;
 const OXC_ONLY_USED_IN_RECURSION_ID: usize = OXC_NUMBER_ARG_OUT_OF_RANGE_ID + 1usize;
 const OXC_UNINVOKED_ARRAY_CALLBACK_ID: usize = OXC_ONLY_USED_IN_RECURSION_ID + 1usize;
-const NEXTJS_GOOGLE_FONT_DISPLAY_ID: usize = OXC_UNINVOKED_ARRAY_CALLBACK_ID + 1usize;
+const OXC_AVOID_BARREL_FILES_ID: usize = OXC_UNINVOKED_ARRAY_CALLBACK_ID + 1usize;
+const OXC_AVOID_RE_EXPORT_ALL_ID: usize = OXC_AVOID_BARREL_FILES_ID + 1usize;
+const OXC_BOUNDARIES_DEPENDENCIES_ID: usize = OXC_AVOID_RE_EXPORT_ALL_ID + 1usize;
+const OXC_CSS_NO_DUPLICATE_PROPERTIES_ID: usize = OXC_BOUNDARIES_DEPENDENCIES_ID + 1usize;
+const OXC_CSS_NO_EMPTY_BLOCKS_ID: usize = OXC_CSS_NO_DUPLICATE_PROPERTIES_ID + 1usize;
+const OXC_CSS_NO_IMPORTANT_ID: usize = OXC_CSS_NO_EMPTY_BLOCKS_ID + 1usize;
+const OXC_OPTIMIZE_REGEX_ID: usize = OXC_CSS_NO_IMPORTANT_ID + 1usize;
+const OXC_SORT_ENUMS_ID: usize = OXC_OPTIMIZE_REGEX_ID + 1usize;
+const OXC_SORT_IMPORTS_ID: usize = OXC_SORT_ENUMS_ID + 1usize;
+const OXC_SORT_INTERFACES_ID: usize = OXC_SORT_IMPORTS_ID + 1usize;
+const OXC_SORT_INTERSECTION_TYPES_ID: usize = OXC_SORT_INTERFACES_ID + 1usize;
+const OXC_SORT_JSX_PROPS_ID: usize = OXC_SORT_INTERSECTION_TYPES_ID + 1usize;
+const OXC_SORT_NAMED_EXPORTS_ID: usize = OXC_SORT_JSX_PROPS_ID + 1usize;
+const OXC_SORT_NAMED_IMPORTS_ID: usize = OXC_SORT_NAMED_EXPORTS_ID + 1usize;
+const OXC_SORT_OBJECT_TYPES_ID: usize = OXC_SORT_NAMED_IMPORTS_ID + 1usize;
+const OXC_SORT_OBJECTS_ID: usize = OXC_SORT_OBJECT_TYPES_ID + 1usize;
+const OXC_SORT_SWITCH_CASE_ID: usize = OXC_SORT_OBJECTS_ID + 1usize;
+const OXC_SORT_UNION_TYPES_ID: usize = OXC_SORT_SWITCH_CASE_ID + 1usize;
+const NEXTJS_GOOGLE_FONT_DISPLAY_ID: usize = OXC_SORT_UNION_TYPES_ID + 1usize;
 const NEXTJS_GOOGLE_FONT_PRECONNECT_ID: usize = NEXTJS_GOOGLE_FONT_DISPLAY_ID + 1usize;
 const NEXTJS_INLINE_SCRIPT_ID_ID: usize = NEXTJS_GOOGLE_FONT_PRECONNECT_ID + 1usize;
 const NEXTJS_NEXT_SCRIPT_FOR_GA_ID: usize = NEXTJS_INLINE_SCRIPT_ID_ID + 1usize;
@@ -2954,6 +3008,24 @@ impl RuleEnum {
             Self::OxcNumberArgOutOfRange(_) => OXC_NUMBER_ARG_OUT_OF_RANGE_ID,
             Self::OxcOnlyUsedInRecursion(_) => OXC_ONLY_USED_IN_RECURSION_ID,
             Self::OxcUninvokedArrayCallback(_) => OXC_UNINVOKED_ARRAY_CALLBACK_ID,
+            Self::OxcAvoidBarrelFiles(_) => OXC_AVOID_BARREL_FILES_ID,
+            Self::OxcAvoidReExportAll(_) => OXC_AVOID_RE_EXPORT_ALL_ID,
+            Self::OxcBoundariesDependencies(_) => OXC_BOUNDARIES_DEPENDENCIES_ID,
+            Self::OxcCssNoDuplicateProperties(_) => OXC_CSS_NO_DUPLICATE_PROPERTIES_ID,
+            Self::OxcCssNoEmptyBlocks(_) => OXC_CSS_NO_EMPTY_BLOCKS_ID,
+            Self::OxcCssNoImportant(_) => OXC_CSS_NO_IMPORTANT_ID,
+            Self::OxcOptimizeRegex(_) => OXC_OPTIMIZE_REGEX_ID,
+            Self::OxcSortEnums(_) => OXC_SORT_ENUMS_ID,
+            Self::OxcSortImports(_) => OXC_SORT_IMPORTS_ID,
+            Self::OxcSortInterfaces(_) => OXC_SORT_INTERFACES_ID,
+            Self::OxcSortIntersectionTypes(_) => OXC_SORT_INTERSECTION_TYPES_ID,
+            Self::OxcSortJsxProps(_) => OXC_SORT_JSX_PROPS_ID,
+            Self::OxcSortNamedExports(_) => OXC_SORT_NAMED_EXPORTS_ID,
+            Self::OxcSortNamedImports(_) => OXC_SORT_NAMED_IMPORTS_ID,
+            Self::OxcSortObjectTypes(_) => OXC_SORT_OBJECT_TYPES_ID,
+            Self::OxcSortObjects(_) => OXC_SORT_OBJECTS_ID,
+            Self::OxcSortSwitchCase(_) => OXC_SORT_SWITCH_CASE_ID,
+            Self::OxcSortUnionTypes(_) => OXC_SORT_UNION_TYPES_ID,
             Self::NextjsGoogleFontDisplay(_) => NEXTJS_GOOGLE_FONT_DISPLAY_ID,
             Self::NextjsGoogleFontPreconnect(_) => NEXTJS_GOOGLE_FONT_PRECONNECT_ID,
             Self::NextjsInlineScriptId(_) => NEXTJS_INLINE_SCRIPT_ID_ID,
@@ -3764,6 +3836,24 @@ impl RuleEnum {
             Self::OxcNumberArgOutOfRange(_) => OxcNumberArgOutOfRange::NAME,
             Self::OxcOnlyUsedInRecursion(_) => OxcOnlyUsedInRecursion::NAME,
             Self::OxcUninvokedArrayCallback(_) => OxcUninvokedArrayCallback::NAME,
+            Self::OxcAvoidBarrelFiles(_) => OxcAvoidBarrelFiles::NAME,
+            Self::OxcAvoidReExportAll(_) => OxcAvoidReExportAll::NAME,
+            Self::OxcBoundariesDependencies(_) => OxcBoundariesDependencies::NAME,
+            Self::OxcCssNoDuplicateProperties(_) => OxcCssNoDuplicateProperties::NAME,
+            Self::OxcCssNoEmptyBlocks(_) => OxcCssNoEmptyBlocks::NAME,
+            Self::OxcCssNoImportant(_) => OxcCssNoImportant::NAME,
+            Self::OxcOptimizeRegex(_) => OxcOptimizeRegex::NAME,
+            Self::OxcSortEnums(_) => OxcSortEnums::NAME,
+            Self::OxcSortImports(_) => OxcSortImports::NAME,
+            Self::OxcSortInterfaces(_) => OxcSortInterfaces::NAME,
+            Self::OxcSortIntersectionTypes(_) => OxcSortIntersectionTypes::NAME,
+            Self::OxcSortJsxProps(_) => OxcSortJsxProps::NAME,
+            Self::OxcSortNamedExports(_) => OxcSortNamedExports::NAME,
+            Self::OxcSortNamedImports(_) => OxcSortNamedImports::NAME,
+            Self::OxcSortObjectTypes(_) => OxcSortObjectTypes::NAME,
+            Self::OxcSortObjects(_) => OxcSortObjects::NAME,
+            Self::OxcSortSwitchCase(_) => OxcSortSwitchCase::NAME,
+            Self::OxcSortUnionTypes(_) => OxcSortUnionTypes::NAME,
             Self::NextjsGoogleFontDisplay(_) => NextjsGoogleFontDisplay::NAME,
             Self::NextjsGoogleFontPreconnect(_) => NextjsGoogleFontPreconnect::NAME,
             Self::NextjsInlineScriptId(_) => NextjsInlineScriptId::NAME,
@@ -4616,6 +4706,24 @@ impl RuleEnum {
             Self::OxcNumberArgOutOfRange(_) => OxcNumberArgOutOfRange::CATEGORY,
             Self::OxcOnlyUsedInRecursion(_) => OxcOnlyUsedInRecursion::CATEGORY,
             Self::OxcUninvokedArrayCallback(_) => OxcUninvokedArrayCallback::CATEGORY,
+            Self::OxcAvoidBarrelFiles(_) => OxcAvoidBarrelFiles::CATEGORY,
+            Self::OxcAvoidReExportAll(_) => OxcAvoidReExportAll::CATEGORY,
+            Self::OxcBoundariesDependencies(_) => OxcBoundariesDependencies::CATEGORY,
+            Self::OxcCssNoDuplicateProperties(_) => OxcCssNoDuplicateProperties::CATEGORY,
+            Self::OxcCssNoEmptyBlocks(_) => OxcCssNoEmptyBlocks::CATEGORY,
+            Self::OxcCssNoImportant(_) => OxcCssNoImportant::CATEGORY,
+            Self::OxcOptimizeRegex(_) => OxcOptimizeRegex::CATEGORY,
+            Self::OxcSortEnums(_) => OxcSortEnums::CATEGORY,
+            Self::OxcSortImports(_) => OxcSortImports::CATEGORY,
+            Self::OxcSortInterfaces(_) => OxcSortInterfaces::CATEGORY,
+            Self::OxcSortIntersectionTypes(_) => OxcSortIntersectionTypes::CATEGORY,
+            Self::OxcSortJsxProps(_) => OxcSortJsxProps::CATEGORY,
+            Self::OxcSortNamedExports(_) => OxcSortNamedExports::CATEGORY,
+            Self::OxcSortNamedImports(_) => OxcSortNamedImports::CATEGORY,
+            Self::OxcSortObjectTypes(_) => OxcSortObjectTypes::CATEGORY,
+            Self::OxcSortObjects(_) => OxcSortObjects::CATEGORY,
+            Self::OxcSortSwitchCase(_) => OxcSortSwitchCase::CATEGORY,
+            Self::OxcSortUnionTypes(_) => OxcSortUnionTypes::CATEGORY,
             Self::NextjsGoogleFontDisplay(_) => NextjsGoogleFontDisplay::CATEGORY,
             Self::NextjsGoogleFontPreconnect(_) => NextjsGoogleFontPreconnect::CATEGORY,
             Self::NextjsInlineScriptId(_) => NextjsInlineScriptId::CATEGORY,
@@ -5435,6 +5543,24 @@ impl RuleEnum {
             Self::OxcNumberArgOutOfRange(_) => OxcNumberArgOutOfRange::FIX,
             Self::OxcOnlyUsedInRecursion(_) => OxcOnlyUsedInRecursion::FIX,
             Self::OxcUninvokedArrayCallback(_) => OxcUninvokedArrayCallback::FIX,
+            Self::OxcAvoidBarrelFiles(_) => OxcAvoidBarrelFiles::FIX,
+            Self::OxcAvoidReExportAll(_) => OxcAvoidReExportAll::FIX,
+            Self::OxcBoundariesDependencies(_) => OxcBoundariesDependencies::FIX,
+            Self::OxcCssNoDuplicateProperties(_) => OxcCssNoDuplicateProperties::FIX,
+            Self::OxcCssNoEmptyBlocks(_) => OxcCssNoEmptyBlocks::FIX,
+            Self::OxcCssNoImportant(_) => OxcCssNoImportant::FIX,
+            Self::OxcOptimizeRegex(_) => OxcOptimizeRegex::FIX,
+            Self::OxcSortEnums(_) => OxcSortEnums::FIX,
+            Self::OxcSortImports(_) => OxcSortImports::FIX,
+            Self::OxcSortInterfaces(_) => OxcSortInterfaces::FIX,
+            Self::OxcSortIntersectionTypes(_) => OxcSortIntersectionTypes::FIX,
+            Self::OxcSortJsxProps(_) => OxcSortJsxProps::FIX,
+            Self::OxcSortNamedExports(_) => OxcSortNamedExports::FIX,
+            Self::OxcSortNamedImports(_) => OxcSortNamedImports::FIX,
+            Self::OxcSortObjectTypes(_) => OxcSortObjectTypes::FIX,
+            Self::OxcSortObjects(_) => OxcSortObjects::FIX,
+            Self::OxcSortSwitchCase(_) => OxcSortSwitchCase::FIX,
+            Self::OxcSortUnionTypes(_) => OxcSortUnionTypes::FIX,
             Self::NextjsGoogleFontDisplay(_) => NextjsGoogleFontDisplay::FIX,
             Self::NextjsGoogleFontPreconnect(_) => NextjsGoogleFontPreconnect::FIX,
             Self::NextjsInlineScriptId(_) => NextjsInlineScriptId::FIX,
@@ -6432,6 +6558,24 @@ impl RuleEnum {
             Self::OxcNumberArgOutOfRange(_) => OxcNumberArgOutOfRange::documentation(),
             Self::OxcOnlyUsedInRecursion(_) => OxcOnlyUsedInRecursion::documentation(),
             Self::OxcUninvokedArrayCallback(_) => OxcUninvokedArrayCallback::documentation(),
+            Self::OxcAvoidBarrelFiles(_) => OxcAvoidBarrelFiles::documentation(),
+            Self::OxcAvoidReExportAll(_) => OxcAvoidReExportAll::documentation(),
+            Self::OxcBoundariesDependencies(_) => OxcBoundariesDependencies::documentation(),
+            Self::OxcCssNoDuplicateProperties(_) => OxcCssNoDuplicateProperties::documentation(),
+            Self::OxcCssNoEmptyBlocks(_) => OxcCssNoEmptyBlocks::documentation(),
+            Self::OxcCssNoImportant(_) => OxcCssNoImportant::documentation(),
+            Self::OxcOptimizeRegex(_) => OxcOptimizeRegex::documentation(),
+            Self::OxcSortEnums(_) => OxcSortEnums::documentation(),
+            Self::OxcSortImports(_) => OxcSortImports::documentation(),
+            Self::OxcSortInterfaces(_) => OxcSortInterfaces::documentation(),
+            Self::OxcSortIntersectionTypes(_) => OxcSortIntersectionTypes::documentation(),
+            Self::OxcSortJsxProps(_) => OxcSortJsxProps::documentation(),
+            Self::OxcSortNamedExports(_) => OxcSortNamedExports::documentation(),
+            Self::OxcSortNamedImports(_) => OxcSortNamedImports::documentation(),
+            Self::OxcSortObjectTypes(_) => OxcSortObjectTypes::documentation(),
+            Self::OxcSortObjects(_) => OxcSortObjects::documentation(),
+            Self::OxcSortSwitchCase(_) => OxcSortSwitchCase::documentation(),
+            Self::OxcSortUnionTypes(_) => OxcSortUnionTypes::documentation(),
             Self::NextjsGoogleFontDisplay(_) => NextjsGoogleFontDisplay::documentation(),
             Self::NextjsGoogleFontPreconnect(_) => NextjsGoogleFontPreconnect::documentation(),
             Self::NextjsInlineScriptId(_) => NextjsInlineScriptId::documentation(),
@@ -8313,6 +8457,47 @@ impl RuleEnum {
                 OxcUninvokedArrayCallback::config_schema(generator)
                     .or_else(|| OxcUninvokedArrayCallback::schema(generator))
             }
+            Self::OxcAvoidBarrelFiles(_) => OxcAvoidBarrelFiles::config_schema(generator)
+                .or_else(|| OxcAvoidBarrelFiles::schema(generator)),
+            Self::OxcAvoidReExportAll(_) => OxcAvoidReExportAll::config_schema(generator)
+                .or_else(|| OxcAvoidReExportAll::schema(generator)),
+            Self::OxcBoundariesDependencies(_) => {
+                OxcBoundariesDependencies::config_schema(generator)
+                    .or_else(|| OxcBoundariesDependencies::schema(generator))
+            }
+            Self::OxcCssNoDuplicateProperties(_) => {
+                OxcCssNoDuplicateProperties::config_schema(generator)
+                    .or_else(|| OxcCssNoDuplicateProperties::schema(generator))
+            }
+            Self::OxcCssNoEmptyBlocks(_) => OxcCssNoEmptyBlocks::config_schema(generator)
+                .or_else(|| OxcCssNoEmptyBlocks::schema(generator)),
+            Self::OxcCssNoImportant(_) => OxcCssNoImportant::config_schema(generator)
+                .or_else(|| OxcCssNoImportant::schema(generator)),
+            Self::OxcOptimizeRegex(_) => OxcOptimizeRegex::config_schema(generator)
+                .or_else(|| OxcOptimizeRegex::schema(generator)),
+            Self::OxcSortEnums(_) => {
+                OxcSortEnums::config_schema(generator).or_else(|| OxcSortEnums::schema(generator))
+            }
+            Self::OxcSortImports(_) => OxcSortImports::config_schema(generator)
+                .or_else(|| OxcSortImports::schema(generator)),
+            Self::OxcSortInterfaces(_) => OxcSortInterfaces::config_schema(generator)
+                .or_else(|| OxcSortInterfaces::schema(generator)),
+            Self::OxcSortIntersectionTypes(_) => OxcSortIntersectionTypes::config_schema(generator)
+                .or_else(|| OxcSortIntersectionTypes::schema(generator)),
+            Self::OxcSortJsxProps(_) => OxcSortJsxProps::config_schema(generator)
+                .or_else(|| OxcSortJsxProps::schema(generator)),
+            Self::OxcSortNamedExports(_) => OxcSortNamedExports::config_schema(generator)
+                .or_else(|| OxcSortNamedExports::schema(generator)),
+            Self::OxcSortNamedImports(_) => OxcSortNamedImports::config_schema(generator)
+                .or_else(|| OxcSortNamedImports::schema(generator)),
+            Self::OxcSortObjectTypes(_) => OxcSortObjectTypes::config_schema(generator)
+                .or_else(|| OxcSortObjectTypes::schema(generator)),
+            Self::OxcSortObjects(_) => OxcSortObjects::config_schema(generator)
+                .or_else(|| OxcSortObjects::schema(generator)),
+            Self::OxcSortSwitchCase(_) => OxcSortSwitchCase::config_schema(generator)
+                .or_else(|| OxcSortSwitchCase::schema(generator)),
+            Self::OxcSortUnionTypes(_) => OxcSortUnionTypes::config_schema(generator)
+                .or_else(|| OxcSortUnionTypes::schema(generator)),
             Self::NextjsGoogleFontDisplay(_) => NextjsGoogleFontDisplay::config_schema(generator)
                 .or_else(|| NextjsGoogleFontDisplay::schema(generator)),
             Self::NextjsGoogleFontPreconnect(_) => {
@@ -9197,6 +9382,24 @@ impl RuleEnum {
             Self::OxcNumberArgOutOfRange(_) => "oxc",
             Self::OxcOnlyUsedInRecursion(_) => "oxc",
             Self::OxcUninvokedArrayCallback(_) => "oxc",
+            Self::OxcAvoidBarrelFiles(_) => "oxc",
+            Self::OxcAvoidReExportAll(_) => "oxc",
+            Self::OxcBoundariesDependencies(_) => "oxc",
+            Self::OxcCssNoDuplicateProperties(_) => "oxc",
+            Self::OxcCssNoEmptyBlocks(_) => "oxc",
+            Self::OxcCssNoImportant(_) => "oxc",
+            Self::OxcOptimizeRegex(_) => "oxc",
+            Self::OxcSortEnums(_) => "oxc",
+            Self::OxcSortImports(_) => "oxc",
+            Self::OxcSortInterfaces(_) => "oxc",
+            Self::OxcSortIntersectionTypes(_) => "oxc",
+            Self::OxcSortJsxProps(_) => "oxc",
+            Self::OxcSortNamedExports(_) => "oxc",
+            Self::OxcSortNamedImports(_) => "oxc",
+            Self::OxcSortObjectTypes(_) => "oxc",
+            Self::OxcSortObjects(_) => "oxc",
+            Self::OxcSortSwitchCase(_) => "oxc",
+            Self::OxcSortUnionTypes(_) => "oxc",
             Self::NextjsGoogleFontDisplay(_) => "nextjs",
             Self::NextjsGoogleFontPreconnect(_) => "nextjs",
             Self::NextjsInlineScriptId(_) => "nextjs",
@@ -11272,6 +11475,60 @@ impl RuleEnum {
             Self::OxcUninvokedArrayCallback(_) => Ok(Self::OxcUninvokedArrayCallback(
                 OxcUninvokedArrayCallback::from_configuration(value)?,
             )),
+            Self::OxcAvoidBarrelFiles(_) => {
+                Ok(Self::OxcAvoidBarrelFiles(OxcAvoidBarrelFiles::from_configuration(value)?))
+            }
+            Self::OxcAvoidReExportAll(_) => {
+                Ok(Self::OxcAvoidReExportAll(OxcAvoidReExportAll::from_configuration(value)?))
+            }
+            Self::OxcBoundariesDependencies(_) => Ok(Self::OxcBoundariesDependencies(
+                OxcBoundariesDependencies::from_configuration(value)?,
+            )),
+            Self::OxcCssNoDuplicateProperties(_) => Ok(Self::OxcCssNoDuplicateProperties(
+                OxcCssNoDuplicateProperties::from_configuration(value)?,
+            )),
+            Self::OxcCssNoEmptyBlocks(_) => {
+                Ok(Self::OxcCssNoEmptyBlocks(OxcCssNoEmptyBlocks::from_configuration(value)?))
+            }
+            Self::OxcCssNoImportant(_) => {
+                Ok(Self::OxcCssNoImportant(OxcCssNoImportant::from_configuration(value)?))
+            }
+            Self::OxcOptimizeRegex(_) => {
+                Ok(Self::OxcOptimizeRegex(OxcOptimizeRegex::from_configuration(value)?))
+            }
+            Self::OxcSortEnums(_) => {
+                Ok(Self::OxcSortEnums(OxcSortEnums::from_configuration(value)?))
+            }
+            Self::OxcSortImports(_) => {
+                Ok(Self::OxcSortImports(OxcSortImports::from_configuration(value)?))
+            }
+            Self::OxcSortInterfaces(_) => {
+                Ok(Self::OxcSortInterfaces(OxcSortInterfaces::from_configuration(value)?))
+            }
+            Self::OxcSortIntersectionTypes(_) => Ok(Self::OxcSortIntersectionTypes(
+                OxcSortIntersectionTypes::from_configuration(value)?,
+            )),
+            Self::OxcSortJsxProps(_) => {
+                Ok(Self::OxcSortJsxProps(OxcSortJsxProps::from_configuration(value)?))
+            }
+            Self::OxcSortNamedExports(_) => {
+                Ok(Self::OxcSortNamedExports(OxcSortNamedExports::from_configuration(value)?))
+            }
+            Self::OxcSortNamedImports(_) => {
+                Ok(Self::OxcSortNamedImports(OxcSortNamedImports::from_configuration(value)?))
+            }
+            Self::OxcSortObjectTypes(_) => {
+                Ok(Self::OxcSortObjectTypes(OxcSortObjectTypes::from_configuration(value)?))
+            }
+            Self::OxcSortObjects(_) => {
+                Ok(Self::OxcSortObjects(OxcSortObjects::from_configuration(value)?))
+            }
+            Self::OxcSortSwitchCase(_) => {
+                Ok(Self::OxcSortSwitchCase(OxcSortSwitchCase::from_configuration(value)?))
+            }
+            Self::OxcSortUnionTypes(_) => {
+                Ok(Self::OxcSortUnionTypes(OxcSortUnionTypes::from_configuration(value)?))
+            }
             Self::NextjsGoogleFontDisplay(_) => Ok(Self::NextjsGoogleFontDisplay(
                 NextjsGoogleFontDisplay::from_configuration(value)?,
             )),
@@ -12198,6 +12455,24 @@ impl RuleEnum {
             Self::OxcNumberArgOutOfRange(rule) => rule.to_configuration(),
             Self::OxcOnlyUsedInRecursion(rule) => rule.to_configuration(),
             Self::OxcUninvokedArrayCallback(rule) => rule.to_configuration(),
+            Self::OxcAvoidBarrelFiles(rule) => rule.to_configuration(),
+            Self::OxcAvoidReExportAll(rule) => rule.to_configuration(),
+            Self::OxcBoundariesDependencies(rule) => rule.to_configuration(),
+            Self::OxcCssNoDuplicateProperties(rule) => rule.to_configuration(),
+            Self::OxcCssNoEmptyBlocks(rule) => rule.to_configuration(),
+            Self::OxcCssNoImportant(rule) => rule.to_configuration(),
+            Self::OxcOptimizeRegex(rule) => rule.to_configuration(),
+            Self::OxcSortEnums(rule) => rule.to_configuration(),
+            Self::OxcSortImports(rule) => rule.to_configuration(),
+            Self::OxcSortInterfaces(rule) => rule.to_configuration(),
+            Self::OxcSortIntersectionTypes(rule) => rule.to_configuration(),
+            Self::OxcSortJsxProps(rule) => rule.to_configuration(),
+            Self::OxcSortNamedExports(rule) => rule.to_configuration(),
+            Self::OxcSortNamedImports(rule) => rule.to_configuration(),
+            Self::OxcSortObjectTypes(rule) => rule.to_configuration(),
+            Self::OxcSortObjects(rule) => rule.to_configuration(),
+            Self::OxcSortSwitchCase(rule) => rule.to_configuration(),
+            Self::OxcSortUnionTypes(rule) => rule.to_configuration(),
             Self::NextjsGoogleFontDisplay(rule) => rule.to_configuration(),
             Self::NextjsGoogleFontPreconnect(rule) => rule.to_configuration(),
             Self::NextjsInlineScriptId(rule) => rule.to_configuration(),
@@ -12914,6 +13189,24 @@ impl RuleEnum {
             Self::OxcNumberArgOutOfRange(rule) => rule.run(node, ctx),
             Self::OxcOnlyUsedInRecursion(rule) => rule.run(node, ctx),
             Self::OxcUninvokedArrayCallback(rule) => rule.run(node, ctx),
+            Self::OxcAvoidBarrelFiles(rule) => rule.run(node, ctx),
+            Self::OxcAvoidReExportAll(rule) => rule.run(node, ctx),
+            Self::OxcBoundariesDependencies(rule) => rule.run(node, ctx),
+            Self::OxcCssNoDuplicateProperties(rule) => rule.run(node, ctx),
+            Self::OxcCssNoEmptyBlocks(rule) => rule.run(node, ctx),
+            Self::OxcCssNoImportant(rule) => rule.run(node, ctx),
+            Self::OxcOptimizeRegex(rule) => rule.run(node, ctx),
+            Self::OxcSortEnums(rule) => rule.run(node, ctx),
+            Self::OxcSortImports(rule) => rule.run(node, ctx),
+            Self::OxcSortInterfaces(rule) => rule.run(node, ctx),
+            Self::OxcSortIntersectionTypes(rule) => rule.run(node, ctx),
+            Self::OxcSortJsxProps(rule) => rule.run(node, ctx),
+            Self::OxcSortNamedExports(rule) => rule.run(node, ctx),
+            Self::OxcSortNamedImports(rule) => rule.run(node, ctx),
+            Self::OxcSortObjectTypes(rule) => rule.run(node, ctx),
+            Self::OxcSortObjects(rule) => rule.run(node, ctx),
+            Self::OxcSortSwitchCase(rule) => rule.run(node, ctx),
+            Self::OxcSortUnionTypes(rule) => rule.run(node, ctx),
             Self::NextjsGoogleFontDisplay(rule) => rule.run(node, ctx),
             Self::NextjsGoogleFontPreconnect(rule) => rule.run(node, ctx),
             Self::NextjsInlineScriptId(rule) => rule.run(node, ctx),
@@ -13628,6 +13921,24 @@ impl RuleEnum {
             Self::OxcNumberArgOutOfRange(rule) => rule.run_once(ctx),
             Self::OxcOnlyUsedInRecursion(rule) => rule.run_once(ctx),
             Self::OxcUninvokedArrayCallback(rule) => rule.run_once(ctx),
+            Self::OxcAvoidBarrelFiles(rule) => rule.run_once(ctx),
+            Self::OxcAvoidReExportAll(rule) => rule.run_once(ctx),
+            Self::OxcBoundariesDependencies(rule) => rule.run_once(ctx),
+            Self::OxcCssNoDuplicateProperties(rule) => rule.run_once(ctx),
+            Self::OxcCssNoEmptyBlocks(rule) => rule.run_once(ctx),
+            Self::OxcCssNoImportant(rule) => rule.run_once(ctx),
+            Self::OxcOptimizeRegex(rule) => rule.run_once(ctx),
+            Self::OxcSortEnums(rule) => rule.run_once(ctx),
+            Self::OxcSortImports(rule) => rule.run_once(ctx),
+            Self::OxcSortInterfaces(rule) => rule.run_once(ctx),
+            Self::OxcSortIntersectionTypes(rule) => rule.run_once(ctx),
+            Self::OxcSortJsxProps(rule) => rule.run_once(ctx),
+            Self::OxcSortNamedExports(rule) => rule.run_once(ctx),
+            Self::OxcSortNamedImports(rule) => rule.run_once(ctx),
+            Self::OxcSortObjectTypes(rule) => rule.run_once(ctx),
+            Self::OxcSortObjects(rule) => rule.run_once(ctx),
+            Self::OxcSortSwitchCase(rule) => rule.run_once(ctx),
+            Self::OxcSortUnionTypes(rule) => rule.run_once(ctx),
             Self::NextjsGoogleFontDisplay(rule) => rule.run_once(ctx),
             Self::NextjsGoogleFontPreconnect(rule) => rule.run_once(ctx),
             Self::NextjsInlineScriptId(rule) => rule.run_once(ctx),
@@ -14438,6 +14749,24 @@ impl RuleEnum {
             Self::OxcNumberArgOutOfRange(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::OxcOnlyUsedInRecursion(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::OxcUninvokedArrayCallback(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcAvoidBarrelFiles(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcAvoidReExportAll(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcBoundariesDependencies(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcCssNoDuplicateProperties(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcCssNoEmptyBlocks(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcCssNoImportant(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcOptimizeRegex(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcSortEnums(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcSortImports(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcSortInterfaces(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcSortIntersectionTypes(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcSortJsxProps(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcSortNamedExports(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcSortNamedImports(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcSortObjectTypes(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcSortObjects(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcSortSwitchCase(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcSortUnionTypes(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::NextjsGoogleFontDisplay(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::NextjsGoogleFontPreconnect(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::NextjsInlineScriptId(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -15156,6 +15485,24 @@ impl RuleEnum {
             Self::OxcNumberArgOutOfRange(rule) => rule.should_run(ctx),
             Self::OxcOnlyUsedInRecursion(rule) => rule.should_run(ctx),
             Self::OxcUninvokedArrayCallback(rule) => rule.should_run(ctx),
+            Self::OxcAvoidBarrelFiles(rule) => rule.should_run(ctx),
+            Self::OxcAvoidReExportAll(rule) => rule.should_run(ctx),
+            Self::OxcBoundariesDependencies(rule) => rule.should_run(ctx),
+            Self::OxcCssNoDuplicateProperties(rule) => rule.should_run(ctx),
+            Self::OxcCssNoEmptyBlocks(rule) => rule.should_run(ctx),
+            Self::OxcCssNoImportant(rule) => rule.should_run(ctx),
+            Self::OxcOptimizeRegex(rule) => rule.should_run(ctx),
+            Self::OxcSortEnums(rule) => rule.should_run(ctx),
+            Self::OxcSortImports(rule) => rule.should_run(ctx),
+            Self::OxcSortInterfaces(rule) => rule.should_run(ctx),
+            Self::OxcSortIntersectionTypes(rule) => rule.should_run(ctx),
+            Self::OxcSortJsxProps(rule) => rule.should_run(ctx),
+            Self::OxcSortNamedExports(rule) => rule.should_run(ctx),
+            Self::OxcSortNamedImports(rule) => rule.should_run(ctx),
+            Self::OxcSortObjectTypes(rule) => rule.should_run(ctx),
+            Self::OxcSortObjects(rule) => rule.should_run(ctx),
+            Self::OxcSortSwitchCase(rule) => rule.should_run(ctx),
+            Self::OxcSortUnionTypes(rule) => rule.should_run(ctx),
             Self::NextjsGoogleFontDisplay(rule) => rule.should_run(ctx),
             Self::NextjsGoogleFontPreconnect(rule) => rule.should_run(ctx),
             Self::NextjsInlineScriptId(rule) => rule.should_run(ctx),
@@ -16148,6 +16495,24 @@ impl RuleEnum {
             Self::OxcNumberArgOutOfRange(_) => OxcNumberArgOutOfRange::IS_TSGOLINT_RULE,
             Self::OxcOnlyUsedInRecursion(_) => OxcOnlyUsedInRecursion::IS_TSGOLINT_RULE,
             Self::OxcUninvokedArrayCallback(_) => OxcUninvokedArrayCallback::IS_TSGOLINT_RULE,
+            Self::OxcAvoidBarrelFiles(_) => OxcAvoidBarrelFiles::IS_TSGOLINT_RULE,
+            Self::OxcAvoidReExportAll(_) => OxcAvoidReExportAll::IS_TSGOLINT_RULE,
+            Self::OxcBoundariesDependencies(_) => OxcBoundariesDependencies::IS_TSGOLINT_RULE,
+            Self::OxcCssNoDuplicateProperties(_) => OxcCssNoDuplicateProperties::IS_TSGOLINT_RULE,
+            Self::OxcCssNoEmptyBlocks(_) => OxcCssNoEmptyBlocks::IS_TSGOLINT_RULE,
+            Self::OxcCssNoImportant(_) => OxcCssNoImportant::IS_TSGOLINT_RULE,
+            Self::OxcOptimizeRegex(_) => OxcOptimizeRegex::IS_TSGOLINT_RULE,
+            Self::OxcSortEnums(_) => OxcSortEnums::IS_TSGOLINT_RULE,
+            Self::OxcSortImports(_) => OxcSortImports::IS_TSGOLINT_RULE,
+            Self::OxcSortInterfaces(_) => OxcSortInterfaces::IS_TSGOLINT_RULE,
+            Self::OxcSortIntersectionTypes(_) => OxcSortIntersectionTypes::IS_TSGOLINT_RULE,
+            Self::OxcSortJsxProps(_) => OxcSortJsxProps::IS_TSGOLINT_RULE,
+            Self::OxcSortNamedExports(_) => OxcSortNamedExports::IS_TSGOLINT_RULE,
+            Self::OxcSortNamedImports(_) => OxcSortNamedImports::IS_TSGOLINT_RULE,
+            Self::OxcSortObjectTypes(_) => OxcSortObjectTypes::IS_TSGOLINT_RULE,
+            Self::OxcSortObjects(_) => OxcSortObjects::IS_TSGOLINT_RULE,
+            Self::OxcSortSwitchCase(_) => OxcSortSwitchCase::IS_TSGOLINT_RULE,
+            Self::OxcSortUnionTypes(_) => OxcSortUnionTypes::IS_TSGOLINT_RULE,
             Self::NextjsGoogleFontDisplay(_) => NextjsGoogleFontDisplay::IS_TSGOLINT_RULE,
             Self::NextjsGoogleFontPreconnect(_) => NextjsGoogleFontPreconnect::IS_TSGOLINT_RULE,
             Self::NextjsInlineScriptId(_) => NextjsInlineScriptId::IS_TSGOLINT_RULE,
@@ -17049,6 +17414,24 @@ impl RuleEnum {
             Self::OxcNumberArgOutOfRange(_) => OxcNumberArgOutOfRange::HAS_CONFIG,
             Self::OxcOnlyUsedInRecursion(_) => OxcOnlyUsedInRecursion::HAS_CONFIG,
             Self::OxcUninvokedArrayCallback(_) => OxcUninvokedArrayCallback::HAS_CONFIG,
+            Self::OxcAvoidBarrelFiles(_) => OxcAvoidBarrelFiles::HAS_CONFIG,
+            Self::OxcAvoidReExportAll(_) => OxcAvoidReExportAll::HAS_CONFIG,
+            Self::OxcBoundariesDependencies(_) => OxcBoundariesDependencies::HAS_CONFIG,
+            Self::OxcCssNoDuplicateProperties(_) => OxcCssNoDuplicateProperties::HAS_CONFIG,
+            Self::OxcCssNoEmptyBlocks(_) => OxcCssNoEmptyBlocks::HAS_CONFIG,
+            Self::OxcCssNoImportant(_) => OxcCssNoImportant::HAS_CONFIG,
+            Self::OxcOptimizeRegex(_) => OxcOptimizeRegex::HAS_CONFIG,
+            Self::OxcSortEnums(_) => OxcSortEnums::HAS_CONFIG,
+            Self::OxcSortImports(_) => OxcSortImports::HAS_CONFIG,
+            Self::OxcSortInterfaces(_) => OxcSortInterfaces::HAS_CONFIG,
+            Self::OxcSortIntersectionTypes(_) => OxcSortIntersectionTypes::HAS_CONFIG,
+            Self::OxcSortJsxProps(_) => OxcSortJsxProps::HAS_CONFIG,
+            Self::OxcSortNamedExports(_) => OxcSortNamedExports::HAS_CONFIG,
+            Self::OxcSortNamedImports(_) => OxcSortNamedImports::HAS_CONFIG,
+            Self::OxcSortObjectTypes(_) => OxcSortObjectTypes::HAS_CONFIG,
+            Self::OxcSortObjects(_) => OxcSortObjects::HAS_CONFIG,
+            Self::OxcSortSwitchCase(_) => OxcSortSwitchCase::HAS_CONFIG,
+            Self::OxcSortUnionTypes(_) => OxcSortUnionTypes::HAS_CONFIG,
             Self::NextjsGoogleFontDisplay(_) => NextjsGoogleFontDisplay::HAS_CONFIG,
             Self::NextjsGoogleFontPreconnect(_) => NextjsGoogleFontPreconnect::HAS_CONFIG,
             Self::NextjsInlineScriptId(_) => NextjsInlineScriptId::HAS_CONFIG,
@@ -17775,6 +18158,24 @@ impl RuleEnum {
             Self::OxcNumberArgOutOfRange(rule) => rule.types_info(),
             Self::OxcOnlyUsedInRecursion(rule) => rule.types_info(),
             Self::OxcUninvokedArrayCallback(rule) => rule.types_info(),
+            Self::OxcAvoidBarrelFiles(rule) => rule.types_info(),
+            Self::OxcAvoidReExportAll(rule) => rule.types_info(),
+            Self::OxcBoundariesDependencies(rule) => rule.types_info(),
+            Self::OxcCssNoDuplicateProperties(rule) => rule.types_info(),
+            Self::OxcCssNoEmptyBlocks(rule) => rule.types_info(),
+            Self::OxcCssNoImportant(rule) => rule.types_info(),
+            Self::OxcOptimizeRegex(rule) => rule.types_info(),
+            Self::OxcSortEnums(rule) => rule.types_info(),
+            Self::OxcSortImports(rule) => rule.types_info(),
+            Self::OxcSortInterfaces(rule) => rule.types_info(),
+            Self::OxcSortIntersectionTypes(rule) => rule.types_info(),
+            Self::OxcSortJsxProps(rule) => rule.types_info(),
+            Self::OxcSortNamedExports(rule) => rule.types_info(),
+            Self::OxcSortNamedImports(rule) => rule.types_info(),
+            Self::OxcSortObjectTypes(rule) => rule.types_info(),
+            Self::OxcSortObjects(rule) => rule.types_info(),
+            Self::OxcSortSwitchCase(rule) => rule.types_info(),
+            Self::OxcSortUnionTypes(rule) => rule.types_info(),
             Self::NextjsGoogleFontDisplay(rule) => rule.types_info(),
             Self::NextjsGoogleFontPreconnect(rule) => rule.types_info(),
             Self::NextjsInlineScriptId(rule) => rule.types_info(),
@@ -18489,6 +18890,24 @@ impl RuleEnum {
             Self::OxcNumberArgOutOfRange(rule) => rule.run_info(),
             Self::OxcOnlyUsedInRecursion(rule) => rule.run_info(),
             Self::OxcUninvokedArrayCallback(rule) => rule.run_info(),
+            Self::OxcAvoidBarrelFiles(rule) => rule.run_info(),
+            Self::OxcAvoidReExportAll(rule) => rule.run_info(),
+            Self::OxcBoundariesDependencies(rule) => rule.run_info(),
+            Self::OxcCssNoDuplicateProperties(rule) => rule.run_info(),
+            Self::OxcCssNoEmptyBlocks(rule) => rule.run_info(),
+            Self::OxcCssNoImportant(rule) => rule.run_info(),
+            Self::OxcOptimizeRegex(rule) => rule.run_info(),
+            Self::OxcSortEnums(rule) => rule.run_info(),
+            Self::OxcSortImports(rule) => rule.run_info(),
+            Self::OxcSortInterfaces(rule) => rule.run_info(),
+            Self::OxcSortIntersectionTypes(rule) => rule.run_info(),
+            Self::OxcSortJsxProps(rule) => rule.run_info(),
+            Self::OxcSortNamedExports(rule) => rule.run_info(),
+            Self::OxcSortNamedImports(rule) => rule.run_info(),
+            Self::OxcSortObjectTypes(rule) => rule.run_info(),
+            Self::OxcSortObjects(rule) => rule.run_info(),
+            Self::OxcSortSwitchCase(rule) => rule.run_info(),
+            Self::OxcSortUnionTypes(rule) => rule.run_info(),
             Self::NextjsGoogleFontDisplay(rule) => rule.run_info(),
             Self::NextjsGoogleFontPreconnect(rule) => rule.run_info(),
             Self::NextjsInlineScriptId(rule) => rule.run_info(),
@@ -19317,6 +19736,24 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::OxcNumberArgOutOfRange(OxcNumberArgOutOfRange::default()),
         RuleEnum::OxcOnlyUsedInRecursion(OxcOnlyUsedInRecursion::default()),
         RuleEnum::OxcUninvokedArrayCallback(OxcUninvokedArrayCallback::default()),
+        RuleEnum::OxcAvoidBarrelFiles(OxcAvoidBarrelFiles::default()),
+        RuleEnum::OxcAvoidReExportAll(OxcAvoidReExportAll::default()),
+        RuleEnum::OxcBoundariesDependencies(OxcBoundariesDependencies::default()),
+        RuleEnum::OxcCssNoDuplicateProperties(OxcCssNoDuplicateProperties::default()),
+        RuleEnum::OxcCssNoEmptyBlocks(OxcCssNoEmptyBlocks::default()),
+        RuleEnum::OxcCssNoImportant(OxcCssNoImportant::default()),
+        RuleEnum::OxcOptimizeRegex(OxcOptimizeRegex::default()),
+        RuleEnum::OxcSortEnums(OxcSortEnums::default()),
+        RuleEnum::OxcSortImports(OxcSortImports::default()),
+        RuleEnum::OxcSortInterfaces(OxcSortInterfaces::default()),
+        RuleEnum::OxcSortIntersectionTypes(OxcSortIntersectionTypes::default()),
+        RuleEnum::OxcSortJsxProps(OxcSortJsxProps::default()),
+        RuleEnum::OxcSortNamedExports(OxcSortNamedExports::default()),
+        RuleEnum::OxcSortNamedImports(OxcSortNamedImports::default()),
+        RuleEnum::OxcSortObjectTypes(OxcSortObjectTypes::default()),
+        RuleEnum::OxcSortObjects(OxcSortObjects::default()),
+        RuleEnum::OxcSortSwitchCase(OxcSortSwitchCase::default()),
+        RuleEnum::OxcSortUnionTypes(OxcSortUnionTypes::default()),
         RuleEnum::NextjsGoogleFontDisplay(NextjsGoogleFontDisplay::default()),
         RuleEnum::NextjsGoogleFontPreconnect(NextjsGoogleFontPreconnect::default()),
         RuleEnum::NextjsInlineScriptId(NextjsInlineScriptId::default()),

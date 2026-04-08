@@ -1,0 +1,48 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 444
+---
+
+  ⚠ oxc(sort-interfaces): Interface members should be sorted alphabetically.
+   ╭─[sort_interfaces.ts:2:3]
+ 1 │ interface User {
+ 2 │   name: string;
+   ·   ─────────────
+ 3 │   id: string;
+   ╰────
+  help: Replace `name: string;
+          id: string;` with `id: string;
+          name: string;`.
+
+  ⚠ oxc(sort-interfaces): Interface members should be sorted alphabetically.
+   ╭─[sort_interfaces.ts:2:3]
+ 1 │ interface User {
+ 2 │   name: string;
+   ·   ─────────────
+ 3 │   getId(): string;
+   ╰────
+  help: Replace `name: string;
+          getId(): string;` with `getId(): string;
+          name: string;`.
+
+  ⚠ oxc(sort-interfaces): Interface members should be sorted alphabetically.
+   ╭─[sort_interfaces.ts:2:3]
+ 1 │ interface User {
+ 2 │   id: string;
+   ·   ───────────
+ 3 │   Id: string;
+   ╰────
+  help: Replace `id: string;
+          Id: string;` with `Id: string;
+          id: string;`.
+
+  ⚠ oxc(sort-interfaces): Interface members should be sorted alphabetically.
+   ╭─[sort_interfaces.ts:2:3]
+ 1 │ interface User {
+ 2 │   getId(): string;
+   ·   ────────────────
+ 3 │   id: string;
+   ╰────
+  help: Replace `getId(): string;
+          id: string;` with `id: string;
+          getId(): string;`.

@@ -639,6 +639,27 @@ pub(crate) mod oxc {
     pub mod number_arg_out_of_range;
     pub mod only_used_in_recursion;
     pub mod uninvoked_array_callback;
+
+    pub mod avoid_barrel_files;
+    pub mod avoid_re_export_all;
+    pub mod boundaries_dependencies;
+    mod boundary_utils;
+    pub mod css_no_duplicate_properties;
+    pub mod css_no_empty_blocks;
+    pub mod css_no_important;
+    mod css_utils;
+    pub mod optimize_regex;
+    pub mod sort_enums;
+    pub mod sort_imports;
+    pub mod sort_interfaces;
+    pub mod sort_intersection_types;
+    pub mod sort_jsx_props;
+    pub mod sort_named_exports;
+    pub mod sort_named_imports;
+    pub mod sort_object_types;
+    pub mod sort_objects;
+    pub mod sort_switch_case;
+    pub mod sort_union_types;
 }
 
 pub(crate) mod nextjs {

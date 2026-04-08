@@ -1,0 +1,22 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 444
+---
+
+  ⚠ oxc(css-no-duplicate-properties): Duplicate property `color` in declaration block.
+   ╭─[/Users/alexeylyakhov/projects/oxc/crates/oxc_linter/fixtures/import/test.css:1:6]
+ 1 │ .a { color: red; color: blue; }
+   ·      ──┬──       ──┬──
+   ·        │           ╰── duplicate here
+   ·        ╰── first occurrence
+   ╰────
+  help: Remove one of the duplicate declarations or use a different value strategy.
+
+  ⚠ oxc(css-no-duplicate-properties): Duplicate property `font-size` in declaration block.
+   ╭─[/Users/alexeylyakhov/projects/oxc/crates/oxc_linter/fixtures/import/test.css:1:6]
+ 1 │ h1 { font-size: 16px; margin: 0; font-size: 20px; }
+   ·      ────┬────                   ────┬────
+   ·          │                           ╰── duplicate here
+   ·          ╰── first occurrence
+   ╰────
+  help: Remove one of the duplicate declarations or use a different value strategy.

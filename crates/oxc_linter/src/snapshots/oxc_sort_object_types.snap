@@ -1,0 +1,16 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 444
+---
+
+  ⚠ oxc(sort-object-types): TypeScript object type members should be sorted alphabetically.
+   ╭─[sort_object_types.ts:1:15]
+ 1 │ type User = { name: string; age: number; email: string };
+   ·               ─────────────
+   ╰────
+
+  ⚠ oxc(sort-object-types): TypeScript object type members should be sorted alphabetically.
+   ╭─[sort_object_types.ts:1:14]
+ 1 │ type Obj = { z: number; a: string };
+   ·              ──────────
+   ╰────
