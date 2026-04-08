@@ -195,24 +195,44 @@ impl<'a, 'b> FormatJsArrowFunctionExpression<'a, 'b> {
                         || (matches!(self.arrow.parent(), AstNodes::JSXExpressionContainer(container)
                             if !f.context().comments().has_comment_in_range(arrow.span.end, container.span.end)));
 
-                    write!(
-                        f,
-                        group(&format_args!(
-                            soft_line_indent_or_space(&format_with(|f| {
-                                if should_add_parens {
-                                    write!(f, if_group_fits_on_line(&"("));
-                                }
-
-                                write!(f, format_body);
-
-                                if should_add_parens {
-                                    write!(f, if_group_fits_on_line(&")"));
-                                }
-                            })),
-                            is_last_call_arg.then_some(&FormatTrailingCommas::All),
-                            should_add_soft_line.then_some(soft_line_break())
-                        ))
-                    );
+                    if should_add_parens {
+                        // Match Prettier's structure: `[" ", group([ifBreak("","("), indent([softline, body]),
+                        // ifBreak("",")"), trailingComma, trailingSpace])]`
+                        //
+                        // The `space()` MUST be outside the group so that when the FitsMeasurer
+                        // evaluates this in Expanded mode (for BestFitting's middle variant),
+                        // the space is counted as pending width. When a soft line break is then
+                        // encountered in Expanded mode, the pending space pushes the line width
+                        // past printWidth, correctly rejecting the middle variant.
+                        //
+                        // Previously, `soft_line_indent_or_space` placed the space/break as the
+                        // first element inside the group. In Expanded mode, `soft_line_break_or_space`
+                        // was treated as a line break and immediately returned `Fits::Yes` without
+                        // accounting for the space's width, causing the middle variant to be
+                        // incorrectly selected when the line was exactly at printWidth.
+                        write!(
+                            f,
+                            [
+                                space(),
+                                group(&format_args!(
+                                    if_group_fits_on_line(&"("),
+                                    indent(&format_args!(soft_line_break(), format_body,)),
+                                    if_group_fits_on_line(&")"),
+                                    is_last_call_arg.then_some(&FormatTrailingCommas::All),
+                                    should_add_soft_line.then_some(soft_line_break())
+                                ))
+                            ]
+                        );
+                    } else {
+                        write!(
+                            f,
+                            group(&format_args!(
+                                soft_line_indent_or_space(&format_body),
+                                is_last_call_arg.then_some(&FormatTrailingCommas::All),
+                                should_add_soft_line.then_some(soft_line_break())
+                            ))
+                        );
+                    }
                 }
             }
         }

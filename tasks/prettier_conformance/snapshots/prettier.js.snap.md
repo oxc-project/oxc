@@ -1,4 +1,4 @@
-js compatibility: 746/753 (99.07%)
+js compatibility: 745/753 (98.94%)
 
 # Failed
 
@@ -11,3 +11,4 @@ js compatibility: 746/753 (99.07%)
 | js/explicit-resource-management/valid-await-using-comments.js | 💥 | 80.00% |
 | js/for/9812-unstable.js | 💥 | 63.64% |
 | js/last-argument-expansion/dangling-comment-in-arrow-function.js | 💥 | 22.22% |
+| jsx/newlines/test.js | 💥 | 97.71% |

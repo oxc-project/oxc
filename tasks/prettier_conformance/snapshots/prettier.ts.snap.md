@@ -1,9 +1,10 @@
-ts compatibility: 591/601 (98.34%)
+ts compatibility: 590/601 (98.17%)
 
 # Failed
 
 | Spec path | Failed or Passed | Match ratio |
 | :-------- | :--------------: | :---------: |
+| jsx/newlines/test.js | 💥 | 97.71% |
 | typescript/arrow/comments.ts | 💥✨ | 44.44% |
 | typescript/arrow/comments/issue-11100.ts | 💥 | 84.00% |
 | typescript/class/empty-method-body.ts | 💥 | 80.00% |
