@@ -4,7 +4,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -43,7 +43,7 @@ declare_oxc_lint!(
     PreferTemplate,
     eslint,
     style,
-    pending
+    fix
 );
 
 impl Rule for PreferTemplate {
@@ -62,9 +62,147 @@ impl Rule for PreferTemplate {
             return;
         }
         if check_should_report(expr) {
-            ctx.diagnostic(prefer_template_diagnostic(expr.span));
+            let expr_span = expr.span;
+
+            // Pre-compute the fix outside the closure to avoid lifetime issues
+            let source = ctx.source_text();
+            let mut parts: Vec<Part> = Vec::new();
+            flatten_binary_expr(expr, source, &mut parts);
+
+            let has_unhandled = parts.iter().any(|p| matches!(p, Part::Unhandled));
+
+            if has_unhandled {
+                ctx.diagnostic(prefer_template_diagnostic(expr.span));
+            } else {
+                let mut result = String::from('`');
+                for part in &parts {
+                    match part {
+                        Part::StringContent(s) => {
+                            result.push_str(s);
+                        }
+                        Part::TemplatePart(s) => {
+                            result.push_str(s);
+                        }
+                        Part::Expression(s) => {
+                            result.push_str("${");
+                            result.push_str(s);
+                            result.push('}');
+                        }
+                        Part::Unhandled => unreachable!(),
+                    }
+                }
+                result.push('`');
+                ctx.diagnostic_with_fix(prefer_template_diagnostic(expr.span), |fixer| {
+                    fixer.replace(expr_span, result)
+                });
+            }
         }
     }
+}
+
+enum Part {
+    /// Content from a string literal (already unescaped from JS string to raw text)
+    StringContent(String),
+    /// Content from a template literal (already valid template content)
+    TemplatePart(String),
+    /// An expression to be wrapped in ${}
+    Expression(String),
+    /// An expression we can't safely autofix
+    Unhandled,
+}
+
+fn contains_string_literal(expr: &Expression) -> bool {
+    match expr.get_inner_expression() {
+        Expression::StringLiteral(_) | Expression::TemplateLiteral(_) => true,
+        Expression::BinaryExpression(bin) if bin.operator == BinaryOperator::Addition => {
+            contains_string_literal(&bin.left) || contains_string_literal(&bin.right)
+        }
+        _ => false,
+    }
+}
+
+fn flatten_binary_expr<'a>(expr: &'a BinaryExpression<'a>, source: &str, parts: &mut Vec<Part>) {
+    // Flatten left - only recurse into + if it contains string literals
+    let left = expr.left.get_inner_expression();
+    match left {
+        Expression::BinaryExpression(bin)
+            if bin.operator == BinaryOperator::Addition && contains_string_literal(left) =>
+        {
+            flatten_binary_expr(bin, source, parts);
+        }
+        _ => collect_part(left, source, parts),
+    }
+
+    // Flatten right - only recurse into + if it contains string literals
+    let right = expr.right.get_inner_expression();
+    match right {
+        Expression::BinaryExpression(bin)
+            if bin.operator == BinaryOperator::Addition && contains_string_literal(right) =>
+        {
+            flatten_binary_expr(bin, source, parts);
+        }
+        _ => collect_part(right, source, parts),
+    }
+}
+
+fn collect_part(expr: &Expression<'_>, source: &str, parts: &mut Vec<Part>) {
+    match expr {
+        Expression::StringLiteral(lit) => {
+            let raw = &lit.value;
+            // Check for octal/special escapes that we can't safely convert
+            let source_text = lit.span.source_text(source);
+            if has_unsafe_escapes(source_text) {
+                parts.push(Part::Unhandled);
+                return;
+            }
+            // Unescape the string for template literal context
+            // The lit.value is already the interpreted value
+            let content = raw.replace('`', "\\`").replace("${", "\\${");
+            parts.push(Part::StringContent(content));
+        }
+        Expression::TemplateLiteral(tmpl) => {
+            // Extract the content between backticks
+            let inner_span = Span::new(tmpl.span.start + 1, tmpl.span.end - 1);
+            let content = inner_span.source_text(source);
+            parts.push(Part::TemplatePart(content.to_string()));
+        }
+        _ => {
+            let expr_text = expr.span().source_text(source);
+            parts.push(Part::Expression(expr_text.to_string()));
+        }
+    }
+}
+
+/// Check if a string literal source contains escape sequences that can't be
+/// safely converted to a template literal (octal escapes, \0 followed by digit, etc.)
+fn has_unsafe_escapes(source: &str) -> bool {
+    let bytes = source.as_bytes();
+    let mut i = 1; // skip opening quote
+    let end = bytes.len().saturating_sub(1); // skip closing quote
+    while i < end {
+        if bytes[i] == b'\\' {
+            i += 1;
+            if i >= end {
+                break;
+            }
+            match bytes[i] {
+                // Octal escapes (other than \0 not followed by digit)
+                b'0' => {
+                    if i + 1 < end && bytes[i + 1].is_ascii_digit() {
+                        return true;
+                    }
+                }
+                b'1'..=b'7' => return true,
+                b'8' | b'9' => return true, // non-octal decimal escape
+                b'x' => {
+                    // \xNN - hex escape, safe to keep
+                }
+                _ => {}
+            }
+        }
+        i += 1;
+    }
+    false
 }
 
 fn check_should_report(expr: &BinaryExpression) -> bool {
@@ -204,73 +342,24 @@ fn test() {
         r#""Hello " + "'world' " + test"#,
     ];
 
-    //     let _fix = vec![
-    //         ("var foo = 'hello, ' + name + '!';", "var foo = `hello, ${  name  }!`;", None),
-    // ("var foo = bar + 'baz';", "var foo = `${bar  }baz`;", None),
-    // ("var foo = bar + `baz`;", "var foo = `${bar  }baz`;", None),
-    // ("var foo = +100 + 'yen';", "var foo = `${+100  }yen`;", None),
-    // ("var foo = 'bar' + baz;", "var foo = `bar${  baz}`;", None),
-    // ("var foo = '￥' + (n * 1000) + '-'", "var foo = `￥${  n * 1000  }-`", None),
-    // ("var foo = 'aaa' + aaa; var bar = 'bbb' + bbb;", "var foo = `aaa${  aaa}`; var bar = `bbb${  bbb}`;", None),
-    // ("var string = (number + 1) + 'px';", "var string = `${number + 1  }px`;", None),
-    // ("var foo = 'bar' + baz + 'qux';", "var foo = `bar${  baz  }qux`;", None),
-    // // ("var foo = '0 backslashes: ${bar}' + baz;", "var foo = `0 backslashes: \${bar}${  baz}`;", None),
-    // // ("var foo = '1 backslash: \${bar}' + baz;", "var foo = `1 backslash: \${bar}${  baz}`;", None),
-    // // ("var foo = '2 backslashes: \\${bar}' + baz;", "var foo = `2 backslashes: \\\${bar}${  baz}`;", None),
-    // // ("var foo = '3 backslashes: \\\${bar}' + baz;", "var foo = `3 backslashes: \\\${bar}${  baz}`;", None),
-    // // ("var foo = bar + 'this is a backtick: `' + baz;", "var foo = `${bar  }this is a backtick: \`${  baz}`;", None),
-    // // ("var foo = bar + 'this is a backtick preceded by a backslash: \`' + baz;", "var foo = `${bar  }this is a backtick preceded by a backslash: \`${  baz}`;", None),
-    // // ("var foo = bar + 'this is a backtick preceded by two backslashes: \\`' + baz;", "var foo = `${bar  }this is a backtick preceded by two backslashes: \\\`${  baz}`;", None),
-    // ("var foo = bar + `${baz}foo`;", "var foo = `${bar  }${baz}foo`;", None),
-    // ("var foo = bar + baz + 'qux';", "var foo = `${bar + baz  }qux`;", None),
-    // ("var foo = /* a */ 'bar' /* b */ + /* c */ baz /* d */ + 'qux' /* e */ ;", "var foo = /* a */ `bar${ /* b */  /* c */ baz /* d */  }qux` /* e */ ;", None),
-    // ("var foo = bar + ('baz') + 'qux' + (boop);", "var foo = `${bar  }baz` + `qux${  boop}`;", None),
-    // ("foo + 'unescapes an escaped single quote in a single-quoted string: \''", "`${foo  }unescapes an escaped single quote in a single-quoted string: '`", None),
-    // (r#"foo + "unescapes an escaped double quote in a double-quoted string: """#, r#"`${foo  }unescapes an escaped double quote in a double-quoted string: "`"#, None),
-    // (r#"foo + 'does not unescape an escaped double quote in a single-quoted string: "'"#, r#"`${foo  }does not unescape an escaped double quote in a single-quoted string: "`"#, None),
-    // (r#"foo + "does not unescape an escaped single quote in a double-quoted string: \'""#, "`${foo  }does not unescape an escaped single quote in a double-quoted string: \'`", None),
-    // ("foo + 'handles unicode escapes correctly: \x27'", "`${foo  }handles unicode escapes correctly: \x27`", None),
-    // ("foo + '\\033'", "`${foo  }\\033`", None),
-    // ("foo + '\0'", "`${foo  }\0`", None),
-    // (r#""default-src 'self' https://*.google.com;"
-    // 			            + "frame-ancestors 'none';"
-    // 			            + "report-to " + foo + ";""#, "`default-src 'self' https://*.google.com;`
-    // 			            + `frame-ancestors 'none';`
-    // 			            + `report-to ${  foo  };`", None),
-    // ("'a' + 'b' + foo", "`a` + `b${  foo}`", None),
-    // ("'a' + 'b' + foo + 'c' + 'd'", "`a` + `b${  foo  }c` + `d`", None),
-    // ("'a' + 'b + c' + foo + 'd' + 'e'", "`a` + `b + c${  foo  }d` + `e`", None),
-    // ("'a' + 'b' + foo + ('c' + 'd')", "`a` + `b${  foo  }c` + `d`", None),
-    // ("'a' + 'b' + foo + ('a' + 'b')", "`a` + `b${  foo  }a` + `b`", None),
-    // ("'a' + 'b' + foo + ('c' + 'd') + ('e' + 'f')", "`a` + `b${  foo  }c` + `d` + `e` + `f`", None),
-    // ("foo + ('a' + 'b') + ('c' + 'd')", "`${foo  }a` + `b` + `c` + `d`", None),
-    // ("'a' + foo + ('b' + 'c') + ('d' + bar + 'e')", "`a${  foo  }b` + `c` + `d${  bar  }e`", None),
-    // ("foo + ('b' + 'c') + ('d' + bar + 'e')", "`${foo  }b` + `c` + `d${  bar  }e`", None),
-    // ("'a' + 'b' + foo + ('c' + 'd' + 'e')", "`a` + `b${  foo  }c` + `d` + `e`", None),
-    // ("'a' + 'b' + foo + ('c' + bar + 'd')", "`a` + `b${  foo  }c${  bar  }d`", None),
-    // ("'a' + 'b' + foo + ('c' + bar + ('d' + 'e') + 'f')", "`a` + `b${  foo  }c${  bar  }d` + `e` + `f`", None),
-    // ("'a' + 'b' + foo + ('c' + bar + 'e') + 'f' + test", "`a` + `b${  foo  }c${  bar  }e` + `f${  test}`", None),
-    // ("'a' + foo + ('b' + bar + 'c') + ('d' + test)", "`a${  foo  }b${  bar  }c` + `d${  test}`", None),
-    // ("'a' + foo + ('b' + 'c') + ('d' + bar)", "`a${  foo  }b` + `c` + `d${  bar}`", None),
-    // ("foo + ('a' + bar + 'b') + 'c' + test", "`${foo  }a${  bar  }b` + `c${  test}`", None),
-    // // ("'a' + '`b`' + c", "`a` + `\`b\`${  c}`", None),
-    // // ("'a' + '`b` + `c`' + d", "`a` + `\`b\` + \`c\`${  d}`", None),
-    // // ("'a' + b + ('`c`' + '`d`')", "`a${  b  }\`c\`` + `\`d\``", None),
-    // // ("'`a`' + b + ('`c`' + '`d`')", "`\`a\`${  b  }\`c\`` + `\`d\``", None),
-    // // ("foo + ('`a`' + bar + '`b`') + '`c`' + test", "`${foo  }\`a\`${  bar  }\`b\`` + `\`c\`${  test}`", None),
-    // ("'a' + ('b' + 'c') + d", "`a` + `b` + `c${  d}`", None),
-    // // ("'a' + ('`b`' + '`c`') + d", "`a` + `\`b\`` + `\`c\`${  d}`", None),
-    // ("a + ('b' + 'c') + d", "`${a  }b` + `c${  d}`", None),
-    // ("a + ('b' + 'c') + (d + 'e')", "`${a  }b` + `c${  d  }e`", None),
-    // // ("a + ('`b`' + '`c`') + d", "`${a  }\`b\`` + `\`c\`${  d}`", None),
-    // // ("a + ('`b` + `c`' + '`d`') + e", "`${a  }\`b\` + \`c\`` + `\`d\`${  e}`", None),
-    // ("'a' + ('b' + 'c' + 'd') + e", "`a` + `b` + `c` + `d${  e}`", None),
-    // ("'a' + ('b' + 'c' + 'd' + (e + 'f') + 'g' +'h' + 'i') + j", "`a` + `b` + `c` + `d${  e  }fg` +`h` + `i${  j}`", None),
-    // ("a + (('b' + 'c') + 'd')", "`${a  }b` + `c` + `d`", None),
-    // ("(a + 'b') + ('c' + 'd') + e", "`${a  }b` + `c` + `d${  e}`", None),
-    // (r#"var foo = "Hello " + "world " + "another " + test"#, "var foo = `Hello ` + `world ` + `another ${  test}`", None),
-    // (r#"'Hello ' + '"world" ' + test"#, r#"`Hello ` + `"world" ${  test}`"#, None),
-    // (r#""Hello " + "'world' " + test"#, "`Hello ` + `'world' ${  test}`", None)
-    //     ];
-    Tester::new(PreferTemplate::NAME, PreferTemplate::PLUGIN, pass, fail).test_and_snapshot();
+    let fix = vec![
+        ("var foo = 'hello, ' + name + '!';", "var foo = `hello, ${name}!`;", None),
+        ("var foo = bar + 'baz';", "var foo = `${bar}baz`;", None),
+        ("var foo = bar + `baz`;", "var foo = `${bar}baz`;", None),
+        ("var foo = +100 + 'yen';", "var foo = `${+100}yen`;", None),
+        ("var foo = 'bar' + baz;", "var foo = `bar${baz}`;", None),
+        ("var foo = '￥' + (n * 1000) + '-'", "var foo = `￥${n * 1000}-`", None),
+        (
+            "var foo = 'aaa' + aaa; var bar = 'bbb' + bbb;",
+            "var foo = `aaa${aaa}`; var bar = `bbb${bbb}`;",
+            None,
+        ),
+        ("var string = (number + 1) + 'px';", "var string = `${number + 1}px`;", None),
+        ("var foo = 'bar' + baz + 'qux';", "var foo = `bar${baz}qux`;", None),
+        ("var foo = bar + `${baz}foo`;", "var foo = `${bar}${baz}foo`;", None),
+        ("var foo = bar + baz + 'qux';", "var foo = `${bar + baz}qux`;", None),
+    ];
+    Tester::new(PreferTemplate::NAME, PreferTemplate::PLUGIN, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

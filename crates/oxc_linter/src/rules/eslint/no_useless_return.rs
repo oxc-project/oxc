@@ -68,7 +68,7 @@ declare_oxc_lint!(
     NoUselessReturn,
     eslint,
     pedantic,
-    pending
+    fix
 );
 
 impl Rule for NoUselessReturn {
@@ -82,7 +82,9 @@ impl Rule for NoUselessReturn {
         }
 
         if Self::is_useless_return(node, ctx) {
-            ctx.diagnostic(no_useless_return_diagnostic(ret.span));
+            ctx.diagnostic_with_fix(no_useless_return_diagnostic(ret.span), |fixer| {
+                fixer.delete_range(ret.span)
+            });
         }
     }
 }
@@ -604,5 +606,14 @@ fn test() {
     // - "foo(); return;" // { "parserOptions": { "ecmaFeatures": { "globalReturn": true } } }
     // - "if (foo) { bar(); return; } else { baz(); }" // { "parserOptions": { "ecmaFeatures": { "globalReturn": true } } }
 
-    Tester::new(NoUselessReturn::NAME, NoUselessReturn::PLUGIN, pass, fail).test_and_snapshot();
+    let fix = vec![
+        ("function foo() { return; }", "function foo() {  }"),
+        ("function foo() { doSomething(); return; }", "function foo() { doSomething();  }"),
+        ("() => { return; }", "() => {  }"),
+        ("const foo = () => { doSomething(); return; }", "const foo = () => { doSomething();  }"),
+    ];
+
+    Tester::new(NoUselessReturn::NAME, NoUselessReturn::PLUGIN, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

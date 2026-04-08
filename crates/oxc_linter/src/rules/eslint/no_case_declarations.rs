@@ -4,7 +4,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -70,7 +70,7 @@ declare_oxc_lint!(
     NoCaseDeclarations,
     eslint,
     pedantic,
-    pending
+    suggestion
 );
 
 impl Rule for NoCaseDeclarations {
@@ -78,17 +78,20 @@ impl Rule for NoCaseDeclarations {
         if let AstKind::SwitchCase(switch_case) = node.kind() {
             let consequent = &switch_case.consequent;
 
+            // Collect all declaration spans first, then emit a single suggestion
+            // wrapping the entire body in braces (avoids duplicate suggestions
+            // when multiple declarations exist in the same case).
+            let mut has_emitted_fix = false;
+
             for stmt in consequent {
-                match stmt {
+                let diag_span = match stmt {
                     Statement::FunctionDeclaration(d) => {
                         let start = d.span.start;
-                        let end = start + 8;
-                        ctx.diagnostic(no_case_declarations_diagnostic(Span::new(start, end)));
+                        Some(Span::new(start, start + 8))
                     }
                     Statement::ClassDeclaration(d) => {
                         let start = d.span.start;
-                        let end = start + 5;
-                        ctx.diagnostic(no_case_declarations_diagnostic(Span::new(start, end)));
+                        Some(Span::new(start, start + 5))
                     }
                     Statement::VariableDeclaration(var) if var.kind.is_lexical() => {
                         let start = var.span.start;
@@ -103,10 +106,29 @@ impl Rule for NoCaseDeclarations {
                             }
                             VariableDeclarationKind::Var => unreachable!(),
                         };
-                        let end = start + len;
-                        ctx.diagnostic(no_case_declarations_diagnostic(Span::new(start, end)));
+                        Some(Span::new(start, start + len))
                     }
-                    _ => {}
+                    _ => None,
+                };
+
+                if let Some(span) = diag_span {
+                    if !has_emitted_fix {
+                        // Get the span covering all consequent statements
+                        let first_start = consequent.first().unwrap().span().start;
+                        let last_end = consequent.last().unwrap().span().end;
+                        let body_span = Span::new(first_start, last_end);
+
+                        ctx.diagnostic_with_suggestion(
+                            no_case_declarations_diagnostic(span),
+                            |fixer| {
+                                let body_text = fixer.source_range(body_span);
+                                fixer.replace(body_span, format!("{{ {body_text} }}"))
+                            },
+                        );
+                        has_emitted_fix = true;
+                    } else {
+                        ctx.diagnostic(no_case_declarations_diagnostic(span));
+                    }
                 }
             }
         }
@@ -140,6 +162,30 @@ fn test() {
         ("switch (a) { default: await using x = {}; break; }", None),
     ];
 
+    let fix = vec![
+        (
+            "switch (a) { case 1: let x = 1; break; }",
+            "switch (a) { case 1: { let x = 1; break; } }",
+            None,
+        ),
+        (
+            "switch (a) { default: const x = 2; break; }",
+            "switch (a) { default: { const x = 2; break; } }",
+            None,
+        ),
+        (
+            "switch (a) { case 1: function f() {} break; }",
+            "switch (a) { case 1: { function f() {} break; } }",
+            None,
+        ),
+        (
+            "switch (a) { case 1: class C {} break; }",
+            "switch (a) { case 1: { class C {} break; } }",
+            None,
+        ),
+    ];
+
     Tester::new(NoCaseDeclarations::NAME, NoCaseDeclarations::PLUGIN, pass, fail)
+        .expect_fix(fix)
         .test_and_snapshot();
 }

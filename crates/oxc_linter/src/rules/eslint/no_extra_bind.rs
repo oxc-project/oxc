@@ -6,7 +6,7 @@ use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeFlags;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{AstNode, ast_util::is_method_call, context::LintContext, rule::Rule};
 
@@ -56,7 +56,7 @@ declare_oxc_lint!(
     NoExtraBind,
     eslint,
     suspicious,
-    pending
+    fix
 );
 
 impl Rule for NoExtraBind {
@@ -83,22 +83,26 @@ impl Rule for NoExtraBind {
             return;
         };
         let obj = member_expr.object().get_inner_expression();
-        match obj {
+        let should_report = match obj {
             Expression::FunctionExpression(func_expr) => {
                 let Some(body) = &func_expr.body else {
                     return;
                 };
                 let mut finder = ThisFinder { found: false };
                 finder.visit_function_body(body);
-                // don't use this expression
-                if !finder.found {
-                    ctx.diagnostic(no_extra_bind_diagnostic(span));
-                }
+                !finder.found
             }
-            Expression::ArrowFunctionExpression(_) => {
-                ctx.diagnostic(no_extra_bind_diagnostic(span));
-            }
-            _ => {}
+            Expression::ArrowFunctionExpression(_) => true,
+            _ => return,
+        };
+
+        if should_report {
+            let call_span = call_expr.span;
+            let obj_span = member_expr.object().span();
+            ctx.diagnostic_with_fix(no_extra_bind_diagnostic(span), |fixer| {
+                let obj_text = fixer.source_range(obj_span).to_string();
+                fixer.replace(call_span, obj_text)
+            });
         }
     }
 }
@@ -174,59 +178,23 @@ fn test() {
         "var a = (function() { return 1; }?.['bind'])(b)", // { "ecmaVersion": 2020 }
         "var a = function() { function v() { this } }.bind(a)",
     ];
-    // pending
-    // let fix = vec![
-    //     ("var a = function() { return 1; }.bind(b)", "var a = function() { return 1; }", None),
-    //     ("var a = function() { return 1; }['bind'](b)", "var a = function() { return 1; }", None),
-    //     ("var a = function() { return 1; }[`bind`](b)", "var a = function() { return 1; }", None),
-    //     ("var a = (() => { return 1; }).bind(b)", "var a = (() => { return 1; })", None),
-    //     ("var a = (() => { return this; }).bind(b)", "var a = (() => { return this; })", None),
-    //     (
-    //         "var a = function() { (function(){ this.c }) }.bind(b)",
-    //         "var a = function() { (function(){ this.c }) }",
-    //         None,
-    //     ),
-    //     (
-    //         "var a = function() { function c(){ this.d } }.bind(b)",
-    //         "var a = function() { function c(){ this.d } }",
-    //         None,
-    //     ),
-    //     ("var a = function() { return 1; }.bind(this)", "var a = function() { return 1; }", None),
-    //     (
-    //         "var a = function() { (function(){ (function(){ this.d }.bind(c)) }) }.bind(b)",
-    //         "var a = function() { (function(){ (function(){ this.d }.bind(c)) }) }",
-    //         None,
-    //     ),
-    //     (
-    //         "var a = (function() { return 1; }).bind(this)",
-    //         "var a = (function() { return 1; })",
-    //         None,
-    //     ),
-    //     (
-    //         "var a = (function() { return 1; }.bind)(this)",
-    //         "var a = (function() { return 1; })",
-    //         None,
-    //     ),
-    //     ("var a = function() {}/**/.bind(b)", "var a = function() {}/**/", None),
-    //     ("var a = function() {}/**/['bind'](b)", "var a = function() {}/**/", None),
-    //     (
-    //         "var a = function() {}//comment
-    // 		.bind(b)",
-    //         "var a = function() {}//comment
-    // 		",
-    //         None,
-    //     ),
-    //     ("var a = function() {}.bind(b)/**/", "var a = function() {}/**/", None),
-    //     ("var a = function() { return 1; }.bind?.(b)", "var a = function() { return 1; }", None),
-    //     ("var a = function() { return 1; }?.bind(b)", "var a = function() { return 1; }", None),
-    //     ("var a = (function() { return 1; }?.bind)(b)", "var a = (function() { return 1; })", None),
-    //     ("var a = function() { return 1; }['bind']?.(b)", "var a = function() { return 1; }", None),
-    //     ("var a = function() { return 1; }?.['bind'](b)", "var a = function() { return 1; }", None),
-    //     (
-    //         "var a = (function() { return 1; }?.['bind'])(b)",
-    //         "var a = (function() { return 1; })",
-    //         None,
-    //     ),
-    // ];
-    Tester::new(NoExtraBind::NAME, NoExtraBind::PLUGIN, pass, fail).test_and_snapshot();
+    let fix = vec![
+        ("var a = function() { return 1; }.bind(b)", "var a = function() { return 1; }"),
+        ("var a = function() { return 1; }['bind'](b)", "var a = function() { return 1; }"),
+        ("var a = function() { return 1; }[`bind`](b)", "var a = function() { return 1; }"),
+        ("var a = (() => { return 1; }).bind(b)", "var a = (() => { return 1; })"),
+        ("var a = (() => { return this; }).bind(b)", "var a = (() => { return this; })"),
+        (
+            "var a = function() { (function(){ this.c }) }.bind(b)",
+            "var a = function() { (function(){ this.c }) }",
+        ),
+        (
+            "var a = function() { function c(){ this.d } }.bind(b)",
+            "var a = function() { function c(){ this.d } }",
+        ),
+        ("var a = function() { return 1; }.bind(this)", "var a = function() { return 1; }"),
+    ];
+    Tester::new(NoExtraBind::NAME, NoExtraBind::PLUGIN, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

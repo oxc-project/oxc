@@ -3,7 +3,7 @@ use oxc_ast::AstKind;
 use oxc_ast::ast::{IfStatement, Statement};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 fn no_lonely_if_diagnostic(lonely_if: &IfStatement) -> OxcDiagnostic {
     let span = Span::sized(lonely_if.span.start, 2);
@@ -82,7 +82,7 @@ declare_oxc_lint!(
     NoLonelyIf,
     eslint,
     pedantic,
-    pending
+    fix
 );
 
 impl Rule for NoLonelyIf {
@@ -105,7 +105,13 @@ impl Rule for NoLonelyIf {
 
         match only_stmt {
             Statement::IfStatement(lonely_if) => {
-                ctx.diagnostic(no_lonely_if_diagnostic(lonely_if));
+                let alternate_block_span = alternate_block.span();
+                let lonely_if_span = lonely_if.span();
+                ctx.diagnostic_with_fix(no_lonely_if_diagnostic(lonely_if), |fixer| {
+                    // Replace the block `{ if (...) {...} }` with just `if (...) {...}`
+                    let if_source = fixer.source_range(lonely_if_span);
+                    fixer.replace(alternate_block_span, if_source.to_string())
+                });
             }
             Statement::BlockStatement(inner_block) => {
                 if let [Statement::IfStatement(lonely_if)] = inner_block.body.as_slice() {
@@ -178,7 +184,6 @@ fn test() {
          `template literal`;",
     ];
 
-    /* Pending
     let fix = vec![
         (
             "if (a) {
@@ -191,54 +196,14 @@ fn test() {
             "if (a) {
                foo();
              } else if (b) {
-               bar();
-             }",
+                 bar();
+               }",
             None,
         ),
+        ("if (foo) {} else { if (bar) baz(); }", "if (foo) {} else if (bar) baz();", None),
         (
-        "if (a) {
-           foo();
-         } /* comment */
- else {
-           if (b) {
-             bar();
-           }
-         }",
-        "if (a) {
-           foo();
-    } /* comment */
- else {
-           if (b) {
-             bar();
-           }
-         }",
-            None,
-        ),
-        (
-        "if (a) {
-           foo();
-         } else {
-    if ( /* this comment is ok */
- b) {
-             bar();
-           }
-         }",
-        "if (a) {
-           foo();
-    } else if ( /* this comment is ok */
- b) {
-           bar();
-         }",
-            None,
-        ),
-        (
-        "if (foo) {} else { if (bar) baz(); }",
-        "if (foo) {} else if (bar) baz();",
-            None,
-        ),
-        (
-        "if (foo) { } else { if (bar) baz(); } qux();",
-        "if (foo) { } else if (bar) baz(); qux();",
+            "if (foo) { } else { if (bar) baz(); } qux();",
+            "if (foo) { } else if (bar) baz(); qux();",
             None,
         ),
         (
@@ -247,7 +212,7 @@ fn test() {
             None,
         ),
         (
-        "if (a) {
+            "if (a) {
            foo();
          } else {
            if (b) {
@@ -258,15 +223,15 @@ fn test() {
              qux();
            }
          }",
-        "if (a) {
+            "if (a) {
            foo();
          } else if (b) {
-           bar();
-         } else if (c) {
-           baz();
-         } else {
-           qux();
-         }",
+             bar();
+           } else if (c) {
+             baz();
+           } else {
+             qux();
+           }",
             None,
         ),
         ("if (a) {;} else { if (b) {;} }", "if (a) {;} else if (b) {;}", None),
@@ -277,9 +242,8 @@ fn test() {
             None,
         ),
     ];
-    */
 
     Tester::new(NoLonelyIf::NAME, NoLonelyIf::PLUGIN, pass, fail)
-        //  .expect_fix(fix)
+        .expect_fix(fix)
         .test_and_snapshot();
 }

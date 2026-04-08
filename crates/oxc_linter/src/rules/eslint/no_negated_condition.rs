@@ -53,7 +53,7 @@ declare_oxc_lint!(
     NoNegatedCondition,
     eslint,
     pedantic,
-    pending
+    suggestion
 );
 
 impl Rule for NoNegatedCondition {
@@ -70,17 +70,69 @@ impl Rule for NoNegatedCondition {
 
                 let test = if_stmt.test.without_parentheses();
                 if is_negated_expression(test) {
-                    ctx.diagnostic(no_negated_condition_diagnostic(test.span()));
+                    let consequent_span = if_stmt.consequent.span();
+                    let alternate_span = if_stmt_alternate.span();
+                    let test_span = test.span();
+                    ctx.diagnostic_with_suggestion(
+                        no_negated_condition_diagnostic(test_span),
+                        |fixer| {
+                            let inverted_condition =
+                                get_inverted_condition(test, fixer.source_text());
+                            let consequent_text = fixer.source_range(consequent_span).to_string();
+                            let alternate_text = fixer.source_range(alternate_span).to_string();
+                            let mut fix = fixer.new_fix_with_capacity(3);
+                            fix.push(fixer.replace(test_span, inverted_condition));
+                            fix.push(fixer.replace(consequent_span, alternate_text));
+                            fix.push(fixer.replace(alternate_span, consequent_text));
+                            fix.with_message("Invert the condition and swap the branches")
+                        },
+                    );
                 }
             }
             AstKind::ConditionalExpression(conditional_expr) => {
                 let test = conditional_expr.test.without_parentheses();
                 if is_negated_expression(test) {
-                    ctx.diagnostic(no_negated_condition_diagnostic(test.span()));
+                    let consequent_span = conditional_expr.consequent.span();
+                    let alternate_span = conditional_expr.alternate.span();
+                    let test_span = test.span();
+                    ctx.diagnostic_with_suggestion(
+                        no_negated_condition_diagnostic(test_span),
+                        |fixer| {
+                            let inverted_condition =
+                                get_inverted_condition(test, fixer.source_text());
+                            let consequent_text = fixer.source_range(consequent_span).to_string();
+                            let alternate_text = fixer.source_range(alternate_span).to_string();
+                            let mut fix = fixer.new_fix_with_capacity(3);
+                            fix.push(fixer.replace(test_span, inverted_condition));
+                            fix.push(fixer.replace(consequent_span, alternate_text));
+                            fix.push(fixer.replace(alternate_span, consequent_text));
+                            fix.with_message("Invert the condition and swap the branches")
+                        },
+                    );
                 }
             }
             _ => {}
         }
+    }
+}
+
+fn get_inverted_condition(expr: &Expression, source_text: &str) -> String {
+    match expr {
+        Expression::UnaryExpression(unary_expr) => {
+            // !a -> a, !!a -> !a (remove one level of negation)
+            unary_expr.argument.span().source_text(source_text).to_string()
+        }
+        Expression::BinaryExpression(binary_expr) => {
+            let left = binary_expr.left.span().source_text(source_text);
+            let right = binary_expr.right.span().source_text(source_text);
+            let new_op = match binary_expr.operator {
+                BinaryOperator::Inequality => "==",
+                BinaryOperator::StrictInequality => "===",
+                _ => return expr.span().source_text(source_text).to_string(),
+            };
+            format!("{left} {new_op} {right}")
+        }
+        _ => expr.span().source_text(source_text).to_string(),
     }
 }
 
@@ -157,6 +209,16 @@ fn test() {
         r"(!!a) ? b() : c();",
     ];
 
+    let fix = vec![
+        ("if (!a) {;} else {;}", "if (a) {;} else {;}"),
+        ("if (a != b) {;} else {;}", "if (a == b) {;} else {;}"),
+        ("if (a !== b) {;} else {;}", "if (a === b) {;} else {;}"),
+        ("!a ? b : c", "a ? c : b"),
+        ("a != b ? c : d", "a == b ? d : c"),
+        ("a !== b ? c : d", "a === b ? d : c"),
+    ];
+
     Tester::new(NoNegatedCondition::NAME, NoNegatedCondition::PLUGIN, pass, fail)
+        .expect_fix(fix)
         .test_and_snapshot();
 }
