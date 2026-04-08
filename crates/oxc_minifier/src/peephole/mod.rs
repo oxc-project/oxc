@@ -19,6 +19,7 @@ mod substitute_alternate_syntax;
 
 use oxc_ast_visit::Visit;
 use oxc_semantic::ReferenceId;
+use oxc_syntax::symbol::SymbolId;
 use rustc_hash::FxHashSet;
 
 use oxc_allocator::Vec;
@@ -95,13 +96,28 @@ impl<'a> PeepholeOptimizations {
             Expression::Identifier(id) => {
                 if let Some(symbol_id) = ctx.scoping().get_reference(id.reference_id()).symbol_id()
                 {
-                    ctx.scoping().symbol_is_mutated(symbol_id)
+                    Self::is_symbol_mutated(symbol_id, ctx)
                 } else {
                     true
                 }
             }
             Expression::ThisExpression(_) => false,
             _ => true,
+        }
+    }
+
+    /// Check if a symbol is mutated, using the O(1) cached `write_references_count`
+    /// from `SymbolValue` when available, falling back to the O(num_refs) scan in
+    /// `Scoping::symbol_is_mutated` for symbols without cached values.
+    ///
+    /// Only variable declarators have cached values (populated during
+    /// `exit_variable_declarator` → `init_symbol_value`); function declarations
+    /// and other binding kinds still take the fallback path.
+    fn is_symbol_mutated(symbol_id: SymbolId, ctx: &TraverseCtx<'a>) -> bool {
+        if let Some(sv) = ctx.state.symbol_values.get_symbol_value(symbol_id) {
+            sv.write_references_count > 0
+        } else {
+            ctx.scoping().symbol_is_mutated(symbol_id)
         }
     }
 }
@@ -114,14 +130,16 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
 
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         if ctx.state.changed {
-            // Remove unused references by visiting the AST again and diff the collected references.
-            let refs_before =
-                ctx.scoping().resolved_references().flatten().copied().collect::<FxHashSet<_>>();
+            // Remove stale references by collecting the set of live references from
+            // the AST and retaining only those in each symbol's reference list.
+            // This is done as a batch rather than deleting references one at a time,
+            // because individual deletion (`delete_resolved_reference`) uses a linear
+            // scan (`.position()`) per call, so removing many references to the same
+            // symbol is O(n²) (happens in bundler output with thousands of unused
+            // `var import_X = __toESM(require_Y())` declarations).
             let mut counter = ReferencesCounter::default();
             counter.visit_program(program);
-            for reference_id_to_remove in refs_before.difference(&counter.refs) {
-                ctx.scoping_mut().delete_reference(*reference_id_to_remove);
-            }
+            ctx.scoping_mut().retain_resolved_references(&counter.refs);
         }
         // Only check class_symbols_stack in full optimization mode (not DCE mode)
         debug_assert!(ctx.state.dce || ctx.state.class_symbols_stack.is_exhausted());

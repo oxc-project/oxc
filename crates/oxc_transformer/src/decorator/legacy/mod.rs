@@ -45,6 +45,7 @@
 
 mod metadata;
 
+use std::borrow::Cow;
 use std::mem;
 
 use oxc_allocator::{Address, CloneIn, GetAddress, TakeIn, UnstableAddress, Vec as ArenaVec};
@@ -369,20 +370,26 @@ impl<'a> LegacyDecorator<'a> {
                 let key_expr = accessor.key.into_expression();
                 let (assignment, reference) = duplicate_expression(key_expr, true, ctx);
 
+                // Use raw identifier name when possible to avoid collisions from
+                // `get_var_name_from_node` stripping leading underscores.
+                let key_name: Cow<'_, str> = match &reference {
+                    Expression::Identifier(ident) => Cow::Borrowed(ident.name.as_str()),
+                    _ => Cow::Owned(get_var_name_from_node(&reference)),
+                };
                 let getter_key = PropertyKey::from(assignment);
                 let setter_key = PropertyKey::from(reference);
-                let storage_name = ctx.ast.str_from_strs_array([
-                    "_",
-                    &get_var_name_from_node(&setter_key),
-                    "_computed_accessor_storage",
-                ]);
+                let storage_name =
+                    ctx.ast.str_from_strs_array(["_", &key_name, "_computed_accessor_storage"]);
                 (storage_name, getter_key, setter_key)
             } else {
-                let storage_name = ctx.ast.str_from_strs_array([
-                    "_",
-                    &get_var_name_from_node(&accessor.key),
-                    "_accessor_storage",
-                ]);
+                // Use `name()` to get the raw property name, avoiding `get_var_name_from_node`
+                // which strips leading underscores (e.g. `prop` and `_prop` both become "prop").
+                let key_name = accessor
+                    .key
+                    .name()
+                    .unwrap_or_else(|| Cow::Owned(get_var_name_from_node(&accessor.key)));
+                let storage_name =
+                    ctx.ast.str_from_strs_array(["_", &key_name, "_accessor_storage"]);
                 let getter_key = accessor.key.clone_in(ctx.ast.allocator);
                 let setter_key = accessor.key.clone_in(ctx.ast.allocator);
                 (storage_name, getter_key, setter_key)

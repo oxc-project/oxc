@@ -163,11 +163,14 @@ export function getLineColumnFromOffset(offset: number): LineColumn {
   // This is also the 1-indexed line number of the line containing `offset`.
   // e.g. if `offset` is on the 3rd line, `low` = 3, and `lineStartIndices[2]` is that line's start.
   // `do...while` is safe because `lineStartIndices` always has at least one entry, so `low < high` at start of loop.
+  //
+  // Note: Source text is limited to 1 GiB max, so offsets cannot exceed 2^30.
+  // This makes it safe to use `>> 1` for division by 2 below (which is faster than `>>> 1`).
   let low = 0,
     high = lineStartIndices.length,
     mid: number;
   do {
-    mid = (low + high) >>> 1;
+    mid = (low + high) >> 1;
     if (offset < lineStartIndices[mid]) {
       high = mid;
     } else {
@@ -350,11 +353,14 @@ export function computeLoc(start: number, end: number): Location {
   // This is also the 1-indexed line number of the line containing `start`.
   // e.g. if `start` is on the 3rd line, `line` = 3, and `lineStartIndices[2]` is that line's start.
   // `do...while` is safe because `lineStartIndices` always has at least one entry, so `line < high` at start of loop.
+  //
+  // Note: Source text is limited to 1 GiB max, so number of lines cannot exceed 2^30.
+  // This makes it safe to use `>> 1` for division by 2 below (which is faster than `>>> 1`).
   let line = 0,
     high = linesLen,
     mid: number;
   do {
-    mid = (line + high) >>> 1;
+    mid = (line + high) >> 1;
     if (start < lineStartIndices[mid]) {
       high = mid;
     } else {
@@ -387,7 +393,7 @@ export function computeLoc(start: number, end: number): Location {
     line++;
     high = linesLen;
     while (line < high) {
-      mid = (line + high) >>> 1;
+      mid = (line + high) >> 1;
       if (end < lineStartIndices[mid]) {
         high = mid;
       } else {

@@ -894,6 +894,15 @@ impl RuleRunner for crate::rules::eslint::no_regex_spaces::NoRegexSpaces {
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
+impl RuleRunner for crate::rules::eslint::no_restricted_exports::NoRestrictedExports {
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::ExportAllDeclaration,
+        AstType::ExportDefaultDeclaration,
+        AstType::ExportNamedDeclaration,
+    ]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
+}
+
 impl RuleRunner for crate::rules::eslint::no_restricted_globals::NoRestrictedGlobals {
     const NODE_TYPES: Option<&AstTypesBitset> =
         Some(&AstTypesBitset::from_types(&[AstType::IdentifierReference]));
@@ -2210,6 +2219,13 @@ impl RuleRunner for crate::rules::jest::no_untyped_mock_factory::NoUntypedMockFa
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnJestNode;
 }
 
+impl RuleRunner
+    for crate::rules::jest::padding_around_after_all_blocks::PaddingAroundAfterAllBlocks
+{
+    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnJestNode;
+}
+
 impl RuleRunner for crate::rules::jest::padding_around_test_blocks::PaddingAroundTestBlocks {
     const NODE_TYPES: Option<&AstTypesBitset> = None;
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnJestNode;
@@ -2387,6 +2403,12 @@ impl RuleRunner for crate::rules::react::forbid_elements::ForbidElements {
 }
 
 impl RuleRunner for crate::rules::react::forward_ref_uses_ref::ForwardRefUsesRef {
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
+}
+
+impl RuleRunner for crate::rules::react::hook_use_state::HookUseState {
     const NODE_TYPES: Option<&AstTypesBitset> =
         Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
@@ -2758,6 +2780,14 @@ impl RuleRunner for crate::rules::unicorn::consistent_function_scoping::Consiste
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
+impl RuleRunner
+    for crate::rules::unicorn::consistent_template_literal_escape::ConsistentTemplateLiteralEscape
+{
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::TemplateLiteral]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
+}
+
 impl RuleRunner for crate::rules::unicorn::custom_error_definition::CustomErrorDefinition {
     const NODE_TYPES: Option<&AstTypesBitset> =
         Some(&AstTypesBitset::from_types(&[AstType::Class]));
@@ -3107,6 +3137,17 @@ impl RuleRunner
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
+impl RuleRunner for crate::rules::unicorn::no_useless_iterator_to_array::NoUselessIteratorToArray {
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::CallExpression,
+        AstType::ForOfStatement,
+        AstType::NewExpression,
+        AstType::SpreadElement,
+        AstType::YieldExpression,
+    ]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
+}
+
 impl RuleRunner for crate::rules::unicorn::no_useless_length_check::NoUselessLengthCheck {
     const NODE_TYPES: Option<&AstTypesBitset> =
         Some(&AstTypesBitset::from_types(&[AstType::LogicalExpression]));
@@ -3289,6 +3330,14 @@ impl RuleRunner for crate::rules::unicorn::prefer_event_target::PreferEventTarge
 impl RuleRunner for crate::rules::unicorn::prefer_global_this::PreferGlobalThis {
     const NODE_TYPES: Option<&AstTypesBitset> =
         Some(&AstTypesBitset::from_types(&[AstType::IdentifierReference]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
+}
+
+impl RuleRunner
+    for crate::rules::unicorn::prefer_import_meta_properties::PreferImportMetaProperties
+{
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::MetaProperty]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
@@ -4739,6 +4788,13 @@ impl RuleRunner for crate::rules::vitest::prefer_expect_type_of::PreferExpectTyp
 impl RuleRunner for crate::rules::vitest::prefer_import_in_mock::PreferImportInMock {
     const NODE_TYPES: Option<&AstTypesBitset> = None;
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnJestNode;
+}
+
+impl RuleRunner
+    for crate::rules::vitest::prefer_importing_vitest_globals::PreferImportingVitestGlobals
+{
+    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnce;
 }
 
 impl RuleRunner

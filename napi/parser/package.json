@@ -1,6 +1,6 @@
 {
   "name": "oxc-parser",
-  "version": "0.123.0",
+  "version": "0.124.0",
   "description": "Oxc Parser Node API",
   "keywords": [
     "ast",
@@ -85,7 +85,7 @@
     "@typescript-eslint/visitor-keys": "^8.54.0",
     "@vitest/browser": "4.1.2",
     "@vitest/browser-playwright": "4.1.2",
-    "esbuild": "^0.27.0",
+    "esbuild": "^0.28.0",
     "playwright": "^1.51.0",
     "publint": "catalog:",
     "tinypool": "^2.0.0",

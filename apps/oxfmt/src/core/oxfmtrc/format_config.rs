@@ -88,6 +88,7 @@ pub struct FormatConfig {
     /// For JSX, you can set the `jsxSingleQuote` option.
     ///
     /// - Default: `false`
+    /// - Overrides `.editorconfig.quote_type`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub single_quote: Option<bool>,
     /// Use single quotes instead of double quotes in JSX.
