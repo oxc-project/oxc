@@ -1,7 +1,7 @@
 use oxc_allocator::{TakeIn, Vec as ArenaVec};
 use oxc_ast::ast::*;
 use oxc_semantic::ScopeFlags;
-use oxc_span::SPAN;
+use oxc_span::{Ident, SPAN};
 use oxc_syntax::operator::AssignmentOperator;
 use oxc_traverse::BoundIdentifier;
 
@@ -381,12 +381,20 @@ impl<'a> TypeScript<'a> {
         params: &ArenaVec<'a, FormalParameter<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> impl Iterator<Item = Statement<'a>> {
+        // Save source text before the closure borrows `ctx`.
+        let source_text = ctx.state.source_text;
         params
             .iter()
             .filter(|param| param.has_modifier())
             .filter_map(|param| param.pattern.get_binding_identifier())
             .map(|id| {
-                let target = create_this_property_assignment(id.span, id.name, ctx);
+                // Use the source span to recover the original property name.
+                // `id.name` may have been renamed by the class_properties plugin's clash
+                // detection (e.g. `x` → `_x`) before this runs in `enter_method_definition`,
+                // but `id.span` always points to the original identifier in source.
+                // The property name on `this` must use the original user-written name.
+                let prop_name = Ident::from(id.span.source_text(source_text));
+                let target = create_this_property_assignment(id.span, prop_name, ctx);
                 let value = BoundIdentifier::from_binding_ident(id).create_read_expression(ctx);
                 Self::create_assignment(target, value, ctx)
             })
