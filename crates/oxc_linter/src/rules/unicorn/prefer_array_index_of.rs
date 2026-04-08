@@ -4,7 +4,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::BinaryOperator;
 
 use crate::{AstNode, ast_util::is_method_call, context::LintContext, rule::Rule};
@@ -46,7 +46,7 @@ declare_oxc_lint!(
     PreferArrayIndexOf,
     unicorn,
     style,
-    pending
+    suggestion
 );
 
 impl Rule for PreferArrayIndexOf {
@@ -65,13 +65,98 @@ impl Rule for PreferArrayIndexOf {
             return;
         }
 
-        ctx.diagnostic(prefer_array_index_of_diagnostic(
-            call_expr
-                .callee
-                .as_member_expression()
-                .and_then(oxc_ast::ast::MemberExpression::static_property_info)
-                .map_or(call_expr.span, |(span, _)| span),
-        ));
+        let method_span = call_expr
+            .callee
+            .as_member_expression()
+            .and_then(oxc_ast::ast::MemberExpression::static_property_info)
+            .map_or(call_expr.span, |(span, _)| span);
+
+        let method_name = ctx.source_range(method_span);
+        let replacement_method = if method_name == "findIndex" { "indexOf" } else { "lastIndexOf" };
+
+        // Try to extract the value from the callback for a complete fix
+        let cb = call_expr.arguments[0].as_expression().unwrap();
+        let value_span = extract_comparison_value(cb, ctx);
+
+        ctx.diagnostic_with_suggestion(prefer_array_index_of_diagnostic(method_span), |fixer| {
+            if let Some(value_span) = value_span {
+                // Replace the entire method call: `.findIndex(x => x === val)` -> `.indexOf(val)`
+                let value_text = fixer.source_range(value_span);
+                let replacement = format!("{replacement_method}({value_text})");
+                fixer.replace(Span::new(method_span.start, call_expr.span.end), replacement)
+            } else {
+                // Just replace the method name
+                fixer.replace(method_span, replacement_method)
+            }
+        });
+    }
+}
+
+fn extract_comparison_value(expr: &Expression, ctx: &LintContext) -> Option<Span> {
+    fn extract_value(arg: &FormalParameter, expr: &Expression, ctx: &LintContext) -> Option<Span> {
+        let ident = arg.pattern.get_binding_identifier()?;
+        if let Expression::BinaryExpression(bin_expr) = expr
+            && ctx.symbol_references(ident.symbol_id()).count() == 1
+            && bin_expr.operator == BinaryOperator::StrictEquality
+        {
+            // Check if left side is the parameter
+            if bin_expr
+                .left
+                .get_identifier_reference()
+                .and_then(|r| ctx.scoping().get_reference(r.reference_id()).symbol_id())
+                == Some(ident.symbol_id())
+            {
+                return Some(bin_expr.right.span());
+            }
+            // Check if right side is the parameter
+            if bin_expr
+                .right
+                .get_identifier_reference()
+                .and_then(|r| ctx.scoping().get_reference(r.reference_id()).symbol_id())
+                == Some(ident.symbol_id())
+            {
+                return Some(bin_expr.left.span());
+            }
+        }
+        None
+    }
+
+    match expr.get_inner_expression() {
+        Expression::ArrowFunctionExpression(arrow_function)
+            if !arrow_function.r#async && arrow_function.params.items.len() == 1 =>
+        {
+            let body_expr = if arrow_function.expression {
+                if let Some(Statement::ExpressionStatement(expr)) =
+                    arrow_function.body.statements.first()
+                {
+                    Some(&expr.expression)
+                } else {
+                    None
+                }
+            } else if let Some(Statement::ReturnStatement(ret)) =
+                arrow_function.body.statements.first()
+            {
+                ret.argument.as_ref()
+            } else {
+                None
+            };
+
+            body_expr.and_then(|e| extract_value(&arrow_function.params.items[0], e, ctx))
+        }
+        Expression::FunctionExpression(function)
+            if !function.r#async && !function.generator && function.params.items.len() == 1 =>
+        {
+            let body_expr = if let Some(Statement::ReturnStatement(ret)) =
+                function.body.as_ref().and_then(|stmts| stmts.statements.first())
+            {
+                ret.argument.as_ref()
+            } else {
+                None
+            };
+
+            body_expr.and_then(|e| extract_value(&function.params.items[0], e, ctx))
+        }
+        _ => None,
     }
 }
 
@@ -242,6 +327,13 @@ fn test() {
         "function foo() {\n\treturn (bar as string).findLastIndex(x => x === \"foo\");\n}",
     ];
 
+    let fix = vec![
+        (r#"values.findIndex(x => x === "foo")"#, r#"values.indexOf("foo")"#),
+        (r#"values.findIndex(x => "foo" === x)"#, r#"values.indexOf("foo")"#),
+        (r#"values.findLastIndex(x => x === "foo")"#, r#"values.lastIndexOf("foo")"#),
+    ];
+
     Tester::new(PreferArrayIndexOf::NAME, PreferArrayIndexOf::PLUGIN, pass, fail)
+        .expect_fix(fix)
         .test_and_snapshot();
 }

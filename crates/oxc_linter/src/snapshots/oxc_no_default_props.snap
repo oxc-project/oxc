@@ -1,0 +1,18 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 444
+---
+
+  ⚠ oxc(no-default-props): defaultProps is deprecated
+   ╭─[no_default_props.tsx:1:11]
+ 1 │ Component.defaultProps = { color: 'red' };
+   ·           ────────────
+   ╰────
+  help: Use JavaScript default parameters instead of defaultProps. defaultProps is deprecated since React 18.3.
+
+  ⚠ oxc(no-default-props): defaultProps is deprecated
+   ╭─[no_default_props.tsx:1:10]
+ 1 │ MyButton.defaultProps = {};
+   ·          ────────────
+   ╰────
+  help: Use JavaScript default parameters instead of defaultProps. defaultProps is deprecated since React 18.3.

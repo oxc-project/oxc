@@ -1,4 +1,6 @@
-use std::{collections::HashSet, ffi::OsStr};
+use std::ffi::OsStr;
+
+use rustc_hash::FxHashSet;
 
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -112,6 +114,7 @@ impl Rule for PackageJsonSortCollections {
             return;
         };
 
+        #[expect(clippy::cast_possible_truncation)]
         let file_span = oxc_span::Span::new(0, source_text.len() as u32);
         let diagnostic = if path_targets_scripts(&first_unsorted_path) {
             unsorted_scripts_diagnostic(oxc_span::Span::new(0, 1))
@@ -162,15 +165,14 @@ fn sort_collections_in_value(
                 )?;
                 changed |= child_changed;
 
-                if configured_paths.iter().any(|candidate| candidate == &path) {
-                    if let Value::Object(collection) = &next_value {
-                        if let Some(sorted_collection) = maybe_sort_collection(&path, collection) {
-                            next_value = Value::Object(sorted_collection);
-                            changed = true;
-                            if first_unsorted_path.is_none() {
-                                *first_unsorted_path = Some(path.clone());
-                            }
-                        }
+                if configured_paths.iter().any(|candidate| candidate == &path)
+                    && let Value::Object(collection) = &next_value
+                    && let Some(sorted_collection) = maybe_sort_collection(&path, collection)
+                {
+                    next_value = Value::Object(sorted_collection);
+                    changed = true;
+                    if first_unsorted_path.is_none() {
+                        *first_unsorted_path = Some(path.clone());
                     }
                 }
 
@@ -190,7 +192,7 @@ fn sort_collections_in_value(
 fn maybe_sort_collection(path: &str, object: &Map<String, Value>) -> Option<Map<String, Value>> {
     let current_keys = object.keys().cloned().collect::<Vec<_>>();
     let expected_keys = if path_targets_scripts(path) {
-        sort_script_names(current_keys.clone())
+        sort_script_names(&current_keys)
     } else {
         let mut keys = current_keys.clone();
         keys.sort_unstable();
@@ -216,14 +218,14 @@ fn join_path(parent: &str, key: &str) -> String {
     if parent.is_empty() { key.to_string() } else { format!("{parent}.{key}") }
 }
 
-fn sort_script_names(keys: Vec<String>) -> Vec<String> {
-    let default_scripts = DEFAULT_NPM_SCRIPTS.iter().copied().collect::<HashSet<_>>();
-    let original_keys = keys.iter().cloned().collect::<HashSet<_>>();
+fn sort_script_names(keys: &[String]) -> Vec<String> {
+    let default_scripts = DEFAULT_NPM_SCRIPTS.iter().copied().collect::<FxHashSet<_>>();
+    let original_keys = keys.iter().cloned().collect::<FxHashSet<_>>();
     let mut transformed = Vec::with_capacity(keys.len());
-    let mut prefixable = HashSet::<String>::new();
+    let mut prefixable = FxHashSet::<String>::default();
 
-    for key in &keys {
-        let omitted =
+    for key in keys {
+        let omitted: String =
             key.strip_prefix("pre").or_else(|| key.strip_prefix("post")).unwrap_or(key).to_string();
 
         if default_scripts.contains(omitted.as_str()) || original_keys.contains(&omitted) {
@@ -234,10 +236,10 @@ fn sort_script_names(keys: Vec<String>) -> Vec<String> {
         }
     }
 
-    let mut names = sort_script_groups(transformed);
+    let names = sort_script_groups(transformed);
     let mut expanded = Vec::new();
-    let mut seen = HashSet::<String>::new();
-    for key in names.drain(..) {
+    let mut seen = FxHashSet::<String>::default();
+    for key in names {
         if prefixable.contains(&key) {
             for candidate in [format!("pre{key}"), key.clone(), format!("post{key}")] {
                 if original_keys.contains(&candidate) && seen.insert(candidate.clone()) {
@@ -257,7 +259,7 @@ fn sort_script_groups(keys: Vec<String>) -> Vec<String> {
 
     for key in keys {
         let base =
-            key.split_once(':').map(|(head, _)| head.to_string()).unwrap_or_else(|| key.clone());
+            key.split_once(':').map_or_else(|| key.clone(), |(head, _)| head.to_string());
         group_map.entry(base).or_default().push(key);
     }
 
@@ -269,7 +271,7 @@ fn sort_script_groups(keys: Vec<String>) -> Vec<String> {
                 children.iter().filter(|key| !key.contains(':')).cloned().collect::<Vec<_>>();
             direct.sort_unstable();
 
-            let nested = children.drain(..).filter(|key| key.contains(':')).collect::<Vec<_>>();
+            let nested = children.into_iter().filter(|key| key.contains(':')).collect::<Vec<_>>();
 
             result.extend(direct);
             result.extend(sort_script_groups(nested));

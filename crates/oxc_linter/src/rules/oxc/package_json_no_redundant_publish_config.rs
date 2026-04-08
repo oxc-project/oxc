@@ -55,9 +55,8 @@ impl Rule for PackageJsonNoRedundantPublishConfig {
             return;
         };
 
-        let package_name = match object.get("name") {
-            Some(Value::String(name)) => name,
-            _ => return,
+        let Some(Value::String(package_name)) = object.get("name") else {
+            return;
         };
         if package_name.starts_with('@') {
             return;
@@ -77,6 +76,7 @@ impl Rule for PackageJsonNoRedundantPublishConfig {
             return;
         };
 
+        #[expect(clippy::cast_possible_truncation)]
         let file_span = oxc_span::Span::new(0, source_text.len() as u32);
         ctx.diagnostic_with_fix(
             redundant_publish_config_access_diagnostic(file_start_span(source_text)),

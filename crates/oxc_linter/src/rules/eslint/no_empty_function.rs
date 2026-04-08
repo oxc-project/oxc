@@ -300,7 +300,7 @@ declare_oxc_lint!(
     NoEmptyFunction,
     eslint,
     restriction,
-    pending,
+    suggestion,
     config = NoEmptyFunctionConfig,
 );
 
@@ -322,7 +322,13 @@ impl Rule for NoEmptyFunction {
         else {
             return;
         };
-        ctx.diagnostic(no_empty_function_diagnostic(fb.span, kind, fn_name));
+        ctx.diagnostic_with_suggestion(
+            no_empty_function_diagnostic(fb.span, kind, fn_name),
+            |fixer| {
+                let inner_span = Span::new(fb.span.start + 1, fb.span.end - 1);
+                fixer.replace(inner_span, " /* empty */ ")
+            },
+        );
     }
 }
 
@@ -1214,5 +1220,13 @@ fn test() {
         ("class A extends B { override foo() {} }", None),
     ];
 
-    Tester::new(NoEmptyFunction::NAME, NoEmptyFunction::PLUGIN, pass, fail).test_and_snapshot();
+    let fix = vec![
+        ("function foo() {}", "function foo() { /* empty */ }", None),
+        ("const bar = () => {};", "const bar = () => { /* empty */ };", None),
+        ("class Foo { bar() {} }", "class Foo { bar() { /* empty */ } }", None),
+    ];
+
+    Tester::new(NoEmptyFunction::NAME, NoEmptyFunction::PLUGIN, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

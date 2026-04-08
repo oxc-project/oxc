@@ -1,10 +1,13 @@
-use super::json_utils::{file_start_span, is_json_file};
+use super::json_utils::is_json_file;
 
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use serde_json::Value;
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{
+    context::LintContext,
+    json_parser::{JsonValue, parse_json},
+    rule::Rule,
+};
 
 fn invalid_package_json_bin_diagnostic(span: oxc_span::Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("The `bin` field in package.json is invalid.")
@@ -44,21 +47,19 @@ declare_oxc_lint!(
 impl Rule for PackageJsonValidBin {
     fn run_once(&self, ctx: &LintContext<'_>) {
         let source_text = ctx.full_source_text();
-        let Ok(value) = serde_json::from_str::<Value>(source_text) else {
+        let result = parse_json(source_text);
+        let Some(JsonValue::Object(object)) = &result.root else {
             return;
         };
-        let Some(object) = value.as_object() else {
-            return;
-        };
-        let Some(bin) = object.get("bin") else {
+        let Some(prop) = object.get_property("bin") else {
             return;
         };
 
-        if is_valid_bin_value(bin) {
+        if is_valid_bin_value(&prop.value) {
             return;
         }
 
-        ctx.diagnostic(invalid_package_json_bin_diagnostic(file_start_span(source_text)));
+        ctx.diagnostic(invalid_package_json_bin_diagnostic(prop.value.span()));
     }
 
     fn should_run(&self, ctx: &crate::rules::ContextHost) -> bool {
@@ -68,14 +69,15 @@ impl Rule for PackageJsonValidBin {
     }
 }
 
-fn is_valid_bin_value(value: &Value) -> bool {
+fn is_valid_bin_value(value: &JsonValue<'_>) -> bool {
     match value {
-        Value::String(value) => !value.trim().is_empty(),
-        Value::Object(object) => {
-            !object.is_empty()
+        JsonValue::String(value, _) => !value.trim().is_empty(),
+        JsonValue::Object(object) => {
+            !object.properties.is_empty()
                 && object
-                    .values()
-                    .all(|value| matches!(value, Value::String(value) if !value.trim().is_empty()))
+                    .properties
+                    .iter()
+                    .all(|p| matches!(&p.value, JsonValue::String(v, _) if !v.trim().is_empty()))
         }
         _ => false,
     }

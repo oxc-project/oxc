@@ -1,10 +1,12 @@
-use super::json_utils::{file_start_span, is_json_file};
+use super::json_utils::{is_json_file, property_deletion_span};
 
+use crate::{
+    context::LintContext,
+    json_parser::{JsonValue, parse_json},
+    rule::Rule,
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use serde_json::Value;
-
-use crate::{context::LintContext, rule::Rule};
 
 fn invalid_package_json_type_diagnostic(actual: &str, span: oxc_span::Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
@@ -46,24 +48,35 @@ declare_oxc_lint!(
     /// ```
     PackageJsonValidType,
     oxc,
-    correctness
+    correctness,
+    fix
 );
 
 impl Rule for PackageJsonValidType {
     fn run_once(&self, ctx: &LintContext<'_>) {
         let source_text = ctx.full_source_text();
-        let Ok(value) = serde_json::from_str::<Value>(source_text) else {
+        let result = parse_json(source_text);
+        let Some(JsonValue::Object(object)) = &result.root else {
             return;
         };
-        let Some(package_type) = value.get("type") else {
+        let Some((index, prop)) =
+            object.properties.iter().enumerate().find(|(_, p)| p.key == "type")
+        else {
             return;
         };
 
-        let span = file_start_span(source_text);
-        match package_type {
-            Value::String(kind) if kind == "module" || kind == "commonjs" => {}
-            Value::String(kind) => ctx.diagnostic(invalid_package_json_type_diagnostic(kind, span)),
-            _ => ctx.diagnostic(non_string_package_json_type_diagnostic(span)),
+        match &prop.value {
+            JsonValue::String(kind, _) if *kind == "module" || *kind == "commonjs" => {}
+            JsonValue::String(kind, _) => {
+                ctx.diagnostic(invalid_package_json_type_diagnostic(kind, prop.value.span()));
+            }
+            _ => {
+                let delete_span = property_deletion_span(source_text, object, prop, index);
+                ctx.diagnostic_with_fix(
+                    non_string_package_json_type_diagnostic(prop.value.span()),
+                    |fixer| fixer.delete_range(delete_span),
+                );
+            }
         }
     }
 
@@ -90,7 +103,14 @@ fn test() {
         r#"{"name":"demo","type":1}"#,
     ];
 
+    // Non-string types get auto-deleted (restoring Node's default behavior)
+    let fix = vec![
+        (r#"{"name":"demo","type":true}"#, r#"{"name":"demo"}"#, None),
+        (r#"{"name":"demo","type":1}"#, r#"{"name":"demo"}"#, None),
+    ];
+
     Tester::new(PackageJsonValidType::NAME, PackageJsonValidType::PLUGIN, pass, fail)
+        .expect_fix(fix)
         .change_rule_path("package.json")
         .test_and_snapshot();
 }

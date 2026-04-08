@@ -39,7 +39,7 @@ declare_oxc_lint!(
     NoNonNullAssertion,
     typescript,
     restriction,
-    pending,
+    suggestion,
 );
 
 fn no_non_null_assertion_diagnostic(span: Span) -> OxcDiagnostic {
@@ -51,7 +51,10 @@ fn no_non_null_assertion_diagnostic(span: Span) -> OxcDiagnostic {
 impl Rule for NoNonNullAssertion {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::TSNonNullExpression(expr) = node.kind() else { return };
-        ctx.diagnostic(no_non_null_assertion_diagnostic(expr.span));
+        let bang_span = Span::new(expr.span.end - 1, expr.span.end);
+        ctx.diagnostic_with_suggestion(no_non_null_assertion_diagnostic(expr.span), |fixer| {
+            fixer.delete_range(bang_span)
+        });
     }
 
     fn should_run(&self, ctx: &ContextHost) -> bool {
@@ -61,6 +64,7 @@ impl Rule for NoNonNullAssertion {
 
 #[test]
 fn test() {
+    use crate::fixer::FixKind;
     use crate::tester::Tester;
 
     let pass = vec!["x;", "x.y;", "x.y.z;", "x?.y.z;", "x?.y?.z;", "!x;"];
@@ -110,6 +114,13 @@ fn test() {
                   ",
     ];
 
+    let fix = vec![
+        ("x!;", "x;", None, FixKind::DangerousSuggestion),
+        ("x!.y;", "x.y;", None, FixKind::DangerousSuggestion),
+        ("x.y!;", "x.y;", None, FixKind::DangerousSuggestion),
+    ];
+
     Tester::new(NoNonNullAssertion::NAME, NoNonNullAssertion::PLUGIN, pass, fail)
+        .expect_fix(fix)
         .test_and_snapshot();
 }

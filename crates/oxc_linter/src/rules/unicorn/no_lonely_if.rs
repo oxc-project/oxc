@@ -1,7 +1,7 @@
-use oxc_ast::AstKind;
+use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -43,7 +43,7 @@ declare_oxc_lint!(
     NoLonelyIf,
     unicorn,
     pedantic,
-    pending
+    fix
 );
 
 impl Rule for NoLonelyIf {
@@ -84,11 +84,79 @@ impl Rule for NoLonelyIf {
             _ => return,
         };
 
-        ctx.diagnostic(no_lonely_if_diagnostic(
-            Span::sized(if_stmt.span.start, 2),
-            Span::sized(parent_if_stmt_span.start, 2),
-        ));
+        let inner_test = &if_stmt.test;
+        let inner_consequent = &if_stmt.consequent;
+
+        ctx.diagnostic_with_fix(
+            no_lonely_if_diagnostic(
+                Span::sized(if_stmt.span.start, 2),
+                Span::sized(parent_if_stmt_span.start, 2),
+            ),
+            |fixer| {
+                let inner_test_text = fixer.source_range(inner_test.span());
+                let inner_test_needs_parens = needs_parentheses(inner_test);
+                let inner_test_str = if inner_test_needs_parens {
+                    format!("({inner_test_text})")
+                } else {
+                    inner_test_text.to_string()
+                };
+
+                // Get the outer if's test
+                let outer_test_span = match parent.kind() {
+                    AstKind::BlockStatement(_) => {
+                        let AstKind::IfStatement(parent_if_stmt) =
+                            ctx.nodes().parent_kind(parent.id())
+                        else {
+                            return fixer.noop();
+                        };
+                        parent_if_stmt.test.span()
+                    }
+                    AstKind::IfStatement(parent_if_stmt) => parent_if_stmt.test.span(),
+                    _ => return fixer.noop(),
+                };
+
+                let outer_test_text = fixer.source_range(outer_test_span);
+
+                // The outer test also needs parentheses if it has lower precedence than &&
+                let outer_test_expr = match parent.kind() {
+                    AstKind::BlockStatement(_) => {
+                        let AstKind::IfStatement(parent_if_stmt) =
+                            ctx.nodes().parent_kind(parent.id())
+                        else {
+                            return fixer.noop();
+                        };
+                        &parent_if_stmt.test
+                    }
+                    AstKind::IfStatement(parent_if_stmt) => &parent_if_stmt.test,
+                    _ => return fixer.noop(),
+                };
+                let outer_test_str = if needs_parentheses(outer_test_expr) {
+                    format!("({outer_test_text})")
+                } else {
+                    outer_test_text.to_string()
+                };
+
+                let consequent_text = fixer.source_range(inner_consequent.span());
+
+                let combined =
+                    format!("if ({outer_test_str} && {inner_test_str}) {consequent_text}");
+                fixer.replace(parent_if_stmt_span, combined)
+            },
+        );
     }
+}
+
+fn needs_parentheses(expr: &Expression) -> bool {
+    matches!(
+        expr.get_inner_expression(),
+        Expression::LogicalExpression(e) if matches!(e.operator, oxc_syntax::operator::LogicalOperator::Or | oxc_syntax::operator::LogicalOperator::Coalesce)
+    ) || matches!(
+        expr.get_inner_expression(),
+        Expression::ConditionalExpression(_)
+            | Expression::AssignmentExpression(_)
+            | Expression::SequenceExpression(_)
+            | Expression::YieldExpression(_)
+    )
 }
 
 #[test]
@@ -208,5 +276,18 @@ fn test() {
     ",
     ];
 
-    Tester::new(NoLonelyIf::NAME, NoLonelyIf::PLUGIN, pass, fail).test_and_snapshot();
+    let fix = vec![
+        ("if (a) { if (b) { } }", "if (a && b) { }"),
+        ("if (a) if (b) foo();", "if (a && b) foo();"),
+        // Inner test needs parens
+        ("if (a) { if (b || c) { } }", "if (a && (b || c)) { }"),
+        // Outer test needs parens
+        ("if (a || b) { if (c) { } }", "if ((a || b) && c) { }"),
+        // Both need parens
+        ("if (a || b) { if (c || d) { } }", "if ((a || b) && (c || d)) { }"),
+    ];
+
+    Tester::new(NoLonelyIf::NAME, NoLonelyIf::PLUGIN, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

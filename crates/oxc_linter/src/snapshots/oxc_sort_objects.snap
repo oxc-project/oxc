@@ -1,0 +1,25 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 444
+---
+
+  ⚠ oxc(sort-objects): Object keys should be sorted alphabetically.
+   ╭─[sort_objects.tsx:1:15]
+ 1 │ const obj = { z: 1, a: 2 };
+   ·               ────
+   ╰────
+  help: Replace `{ z: 1, a: 2 }` with `{ a: 2, z: 1 }`.
+
+  ⚠ oxc(sort-objects): Object keys should be sorted alphabetically.
+   ╭─[sort_objects.tsx:1:15]
+ 1 │ const obj = { b: 1, a: 2, c: 3 };
+   ·               ────
+   ╰────
+  help: Replace `{ b: 1, a: 2, c: 3 }` with `{ a: 2, b: 1, c: 3 }`.
+
+  ⚠ oxc(sort-objects): Object keys should be sorted alphabetically.
+   ╭─[sort_objects.tsx:1:15]
+ 1 │ const obj = { a: 1, b: 2 };
+   ·               ────
+   ╰────
+  help: Replace `{ a: 1, b: 2 }` with `{ b: 2, a: 1 }`.

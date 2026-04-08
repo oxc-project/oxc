@@ -1,0 +1,32 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 444
+---
+
+  ⚠ oxc(detect-child-process): child_process.exec() called with a non-literal argument
+   ╭─[detect_child_process.tsx:1:1]
+ 1 │ child_process.exec(userInput)
+   · ─────────────────────────────
+   ╰────
+  help: Avoid calling child_process.exec() with dynamic expressions. Use child_process.execFile() or spawn() with an argument array instead.
+
+  ⚠ oxc(detect-child-process): child_process.exec() called with a non-literal argument
+   ╭─[detect_child_process.tsx:1:1]
+ 1 │ cp.exec(cmd)
+   · ────────────
+   ╰────
+  help: Avoid calling child_process.exec() with dynamic expressions. Use child_process.execFile() or spawn() with an argument array instead.
+
+  ⚠ oxc(detect-child-process): child_process.exec() called with a non-literal argument
+   ╭─[detect_child_process.tsx:1:1]
+ 1 │ child_process.exec(getCommand())
+   · ────────────────────────────────
+   ╰────
+  help: Avoid calling child_process.exec() with dynamic expressions. Use child_process.execFile() or spawn() with an argument array instead.
+
+  ⚠ oxc(detect-child-process): child_process.exec() called with a non-literal argument
+   ╭─[detect_child_process.tsx:1:1]
+ 1 │ child_process.exec(`${cmd} -la`)
+   · ────────────────────────────────
+   ╰────
+  help: Avoid calling child_process.exec() with dynamic expressions. Use child_process.execFile() or spawn() with an argument array instead.

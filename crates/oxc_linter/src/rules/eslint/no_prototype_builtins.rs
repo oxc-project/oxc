@@ -44,7 +44,7 @@ declare_oxc_lint!(
     NoPrototypeBuiltins,
     eslint,
     pedantic,
-    pending
+    suggestion
 );
 
 const DISALLOWED_PROPS: &[&str; 3] = &["hasOwnProperty", "isPrototypeOf", "propertyIsEnumerable"];
@@ -61,7 +61,28 @@ impl Rule for NoPrototypeBuiltins {
             return;
         };
         if DISALLOWED_PROPS.contains(&prop_name) {
-            ctx.diagnostic(no_prototype_builtins_diagnostic(prop_name, member_expr.span()));
+            let object_span = member_expr.object().span();
+            let call_span = expr.span;
+            let args = &expr.arguments;
+            ctx.diagnostic_with_suggestion(
+                no_prototype_builtins_diagnostic(prop_name, member_expr.span()),
+                |fixer| {
+                    let object_text = fixer.source_range(object_span);
+                    if args.is_empty() {
+                        return fixer.replace(
+                            call_span,
+                            format!("Object.prototype.{prop_name}.call({object_text})"),
+                        );
+                    }
+                    let first_arg_start = args[0].span().start;
+                    let last_arg_end = args[args.len() - 1].span().end;
+                    let args_text = fixer.source_range(Span::new(first_arg_start, last_arg_end));
+                    fixer.replace(
+                        call_span,
+                        format!("Object.prototype.{prop_name}.call({object_text}, {args_text})"),
+                    )
+                },
+            );
         }
     }
 }
@@ -123,6 +144,17 @@ fn test() {
         "(foo?.[`hasOwnProperty`])('bar')", // { "ecmaVersion": 2020 }
     ];
 
+    let fix = vec![
+        ("foo.hasOwnProperty('bar')", "Object.prototype.hasOwnProperty.call(foo, 'bar')"),
+        ("foo.isPrototypeOf('bar')", "Object.prototype.isPrototypeOf.call(foo, 'bar')"),
+        (
+            "foo.propertyIsEnumerable('bar')",
+            "Object.prototype.propertyIsEnumerable.call(foo, 'bar')",
+        ),
+        ("foo.bar.hasOwnProperty('bar')", "Object.prototype.hasOwnProperty.call(foo.bar, 'bar')"),
+    ];
+
     Tester::new(NoPrototypeBuiltins::NAME, NoPrototypeBuiltins::PLUGIN, pass, fail)
+        .expect_fix(fix)
         .test_and_snapshot();
 }

@@ -43,7 +43,7 @@ declare_oxc_lint!(
     NoConfusingNonNullAssertion,
     typescript,
     suspicious,
-    pending
+    suggestion
 );
 
 fn not_need_no_confusing_non_null_assertion_diagnostic(op_str: &str, span: Span) -> OxcDiagnostic {
@@ -100,10 +100,16 @@ impl Rule for NoConfusingNonNullAssertion {
                     return;
                 };
                 if bang_depth == 0 {
-                    ctx.diagnostic(not_need_no_confusing_non_null_assertion_diagnostic(
-                        binary_expr.operator.as_str(),
-                        binary_expr.span,
-                    ));
+                    if let Expression::TSNonNullExpression(ts_expr) = &binary_expr.left {
+                        let bang_span = Span::new(ts_expr.span.end - 1, ts_expr.span.end);
+                        ctx.diagnostic_with_suggestion(
+                            not_need_no_confusing_non_null_assertion_diagnostic(
+                                binary_expr.operator.as_str(),
+                                binary_expr.span,
+                            ),
+                            |fixer| fixer.delete_range(bang_span),
+                        );
+                    }
                 } else {
                     ctx.diagnostic(wrap_up_no_confusing_non_null_assertion_diagnostic(
                         binary_expr.operator.as_str(),
@@ -117,11 +123,17 @@ impl Rule for NoConfusingNonNullAssertion {
                 let Some(simple_target) = assignment_expr.left.as_simple_assignment_target() else {
                     return;
                 };
-                let SimpleAssignmentTarget::TSNonNullExpression(_) = simple_target else { return };
-                ctx.diagnostic(confusing_non_null_assignment_assertion_diagnostic(
-                    assignment_expr.operator.as_str(),
-                    assignment_expr.span,
-                ));
+                let SimpleAssignmentTarget::TSNonNullExpression(ts_expr) = simple_target else {
+                    return;
+                };
+                let bang_span = Span::new(ts_expr.span.end - 1, ts_expr.span.end);
+                ctx.diagnostic_with_suggestion(
+                    confusing_non_null_assignment_assertion_diagnostic(
+                        assignment_expr.operator.as_str(),
+                        assignment_expr.span,
+                    ),
+                    |fixer| fixer.delete_range(bang_span),
+                );
             }
             _ => {}
         }
@@ -134,6 +146,7 @@ impl Rule for NoConfusingNonNullAssertion {
 
 #[test]
 fn test() {
+    use crate::fixer::FixKind;
     use crate::tester::Tester;
 
     let pass = vec![
@@ -166,11 +179,18 @@ fn test() {
         "(obj = new new OuterObj().InnerObj).Name! = c;",
     ];
 
-    // let fix = vec![
-    //     // source, expected, rule_config?
-    //     // ("f = 1 + d! == 2", "f = (1 + d!) == 2", None), TODO: Add suggest or the weird ;() fix
-    //     // ("f =  d! == 2", "f = d == 2", None), TODO: Add suggest remove bang
-    // ];
+    let fix = vec![
+        ("a! == b;", "a == b;", None, FixKind::DangerousSuggestion),
+        ("a! === b;", "a === b;", None, FixKind::DangerousSuggestion),
+        ("a! = b;", "a = b;", None, FixKind::DangerousSuggestion),
+        (
+            "(obj = new new OuterObj().InnerObj).Name! = c;",
+            "(obj = new new OuterObj().InnerObj).Name = c;",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+    ];
     Tester::new(NoConfusingNonNullAssertion::NAME, NoConfusingNonNullAssertion::PLUGIN, pass, fail)
+        .expect_fix(fix)
         .test_and_snapshot();
 }

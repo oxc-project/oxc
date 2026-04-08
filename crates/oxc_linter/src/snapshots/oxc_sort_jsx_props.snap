@@ -1,0 +1,16 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 444
+---
+
+  ⚠ oxc(sort-jsx-props): JSX props should be sorted alphabetically.
+   ╭─[sort_jsx_props.tsx:1:18]
+ 1 │ <Component z="1" a="2" />
+   ·                  ─────
+   ╰────
+
+  ⚠ oxc(sort-jsx-props): JSX props should be sorted alphabetically.
+   ╭─[sort_jsx_props.tsx:1:18]
+ 1 │ <Component c="1" a="2" b="3" />
+   ·                  ─────
+   ╰────

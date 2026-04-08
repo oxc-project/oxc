@@ -1,0 +1,39 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 444
+---
+
+  ⚠ oxc(package-json-valid-engines): The `engines` field in package.json is invalid.
+   ╭─[/Users/alexeylyakhov/projects/oxc/crates/oxc_linter/fixtures/import/package.json:1:12]
+ 1 │ {"engines":"node >= 18"}
+   ·            ────────────
+   ╰────
+  help: Use an object with runtime names as keys and semver ranges as values, e.g. `{ "node": ">=18" }`.
+
+  ⚠ oxc(package-json-valid-engines): The `engines` field in package.json is invalid.
+   ╭─[/Users/alexeylyakhov/projects/oxc/crates/oxc_linter/fixtures/import/package.json:1:12]
+ 1 │ {"engines":1}
+   ·            ─
+   ╰────
+  help: Use an object with runtime names as keys and semver ranges as values, e.g. `{ "node": ">=18" }`.
+
+  ⚠ oxc(package-json-valid-engines): The `engines.node` value in package.json must be a non-empty string.
+   ╭─[/Users/alexeylyakhov/projects/oxc/crates/oxc_linter/fixtures/import/package.json:1:20]
+ 1 │ {"engines":{"node":""}}
+   ·                    ──
+   ╰────
+  help: Use a semver range string like `>=18`, `^20.0.0`, or `*`.
+
+  ⚠ oxc(package-json-valid-engines): The `engines.node` value in package.json must be a non-empty string.
+   ╭─[/Users/alexeylyakhov/projects/oxc/crates/oxc_linter/fixtures/import/package.json:1:20]
+ 1 │ {"engines":{"node":1}}
+   ·                    ─
+   ╰────
+  help: Use a semver range string like `>=18`, `^20.0.0`, or `*`.
+
+  ⚠ oxc(package-json-valid-engines): The `engines.npm` value in package.json must be a non-empty string.
+   ╭─[/Users/alexeylyakhov/projects/oxc/crates/oxc_linter/fixtures/import/package.json:1:33]
+ 1 │ {"engines":{"node":">=18","npm":""}}
+   ·                                 ──
+   ╰────
+  help: Use a semver range string like `>=18`, `^20.0.0`, or `*`.

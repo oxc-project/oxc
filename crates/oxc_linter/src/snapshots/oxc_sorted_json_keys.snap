@@ -1,25 +1,24 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-assertion_line: 444
 ---
 
   ⚠ oxc(sorted-json-keys): JSON object keys should be sorted.
    ╭─[sorted_json_keys.json:1:1]
  1 │ {"b":"two","a":"one"}
-   · ▲
+   · ─
    ╰────
   help: Sort object keys consistently to keep locale files easy to diff and review.
 
   ⚠ oxc(sorted-json-keys): JSON object keys should be sorted.
    ╭─[sorted_json_keys.json:1:1]
  1 │ {"z":"last","a":{"c":"three","b":"two"}}
-   · ▲
+   · ─
    ╰────
   help: Sort object keys consistently to keep locale files easy to diff and review.
 
   ⚠ oxc(sorted-json-keys): JSON object keys should be sorted.
    ╭─[sorted_json_keys.json:1:1]
  1 │ {"a":"one","b":"two"}
-   · ▲
+   · ─
    ╰────
   help: Sort object keys consistently to keep locale files easy to diff and review.

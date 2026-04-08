@@ -1,10 +1,13 @@
-use super::json_utils::{file_start_span, is_json_file};
+use super::json_utils::is_json_file;
 
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use serde_json::Value;
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{
+    context::LintContext,
+    json_parser::{JsonValue, parse_json},
+    rule::Rule,
+};
 
 fn invalid_package_json_description_diagnostic(span: oxc_span::Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("The `description` field in package.json must be a non-empty string.")
@@ -44,18 +47,16 @@ declare_oxc_lint!(
 impl Rule for PackageJsonValidDescription {
     fn run_once(&self, ctx: &LintContext<'_>) {
         let source_text = ctx.full_source_text();
-        let Ok(value) = serde_json::from_str::<Value>(source_text) else {
+        let result = parse_json(source_text);
+        let Some(JsonValue::Object(object)) = &result.root else {
             return;
         };
-        let Some(object) = value.as_object() else {
-            return;
-        };
-        let Some(description) = object.get("description") else {
+        let Some(prop) = object.get_property("description") else {
             return;
         };
 
-        let is_valid = match description {
-            Value::String(value) => !value.trim().is_empty(),
+        let is_valid = match &prop.value {
+            JsonValue::String(value, _) => !value.trim().is_empty(),
             _ => false,
         };
 
@@ -63,7 +64,7 @@ impl Rule for PackageJsonValidDescription {
             return;
         }
 
-        ctx.diagnostic(invalid_package_json_description_diagnostic(file_start_span(source_text)));
+        ctx.diagnostic(invalid_package_json_description_diagnostic(prop.value.span()));
     }
 
     fn should_run(&self, ctx: &crate::rules::ContextHost) -> bool {

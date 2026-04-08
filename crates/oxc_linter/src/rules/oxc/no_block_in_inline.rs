@@ -71,6 +71,7 @@ fn no_block_in_inline_diagnostic(span: Span, block: &str, inline: &str) -> OxcDi
 
 #[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
 #[serde(default, rename_all = "camelCase", deny_unknown_fields)]
+#[expect(clippy::struct_field_names)]
 pub struct NoBlockInInlineConfig {
     block_elements: Option<Vec<String>>,
     inline_elements: Option<Vec<String>>,

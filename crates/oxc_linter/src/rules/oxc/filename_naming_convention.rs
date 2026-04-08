@@ -29,6 +29,7 @@ pub struct FilenameNamingConventionConfig {
 }
 
 #[derive(Debug, Clone, Copy)]
+#[expect(clippy::enum_variant_names)]
 enum NamingConvention {
     CamelCase,
     FlatCase,

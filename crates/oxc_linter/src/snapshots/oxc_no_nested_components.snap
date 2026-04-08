@@ -1,0 +1,18 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 444
+---
+
+  ⚠ oxc(no-nested-components): Component definition inside another component
+   ╭─[no_nested_components.tsx:1:39]
+ 1 │ function ParentComponent() { function ChildComponent() { return <div />; } return <ChildComponent />; }
+   ·                                       ──────────────
+   ╰────
+  help: Move the component definition outside of the parent component. Nested component definitions cause the component to be recreated on every render, destroying its state.
+
+  ⚠ oxc(no-nested-components): Component definition inside another component
+   ╭─[no_nested_components.tsx:1:36]
+ 1 │ function ParentComponent() { const ChildComponent = () => <div />; return <ChildComponent />; }
+   ·                                    ──────────────
+   ╰────
+  help: Move the component definition outside of the parent component. Nested component definitions cause the component to be recreated on every render, destroying its state.

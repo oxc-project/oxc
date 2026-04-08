@@ -1,0 +1,31 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 444
+---
+
+  ⚠ oxc(json-no-duplicate-keys): Duplicate key "name" in JSON object
+   ╭─[json_no_duplicate_keys.json:1:2]
+ 1 │ {"name": "foo", "name": "bar"}
+   ·  ───┬──         ───┬──
+   ·     │              ╰── duplicate key here
+   ·     ╰── first occurrence
+   ╰────
+  help: Remove one of the duplicate keys. The last value will be used by JSON parsers.
+
+  ⚠ oxc(json-no-duplicate-keys): Duplicate key "a" in JSON object
+   ╭─[json_no_duplicate_keys.json:1:2]
+ 1 │ {"a": 1, "b": 2, "a": 3}
+   ·  ─┬─             ─┬─
+   ·   │               ╰── duplicate key here
+   ·   ╰── first occurrence
+   ╰────
+  help: Remove one of the duplicate keys. The last value will be used by JSON parsers.
+
+  ⚠ oxc(json-no-duplicate-keys): Duplicate key "inner" in JSON object
+   ╭─[json_no_duplicate_keys.json:1:12]
+ 1 │ {"outer": {"inner": 1, "inner": 2}}
+   ·            ───┬───     ───┬───
+   ·               │           ╰── duplicate key here
+   ·               ╰── first occurrence
+   ╰────
+  help: Remove one of the duplicate keys. The last value will be used by JSON parsers.

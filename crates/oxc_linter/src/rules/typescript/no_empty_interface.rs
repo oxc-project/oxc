@@ -66,7 +66,7 @@ declare_oxc_lint!(
     NoEmptyInterface,
     typescript,
     style,
-    pending,
+    suggestion,
     config = NoEmptyInterface,
 );
 
@@ -79,10 +79,27 @@ impl Rule for NoEmptyInterface {
         if let AstKind::TSInterfaceDeclaration(interface) = node.kind()
             && interface.body.body.is_empty()
         {
+            let name_start = interface.id.span.start;
+            let mut name_end = interface.id.span.end;
+            if let Some(params) = &interface.type_parameters {
+                name_end = params.span.end;
+            }
+            let name = &ctx.source_text()[name_start as usize..name_end as usize];
+
             if interface.extends.is_empty() {
-                ctx.diagnostic(no_empty_interface_diagnostic(interface.span));
+                let replacement = format!("type {name} = {{}}");
+                ctx.diagnostic_with_suggestion(
+                    no_empty_interface_diagnostic(interface.span),
+                    |fixer| fixer.replace(interface.span, replacement),
+                );
             } else if interface.extends.len() == 1 && !self.allow_single_extends {
-                ctx.diagnostic(no_empty_interface_extend_diagnostic(interface.span));
+                let extend = &interface.extends[0];
+                let extend_text = extend.span.source_text(ctx.source_text());
+                let replacement = format!("type {name} = {extend_text}");
+                ctx.diagnostic_with_suggestion(
+                    no_empty_interface_extend_diagnostic(interface.span),
+                    |fixer| fixer.replace(interface.span, replacement),
+                );
             }
         }
     }
@@ -252,5 +269,13 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoEmptyInterface::NAME, NoEmptyInterface::PLUGIN, pass, fail).test_and_snapshot();
+    let fix = vec![
+        ("interface Foo {}", "type Foo = {}"),
+        ("interface Foo extends Array<number> {}", "type Foo = Array<number>"),
+        ("interface Foo<T> extends Bar<T> {}", "type Foo<T> = Bar<T>"),
+    ];
+
+    Tester::new(NoEmptyInterface::NAME, NoEmptyInterface::PLUGIN, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

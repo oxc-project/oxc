@@ -4,36 +4,36 @@ assertion_line: 444
 ---
 
   ⚠ oxc(package-json-valid-bin): The `bin` field in package.json is invalid.
-   ╭─[/Users/alexeylyakhov/projects/oxc/crates/oxc_linter/fixtures/import/package.json:1:1]
+   ╭─[/Users/alexeylyakhov/projects/oxc/crates/oxc_linter/fixtures/import/package.json:1:8]
  1 │ {"bin":""}
-   · ─
+   ·        ──
    ╰────
   help: Use a non-empty string or an object whose values are non-empty strings.
 
   ⚠ oxc(package-json-valid-bin): The `bin` field in package.json is invalid.
-   ╭─[/Users/alexeylyakhov/projects/oxc/crates/oxc_linter/fixtures/import/package.json:1:1]
+   ╭─[/Users/alexeylyakhov/projects/oxc/crates/oxc_linter/fixtures/import/package.json:1:8]
  1 │ {"bin":{}}
-   · ─
+   ·        ──
    ╰────
   help: Use a non-empty string or an object whose values are non-empty strings.
 
   ⚠ oxc(package-json-valid-bin): The `bin` field in package.json is invalid.
-   ╭─[/Users/alexeylyakhov/projects/oxc/crates/oxc_linter/fixtures/import/package.json:1:1]
+   ╭─[/Users/alexeylyakhov/projects/oxc/crates/oxc_linter/fixtures/import/package.json:1:8]
  1 │ {"bin":{"demo":""}}
-   · ─
+   ·        ───────────
    ╰────
   help: Use a non-empty string or an object whose values are non-empty strings.
 
   ⚠ oxc(package-json-valid-bin): The `bin` field in package.json is invalid.
-   ╭─[/Users/alexeylyakhov/projects/oxc/crates/oxc_linter/fixtures/import/package.json:1:1]
+   ╭─[/Users/alexeylyakhov/projects/oxc/crates/oxc_linter/fixtures/import/package.json:1:8]
  1 │ {"bin":{"demo":1}}
-   · ─
+   ·        ──────────
    ╰────
   help: Use a non-empty string or an object whose values are non-empty strings.
 
   ⚠ oxc(package-json-valid-bin): The `bin` field in package.json is invalid.
-   ╭─[/Users/alexeylyakhov/projects/oxc/crates/oxc_linter/fixtures/import/package.json:1:1]
+   ╭─[/Users/alexeylyakhov/projects/oxc/crates/oxc_linter/fixtures/import/package.json:1:8]
  1 │ {"bin":1}
-   · ─
+   ·        ─
    ╰────
   help: Use a non-empty string or an object whose values are non-empty strings.

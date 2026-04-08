@@ -5,7 +5,7 @@ use oxc_ast::{
 use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::UnaryOperator;
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -116,7 +116,7 @@ declare_oxc_lint!(
     NoPromiseExecutorReturn,
     eslint,
     pedantic,
-    pending,
+    suggestion,
     config = NoPromiseExecutorReturnConfig,
 );
 
@@ -157,7 +157,15 @@ impl Rule for NoPromiseExecutorReturn {
                     {
                         return;
                     }
-                    ctx.diagnostic(no_promise_executor_return_diagnostic(arrow.body.span));
+                    let body_span = arrow.body.span;
+                    let expr_text = ctx.source_range(expr.span()).to_string();
+                    ctx.diagnostic_with_suggestion(
+                        no_promise_executor_return_diagnostic(body_span),
+                        |fixer| {
+                            // Convert `=> expr` to `=> { expr; }`
+                            fixer.replace(body_span, format!("{{ {expr_text}; }}"))
+                        },
+                    );
                 } else {
                     // Arrow function with block body: check for return statements
                     self.check_function_body(&arrow.body, ctx);
@@ -178,20 +186,28 @@ impl NoPromiseExecutorReturn {
         let mut finder = ReturnStatementFinder::new(self.allow_void);
         finder.visit_function_body(body);
 
-        for span in finder.return_spans {
-            ctx.diagnostic(no_promise_executor_return_diagnostic(span));
+        for (return_span, arg_span) in finder.return_info {
+            ctx.diagnostic_with_suggestion(
+                no_promise_executor_return_diagnostic(return_span),
+                |fixer| {
+                    // Convert `return <expr>;` to `<expr>; return;`
+                    let arg_text = fixer.source_range(arg_span);
+                    fixer.replace(return_span, format!("{arg_text};\nreturn;"))
+                },
+            );
         }
     }
 }
 
 struct ReturnStatementFinder {
-    return_spans: Vec<Span>,
+    /// (return_statement_span, argument_span)
+    return_info: Vec<(Span, Span)>,
     allow_void: bool,
 }
 
 impl ReturnStatementFinder {
     fn new(allow_void: bool) -> Self {
-        Self { return_spans: Vec::new(), allow_void }
+        Self { return_info: Vec::new(), allow_void }
     }
 }
 
@@ -210,7 +226,7 @@ impl Visit<'_> for ReturnStatementFinder {
             return;
         }
 
-        self.return_spans.push(it.span);
+        self.return_info.push((it.span, argument.span()));
     }
 
     fn visit_function(
@@ -409,6 +425,26 @@ fn test() {
         ("new Promise(function Promise(resolve, reject) { return 1; })", None),
     ];
 
+    let fix = vec![
+        (
+            "new Promise(function (resolve, reject) { return 1; })",
+            "new Promise(function (resolve, reject) { 1;\nreturn; })",
+            None,
+        ),
+        (
+            "new Promise((resolve, reject) => resolve)",
+            "new Promise((resolve, reject) => { resolve; })",
+            None,
+        ),
+        (
+            "new Promise((resolve, reject) => { return 1; })",
+            "new Promise((resolve, reject) => { 1;\nreturn; })",
+            None,
+        ),
+        ("new Promise(() => 1)", "new Promise(() => { 1; })", None),
+    ];
+
     Tester::new(NoPromiseExecutorReturn::NAME, NoPromiseExecutorReturn::PLUGIN, pass, fail)
+        .expect_fix(fix)
         .test_and_snapshot();
 }

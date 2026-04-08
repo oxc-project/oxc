@@ -63,7 +63,7 @@ declare_oxc_lint!(
     NoImgElement,
     nextjs,
     correctness,
-    pending // TODO: add `import Image from "next/image"` (if missing), then change `<img />` to `<Image />`
+    suggestion // TODO: add `import Image from "next/image"` (if missing)
 );
 
 impl Rule for NoImgElement {
@@ -103,7 +103,10 @@ impl Rule for NoImgElement {
                 (ident.name == "src").then(|| lit.span())
             });
 
-        ctx.diagnostic(no_img_element_diagnostic(jsx_opening_element_name.span, src_span));
+        ctx.diagnostic_with_suggestion(
+            no_img_element_diagnostic(jsx_opening_element_name.span, src_span),
+            |fixer| fixer.replace(jsx_opening_element_name.span, "Image"),
+        );
     }
 }
 
@@ -198,5 +201,13 @@ fn test() {
 		",
     ];
 
-    Tester::new(NoImgElement::NAME, NoImgElement::PLUGIN, pass, fail).test_and_snapshot();
+    let fix = vec![(
+        r#"<div><img src="/test.png" alt="Test" /></div>"#,
+        r#"<div><Image src="/test.png" alt="Test" /></div>"#,
+        None,
+    )];
+
+    Tester::new(NoImgElement::NAME, NoImgElement::PLUGIN, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

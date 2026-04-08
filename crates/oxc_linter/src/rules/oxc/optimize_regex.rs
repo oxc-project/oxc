@@ -147,7 +147,7 @@ fn collect_term_replacements(
 ) {
     match term {
         Term::Quantifier(quantifier) => {
-            collect_quantifier_replacements(quantifier, ctx, replacements)
+            collect_quantifier_replacements(quantifier, ctx, replacements);
         }
         Term::CharacterClass(class) => {
             if let Some(text) = character_class_replacement(class) {
@@ -155,7 +155,7 @@ fn collect_term_replacements(
             }
         }
         Term::CapturingGroup(group) => {
-            collect_capturing_group_replacements(group, ctx, replacements)
+            collect_capturing_group_replacements(group, ctx, replacements);
         }
         Term::IgnoreGroup(group) => collect_ignore_group_replacements(group, ctx, replacements),
         Term::LookAroundAssertion(assertion) => {

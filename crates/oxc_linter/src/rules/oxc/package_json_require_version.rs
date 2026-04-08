@@ -1,10 +1,14 @@
-use super::json_utils::{file_start_span, is_json_file};
+use super::json_utils::is_json_file;
 
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use serde_json::Value;
+use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{
+    context::LintContext,
+    json_parser::{JsonValue, parse_json},
+    rule::Rule,
+};
 
 fn missing_package_json_version_diagnostic(span: oxc_span::Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("package.json should declare a `version` field.")
@@ -44,18 +48,16 @@ declare_oxc_lint!(
 impl Rule for PackageJsonRequireVersion {
     fn run_once(&self, ctx: &LintContext<'_>) {
         let source_text = ctx.full_source_text();
-        let Ok(value) = serde_json::from_str::<Value>(source_text) else {
-            return;
-        };
-        let Some(object) = value.as_object() else {
+        let result = parse_json(source_text);
+        let Some(JsonValue::Object(object)) = &result.root else {
             return;
         };
 
-        if object.contains_key("version") {
+        if object.get("version").is_some() {
             return;
         }
 
-        ctx.diagnostic(missing_package_json_version_diagnostic(file_start_span(source_text)));
+        ctx.diagnostic(missing_package_json_version_diagnostic(Span::new(0, 1)));
     }
 
     fn should_run(&self, ctx: &crate::rules::ContextHost) -> bool {

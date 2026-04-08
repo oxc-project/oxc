@@ -106,7 +106,7 @@ impl Rule for PackageJsonRepositoryShorthand {
         match self.0.form {
             RepositoryForm::Object => self.run_object_form(ctx, source_text, &value, repository),
             RepositoryForm::Shorthand => {
-                self.run_shorthand_form(ctx, source_text, &value, repository)
+                self.run_shorthand_form(ctx, source_text, &value, repository);
             }
         }
     }
@@ -119,6 +119,7 @@ impl Rule for PackageJsonRepositoryShorthand {
 }
 
 impl PackageJsonRepositoryShorthand {
+    #[expect(clippy::unused_self)]
     fn run_object_form(
         &self,
         ctx: &LintContext<'_>,
@@ -141,12 +142,14 @@ impl PackageJsonRepositoryShorthand {
             return;
         };
 
+        #[expect(clippy::cast_possible_truncation)]
         let file_span = oxc_span::Span::new(0, source_text.len() as u32);
         ctx.diagnostic_with_fix(diagnostic, |fixer| {
             fixer.replace_full_source_range(file_span, expected)
         });
     }
 
+    #[expect(clippy::unused_self)]
     fn run_shorthand_form(
         &self,
         ctx: &LintContext<'_>,
@@ -165,6 +168,7 @@ impl PackageJsonRepositoryShorthand {
             return;
         };
 
+        #[expect(clippy::cast_possible_truncation)]
         let file_span = oxc_span::Span::new(0, source_text.len() as u32);
         ctx.diagnostic_with_fix(
             prefer_shorthand_diagnostic(file_start_span(source_text)),
@@ -200,9 +204,8 @@ fn extract_shorthand_repository(repository: &Value) -> Option<String> {
                 return None;
             }
 
-            let url = match object.get("url")? {
-                Value::String(url) => url,
-                _ => return None,
+            let Value::String(url) = object.get("url")? else {
+                return None;
             };
             let provider = get_provider_from_url(url)?;
             Some(create_shorthand(url, provider))
@@ -269,10 +272,10 @@ fn clean_url(url: &str, provider: RepositoryProvider) -> String {
 }
 
 fn create_url(shorthand: &str) -> String {
-    if let Some((provider, repo)) = shorthand.split_once(':') {
-        if let Some(provider) = parse_provider(provider) {
-            return format!("{}{repo}", provider_url(provider));
-        }
+    if let Some((provider, repo)) = shorthand.split_once(':')
+        && let Some(provider) = parse_provider(provider)
+    {
+        return format!("{}{repo}", provider_url(provider));
     }
 
     format!("{}{}", provider_url(RepositoryProvider::GitHub), shorthand)

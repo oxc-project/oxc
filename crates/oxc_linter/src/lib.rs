@@ -31,12 +31,14 @@ use oxc_span::Span;
 mod ast_util;
 mod config;
 mod context;
+pub mod css_parser;
 mod disable_directives;
 mod external_linter;
 mod external_plugin_store;
 mod fixer;
 mod frameworks;
 mod globals;
+pub mod json_parser;
 mod module_graph_visitor;
 mod module_record;
 mod options;
@@ -280,16 +282,35 @@ impl Linter {
                 //
                 // See https://github.com/oxc-project/oxc/pull/6600 for more context.
                 if semantic.nodes().len() > 200_000 {
-                    // TODO: It seems like there is probably a more intelligent way to preallocate space here. This will
-                    // likely incur quite a few unnecessary reallocs currently. We theoretically could compute this at
-                    // compile-time since we know all of the rules and their AST node type information ahead of time.
+                    // Pre-compute the number of rules that map to each AST type so we can
+                    // allocate buckets with the right capacity and avoid reallocs.
                     //
                     // Use boxed array to help compiler see that indexing into it with an `AstType`
                     // cannot go out of bounds, and remove bounds checks.
+                    let mut counts = boxed_array![0usize; AST_TYPE_MAX as usize + 1];
+                    let mut any_count = 0usize;
+                    for (rule, _) in &rules {
+                        let rule = *rule;
+                        let run_info = rule.run_info();
+                        if with_runtime_optimization
+                            && let Some(ast_types) = rule.types_info()
+                            && run_info.is_run_implemented()
+                        {
+                            for ty in ast_types {
+                                counts[ty as usize] += 1;
+                            }
+                        } else {
+                            any_count += 1;
+                        }
+                    }
+
                     let mut rules_by_ast_type = boxed_array![Vec::new(); AST_TYPE_MAX as usize + 1];
-                    // TODO: Compute needed capacity. This is a slight overestimate as not 100% of rules will need to run on all
-                    // node types, but it at least guarantees we won't need to realloc.
-                    let mut rules_any_ast_type = Vec::with_capacity(rules.len());
+                    for (i, count) in counts.iter().enumerate() {
+                        if *count > 0 {
+                            rules_by_ast_type[i] = Vec::with_capacity(*count);
+                        }
+                    }
+                    let mut rules_any_ast_type = Vec::with_capacity(any_count);
 
                     for (rule, ctx) in &rules {
                         let rule = *rule;

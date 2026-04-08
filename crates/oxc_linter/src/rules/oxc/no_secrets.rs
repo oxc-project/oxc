@@ -157,10 +157,12 @@ fn shannon_entropy(value: &str) -> f64 {
         return 0.0;
     }
 
+    #[expect(clippy::cast_precision_loss)]
     let length = value.len() as f64;
     let mut entropy = 0.0;
 
     for character in CHARSET.chars() {
+        #[expect(clippy::cast_precision_loss)]
         let count = value.chars().filter(|candidate| *candidate == character).count() as f64;
         if count > 0.0 {
             let ratio = count / length;
@@ -211,15 +213,21 @@ fn patterns() -> &'static [(&'static str, &'static Lazy<Regex>)] {
 
 static SLACK_TOKEN: Lazy<Regex> =
     lazy_regex!(r"(xox[p|b|o|a]-[0-9]{12}-[0-9]{12}-[0-9]{12}-[a-z0-9]{32})");
+#[expect(clippy::trivial_regex)]
 static RSA_PRIVATE_KEY: Lazy<Regex> = lazy_regex!(r"-----BEGIN RSA PRIVATE KEY-----");
+#[expect(clippy::trivial_regex)]
 static OPENSSH_PRIVATE_KEY: Lazy<Regex> = lazy_regex!(r"-----BEGIN OPENSSH PRIVATE KEY-----");
+#[expect(clippy::trivial_regex)]
 static DSA_PRIVATE_KEY: Lazy<Regex> = lazy_regex!(r"-----BEGIN DSA PRIVATE KEY-----");
+#[expect(clippy::trivial_regex)]
 static EC_PRIVATE_KEY: Lazy<Regex> = lazy_regex!(r"-----BEGIN EC PRIVATE KEY-----");
+#[expect(clippy::trivial_regex)]
 static PGP_PRIVATE_KEY: Lazy<Regex> = lazy_regex!(r"-----BEGIN PGP PRIVATE KEY BLOCK-----");
 static AWS_API_KEY: Lazy<Regex> = lazy_regex!(r"AKIA[0-9A-Z]{16}");
 static SLACK_WEBHOOK: Lazy<Regex> = lazy_regex!(
     r"https://hooks\.slack\.com/services/T[a-zA-Z0-9_]{8}/B[a-zA-Z0-9_]{8}/[a-zA-Z0-9_]{24}"
 );
+#[expect(clippy::trivial_regex)]
 static GCP_SERVICE_ACCOUNT: Lazy<Regex> = lazy_regex!(r#""type": "service_account""#);
 static TWILIO_API_KEY: Lazy<Regex> = lazy_regex!(r"SK[a-z0-9]{32}");
 static PASSWORD_IN_URL: Lazy<Regex> =

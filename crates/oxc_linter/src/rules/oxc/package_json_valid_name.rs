@@ -1,11 +1,15 @@
-use super::json_utils::{file_start_span, is_json_file};
+use super::json_utils::is_json_file;
 
+use cow_utils::CowUtils;
 use nodejs_built_in_modules::is_nodejs_builtin_module;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use serde_json::Value;
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{
+    context::LintContext,
+    json_parser::{JsonValue, parse_json},
+    rule::Rule,
+};
 
 fn invalid_package_json_name_diagnostic(complaints: &str, span: oxc_span::Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Invalid npm package name: {complaints}."))
@@ -51,10 +55,8 @@ declare_oxc_lint!(
 impl Rule for PackageJsonValidName {
     fn run_once(&self, ctx: &LintContext<'_>) {
         let source_text = ctx.full_source_text();
-        let Ok(value) = serde_json::from_str::<Value>(source_text) else {
-            return;
-        };
-        let Some(object) = value.as_object() else {
+        let result = parse_json(source_text);
+        let Some(JsonValue::Object(object)) = &result.root else {
             return;
         };
 
@@ -62,13 +64,12 @@ impl Rule for PackageJsonValidName {
             return;
         }
 
-        let Some(name) = object.get("name") else {
+        let Some(name_prop) = object.get_property("name") else {
             return;
         };
 
-        let span = file_start_span(source_text);
-        let Value::String(name) = name else {
-            ctx.diagnostic(non_string_package_json_name_diagnostic(span));
+        let JsonValue::String(name, _) = &name_prop.value else {
+            ctx.diagnostic(non_string_package_json_name_diagnostic(name_prop.value.span()));
             return;
         };
 
@@ -77,7 +78,10 @@ impl Rule for PackageJsonValidName {
             return;
         }
 
-        ctx.diagnostic(invalid_package_json_name_diagnostic(&complaints.join("; "), span));
+        ctx.diagnostic(invalid_package_json_name_diagnostic(
+            &complaints.join("; "),
+            name_prop.value.span(),
+        ));
     }
 
     fn should_run(&self, ctx: &crate::rules::ContextHost) -> bool {
@@ -87,12 +91,8 @@ impl Rule for PackageJsonValidName {
     }
 }
 
-fn is_private_package(object: &serde_json::Map<String, Value>) -> bool {
-    object.get("private").is_some_and(|private| match private {
-        Value::Bool(true) => true,
-        Value::String(value) => value == "true",
-        _ => false,
-    })
+fn is_private_package(object: &crate::json_parser::JsonObject<'_>) -> bool {
+    matches!(object.get("private"), Some(JsonValue::Boolean(true, _)))
 }
 
 fn validate_package_name(name: &str) -> Vec<String> {
@@ -118,8 +118,8 @@ fn validate_package_name(name: &str) -> Vec<String> {
         complaints.push("name cannot contain leading or trailing spaces".to_string());
     }
 
-    let lowercase_name = name.to_ascii_lowercase();
-    if matches!(lowercase_name.as_str(), "node_modules" | "favicon.ico") {
+    let lowercase_name = name.cow_to_ascii_lowercase();
+    if matches!(&*lowercase_name, "node_modules" | "favicon.ico") {
         complaints.push(format!("{lowercase_name} is not a valid package name"));
     }
 
@@ -131,7 +131,7 @@ fn validate_package_name(name: &str) -> Vec<String> {
         complaints.push("name can no longer contain more than 214 characters".to_string());
     }
 
-    if name.to_ascii_lowercase() != name {
+    if name.cow_to_ascii_lowercase() != name {
         complaints.push("name can no longer contain capital letters".to_string());
     }
 
@@ -193,12 +193,13 @@ fn test() {
         r#"{"name":"demo.package_name"}"#,
         r#"{"name":"@scope/demo"}"#,
         r#"{"name":"HTTP","private":true}"#,
-        r#"{"name":"HTTP","private":"true"}"#,
         r#"{"version":"1.0.0"}"#,
     ];
 
     let fail = vec![
         r#"{"name":1}"#,
+        // string "true" is NOT treated as private — only boolean true skips validation
+        r#"{"name":"HTTP","private":"true"}"#,
         r#"{"name":""}"#,
         r#"{"name":"HTTP"}"#,
         r#"{"name":"node_modules"}"#,

@@ -1,0 +1,39 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 444
+---
+
+  ⚠ oxc(detect-possible-timing-attacks): Possible timing attack
+   ╭─[detect_possible_timing_attacks.tsx:1:5]
+ 1 │ if (password === userInput) {}
+   ·     ──────────────────────
+   ╰────
+  help: Use a constant-time comparison function (e.g., crypto.timingSafeEqual) instead of == or === when comparing security-sensitive values like passwords, tokens, or secrets.
+
+  ⚠ oxc(detect-possible-timing-attacks): Possible timing attack
+   ╭─[detect_possible_timing_attacks.tsx:1:5]
+ 1 │ if (token == guess) {}
+   ·     ──────────────
+   ╰────
+  help: Use a constant-time comparison function (e.g., crypto.timingSafeEqual) instead of == or === when comparing security-sensitive values like passwords, tokens, or secrets.
+
+  ⚠ oxc(detect-possible-timing-attacks): Possible timing attack
+   ╭─[detect_possible_timing_attacks.tsx:1:5]
+ 1 │ if (secret === input) {}
+   ·     ────────────────
+   ╰────
+  help: Use a constant-time comparison function (e.g., crypto.timingSafeEqual) instead of == or === when comparing security-sensitive values like passwords, tokens, or secrets.
+
+  ⚠ oxc(detect-possible-timing-attacks): Possible timing attack
+   ╭─[detect_possible_timing_attacks.tsx:1:5]
+ 1 │ if (user.apiKey === req.body.key) {}
+   ·     ────────────────────────────
+   ╰────
+  help: Use a constant-time comparison function (e.g., crypto.timingSafeEqual) instead of == or === when comparing security-sensitive values like passwords, tokens, or secrets.
+
+  ⚠ oxc(detect-possible-timing-attacks): Possible timing attack
+   ╭─[detect_possible_timing_attacks.tsx:1:5]
+ 1 │ if (hash !== computedHash) {}
+   ·     ─────────────────────
+   ╰────
+  help: Use a constant-time comparison function (e.g., crypto.timingSafeEqual) instead of == or === when comparing security-sensitive values like passwords, tokens, or secrets.

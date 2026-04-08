@@ -64,17 +64,17 @@ pub(super) fn resolve_local_specifier(base_file: &Path, specifier: &str) -> Opti
         parent.join(specifier)
     };
 
-    let candidate = normalize_path(candidate);
+    let candidate = normalize_path(&candidate);
 
     resolve_existing_module_path(&candidate)
 }
 
 fn resolve_existing_module_path(candidate: &Path) -> Option<PathBuf> {
+    const EXTENSIONS: [&str; 8] = ["ts", "tsx", "js", "jsx", "mts", "cts", "mjs", "cjs"];
+
     if candidate.is_file() {
         return Some(candidate.to_path_buf());
     }
-
-    const EXTENSIONS: [&str; 8] = ["ts", "tsx", "js", "jsx", "mts", "cts", "mjs", "cjs"];
 
     if candidate.extension().is_none() {
         for extension in EXTENSIONS {
@@ -97,7 +97,7 @@ fn resolve_existing_module_path(candidate: &Path) -> Option<PathBuf> {
     None
 }
 
-fn normalize_path(path: PathBuf) -> PathBuf {
+fn normalize_path(path: &Path) -> PathBuf {
     let mut normalized = PathBuf::new();
 
     for component in path.components() {

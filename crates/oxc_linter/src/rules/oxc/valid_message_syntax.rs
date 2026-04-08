@@ -1,25 +1,21 @@
-use super::json_utils::{
-    display_path, file_start_span, is_json_file, join_array_path, join_object_path,
-};
+use super::json_utils::is_json_file;
 
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_span::Span;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 
 use crate::{
     context::LintContext,
+    json_parser::{JsonValue, parse_json},
     rule::{DefaultRuleConfig, Rule},
 };
 
-fn valid_message_syntax_diagnostic(path: &str, span: oxc_span::Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!(
-        "Translation message at `{}` must be a non-empty string.",
-        display_path(path)
-    ))
-    .with_help("Use a non-empty string for locale message leaves.")
-    .with_label(span)
+fn valid_message_syntax_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Translation message must be a non-empty string.")
+        .with_help("Use a non-empty string for locale message leaves.")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone, Copy, Eq, PartialEq, Deserialize, Serialize, JsonSchema)]
@@ -74,16 +70,16 @@ impl Rule for ValidMessageSyntax {
 
     fn run_once(&self, ctx: &LintContext<'_>) {
         let source_text = ctx.full_source_text();
-        let Ok(value) = serde_json::from_str::<Value>(source_text) else {
+        let result = parse_json(source_text);
+        let Some(root) = &result.root else {
             return;
         };
 
-        let span = file_start_span(source_text);
-        let mut invalid_paths = Vec::new();
-        collect_invalid_message_paths(&value, "", self.0.syntax, &mut invalid_paths);
+        let mut invalid_spans = Vec::new();
+        collect_invalid_message_spans(root, self.0.syntax, &mut invalid_spans);
 
-        for path in invalid_paths {
-            ctx.diagnostic(valid_message_syntax_diagnostic(&path, span));
+        for span in invalid_spans {
+            ctx.diagnostic(valid_message_syntax_diagnostic(span));
         }
     }
 
@@ -92,41 +88,30 @@ impl Rule for ValidMessageSyntax {
     }
 }
 
-fn collect_invalid_message_paths(
-    value: &Value,
-    path: &str,
+fn collect_invalid_message_spans(
+    value: &JsonValue<'_>,
     syntax: MessageSyntaxKind,
-    invalid_paths: &mut Vec<String>,
+    invalid_spans: &mut Vec<Span>,
 ) {
     match value {
-        Value::Object(object) => {
-            for (key, value) in object {
-                collect_invalid_message_paths(
-                    value,
-                    &join_object_path(path, key),
-                    syntax,
-                    invalid_paths,
-                );
+        JsonValue::Object(object) => {
+            for prop in &object.properties {
+                collect_invalid_message_spans(&prop.value, syntax, invalid_spans);
             }
         }
-        Value::Array(array) => {
-            for (index, value) in array.iter().enumerate() {
-                collect_invalid_message_paths(
-                    value,
-                    &join_array_path(path, index),
-                    syntax,
-                    invalid_paths,
-                );
+        JsonValue::Array(array) => {
+            for element in &array.elements {
+                collect_invalid_message_spans(element, syntax, invalid_spans);
             }
         }
-        Value::String(message) => {
+        JsonValue::String(message, span) => {
             if matches!(syntax, MessageSyntaxKind::NonEmptyString) && message.trim().is_empty() {
-                invalid_paths.push(display_path(path).to_string());
+                invalid_spans.push(*span);
             }
         }
         _ => {
             if matches!(syntax, MessageSyntaxKind::NonEmptyString) {
-                invalid_paths.push(display_path(path).to_string());
+                invalid_spans.push(value.span());
             }
         }
     }

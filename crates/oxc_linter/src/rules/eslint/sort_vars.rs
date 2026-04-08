@@ -51,7 +51,7 @@ declare_oxc_lint!(
     SortVars,
     eslint,
     pedantic,
-    pending,
+    fix,
     config = SortVars,
 );
 
@@ -75,6 +75,7 @@ impl Rule for SortVars {
             return;
         }
 
+        let mut has_unsorted = false;
         let mut previous: Option<&VariableDeclarator> = None;
         for current in var_decl
             .declarations
@@ -85,10 +86,68 @@ impl Rule for SortVars {
                 && self.get_sortable_name(previous).cmp(&self.get_sortable_name(current))
                     == Ordering::Greater
             {
-                ctx.diagnostic(sort_vars_diagnostic(current.span));
+                has_unsorted = true;
             }
-
             previous = Some(current);
+        }
+
+        if !has_unsorted {
+            return;
+        }
+
+        // Collect the identifiers that are sortable (simple binding identifiers)
+        // along with their indices into the declarations array
+        let sortable_indices: Vec<usize> = var_decl
+            .declarations
+            .iter()
+            .enumerate()
+            .filter(|(_, decl)| matches!(decl.id, BindingPattern::BindingIdentifier(_)))
+            .map(|(i, _)| i)
+            .collect();
+
+        // Create sorted order of indices by name
+        let mut sorted_indices = sortable_indices.clone();
+        sorted_indices.sort_by(|&a, &b| {
+            self.get_sortable_name(&var_decl.declarations[a])
+                .cmp(&self.get_sortable_name(&var_decl.declarations[b]))
+        });
+
+        // Find the first unsorted position and report there
+        let first_unsorted_pos = sortable_indices
+            .iter()
+            .zip(sorted_indices.iter())
+            .position(|(orig, sorted)| orig != sorted);
+
+        if let Some(pos) = first_unsorted_pos {
+            let diag_span = var_decl.declarations[sortable_indices[pos]].span;
+
+            // Pre-compute the declarator texts for sorting
+            let source = ctx.source_text();
+            let declarator_texts: Vec<(usize, String)> = sortable_indices
+                .iter()
+                .map(|&i| (i, var_decl.declarations[i].span.source_text(source).to_string()))
+                .collect();
+
+            // Build sorted texts mapping: original_index -> new text
+            let sorted_texts: Vec<(Span, String)> = sortable_indices
+                .iter()
+                .zip(sorted_indices.iter())
+                .filter(|(orig, sorted)| orig != sorted)
+                .map(|(&orig_idx, &sorted_idx)| {
+                    let target_span = var_decl.declarations[orig_idx].span;
+                    let replacement =
+                        declarator_texts.iter().find(|(i, _)| *i == sorted_idx).unwrap().1.clone();
+                    (target_span, replacement)
+                })
+                .collect();
+
+            ctx.diagnostic_with_fix(sort_vars_diagnostic(diag_span), |fixer| {
+                let mut fix = fixer.new_fix_with_capacity(sorted_texts.len());
+                for (span, text) in &sorted_texts {
+                    fix.push(fixer.replace(*span, text.clone()));
+                }
+                fix.with_message("Sort variable declarations alphabetically")
+            });
         }
     }
 }
@@ -202,7 +261,7 @@ fn test() {
         ("var c, a = b = 0", None),
     ];
 
-    let _fix = vec![
+    let fix = vec![
         ("var b, a", "var a, b", None),
         ("var b , a", "var a , b", None),
         ("var b=10, a=20;", "var a=20, b=10;", None),
@@ -228,5 +287,5 @@ fn test() {
         ("var {} = 1, b, a", "var {} = 1, a, b", Some(serde_json::json!([{ "ignoreCase": true }]))),
     ];
 
-    Tester::new(SortVars::NAME, SortVars::PLUGIN, pass, fail).test_and_snapshot();
+    Tester::new(SortVars::NAME, SortVars::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();
 }

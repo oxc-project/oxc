@@ -8,10 +8,10 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 
 use crate::{
     context::LintContext,
+    json_parser::parse_json,
     rule::{DefaultRuleConfig, Rule},
     utils::read_to_string,
 };
@@ -95,7 +95,8 @@ impl Rule for IdenticalKeys {
         };
 
         let source_text = ctx.full_source_text();
-        let Ok(candidate) = serde_json::from_str::<Value>(source_text) else {
+        let candidate_result = parse_json(source_text);
+        let Some(candidate) = &candidate_result.root else {
             return;
         };
 
@@ -112,12 +113,13 @@ impl Rule for IdenticalKeys {
                 return;
             }
         };
-        let Ok(reference) = serde_json::from_str::<Value>(&reference_source) else {
+        let reference_result = parse_json(&reference_source);
+        let Some(reference) = &reference_result.root else {
             return;
         };
 
         let mut diff = JsonShapeDiff::default();
-        compare_json_shapes(&reference, &candidate, "", &mut diff);
+        compare_json_shapes(reference, candidate, "", &mut diff);
 
         if diff.missing.is_empty() && diff.extra.is_empty() && diff.type_mismatches.is_empty() {
             return;
@@ -162,7 +164,8 @@ fn summarize_paths(paths: &[String]) -> String {
 
     let mut summary = paths.iter().take(MAX_PATHS).cloned().collect::<Vec<_>>().join(", ");
     if paths.len() > MAX_PATHS {
-        summary.push_str(&format!(", and {} more", paths.len() - MAX_PATHS));
+        use std::fmt::Write;
+        write!(summary, ", and {} more", paths.len() - MAX_PATHS).unwrap();
     }
     summary
 }

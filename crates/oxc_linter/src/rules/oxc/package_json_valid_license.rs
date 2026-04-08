@@ -1,12 +1,15 @@
-use super::json_utils::{file_start_span, is_json_file};
+use super::json_utils::is_json_file;
 
 use lazy_regex::regex_is_match;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use serde_json::Value;
 use spdx::Expression;
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{
+    context::LintContext,
+    json_parser::{JsonValue, parse_json},
+    rule::Rule,
+};
 
 fn invalid_package_json_license_diagnostic(span: oxc_span::Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("The `license` field in package.json must be a valid SPDX expression, `UNLICENSED`, or `SEE LICENSE IN <file>`.")
@@ -52,19 +55,16 @@ declare_oxc_lint!(
 impl Rule for PackageJsonValidLicense {
     fn run_once(&self, ctx: &LintContext<'_>) {
         let source_text = ctx.full_source_text();
-        let Ok(value) = serde_json::from_str::<Value>(source_text) else {
+        let result = parse_json(source_text);
+        let Some(JsonValue::Object(object)) = &result.root else {
             return;
         };
-        let Some(object) = value.as_object() else {
-            return;
-        };
-        let Some(license) = object.get("license") else {
+        let Some(prop) = object.get_property("license") else {
             return;
         };
 
-        let span = file_start_span(source_text);
-        let Value::String(license) = license else {
-            ctx.diagnostic(non_string_package_json_license_diagnostic(span));
+        let JsonValue::String(license, _) = &prop.value else {
+            ctx.diagnostic(non_string_package_json_license_diagnostic(prop.value.span()));
             return;
         };
 
@@ -72,7 +72,7 @@ impl Rule for PackageJsonValidLicense {
             return;
         }
 
-        ctx.diagnostic(invalid_package_json_license_diagnostic(span));
+        ctx.diagnostic(invalid_package_json_license_diagnostic(prop.value.span()));
     }
 
     fn should_run(&self, ctx: &crate::rules::ContextHost) -> bool {

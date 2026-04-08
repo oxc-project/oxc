@@ -1,11 +1,14 @@
-use super::json_utils::{file_start_span, is_json_file};
+use super::json_utils::is_json_file;
 
 use lazy_regex::{Lazy, Regex, lazy_regex};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use serde_json::Value;
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{
+    context::LintContext,
+    json_parser::{JsonValue, parse_json},
+    rule::Rule,
+};
 
 static SEMVER_REGEX: Lazy<Regex> = lazy_regex!(
     r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*)(?:\.(?:0|[1-9]\d*|[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*))*))?(?:\+([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$"
@@ -49,20 +52,17 @@ declare_oxc_lint!(
 impl Rule for PackageJsonValidVersion {
     fn run_once(&self, ctx: &LintContext<'_>) {
         let source_text = ctx.full_source_text();
-        let Ok(value) = serde_json::from_str::<Value>(source_text) else {
+        let result = parse_json(source_text);
+        let Some(JsonValue::Object(object)) = &result.root else {
             return;
         };
-        let Some(object) = value.as_object() else {
-            return;
-        };
-        let Some(version) = object.get("version") else {
+        let Some(prop) = object.get_property("version") else {
             return;
         };
 
-        let span = file_start_span(source_text);
-        match version {
-            Value::String(version) if SEMVER_REGEX.is_match(version) => {}
-            _ => ctx.diagnostic(invalid_package_json_version_diagnostic(span)),
+        match &prop.value {
+            JsonValue::String(version, _) if SEMVER_REGEX.is_match(version) => {}
+            _ => ctx.diagnostic(invalid_package_json_version_diagnostic(prop.value.span())),
         }
     }
 

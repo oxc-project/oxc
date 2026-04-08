@@ -1,67 +1,73 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-assertion_line: 444
 ---
 
   ⚠ oxc(package-json-valid-name): The `name` field in package.json must be a string.
-   ╭─[/Users/alexeylyakhov/projects/oxc/crates/oxc_linter/fixtures/import/package.json:1:1]
+   ╭─[/Users/alexeylyakhov/projects/oxc/crates/oxc_linter/fixtures/import/package.json:1:9]
  1 │ {"name":1}
-   · ─
+   ·         ─
    ╰────
   help: Use a valid npm package name string.
 
+  ⚠ oxc(package-json-valid-name): Invalid npm package name: HTTP is a core module name; name can no longer contain capital letters.
+   ╭─[/Users/alexeylyakhov/projects/oxc/crates/oxc_linter/fixtures/import/package.json:1:9]
+ 1 │ {"name":"HTTP","private":"true"}
+   ·         ──────
+   ╰────
+  help: Use a valid npm package name, or mark the package as private if it is not meant to be published.
+
   ⚠ oxc(package-json-valid-name): Invalid npm package name: name length must be greater than zero; name can only contain URL-friendly characters.
-   ╭─[/Users/alexeylyakhov/projects/oxc/crates/oxc_linter/fixtures/import/package.json:1:1]
+   ╭─[/Users/alexeylyakhov/projects/oxc/crates/oxc_linter/fixtures/import/package.json:1:9]
  1 │ {"name":""}
-   · ─
+   ·         ──
    ╰────
   help: Use a valid npm package name, or mark the package as private if it is not meant to be published.
 
   ⚠ oxc(package-json-valid-name): Invalid npm package name: HTTP is a core module name; name can no longer contain capital letters.
-   ╭─[/Users/alexeylyakhov/projects/oxc/crates/oxc_linter/fixtures/import/package.json:1:1]
+   ╭─[/Users/alexeylyakhov/projects/oxc/crates/oxc_linter/fixtures/import/package.json:1:9]
  1 │ {"name":"HTTP"}
-   · ─
+   ·         ──────
    ╰────
   help: Use a valid npm package name, or mark the package as private if it is not meant to be published.
 
   ⚠ oxc(package-json-valid-name): Invalid npm package name: node_modules is not a valid package name.
-   ╭─[/Users/alexeylyakhov/projects/oxc/crates/oxc_linter/fixtures/import/package.json:1:1]
+   ╭─[/Users/alexeylyakhov/projects/oxc/crates/oxc_linter/fixtures/import/package.json:1:9]
  1 │ {"name":"node_modules"}
-   · ─
+   ·         ──────────────
    ╰────
   help: Use a valid npm package name, or mark the package as private if it is not meant to be published.
 
   ⚠ oxc(package-json-valid-name): Invalid npm package name: name cannot contain leading or trailing spaces; name can only contain URL-friendly characters.
-   ╭─[/Users/alexeylyakhov/projects/oxc/crates/oxc_linter/fixtures/import/package.json:1:1]
+   ╭─[/Users/alexeylyakhov/projects/oxc/crates/oxc_linter/fixtures/import/package.json:1:9]
  1 │ {"name":" demo"}
-   · ─
+   ·         ───────
    ╰────
   help: Use a valid npm package name, or mark the package as private if it is not meant to be published.
 
   ⚠ oxc(package-json-valid-name): Invalid npm package name: name can no longer contain special characters ("~'!()*").
-   ╭─[/Users/alexeylyakhov/projects/oxc/crates/oxc_linter/fixtures/import/package.json:1:1]
+   ╭─[/Users/alexeylyakhov/projects/oxc/crates/oxc_linter/fixtures/import/package.json:1:9]
  1 │ {"name":"demo!"}
-   · ─
+   ·         ───────
    ╰────
   help: Use a valid npm package name, or mark the package as private if it is not meant to be published.
 
   ⚠ oxc(package-json-valid-name): Invalid npm package name: name can only contain URL-friendly characters.
-   ╭─[/Users/alexeylyakhov/projects/oxc/crates/oxc_linter/fixtures/import/package.json:1:1]
+   ╭─[/Users/alexeylyakhov/projects/oxc/crates/oxc_linter/fixtures/import/package.json:1:9]
  1 │ {"name":"demo package"}
-   · ─
+   ·         ──────────────
    ╰────
   help: Use a valid npm package name, or mark the package as private if it is not meant to be published.
 
   ⚠ oxc(package-json-valid-name): Invalid npm package name: name cannot start with an underscore.
-   ╭─[/Users/alexeylyakhov/projects/oxc/crates/oxc_linter/fixtures/import/package.json:1:1]
+   ╭─[/Users/alexeylyakhov/projects/oxc/crates/oxc_linter/fixtures/import/package.json:1:9]
  1 │ {"name":"_demo"}
-   · ─
+   ·         ───────
    ╰────
   help: Use a valid npm package name, or mark the package as private if it is not meant to be published.
 
   ⚠ oxc(package-json-valid-name): Invalid npm package name: name cannot start with a period.
-   ╭─[/Users/alexeylyakhov/projects/oxc/crates/oxc_linter/fixtures/import/package.json:1:1]
+   ╭─[/Users/alexeylyakhov/projects/oxc/crates/oxc_linter/fixtures/import/package.json:1:9]
  1 │ {"name":"@scope/.demo"}
-   · ─
+   ·         ──────────────
    ╰────
   help: Use a valid npm package name, or mark the package as private if it is not meant to be published.

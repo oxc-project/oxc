@@ -90,7 +90,7 @@ declare_oxc_lint!(
     ClassLiteralPropertyStyle,
     typescript,
     style,
-    pending,
+    suggestion,
     config = ClassLiteralPropertyStyleOption
 );
 
@@ -126,7 +126,19 @@ fn check_fields_mode<'a>(class_body: &ClassBody<'a>, ctx: &LintContext<'a>) {
             && is_supported_literal(argument)
             && !has_duplicate_setter(class_body, method)
         {
-            ctx.diagnostic(prefer_field_style_diagnostic(method.key.span()));
+            let method_span = method.span;
+            let key_span = method.key.span();
+            let value_span = argument.span();
+            let is_static = method.r#static;
+            ctx.diagnostic_with_suggestion(prefer_field_style_diagnostic(key_span), |fixer| {
+                let key_text = key_span.source_text(fixer.source_text());
+                let value_text = value_span.source_text(fixer.source_text());
+                let static_prefix = if is_static { "static " } else { "" };
+                fixer.replace(
+                    method_span,
+                    format!("{static_prefix}readonly {key_text} = {value_text};"),
+                )
+            });
         }
     }
 }
@@ -154,7 +166,19 @@ fn check_getters_mode<'a>(class_body: &ClassBody<'a>, ctx: &LintContext<'a>) {
                 continue;
             }
 
-            ctx.diagnostic(prefer_getter_style_diagnostic(property.key.span()));
+            let prop_span = property.span;
+            let key_span = property.key.span();
+            let value_span = property.value.as_ref().unwrap().span();
+            let is_static = property.r#static;
+            ctx.diagnostic_with_suggestion(prefer_getter_style_diagnostic(key_span), |fixer| {
+                let key_text = key_span.source_text(fixer.source_text());
+                let value_text = value_span.source_text(fixer.source_text());
+                let static_prefix = if is_static { "static " } else { "" };
+                fixer.replace(
+                    prop_span,
+                    format!("{static_prefix}get {key_text}() {{ return {value_text}; }}"),
+                )
+            });
         }
     }
 }
@@ -249,6 +273,7 @@ impl<'a> Visit<'a> for ConstructorAssignmentCollector<'_, 'a> {
 
 #[test]
 fn test() {
+    use crate::fixer::FixKind;
     use crate::tester::Tester;
 
     let pass = vec![
@@ -789,6 +814,34 @@ fn test() {
         ),
     ];
 
+    let fix = vec![
+        (
+            "class Mx { get p1() { return 'hello world'; } }",
+            "class Mx { readonly p1 = 'hello world'; }",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "class Mx { static get p1() { return 'hello world'; } }",
+            "class Mx { static readonly p1 = 'hello world'; }",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "class Mx { readonly p1 = 'hello world'; }",
+            "class Mx { get p1() { return 'hello world'; } }",
+            Some(serde_json::json!(["getters"])),
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "class Mx { static readonly p1 = 'hello world'; }",
+            "class Mx { static get p1() { return 'hello world'; } }",
+            Some(serde_json::json!(["getters"])),
+            FixKind::DangerousSuggestion,
+        ),
+    ];
+
     Tester::new(ClassLiteralPropertyStyle::NAME, ClassLiteralPropertyStyle::PLUGIN, pass, fail)
+        .expect_fix(fix)
         .test_and_snapshot();
 }

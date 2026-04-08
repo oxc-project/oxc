@@ -1,0 +1,16 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 444
+---
+
+  ⚠ oxc(sort-enums): Enum members should be sorted alphabetically.
+   ╭─[sort_enums.ts:1:14]
+ 1 │ enum Color { Red, Green, Blue }
+   ·              ───
+   ╰────
+
+  ⚠ oxc(sort-enums): Enum members should be sorted alphabetically.
+   ╭─[sort_enums.ts:1:15]
+ 1 │ enum Status { Pending, Active, Inactive }
+   ·               ───────
+   ╰────

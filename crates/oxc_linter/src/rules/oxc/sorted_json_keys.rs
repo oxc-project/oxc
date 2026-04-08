@@ -7,15 +7,17 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 
+use super::json_utils::file_start_span;
 use crate::{
     context::LintContext,
+    json_parser::{JsonValue, parse_json},
     rule::{DefaultRuleConfig, Rule},
 };
 
-fn sorted_json_keys_diagnostic() -> OxcDiagnostic {
+fn sorted_json_keys_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("JSON object keys should be sorted.")
         .with_help("Sort object keys consistently to keep locale files easy to diff and review.")
-        .with_label(Span::default())
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone, Copy, Eq, PartialEq, Deserialize, Serialize, JsonSchema)]
@@ -77,17 +79,23 @@ impl Rule for SortedJsonKeys {
             .map(|config| Self(Box::new(config)))
     }
 
+    #[expect(clippy::cast_possible_truncation)] // Span uses u32 by design
     fn run_once(&self, ctx: &LintContext<'_>) {
         let source_text = ctx.full_source_text();
-        let Ok(value) = serde_json::from_str::<Value>(source_text) else {
+        let result = parse_json(source_text);
+        let Some(root) = &result.root else {
             return;
         };
 
-        if is_json_value_sorted(&value, self.0.order) {
+        if is_json_value_sorted(root, self.0.order) {
             return;
         }
 
-        let sorted = sort_json_value(&value, self.0.order);
+        // Use serde_json for the fix path (serialization)
+        let Ok(serde_value) = serde_json::from_str::<Value>(source_text) else {
+            return;
+        };
+        let sorted = sort_serde_json_value(&serde_value, self.0.order);
         let Ok(mut expected) = serialize_json(&sorted, self.0.indent_spaces) else {
             return;
         };
@@ -97,9 +105,10 @@ impl Rule for SortedJsonKeys {
         }
 
         let file_span = Span::new(0, source_text.len() as u32);
-        ctx.diagnostic_with_fix(sorted_json_keys_diagnostic(), |fixer| {
-            fixer.replace_full_source_range(file_span, expected)
-        });
+        ctx.diagnostic_with_fix(
+            sorted_json_keys_diagnostic(file_start_span(source_text)),
+            |fixer| fixer.replace_full_source_range(file_span, expected),
+        );
     }
 
     fn should_run(&self, ctx: &crate::rules::ContextHost) -> bool {
@@ -107,7 +116,7 @@ impl Rule for SortedJsonKeys {
     }
 }
 
-fn sort_json_value(value: &Value, order: JsonSortOrder) -> Value {
+fn sort_serde_json_value(value: &Value, order: JsonSortOrder) -> Value {
     match value {
         Value::Object(object) => {
             let mut entries = object.iter().collect::<Vec<_>>();
@@ -121,24 +130,24 @@ fn sort_json_value(value: &Value, order: JsonSortOrder) -> Value {
 
             let mut sorted = Map::with_capacity(object.len());
             for (key, value) in entries {
-                sorted.insert(key.clone(), sort_json_value(value, order));
+                sorted.insert(key.clone(), sort_serde_json_value(value, order));
             }
             Value::Object(sorted)
         }
         Value::Array(array) => {
-            Value::Array(array.iter().map(|item| sort_json_value(item, order)).collect())
+            Value::Array(array.iter().map(|item| sort_serde_json_value(item, order)).collect())
         }
         _ => value.clone(),
     }
 }
 
-fn is_json_value_sorted(value: &Value, order: JsonSortOrder) -> bool {
+fn is_json_value_sorted(value: &JsonValue<'_>, order: JsonSortOrder) -> bool {
     match value {
-        Value::Object(object) => {
+        JsonValue::Object(object) => {
             let mut previous_key: Option<&str> = None;
-            for (key, value) in object {
+            for prop in &object.properties {
                 if let Some(previous_key) = previous_key {
-                    let ordering = previous_key.cmp(key.as_str());
+                    let ordering = previous_key.cmp(prop.key);
                     let in_order = match order {
                         JsonSortOrder::Asc => ordering != Ordering::Greater,
                         JsonSortOrder::Desc => ordering != Ordering::Less,
@@ -148,16 +157,18 @@ fn is_json_value_sorted(value: &Value, order: JsonSortOrder) -> bool {
                     }
                 }
 
-                if !is_json_value_sorted(value, order) {
+                if !is_json_value_sorted(&prop.value, order) {
                     return false;
                 }
 
-                previous_key = Some(key.as_str());
+                previous_key = Some(prop.key);
             }
 
             true
         }
-        Value::Array(array) => array.iter().all(|item| is_json_value_sorted(item, order)),
+        JsonValue::Array(array) => {
+            array.elements.iter().all(|item| is_json_value_sorted(item, order))
+        }
         _ => true,
     }
 }

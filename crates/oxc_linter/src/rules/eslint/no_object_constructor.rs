@@ -41,7 +41,7 @@ declare_oxc_lint!(
     NoObjectConstructor,
     eslint,
     pedantic,
-    pending
+    suggestion
 );
 
 impl Rule for NoObjectConstructor {
@@ -65,7 +65,9 @@ impl Rule for NoObjectConstructor {
             && arguments.is_empty()
             && type_parameters.is_none()
         {
-            ctx.diagnostic(no_object_constructor_diagnostic(span));
+            ctx.diagnostic_with_suggestion(no_object_constructor_diagnostic(span), |fixer| {
+                fixer.replace(span, "({})")
+            });
         }
     }
 }
@@ -260,6 +262,14 @@ fn test() {
         ),
     ];
 
+    let fix = vec![
+        ("new Object", "({})"),
+        ("Object()", "({})"),
+        ("const fn = () => Object();", "const fn = () => ({});"),
+        ("new Object()", "({})"),
+    ];
+
     Tester::new(NoObjectConstructor::NAME, NoObjectConstructor::PLUGIN, pass, fail)
+        .expect_fix(fix)
         .test_and_snapshot();
 }

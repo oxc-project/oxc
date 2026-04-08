@@ -159,7 +159,7 @@ declare_oxc_lint!(
     NoEmptyObjectType,
     typescript,
     restriction,
-    pending,
+    suggestion,
     config = NoEmptyObjectTypeConfig,
 );
 
@@ -235,13 +235,30 @@ fn check_interface_declaration(
     {
         return;
     }
-    if interface.extends.is_empty()
-        || (allow_interfaces == AllowInterfaces::Never && interface.extends.len() == 1)
-    {
-        ctx.diagnostic(no_empty_object_type_diagnostic(
-            interface.body.span,
-            "Do not use an empty interface declaration.",
-        ));
+    if interface.extends.is_empty() {
+        let body_span = interface.body.span;
+        ctx.diagnostic_with_suggestion(
+            no_empty_object_type_diagnostic(
+                body_span,
+                "Do not use an empty interface declaration.",
+            ),
+            |fixer| {
+                let name = interface.id.name.as_str();
+                fixer.replace(interface.span, format!("type {name} = unknown"))
+            },
+        );
+    } else if allow_interfaces == AllowInterfaces::Never && interface.extends.len() == 1 {
+        ctx.diagnostic_with_suggestion(
+            no_empty_object_type_diagnostic(
+                interface.body.span,
+                "Do not use an empty interface declaration.",
+            ),
+            |fixer| {
+                let name = interface.id.name.as_str();
+                let extend_text = interface.extends[0].span.source_text(fixer.source_text());
+                fixer.replace(interface.span, format!("type {name} = {extend_text}"))
+            },
+        );
     }
 }
 
@@ -266,14 +283,16 @@ fn check_type_literal(
         }
         _ => (),
     }
-    ctx.diagnostic(no_empty_object_type_diagnostic(
-        type_literal.span,
-        "Do not use the empty object type literal.",
-    ));
+    let literal_span = type_literal.span;
+    ctx.diagnostic_with_suggestion(
+        no_empty_object_type_diagnostic(literal_span, "Do not use the empty object type literal."),
+        |fixer| fixer.replace(literal_span, "Record<string, never>"),
+    );
 }
 
 #[test]
 fn test() {
+    use crate::fixer::FixKind;
     use crate::tester::Tester;
 
     let pass = vec![
@@ -431,5 +450,18 @@ fn test() {
         ("interface Base {}", Some(serde_json::json!([{ "allowWithName": "Props" }]))),
     ];
 
-    Tester::new(NoEmptyObjectType::NAME, NoEmptyObjectType::PLUGIN, pass, fail).test_and_snapshot();
+    let fix = vec![
+        ("interface Base {}", "type Base = unknown", None, FixKind::DangerousSuggestion),
+        (
+            "type Base = {};",
+            "type Base = Record<string, never>;",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        ("let value: {};", "let value: Record<string, never>;", None, FixKind::DangerousSuggestion),
+    ];
+
+    Tester::new(NoEmptyObjectType::NAME, NoEmptyObjectType::PLUGIN, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

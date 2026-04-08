@@ -1,5 +1,6 @@
 use std::cmp::Ordering;
 
+use cow_utils::CowUtils;
 use oxc_ast::{
     AstKind,
     ast::{Expression, Statement, SwitchCase, SwitchStatement},
@@ -303,7 +304,7 @@ fn normalized_case_name(
 ) -> String {
     let raw = ctx.source_range(test.span()).trim();
     let raw = if raw.is_empty() { ctx.source_range(case.span()).trim() } else { raw };
-    if config.ignore_case { raw.to_ascii_lowercase() } else { raw.to_string() }
+    if config.ignore_case { raw.cow_to_ascii_lowercase().into_owned() } else { raw.to_string() }
 }
 
 fn build_group_reorder_fix(

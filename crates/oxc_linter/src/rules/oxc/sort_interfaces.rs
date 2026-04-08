@@ -1,5 +1,6 @@
 use std::cmp::Ordering;
 
+use cow_utils::CowUtils;
 use oxc_ast::{
     AstKind,
     ast::{TSInterfaceDeclaration, TSSignature},
@@ -148,7 +149,11 @@ fn sorted_member_indices(
         .enumerate()
         .map(|(index, member)| {
             let raw_name = member_sort_name(member)?;
-            let key = if config.ignore_case { raw_name.to_ascii_lowercase() } else { raw_name };
+            let key = if config.ignore_case {
+                raw_name.cow_to_ascii_lowercase().into_owned()
+            } else {
+                raw_name
+            };
             Some((index, key))
         })
         .collect::<Option<Vec<_>>>()?;

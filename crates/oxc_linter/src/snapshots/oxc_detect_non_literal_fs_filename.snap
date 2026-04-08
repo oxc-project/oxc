@@ -1,0 +1,39 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 444
+---
+
+  ⚠ oxc(detect-non-literal-fs-filename): fs.readFile() called with a non-literal file path
+   ╭─[detect_non_literal_fs_filename.tsx:1:1]
+ 1 │ fs.readFile(userInput, cb)
+   · ──────────────────────────
+   ╰────
+  help: Avoid passing dynamic values as file paths to fs methods. This can allow an attacker to access arbitrary files on the file system.
+
+  ⚠ oxc(detect-non-literal-fs-filename): fs.writeFileSync() called with a non-literal file path
+   ╭─[detect_non_literal_fs_filename.tsx:1:1]
+ 1 │ fs.writeFileSync(filePath, data)
+   · ────────────────────────────────
+   ╰────
+  help: Avoid passing dynamic values as file paths to fs methods. This can allow an attacker to access arbitrary files on the file system.
+
+  ⚠ oxc(detect-non-literal-fs-filename): fs.readFile() called with a non-literal file path
+   ╭─[detect_non_literal_fs_filename.tsx:1:1]
+ 1 │ fs.readFile(getPath(), cb)
+   · ──────────────────────────
+   ╰────
+  help: Avoid passing dynamic values as file paths to fs methods. This can allow an attacker to access arbitrary files on the file system.
+
+  ⚠ oxc(detect-non-literal-fs-filename): fs.unlink() called with a non-literal file path
+   ╭─[detect_non_literal_fs_filename.tsx:1:1]
+ 1 │ fs.unlink(dynamicFile, cb)
+   · ──────────────────────────
+   ╰────
+  help: Avoid passing dynamic values as file paths to fs methods. This can allow an attacker to access arbitrary files on the file system.
+
+  ⚠ oxc(detect-non-literal-fs-filename): fs.readFile() called with a non-literal file path
+   ╭─[detect_non_literal_fs_filename.tsx:1:1]
+ 1 │ fs.readFile(`${dir}/file`, cb)
+   · ──────────────────────────────
+   ╰────
+  help: Avoid passing dynamic values as file paths to fs methods. This can allow an attacker to access arbitrary files on the file system.

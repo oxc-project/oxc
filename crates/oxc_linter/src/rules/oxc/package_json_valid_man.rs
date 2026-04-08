@@ -1,11 +1,14 @@
-use super::json_utils::{file_start_span, is_json_file};
+use super::json_utils::is_json_file;
 
 use lazy_regex::{Lazy, Regex, lazy_regex};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use serde_json::Value;
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{
+    context::LintContext,
+    json_parser::{JsonValue, parse_json},
+    rule::Rule,
+};
 
 static MANPAGE_REGEX: Lazy<Regex> = lazy_regex!(r"\.[0-9](?:\.gz)?$");
 
@@ -49,21 +52,19 @@ declare_oxc_lint!(
 impl Rule for PackageJsonValidMan {
     fn run_once(&self, ctx: &LintContext<'_>) {
         let source_text = ctx.full_source_text();
-        let Ok(value) = serde_json::from_str::<Value>(source_text) else {
+        let result = parse_json(source_text);
+        let Some(JsonValue::Object(object)) = &result.root else {
             return;
         };
-        let Some(object) = value.as_object() else {
-            return;
-        };
-        let Some(man) = object.get("man") else {
+        let Some(prop) = object.get_property("man") else {
             return;
         };
 
-        if is_valid_man_value(man) {
+        if is_valid_man_value(&prop.value) {
             return;
         }
 
-        ctx.diagnostic(invalid_package_json_man_diagnostic(file_start_span(source_text)));
+        ctx.diagnostic(invalid_package_json_man_diagnostic(prop.value.span()));
     }
 
     fn should_run(&self, ctx: &crate::rules::ContextHost) -> bool {
@@ -73,16 +74,17 @@ impl Rule for PackageJsonValidMan {
     }
 }
 
-fn is_valid_man_value(value: &Value) -> bool {
+fn is_valid_man_value(value: &JsonValue<'_>) -> bool {
     match value {
-        Value::String(value) => is_valid_man_path(value),
-        Value::Array(values) => !values.is_empty() && values.iter().all(is_valid_man_entry),
+        JsonValue::String(value, _) => is_valid_man_path(value),
+        JsonValue::Array(arr) => {
+            !arr.elements.is_empty()
+                && arr.elements.iter().all(
+                    |elem| matches!(elem, JsonValue::String(value, _) if is_valid_man_path(value)),
+                )
+        }
         _ => false,
     }
-}
-
-fn is_valid_man_entry(value: &Value) -> bool {
-    matches!(value, Value::String(value) if is_valid_man_path(value))
 }
 
 fn is_valid_man_path(value: &str) -> bool {

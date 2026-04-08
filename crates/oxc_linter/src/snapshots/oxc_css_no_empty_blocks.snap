@@ -1,0 +1,18 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 444
+---
+
+  ⚠ oxc(css-no-empty-blocks): Empty declaration block for `.a`.
+   ╭─[/Users/alexeylyakhov/projects/oxc/crates/oxc_linter/fixtures/import/test.css:1:4]
+ 1 │ .a { }
+   ·    ───
+   ╰────
+  help: Remove the empty rule or add declarations to it.
+
+  ⚠ oxc(css-no-empty-blocks): Empty declaration block for `h1`.
+   ╭─[/Users/alexeylyakhov/projects/oxc/crates/oxc_linter/fixtures/import/test.css:1:4]
+ 1 │ h1 { } h2 { color: red; }
+   ·    ───
+   ╰────
+  help: Remove the empty rule or add declarations to it.

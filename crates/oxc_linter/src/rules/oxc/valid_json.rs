@@ -1,21 +1,16 @@
-use super::json_utils::{error_span, is_json_file};
+use super::json_utils::is_json_file;
 
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_span::Span;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{context::LintContext, json_parser::parse_json, rule::Rule};
 
-fn valid_json_diagnostic(
-    message: &str,
-    line: usize,
-    column: usize,
-    span: oxc_span::Span,
-) -> OxcDiagnostic {
+fn valid_json_diagnostic(message: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Invalid JSON: {message}"))
-        .with_help(format!("Fix the JSON syntax error near line {line}, column {column}."))
+        .with_help("Fix the JSON syntax error.")
         .with_label(span)
 }
 
@@ -99,15 +94,14 @@ impl Rule for ValidJson {
             source_text
         };
 
-        let Err(error) = serde_json::from_str::<Value>(parse_source) else { return };
+        let result = parse_json(parse_source);
+        if result.errors.is_empty() && result.root.is_some() {
+            return;
+        }
 
-        let span = error_span(source_text, error.line(), error.column());
-        ctx.diagnostic(valid_json_diagnostic(
-            &error.to_string(),
-            error.line(),
-            error.column(),
-            span,
-        ));
+        for error in &result.errors {
+            ctx.diagnostic(valid_json_diagnostic(&error.message, error.span));
+        }
     }
 
     fn should_run(&self, ctx: &crate::rules::ContextHost) -> bool {

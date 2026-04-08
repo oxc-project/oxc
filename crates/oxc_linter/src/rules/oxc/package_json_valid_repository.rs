@@ -1,11 +1,14 @@
-use super::json_utils::{file_start_span, is_json_file};
+use super::json_utils::is_json_file;
 
 use lazy_regex::{Lazy, Regex, lazy_regex};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use serde_json::{Map, Value};
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{
+    context::LintContext,
+    json_parser::{JsonObject, JsonValue, parse_json},
+    rule::Rule,
+};
 
 static OWNER_REPOSITORY_REGEX: Lazy<Regex> = lazy_regex!(r"^[^/\s]+/[^/\s]+$");
 static PROVIDER_SHORTHAND_REGEX: Lazy<Regex> =
@@ -52,21 +55,19 @@ declare_oxc_lint!(
 impl Rule for PackageJsonValidRepository {
     fn run_once(&self, ctx: &LintContext<'_>) {
         let source_text = ctx.full_source_text();
-        let Ok(value) = serde_json::from_str::<Value>(source_text) else {
+        let result = parse_json(source_text);
+        let Some(JsonValue::Object(object)) = &result.root else {
             return;
         };
-        let Some(object) = value.as_object() else {
-            return;
-        };
-        let Some(repository) = object.get("repository") else {
+        let Some(prop) = object.get_property("repository") else {
             return;
         };
 
-        if is_valid_repository_value(repository) {
+        if is_valid_repository_value(&prop.value) {
             return;
         }
 
-        ctx.diagnostic(invalid_package_json_repository_diagnostic(file_start_span(source_text)));
+        ctx.diagnostic(invalid_package_json_repository_diagnostic(prop.value.span()));
     }
 
     fn should_run(&self, ctx: &crate::rules::ContextHost) -> bool {
@@ -76,21 +77,21 @@ impl Rule for PackageJsonValidRepository {
     }
 }
 
-fn is_valid_repository_value(value: &Value) -> bool {
+fn is_valid_repository_value(value: &JsonValue<'_>) -> bool {
     match value {
-        Value::String(value) => is_valid_repository_locator(value),
-        Value::Object(object) => is_valid_repository_object(object),
+        JsonValue::String(value, _) => is_valid_repository_locator(value),
+        JsonValue::Object(object) => is_valid_repository_object(object),
         _ => false,
     }
 }
 
-fn is_valid_repository_object(object: &Map<String, Value>) -> bool {
+fn is_valid_repository_object(object: &JsonObject<'_>) -> bool {
     let type_is_valid =
-        matches!(object.get("type"), Some(Value::String(value)) if !value.trim().is_empty());
-    let url_is_valid = matches!(object.get("url"), Some(Value::String(value)) if is_valid_repository_locator(value));
+        matches!(object.get("type"), Some(JsonValue::String(value, _)) if !value.trim().is_empty());
+    let url_is_valid = matches!(object.get("url"), Some(JsonValue::String(value, _)) if is_valid_repository_locator(value));
     let directory_is_valid = match object.get("directory") {
         None => true,
-        Some(Value::String(value)) => !value.trim().is_empty(),
+        Some(JsonValue::String(value, _)) => !value.trim().is_empty(),
         Some(_) => false,
     };
 

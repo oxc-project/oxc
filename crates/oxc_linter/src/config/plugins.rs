@@ -94,6 +94,10 @@ bitflags! {
         const NODE = 1 << 12;
         /// `eslint-plugin-vue`
         const VUE = 1 << 13;
+        /// JSON linting rules
+        const JSON = 1 << 14;
+        /// CSS linting rules
+        const CSS = 1 << 15;
     }
 }
 
@@ -158,6 +162,8 @@ impl TryFrom<&str> for LintPlugins {
             "promise" => Ok(LintPlugins::PROMISE),
             "node" => Ok(LintPlugins::NODE),
             "vue" => Ok(LintPlugins::VUE),
+            "json" => Ok(LintPlugins::JSON),
+            "css" => Ok(LintPlugins::CSS),
             // "eslint" is not really a plugin, so it's 'empty'. This has the added benefit of
             // making it the default value.
             "eslint" => Ok(LintPlugins::ESLINT),
@@ -183,6 +189,8 @@ impl From<LintPlugins> for &'static str {
             LintPlugins::PROMISE => "promise",
             LintPlugins::NODE => "node",
             LintPlugins::VUE => "vue",
+            LintPlugins::JSON => "json",
+            LintPlugins::CSS => "css",
             _ => "",
         }
     }
@@ -254,6 +262,8 @@ impl JsonSchema for LintPlugins {
             Promise,
             Node,
             Vue,
+            Json,
+            Css,
         }
 
         let enum_schema = r#gen.subschema_for::<LintPluginOptionsSchema>();

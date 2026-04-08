@@ -356,12 +356,32 @@ pub use crate::rules::oxc::bad_replace_all_arg::BadReplaceAllArg as OxcBadReplac
 pub use crate::rules::oxc::boundaries_dependencies::BoundariesDependencies as OxcBoundariesDependencies;
 pub use crate::rules::oxc::branches_sharing_code::BranchesSharingCode as OxcBranchesSharingCode;
 pub use crate::rules::oxc::const_comparisons::ConstComparisons as OxcConstComparisons;
+pub use crate::rules::oxc::css_no_duplicate_properties::CssNoDuplicateProperties as OxcCssNoDuplicateProperties;
+pub use crate::rules::oxc::css_no_empty_blocks::CssNoEmptyBlocks as OxcCssNoEmptyBlocks;
+pub use crate::rules::oxc::css_no_important::CssNoImportant as OxcCssNoImportant;
+pub use crate::rules::oxc::depend_ban_dependencies::DependBanDependencies as OxcDependBanDependencies;
+pub use crate::rules::oxc::detect_buffer_noassert::DetectBufferNoassert as OxcDetectBufferNoassert;
+pub use crate::rules::oxc::detect_child_process::DetectChildProcess as OxcDetectChildProcess;
+pub use crate::rules::oxc::detect_disable_mustache_escape::DetectDisableMustacheEscape as OxcDetectDisableMustacheEscape;
+pub use crate::rules::oxc::detect_eval_with_expression::DetectEvalWithExpression as OxcDetectEvalWithExpression;
+pub use crate::rules::oxc::detect_new_buffer::DetectNewBuffer as OxcDetectNewBuffer;
+pub use crate::rules::oxc::detect_no_csrf_before_method_override::DetectNoCsrfBeforeMethodOverride as OxcDetectNoCsrfBeforeMethodOverride;
+pub use crate::rules::oxc::detect_non_literal_fs_filename::DetectNonLiteralFsFilename as OxcDetectNonLiteralFsFilename;
+pub use crate::rules::oxc::detect_non_literal_regexp::DetectNonLiteralRegexp as OxcDetectNonLiteralRegexp;
+pub use crate::rules::oxc::detect_non_literal_require::DetectNonLiteralRequire as OxcDetectNonLiteralRequire;
 pub use crate::rules::oxc::detect_object_injection::DetectObjectInjection as OxcDetectObjectInjection;
+pub use crate::rules::oxc::detect_possible_timing_attacks::DetectPossibleTimingAttacks as OxcDetectPossibleTimingAttacks;
+pub use crate::rules::oxc::detect_pseudo_random_bytes::DetectPseudoRandomBytes as OxcDetectPseudoRandomBytes;
+pub use crate::rules::oxc::detect_unsafe_regex::DetectUnsafeRegex as OxcDetectUnsafeRegex;
 pub use crate::rules::oxc::double_comparisons::DoubleComparisons as OxcDoubleComparisons;
 pub use crate::rules::oxc::erasing_op::ErasingOp as OxcErasingOp;
 pub use crate::rules::oxc::filename_naming_convention::FilenameNamingConvention as OxcFilenameNamingConvention;
 pub use crate::rules::oxc::folder_naming_convention::FolderNamingConvention as OxcFolderNamingConvention;
 pub use crate::rules::oxc::identical_keys::IdenticalKeys as OxcIdenticalKeys;
+pub use crate::rules::oxc::identical_placeholders::IdenticalPlaceholders as OxcIdenticalPlaceholders;
+pub use crate::rules::oxc::json_no_comments::JsonNoComments as OxcJsonNoComments;
+pub use crate::rules::oxc::json_no_duplicate_keys::JsonNoDuplicateKeys as OxcJsonNoDuplicateKeys;
+pub use crate::rules::oxc::json_no_trailing_commas::JsonNoTrailingCommas as OxcJsonNoTrailingCommas;
 pub use crate::rules::oxc::json_parse_validation::JsonParseValidation as OxcJsonParseValidation;
 pub use crate::rules::oxc::misrefactored_assign_op::MisrefactoredAssignOp as OxcMisrefactoredAssignOp;
 pub use crate::rules::oxc::missing_throw::MissingThrow as OxcMissingThrow;
@@ -371,18 +391,25 @@ pub use crate::rules::oxc::no_async_endpoint_handlers::NoAsyncEndpointHandlers a
 pub use crate::rules::oxc::no_barrel_file::NoBarrelFile as OxcNoBarrelFile;
 pub use crate::rules::oxc::no_block_in_inline::NoBlockInInline as OxcNoBlockInInline;
 pub use crate::rules::oxc::no_const_enum::NoConstEnum as OxcNoConstEnum;
+pub use crate::rules::oxc::no_create_ref::NoCreateRef as OxcNoCreateRef;
+pub use crate::rules::oxc::no_default_props::NoDefaultProps as OxcNoDefaultProps;
 pub use crate::rules::oxc::no_inline_type_annotations::NoInlineTypeAnnotations as OxcNoInlineTypeAnnotations;
+pub use crate::rules::oxc::no_leaked_conditional_rendering::NoLeakedConditionalRendering as OxcNoLeakedConditionalRendering;
 pub use crate::rules::oxc::no_literal_string::NoLiteralString as OxcNoLiteralString;
 pub use crate::rules::oxc::no_map_spread::NoMapSpread as OxcNoMapSpread;
+pub use crate::rules::oxc::no_nested_components::NoNestedComponents as OxcNoNestedComponents;
 pub use crate::rules::oxc::no_optional_chaining::NoOptionalChaining as OxcNoOptionalChaining;
+pub use crate::rules::oxc::no_prop_types::NoPropTypes as OxcNoPropTypes;
 pub use crate::rules::oxc::no_rest_spread_properties::NoRestSpreadProperties as OxcNoRestSpreadProperties;
 pub use crate::rules::oxc::no_secrets::NoSecrets as OxcNoSecrets;
 pub use crate::rules::oxc::no_this_in_exported_function::NoThisInExportedFunction as OxcNoThisInExportedFunction;
 pub use crate::rules::oxc::no_unknown::NoUnknown as OxcNoUnknown;
 pub use crate::rules::oxc::no_unknown_files::NoUnknownFiles as OxcNoUnknownFiles;
+pub use crate::rules::oxc::no_unstable_default_props::NoUnstableDefaultProps as OxcNoUnstableDefaultProps;
 pub use crate::rules::oxc::number_arg_out_of_range::NumberArgOutOfRange as OxcNumberArgOutOfRange;
 pub use crate::rules::oxc::only_used_in_recursion::OnlyUsedInRecursion as OxcOnlyUsedInRecursion;
 pub use crate::rules::oxc::optimize_regex::OptimizeRegex as OxcOptimizeRegex;
+pub use crate::rules::oxc::package_json_no_duplicate_dependencies::PackageJsonNoDuplicateDependencies as OxcPackageJsonNoDuplicateDependencies;
 pub use crate::rules::oxc::package_json_no_empty_fields::PackageJsonNoEmptyFields as OxcPackageJsonNoEmptyFields;
 pub use crate::rules::oxc::package_json_no_redundant_publish_config::PackageJsonNoRedundantPublishConfig as OxcPackageJsonNoRedundantPublishConfig;
 pub use crate::rules::oxc::package_json_order_properties::PackageJsonOrderProperties as OxcPackageJsonOrderProperties;
@@ -392,6 +419,8 @@ pub use crate::rules::oxc::package_json_require_version::PackageJsonRequireVersi
 pub use crate::rules::oxc::package_json_sort_collections::PackageJsonSortCollections as OxcPackageJsonSortCollections;
 pub use crate::rules::oxc::package_json_valid_bin::PackageJsonValidBin as OxcPackageJsonValidBin;
 pub use crate::rules::oxc::package_json_valid_description::PackageJsonValidDescription as OxcPackageJsonValidDescription;
+pub use crate::rules::oxc::package_json_valid_engines::PackageJsonValidEngines as OxcPackageJsonValidEngines;
+pub use crate::rules::oxc::package_json_valid_keywords::PackageJsonValidKeywords as OxcPackageJsonValidKeywords;
 pub use crate::rules::oxc::package_json_valid_license::PackageJsonValidLicense as OxcPackageJsonValidLicense;
 pub use crate::rules::oxc::package_json_valid_man::PackageJsonValidMan as OxcPackageJsonValidMan;
 pub use crate::rules::oxc::package_json_valid_name::PackageJsonValidName as OxcPackageJsonValidName;
@@ -399,7 +428,16 @@ pub use crate::rules::oxc::package_json_valid_private::PackageJsonValidPrivate a
 pub use crate::rules::oxc::package_json_valid_repository::PackageJsonValidRepository as OxcPackageJsonValidRepository;
 pub use crate::rules::oxc::package_json_valid_type::PackageJsonValidType as OxcPackageJsonValidType;
 pub use crate::rules::oxc::package_json_valid_version::PackageJsonValidVersion as OxcPackageJsonValidVersion;
+pub use crate::rules::oxc::prefer_shorthand_boolean::PreferShorthandBoolean as OxcPreferShorthandBoolean;
+pub use crate::rules::oxc::sort_enums::SortEnums as OxcSortEnums;
+pub use crate::rules::oxc::sort_imports::SortImports as OxcSortImports;
 pub use crate::rules::oxc::sort_interfaces::SortInterfaces as OxcSortInterfaces;
+pub use crate::rules::oxc::sort_intersection_types::SortIntersectionTypes as OxcSortIntersectionTypes;
+pub use crate::rules::oxc::sort_jsx_props::SortJsxProps as OxcSortJsxProps;
+pub use crate::rules::oxc::sort_named_exports::SortNamedExports as OxcSortNamedExports;
+pub use crate::rules::oxc::sort_named_imports::SortNamedImports as OxcSortNamedImports;
+pub use crate::rules::oxc::sort_object_types::SortObjectTypes as OxcSortObjectTypes;
+pub use crate::rules::oxc::sort_objects::SortObjects as OxcSortObjects;
 pub use crate::rules::oxc::sort_switch_case::SortSwitchCase as OxcSortSwitchCase;
 pub use crate::rules::oxc::sort_union_types::SortUnionTypes as OxcSortUnionTypes;
 pub use crate::rules::oxc::sorted_json_keys::SortedJsonKeys as OxcSortedJsonKeys;
@@ -1363,12 +1401,32 @@ pub enum RuleEnum {
     OxcBoundariesDependencies(OxcBoundariesDependencies),
     OxcBranchesSharingCode(OxcBranchesSharingCode),
     OxcConstComparisons(OxcConstComparisons),
+    OxcCssNoDuplicateProperties(OxcCssNoDuplicateProperties),
+    OxcCssNoEmptyBlocks(OxcCssNoEmptyBlocks),
+    OxcCssNoImportant(OxcCssNoImportant),
+    OxcDependBanDependencies(OxcDependBanDependencies),
+    OxcDetectBufferNoassert(OxcDetectBufferNoassert),
+    OxcDetectChildProcess(OxcDetectChildProcess),
+    OxcDetectDisableMustacheEscape(OxcDetectDisableMustacheEscape),
+    OxcDetectEvalWithExpression(OxcDetectEvalWithExpression),
+    OxcDetectNewBuffer(OxcDetectNewBuffer),
+    OxcDetectNoCsrfBeforeMethodOverride(OxcDetectNoCsrfBeforeMethodOverride),
+    OxcDetectNonLiteralFsFilename(OxcDetectNonLiteralFsFilename),
+    OxcDetectNonLiteralRegexp(OxcDetectNonLiteralRegexp),
+    OxcDetectNonLiteralRequire(OxcDetectNonLiteralRequire),
     OxcDetectObjectInjection(OxcDetectObjectInjection),
+    OxcDetectPossibleTimingAttacks(OxcDetectPossibleTimingAttacks),
+    OxcDetectPseudoRandomBytes(OxcDetectPseudoRandomBytes),
+    OxcDetectUnsafeRegex(OxcDetectUnsafeRegex),
     OxcDoubleComparisons(OxcDoubleComparisons),
     OxcErasingOp(OxcErasingOp),
     OxcFilenameNamingConvention(OxcFilenameNamingConvention),
     OxcFolderNamingConvention(OxcFolderNamingConvention),
     OxcIdenticalKeys(OxcIdenticalKeys),
+    OxcIdenticalPlaceholders(OxcIdenticalPlaceholders),
+    OxcJsonNoComments(OxcJsonNoComments),
+    OxcJsonNoDuplicateKeys(OxcJsonNoDuplicateKeys),
+    OxcJsonNoTrailingCommas(OxcJsonNoTrailingCommas),
     OxcJsonParseValidation(OxcJsonParseValidation),
     OxcMisrefactoredAssignOp(OxcMisrefactoredAssignOp),
     OxcMissingThrow(OxcMissingThrow),
@@ -1378,18 +1436,25 @@ pub enum RuleEnum {
     OxcNoBarrelFile(OxcNoBarrelFile),
     OxcNoBlockInInline(OxcNoBlockInInline),
     OxcNoConstEnum(OxcNoConstEnum),
+    OxcNoCreateRef(OxcNoCreateRef),
+    OxcNoDefaultProps(OxcNoDefaultProps),
     OxcNoInlineTypeAnnotations(OxcNoInlineTypeAnnotations),
+    OxcNoLeakedConditionalRendering(OxcNoLeakedConditionalRendering),
     OxcNoLiteralString(OxcNoLiteralString),
     OxcNoMapSpread(OxcNoMapSpread),
+    OxcNoNestedComponents(OxcNoNestedComponents),
     OxcNoOptionalChaining(OxcNoOptionalChaining),
+    OxcNoPropTypes(OxcNoPropTypes),
     OxcNoRestSpreadProperties(OxcNoRestSpreadProperties),
     OxcNoSecrets(OxcNoSecrets),
     OxcNoThisInExportedFunction(OxcNoThisInExportedFunction),
     OxcNoUnknown(OxcNoUnknown),
     OxcNoUnknownFiles(OxcNoUnknownFiles),
+    OxcNoUnstableDefaultProps(OxcNoUnstableDefaultProps),
     OxcNumberArgOutOfRange(OxcNumberArgOutOfRange),
     OxcOnlyUsedInRecursion(OxcOnlyUsedInRecursion),
     OxcOptimizeRegex(OxcOptimizeRegex),
+    OxcPackageJsonNoDuplicateDependencies(OxcPackageJsonNoDuplicateDependencies),
     OxcPackageJsonNoEmptyFields(OxcPackageJsonNoEmptyFields),
     OxcPackageJsonNoRedundantPublishConfig(OxcPackageJsonNoRedundantPublishConfig),
     OxcPackageJsonOrderProperties(OxcPackageJsonOrderProperties),
@@ -1399,6 +1464,8 @@ pub enum RuleEnum {
     OxcPackageJsonSortCollections(OxcPackageJsonSortCollections),
     OxcPackageJsonValidBin(OxcPackageJsonValidBin),
     OxcPackageJsonValidDescription(OxcPackageJsonValidDescription),
+    OxcPackageJsonValidEngines(OxcPackageJsonValidEngines),
+    OxcPackageJsonValidKeywords(OxcPackageJsonValidKeywords),
     OxcPackageJsonValidLicense(OxcPackageJsonValidLicense),
     OxcPackageJsonValidMan(OxcPackageJsonValidMan),
     OxcPackageJsonValidName(OxcPackageJsonValidName),
@@ -1406,7 +1473,16 @@ pub enum RuleEnum {
     OxcPackageJsonValidRepository(OxcPackageJsonValidRepository),
     OxcPackageJsonValidType(OxcPackageJsonValidType),
     OxcPackageJsonValidVersion(OxcPackageJsonValidVersion),
+    OxcPreferShorthandBoolean(OxcPreferShorthandBoolean),
+    OxcSortEnums(OxcSortEnums),
+    OxcSortImports(OxcSortImports),
     OxcSortInterfaces(OxcSortInterfaces),
+    OxcSortIntersectionTypes(OxcSortIntersectionTypes),
+    OxcSortJsxProps(OxcSortJsxProps),
+    OxcSortNamedExports(OxcSortNamedExports),
+    OxcSortNamedImports(OxcSortNamedImports),
+    OxcSortObjectTypes(OxcSortObjectTypes),
+    OxcSortObjects(OxcSortObjects),
     OxcSortSwitchCase(OxcSortSwitchCase),
     OxcSortUnionTypes(OxcSortUnionTypes),
     OxcSortedJsonKeys(OxcSortedJsonKeys),
@@ -2193,13 +2269,34 @@ const OXC_BAD_REPLACE_ALL_ARG_ID: usize = OXC_BAD_OBJECT_LITERAL_COMPARISON_ID +
 const OXC_BOUNDARIES_DEPENDENCIES_ID: usize = OXC_BAD_REPLACE_ALL_ARG_ID + 1usize;
 const OXC_BRANCHES_SHARING_CODE_ID: usize = OXC_BOUNDARIES_DEPENDENCIES_ID + 1usize;
 const OXC_CONST_COMPARISONS_ID: usize = OXC_BRANCHES_SHARING_CODE_ID + 1usize;
-const OXC_DETECT_OBJECT_INJECTION_ID: usize = OXC_CONST_COMPARISONS_ID + 1usize;
-const OXC_DOUBLE_COMPARISONS_ID: usize = OXC_DETECT_OBJECT_INJECTION_ID + 1usize;
+const OXC_CSS_NO_DUPLICATE_PROPERTIES_ID: usize = OXC_CONST_COMPARISONS_ID + 1usize;
+const OXC_CSS_NO_EMPTY_BLOCKS_ID: usize = OXC_CSS_NO_DUPLICATE_PROPERTIES_ID + 1usize;
+const OXC_CSS_NO_IMPORTANT_ID: usize = OXC_CSS_NO_EMPTY_BLOCKS_ID + 1usize;
+const OXC_DEPEND_BAN_DEPENDENCIES_ID: usize = OXC_CSS_NO_IMPORTANT_ID + 1usize;
+const OXC_DETECT_BUFFER_NOASSERT_ID: usize = OXC_DEPEND_BAN_DEPENDENCIES_ID + 1usize;
+const OXC_DETECT_CHILD_PROCESS_ID: usize = OXC_DETECT_BUFFER_NOASSERT_ID + 1usize;
+const OXC_DETECT_DISABLE_MUSTACHE_ESCAPE_ID: usize = OXC_DETECT_CHILD_PROCESS_ID + 1usize;
+const OXC_DETECT_EVAL_WITH_EXPRESSION_ID: usize = OXC_DETECT_DISABLE_MUSTACHE_ESCAPE_ID + 1usize;
+const OXC_DETECT_NEW_BUFFER_ID: usize = OXC_DETECT_EVAL_WITH_EXPRESSION_ID + 1usize;
+const OXC_DETECT_NO_CSRF_BEFORE_METHOD_OVERRIDE_ID: usize = OXC_DETECT_NEW_BUFFER_ID + 1usize;
+const OXC_DETECT_NON_LITERAL_FS_FILENAME_ID: usize =
+    OXC_DETECT_NO_CSRF_BEFORE_METHOD_OVERRIDE_ID + 1usize;
+const OXC_DETECT_NON_LITERAL_REGEXP_ID: usize = OXC_DETECT_NON_LITERAL_FS_FILENAME_ID + 1usize;
+const OXC_DETECT_NON_LITERAL_REQUIRE_ID: usize = OXC_DETECT_NON_LITERAL_REGEXP_ID + 1usize;
+const OXC_DETECT_OBJECT_INJECTION_ID: usize = OXC_DETECT_NON_LITERAL_REQUIRE_ID + 1usize;
+const OXC_DETECT_POSSIBLE_TIMING_ATTACKS_ID: usize = OXC_DETECT_OBJECT_INJECTION_ID + 1usize;
+const OXC_DETECT_PSEUDO_RANDOM_BYTES_ID: usize = OXC_DETECT_POSSIBLE_TIMING_ATTACKS_ID + 1usize;
+const OXC_DETECT_UNSAFE_REGEX_ID: usize = OXC_DETECT_PSEUDO_RANDOM_BYTES_ID + 1usize;
+const OXC_DOUBLE_COMPARISONS_ID: usize = OXC_DETECT_UNSAFE_REGEX_ID + 1usize;
 const OXC_ERASING_OP_ID: usize = OXC_DOUBLE_COMPARISONS_ID + 1usize;
 const OXC_FILENAME_NAMING_CONVENTION_ID: usize = OXC_ERASING_OP_ID + 1usize;
 const OXC_FOLDER_NAMING_CONVENTION_ID: usize = OXC_FILENAME_NAMING_CONVENTION_ID + 1usize;
 const OXC_IDENTICAL_KEYS_ID: usize = OXC_FOLDER_NAMING_CONVENTION_ID + 1usize;
-const OXC_JSON_PARSE_VALIDATION_ID: usize = OXC_IDENTICAL_KEYS_ID + 1usize;
+const OXC_IDENTICAL_PLACEHOLDERS_ID: usize = OXC_IDENTICAL_KEYS_ID + 1usize;
+const OXC_JSON_NO_COMMENTS_ID: usize = OXC_IDENTICAL_PLACEHOLDERS_ID + 1usize;
+const OXC_JSON_NO_DUPLICATE_KEYS_ID: usize = OXC_JSON_NO_COMMENTS_ID + 1usize;
+const OXC_JSON_NO_TRAILING_COMMAS_ID: usize = OXC_JSON_NO_DUPLICATE_KEYS_ID + 1usize;
+const OXC_JSON_PARSE_VALIDATION_ID: usize = OXC_JSON_NO_TRAILING_COMMAS_ID + 1usize;
 const OXC_MISREFACTORED_ASSIGN_OP_ID: usize = OXC_JSON_PARSE_VALIDATION_ID + 1usize;
 const OXC_MISSING_THROW_ID: usize = OXC_MISREFACTORED_ASSIGN_OP_ID + 1usize;
 const OXC_NO_ACCUMULATING_SPREAD_ID: usize = OXC_MISSING_THROW_ID + 1usize;
@@ -2208,19 +2305,27 @@ const OXC_NO_ASYNC_ENDPOINT_HANDLERS_ID: usize = OXC_NO_ASYNC_AWAIT_ID + 1usize;
 const OXC_NO_BARREL_FILE_ID: usize = OXC_NO_ASYNC_ENDPOINT_HANDLERS_ID + 1usize;
 const OXC_NO_BLOCK_IN_INLINE_ID: usize = OXC_NO_BARREL_FILE_ID + 1usize;
 const OXC_NO_CONST_ENUM_ID: usize = OXC_NO_BLOCK_IN_INLINE_ID + 1usize;
-const OXC_NO_INLINE_TYPE_ANNOTATIONS_ID: usize = OXC_NO_CONST_ENUM_ID + 1usize;
-const OXC_NO_LITERAL_STRING_ID: usize = OXC_NO_INLINE_TYPE_ANNOTATIONS_ID + 1usize;
+const OXC_NO_CREATE_REF_ID: usize = OXC_NO_CONST_ENUM_ID + 1usize;
+const OXC_NO_DEFAULT_PROPS_ID: usize = OXC_NO_CREATE_REF_ID + 1usize;
+const OXC_NO_INLINE_TYPE_ANNOTATIONS_ID: usize = OXC_NO_DEFAULT_PROPS_ID + 1usize;
+const OXC_NO_LEAKED_CONDITIONAL_RENDERING_ID: usize = OXC_NO_INLINE_TYPE_ANNOTATIONS_ID + 1usize;
+const OXC_NO_LITERAL_STRING_ID: usize = OXC_NO_LEAKED_CONDITIONAL_RENDERING_ID + 1usize;
 const OXC_NO_MAP_SPREAD_ID: usize = OXC_NO_LITERAL_STRING_ID + 1usize;
-const OXC_NO_OPTIONAL_CHAINING_ID: usize = OXC_NO_MAP_SPREAD_ID + 1usize;
-const OXC_NO_REST_SPREAD_PROPERTIES_ID: usize = OXC_NO_OPTIONAL_CHAINING_ID + 1usize;
+const OXC_NO_NESTED_COMPONENTS_ID: usize = OXC_NO_MAP_SPREAD_ID + 1usize;
+const OXC_NO_OPTIONAL_CHAINING_ID: usize = OXC_NO_NESTED_COMPONENTS_ID + 1usize;
+const OXC_NO_PROP_TYPES_ID: usize = OXC_NO_OPTIONAL_CHAINING_ID + 1usize;
+const OXC_NO_REST_SPREAD_PROPERTIES_ID: usize = OXC_NO_PROP_TYPES_ID + 1usize;
 const OXC_NO_SECRETS_ID: usize = OXC_NO_REST_SPREAD_PROPERTIES_ID + 1usize;
 const OXC_NO_THIS_IN_EXPORTED_FUNCTION_ID: usize = OXC_NO_SECRETS_ID + 1usize;
 const OXC_NO_UNKNOWN_ID: usize = OXC_NO_THIS_IN_EXPORTED_FUNCTION_ID + 1usize;
 const OXC_NO_UNKNOWN_FILES_ID: usize = OXC_NO_UNKNOWN_ID + 1usize;
-const OXC_NUMBER_ARG_OUT_OF_RANGE_ID: usize = OXC_NO_UNKNOWN_FILES_ID + 1usize;
+const OXC_NO_UNSTABLE_DEFAULT_PROPS_ID: usize = OXC_NO_UNKNOWN_FILES_ID + 1usize;
+const OXC_NUMBER_ARG_OUT_OF_RANGE_ID: usize = OXC_NO_UNSTABLE_DEFAULT_PROPS_ID + 1usize;
 const OXC_ONLY_USED_IN_RECURSION_ID: usize = OXC_NUMBER_ARG_OUT_OF_RANGE_ID + 1usize;
 const OXC_OPTIMIZE_REGEX_ID: usize = OXC_ONLY_USED_IN_RECURSION_ID + 1usize;
-const OXC_PACKAGE_JSON_NO_EMPTY_FIELDS_ID: usize = OXC_OPTIMIZE_REGEX_ID + 1usize;
+const OXC_PACKAGE_JSON_NO_DUPLICATE_DEPENDENCIES_ID: usize = OXC_OPTIMIZE_REGEX_ID + 1usize;
+const OXC_PACKAGE_JSON_NO_EMPTY_FIELDS_ID: usize =
+    OXC_PACKAGE_JSON_NO_DUPLICATE_DEPENDENCIES_ID + 1usize;
 const OXC_PACKAGE_JSON_NO_REDUNDANT_PUBLISH_CONFIG_ID: usize =
     OXC_PACKAGE_JSON_NO_EMPTY_FIELDS_ID + 1usize;
 const OXC_PACKAGE_JSON_ORDER_PROPERTIES_ID: usize =
@@ -2232,15 +2337,26 @@ const OXC_PACKAGE_JSON_REQUIRE_VERSION_ID: usize = OXC_PACKAGE_JSON_REQUIRE_TYPE
 const OXC_PACKAGE_JSON_SORT_COLLECTIONS_ID: usize = OXC_PACKAGE_JSON_REQUIRE_VERSION_ID + 1usize;
 const OXC_PACKAGE_JSON_VALID_BIN_ID: usize = OXC_PACKAGE_JSON_SORT_COLLECTIONS_ID + 1usize;
 const OXC_PACKAGE_JSON_VALID_DESCRIPTION_ID: usize = OXC_PACKAGE_JSON_VALID_BIN_ID + 1usize;
-const OXC_PACKAGE_JSON_VALID_LICENSE_ID: usize = OXC_PACKAGE_JSON_VALID_DESCRIPTION_ID + 1usize;
+const OXC_PACKAGE_JSON_VALID_ENGINES_ID: usize = OXC_PACKAGE_JSON_VALID_DESCRIPTION_ID + 1usize;
+const OXC_PACKAGE_JSON_VALID_KEYWORDS_ID: usize = OXC_PACKAGE_JSON_VALID_ENGINES_ID + 1usize;
+const OXC_PACKAGE_JSON_VALID_LICENSE_ID: usize = OXC_PACKAGE_JSON_VALID_KEYWORDS_ID + 1usize;
 const OXC_PACKAGE_JSON_VALID_MAN_ID: usize = OXC_PACKAGE_JSON_VALID_LICENSE_ID + 1usize;
 const OXC_PACKAGE_JSON_VALID_NAME_ID: usize = OXC_PACKAGE_JSON_VALID_MAN_ID + 1usize;
 const OXC_PACKAGE_JSON_VALID_PRIVATE_ID: usize = OXC_PACKAGE_JSON_VALID_NAME_ID + 1usize;
 const OXC_PACKAGE_JSON_VALID_REPOSITORY_ID: usize = OXC_PACKAGE_JSON_VALID_PRIVATE_ID + 1usize;
 const OXC_PACKAGE_JSON_VALID_TYPE_ID: usize = OXC_PACKAGE_JSON_VALID_REPOSITORY_ID + 1usize;
 const OXC_PACKAGE_JSON_VALID_VERSION_ID: usize = OXC_PACKAGE_JSON_VALID_TYPE_ID + 1usize;
-const OXC_SORT_INTERFACES_ID: usize = OXC_PACKAGE_JSON_VALID_VERSION_ID + 1usize;
-const OXC_SORT_SWITCH_CASE_ID: usize = OXC_SORT_INTERFACES_ID + 1usize;
+const OXC_PREFER_SHORTHAND_BOOLEAN_ID: usize = OXC_PACKAGE_JSON_VALID_VERSION_ID + 1usize;
+const OXC_SORT_ENUMS_ID: usize = OXC_PREFER_SHORTHAND_BOOLEAN_ID + 1usize;
+const OXC_SORT_IMPORTS_ID: usize = OXC_SORT_ENUMS_ID + 1usize;
+const OXC_SORT_INTERFACES_ID: usize = OXC_SORT_IMPORTS_ID + 1usize;
+const OXC_SORT_INTERSECTION_TYPES_ID: usize = OXC_SORT_INTERFACES_ID + 1usize;
+const OXC_SORT_JSX_PROPS_ID: usize = OXC_SORT_INTERSECTION_TYPES_ID + 1usize;
+const OXC_SORT_NAMED_EXPORTS_ID: usize = OXC_SORT_JSX_PROPS_ID + 1usize;
+const OXC_SORT_NAMED_IMPORTS_ID: usize = OXC_SORT_NAMED_EXPORTS_ID + 1usize;
+const OXC_SORT_OBJECT_TYPES_ID: usize = OXC_SORT_NAMED_IMPORTS_ID + 1usize;
+const OXC_SORT_OBJECTS_ID: usize = OXC_SORT_OBJECT_TYPES_ID + 1usize;
+const OXC_SORT_SWITCH_CASE_ID: usize = OXC_SORT_OBJECTS_ID + 1usize;
 const OXC_SORT_UNION_TYPES_ID: usize = OXC_SORT_SWITCH_CASE_ID + 1usize;
 const OXC_SORTED_JSON_KEYS_ID: usize = OXC_SORT_UNION_TYPES_ID + 1usize;
 const OXC_UNINVOKED_ARRAY_CALLBACK_ID: usize = OXC_SORTED_JSON_KEYS_ID + 1usize;
@@ -3055,12 +3171,34 @@ impl RuleEnum {
             Self::OxcBoundariesDependencies(_) => OXC_BOUNDARIES_DEPENDENCIES_ID,
             Self::OxcBranchesSharingCode(_) => OXC_BRANCHES_SHARING_CODE_ID,
             Self::OxcConstComparisons(_) => OXC_CONST_COMPARISONS_ID,
+            Self::OxcCssNoDuplicateProperties(_) => OXC_CSS_NO_DUPLICATE_PROPERTIES_ID,
+            Self::OxcCssNoEmptyBlocks(_) => OXC_CSS_NO_EMPTY_BLOCKS_ID,
+            Self::OxcCssNoImportant(_) => OXC_CSS_NO_IMPORTANT_ID,
+            Self::OxcDependBanDependencies(_) => OXC_DEPEND_BAN_DEPENDENCIES_ID,
+            Self::OxcDetectBufferNoassert(_) => OXC_DETECT_BUFFER_NOASSERT_ID,
+            Self::OxcDetectChildProcess(_) => OXC_DETECT_CHILD_PROCESS_ID,
+            Self::OxcDetectDisableMustacheEscape(_) => OXC_DETECT_DISABLE_MUSTACHE_ESCAPE_ID,
+            Self::OxcDetectEvalWithExpression(_) => OXC_DETECT_EVAL_WITH_EXPRESSION_ID,
+            Self::OxcDetectNewBuffer(_) => OXC_DETECT_NEW_BUFFER_ID,
+            Self::OxcDetectNoCsrfBeforeMethodOverride(_) => {
+                OXC_DETECT_NO_CSRF_BEFORE_METHOD_OVERRIDE_ID
+            }
+            Self::OxcDetectNonLiteralFsFilename(_) => OXC_DETECT_NON_LITERAL_FS_FILENAME_ID,
+            Self::OxcDetectNonLiteralRegexp(_) => OXC_DETECT_NON_LITERAL_REGEXP_ID,
+            Self::OxcDetectNonLiteralRequire(_) => OXC_DETECT_NON_LITERAL_REQUIRE_ID,
             Self::OxcDetectObjectInjection(_) => OXC_DETECT_OBJECT_INJECTION_ID,
+            Self::OxcDetectPossibleTimingAttacks(_) => OXC_DETECT_POSSIBLE_TIMING_ATTACKS_ID,
+            Self::OxcDetectPseudoRandomBytes(_) => OXC_DETECT_PSEUDO_RANDOM_BYTES_ID,
+            Self::OxcDetectUnsafeRegex(_) => OXC_DETECT_UNSAFE_REGEX_ID,
             Self::OxcDoubleComparisons(_) => OXC_DOUBLE_COMPARISONS_ID,
             Self::OxcErasingOp(_) => OXC_ERASING_OP_ID,
             Self::OxcFilenameNamingConvention(_) => OXC_FILENAME_NAMING_CONVENTION_ID,
             Self::OxcFolderNamingConvention(_) => OXC_FOLDER_NAMING_CONVENTION_ID,
             Self::OxcIdenticalKeys(_) => OXC_IDENTICAL_KEYS_ID,
+            Self::OxcIdenticalPlaceholders(_) => OXC_IDENTICAL_PLACEHOLDERS_ID,
+            Self::OxcJsonNoComments(_) => OXC_JSON_NO_COMMENTS_ID,
+            Self::OxcJsonNoDuplicateKeys(_) => OXC_JSON_NO_DUPLICATE_KEYS_ID,
+            Self::OxcJsonNoTrailingCommas(_) => OXC_JSON_NO_TRAILING_COMMAS_ID,
             Self::OxcJsonParseValidation(_) => OXC_JSON_PARSE_VALIDATION_ID,
             Self::OxcMisrefactoredAssignOp(_) => OXC_MISREFACTORED_ASSIGN_OP_ID,
             Self::OxcMissingThrow(_) => OXC_MISSING_THROW_ID,
@@ -3070,18 +3208,27 @@ impl RuleEnum {
             Self::OxcNoBarrelFile(_) => OXC_NO_BARREL_FILE_ID,
             Self::OxcNoBlockInInline(_) => OXC_NO_BLOCK_IN_INLINE_ID,
             Self::OxcNoConstEnum(_) => OXC_NO_CONST_ENUM_ID,
+            Self::OxcNoCreateRef(_) => OXC_NO_CREATE_REF_ID,
+            Self::OxcNoDefaultProps(_) => OXC_NO_DEFAULT_PROPS_ID,
             Self::OxcNoInlineTypeAnnotations(_) => OXC_NO_INLINE_TYPE_ANNOTATIONS_ID,
+            Self::OxcNoLeakedConditionalRendering(_) => OXC_NO_LEAKED_CONDITIONAL_RENDERING_ID,
             Self::OxcNoLiteralString(_) => OXC_NO_LITERAL_STRING_ID,
             Self::OxcNoMapSpread(_) => OXC_NO_MAP_SPREAD_ID,
+            Self::OxcNoNestedComponents(_) => OXC_NO_NESTED_COMPONENTS_ID,
             Self::OxcNoOptionalChaining(_) => OXC_NO_OPTIONAL_CHAINING_ID,
+            Self::OxcNoPropTypes(_) => OXC_NO_PROP_TYPES_ID,
             Self::OxcNoRestSpreadProperties(_) => OXC_NO_REST_SPREAD_PROPERTIES_ID,
             Self::OxcNoSecrets(_) => OXC_NO_SECRETS_ID,
             Self::OxcNoThisInExportedFunction(_) => OXC_NO_THIS_IN_EXPORTED_FUNCTION_ID,
             Self::OxcNoUnknown(_) => OXC_NO_UNKNOWN_ID,
             Self::OxcNoUnknownFiles(_) => OXC_NO_UNKNOWN_FILES_ID,
+            Self::OxcNoUnstableDefaultProps(_) => OXC_NO_UNSTABLE_DEFAULT_PROPS_ID,
             Self::OxcNumberArgOutOfRange(_) => OXC_NUMBER_ARG_OUT_OF_RANGE_ID,
             Self::OxcOnlyUsedInRecursion(_) => OXC_ONLY_USED_IN_RECURSION_ID,
             Self::OxcOptimizeRegex(_) => OXC_OPTIMIZE_REGEX_ID,
+            Self::OxcPackageJsonNoDuplicateDependencies(_) => {
+                OXC_PACKAGE_JSON_NO_DUPLICATE_DEPENDENCIES_ID
+            }
             Self::OxcPackageJsonNoEmptyFields(_) => OXC_PACKAGE_JSON_NO_EMPTY_FIELDS_ID,
             Self::OxcPackageJsonNoRedundantPublishConfig(_) => {
                 OXC_PACKAGE_JSON_NO_REDUNDANT_PUBLISH_CONFIG_ID
@@ -3093,6 +3240,8 @@ impl RuleEnum {
             Self::OxcPackageJsonSortCollections(_) => OXC_PACKAGE_JSON_SORT_COLLECTIONS_ID,
             Self::OxcPackageJsonValidBin(_) => OXC_PACKAGE_JSON_VALID_BIN_ID,
             Self::OxcPackageJsonValidDescription(_) => OXC_PACKAGE_JSON_VALID_DESCRIPTION_ID,
+            Self::OxcPackageJsonValidEngines(_) => OXC_PACKAGE_JSON_VALID_ENGINES_ID,
+            Self::OxcPackageJsonValidKeywords(_) => OXC_PACKAGE_JSON_VALID_KEYWORDS_ID,
             Self::OxcPackageJsonValidLicense(_) => OXC_PACKAGE_JSON_VALID_LICENSE_ID,
             Self::OxcPackageJsonValidMan(_) => OXC_PACKAGE_JSON_VALID_MAN_ID,
             Self::OxcPackageJsonValidName(_) => OXC_PACKAGE_JSON_VALID_NAME_ID,
@@ -3100,7 +3249,16 @@ impl RuleEnum {
             Self::OxcPackageJsonValidRepository(_) => OXC_PACKAGE_JSON_VALID_REPOSITORY_ID,
             Self::OxcPackageJsonValidType(_) => OXC_PACKAGE_JSON_VALID_TYPE_ID,
             Self::OxcPackageJsonValidVersion(_) => OXC_PACKAGE_JSON_VALID_VERSION_ID,
+            Self::OxcPreferShorthandBoolean(_) => OXC_PREFER_SHORTHAND_BOOLEAN_ID,
+            Self::OxcSortEnums(_) => OXC_SORT_ENUMS_ID,
+            Self::OxcSortImports(_) => OXC_SORT_IMPORTS_ID,
             Self::OxcSortInterfaces(_) => OXC_SORT_INTERFACES_ID,
+            Self::OxcSortIntersectionTypes(_) => OXC_SORT_INTERSECTION_TYPES_ID,
+            Self::OxcSortJsxProps(_) => OXC_SORT_JSX_PROPS_ID,
+            Self::OxcSortNamedExports(_) => OXC_SORT_NAMED_EXPORTS_ID,
+            Self::OxcSortNamedImports(_) => OXC_SORT_NAMED_IMPORTS_ID,
+            Self::OxcSortObjectTypes(_) => OXC_SORT_OBJECT_TYPES_ID,
+            Self::OxcSortObjects(_) => OXC_SORT_OBJECTS_ID,
             Self::OxcSortSwitchCase(_) => OXC_SORT_SWITCH_CASE_ID,
             Self::OxcSortUnionTypes(_) => OXC_SORT_UNION_TYPES_ID,
             Self::OxcSortedJsonKeys(_) => OXC_SORTED_JSON_KEYS_ID,
@@ -3904,12 +4062,34 @@ impl RuleEnum {
             Self::OxcBoundariesDependencies(_) => OxcBoundariesDependencies::NAME,
             Self::OxcBranchesSharingCode(_) => OxcBranchesSharingCode::NAME,
             Self::OxcConstComparisons(_) => OxcConstComparisons::NAME,
+            Self::OxcCssNoDuplicateProperties(_) => OxcCssNoDuplicateProperties::NAME,
+            Self::OxcCssNoEmptyBlocks(_) => OxcCssNoEmptyBlocks::NAME,
+            Self::OxcCssNoImportant(_) => OxcCssNoImportant::NAME,
+            Self::OxcDependBanDependencies(_) => OxcDependBanDependencies::NAME,
+            Self::OxcDetectBufferNoassert(_) => OxcDetectBufferNoassert::NAME,
+            Self::OxcDetectChildProcess(_) => OxcDetectChildProcess::NAME,
+            Self::OxcDetectDisableMustacheEscape(_) => OxcDetectDisableMustacheEscape::NAME,
+            Self::OxcDetectEvalWithExpression(_) => OxcDetectEvalWithExpression::NAME,
+            Self::OxcDetectNewBuffer(_) => OxcDetectNewBuffer::NAME,
+            Self::OxcDetectNoCsrfBeforeMethodOverride(_) => {
+                OxcDetectNoCsrfBeforeMethodOverride::NAME
+            }
+            Self::OxcDetectNonLiteralFsFilename(_) => OxcDetectNonLiteralFsFilename::NAME,
+            Self::OxcDetectNonLiteralRegexp(_) => OxcDetectNonLiteralRegexp::NAME,
+            Self::OxcDetectNonLiteralRequire(_) => OxcDetectNonLiteralRequire::NAME,
             Self::OxcDetectObjectInjection(_) => OxcDetectObjectInjection::NAME,
+            Self::OxcDetectPossibleTimingAttacks(_) => OxcDetectPossibleTimingAttacks::NAME,
+            Self::OxcDetectPseudoRandomBytes(_) => OxcDetectPseudoRandomBytes::NAME,
+            Self::OxcDetectUnsafeRegex(_) => OxcDetectUnsafeRegex::NAME,
             Self::OxcDoubleComparisons(_) => OxcDoubleComparisons::NAME,
             Self::OxcErasingOp(_) => OxcErasingOp::NAME,
             Self::OxcFilenameNamingConvention(_) => OxcFilenameNamingConvention::NAME,
             Self::OxcFolderNamingConvention(_) => OxcFolderNamingConvention::NAME,
             Self::OxcIdenticalKeys(_) => OxcIdenticalKeys::NAME,
+            Self::OxcIdenticalPlaceholders(_) => OxcIdenticalPlaceholders::NAME,
+            Self::OxcJsonNoComments(_) => OxcJsonNoComments::NAME,
+            Self::OxcJsonNoDuplicateKeys(_) => OxcJsonNoDuplicateKeys::NAME,
+            Self::OxcJsonNoTrailingCommas(_) => OxcJsonNoTrailingCommas::NAME,
             Self::OxcJsonParseValidation(_) => OxcJsonParseValidation::NAME,
             Self::OxcMisrefactoredAssignOp(_) => OxcMisrefactoredAssignOp::NAME,
             Self::OxcMissingThrow(_) => OxcMissingThrow::NAME,
@@ -3919,18 +4099,27 @@ impl RuleEnum {
             Self::OxcNoBarrelFile(_) => OxcNoBarrelFile::NAME,
             Self::OxcNoBlockInInline(_) => OxcNoBlockInInline::NAME,
             Self::OxcNoConstEnum(_) => OxcNoConstEnum::NAME,
+            Self::OxcNoCreateRef(_) => OxcNoCreateRef::NAME,
+            Self::OxcNoDefaultProps(_) => OxcNoDefaultProps::NAME,
             Self::OxcNoInlineTypeAnnotations(_) => OxcNoInlineTypeAnnotations::NAME,
+            Self::OxcNoLeakedConditionalRendering(_) => OxcNoLeakedConditionalRendering::NAME,
             Self::OxcNoLiteralString(_) => OxcNoLiteralString::NAME,
             Self::OxcNoMapSpread(_) => OxcNoMapSpread::NAME,
+            Self::OxcNoNestedComponents(_) => OxcNoNestedComponents::NAME,
             Self::OxcNoOptionalChaining(_) => OxcNoOptionalChaining::NAME,
+            Self::OxcNoPropTypes(_) => OxcNoPropTypes::NAME,
             Self::OxcNoRestSpreadProperties(_) => OxcNoRestSpreadProperties::NAME,
             Self::OxcNoSecrets(_) => OxcNoSecrets::NAME,
             Self::OxcNoThisInExportedFunction(_) => OxcNoThisInExportedFunction::NAME,
             Self::OxcNoUnknown(_) => OxcNoUnknown::NAME,
             Self::OxcNoUnknownFiles(_) => OxcNoUnknownFiles::NAME,
+            Self::OxcNoUnstableDefaultProps(_) => OxcNoUnstableDefaultProps::NAME,
             Self::OxcNumberArgOutOfRange(_) => OxcNumberArgOutOfRange::NAME,
             Self::OxcOnlyUsedInRecursion(_) => OxcOnlyUsedInRecursion::NAME,
             Self::OxcOptimizeRegex(_) => OxcOptimizeRegex::NAME,
+            Self::OxcPackageJsonNoDuplicateDependencies(_) => {
+                OxcPackageJsonNoDuplicateDependencies::NAME
+            }
             Self::OxcPackageJsonNoEmptyFields(_) => OxcPackageJsonNoEmptyFields::NAME,
             Self::OxcPackageJsonNoRedundantPublishConfig(_) => {
                 OxcPackageJsonNoRedundantPublishConfig::NAME
@@ -3942,6 +4131,8 @@ impl RuleEnum {
             Self::OxcPackageJsonSortCollections(_) => OxcPackageJsonSortCollections::NAME,
             Self::OxcPackageJsonValidBin(_) => OxcPackageJsonValidBin::NAME,
             Self::OxcPackageJsonValidDescription(_) => OxcPackageJsonValidDescription::NAME,
+            Self::OxcPackageJsonValidEngines(_) => OxcPackageJsonValidEngines::NAME,
+            Self::OxcPackageJsonValidKeywords(_) => OxcPackageJsonValidKeywords::NAME,
             Self::OxcPackageJsonValidLicense(_) => OxcPackageJsonValidLicense::NAME,
             Self::OxcPackageJsonValidMan(_) => OxcPackageJsonValidMan::NAME,
             Self::OxcPackageJsonValidName(_) => OxcPackageJsonValidName::NAME,
@@ -3949,7 +4140,16 @@ impl RuleEnum {
             Self::OxcPackageJsonValidRepository(_) => OxcPackageJsonValidRepository::NAME,
             Self::OxcPackageJsonValidType(_) => OxcPackageJsonValidType::NAME,
             Self::OxcPackageJsonValidVersion(_) => OxcPackageJsonValidVersion::NAME,
+            Self::OxcPreferShorthandBoolean(_) => OxcPreferShorthandBoolean::NAME,
+            Self::OxcSortEnums(_) => OxcSortEnums::NAME,
+            Self::OxcSortImports(_) => OxcSortImports::NAME,
             Self::OxcSortInterfaces(_) => OxcSortInterfaces::NAME,
+            Self::OxcSortIntersectionTypes(_) => OxcSortIntersectionTypes::NAME,
+            Self::OxcSortJsxProps(_) => OxcSortJsxProps::NAME,
+            Self::OxcSortNamedExports(_) => OxcSortNamedExports::NAME,
+            Self::OxcSortNamedImports(_) => OxcSortNamedImports::NAME,
+            Self::OxcSortObjectTypes(_) => OxcSortObjectTypes::NAME,
+            Self::OxcSortObjects(_) => OxcSortObjects::NAME,
             Self::OxcSortSwitchCase(_) => OxcSortSwitchCase::NAME,
             Self::OxcSortUnionTypes(_) => OxcSortUnionTypes::NAME,
             Self::OxcSortedJsonKeys(_) => OxcSortedJsonKeys::NAME,
@@ -4795,12 +4995,34 @@ impl RuleEnum {
             Self::OxcBoundariesDependencies(_) => OxcBoundariesDependencies::CATEGORY,
             Self::OxcBranchesSharingCode(_) => OxcBranchesSharingCode::CATEGORY,
             Self::OxcConstComparisons(_) => OxcConstComparisons::CATEGORY,
+            Self::OxcCssNoDuplicateProperties(_) => OxcCssNoDuplicateProperties::CATEGORY,
+            Self::OxcCssNoEmptyBlocks(_) => OxcCssNoEmptyBlocks::CATEGORY,
+            Self::OxcCssNoImportant(_) => OxcCssNoImportant::CATEGORY,
+            Self::OxcDependBanDependencies(_) => OxcDependBanDependencies::CATEGORY,
+            Self::OxcDetectBufferNoassert(_) => OxcDetectBufferNoassert::CATEGORY,
+            Self::OxcDetectChildProcess(_) => OxcDetectChildProcess::CATEGORY,
+            Self::OxcDetectDisableMustacheEscape(_) => OxcDetectDisableMustacheEscape::CATEGORY,
+            Self::OxcDetectEvalWithExpression(_) => OxcDetectEvalWithExpression::CATEGORY,
+            Self::OxcDetectNewBuffer(_) => OxcDetectNewBuffer::CATEGORY,
+            Self::OxcDetectNoCsrfBeforeMethodOverride(_) => {
+                OxcDetectNoCsrfBeforeMethodOverride::CATEGORY
+            }
+            Self::OxcDetectNonLiteralFsFilename(_) => OxcDetectNonLiteralFsFilename::CATEGORY,
+            Self::OxcDetectNonLiteralRegexp(_) => OxcDetectNonLiteralRegexp::CATEGORY,
+            Self::OxcDetectNonLiteralRequire(_) => OxcDetectNonLiteralRequire::CATEGORY,
             Self::OxcDetectObjectInjection(_) => OxcDetectObjectInjection::CATEGORY,
+            Self::OxcDetectPossibleTimingAttacks(_) => OxcDetectPossibleTimingAttacks::CATEGORY,
+            Self::OxcDetectPseudoRandomBytes(_) => OxcDetectPseudoRandomBytes::CATEGORY,
+            Self::OxcDetectUnsafeRegex(_) => OxcDetectUnsafeRegex::CATEGORY,
             Self::OxcDoubleComparisons(_) => OxcDoubleComparisons::CATEGORY,
             Self::OxcErasingOp(_) => OxcErasingOp::CATEGORY,
             Self::OxcFilenameNamingConvention(_) => OxcFilenameNamingConvention::CATEGORY,
             Self::OxcFolderNamingConvention(_) => OxcFolderNamingConvention::CATEGORY,
             Self::OxcIdenticalKeys(_) => OxcIdenticalKeys::CATEGORY,
+            Self::OxcIdenticalPlaceholders(_) => OxcIdenticalPlaceholders::CATEGORY,
+            Self::OxcJsonNoComments(_) => OxcJsonNoComments::CATEGORY,
+            Self::OxcJsonNoDuplicateKeys(_) => OxcJsonNoDuplicateKeys::CATEGORY,
+            Self::OxcJsonNoTrailingCommas(_) => OxcJsonNoTrailingCommas::CATEGORY,
             Self::OxcJsonParseValidation(_) => OxcJsonParseValidation::CATEGORY,
             Self::OxcMisrefactoredAssignOp(_) => OxcMisrefactoredAssignOp::CATEGORY,
             Self::OxcMissingThrow(_) => OxcMissingThrow::CATEGORY,
@@ -4810,18 +5032,27 @@ impl RuleEnum {
             Self::OxcNoBarrelFile(_) => OxcNoBarrelFile::CATEGORY,
             Self::OxcNoBlockInInline(_) => OxcNoBlockInInline::CATEGORY,
             Self::OxcNoConstEnum(_) => OxcNoConstEnum::CATEGORY,
+            Self::OxcNoCreateRef(_) => OxcNoCreateRef::CATEGORY,
+            Self::OxcNoDefaultProps(_) => OxcNoDefaultProps::CATEGORY,
             Self::OxcNoInlineTypeAnnotations(_) => OxcNoInlineTypeAnnotations::CATEGORY,
+            Self::OxcNoLeakedConditionalRendering(_) => OxcNoLeakedConditionalRendering::CATEGORY,
             Self::OxcNoLiteralString(_) => OxcNoLiteralString::CATEGORY,
             Self::OxcNoMapSpread(_) => OxcNoMapSpread::CATEGORY,
+            Self::OxcNoNestedComponents(_) => OxcNoNestedComponents::CATEGORY,
             Self::OxcNoOptionalChaining(_) => OxcNoOptionalChaining::CATEGORY,
+            Self::OxcNoPropTypes(_) => OxcNoPropTypes::CATEGORY,
             Self::OxcNoRestSpreadProperties(_) => OxcNoRestSpreadProperties::CATEGORY,
             Self::OxcNoSecrets(_) => OxcNoSecrets::CATEGORY,
             Self::OxcNoThisInExportedFunction(_) => OxcNoThisInExportedFunction::CATEGORY,
             Self::OxcNoUnknown(_) => OxcNoUnknown::CATEGORY,
             Self::OxcNoUnknownFiles(_) => OxcNoUnknownFiles::CATEGORY,
+            Self::OxcNoUnstableDefaultProps(_) => OxcNoUnstableDefaultProps::CATEGORY,
             Self::OxcNumberArgOutOfRange(_) => OxcNumberArgOutOfRange::CATEGORY,
             Self::OxcOnlyUsedInRecursion(_) => OxcOnlyUsedInRecursion::CATEGORY,
             Self::OxcOptimizeRegex(_) => OxcOptimizeRegex::CATEGORY,
+            Self::OxcPackageJsonNoDuplicateDependencies(_) => {
+                OxcPackageJsonNoDuplicateDependencies::CATEGORY
+            }
             Self::OxcPackageJsonNoEmptyFields(_) => OxcPackageJsonNoEmptyFields::CATEGORY,
             Self::OxcPackageJsonNoRedundantPublishConfig(_) => {
                 OxcPackageJsonNoRedundantPublishConfig::CATEGORY
@@ -4835,6 +5066,8 @@ impl RuleEnum {
             Self::OxcPackageJsonSortCollections(_) => OxcPackageJsonSortCollections::CATEGORY,
             Self::OxcPackageJsonValidBin(_) => OxcPackageJsonValidBin::CATEGORY,
             Self::OxcPackageJsonValidDescription(_) => OxcPackageJsonValidDescription::CATEGORY,
+            Self::OxcPackageJsonValidEngines(_) => OxcPackageJsonValidEngines::CATEGORY,
+            Self::OxcPackageJsonValidKeywords(_) => OxcPackageJsonValidKeywords::CATEGORY,
             Self::OxcPackageJsonValidLicense(_) => OxcPackageJsonValidLicense::CATEGORY,
             Self::OxcPackageJsonValidMan(_) => OxcPackageJsonValidMan::CATEGORY,
             Self::OxcPackageJsonValidName(_) => OxcPackageJsonValidName::CATEGORY,
@@ -4842,7 +5075,16 @@ impl RuleEnum {
             Self::OxcPackageJsonValidRepository(_) => OxcPackageJsonValidRepository::CATEGORY,
             Self::OxcPackageJsonValidType(_) => OxcPackageJsonValidType::CATEGORY,
             Self::OxcPackageJsonValidVersion(_) => OxcPackageJsonValidVersion::CATEGORY,
+            Self::OxcPreferShorthandBoolean(_) => OxcPreferShorthandBoolean::CATEGORY,
+            Self::OxcSortEnums(_) => OxcSortEnums::CATEGORY,
+            Self::OxcSortImports(_) => OxcSortImports::CATEGORY,
             Self::OxcSortInterfaces(_) => OxcSortInterfaces::CATEGORY,
+            Self::OxcSortIntersectionTypes(_) => OxcSortIntersectionTypes::CATEGORY,
+            Self::OxcSortJsxProps(_) => OxcSortJsxProps::CATEGORY,
+            Self::OxcSortNamedExports(_) => OxcSortNamedExports::CATEGORY,
+            Self::OxcSortNamedImports(_) => OxcSortNamedImports::CATEGORY,
+            Self::OxcSortObjectTypes(_) => OxcSortObjectTypes::CATEGORY,
+            Self::OxcSortObjects(_) => OxcSortObjects::CATEGORY,
             Self::OxcSortSwitchCase(_) => OxcSortSwitchCase::CATEGORY,
             Self::OxcSortUnionTypes(_) => OxcSortUnionTypes::CATEGORY,
             Self::OxcSortedJsonKeys(_) => OxcSortedJsonKeys::CATEGORY,
@@ -5655,12 +5897,34 @@ impl RuleEnum {
             Self::OxcBoundariesDependencies(_) => OxcBoundariesDependencies::FIX,
             Self::OxcBranchesSharingCode(_) => OxcBranchesSharingCode::FIX,
             Self::OxcConstComparisons(_) => OxcConstComparisons::FIX,
+            Self::OxcCssNoDuplicateProperties(_) => OxcCssNoDuplicateProperties::FIX,
+            Self::OxcCssNoEmptyBlocks(_) => OxcCssNoEmptyBlocks::FIX,
+            Self::OxcCssNoImportant(_) => OxcCssNoImportant::FIX,
+            Self::OxcDependBanDependencies(_) => OxcDependBanDependencies::FIX,
+            Self::OxcDetectBufferNoassert(_) => OxcDetectBufferNoassert::FIX,
+            Self::OxcDetectChildProcess(_) => OxcDetectChildProcess::FIX,
+            Self::OxcDetectDisableMustacheEscape(_) => OxcDetectDisableMustacheEscape::FIX,
+            Self::OxcDetectEvalWithExpression(_) => OxcDetectEvalWithExpression::FIX,
+            Self::OxcDetectNewBuffer(_) => OxcDetectNewBuffer::FIX,
+            Self::OxcDetectNoCsrfBeforeMethodOverride(_) => {
+                OxcDetectNoCsrfBeforeMethodOverride::FIX
+            }
+            Self::OxcDetectNonLiteralFsFilename(_) => OxcDetectNonLiteralFsFilename::FIX,
+            Self::OxcDetectNonLiteralRegexp(_) => OxcDetectNonLiteralRegexp::FIX,
+            Self::OxcDetectNonLiteralRequire(_) => OxcDetectNonLiteralRequire::FIX,
             Self::OxcDetectObjectInjection(_) => OxcDetectObjectInjection::FIX,
+            Self::OxcDetectPossibleTimingAttacks(_) => OxcDetectPossibleTimingAttacks::FIX,
+            Self::OxcDetectPseudoRandomBytes(_) => OxcDetectPseudoRandomBytes::FIX,
+            Self::OxcDetectUnsafeRegex(_) => OxcDetectUnsafeRegex::FIX,
             Self::OxcDoubleComparisons(_) => OxcDoubleComparisons::FIX,
             Self::OxcErasingOp(_) => OxcErasingOp::FIX,
             Self::OxcFilenameNamingConvention(_) => OxcFilenameNamingConvention::FIX,
             Self::OxcFolderNamingConvention(_) => OxcFolderNamingConvention::FIX,
             Self::OxcIdenticalKeys(_) => OxcIdenticalKeys::FIX,
+            Self::OxcIdenticalPlaceholders(_) => OxcIdenticalPlaceholders::FIX,
+            Self::OxcJsonNoComments(_) => OxcJsonNoComments::FIX,
+            Self::OxcJsonNoDuplicateKeys(_) => OxcJsonNoDuplicateKeys::FIX,
+            Self::OxcJsonNoTrailingCommas(_) => OxcJsonNoTrailingCommas::FIX,
             Self::OxcJsonParseValidation(_) => OxcJsonParseValidation::FIX,
             Self::OxcMisrefactoredAssignOp(_) => OxcMisrefactoredAssignOp::FIX,
             Self::OxcMissingThrow(_) => OxcMissingThrow::FIX,
@@ -5670,18 +5934,27 @@ impl RuleEnum {
             Self::OxcNoBarrelFile(_) => OxcNoBarrelFile::FIX,
             Self::OxcNoBlockInInline(_) => OxcNoBlockInInline::FIX,
             Self::OxcNoConstEnum(_) => OxcNoConstEnum::FIX,
+            Self::OxcNoCreateRef(_) => OxcNoCreateRef::FIX,
+            Self::OxcNoDefaultProps(_) => OxcNoDefaultProps::FIX,
             Self::OxcNoInlineTypeAnnotations(_) => OxcNoInlineTypeAnnotations::FIX,
+            Self::OxcNoLeakedConditionalRendering(_) => OxcNoLeakedConditionalRendering::FIX,
             Self::OxcNoLiteralString(_) => OxcNoLiteralString::FIX,
             Self::OxcNoMapSpread(_) => OxcNoMapSpread::FIX,
+            Self::OxcNoNestedComponents(_) => OxcNoNestedComponents::FIX,
             Self::OxcNoOptionalChaining(_) => OxcNoOptionalChaining::FIX,
+            Self::OxcNoPropTypes(_) => OxcNoPropTypes::FIX,
             Self::OxcNoRestSpreadProperties(_) => OxcNoRestSpreadProperties::FIX,
             Self::OxcNoSecrets(_) => OxcNoSecrets::FIX,
             Self::OxcNoThisInExportedFunction(_) => OxcNoThisInExportedFunction::FIX,
             Self::OxcNoUnknown(_) => OxcNoUnknown::FIX,
             Self::OxcNoUnknownFiles(_) => OxcNoUnknownFiles::FIX,
+            Self::OxcNoUnstableDefaultProps(_) => OxcNoUnstableDefaultProps::FIX,
             Self::OxcNumberArgOutOfRange(_) => OxcNumberArgOutOfRange::FIX,
             Self::OxcOnlyUsedInRecursion(_) => OxcOnlyUsedInRecursion::FIX,
             Self::OxcOptimizeRegex(_) => OxcOptimizeRegex::FIX,
+            Self::OxcPackageJsonNoDuplicateDependencies(_) => {
+                OxcPackageJsonNoDuplicateDependencies::FIX
+            }
             Self::OxcPackageJsonNoEmptyFields(_) => OxcPackageJsonNoEmptyFields::FIX,
             Self::OxcPackageJsonNoRedundantPublishConfig(_) => {
                 OxcPackageJsonNoRedundantPublishConfig::FIX
@@ -5693,6 +5966,8 @@ impl RuleEnum {
             Self::OxcPackageJsonSortCollections(_) => OxcPackageJsonSortCollections::FIX,
             Self::OxcPackageJsonValidBin(_) => OxcPackageJsonValidBin::FIX,
             Self::OxcPackageJsonValidDescription(_) => OxcPackageJsonValidDescription::FIX,
+            Self::OxcPackageJsonValidEngines(_) => OxcPackageJsonValidEngines::FIX,
+            Self::OxcPackageJsonValidKeywords(_) => OxcPackageJsonValidKeywords::FIX,
             Self::OxcPackageJsonValidLicense(_) => OxcPackageJsonValidLicense::FIX,
             Self::OxcPackageJsonValidMan(_) => OxcPackageJsonValidMan::FIX,
             Self::OxcPackageJsonValidName(_) => OxcPackageJsonValidName::FIX,
@@ -5700,7 +5975,16 @@ impl RuleEnum {
             Self::OxcPackageJsonValidRepository(_) => OxcPackageJsonValidRepository::FIX,
             Self::OxcPackageJsonValidType(_) => OxcPackageJsonValidType::FIX,
             Self::OxcPackageJsonValidVersion(_) => OxcPackageJsonValidVersion::FIX,
+            Self::OxcPreferShorthandBoolean(_) => OxcPreferShorthandBoolean::FIX,
+            Self::OxcSortEnums(_) => OxcSortEnums::FIX,
+            Self::OxcSortImports(_) => OxcSortImports::FIX,
             Self::OxcSortInterfaces(_) => OxcSortInterfaces::FIX,
+            Self::OxcSortIntersectionTypes(_) => OxcSortIntersectionTypes::FIX,
+            Self::OxcSortJsxProps(_) => OxcSortJsxProps::FIX,
+            Self::OxcSortNamedExports(_) => OxcSortNamedExports::FIX,
+            Self::OxcSortNamedImports(_) => OxcSortNamedImports::FIX,
+            Self::OxcSortObjectTypes(_) => OxcSortObjectTypes::FIX,
+            Self::OxcSortObjects(_) => OxcSortObjects::FIX,
             Self::OxcSortSwitchCase(_) => OxcSortSwitchCase::FIX,
             Self::OxcSortUnionTypes(_) => OxcSortUnionTypes::FIX,
             Self::OxcSortedJsonKeys(_) => OxcSortedJsonKeys::FIX,
@@ -6691,12 +6975,40 @@ impl RuleEnum {
             Self::OxcBoundariesDependencies(_) => OxcBoundariesDependencies::documentation(),
             Self::OxcBranchesSharingCode(_) => OxcBranchesSharingCode::documentation(),
             Self::OxcConstComparisons(_) => OxcConstComparisons::documentation(),
+            Self::OxcCssNoDuplicateProperties(_) => OxcCssNoDuplicateProperties::documentation(),
+            Self::OxcCssNoEmptyBlocks(_) => OxcCssNoEmptyBlocks::documentation(),
+            Self::OxcCssNoImportant(_) => OxcCssNoImportant::documentation(),
+            Self::OxcDependBanDependencies(_) => OxcDependBanDependencies::documentation(),
+            Self::OxcDetectBufferNoassert(_) => OxcDetectBufferNoassert::documentation(),
+            Self::OxcDetectChildProcess(_) => OxcDetectChildProcess::documentation(),
+            Self::OxcDetectDisableMustacheEscape(_) => {
+                OxcDetectDisableMustacheEscape::documentation()
+            }
+            Self::OxcDetectEvalWithExpression(_) => OxcDetectEvalWithExpression::documentation(),
+            Self::OxcDetectNewBuffer(_) => OxcDetectNewBuffer::documentation(),
+            Self::OxcDetectNoCsrfBeforeMethodOverride(_) => {
+                OxcDetectNoCsrfBeforeMethodOverride::documentation()
+            }
+            Self::OxcDetectNonLiteralFsFilename(_) => {
+                OxcDetectNonLiteralFsFilename::documentation()
+            }
+            Self::OxcDetectNonLiteralRegexp(_) => OxcDetectNonLiteralRegexp::documentation(),
+            Self::OxcDetectNonLiteralRequire(_) => OxcDetectNonLiteralRequire::documentation(),
             Self::OxcDetectObjectInjection(_) => OxcDetectObjectInjection::documentation(),
+            Self::OxcDetectPossibleTimingAttacks(_) => {
+                OxcDetectPossibleTimingAttacks::documentation()
+            }
+            Self::OxcDetectPseudoRandomBytes(_) => OxcDetectPseudoRandomBytes::documentation(),
+            Self::OxcDetectUnsafeRegex(_) => OxcDetectUnsafeRegex::documentation(),
             Self::OxcDoubleComparisons(_) => OxcDoubleComparisons::documentation(),
             Self::OxcErasingOp(_) => OxcErasingOp::documentation(),
             Self::OxcFilenameNamingConvention(_) => OxcFilenameNamingConvention::documentation(),
             Self::OxcFolderNamingConvention(_) => OxcFolderNamingConvention::documentation(),
             Self::OxcIdenticalKeys(_) => OxcIdenticalKeys::documentation(),
+            Self::OxcIdenticalPlaceholders(_) => OxcIdenticalPlaceholders::documentation(),
+            Self::OxcJsonNoComments(_) => OxcJsonNoComments::documentation(),
+            Self::OxcJsonNoDuplicateKeys(_) => OxcJsonNoDuplicateKeys::documentation(),
+            Self::OxcJsonNoTrailingCommas(_) => OxcJsonNoTrailingCommas::documentation(),
             Self::OxcJsonParseValidation(_) => OxcJsonParseValidation::documentation(),
             Self::OxcMisrefactoredAssignOp(_) => OxcMisrefactoredAssignOp::documentation(),
             Self::OxcMissingThrow(_) => OxcMissingThrow::documentation(),
@@ -6706,18 +7018,29 @@ impl RuleEnum {
             Self::OxcNoBarrelFile(_) => OxcNoBarrelFile::documentation(),
             Self::OxcNoBlockInInline(_) => OxcNoBlockInInline::documentation(),
             Self::OxcNoConstEnum(_) => OxcNoConstEnum::documentation(),
+            Self::OxcNoCreateRef(_) => OxcNoCreateRef::documentation(),
+            Self::OxcNoDefaultProps(_) => OxcNoDefaultProps::documentation(),
             Self::OxcNoInlineTypeAnnotations(_) => OxcNoInlineTypeAnnotations::documentation(),
+            Self::OxcNoLeakedConditionalRendering(_) => {
+                OxcNoLeakedConditionalRendering::documentation()
+            }
             Self::OxcNoLiteralString(_) => OxcNoLiteralString::documentation(),
             Self::OxcNoMapSpread(_) => OxcNoMapSpread::documentation(),
+            Self::OxcNoNestedComponents(_) => OxcNoNestedComponents::documentation(),
             Self::OxcNoOptionalChaining(_) => OxcNoOptionalChaining::documentation(),
+            Self::OxcNoPropTypes(_) => OxcNoPropTypes::documentation(),
             Self::OxcNoRestSpreadProperties(_) => OxcNoRestSpreadProperties::documentation(),
             Self::OxcNoSecrets(_) => OxcNoSecrets::documentation(),
             Self::OxcNoThisInExportedFunction(_) => OxcNoThisInExportedFunction::documentation(),
             Self::OxcNoUnknown(_) => OxcNoUnknown::documentation(),
             Self::OxcNoUnknownFiles(_) => OxcNoUnknownFiles::documentation(),
+            Self::OxcNoUnstableDefaultProps(_) => OxcNoUnstableDefaultProps::documentation(),
             Self::OxcNumberArgOutOfRange(_) => OxcNumberArgOutOfRange::documentation(),
             Self::OxcOnlyUsedInRecursion(_) => OxcOnlyUsedInRecursion::documentation(),
             Self::OxcOptimizeRegex(_) => OxcOptimizeRegex::documentation(),
+            Self::OxcPackageJsonNoDuplicateDependencies(_) => {
+                OxcPackageJsonNoDuplicateDependencies::documentation()
+            }
             Self::OxcPackageJsonNoEmptyFields(_) => OxcPackageJsonNoEmptyFields::documentation(),
             Self::OxcPackageJsonNoRedundantPublishConfig(_) => {
                 OxcPackageJsonNoRedundantPublishConfig::documentation()
@@ -6737,6 +7060,8 @@ impl RuleEnum {
             Self::OxcPackageJsonValidDescription(_) => {
                 OxcPackageJsonValidDescription::documentation()
             }
+            Self::OxcPackageJsonValidEngines(_) => OxcPackageJsonValidEngines::documentation(),
+            Self::OxcPackageJsonValidKeywords(_) => OxcPackageJsonValidKeywords::documentation(),
             Self::OxcPackageJsonValidLicense(_) => OxcPackageJsonValidLicense::documentation(),
             Self::OxcPackageJsonValidMan(_) => OxcPackageJsonValidMan::documentation(),
             Self::OxcPackageJsonValidName(_) => OxcPackageJsonValidName::documentation(),
@@ -6746,7 +7071,16 @@ impl RuleEnum {
             }
             Self::OxcPackageJsonValidType(_) => OxcPackageJsonValidType::documentation(),
             Self::OxcPackageJsonValidVersion(_) => OxcPackageJsonValidVersion::documentation(),
+            Self::OxcPreferShorthandBoolean(_) => OxcPreferShorthandBoolean::documentation(),
+            Self::OxcSortEnums(_) => OxcSortEnums::documentation(),
+            Self::OxcSortImports(_) => OxcSortImports::documentation(),
             Self::OxcSortInterfaces(_) => OxcSortInterfaces::documentation(),
+            Self::OxcSortIntersectionTypes(_) => OxcSortIntersectionTypes::documentation(),
+            Self::OxcSortJsxProps(_) => OxcSortJsxProps::documentation(),
+            Self::OxcSortNamedExports(_) => OxcSortNamedExports::documentation(),
+            Self::OxcSortNamedImports(_) => OxcSortNamedImports::documentation(),
+            Self::OxcSortObjectTypes(_) => OxcSortObjectTypes::documentation(),
+            Self::OxcSortObjects(_) => OxcSortObjects::documentation(),
             Self::OxcSortSwitchCase(_) => OxcSortSwitchCase::documentation(),
             Self::OxcSortUnionTypes(_) => OxcSortUnionTypes::documentation(),
             Self::OxcSortedJsonKeys(_) => OxcSortedJsonKeys::documentation(),
@@ -8601,8 +8935,58 @@ impl RuleEnum {
                 .or_else(|| OxcBranchesSharingCode::schema(generator)),
             Self::OxcConstComparisons(_) => OxcConstComparisons::config_schema(generator)
                 .or_else(|| OxcConstComparisons::schema(generator)),
+            Self::OxcCssNoDuplicateProperties(_) => {
+                OxcCssNoDuplicateProperties::config_schema(generator)
+                    .or_else(|| OxcCssNoDuplicateProperties::schema(generator))
+            }
+            Self::OxcCssNoEmptyBlocks(_) => OxcCssNoEmptyBlocks::config_schema(generator)
+                .or_else(|| OxcCssNoEmptyBlocks::schema(generator)),
+            Self::OxcCssNoImportant(_) => OxcCssNoImportant::config_schema(generator)
+                .or_else(|| OxcCssNoImportant::schema(generator)),
+            Self::OxcDependBanDependencies(_) => OxcDependBanDependencies::config_schema(generator)
+                .or_else(|| OxcDependBanDependencies::schema(generator)),
+            Self::OxcDetectBufferNoassert(_) => OxcDetectBufferNoassert::config_schema(generator)
+                .or_else(|| OxcDetectBufferNoassert::schema(generator)),
+            Self::OxcDetectChildProcess(_) => OxcDetectChildProcess::config_schema(generator)
+                .or_else(|| OxcDetectChildProcess::schema(generator)),
+            Self::OxcDetectDisableMustacheEscape(_) => {
+                OxcDetectDisableMustacheEscape::config_schema(generator)
+                    .or_else(|| OxcDetectDisableMustacheEscape::schema(generator))
+            }
+            Self::OxcDetectEvalWithExpression(_) => {
+                OxcDetectEvalWithExpression::config_schema(generator)
+                    .or_else(|| OxcDetectEvalWithExpression::schema(generator))
+            }
+            Self::OxcDetectNewBuffer(_) => OxcDetectNewBuffer::config_schema(generator)
+                .or_else(|| OxcDetectNewBuffer::schema(generator)),
+            Self::OxcDetectNoCsrfBeforeMethodOverride(_) => {
+                OxcDetectNoCsrfBeforeMethodOverride::config_schema(generator)
+                    .or_else(|| OxcDetectNoCsrfBeforeMethodOverride::schema(generator))
+            }
+            Self::OxcDetectNonLiteralFsFilename(_) => {
+                OxcDetectNonLiteralFsFilename::config_schema(generator)
+                    .or_else(|| OxcDetectNonLiteralFsFilename::schema(generator))
+            }
+            Self::OxcDetectNonLiteralRegexp(_) => {
+                OxcDetectNonLiteralRegexp::config_schema(generator)
+                    .or_else(|| OxcDetectNonLiteralRegexp::schema(generator))
+            }
+            Self::OxcDetectNonLiteralRequire(_) => {
+                OxcDetectNonLiteralRequire::config_schema(generator)
+                    .or_else(|| OxcDetectNonLiteralRequire::schema(generator))
+            }
             Self::OxcDetectObjectInjection(_) => OxcDetectObjectInjection::config_schema(generator)
                 .or_else(|| OxcDetectObjectInjection::schema(generator)),
+            Self::OxcDetectPossibleTimingAttacks(_) => {
+                OxcDetectPossibleTimingAttacks::config_schema(generator)
+                    .or_else(|| OxcDetectPossibleTimingAttacks::schema(generator))
+            }
+            Self::OxcDetectPseudoRandomBytes(_) => {
+                OxcDetectPseudoRandomBytes::config_schema(generator)
+                    .or_else(|| OxcDetectPseudoRandomBytes::schema(generator))
+            }
+            Self::OxcDetectUnsafeRegex(_) => OxcDetectUnsafeRegex::config_schema(generator)
+                .or_else(|| OxcDetectUnsafeRegex::schema(generator)),
             Self::OxcDoubleComparisons(_) => OxcDoubleComparisons::config_schema(generator)
                 .or_else(|| OxcDoubleComparisons::schema(generator)),
             Self::OxcErasingOp(_) => {
@@ -8618,6 +9002,14 @@ impl RuleEnum {
             }
             Self::OxcIdenticalKeys(_) => OxcIdenticalKeys::config_schema(generator)
                 .or_else(|| OxcIdenticalKeys::schema(generator)),
+            Self::OxcIdenticalPlaceholders(_) => OxcIdenticalPlaceholders::config_schema(generator)
+                .or_else(|| OxcIdenticalPlaceholders::schema(generator)),
+            Self::OxcJsonNoComments(_) => OxcJsonNoComments::config_schema(generator)
+                .or_else(|| OxcJsonNoComments::schema(generator)),
+            Self::OxcJsonNoDuplicateKeys(_) => OxcJsonNoDuplicateKeys::config_schema(generator)
+                .or_else(|| OxcJsonNoDuplicateKeys::schema(generator)),
+            Self::OxcJsonNoTrailingCommas(_) => OxcJsonNoTrailingCommas::config_schema(generator)
+                .or_else(|| OxcJsonNoTrailingCommas::schema(generator)),
             Self::OxcJsonParseValidation(_) => OxcJsonParseValidation::config_schema(generator)
                 .or_else(|| OxcJsonParseValidation::schema(generator)),
             Self::OxcMisrefactoredAssignOp(_) => OxcMisrefactoredAssignOp::config_schema(generator)
@@ -8638,16 +9030,28 @@ impl RuleEnum {
                 .or_else(|| OxcNoBlockInInline::schema(generator)),
             Self::OxcNoConstEnum(_) => OxcNoConstEnum::config_schema(generator)
                 .or_else(|| OxcNoConstEnum::schema(generator)),
+            Self::OxcNoCreateRef(_) => OxcNoCreateRef::config_schema(generator)
+                .or_else(|| OxcNoCreateRef::schema(generator)),
+            Self::OxcNoDefaultProps(_) => OxcNoDefaultProps::config_schema(generator)
+                .or_else(|| OxcNoDefaultProps::schema(generator)),
             Self::OxcNoInlineTypeAnnotations(_) => {
                 OxcNoInlineTypeAnnotations::config_schema(generator)
                     .or_else(|| OxcNoInlineTypeAnnotations::schema(generator))
+            }
+            Self::OxcNoLeakedConditionalRendering(_) => {
+                OxcNoLeakedConditionalRendering::config_schema(generator)
+                    .or_else(|| OxcNoLeakedConditionalRendering::schema(generator))
             }
             Self::OxcNoLiteralString(_) => OxcNoLiteralString::config_schema(generator)
                 .or_else(|| OxcNoLiteralString::schema(generator)),
             Self::OxcNoMapSpread(_) => OxcNoMapSpread::config_schema(generator)
                 .or_else(|| OxcNoMapSpread::schema(generator)),
+            Self::OxcNoNestedComponents(_) => OxcNoNestedComponents::config_schema(generator)
+                .or_else(|| OxcNoNestedComponents::schema(generator)),
             Self::OxcNoOptionalChaining(_) => OxcNoOptionalChaining::config_schema(generator)
                 .or_else(|| OxcNoOptionalChaining::schema(generator)),
+            Self::OxcNoPropTypes(_) => OxcNoPropTypes::config_schema(generator)
+                .or_else(|| OxcNoPropTypes::schema(generator)),
             Self::OxcNoRestSpreadProperties(_) => {
                 OxcNoRestSpreadProperties::config_schema(generator)
                     .or_else(|| OxcNoRestSpreadProperties::schema(generator))
@@ -8664,12 +9068,20 @@ impl RuleEnum {
             }
             Self::OxcNoUnknownFiles(_) => OxcNoUnknownFiles::config_schema(generator)
                 .or_else(|| OxcNoUnknownFiles::schema(generator)),
+            Self::OxcNoUnstableDefaultProps(_) => {
+                OxcNoUnstableDefaultProps::config_schema(generator)
+                    .or_else(|| OxcNoUnstableDefaultProps::schema(generator))
+            }
             Self::OxcNumberArgOutOfRange(_) => OxcNumberArgOutOfRange::config_schema(generator)
                 .or_else(|| OxcNumberArgOutOfRange::schema(generator)),
             Self::OxcOnlyUsedInRecursion(_) => OxcOnlyUsedInRecursion::config_schema(generator)
                 .or_else(|| OxcOnlyUsedInRecursion::schema(generator)),
             Self::OxcOptimizeRegex(_) => OxcOptimizeRegex::config_schema(generator)
                 .or_else(|| OxcOptimizeRegex::schema(generator)),
+            Self::OxcPackageJsonNoDuplicateDependencies(_) => {
+                OxcPackageJsonNoDuplicateDependencies::config_schema(generator)
+                    .or_else(|| OxcPackageJsonNoDuplicateDependencies::schema(generator))
+            }
             Self::OxcPackageJsonNoEmptyFields(_) => {
                 OxcPackageJsonNoEmptyFields::config_schema(generator)
                     .or_else(|| OxcPackageJsonNoEmptyFields::schema(generator))
@@ -8704,6 +9116,14 @@ impl RuleEnum {
                 OxcPackageJsonValidDescription::config_schema(generator)
                     .or_else(|| OxcPackageJsonValidDescription::schema(generator))
             }
+            Self::OxcPackageJsonValidEngines(_) => {
+                OxcPackageJsonValidEngines::config_schema(generator)
+                    .or_else(|| OxcPackageJsonValidEngines::schema(generator))
+            }
+            Self::OxcPackageJsonValidKeywords(_) => {
+                OxcPackageJsonValidKeywords::config_schema(generator)
+                    .or_else(|| OxcPackageJsonValidKeywords::schema(generator))
+            }
             Self::OxcPackageJsonValidLicense(_) => {
                 OxcPackageJsonValidLicense::config_schema(generator)
                     .or_else(|| OxcPackageJsonValidLicense::schema(generator))
@@ -8726,8 +9146,29 @@ impl RuleEnum {
                 OxcPackageJsonValidVersion::config_schema(generator)
                     .or_else(|| OxcPackageJsonValidVersion::schema(generator))
             }
+            Self::OxcPreferShorthandBoolean(_) => {
+                OxcPreferShorthandBoolean::config_schema(generator)
+                    .or_else(|| OxcPreferShorthandBoolean::schema(generator))
+            }
+            Self::OxcSortEnums(_) => {
+                OxcSortEnums::config_schema(generator).or_else(|| OxcSortEnums::schema(generator))
+            }
+            Self::OxcSortImports(_) => OxcSortImports::config_schema(generator)
+                .or_else(|| OxcSortImports::schema(generator)),
             Self::OxcSortInterfaces(_) => OxcSortInterfaces::config_schema(generator)
                 .or_else(|| OxcSortInterfaces::schema(generator)),
+            Self::OxcSortIntersectionTypes(_) => OxcSortIntersectionTypes::config_schema(generator)
+                .or_else(|| OxcSortIntersectionTypes::schema(generator)),
+            Self::OxcSortJsxProps(_) => OxcSortJsxProps::config_schema(generator)
+                .or_else(|| OxcSortJsxProps::schema(generator)),
+            Self::OxcSortNamedExports(_) => OxcSortNamedExports::config_schema(generator)
+                .or_else(|| OxcSortNamedExports::schema(generator)),
+            Self::OxcSortNamedImports(_) => OxcSortNamedImports::config_schema(generator)
+                .or_else(|| OxcSortNamedImports::schema(generator)),
+            Self::OxcSortObjectTypes(_) => OxcSortObjectTypes::config_schema(generator)
+                .or_else(|| OxcSortObjectTypes::schema(generator)),
+            Self::OxcSortObjects(_) => OxcSortObjects::config_schema(generator)
+                .or_else(|| OxcSortObjects::schema(generator)),
             Self::OxcSortSwitchCase(_) => OxcSortSwitchCase::config_schema(generator)
                 .or_else(|| OxcSortSwitchCase::schema(generator)),
             Self::OxcSortUnionTypes(_) => OxcSortUnionTypes::config_schema(generator)
@@ -9614,12 +10055,32 @@ impl RuleEnum {
             Self::OxcBoundariesDependencies(_) => "oxc",
             Self::OxcBranchesSharingCode(_) => "oxc",
             Self::OxcConstComparisons(_) => "oxc",
+            Self::OxcCssNoDuplicateProperties(_) => "oxc",
+            Self::OxcCssNoEmptyBlocks(_) => "oxc",
+            Self::OxcCssNoImportant(_) => "oxc",
+            Self::OxcDependBanDependencies(_) => "oxc",
+            Self::OxcDetectBufferNoassert(_) => "oxc",
+            Self::OxcDetectChildProcess(_) => "oxc",
+            Self::OxcDetectDisableMustacheEscape(_) => "oxc",
+            Self::OxcDetectEvalWithExpression(_) => "oxc",
+            Self::OxcDetectNewBuffer(_) => "oxc",
+            Self::OxcDetectNoCsrfBeforeMethodOverride(_) => "oxc",
+            Self::OxcDetectNonLiteralFsFilename(_) => "oxc",
+            Self::OxcDetectNonLiteralRegexp(_) => "oxc",
+            Self::OxcDetectNonLiteralRequire(_) => "oxc",
             Self::OxcDetectObjectInjection(_) => "oxc",
+            Self::OxcDetectPossibleTimingAttacks(_) => "oxc",
+            Self::OxcDetectPseudoRandomBytes(_) => "oxc",
+            Self::OxcDetectUnsafeRegex(_) => "oxc",
             Self::OxcDoubleComparisons(_) => "oxc",
             Self::OxcErasingOp(_) => "oxc",
             Self::OxcFilenameNamingConvention(_) => "oxc",
             Self::OxcFolderNamingConvention(_) => "oxc",
             Self::OxcIdenticalKeys(_) => "oxc",
+            Self::OxcIdenticalPlaceholders(_) => "oxc",
+            Self::OxcJsonNoComments(_) => "oxc",
+            Self::OxcJsonNoDuplicateKeys(_) => "oxc",
+            Self::OxcJsonNoTrailingCommas(_) => "oxc",
             Self::OxcJsonParseValidation(_) => "oxc",
             Self::OxcMisrefactoredAssignOp(_) => "oxc",
             Self::OxcMissingThrow(_) => "oxc",
@@ -9629,18 +10090,25 @@ impl RuleEnum {
             Self::OxcNoBarrelFile(_) => "oxc",
             Self::OxcNoBlockInInline(_) => "oxc",
             Self::OxcNoConstEnum(_) => "oxc",
+            Self::OxcNoCreateRef(_) => "oxc",
+            Self::OxcNoDefaultProps(_) => "oxc",
             Self::OxcNoInlineTypeAnnotations(_) => "oxc",
+            Self::OxcNoLeakedConditionalRendering(_) => "oxc",
             Self::OxcNoLiteralString(_) => "oxc",
             Self::OxcNoMapSpread(_) => "oxc",
+            Self::OxcNoNestedComponents(_) => "oxc",
             Self::OxcNoOptionalChaining(_) => "oxc",
+            Self::OxcNoPropTypes(_) => "oxc",
             Self::OxcNoRestSpreadProperties(_) => "oxc",
             Self::OxcNoSecrets(_) => "oxc",
             Self::OxcNoThisInExportedFunction(_) => "oxc",
             Self::OxcNoUnknown(_) => "oxc",
             Self::OxcNoUnknownFiles(_) => "oxc",
+            Self::OxcNoUnstableDefaultProps(_) => "oxc",
             Self::OxcNumberArgOutOfRange(_) => "oxc",
             Self::OxcOnlyUsedInRecursion(_) => "oxc",
             Self::OxcOptimizeRegex(_) => "oxc",
+            Self::OxcPackageJsonNoDuplicateDependencies(_) => "oxc",
             Self::OxcPackageJsonNoEmptyFields(_) => "oxc",
             Self::OxcPackageJsonNoRedundantPublishConfig(_) => "oxc",
             Self::OxcPackageJsonOrderProperties(_) => "oxc",
@@ -9650,6 +10118,8 @@ impl RuleEnum {
             Self::OxcPackageJsonSortCollections(_) => "oxc",
             Self::OxcPackageJsonValidBin(_) => "oxc",
             Self::OxcPackageJsonValidDescription(_) => "oxc",
+            Self::OxcPackageJsonValidEngines(_) => "oxc",
+            Self::OxcPackageJsonValidKeywords(_) => "oxc",
             Self::OxcPackageJsonValidLicense(_) => "oxc",
             Self::OxcPackageJsonValidMan(_) => "oxc",
             Self::OxcPackageJsonValidName(_) => "oxc",
@@ -9657,7 +10127,16 @@ impl RuleEnum {
             Self::OxcPackageJsonValidRepository(_) => "oxc",
             Self::OxcPackageJsonValidType(_) => "oxc",
             Self::OxcPackageJsonValidVersion(_) => "oxc",
+            Self::OxcPreferShorthandBoolean(_) => "oxc",
+            Self::OxcSortEnums(_) => "oxc",
+            Self::OxcSortImports(_) => "oxc",
             Self::OxcSortInterfaces(_) => "oxc",
+            Self::OxcSortIntersectionTypes(_) => "oxc",
+            Self::OxcSortJsxProps(_) => "oxc",
+            Self::OxcSortNamedExports(_) => "oxc",
+            Self::OxcSortNamedImports(_) => "oxc",
+            Self::OxcSortObjectTypes(_) => "oxc",
+            Self::OxcSortObjects(_) => "oxc",
             Self::OxcSortSwitchCase(_) => "oxc",
             Self::OxcSortUnionTypes(_) => "oxc",
             Self::OxcSortedJsonKeys(_) => "oxc",
@@ -11700,9 +12179,59 @@ impl RuleEnum {
             Self::OxcConstComparisons(_) => {
                 Ok(Self::OxcConstComparisons(OxcConstComparisons::from_configuration(value)?))
             }
+            Self::OxcCssNoDuplicateProperties(_) => Ok(Self::OxcCssNoDuplicateProperties(
+                OxcCssNoDuplicateProperties::from_configuration(value)?,
+            )),
+            Self::OxcCssNoEmptyBlocks(_) => {
+                Ok(Self::OxcCssNoEmptyBlocks(OxcCssNoEmptyBlocks::from_configuration(value)?))
+            }
+            Self::OxcCssNoImportant(_) => {
+                Ok(Self::OxcCssNoImportant(OxcCssNoImportant::from_configuration(value)?))
+            }
+            Self::OxcDependBanDependencies(_) => Ok(Self::OxcDependBanDependencies(
+                OxcDependBanDependencies::from_configuration(value)?,
+            )),
+            Self::OxcDetectBufferNoassert(_) => Ok(Self::OxcDetectBufferNoassert(
+                OxcDetectBufferNoassert::from_configuration(value)?,
+            )),
+            Self::OxcDetectChildProcess(_) => {
+                Ok(Self::OxcDetectChildProcess(OxcDetectChildProcess::from_configuration(value)?))
+            }
+            Self::OxcDetectDisableMustacheEscape(_) => Ok(Self::OxcDetectDisableMustacheEscape(
+                OxcDetectDisableMustacheEscape::from_configuration(value)?,
+            )),
+            Self::OxcDetectEvalWithExpression(_) => Ok(Self::OxcDetectEvalWithExpression(
+                OxcDetectEvalWithExpression::from_configuration(value)?,
+            )),
+            Self::OxcDetectNewBuffer(_) => {
+                Ok(Self::OxcDetectNewBuffer(OxcDetectNewBuffer::from_configuration(value)?))
+            }
+            Self::OxcDetectNoCsrfBeforeMethodOverride(_) => {
+                Ok(Self::OxcDetectNoCsrfBeforeMethodOverride(
+                    OxcDetectNoCsrfBeforeMethodOverride::from_configuration(value)?,
+                ))
+            }
+            Self::OxcDetectNonLiteralFsFilename(_) => Ok(Self::OxcDetectNonLiteralFsFilename(
+                OxcDetectNonLiteralFsFilename::from_configuration(value)?,
+            )),
+            Self::OxcDetectNonLiteralRegexp(_) => Ok(Self::OxcDetectNonLiteralRegexp(
+                OxcDetectNonLiteralRegexp::from_configuration(value)?,
+            )),
+            Self::OxcDetectNonLiteralRequire(_) => Ok(Self::OxcDetectNonLiteralRequire(
+                OxcDetectNonLiteralRequire::from_configuration(value)?,
+            )),
             Self::OxcDetectObjectInjection(_) => Ok(Self::OxcDetectObjectInjection(
                 OxcDetectObjectInjection::from_configuration(value)?,
             )),
+            Self::OxcDetectPossibleTimingAttacks(_) => Ok(Self::OxcDetectPossibleTimingAttacks(
+                OxcDetectPossibleTimingAttacks::from_configuration(value)?,
+            )),
+            Self::OxcDetectPseudoRandomBytes(_) => Ok(Self::OxcDetectPseudoRandomBytes(
+                OxcDetectPseudoRandomBytes::from_configuration(value)?,
+            )),
+            Self::OxcDetectUnsafeRegex(_) => {
+                Ok(Self::OxcDetectUnsafeRegex(OxcDetectUnsafeRegex::from_configuration(value)?))
+            }
             Self::OxcDoubleComparisons(_) => {
                 Ok(Self::OxcDoubleComparisons(OxcDoubleComparisons::from_configuration(value)?))
             }
@@ -11718,6 +12247,18 @@ impl RuleEnum {
             Self::OxcIdenticalKeys(_) => {
                 Ok(Self::OxcIdenticalKeys(OxcIdenticalKeys::from_configuration(value)?))
             }
+            Self::OxcIdenticalPlaceholders(_) => Ok(Self::OxcIdenticalPlaceholders(
+                OxcIdenticalPlaceholders::from_configuration(value)?,
+            )),
+            Self::OxcJsonNoComments(_) => {
+                Ok(Self::OxcJsonNoComments(OxcJsonNoComments::from_configuration(value)?))
+            }
+            Self::OxcJsonNoDuplicateKeys(_) => {
+                Ok(Self::OxcJsonNoDuplicateKeys(OxcJsonNoDuplicateKeys::from_configuration(value)?))
+            }
+            Self::OxcJsonNoTrailingCommas(_) => Ok(Self::OxcJsonNoTrailingCommas(
+                OxcJsonNoTrailingCommas::from_configuration(value)?,
+            )),
             Self::OxcJsonParseValidation(_) => {
                 Ok(Self::OxcJsonParseValidation(OxcJsonParseValidation::from_configuration(value)?))
             }
@@ -11745,8 +12286,17 @@ impl RuleEnum {
             Self::OxcNoConstEnum(_) => {
                 Ok(Self::OxcNoConstEnum(OxcNoConstEnum::from_configuration(value)?))
             }
+            Self::OxcNoCreateRef(_) => {
+                Ok(Self::OxcNoCreateRef(OxcNoCreateRef::from_configuration(value)?))
+            }
+            Self::OxcNoDefaultProps(_) => {
+                Ok(Self::OxcNoDefaultProps(OxcNoDefaultProps::from_configuration(value)?))
+            }
             Self::OxcNoInlineTypeAnnotations(_) => Ok(Self::OxcNoInlineTypeAnnotations(
                 OxcNoInlineTypeAnnotations::from_configuration(value)?,
+            )),
+            Self::OxcNoLeakedConditionalRendering(_) => Ok(Self::OxcNoLeakedConditionalRendering(
+                OxcNoLeakedConditionalRendering::from_configuration(value)?,
             )),
             Self::OxcNoLiteralString(_) => {
                 Ok(Self::OxcNoLiteralString(OxcNoLiteralString::from_configuration(value)?))
@@ -11754,8 +12304,14 @@ impl RuleEnum {
             Self::OxcNoMapSpread(_) => {
                 Ok(Self::OxcNoMapSpread(OxcNoMapSpread::from_configuration(value)?))
             }
+            Self::OxcNoNestedComponents(_) => {
+                Ok(Self::OxcNoNestedComponents(OxcNoNestedComponents::from_configuration(value)?))
+            }
             Self::OxcNoOptionalChaining(_) => {
                 Ok(Self::OxcNoOptionalChaining(OxcNoOptionalChaining::from_configuration(value)?))
+            }
+            Self::OxcNoPropTypes(_) => {
+                Ok(Self::OxcNoPropTypes(OxcNoPropTypes::from_configuration(value)?))
             }
             Self::OxcNoRestSpreadProperties(_) => Ok(Self::OxcNoRestSpreadProperties(
                 OxcNoRestSpreadProperties::from_configuration(value)?,
@@ -11772,6 +12328,9 @@ impl RuleEnum {
             Self::OxcNoUnknownFiles(_) => {
                 Ok(Self::OxcNoUnknownFiles(OxcNoUnknownFiles::from_configuration(value)?))
             }
+            Self::OxcNoUnstableDefaultProps(_) => Ok(Self::OxcNoUnstableDefaultProps(
+                OxcNoUnstableDefaultProps::from_configuration(value)?,
+            )),
             Self::OxcNumberArgOutOfRange(_) => {
                 Ok(Self::OxcNumberArgOutOfRange(OxcNumberArgOutOfRange::from_configuration(value)?))
             }
@@ -11780,6 +12339,11 @@ impl RuleEnum {
             }
             Self::OxcOptimizeRegex(_) => {
                 Ok(Self::OxcOptimizeRegex(OxcOptimizeRegex::from_configuration(value)?))
+            }
+            Self::OxcPackageJsonNoDuplicateDependencies(_) => {
+                Ok(Self::OxcPackageJsonNoDuplicateDependencies(
+                    OxcPackageJsonNoDuplicateDependencies::from_configuration(value)?,
+                ))
             }
             Self::OxcPackageJsonNoEmptyFields(_) => Ok(Self::OxcPackageJsonNoEmptyFields(
                 OxcPackageJsonNoEmptyFields::from_configuration(value)?,
@@ -11812,6 +12376,12 @@ impl RuleEnum {
             Self::OxcPackageJsonValidDescription(_) => Ok(Self::OxcPackageJsonValidDescription(
                 OxcPackageJsonValidDescription::from_configuration(value)?,
             )),
+            Self::OxcPackageJsonValidEngines(_) => Ok(Self::OxcPackageJsonValidEngines(
+                OxcPackageJsonValidEngines::from_configuration(value)?,
+            )),
+            Self::OxcPackageJsonValidKeywords(_) => Ok(Self::OxcPackageJsonValidKeywords(
+                OxcPackageJsonValidKeywords::from_configuration(value)?,
+            )),
             Self::OxcPackageJsonValidLicense(_) => Ok(Self::OxcPackageJsonValidLicense(
                 OxcPackageJsonValidLicense::from_configuration(value)?,
             )),
@@ -11833,8 +12403,35 @@ impl RuleEnum {
             Self::OxcPackageJsonValidVersion(_) => Ok(Self::OxcPackageJsonValidVersion(
                 OxcPackageJsonValidVersion::from_configuration(value)?,
             )),
+            Self::OxcPreferShorthandBoolean(_) => Ok(Self::OxcPreferShorthandBoolean(
+                OxcPreferShorthandBoolean::from_configuration(value)?,
+            )),
+            Self::OxcSortEnums(_) => {
+                Ok(Self::OxcSortEnums(OxcSortEnums::from_configuration(value)?))
+            }
+            Self::OxcSortImports(_) => {
+                Ok(Self::OxcSortImports(OxcSortImports::from_configuration(value)?))
+            }
             Self::OxcSortInterfaces(_) => {
                 Ok(Self::OxcSortInterfaces(OxcSortInterfaces::from_configuration(value)?))
+            }
+            Self::OxcSortIntersectionTypes(_) => Ok(Self::OxcSortIntersectionTypes(
+                OxcSortIntersectionTypes::from_configuration(value)?,
+            )),
+            Self::OxcSortJsxProps(_) => {
+                Ok(Self::OxcSortJsxProps(OxcSortJsxProps::from_configuration(value)?))
+            }
+            Self::OxcSortNamedExports(_) => {
+                Ok(Self::OxcSortNamedExports(OxcSortNamedExports::from_configuration(value)?))
+            }
+            Self::OxcSortNamedImports(_) => {
+                Ok(Self::OxcSortNamedImports(OxcSortNamedImports::from_configuration(value)?))
+            }
+            Self::OxcSortObjectTypes(_) => {
+                Ok(Self::OxcSortObjectTypes(OxcSortObjectTypes::from_configuration(value)?))
+            }
+            Self::OxcSortObjects(_) => {
+                Ok(Self::OxcSortObjects(OxcSortObjects::from_configuration(value)?))
             }
             Self::OxcSortSwitchCase(_) => {
                 Ok(Self::OxcSortSwitchCase(OxcSortSwitchCase::from_configuration(value)?))
@@ -12767,12 +13364,32 @@ impl RuleEnum {
             Self::OxcBoundariesDependencies(rule) => rule.to_configuration(),
             Self::OxcBranchesSharingCode(rule) => rule.to_configuration(),
             Self::OxcConstComparisons(rule) => rule.to_configuration(),
+            Self::OxcCssNoDuplicateProperties(rule) => rule.to_configuration(),
+            Self::OxcCssNoEmptyBlocks(rule) => rule.to_configuration(),
+            Self::OxcCssNoImportant(rule) => rule.to_configuration(),
+            Self::OxcDependBanDependencies(rule) => rule.to_configuration(),
+            Self::OxcDetectBufferNoassert(rule) => rule.to_configuration(),
+            Self::OxcDetectChildProcess(rule) => rule.to_configuration(),
+            Self::OxcDetectDisableMustacheEscape(rule) => rule.to_configuration(),
+            Self::OxcDetectEvalWithExpression(rule) => rule.to_configuration(),
+            Self::OxcDetectNewBuffer(rule) => rule.to_configuration(),
+            Self::OxcDetectNoCsrfBeforeMethodOverride(rule) => rule.to_configuration(),
+            Self::OxcDetectNonLiteralFsFilename(rule) => rule.to_configuration(),
+            Self::OxcDetectNonLiteralRegexp(rule) => rule.to_configuration(),
+            Self::OxcDetectNonLiteralRequire(rule) => rule.to_configuration(),
             Self::OxcDetectObjectInjection(rule) => rule.to_configuration(),
+            Self::OxcDetectPossibleTimingAttacks(rule) => rule.to_configuration(),
+            Self::OxcDetectPseudoRandomBytes(rule) => rule.to_configuration(),
+            Self::OxcDetectUnsafeRegex(rule) => rule.to_configuration(),
             Self::OxcDoubleComparisons(rule) => rule.to_configuration(),
             Self::OxcErasingOp(rule) => rule.to_configuration(),
             Self::OxcFilenameNamingConvention(rule) => rule.to_configuration(),
             Self::OxcFolderNamingConvention(rule) => rule.to_configuration(),
             Self::OxcIdenticalKeys(rule) => rule.to_configuration(),
+            Self::OxcIdenticalPlaceholders(rule) => rule.to_configuration(),
+            Self::OxcJsonNoComments(rule) => rule.to_configuration(),
+            Self::OxcJsonNoDuplicateKeys(rule) => rule.to_configuration(),
+            Self::OxcJsonNoTrailingCommas(rule) => rule.to_configuration(),
             Self::OxcJsonParseValidation(rule) => rule.to_configuration(),
             Self::OxcMisrefactoredAssignOp(rule) => rule.to_configuration(),
             Self::OxcMissingThrow(rule) => rule.to_configuration(),
@@ -12782,18 +13399,25 @@ impl RuleEnum {
             Self::OxcNoBarrelFile(rule) => rule.to_configuration(),
             Self::OxcNoBlockInInline(rule) => rule.to_configuration(),
             Self::OxcNoConstEnum(rule) => rule.to_configuration(),
+            Self::OxcNoCreateRef(rule) => rule.to_configuration(),
+            Self::OxcNoDefaultProps(rule) => rule.to_configuration(),
             Self::OxcNoInlineTypeAnnotations(rule) => rule.to_configuration(),
+            Self::OxcNoLeakedConditionalRendering(rule) => rule.to_configuration(),
             Self::OxcNoLiteralString(rule) => rule.to_configuration(),
             Self::OxcNoMapSpread(rule) => rule.to_configuration(),
+            Self::OxcNoNestedComponents(rule) => rule.to_configuration(),
             Self::OxcNoOptionalChaining(rule) => rule.to_configuration(),
+            Self::OxcNoPropTypes(rule) => rule.to_configuration(),
             Self::OxcNoRestSpreadProperties(rule) => rule.to_configuration(),
             Self::OxcNoSecrets(rule) => rule.to_configuration(),
             Self::OxcNoThisInExportedFunction(rule) => rule.to_configuration(),
             Self::OxcNoUnknown(rule) => rule.to_configuration(),
             Self::OxcNoUnknownFiles(rule) => rule.to_configuration(),
+            Self::OxcNoUnstableDefaultProps(rule) => rule.to_configuration(),
             Self::OxcNumberArgOutOfRange(rule) => rule.to_configuration(),
             Self::OxcOnlyUsedInRecursion(rule) => rule.to_configuration(),
             Self::OxcOptimizeRegex(rule) => rule.to_configuration(),
+            Self::OxcPackageJsonNoDuplicateDependencies(rule) => rule.to_configuration(),
             Self::OxcPackageJsonNoEmptyFields(rule) => rule.to_configuration(),
             Self::OxcPackageJsonNoRedundantPublishConfig(rule) => rule.to_configuration(),
             Self::OxcPackageJsonOrderProperties(rule) => rule.to_configuration(),
@@ -12803,6 +13427,8 @@ impl RuleEnum {
             Self::OxcPackageJsonSortCollections(rule) => rule.to_configuration(),
             Self::OxcPackageJsonValidBin(rule) => rule.to_configuration(),
             Self::OxcPackageJsonValidDescription(rule) => rule.to_configuration(),
+            Self::OxcPackageJsonValidEngines(rule) => rule.to_configuration(),
+            Self::OxcPackageJsonValidKeywords(rule) => rule.to_configuration(),
             Self::OxcPackageJsonValidLicense(rule) => rule.to_configuration(),
             Self::OxcPackageJsonValidMan(rule) => rule.to_configuration(),
             Self::OxcPackageJsonValidName(rule) => rule.to_configuration(),
@@ -12810,7 +13436,16 @@ impl RuleEnum {
             Self::OxcPackageJsonValidRepository(rule) => rule.to_configuration(),
             Self::OxcPackageJsonValidType(rule) => rule.to_configuration(),
             Self::OxcPackageJsonValidVersion(rule) => rule.to_configuration(),
+            Self::OxcPreferShorthandBoolean(rule) => rule.to_configuration(),
+            Self::OxcSortEnums(rule) => rule.to_configuration(),
+            Self::OxcSortImports(rule) => rule.to_configuration(),
             Self::OxcSortInterfaces(rule) => rule.to_configuration(),
+            Self::OxcSortIntersectionTypes(rule) => rule.to_configuration(),
+            Self::OxcSortJsxProps(rule) => rule.to_configuration(),
+            Self::OxcSortNamedExports(rule) => rule.to_configuration(),
+            Self::OxcSortNamedImports(rule) => rule.to_configuration(),
+            Self::OxcSortObjectTypes(rule) => rule.to_configuration(),
+            Self::OxcSortObjects(rule) => rule.to_configuration(),
             Self::OxcSortSwitchCase(rule) => rule.to_configuration(),
             Self::OxcSortUnionTypes(rule) => rule.to_configuration(),
             Self::OxcSortedJsonKeys(rule) => rule.to_configuration(),
@@ -13520,12 +14155,32 @@ impl RuleEnum {
             Self::OxcBoundariesDependencies(rule) => rule.run(node, ctx),
             Self::OxcBranchesSharingCode(rule) => rule.run(node, ctx),
             Self::OxcConstComparisons(rule) => rule.run(node, ctx),
+            Self::OxcCssNoDuplicateProperties(rule) => rule.run(node, ctx),
+            Self::OxcCssNoEmptyBlocks(rule) => rule.run(node, ctx),
+            Self::OxcCssNoImportant(rule) => rule.run(node, ctx),
+            Self::OxcDependBanDependencies(rule) => rule.run(node, ctx),
+            Self::OxcDetectBufferNoassert(rule) => rule.run(node, ctx),
+            Self::OxcDetectChildProcess(rule) => rule.run(node, ctx),
+            Self::OxcDetectDisableMustacheEscape(rule) => rule.run(node, ctx),
+            Self::OxcDetectEvalWithExpression(rule) => rule.run(node, ctx),
+            Self::OxcDetectNewBuffer(rule) => rule.run(node, ctx),
+            Self::OxcDetectNoCsrfBeforeMethodOverride(rule) => rule.run(node, ctx),
+            Self::OxcDetectNonLiteralFsFilename(rule) => rule.run(node, ctx),
+            Self::OxcDetectNonLiteralRegexp(rule) => rule.run(node, ctx),
+            Self::OxcDetectNonLiteralRequire(rule) => rule.run(node, ctx),
             Self::OxcDetectObjectInjection(rule) => rule.run(node, ctx),
+            Self::OxcDetectPossibleTimingAttacks(rule) => rule.run(node, ctx),
+            Self::OxcDetectPseudoRandomBytes(rule) => rule.run(node, ctx),
+            Self::OxcDetectUnsafeRegex(rule) => rule.run(node, ctx),
             Self::OxcDoubleComparisons(rule) => rule.run(node, ctx),
             Self::OxcErasingOp(rule) => rule.run(node, ctx),
             Self::OxcFilenameNamingConvention(rule) => rule.run(node, ctx),
             Self::OxcFolderNamingConvention(rule) => rule.run(node, ctx),
             Self::OxcIdenticalKeys(rule) => rule.run(node, ctx),
+            Self::OxcIdenticalPlaceholders(rule) => rule.run(node, ctx),
+            Self::OxcJsonNoComments(rule) => rule.run(node, ctx),
+            Self::OxcJsonNoDuplicateKeys(rule) => rule.run(node, ctx),
+            Self::OxcJsonNoTrailingCommas(rule) => rule.run(node, ctx),
             Self::OxcJsonParseValidation(rule) => rule.run(node, ctx),
             Self::OxcMisrefactoredAssignOp(rule) => rule.run(node, ctx),
             Self::OxcMissingThrow(rule) => rule.run(node, ctx),
@@ -13535,18 +14190,25 @@ impl RuleEnum {
             Self::OxcNoBarrelFile(rule) => rule.run(node, ctx),
             Self::OxcNoBlockInInline(rule) => rule.run(node, ctx),
             Self::OxcNoConstEnum(rule) => rule.run(node, ctx),
+            Self::OxcNoCreateRef(rule) => rule.run(node, ctx),
+            Self::OxcNoDefaultProps(rule) => rule.run(node, ctx),
             Self::OxcNoInlineTypeAnnotations(rule) => rule.run(node, ctx),
+            Self::OxcNoLeakedConditionalRendering(rule) => rule.run(node, ctx),
             Self::OxcNoLiteralString(rule) => rule.run(node, ctx),
             Self::OxcNoMapSpread(rule) => rule.run(node, ctx),
+            Self::OxcNoNestedComponents(rule) => rule.run(node, ctx),
             Self::OxcNoOptionalChaining(rule) => rule.run(node, ctx),
+            Self::OxcNoPropTypes(rule) => rule.run(node, ctx),
             Self::OxcNoRestSpreadProperties(rule) => rule.run(node, ctx),
             Self::OxcNoSecrets(rule) => rule.run(node, ctx),
             Self::OxcNoThisInExportedFunction(rule) => rule.run(node, ctx),
             Self::OxcNoUnknown(rule) => rule.run(node, ctx),
             Self::OxcNoUnknownFiles(rule) => rule.run(node, ctx),
+            Self::OxcNoUnstableDefaultProps(rule) => rule.run(node, ctx),
             Self::OxcNumberArgOutOfRange(rule) => rule.run(node, ctx),
             Self::OxcOnlyUsedInRecursion(rule) => rule.run(node, ctx),
             Self::OxcOptimizeRegex(rule) => rule.run(node, ctx),
+            Self::OxcPackageJsonNoDuplicateDependencies(rule) => rule.run(node, ctx),
             Self::OxcPackageJsonNoEmptyFields(rule) => rule.run(node, ctx),
             Self::OxcPackageJsonNoRedundantPublishConfig(rule) => rule.run(node, ctx),
             Self::OxcPackageJsonOrderProperties(rule) => rule.run(node, ctx),
@@ -13556,6 +14218,8 @@ impl RuleEnum {
             Self::OxcPackageJsonSortCollections(rule) => rule.run(node, ctx),
             Self::OxcPackageJsonValidBin(rule) => rule.run(node, ctx),
             Self::OxcPackageJsonValidDescription(rule) => rule.run(node, ctx),
+            Self::OxcPackageJsonValidEngines(rule) => rule.run(node, ctx),
+            Self::OxcPackageJsonValidKeywords(rule) => rule.run(node, ctx),
             Self::OxcPackageJsonValidLicense(rule) => rule.run(node, ctx),
             Self::OxcPackageJsonValidMan(rule) => rule.run(node, ctx),
             Self::OxcPackageJsonValidName(rule) => rule.run(node, ctx),
@@ -13563,7 +14227,16 @@ impl RuleEnum {
             Self::OxcPackageJsonValidRepository(rule) => rule.run(node, ctx),
             Self::OxcPackageJsonValidType(rule) => rule.run(node, ctx),
             Self::OxcPackageJsonValidVersion(rule) => rule.run(node, ctx),
+            Self::OxcPreferShorthandBoolean(rule) => rule.run(node, ctx),
+            Self::OxcSortEnums(rule) => rule.run(node, ctx),
+            Self::OxcSortImports(rule) => rule.run(node, ctx),
             Self::OxcSortInterfaces(rule) => rule.run(node, ctx),
+            Self::OxcSortIntersectionTypes(rule) => rule.run(node, ctx),
+            Self::OxcSortJsxProps(rule) => rule.run(node, ctx),
+            Self::OxcSortNamedExports(rule) => rule.run(node, ctx),
+            Self::OxcSortNamedImports(rule) => rule.run(node, ctx),
+            Self::OxcSortObjectTypes(rule) => rule.run(node, ctx),
+            Self::OxcSortObjects(rule) => rule.run(node, ctx),
             Self::OxcSortSwitchCase(rule) => rule.run(node, ctx),
             Self::OxcSortUnionTypes(rule) => rule.run(node, ctx),
             Self::OxcSortedJsonKeys(rule) => rule.run(node, ctx),
@@ -14271,12 +14944,32 @@ impl RuleEnum {
             Self::OxcBoundariesDependencies(rule) => rule.run_once(ctx),
             Self::OxcBranchesSharingCode(rule) => rule.run_once(ctx),
             Self::OxcConstComparisons(rule) => rule.run_once(ctx),
+            Self::OxcCssNoDuplicateProperties(rule) => rule.run_once(ctx),
+            Self::OxcCssNoEmptyBlocks(rule) => rule.run_once(ctx),
+            Self::OxcCssNoImportant(rule) => rule.run_once(ctx),
+            Self::OxcDependBanDependencies(rule) => rule.run_once(ctx),
+            Self::OxcDetectBufferNoassert(rule) => rule.run_once(ctx),
+            Self::OxcDetectChildProcess(rule) => rule.run_once(ctx),
+            Self::OxcDetectDisableMustacheEscape(rule) => rule.run_once(ctx),
+            Self::OxcDetectEvalWithExpression(rule) => rule.run_once(ctx),
+            Self::OxcDetectNewBuffer(rule) => rule.run_once(ctx),
+            Self::OxcDetectNoCsrfBeforeMethodOverride(rule) => rule.run_once(ctx),
+            Self::OxcDetectNonLiteralFsFilename(rule) => rule.run_once(ctx),
+            Self::OxcDetectNonLiteralRegexp(rule) => rule.run_once(ctx),
+            Self::OxcDetectNonLiteralRequire(rule) => rule.run_once(ctx),
             Self::OxcDetectObjectInjection(rule) => rule.run_once(ctx),
+            Self::OxcDetectPossibleTimingAttacks(rule) => rule.run_once(ctx),
+            Self::OxcDetectPseudoRandomBytes(rule) => rule.run_once(ctx),
+            Self::OxcDetectUnsafeRegex(rule) => rule.run_once(ctx),
             Self::OxcDoubleComparisons(rule) => rule.run_once(ctx),
             Self::OxcErasingOp(rule) => rule.run_once(ctx),
             Self::OxcFilenameNamingConvention(rule) => rule.run_once(ctx),
             Self::OxcFolderNamingConvention(rule) => rule.run_once(ctx),
             Self::OxcIdenticalKeys(rule) => rule.run_once(ctx),
+            Self::OxcIdenticalPlaceholders(rule) => rule.run_once(ctx),
+            Self::OxcJsonNoComments(rule) => rule.run_once(ctx),
+            Self::OxcJsonNoDuplicateKeys(rule) => rule.run_once(ctx),
+            Self::OxcJsonNoTrailingCommas(rule) => rule.run_once(ctx),
             Self::OxcJsonParseValidation(rule) => rule.run_once(ctx),
             Self::OxcMisrefactoredAssignOp(rule) => rule.run_once(ctx),
             Self::OxcMissingThrow(rule) => rule.run_once(ctx),
@@ -14286,18 +14979,25 @@ impl RuleEnum {
             Self::OxcNoBarrelFile(rule) => rule.run_once(ctx),
             Self::OxcNoBlockInInline(rule) => rule.run_once(ctx),
             Self::OxcNoConstEnum(rule) => rule.run_once(ctx),
+            Self::OxcNoCreateRef(rule) => rule.run_once(ctx),
+            Self::OxcNoDefaultProps(rule) => rule.run_once(ctx),
             Self::OxcNoInlineTypeAnnotations(rule) => rule.run_once(ctx),
+            Self::OxcNoLeakedConditionalRendering(rule) => rule.run_once(ctx),
             Self::OxcNoLiteralString(rule) => rule.run_once(ctx),
             Self::OxcNoMapSpread(rule) => rule.run_once(ctx),
+            Self::OxcNoNestedComponents(rule) => rule.run_once(ctx),
             Self::OxcNoOptionalChaining(rule) => rule.run_once(ctx),
+            Self::OxcNoPropTypes(rule) => rule.run_once(ctx),
             Self::OxcNoRestSpreadProperties(rule) => rule.run_once(ctx),
             Self::OxcNoSecrets(rule) => rule.run_once(ctx),
             Self::OxcNoThisInExportedFunction(rule) => rule.run_once(ctx),
             Self::OxcNoUnknown(rule) => rule.run_once(ctx),
             Self::OxcNoUnknownFiles(rule) => rule.run_once(ctx),
+            Self::OxcNoUnstableDefaultProps(rule) => rule.run_once(ctx),
             Self::OxcNumberArgOutOfRange(rule) => rule.run_once(ctx),
             Self::OxcOnlyUsedInRecursion(rule) => rule.run_once(ctx),
             Self::OxcOptimizeRegex(rule) => rule.run_once(ctx),
+            Self::OxcPackageJsonNoDuplicateDependencies(rule) => rule.run_once(ctx),
             Self::OxcPackageJsonNoEmptyFields(rule) => rule.run_once(ctx),
             Self::OxcPackageJsonNoRedundantPublishConfig(rule) => rule.run_once(ctx),
             Self::OxcPackageJsonOrderProperties(rule) => rule.run_once(ctx),
@@ -14307,6 +15007,8 @@ impl RuleEnum {
             Self::OxcPackageJsonSortCollections(rule) => rule.run_once(ctx),
             Self::OxcPackageJsonValidBin(rule) => rule.run_once(ctx),
             Self::OxcPackageJsonValidDescription(rule) => rule.run_once(ctx),
+            Self::OxcPackageJsonValidEngines(rule) => rule.run_once(ctx),
+            Self::OxcPackageJsonValidKeywords(rule) => rule.run_once(ctx),
             Self::OxcPackageJsonValidLicense(rule) => rule.run_once(ctx),
             Self::OxcPackageJsonValidMan(rule) => rule.run_once(ctx),
             Self::OxcPackageJsonValidName(rule) => rule.run_once(ctx),
@@ -14314,7 +15016,16 @@ impl RuleEnum {
             Self::OxcPackageJsonValidRepository(rule) => rule.run_once(ctx),
             Self::OxcPackageJsonValidType(rule) => rule.run_once(ctx),
             Self::OxcPackageJsonValidVersion(rule) => rule.run_once(ctx),
+            Self::OxcPreferShorthandBoolean(rule) => rule.run_once(ctx),
+            Self::OxcSortEnums(rule) => rule.run_once(ctx),
+            Self::OxcSortImports(rule) => rule.run_once(ctx),
             Self::OxcSortInterfaces(rule) => rule.run_once(ctx),
+            Self::OxcSortIntersectionTypes(rule) => rule.run_once(ctx),
+            Self::OxcSortJsxProps(rule) => rule.run_once(ctx),
+            Self::OxcSortNamedExports(rule) => rule.run_once(ctx),
+            Self::OxcSortNamedImports(rule) => rule.run_once(ctx),
+            Self::OxcSortObjectTypes(rule) => rule.run_once(ctx),
+            Self::OxcSortObjects(rule) => rule.run_once(ctx),
             Self::OxcSortSwitchCase(rule) => rule.run_once(ctx),
             Self::OxcSortUnionTypes(rule) => rule.run_once(ctx),
             Self::OxcSortedJsonKeys(rule) => rule.run_once(ctx),
@@ -15118,12 +15829,34 @@ impl RuleEnum {
             Self::OxcBoundariesDependencies(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::OxcBranchesSharingCode(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::OxcConstComparisons(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcCssNoDuplicateProperties(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcCssNoEmptyBlocks(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcCssNoImportant(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcDependBanDependencies(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcDetectBufferNoassert(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcDetectChildProcess(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcDetectDisableMustacheEscape(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcDetectEvalWithExpression(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcDetectNewBuffer(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcDetectNoCsrfBeforeMethodOverride(rule) => {
+                rule.run_on_jest_node(jest_node, ctx)
+            }
+            Self::OxcDetectNonLiteralFsFilename(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcDetectNonLiteralRegexp(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcDetectNonLiteralRequire(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::OxcDetectObjectInjection(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcDetectPossibleTimingAttacks(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcDetectPseudoRandomBytes(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcDetectUnsafeRegex(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::OxcDoubleComparisons(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::OxcErasingOp(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::OxcFilenameNamingConvention(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::OxcFolderNamingConvention(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::OxcIdenticalKeys(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcIdenticalPlaceholders(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcJsonNoComments(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcJsonNoDuplicateKeys(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcJsonNoTrailingCommas(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::OxcJsonParseValidation(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::OxcMisrefactoredAssignOp(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::OxcMissingThrow(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -15133,18 +15866,27 @@ impl RuleEnum {
             Self::OxcNoBarrelFile(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::OxcNoBlockInInline(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::OxcNoConstEnum(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcNoCreateRef(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcNoDefaultProps(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::OxcNoInlineTypeAnnotations(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcNoLeakedConditionalRendering(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::OxcNoLiteralString(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::OxcNoMapSpread(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcNoNestedComponents(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::OxcNoOptionalChaining(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcNoPropTypes(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::OxcNoRestSpreadProperties(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::OxcNoSecrets(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::OxcNoThisInExportedFunction(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::OxcNoUnknown(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::OxcNoUnknownFiles(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcNoUnstableDefaultProps(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::OxcNumberArgOutOfRange(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::OxcOnlyUsedInRecursion(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::OxcOptimizeRegex(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcPackageJsonNoDuplicateDependencies(rule) => {
+                rule.run_on_jest_node(jest_node, ctx)
+            }
             Self::OxcPackageJsonNoEmptyFields(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::OxcPackageJsonNoRedundantPublishConfig(rule) => {
                 rule.run_on_jest_node(jest_node, ctx)
@@ -15156,6 +15898,8 @@ impl RuleEnum {
             Self::OxcPackageJsonSortCollections(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::OxcPackageJsonValidBin(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::OxcPackageJsonValidDescription(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcPackageJsonValidEngines(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcPackageJsonValidKeywords(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::OxcPackageJsonValidLicense(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::OxcPackageJsonValidMan(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::OxcPackageJsonValidName(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -15163,7 +15907,16 @@ impl RuleEnum {
             Self::OxcPackageJsonValidRepository(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::OxcPackageJsonValidType(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::OxcPackageJsonValidVersion(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcPreferShorthandBoolean(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcSortEnums(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcSortImports(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::OxcSortInterfaces(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcSortIntersectionTypes(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcSortJsxProps(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcSortNamedExports(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcSortNamedImports(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcSortObjectTypes(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcSortObjects(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::OxcSortSwitchCase(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::OxcSortUnionTypes(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::OxcSortedJsonKeys(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -15875,12 +16628,32 @@ impl RuleEnum {
             Self::OxcBoundariesDependencies(rule) => rule.should_run(ctx),
             Self::OxcBranchesSharingCode(rule) => rule.should_run(ctx),
             Self::OxcConstComparisons(rule) => rule.should_run(ctx),
+            Self::OxcCssNoDuplicateProperties(rule) => rule.should_run(ctx),
+            Self::OxcCssNoEmptyBlocks(rule) => rule.should_run(ctx),
+            Self::OxcCssNoImportant(rule) => rule.should_run(ctx),
+            Self::OxcDependBanDependencies(rule) => rule.should_run(ctx),
+            Self::OxcDetectBufferNoassert(rule) => rule.should_run(ctx),
+            Self::OxcDetectChildProcess(rule) => rule.should_run(ctx),
+            Self::OxcDetectDisableMustacheEscape(rule) => rule.should_run(ctx),
+            Self::OxcDetectEvalWithExpression(rule) => rule.should_run(ctx),
+            Self::OxcDetectNewBuffer(rule) => rule.should_run(ctx),
+            Self::OxcDetectNoCsrfBeforeMethodOverride(rule) => rule.should_run(ctx),
+            Self::OxcDetectNonLiteralFsFilename(rule) => rule.should_run(ctx),
+            Self::OxcDetectNonLiteralRegexp(rule) => rule.should_run(ctx),
+            Self::OxcDetectNonLiteralRequire(rule) => rule.should_run(ctx),
             Self::OxcDetectObjectInjection(rule) => rule.should_run(ctx),
+            Self::OxcDetectPossibleTimingAttacks(rule) => rule.should_run(ctx),
+            Self::OxcDetectPseudoRandomBytes(rule) => rule.should_run(ctx),
+            Self::OxcDetectUnsafeRegex(rule) => rule.should_run(ctx),
             Self::OxcDoubleComparisons(rule) => rule.should_run(ctx),
             Self::OxcErasingOp(rule) => rule.should_run(ctx),
             Self::OxcFilenameNamingConvention(rule) => rule.should_run(ctx),
             Self::OxcFolderNamingConvention(rule) => rule.should_run(ctx),
             Self::OxcIdenticalKeys(rule) => rule.should_run(ctx),
+            Self::OxcIdenticalPlaceholders(rule) => rule.should_run(ctx),
+            Self::OxcJsonNoComments(rule) => rule.should_run(ctx),
+            Self::OxcJsonNoDuplicateKeys(rule) => rule.should_run(ctx),
+            Self::OxcJsonNoTrailingCommas(rule) => rule.should_run(ctx),
             Self::OxcJsonParseValidation(rule) => rule.should_run(ctx),
             Self::OxcMisrefactoredAssignOp(rule) => rule.should_run(ctx),
             Self::OxcMissingThrow(rule) => rule.should_run(ctx),
@@ -15890,18 +16663,25 @@ impl RuleEnum {
             Self::OxcNoBarrelFile(rule) => rule.should_run(ctx),
             Self::OxcNoBlockInInline(rule) => rule.should_run(ctx),
             Self::OxcNoConstEnum(rule) => rule.should_run(ctx),
+            Self::OxcNoCreateRef(rule) => rule.should_run(ctx),
+            Self::OxcNoDefaultProps(rule) => rule.should_run(ctx),
             Self::OxcNoInlineTypeAnnotations(rule) => rule.should_run(ctx),
+            Self::OxcNoLeakedConditionalRendering(rule) => rule.should_run(ctx),
             Self::OxcNoLiteralString(rule) => rule.should_run(ctx),
             Self::OxcNoMapSpread(rule) => rule.should_run(ctx),
+            Self::OxcNoNestedComponents(rule) => rule.should_run(ctx),
             Self::OxcNoOptionalChaining(rule) => rule.should_run(ctx),
+            Self::OxcNoPropTypes(rule) => rule.should_run(ctx),
             Self::OxcNoRestSpreadProperties(rule) => rule.should_run(ctx),
             Self::OxcNoSecrets(rule) => rule.should_run(ctx),
             Self::OxcNoThisInExportedFunction(rule) => rule.should_run(ctx),
             Self::OxcNoUnknown(rule) => rule.should_run(ctx),
             Self::OxcNoUnknownFiles(rule) => rule.should_run(ctx),
+            Self::OxcNoUnstableDefaultProps(rule) => rule.should_run(ctx),
             Self::OxcNumberArgOutOfRange(rule) => rule.should_run(ctx),
             Self::OxcOnlyUsedInRecursion(rule) => rule.should_run(ctx),
             Self::OxcOptimizeRegex(rule) => rule.should_run(ctx),
+            Self::OxcPackageJsonNoDuplicateDependencies(rule) => rule.should_run(ctx),
             Self::OxcPackageJsonNoEmptyFields(rule) => rule.should_run(ctx),
             Self::OxcPackageJsonNoRedundantPublishConfig(rule) => rule.should_run(ctx),
             Self::OxcPackageJsonOrderProperties(rule) => rule.should_run(ctx),
@@ -15911,6 +16691,8 @@ impl RuleEnum {
             Self::OxcPackageJsonSortCollections(rule) => rule.should_run(ctx),
             Self::OxcPackageJsonValidBin(rule) => rule.should_run(ctx),
             Self::OxcPackageJsonValidDescription(rule) => rule.should_run(ctx),
+            Self::OxcPackageJsonValidEngines(rule) => rule.should_run(ctx),
+            Self::OxcPackageJsonValidKeywords(rule) => rule.should_run(ctx),
             Self::OxcPackageJsonValidLicense(rule) => rule.should_run(ctx),
             Self::OxcPackageJsonValidMan(rule) => rule.should_run(ctx),
             Self::OxcPackageJsonValidName(rule) => rule.should_run(ctx),
@@ -15918,7 +16700,16 @@ impl RuleEnum {
             Self::OxcPackageJsonValidRepository(rule) => rule.should_run(ctx),
             Self::OxcPackageJsonValidType(rule) => rule.should_run(ctx),
             Self::OxcPackageJsonValidVersion(rule) => rule.should_run(ctx),
+            Self::OxcPreferShorthandBoolean(rule) => rule.should_run(ctx),
+            Self::OxcSortEnums(rule) => rule.should_run(ctx),
+            Self::OxcSortImports(rule) => rule.should_run(ctx),
             Self::OxcSortInterfaces(rule) => rule.should_run(ctx),
+            Self::OxcSortIntersectionTypes(rule) => rule.should_run(ctx),
+            Self::OxcSortJsxProps(rule) => rule.should_run(ctx),
+            Self::OxcSortNamedExports(rule) => rule.should_run(ctx),
+            Self::OxcSortNamedImports(rule) => rule.should_run(ctx),
+            Self::OxcSortObjectTypes(rule) => rule.should_run(ctx),
+            Self::OxcSortObjects(rule) => rule.should_run(ctx),
             Self::OxcSortSwitchCase(rule) => rule.should_run(ctx),
             Self::OxcSortUnionTypes(rule) => rule.should_run(ctx),
             Self::OxcSortedJsonKeys(rule) => rule.should_run(ctx),
@@ -16904,12 +17695,40 @@ impl RuleEnum {
             Self::OxcBoundariesDependencies(_) => OxcBoundariesDependencies::IS_TSGOLINT_RULE,
             Self::OxcBranchesSharingCode(_) => OxcBranchesSharingCode::IS_TSGOLINT_RULE,
             Self::OxcConstComparisons(_) => OxcConstComparisons::IS_TSGOLINT_RULE,
+            Self::OxcCssNoDuplicateProperties(_) => OxcCssNoDuplicateProperties::IS_TSGOLINT_RULE,
+            Self::OxcCssNoEmptyBlocks(_) => OxcCssNoEmptyBlocks::IS_TSGOLINT_RULE,
+            Self::OxcCssNoImportant(_) => OxcCssNoImportant::IS_TSGOLINT_RULE,
+            Self::OxcDependBanDependencies(_) => OxcDependBanDependencies::IS_TSGOLINT_RULE,
+            Self::OxcDetectBufferNoassert(_) => OxcDetectBufferNoassert::IS_TSGOLINT_RULE,
+            Self::OxcDetectChildProcess(_) => OxcDetectChildProcess::IS_TSGOLINT_RULE,
+            Self::OxcDetectDisableMustacheEscape(_) => {
+                OxcDetectDisableMustacheEscape::IS_TSGOLINT_RULE
+            }
+            Self::OxcDetectEvalWithExpression(_) => OxcDetectEvalWithExpression::IS_TSGOLINT_RULE,
+            Self::OxcDetectNewBuffer(_) => OxcDetectNewBuffer::IS_TSGOLINT_RULE,
+            Self::OxcDetectNoCsrfBeforeMethodOverride(_) => {
+                OxcDetectNoCsrfBeforeMethodOverride::IS_TSGOLINT_RULE
+            }
+            Self::OxcDetectNonLiteralFsFilename(_) => {
+                OxcDetectNonLiteralFsFilename::IS_TSGOLINT_RULE
+            }
+            Self::OxcDetectNonLiteralRegexp(_) => OxcDetectNonLiteralRegexp::IS_TSGOLINT_RULE,
+            Self::OxcDetectNonLiteralRequire(_) => OxcDetectNonLiteralRequire::IS_TSGOLINT_RULE,
             Self::OxcDetectObjectInjection(_) => OxcDetectObjectInjection::IS_TSGOLINT_RULE,
+            Self::OxcDetectPossibleTimingAttacks(_) => {
+                OxcDetectPossibleTimingAttacks::IS_TSGOLINT_RULE
+            }
+            Self::OxcDetectPseudoRandomBytes(_) => OxcDetectPseudoRandomBytes::IS_TSGOLINT_RULE,
+            Self::OxcDetectUnsafeRegex(_) => OxcDetectUnsafeRegex::IS_TSGOLINT_RULE,
             Self::OxcDoubleComparisons(_) => OxcDoubleComparisons::IS_TSGOLINT_RULE,
             Self::OxcErasingOp(_) => OxcErasingOp::IS_TSGOLINT_RULE,
             Self::OxcFilenameNamingConvention(_) => OxcFilenameNamingConvention::IS_TSGOLINT_RULE,
             Self::OxcFolderNamingConvention(_) => OxcFolderNamingConvention::IS_TSGOLINT_RULE,
             Self::OxcIdenticalKeys(_) => OxcIdenticalKeys::IS_TSGOLINT_RULE,
+            Self::OxcIdenticalPlaceholders(_) => OxcIdenticalPlaceholders::IS_TSGOLINT_RULE,
+            Self::OxcJsonNoComments(_) => OxcJsonNoComments::IS_TSGOLINT_RULE,
+            Self::OxcJsonNoDuplicateKeys(_) => OxcJsonNoDuplicateKeys::IS_TSGOLINT_RULE,
+            Self::OxcJsonNoTrailingCommas(_) => OxcJsonNoTrailingCommas::IS_TSGOLINT_RULE,
             Self::OxcJsonParseValidation(_) => OxcJsonParseValidation::IS_TSGOLINT_RULE,
             Self::OxcMisrefactoredAssignOp(_) => OxcMisrefactoredAssignOp::IS_TSGOLINT_RULE,
             Self::OxcMissingThrow(_) => OxcMissingThrow::IS_TSGOLINT_RULE,
@@ -16919,18 +17738,29 @@ impl RuleEnum {
             Self::OxcNoBarrelFile(_) => OxcNoBarrelFile::IS_TSGOLINT_RULE,
             Self::OxcNoBlockInInline(_) => OxcNoBlockInInline::IS_TSGOLINT_RULE,
             Self::OxcNoConstEnum(_) => OxcNoConstEnum::IS_TSGOLINT_RULE,
+            Self::OxcNoCreateRef(_) => OxcNoCreateRef::IS_TSGOLINT_RULE,
+            Self::OxcNoDefaultProps(_) => OxcNoDefaultProps::IS_TSGOLINT_RULE,
             Self::OxcNoInlineTypeAnnotations(_) => OxcNoInlineTypeAnnotations::IS_TSGOLINT_RULE,
+            Self::OxcNoLeakedConditionalRendering(_) => {
+                OxcNoLeakedConditionalRendering::IS_TSGOLINT_RULE
+            }
             Self::OxcNoLiteralString(_) => OxcNoLiteralString::IS_TSGOLINT_RULE,
             Self::OxcNoMapSpread(_) => OxcNoMapSpread::IS_TSGOLINT_RULE,
+            Self::OxcNoNestedComponents(_) => OxcNoNestedComponents::IS_TSGOLINT_RULE,
             Self::OxcNoOptionalChaining(_) => OxcNoOptionalChaining::IS_TSGOLINT_RULE,
+            Self::OxcNoPropTypes(_) => OxcNoPropTypes::IS_TSGOLINT_RULE,
             Self::OxcNoRestSpreadProperties(_) => OxcNoRestSpreadProperties::IS_TSGOLINT_RULE,
             Self::OxcNoSecrets(_) => OxcNoSecrets::IS_TSGOLINT_RULE,
             Self::OxcNoThisInExportedFunction(_) => OxcNoThisInExportedFunction::IS_TSGOLINT_RULE,
             Self::OxcNoUnknown(_) => OxcNoUnknown::IS_TSGOLINT_RULE,
             Self::OxcNoUnknownFiles(_) => OxcNoUnknownFiles::IS_TSGOLINT_RULE,
+            Self::OxcNoUnstableDefaultProps(_) => OxcNoUnstableDefaultProps::IS_TSGOLINT_RULE,
             Self::OxcNumberArgOutOfRange(_) => OxcNumberArgOutOfRange::IS_TSGOLINT_RULE,
             Self::OxcOnlyUsedInRecursion(_) => OxcOnlyUsedInRecursion::IS_TSGOLINT_RULE,
             Self::OxcOptimizeRegex(_) => OxcOptimizeRegex::IS_TSGOLINT_RULE,
+            Self::OxcPackageJsonNoDuplicateDependencies(_) => {
+                OxcPackageJsonNoDuplicateDependencies::IS_TSGOLINT_RULE
+            }
             Self::OxcPackageJsonNoEmptyFields(_) => OxcPackageJsonNoEmptyFields::IS_TSGOLINT_RULE,
             Self::OxcPackageJsonNoRedundantPublishConfig(_) => {
                 OxcPackageJsonNoRedundantPublishConfig::IS_TSGOLINT_RULE
@@ -16950,6 +17780,8 @@ impl RuleEnum {
             Self::OxcPackageJsonValidDescription(_) => {
                 OxcPackageJsonValidDescription::IS_TSGOLINT_RULE
             }
+            Self::OxcPackageJsonValidEngines(_) => OxcPackageJsonValidEngines::IS_TSGOLINT_RULE,
+            Self::OxcPackageJsonValidKeywords(_) => OxcPackageJsonValidKeywords::IS_TSGOLINT_RULE,
             Self::OxcPackageJsonValidLicense(_) => OxcPackageJsonValidLicense::IS_TSGOLINT_RULE,
             Self::OxcPackageJsonValidMan(_) => OxcPackageJsonValidMan::IS_TSGOLINT_RULE,
             Self::OxcPackageJsonValidName(_) => OxcPackageJsonValidName::IS_TSGOLINT_RULE,
@@ -16959,7 +17791,16 @@ impl RuleEnum {
             }
             Self::OxcPackageJsonValidType(_) => OxcPackageJsonValidType::IS_TSGOLINT_RULE,
             Self::OxcPackageJsonValidVersion(_) => OxcPackageJsonValidVersion::IS_TSGOLINT_RULE,
+            Self::OxcPreferShorthandBoolean(_) => OxcPreferShorthandBoolean::IS_TSGOLINT_RULE,
+            Self::OxcSortEnums(_) => OxcSortEnums::IS_TSGOLINT_RULE,
+            Self::OxcSortImports(_) => OxcSortImports::IS_TSGOLINT_RULE,
             Self::OxcSortInterfaces(_) => OxcSortInterfaces::IS_TSGOLINT_RULE,
+            Self::OxcSortIntersectionTypes(_) => OxcSortIntersectionTypes::IS_TSGOLINT_RULE,
+            Self::OxcSortJsxProps(_) => OxcSortJsxProps::IS_TSGOLINT_RULE,
+            Self::OxcSortNamedExports(_) => OxcSortNamedExports::IS_TSGOLINT_RULE,
+            Self::OxcSortNamedImports(_) => OxcSortNamedImports::IS_TSGOLINT_RULE,
+            Self::OxcSortObjectTypes(_) => OxcSortObjectTypes::IS_TSGOLINT_RULE,
+            Self::OxcSortObjects(_) => OxcSortObjects::IS_TSGOLINT_RULE,
             Self::OxcSortSwitchCase(_) => OxcSortSwitchCase::IS_TSGOLINT_RULE,
             Self::OxcSortUnionTypes(_) => OxcSortUnionTypes::IS_TSGOLINT_RULE,
             Self::OxcSortedJsonKeys(_) => OxcSortedJsonKeys::IS_TSGOLINT_RULE,
@@ -17854,12 +18695,34 @@ impl RuleEnum {
             Self::OxcBoundariesDependencies(_) => OxcBoundariesDependencies::HAS_CONFIG,
             Self::OxcBranchesSharingCode(_) => OxcBranchesSharingCode::HAS_CONFIG,
             Self::OxcConstComparisons(_) => OxcConstComparisons::HAS_CONFIG,
+            Self::OxcCssNoDuplicateProperties(_) => OxcCssNoDuplicateProperties::HAS_CONFIG,
+            Self::OxcCssNoEmptyBlocks(_) => OxcCssNoEmptyBlocks::HAS_CONFIG,
+            Self::OxcCssNoImportant(_) => OxcCssNoImportant::HAS_CONFIG,
+            Self::OxcDependBanDependencies(_) => OxcDependBanDependencies::HAS_CONFIG,
+            Self::OxcDetectBufferNoassert(_) => OxcDetectBufferNoassert::HAS_CONFIG,
+            Self::OxcDetectChildProcess(_) => OxcDetectChildProcess::HAS_CONFIG,
+            Self::OxcDetectDisableMustacheEscape(_) => OxcDetectDisableMustacheEscape::HAS_CONFIG,
+            Self::OxcDetectEvalWithExpression(_) => OxcDetectEvalWithExpression::HAS_CONFIG,
+            Self::OxcDetectNewBuffer(_) => OxcDetectNewBuffer::HAS_CONFIG,
+            Self::OxcDetectNoCsrfBeforeMethodOverride(_) => {
+                OxcDetectNoCsrfBeforeMethodOverride::HAS_CONFIG
+            }
+            Self::OxcDetectNonLiteralFsFilename(_) => OxcDetectNonLiteralFsFilename::HAS_CONFIG,
+            Self::OxcDetectNonLiteralRegexp(_) => OxcDetectNonLiteralRegexp::HAS_CONFIG,
+            Self::OxcDetectNonLiteralRequire(_) => OxcDetectNonLiteralRequire::HAS_CONFIG,
             Self::OxcDetectObjectInjection(_) => OxcDetectObjectInjection::HAS_CONFIG,
+            Self::OxcDetectPossibleTimingAttacks(_) => OxcDetectPossibleTimingAttacks::HAS_CONFIG,
+            Self::OxcDetectPseudoRandomBytes(_) => OxcDetectPseudoRandomBytes::HAS_CONFIG,
+            Self::OxcDetectUnsafeRegex(_) => OxcDetectUnsafeRegex::HAS_CONFIG,
             Self::OxcDoubleComparisons(_) => OxcDoubleComparisons::HAS_CONFIG,
             Self::OxcErasingOp(_) => OxcErasingOp::HAS_CONFIG,
             Self::OxcFilenameNamingConvention(_) => OxcFilenameNamingConvention::HAS_CONFIG,
             Self::OxcFolderNamingConvention(_) => OxcFolderNamingConvention::HAS_CONFIG,
             Self::OxcIdenticalKeys(_) => OxcIdenticalKeys::HAS_CONFIG,
+            Self::OxcIdenticalPlaceholders(_) => OxcIdenticalPlaceholders::HAS_CONFIG,
+            Self::OxcJsonNoComments(_) => OxcJsonNoComments::HAS_CONFIG,
+            Self::OxcJsonNoDuplicateKeys(_) => OxcJsonNoDuplicateKeys::HAS_CONFIG,
+            Self::OxcJsonNoTrailingCommas(_) => OxcJsonNoTrailingCommas::HAS_CONFIG,
             Self::OxcJsonParseValidation(_) => OxcJsonParseValidation::HAS_CONFIG,
             Self::OxcMisrefactoredAssignOp(_) => OxcMisrefactoredAssignOp::HAS_CONFIG,
             Self::OxcMissingThrow(_) => OxcMissingThrow::HAS_CONFIG,
@@ -17869,18 +18732,27 @@ impl RuleEnum {
             Self::OxcNoBarrelFile(_) => OxcNoBarrelFile::HAS_CONFIG,
             Self::OxcNoBlockInInline(_) => OxcNoBlockInInline::HAS_CONFIG,
             Self::OxcNoConstEnum(_) => OxcNoConstEnum::HAS_CONFIG,
+            Self::OxcNoCreateRef(_) => OxcNoCreateRef::HAS_CONFIG,
+            Self::OxcNoDefaultProps(_) => OxcNoDefaultProps::HAS_CONFIG,
             Self::OxcNoInlineTypeAnnotations(_) => OxcNoInlineTypeAnnotations::HAS_CONFIG,
+            Self::OxcNoLeakedConditionalRendering(_) => OxcNoLeakedConditionalRendering::HAS_CONFIG,
             Self::OxcNoLiteralString(_) => OxcNoLiteralString::HAS_CONFIG,
             Self::OxcNoMapSpread(_) => OxcNoMapSpread::HAS_CONFIG,
+            Self::OxcNoNestedComponents(_) => OxcNoNestedComponents::HAS_CONFIG,
             Self::OxcNoOptionalChaining(_) => OxcNoOptionalChaining::HAS_CONFIG,
+            Self::OxcNoPropTypes(_) => OxcNoPropTypes::HAS_CONFIG,
             Self::OxcNoRestSpreadProperties(_) => OxcNoRestSpreadProperties::HAS_CONFIG,
             Self::OxcNoSecrets(_) => OxcNoSecrets::HAS_CONFIG,
             Self::OxcNoThisInExportedFunction(_) => OxcNoThisInExportedFunction::HAS_CONFIG,
             Self::OxcNoUnknown(_) => OxcNoUnknown::HAS_CONFIG,
             Self::OxcNoUnknownFiles(_) => OxcNoUnknownFiles::HAS_CONFIG,
+            Self::OxcNoUnstableDefaultProps(_) => OxcNoUnstableDefaultProps::HAS_CONFIG,
             Self::OxcNumberArgOutOfRange(_) => OxcNumberArgOutOfRange::HAS_CONFIG,
             Self::OxcOnlyUsedInRecursion(_) => OxcOnlyUsedInRecursion::HAS_CONFIG,
             Self::OxcOptimizeRegex(_) => OxcOptimizeRegex::HAS_CONFIG,
+            Self::OxcPackageJsonNoDuplicateDependencies(_) => {
+                OxcPackageJsonNoDuplicateDependencies::HAS_CONFIG
+            }
             Self::OxcPackageJsonNoEmptyFields(_) => OxcPackageJsonNoEmptyFields::HAS_CONFIG,
             Self::OxcPackageJsonNoRedundantPublishConfig(_) => {
                 OxcPackageJsonNoRedundantPublishConfig::HAS_CONFIG
@@ -17894,6 +18766,8 @@ impl RuleEnum {
             Self::OxcPackageJsonSortCollections(_) => OxcPackageJsonSortCollections::HAS_CONFIG,
             Self::OxcPackageJsonValidBin(_) => OxcPackageJsonValidBin::HAS_CONFIG,
             Self::OxcPackageJsonValidDescription(_) => OxcPackageJsonValidDescription::HAS_CONFIG,
+            Self::OxcPackageJsonValidEngines(_) => OxcPackageJsonValidEngines::HAS_CONFIG,
+            Self::OxcPackageJsonValidKeywords(_) => OxcPackageJsonValidKeywords::HAS_CONFIG,
             Self::OxcPackageJsonValidLicense(_) => OxcPackageJsonValidLicense::HAS_CONFIG,
             Self::OxcPackageJsonValidMan(_) => OxcPackageJsonValidMan::HAS_CONFIG,
             Self::OxcPackageJsonValidName(_) => OxcPackageJsonValidName::HAS_CONFIG,
@@ -17901,7 +18775,16 @@ impl RuleEnum {
             Self::OxcPackageJsonValidRepository(_) => OxcPackageJsonValidRepository::HAS_CONFIG,
             Self::OxcPackageJsonValidType(_) => OxcPackageJsonValidType::HAS_CONFIG,
             Self::OxcPackageJsonValidVersion(_) => OxcPackageJsonValidVersion::HAS_CONFIG,
+            Self::OxcPreferShorthandBoolean(_) => OxcPreferShorthandBoolean::HAS_CONFIG,
+            Self::OxcSortEnums(_) => OxcSortEnums::HAS_CONFIG,
+            Self::OxcSortImports(_) => OxcSortImports::HAS_CONFIG,
             Self::OxcSortInterfaces(_) => OxcSortInterfaces::HAS_CONFIG,
+            Self::OxcSortIntersectionTypes(_) => OxcSortIntersectionTypes::HAS_CONFIG,
+            Self::OxcSortJsxProps(_) => OxcSortJsxProps::HAS_CONFIG,
+            Self::OxcSortNamedExports(_) => OxcSortNamedExports::HAS_CONFIG,
+            Self::OxcSortNamedImports(_) => OxcSortNamedImports::HAS_CONFIG,
+            Self::OxcSortObjectTypes(_) => OxcSortObjectTypes::HAS_CONFIG,
+            Self::OxcSortObjects(_) => OxcSortObjects::HAS_CONFIG,
             Self::OxcSortSwitchCase(_) => OxcSortSwitchCase::HAS_CONFIG,
             Self::OxcSortUnionTypes(_) => OxcSortUnionTypes::HAS_CONFIG,
             Self::OxcSortedJsonKeys(_) => OxcSortedJsonKeys::HAS_CONFIG,
@@ -18621,12 +19504,32 @@ impl RuleEnum {
             Self::OxcBoundariesDependencies(rule) => rule.types_info(),
             Self::OxcBranchesSharingCode(rule) => rule.types_info(),
             Self::OxcConstComparisons(rule) => rule.types_info(),
+            Self::OxcCssNoDuplicateProperties(rule) => rule.types_info(),
+            Self::OxcCssNoEmptyBlocks(rule) => rule.types_info(),
+            Self::OxcCssNoImportant(rule) => rule.types_info(),
+            Self::OxcDependBanDependencies(rule) => rule.types_info(),
+            Self::OxcDetectBufferNoassert(rule) => rule.types_info(),
+            Self::OxcDetectChildProcess(rule) => rule.types_info(),
+            Self::OxcDetectDisableMustacheEscape(rule) => rule.types_info(),
+            Self::OxcDetectEvalWithExpression(rule) => rule.types_info(),
+            Self::OxcDetectNewBuffer(rule) => rule.types_info(),
+            Self::OxcDetectNoCsrfBeforeMethodOverride(rule) => rule.types_info(),
+            Self::OxcDetectNonLiteralFsFilename(rule) => rule.types_info(),
+            Self::OxcDetectNonLiteralRegexp(rule) => rule.types_info(),
+            Self::OxcDetectNonLiteralRequire(rule) => rule.types_info(),
             Self::OxcDetectObjectInjection(rule) => rule.types_info(),
+            Self::OxcDetectPossibleTimingAttacks(rule) => rule.types_info(),
+            Self::OxcDetectPseudoRandomBytes(rule) => rule.types_info(),
+            Self::OxcDetectUnsafeRegex(rule) => rule.types_info(),
             Self::OxcDoubleComparisons(rule) => rule.types_info(),
             Self::OxcErasingOp(rule) => rule.types_info(),
             Self::OxcFilenameNamingConvention(rule) => rule.types_info(),
             Self::OxcFolderNamingConvention(rule) => rule.types_info(),
             Self::OxcIdenticalKeys(rule) => rule.types_info(),
+            Self::OxcIdenticalPlaceholders(rule) => rule.types_info(),
+            Self::OxcJsonNoComments(rule) => rule.types_info(),
+            Self::OxcJsonNoDuplicateKeys(rule) => rule.types_info(),
+            Self::OxcJsonNoTrailingCommas(rule) => rule.types_info(),
             Self::OxcJsonParseValidation(rule) => rule.types_info(),
             Self::OxcMisrefactoredAssignOp(rule) => rule.types_info(),
             Self::OxcMissingThrow(rule) => rule.types_info(),
@@ -18636,18 +19539,25 @@ impl RuleEnum {
             Self::OxcNoBarrelFile(rule) => rule.types_info(),
             Self::OxcNoBlockInInline(rule) => rule.types_info(),
             Self::OxcNoConstEnum(rule) => rule.types_info(),
+            Self::OxcNoCreateRef(rule) => rule.types_info(),
+            Self::OxcNoDefaultProps(rule) => rule.types_info(),
             Self::OxcNoInlineTypeAnnotations(rule) => rule.types_info(),
+            Self::OxcNoLeakedConditionalRendering(rule) => rule.types_info(),
             Self::OxcNoLiteralString(rule) => rule.types_info(),
             Self::OxcNoMapSpread(rule) => rule.types_info(),
+            Self::OxcNoNestedComponents(rule) => rule.types_info(),
             Self::OxcNoOptionalChaining(rule) => rule.types_info(),
+            Self::OxcNoPropTypes(rule) => rule.types_info(),
             Self::OxcNoRestSpreadProperties(rule) => rule.types_info(),
             Self::OxcNoSecrets(rule) => rule.types_info(),
             Self::OxcNoThisInExportedFunction(rule) => rule.types_info(),
             Self::OxcNoUnknown(rule) => rule.types_info(),
             Self::OxcNoUnknownFiles(rule) => rule.types_info(),
+            Self::OxcNoUnstableDefaultProps(rule) => rule.types_info(),
             Self::OxcNumberArgOutOfRange(rule) => rule.types_info(),
             Self::OxcOnlyUsedInRecursion(rule) => rule.types_info(),
             Self::OxcOptimizeRegex(rule) => rule.types_info(),
+            Self::OxcPackageJsonNoDuplicateDependencies(rule) => rule.types_info(),
             Self::OxcPackageJsonNoEmptyFields(rule) => rule.types_info(),
             Self::OxcPackageJsonNoRedundantPublishConfig(rule) => rule.types_info(),
             Self::OxcPackageJsonOrderProperties(rule) => rule.types_info(),
@@ -18657,6 +19567,8 @@ impl RuleEnum {
             Self::OxcPackageJsonSortCollections(rule) => rule.types_info(),
             Self::OxcPackageJsonValidBin(rule) => rule.types_info(),
             Self::OxcPackageJsonValidDescription(rule) => rule.types_info(),
+            Self::OxcPackageJsonValidEngines(rule) => rule.types_info(),
+            Self::OxcPackageJsonValidKeywords(rule) => rule.types_info(),
             Self::OxcPackageJsonValidLicense(rule) => rule.types_info(),
             Self::OxcPackageJsonValidMan(rule) => rule.types_info(),
             Self::OxcPackageJsonValidName(rule) => rule.types_info(),
@@ -18664,7 +19576,16 @@ impl RuleEnum {
             Self::OxcPackageJsonValidRepository(rule) => rule.types_info(),
             Self::OxcPackageJsonValidType(rule) => rule.types_info(),
             Self::OxcPackageJsonValidVersion(rule) => rule.types_info(),
+            Self::OxcPreferShorthandBoolean(rule) => rule.types_info(),
+            Self::OxcSortEnums(rule) => rule.types_info(),
+            Self::OxcSortImports(rule) => rule.types_info(),
             Self::OxcSortInterfaces(rule) => rule.types_info(),
+            Self::OxcSortIntersectionTypes(rule) => rule.types_info(),
+            Self::OxcSortJsxProps(rule) => rule.types_info(),
+            Self::OxcSortNamedExports(rule) => rule.types_info(),
+            Self::OxcSortNamedImports(rule) => rule.types_info(),
+            Self::OxcSortObjectTypes(rule) => rule.types_info(),
+            Self::OxcSortObjects(rule) => rule.types_info(),
             Self::OxcSortSwitchCase(rule) => rule.types_info(),
             Self::OxcSortUnionTypes(rule) => rule.types_info(),
             Self::OxcSortedJsonKeys(rule) => rule.types_info(),
@@ -19372,12 +20293,32 @@ impl RuleEnum {
             Self::OxcBoundariesDependencies(rule) => rule.run_info(),
             Self::OxcBranchesSharingCode(rule) => rule.run_info(),
             Self::OxcConstComparisons(rule) => rule.run_info(),
+            Self::OxcCssNoDuplicateProperties(rule) => rule.run_info(),
+            Self::OxcCssNoEmptyBlocks(rule) => rule.run_info(),
+            Self::OxcCssNoImportant(rule) => rule.run_info(),
+            Self::OxcDependBanDependencies(rule) => rule.run_info(),
+            Self::OxcDetectBufferNoassert(rule) => rule.run_info(),
+            Self::OxcDetectChildProcess(rule) => rule.run_info(),
+            Self::OxcDetectDisableMustacheEscape(rule) => rule.run_info(),
+            Self::OxcDetectEvalWithExpression(rule) => rule.run_info(),
+            Self::OxcDetectNewBuffer(rule) => rule.run_info(),
+            Self::OxcDetectNoCsrfBeforeMethodOverride(rule) => rule.run_info(),
+            Self::OxcDetectNonLiteralFsFilename(rule) => rule.run_info(),
+            Self::OxcDetectNonLiteralRegexp(rule) => rule.run_info(),
+            Self::OxcDetectNonLiteralRequire(rule) => rule.run_info(),
             Self::OxcDetectObjectInjection(rule) => rule.run_info(),
+            Self::OxcDetectPossibleTimingAttacks(rule) => rule.run_info(),
+            Self::OxcDetectPseudoRandomBytes(rule) => rule.run_info(),
+            Self::OxcDetectUnsafeRegex(rule) => rule.run_info(),
             Self::OxcDoubleComparisons(rule) => rule.run_info(),
             Self::OxcErasingOp(rule) => rule.run_info(),
             Self::OxcFilenameNamingConvention(rule) => rule.run_info(),
             Self::OxcFolderNamingConvention(rule) => rule.run_info(),
             Self::OxcIdenticalKeys(rule) => rule.run_info(),
+            Self::OxcIdenticalPlaceholders(rule) => rule.run_info(),
+            Self::OxcJsonNoComments(rule) => rule.run_info(),
+            Self::OxcJsonNoDuplicateKeys(rule) => rule.run_info(),
+            Self::OxcJsonNoTrailingCommas(rule) => rule.run_info(),
             Self::OxcJsonParseValidation(rule) => rule.run_info(),
             Self::OxcMisrefactoredAssignOp(rule) => rule.run_info(),
             Self::OxcMissingThrow(rule) => rule.run_info(),
@@ -19387,18 +20328,25 @@ impl RuleEnum {
             Self::OxcNoBarrelFile(rule) => rule.run_info(),
             Self::OxcNoBlockInInline(rule) => rule.run_info(),
             Self::OxcNoConstEnum(rule) => rule.run_info(),
+            Self::OxcNoCreateRef(rule) => rule.run_info(),
+            Self::OxcNoDefaultProps(rule) => rule.run_info(),
             Self::OxcNoInlineTypeAnnotations(rule) => rule.run_info(),
+            Self::OxcNoLeakedConditionalRendering(rule) => rule.run_info(),
             Self::OxcNoLiteralString(rule) => rule.run_info(),
             Self::OxcNoMapSpread(rule) => rule.run_info(),
+            Self::OxcNoNestedComponents(rule) => rule.run_info(),
             Self::OxcNoOptionalChaining(rule) => rule.run_info(),
+            Self::OxcNoPropTypes(rule) => rule.run_info(),
             Self::OxcNoRestSpreadProperties(rule) => rule.run_info(),
             Self::OxcNoSecrets(rule) => rule.run_info(),
             Self::OxcNoThisInExportedFunction(rule) => rule.run_info(),
             Self::OxcNoUnknown(rule) => rule.run_info(),
             Self::OxcNoUnknownFiles(rule) => rule.run_info(),
+            Self::OxcNoUnstableDefaultProps(rule) => rule.run_info(),
             Self::OxcNumberArgOutOfRange(rule) => rule.run_info(),
             Self::OxcOnlyUsedInRecursion(rule) => rule.run_info(),
             Self::OxcOptimizeRegex(rule) => rule.run_info(),
+            Self::OxcPackageJsonNoDuplicateDependencies(rule) => rule.run_info(),
             Self::OxcPackageJsonNoEmptyFields(rule) => rule.run_info(),
             Self::OxcPackageJsonNoRedundantPublishConfig(rule) => rule.run_info(),
             Self::OxcPackageJsonOrderProperties(rule) => rule.run_info(),
@@ -19408,6 +20356,8 @@ impl RuleEnum {
             Self::OxcPackageJsonSortCollections(rule) => rule.run_info(),
             Self::OxcPackageJsonValidBin(rule) => rule.run_info(),
             Self::OxcPackageJsonValidDescription(rule) => rule.run_info(),
+            Self::OxcPackageJsonValidEngines(rule) => rule.run_info(),
+            Self::OxcPackageJsonValidKeywords(rule) => rule.run_info(),
             Self::OxcPackageJsonValidLicense(rule) => rule.run_info(),
             Self::OxcPackageJsonValidMan(rule) => rule.run_info(),
             Self::OxcPackageJsonValidName(rule) => rule.run_info(),
@@ -19415,7 +20365,16 @@ impl RuleEnum {
             Self::OxcPackageJsonValidRepository(rule) => rule.run_info(),
             Self::OxcPackageJsonValidType(rule) => rule.run_info(),
             Self::OxcPackageJsonValidVersion(rule) => rule.run_info(),
+            Self::OxcPreferShorthandBoolean(rule) => rule.run_info(),
+            Self::OxcSortEnums(rule) => rule.run_info(),
+            Self::OxcSortImports(rule) => rule.run_info(),
             Self::OxcSortInterfaces(rule) => rule.run_info(),
+            Self::OxcSortIntersectionTypes(rule) => rule.run_info(),
+            Self::OxcSortJsxProps(rule) => rule.run_info(),
+            Self::OxcSortNamedExports(rule) => rule.run_info(),
+            Self::OxcSortNamedImports(rule) => rule.run_info(),
+            Self::OxcSortObjectTypes(rule) => rule.run_info(),
+            Self::OxcSortObjects(rule) => rule.run_info(),
             Self::OxcSortSwitchCase(rule) => rule.run_info(),
             Self::OxcSortUnionTypes(rule) => rule.run_info(),
             Self::OxcSortedJsonKeys(rule) => rule.run_info(),
@@ -20237,12 +21196,34 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::OxcBoundariesDependencies(OxcBoundariesDependencies::default()),
         RuleEnum::OxcBranchesSharingCode(OxcBranchesSharingCode::default()),
         RuleEnum::OxcConstComparisons(OxcConstComparisons::default()),
+        RuleEnum::OxcCssNoDuplicateProperties(OxcCssNoDuplicateProperties::default()),
+        RuleEnum::OxcCssNoEmptyBlocks(OxcCssNoEmptyBlocks::default()),
+        RuleEnum::OxcCssNoImportant(OxcCssNoImportant::default()),
+        RuleEnum::OxcDependBanDependencies(OxcDependBanDependencies::default()),
+        RuleEnum::OxcDetectBufferNoassert(OxcDetectBufferNoassert::default()),
+        RuleEnum::OxcDetectChildProcess(OxcDetectChildProcess::default()),
+        RuleEnum::OxcDetectDisableMustacheEscape(OxcDetectDisableMustacheEscape::default()),
+        RuleEnum::OxcDetectEvalWithExpression(OxcDetectEvalWithExpression::default()),
+        RuleEnum::OxcDetectNewBuffer(OxcDetectNewBuffer::default()),
+        RuleEnum::OxcDetectNoCsrfBeforeMethodOverride(
+            OxcDetectNoCsrfBeforeMethodOverride::default(),
+        ),
+        RuleEnum::OxcDetectNonLiteralFsFilename(OxcDetectNonLiteralFsFilename::default()),
+        RuleEnum::OxcDetectNonLiteralRegexp(OxcDetectNonLiteralRegexp::default()),
+        RuleEnum::OxcDetectNonLiteralRequire(OxcDetectNonLiteralRequire::default()),
         RuleEnum::OxcDetectObjectInjection(OxcDetectObjectInjection::default()),
+        RuleEnum::OxcDetectPossibleTimingAttacks(OxcDetectPossibleTimingAttacks::default()),
+        RuleEnum::OxcDetectPseudoRandomBytes(OxcDetectPseudoRandomBytes::default()),
+        RuleEnum::OxcDetectUnsafeRegex(OxcDetectUnsafeRegex::default()),
         RuleEnum::OxcDoubleComparisons(OxcDoubleComparisons::default()),
         RuleEnum::OxcErasingOp(OxcErasingOp::default()),
         RuleEnum::OxcFilenameNamingConvention(OxcFilenameNamingConvention::default()),
         RuleEnum::OxcFolderNamingConvention(OxcFolderNamingConvention::default()),
         RuleEnum::OxcIdenticalKeys(OxcIdenticalKeys::default()),
+        RuleEnum::OxcIdenticalPlaceholders(OxcIdenticalPlaceholders::default()),
+        RuleEnum::OxcJsonNoComments(OxcJsonNoComments::default()),
+        RuleEnum::OxcJsonNoDuplicateKeys(OxcJsonNoDuplicateKeys::default()),
+        RuleEnum::OxcJsonNoTrailingCommas(OxcJsonNoTrailingCommas::default()),
         RuleEnum::OxcJsonParseValidation(OxcJsonParseValidation::default()),
         RuleEnum::OxcMisrefactoredAssignOp(OxcMisrefactoredAssignOp::default()),
         RuleEnum::OxcMissingThrow(OxcMissingThrow::default()),
@@ -20252,18 +21233,27 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::OxcNoBarrelFile(OxcNoBarrelFile::default()),
         RuleEnum::OxcNoBlockInInline(OxcNoBlockInInline::default()),
         RuleEnum::OxcNoConstEnum(OxcNoConstEnum::default()),
+        RuleEnum::OxcNoCreateRef(OxcNoCreateRef::default()),
+        RuleEnum::OxcNoDefaultProps(OxcNoDefaultProps::default()),
         RuleEnum::OxcNoInlineTypeAnnotations(OxcNoInlineTypeAnnotations::default()),
+        RuleEnum::OxcNoLeakedConditionalRendering(OxcNoLeakedConditionalRendering::default()),
         RuleEnum::OxcNoLiteralString(OxcNoLiteralString::default()),
         RuleEnum::OxcNoMapSpread(OxcNoMapSpread::default()),
+        RuleEnum::OxcNoNestedComponents(OxcNoNestedComponents::default()),
         RuleEnum::OxcNoOptionalChaining(OxcNoOptionalChaining::default()),
+        RuleEnum::OxcNoPropTypes(OxcNoPropTypes::default()),
         RuleEnum::OxcNoRestSpreadProperties(OxcNoRestSpreadProperties::default()),
         RuleEnum::OxcNoSecrets(OxcNoSecrets::default()),
         RuleEnum::OxcNoThisInExportedFunction(OxcNoThisInExportedFunction::default()),
         RuleEnum::OxcNoUnknown(OxcNoUnknown::default()),
         RuleEnum::OxcNoUnknownFiles(OxcNoUnknownFiles::default()),
+        RuleEnum::OxcNoUnstableDefaultProps(OxcNoUnstableDefaultProps::default()),
         RuleEnum::OxcNumberArgOutOfRange(OxcNumberArgOutOfRange::default()),
         RuleEnum::OxcOnlyUsedInRecursion(OxcOnlyUsedInRecursion::default()),
         RuleEnum::OxcOptimizeRegex(OxcOptimizeRegex::default()),
+        RuleEnum::OxcPackageJsonNoDuplicateDependencies(
+            OxcPackageJsonNoDuplicateDependencies::default(),
+        ),
         RuleEnum::OxcPackageJsonNoEmptyFields(OxcPackageJsonNoEmptyFields::default()),
         RuleEnum::OxcPackageJsonNoRedundantPublishConfig(
             OxcPackageJsonNoRedundantPublishConfig::default(),
@@ -20275,6 +21265,8 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::OxcPackageJsonSortCollections(OxcPackageJsonSortCollections::default()),
         RuleEnum::OxcPackageJsonValidBin(OxcPackageJsonValidBin::default()),
         RuleEnum::OxcPackageJsonValidDescription(OxcPackageJsonValidDescription::default()),
+        RuleEnum::OxcPackageJsonValidEngines(OxcPackageJsonValidEngines::default()),
+        RuleEnum::OxcPackageJsonValidKeywords(OxcPackageJsonValidKeywords::default()),
         RuleEnum::OxcPackageJsonValidLicense(OxcPackageJsonValidLicense::default()),
         RuleEnum::OxcPackageJsonValidMan(OxcPackageJsonValidMan::default()),
         RuleEnum::OxcPackageJsonValidName(OxcPackageJsonValidName::default()),
@@ -20282,7 +21274,16 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::OxcPackageJsonValidRepository(OxcPackageJsonValidRepository::default()),
         RuleEnum::OxcPackageJsonValidType(OxcPackageJsonValidType::default()),
         RuleEnum::OxcPackageJsonValidVersion(OxcPackageJsonValidVersion::default()),
+        RuleEnum::OxcPreferShorthandBoolean(OxcPreferShorthandBoolean::default()),
+        RuleEnum::OxcSortEnums(OxcSortEnums::default()),
+        RuleEnum::OxcSortImports(OxcSortImports::default()),
         RuleEnum::OxcSortInterfaces(OxcSortInterfaces::default()),
+        RuleEnum::OxcSortIntersectionTypes(OxcSortIntersectionTypes::default()),
+        RuleEnum::OxcSortJsxProps(OxcSortJsxProps::default()),
+        RuleEnum::OxcSortNamedExports(OxcSortNamedExports::default()),
+        RuleEnum::OxcSortNamedImports(OxcSortNamedImports::default()),
+        RuleEnum::OxcSortObjectTypes(OxcSortObjectTypes::default()),
+        RuleEnum::OxcSortObjects(OxcSortObjects::default()),
         RuleEnum::OxcSortSwitchCase(OxcSortSwitchCase::default()),
         RuleEnum::OxcSortUnionTypes(OxcSortUnionTypes::default()),
         RuleEnum::OxcSortedJsonKeys(OxcSortedJsonKeys::default()),

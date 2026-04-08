@@ -1,10 +1,13 @@
-use super::json_utils::{file_start_span, is_json_file};
+use super::json_utils::is_json_file;
 
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use serde_json::Value;
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{
+    context::LintContext,
+    json_parser::{JsonValue, parse_json},
+    rule::Rule,
+};
 
 fn invalid_package_json_private_diagnostic(span: oxc_span::Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("The `private` field in package.json must be a boolean.")
@@ -38,27 +41,38 @@ declare_oxc_lint!(
     /// ```
     PackageJsonValidPrivate,
     oxc,
-    correctness
+    correctness,
+    fix
 );
 
 impl Rule for PackageJsonValidPrivate {
     fn run_once(&self, ctx: &LintContext<'_>) {
         let source_text = ctx.full_source_text();
-        let Ok(value) = serde_json::from_str::<Value>(source_text) else {
+        let result = parse_json(source_text);
+        let Some(JsonValue::Object(object)) = &result.root else {
             return;
         };
-        let Some(object) = value.as_object() else {
-            return;
-        };
-        let Some(private) = object.get("private") else {
+        let Some(prop) = object.get_property("private") else {
             return;
         };
 
-        if matches!(private, Value::Bool(_)) {
+        if matches!(&prop.value, JsonValue::Boolean(_, _)) {
             return;
         }
 
-        ctx.diagnostic(invalid_package_json_private_diagnostic(file_start_span(source_text)));
+        // Auto-fix string "true"/"false" to boolean true/false
+        if let JsonValue::String(value, _) = &prop.value
+            && (*value == "true" || *value == "false")
+        {
+            let replacement = if *value == "true" { "true" } else { "false" };
+            ctx.diagnostic_with_fix(
+                invalid_package_json_private_diagnostic(prop.value.span()),
+                |fixer| fixer.replace_full_source_range(prop.value.span(), replacement),
+            );
+            return;
+        }
+
+        ctx.diagnostic(invalid_package_json_private_diagnostic(prop.value.span()));
     }
 
     fn should_run(&self, ctx: &crate::rules::ContextHost) -> bool {
@@ -74,9 +88,20 @@ fn test() {
 
     let pass = vec![r#"{"private":true}"#, r#"{"private":false}"#, r#"{"name":"demo"}"#];
 
-    let fail = vec![r#"{"private":"true"}"#, r#"{"private":1}"#, r#"{"private":{}}"#];
+    let fail = vec![
+        r#"{"private":"true"}"#,
+        r#"{"private":"false"}"#,
+        r#"{"private":1}"#,
+        r#"{"private":{}}"#,
+    ];
+
+    let fix = vec![
+        (r#"{"private":"true"}"#, r#"{"private":true}"#, None),
+        (r#"{"private":"false"}"#, r#"{"private":false}"#, None),
+    ];
 
     Tester::new(PackageJsonValidPrivate::NAME, PackageJsonValidPrivate::PLUGIN, pass, fail)
+        .expect_fix(fix)
         .change_rule_path("package.json")
         .test_and_snapshot();
 }

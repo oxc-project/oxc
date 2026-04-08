@@ -1,4 +1,6 @@
-use std::{collections::HashSet, ffi::OsStr};
+use std::ffi::OsStr;
+
+use rustc_hash::FxHashSet;
 
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -184,16 +186,10 @@ impl Default for PackageJsonPropertyOrder {
     }
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
+#[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct PackageJsonOrderPropertiesConfig {
     order: PackageJsonPropertyOrder,
-}
-
-impl Default for PackageJsonOrderPropertiesConfig {
-    fn default() -> Self {
-        Self { order: PackageJsonPropertyOrder::default() }
-    }
 }
 
 #[derive(Debug, Default, Clone)]
@@ -266,6 +262,7 @@ impl Rule for PackageJsonOrderProperties {
             return;
         };
 
+        #[expect(clippy::cast_possible_truncation)]
         let file_span = oxc_span::Span::new(0, source_text.len() as u32);
         ctx.diagnostic_with_fix(
             incorrect_order_diagnostic(property, oxc_span::Span::new(0, 1)),
@@ -284,7 +281,6 @@ fn ordered_keys_for_config(
     object: &Map<String, Value>,
     order: &PackageJsonPropertyOrder,
 ) -> Vec<String> {
-    let all_keys = object.keys().map(String::as_str).collect::<Vec<_>>();
     let explicit_order = match order {
         PackageJsonPropertyOrder::Preset(PackageJsonPropertyOrderPreset::Legacy) => {
             LEGACY_ORDER.iter().copied().map(str::to_string).collect::<Vec<_>>()
@@ -299,13 +295,13 @@ fn ordered_keys_for_config(
         }
     };
 
-    let mut seen = HashSet::new();
+    let mut seen = FxHashSet::default();
     let mut ordered_keys = explicit_order
         .into_iter()
         .filter(|key| seen.insert(key.clone()) && object.contains_key(key))
         .collect::<Vec<_>>();
 
-    let mut remainder = all_keys.into_iter().filter(|key| !seen.contains(*key)).collect::<Vec<_>>();
+    let mut remainder = object.keys().map(String::as_str).filter(|key| !seen.contains(*key)).collect::<Vec<_>>();
     remainder.sort_unstable();
 
     ordered_keys.extend(remainder.into_iter().map(str::to_string));

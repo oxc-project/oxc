@@ -1,0 +1,22 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 444
+---
+
+  ⚠ oxc(json-no-comments): Comments are not allowed in JSON
+   ╭─[json_no_comments.json:2:1]
+ 1 │ {
+ 2 │ // comment
+   · ──────────
+ 3 │ "a": 1
+   ╰────
+  help: Remove the comment. Standard JSON (RFC 8259) does not support comments. Use JSONC if you need comments.
+
+  ⚠ oxc(json-no-comments): Comments are not allowed in JSON
+   ╭─[json_no_comments.json:2:1]
+ 1 │ {
+ 2 │ /* block */
+   · ───────────
+ 3 │ "a": 1
+   ╰────
+  help: Remove the comment. Standard JSON (RFC 8259) does not support comments. Use JSONC if you need comments.

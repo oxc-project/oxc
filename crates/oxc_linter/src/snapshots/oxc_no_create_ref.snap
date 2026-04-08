@@ -1,0 +1,25 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 444
+---
+
+  ⚠ oxc(no-create-ref): React.createRef() should not be used in function components
+   ╭─[no_create_ref.tsx:1:13]
+ 1 │ const ref = React.createRef();
+   ·             ─────────────────
+   ╰────
+  help: Use useRef() hook instead of React.createRef() in function components. createRef creates a new ref object on every render.
+
+  ⚠ oxc(no-create-ref): React.createRef() should not be used in function components
+   ╭─[no_create_ref.tsx:1:13]
+ 1 │ const ref = createRef();
+   ·             ───────────
+   ╰────
+  help: Use useRef() hook instead of React.createRef() in function components. createRef creates a new ref object on every render.
+
+  ⚠ oxc(no-create-ref): React.createRef() should not be used in function components
+   ╭─[no_create_ref.tsx:1:1]
+ 1 │ createRef();
+   · ───────────
+   ╰────
+  help: Use useRef() hook instead of React.createRef() in function components. createRef creates a new ref object on every render.

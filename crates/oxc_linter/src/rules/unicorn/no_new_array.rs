@@ -1,7 +1,7 @@
 use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -38,7 +38,7 @@ declare_oxc_lint!(
     NoNewArray,
     unicorn,
     correctness,
-    pending
+    suggestion
 );
 
 impl Rule for NoNewArray {
@@ -59,7 +59,12 @@ impl Rule for NoNewArray {
             return;
         }
 
-        ctx.diagnostic(no_new_array_diagnostic(new_expr.span));
+        let arg = &new_expr.arguments[0];
+        let arg_text = ctx.source_range(arg.span());
+
+        ctx.diagnostic_with_suggestion(no_new_array_diagnostic(new_expr.span), |fixer| {
+            fixer.replace(new_expr.span, format!("Array.from({{ length: {arg_text} }})"))
+        });
     }
 }
 
@@ -145,5 +150,12 @@ fn test() {
             new Array(...bar).forEach(baz)",
     ];
 
-    Tester::new(NoNewArray::NAME, NoNewArray::PLUGIN, pass, fail).test_and_snapshot();
+    let fix = vec![
+        ("const array = new Array(1)", "const array = Array.from({ length: 1 })"),
+        ("const array = new Array(foo)", "const array = Array.from({ length: foo })"),
+    ];
+
+    Tester::new(NoNewArray::NAME, NoNewArray::PLUGIN, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

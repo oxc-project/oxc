@@ -20,7 +20,7 @@ const COMMENT_END: &str = "-->";
 /// Some contain embedded script sections (`.vue`, `.astro`, `.svelte`), while
 /// others use non-JS raw-file rules backed by a placeholder semantic section
 /// (`.json`).
-pub const LINT_PARTIAL_LOADER_EXTENSIONS: &[&str] = &["vue", "astro", "svelte", "json"];
+pub const LINT_PARTIAL_LOADER_EXTENSIONS: &[&str] = &["vue", "astro", "svelte", "json", "css"];
 
 /// All valid JavaScript/TypeScript extensions, plus additional framework files that
 /// contain JavaScript/TypeScript code in them (e.g., Vue, Astro, Svelte, etc.).
@@ -38,6 +38,7 @@ impl PartialLoader {
             "astro" => Some(AstroPartialLoader::new(source_text).parse()),
             "svelte" => Some(SveltePartialLoader::new(source_text).parse()),
             "json" => Some(vec![JavaScriptSource::partial("", SourceType::default(), 0)]),
+            "css" => Some(vec![JavaScriptSource::partial("", SourceType::default(), 0)]),
             _ => None,
         }
     }

@@ -1,5 +1,6 @@
 use std::cmp::Ordering;
 
+use cow_utils::CowUtils;
 use oxc_ast::{AstKind, ast::TSUnionType};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -151,7 +152,7 @@ fn sorted_type_indices(
 
 fn normalized_sort_key(raw: &str, ignore_case: bool) -> String {
     let compact = raw.split_whitespace().collect::<String>();
-    if ignore_case { compact.to_ascii_lowercase() } else { compact }
+    if ignore_case { compact.cow_to_ascii_lowercase().into_owned() } else { compact }
 }
 
 fn build_fix(

@@ -1,7 +1,7 @@
 use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::BinaryOperator;
 
 use crate::{AstNode, context::LintContext, globals::GLOBAL_OBJECT_NAMES, rule::Rule};
@@ -49,7 +49,7 @@ declare_oxc_lint!(
     NewForBuiltins,
     unicorn,
     pedantic,
-    pending
+    fix
 );
 
 impl Rule for NewForBuiltins {
@@ -61,7 +61,14 @@ impl Rule for NewForBuiltins {
                 };
 
                 if DISALLOW_NEW_FOR_BUILTINS.contains(&builtin_name) {
-                    ctx.diagnostic(disallow(new_expr.span, builtin_name));
+                    ctx.diagnostic_with_fix(disallow(new_expr.span, builtin_name), |fixer| {
+                        // Remove `new ` prefix - replace entire new expression with the callee + args
+                        let call_text = fixer.source_range(Span::new(
+                            new_expr.callee.span().start,
+                            new_expr.span.end,
+                        ));
+                        fixer.replace(new_expr.span, call_text.to_string())
+                    });
                 }
             }
             AstKind::CallExpression(call_expr) => {
@@ -80,7 +87,9 @@ impl Rule for NewForBuiltins {
                         }
                     }
 
-                    ctx.diagnostic(enforce(call_expr.span, builtin_name));
+                    ctx.diagnostic_with_fix(enforce(call_expr.span, builtin_name), |fixer| {
+                        fixer.insert_text_before_range(call_expr.span, "new ")
+                    });
                 }
             }
             _ => {}
@@ -335,5 +344,14 @@ fn test() {
         "const foo = Date(bar);",
     ];
 
-    Tester::new(NewForBuiltins::NAME, NewForBuiltins::PLUGIN, pass, fail).test_and_snapshot();
+    let fix = vec![
+        ("const foo = Array()", "const foo = new Array()"),
+        ("const foo = new Boolean()", "const foo = Boolean()"),
+        ("const foo = new String()", "const foo = String()"),
+        ("const foo = Map()", "const foo = new Map()"),
+    ];
+
+    Tester::new(NewForBuiltins::NAME, NewForBuiltins::PLUGIN, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

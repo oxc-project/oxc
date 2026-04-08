@@ -3,30 +3,30 @@ source: crates/oxc_linter/src/tester.rs
 assertion_line: 444
 ---
 
-  ⚠ oxc(valid-message-syntax): Translation message at `title` must be a non-empty string.
-   ╭─[valid_message_syntax.json:1:1]
+  ⚠ oxc(valid-message-syntax): Translation message must be a non-empty string.
+   ╭─[valid_message_syntax.json:1:10]
  1 │ {"title":""}
-   · ─
+   ·          ──
    ╰────
   help: Use a non-empty string for locale message leaves.
 
-  ⚠ oxc(valid-message-syntax): Translation message at `title` must be a non-empty string.
-   ╭─[valid_message_syntax.json:1:1]
+  ⚠ oxc(valid-message-syntax): Translation message must be a non-empty string.
+   ╭─[valid_message_syntax.json:1:10]
  1 │ {"title":"   "}
-   · ─
+   ·          ─────
    ╰────
   help: Use a non-empty string for locale message leaves.
 
-  ⚠ oxc(valid-message-syntax): Translation message at `title` must be a non-empty string.
-   ╭─[valid_message_syntax.json:1:1]
+  ⚠ oxc(valid-message-syntax): Translation message must be a non-empty string.
+   ╭─[valid_message_syntax.json:1:10]
  1 │ {"title":1}
-   · ─
+   ·          ─
    ╰────
   help: Use a non-empty string for locale message leaves.
 
-  ⚠ oxc(valid-message-syntax): Translation message at `items[1]` must be a non-empty string.
-   ╭─[valid_message_syntax.json:1:1]
+  ⚠ oxc(valid-message-syntax): Translation message must be a non-empty string.
+   ╭─[valid_message_syntax.json:1:17]
  1 │ {"items":["One",""]}
-   · ─
+   ·                 ──
    ╰────
   help: Use a non-empty string for locale message leaves.

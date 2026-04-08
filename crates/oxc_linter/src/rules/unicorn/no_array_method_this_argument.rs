@@ -50,7 +50,7 @@ declare_oxc_lint!(
     NoArrayMethodThisArgument,
     unicorn,
     style,
-    pending
+    suggestion
 );
 
 impl Rule for NoArrayMethodThisArgument {
@@ -92,9 +92,16 @@ fn check_array_prototype_methods(call_expr: &CallExpression, ctx: &LintContext) 
         return;
     }
 
-    ctx.diagnostic(no_array_method_this_argument_diagnostic(
-        call_expr.arguments.first().map_or(call_expr.span, GetSpan::span),
-    ));
+    let this_arg_span = call_expr.arguments.get(1).map(GetSpan::span).unwrap_or(call_expr.span);
+    let callback_span = call_expr.arguments.first().map(GetSpan::span).unwrap_or(call_expr.span);
+
+    // Remove from end of callback arg to end of thisArg (including comma and whitespace)
+    let delete_span = Span::new(callback_span.end, this_arg_span.end);
+
+    ctx.diagnostic_with_suggestion(
+        no_array_method_this_argument_diagnostic(callback_span),
+        |fixer| fixer.delete_range(delete_span),
+    );
 }
 
 fn check_array_from(call_expr: &CallExpression, ctx: &LintContext) {
@@ -117,9 +124,16 @@ fn check_array_from(call_expr: &CallExpression, ctx: &LintContext) {
         return;
     }
 
-    ctx.diagnostic(no_array_method_this_argument_diagnostic(
-        call_expr.arguments.get(2).map_or(call_expr.span, GetSpan::span),
-    ));
+    let this_arg_span = call_expr.arguments.get(2).map(GetSpan::span).unwrap_or(call_expr.span);
+    let callback_span = call_expr.arguments.get(1).map(GetSpan::span).unwrap_or(call_expr.span);
+
+    // Remove from end of callback arg to end of thisArg (including comma and whitespace)
+    let delete_span = Span::new(callback_span.end, this_arg_span.end);
+
+    ctx.diagnostic_with_suggestion(
+        no_array_method_this_argument_diagnostic(this_arg_span),
+        |fixer| fixer.delete_range(delete_span),
+    );
 }
 
 fn is_node_not_function(expr: &Expression) -> bool {
@@ -306,6 +320,16 @@ fn test() {
         "Array.fromAsync(iterableOrArrayLike, callback.bind(foo), thisArgument)",
     ];
 
+    let fix = vec![
+        ("array.map(() => {}, thisArgument)", "array.map(() => {})"),
+        ("array.filter(() => {}, thisArgument)", "array.filter(() => {})"),
+        (
+            "Array.from(iterableOrArrayLike, () => {}, thisArgument)",
+            "Array.from(iterableOrArrayLike, () => {})",
+        ),
+    ];
+
     Tester::new(NoArrayMethodThisArgument::NAME, NoArrayMethodThisArgument::PLUGIN, pass, fail)
+        .expect_fix(fix)
         .test_and_snapshot();
 }

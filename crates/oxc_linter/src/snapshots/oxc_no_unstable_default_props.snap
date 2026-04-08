@@ -1,0 +1,25 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 444
+---
+
+  ⚠ oxc(no-unstable-default-props): Unstable value used as default prop
+   ╭─[no_unstable_default_props.tsx:1:30]
+ 1 │ function Component({ items = [] }) { return <div />; }
+   ·                              ──
+   ╰────
+  help: Object and array literals as default parameter values create a new reference on every render. Extract them to a module-level constant.
+
+  ⚠ oxc(no-unstable-default-props): Unstable value used as default prop
+   ╭─[no_unstable_default_props.tsx:1:31]
+ 1 │ function Component({ config = {} }) { return <div />; }
+   ·                               ──
+   ╰────
+  help: Object and array literals as default parameter values create a new reference on every render. Extract them to a module-level constant.
+
+  ⚠ oxc(no-unstable-default-props): Unstable value used as default prop
+   ╭─[no_unstable_default_props.tsx:1:32]
+ 1 │ function Component({ onClick = () => {} }) { return <div />; }
+   ·                                ────────
+   ╰────
+  help: Object and array literals as default parameter values create a new reference on every render. Extract them to a module-level constant.

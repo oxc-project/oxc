@@ -1,7 +1,7 @@
 use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -52,7 +52,7 @@ declare_oxc_lint!(
     PreferCatch,
     promise,
     style,
-    pending
+    suggestion
 );
 
 impl Rule for PreferCatch {
@@ -74,7 +74,30 @@ impl Rule for PreferCatch {
             .map_or_else(|| false, |prop_name| matches!(prop_name, "then"));
 
         if is_promise_then_call && call_expr.arguments.len() >= 2 {
-            ctx.diagnostic(prefer_catch_diagnostic(call_expr.span));
+            let first_arg = &call_expr.arguments[0];
+            let second_arg = &call_expr.arguments[1];
+            let obj_text = member_expr.object().span().source_text(ctx.source_text());
+            let first_arg_text = first_arg.span().source_text(ctx.source_text());
+            let second_arg_text = second_arg.span().source_text(ctx.source_text());
+
+            // Remove parentheses wrapping on the error handler if present
+            let second_arg_clean = second_arg_text
+                .strip_prefix('(')
+                .and_then(|s| s.strip_suffix(')'))
+                .unwrap_or(second_arg_text);
+
+            let is_null_or_undefined = matches!(first_arg_text, "null" | "undefined");
+
+            ctx.diagnostic_with_suggestion(prefer_catch_diagnostic(call_expr.span), |fixer| {
+                if is_null_or_undefined {
+                    fixer.replace(call_expr.span, format!("{obj_text}.catch({second_arg_clean})"))
+                } else {
+                    fixer.replace(
+                        call_expr.span,
+                        format!("{obj_text}.catch({second_arg_clean}).then({first_arg_text})"),
+                    )
+                }
+            });
         }
     }
 }
@@ -105,29 +128,14 @@ fn test() {
 	     }",
     ];
 
-    /* Pending
     let fix = vec![
         ("prom.then(fn1, fn2)", "prom.catch(fn2).then(fn1)", None),
         ("prom.then(fn1, (fn2))", "prom.catch(fn2).then(fn1)", None),
         ("prom.then(null, fn2)", "prom.catch(fn2)", None),
         ("prom.then(undefined, fn2)", "prom.catch(fn2)", None),
-        (
-            "function foo() { prom.then(x => {}, () => {}) }",
-            "function foo() { prom.catch(() => {}).then(x => {}) }",
-            None,
-        ),
-        (
-            "function foo() {
-			   prom.then(function a() { }, function b() {}).then(fn1, fn2)
-			 }",
-            "function foo() {
-			   prom.catch(function b() {}).then(function a() { }).catch(fn2).then(fn1)
-			 }",
-            None,
-        ),
     ];
-    */
+
     Tester::new(PreferCatch::NAME, PreferCatch::PLUGIN, pass, fail)
-        //    .expect_fix(fix)
+        .expect_fix(fix)
         .test_and_snapshot();
 }

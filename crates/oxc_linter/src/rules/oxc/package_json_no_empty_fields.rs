@@ -1,10 +1,12 @@
-use super::json_utils::{file_start_span, is_json_file};
+use super::json_utils::{is_json_file, property_deletion_span};
 
+use crate::{
+    context::LintContext,
+    json_parser::{JsonValue, parse_json},
+    rule::Rule,
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use serde_json::Value;
-
-use crate::{context::LintContext, rule::Rule};
 
 fn empty_package_json_field_diagnostic(
     field_name: &str,
@@ -43,30 +45,30 @@ declare_oxc_lint!(
     /// ```
     PackageJsonNoEmptyFields,
     oxc,
-    correctness
+    correctness,
+    fix
 );
 
 impl Rule for PackageJsonNoEmptyFields {
     fn run_once(&self, ctx: &LintContext<'_>) {
         let source_text = ctx.full_source_text();
-        let Ok(value) = serde_json::from_str::<Value>(source_text) else {
-            return;
-        };
-        let Some(object) = value.as_object() else {
+        let result = parse_json(source_text);
+        let Some(JsonValue::Object(object)) = &result.root else {
             return;
         };
 
-        let span = file_start_span(source_text);
-        for (field_name, field_value) in object {
-            match field_value {
-                Value::Array(items) if items.is_empty() => {
-                    ctx.diagnostic(empty_package_json_field_diagnostic(field_name, "array", span));
-                }
-                Value::Object(entries) if entries.is_empty() => {
-                    ctx.diagnostic(empty_package_json_field_diagnostic(field_name, "object", span));
-                }
-                _ => {}
-            }
+        for (index, prop) in object.properties.iter().enumerate() {
+            let kind = match &prop.value {
+                JsonValue::Array(arr) if arr.elements.is_empty() => "array",
+                JsonValue::Object(obj) if obj.properties.is_empty() => "object",
+                _ => continue,
+            };
+
+            let delete_span = property_deletion_span(source_text, object, prop, index);
+            ctx.diagnostic_with_fix(
+                empty_package_json_field_diagnostic(prop.key, kind, prop.value.span()),
+                |fixer| fixer.delete_range(delete_span),
+            );
         }
     }
 
@@ -88,10 +90,26 @@ fn test() {
         r#"{"exports":{"." :"./dist/index.js"}}"#,
     ];
 
-    let fail =
-        vec![r#"{"keywords":[]}"#, r#"{"publishConfig":{}}"#, r#"{"files":[],"scripts":{}}"#];
+    let fail = vec![
+        r#"{"keywords":[]}"#,
+        r#"{"publishConfig":{}}"#,
+        r#"{"files":[],"scripts":{}}"#,
+        r#"{"name":"demo","keywords":[]}"#,
+        r#"{"keywords":[],"name":"demo"}"#,
+    ];
+
+    let fix = vec![
+        // Only property
+        (r#"{"keywords":[]}"#, r#"{}"#, None),
+        (r#"{"publishConfig":{}}"#, r#"{}"#, None),
+        // First property with trailing comma — remove property + comma
+        (r#"{"keywords":[],"name":"demo"}"#, r#"{"name":"demo"}"#, None),
+        // Last property with leading comma — remove comma + property
+        (r#"{"name":"demo","keywords":[]}"#, r#"{"name":"demo"}"#, None),
+    ];
 
     Tester::new(PackageJsonNoEmptyFields::NAME, PackageJsonNoEmptyFields::PLUGIN, pass, fail)
+        .expect_fix(fix)
         .change_rule_path("package.json")
         .test_and_snapshot();
 }

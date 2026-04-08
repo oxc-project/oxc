@@ -124,7 +124,7 @@ declare_oxc_lint!(
     CustomErrorDefinition,
     unicorn,
     style,
-    pending,
+    suggestion,
 );
 
 impl Rule for CustomErrorDefinition {
@@ -263,7 +263,16 @@ fn check_class<'a>(class: &Class<'a>, node: &AstNode<'a>, ctx: &LintContext<'a>)
     };
 
     if let Some(span) = invalid_name_span {
-        ctx.diagnostic(invalid_name_property_diagnostic(span, name));
+        // Only provide a suggestion when the span is a specific value (not the whole body/class)
+        if span != body.span && span != class.span {
+            let name = name.to_string();
+            ctx.diagnostic_with_suggestion(
+                invalid_name_property_diagnostic(span, &name),
+                |fixer| fixer.replace(span, format!("'{name}'")),
+            );
+        } else {
+            ctx.diagnostic(invalid_name_property_diagnostic(span, name));
+        }
     }
 }
 
@@ -670,6 +679,38 @@ fn test() {
         }",
     ];
 
+    let fix = vec![
+        (
+            r"class FooError extends Error {
+            constructor() {
+                super('My awesome Foo Error');
+                this.name = this.constructor.name;
+            }
+        }",
+            r"class FooError extends Error {
+            constructor() {
+                super('My awesome Foo Error');
+                this.name = 'FooError';
+            }
+        }",
+        ),
+        (
+            r"class FooError extends Http.ProtocolError {
+            constructor() {
+                super();
+                this.name = 'foo';
+            }
+        }",
+            r"class FooError extends Http.ProtocolError {
+            constructor() {
+                super();
+                this.name = 'FooError';
+            }
+        }",
+        ),
+    ];
+
     Tester::new(CustomErrorDefinition::NAME, CustomErrorDefinition::PLUGIN, pass, fail)
+        .expect_fix(fix)
         .test_and_snapshot();
 }

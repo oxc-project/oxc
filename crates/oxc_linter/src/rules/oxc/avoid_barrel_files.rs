@@ -103,10 +103,10 @@ fn count_statement(statement: &Statement<'_>, declarations: &mut usize, exports:
         Statement::VariableDeclaration(variable_decl) => {
             *declarations += variable_decl.declarations.len();
         }
-        Statement::FunctionDeclaration(_) | Statement::ClassDeclaration(_) => {
-            *declarations += 1;
-        }
-        Statement::TSTypeAliasDeclaration(_) | Statement::TSInterfaceDeclaration(_) => {
+        Statement::FunctionDeclaration(_)
+        | Statement::ClassDeclaration(_)
+        | Statement::TSTypeAliasDeclaration(_)
+        | Statement::TSInterfaceDeclaration(_) => {
             *declarations += 1;
         }
         Statement::ExportNamedDeclaration(export_named) => {
@@ -118,10 +118,8 @@ fn count_statement(statement: &Statement<'_>, declarations: &mut usize, exports:
             }
         }
         Statement::ExportDefaultDeclaration(export_default) => match &export_default.declaration {
-            ExportDefaultDeclarationKind::FunctionDeclaration(_) => {
-                *declarations += 1;
-            }
-            ExportDefaultDeclarationKind::CallExpression(_) => {
+            ExportDefaultDeclarationKind::FunctionDeclaration(_)
+            | ExportDefaultDeclarationKind::CallExpression(_) => {
                 *declarations += 1;
             }
             ExportDefaultDeclarationKind::ObjectExpression(object_expr) => {

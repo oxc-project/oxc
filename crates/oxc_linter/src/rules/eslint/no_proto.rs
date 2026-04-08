@@ -42,7 +42,7 @@ declare_oxc_lint!(
     NoProto,
     eslint,
     restriction,
-    pending
+    suggestion
 );
 
 impl Rule for NoProto {
@@ -52,7 +52,12 @@ impl Rule for NoProto {
         };
 
         if member_expr.static_property_name().is_some_and(|name| name == "__proto__") {
-            ctx.diagnostic(no_proto_diagnostic(member_expr.span()));
+            let object_span = member_expr.object().span();
+            let span = member_expr.span();
+            ctx.diagnostic_with_suggestion(no_proto_diagnostic(span), |fixer| {
+                let object_text = fixer.source_range(object_span);
+                fixer.replace(span, format!("Object.getPrototypeOf({object_text})"))
+            });
         }
     }
 }
@@ -77,5 +82,11 @@ fn test() {
         "test[`__proto__`] = function () {};",
     ];
 
-    Tester::new(NoProto::NAME, NoProto::PLUGIN, pass, fail).test_and_snapshot();
+    let fix = vec![
+        ("var a = test.__proto__;", "var a = Object.getPrototypeOf(test);", None),
+        ("var a = test['__proto__'];", "var a = Object.getPrototypeOf(test);", None),
+        ("var a = test[`__proto__`];", "var a = Object.getPrototypeOf(test);", None),
+    ];
+
+    Tester::new(NoProto::NAME, NoProto::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();
 }
