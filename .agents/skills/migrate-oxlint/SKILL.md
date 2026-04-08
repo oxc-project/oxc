@@ -40,7 +40,7 @@ If your ESLint config is not at the default location, pass the path explicitly:
 npx @oxlint/migrate ./path/to/eslint.config.js
 ```
 
-> **Type-aware rules**: If the source ESLint config used `@typescript-eslint/recommended-type-checked`, `strict-type-checked`, or any other type-aware rules, run with `--type-aware` to preserve that coverage. Without this flag, all type-aware rules are silently skipped. Install `oxlint-tsgolint` after migrating (see Step 3).
+> **Type-aware rules**: If the source ESLint config used `@typescript-eslint/recommended-type-checked`, `strict-type-checked`, or any other type-aware rules, add `"typeAware": true` to the `options` section of `.oxlintrc.json` to preserve that coverage. Without it, all type-aware rules are silently skipped. Install `oxlint-tsgolint` after migrating (see Step 3). If you need to skip type-aware rules in specific invocations for speed (e.g., a pre-commit hook), omit `typeAware` from the config and pass `--type-aware` on the CLI only where full type checking is wanted.
 
 ## Step 2: Review Generated Config
 
@@ -114,7 +114,7 @@ If you want to add the `oxlint-tsgolint` package, if you intend to use type-awar
 npm install -D oxlint-tsgolint
 ```
 
-> **`oxlint-tsgolint` limitations**: `oxlint-tsgolint` uses its own TypeScript compiler (tsgo) which has known gaps compared to `tsc`. In particular, it does not resolve module augmentations declared in test setup files (e.g., `vitest.setup.ts`, `jest.setup.ts`). This causes false-positive `typescript/no-unsafe-call` errors on custom matchers added by test helper libraries (e.g., `jest-styled-components`). Suppress these with `// oxlint-disable-next-line typescript/no-unsafe-call` and a comment explaining why the suppression is needed.
+> **Diagnosing false positives**: If type-aware rules produce unexpected errors, run with `--type-check` to surface TypeScript compiler diagnostics alongside lint results. Unresolved imports or globals cause values to be typed as `any`, which triggers rules like `typescript/no-unsafe-call`. Resolve the underlying import/type issue before adding disable comments.
 
 No other packages besides the above are needed by default, though you will need to keep/install any additional ESLint plugins that were migrated into `jsPlugins`. Do not add `@oxlint/migrate` to the package.json, it is meant for one-off usage.
 
