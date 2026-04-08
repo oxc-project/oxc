@@ -55,7 +55,7 @@ declare_oxc_lint!(
     PreferBlobReadingMethods,
     unicorn,
     pedantic,
-    pending
+    suggestion
 );
 
 impl Rule for PreferBlobReadingMethods {
@@ -82,7 +82,10 @@ impl Rule for PreferBlobReadingMethods {
             _ => return,
         };
 
-        ctx.diagnostic(prefer_blob_reading_methods_diagnostic(span, replacement, current));
+        ctx.diagnostic_with_suggestion(
+            prefer_blob_reading_methods_diagnostic(span, replacement, current),
+            |fixer| fixer.replace(span, replacement),
+        );
     }
 }
 
@@ -102,6 +105,12 @@ fn test() {
 
     let fail = vec!["fileReader.readAsArrayBuffer(blob)", "fileReader.readAsText(blob)"];
 
+    let fix = vec![
+        ("fileReader.readAsArrayBuffer(blob)", "fileReader.arrayBuffer(blob)"),
+        ("fileReader.readAsText(blob)", "fileReader.text(blob)"),
+    ];
+
     Tester::new(PreferBlobReadingMethods::NAME, PreferBlobReadingMethods::PLUGIN, pass, fail)
+        .expect_fix(fix)
         .test_and_snapshot();
 }

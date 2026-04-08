@@ -49,7 +49,7 @@ declare_oxc_lint!(
     NoUselessSwitchCase,
     unicorn,
     pedantic,
-    pending
+    suggestion
 );
 
 impl Rule for NoUselessSwitchCase {
@@ -88,7 +88,9 @@ impl Rule for NoUselessSwitchCase {
         }
 
         for case in useless_cases {
-            ctx.diagnostic(no_useless_switch_case_diagnostic(case.span));
+            ctx.diagnostic_with_suggestion(no_useless_switch_case_diagnostic(case.span), |fixer| {
+                fixer.delete_range(case.span)
+            });
         }
     }
 }
@@ -265,6 +267,21 @@ fn test() {
         ",
     ];
 
+    let fix = vec![(
+        "switch (foo) {
+            case a:
+            default:
+                handleDefaultCase();
+                break;
+        }",
+        "switch (foo) {
+            \n            default:
+                handleDefaultCase();
+                break;
+        }",
+    )];
+
     Tester::new(NoUselessSwitchCase::NAME, NoUselessSwitchCase::PLUGIN, pass, fail)
+        .expect_fix(fix)
         .test_and_snapshot();
 }

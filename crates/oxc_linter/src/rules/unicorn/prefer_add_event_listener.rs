@@ -1,7 +1,8 @@
 use oxc_ast::AstKind;
+use oxc_ast::ast::AssignmentOperator;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -38,7 +39,7 @@ declare_oxc_lint!(
     PreferAddEventListener,
     unicorn,
     suspicious,
-    pending
+    suggestion
 );
 
 impl Rule for PreferAddEventListener {
@@ -67,7 +68,20 @@ impl Rule for PreferAddEventListener {
             return;
         }
 
-        ctx.diagnostic(prefer_add_event_listener_diagnostic(span));
+        let event_name = name.trim_start_matches("on");
+
+        if assignment_expr.operator == AssignmentOperator::Assign {
+            let object_text = ctx.source_range(member_expr.object().span());
+            let handler_text = ctx.source_range(assignment_expr.right.span());
+            ctx.diagnostic_with_suggestion(prefer_add_event_listener_diagnostic(span), |fixer| {
+                fixer.replace(
+                    assignment_expr.span,
+                    format!("{object_text}.addEventListener('{event_name}', {handler_text})"),
+                )
+            });
+        } else {
+            ctx.diagnostic(prefer_add_event_listener_diagnostic(span));
+        }
     }
 }
 
@@ -448,6 +462,12 @@ fn test() {
     //     "(el as HTMLElement).addEventListener('mouseenter', onAnchorMouseEnter);",
     // )];
 
+    let fix = vec![
+        ("foo.onclick = () => {}", "foo.addEventListener('click', () => {})"),
+        ("foo.onkeydown = () => {}", "foo.addEventListener('keydown', () => {})"),
+    ];
+
     Tester::new(PreferAddEventListener::NAME, PreferAddEventListener::PLUGIN, pass, fail)
+        .expect_fix(fix)
         .test_and_snapshot();
 }

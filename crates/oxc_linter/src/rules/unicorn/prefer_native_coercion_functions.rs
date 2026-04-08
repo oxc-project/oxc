@@ -53,7 +53,7 @@ declare_oxc_lint!(
     PreferNativeCoercionFunctions,
     unicorn,
     pedantic,
-    pending
+    suggestion
 );
 
 impl Rule for PreferNativeCoercionFunctions {
@@ -67,7 +67,11 @@ impl Rule for PreferNativeCoercionFunctions {
                 if let Some(call_expr_ident) =
                     check_function(&arrow_expr.params, &arrow_expr.body, true)
                 {
-                    ctx.diagnostic(function(arrow_expr.span, call_expr_ident));
+                    let called_fn = call_expr_ident.to_string();
+                    ctx.diagnostic_with_suggestion(
+                        function(arrow_expr.span, call_expr_ident),
+                        |fixer| fixer.replace(arrow_expr.span, called_fn),
+                    );
                 }
 
                 if check_array_callback_methods(
@@ -77,7 +81,9 @@ impl Rule for PreferNativeCoercionFunctions {
                     true,
                     ctx,
                 ) {
-                    ctx.diagnostic(array_callback(arrow_expr.span));
+                    ctx.diagnostic_with_suggestion(array_callback(arrow_expr.span), |fixer| {
+                        fixer.replace(arrow_expr.span, "Boolean")
+                    });
                 }
             }
             AstKind::Function(func) => {
@@ -91,7 +97,12 @@ impl Rule for PreferNativeCoercionFunctions {
                     && let Some(call_expr_ident) =
                         check_function(&func.params, function_body, false)
                 {
-                    ctx.diagnostic(function(func.span, call_expr_ident));
+                    let diagnostic = function(func.span, call_expr_ident);
+                    let replacement = call_expr_ident.to_string();
+                    let span = func.span;
+                    ctx.diagnostic_with_suggestion(diagnostic, |fixer| {
+                        fixer.replace(span, replacement)
+                    });
                 }
             }
             _ => {}
@@ -402,11 +413,21 @@ fn test() {
         "array.filter((value): boolean => value)", // {"parser": parsers.typescript}
     ];
 
+    let fix = vec![
+        ("const foo = v => String(v)", "const foo = String"),
+        ("const foo = v => Number(v)", "const foo = Number"),
+        ("const foo = v => Boolean(v)", "const foo = Boolean"),
+        ("array.every(v => v)", "array.every(Boolean)"),
+        ("array.filter(v => v)", "array.filter(Boolean)"),
+        ("array.some(v => v)", "array.some(Boolean)"),
+    ];
+
     Tester::new(
         PreferNativeCoercionFunctions::NAME,
         PreferNativeCoercionFunctions::PLUGIN,
         pass,
         fail,
     )
+    .expect_fix(fix)
     .test_and_snapshot();
 }

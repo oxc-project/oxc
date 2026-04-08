@@ -37,6 +37,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                             ──────────
  5 │             }
    ╰────
+  help: Replace `'FooError'` with `'fooError'`.
 
   ⚠ eslint-plugin-unicorn(custom-error-definition): Invalid class name, use `FooError`.
    ╭─[custom_error_definition.tsx:1:7]
@@ -125,6 +126,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                             ─────────────────────
  5 │             }
    ╰────
+  help: Replace `this.constructor.name` with `'FooError'`.
 
   ⚠ eslint-plugin-unicorn(custom-error-definition): Pass the error message to `super()` instead of setting `this.message`.
    ╭─[custom_error_definition.tsx:3:17]
@@ -175,6 +177,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                             ─────
  5 │             }
    ╰────
+  help: Replace `'foo'` with `'FooError'`.
 
   ⚠ eslint-plugin-unicorn(custom-error-definition): The `name` property should be set to `FooError`.
    ╭─[custom_error_definition.tsx:4:29]
@@ -183,6 +186,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                             ─────
  5 │             }
    ╰────
+  help: Replace `'foo'` with `'FooError'`.
 
   ⚠ eslint-plugin-unicorn(custom-error-definition): Exported error name should match error class
    ╭─[custom_error_definition.tsx:1:9]
@@ -205,6 +209,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                             ─────
  5 │             }
    ╰────
+  help: Replace `'foo'` with `'FooError'`.
 
   ⚠ eslint-plugin-unicorn(custom-error-definition): The `name` property should be set to `FooError`.
    ╭─[custom_error_definition.tsx:4:29]
@@ -213,6 +218,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                             ─────
  5 │             }
    ╰────
+  help: Replace `'foo'` with `'FooError'`.
 
   ⚠ eslint-plugin-unicorn(custom-error-definition): The `name` property should be set to `FooError`.
    ╭─[custom_error_definition.tsx:4:29]
@@ -221,6 +227,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                             ─────
  5 │             }
    ╰────
+  help: Replace `'foo'` with `'FooError'`.
 
   ⚠ eslint-plugin-unicorn(custom-error-definition): Pass the error message to `super()` instead of setting `this.message`.
    ╭─[custom_error_definition.tsx:8:17]
@@ -245,6 +252,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ─────
  3 │             constructor(message) {
    ╰────
+  help: Replace `'FOO'` with `'ValidationError'`.
 
   ⚠ eslint-plugin-unicorn(custom-error-definition): The `name` property should be set to `FooError`.
    ╭─[custom_error_definition.tsx:4:34]
@@ -262,6 +270,7 @@ source: crates/oxc_linter/src/tester.rs
    ·             ─────────────────
  3 │             constructor(message) {
    ╰────
+  help: Replace `'name': SomeType;` with `'ValidationError'`.
 
   ⚠ eslint-plugin-unicorn(custom-error-definition): The `name` property should be set to `FooError`.
    ╭─[custom_error_definition.tsx:2:13]

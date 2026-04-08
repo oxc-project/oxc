@@ -46,7 +46,7 @@ declare_oxc_lint!(
     SwitchCaseBreakPosition,
     unicorn,
     style,
-    pending,
+    suggestion,
 );
 
 impl Rule for SwitchCaseBreakPosition {
@@ -74,7 +74,42 @@ impl Rule for SwitchCaseBreakPosition {
             return;
         }
 
-        ctx.diagnostic(switch_case_break_position_diagnostic(last_statement.span(), keyword));
+        let break_text = ctx.source_range(last_statement.span());
+        let source_text = ctx.source_text();
+
+        // Figure out indentation of statements inside the block
+        let last_body_stmt = block_statement.body.last().unwrap();
+        let body_indent = {
+            let before = &source_text[..last_body_stmt.span().start as usize];
+            let line_start = before.rfind('\n').map_or(0, |i| i + 1);
+            &source_text[line_start..last_body_stmt.span().start as usize]
+        };
+
+        // Figure out indentation of the closing brace
+        let brace_pos = (block_statement.span.end - 1) as usize;
+        let brace_indent = {
+            let before = &source_text[..brace_pos];
+            let line_start = before.rfind('\n').map_or(0, |i| i + 1);
+            &source_text[line_start..brace_pos]
+        };
+
+        // Find start of whitespace/newline before the closing brace
+        let before_brace = &source_text[..brace_pos];
+        let brace_line_start = before_brace.rfind('\n').map_or(0, |i| i);
+
+        // Replace from before the closing brace's newline through the break statement
+        // This preserves all content inside the block (including comments) and moves
+        // the break before the closing brace
+        let replace_span = Span::new(brace_line_start as u32, last_statement.span().end);
+
+        ctx.diagnostic_with_suggestion(
+            switch_case_break_position_diagnostic(last_statement.span(), keyword),
+            |fixer| {
+                fixer
+                    .replace(replace_span, format!("\n{body_indent}{break_text}\n{brace_indent}}}"))
+                    .with_message(format!("Move `{keyword}` inside the block statement."))
+            },
+        );
     }
 }
 
@@ -274,9 +309,21 @@ fn test() {
             }",
     ];
 
-    // TODO: add fixer
-    #[expect(clippy::useless_vec)]
-    let _fix = vec![
+    let fix = vec![
+        (
+            "switch(foo) {
+                case 1: {
+                    doStuff();
+                }
+                break;
+            }",
+            "switch(foo) {
+                case 1: {
+                    doStuff();
+                    break;
+                }
+            }",
+        ),
         (
             "switch(foo) {
                 case 1: {
@@ -338,5 +385,6 @@ fn test() {
     ];
 
     Tester::new(SwitchCaseBreakPosition::NAME, SwitchCaseBreakPosition::PLUGIN, pass, fail)
+        .expect_fix(fix)
         .test_and_snapshot();
 }

@@ -9,6 +9,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ──────
  6 │             }
    ╰────
+  help: Move `break` inside the block statement.
 
   ⚠ eslint-plugin-unicorn(switch-case-break-position): Move `return` inside the block statement.
    ╭─[switch_case_break_position.tsx:6:21]
@@ -17,6 +18,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ───────
  7 │                 }
    ╰────
+  help: Move `return` inside the block statement.
 
   ⚠ eslint-plugin-unicorn(switch-case-break-position): Move `return` inside the block statement.
    ╭─[switch_case_break_position.tsx:6:21]
@@ -25,6 +27,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ──────────────
  7 │                 }
    ╰────
+  help: Move `return` inside the block statement.
 
   ⚠ eslint-plugin-unicorn(switch-case-break-position): Move `throw` inside the block statement.
    ╭─[switch_case_break_position.tsx:5:17]
@@ -33,6 +36,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ───────────────────────
  6 │             }
    ╰────
+  help: Move `throw` inside the block statement.
 
   ⚠ eslint-plugin-unicorn(switch-case-break-position): Move `break` inside the block statement.
    ╭─[switch_case_break_position.tsx:5:17]
@@ -41,6 +45,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ──────
  6 │             }
    ╰────
+  help: Move `break` inside the block statement.
 
   ⚠ eslint-plugin-unicorn(switch-case-break-position): Move `break` inside the block statement.
    ╭─[switch_case_break_position.tsx:6:21]
@@ -49,6 +54,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ──────
  7 │             }
    ╰────
+  help: Move `break` inside the block statement.
 
   ⚠ eslint-plugin-unicorn(switch-case-break-position): Move `break` inside the block statement.
     ╭─[switch_case_break_position.tsx:9:17]
@@ -57,6 +63,7 @@ source: crates/oxc_linter/src/tester.rs
     ·                 ──────
  10 │             }
     ╰────
+  help: Move `break` inside the block statement.
 
   ⚠ eslint-plugin-unicorn(switch-case-break-position): Move `continue` inside the block statement.
    ╭─[switch_case_break_position.tsx:6:21]
@@ -65,6 +72,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ─────────
  7 │                 }
    ╰────
+  help: Move `continue` inside the block statement.
 
   ⚠ eslint-plugin-unicorn(switch-case-break-position): Move `break` inside the block statement.
    ╭─[switch_case_break_position.tsx:6:21]
@@ -73,6 +81,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ────────────
  7 │                 }
    ╰────
+  help: Move `break` inside the block statement.
 
   ⚠ eslint-plugin-unicorn(switch-case-break-position): Move `break` inside the block statement.
    ╭─[switch_case_break_position.tsx:6:17]
@@ -81,6 +90,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ──────
  7 │             }
    ╰────
+  help: Move `break` inside the block statement.
 
   ⚠ eslint-plugin-unicorn(switch-case-break-position): Move `return` inside the block statement.
    ╭─[switch_case_break_position.tsx:6:21]
@@ -89,6 +99,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ─────────────
  7 │                 }
    ╰────
+  help: Move `return` inside the block statement.
 
   ⚠ eslint-plugin-unicorn(switch-case-break-position): Move `throw` inside the block statement.
    ╭─[switch_case_break_position.tsx:6:21]
@@ -97,6 +108,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ────────────
  7 │                 }
    ╰────
+  help: Move `throw` inside the block statement.
 
   ⚠ eslint-plugin-unicorn(switch-case-break-position): Move `break` inside the block statement.
    ╭─[switch_case_break_position.tsx:5:17]
@@ -105,6 +117,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ──────
  6 │             }
    ╰────
+  help: Move `break` inside the block statement.
 
   ⚠ eslint-plugin-unicorn(switch-case-break-position): Move `break` inside the block statement.
    ╭─[switch_case_break_position.tsx:5:17]
@@ -113,6 +126,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ──────
  6 │             }
    ╰────
+  help: Move `break` inside the block statement.
 
   ⚠ eslint-plugin-unicorn(switch-case-break-position): Move `break` inside the block statement.
    ╭─[switch_case_break_position.tsx:6:17]
@@ -121,6 +135,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ──────
  7 │             }
    ╰────
+  help: Move `break` inside the block statement.
 
   ⚠ eslint-plugin-unicorn(switch-case-break-position): Move `break` inside the block statement.
    ╭─[switch_case_break_position.tsx:5:17]
@@ -129,12 +144,14 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ──────
  6 │             }
    ╰────
+  help: Move `break` inside the block statement.
 
   ⚠ eslint-plugin-unicorn(switch-case-break-position): Move `break` inside the block statement.
    ╭─[switch_case_break_position.tsx:1:38]
  1 │ switch(foo) { case 1: { doStuff(); } break; }
    ·                                      ──────
    ╰────
+  help: Move `break` inside the block statement.
 
   ⚠ eslint-plugin-unicorn(switch-case-break-position): Move `break` inside the block statement.
    ╭─[switch_case_break_position.tsx:5:17]
@@ -143,6 +160,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ──────
  6 │             }
    ╰────
+  help: Move `break` inside the block statement.
 
   ⚠ eslint-plugin-unicorn(switch-case-break-position): Move `break` inside the block statement.
    ╭─[switch_case_break_position.tsx:5:17]
@@ -151,6 +169,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ──────
  6 │             }
    ╰────
+  help: Move `break` inside the block statement.
 
   ⚠ eslint-plugin-unicorn(switch-case-break-position): Move `return` inside the block statement.
    ╭─[switch_case_break_position.tsx:6:21]
@@ -159,3 +178,4 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ─────────────
  7 │                 }
    ╰────
+  help: Move `return` inside the block statement.

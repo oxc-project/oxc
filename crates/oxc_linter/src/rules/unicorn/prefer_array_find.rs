@@ -51,7 +51,7 @@ declare_oxc_lint!(
     PreferArrayFind,
     unicorn,
     perf, // Encourages more efficient use of built-in methods
-    pending
+    suggestion
 );
 
 impl Rule for PreferArrayFind {
@@ -65,9 +65,18 @@ impl Rule for PreferArrayFind {
                     && is_filter_call(call_expr)
                     && !is_left_hand_side(node, ctx)
                 {
-                    ctx.diagnostic(prefer_array_find_diagnostic(
-                        call_expr_member_expr_property_span(call_expr),
-                    ));
+                    let filter_span = call_expr_member_expr_property_span(call_expr);
+                    ctx.diagnostic_with_suggestion(
+                        prefer_array_find_diagnostic(filter_span),
+                        |fixer| {
+                            // Replace `.filter(fn)[0]` with `.find(fn)`
+                            // Replace `filter` with `find` and remove `[0]`
+                            let outer_span = Span::new(filter_span.start, node.span().end);
+                            let args_text =
+                                fixer.source_range(Span::new(filter_span.end, call_expr.span.end));
+                            fixer.replace(outer_span, format!("find{args_text}"))
+                        },
+                    );
                 }
             }
             AstKind::CallExpression(call_expr) => {
@@ -79,25 +88,24 @@ impl Rule for PreferArrayFind {
                         .map(|expression| expression.object().get_inner_expression())
                     && is_filter_call(filter_call_expr)
                 {
-                    ctx.diagnostic(prefer_array_find_diagnostic(
-                        call_expr_member_expr_property_span(filter_call_expr),
-                    ));
+                    let filter_span = call_expr_member_expr_property_span(filter_call_expr);
+                    ctx.diagnostic_with_suggestion(
+                        prefer_array_find_diagnostic(filter_span),
+                        |fixer| {
+                            // Replace `.filter(fn).shift()` with `.find(fn)`
+                            let outer_span = Span::new(filter_span.start, call_expr.span.end);
+                            let args_text = fixer.source_range(Span::new(
+                                filter_span.end,
+                                filter_call_expr.span.end,
+                            ));
+                            fixer.replace(outer_span, format!("find{args_text}"))
+                        },
+                    );
                 }
 
                 // `array.filter().at(0)`
                 // `array.filter().at(-1)`
                 if is_method_call(call_expr, None, Some(&["at"]), Some(1), Some(1))
-                    && call_expr.arguments.first().is_some_and(|arg| {
-                        arg.as_expression().is_some_and(|x| match x {
-                            Expression::NumericLiteral(_) if x.is_number_value(0.0) => true,
-                            Expression::UnaryExpression(u)
-                                if u.operator == UnaryOperator::UnaryNegation =>
-                            {
-                                u.argument.is_number_value(1.0)
-                            }
-                            _ => false,
-                        })
-                    })
                     && let Some(Expression::CallExpression(filter_call_expr)) = call_expr
                         .callee
                         .get_inner_expression()
@@ -105,9 +113,37 @@ impl Rule for PreferArrayFind {
                         .map(|expression| expression.object().get_inner_expression())
                     && is_filter_call(filter_call_expr)
                 {
-                    ctx.diagnostic(prefer_array_find_diagnostic(
-                        call_expr_member_expr_property_span(filter_call_expr),
-                    ));
+                    let is_at_minus_1 = call_expr.arguments.first().is_some_and(|arg| {
+                        arg.as_expression().is_some_and(|x| {
+                            if let Expression::UnaryExpression(u) = x
+                                && u.operator == UnaryOperator::UnaryNegation
+                            {
+                                u.argument.is_number_value(1.0)
+                            } else {
+                                false
+                            }
+                        })
+                    });
+                    let is_at_0 = call_expr.arguments.first().is_some_and(|arg| {
+                        arg.as_expression()
+                            .is_some_and(|x| matches!(x, Expression::NumericLiteral(_) if x.is_number_value(0.0)))
+                    });
+
+                    if is_at_0 || is_at_minus_1 {
+                        let filter_span = call_expr_member_expr_property_span(filter_call_expr);
+                        let replacement = if is_at_minus_1 { "findLast" } else { "find" };
+                        ctx.diagnostic_with_suggestion(
+                            prefer_array_find_diagnostic(filter_span),
+                            |fixer| {
+                                let outer_span = Span::new(filter_span.start, call_expr.span.end);
+                                let args_text = fixer.source_range(Span::new(
+                                    filter_span.end,
+                                    filter_call_expr.span.end,
+                                ));
+                                fixer.replace(outer_span, format!("{replacement}{args_text}"))
+                            },
+                        );
+                    }
                 }
 
                 // `array.filter().pop()`
@@ -119,9 +155,18 @@ impl Rule for PreferArrayFind {
                         .map(|expression| expression.object().get_inner_expression())
                     && is_filter_call(filter_call_expr)
                 {
-                    ctx.diagnostic(prefer_array_find_diagnostic(
-                        call_expr_member_expr_property_span(filter_call_expr),
-                    ));
+                    let filter_span = call_expr_member_expr_property_span(filter_call_expr);
+                    ctx.diagnostic_with_suggestion(
+                        prefer_array_find_diagnostic(filter_span),
+                        |fixer| {
+                            let outer_span = Span::new(filter_span.start, call_expr.span.end);
+                            let args_text = fixer.source_range(Span::new(
+                                filter_span.end,
+                                filter_call_expr.span.end,
+                            ));
+                            fixer.replace(outer_span, format!("findLast{args_text}"))
+                        },
+                    );
                 }
             }
             AstKind::VariableDeclarator(var_decl) => {
@@ -132,9 +177,11 @@ impl Rule for PreferArrayFind {
                     && let Some(Expression::CallExpression(array_filter)) = &var_decl.init
                     && is_filter_call(array_filter)
                 {
-                    ctx.diagnostic(prefer_array_find_diagnostic(
-                        call_expr_member_expr_property_span(array_filter),
-                    ));
+                    let filter_span = call_expr_member_expr_property_span(array_filter);
+                    ctx.diagnostic_with_suggestion(
+                        prefer_array_find_diagnostic(filter_span),
+                        |fixer| fixer.replace(filter_span, "find"),
+                    );
                 }
 
                 // `const foo = array.filter(); foo[0]; [bar] = foo`
@@ -194,9 +241,11 @@ impl Rule for PreferArrayFind {
                     if !is_used_elsewhere
                         && (!zero_index_nodes.is_empty() || !destructuring_nodes.is_empty())
                     {
-                        ctx.diagnostic(prefer_array_find_diagnostic(
-                            call_expr_member_expr_property_span(call_expr),
-                        ));
+                        let filter_span = call_expr_member_expr_property_span(call_expr);
+                        ctx.diagnostic_with_suggestion(
+                            prefer_array_find_diagnostic(filter_span),
+                            |fixer| fixer.replace(filter_span, "find"),
+                        );
                     }
                 }
             }
@@ -209,9 +258,11 @@ impl Rule for PreferArrayFind {
                     && let Expression::CallExpression(array_filter) = &assignment_expr.right
                     && is_filter_call(array_filter)
                 {
-                    ctx.diagnostic(prefer_array_find_diagnostic(
-                        call_expr_member_expr_property_span(array_filter),
-                    ));
+                    let filter_span = call_expr_member_expr_property_span(array_filter);
+                    ctx.diagnostic_with_suggestion(
+                        prefer_array_find_diagnostic(filter_span),
+                        |fixer| fixer.replace(filter_span, "find"),
+                    );
                 }
             }
             _ => {}
@@ -971,5 +1022,15 @@ fn test() {
                 ;",
         ),
     ];
-    Tester::new(PreferArrayFind::NAME, PreferArrayFind::PLUGIN, pass, fail).test_and_snapshot();
+    let fix = vec![
+        ("array.filter(foo)[0]", "array.find(foo)"),
+        ("array.filter(foo).shift()", "array.find(foo)"),
+        ("array.filter(foo).pop()", "array.findLast(foo)"),
+        ("array.filter(foo).at(0)", "array.find(foo)"),
+        ("array.filter(foo).at(-1)", "array.findLast(foo)"),
+    ];
+
+    Tester::new(PreferArrayFind::NAME, PreferArrayFind::PLUGIN, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }
