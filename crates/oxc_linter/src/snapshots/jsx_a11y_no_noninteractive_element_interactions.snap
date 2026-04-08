@@ -1,0 +1,17 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive element should not have event handlers without a role.
+   ╭─[no_noninteractive_element_interactions.tsx:1:6]
+ 1 │ <div onClick={() => {}} />
+   ·      ──────────────────
+   ╰────
+  help: Add an appropriate ARIA role to the element, or use an interactive element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive element should not have event handlers without a role.
+   ╭─[no_noninteractive_element_interactions.tsx:1:7]
+ 1 │ <span onClick={() => {}} />
+   ·       ──────────────────
+   ╰────
+  help: Add an appropriate ARIA role to the element, or use an interactive element instead.

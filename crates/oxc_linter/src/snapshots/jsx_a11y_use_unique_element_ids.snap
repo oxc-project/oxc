@@ -1,0 +1,10 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint-plugin-jsx-a11y(use-unique-element-ids): Duplicate element id `foo`.
+   ╭─[use_unique_element_ids.tsx:1:24]
+ 1 │ <><div id="foo" /><div id="foo" /></>
+   ·                        ────────
+   ╰────
+  help: Element `id` attributes must be unique within a document. Use a unique id for each element.

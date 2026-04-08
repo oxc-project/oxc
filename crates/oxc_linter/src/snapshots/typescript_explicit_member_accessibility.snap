@@ -1,0 +1,24 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ typescript-eslint(explicit-member-accessibility): Missing accessibility modifier on property.
+   ╭─[explicit_member_accessibility.tsx:1:13]
+ 1 │ class Foo { bar: string; }
+   ·             ─
+   ╰────
+  help: Add an explicit `public`, `private`, or `protected` modifier.
+
+  ⚠ typescript-eslint(explicit-member-accessibility): Missing accessibility modifier on method.
+   ╭─[explicit_member_accessibility.tsx:1:13]
+ 1 │ class Foo { baz() {} }
+   ·             ─
+   ╰────
+  help: Add an explicit `public`, `private`, or `protected` modifier.
+
+  ⚠ typescript-eslint(explicit-member-accessibility): Missing accessibility modifier on property.
+   ╭─[explicit_member_accessibility.tsx:1:13]
+ 1 │ class Foo { qux = 1; }
+   ·             ─
+   ╰────
+  help: Add an explicit `public`, `private`, or `protected` modifier.

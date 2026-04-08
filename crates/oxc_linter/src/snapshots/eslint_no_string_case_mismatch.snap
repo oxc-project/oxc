@@ -1,0 +1,59 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint(no-string-case-mismatch): Comparison with `toLowerCase()` will always be false due to case mismatch.
+   ╭─[no_string_case_mismatch.tsx:1:5]
+ 1 │ if (str.toLowerCase() === "ABC") {}
+   ·     ───────────────────────────
+   ╰────
+  help: The string being compared contains characters that don't match the case transformation from `toLowerCase()`. This comparison will never be true.
+
+  ⚠ eslint(no-string-case-mismatch): Comparison with `toUpperCase()` will always be false due to case mismatch.
+   ╭─[no_string_case_mismatch.tsx:1:5]
+ 1 │ if (str.toUpperCase() === "abc") {}
+   ·     ───────────────────────────
+   ╰────
+  help: The string being compared contains characters that don't match the case transformation from `toUpperCase()`. This comparison will never be true.
+
+  ⚠ eslint(no-string-case-mismatch): Comparison with `toLowerCase()` will always be false due to case mismatch.
+   ╭─[no_string_case_mismatch.tsx:1:5]
+ 1 │ if ("ABC" === str.toLowerCase()) {}
+   ·     ───────────────────────────
+   ╰────
+  help: The string being compared contains characters that don't match the case transformation from `toLowerCase()`. This comparison will never be true.
+
+  ⚠ eslint(no-string-case-mismatch): Comparison with `toLowerCase()` will always be false due to case mismatch.
+   ╭─[no_string_case_mismatch.tsx:1:5]
+ 1 │ if (str.toLowerCase() === "AbC") {}
+   ·     ───────────────────────────
+   ╰────
+  help: The string being compared contains characters that don't match the case transformation from `toLowerCase()`. This comparison will never be true.
+
+  ⚠ eslint(no-string-case-mismatch): Comparison with `toUpperCase()` will always be false due to case mismatch.
+   ╭─[no_string_case_mismatch.tsx:1:5]
+ 1 │ if (str.toUpperCase() === "AbC") {}
+   ·     ───────────────────────────
+   ╰────
+  help: The string being compared contains characters that don't match the case transformation from `toUpperCase()`. This comparison will never be true.
+
+  ⚠ eslint(no-string-case-mismatch): Comparison with `toLowerCase()` will always be false due to case mismatch.
+   ╭─[no_string_case_mismatch.tsx:1:5]
+ 1 │ if (str.toLowerCase() !== "ABC") {}
+   ·     ───────────────────────────
+   ╰────
+  help: The string being compared contains characters that don't match the case transformation from `toLowerCase()`. This comparison will never be true.
+
+  ⚠ eslint(no-string-case-mismatch): Comparison with `toLocaleLowerCase()` will always be false due to case mismatch.
+   ╭─[no_string_case_mismatch.tsx:1:5]
+ 1 │ if (str.toLocaleLowerCase() === "ABC") {}
+   ·     ─────────────────────────────────
+   ╰────
+  help: The string being compared contains characters that don't match the case transformation from `toLocaleLowerCase()`. This comparison will never be true.
+
+  ⚠ eslint(no-string-case-mismatch): Comparison with `toLocaleUpperCase()` will always be false due to case mismatch.
+   ╭─[no_string_case_mismatch.tsx:1:5]
+ 1 │ if (str.toLocaleUpperCase() === "abc") {}
+   ·     ─────────────────────────────────
+   ╰────
+  help: The string being compared contains characters that don't match the case transformation from `toLocaleUpperCase()`. This comparison will never be true.

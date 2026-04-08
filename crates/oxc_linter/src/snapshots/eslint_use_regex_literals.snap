@@ -1,0 +1,38 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint(use-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[use_regex_literals.tsx:1:1]
+ 1 │ new RegExp('abc');
+   · ─────────────────
+   ╰────
+  help: Replace `new RegExp("pattern")` with `/pattern/` for better readability and performance.
+
+  ⚠ eslint(use-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[use_regex_literals.tsx:1:1]
+ 1 │ RegExp('abc');
+   · ─────────────
+   ╰────
+  help: Replace `new RegExp("pattern")` with `/pattern/` for better readability and performance.
+
+  ⚠ eslint(use-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[use_regex_literals.tsx:1:1]
+ 1 │ new RegExp('abc', 'g');
+   · ──────────────────────
+   ╰────
+  help: Replace `new RegExp("pattern")` with `/pattern/` for better readability and performance.
+
+  ⚠ eslint(use-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[use_regex_literals.tsx:1:1]
+ 1 │ RegExp('abc', 'ig');
+   · ───────────────────
+   ╰────
+  help: Replace `new RegExp("pattern")` with `/pattern/` for better readability and performance.
+
+  ⚠ eslint(use-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[use_regex_literals.tsx:1:1]
+ 1 │ new RegExp('test');
+   · ──────────────────
+   ╰────
+  help: Replace `new RegExp("pattern")` with `/pattern/` for better readability and performance.

@@ -1,0 +1,24 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint-plugin-jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive element should not be assigned a non-interactive role.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:9]
+ 1 │ <button role="article" />
+   ·         ──────────────
+   ╰────
+  help: Interactive HTML elements like `<button>`, `<a>`, and `<input>` should not be given non-interactive roles like `article` or `presentation`.
+
+  ⚠ eslint-plugin-jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive element should not be assigned a non-interactive role.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:9]
+ 1 │ <button role="presentation" />
+   ·         ───────────────────
+   ╰────
+  help: Interactive HTML elements like `<button>`, `<a>`, and `<input>` should not be given non-interactive roles like `article` or `presentation`.
+
+  ⚠ eslint-plugin-jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive element should not be assigned a non-interactive role.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:13]
+ 1 │ <a href="#" role="none" />
+   ·             ───────────
+   ╰────
+  help: Interactive HTML elements like `<button>`, `<a>`, and `<input>` should not be given non-interactive roles like `article` or `presentation`.

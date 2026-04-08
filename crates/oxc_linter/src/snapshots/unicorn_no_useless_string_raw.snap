@@ -1,0 +1,24 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint-plugin-unicorn(no-useless-string-raw): `String.raw` is unnecessary when the template has no escape sequences.
+   ╭─[no_useless_string_raw.tsx:1:1]
+ 1 │ String.raw`hello world`;
+   · ───────────────────────
+   ╰────
+  help: Remove `String.raw` since the template literal doesn't contain any backslash escapes.
+
+  ⚠ eslint-plugin-unicorn(no-useless-string-raw): `String.raw` is unnecessary when the template has no escape sequences.
+   ╭─[no_useless_string_raw.tsx:1:1]
+ 1 │ String.raw`foo bar`;
+   · ───────────────────
+   ╰────
+  help: Remove `String.raw` since the template literal doesn't contain any backslash escapes.
+
+  ⚠ eslint-plugin-unicorn(no-useless-string-raw): `String.raw` is unnecessary when the template has no escape sequences.
+   ╭─[no_useless_string_raw.tsx:1:1]
+ 1 │ String.raw`no escapes here`;
+   · ───────────────────────────
+   ╰────
+  help: Remove `String.raw` since the template literal doesn't contain any backslash escapes.

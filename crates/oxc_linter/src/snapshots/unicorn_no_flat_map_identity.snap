@@ -1,0 +1,10 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint-plugin-unicorn(no-flat-map-identity): `.flatMap(x => x)` is equivalent to `.flat()`.
+   ╭─[no_flat_map_identity.tsx:1:1]
+ 1 │ arr.flatMap(x => x);
+   · ───────────────────
+   ╰────
+  help: Replace `.flatMap(x => x)` with `.flat()` for clarity.

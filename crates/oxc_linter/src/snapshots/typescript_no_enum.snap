@@ -1,0 +1,24 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ typescript-eslint(no-enum): TypeScript enums are not allowed.
+   ╭─[no_enum.tsx:1:1]
+ 1 │ enum Color { Red, Green, Blue }
+   · ────
+   ╰────
+  help: Use a union type or a const object instead of an enum.
+
+  ⚠ typescript-eslint(no-enum): TypeScript enums are not allowed.
+   ╭─[no_enum.tsx:1:1]
+ 1 │ const enum Direction { Up, Down }
+   · ──────────
+   ╰────
+  help: Use a union type or a const object instead of an enum.
+
+  ⚠ typescript-eslint(no-enum): TypeScript enums are not allowed.
+   ╭─[no_enum.tsx:1:1]
+ 1 │ enum Status { Active = 'active', Inactive = 'inactive' }
+   · ────
+   ╰────
+  help: Use a union type or a const object instead of an enum.

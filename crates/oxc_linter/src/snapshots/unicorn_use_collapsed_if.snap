@@ -1,0 +1,17 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint-plugin-unicorn(use-collapsed-if): This `if` statement can be collapsed into the outer `if` statement.
+   ╭─[use_collapsed_if.tsx:1:10]
+ 1 │ if (a) { if (b) { doSomething(); } }
+   ·          ─────────────────────────
+   ╰────
+  help: Combine conditions using `&&` to reduce nesting.
+
+  ⚠ eslint-plugin-unicorn(use-collapsed-if): This `if` statement can be collapsed into the outer `if` statement.
+   ╭─[use_collapsed_if.tsx:1:14]
+ 1 │ if (x > 0) { if (y > 0) { console.log('both positive'); } }
+   ·              ────────────────────────────────────────────
+   ╰────
+  help: Combine conditions using `&&` to reduce nesting.

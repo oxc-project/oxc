@@ -1,0 +1,10 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint-plugin-jsx-a11y(no-svg-without-title): SVG elements must have a `<title>` element or an accessible label.
+   ╭─[no_svg_without_title.tsx:1:1]
+ 1 │ <svg><circle /></svg>
+   · ─────
+   ╰────
+  help: Add a `<title>` child element, or add an `aria-label` or `aria-labelledby` attribute.

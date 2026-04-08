@@ -1,0 +1,17 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint-plugin-react(no-react-specific-props): `className` is a React-specific prop.
+   ╭─[no_react_specific_props.tsx:1:6]
+ 1 │ <div className="foo" />
+   ·      ───────────────
+   ╰────
+  help: Use the standard HTML attribute `class` instead of `className` when not using React.
+
+  ⚠ eslint-plugin-react(no-react-specific-props): `htmlFor` is a React-specific prop.
+   ╭─[no_react_specific_props.tsx:1:8]
+ 1 │ <label htmlFor="input" />
+   ·        ───────────────
+   ╰────
+  help: Use the standard HTML attribute `for` instead of `htmlFor` when not using React.

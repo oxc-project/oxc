@@ -1,0 +1,31 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint(use-single-var-declarator): Declare variables separately instead of using a single `let` declaration.
+   ╭─[use_single_var_declarator.tsx:1:1]
+ 1 │ let a, b;
+   · ─────────
+   ╰────
+  help: Split this declaration into separate statements, one per variable.
+
+  ⚠ eslint(use-single-var-declarator): Declare variables separately instead of using a single `const` declaration.
+   ╭─[use_single_var_declarator.tsx:1:1]
+ 1 │ const x = 1, y = 2;
+   · ───────────────────
+   ╰────
+  help: Split this declaration into separate statements, one per variable.
+
+  ⚠ eslint(use-single-var-declarator): Declare variables separately instead of using a single `var` declaration.
+   ╭─[use_single_var_declarator.tsx:1:1]
+ 1 │ var foo = 1, bar = 2;
+   · ─────────────────────
+   ╰────
+  help: Split this declaration into separate statements, one per variable.
+
+  ⚠ eslint(use-single-var-declarator): Declare variables separately instead of using a single `let` declaration.
+   ╭─[use_single_var_declarator.tsx:1:1]
+ 1 │ let a = 1, b = 2, c = 3;
+   · ────────────────────────
+   ╰────
+  help: Split this declaration into separate statements, one per variable.

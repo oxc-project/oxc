@@ -1,0 +1,10 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint-plugin-unicorn(use-consistent-curly-braces): Unnecessary curly braces around JSX string expression.
+   ╭─[use_consistent_curly_braces.tsx:1:6]
+ 1 │ <div>{'Hello'}</div>
+   ·      ─────────
+   ╰────
+  help: Remove the curly braces around this string literal. Use `text` instead of `{'text'}`.

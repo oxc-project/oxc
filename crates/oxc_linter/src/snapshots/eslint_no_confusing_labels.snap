@@ -1,0 +1,24 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint(no-confusing-labels): Label 'x' is confusing because it shares a name with a variable in scope.
+   ╭─[no_confusing_labels.tsx:1:12]
+ 1 │ let x = 1; x: while (true) { break x; }
+   ·            ─
+   ╰────
+  help: Use a different name for this label to avoid confusion with the variable of the same name.
+
+  ⚠ eslint(no-confusing-labels): Label 'foo' is confusing because it shares a name with a variable in scope.
+   ╭─[no_confusing_labels.tsx:1:14]
+ 1 │ var foo = 1; foo: while (true) { break foo; }
+   ·              ───
+   ╰────
+  help: Use a different name for this label to avoid confusion with the variable of the same name.
+
+  ⚠ eslint(no-confusing-labels): Label 'bar' is confusing because it shares a name with a variable in scope.
+   ╭─[no_confusing_labels.tsx:1:16]
+ 1 │ const bar = 1; bar: for (;;) { break bar; }
+   ·                ───
+   ╰────
+  help: Use a different name for this label to avoid confusion with the variable of the same name.

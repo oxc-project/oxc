@@ -47,6 +47,7 @@ pub use crate::rules::eslint::no_case_declarations::NoCaseDeclarations as Eslint
 pub use crate::rules::eslint::no_class_assign::NoClassAssign as EslintNoClassAssign;
 pub use crate::rules::eslint::no_compare_neg_zero::NoCompareNegZero as EslintNoCompareNegZero;
 pub use crate::rules::eslint::no_cond_assign::NoCondAssign as EslintNoCondAssign;
+pub use crate::rules::eslint::no_confusing_labels::NoConfusingLabels as EslintNoConfusingLabels;
 pub use crate::rules::eslint::no_console::NoConsole as EslintNoConsole;
 pub use crate::rules::eslint::no_const_assign::NoConstAssign as EslintNoConstAssign;
 pub use crate::rules::eslint::no_constant_binary_expression::NoConstantBinaryExpression as EslintNoConstantBinaryExpression;
@@ -104,12 +105,14 @@ pub use crate::rules::eslint::no_new_wrappers::NoNewWrappers as EslintNoNewWrapp
 pub use crate::rules::eslint::no_nonoctal_decimal_escape::NoNonoctalDecimalEscape as EslintNoNonoctalDecimalEscape;
 pub use crate::rules::eslint::no_obj_calls::NoObjCalls as EslintNoObjCalls;
 pub use crate::rules::eslint::no_object_constructor::NoObjectConstructor as EslintNoObjectConstructor;
+pub use crate::rules::eslint::no_octal_escape::NoOctalEscape as EslintNoOctalEscape;
 pub use crate::rules::eslint::no_param_reassign::NoParamReassign as EslintNoParamReassign;
 pub use crate::rules::eslint::no_plusplus::NoPlusplus as EslintNoPlusplus;
 pub use crate::rules::eslint::no_promise_executor_return::NoPromiseExecutorReturn as EslintNoPromiseExecutorReturn;
 pub use crate::rules::eslint::no_proto::NoProto as EslintNoProto;
 pub use crate::rules::eslint::no_prototype_builtins::NoPrototypeBuiltins as EslintNoPrototypeBuiltins;
 pub use crate::rules::eslint::no_redeclare::NoRedeclare as EslintNoRedeclare;
+pub use crate::rules::eslint::no_redundant_use_strict::NoRedundantUseStrict as EslintNoRedundantUseStrict;
 pub use crate::rules::eslint::no_regex_spaces::NoRegexSpaces as EslintNoRegexSpaces;
 pub use crate::rules::eslint::no_restricted_globals::NoRestrictedGlobals as EslintNoRestrictedGlobals;
 pub use crate::rules::eslint::no_restricted_imports::NoRestrictedImports as EslintNoRestrictedImports;
@@ -121,7 +124,9 @@ pub use crate::rules::eslint::no_sequences::NoSequences as EslintNoSequences;
 pub use crate::rules::eslint::no_setter_return::NoSetterReturn as EslintNoSetterReturn;
 pub use crate::rules::eslint::no_shadow::NoShadow as EslintNoShadow;
 pub use crate::rules::eslint::no_shadow_restricted_names::NoShadowRestrictedNames as EslintNoShadowRestrictedNames;
+pub use crate::rules::eslint::no_shouty_constants::NoShoutyConstants as EslintNoShoutyConstants;
 pub use crate::rules::eslint::no_sparse_arrays::NoSparseArrays as EslintNoSparseArrays;
+pub use crate::rules::eslint::no_string_case_mismatch::NoStringCaseMismatch as EslintNoStringCaseMismatch;
 pub use crate::rules::eslint::no_template_curly_in_string::NoTemplateCurlyInString as EslintNoTemplateCurlyInString;
 pub use crate::rules::eslint::no_ternary::NoTernary as EslintNoTernary;
 pub use crate::rules::eslint::no_this_before_super::NoThisBeforeSuper as EslintNoThisBeforeSuper;
@@ -148,6 +153,7 @@ pub use crate::rules::eslint::no_useless_catch::NoUselessCatch as EslintNoUseles
 pub use crate::rules::eslint::no_useless_computed_key::NoUselessComputedKey as EslintNoUselessComputedKey;
 pub use crate::rules::eslint::no_useless_concat::NoUselessConcat as EslintNoUselessConcat;
 pub use crate::rules::eslint::no_useless_constructor::NoUselessConstructor as EslintNoUselessConstructor;
+pub use crate::rules::eslint::no_useless_continue::NoUselessContinue as EslintNoUselessContinue;
 pub use crate::rules::eslint::no_useless_escape::NoUselessEscape as EslintNoUselessEscape;
 pub use crate::rules::eslint::no_useless_rename::NoUselessRename as EslintNoUselessRename;
 pub use crate::rules::eslint::no_useless_return::NoUselessReturn as EslintNoUselessReturn;
@@ -157,6 +163,7 @@ pub use crate::rules::eslint::no_warning_comments::NoWarningComments as EslintNo
 pub use crate::rules::eslint::no_with::NoWith as EslintNoWith;
 pub use crate::rules::eslint::object_shorthand::ObjectShorthand as EslintObjectShorthand;
 pub use crate::rules::eslint::operator_assignment::OperatorAssignment as EslintOperatorAssignment;
+pub use crate::rules::eslint::prefer_arrow_callback::PreferArrowCallback as EslintPreferArrowCallback;
 pub use crate::rules::eslint::prefer_const::PreferConst as EslintPreferConst;
 pub use crate::rules::eslint::prefer_destructuring::PreferDestructuring as EslintPreferDestructuring;
 pub use crate::rules::eslint::prefer_exponentiation_operator::PreferExponentiationOperator as EslintPreferExponentiationOperator;
@@ -177,6 +184,9 @@ pub use crate::rules::eslint::sort_vars::SortVars as EslintSortVars;
 pub use crate::rules::eslint::symbol_description::SymbolDescription as EslintSymbolDescription;
 pub use crate::rules::eslint::unicode_bom::UnicodeBom as EslintUnicodeBom;
 pub use crate::rules::eslint::use_isnan::UseIsnan as EslintUseIsnan;
+pub use crate::rules::eslint::use_regex_literals::UseRegexLiterals as EslintUseRegexLiterals;
+pub use crate::rules::eslint::use_single_var_declarator::UseSingleVarDeclarator as EslintUseSingleVarDeclarator;
+pub use crate::rules::eslint::use_while::UseWhile as EslintUseWhile;
 pub use crate::rules::eslint::valid_typeof::ValidTypeof as EslintValidTypeof;
 pub use crate::rules::eslint::vars_on_top::VarsOnTop as EslintVarsOnTop;
 pub use crate::rules::eslint::yoda::Yoda as EslintYoda;
@@ -197,6 +207,7 @@ pub use crate::rules::import::no_commonjs::NoCommonjs as ImportNoCommonjs;
 pub use crate::rules::import::no_cycle::NoCycle as ImportNoCycle;
 pub use crate::rules::import::no_default_export::NoDefaultExport as ImportNoDefaultExport;
 pub use crate::rules::import::no_duplicates::NoDuplicates as ImportNoDuplicates;
+pub use crate::rules::import::no_dynamic_namespace_import_access::NoDynamicNamespaceImportAccess as ImportNoDynamicNamespaceImportAccess;
 pub use crate::rules::import::no_dynamic_require::NoDynamicRequire as ImportNoDynamicRequire;
 pub use crate::rules::import::no_empty_named_blocks::NoEmptyNamedBlocks as ImportNoEmptyNamedBlocks;
 pub use crate::rules::import::no_mutable_exports::NoMutableExports as ImportNoMutableExports;
@@ -206,9 +217,12 @@ pub use crate::rules::import::no_named_default::NoNamedDefault as ImportNoNamedD
 pub use crate::rules::import::no_named_export::NoNamedExport as ImportNoNamedExport;
 pub use crate::rules::import::no_namespace::NoNamespace as ImportNoNamespace;
 pub use crate::rules::import::no_nodejs_modules::NoNodejsModules as ImportNoNodejsModules;
+pub use crate::rules::import::no_private_imports::NoPrivateImports as ImportNoPrivateImports;
 pub use crate::rules::import::no_relative_parent_imports::NoRelativeParentImports as ImportNoRelativeParentImports;
 pub use crate::rules::import::no_self_import::NoSelfImport as ImportNoSelfImport;
 pub use crate::rules::import::no_unassigned_import::NoUnassignedImport as ImportNoUnassignedImport;
+pub use crate::rules::import::no_undeclared_dependencies::NoUndeclaredDependencies as ImportNoUndeclaredDependencies;
+pub use crate::rules::import::no_unresolved_imports::NoUnresolvedImports as ImportNoUnresolvedImports;
 pub use crate::rules::import::no_webpack_loader_syntax::NoWebpackLoaderSyntax as ImportNoWebpackLoaderSyntax;
 pub use crate::rules::import::prefer_default_export::PreferDefaultExport as ImportPreferDefaultExport;
 pub use crate::rules::import::unambiguous::Unambiguous as ImportUnambiguous;
@@ -308,14 +322,20 @@ pub use crate::rules::jsx_a11y::no_access_key::NoAccessKey as JsxA11YNoAccessKey
 pub use crate::rules::jsx_a11y::no_aria_hidden_on_focusable::NoAriaHiddenOnFocusable as JsxA11YNoAriaHiddenOnFocusable;
 pub use crate::rules::jsx_a11y::no_autofocus::NoAutofocus as JsxA11YNoAutofocus;
 pub use crate::rules::jsx_a11y::no_distracting_elements::NoDistractingElements as JsxA11YNoDistractingElements;
+pub use crate::rules::jsx_a11y::no_interactive_element_to_noninteractive_role::NoInteractiveElementToNoninteractiveRole as JsxA11YNoInteractiveElementToNoninteractiveRole;
+pub use crate::rules::jsx_a11y::no_noninteractive_element_interactions::NoNoninteractiveElementInteractions as JsxA11YNoNoninteractiveElementInteractions;
+pub use crate::rules::jsx_a11y::no_noninteractive_element_to_interactive_role::NoNoninteractiveElementToInteractiveRole as JsxA11YNoNoninteractiveElementToInteractiveRole;
 pub use crate::rules::jsx_a11y::no_noninteractive_tabindex::NoNoninteractiveTabindex as JsxA11YNoNoninteractiveTabindex;
 pub use crate::rules::jsx_a11y::no_redundant_roles::NoRedundantRoles as JsxA11YNoRedundantRoles;
 pub use crate::rules::jsx_a11y::no_static_element_interactions::NoStaticElementInteractions as JsxA11YNoStaticElementInteractions;
+pub use crate::rules::jsx_a11y::no_svg_without_title::NoSvgWithoutTitle as JsxA11YNoSvgWithoutTitle;
 pub use crate::rules::jsx_a11y::prefer_tag_over_role::PreferTagOverRole as JsxA11YPreferTagOverRole;
 pub use crate::rules::jsx_a11y::role_has_required_aria_props::RoleHasRequiredAriaProps as JsxA11YRoleHasRequiredAriaProps;
 pub use crate::rules::jsx_a11y::role_supports_aria_props::RoleSupportsAriaProps as JsxA11YRoleSupportsAriaProps;
 pub use crate::rules::jsx_a11y::scope::Scope as JsxA11YScope;
 pub use crate::rules::jsx_a11y::tabindex_no_positive::TabindexNoPositive as JsxA11YTabindexNoPositive;
+pub use crate::rules::jsx_a11y::use_focusable_interactive::UseFocusableInteractive as JsxA11YUseFocusableInteractive;
+pub use crate::rules::jsx_a11y::use_unique_element_ids::UseUniqueElementIds as JsxA11YUseUniqueElementIds;
 pub use crate::rules::nextjs::google_font_display::GoogleFontDisplay as NextjsGoogleFontDisplay;
 pub use crate::rules::nextjs::google_font_preconnect::GoogleFontPreconnect as NextjsGoogleFontPreconnect;
 pub use crate::rules::nextjs::inline_script_id::InlineScriptId as NextjsInlineScriptId;
@@ -340,6 +360,7 @@ pub use crate::rules::nextjs::no_unwanted_polyfillio::NoUnwantedPolyfillio as Ne
 pub use crate::rules::node::global_require::GlobalRequire as NodeGlobalRequire;
 pub use crate::rules::node::handle_callback_err::HandleCallbackErr as NodeHandleCallbackErr;
 pub use crate::rules::node::no_exports_assign::NoExportsAssign as NodeNoExportsAssign;
+pub use crate::rules::node::no_global_dirname_filename::NoGlobalDirnameFilename as NodeNoGlobalDirnameFilename;
 pub use crate::rules::node::no_new_require::NoNewRequire as NodeNoNewRequire;
 pub use crate::rules::node::no_path_concat::NoPathConcat as NodeNoPathConcat;
 pub use crate::rules::node::no_process_env::NoProcessEnv as NodeNoProcessEnv;
@@ -418,14 +439,18 @@ pub use crate::rules::react::no_danger_with_children::NoDangerWithChildren as Re
 pub use crate::rules::react::no_did_mount_set_state::NoDidMountSetState as ReactNoDidMountSetState;
 pub use crate::rules::react::no_direct_mutation_state::NoDirectMutationState as ReactNoDirectMutationState;
 pub use crate::rules::react::no_find_dom_node::NoFindDomNode as ReactNoFindDomNode;
+pub use crate::rules::react::no_forward_ref::NoForwardRef as ReactNoForwardRef;
 pub use crate::rules::react::no_is_mounted::NoIsMounted as ReactNoIsMounted;
+pub use crate::rules::react::no_jsx_literals::NoJsxLiterals as ReactNoJsxLiterals;
 pub use crate::rules::react::no_multi_comp::NoMultiComp as ReactNoMultiComp;
 pub use crate::rules::react::no_namespace::NoNamespace as ReactNoNamespace;
 pub use crate::rules::react::no_react_children::NoReactChildren as ReactNoReactChildren;
+pub use crate::rules::react::no_react_specific_props::NoReactSpecificProps as ReactNoReactSpecificProps;
 pub use crate::rules::react::no_redundant_should_component_update::NoRedundantShouldComponentUpdate as ReactNoRedundantShouldComponentUpdate;
 pub use crate::rules::react::no_render_return_value::NoRenderReturnValue as ReactNoRenderReturnValue;
 pub use crate::rules::react::no_set_state::NoSetState as ReactNoSetState;
 pub use crate::rules::react::no_string_refs::NoStringRefs as ReactNoStringRefs;
+pub use crate::rules::react::no_suspicious_semicolon_in_jsx::NoSuspiciousSemicolonInJsx as ReactNoSuspiciousSemicolonInJsx;
 pub use crate::rules::react::no_this_in_sfc::NoThisInSfc as ReactNoThisInSfc;
 pub use crate::rules::react::no_unescaped_entities::NoUnescapedEntities as ReactNoUnescapedEntities;
 pub use crate::rules::react::no_unknown_property::NoUnknownProperty as ReactNoUnknownProperty;
@@ -440,6 +465,7 @@ pub use crate::rules::react::rules_of_hooks::RulesOfHooks as ReactRulesOfHooks;
 pub use crate::rules::react::self_closing_comp::SelfClosingComp as ReactSelfClosingComp;
 pub use crate::rules::react::state_in_constructor::StateInConstructor as ReactStateInConstructor;
 pub use crate::rules::react::style_prop_object::StylePropObject as ReactStylePropObject;
+pub use crate::rules::react::use_image_size::UseImageSize as ReactUseImageSize;
 pub use crate::rules::react::void_dom_elements_no_children::VoidDomElementsNoChildren as ReactVoidDomElementsNoChildren;
 pub use crate::rules::react_perf::jsx_no_jsx_as_prop::JsxNoJsxAsProp as ReactPerfJsxNoJsxAsProp;
 pub use crate::rules::react_perf::jsx_no_new_array_as_prop::JsxNoNewArrayAsProp as ReactPerfJsxNoNewArrayAsProp;
@@ -461,7 +487,9 @@ pub use crate::rules::typescript::consistent_type_exports::ConsistentTypeExports
 pub use crate::rules::typescript::consistent_type_imports::ConsistentTypeImports as TypescriptConsistentTypeImports;
 pub use crate::rules::typescript::dot_notation::DotNotation as TypescriptDotNotation;
 pub use crate::rules::typescript::explicit_function_return_type::ExplicitFunctionReturnType as TypescriptExplicitFunctionReturnType;
+pub use crate::rules::typescript::explicit_member_accessibility::ExplicitMemberAccessibility as TypescriptExplicitMemberAccessibility;
 pub use crate::rules::typescript::explicit_module_boundary_types::ExplicitModuleBoundaryTypes as TypescriptExplicitModuleBoundaryTypes;
+pub use crate::rules::typescript::naming_convention::NamingConvention as TypescriptNamingConvention;
 pub use crate::rules::typescript::no_array_delete::NoArrayDelete as TypescriptNoArrayDelete;
 pub use crate::rules::typescript::no_base_to_string::NoBaseToString as TypescriptNoBaseToString;
 pub use crate::rules::typescript::no_confusing_non_null_assertion::NoConfusingNonNullAssertion as TypescriptNoConfusingNonNullAssertion;
@@ -472,11 +500,15 @@ pub use crate::rules::typescript::no_duplicate_type_constituents::NoDuplicateTyp
 pub use crate::rules::typescript::no_dynamic_delete::NoDynamicDelete as TypescriptNoDynamicDelete;
 pub use crate::rules::typescript::no_empty_interface::NoEmptyInterface as TypescriptNoEmptyInterface;
 pub use crate::rules::typescript::no_empty_object_type::NoEmptyObjectType as TypescriptNoEmptyObjectType;
+pub use crate::rules::typescript::no_empty_type_parameters::NoEmptyTypeParameters as TypescriptNoEmptyTypeParameters;
+pub use crate::rules::typescript::no_enum::NoEnum as TypescriptNoEnum;
+pub use crate::rules::typescript::no_evolving_types::NoEvolvingTypes as TypescriptNoEvolvingTypes;
 pub use crate::rules::typescript::no_explicit_any::NoExplicitAny as TypescriptNoExplicitAny;
 pub use crate::rules::typescript::no_extra_non_null_assertion::NoExtraNonNullAssertion as TypescriptNoExtraNonNullAssertion;
 pub use crate::rules::typescript::no_extraneous_class::NoExtraneousClass as TypescriptNoExtraneousClass;
 pub use crate::rules::typescript::no_floating_promises::NoFloatingPromises as TypescriptNoFloatingPromises;
 pub use crate::rules::typescript::no_for_in_array::NoForInArray as TypescriptNoForInArray;
+pub use crate::rules::typescript::no_implicit_any_let::NoImplicitAnyLet as TypescriptNoImplicitAnyLet;
 pub use crate::rules::typescript::no_implied_eval::NoImpliedEval as TypescriptNoImpliedEval;
 pub use crate::rules::typescript::no_import_type_side_effects::NoImportTypeSideEffects as TypescriptNoImportTypeSideEffects;
 pub use crate::rules::typescript::no_inferrable_types::NoInferrableTypes as TypescriptNoInferrableTypes;
@@ -494,6 +526,7 @@ pub use crate::rules::typescript::no_redundant_type_constituents::NoRedundantTyp
 pub use crate::rules::typescript::no_require_imports::NoRequireImports as TypescriptNoRequireImports;
 pub use crate::rules::typescript::no_restricted_types::NoRestrictedTypes as TypescriptNoRestrictedTypes;
 pub use crate::rules::typescript::no_this_alias::NoThisAlias as TypescriptNoThisAlias;
+pub use crate::rules::typescript::no_this_in_static::NoThisInStatic as TypescriptNoThisInStatic;
 pub use crate::rules::typescript::no_unnecessary_boolean_literal_compare::NoUnnecessaryBooleanLiteralCompare as TypescriptNoUnnecessaryBooleanLiteralCompare;
 pub use crate::rules::typescript::no_unnecessary_condition::NoUnnecessaryCondition as TypescriptNoUnnecessaryCondition;
 pub use crate::rules::typescript::no_unnecessary_parameter_property_assignment::NoUnnecessaryParameterPropertyAssignment as TypescriptNoUnnecessaryParameterPropertyAssignment;
@@ -580,6 +613,7 @@ pub use crate::rules::unicorn::no_await_in_promise_methods::NoAwaitInPromiseMeth
 pub use crate::rules::unicorn::no_console_spaces::NoConsoleSpaces as UnicornNoConsoleSpaces;
 pub use crate::rules::unicorn::no_document_cookie::NoDocumentCookie as UnicornNoDocumentCookie;
 pub use crate::rules::unicorn::no_empty_file::NoEmptyFile as UnicornNoEmptyFile;
+pub use crate::rules::unicorn::no_flat_map_identity::NoFlatMapIdentity as UnicornNoFlatMapIdentity;
 pub use crate::rules::unicorn::no_hex_escape::NoHexEscape as UnicornNoHexEscape;
 pub use crate::rules::unicorn::no_immediate_mutation::NoImmediateMutation as UnicornNoImmediateMutation;
 pub use crate::rules::unicorn::no_instanceof_array::NoInstanceofArray as UnicornNoInstanceofArray;
@@ -613,8 +647,10 @@ pub use crate::rules::unicorn::no_useless_fallback_in_spread::NoUselessFallbackI
 pub use crate::rules::unicorn::no_useless_length_check::NoUselessLengthCheck as UnicornNoUselessLengthCheck;
 pub use crate::rules::unicorn::no_useless_promise_resolve_reject::NoUselessPromiseResolveReject as UnicornNoUselessPromiseResolveReject;
 pub use crate::rules::unicorn::no_useless_spread::NoUselessSpread as UnicornNoUselessSpread;
+pub use crate::rules::unicorn::no_useless_string_raw::NoUselessStringRaw as UnicornNoUselessStringRaw;
 pub use crate::rules::unicorn::no_useless_switch_case::NoUselessSwitchCase as UnicornNoUselessSwitchCase;
 pub use crate::rules::unicorn::no_useless_undefined::NoUselessUndefined as UnicornNoUselessUndefined;
+pub use crate::rules::unicorn::no_useless_undefined_initialization::NoUselessUndefinedInitialization as UnicornNoUselessUndefinedInitialization;
 pub use crate::rules::unicorn::no_zero_fractions::NoZeroFractions as UnicornNoZeroFractions;
 pub use crate::rules::unicorn::number_literal_case::NumberLiteralCase as UnicornNumberLiteralCase;
 pub use crate::rules::unicorn::numeric_separators_style::NumericSeparatorsStyle as UnicornNumericSeparatorsStyle;
@@ -679,6 +715,10 @@ pub use crate::rules::unicorn::switch_case_braces::SwitchCaseBraces as UnicornSw
 pub use crate::rules::unicorn::switch_case_break_position::SwitchCaseBreakPosition as UnicornSwitchCaseBreakPosition;
 pub use crate::rules::unicorn::text_encoding_identifier_case::TextEncodingIdentifierCase as UnicornTextEncodingIdentifierCase;
 pub use crate::rules::unicorn::throw_new_error::ThrowNewError as UnicornThrowNewError;
+pub use crate::rules::unicorn::use_collapsed_if::UseCollapsedIf as UnicornUseCollapsedIf;
+pub use crate::rules::unicorn::use_consistent_curly_braces::UseConsistentCurlyBraces as UnicornUseConsistentCurlyBraces;
+pub use crate::rules::unicorn::use_simple_number_keys::UseSimpleNumberKeys as UnicornUseSimpleNumberKeys;
+pub use crate::rules::unicorn::use_simplified_logic_expression::UseSimplifiedLogicExpression as UnicornUseSimplifiedLogicExpression;
 pub use crate::rules::vitest::consistent_each_for::ConsistentEachFor as VitestConsistentEachFor;
 pub use crate::rules::vitest::consistent_test_filename::ConsistentTestFilename as VitestConsistentTestFilename;
 pub use crate::rules::vitest::consistent_vitest_vi::ConsistentVitestVi as VitestConsistentVitestVi;
@@ -744,6 +784,7 @@ pub enum RuleEnum {
     ImportNoCycle(ImportNoCycle),
     ImportNoDefaultExport(ImportNoDefaultExport),
     ImportNoDuplicates(ImportNoDuplicates),
+    ImportNoDynamicNamespaceImportAccess(ImportNoDynamicNamespaceImportAccess),
     ImportNoDynamicRequire(ImportNoDynamicRequire),
     ImportNoEmptyNamedBlocks(ImportNoEmptyNamedBlocks),
     ImportNoMutableExports(ImportNoMutableExports),
@@ -753,9 +794,12 @@ pub enum RuleEnum {
     ImportNoNamedExport(ImportNoNamedExport),
     ImportNoNamespace(ImportNoNamespace),
     ImportNoNodejsModules(ImportNoNodejsModules),
+    ImportNoPrivateImports(ImportNoPrivateImports),
     ImportNoRelativeParentImports(ImportNoRelativeParentImports),
     ImportNoSelfImport(ImportNoSelfImport),
     ImportNoUnassignedImport(ImportNoUnassignedImport),
+    ImportNoUndeclaredDependencies(ImportNoUndeclaredDependencies),
+    ImportNoUnresolvedImports(ImportNoUnresolvedImports),
     ImportNoWebpackLoaderSyntax(ImportNoWebpackLoaderSyntax),
     ImportPreferDefaultExport(ImportPreferDefaultExport),
     ImportUnambiguous(ImportUnambiguous),
@@ -798,6 +842,7 @@ pub enum RuleEnum {
     EslintNoClassAssign(EslintNoClassAssign),
     EslintNoCompareNegZero(EslintNoCompareNegZero),
     EslintNoCondAssign(EslintNoCondAssign),
+    EslintNoConfusingLabels(EslintNoConfusingLabels),
     EslintNoConsole(EslintNoConsole),
     EslintNoConstAssign(EslintNoConstAssign),
     EslintNoConstantBinaryExpression(EslintNoConstantBinaryExpression),
@@ -855,12 +900,14 @@ pub enum RuleEnum {
     EslintNoNonoctalDecimalEscape(EslintNoNonoctalDecimalEscape),
     EslintNoObjCalls(EslintNoObjCalls),
     EslintNoObjectConstructor(EslintNoObjectConstructor),
+    EslintNoOctalEscape(EslintNoOctalEscape),
     EslintNoParamReassign(EslintNoParamReassign),
     EslintNoPlusplus(EslintNoPlusplus),
     EslintNoPromiseExecutorReturn(EslintNoPromiseExecutorReturn),
     EslintNoProto(EslintNoProto),
     EslintNoPrototypeBuiltins(EslintNoPrototypeBuiltins),
     EslintNoRedeclare(EslintNoRedeclare),
+    EslintNoRedundantUseStrict(EslintNoRedundantUseStrict),
     EslintNoRegexSpaces(EslintNoRegexSpaces),
     EslintNoRestrictedGlobals(EslintNoRestrictedGlobals),
     EslintNoRestrictedImports(EslintNoRestrictedImports),
@@ -872,7 +919,9 @@ pub enum RuleEnum {
     EslintNoSetterReturn(EslintNoSetterReturn),
     EslintNoShadow(EslintNoShadow),
     EslintNoShadowRestrictedNames(EslintNoShadowRestrictedNames),
+    EslintNoShoutyConstants(EslintNoShoutyConstants),
     EslintNoSparseArrays(EslintNoSparseArrays),
+    EslintNoStringCaseMismatch(EslintNoStringCaseMismatch),
     EslintNoTemplateCurlyInString(EslintNoTemplateCurlyInString),
     EslintNoTernary(EslintNoTernary),
     EslintNoThisBeforeSuper(EslintNoThisBeforeSuper),
@@ -899,6 +948,7 @@ pub enum RuleEnum {
     EslintNoUselessComputedKey(EslintNoUselessComputedKey),
     EslintNoUselessConcat(EslintNoUselessConcat),
     EslintNoUselessConstructor(EslintNoUselessConstructor),
+    EslintNoUselessContinue(EslintNoUselessContinue),
     EslintNoUselessEscape(EslintNoUselessEscape),
     EslintNoUselessRename(EslintNoUselessRename),
     EslintNoUselessReturn(EslintNoUselessReturn),
@@ -908,6 +958,7 @@ pub enum RuleEnum {
     EslintNoWith(EslintNoWith),
     EslintObjectShorthand(EslintObjectShorthand),
     EslintOperatorAssignment(EslintOperatorAssignment),
+    EslintPreferArrowCallback(EslintPreferArrowCallback),
     EslintPreferConst(EslintPreferConst),
     EslintPreferDestructuring(EslintPreferDestructuring),
     EslintPreferExponentiationOperator(EslintPreferExponentiationOperator),
@@ -928,6 +979,9 @@ pub enum RuleEnum {
     EslintSymbolDescription(EslintSymbolDescription),
     EslintUnicodeBom(EslintUnicodeBom),
     EslintUseIsnan(EslintUseIsnan),
+    EslintUseRegexLiterals(EslintUseRegexLiterals),
+    EslintUseSingleVarDeclarator(EslintUseSingleVarDeclarator),
+    EslintUseWhile(EslintUseWhile),
     EslintValidTypeof(EslintValidTypeof),
     EslintVarsOnTop(EslintVarsOnTop),
     EslintYoda(EslintYoda),
@@ -947,7 +1001,9 @@ pub enum RuleEnum {
     TypescriptConsistentTypeImports(TypescriptConsistentTypeImports),
     TypescriptDotNotation(TypescriptDotNotation),
     TypescriptExplicitFunctionReturnType(TypescriptExplicitFunctionReturnType),
+    TypescriptExplicitMemberAccessibility(TypescriptExplicitMemberAccessibility),
     TypescriptExplicitModuleBoundaryTypes(TypescriptExplicitModuleBoundaryTypes),
+    TypescriptNamingConvention(TypescriptNamingConvention),
     TypescriptNoArrayDelete(TypescriptNoArrayDelete),
     TypescriptNoBaseToString(TypescriptNoBaseToString),
     TypescriptNoConfusingNonNullAssertion(TypescriptNoConfusingNonNullAssertion),
@@ -958,11 +1014,15 @@ pub enum RuleEnum {
     TypescriptNoDynamicDelete(TypescriptNoDynamicDelete),
     TypescriptNoEmptyInterface(TypescriptNoEmptyInterface),
     TypescriptNoEmptyObjectType(TypescriptNoEmptyObjectType),
+    TypescriptNoEmptyTypeParameters(TypescriptNoEmptyTypeParameters),
+    TypescriptNoEnum(TypescriptNoEnum),
+    TypescriptNoEvolvingTypes(TypescriptNoEvolvingTypes),
     TypescriptNoExplicitAny(TypescriptNoExplicitAny),
     TypescriptNoExtraNonNullAssertion(TypescriptNoExtraNonNullAssertion),
     TypescriptNoExtraneousClass(TypescriptNoExtraneousClass),
     TypescriptNoFloatingPromises(TypescriptNoFloatingPromises),
     TypescriptNoForInArray(TypescriptNoForInArray),
+    TypescriptNoImplicitAnyLet(TypescriptNoImplicitAnyLet),
     TypescriptNoImpliedEval(TypescriptNoImpliedEval),
     TypescriptNoImportTypeSideEffects(TypescriptNoImportTypeSideEffects),
     TypescriptNoInferrableTypes(TypescriptNoInferrableTypes),
@@ -980,6 +1040,7 @@ pub enum RuleEnum {
     TypescriptNoRequireImports(TypescriptNoRequireImports),
     TypescriptNoRestrictedTypes(TypescriptNoRestrictedTypes),
     TypescriptNoThisAlias(TypescriptNoThisAlias),
+    TypescriptNoThisInStatic(TypescriptNoThisInStatic),
     TypescriptNoUnnecessaryBooleanLiteralCompare(TypescriptNoUnnecessaryBooleanLiteralCompare),
     TypescriptNoUnnecessaryCondition(TypescriptNoUnnecessaryCondition),
     TypescriptNoUnnecessaryParameterPropertyAssignment(
@@ -1129,14 +1190,18 @@ pub enum RuleEnum {
     ReactNoDidMountSetState(ReactNoDidMountSetState),
     ReactNoDirectMutationState(ReactNoDirectMutationState),
     ReactNoFindDomNode(ReactNoFindDomNode),
+    ReactNoForwardRef(ReactNoForwardRef),
     ReactNoIsMounted(ReactNoIsMounted),
+    ReactNoJsxLiterals(ReactNoJsxLiterals),
     ReactNoMultiComp(ReactNoMultiComp),
     ReactNoNamespace(ReactNoNamespace),
     ReactNoReactChildren(ReactNoReactChildren),
+    ReactNoReactSpecificProps(ReactNoReactSpecificProps),
     ReactNoRedundantShouldComponentUpdate(ReactNoRedundantShouldComponentUpdate),
     ReactNoRenderReturnValue(ReactNoRenderReturnValue),
     ReactNoSetState(ReactNoSetState),
     ReactNoStringRefs(ReactNoStringRefs),
+    ReactNoSuspiciousSemicolonInJsx(ReactNoSuspiciousSemicolonInJsx),
     ReactNoThisInSfc(ReactNoThisInSfc),
     ReactNoUnescapedEntities(ReactNoUnescapedEntities),
     ReactNoUnknownProperty(ReactNoUnknownProperty),
@@ -1151,6 +1216,7 @@ pub enum RuleEnum {
     ReactSelfClosingComp(ReactSelfClosingComp),
     ReactStateInConstructor(ReactStateInConstructor),
     ReactStylePropObject(ReactStylePropObject),
+    ReactUseImageSize(ReactUseImageSize),
     ReactVoidDomElementsNoChildren(ReactVoidDomElementsNoChildren),
     ReactPerfJsxNoJsxAsProp(ReactPerfJsxNoJsxAsProp),
     ReactPerfJsxNoNewArrayAsProp(ReactPerfJsxNoNewArrayAsProp),
@@ -1183,6 +1249,7 @@ pub enum RuleEnum {
     UnicornNoConsoleSpaces(UnicornNoConsoleSpaces),
     UnicornNoDocumentCookie(UnicornNoDocumentCookie),
     UnicornNoEmptyFile(UnicornNoEmptyFile),
+    UnicornNoFlatMapIdentity(UnicornNoFlatMapIdentity),
     UnicornNoHexEscape(UnicornNoHexEscape),
     UnicornNoImmediateMutation(UnicornNoImmediateMutation),
     UnicornNoInstanceofArray(UnicornNoInstanceofArray),
@@ -1216,8 +1283,10 @@ pub enum RuleEnum {
     UnicornNoUselessLengthCheck(UnicornNoUselessLengthCheck),
     UnicornNoUselessPromiseResolveReject(UnicornNoUselessPromiseResolveReject),
     UnicornNoUselessSpread(UnicornNoUselessSpread),
+    UnicornNoUselessStringRaw(UnicornNoUselessStringRaw),
     UnicornNoUselessSwitchCase(UnicornNoUselessSwitchCase),
     UnicornNoUselessUndefined(UnicornNoUselessUndefined),
+    UnicornNoUselessUndefinedInitialization(UnicornNoUselessUndefinedInitialization),
     UnicornNoZeroFractions(UnicornNoZeroFractions),
     UnicornNumberLiteralCase(UnicornNumberLiteralCase),
     UnicornNumericSeparatorsStyle(UnicornNumericSeparatorsStyle),
@@ -1282,6 +1351,10 @@ pub enum RuleEnum {
     UnicornSwitchCaseBreakPosition(UnicornSwitchCaseBreakPosition),
     UnicornTextEncodingIdentifierCase(UnicornTextEncodingIdentifierCase),
     UnicornThrowNewError(UnicornThrowNewError),
+    UnicornUseCollapsedIf(UnicornUseCollapsedIf),
+    UnicornUseConsistentCurlyBraces(UnicornUseConsistentCurlyBraces),
+    UnicornUseSimpleNumberKeys(UnicornUseSimpleNumberKeys),
+    UnicornUseSimplifiedLogicExpression(UnicornUseSimplifiedLogicExpression),
     JsxA11YAltText(JsxA11YAltText),
     JsxA11YAnchorAmbiguousText(JsxA11YAnchorAmbiguousText),
     JsxA11YAnchorHasContent(JsxA11YAnchorHasContent),
@@ -1305,14 +1378,24 @@ pub enum RuleEnum {
     JsxA11YNoAriaHiddenOnFocusable(JsxA11YNoAriaHiddenOnFocusable),
     JsxA11YNoAutofocus(JsxA11YNoAutofocus),
     JsxA11YNoDistractingElements(JsxA11YNoDistractingElements),
+    JsxA11YNoInteractiveElementToNoninteractiveRole(
+        JsxA11YNoInteractiveElementToNoninteractiveRole,
+    ),
+    JsxA11YNoNoninteractiveElementInteractions(JsxA11YNoNoninteractiveElementInteractions),
+    JsxA11YNoNoninteractiveElementToInteractiveRole(
+        JsxA11YNoNoninteractiveElementToInteractiveRole,
+    ),
     JsxA11YNoNoninteractiveTabindex(JsxA11YNoNoninteractiveTabindex),
     JsxA11YNoRedundantRoles(JsxA11YNoRedundantRoles),
     JsxA11YNoStaticElementInteractions(JsxA11YNoStaticElementInteractions),
+    JsxA11YNoSvgWithoutTitle(JsxA11YNoSvgWithoutTitle),
     JsxA11YPreferTagOverRole(JsxA11YPreferTagOverRole),
     JsxA11YRoleHasRequiredAriaProps(JsxA11YRoleHasRequiredAriaProps),
     JsxA11YRoleSupportsAriaProps(JsxA11YRoleSupportsAriaProps),
     JsxA11YScope(JsxA11YScope),
     JsxA11YTabindexNoPositive(JsxA11YTabindexNoPositive),
+    JsxA11YUseFocusableInteractive(JsxA11YUseFocusableInteractive),
+    JsxA11YUseUniqueElementIds(JsxA11YUseUniqueElementIds),
     OxcApproxConstant(OxcApproxConstant),
     OxcBadArrayMethodOnArguments(OxcBadArrayMethodOnArguments),
     OxcBadBitwiseOperator(OxcBadBitwiseOperator),
@@ -1421,6 +1504,7 @@ pub enum RuleEnum {
     NodeGlobalRequire(NodeGlobalRequire),
     NodeHandleCallbackErr(NodeHandleCallbackErr),
     NodeNoExportsAssign(NodeNoExportsAssign),
+    NodeNoGlobalDirnameFilename(NodeNoGlobalDirnameFilename),
     NodeNoNewRequire(NodeNoNewRequire),
     NodeNoPathConcat(NodeNoPathConcat),
     NodeNoProcessEnv(NodeNoProcessEnv),
@@ -1459,7 +1543,8 @@ const IMPORT_NO_COMMONJS_ID: usize = IMPORT_NO_ANONYMOUS_DEFAULT_EXPORT_ID + 1us
 const IMPORT_NO_CYCLE_ID: usize = IMPORT_NO_COMMONJS_ID + 1usize;
 const IMPORT_NO_DEFAULT_EXPORT_ID: usize = IMPORT_NO_CYCLE_ID + 1usize;
 const IMPORT_NO_DUPLICATES_ID: usize = IMPORT_NO_DEFAULT_EXPORT_ID + 1usize;
-const IMPORT_NO_DYNAMIC_REQUIRE_ID: usize = IMPORT_NO_DUPLICATES_ID + 1usize;
+const IMPORT_NO_DYNAMIC_NAMESPACE_IMPORT_ACCESS_ID: usize = IMPORT_NO_DUPLICATES_ID + 1usize;
+const IMPORT_NO_DYNAMIC_REQUIRE_ID: usize = IMPORT_NO_DYNAMIC_NAMESPACE_IMPORT_ACCESS_ID + 1usize;
 const IMPORT_NO_EMPTY_NAMED_BLOCKS_ID: usize = IMPORT_NO_DYNAMIC_REQUIRE_ID + 1usize;
 const IMPORT_NO_MUTABLE_EXPORTS_ID: usize = IMPORT_NO_EMPTY_NAMED_BLOCKS_ID + 1usize;
 const IMPORT_NO_NAMED_AS_DEFAULT_ID: usize = IMPORT_NO_MUTABLE_EXPORTS_ID + 1usize;
@@ -1468,10 +1553,13 @@ const IMPORT_NO_NAMED_DEFAULT_ID: usize = IMPORT_NO_NAMED_AS_DEFAULT_MEMBER_ID +
 const IMPORT_NO_NAMED_EXPORT_ID: usize = IMPORT_NO_NAMED_DEFAULT_ID + 1usize;
 const IMPORT_NO_NAMESPACE_ID: usize = IMPORT_NO_NAMED_EXPORT_ID + 1usize;
 const IMPORT_NO_NODEJS_MODULES_ID: usize = IMPORT_NO_NAMESPACE_ID + 1usize;
-const IMPORT_NO_RELATIVE_PARENT_IMPORTS_ID: usize = IMPORT_NO_NODEJS_MODULES_ID + 1usize;
+const IMPORT_NO_PRIVATE_IMPORTS_ID: usize = IMPORT_NO_NODEJS_MODULES_ID + 1usize;
+const IMPORT_NO_RELATIVE_PARENT_IMPORTS_ID: usize = IMPORT_NO_PRIVATE_IMPORTS_ID + 1usize;
 const IMPORT_NO_SELF_IMPORT_ID: usize = IMPORT_NO_RELATIVE_PARENT_IMPORTS_ID + 1usize;
 const IMPORT_NO_UNASSIGNED_IMPORT_ID: usize = IMPORT_NO_SELF_IMPORT_ID + 1usize;
-const IMPORT_NO_WEBPACK_LOADER_SYNTAX_ID: usize = IMPORT_NO_UNASSIGNED_IMPORT_ID + 1usize;
+const IMPORT_NO_UNDECLARED_DEPENDENCIES_ID: usize = IMPORT_NO_UNASSIGNED_IMPORT_ID + 1usize;
+const IMPORT_NO_UNRESOLVED_IMPORTS_ID: usize = IMPORT_NO_UNDECLARED_DEPENDENCIES_ID + 1usize;
+const IMPORT_NO_WEBPACK_LOADER_SYNTAX_ID: usize = IMPORT_NO_UNRESOLVED_IMPORTS_ID + 1usize;
 const IMPORT_PREFER_DEFAULT_EXPORT_ID: usize = IMPORT_NO_WEBPACK_LOADER_SYNTAX_ID + 1usize;
 const IMPORT_UNAMBIGUOUS_ID: usize = IMPORT_PREFER_DEFAULT_EXPORT_ID + 1usize;
 const ESLINT_ACCESSOR_PAIRS_ID: usize = IMPORT_UNAMBIGUOUS_ID + 1usize;
@@ -1513,7 +1601,8 @@ const ESLINT_NO_CASE_DECLARATIONS_ID: usize = ESLINT_NO_CALLER_ID + 1usize;
 const ESLINT_NO_CLASS_ASSIGN_ID: usize = ESLINT_NO_CASE_DECLARATIONS_ID + 1usize;
 const ESLINT_NO_COMPARE_NEG_ZERO_ID: usize = ESLINT_NO_CLASS_ASSIGN_ID + 1usize;
 const ESLINT_NO_COND_ASSIGN_ID: usize = ESLINT_NO_COMPARE_NEG_ZERO_ID + 1usize;
-const ESLINT_NO_CONSOLE_ID: usize = ESLINT_NO_COND_ASSIGN_ID + 1usize;
+const ESLINT_NO_CONFUSING_LABELS_ID: usize = ESLINT_NO_COND_ASSIGN_ID + 1usize;
+const ESLINT_NO_CONSOLE_ID: usize = ESLINT_NO_CONFUSING_LABELS_ID + 1usize;
 const ESLINT_NO_CONST_ASSIGN_ID: usize = ESLINT_NO_CONSOLE_ID + 1usize;
 const ESLINT_NO_CONSTANT_BINARY_EXPRESSION_ID: usize = ESLINT_NO_CONST_ASSIGN_ID + 1usize;
 const ESLINT_NO_CONSTANT_CONDITION_ID: usize = ESLINT_NO_CONSTANT_BINARY_EXPRESSION_ID + 1usize;
@@ -1570,13 +1659,15 @@ const ESLINT_NO_NEW_WRAPPERS_ID: usize = ESLINT_NO_NEW_NATIVE_NONCONSTRUCTOR_ID 
 const ESLINT_NO_NONOCTAL_DECIMAL_ESCAPE_ID: usize = ESLINT_NO_NEW_WRAPPERS_ID + 1usize;
 const ESLINT_NO_OBJ_CALLS_ID: usize = ESLINT_NO_NONOCTAL_DECIMAL_ESCAPE_ID + 1usize;
 const ESLINT_NO_OBJECT_CONSTRUCTOR_ID: usize = ESLINT_NO_OBJ_CALLS_ID + 1usize;
-const ESLINT_NO_PARAM_REASSIGN_ID: usize = ESLINT_NO_OBJECT_CONSTRUCTOR_ID + 1usize;
+const ESLINT_NO_OCTAL_ESCAPE_ID: usize = ESLINT_NO_OBJECT_CONSTRUCTOR_ID + 1usize;
+const ESLINT_NO_PARAM_REASSIGN_ID: usize = ESLINT_NO_OCTAL_ESCAPE_ID + 1usize;
 const ESLINT_NO_PLUSPLUS_ID: usize = ESLINT_NO_PARAM_REASSIGN_ID + 1usize;
 const ESLINT_NO_PROMISE_EXECUTOR_RETURN_ID: usize = ESLINT_NO_PLUSPLUS_ID + 1usize;
 const ESLINT_NO_PROTO_ID: usize = ESLINT_NO_PROMISE_EXECUTOR_RETURN_ID + 1usize;
 const ESLINT_NO_PROTOTYPE_BUILTINS_ID: usize = ESLINT_NO_PROTO_ID + 1usize;
 const ESLINT_NO_REDECLARE_ID: usize = ESLINT_NO_PROTOTYPE_BUILTINS_ID + 1usize;
-const ESLINT_NO_REGEX_SPACES_ID: usize = ESLINT_NO_REDECLARE_ID + 1usize;
+const ESLINT_NO_REDUNDANT_USE_STRICT_ID: usize = ESLINT_NO_REDECLARE_ID + 1usize;
+const ESLINT_NO_REGEX_SPACES_ID: usize = ESLINT_NO_REDUNDANT_USE_STRICT_ID + 1usize;
 const ESLINT_NO_RESTRICTED_GLOBALS_ID: usize = ESLINT_NO_REGEX_SPACES_ID + 1usize;
 const ESLINT_NO_RESTRICTED_IMPORTS_ID: usize = ESLINT_NO_RESTRICTED_GLOBALS_ID + 1usize;
 const ESLINT_NO_RETURN_ASSIGN_ID: usize = ESLINT_NO_RESTRICTED_IMPORTS_ID + 1usize;
@@ -1587,8 +1678,10 @@ const ESLINT_NO_SEQUENCES_ID: usize = ESLINT_NO_SELF_COMPARE_ID + 1usize;
 const ESLINT_NO_SETTER_RETURN_ID: usize = ESLINT_NO_SEQUENCES_ID + 1usize;
 const ESLINT_NO_SHADOW_ID: usize = ESLINT_NO_SETTER_RETURN_ID + 1usize;
 const ESLINT_NO_SHADOW_RESTRICTED_NAMES_ID: usize = ESLINT_NO_SHADOW_ID + 1usize;
-const ESLINT_NO_SPARSE_ARRAYS_ID: usize = ESLINT_NO_SHADOW_RESTRICTED_NAMES_ID + 1usize;
-const ESLINT_NO_TEMPLATE_CURLY_IN_STRING_ID: usize = ESLINT_NO_SPARSE_ARRAYS_ID + 1usize;
+const ESLINT_NO_SHOUTY_CONSTANTS_ID: usize = ESLINT_NO_SHADOW_RESTRICTED_NAMES_ID + 1usize;
+const ESLINT_NO_SPARSE_ARRAYS_ID: usize = ESLINT_NO_SHOUTY_CONSTANTS_ID + 1usize;
+const ESLINT_NO_STRING_CASE_MISMATCH_ID: usize = ESLINT_NO_SPARSE_ARRAYS_ID + 1usize;
+const ESLINT_NO_TEMPLATE_CURLY_IN_STRING_ID: usize = ESLINT_NO_STRING_CASE_MISMATCH_ID + 1usize;
 const ESLINT_NO_TERNARY_ID: usize = ESLINT_NO_TEMPLATE_CURLY_IN_STRING_ID + 1usize;
 const ESLINT_NO_THIS_BEFORE_SUPER_ID: usize = ESLINT_NO_TERNARY_ID + 1usize;
 const ESLINT_NO_THROW_LITERAL_ID: usize = ESLINT_NO_THIS_BEFORE_SUPER_ID + 1usize;
@@ -1614,7 +1707,8 @@ const ESLINT_NO_USELESS_CATCH_ID: usize = ESLINT_NO_USELESS_CALL_ID + 1usize;
 const ESLINT_NO_USELESS_COMPUTED_KEY_ID: usize = ESLINT_NO_USELESS_CATCH_ID + 1usize;
 const ESLINT_NO_USELESS_CONCAT_ID: usize = ESLINT_NO_USELESS_COMPUTED_KEY_ID + 1usize;
 const ESLINT_NO_USELESS_CONSTRUCTOR_ID: usize = ESLINT_NO_USELESS_CONCAT_ID + 1usize;
-const ESLINT_NO_USELESS_ESCAPE_ID: usize = ESLINT_NO_USELESS_CONSTRUCTOR_ID + 1usize;
+const ESLINT_NO_USELESS_CONTINUE_ID: usize = ESLINT_NO_USELESS_CONSTRUCTOR_ID + 1usize;
+const ESLINT_NO_USELESS_ESCAPE_ID: usize = ESLINT_NO_USELESS_CONTINUE_ID + 1usize;
 const ESLINT_NO_USELESS_RENAME_ID: usize = ESLINT_NO_USELESS_ESCAPE_ID + 1usize;
 const ESLINT_NO_USELESS_RETURN_ID: usize = ESLINT_NO_USELESS_RENAME_ID + 1usize;
 const ESLINT_NO_VAR_ID: usize = ESLINT_NO_USELESS_RETURN_ID + 1usize;
@@ -1623,7 +1717,8 @@ const ESLINT_NO_WARNING_COMMENTS_ID: usize = ESLINT_NO_VOID_ID + 1usize;
 const ESLINT_NO_WITH_ID: usize = ESLINT_NO_WARNING_COMMENTS_ID + 1usize;
 const ESLINT_OBJECT_SHORTHAND_ID: usize = ESLINT_NO_WITH_ID + 1usize;
 const ESLINT_OPERATOR_ASSIGNMENT_ID: usize = ESLINT_OBJECT_SHORTHAND_ID + 1usize;
-const ESLINT_PREFER_CONST_ID: usize = ESLINT_OPERATOR_ASSIGNMENT_ID + 1usize;
+const ESLINT_PREFER_ARROW_CALLBACK_ID: usize = ESLINT_OPERATOR_ASSIGNMENT_ID + 1usize;
+const ESLINT_PREFER_CONST_ID: usize = ESLINT_PREFER_ARROW_CALLBACK_ID + 1usize;
 const ESLINT_PREFER_DESTRUCTURING_ID: usize = ESLINT_PREFER_CONST_ID + 1usize;
 const ESLINT_PREFER_EXPONENTIATION_OPERATOR_ID: usize = ESLINT_PREFER_DESTRUCTURING_ID + 1usize;
 const ESLINT_PREFER_NUMERIC_LITERALS_ID: usize = ESLINT_PREFER_EXPONENTIATION_OPERATOR_ID + 1usize;
@@ -1643,7 +1738,10 @@ const ESLINT_SORT_VARS_ID: usize = ESLINT_SORT_KEYS_ID + 1usize;
 const ESLINT_SYMBOL_DESCRIPTION_ID: usize = ESLINT_SORT_VARS_ID + 1usize;
 const ESLINT_UNICODE_BOM_ID: usize = ESLINT_SYMBOL_DESCRIPTION_ID + 1usize;
 const ESLINT_USE_ISNAN_ID: usize = ESLINT_UNICODE_BOM_ID + 1usize;
-const ESLINT_VALID_TYPEOF_ID: usize = ESLINT_USE_ISNAN_ID + 1usize;
+const ESLINT_USE_REGEX_LITERALS_ID: usize = ESLINT_USE_ISNAN_ID + 1usize;
+const ESLINT_USE_SINGLE_VAR_DECLARATOR_ID: usize = ESLINT_USE_REGEX_LITERALS_ID + 1usize;
+const ESLINT_USE_WHILE_ID: usize = ESLINT_USE_SINGLE_VAR_DECLARATOR_ID + 1usize;
+const ESLINT_VALID_TYPEOF_ID: usize = ESLINT_USE_WHILE_ID + 1usize;
 const ESLINT_VARS_ON_TOP_ID: usize = ESLINT_VALID_TYPEOF_ID + 1usize;
 const ESLINT_YODA_ID: usize = ESLINT_VARS_ON_TOP_ID + 1usize;
 const TYPESCRIPT_ADJACENT_OVERLOAD_SIGNATURES_ID: usize = ESLINT_YODA_ID + 1usize;
@@ -1667,9 +1765,13 @@ const TYPESCRIPT_CONSISTENT_TYPE_EXPORTS_ID: usize =
 const TYPESCRIPT_CONSISTENT_TYPE_IMPORTS_ID: usize = TYPESCRIPT_CONSISTENT_TYPE_EXPORTS_ID + 1usize;
 const TYPESCRIPT_DOT_NOTATION_ID: usize = TYPESCRIPT_CONSISTENT_TYPE_IMPORTS_ID + 1usize;
 const TYPESCRIPT_EXPLICIT_FUNCTION_RETURN_TYPE_ID: usize = TYPESCRIPT_DOT_NOTATION_ID + 1usize;
-const TYPESCRIPT_EXPLICIT_MODULE_BOUNDARY_TYPES_ID: usize =
+const TYPESCRIPT_EXPLICIT_MEMBER_ACCESSIBILITY_ID: usize =
     TYPESCRIPT_EXPLICIT_FUNCTION_RETURN_TYPE_ID + 1usize;
-const TYPESCRIPT_NO_ARRAY_DELETE_ID: usize = TYPESCRIPT_EXPLICIT_MODULE_BOUNDARY_TYPES_ID + 1usize;
+const TYPESCRIPT_EXPLICIT_MODULE_BOUNDARY_TYPES_ID: usize =
+    TYPESCRIPT_EXPLICIT_MEMBER_ACCESSIBILITY_ID + 1usize;
+const TYPESCRIPT_NAMING_CONVENTION_ID: usize =
+    TYPESCRIPT_EXPLICIT_MODULE_BOUNDARY_TYPES_ID + 1usize;
+const TYPESCRIPT_NO_ARRAY_DELETE_ID: usize = TYPESCRIPT_NAMING_CONVENTION_ID + 1usize;
 const TYPESCRIPT_NO_BASE_TO_STRING_ID: usize = TYPESCRIPT_NO_ARRAY_DELETE_ID + 1usize;
 const TYPESCRIPT_NO_CONFUSING_NON_NULL_ASSERTION_ID: usize =
     TYPESCRIPT_NO_BASE_TO_STRING_ID + 1usize;
@@ -1683,12 +1785,16 @@ const TYPESCRIPT_NO_DYNAMIC_DELETE_ID: usize =
     TYPESCRIPT_NO_DUPLICATE_TYPE_CONSTITUENTS_ID + 1usize;
 const TYPESCRIPT_NO_EMPTY_INTERFACE_ID: usize = TYPESCRIPT_NO_DYNAMIC_DELETE_ID + 1usize;
 const TYPESCRIPT_NO_EMPTY_OBJECT_TYPE_ID: usize = TYPESCRIPT_NO_EMPTY_INTERFACE_ID + 1usize;
-const TYPESCRIPT_NO_EXPLICIT_ANY_ID: usize = TYPESCRIPT_NO_EMPTY_OBJECT_TYPE_ID + 1usize;
+const TYPESCRIPT_NO_EMPTY_TYPE_PARAMETERS_ID: usize = TYPESCRIPT_NO_EMPTY_OBJECT_TYPE_ID + 1usize;
+const TYPESCRIPT_NO_ENUM_ID: usize = TYPESCRIPT_NO_EMPTY_TYPE_PARAMETERS_ID + 1usize;
+const TYPESCRIPT_NO_EVOLVING_TYPES_ID: usize = TYPESCRIPT_NO_ENUM_ID + 1usize;
+const TYPESCRIPT_NO_EXPLICIT_ANY_ID: usize = TYPESCRIPT_NO_EVOLVING_TYPES_ID + 1usize;
 const TYPESCRIPT_NO_EXTRA_NON_NULL_ASSERTION_ID: usize = TYPESCRIPT_NO_EXPLICIT_ANY_ID + 1usize;
 const TYPESCRIPT_NO_EXTRANEOUS_CLASS_ID: usize = TYPESCRIPT_NO_EXTRA_NON_NULL_ASSERTION_ID + 1usize;
 const TYPESCRIPT_NO_FLOATING_PROMISES_ID: usize = TYPESCRIPT_NO_EXTRANEOUS_CLASS_ID + 1usize;
 const TYPESCRIPT_NO_FOR_IN_ARRAY_ID: usize = TYPESCRIPT_NO_FLOATING_PROMISES_ID + 1usize;
-const TYPESCRIPT_NO_IMPLIED_EVAL_ID: usize = TYPESCRIPT_NO_FOR_IN_ARRAY_ID + 1usize;
+const TYPESCRIPT_NO_IMPLICIT_ANY_LET_ID: usize = TYPESCRIPT_NO_FOR_IN_ARRAY_ID + 1usize;
+const TYPESCRIPT_NO_IMPLIED_EVAL_ID: usize = TYPESCRIPT_NO_IMPLICIT_ANY_LET_ID + 1usize;
 const TYPESCRIPT_NO_IMPORT_TYPE_SIDE_EFFECTS_ID: usize = TYPESCRIPT_NO_IMPLIED_EVAL_ID + 1usize;
 const TYPESCRIPT_NO_INFERRABLE_TYPES_ID: usize = TYPESCRIPT_NO_IMPORT_TYPE_SIDE_EFFECTS_ID + 1usize;
 const TYPESCRIPT_NO_INVALID_VOID_TYPE_ID: usize = TYPESCRIPT_NO_INFERRABLE_TYPES_ID + 1usize;
@@ -1711,8 +1817,9 @@ const TYPESCRIPT_NO_REQUIRE_IMPORTS_ID: usize =
     TYPESCRIPT_NO_REDUNDANT_TYPE_CONSTITUENTS_ID + 1usize;
 const TYPESCRIPT_NO_RESTRICTED_TYPES_ID: usize = TYPESCRIPT_NO_REQUIRE_IMPORTS_ID + 1usize;
 const TYPESCRIPT_NO_THIS_ALIAS_ID: usize = TYPESCRIPT_NO_RESTRICTED_TYPES_ID + 1usize;
+const TYPESCRIPT_NO_THIS_IN_STATIC_ID: usize = TYPESCRIPT_NO_THIS_ALIAS_ID + 1usize;
 const TYPESCRIPT_NO_UNNECESSARY_BOOLEAN_LITERAL_COMPARE_ID: usize =
-    TYPESCRIPT_NO_THIS_ALIAS_ID + 1usize;
+    TYPESCRIPT_NO_THIS_IN_STATIC_ID + 1usize;
 const TYPESCRIPT_NO_UNNECESSARY_CONDITION_ID: usize =
     TYPESCRIPT_NO_UNNECESSARY_BOOLEAN_LITERAL_COMPARE_ID + 1usize;
 const TYPESCRIPT_NO_UNNECESSARY_PARAMETER_PROPERTY_ASSIGNMENT_ID: usize =
@@ -1888,16 +1995,21 @@ const REACT_NO_DANGER_WITH_CHILDREN_ID: usize = REACT_NO_DANGER_ID + 1usize;
 const REACT_NO_DID_MOUNT_SET_STATE_ID: usize = REACT_NO_DANGER_WITH_CHILDREN_ID + 1usize;
 const REACT_NO_DIRECT_MUTATION_STATE_ID: usize = REACT_NO_DID_MOUNT_SET_STATE_ID + 1usize;
 const REACT_NO_FIND_DOM_NODE_ID: usize = REACT_NO_DIRECT_MUTATION_STATE_ID + 1usize;
-const REACT_NO_IS_MOUNTED_ID: usize = REACT_NO_FIND_DOM_NODE_ID + 1usize;
-const REACT_NO_MULTI_COMP_ID: usize = REACT_NO_IS_MOUNTED_ID + 1usize;
+const REACT_NO_FORWARD_REF_ID: usize = REACT_NO_FIND_DOM_NODE_ID + 1usize;
+const REACT_NO_IS_MOUNTED_ID: usize = REACT_NO_FORWARD_REF_ID + 1usize;
+const REACT_NO_JSX_LITERALS_ID: usize = REACT_NO_IS_MOUNTED_ID + 1usize;
+const REACT_NO_MULTI_COMP_ID: usize = REACT_NO_JSX_LITERALS_ID + 1usize;
 const REACT_NO_NAMESPACE_ID: usize = REACT_NO_MULTI_COMP_ID + 1usize;
 const REACT_NO_REACT_CHILDREN_ID: usize = REACT_NO_NAMESPACE_ID + 1usize;
-const REACT_NO_REDUNDANT_SHOULD_COMPONENT_UPDATE_ID: usize = REACT_NO_REACT_CHILDREN_ID + 1usize;
+const REACT_NO_REACT_SPECIFIC_PROPS_ID: usize = REACT_NO_REACT_CHILDREN_ID + 1usize;
+const REACT_NO_REDUNDANT_SHOULD_COMPONENT_UPDATE_ID: usize =
+    REACT_NO_REACT_SPECIFIC_PROPS_ID + 1usize;
 const REACT_NO_RENDER_RETURN_VALUE_ID: usize =
     REACT_NO_REDUNDANT_SHOULD_COMPONENT_UPDATE_ID + 1usize;
 const REACT_NO_SET_STATE_ID: usize = REACT_NO_RENDER_RETURN_VALUE_ID + 1usize;
 const REACT_NO_STRING_REFS_ID: usize = REACT_NO_SET_STATE_ID + 1usize;
-const REACT_NO_THIS_IN_SFC_ID: usize = REACT_NO_STRING_REFS_ID + 1usize;
+const REACT_NO_SUSPICIOUS_SEMICOLON_IN_JSX_ID: usize = REACT_NO_STRING_REFS_ID + 1usize;
+const REACT_NO_THIS_IN_SFC_ID: usize = REACT_NO_SUSPICIOUS_SEMICOLON_IN_JSX_ID + 1usize;
 const REACT_NO_UNESCAPED_ENTITIES_ID: usize = REACT_NO_THIS_IN_SFC_ID + 1usize;
 const REACT_NO_UNKNOWN_PROPERTY_ID: usize = REACT_NO_UNESCAPED_ENTITIES_ID + 1usize;
 const REACT_NO_UNSAFE_ID: usize = REACT_NO_UNKNOWN_PROPERTY_ID + 1usize;
@@ -1911,7 +2023,8 @@ const REACT_RULES_OF_HOOKS_ID: usize = REACT_REQUIRE_RENDER_RETURN_ID + 1usize;
 const REACT_SELF_CLOSING_COMP_ID: usize = REACT_RULES_OF_HOOKS_ID + 1usize;
 const REACT_STATE_IN_CONSTRUCTOR_ID: usize = REACT_SELF_CLOSING_COMP_ID + 1usize;
 const REACT_STYLE_PROP_OBJECT_ID: usize = REACT_STATE_IN_CONSTRUCTOR_ID + 1usize;
-const REACT_VOID_DOM_ELEMENTS_NO_CHILDREN_ID: usize = REACT_STYLE_PROP_OBJECT_ID + 1usize;
+const REACT_USE_IMAGE_SIZE_ID: usize = REACT_STYLE_PROP_OBJECT_ID + 1usize;
+const REACT_VOID_DOM_ELEMENTS_NO_CHILDREN_ID: usize = REACT_USE_IMAGE_SIZE_ID + 1usize;
 const REACT_PERF_JSX_NO_JSX_AS_PROP_ID: usize = REACT_VOID_DOM_ELEMENTS_NO_CHILDREN_ID + 1usize;
 const REACT_PERF_JSX_NO_NEW_ARRAY_AS_PROP_ID: usize = REACT_PERF_JSX_NO_JSX_AS_PROP_ID + 1usize;
 const REACT_PERF_JSX_NO_NEW_FUNCTION_AS_PROP_ID: usize =
@@ -1949,7 +2062,8 @@ const UNICORN_NO_AWAIT_IN_PROMISE_METHODS_ID: usize =
 const UNICORN_NO_CONSOLE_SPACES_ID: usize = UNICORN_NO_AWAIT_IN_PROMISE_METHODS_ID + 1usize;
 const UNICORN_NO_DOCUMENT_COOKIE_ID: usize = UNICORN_NO_CONSOLE_SPACES_ID + 1usize;
 const UNICORN_NO_EMPTY_FILE_ID: usize = UNICORN_NO_DOCUMENT_COOKIE_ID + 1usize;
-const UNICORN_NO_HEX_ESCAPE_ID: usize = UNICORN_NO_EMPTY_FILE_ID + 1usize;
+const UNICORN_NO_FLAT_MAP_IDENTITY_ID: usize = UNICORN_NO_EMPTY_FILE_ID + 1usize;
+const UNICORN_NO_HEX_ESCAPE_ID: usize = UNICORN_NO_FLAT_MAP_IDENTITY_ID + 1usize;
 const UNICORN_NO_IMMEDIATE_MUTATION_ID: usize = UNICORN_NO_HEX_ESCAPE_ID + 1usize;
 const UNICORN_NO_INSTANCEOF_ARRAY_ID: usize = UNICORN_NO_IMMEDIATE_MUTATION_ID + 1usize;
 const UNICORN_NO_INSTANCEOF_BUILTINS_ID: usize = UNICORN_NO_INSTANCEOF_ARRAY_ID + 1usize;
@@ -1992,9 +2106,12 @@ const UNICORN_NO_USELESS_LENGTH_CHECK_ID: usize = UNICORN_NO_USELESS_FALLBACK_IN
 const UNICORN_NO_USELESS_PROMISE_RESOLVE_REJECT_ID: usize =
     UNICORN_NO_USELESS_LENGTH_CHECK_ID + 1usize;
 const UNICORN_NO_USELESS_SPREAD_ID: usize = UNICORN_NO_USELESS_PROMISE_RESOLVE_REJECT_ID + 1usize;
-const UNICORN_NO_USELESS_SWITCH_CASE_ID: usize = UNICORN_NO_USELESS_SPREAD_ID + 1usize;
+const UNICORN_NO_USELESS_STRING_RAW_ID: usize = UNICORN_NO_USELESS_SPREAD_ID + 1usize;
+const UNICORN_NO_USELESS_SWITCH_CASE_ID: usize = UNICORN_NO_USELESS_STRING_RAW_ID + 1usize;
 const UNICORN_NO_USELESS_UNDEFINED_ID: usize = UNICORN_NO_USELESS_SWITCH_CASE_ID + 1usize;
-const UNICORN_NO_ZERO_FRACTIONS_ID: usize = UNICORN_NO_USELESS_UNDEFINED_ID + 1usize;
+const UNICORN_NO_USELESS_UNDEFINED_INITIALIZATION_ID: usize =
+    UNICORN_NO_USELESS_UNDEFINED_ID + 1usize;
+const UNICORN_NO_ZERO_FRACTIONS_ID: usize = UNICORN_NO_USELESS_UNDEFINED_INITIALIZATION_ID + 1usize;
 const UNICORN_NUMBER_LITERAL_CASE_ID: usize = UNICORN_NO_ZERO_FRACTIONS_ID + 1usize;
 const UNICORN_NUMERIC_SEPARATORS_STYLE_ID: usize = UNICORN_NUMBER_LITERAL_CASE_ID + 1usize;
 const UNICORN_PREFER_ADD_EVENT_LISTENER_ID: usize = UNICORN_NUMERIC_SEPARATORS_STYLE_ID + 1usize;
@@ -2068,7 +2185,12 @@ const UNICORN_SWITCH_CASE_BREAK_POSITION_ID: usize = UNICORN_SWITCH_CASE_BRACES_
 const UNICORN_TEXT_ENCODING_IDENTIFIER_CASE_ID: usize =
     UNICORN_SWITCH_CASE_BREAK_POSITION_ID + 1usize;
 const UNICORN_THROW_NEW_ERROR_ID: usize = UNICORN_TEXT_ENCODING_IDENTIFIER_CASE_ID + 1usize;
-const JSX_A_11_Y_ALT_TEXT_ID: usize = UNICORN_THROW_NEW_ERROR_ID + 1usize;
+const UNICORN_USE_COLLAPSED_IF_ID: usize = UNICORN_THROW_NEW_ERROR_ID + 1usize;
+const UNICORN_USE_CONSISTENT_CURLY_BRACES_ID: usize = UNICORN_USE_COLLAPSED_IF_ID + 1usize;
+const UNICORN_USE_SIMPLE_NUMBER_KEYS_ID: usize = UNICORN_USE_CONSISTENT_CURLY_BRACES_ID + 1usize;
+const UNICORN_USE_SIMPLIFIED_LOGIC_EXPRESSION_ID: usize =
+    UNICORN_USE_SIMPLE_NUMBER_KEYS_ID + 1usize;
+const JSX_A_11_Y_ALT_TEXT_ID: usize = UNICORN_USE_SIMPLIFIED_LOGIC_EXPRESSION_ID + 1usize;
 const JSX_A_11_Y_ANCHOR_AMBIGUOUS_TEXT_ID: usize = JSX_A_11_Y_ALT_TEXT_ID + 1usize;
 const JSX_A_11_Y_ANCHOR_HAS_CONTENT_ID: usize = JSX_A_11_Y_ANCHOR_AMBIGUOUS_TEXT_ID + 1usize;
 const JSX_A_11_Y_ANCHOR_IS_VALID_ID: usize = JSX_A_11_Y_ANCHOR_HAS_CONTENT_ID + 1usize;
@@ -2093,20 +2215,30 @@ const JSX_A_11_Y_NO_ACCESS_KEY_ID: usize = JSX_A_11_Y_MOUSE_EVENTS_HAVE_KEY_EVEN
 const JSX_A_11_Y_NO_ARIA_HIDDEN_ON_FOCUSABLE_ID: usize = JSX_A_11_Y_NO_ACCESS_KEY_ID + 1usize;
 const JSX_A_11_Y_NO_AUTOFOCUS_ID: usize = JSX_A_11_Y_NO_ARIA_HIDDEN_ON_FOCUSABLE_ID + 1usize;
 const JSX_A_11_Y_NO_DISTRACTING_ELEMENTS_ID: usize = JSX_A_11_Y_NO_AUTOFOCUS_ID + 1usize;
-const JSX_A_11_Y_NO_NONINTERACTIVE_TABINDEX_ID: usize =
+const JSX_A_11_Y_NO_INTERACTIVE_ELEMENT_TO_NONINTERACTIVE_ROLE_ID: usize =
     JSX_A_11_Y_NO_DISTRACTING_ELEMENTS_ID + 1usize;
+const JSX_A_11_Y_NO_NONINTERACTIVE_ELEMENT_INTERACTIONS_ID: usize =
+    JSX_A_11_Y_NO_INTERACTIVE_ELEMENT_TO_NONINTERACTIVE_ROLE_ID + 1usize;
+const JSX_A_11_Y_NO_NONINTERACTIVE_ELEMENT_TO_INTERACTIVE_ROLE_ID: usize =
+    JSX_A_11_Y_NO_NONINTERACTIVE_ELEMENT_INTERACTIONS_ID + 1usize;
+const JSX_A_11_Y_NO_NONINTERACTIVE_TABINDEX_ID: usize =
+    JSX_A_11_Y_NO_NONINTERACTIVE_ELEMENT_TO_INTERACTIVE_ROLE_ID + 1usize;
 const JSX_A_11_Y_NO_REDUNDANT_ROLES_ID: usize = JSX_A_11_Y_NO_NONINTERACTIVE_TABINDEX_ID + 1usize;
 const JSX_A_11_Y_NO_STATIC_ELEMENT_INTERACTIONS_ID: usize =
     JSX_A_11_Y_NO_REDUNDANT_ROLES_ID + 1usize;
-const JSX_A_11_Y_PREFER_TAG_OVER_ROLE_ID: usize =
+const JSX_A_11_Y_NO_SVG_WITHOUT_TITLE_ID: usize =
     JSX_A_11_Y_NO_STATIC_ELEMENT_INTERACTIONS_ID + 1usize;
+const JSX_A_11_Y_PREFER_TAG_OVER_ROLE_ID: usize = JSX_A_11_Y_NO_SVG_WITHOUT_TITLE_ID + 1usize;
 const JSX_A_11_Y_ROLE_HAS_REQUIRED_ARIA_PROPS_ID: usize =
     JSX_A_11_Y_PREFER_TAG_OVER_ROLE_ID + 1usize;
 const JSX_A_11_Y_ROLE_SUPPORTS_ARIA_PROPS_ID: usize =
     JSX_A_11_Y_ROLE_HAS_REQUIRED_ARIA_PROPS_ID + 1usize;
 const JSX_A_11_Y_SCOPE_ID: usize = JSX_A_11_Y_ROLE_SUPPORTS_ARIA_PROPS_ID + 1usize;
 const JSX_A_11_Y_TABINDEX_NO_POSITIVE_ID: usize = JSX_A_11_Y_SCOPE_ID + 1usize;
-const OXC_APPROX_CONSTANT_ID: usize = JSX_A_11_Y_TABINDEX_NO_POSITIVE_ID + 1usize;
+const JSX_A_11_Y_USE_FOCUSABLE_INTERACTIVE_ID: usize = JSX_A_11_Y_TABINDEX_NO_POSITIVE_ID + 1usize;
+const JSX_A_11_Y_USE_UNIQUE_ELEMENT_IDS_ID: usize =
+    JSX_A_11_Y_USE_FOCUSABLE_INTERACTIVE_ID + 1usize;
+const OXC_APPROX_CONSTANT_ID: usize = JSX_A_11_Y_USE_UNIQUE_ELEMENT_IDS_ID + 1usize;
 const OXC_BAD_ARRAY_METHOD_ON_ARGUMENTS_ID: usize = OXC_APPROX_CONSTANT_ID + 1usize;
 const OXC_BAD_BITWISE_OPERATOR_ID: usize = OXC_BAD_ARRAY_METHOD_ON_ARGUMENTS_ID + 1usize;
 const OXC_BAD_CHAR_AT_COMPARISON_ID: usize = OXC_BAD_BITWISE_OPERATOR_ID + 1usize;
@@ -2217,7 +2349,8 @@ const VITEST_WARN_TODO_ID: usize = VITEST_REQUIRE_TEST_TIMEOUT_ID + 1usize;
 const NODE_GLOBAL_REQUIRE_ID: usize = VITEST_WARN_TODO_ID + 1usize;
 const NODE_HANDLE_CALLBACK_ERR_ID: usize = NODE_GLOBAL_REQUIRE_ID + 1usize;
 const NODE_NO_EXPORTS_ASSIGN_ID: usize = NODE_HANDLE_CALLBACK_ERR_ID + 1usize;
-const NODE_NO_NEW_REQUIRE_ID: usize = NODE_NO_EXPORTS_ASSIGN_ID + 1usize;
+const NODE_NO_GLOBAL_DIRNAME_FILENAME_ID: usize = NODE_NO_EXPORTS_ASSIGN_ID + 1usize;
+const NODE_NO_NEW_REQUIRE_ID: usize = NODE_NO_GLOBAL_DIRNAME_FILENAME_ID + 1usize;
 const NODE_NO_PATH_CONCAT_ID: usize = NODE_NO_NEW_REQUIRE_ID + 1usize;
 const NODE_NO_PROCESS_ENV_ID: usize = NODE_NO_PATH_CONCAT_ID + 1usize;
 const VUE_DEFINE_EMITS_DECLARATION_ID: usize = NODE_NO_PROCESS_ENV_ID + 1usize;
@@ -2259,6 +2392,9 @@ impl RuleEnum {
             Self::ImportNoCycle(_) => IMPORT_NO_CYCLE_ID,
             Self::ImportNoDefaultExport(_) => IMPORT_NO_DEFAULT_EXPORT_ID,
             Self::ImportNoDuplicates(_) => IMPORT_NO_DUPLICATES_ID,
+            Self::ImportNoDynamicNamespaceImportAccess(_) => {
+                IMPORT_NO_DYNAMIC_NAMESPACE_IMPORT_ACCESS_ID
+            }
             Self::ImportNoDynamicRequire(_) => IMPORT_NO_DYNAMIC_REQUIRE_ID,
             Self::ImportNoEmptyNamedBlocks(_) => IMPORT_NO_EMPTY_NAMED_BLOCKS_ID,
             Self::ImportNoMutableExports(_) => IMPORT_NO_MUTABLE_EXPORTS_ID,
@@ -2268,9 +2404,12 @@ impl RuleEnum {
             Self::ImportNoNamedExport(_) => IMPORT_NO_NAMED_EXPORT_ID,
             Self::ImportNoNamespace(_) => IMPORT_NO_NAMESPACE_ID,
             Self::ImportNoNodejsModules(_) => IMPORT_NO_NODEJS_MODULES_ID,
+            Self::ImportNoPrivateImports(_) => IMPORT_NO_PRIVATE_IMPORTS_ID,
             Self::ImportNoRelativeParentImports(_) => IMPORT_NO_RELATIVE_PARENT_IMPORTS_ID,
             Self::ImportNoSelfImport(_) => IMPORT_NO_SELF_IMPORT_ID,
             Self::ImportNoUnassignedImport(_) => IMPORT_NO_UNASSIGNED_IMPORT_ID,
+            Self::ImportNoUndeclaredDependencies(_) => IMPORT_NO_UNDECLARED_DEPENDENCIES_ID,
+            Self::ImportNoUnresolvedImports(_) => IMPORT_NO_UNRESOLVED_IMPORTS_ID,
             Self::ImportNoWebpackLoaderSyntax(_) => IMPORT_NO_WEBPACK_LOADER_SYNTAX_ID,
             Self::ImportPreferDefaultExport(_) => IMPORT_PREFER_DEFAULT_EXPORT_ID,
             Self::ImportUnambiguous(_) => IMPORT_UNAMBIGUOUS_ID,
@@ -2313,6 +2452,7 @@ impl RuleEnum {
             Self::EslintNoClassAssign(_) => ESLINT_NO_CLASS_ASSIGN_ID,
             Self::EslintNoCompareNegZero(_) => ESLINT_NO_COMPARE_NEG_ZERO_ID,
             Self::EslintNoCondAssign(_) => ESLINT_NO_COND_ASSIGN_ID,
+            Self::EslintNoConfusingLabels(_) => ESLINT_NO_CONFUSING_LABELS_ID,
             Self::EslintNoConsole(_) => ESLINT_NO_CONSOLE_ID,
             Self::EslintNoConstAssign(_) => ESLINT_NO_CONST_ASSIGN_ID,
             Self::EslintNoConstantBinaryExpression(_) => ESLINT_NO_CONSTANT_BINARY_EXPRESSION_ID,
@@ -2370,12 +2510,14 @@ impl RuleEnum {
             Self::EslintNoNonoctalDecimalEscape(_) => ESLINT_NO_NONOCTAL_DECIMAL_ESCAPE_ID,
             Self::EslintNoObjCalls(_) => ESLINT_NO_OBJ_CALLS_ID,
             Self::EslintNoObjectConstructor(_) => ESLINT_NO_OBJECT_CONSTRUCTOR_ID,
+            Self::EslintNoOctalEscape(_) => ESLINT_NO_OCTAL_ESCAPE_ID,
             Self::EslintNoParamReassign(_) => ESLINT_NO_PARAM_REASSIGN_ID,
             Self::EslintNoPlusplus(_) => ESLINT_NO_PLUSPLUS_ID,
             Self::EslintNoPromiseExecutorReturn(_) => ESLINT_NO_PROMISE_EXECUTOR_RETURN_ID,
             Self::EslintNoProto(_) => ESLINT_NO_PROTO_ID,
             Self::EslintNoPrototypeBuiltins(_) => ESLINT_NO_PROTOTYPE_BUILTINS_ID,
             Self::EslintNoRedeclare(_) => ESLINT_NO_REDECLARE_ID,
+            Self::EslintNoRedundantUseStrict(_) => ESLINT_NO_REDUNDANT_USE_STRICT_ID,
             Self::EslintNoRegexSpaces(_) => ESLINT_NO_REGEX_SPACES_ID,
             Self::EslintNoRestrictedGlobals(_) => ESLINT_NO_RESTRICTED_GLOBALS_ID,
             Self::EslintNoRestrictedImports(_) => ESLINT_NO_RESTRICTED_IMPORTS_ID,
@@ -2387,7 +2529,9 @@ impl RuleEnum {
             Self::EslintNoSetterReturn(_) => ESLINT_NO_SETTER_RETURN_ID,
             Self::EslintNoShadow(_) => ESLINT_NO_SHADOW_ID,
             Self::EslintNoShadowRestrictedNames(_) => ESLINT_NO_SHADOW_RESTRICTED_NAMES_ID,
+            Self::EslintNoShoutyConstants(_) => ESLINT_NO_SHOUTY_CONSTANTS_ID,
             Self::EslintNoSparseArrays(_) => ESLINT_NO_SPARSE_ARRAYS_ID,
+            Self::EslintNoStringCaseMismatch(_) => ESLINT_NO_STRING_CASE_MISMATCH_ID,
             Self::EslintNoTemplateCurlyInString(_) => ESLINT_NO_TEMPLATE_CURLY_IN_STRING_ID,
             Self::EslintNoTernary(_) => ESLINT_NO_TERNARY_ID,
             Self::EslintNoThisBeforeSuper(_) => ESLINT_NO_THIS_BEFORE_SUPER_ID,
@@ -2414,6 +2558,7 @@ impl RuleEnum {
             Self::EslintNoUselessComputedKey(_) => ESLINT_NO_USELESS_COMPUTED_KEY_ID,
             Self::EslintNoUselessConcat(_) => ESLINT_NO_USELESS_CONCAT_ID,
             Self::EslintNoUselessConstructor(_) => ESLINT_NO_USELESS_CONSTRUCTOR_ID,
+            Self::EslintNoUselessContinue(_) => ESLINT_NO_USELESS_CONTINUE_ID,
             Self::EslintNoUselessEscape(_) => ESLINT_NO_USELESS_ESCAPE_ID,
             Self::EslintNoUselessRename(_) => ESLINT_NO_USELESS_RENAME_ID,
             Self::EslintNoUselessReturn(_) => ESLINT_NO_USELESS_RETURN_ID,
@@ -2423,6 +2568,7 @@ impl RuleEnum {
             Self::EslintNoWith(_) => ESLINT_NO_WITH_ID,
             Self::EslintObjectShorthand(_) => ESLINT_OBJECT_SHORTHAND_ID,
             Self::EslintOperatorAssignment(_) => ESLINT_OPERATOR_ASSIGNMENT_ID,
+            Self::EslintPreferArrowCallback(_) => ESLINT_PREFER_ARROW_CALLBACK_ID,
             Self::EslintPreferConst(_) => ESLINT_PREFER_CONST_ID,
             Self::EslintPreferDestructuring(_) => ESLINT_PREFER_DESTRUCTURING_ID,
             Self::EslintPreferExponentiationOperator(_) => ESLINT_PREFER_EXPONENTIATION_OPERATOR_ID,
@@ -2443,6 +2589,9 @@ impl RuleEnum {
             Self::EslintSymbolDescription(_) => ESLINT_SYMBOL_DESCRIPTION_ID,
             Self::EslintUnicodeBom(_) => ESLINT_UNICODE_BOM_ID,
             Self::EslintUseIsnan(_) => ESLINT_USE_ISNAN_ID,
+            Self::EslintUseRegexLiterals(_) => ESLINT_USE_REGEX_LITERALS_ID,
+            Self::EslintUseSingleVarDeclarator(_) => ESLINT_USE_SINGLE_VAR_DECLARATOR_ID,
+            Self::EslintUseWhile(_) => ESLINT_USE_WHILE_ID,
             Self::EslintValidTypeof(_) => ESLINT_VALID_TYPEOF_ID,
             Self::EslintVarsOnTop(_) => ESLINT_VARS_ON_TOP_ID,
             Self::EslintYoda(_) => ESLINT_YODA_ID,
@@ -2474,9 +2623,13 @@ impl RuleEnum {
             Self::TypescriptExplicitFunctionReturnType(_) => {
                 TYPESCRIPT_EXPLICIT_FUNCTION_RETURN_TYPE_ID
             }
+            Self::TypescriptExplicitMemberAccessibility(_) => {
+                TYPESCRIPT_EXPLICIT_MEMBER_ACCESSIBILITY_ID
+            }
             Self::TypescriptExplicitModuleBoundaryTypes(_) => {
                 TYPESCRIPT_EXPLICIT_MODULE_BOUNDARY_TYPES_ID
             }
+            Self::TypescriptNamingConvention(_) => TYPESCRIPT_NAMING_CONVENTION_ID,
             Self::TypescriptNoArrayDelete(_) => TYPESCRIPT_NO_ARRAY_DELETE_ID,
             Self::TypescriptNoBaseToString(_) => TYPESCRIPT_NO_BASE_TO_STRING_ID,
             Self::TypescriptNoConfusingNonNullAssertion(_) => {
@@ -2493,11 +2646,15 @@ impl RuleEnum {
             Self::TypescriptNoDynamicDelete(_) => TYPESCRIPT_NO_DYNAMIC_DELETE_ID,
             Self::TypescriptNoEmptyInterface(_) => TYPESCRIPT_NO_EMPTY_INTERFACE_ID,
             Self::TypescriptNoEmptyObjectType(_) => TYPESCRIPT_NO_EMPTY_OBJECT_TYPE_ID,
+            Self::TypescriptNoEmptyTypeParameters(_) => TYPESCRIPT_NO_EMPTY_TYPE_PARAMETERS_ID,
+            Self::TypescriptNoEnum(_) => TYPESCRIPT_NO_ENUM_ID,
+            Self::TypescriptNoEvolvingTypes(_) => TYPESCRIPT_NO_EVOLVING_TYPES_ID,
             Self::TypescriptNoExplicitAny(_) => TYPESCRIPT_NO_EXPLICIT_ANY_ID,
             Self::TypescriptNoExtraNonNullAssertion(_) => TYPESCRIPT_NO_EXTRA_NON_NULL_ASSERTION_ID,
             Self::TypescriptNoExtraneousClass(_) => TYPESCRIPT_NO_EXTRANEOUS_CLASS_ID,
             Self::TypescriptNoFloatingPromises(_) => TYPESCRIPT_NO_FLOATING_PROMISES_ID,
             Self::TypescriptNoForInArray(_) => TYPESCRIPT_NO_FOR_IN_ARRAY_ID,
+            Self::TypescriptNoImplicitAnyLet(_) => TYPESCRIPT_NO_IMPLICIT_ANY_LET_ID,
             Self::TypescriptNoImpliedEval(_) => TYPESCRIPT_NO_IMPLIED_EVAL_ID,
             Self::TypescriptNoImportTypeSideEffects(_) => TYPESCRIPT_NO_IMPORT_TYPE_SIDE_EFFECTS_ID,
             Self::TypescriptNoInferrableTypes(_) => TYPESCRIPT_NO_INFERRABLE_TYPES_ID,
@@ -2523,6 +2680,7 @@ impl RuleEnum {
             Self::TypescriptNoRequireImports(_) => TYPESCRIPT_NO_REQUIRE_IMPORTS_ID,
             Self::TypescriptNoRestrictedTypes(_) => TYPESCRIPT_NO_RESTRICTED_TYPES_ID,
             Self::TypescriptNoThisAlias(_) => TYPESCRIPT_NO_THIS_ALIAS_ID,
+            Self::TypescriptNoThisInStatic(_) => TYPESCRIPT_NO_THIS_IN_STATIC_ID,
             Self::TypescriptNoUnnecessaryBooleanLiteralCompare(_) => {
                 TYPESCRIPT_NO_UNNECESSARY_BOOLEAN_LITERAL_COMPARE_ID
             }
@@ -2712,16 +2870,20 @@ impl RuleEnum {
             Self::ReactNoDidMountSetState(_) => REACT_NO_DID_MOUNT_SET_STATE_ID,
             Self::ReactNoDirectMutationState(_) => REACT_NO_DIRECT_MUTATION_STATE_ID,
             Self::ReactNoFindDomNode(_) => REACT_NO_FIND_DOM_NODE_ID,
+            Self::ReactNoForwardRef(_) => REACT_NO_FORWARD_REF_ID,
             Self::ReactNoIsMounted(_) => REACT_NO_IS_MOUNTED_ID,
+            Self::ReactNoJsxLiterals(_) => REACT_NO_JSX_LITERALS_ID,
             Self::ReactNoMultiComp(_) => REACT_NO_MULTI_COMP_ID,
             Self::ReactNoNamespace(_) => REACT_NO_NAMESPACE_ID,
             Self::ReactNoReactChildren(_) => REACT_NO_REACT_CHILDREN_ID,
+            Self::ReactNoReactSpecificProps(_) => REACT_NO_REACT_SPECIFIC_PROPS_ID,
             Self::ReactNoRedundantShouldComponentUpdate(_) => {
                 REACT_NO_REDUNDANT_SHOULD_COMPONENT_UPDATE_ID
             }
             Self::ReactNoRenderReturnValue(_) => REACT_NO_RENDER_RETURN_VALUE_ID,
             Self::ReactNoSetState(_) => REACT_NO_SET_STATE_ID,
             Self::ReactNoStringRefs(_) => REACT_NO_STRING_REFS_ID,
+            Self::ReactNoSuspiciousSemicolonInJsx(_) => REACT_NO_SUSPICIOUS_SEMICOLON_IN_JSX_ID,
             Self::ReactNoThisInSfc(_) => REACT_NO_THIS_IN_SFC_ID,
             Self::ReactNoUnescapedEntities(_) => REACT_NO_UNESCAPED_ENTITIES_ID,
             Self::ReactNoUnknownProperty(_) => REACT_NO_UNKNOWN_PROPERTY_ID,
@@ -2736,6 +2898,7 @@ impl RuleEnum {
             Self::ReactSelfClosingComp(_) => REACT_SELF_CLOSING_COMP_ID,
             Self::ReactStateInConstructor(_) => REACT_STATE_IN_CONSTRUCTOR_ID,
             Self::ReactStylePropObject(_) => REACT_STYLE_PROP_OBJECT_ID,
+            Self::ReactUseImageSize(_) => REACT_USE_IMAGE_SIZE_ID,
             Self::ReactVoidDomElementsNoChildren(_) => REACT_VOID_DOM_ELEMENTS_NO_CHILDREN_ID,
             Self::ReactPerfJsxNoJsxAsProp(_) => REACT_PERF_JSX_NO_JSX_AS_PROP_ID,
             Self::ReactPerfJsxNoNewArrayAsProp(_) => REACT_PERF_JSX_NO_NEW_ARRAY_AS_PROP_ID,
@@ -2770,6 +2933,7 @@ impl RuleEnum {
             Self::UnicornNoConsoleSpaces(_) => UNICORN_NO_CONSOLE_SPACES_ID,
             Self::UnicornNoDocumentCookie(_) => UNICORN_NO_DOCUMENT_COOKIE_ID,
             Self::UnicornNoEmptyFile(_) => UNICORN_NO_EMPTY_FILE_ID,
+            Self::UnicornNoFlatMapIdentity(_) => UNICORN_NO_FLAT_MAP_IDENTITY_ID,
             Self::UnicornNoHexEscape(_) => UNICORN_NO_HEX_ESCAPE_ID,
             Self::UnicornNoImmediateMutation(_) => UNICORN_NO_IMMEDIATE_MUTATION_ID,
             Self::UnicornNoInstanceofArray(_) => UNICORN_NO_INSTANCEOF_ARRAY_ID,
@@ -2819,8 +2983,12 @@ impl RuleEnum {
                 UNICORN_NO_USELESS_PROMISE_RESOLVE_REJECT_ID
             }
             Self::UnicornNoUselessSpread(_) => UNICORN_NO_USELESS_SPREAD_ID,
+            Self::UnicornNoUselessStringRaw(_) => UNICORN_NO_USELESS_STRING_RAW_ID,
             Self::UnicornNoUselessSwitchCase(_) => UNICORN_NO_USELESS_SWITCH_CASE_ID,
             Self::UnicornNoUselessUndefined(_) => UNICORN_NO_USELESS_UNDEFINED_ID,
+            Self::UnicornNoUselessUndefinedInitialization(_) => {
+                UNICORN_NO_USELESS_UNDEFINED_INITIALIZATION_ID
+            }
             Self::UnicornNoZeroFractions(_) => UNICORN_NO_ZERO_FRACTIONS_ID,
             Self::UnicornNumberLiteralCase(_) => UNICORN_NUMBER_LITERAL_CASE_ID,
             Self::UnicornNumericSeparatorsStyle(_) => UNICORN_NUMERIC_SEPARATORS_STYLE_ID,
@@ -2893,6 +3061,12 @@ impl RuleEnum {
             Self::UnicornSwitchCaseBreakPosition(_) => UNICORN_SWITCH_CASE_BREAK_POSITION_ID,
             Self::UnicornTextEncodingIdentifierCase(_) => UNICORN_TEXT_ENCODING_IDENTIFIER_CASE_ID,
             Self::UnicornThrowNewError(_) => UNICORN_THROW_NEW_ERROR_ID,
+            Self::UnicornUseCollapsedIf(_) => UNICORN_USE_COLLAPSED_IF_ID,
+            Self::UnicornUseConsistentCurlyBraces(_) => UNICORN_USE_CONSISTENT_CURLY_BRACES_ID,
+            Self::UnicornUseSimpleNumberKeys(_) => UNICORN_USE_SIMPLE_NUMBER_KEYS_ID,
+            Self::UnicornUseSimplifiedLogicExpression(_) => {
+                UNICORN_USE_SIMPLIFIED_LOGIC_EXPRESSION_ID
+            }
             Self::JsxA11YAltText(_) => JSX_A_11_Y_ALT_TEXT_ID,
             Self::JsxA11YAnchorAmbiguousText(_) => JSX_A_11_Y_ANCHOR_AMBIGUOUS_TEXT_ID,
             Self::JsxA11YAnchorHasContent(_) => JSX_A_11_Y_ANCHOR_HAS_CONTENT_ID,
@@ -2918,16 +3092,28 @@ impl RuleEnum {
             Self::JsxA11YNoAriaHiddenOnFocusable(_) => JSX_A_11_Y_NO_ARIA_HIDDEN_ON_FOCUSABLE_ID,
             Self::JsxA11YNoAutofocus(_) => JSX_A_11_Y_NO_AUTOFOCUS_ID,
             Self::JsxA11YNoDistractingElements(_) => JSX_A_11_Y_NO_DISTRACTING_ELEMENTS_ID,
+            Self::JsxA11YNoInteractiveElementToNoninteractiveRole(_) => {
+                JSX_A_11_Y_NO_INTERACTIVE_ELEMENT_TO_NONINTERACTIVE_ROLE_ID
+            }
+            Self::JsxA11YNoNoninteractiveElementInteractions(_) => {
+                JSX_A_11_Y_NO_NONINTERACTIVE_ELEMENT_INTERACTIONS_ID
+            }
+            Self::JsxA11YNoNoninteractiveElementToInteractiveRole(_) => {
+                JSX_A_11_Y_NO_NONINTERACTIVE_ELEMENT_TO_INTERACTIVE_ROLE_ID
+            }
             Self::JsxA11YNoNoninteractiveTabindex(_) => JSX_A_11_Y_NO_NONINTERACTIVE_TABINDEX_ID,
             Self::JsxA11YNoRedundantRoles(_) => JSX_A_11_Y_NO_REDUNDANT_ROLES_ID,
             Self::JsxA11YNoStaticElementInteractions(_) => {
                 JSX_A_11_Y_NO_STATIC_ELEMENT_INTERACTIONS_ID
             }
+            Self::JsxA11YNoSvgWithoutTitle(_) => JSX_A_11_Y_NO_SVG_WITHOUT_TITLE_ID,
             Self::JsxA11YPreferTagOverRole(_) => JSX_A_11_Y_PREFER_TAG_OVER_ROLE_ID,
             Self::JsxA11YRoleHasRequiredAriaProps(_) => JSX_A_11_Y_ROLE_HAS_REQUIRED_ARIA_PROPS_ID,
             Self::JsxA11YRoleSupportsAriaProps(_) => JSX_A_11_Y_ROLE_SUPPORTS_ARIA_PROPS_ID,
             Self::JsxA11YScope(_) => JSX_A_11_Y_SCOPE_ID,
             Self::JsxA11YTabindexNoPositive(_) => JSX_A_11_Y_TABINDEX_NO_POSITIVE_ID,
+            Self::JsxA11YUseFocusableInteractive(_) => JSX_A_11_Y_USE_FOCUSABLE_INTERACTIVE_ID,
+            Self::JsxA11YUseUniqueElementIds(_) => JSX_A_11_Y_USE_UNIQUE_ELEMENT_IDS_ID,
             Self::OxcApproxConstant(_) => OXC_APPROX_CONSTANT_ID,
             Self::OxcBadArrayMethodOnArguments(_) => OXC_BAD_ARRAY_METHOD_ON_ARGUMENTS_ID,
             Self::OxcBadBitwiseOperator(_) => OXC_BAD_BITWISE_OPERATOR_ID,
@@ -3038,6 +3224,7 @@ impl RuleEnum {
             Self::NodeGlobalRequire(_) => NODE_GLOBAL_REQUIRE_ID,
             Self::NodeHandleCallbackErr(_) => NODE_HANDLE_CALLBACK_ERR_ID,
             Self::NodeNoExportsAssign(_) => NODE_NO_EXPORTS_ASSIGN_ID,
+            Self::NodeNoGlobalDirnameFilename(_) => NODE_NO_GLOBAL_DIRNAME_FILENAME_ID,
             Self::NodeNoNewRequire(_) => NODE_NO_NEW_REQUIRE_ID,
             Self::NodeNoPathConcat(_) => NODE_NO_PATH_CONCAT_ID,
             Self::NodeNoProcessEnv(_) => NODE_NO_PROCESS_ENV_ID,
@@ -3079,6 +3266,9 @@ impl RuleEnum {
             Self::ImportNoCycle(_) => ImportNoCycle::NAME,
             Self::ImportNoDefaultExport(_) => ImportNoDefaultExport::NAME,
             Self::ImportNoDuplicates(_) => ImportNoDuplicates::NAME,
+            Self::ImportNoDynamicNamespaceImportAccess(_) => {
+                ImportNoDynamicNamespaceImportAccess::NAME
+            }
             Self::ImportNoDynamicRequire(_) => ImportNoDynamicRequire::NAME,
             Self::ImportNoEmptyNamedBlocks(_) => ImportNoEmptyNamedBlocks::NAME,
             Self::ImportNoMutableExports(_) => ImportNoMutableExports::NAME,
@@ -3088,9 +3278,12 @@ impl RuleEnum {
             Self::ImportNoNamedExport(_) => ImportNoNamedExport::NAME,
             Self::ImportNoNamespace(_) => ImportNoNamespace::NAME,
             Self::ImportNoNodejsModules(_) => ImportNoNodejsModules::NAME,
+            Self::ImportNoPrivateImports(_) => ImportNoPrivateImports::NAME,
             Self::ImportNoRelativeParentImports(_) => ImportNoRelativeParentImports::NAME,
             Self::ImportNoSelfImport(_) => ImportNoSelfImport::NAME,
             Self::ImportNoUnassignedImport(_) => ImportNoUnassignedImport::NAME,
+            Self::ImportNoUndeclaredDependencies(_) => ImportNoUndeclaredDependencies::NAME,
+            Self::ImportNoUnresolvedImports(_) => ImportNoUnresolvedImports::NAME,
             Self::ImportNoWebpackLoaderSyntax(_) => ImportNoWebpackLoaderSyntax::NAME,
             Self::ImportPreferDefaultExport(_) => ImportPreferDefaultExport::NAME,
             Self::ImportUnambiguous(_) => ImportUnambiguous::NAME,
@@ -3133,6 +3326,7 @@ impl RuleEnum {
             Self::EslintNoClassAssign(_) => EslintNoClassAssign::NAME,
             Self::EslintNoCompareNegZero(_) => EslintNoCompareNegZero::NAME,
             Self::EslintNoCondAssign(_) => EslintNoCondAssign::NAME,
+            Self::EslintNoConfusingLabels(_) => EslintNoConfusingLabels::NAME,
             Self::EslintNoConsole(_) => EslintNoConsole::NAME,
             Self::EslintNoConstAssign(_) => EslintNoConstAssign::NAME,
             Self::EslintNoConstantBinaryExpression(_) => EslintNoConstantBinaryExpression::NAME,
@@ -3190,12 +3384,14 @@ impl RuleEnum {
             Self::EslintNoNonoctalDecimalEscape(_) => EslintNoNonoctalDecimalEscape::NAME,
             Self::EslintNoObjCalls(_) => EslintNoObjCalls::NAME,
             Self::EslintNoObjectConstructor(_) => EslintNoObjectConstructor::NAME,
+            Self::EslintNoOctalEscape(_) => EslintNoOctalEscape::NAME,
             Self::EslintNoParamReassign(_) => EslintNoParamReassign::NAME,
             Self::EslintNoPlusplus(_) => EslintNoPlusplus::NAME,
             Self::EslintNoPromiseExecutorReturn(_) => EslintNoPromiseExecutorReturn::NAME,
             Self::EslintNoProto(_) => EslintNoProto::NAME,
             Self::EslintNoPrototypeBuiltins(_) => EslintNoPrototypeBuiltins::NAME,
             Self::EslintNoRedeclare(_) => EslintNoRedeclare::NAME,
+            Self::EslintNoRedundantUseStrict(_) => EslintNoRedundantUseStrict::NAME,
             Self::EslintNoRegexSpaces(_) => EslintNoRegexSpaces::NAME,
             Self::EslintNoRestrictedGlobals(_) => EslintNoRestrictedGlobals::NAME,
             Self::EslintNoRestrictedImports(_) => EslintNoRestrictedImports::NAME,
@@ -3207,7 +3403,9 @@ impl RuleEnum {
             Self::EslintNoSetterReturn(_) => EslintNoSetterReturn::NAME,
             Self::EslintNoShadow(_) => EslintNoShadow::NAME,
             Self::EslintNoShadowRestrictedNames(_) => EslintNoShadowRestrictedNames::NAME,
+            Self::EslintNoShoutyConstants(_) => EslintNoShoutyConstants::NAME,
             Self::EslintNoSparseArrays(_) => EslintNoSparseArrays::NAME,
+            Self::EslintNoStringCaseMismatch(_) => EslintNoStringCaseMismatch::NAME,
             Self::EslintNoTemplateCurlyInString(_) => EslintNoTemplateCurlyInString::NAME,
             Self::EslintNoTernary(_) => EslintNoTernary::NAME,
             Self::EslintNoThisBeforeSuper(_) => EslintNoThisBeforeSuper::NAME,
@@ -3234,6 +3432,7 @@ impl RuleEnum {
             Self::EslintNoUselessComputedKey(_) => EslintNoUselessComputedKey::NAME,
             Self::EslintNoUselessConcat(_) => EslintNoUselessConcat::NAME,
             Self::EslintNoUselessConstructor(_) => EslintNoUselessConstructor::NAME,
+            Self::EslintNoUselessContinue(_) => EslintNoUselessContinue::NAME,
             Self::EslintNoUselessEscape(_) => EslintNoUselessEscape::NAME,
             Self::EslintNoUselessRename(_) => EslintNoUselessRename::NAME,
             Self::EslintNoUselessReturn(_) => EslintNoUselessReturn::NAME,
@@ -3243,6 +3442,7 @@ impl RuleEnum {
             Self::EslintNoWith(_) => EslintNoWith::NAME,
             Self::EslintObjectShorthand(_) => EslintObjectShorthand::NAME,
             Self::EslintOperatorAssignment(_) => EslintOperatorAssignment::NAME,
+            Self::EslintPreferArrowCallback(_) => EslintPreferArrowCallback::NAME,
             Self::EslintPreferConst(_) => EslintPreferConst::NAME,
             Self::EslintPreferDestructuring(_) => EslintPreferDestructuring::NAME,
             Self::EslintPreferExponentiationOperator(_) => EslintPreferExponentiationOperator::NAME,
@@ -3263,6 +3463,9 @@ impl RuleEnum {
             Self::EslintSymbolDescription(_) => EslintSymbolDescription::NAME,
             Self::EslintUnicodeBom(_) => EslintUnicodeBom::NAME,
             Self::EslintUseIsnan(_) => EslintUseIsnan::NAME,
+            Self::EslintUseRegexLiterals(_) => EslintUseRegexLiterals::NAME,
+            Self::EslintUseSingleVarDeclarator(_) => EslintUseSingleVarDeclarator::NAME,
+            Self::EslintUseWhile(_) => EslintUseWhile::NAME,
             Self::EslintValidTypeof(_) => EslintValidTypeof::NAME,
             Self::EslintVarsOnTop(_) => EslintVarsOnTop::NAME,
             Self::EslintYoda(_) => EslintYoda::NAME,
@@ -3294,9 +3497,13 @@ impl RuleEnum {
             Self::TypescriptExplicitFunctionReturnType(_) => {
                 TypescriptExplicitFunctionReturnType::NAME
             }
+            Self::TypescriptExplicitMemberAccessibility(_) => {
+                TypescriptExplicitMemberAccessibility::NAME
+            }
             Self::TypescriptExplicitModuleBoundaryTypes(_) => {
                 TypescriptExplicitModuleBoundaryTypes::NAME
             }
+            Self::TypescriptNamingConvention(_) => TypescriptNamingConvention::NAME,
             Self::TypescriptNoArrayDelete(_) => TypescriptNoArrayDelete::NAME,
             Self::TypescriptNoBaseToString(_) => TypescriptNoBaseToString::NAME,
             Self::TypescriptNoConfusingNonNullAssertion(_) => {
@@ -3313,11 +3520,15 @@ impl RuleEnum {
             Self::TypescriptNoDynamicDelete(_) => TypescriptNoDynamicDelete::NAME,
             Self::TypescriptNoEmptyInterface(_) => TypescriptNoEmptyInterface::NAME,
             Self::TypescriptNoEmptyObjectType(_) => TypescriptNoEmptyObjectType::NAME,
+            Self::TypescriptNoEmptyTypeParameters(_) => TypescriptNoEmptyTypeParameters::NAME,
+            Self::TypescriptNoEnum(_) => TypescriptNoEnum::NAME,
+            Self::TypescriptNoEvolvingTypes(_) => TypescriptNoEvolvingTypes::NAME,
             Self::TypescriptNoExplicitAny(_) => TypescriptNoExplicitAny::NAME,
             Self::TypescriptNoExtraNonNullAssertion(_) => TypescriptNoExtraNonNullAssertion::NAME,
             Self::TypescriptNoExtraneousClass(_) => TypescriptNoExtraneousClass::NAME,
             Self::TypescriptNoFloatingPromises(_) => TypescriptNoFloatingPromises::NAME,
             Self::TypescriptNoForInArray(_) => TypescriptNoForInArray::NAME,
+            Self::TypescriptNoImplicitAnyLet(_) => TypescriptNoImplicitAnyLet::NAME,
             Self::TypescriptNoImpliedEval(_) => TypescriptNoImpliedEval::NAME,
             Self::TypescriptNoImportTypeSideEffects(_) => TypescriptNoImportTypeSideEffects::NAME,
             Self::TypescriptNoInferrableTypes(_) => TypescriptNoInferrableTypes::NAME,
@@ -3343,6 +3554,7 @@ impl RuleEnum {
             Self::TypescriptNoRequireImports(_) => TypescriptNoRequireImports::NAME,
             Self::TypescriptNoRestrictedTypes(_) => TypescriptNoRestrictedTypes::NAME,
             Self::TypescriptNoThisAlias(_) => TypescriptNoThisAlias::NAME,
+            Self::TypescriptNoThisInStatic(_) => TypescriptNoThisInStatic::NAME,
             Self::TypescriptNoUnnecessaryBooleanLiteralCompare(_) => {
                 TypescriptNoUnnecessaryBooleanLiteralCompare::NAME
             }
@@ -3528,16 +3740,20 @@ impl RuleEnum {
             Self::ReactNoDidMountSetState(_) => ReactNoDidMountSetState::NAME,
             Self::ReactNoDirectMutationState(_) => ReactNoDirectMutationState::NAME,
             Self::ReactNoFindDomNode(_) => ReactNoFindDomNode::NAME,
+            Self::ReactNoForwardRef(_) => ReactNoForwardRef::NAME,
             Self::ReactNoIsMounted(_) => ReactNoIsMounted::NAME,
+            Self::ReactNoJsxLiterals(_) => ReactNoJsxLiterals::NAME,
             Self::ReactNoMultiComp(_) => ReactNoMultiComp::NAME,
             Self::ReactNoNamespace(_) => ReactNoNamespace::NAME,
             Self::ReactNoReactChildren(_) => ReactNoReactChildren::NAME,
+            Self::ReactNoReactSpecificProps(_) => ReactNoReactSpecificProps::NAME,
             Self::ReactNoRedundantShouldComponentUpdate(_) => {
                 ReactNoRedundantShouldComponentUpdate::NAME
             }
             Self::ReactNoRenderReturnValue(_) => ReactNoRenderReturnValue::NAME,
             Self::ReactNoSetState(_) => ReactNoSetState::NAME,
             Self::ReactNoStringRefs(_) => ReactNoStringRefs::NAME,
+            Self::ReactNoSuspiciousSemicolonInJsx(_) => ReactNoSuspiciousSemicolonInJsx::NAME,
             Self::ReactNoThisInSfc(_) => ReactNoThisInSfc::NAME,
             Self::ReactNoUnescapedEntities(_) => ReactNoUnescapedEntities::NAME,
             Self::ReactNoUnknownProperty(_) => ReactNoUnknownProperty::NAME,
@@ -3552,6 +3768,7 @@ impl RuleEnum {
             Self::ReactSelfClosingComp(_) => ReactSelfClosingComp::NAME,
             Self::ReactStateInConstructor(_) => ReactStateInConstructor::NAME,
             Self::ReactStylePropObject(_) => ReactStylePropObject::NAME,
+            Self::ReactUseImageSize(_) => ReactUseImageSize::NAME,
             Self::ReactVoidDomElementsNoChildren(_) => ReactVoidDomElementsNoChildren::NAME,
             Self::ReactPerfJsxNoJsxAsProp(_) => ReactPerfJsxNoJsxAsProp::NAME,
             Self::ReactPerfJsxNoNewArrayAsProp(_) => ReactPerfJsxNoNewArrayAsProp::NAME,
@@ -3586,6 +3803,7 @@ impl RuleEnum {
             Self::UnicornNoConsoleSpaces(_) => UnicornNoConsoleSpaces::NAME,
             Self::UnicornNoDocumentCookie(_) => UnicornNoDocumentCookie::NAME,
             Self::UnicornNoEmptyFile(_) => UnicornNoEmptyFile::NAME,
+            Self::UnicornNoFlatMapIdentity(_) => UnicornNoFlatMapIdentity::NAME,
             Self::UnicornNoHexEscape(_) => UnicornNoHexEscape::NAME,
             Self::UnicornNoImmediateMutation(_) => UnicornNoImmediateMutation::NAME,
             Self::UnicornNoInstanceofArray(_) => UnicornNoInstanceofArray::NAME,
@@ -3631,8 +3849,12 @@ impl RuleEnum {
                 UnicornNoUselessPromiseResolveReject::NAME
             }
             Self::UnicornNoUselessSpread(_) => UnicornNoUselessSpread::NAME,
+            Self::UnicornNoUselessStringRaw(_) => UnicornNoUselessStringRaw::NAME,
             Self::UnicornNoUselessSwitchCase(_) => UnicornNoUselessSwitchCase::NAME,
             Self::UnicornNoUselessUndefined(_) => UnicornNoUselessUndefined::NAME,
+            Self::UnicornNoUselessUndefinedInitialization(_) => {
+                UnicornNoUselessUndefinedInitialization::NAME
+            }
             Self::UnicornNoZeroFractions(_) => UnicornNoZeroFractions::NAME,
             Self::UnicornNumberLiteralCase(_) => UnicornNumberLiteralCase::NAME,
             Self::UnicornNumericSeparatorsStyle(_) => UnicornNumericSeparatorsStyle::NAME,
@@ -3705,6 +3927,12 @@ impl RuleEnum {
             Self::UnicornSwitchCaseBreakPosition(_) => UnicornSwitchCaseBreakPosition::NAME,
             Self::UnicornTextEncodingIdentifierCase(_) => UnicornTextEncodingIdentifierCase::NAME,
             Self::UnicornThrowNewError(_) => UnicornThrowNewError::NAME,
+            Self::UnicornUseCollapsedIf(_) => UnicornUseCollapsedIf::NAME,
+            Self::UnicornUseConsistentCurlyBraces(_) => UnicornUseConsistentCurlyBraces::NAME,
+            Self::UnicornUseSimpleNumberKeys(_) => UnicornUseSimpleNumberKeys::NAME,
+            Self::UnicornUseSimplifiedLogicExpression(_) => {
+                UnicornUseSimplifiedLogicExpression::NAME
+            }
             Self::JsxA11YAltText(_) => JsxA11YAltText::NAME,
             Self::JsxA11YAnchorAmbiguousText(_) => JsxA11YAnchorAmbiguousText::NAME,
             Self::JsxA11YAnchorHasContent(_) => JsxA11YAnchorHasContent::NAME,
@@ -3730,14 +3958,26 @@ impl RuleEnum {
             Self::JsxA11YNoAriaHiddenOnFocusable(_) => JsxA11YNoAriaHiddenOnFocusable::NAME,
             Self::JsxA11YNoAutofocus(_) => JsxA11YNoAutofocus::NAME,
             Self::JsxA11YNoDistractingElements(_) => JsxA11YNoDistractingElements::NAME,
+            Self::JsxA11YNoInteractiveElementToNoninteractiveRole(_) => {
+                JsxA11YNoInteractiveElementToNoninteractiveRole::NAME
+            }
+            Self::JsxA11YNoNoninteractiveElementInteractions(_) => {
+                JsxA11YNoNoninteractiveElementInteractions::NAME
+            }
+            Self::JsxA11YNoNoninteractiveElementToInteractiveRole(_) => {
+                JsxA11YNoNoninteractiveElementToInteractiveRole::NAME
+            }
             Self::JsxA11YNoNoninteractiveTabindex(_) => JsxA11YNoNoninteractiveTabindex::NAME,
             Self::JsxA11YNoRedundantRoles(_) => JsxA11YNoRedundantRoles::NAME,
             Self::JsxA11YNoStaticElementInteractions(_) => JsxA11YNoStaticElementInteractions::NAME,
+            Self::JsxA11YNoSvgWithoutTitle(_) => JsxA11YNoSvgWithoutTitle::NAME,
             Self::JsxA11YPreferTagOverRole(_) => JsxA11YPreferTagOverRole::NAME,
             Self::JsxA11YRoleHasRequiredAriaProps(_) => JsxA11YRoleHasRequiredAriaProps::NAME,
             Self::JsxA11YRoleSupportsAriaProps(_) => JsxA11YRoleSupportsAriaProps::NAME,
             Self::JsxA11YScope(_) => JsxA11YScope::NAME,
             Self::JsxA11YTabindexNoPositive(_) => JsxA11YTabindexNoPositive::NAME,
+            Self::JsxA11YUseFocusableInteractive(_) => JsxA11YUseFocusableInteractive::NAME,
+            Self::JsxA11YUseUniqueElementIds(_) => JsxA11YUseUniqueElementIds::NAME,
             Self::OxcApproxConstant(_) => OxcApproxConstant::NAME,
             Self::OxcBadArrayMethodOnArguments(_) => OxcBadArrayMethodOnArguments::NAME,
             Self::OxcBadBitwiseOperator(_) => OxcBadBitwiseOperator::NAME,
@@ -3848,6 +4088,7 @@ impl RuleEnum {
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::NAME,
             Self::NodeHandleCallbackErr(_) => NodeHandleCallbackErr::NAME,
             Self::NodeNoExportsAssign(_) => NodeNoExportsAssign::NAME,
+            Self::NodeNoGlobalDirnameFilename(_) => NodeNoGlobalDirnameFilename::NAME,
             Self::NodeNoNewRequire(_) => NodeNoNewRequire::NAME,
             Self::NodeNoPathConcat(_) => NodeNoPathConcat::NAME,
             Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::NAME,
@@ -3891,6 +4132,9 @@ impl RuleEnum {
             Self::ImportNoCycle(_) => ImportNoCycle::CATEGORY,
             Self::ImportNoDefaultExport(_) => ImportNoDefaultExport::CATEGORY,
             Self::ImportNoDuplicates(_) => ImportNoDuplicates::CATEGORY,
+            Self::ImportNoDynamicNamespaceImportAccess(_) => {
+                ImportNoDynamicNamespaceImportAccess::CATEGORY
+            }
             Self::ImportNoDynamicRequire(_) => ImportNoDynamicRequire::CATEGORY,
             Self::ImportNoEmptyNamedBlocks(_) => ImportNoEmptyNamedBlocks::CATEGORY,
             Self::ImportNoMutableExports(_) => ImportNoMutableExports::CATEGORY,
@@ -3900,9 +4144,12 @@ impl RuleEnum {
             Self::ImportNoNamedExport(_) => ImportNoNamedExport::CATEGORY,
             Self::ImportNoNamespace(_) => ImportNoNamespace::CATEGORY,
             Self::ImportNoNodejsModules(_) => ImportNoNodejsModules::CATEGORY,
+            Self::ImportNoPrivateImports(_) => ImportNoPrivateImports::CATEGORY,
             Self::ImportNoRelativeParentImports(_) => ImportNoRelativeParentImports::CATEGORY,
             Self::ImportNoSelfImport(_) => ImportNoSelfImport::CATEGORY,
             Self::ImportNoUnassignedImport(_) => ImportNoUnassignedImport::CATEGORY,
+            Self::ImportNoUndeclaredDependencies(_) => ImportNoUndeclaredDependencies::CATEGORY,
+            Self::ImportNoUnresolvedImports(_) => ImportNoUnresolvedImports::CATEGORY,
             Self::ImportNoWebpackLoaderSyntax(_) => ImportNoWebpackLoaderSyntax::CATEGORY,
             Self::ImportPreferDefaultExport(_) => ImportPreferDefaultExport::CATEGORY,
             Self::ImportUnambiguous(_) => ImportUnambiguous::CATEGORY,
@@ -3945,6 +4192,7 @@ impl RuleEnum {
             Self::EslintNoClassAssign(_) => EslintNoClassAssign::CATEGORY,
             Self::EslintNoCompareNegZero(_) => EslintNoCompareNegZero::CATEGORY,
             Self::EslintNoCondAssign(_) => EslintNoCondAssign::CATEGORY,
+            Self::EslintNoConfusingLabels(_) => EslintNoConfusingLabels::CATEGORY,
             Self::EslintNoConsole(_) => EslintNoConsole::CATEGORY,
             Self::EslintNoConstAssign(_) => EslintNoConstAssign::CATEGORY,
             Self::EslintNoConstantBinaryExpression(_) => EslintNoConstantBinaryExpression::CATEGORY,
@@ -4002,12 +4250,14 @@ impl RuleEnum {
             Self::EslintNoNonoctalDecimalEscape(_) => EslintNoNonoctalDecimalEscape::CATEGORY,
             Self::EslintNoObjCalls(_) => EslintNoObjCalls::CATEGORY,
             Self::EslintNoObjectConstructor(_) => EslintNoObjectConstructor::CATEGORY,
+            Self::EslintNoOctalEscape(_) => EslintNoOctalEscape::CATEGORY,
             Self::EslintNoParamReassign(_) => EslintNoParamReassign::CATEGORY,
             Self::EslintNoPlusplus(_) => EslintNoPlusplus::CATEGORY,
             Self::EslintNoPromiseExecutorReturn(_) => EslintNoPromiseExecutorReturn::CATEGORY,
             Self::EslintNoProto(_) => EslintNoProto::CATEGORY,
             Self::EslintNoPrototypeBuiltins(_) => EslintNoPrototypeBuiltins::CATEGORY,
             Self::EslintNoRedeclare(_) => EslintNoRedeclare::CATEGORY,
+            Self::EslintNoRedundantUseStrict(_) => EslintNoRedundantUseStrict::CATEGORY,
             Self::EslintNoRegexSpaces(_) => EslintNoRegexSpaces::CATEGORY,
             Self::EslintNoRestrictedGlobals(_) => EslintNoRestrictedGlobals::CATEGORY,
             Self::EslintNoRestrictedImports(_) => EslintNoRestrictedImports::CATEGORY,
@@ -4019,7 +4269,9 @@ impl RuleEnum {
             Self::EslintNoSetterReturn(_) => EslintNoSetterReturn::CATEGORY,
             Self::EslintNoShadow(_) => EslintNoShadow::CATEGORY,
             Self::EslintNoShadowRestrictedNames(_) => EslintNoShadowRestrictedNames::CATEGORY,
+            Self::EslintNoShoutyConstants(_) => EslintNoShoutyConstants::CATEGORY,
             Self::EslintNoSparseArrays(_) => EslintNoSparseArrays::CATEGORY,
+            Self::EslintNoStringCaseMismatch(_) => EslintNoStringCaseMismatch::CATEGORY,
             Self::EslintNoTemplateCurlyInString(_) => EslintNoTemplateCurlyInString::CATEGORY,
             Self::EslintNoTernary(_) => EslintNoTernary::CATEGORY,
             Self::EslintNoThisBeforeSuper(_) => EslintNoThisBeforeSuper::CATEGORY,
@@ -4048,6 +4300,7 @@ impl RuleEnum {
             Self::EslintNoUselessComputedKey(_) => EslintNoUselessComputedKey::CATEGORY,
             Self::EslintNoUselessConcat(_) => EslintNoUselessConcat::CATEGORY,
             Self::EslintNoUselessConstructor(_) => EslintNoUselessConstructor::CATEGORY,
+            Self::EslintNoUselessContinue(_) => EslintNoUselessContinue::CATEGORY,
             Self::EslintNoUselessEscape(_) => EslintNoUselessEscape::CATEGORY,
             Self::EslintNoUselessRename(_) => EslintNoUselessRename::CATEGORY,
             Self::EslintNoUselessReturn(_) => EslintNoUselessReturn::CATEGORY,
@@ -4057,6 +4310,7 @@ impl RuleEnum {
             Self::EslintNoWith(_) => EslintNoWith::CATEGORY,
             Self::EslintObjectShorthand(_) => EslintObjectShorthand::CATEGORY,
             Self::EslintOperatorAssignment(_) => EslintOperatorAssignment::CATEGORY,
+            Self::EslintPreferArrowCallback(_) => EslintPreferArrowCallback::CATEGORY,
             Self::EslintPreferConst(_) => EslintPreferConst::CATEGORY,
             Self::EslintPreferDestructuring(_) => EslintPreferDestructuring::CATEGORY,
             Self::EslintPreferExponentiationOperator(_) => {
@@ -4079,6 +4333,9 @@ impl RuleEnum {
             Self::EslintSymbolDescription(_) => EslintSymbolDescription::CATEGORY,
             Self::EslintUnicodeBom(_) => EslintUnicodeBom::CATEGORY,
             Self::EslintUseIsnan(_) => EslintUseIsnan::CATEGORY,
+            Self::EslintUseRegexLiterals(_) => EslintUseRegexLiterals::CATEGORY,
+            Self::EslintUseSingleVarDeclarator(_) => EslintUseSingleVarDeclarator::CATEGORY,
+            Self::EslintUseWhile(_) => EslintUseWhile::CATEGORY,
             Self::EslintValidTypeof(_) => EslintValidTypeof::CATEGORY,
             Self::EslintVarsOnTop(_) => EslintVarsOnTop::CATEGORY,
             Self::EslintYoda(_) => EslintYoda::CATEGORY,
@@ -4112,9 +4369,13 @@ impl RuleEnum {
             Self::TypescriptExplicitFunctionReturnType(_) => {
                 TypescriptExplicitFunctionReturnType::CATEGORY
             }
+            Self::TypescriptExplicitMemberAccessibility(_) => {
+                TypescriptExplicitMemberAccessibility::CATEGORY
+            }
             Self::TypescriptExplicitModuleBoundaryTypes(_) => {
                 TypescriptExplicitModuleBoundaryTypes::CATEGORY
             }
+            Self::TypescriptNamingConvention(_) => TypescriptNamingConvention::CATEGORY,
             Self::TypescriptNoArrayDelete(_) => TypescriptNoArrayDelete::CATEGORY,
             Self::TypescriptNoBaseToString(_) => TypescriptNoBaseToString::CATEGORY,
             Self::TypescriptNoConfusingNonNullAssertion(_) => {
@@ -4131,6 +4392,9 @@ impl RuleEnum {
             Self::TypescriptNoDynamicDelete(_) => TypescriptNoDynamicDelete::CATEGORY,
             Self::TypescriptNoEmptyInterface(_) => TypescriptNoEmptyInterface::CATEGORY,
             Self::TypescriptNoEmptyObjectType(_) => TypescriptNoEmptyObjectType::CATEGORY,
+            Self::TypescriptNoEmptyTypeParameters(_) => TypescriptNoEmptyTypeParameters::CATEGORY,
+            Self::TypescriptNoEnum(_) => TypescriptNoEnum::CATEGORY,
+            Self::TypescriptNoEvolvingTypes(_) => TypescriptNoEvolvingTypes::CATEGORY,
             Self::TypescriptNoExplicitAny(_) => TypescriptNoExplicitAny::CATEGORY,
             Self::TypescriptNoExtraNonNullAssertion(_) => {
                 TypescriptNoExtraNonNullAssertion::CATEGORY
@@ -4138,6 +4402,7 @@ impl RuleEnum {
             Self::TypescriptNoExtraneousClass(_) => TypescriptNoExtraneousClass::CATEGORY,
             Self::TypescriptNoFloatingPromises(_) => TypescriptNoFloatingPromises::CATEGORY,
             Self::TypescriptNoForInArray(_) => TypescriptNoForInArray::CATEGORY,
+            Self::TypescriptNoImplicitAnyLet(_) => TypescriptNoImplicitAnyLet::CATEGORY,
             Self::TypescriptNoImpliedEval(_) => TypescriptNoImpliedEval::CATEGORY,
             Self::TypescriptNoImportTypeSideEffects(_) => {
                 TypescriptNoImportTypeSideEffects::CATEGORY
@@ -4165,6 +4430,7 @@ impl RuleEnum {
             Self::TypescriptNoRequireImports(_) => TypescriptNoRequireImports::CATEGORY,
             Self::TypescriptNoRestrictedTypes(_) => TypescriptNoRestrictedTypes::CATEGORY,
             Self::TypescriptNoThisAlias(_) => TypescriptNoThisAlias::CATEGORY,
+            Self::TypescriptNoThisInStatic(_) => TypescriptNoThisInStatic::CATEGORY,
             Self::TypescriptNoUnnecessaryBooleanLiteralCompare(_) => {
                 TypescriptNoUnnecessaryBooleanLiteralCompare::CATEGORY
             }
@@ -4364,16 +4630,20 @@ impl RuleEnum {
             Self::ReactNoDidMountSetState(_) => ReactNoDidMountSetState::CATEGORY,
             Self::ReactNoDirectMutationState(_) => ReactNoDirectMutationState::CATEGORY,
             Self::ReactNoFindDomNode(_) => ReactNoFindDomNode::CATEGORY,
+            Self::ReactNoForwardRef(_) => ReactNoForwardRef::CATEGORY,
             Self::ReactNoIsMounted(_) => ReactNoIsMounted::CATEGORY,
+            Self::ReactNoJsxLiterals(_) => ReactNoJsxLiterals::CATEGORY,
             Self::ReactNoMultiComp(_) => ReactNoMultiComp::CATEGORY,
             Self::ReactNoNamespace(_) => ReactNoNamespace::CATEGORY,
             Self::ReactNoReactChildren(_) => ReactNoReactChildren::CATEGORY,
+            Self::ReactNoReactSpecificProps(_) => ReactNoReactSpecificProps::CATEGORY,
             Self::ReactNoRedundantShouldComponentUpdate(_) => {
                 ReactNoRedundantShouldComponentUpdate::CATEGORY
             }
             Self::ReactNoRenderReturnValue(_) => ReactNoRenderReturnValue::CATEGORY,
             Self::ReactNoSetState(_) => ReactNoSetState::CATEGORY,
             Self::ReactNoStringRefs(_) => ReactNoStringRefs::CATEGORY,
+            Self::ReactNoSuspiciousSemicolonInJsx(_) => ReactNoSuspiciousSemicolonInJsx::CATEGORY,
             Self::ReactNoThisInSfc(_) => ReactNoThisInSfc::CATEGORY,
             Self::ReactNoUnescapedEntities(_) => ReactNoUnescapedEntities::CATEGORY,
             Self::ReactNoUnknownProperty(_) => ReactNoUnknownProperty::CATEGORY,
@@ -4388,6 +4658,7 @@ impl RuleEnum {
             Self::ReactSelfClosingComp(_) => ReactSelfClosingComp::CATEGORY,
             Self::ReactStateInConstructor(_) => ReactStateInConstructor::CATEGORY,
             Self::ReactStylePropObject(_) => ReactStylePropObject::CATEGORY,
+            Self::ReactUseImageSize(_) => ReactUseImageSize::CATEGORY,
             Self::ReactVoidDomElementsNoChildren(_) => ReactVoidDomElementsNoChildren::CATEGORY,
             Self::ReactPerfJsxNoJsxAsProp(_) => ReactPerfJsxNoJsxAsProp::CATEGORY,
             Self::ReactPerfJsxNoNewArrayAsProp(_) => ReactPerfJsxNoNewArrayAsProp::CATEGORY,
@@ -4424,6 +4695,7 @@ impl RuleEnum {
             Self::UnicornNoConsoleSpaces(_) => UnicornNoConsoleSpaces::CATEGORY,
             Self::UnicornNoDocumentCookie(_) => UnicornNoDocumentCookie::CATEGORY,
             Self::UnicornNoEmptyFile(_) => UnicornNoEmptyFile::CATEGORY,
+            Self::UnicornNoFlatMapIdentity(_) => UnicornNoFlatMapIdentity::CATEGORY,
             Self::UnicornNoHexEscape(_) => UnicornNoHexEscape::CATEGORY,
             Self::UnicornNoImmediateMutation(_) => UnicornNoImmediateMutation::CATEGORY,
             Self::UnicornNoInstanceofArray(_) => UnicornNoInstanceofArray::CATEGORY,
@@ -4475,8 +4747,12 @@ impl RuleEnum {
                 UnicornNoUselessPromiseResolveReject::CATEGORY
             }
             Self::UnicornNoUselessSpread(_) => UnicornNoUselessSpread::CATEGORY,
+            Self::UnicornNoUselessStringRaw(_) => UnicornNoUselessStringRaw::CATEGORY,
             Self::UnicornNoUselessSwitchCase(_) => UnicornNoUselessSwitchCase::CATEGORY,
             Self::UnicornNoUselessUndefined(_) => UnicornNoUselessUndefined::CATEGORY,
+            Self::UnicornNoUselessUndefinedInitialization(_) => {
+                UnicornNoUselessUndefinedInitialization::CATEGORY
+            }
             Self::UnicornNoZeroFractions(_) => UnicornNoZeroFractions::CATEGORY,
             Self::UnicornNumberLiteralCase(_) => UnicornNumberLiteralCase::CATEGORY,
             Self::UnicornNumericSeparatorsStyle(_) => UnicornNumericSeparatorsStyle::CATEGORY,
@@ -4555,6 +4831,12 @@ impl RuleEnum {
                 UnicornTextEncodingIdentifierCase::CATEGORY
             }
             Self::UnicornThrowNewError(_) => UnicornThrowNewError::CATEGORY,
+            Self::UnicornUseCollapsedIf(_) => UnicornUseCollapsedIf::CATEGORY,
+            Self::UnicornUseConsistentCurlyBraces(_) => UnicornUseConsistentCurlyBraces::CATEGORY,
+            Self::UnicornUseSimpleNumberKeys(_) => UnicornUseSimpleNumberKeys::CATEGORY,
+            Self::UnicornUseSimplifiedLogicExpression(_) => {
+                UnicornUseSimplifiedLogicExpression::CATEGORY
+            }
             Self::JsxA11YAltText(_) => JsxA11YAltText::CATEGORY,
             Self::JsxA11YAnchorAmbiguousText(_) => JsxA11YAnchorAmbiguousText::CATEGORY,
             Self::JsxA11YAnchorHasContent(_) => JsxA11YAnchorHasContent::CATEGORY,
@@ -4580,16 +4862,28 @@ impl RuleEnum {
             Self::JsxA11YNoAriaHiddenOnFocusable(_) => JsxA11YNoAriaHiddenOnFocusable::CATEGORY,
             Self::JsxA11YNoAutofocus(_) => JsxA11YNoAutofocus::CATEGORY,
             Self::JsxA11YNoDistractingElements(_) => JsxA11YNoDistractingElements::CATEGORY,
+            Self::JsxA11YNoInteractiveElementToNoninteractiveRole(_) => {
+                JsxA11YNoInteractiveElementToNoninteractiveRole::CATEGORY
+            }
+            Self::JsxA11YNoNoninteractiveElementInteractions(_) => {
+                JsxA11YNoNoninteractiveElementInteractions::CATEGORY
+            }
+            Self::JsxA11YNoNoninteractiveElementToInteractiveRole(_) => {
+                JsxA11YNoNoninteractiveElementToInteractiveRole::CATEGORY
+            }
             Self::JsxA11YNoNoninteractiveTabindex(_) => JsxA11YNoNoninteractiveTabindex::CATEGORY,
             Self::JsxA11YNoRedundantRoles(_) => JsxA11YNoRedundantRoles::CATEGORY,
             Self::JsxA11YNoStaticElementInteractions(_) => {
                 JsxA11YNoStaticElementInteractions::CATEGORY
             }
+            Self::JsxA11YNoSvgWithoutTitle(_) => JsxA11YNoSvgWithoutTitle::CATEGORY,
             Self::JsxA11YPreferTagOverRole(_) => JsxA11YPreferTagOverRole::CATEGORY,
             Self::JsxA11YRoleHasRequiredAriaProps(_) => JsxA11YRoleHasRequiredAriaProps::CATEGORY,
             Self::JsxA11YRoleSupportsAriaProps(_) => JsxA11YRoleSupportsAriaProps::CATEGORY,
             Self::JsxA11YScope(_) => JsxA11YScope::CATEGORY,
             Self::JsxA11YTabindexNoPositive(_) => JsxA11YTabindexNoPositive::CATEGORY,
+            Self::JsxA11YUseFocusableInteractive(_) => JsxA11YUseFocusableInteractive::CATEGORY,
+            Self::JsxA11YUseUniqueElementIds(_) => JsxA11YUseUniqueElementIds::CATEGORY,
             Self::OxcApproxConstant(_) => OxcApproxConstant::CATEGORY,
             Self::OxcBadArrayMethodOnArguments(_) => OxcBadArrayMethodOnArguments::CATEGORY,
             Self::OxcBadBitwiseOperator(_) => OxcBadBitwiseOperator::CATEGORY,
@@ -4706,6 +5000,7 @@ impl RuleEnum {
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::CATEGORY,
             Self::NodeHandleCallbackErr(_) => NodeHandleCallbackErr::CATEGORY,
             Self::NodeNoExportsAssign(_) => NodeNoExportsAssign::CATEGORY,
+            Self::NodeNoGlobalDirnameFilename(_) => NodeNoGlobalDirnameFilename::CATEGORY,
             Self::NodeNoNewRequire(_) => NodeNoNewRequire::CATEGORY,
             Self::NodeNoPathConcat(_) => NodeNoPathConcat::CATEGORY,
             Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::CATEGORY,
@@ -4750,6 +5045,9 @@ impl RuleEnum {
             Self::ImportNoCycle(_) => ImportNoCycle::FIX,
             Self::ImportNoDefaultExport(_) => ImportNoDefaultExport::FIX,
             Self::ImportNoDuplicates(_) => ImportNoDuplicates::FIX,
+            Self::ImportNoDynamicNamespaceImportAccess(_) => {
+                ImportNoDynamicNamespaceImportAccess::FIX
+            }
             Self::ImportNoDynamicRequire(_) => ImportNoDynamicRequire::FIX,
             Self::ImportNoEmptyNamedBlocks(_) => ImportNoEmptyNamedBlocks::FIX,
             Self::ImportNoMutableExports(_) => ImportNoMutableExports::FIX,
@@ -4759,9 +5057,12 @@ impl RuleEnum {
             Self::ImportNoNamedExport(_) => ImportNoNamedExport::FIX,
             Self::ImportNoNamespace(_) => ImportNoNamespace::FIX,
             Self::ImportNoNodejsModules(_) => ImportNoNodejsModules::FIX,
+            Self::ImportNoPrivateImports(_) => ImportNoPrivateImports::FIX,
             Self::ImportNoRelativeParentImports(_) => ImportNoRelativeParentImports::FIX,
             Self::ImportNoSelfImport(_) => ImportNoSelfImport::FIX,
             Self::ImportNoUnassignedImport(_) => ImportNoUnassignedImport::FIX,
+            Self::ImportNoUndeclaredDependencies(_) => ImportNoUndeclaredDependencies::FIX,
+            Self::ImportNoUnresolvedImports(_) => ImportNoUnresolvedImports::FIX,
             Self::ImportNoWebpackLoaderSyntax(_) => ImportNoWebpackLoaderSyntax::FIX,
             Self::ImportPreferDefaultExport(_) => ImportPreferDefaultExport::FIX,
             Self::ImportUnambiguous(_) => ImportUnambiguous::FIX,
@@ -4804,6 +5105,7 @@ impl RuleEnum {
             Self::EslintNoClassAssign(_) => EslintNoClassAssign::FIX,
             Self::EslintNoCompareNegZero(_) => EslintNoCompareNegZero::FIX,
             Self::EslintNoCondAssign(_) => EslintNoCondAssign::FIX,
+            Self::EslintNoConfusingLabels(_) => EslintNoConfusingLabels::FIX,
             Self::EslintNoConsole(_) => EslintNoConsole::FIX,
             Self::EslintNoConstAssign(_) => EslintNoConstAssign::FIX,
             Self::EslintNoConstantBinaryExpression(_) => EslintNoConstantBinaryExpression::FIX,
@@ -4861,12 +5163,14 @@ impl RuleEnum {
             Self::EslintNoNonoctalDecimalEscape(_) => EslintNoNonoctalDecimalEscape::FIX,
             Self::EslintNoObjCalls(_) => EslintNoObjCalls::FIX,
             Self::EslintNoObjectConstructor(_) => EslintNoObjectConstructor::FIX,
+            Self::EslintNoOctalEscape(_) => EslintNoOctalEscape::FIX,
             Self::EslintNoParamReassign(_) => EslintNoParamReassign::FIX,
             Self::EslintNoPlusplus(_) => EslintNoPlusplus::FIX,
             Self::EslintNoPromiseExecutorReturn(_) => EslintNoPromiseExecutorReturn::FIX,
             Self::EslintNoProto(_) => EslintNoProto::FIX,
             Self::EslintNoPrototypeBuiltins(_) => EslintNoPrototypeBuiltins::FIX,
             Self::EslintNoRedeclare(_) => EslintNoRedeclare::FIX,
+            Self::EslintNoRedundantUseStrict(_) => EslintNoRedundantUseStrict::FIX,
             Self::EslintNoRegexSpaces(_) => EslintNoRegexSpaces::FIX,
             Self::EslintNoRestrictedGlobals(_) => EslintNoRestrictedGlobals::FIX,
             Self::EslintNoRestrictedImports(_) => EslintNoRestrictedImports::FIX,
@@ -4878,7 +5182,9 @@ impl RuleEnum {
             Self::EslintNoSetterReturn(_) => EslintNoSetterReturn::FIX,
             Self::EslintNoShadow(_) => EslintNoShadow::FIX,
             Self::EslintNoShadowRestrictedNames(_) => EslintNoShadowRestrictedNames::FIX,
+            Self::EslintNoShoutyConstants(_) => EslintNoShoutyConstants::FIX,
             Self::EslintNoSparseArrays(_) => EslintNoSparseArrays::FIX,
+            Self::EslintNoStringCaseMismatch(_) => EslintNoStringCaseMismatch::FIX,
             Self::EslintNoTemplateCurlyInString(_) => EslintNoTemplateCurlyInString::FIX,
             Self::EslintNoTernary(_) => EslintNoTernary::FIX,
             Self::EslintNoThisBeforeSuper(_) => EslintNoThisBeforeSuper::FIX,
@@ -4905,6 +5211,7 @@ impl RuleEnum {
             Self::EslintNoUselessComputedKey(_) => EslintNoUselessComputedKey::FIX,
             Self::EslintNoUselessConcat(_) => EslintNoUselessConcat::FIX,
             Self::EslintNoUselessConstructor(_) => EslintNoUselessConstructor::FIX,
+            Self::EslintNoUselessContinue(_) => EslintNoUselessContinue::FIX,
             Self::EslintNoUselessEscape(_) => EslintNoUselessEscape::FIX,
             Self::EslintNoUselessRename(_) => EslintNoUselessRename::FIX,
             Self::EslintNoUselessReturn(_) => EslintNoUselessReturn::FIX,
@@ -4914,6 +5221,7 @@ impl RuleEnum {
             Self::EslintNoWith(_) => EslintNoWith::FIX,
             Self::EslintObjectShorthand(_) => EslintObjectShorthand::FIX,
             Self::EslintOperatorAssignment(_) => EslintOperatorAssignment::FIX,
+            Self::EslintPreferArrowCallback(_) => EslintPreferArrowCallback::FIX,
             Self::EslintPreferConst(_) => EslintPreferConst::FIX,
             Self::EslintPreferDestructuring(_) => EslintPreferDestructuring::FIX,
             Self::EslintPreferExponentiationOperator(_) => EslintPreferExponentiationOperator::FIX,
@@ -4934,6 +5242,9 @@ impl RuleEnum {
             Self::EslintSymbolDescription(_) => EslintSymbolDescription::FIX,
             Self::EslintUnicodeBom(_) => EslintUnicodeBom::FIX,
             Self::EslintUseIsnan(_) => EslintUseIsnan::FIX,
+            Self::EslintUseRegexLiterals(_) => EslintUseRegexLiterals::FIX,
+            Self::EslintUseSingleVarDeclarator(_) => EslintUseSingleVarDeclarator::FIX,
+            Self::EslintUseWhile(_) => EslintUseWhile::FIX,
             Self::EslintValidTypeof(_) => EslintValidTypeof::FIX,
             Self::EslintVarsOnTop(_) => EslintVarsOnTop::FIX,
             Self::EslintYoda(_) => EslintYoda::FIX,
@@ -4965,9 +5276,13 @@ impl RuleEnum {
             Self::TypescriptExplicitFunctionReturnType(_) => {
                 TypescriptExplicitFunctionReturnType::FIX
             }
+            Self::TypescriptExplicitMemberAccessibility(_) => {
+                TypescriptExplicitMemberAccessibility::FIX
+            }
             Self::TypescriptExplicitModuleBoundaryTypes(_) => {
                 TypescriptExplicitModuleBoundaryTypes::FIX
             }
+            Self::TypescriptNamingConvention(_) => TypescriptNamingConvention::FIX,
             Self::TypescriptNoArrayDelete(_) => TypescriptNoArrayDelete::FIX,
             Self::TypescriptNoBaseToString(_) => TypescriptNoBaseToString::FIX,
             Self::TypescriptNoConfusingNonNullAssertion(_) => {
@@ -4984,11 +5299,15 @@ impl RuleEnum {
             Self::TypescriptNoDynamicDelete(_) => TypescriptNoDynamicDelete::FIX,
             Self::TypescriptNoEmptyInterface(_) => TypescriptNoEmptyInterface::FIX,
             Self::TypescriptNoEmptyObjectType(_) => TypescriptNoEmptyObjectType::FIX,
+            Self::TypescriptNoEmptyTypeParameters(_) => TypescriptNoEmptyTypeParameters::FIX,
+            Self::TypescriptNoEnum(_) => TypescriptNoEnum::FIX,
+            Self::TypescriptNoEvolvingTypes(_) => TypescriptNoEvolvingTypes::FIX,
             Self::TypescriptNoExplicitAny(_) => TypescriptNoExplicitAny::FIX,
             Self::TypescriptNoExtraNonNullAssertion(_) => TypescriptNoExtraNonNullAssertion::FIX,
             Self::TypescriptNoExtraneousClass(_) => TypescriptNoExtraneousClass::FIX,
             Self::TypescriptNoFloatingPromises(_) => TypescriptNoFloatingPromises::FIX,
             Self::TypescriptNoForInArray(_) => TypescriptNoForInArray::FIX,
+            Self::TypescriptNoImplicitAnyLet(_) => TypescriptNoImplicitAnyLet::FIX,
             Self::TypescriptNoImpliedEval(_) => TypescriptNoImpliedEval::FIX,
             Self::TypescriptNoImportTypeSideEffects(_) => TypescriptNoImportTypeSideEffects::FIX,
             Self::TypescriptNoInferrableTypes(_) => TypescriptNoInferrableTypes::FIX,
@@ -5014,6 +5333,7 @@ impl RuleEnum {
             Self::TypescriptNoRequireImports(_) => TypescriptNoRequireImports::FIX,
             Self::TypescriptNoRestrictedTypes(_) => TypescriptNoRestrictedTypes::FIX,
             Self::TypescriptNoThisAlias(_) => TypescriptNoThisAlias::FIX,
+            Self::TypescriptNoThisInStatic(_) => TypescriptNoThisInStatic::FIX,
             Self::TypescriptNoUnnecessaryBooleanLiteralCompare(_) => {
                 TypescriptNoUnnecessaryBooleanLiteralCompare::FIX
             }
@@ -5199,16 +5519,20 @@ impl RuleEnum {
             Self::ReactNoDidMountSetState(_) => ReactNoDidMountSetState::FIX,
             Self::ReactNoDirectMutationState(_) => ReactNoDirectMutationState::FIX,
             Self::ReactNoFindDomNode(_) => ReactNoFindDomNode::FIX,
+            Self::ReactNoForwardRef(_) => ReactNoForwardRef::FIX,
             Self::ReactNoIsMounted(_) => ReactNoIsMounted::FIX,
+            Self::ReactNoJsxLiterals(_) => ReactNoJsxLiterals::FIX,
             Self::ReactNoMultiComp(_) => ReactNoMultiComp::FIX,
             Self::ReactNoNamespace(_) => ReactNoNamespace::FIX,
             Self::ReactNoReactChildren(_) => ReactNoReactChildren::FIX,
+            Self::ReactNoReactSpecificProps(_) => ReactNoReactSpecificProps::FIX,
             Self::ReactNoRedundantShouldComponentUpdate(_) => {
                 ReactNoRedundantShouldComponentUpdate::FIX
             }
             Self::ReactNoRenderReturnValue(_) => ReactNoRenderReturnValue::FIX,
             Self::ReactNoSetState(_) => ReactNoSetState::FIX,
             Self::ReactNoStringRefs(_) => ReactNoStringRefs::FIX,
+            Self::ReactNoSuspiciousSemicolonInJsx(_) => ReactNoSuspiciousSemicolonInJsx::FIX,
             Self::ReactNoThisInSfc(_) => ReactNoThisInSfc::FIX,
             Self::ReactNoUnescapedEntities(_) => ReactNoUnescapedEntities::FIX,
             Self::ReactNoUnknownProperty(_) => ReactNoUnknownProperty::FIX,
@@ -5223,6 +5547,7 @@ impl RuleEnum {
             Self::ReactSelfClosingComp(_) => ReactSelfClosingComp::FIX,
             Self::ReactStateInConstructor(_) => ReactStateInConstructor::FIX,
             Self::ReactStylePropObject(_) => ReactStylePropObject::FIX,
+            Self::ReactUseImageSize(_) => ReactUseImageSize::FIX,
             Self::ReactVoidDomElementsNoChildren(_) => ReactVoidDomElementsNoChildren::FIX,
             Self::ReactPerfJsxNoJsxAsProp(_) => ReactPerfJsxNoJsxAsProp::FIX,
             Self::ReactPerfJsxNoNewArrayAsProp(_) => ReactPerfJsxNoNewArrayAsProp::FIX,
@@ -5257,6 +5582,7 @@ impl RuleEnum {
             Self::UnicornNoConsoleSpaces(_) => UnicornNoConsoleSpaces::FIX,
             Self::UnicornNoDocumentCookie(_) => UnicornNoDocumentCookie::FIX,
             Self::UnicornNoEmptyFile(_) => UnicornNoEmptyFile::FIX,
+            Self::UnicornNoFlatMapIdentity(_) => UnicornNoFlatMapIdentity::FIX,
             Self::UnicornNoHexEscape(_) => UnicornNoHexEscape::FIX,
             Self::UnicornNoImmediateMutation(_) => UnicornNoImmediateMutation::FIX,
             Self::UnicornNoInstanceofArray(_) => UnicornNoInstanceofArray::FIX,
@@ -5302,8 +5628,12 @@ impl RuleEnum {
                 UnicornNoUselessPromiseResolveReject::FIX
             }
             Self::UnicornNoUselessSpread(_) => UnicornNoUselessSpread::FIX,
+            Self::UnicornNoUselessStringRaw(_) => UnicornNoUselessStringRaw::FIX,
             Self::UnicornNoUselessSwitchCase(_) => UnicornNoUselessSwitchCase::FIX,
             Self::UnicornNoUselessUndefined(_) => UnicornNoUselessUndefined::FIX,
+            Self::UnicornNoUselessUndefinedInitialization(_) => {
+                UnicornNoUselessUndefinedInitialization::FIX
+            }
             Self::UnicornNoZeroFractions(_) => UnicornNoZeroFractions::FIX,
             Self::UnicornNumberLiteralCase(_) => UnicornNumberLiteralCase::FIX,
             Self::UnicornNumericSeparatorsStyle(_) => UnicornNumericSeparatorsStyle::FIX,
@@ -5376,6 +5706,12 @@ impl RuleEnum {
             Self::UnicornSwitchCaseBreakPosition(_) => UnicornSwitchCaseBreakPosition::FIX,
             Self::UnicornTextEncodingIdentifierCase(_) => UnicornTextEncodingIdentifierCase::FIX,
             Self::UnicornThrowNewError(_) => UnicornThrowNewError::FIX,
+            Self::UnicornUseCollapsedIf(_) => UnicornUseCollapsedIf::FIX,
+            Self::UnicornUseConsistentCurlyBraces(_) => UnicornUseConsistentCurlyBraces::FIX,
+            Self::UnicornUseSimpleNumberKeys(_) => UnicornUseSimpleNumberKeys::FIX,
+            Self::UnicornUseSimplifiedLogicExpression(_) => {
+                UnicornUseSimplifiedLogicExpression::FIX
+            }
             Self::JsxA11YAltText(_) => JsxA11YAltText::FIX,
             Self::JsxA11YAnchorAmbiguousText(_) => JsxA11YAnchorAmbiguousText::FIX,
             Self::JsxA11YAnchorHasContent(_) => JsxA11YAnchorHasContent::FIX,
@@ -5401,14 +5737,26 @@ impl RuleEnum {
             Self::JsxA11YNoAriaHiddenOnFocusable(_) => JsxA11YNoAriaHiddenOnFocusable::FIX,
             Self::JsxA11YNoAutofocus(_) => JsxA11YNoAutofocus::FIX,
             Self::JsxA11YNoDistractingElements(_) => JsxA11YNoDistractingElements::FIX,
+            Self::JsxA11YNoInteractiveElementToNoninteractiveRole(_) => {
+                JsxA11YNoInteractiveElementToNoninteractiveRole::FIX
+            }
+            Self::JsxA11YNoNoninteractiveElementInteractions(_) => {
+                JsxA11YNoNoninteractiveElementInteractions::FIX
+            }
+            Self::JsxA11YNoNoninteractiveElementToInteractiveRole(_) => {
+                JsxA11YNoNoninteractiveElementToInteractiveRole::FIX
+            }
             Self::JsxA11YNoNoninteractiveTabindex(_) => JsxA11YNoNoninteractiveTabindex::FIX,
             Self::JsxA11YNoRedundantRoles(_) => JsxA11YNoRedundantRoles::FIX,
             Self::JsxA11YNoStaticElementInteractions(_) => JsxA11YNoStaticElementInteractions::FIX,
+            Self::JsxA11YNoSvgWithoutTitle(_) => JsxA11YNoSvgWithoutTitle::FIX,
             Self::JsxA11YPreferTagOverRole(_) => JsxA11YPreferTagOverRole::FIX,
             Self::JsxA11YRoleHasRequiredAriaProps(_) => JsxA11YRoleHasRequiredAriaProps::FIX,
             Self::JsxA11YRoleSupportsAriaProps(_) => JsxA11YRoleSupportsAriaProps::FIX,
             Self::JsxA11YScope(_) => JsxA11YScope::FIX,
             Self::JsxA11YTabindexNoPositive(_) => JsxA11YTabindexNoPositive::FIX,
+            Self::JsxA11YUseFocusableInteractive(_) => JsxA11YUseFocusableInteractive::FIX,
+            Self::JsxA11YUseUniqueElementIds(_) => JsxA11YUseUniqueElementIds::FIX,
             Self::OxcApproxConstant(_) => OxcApproxConstant::FIX,
             Self::OxcBadArrayMethodOnArguments(_) => OxcBadArrayMethodOnArguments::FIX,
             Self::OxcBadBitwiseOperator(_) => OxcBadBitwiseOperator::FIX,
@@ -5519,6 +5867,7 @@ impl RuleEnum {
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::FIX,
             Self::NodeHandleCallbackErr(_) => NodeHandleCallbackErr::FIX,
             Self::NodeNoExportsAssign(_) => NodeNoExportsAssign::FIX,
+            Self::NodeNoGlobalDirnameFilename(_) => NodeNoGlobalDirnameFilename::FIX,
             Self::NodeNoNewRequire(_) => NodeNoNewRequire::FIX,
             Self::NodeNoPathConcat(_) => NodeNoPathConcat::FIX,
             Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::FIX,
@@ -5565,6 +5914,9 @@ impl RuleEnum {
             Self::ImportNoCycle(_) => ImportNoCycle::documentation(),
             Self::ImportNoDefaultExport(_) => ImportNoDefaultExport::documentation(),
             Self::ImportNoDuplicates(_) => ImportNoDuplicates::documentation(),
+            Self::ImportNoDynamicNamespaceImportAccess(_) => {
+                ImportNoDynamicNamespaceImportAccess::documentation()
+            }
             Self::ImportNoDynamicRequire(_) => ImportNoDynamicRequire::documentation(),
             Self::ImportNoEmptyNamedBlocks(_) => ImportNoEmptyNamedBlocks::documentation(),
             Self::ImportNoMutableExports(_) => ImportNoMutableExports::documentation(),
@@ -5574,11 +5926,16 @@ impl RuleEnum {
             Self::ImportNoNamedExport(_) => ImportNoNamedExport::documentation(),
             Self::ImportNoNamespace(_) => ImportNoNamespace::documentation(),
             Self::ImportNoNodejsModules(_) => ImportNoNodejsModules::documentation(),
+            Self::ImportNoPrivateImports(_) => ImportNoPrivateImports::documentation(),
             Self::ImportNoRelativeParentImports(_) => {
                 ImportNoRelativeParentImports::documentation()
             }
             Self::ImportNoSelfImport(_) => ImportNoSelfImport::documentation(),
             Self::ImportNoUnassignedImport(_) => ImportNoUnassignedImport::documentation(),
+            Self::ImportNoUndeclaredDependencies(_) => {
+                ImportNoUndeclaredDependencies::documentation()
+            }
+            Self::ImportNoUnresolvedImports(_) => ImportNoUnresolvedImports::documentation(),
             Self::ImportNoWebpackLoaderSyntax(_) => ImportNoWebpackLoaderSyntax::documentation(),
             Self::ImportPreferDefaultExport(_) => ImportPreferDefaultExport::documentation(),
             Self::ImportUnambiguous(_) => ImportUnambiguous::documentation(),
@@ -5621,6 +5978,7 @@ impl RuleEnum {
             Self::EslintNoClassAssign(_) => EslintNoClassAssign::documentation(),
             Self::EslintNoCompareNegZero(_) => EslintNoCompareNegZero::documentation(),
             Self::EslintNoCondAssign(_) => EslintNoCondAssign::documentation(),
+            Self::EslintNoConfusingLabels(_) => EslintNoConfusingLabels::documentation(),
             Self::EslintNoConsole(_) => EslintNoConsole::documentation(),
             Self::EslintNoConstAssign(_) => EslintNoConstAssign::documentation(),
             Self::EslintNoConstantBinaryExpression(_) => {
@@ -5686,6 +6044,7 @@ impl RuleEnum {
             }
             Self::EslintNoObjCalls(_) => EslintNoObjCalls::documentation(),
             Self::EslintNoObjectConstructor(_) => EslintNoObjectConstructor::documentation(),
+            Self::EslintNoOctalEscape(_) => EslintNoOctalEscape::documentation(),
             Self::EslintNoParamReassign(_) => EslintNoParamReassign::documentation(),
             Self::EslintNoPlusplus(_) => EslintNoPlusplus::documentation(),
             Self::EslintNoPromiseExecutorReturn(_) => {
@@ -5694,6 +6053,7 @@ impl RuleEnum {
             Self::EslintNoProto(_) => EslintNoProto::documentation(),
             Self::EslintNoPrototypeBuiltins(_) => EslintNoPrototypeBuiltins::documentation(),
             Self::EslintNoRedeclare(_) => EslintNoRedeclare::documentation(),
+            Self::EslintNoRedundantUseStrict(_) => EslintNoRedundantUseStrict::documentation(),
             Self::EslintNoRegexSpaces(_) => EslintNoRegexSpaces::documentation(),
             Self::EslintNoRestrictedGlobals(_) => EslintNoRestrictedGlobals::documentation(),
             Self::EslintNoRestrictedImports(_) => EslintNoRestrictedImports::documentation(),
@@ -5707,7 +6067,9 @@ impl RuleEnum {
             Self::EslintNoShadowRestrictedNames(_) => {
                 EslintNoShadowRestrictedNames::documentation()
             }
+            Self::EslintNoShoutyConstants(_) => EslintNoShoutyConstants::documentation(),
             Self::EslintNoSparseArrays(_) => EslintNoSparseArrays::documentation(),
+            Self::EslintNoStringCaseMismatch(_) => EslintNoStringCaseMismatch::documentation(),
             Self::EslintNoTemplateCurlyInString(_) => {
                 EslintNoTemplateCurlyInString::documentation()
             }
@@ -5742,6 +6104,7 @@ impl RuleEnum {
             Self::EslintNoUselessComputedKey(_) => EslintNoUselessComputedKey::documentation(),
             Self::EslintNoUselessConcat(_) => EslintNoUselessConcat::documentation(),
             Self::EslintNoUselessConstructor(_) => EslintNoUselessConstructor::documentation(),
+            Self::EslintNoUselessContinue(_) => EslintNoUselessContinue::documentation(),
             Self::EslintNoUselessEscape(_) => EslintNoUselessEscape::documentation(),
             Self::EslintNoUselessRename(_) => EslintNoUselessRename::documentation(),
             Self::EslintNoUselessReturn(_) => EslintNoUselessReturn::documentation(),
@@ -5751,6 +6114,7 @@ impl RuleEnum {
             Self::EslintNoWith(_) => EslintNoWith::documentation(),
             Self::EslintObjectShorthand(_) => EslintObjectShorthand::documentation(),
             Self::EslintOperatorAssignment(_) => EslintOperatorAssignment::documentation(),
+            Self::EslintPreferArrowCallback(_) => EslintPreferArrowCallback::documentation(),
             Self::EslintPreferConst(_) => EslintPreferConst::documentation(),
             Self::EslintPreferDestructuring(_) => EslintPreferDestructuring::documentation(),
             Self::EslintPreferExponentiationOperator(_) => {
@@ -5775,6 +6139,9 @@ impl RuleEnum {
             Self::EslintSymbolDescription(_) => EslintSymbolDescription::documentation(),
             Self::EslintUnicodeBom(_) => EslintUnicodeBom::documentation(),
             Self::EslintUseIsnan(_) => EslintUseIsnan::documentation(),
+            Self::EslintUseRegexLiterals(_) => EslintUseRegexLiterals::documentation(),
+            Self::EslintUseSingleVarDeclarator(_) => EslintUseSingleVarDeclarator::documentation(),
+            Self::EslintUseWhile(_) => EslintUseWhile::documentation(),
             Self::EslintValidTypeof(_) => EslintValidTypeof::documentation(),
             Self::EslintVarsOnTop(_) => EslintVarsOnTop::documentation(),
             Self::EslintYoda(_) => EslintYoda::documentation(),
@@ -5812,9 +6179,13 @@ impl RuleEnum {
             Self::TypescriptExplicitFunctionReturnType(_) => {
                 TypescriptExplicitFunctionReturnType::documentation()
             }
+            Self::TypescriptExplicitMemberAccessibility(_) => {
+                TypescriptExplicitMemberAccessibility::documentation()
+            }
             Self::TypescriptExplicitModuleBoundaryTypes(_) => {
                 TypescriptExplicitModuleBoundaryTypes::documentation()
             }
+            Self::TypescriptNamingConvention(_) => TypescriptNamingConvention::documentation(),
             Self::TypescriptNoArrayDelete(_) => TypescriptNoArrayDelete::documentation(),
             Self::TypescriptNoBaseToString(_) => TypescriptNoBaseToString::documentation(),
             Self::TypescriptNoConfusingNonNullAssertion(_) => {
@@ -5833,6 +6204,11 @@ impl RuleEnum {
             Self::TypescriptNoDynamicDelete(_) => TypescriptNoDynamicDelete::documentation(),
             Self::TypescriptNoEmptyInterface(_) => TypescriptNoEmptyInterface::documentation(),
             Self::TypescriptNoEmptyObjectType(_) => TypescriptNoEmptyObjectType::documentation(),
+            Self::TypescriptNoEmptyTypeParameters(_) => {
+                TypescriptNoEmptyTypeParameters::documentation()
+            }
+            Self::TypescriptNoEnum(_) => TypescriptNoEnum::documentation(),
+            Self::TypescriptNoEvolvingTypes(_) => TypescriptNoEvolvingTypes::documentation(),
             Self::TypescriptNoExplicitAny(_) => TypescriptNoExplicitAny::documentation(),
             Self::TypescriptNoExtraNonNullAssertion(_) => {
                 TypescriptNoExtraNonNullAssertion::documentation()
@@ -5840,6 +6216,7 @@ impl RuleEnum {
             Self::TypescriptNoExtraneousClass(_) => TypescriptNoExtraneousClass::documentation(),
             Self::TypescriptNoFloatingPromises(_) => TypescriptNoFloatingPromises::documentation(),
             Self::TypescriptNoForInArray(_) => TypescriptNoForInArray::documentation(),
+            Self::TypescriptNoImplicitAnyLet(_) => TypescriptNoImplicitAnyLet::documentation(),
             Self::TypescriptNoImpliedEval(_) => TypescriptNoImpliedEval::documentation(),
             Self::TypescriptNoImportTypeSideEffects(_) => {
                 TypescriptNoImportTypeSideEffects::documentation()
@@ -5867,6 +6244,7 @@ impl RuleEnum {
             Self::TypescriptNoRequireImports(_) => TypescriptNoRequireImports::documentation(),
             Self::TypescriptNoRestrictedTypes(_) => TypescriptNoRestrictedTypes::documentation(),
             Self::TypescriptNoThisAlias(_) => TypescriptNoThisAlias::documentation(),
+            Self::TypescriptNoThisInStatic(_) => TypescriptNoThisInStatic::documentation(),
             Self::TypescriptNoUnnecessaryBooleanLiteralCompare(_) => {
                 TypescriptNoUnnecessaryBooleanLiteralCompare::documentation()
             }
@@ -6108,16 +6486,22 @@ impl RuleEnum {
             Self::ReactNoDidMountSetState(_) => ReactNoDidMountSetState::documentation(),
             Self::ReactNoDirectMutationState(_) => ReactNoDirectMutationState::documentation(),
             Self::ReactNoFindDomNode(_) => ReactNoFindDomNode::documentation(),
+            Self::ReactNoForwardRef(_) => ReactNoForwardRef::documentation(),
             Self::ReactNoIsMounted(_) => ReactNoIsMounted::documentation(),
+            Self::ReactNoJsxLiterals(_) => ReactNoJsxLiterals::documentation(),
             Self::ReactNoMultiComp(_) => ReactNoMultiComp::documentation(),
             Self::ReactNoNamespace(_) => ReactNoNamespace::documentation(),
             Self::ReactNoReactChildren(_) => ReactNoReactChildren::documentation(),
+            Self::ReactNoReactSpecificProps(_) => ReactNoReactSpecificProps::documentation(),
             Self::ReactNoRedundantShouldComponentUpdate(_) => {
                 ReactNoRedundantShouldComponentUpdate::documentation()
             }
             Self::ReactNoRenderReturnValue(_) => ReactNoRenderReturnValue::documentation(),
             Self::ReactNoSetState(_) => ReactNoSetState::documentation(),
             Self::ReactNoStringRefs(_) => ReactNoStringRefs::documentation(),
+            Self::ReactNoSuspiciousSemicolonInJsx(_) => {
+                ReactNoSuspiciousSemicolonInJsx::documentation()
+            }
             Self::ReactNoThisInSfc(_) => ReactNoThisInSfc::documentation(),
             Self::ReactNoUnescapedEntities(_) => ReactNoUnescapedEntities::documentation(),
             Self::ReactNoUnknownProperty(_) => ReactNoUnknownProperty::documentation(),
@@ -6132,6 +6516,7 @@ impl RuleEnum {
             Self::ReactSelfClosingComp(_) => ReactSelfClosingComp::documentation(),
             Self::ReactStateInConstructor(_) => ReactStateInConstructor::documentation(),
             Self::ReactStylePropObject(_) => ReactStylePropObject::documentation(),
+            Self::ReactUseImageSize(_) => ReactUseImageSize::documentation(),
             Self::ReactVoidDomElementsNoChildren(_) => {
                 ReactVoidDomElementsNoChildren::documentation()
             }
@@ -6188,6 +6573,7 @@ impl RuleEnum {
             Self::UnicornNoConsoleSpaces(_) => UnicornNoConsoleSpaces::documentation(),
             Self::UnicornNoDocumentCookie(_) => UnicornNoDocumentCookie::documentation(),
             Self::UnicornNoEmptyFile(_) => UnicornNoEmptyFile::documentation(),
+            Self::UnicornNoFlatMapIdentity(_) => UnicornNoFlatMapIdentity::documentation(),
             Self::UnicornNoHexEscape(_) => UnicornNoHexEscape::documentation(),
             Self::UnicornNoImmediateMutation(_) => UnicornNoImmediateMutation::documentation(),
             Self::UnicornNoInstanceofArray(_) => UnicornNoInstanceofArray::documentation(),
@@ -6243,8 +6629,12 @@ impl RuleEnum {
                 UnicornNoUselessPromiseResolveReject::documentation()
             }
             Self::UnicornNoUselessSpread(_) => UnicornNoUselessSpread::documentation(),
+            Self::UnicornNoUselessStringRaw(_) => UnicornNoUselessStringRaw::documentation(),
             Self::UnicornNoUselessSwitchCase(_) => UnicornNoUselessSwitchCase::documentation(),
             Self::UnicornNoUselessUndefined(_) => UnicornNoUselessUndefined::documentation(),
+            Self::UnicornNoUselessUndefinedInitialization(_) => {
+                UnicornNoUselessUndefinedInitialization::documentation()
+            }
             Self::UnicornNoZeroFractions(_) => UnicornNoZeroFractions::documentation(),
             Self::UnicornNumberLiteralCase(_) => UnicornNumberLiteralCase::documentation(),
             Self::UnicornNumericSeparatorsStyle(_) => {
@@ -6355,6 +6745,14 @@ impl RuleEnum {
                 UnicornTextEncodingIdentifierCase::documentation()
             }
             Self::UnicornThrowNewError(_) => UnicornThrowNewError::documentation(),
+            Self::UnicornUseCollapsedIf(_) => UnicornUseCollapsedIf::documentation(),
+            Self::UnicornUseConsistentCurlyBraces(_) => {
+                UnicornUseConsistentCurlyBraces::documentation()
+            }
+            Self::UnicornUseSimpleNumberKeys(_) => UnicornUseSimpleNumberKeys::documentation(),
+            Self::UnicornUseSimplifiedLogicExpression(_) => {
+                UnicornUseSimplifiedLogicExpression::documentation()
+            }
             Self::JsxA11YAltText(_) => JsxA11YAltText::documentation(),
             Self::JsxA11YAnchorAmbiguousText(_) => JsxA11YAnchorAmbiguousText::documentation(),
             Self::JsxA11YAnchorHasContent(_) => JsxA11YAnchorHasContent::documentation(),
@@ -6390,6 +6788,15 @@ impl RuleEnum {
             }
             Self::JsxA11YNoAutofocus(_) => JsxA11YNoAutofocus::documentation(),
             Self::JsxA11YNoDistractingElements(_) => JsxA11YNoDistractingElements::documentation(),
+            Self::JsxA11YNoInteractiveElementToNoninteractiveRole(_) => {
+                JsxA11YNoInteractiveElementToNoninteractiveRole::documentation()
+            }
+            Self::JsxA11YNoNoninteractiveElementInteractions(_) => {
+                JsxA11YNoNoninteractiveElementInteractions::documentation()
+            }
+            Self::JsxA11YNoNoninteractiveElementToInteractiveRole(_) => {
+                JsxA11YNoNoninteractiveElementToInteractiveRole::documentation()
+            }
             Self::JsxA11YNoNoninteractiveTabindex(_) => {
                 JsxA11YNoNoninteractiveTabindex::documentation()
             }
@@ -6397,6 +6804,7 @@ impl RuleEnum {
             Self::JsxA11YNoStaticElementInteractions(_) => {
                 JsxA11YNoStaticElementInteractions::documentation()
             }
+            Self::JsxA11YNoSvgWithoutTitle(_) => JsxA11YNoSvgWithoutTitle::documentation(),
             Self::JsxA11YPreferTagOverRole(_) => JsxA11YPreferTagOverRole::documentation(),
             Self::JsxA11YRoleHasRequiredAriaProps(_) => {
                 JsxA11YRoleHasRequiredAriaProps::documentation()
@@ -6404,6 +6812,10 @@ impl RuleEnum {
             Self::JsxA11YRoleSupportsAriaProps(_) => JsxA11YRoleSupportsAriaProps::documentation(),
             Self::JsxA11YScope(_) => JsxA11YScope::documentation(),
             Self::JsxA11YTabindexNoPositive(_) => JsxA11YTabindexNoPositive::documentation(),
+            Self::JsxA11YUseFocusableInteractive(_) => {
+                JsxA11YUseFocusableInteractive::documentation()
+            }
+            Self::JsxA11YUseUniqueElementIds(_) => JsxA11YUseUniqueElementIds::documentation(),
             Self::OxcApproxConstant(_) => OxcApproxConstant::documentation(),
             Self::OxcBadArrayMethodOnArguments(_) => OxcBadArrayMethodOnArguments::documentation(),
             Self::OxcBadBitwiseOperator(_) => OxcBadBitwiseOperator::documentation(),
@@ -6536,6 +6948,7 @@ impl RuleEnum {
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::documentation(),
             Self::NodeHandleCallbackErr(_) => NodeHandleCallbackErr::documentation(),
             Self::NodeNoExportsAssign(_) => NodeNoExportsAssign::documentation(),
+            Self::NodeNoGlobalDirnameFilename(_) => NodeNoGlobalDirnameFilename::documentation(),
             Self::NodeNoNewRequire(_) => NodeNoNewRequire::documentation(),
             Self::NodeNoPathConcat(_) => NodeNoPathConcat::documentation(),
             Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::documentation(),
@@ -6610,6 +7023,10 @@ impl RuleEnum {
                 .or_else(|| ImportNoDefaultExport::schema(generator)),
             Self::ImportNoDuplicates(_) => ImportNoDuplicates::config_schema(generator)
                 .or_else(|| ImportNoDuplicates::schema(generator)),
+            Self::ImportNoDynamicNamespaceImportAccess(_) => {
+                ImportNoDynamicNamespaceImportAccess::config_schema(generator)
+                    .or_else(|| ImportNoDynamicNamespaceImportAccess::schema(generator))
+            }
             Self::ImportNoDynamicRequire(_) => ImportNoDynamicRequire::config_schema(generator)
                 .or_else(|| ImportNoDynamicRequire::schema(generator)),
             Self::ImportNoEmptyNamedBlocks(_) => ImportNoEmptyNamedBlocks::config_schema(generator)
@@ -6630,6 +7047,8 @@ impl RuleEnum {
                 .or_else(|| ImportNoNamespace::schema(generator)),
             Self::ImportNoNodejsModules(_) => ImportNoNodejsModules::config_schema(generator)
                 .or_else(|| ImportNoNodejsModules::schema(generator)),
+            Self::ImportNoPrivateImports(_) => ImportNoPrivateImports::config_schema(generator)
+                .or_else(|| ImportNoPrivateImports::schema(generator)),
             Self::ImportNoRelativeParentImports(_) => {
                 ImportNoRelativeParentImports::config_schema(generator)
                     .or_else(|| ImportNoRelativeParentImports::schema(generator))
@@ -6638,6 +7057,14 @@ impl RuleEnum {
                 .or_else(|| ImportNoSelfImport::schema(generator)),
             Self::ImportNoUnassignedImport(_) => ImportNoUnassignedImport::config_schema(generator)
                 .or_else(|| ImportNoUnassignedImport::schema(generator)),
+            Self::ImportNoUndeclaredDependencies(_) => {
+                ImportNoUndeclaredDependencies::config_schema(generator)
+                    .or_else(|| ImportNoUndeclaredDependencies::schema(generator))
+            }
+            Self::ImportNoUnresolvedImports(_) => {
+                ImportNoUnresolvedImports::config_schema(generator)
+                    .or_else(|| ImportNoUnresolvedImports::schema(generator))
+            }
             Self::ImportNoWebpackLoaderSyntax(_) => {
                 ImportNoWebpackLoaderSyntax::config_schema(generator)
                     .or_else(|| ImportNoWebpackLoaderSyntax::schema(generator))
@@ -6742,6 +7169,8 @@ impl RuleEnum {
                 .or_else(|| EslintNoCompareNegZero::schema(generator)),
             Self::EslintNoCondAssign(_) => EslintNoCondAssign::config_schema(generator)
                 .or_else(|| EslintNoCondAssign::schema(generator)),
+            Self::EslintNoConfusingLabels(_) => EslintNoConfusingLabels::config_schema(generator)
+                .or_else(|| EslintNoConfusingLabels::schema(generator)),
             Self::EslintNoConsole(_) => EslintNoConsole::config_schema(generator)
                 .or_else(|| EslintNoConsole::schema(generator)),
             Self::EslintNoConstAssign(_) => EslintNoConstAssign::config_schema(generator)
@@ -6879,6 +7308,8 @@ impl RuleEnum {
                 EslintNoObjectConstructor::config_schema(generator)
                     .or_else(|| EslintNoObjectConstructor::schema(generator))
             }
+            Self::EslintNoOctalEscape(_) => EslintNoOctalEscape::config_schema(generator)
+                .or_else(|| EslintNoOctalEscape::schema(generator)),
             Self::EslintNoParamReassign(_) => EslintNoParamReassign::config_schema(generator)
                 .or_else(|| EslintNoParamReassign::schema(generator)),
             Self::EslintNoPlusplus(_) => EslintNoPlusplus::config_schema(generator)
@@ -6896,6 +7327,10 @@ impl RuleEnum {
             }
             Self::EslintNoRedeclare(_) => EslintNoRedeclare::config_schema(generator)
                 .or_else(|| EslintNoRedeclare::schema(generator)),
+            Self::EslintNoRedundantUseStrict(_) => {
+                EslintNoRedundantUseStrict::config_schema(generator)
+                    .or_else(|| EslintNoRedundantUseStrict::schema(generator))
+            }
             Self::EslintNoRegexSpaces(_) => EslintNoRegexSpaces::config_schema(generator)
                 .or_else(|| EslintNoRegexSpaces::schema(generator)),
             Self::EslintNoRestrictedGlobals(_) => {
@@ -6924,8 +7359,14 @@ impl RuleEnum {
                 EslintNoShadowRestrictedNames::config_schema(generator)
                     .or_else(|| EslintNoShadowRestrictedNames::schema(generator))
             }
+            Self::EslintNoShoutyConstants(_) => EslintNoShoutyConstants::config_schema(generator)
+                .or_else(|| EslintNoShoutyConstants::schema(generator)),
             Self::EslintNoSparseArrays(_) => EslintNoSparseArrays::config_schema(generator)
                 .or_else(|| EslintNoSparseArrays::schema(generator)),
+            Self::EslintNoStringCaseMismatch(_) => {
+                EslintNoStringCaseMismatch::config_schema(generator)
+                    .or_else(|| EslintNoStringCaseMismatch::schema(generator))
+            }
             Self::EslintNoTemplateCurlyInString(_) => {
                 EslintNoTemplateCurlyInString::config_schema(generator)
                     .or_else(|| EslintNoTemplateCurlyInString::schema(generator))
@@ -6999,6 +7440,8 @@ impl RuleEnum {
                 EslintNoUselessConstructor::config_schema(generator)
                     .or_else(|| EslintNoUselessConstructor::schema(generator))
             }
+            Self::EslintNoUselessContinue(_) => EslintNoUselessContinue::config_schema(generator)
+                .or_else(|| EslintNoUselessContinue::schema(generator)),
             Self::EslintNoUselessEscape(_) => EslintNoUselessEscape::config_schema(generator)
                 .or_else(|| EslintNoUselessEscape::schema(generator)),
             Self::EslintNoUselessRename(_) => EslintNoUselessRename::config_schema(generator)
@@ -7020,6 +7463,10 @@ impl RuleEnum {
                 .or_else(|| EslintObjectShorthand::schema(generator)),
             Self::EslintOperatorAssignment(_) => EslintOperatorAssignment::config_schema(generator)
                 .or_else(|| EslintOperatorAssignment::schema(generator)),
+            Self::EslintPreferArrowCallback(_) => {
+                EslintPreferArrowCallback::config_schema(generator)
+                    .or_else(|| EslintPreferArrowCallback::schema(generator))
+            }
             Self::EslintPreferConst(_) => EslintPreferConst::config_schema(generator)
                 .or_else(|| EslintPreferConst::schema(generator)),
             Self::EslintPreferDestructuring(_) => {
@@ -7071,6 +7518,14 @@ impl RuleEnum {
                 .or_else(|| EslintUnicodeBom::schema(generator)),
             Self::EslintUseIsnan(_) => EslintUseIsnan::config_schema(generator)
                 .or_else(|| EslintUseIsnan::schema(generator)),
+            Self::EslintUseRegexLiterals(_) => EslintUseRegexLiterals::config_schema(generator)
+                .or_else(|| EslintUseRegexLiterals::schema(generator)),
+            Self::EslintUseSingleVarDeclarator(_) => {
+                EslintUseSingleVarDeclarator::config_schema(generator)
+                    .or_else(|| EslintUseSingleVarDeclarator::schema(generator))
+            }
+            Self::EslintUseWhile(_) => EslintUseWhile::config_schema(generator)
+                .or_else(|| EslintUseWhile::schema(generator)),
             Self::EslintValidTypeof(_) => EslintValidTypeof::config_schema(generator)
                 .or_else(|| EslintValidTypeof::schema(generator)),
             Self::EslintVarsOnTop(_) => EslintVarsOnTop::config_schema(generator)
@@ -7132,9 +7587,17 @@ impl RuleEnum {
                 TypescriptExplicitFunctionReturnType::config_schema(generator)
                     .or_else(|| TypescriptExplicitFunctionReturnType::schema(generator))
             }
+            Self::TypescriptExplicitMemberAccessibility(_) => {
+                TypescriptExplicitMemberAccessibility::config_schema(generator)
+                    .or_else(|| TypescriptExplicitMemberAccessibility::schema(generator))
+            }
             Self::TypescriptExplicitModuleBoundaryTypes(_) => {
                 TypescriptExplicitModuleBoundaryTypes::config_schema(generator)
                     .or_else(|| TypescriptExplicitModuleBoundaryTypes::schema(generator))
+            }
+            Self::TypescriptNamingConvention(_) => {
+                TypescriptNamingConvention::config_schema(generator)
+                    .or_else(|| TypescriptNamingConvention::schema(generator))
             }
             Self::TypescriptNoArrayDelete(_) => TypescriptNoArrayDelete::config_schema(generator)
                 .or_else(|| TypescriptNoArrayDelete::schema(generator)),
@@ -7170,6 +7633,16 @@ impl RuleEnum {
                 TypescriptNoEmptyObjectType::config_schema(generator)
                     .or_else(|| TypescriptNoEmptyObjectType::schema(generator))
             }
+            Self::TypescriptNoEmptyTypeParameters(_) => {
+                TypescriptNoEmptyTypeParameters::config_schema(generator)
+                    .or_else(|| TypescriptNoEmptyTypeParameters::schema(generator))
+            }
+            Self::TypescriptNoEnum(_) => TypescriptNoEnum::config_schema(generator)
+                .or_else(|| TypescriptNoEnum::schema(generator)),
+            Self::TypescriptNoEvolvingTypes(_) => {
+                TypescriptNoEvolvingTypes::config_schema(generator)
+                    .or_else(|| TypescriptNoEvolvingTypes::schema(generator))
+            }
             Self::TypescriptNoExplicitAny(_) => TypescriptNoExplicitAny::config_schema(generator)
                 .or_else(|| TypescriptNoExplicitAny::schema(generator)),
             Self::TypescriptNoExtraNonNullAssertion(_) => {
@@ -7186,6 +7659,10 @@ impl RuleEnum {
             }
             Self::TypescriptNoForInArray(_) => TypescriptNoForInArray::config_schema(generator)
                 .or_else(|| TypescriptNoForInArray::schema(generator)),
+            Self::TypescriptNoImplicitAnyLet(_) => {
+                TypescriptNoImplicitAnyLet::config_schema(generator)
+                    .or_else(|| TypescriptNoImplicitAnyLet::schema(generator))
+            }
             Self::TypescriptNoImpliedEval(_) => TypescriptNoImpliedEval::config_schema(generator)
                 .or_else(|| TypescriptNoImpliedEval::schema(generator)),
             Self::TypescriptNoImportTypeSideEffects(_) => {
@@ -7244,6 +7721,8 @@ impl RuleEnum {
             }
             Self::TypescriptNoThisAlias(_) => TypescriptNoThisAlias::config_schema(generator)
                 .or_else(|| TypescriptNoThisAlias::schema(generator)),
+            Self::TypescriptNoThisInStatic(_) => TypescriptNoThisInStatic::config_schema(generator)
+                .or_else(|| TypescriptNoThisInStatic::schema(generator)),
             Self::TypescriptNoUnnecessaryBooleanLiteralCompare(_) => {
                 TypescriptNoUnnecessaryBooleanLiteralCompare::config_schema(generator)
                     .or_else(|| TypescriptNoUnnecessaryBooleanLiteralCompare::schema(generator))
@@ -7690,14 +8169,22 @@ impl RuleEnum {
             }
             Self::ReactNoFindDomNode(_) => ReactNoFindDomNode::config_schema(generator)
                 .or_else(|| ReactNoFindDomNode::schema(generator)),
+            Self::ReactNoForwardRef(_) => ReactNoForwardRef::config_schema(generator)
+                .or_else(|| ReactNoForwardRef::schema(generator)),
             Self::ReactNoIsMounted(_) => ReactNoIsMounted::config_schema(generator)
                 .or_else(|| ReactNoIsMounted::schema(generator)),
+            Self::ReactNoJsxLiterals(_) => ReactNoJsxLiterals::config_schema(generator)
+                .or_else(|| ReactNoJsxLiterals::schema(generator)),
             Self::ReactNoMultiComp(_) => ReactNoMultiComp::config_schema(generator)
                 .or_else(|| ReactNoMultiComp::schema(generator)),
             Self::ReactNoNamespace(_) => ReactNoNamespace::config_schema(generator)
                 .or_else(|| ReactNoNamespace::schema(generator)),
             Self::ReactNoReactChildren(_) => ReactNoReactChildren::config_schema(generator)
                 .or_else(|| ReactNoReactChildren::schema(generator)),
+            Self::ReactNoReactSpecificProps(_) => {
+                ReactNoReactSpecificProps::config_schema(generator)
+                    .or_else(|| ReactNoReactSpecificProps::schema(generator))
+            }
             Self::ReactNoRedundantShouldComponentUpdate(_) => {
                 ReactNoRedundantShouldComponentUpdate::config_schema(generator)
                     .or_else(|| ReactNoRedundantShouldComponentUpdate::schema(generator))
@@ -7708,6 +8195,10 @@ impl RuleEnum {
                 .or_else(|| ReactNoSetState::schema(generator)),
             Self::ReactNoStringRefs(_) => ReactNoStringRefs::config_schema(generator)
                 .or_else(|| ReactNoStringRefs::schema(generator)),
+            Self::ReactNoSuspiciousSemicolonInJsx(_) => {
+                ReactNoSuspiciousSemicolonInJsx::config_schema(generator)
+                    .or_else(|| ReactNoSuspiciousSemicolonInJsx::schema(generator))
+            }
             Self::ReactNoThisInSfc(_) => ReactNoThisInSfc::config_schema(generator)
                 .or_else(|| ReactNoThisInSfc::schema(generator)),
             Self::ReactNoUnescapedEntities(_) => ReactNoUnescapedEntities::config_schema(generator)
@@ -7743,6 +8234,8 @@ impl RuleEnum {
                 .or_else(|| ReactStateInConstructor::schema(generator)),
             Self::ReactStylePropObject(_) => ReactStylePropObject::config_schema(generator)
                 .or_else(|| ReactStylePropObject::schema(generator)),
+            Self::ReactUseImageSize(_) => ReactUseImageSize::config_schema(generator)
+                .or_else(|| ReactUseImageSize::schema(generator)),
             Self::ReactVoidDomElementsNoChildren(_) => {
                 ReactVoidDomElementsNoChildren::config_schema(generator)
                     .or_else(|| ReactVoidDomElementsNoChildren::schema(generator))
@@ -7841,6 +8334,8 @@ impl RuleEnum {
                 .or_else(|| UnicornNoDocumentCookie::schema(generator)),
             Self::UnicornNoEmptyFile(_) => UnicornNoEmptyFile::config_schema(generator)
                 .or_else(|| UnicornNoEmptyFile::schema(generator)),
+            Self::UnicornNoFlatMapIdentity(_) => UnicornNoFlatMapIdentity::config_schema(generator)
+                .or_else(|| UnicornNoFlatMapIdentity::schema(generator)),
             Self::UnicornNoHexEscape(_) => UnicornNoHexEscape::config_schema(generator)
                 .or_else(|| UnicornNoHexEscape::schema(generator)),
             Self::UnicornNoImmediateMutation(_) => {
@@ -7946,6 +8441,10 @@ impl RuleEnum {
             }
             Self::UnicornNoUselessSpread(_) => UnicornNoUselessSpread::config_schema(generator)
                 .or_else(|| UnicornNoUselessSpread::schema(generator)),
+            Self::UnicornNoUselessStringRaw(_) => {
+                UnicornNoUselessStringRaw::config_schema(generator)
+                    .or_else(|| UnicornNoUselessStringRaw::schema(generator))
+            }
             Self::UnicornNoUselessSwitchCase(_) => {
                 UnicornNoUselessSwitchCase::config_schema(generator)
                     .or_else(|| UnicornNoUselessSwitchCase::schema(generator))
@@ -7953,6 +8452,10 @@ impl RuleEnum {
             Self::UnicornNoUselessUndefined(_) => {
                 UnicornNoUselessUndefined::config_schema(generator)
                     .or_else(|| UnicornNoUselessUndefined::schema(generator))
+            }
+            Self::UnicornNoUselessUndefinedInitialization(_) => {
+                UnicornNoUselessUndefinedInitialization::config_schema(generator)
+                    .or_else(|| UnicornNoUselessUndefinedInitialization::schema(generator))
             }
             Self::UnicornNoZeroFractions(_) => UnicornNoZeroFractions::config_schema(generator)
                 .or_else(|| UnicornNoZeroFractions::schema(generator)),
@@ -8158,6 +8661,20 @@ impl RuleEnum {
             }
             Self::UnicornThrowNewError(_) => UnicornThrowNewError::config_schema(generator)
                 .or_else(|| UnicornThrowNewError::schema(generator)),
+            Self::UnicornUseCollapsedIf(_) => UnicornUseCollapsedIf::config_schema(generator)
+                .or_else(|| UnicornUseCollapsedIf::schema(generator)),
+            Self::UnicornUseConsistentCurlyBraces(_) => {
+                UnicornUseConsistentCurlyBraces::config_schema(generator)
+                    .or_else(|| UnicornUseConsistentCurlyBraces::schema(generator))
+            }
+            Self::UnicornUseSimpleNumberKeys(_) => {
+                UnicornUseSimpleNumberKeys::config_schema(generator)
+                    .or_else(|| UnicornUseSimpleNumberKeys::schema(generator))
+            }
+            Self::UnicornUseSimplifiedLogicExpression(_) => {
+                UnicornUseSimplifiedLogicExpression::config_schema(generator)
+                    .or_else(|| UnicornUseSimplifiedLogicExpression::schema(generator))
+            }
             Self::JsxA11YAltText(_) => JsxA11YAltText::config_schema(generator)
                 .or_else(|| JsxA11YAltText::schema(generator)),
             Self::JsxA11YAnchorAmbiguousText(_) => {
@@ -8221,6 +8738,18 @@ impl RuleEnum {
                 JsxA11YNoDistractingElements::config_schema(generator)
                     .or_else(|| JsxA11YNoDistractingElements::schema(generator))
             }
+            Self::JsxA11YNoInteractiveElementToNoninteractiveRole(_) => {
+                JsxA11YNoInteractiveElementToNoninteractiveRole::config_schema(generator)
+                    .or_else(|| JsxA11YNoInteractiveElementToNoninteractiveRole::schema(generator))
+            }
+            Self::JsxA11YNoNoninteractiveElementInteractions(_) => {
+                JsxA11YNoNoninteractiveElementInteractions::config_schema(generator)
+                    .or_else(|| JsxA11YNoNoninteractiveElementInteractions::schema(generator))
+            }
+            Self::JsxA11YNoNoninteractiveElementToInteractiveRole(_) => {
+                JsxA11YNoNoninteractiveElementToInteractiveRole::config_schema(generator)
+                    .or_else(|| JsxA11YNoNoninteractiveElementToInteractiveRole::schema(generator))
+            }
             Self::JsxA11YNoNoninteractiveTabindex(_) => {
                 JsxA11YNoNoninteractiveTabindex::config_schema(generator)
                     .or_else(|| JsxA11YNoNoninteractiveTabindex::schema(generator))
@@ -8231,6 +8760,8 @@ impl RuleEnum {
                 JsxA11YNoStaticElementInteractions::config_schema(generator)
                     .or_else(|| JsxA11YNoStaticElementInteractions::schema(generator))
             }
+            Self::JsxA11YNoSvgWithoutTitle(_) => JsxA11YNoSvgWithoutTitle::config_schema(generator)
+                .or_else(|| JsxA11YNoSvgWithoutTitle::schema(generator)),
             Self::JsxA11YPreferTagOverRole(_) => JsxA11YPreferTagOverRole::config_schema(generator)
                 .or_else(|| JsxA11YPreferTagOverRole::schema(generator)),
             Self::JsxA11YRoleHasRequiredAriaProps(_) => {
@@ -8247,6 +8778,14 @@ impl RuleEnum {
             Self::JsxA11YTabindexNoPositive(_) => {
                 JsxA11YTabindexNoPositive::config_schema(generator)
                     .or_else(|| JsxA11YTabindexNoPositive::schema(generator))
+            }
+            Self::JsxA11YUseFocusableInteractive(_) => {
+                JsxA11YUseFocusableInteractive::config_schema(generator)
+                    .or_else(|| JsxA11YUseFocusableInteractive::schema(generator))
+            }
+            Self::JsxA11YUseUniqueElementIds(_) => {
+                JsxA11YUseUniqueElementIds::config_schema(generator)
+                    .or_else(|| JsxA11YUseUniqueElementIds::schema(generator))
             }
             Self::OxcApproxConstant(_) => OxcApproxConstant::config_schema(generator)
                 .or_else(|| OxcApproxConstant::schema(generator)),
@@ -8526,6 +9065,10 @@ impl RuleEnum {
                 .or_else(|| NodeHandleCallbackErr::schema(generator)),
             Self::NodeNoExportsAssign(_) => NodeNoExportsAssign::config_schema(generator)
                 .or_else(|| NodeNoExportsAssign::schema(generator)),
+            Self::NodeNoGlobalDirnameFilename(_) => {
+                NodeNoGlobalDirnameFilename::config_schema(generator)
+                    .or_else(|| NodeNoGlobalDirnameFilename::schema(generator))
+            }
             Self::NodeNoNewRequire(_) => NodeNoNewRequire::config_schema(generator)
                 .or_else(|| NodeNoNewRequire::schema(generator)),
             Self::NodeNoPathConcat(_) => NodeNoPathConcat::config_schema(generator)
@@ -8604,6 +9147,7 @@ impl RuleEnum {
             Self::ImportNoCycle(_) => "import",
             Self::ImportNoDefaultExport(_) => "import",
             Self::ImportNoDuplicates(_) => "import",
+            Self::ImportNoDynamicNamespaceImportAccess(_) => "import",
             Self::ImportNoDynamicRequire(_) => "import",
             Self::ImportNoEmptyNamedBlocks(_) => "import",
             Self::ImportNoMutableExports(_) => "import",
@@ -8613,9 +9157,12 @@ impl RuleEnum {
             Self::ImportNoNamedExport(_) => "import",
             Self::ImportNoNamespace(_) => "import",
             Self::ImportNoNodejsModules(_) => "import",
+            Self::ImportNoPrivateImports(_) => "import",
             Self::ImportNoRelativeParentImports(_) => "import",
             Self::ImportNoSelfImport(_) => "import",
             Self::ImportNoUnassignedImport(_) => "import",
+            Self::ImportNoUndeclaredDependencies(_) => "import",
+            Self::ImportNoUnresolvedImports(_) => "import",
             Self::ImportNoWebpackLoaderSyntax(_) => "import",
             Self::ImportPreferDefaultExport(_) => "import",
             Self::ImportUnambiguous(_) => "import",
@@ -8658,6 +9205,7 @@ impl RuleEnum {
             Self::EslintNoClassAssign(_) => "eslint",
             Self::EslintNoCompareNegZero(_) => "eslint",
             Self::EslintNoCondAssign(_) => "eslint",
+            Self::EslintNoConfusingLabels(_) => "eslint",
             Self::EslintNoConsole(_) => "eslint",
             Self::EslintNoConstAssign(_) => "eslint",
             Self::EslintNoConstantBinaryExpression(_) => "eslint",
@@ -8715,12 +9263,14 @@ impl RuleEnum {
             Self::EslintNoNonoctalDecimalEscape(_) => "eslint",
             Self::EslintNoObjCalls(_) => "eslint",
             Self::EslintNoObjectConstructor(_) => "eslint",
+            Self::EslintNoOctalEscape(_) => "eslint",
             Self::EslintNoParamReassign(_) => "eslint",
             Self::EslintNoPlusplus(_) => "eslint",
             Self::EslintNoPromiseExecutorReturn(_) => "eslint",
             Self::EslintNoProto(_) => "eslint",
             Self::EslintNoPrototypeBuiltins(_) => "eslint",
             Self::EslintNoRedeclare(_) => "eslint",
+            Self::EslintNoRedundantUseStrict(_) => "eslint",
             Self::EslintNoRegexSpaces(_) => "eslint",
             Self::EslintNoRestrictedGlobals(_) => "eslint",
             Self::EslintNoRestrictedImports(_) => "eslint",
@@ -8732,7 +9282,9 @@ impl RuleEnum {
             Self::EslintNoSetterReturn(_) => "eslint",
             Self::EslintNoShadow(_) => "eslint",
             Self::EslintNoShadowRestrictedNames(_) => "eslint",
+            Self::EslintNoShoutyConstants(_) => "eslint",
             Self::EslintNoSparseArrays(_) => "eslint",
+            Self::EslintNoStringCaseMismatch(_) => "eslint",
             Self::EslintNoTemplateCurlyInString(_) => "eslint",
             Self::EslintNoTernary(_) => "eslint",
             Self::EslintNoThisBeforeSuper(_) => "eslint",
@@ -8759,6 +9311,7 @@ impl RuleEnum {
             Self::EslintNoUselessComputedKey(_) => "eslint",
             Self::EslintNoUselessConcat(_) => "eslint",
             Self::EslintNoUselessConstructor(_) => "eslint",
+            Self::EslintNoUselessContinue(_) => "eslint",
             Self::EslintNoUselessEscape(_) => "eslint",
             Self::EslintNoUselessRename(_) => "eslint",
             Self::EslintNoUselessReturn(_) => "eslint",
@@ -8768,6 +9321,7 @@ impl RuleEnum {
             Self::EslintNoWith(_) => "eslint",
             Self::EslintObjectShorthand(_) => "eslint",
             Self::EslintOperatorAssignment(_) => "eslint",
+            Self::EslintPreferArrowCallback(_) => "eslint",
             Self::EslintPreferConst(_) => "eslint",
             Self::EslintPreferDestructuring(_) => "eslint",
             Self::EslintPreferExponentiationOperator(_) => "eslint",
@@ -8788,6 +9342,9 @@ impl RuleEnum {
             Self::EslintSymbolDescription(_) => "eslint",
             Self::EslintUnicodeBom(_) => "eslint",
             Self::EslintUseIsnan(_) => "eslint",
+            Self::EslintUseRegexLiterals(_) => "eslint",
+            Self::EslintUseSingleVarDeclarator(_) => "eslint",
+            Self::EslintUseWhile(_) => "eslint",
             Self::EslintValidTypeof(_) => "eslint",
             Self::EslintVarsOnTop(_) => "eslint",
             Self::EslintYoda(_) => "eslint",
@@ -8807,7 +9364,9 @@ impl RuleEnum {
             Self::TypescriptConsistentTypeImports(_) => "typescript",
             Self::TypescriptDotNotation(_) => "typescript",
             Self::TypescriptExplicitFunctionReturnType(_) => "typescript",
+            Self::TypescriptExplicitMemberAccessibility(_) => "typescript",
             Self::TypescriptExplicitModuleBoundaryTypes(_) => "typescript",
+            Self::TypescriptNamingConvention(_) => "typescript",
             Self::TypescriptNoArrayDelete(_) => "typescript",
             Self::TypescriptNoBaseToString(_) => "typescript",
             Self::TypescriptNoConfusingNonNullAssertion(_) => "typescript",
@@ -8818,11 +9377,15 @@ impl RuleEnum {
             Self::TypescriptNoDynamicDelete(_) => "typescript",
             Self::TypescriptNoEmptyInterface(_) => "typescript",
             Self::TypescriptNoEmptyObjectType(_) => "typescript",
+            Self::TypescriptNoEmptyTypeParameters(_) => "typescript",
+            Self::TypescriptNoEnum(_) => "typescript",
+            Self::TypescriptNoEvolvingTypes(_) => "typescript",
             Self::TypescriptNoExplicitAny(_) => "typescript",
             Self::TypescriptNoExtraNonNullAssertion(_) => "typescript",
             Self::TypescriptNoExtraneousClass(_) => "typescript",
             Self::TypescriptNoFloatingPromises(_) => "typescript",
             Self::TypescriptNoForInArray(_) => "typescript",
+            Self::TypescriptNoImplicitAnyLet(_) => "typescript",
             Self::TypescriptNoImpliedEval(_) => "typescript",
             Self::TypescriptNoImportTypeSideEffects(_) => "typescript",
             Self::TypescriptNoInferrableTypes(_) => "typescript",
@@ -8840,6 +9403,7 @@ impl RuleEnum {
             Self::TypescriptNoRequireImports(_) => "typescript",
             Self::TypescriptNoRestrictedTypes(_) => "typescript",
             Self::TypescriptNoThisAlias(_) => "typescript",
+            Self::TypescriptNoThisInStatic(_) => "typescript",
             Self::TypescriptNoUnnecessaryBooleanLiteralCompare(_) => "typescript",
             Self::TypescriptNoUnnecessaryCondition(_) => "typescript",
             Self::TypescriptNoUnnecessaryParameterPropertyAssignment(_) => "typescript",
@@ -8987,14 +9551,18 @@ impl RuleEnum {
             Self::ReactNoDidMountSetState(_) => "react",
             Self::ReactNoDirectMutationState(_) => "react",
             Self::ReactNoFindDomNode(_) => "react",
+            Self::ReactNoForwardRef(_) => "react",
             Self::ReactNoIsMounted(_) => "react",
+            Self::ReactNoJsxLiterals(_) => "react",
             Self::ReactNoMultiComp(_) => "react",
             Self::ReactNoNamespace(_) => "react",
             Self::ReactNoReactChildren(_) => "react",
+            Self::ReactNoReactSpecificProps(_) => "react",
             Self::ReactNoRedundantShouldComponentUpdate(_) => "react",
             Self::ReactNoRenderReturnValue(_) => "react",
             Self::ReactNoSetState(_) => "react",
             Self::ReactNoStringRefs(_) => "react",
+            Self::ReactNoSuspiciousSemicolonInJsx(_) => "react",
             Self::ReactNoThisInSfc(_) => "react",
             Self::ReactNoUnescapedEntities(_) => "react",
             Self::ReactNoUnknownProperty(_) => "react",
@@ -9009,6 +9577,7 @@ impl RuleEnum {
             Self::ReactSelfClosingComp(_) => "react",
             Self::ReactStateInConstructor(_) => "react",
             Self::ReactStylePropObject(_) => "react",
+            Self::ReactUseImageSize(_) => "react",
             Self::ReactVoidDomElementsNoChildren(_) => "react",
             Self::ReactPerfJsxNoJsxAsProp(_) => "react_perf",
             Self::ReactPerfJsxNoNewArrayAsProp(_) => "react_perf",
@@ -9041,6 +9610,7 @@ impl RuleEnum {
             Self::UnicornNoConsoleSpaces(_) => "unicorn",
             Self::UnicornNoDocumentCookie(_) => "unicorn",
             Self::UnicornNoEmptyFile(_) => "unicorn",
+            Self::UnicornNoFlatMapIdentity(_) => "unicorn",
             Self::UnicornNoHexEscape(_) => "unicorn",
             Self::UnicornNoImmediateMutation(_) => "unicorn",
             Self::UnicornNoInstanceofArray(_) => "unicorn",
@@ -9074,8 +9644,10 @@ impl RuleEnum {
             Self::UnicornNoUselessLengthCheck(_) => "unicorn",
             Self::UnicornNoUselessPromiseResolveReject(_) => "unicorn",
             Self::UnicornNoUselessSpread(_) => "unicorn",
+            Self::UnicornNoUselessStringRaw(_) => "unicorn",
             Self::UnicornNoUselessSwitchCase(_) => "unicorn",
             Self::UnicornNoUselessUndefined(_) => "unicorn",
+            Self::UnicornNoUselessUndefinedInitialization(_) => "unicorn",
             Self::UnicornNoZeroFractions(_) => "unicorn",
             Self::UnicornNumberLiteralCase(_) => "unicorn",
             Self::UnicornNumericSeparatorsStyle(_) => "unicorn",
@@ -9140,6 +9712,10 @@ impl RuleEnum {
             Self::UnicornSwitchCaseBreakPosition(_) => "unicorn",
             Self::UnicornTextEncodingIdentifierCase(_) => "unicorn",
             Self::UnicornThrowNewError(_) => "unicorn",
+            Self::UnicornUseCollapsedIf(_) => "unicorn",
+            Self::UnicornUseConsistentCurlyBraces(_) => "unicorn",
+            Self::UnicornUseSimpleNumberKeys(_) => "unicorn",
+            Self::UnicornUseSimplifiedLogicExpression(_) => "unicorn",
             Self::JsxA11YAltText(_) => "jsx_a11y",
             Self::JsxA11YAnchorAmbiguousText(_) => "jsx_a11y",
             Self::JsxA11YAnchorHasContent(_) => "jsx_a11y",
@@ -9163,14 +9739,20 @@ impl RuleEnum {
             Self::JsxA11YNoAriaHiddenOnFocusable(_) => "jsx_a11y",
             Self::JsxA11YNoAutofocus(_) => "jsx_a11y",
             Self::JsxA11YNoDistractingElements(_) => "jsx_a11y",
+            Self::JsxA11YNoInteractiveElementToNoninteractiveRole(_) => "jsx_a11y",
+            Self::JsxA11YNoNoninteractiveElementInteractions(_) => "jsx_a11y",
+            Self::JsxA11YNoNoninteractiveElementToInteractiveRole(_) => "jsx_a11y",
             Self::JsxA11YNoNoninteractiveTabindex(_) => "jsx_a11y",
             Self::JsxA11YNoRedundantRoles(_) => "jsx_a11y",
             Self::JsxA11YNoStaticElementInteractions(_) => "jsx_a11y",
+            Self::JsxA11YNoSvgWithoutTitle(_) => "jsx_a11y",
             Self::JsxA11YPreferTagOverRole(_) => "jsx_a11y",
             Self::JsxA11YRoleHasRequiredAriaProps(_) => "jsx_a11y",
             Self::JsxA11YRoleSupportsAriaProps(_) => "jsx_a11y",
             Self::JsxA11YScope(_) => "jsx_a11y",
             Self::JsxA11YTabindexNoPositive(_) => "jsx_a11y",
+            Self::JsxA11YUseFocusableInteractive(_) => "jsx_a11y",
+            Self::JsxA11YUseUniqueElementIds(_) => "jsx_a11y",
             Self::OxcApproxConstant(_) => "oxc",
             Self::OxcBadArrayMethodOnArguments(_) => "oxc",
             Self::OxcBadBitwiseOperator(_) => "oxc",
@@ -9277,6 +9859,7 @@ impl RuleEnum {
             Self::NodeGlobalRequire(_) => "node",
             Self::NodeHandleCallbackErr(_) => "node",
             Self::NodeNoExportsAssign(_) => "node",
+            Self::NodeNoGlobalDirnameFilename(_) => "node",
             Self::NodeNoNewRequire(_) => "node",
             Self::NodeNoPathConcat(_) => "node",
             Self::NodeNoProcessEnv(_) => "node",
@@ -9351,6 +9934,11 @@ impl RuleEnum {
             Self::ImportNoDuplicates(_) => {
                 Ok(Self::ImportNoDuplicates(ImportNoDuplicates::from_configuration(value)?))
             }
+            Self::ImportNoDynamicNamespaceImportAccess(_) => {
+                Ok(Self::ImportNoDynamicNamespaceImportAccess(
+                    ImportNoDynamicNamespaceImportAccess::from_configuration(value)?,
+                ))
+            }
             Self::ImportNoDynamicRequire(_) => {
                 Ok(Self::ImportNoDynamicRequire(ImportNoDynamicRequire::from_configuration(value)?))
             }
@@ -9378,6 +9966,9 @@ impl RuleEnum {
             Self::ImportNoNodejsModules(_) => {
                 Ok(Self::ImportNoNodejsModules(ImportNoNodejsModules::from_configuration(value)?))
             }
+            Self::ImportNoPrivateImports(_) => {
+                Ok(Self::ImportNoPrivateImports(ImportNoPrivateImports::from_configuration(value)?))
+            }
             Self::ImportNoRelativeParentImports(_) => Ok(Self::ImportNoRelativeParentImports(
                 ImportNoRelativeParentImports::from_configuration(value)?,
             )),
@@ -9386,6 +9977,12 @@ impl RuleEnum {
             }
             Self::ImportNoUnassignedImport(_) => Ok(Self::ImportNoUnassignedImport(
                 ImportNoUnassignedImport::from_configuration(value)?,
+            )),
+            Self::ImportNoUndeclaredDependencies(_) => Ok(Self::ImportNoUndeclaredDependencies(
+                ImportNoUndeclaredDependencies::from_configuration(value)?,
+            )),
+            Self::ImportNoUnresolvedImports(_) => Ok(Self::ImportNoUnresolvedImports(
+                ImportNoUnresolvedImports::from_configuration(value)?,
             )),
             Self::ImportNoWebpackLoaderSyntax(_) => Ok(Self::ImportNoWebpackLoaderSyntax(
                 ImportNoWebpackLoaderSyntax::from_configuration(value)?,
@@ -9511,6 +10108,9 @@ impl RuleEnum {
             Self::EslintNoCondAssign(_) => {
                 Ok(Self::EslintNoCondAssign(EslintNoCondAssign::from_configuration(value)?))
             }
+            Self::EslintNoConfusingLabels(_) => Ok(Self::EslintNoConfusingLabels(
+                EslintNoConfusingLabels::from_configuration(value)?,
+            )),
             Self::EslintNoConsole(_) => {
                 Ok(Self::EslintNoConsole(EslintNoConsole::from_configuration(value)?))
             }
@@ -9684,6 +10284,9 @@ impl RuleEnum {
             Self::EslintNoObjectConstructor(_) => Ok(Self::EslintNoObjectConstructor(
                 EslintNoObjectConstructor::from_configuration(value)?,
             )),
+            Self::EslintNoOctalEscape(_) => {
+                Ok(Self::EslintNoOctalEscape(EslintNoOctalEscape::from_configuration(value)?))
+            }
             Self::EslintNoParamReassign(_) => {
                 Ok(Self::EslintNoParamReassign(EslintNoParamReassign::from_configuration(value)?))
             }
@@ -9702,6 +10305,9 @@ impl RuleEnum {
             Self::EslintNoRedeclare(_) => {
                 Ok(Self::EslintNoRedeclare(EslintNoRedeclare::from_configuration(value)?))
             }
+            Self::EslintNoRedundantUseStrict(_) => Ok(Self::EslintNoRedundantUseStrict(
+                EslintNoRedundantUseStrict::from_configuration(value)?,
+            )),
             Self::EslintNoRegexSpaces(_) => {
                 Ok(Self::EslintNoRegexSpaces(EslintNoRegexSpaces::from_configuration(value)?))
             }
@@ -9735,9 +10341,15 @@ impl RuleEnum {
             Self::EslintNoShadowRestrictedNames(_) => Ok(Self::EslintNoShadowRestrictedNames(
                 EslintNoShadowRestrictedNames::from_configuration(value)?,
             )),
+            Self::EslintNoShoutyConstants(_) => Ok(Self::EslintNoShoutyConstants(
+                EslintNoShoutyConstants::from_configuration(value)?,
+            )),
             Self::EslintNoSparseArrays(_) => {
                 Ok(Self::EslintNoSparseArrays(EslintNoSparseArrays::from_configuration(value)?))
             }
+            Self::EslintNoStringCaseMismatch(_) => Ok(Self::EslintNoStringCaseMismatch(
+                EslintNoStringCaseMismatch::from_configuration(value)?,
+            )),
             Self::EslintNoTemplateCurlyInString(_) => Ok(Self::EslintNoTemplateCurlyInString(
                 EslintNoTemplateCurlyInString::from_configuration(value)?,
             )),
@@ -9818,6 +10430,9 @@ impl RuleEnum {
             Self::EslintNoUselessConstructor(_) => Ok(Self::EslintNoUselessConstructor(
                 EslintNoUselessConstructor::from_configuration(value)?,
             )),
+            Self::EslintNoUselessContinue(_) => Ok(Self::EslintNoUselessContinue(
+                EslintNoUselessContinue::from_configuration(value)?,
+            )),
             Self::EslintNoUselessEscape(_) => {
                 Ok(Self::EslintNoUselessEscape(EslintNoUselessEscape::from_configuration(value)?))
             }
@@ -9842,6 +10457,9 @@ impl RuleEnum {
             }
             Self::EslintOperatorAssignment(_) => Ok(Self::EslintOperatorAssignment(
                 EslintOperatorAssignment::from_configuration(value)?,
+            )),
+            Self::EslintPreferArrowCallback(_) => Ok(Self::EslintPreferArrowCallback(
+                EslintPreferArrowCallback::from_configuration(value)?,
             )),
             Self::EslintPreferConst(_) => {
                 Ok(Self::EslintPreferConst(EslintPreferConst::from_configuration(value)?))
@@ -9902,6 +10520,15 @@ impl RuleEnum {
             }
             Self::EslintUseIsnan(_) => {
                 Ok(Self::EslintUseIsnan(EslintUseIsnan::from_configuration(value)?))
+            }
+            Self::EslintUseRegexLiterals(_) => {
+                Ok(Self::EslintUseRegexLiterals(EslintUseRegexLiterals::from_configuration(value)?))
+            }
+            Self::EslintUseSingleVarDeclarator(_) => Ok(Self::EslintUseSingleVarDeclarator(
+                EslintUseSingleVarDeclarator::from_configuration(value)?,
+            )),
+            Self::EslintUseWhile(_) => {
+                Ok(Self::EslintUseWhile(EslintUseWhile::from_configuration(value)?))
             }
             Self::EslintValidTypeof(_) => {
                 Ok(Self::EslintValidTypeof(EslintValidTypeof::from_configuration(value)?))
@@ -9972,11 +10599,19 @@ impl RuleEnum {
                     TypescriptExplicitFunctionReturnType::from_configuration(value)?,
                 ))
             }
+            Self::TypescriptExplicitMemberAccessibility(_) => {
+                Ok(Self::TypescriptExplicitMemberAccessibility(
+                    TypescriptExplicitMemberAccessibility::from_configuration(value)?,
+                ))
+            }
             Self::TypescriptExplicitModuleBoundaryTypes(_) => {
                 Ok(Self::TypescriptExplicitModuleBoundaryTypes(
                     TypescriptExplicitModuleBoundaryTypes::from_configuration(value)?,
                 ))
             }
+            Self::TypescriptNamingConvention(_) => Ok(Self::TypescriptNamingConvention(
+                TypescriptNamingConvention::from_configuration(value)?,
+            )),
             Self::TypescriptNoArrayDelete(_) => Ok(Self::TypescriptNoArrayDelete(
                 TypescriptNoArrayDelete::from_configuration(value)?,
             )),
@@ -10013,6 +10648,15 @@ impl RuleEnum {
             Self::TypescriptNoEmptyObjectType(_) => Ok(Self::TypescriptNoEmptyObjectType(
                 TypescriptNoEmptyObjectType::from_configuration(value)?,
             )),
+            Self::TypescriptNoEmptyTypeParameters(_) => Ok(Self::TypescriptNoEmptyTypeParameters(
+                TypescriptNoEmptyTypeParameters::from_configuration(value)?,
+            )),
+            Self::TypescriptNoEnum(_) => {
+                Ok(Self::TypescriptNoEnum(TypescriptNoEnum::from_configuration(value)?))
+            }
+            Self::TypescriptNoEvolvingTypes(_) => Ok(Self::TypescriptNoEvolvingTypes(
+                TypescriptNoEvolvingTypes::from_configuration(value)?,
+            )),
             Self::TypescriptNoExplicitAny(_) => Ok(Self::TypescriptNoExplicitAny(
                 TypescriptNoExplicitAny::from_configuration(value)?,
             )),
@@ -10030,6 +10674,9 @@ impl RuleEnum {
             Self::TypescriptNoForInArray(_) => {
                 Ok(Self::TypescriptNoForInArray(TypescriptNoForInArray::from_configuration(value)?))
             }
+            Self::TypescriptNoImplicitAnyLet(_) => Ok(Self::TypescriptNoImplicitAnyLet(
+                TypescriptNoImplicitAnyLet::from_configuration(value)?,
+            )),
             Self::TypescriptNoImpliedEval(_) => Ok(Self::TypescriptNoImpliedEval(
                 TypescriptNoImpliedEval::from_configuration(value)?,
             )),
@@ -10091,6 +10738,9 @@ impl RuleEnum {
             Self::TypescriptNoThisAlias(_) => {
                 Ok(Self::TypescriptNoThisAlias(TypescriptNoThisAlias::from_configuration(value)?))
             }
+            Self::TypescriptNoThisInStatic(_) => Ok(Self::TypescriptNoThisInStatic(
+                TypescriptNoThisInStatic::from_configuration(value)?,
+            )),
             Self::TypescriptNoUnnecessaryBooleanLiteralCompare(_) => {
                 Ok(Self::TypescriptNoUnnecessaryBooleanLiteralCompare(
                     TypescriptNoUnnecessaryBooleanLiteralCompare::from_configuration(value)?,
@@ -10590,8 +11240,14 @@ impl RuleEnum {
             Self::ReactNoFindDomNode(_) => {
                 Ok(Self::ReactNoFindDomNode(ReactNoFindDomNode::from_configuration(value)?))
             }
+            Self::ReactNoForwardRef(_) => {
+                Ok(Self::ReactNoForwardRef(ReactNoForwardRef::from_configuration(value)?))
+            }
             Self::ReactNoIsMounted(_) => {
                 Ok(Self::ReactNoIsMounted(ReactNoIsMounted::from_configuration(value)?))
+            }
+            Self::ReactNoJsxLiterals(_) => {
+                Ok(Self::ReactNoJsxLiterals(ReactNoJsxLiterals::from_configuration(value)?))
             }
             Self::ReactNoMultiComp(_) => {
                 Ok(Self::ReactNoMultiComp(ReactNoMultiComp::from_configuration(value)?))
@@ -10602,6 +11258,9 @@ impl RuleEnum {
             Self::ReactNoReactChildren(_) => {
                 Ok(Self::ReactNoReactChildren(ReactNoReactChildren::from_configuration(value)?))
             }
+            Self::ReactNoReactSpecificProps(_) => Ok(Self::ReactNoReactSpecificProps(
+                ReactNoReactSpecificProps::from_configuration(value)?,
+            )),
             Self::ReactNoRedundantShouldComponentUpdate(_) => {
                 Ok(Self::ReactNoRedundantShouldComponentUpdate(
                     ReactNoRedundantShouldComponentUpdate::from_configuration(value)?,
@@ -10616,6 +11275,9 @@ impl RuleEnum {
             Self::ReactNoStringRefs(_) => {
                 Ok(Self::ReactNoStringRefs(ReactNoStringRefs::from_configuration(value)?))
             }
+            Self::ReactNoSuspiciousSemicolonInJsx(_) => Ok(Self::ReactNoSuspiciousSemicolonInJsx(
+                ReactNoSuspiciousSemicolonInJsx::from_configuration(value)?,
+            )),
             Self::ReactNoThisInSfc(_) => {
                 Ok(Self::ReactNoThisInSfc(ReactNoThisInSfc::from_configuration(value)?))
             }
@@ -10657,6 +11319,9 @@ impl RuleEnum {
             )),
             Self::ReactStylePropObject(_) => {
                 Ok(Self::ReactStylePropObject(ReactStylePropObject::from_configuration(value)?))
+            }
+            Self::ReactUseImageSize(_) => {
+                Ok(Self::ReactUseImageSize(ReactUseImageSize::from_configuration(value)?))
             }
             Self::ReactVoidDomElementsNoChildren(_) => Ok(Self::ReactVoidDomElementsNoChildren(
                 ReactVoidDomElementsNoChildren::from_configuration(value)?,
@@ -10762,6 +11427,9 @@ impl RuleEnum {
             Self::UnicornNoEmptyFile(_) => {
                 Ok(Self::UnicornNoEmptyFile(UnicornNoEmptyFile::from_configuration(value)?))
             }
+            Self::UnicornNoFlatMapIdentity(_) => Ok(Self::UnicornNoFlatMapIdentity(
+                UnicornNoFlatMapIdentity::from_configuration(value)?,
+            )),
             Self::UnicornNoHexEscape(_) => {
                 Ok(Self::UnicornNoHexEscape(UnicornNoHexEscape::from_configuration(value)?))
             }
@@ -10883,12 +11551,20 @@ impl RuleEnum {
             Self::UnicornNoUselessSpread(_) => {
                 Ok(Self::UnicornNoUselessSpread(UnicornNoUselessSpread::from_configuration(value)?))
             }
+            Self::UnicornNoUselessStringRaw(_) => Ok(Self::UnicornNoUselessStringRaw(
+                UnicornNoUselessStringRaw::from_configuration(value)?,
+            )),
             Self::UnicornNoUselessSwitchCase(_) => Ok(Self::UnicornNoUselessSwitchCase(
                 UnicornNoUselessSwitchCase::from_configuration(value)?,
             )),
             Self::UnicornNoUselessUndefined(_) => Ok(Self::UnicornNoUselessUndefined(
                 UnicornNoUselessUndefined::from_configuration(value)?,
             )),
+            Self::UnicornNoUselessUndefinedInitialization(_) => {
+                Ok(Self::UnicornNoUselessUndefinedInitialization(
+                    UnicornNoUselessUndefinedInitialization::from_configuration(value)?,
+                ))
+            }
             Self::UnicornNoZeroFractions(_) => {
                 Ok(Self::UnicornNoZeroFractions(UnicornNoZeroFractions::from_configuration(value)?))
             }
@@ -11097,6 +11773,20 @@ impl RuleEnum {
             Self::UnicornThrowNewError(_) => {
                 Ok(Self::UnicornThrowNewError(UnicornThrowNewError::from_configuration(value)?))
             }
+            Self::UnicornUseCollapsedIf(_) => {
+                Ok(Self::UnicornUseCollapsedIf(UnicornUseCollapsedIf::from_configuration(value)?))
+            }
+            Self::UnicornUseConsistentCurlyBraces(_) => Ok(Self::UnicornUseConsistentCurlyBraces(
+                UnicornUseConsistentCurlyBraces::from_configuration(value)?,
+            )),
+            Self::UnicornUseSimpleNumberKeys(_) => Ok(Self::UnicornUseSimpleNumberKeys(
+                UnicornUseSimpleNumberKeys::from_configuration(value)?,
+            )),
+            Self::UnicornUseSimplifiedLogicExpression(_) => {
+                Ok(Self::UnicornUseSimplifiedLogicExpression(
+                    UnicornUseSimplifiedLogicExpression::from_configuration(value)?,
+                ))
+            }
             Self::JsxA11YAltText(_) => {
                 Ok(Self::JsxA11YAltText(JsxA11YAltText::from_configuration(value)?))
             }
@@ -11168,6 +11858,21 @@ impl RuleEnum {
             Self::JsxA11YNoDistractingElements(_) => Ok(Self::JsxA11YNoDistractingElements(
                 JsxA11YNoDistractingElements::from_configuration(value)?,
             )),
+            Self::JsxA11YNoInteractiveElementToNoninteractiveRole(_) => {
+                Ok(Self::JsxA11YNoInteractiveElementToNoninteractiveRole(
+                    JsxA11YNoInteractiveElementToNoninteractiveRole::from_configuration(value)?,
+                ))
+            }
+            Self::JsxA11YNoNoninteractiveElementInteractions(_) => {
+                Ok(Self::JsxA11YNoNoninteractiveElementInteractions(
+                    JsxA11YNoNoninteractiveElementInteractions::from_configuration(value)?,
+                ))
+            }
+            Self::JsxA11YNoNoninteractiveElementToInteractiveRole(_) => {
+                Ok(Self::JsxA11YNoNoninteractiveElementToInteractiveRole(
+                    JsxA11YNoNoninteractiveElementToInteractiveRole::from_configuration(value)?,
+                ))
+            }
             Self::JsxA11YNoNoninteractiveTabindex(_) => Ok(Self::JsxA11YNoNoninteractiveTabindex(
                 JsxA11YNoNoninteractiveTabindex::from_configuration(value)?,
             )),
@@ -11179,6 +11884,9 @@ impl RuleEnum {
                     JsxA11YNoStaticElementInteractions::from_configuration(value)?,
                 ))
             }
+            Self::JsxA11YNoSvgWithoutTitle(_) => Ok(Self::JsxA11YNoSvgWithoutTitle(
+                JsxA11YNoSvgWithoutTitle::from_configuration(value)?,
+            )),
             Self::JsxA11YPreferTagOverRole(_) => Ok(Self::JsxA11YPreferTagOverRole(
                 JsxA11YPreferTagOverRole::from_configuration(value)?,
             )),
@@ -11193,6 +11901,12 @@ impl RuleEnum {
             }
             Self::JsxA11YTabindexNoPositive(_) => Ok(Self::JsxA11YTabindexNoPositive(
                 JsxA11YTabindexNoPositive::from_configuration(value)?,
+            )),
+            Self::JsxA11YUseFocusableInteractive(_) => Ok(Self::JsxA11YUseFocusableInteractive(
+                JsxA11YUseFocusableInteractive::from_configuration(value)?,
+            )),
+            Self::JsxA11YUseUniqueElementIds(_) => Ok(Self::JsxA11YUseUniqueElementIds(
+                JsxA11YUseUniqueElementIds::from_configuration(value)?,
             )),
             Self::OxcApproxConstant(_) => {
                 Ok(Self::OxcApproxConstant(OxcApproxConstant::from_configuration(value)?))
@@ -11522,6 +12236,9 @@ impl RuleEnum {
             Self::NodeNoExportsAssign(_) => {
                 Ok(Self::NodeNoExportsAssign(NodeNoExportsAssign::from_configuration(value)?))
             }
+            Self::NodeNoGlobalDirnameFilename(_) => Ok(Self::NodeNoGlobalDirnameFilename(
+                NodeNoGlobalDirnameFilename::from_configuration(value)?,
+            )),
             Self::NodeNoNewRequire(_) => {
                 Ok(Self::NodeNoNewRequire(NodeNoNewRequire::from_configuration(value)?))
             }
@@ -11603,6 +12320,7 @@ impl RuleEnum {
             Self::ImportNoCycle(rule) => rule.to_configuration(),
             Self::ImportNoDefaultExport(rule) => rule.to_configuration(),
             Self::ImportNoDuplicates(rule) => rule.to_configuration(),
+            Self::ImportNoDynamicNamespaceImportAccess(rule) => rule.to_configuration(),
             Self::ImportNoDynamicRequire(rule) => rule.to_configuration(),
             Self::ImportNoEmptyNamedBlocks(rule) => rule.to_configuration(),
             Self::ImportNoMutableExports(rule) => rule.to_configuration(),
@@ -11612,9 +12330,12 @@ impl RuleEnum {
             Self::ImportNoNamedExport(rule) => rule.to_configuration(),
             Self::ImportNoNamespace(rule) => rule.to_configuration(),
             Self::ImportNoNodejsModules(rule) => rule.to_configuration(),
+            Self::ImportNoPrivateImports(rule) => rule.to_configuration(),
             Self::ImportNoRelativeParentImports(rule) => rule.to_configuration(),
             Self::ImportNoSelfImport(rule) => rule.to_configuration(),
             Self::ImportNoUnassignedImport(rule) => rule.to_configuration(),
+            Self::ImportNoUndeclaredDependencies(rule) => rule.to_configuration(),
+            Self::ImportNoUnresolvedImports(rule) => rule.to_configuration(),
             Self::ImportNoWebpackLoaderSyntax(rule) => rule.to_configuration(),
             Self::ImportPreferDefaultExport(rule) => rule.to_configuration(),
             Self::ImportUnambiguous(rule) => rule.to_configuration(),
@@ -11657,6 +12378,7 @@ impl RuleEnum {
             Self::EslintNoClassAssign(rule) => rule.to_configuration(),
             Self::EslintNoCompareNegZero(rule) => rule.to_configuration(),
             Self::EslintNoCondAssign(rule) => rule.to_configuration(),
+            Self::EslintNoConfusingLabels(rule) => rule.to_configuration(),
             Self::EslintNoConsole(rule) => rule.to_configuration(),
             Self::EslintNoConstAssign(rule) => rule.to_configuration(),
             Self::EslintNoConstantBinaryExpression(rule) => rule.to_configuration(),
@@ -11714,12 +12436,14 @@ impl RuleEnum {
             Self::EslintNoNonoctalDecimalEscape(rule) => rule.to_configuration(),
             Self::EslintNoObjCalls(rule) => rule.to_configuration(),
             Self::EslintNoObjectConstructor(rule) => rule.to_configuration(),
+            Self::EslintNoOctalEscape(rule) => rule.to_configuration(),
             Self::EslintNoParamReassign(rule) => rule.to_configuration(),
             Self::EslintNoPlusplus(rule) => rule.to_configuration(),
             Self::EslintNoPromiseExecutorReturn(rule) => rule.to_configuration(),
             Self::EslintNoProto(rule) => rule.to_configuration(),
             Self::EslintNoPrototypeBuiltins(rule) => rule.to_configuration(),
             Self::EslintNoRedeclare(rule) => rule.to_configuration(),
+            Self::EslintNoRedundantUseStrict(rule) => rule.to_configuration(),
             Self::EslintNoRegexSpaces(rule) => rule.to_configuration(),
             Self::EslintNoRestrictedGlobals(rule) => rule.to_configuration(),
             Self::EslintNoRestrictedImports(rule) => rule.to_configuration(),
@@ -11731,7 +12455,9 @@ impl RuleEnum {
             Self::EslintNoSetterReturn(rule) => rule.to_configuration(),
             Self::EslintNoShadow(rule) => rule.to_configuration(),
             Self::EslintNoShadowRestrictedNames(rule) => rule.to_configuration(),
+            Self::EslintNoShoutyConstants(rule) => rule.to_configuration(),
             Self::EslintNoSparseArrays(rule) => rule.to_configuration(),
+            Self::EslintNoStringCaseMismatch(rule) => rule.to_configuration(),
             Self::EslintNoTemplateCurlyInString(rule) => rule.to_configuration(),
             Self::EslintNoTernary(rule) => rule.to_configuration(),
             Self::EslintNoThisBeforeSuper(rule) => rule.to_configuration(),
@@ -11758,6 +12484,7 @@ impl RuleEnum {
             Self::EslintNoUselessComputedKey(rule) => rule.to_configuration(),
             Self::EslintNoUselessConcat(rule) => rule.to_configuration(),
             Self::EslintNoUselessConstructor(rule) => rule.to_configuration(),
+            Self::EslintNoUselessContinue(rule) => rule.to_configuration(),
             Self::EslintNoUselessEscape(rule) => rule.to_configuration(),
             Self::EslintNoUselessRename(rule) => rule.to_configuration(),
             Self::EslintNoUselessReturn(rule) => rule.to_configuration(),
@@ -11767,6 +12494,7 @@ impl RuleEnum {
             Self::EslintNoWith(rule) => rule.to_configuration(),
             Self::EslintObjectShorthand(rule) => rule.to_configuration(),
             Self::EslintOperatorAssignment(rule) => rule.to_configuration(),
+            Self::EslintPreferArrowCallback(rule) => rule.to_configuration(),
             Self::EslintPreferConst(rule) => rule.to_configuration(),
             Self::EslintPreferDestructuring(rule) => rule.to_configuration(),
             Self::EslintPreferExponentiationOperator(rule) => rule.to_configuration(),
@@ -11787,6 +12515,9 @@ impl RuleEnum {
             Self::EslintSymbolDescription(rule) => rule.to_configuration(),
             Self::EslintUnicodeBom(rule) => rule.to_configuration(),
             Self::EslintUseIsnan(rule) => rule.to_configuration(),
+            Self::EslintUseRegexLiterals(rule) => rule.to_configuration(),
+            Self::EslintUseSingleVarDeclarator(rule) => rule.to_configuration(),
+            Self::EslintUseWhile(rule) => rule.to_configuration(),
             Self::EslintValidTypeof(rule) => rule.to_configuration(),
             Self::EslintVarsOnTop(rule) => rule.to_configuration(),
             Self::EslintYoda(rule) => rule.to_configuration(),
@@ -11806,7 +12537,9 @@ impl RuleEnum {
             Self::TypescriptConsistentTypeImports(rule) => rule.to_configuration(),
             Self::TypescriptDotNotation(rule) => rule.to_configuration(),
             Self::TypescriptExplicitFunctionReturnType(rule) => rule.to_configuration(),
+            Self::TypescriptExplicitMemberAccessibility(rule) => rule.to_configuration(),
             Self::TypescriptExplicitModuleBoundaryTypes(rule) => rule.to_configuration(),
+            Self::TypescriptNamingConvention(rule) => rule.to_configuration(),
             Self::TypescriptNoArrayDelete(rule) => rule.to_configuration(),
             Self::TypescriptNoBaseToString(rule) => rule.to_configuration(),
             Self::TypescriptNoConfusingNonNullAssertion(rule) => rule.to_configuration(),
@@ -11817,11 +12550,15 @@ impl RuleEnum {
             Self::TypescriptNoDynamicDelete(rule) => rule.to_configuration(),
             Self::TypescriptNoEmptyInterface(rule) => rule.to_configuration(),
             Self::TypescriptNoEmptyObjectType(rule) => rule.to_configuration(),
+            Self::TypescriptNoEmptyTypeParameters(rule) => rule.to_configuration(),
+            Self::TypescriptNoEnum(rule) => rule.to_configuration(),
+            Self::TypescriptNoEvolvingTypes(rule) => rule.to_configuration(),
             Self::TypescriptNoExplicitAny(rule) => rule.to_configuration(),
             Self::TypescriptNoExtraNonNullAssertion(rule) => rule.to_configuration(),
             Self::TypescriptNoExtraneousClass(rule) => rule.to_configuration(),
             Self::TypescriptNoFloatingPromises(rule) => rule.to_configuration(),
             Self::TypescriptNoForInArray(rule) => rule.to_configuration(),
+            Self::TypescriptNoImplicitAnyLet(rule) => rule.to_configuration(),
             Self::TypescriptNoImpliedEval(rule) => rule.to_configuration(),
             Self::TypescriptNoImportTypeSideEffects(rule) => rule.to_configuration(),
             Self::TypescriptNoInferrableTypes(rule) => rule.to_configuration(),
@@ -11839,6 +12576,7 @@ impl RuleEnum {
             Self::TypescriptNoRequireImports(rule) => rule.to_configuration(),
             Self::TypescriptNoRestrictedTypes(rule) => rule.to_configuration(),
             Self::TypescriptNoThisAlias(rule) => rule.to_configuration(),
+            Self::TypescriptNoThisInStatic(rule) => rule.to_configuration(),
             Self::TypescriptNoUnnecessaryBooleanLiteralCompare(rule) => rule.to_configuration(),
             Self::TypescriptNoUnnecessaryCondition(rule) => rule.to_configuration(),
             Self::TypescriptNoUnnecessaryParameterPropertyAssignment(rule) => {
@@ -11988,14 +12726,18 @@ impl RuleEnum {
             Self::ReactNoDidMountSetState(rule) => rule.to_configuration(),
             Self::ReactNoDirectMutationState(rule) => rule.to_configuration(),
             Self::ReactNoFindDomNode(rule) => rule.to_configuration(),
+            Self::ReactNoForwardRef(rule) => rule.to_configuration(),
             Self::ReactNoIsMounted(rule) => rule.to_configuration(),
+            Self::ReactNoJsxLiterals(rule) => rule.to_configuration(),
             Self::ReactNoMultiComp(rule) => rule.to_configuration(),
             Self::ReactNoNamespace(rule) => rule.to_configuration(),
             Self::ReactNoReactChildren(rule) => rule.to_configuration(),
+            Self::ReactNoReactSpecificProps(rule) => rule.to_configuration(),
             Self::ReactNoRedundantShouldComponentUpdate(rule) => rule.to_configuration(),
             Self::ReactNoRenderReturnValue(rule) => rule.to_configuration(),
             Self::ReactNoSetState(rule) => rule.to_configuration(),
             Self::ReactNoStringRefs(rule) => rule.to_configuration(),
+            Self::ReactNoSuspiciousSemicolonInJsx(rule) => rule.to_configuration(),
             Self::ReactNoThisInSfc(rule) => rule.to_configuration(),
             Self::ReactNoUnescapedEntities(rule) => rule.to_configuration(),
             Self::ReactNoUnknownProperty(rule) => rule.to_configuration(),
@@ -12010,6 +12752,7 @@ impl RuleEnum {
             Self::ReactSelfClosingComp(rule) => rule.to_configuration(),
             Self::ReactStateInConstructor(rule) => rule.to_configuration(),
             Self::ReactStylePropObject(rule) => rule.to_configuration(),
+            Self::ReactUseImageSize(rule) => rule.to_configuration(),
             Self::ReactVoidDomElementsNoChildren(rule) => rule.to_configuration(),
             Self::ReactPerfJsxNoJsxAsProp(rule) => rule.to_configuration(),
             Self::ReactPerfJsxNoNewArrayAsProp(rule) => rule.to_configuration(),
@@ -12042,6 +12785,7 @@ impl RuleEnum {
             Self::UnicornNoConsoleSpaces(rule) => rule.to_configuration(),
             Self::UnicornNoDocumentCookie(rule) => rule.to_configuration(),
             Self::UnicornNoEmptyFile(rule) => rule.to_configuration(),
+            Self::UnicornNoFlatMapIdentity(rule) => rule.to_configuration(),
             Self::UnicornNoHexEscape(rule) => rule.to_configuration(),
             Self::UnicornNoImmediateMutation(rule) => rule.to_configuration(),
             Self::UnicornNoInstanceofArray(rule) => rule.to_configuration(),
@@ -12075,8 +12819,10 @@ impl RuleEnum {
             Self::UnicornNoUselessLengthCheck(rule) => rule.to_configuration(),
             Self::UnicornNoUselessPromiseResolveReject(rule) => rule.to_configuration(),
             Self::UnicornNoUselessSpread(rule) => rule.to_configuration(),
+            Self::UnicornNoUselessStringRaw(rule) => rule.to_configuration(),
             Self::UnicornNoUselessSwitchCase(rule) => rule.to_configuration(),
             Self::UnicornNoUselessUndefined(rule) => rule.to_configuration(),
+            Self::UnicornNoUselessUndefinedInitialization(rule) => rule.to_configuration(),
             Self::UnicornNoZeroFractions(rule) => rule.to_configuration(),
             Self::UnicornNumberLiteralCase(rule) => rule.to_configuration(),
             Self::UnicornNumericSeparatorsStyle(rule) => rule.to_configuration(),
@@ -12141,6 +12887,10 @@ impl RuleEnum {
             Self::UnicornSwitchCaseBreakPosition(rule) => rule.to_configuration(),
             Self::UnicornTextEncodingIdentifierCase(rule) => rule.to_configuration(),
             Self::UnicornThrowNewError(rule) => rule.to_configuration(),
+            Self::UnicornUseCollapsedIf(rule) => rule.to_configuration(),
+            Self::UnicornUseConsistentCurlyBraces(rule) => rule.to_configuration(),
+            Self::UnicornUseSimpleNumberKeys(rule) => rule.to_configuration(),
+            Self::UnicornUseSimplifiedLogicExpression(rule) => rule.to_configuration(),
             Self::JsxA11YAltText(rule) => rule.to_configuration(),
             Self::JsxA11YAnchorAmbiguousText(rule) => rule.to_configuration(),
             Self::JsxA11YAnchorHasContent(rule) => rule.to_configuration(),
@@ -12164,14 +12914,20 @@ impl RuleEnum {
             Self::JsxA11YNoAriaHiddenOnFocusable(rule) => rule.to_configuration(),
             Self::JsxA11YNoAutofocus(rule) => rule.to_configuration(),
             Self::JsxA11YNoDistractingElements(rule) => rule.to_configuration(),
+            Self::JsxA11YNoInteractiveElementToNoninteractiveRole(rule) => rule.to_configuration(),
+            Self::JsxA11YNoNoninteractiveElementInteractions(rule) => rule.to_configuration(),
+            Self::JsxA11YNoNoninteractiveElementToInteractiveRole(rule) => rule.to_configuration(),
             Self::JsxA11YNoNoninteractiveTabindex(rule) => rule.to_configuration(),
             Self::JsxA11YNoRedundantRoles(rule) => rule.to_configuration(),
             Self::JsxA11YNoStaticElementInteractions(rule) => rule.to_configuration(),
+            Self::JsxA11YNoSvgWithoutTitle(rule) => rule.to_configuration(),
             Self::JsxA11YPreferTagOverRole(rule) => rule.to_configuration(),
             Self::JsxA11YRoleHasRequiredAriaProps(rule) => rule.to_configuration(),
             Self::JsxA11YRoleSupportsAriaProps(rule) => rule.to_configuration(),
             Self::JsxA11YScope(rule) => rule.to_configuration(),
             Self::JsxA11YTabindexNoPositive(rule) => rule.to_configuration(),
+            Self::JsxA11YUseFocusableInteractive(rule) => rule.to_configuration(),
+            Self::JsxA11YUseUniqueElementIds(rule) => rule.to_configuration(),
             Self::OxcApproxConstant(rule) => rule.to_configuration(),
             Self::OxcBadArrayMethodOnArguments(rule) => rule.to_configuration(),
             Self::OxcBadBitwiseOperator(rule) => rule.to_configuration(),
@@ -12280,6 +13036,7 @@ impl RuleEnum {
             Self::NodeGlobalRequire(rule) => rule.to_configuration(),
             Self::NodeHandleCallbackErr(rule) => rule.to_configuration(),
             Self::NodeNoExportsAssign(rule) => rule.to_configuration(),
+            Self::NodeNoGlobalDirnameFilename(rule) => rule.to_configuration(),
             Self::NodeNoNewRequire(rule) => rule.to_configuration(),
             Self::NodeNoPathConcat(rule) => rule.to_configuration(),
             Self::NodeNoProcessEnv(rule) => rule.to_configuration(),
@@ -12321,6 +13078,7 @@ impl RuleEnum {
             Self::ImportNoCycle(rule) => rule.run(node, ctx),
             Self::ImportNoDefaultExport(rule) => rule.run(node, ctx),
             Self::ImportNoDuplicates(rule) => rule.run(node, ctx),
+            Self::ImportNoDynamicNamespaceImportAccess(rule) => rule.run(node, ctx),
             Self::ImportNoDynamicRequire(rule) => rule.run(node, ctx),
             Self::ImportNoEmptyNamedBlocks(rule) => rule.run(node, ctx),
             Self::ImportNoMutableExports(rule) => rule.run(node, ctx),
@@ -12330,9 +13088,12 @@ impl RuleEnum {
             Self::ImportNoNamedExport(rule) => rule.run(node, ctx),
             Self::ImportNoNamespace(rule) => rule.run(node, ctx),
             Self::ImportNoNodejsModules(rule) => rule.run(node, ctx),
+            Self::ImportNoPrivateImports(rule) => rule.run(node, ctx),
             Self::ImportNoRelativeParentImports(rule) => rule.run(node, ctx),
             Self::ImportNoSelfImport(rule) => rule.run(node, ctx),
             Self::ImportNoUnassignedImport(rule) => rule.run(node, ctx),
+            Self::ImportNoUndeclaredDependencies(rule) => rule.run(node, ctx),
+            Self::ImportNoUnresolvedImports(rule) => rule.run(node, ctx),
             Self::ImportNoWebpackLoaderSyntax(rule) => rule.run(node, ctx),
             Self::ImportPreferDefaultExport(rule) => rule.run(node, ctx),
             Self::ImportUnambiguous(rule) => rule.run(node, ctx),
@@ -12375,6 +13136,7 @@ impl RuleEnum {
             Self::EslintNoClassAssign(rule) => rule.run(node, ctx),
             Self::EslintNoCompareNegZero(rule) => rule.run(node, ctx),
             Self::EslintNoCondAssign(rule) => rule.run(node, ctx),
+            Self::EslintNoConfusingLabels(rule) => rule.run(node, ctx),
             Self::EslintNoConsole(rule) => rule.run(node, ctx),
             Self::EslintNoConstAssign(rule) => rule.run(node, ctx),
             Self::EslintNoConstantBinaryExpression(rule) => rule.run(node, ctx),
@@ -12432,12 +13194,14 @@ impl RuleEnum {
             Self::EslintNoNonoctalDecimalEscape(rule) => rule.run(node, ctx),
             Self::EslintNoObjCalls(rule) => rule.run(node, ctx),
             Self::EslintNoObjectConstructor(rule) => rule.run(node, ctx),
+            Self::EslintNoOctalEscape(rule) => rule.run(node, ctx),
             Self::EslintNoParamReassign(rule) => rule.run(node, ctx),
             Self::EslintNoPlusplus(rule) => rule.run(node, ctx),
             Self::EslintNoPromiseExecutorReturn(rule) => rule.run(node, ctx),
             Self::EslintNoProto(rule) => rule.run(node, ctx),
             Self::EslintNoPrototypeBuiltins(rule) => rule.run(node, ctx),
             Self::EslintNoRedeclare(rule) => rule.run(node, ctx),
+            Self::EslintNoRedundantUseStrict(rule) => rule.run(node, ctx),
             Self::EslintNoRegexSpaces(rule) => rule.run(node, ctx),
             Self::EslintNoRestrictedGlobals(rule) => rule.run(node, ctx),
             Self::EslintNoRestrictedImports(rule) => rule.run(node, ctx),
@@ -12449,7 +13213,9 @@ impl RuleEnum {
             Self::EslintNoSetterReturn(rule) => rule.run(node, ctx),
             Self::EslintNoShadow(rule) => rule.run(node, ctx),
             Self::EslintNoShadowRestrictedNames(rule) => rule.run(node, ctx),
+            Self::EslintNoShoutyConstants(rule) => rule.run(node, ctx),
             Self::EslintNoSparseArrays(rule) => rule.run(node, ctx),
+            Self::EslintNoStringCaseMismatch(rule) => rule.run(node, ctx),
             Self::EslintNoTemplateCurlyInString(rule) => rule.run(node, ctx),
             Self::EslintNoTernary(rule) => rule.run(node, ctx),
             Self::EslintNoThisBeforeSuper(rule) => rule.run(node, ctx),
@@ -12476,6 +13242,7 @@ impl RuleEnum {
             Self::EslintNoUselessComputedKey(rule) => rule.run(node, ctx),
             Self::EslintNoUselessConcat(rule) => rule.run(node, ctx),
             Self::EslintNoUselessConstructor(rule) => rule.run(node, ctx),
+            Self::EslintNoUselessContinue(rule) => rule.run(node, ctx),
             Self::EslintNoUselessEscape(rule) => rule.run(node, ctx),
             Self::EslintNoUselessRename(rule) => rule.run(node, ctx),
             Self::EslintNoUselessReturn(rule) => rule.run(node, ctx),
@@ -12485,6 +13252,7 @@ impl RuleEnum {
             Self::EslintNoWith(rule) => rule.run(node, ctx),
             Self::EslintObjectShorthand(rule) => rule.run(node, ctx),
             Self::EslintOperatorAssignment(rule) => rule.run(node, ctx),
+            Self::EslintPreferArrowCallback(rule) => rule.run(node, ctx),
             Self::EslintPreferConst(rule) => rule.run(node, ctx),
             Self::EslintPreferDestructuring(rule) => rule.run(node, ctx),
             Self::EslintPreferExponentiationOperator(rule) => rule.run(node, ctx),
@@ -12505,6 +13273,9 @@ impl RuleEnum {
             Self::EslintSymbolDescription(rule) => rule.run(node, ctx),
             Self::EslintUnicodeBom(rule) => rule.run(node, ctx),
             Self::EslintUseIsnan(rule) => rule.run(node, ctx),
+            Self::EslintUseRegexLiterals(rule) => rule.run(node, ctx),
+            Self::EslintUseSingleVarDeclarator(rule) => rule.run(node, ctx),
+            Self::EslintUseWhile(rule) => rule.run(node, ctx),
             Self::EslintValidTypeof(rule) => rule.run(node, ctx),
             Self::EslintVarsOnTop(rule) => rule.run(node, ctx),
             Self::EslintYoda(rule) => rule.run(node, ctx),
@@ -12524,7 +13295,9 @@ impl RuleEnum {
             Self::TypescriptConsistentTypeImports(rule) => rule.run(node, ctx),
             Self::TypescriptDotNotation(rule) => rule.run(node, ctx),
             Self::TypescriptExplicitFunctionReturnType(rule) => rule.run(node, ctx),
+            Self::TypescriptExplicitMemberAccessibility(rule) => rule.run(node, ctx),
             Self::TypescriptExplicitModuleBoundaryTypes(rule) => rule.run(node, ctx),
+            Self::TypescriptNamingConvention(rule) => rule.run(node, ctx),
             Self::TypescriptNoArrayDelete(rule) => rule.run(node, ctx),
             Self::TypescriptNoBaseToString(rule) => rule.run(node, ctx),
             Self::TypescriptNoConfusingNonNullAssertion(rule) => rule.run(node, ctx),
@@ -12535,11 +13308,15 @@ impl RuleEnum {
             Self::TypescriptNoDynamicDelete(rule) => rule.run(node, ctx),
             Self::TypescriptNoEmptyInterface(rule) => rule.run(node, ctx),
             Self::TypescriptNoEmptyObjectType(rule) => rule.run(node, ctx),
+            Self::TypescriptNoEmptyTypeParameters(rule) => rule.run(node, ctx),
+            Self::TypescriptNoEnum(rule) => rule.run(node, ctx),
+            Self::TypescriptNoEvolvingTypes(rule) => rule.run(node, ctx),
             Self::TypescriptNoExplicitAny(rule) => rule.run(node, ctx),
             Self::TypescriptNoExtraNonNullAssertion(rule) => rule.run(node, ctx),
             Self::TypescriptNoExtraneousClass(rule) => rule.run(node, ctx),
             Self::TypescriptNoFloatingPromises(rule) => rule.run(node, ctx),
             Self::TypescriptNoForInArray(rule) => rule.run(node, ctx),
+            Self::TypescriptNoImplicitAnyLet(rule) => rule.run(node, ctx),
             Self::TypescriptNoImpliedEval(rule) => rule.run(node, ctx),
             Self::TypescriptNoImportTypeSideEffects(rule) => rule.run(node, ctx),
             Self::TypescriptNoInferrableTypes(rule) => rule.run(node, ctx),
@@ -12557,6 +13334,7 @@ impl RuleEnum {
             Self::TypescriptNoRequireImports(rule) => rule.run(node, ctx),
             Self::TypescriptNoRestrictedTypes(rule) => rule.run(node, ctx),
             Self::TypescriptNoThisAlias(rule) => rule.run(node, ctx),
+            Self::TypescriptNoThisInStatic(rule) => rule.run(node, ctx),
             Self::TypescriptNoUnnecessaryBooleanLiteralCompare(rule) => rule.run(node, ctx),
             Self::TypescriptNoUnnecessaryCondition(rule) => rule.run(node, ctx),
             Self::TypescriptNoUnnecessaryParameterPropertyAssignment(rule) => rule.run(node, ctx),
@@ -12704,14 +13482,18 @@ impl RuleEnum {
             Self::ReactNoDidMountSetState(rule) => rule.run(node, ctx),
             Self::ReactNoDirectMutationState(rule) => rule.run(node, ctx),
             Self::ReactNoFindDomNode(rule) => rule.run(node, ctx),
+            Self::ReactNoForwardRef(rule) => rule.run(node, ctx),
             Self::ReactNoIsMounted(rule) => rule.run(node, ctx),
+            Self::ReactNoJsxLiterals(rule) => rule.run(node, ctx),
             Self::ReactNoMultiComp(rule) => rule.run(node, ctx),
             Self::ReactNoNamespace(rule) => rule.run(node, ctx),
             Self::ReactNoReactChildren(rule) => rule.run(node, ctx),
+            Self::ReactNoReactSpecificProps(rule) => rule.run(node, ctx),
             Self::ReactNoRedundantShouldComponentUpdate(rule) => rule.run(node, ctx),
             Self::ReactNoRenderReturnValue(rule) => rule.run(node, ctx),
             Self::ReactNoSetState(rule) => rule.run(node, ctx),
             Self::ReactNoStringRefs(rule) => rule.run(node, ctx),
+            Self::ReactNoSuspiciousSemicolonInJsx(rule) => rule.run(node, ctx),
             Self::ReactNoThisInSfc(rule) => rule.run(node, ctx),
             Self::ReactNoUnescapedEntities(rule) => rule.run(node, ctx),
             Self::ReactNoUnknownProperty(rule) => rule.run(node, ctx),
@@ -12726,6 +13508,7 @@ impl RuleEnum {
             Self::ReactSelfClosingComp(rule) => rule.run(node, ctx),
             Self::ReactStateInConstructor(rule) => rule.run(node, ctx),
             Self::ReactStylePropObject(rule) => rule.run(node, ctx),
+            Self::ReactUseImageSize(rule) => rule.run(node, ctx),
             Self::ReactVoidDomElementsNoChildren(rule) => rule.run(node, ctx),
             Self::ReactPerfJsxNoJsxAsProp(rule) => rule.run(node, ctx),
             Self::ReactPerfJsxNoNewArrayAsProp(rule) => rule.run(node, ctx),
@@ -12758,6 +13541,7 @@ impl RuleEnum {
             Self::UnicornNoConsoleSpaces(rule) => rule.run(node, ctx),
             Self::UnicornNoDocumentCookie(rule) => rule.run(node, ctx),
             Self::UnicornNoEmptyFile(rule) => rule.run(node, ctx),
+            Self::UnicornNoFlatMapIdentity(rule) => rule.run(node, ctx),
             Self::UnicornNoHexEscape(rule) => rule.run(node, ctx),
             Self::UnicornNoImmediateMutation(rule) => rule.run(node, ctx),
             Self::UnicornNoInstanceofArray(rule) => rule.run(node, ctx),
@@ -12791,8 +13575,10 @@ impl RuleEnum {
             Self::UnicornNoUselessLengthCheck(rule) => rule.run(node, ctx),
             Self::UnicornNoUselessPromiseResolveReject(rule) => rule.run(node, ctx),
             Self::UnicornNoUselessSpread(rule) => rule.run(node, ctx),
+            Self::UnicornNoUselessStringRaw(rule) => rule.run(node, ctx),
             Self::UnicornNoUselessSwitchCase(rule) => rule.run(node, ctx),
             Self::UnicornNoUselessUndefined(rule) => rule.run(node, ctx),
+            Self::UnicornNoUselessUndefinedInitialization(rule) => rule.run(node, ctx),
             Self::UnicornNoZeroFractions(rule) => rule.run(node, ctx),
             Self::UnicornNumberLiteralCase(rule) => rule.run(node, ctx),
             Self::UnicornNumericSeparatorsStyle(rule) => rule.run(node, ctx),
@@ -12857,6 +13643,10 @@ impl RuleEnum {
             Self::UnicornSwitchCaseBreakPosition(rule) => rule.run(node, ctx),
             Self::UnicornTextEncodingIdentifierCase(rule) => rule.run(node, ctx),
             Self::UnicornThrowNewError(rule) => rule.run(node, ctx),
+            Self::UnicornUseCollapsedIf(rule) => rule.run(node, ctx),
+            Self::UnicornUseConsistentCurlyBraces(rule) => rule.run(node, ctx),
+            Self::UnicornUseSimpleNumberKeys(rule) => rule.run(node, ctx),
+            Self::UnicornUseSimplifiedLogicExpression(rule) => rule.run(node, ctx),
             Self::JsxA11YAltText(rule) => rule.run(node, ctx),
             Self::JsxA11YAnchorAmbiguousText(rule) => rule.run(node, ctx),
             Self::JsxA11YAnchorHasContent(rule) => rule.run(node, ctx),
@@ -12880,14 +13670,20 @@ impl RuleEnum {
             Self::JsxA11YNoAriaHiddenOnFocusable(rule) => rule.run(node, ctx),
             Self::JsxA11YNoAutofocus(rule) => rule.run(node, ctx),
             Self::JsxA11YNoDistractingElements(rule) => rule.run(node, ctx),
+            Self::JsxA11YNoInteractiveElementToNoninteractiveRole(rule) => rule.run(node, ctx),
+            Self::JsxA11YNoNoninteractiveElementInteractions(rule) => rule.run(node, ctx),
+            Self::JsxA11YNoNoninteractiveElementToInteractiveRole(rule) => rule.run(node, ctx),
             Self::JsxA11YNoNoninteractiveTabindex(rule) => rule.run(node, ctx),
             Self::JsxA11YNoRedundantRoles(rule) => rule.run(node, ctx),
             Self::JsxA11YNoStaticElementInteractions(rule) => rule.run(node, ctx),
+            Self::JsxA11YNoSvgWithoutTitle(rule) => rule.run(node, ctx),
             Self::JsxA11YPreferTagOverRole(rule) => rule.run(node, ctx),
             Self::JsxA11YRoleHasRequiredAriaProps(rule) => rule.run(node, ctx),
             Self::JsxA11YRoleSupportsAriaProps(rule) => rule.run(node, ctx),
             Self::JsxA11YScope(rule) => rule.run(node, ctx),
             Self::JsxA11YTabindexNoPositive(rule) => rule.run(node, ctx),
+            Self::JsxA11YUseFocusableInteractive(rule) => rule.run(node, ctx),
+            Self::JsxA11YUseUniqueElementIds(rule) => rule.run(node, ctx),
             Self::OxcApproxConstant(rule) => rule.run(node, ctx),
             Self::OxcBadArrayMethodOnArguments(rule) => rule.run(node, ctx),
             Self::OxcBadBitwiseOperator(rule) => rule.run(node, ctx),
@@ -12994,6 +13790,7 @@ impl RuleEnum {
             Self::NodeGlobalRequire(rule) => rule.run(node, ctx),
             Self::NodeHandleCallbackErr(rule) => rule.run(node, ctx),
             Self::NodeNoExportsAssign(rule) => rule.run(node, ctx),
+            Self::NodeNoGlobalDirnameFilename(rule) => rule.run(node, ctx),
             Self::NodeNoNewRequire(rule) => rule.run(node, ctx),
             Self::NodeNoPathConcat(rule) => rule.run(node, ctx),
             Self::NodeNoProcessEnv(rule) => rule.run(node, ctx),
@@ -13035,6 +13832,7 @@ impl RuleEnum {
             Self::ImportNoCycle(rule) => rule.run_once(ctx),
             Self::ImportNoDefaultExport(rule) => rule.run_once(ctx),
             Self::ImportNoDuplicates(rule) => rule.run_once(ctx),
+            Self::ImportNoDynamicNamespaceImportAccess(rule) => rule.run_once(ctx),
             Self::ImportNoDynamicRequire(rule) => rule.run_once(ctx),
             Self::ImportNoEmptyNamedBlocks(rule) => rule.run_once(ctx),
             Self::ImportNoMutableExports(rule) => rule.run_once(ctx),
@@ -13044,9 +13842,12 @@ impl RuleEnum {
             Self::ImportNoNamedExport(rule) => rule.run_once(ctx),
             Self::ImportNoNamespace(rule) => rule.run_once(ctx),
             Self::ImportNoNodejsModules(rule) => rule.run_once(ctx),
+            Self::ImportNoPrivateImports(rule) => rule.run_once(ctx),
             Self::ImportNoRelativeParentImports(rule) => rule.run_once(ctx),
             Self::ImportNoSelfImport(rule) => rule.run_once(ctx),
             Self::ImportNoUnassignedImport(rule) => rule.run_once(ctx),
+            Self::ImportNoUndeclaredDependencies(rule) => rule.run_once(ctx),
+            Self::ImportNoUnresolvedImports(rule) => rule.run_once(ctx),
             Self::ImportNoWebpackLoaderSyntax(rule) => rule.run_once(ctx),
             Self::ImportPreferDefaultExport(rule) => rule.run_once(ctx),
             Self::ImportUnambiguous(rule) => rule.run_once(ctx),
@@ -13089,6 +13890,7 @@ impl RuleEnum {
             Self::EslintNoClassAssign(rule) => rule.run_once(ctx),
             Self::EslintNoCompareNegZero(rule) => rule.run_once(ctx),
             Self::EslintNoCondAssign(rule) => rule.run_once(ctx),
+            Self::EslintNoConfusingLabels(rule) => rule.run_once(ctx),
             Self::EslintNoConsole(rule) => rule.run_once(ctx),
             Self::EslintNoConstAssign(rule) => rule.run_once(ctx),
             Self::EslintNoConstantBinaryExpression(rule) => rule.run_once(ctx),
@@ -13146,12 +13948,14 @@ impl RuleEnum {
             Self::EslintNoNonoctalDecimalEscape(rule) => rule.run_once(ctx),
             Self::EslintNoObjCalls(rule) => rule.run_once(ctx),
             Self::EslintNoObjectConstructor(rule) => rule.run_once(ctx),
+            Self::EslintNoOctalEscape(rule) => rule.run_once(ctx),
             Self::EslintNoParamReassign(rule) => rule.run_once(ctx),
             Self::EslintNoPlusplus(rule) => rule.run_once(ctx),
             Self::EslintNoPromiseExecutorReturn(rule) => rule.run_once(ctx),
             Self::EslintNoProto(rule) => rule.run_once(ctx),
             Self::EslintNoPrototypeBuiltins(rule) => rule.run_once(ctx),
             Self::EslintNoRedeclare(rule) => rule.run_once(ctx),
+            Self::EslintNoRedundantUseStrict(rule) => rule.run_once(ctx),
             Self::EslintNoRegexSpaces(rule) => rule.run_once(ctx),
             Self::EslintNoRestrictedGlobals(rule) => rule.run_once(ctx),
             Self::EslintNoRestrictedImports(rule) => rule.run_once(ctx),
@@ -13163,7 +13967,9 @@ impl RuleEnum {
             Self::EslintNoSetterReturn(rule) => rule.run_once(ctx),
             Self::EslintNoShadow(rule) => rule.run_once(ctx),
             Self::EslintNoShadowRestrictedNames(rule) => rule.run_once(ctx),
+            Self::EslintNoShoutyConstants(rule) => rule.run_once(ctx),
             Self::EslintNoSparseArrays(rule) => rule.run_once(ctx),
+            Self::EslintNoStringCaseMismatch(rule) => rule.run_once(ctx),
             Self::EslintNoTemplateCurlyInString(rule) => rule.run_once(ctx),
             Self::EslintNoTernary(rule) => rule.run_once(ctx),
             Self::EslintNoThisBeforeSuper(rule) => rule.run_once(ctx),
@@ -13190,6 +13996,7 @@ impl RuleEnum {
             Self::EslintNoUselessComputedKey(rule) => rule.run_once(ctx),
             Self::EslintNoUselessConcat(rule) => rule.run_once(ctx),
             Self::EslintNoUselessConstructor(rule) => rule.run_once(ctx),
+            Self::EslintNoUselessContinue(rule) => rule.run_once(ctx),
             Self::EslintNoUselessEscape(rule) => rule.run_once(ctx),
             Self::EslintNoUselessRename(rule) => rule.run_once(ctx),
             Self::EslintNoUselessReturn(rule) => rule.run_once(ctx),
@@ -13199,6 +14006,7 @@ impl RuleEnum {
             Self::EslintNoWith(rule) => rule.run_once(ctx),
             Self::EslintObjectShorthand(rule) => rule.run_once(ctx),
             Self::EslintOperatorAssignment(rule) => rule.run_once(ctx),
+            Self::EslintPreferArrowCallback(rule) => rule.run_once(ctx),
             Self::EslintPreferConst(rule) => rule.run_once(ctx),
             Self::EslintPreferDestructuring(rule) => rule.run_once(ctx),
             Self::EslintPreferExponentiationOperator(rule) => rule.run_once(ctx),
@@ -13219,6 +14027,9 @@ impl RuleEnum {
             Self::EslintSymbolDescription(rule) => rule.run_once(ctx),
             Self::EslintUnicodeBom(rule) => rule.run_once(ctx),
             Self::EslintUseIsnan(rule) => rule.run_once(ctx),
+            Self::EslintUseRegexLiterals(rule) => rule.run_once(ctx),
+            Self::EslintUseSingleVarDeclarator(rule) => rule.run_once(ctx),
+            Self::EslintUseWhile(rule) => rule.run_once(ctx),
             Self::EslintValidTypeof(rule) => rule.run_once(ctx),
             Self::EslintVarsOnTop(rule) => rule.run_once(ctx),
             Self::EslintYoda(rule) => rule.run_once(ctx),
@@ -13238,7 +14049,9 @@ impl RuleEnum {
             Self::TypescriptConsistentTypeImports(rule) => rule.run_once(ctx),
             Self::TypescriptDotNotation(rule) => rule.run_once(ctx),
             Self::TypescriptExplicitFunctionReturnType(rule) => rule.run_once(ctx),
+            Self::TypescriptExplicitMemberAccessibility(rule) => rule.run_once(ctx),
             Self::TypescriptExplicitModuleBoundaryTypes(rule) => rule.run_once(ctx),
+            Self::TypescriptNamingConvention(rule) => rule.run_once(ctx),
             Self::TypescriptNoArrayDelete(rule) => rule.run_once(ctx),
             Self::TypescriptNoBaseToString(rule) => rule.run_once(ctx),
             Self::TypescriptNoConfusingNonNullAssertion(rule) => rule.run_once(ctx),
@@ -13249,11 +14062,15 @@ impl RuleEnum {
             Self::TypescriptNoDynamicDelete(rule) => rule.run_once(ctx),
             Self::TypescriptNoEmptyInterface(rule) => rule.run_once(ctx),
             Self::TypescriptNoEmptyObjectType(rule) => rule.run_once(ctx),
+            Self::TypescriptNoEmptyTypeParameters(rule) => rule.run_once(ctx),
+            Self::TypescriptNoEnum(rule) => rule.run_once(ctx),
+            Self::TypescriptNoEvolvingTypes(rule) => rule.run_once(ctx),
             Self::TypescriptNoExplicitAny(rule) => rule.run_once(ctx),
             Self::TypescriptNoExtraNonNullAssertion(rule) => rule.run_once(ctx),
             Self::TypescriptNoExtraneousClass(rule) => rule.run_once(ctx),
             Self::TypescriptNoFloatingPromises(rule) => rule.run_once(ctx),
             Self::TypescriptNoForInArray(rule) => rule.run_once(ctx),
+            Self::TypescriptNoImplicitAnyLet(rule) => rule.run_once(ctx),
             Self::TypescriptNoImpliedEval(rule) => rule.run_once(ctx),
             Self::TypescriptNoImportTypeSideEffects(rule) => rule.run_once(ctx),
             Self::TypescriptNoInferrableTypes(rule) => rule.run_once(ctx),
@@ -13271,6 +14088,7 @@ impl RuleEnum {
             Self::TypescriptNoRequireImports(rule) => rule.run_once(ctx),
             Self::TypescriptNoRestrictedTypes(rule) => rule.run_once(ctx),
             Self::TypescriptNoThisAlias(rule) => rule.run_once(ctx),
+            Self::TypescriptNoThisInStatic(rule) => rule.run_once(ctx),
             Self::TypescriptNoUnnecessaryBooleanLiteralCompare(rule) => rule.run_once(ctx),
             Self::TypescriptNoUnnecessaryCondition(rule) => rule.run_once(ctx),
             Self::TypescriptNoUnnecessaryParameterPropertyAssignment(rule) => rule.run_once(ctx),
@@ -13418,14 +14236,18 @@ impl RuleEnum {
             Self::ReactNoDidMountSetState(rule) => rule.run_once(ctx),
             Self::ReactNoDirectMutationState(rule) => rule.run_once(ctx),
             Self::ReactNoFindDomNode(rule) => rule.run_once(ctx),
+            Self::ReactNoForwardRef(rule) => rule.run_once(ctx),
             Self::ReactNoIsMounted(rule) => rule.run_once(ctx),
+            Self::ReactNoJsxLiterals(rule) => rule.run_once(ctx),
             Self::ReactNoMultiComp(rule) => rule.run_once(ctx),
             Self::ReactNoNamespace(rule) => rule.run_once(ctx),
             Self::ReactNoReactChildren(rule) => rule.run_once(ctx),
+            Self::ReactNoReactSpecificProps(rule) => rule.run_once(ctx),
             Self::ReactNoRedundantShouldComponentUpdate(rule) => rule.run_once(ctx),
             Self::ReactNoRenderReturnValue(rule) => rule.run_once(ctx),
             Self::ReactNoSetState(rule) => rule.run_once(ctx),
             Self::ReactNoStringRefs(rule) => rule.run_once(ctx),
+            Self::ReactNoSuspiciousSemicolonInJsx(rule) => rule.run_once(ctx),
             Self::ReactNoThisInSfc(rule) => rule.run_once(ctx),
             Self::ReactNoUnescapedEntities(rule) => rule.run_once(ctx),
             Self::ReactNoUnknownProperty(rule) => rule.run_once(ctx),
@@ -13440,6 +14262,7 @@ impl RuleEnum {
             Self::ReactSelfClosingComp(rule) => rule.run_once(ctx),
             Self::ReactStateInConstructor(rule) => rule.run_once(ctx),
             Self::ReactStylePropObject(rule) => rule.run_once(ctx),
+            Self::ReactUseImageSize(rule) => rule.run_once(ctx),
             Self::ReactVoidDomElementsNoChildren(rule) => rule.run_once(ctx),
             Self::ReactPerfJsxNoJsxAsProp(rule) => rule.run_once(ctx),
             Self::ReactPerfJsxNoNewArrayAsProp(rule) => rule.run_once(ctx),
@@ -13472,6 +14295,7 @@ impl RuleEnum {
             Self::UnicornNoConsoleSpaces(rule) => rule.run_once(ctx),
             Self::UnicornNoDocumentCookie(rule) => rule.run_once(ctx),
             Self::UnicornNoEmptyFile(rule) => rule.run_once(ctx),
+            Self::UnicornNoFlatMapIdentity(rule) => rule.run_once(ctx),
             Self::UnicornNoHexEscape(rule) => rule.run_once(ctx),
             Self::UnicornNoImmediateMutation(rule) => rule.run_once(ctx),
             Self::UnicornNoInstanceofArray(rule) => rule.run_once(ctx),
@@ -13505,8 +14329,10 @@ impl RuleEnum {
             Self::UnicornNoUselessLengthCheck(rule) => rule.run_once(ctx),
             Self::UnicornNoUselessPromiseResolveReject(rule) => rule.run_once(ctx),
             Self::UnicornNoUselessSpread(rule) => rule.run_once(ctx),
+            Self::UnicornNoUselessStringRaw(rule) => rule.run_once(ctx),
             Self::UnicornNoUselessSwitchCase(rule) => rule.run_once(ctx),
             Self::UnicornNoUselessUndefined(rule) => rule.run_once(ctx),
+            Self::UnicornNoUselessUndefinedInitialization(rule) => rule.run_once(ctx),
             Self::UnicornNoZeroFractions(rule) => rule.run_once(ctx),
             Self::UnicornNumberLiteralCase(rule) => rule.run_once(ctx),
             Self::UnicornNumericSeparatorsStyle(rule) => rule.run_once(ctx),
@@ -13571,6 +14397,10 @@ impl RuleEnum {
             Self::UnicornSwitchCaseBreakPosition(rule) => rule.run_once(ctx),
             Self::UnicornTextEncodingIdentifierCase(rule) => rule.run_once(ctx),
             Self::UnicornThrowNewError(rule) => rule.run_once(ctx),
+            Self::UnicornUseCollapsedIf(rule) => rule.run_once(ctx),
+            Self::UnicornUseConsistentCurlyBraces(rule) => rule.run_once(ctx),
+            Self::UnicornUseSimpleNumberKeys(rule) => rule.run_once(ctx),
+            Self::UnicornUseSimplifiedLogicExpression(rule) => rule.run_once(ctx),
             Self::JsxA11YAltText(rule) => rule.run_once(ctx),
             Self::JsxA11YAnchorAmbiguousText(rule) => rule.run_once(ctx),
             Self::JsxA11YAnchorHasContent(rule) => rule.run_once(ctx),
@@ -13594,14 +14424,20 @@ impl RuleEnum {
             Self::JsxA11YNoAriaHiddenOnFocusable(rule) => rule.run_once(ctx),
             Self::JsxA11YNoAutofocus(rule) => rule.run_once(ctx),
             Self::JsxA11YNoDistractingElements(rule) => rule.run_once(ctx),
+            Self::JsxA11YNoInteractiveElementToNoninteractiveRole(rule) => rule.run_once(ctx),
+            Self::JsxA11YNoNoninteractiveElementInteractions(rule) => rule.run_once(ctx),
+            Self::JsxA11YNoNoninteractiveElementToInteractiveRole(rule) => rule.run_once(ctx),
             Self::JsxA11YNoNoninteractiveTabindex(rule) => rule.run_once(ctx),
             Self::JsxA11YNoRedundantRoles(rule) => rule.run_once(ctx),
             Self::JsxA11YNoStaticElementInteractions(rule) => rule.run_once(ctx),
+            Self::JsxA11YNoSvgWithoutTitle(rule) => rule.run_once(ctx),
             Self::JsxA11YPreferTagOverRole(rule) => rule.run_once(ctx),
             Self::JsxA11YRoleHasRequiredAriaProps(rule) => rule.run_once(ctx),
             Self::JsxA11YRoleSupportsAriaProps(rule) => rule.run_once(ctx),
             Self::JsxA11YScope(rule) => rule.run_once(ctx),
             Self::JsxA11YTabindexNoPositive(rule) => rule.run_once(ctx),
+            Self::JsxA11YUseFocusableInteractive(rule) => rule.run_once(ctx),
+            Self::JsxA11YUseUniqueElementIds(rule) => rule.run_once(ctx),
             Self::OxcApproxConstant(rule) => rule.run_once(ctx),
             Self::OxcBadArrayMethodOnArguments(rule) => rule.run_once(ctx),
             Self::OxcBadBitwiseOperator(rule) => rule.run_once(ctx),
@@ -13708,6 +14544,7 @@ impl RuleEnum {
             Self::NodeGlobalRequire(rule) => rule.run_once(ctx),
             Self::NodeHandleCallbackErr(rule) => rule.run_once(ctx),
             Self::NodeNoExportsAssign(rule) => rule.run_once(ctx),
+            Self::NodeNoGlobalDirnameFilename(rule) => rule.run_once(ctx),
             Self::NodeNoNewRequire(rule) => rule.run_once(ctx),
             Self::NodeNoPathConcat(rule) => rule.run_once(ctx),
             Self::NodeNoProcessEnv(rule) => rule.run_once(ctx),
@@ -13753,6 +14590,9 @@ impl RuleEnum {
             Self::ImportNoCycle(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ImportNoDefaultExport(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ImportNoDuplicates(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ImportNoDynamicNamespaceImportAccess(rule) => {
+                rule.run_on_jest_node(jest_node, ctx)
+            }
             Self::ImportNoDynamicRequire(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ImportNoEmptyNamedBlocks(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ImportNoMutableExports(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -13762,9 +14602,12 @@ impl RuleEnum {
             Self::ImportNoNamedExport(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ImportNoNamespace(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ImportNoNodejsModules(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ImportNoPrivateImports(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ImportNoRelativeParentImports(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ImportNoSelfImport(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ImportNoUnassignedImport(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ImportNoUndeclaredDependencies(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ImportNoUnresolvedImports(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ImportNoWebpackLoaderSyntax(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ImportPreferDefaultExport(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ImportUnambiguous(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -13807,6 +14650,7 @@ impl RuleEnum {
             Self::EslintNoClassAssign(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoCompareNegZero(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoCondAssign(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::EslintNoConfusingLabels(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoConsole(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoConstAssign(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoConstantBinaryExpression(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -13864,12 +14708,14 @@ impl RuleEnum {
             Self::EslintNoNonoctalDecimalEscape(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoObjCalls(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoObjectConstructor(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::EslintNoOctalEscape(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoParamReassign(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoPlusplus(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoPromiseExecutorReturn(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoProto(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoPrototypeBuiltins(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoRedeclare(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::EslintNoRedundantUseStrict(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoRegexSpaces(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoRestrictedGlobals(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoRestrictedImports(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -13881,7 +14727,9 @@ impl RuleEnum {
             Self::EslintNoSetterReturn(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoShadow(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoShadowRestrictedNames(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::EslintNoShoutyConstants(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoSparseArrays(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::EslintNoStringCaseMismatch(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoTemplateCurlyInString(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoTernary(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoThisBeforeSuper(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -13908,6 +14756,7 @@ impl RuleEnum {
             Self::EslintNoUselessComputedKey(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoUselessConcat(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoUselessConstructor(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::EslintNoUselessContinue(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoUselessEscape(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoUselessRename(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoUselessReturn(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -13917,6 +14766,7 @@ impl RuleEnum {
             Self::EslintNoWith(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintObjectShorthand(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintOperatorAssignment(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::EslintPreferArrowCallback(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintPreferConst(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintPreferDestructuring(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintPreferExponentiationOperator(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -13937,6 +14787,9 @@ impl RuleEnum {
             Self::EslintSymbolDescription(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintUnicodeBom(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintUseIsnan(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::EslintUseRegexLiterals(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::EslintUseSingleVarDeclarator(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::EslintUseWhile(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintValidTypeof(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintVarsOnTop(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintYoda(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -13968,9 +14821,13 @@ impl RuleEnum {
             Self::TypescriptExplicitFunctionReturnType(rule) => {
                 rule.run_on_jest_node(jest_node, ctx)
             }
+            Self::TypescriptExplicitMemberAccessibility(rule) => {
+                rule.run_on_jest_node(jest_node, ctx)
+            }
             Self::TypescriptExplicitModuleBoundaryTypes(rule) => {
                 rule.run_on_jest_node(jest_node, ctx)
             }
+            Self::TypescriptNamingConvention(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::TypescriptNoArrayDelete(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::TypescriptNoBaseToString(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::TypescriptNoConfusingNonNullAssertion(rule) => {
@@ -13987,11 +14844,15 @@ impl RuleEnum {
             Self::TypescriptNoDynamicDelete(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::TypescriptNoEmptyInterface(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::TypescriptNoEmptyObjectType(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::TypescriptNoEmptyTypeParameters(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::TypescriptNoEnum(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::TypescriptNoEvolvingTypes(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::TypescriptNoExplicitAny(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::TypescriptNoExtraNonNullAssertion(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::TypescriptNoExtraneousClass(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::TypescriptNoFloatingPromises(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::TypescriptNoForInArray(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::TypescriptNoImplicitAnyLet(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::TypescriptNoImpliedEval(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::TypescriptNoImportTypeSideEffects(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::TypescriptNoInferrableTypes(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -14017,6 +14878,7 @@ impl RuleEnum {
             Self::TypescriptNoRequireImports(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::TypescriptNoRestrictedTypes(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::TypescriptNoThisAlias(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::TypescriptNoThisInStatic(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::TypescriptNoUnnecessaryBooleanLiteralCompare(rule) => {
                 rule.run_on_jest_node(jest_node, ctx)
             }
@@ -14202,16 +15064,20 @@ impl RuleEnum {
             Self::ReactNoDidMountSetState(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactNoDirectMutationState(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactNoFindDomNode(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactNoForwardRef(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactNoIsMounted(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactNoJsxLiterals(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactNoMultiComp(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactNoNamespace(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactNoReactChildren(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactNoReactSpecificProps(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactNoRedundantShouldComponentUpdate(rule) => {
                 rule.run_on_jest_node(jest_node, ctx)
             }
             Self::ReactNoRenderReturnValue(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactNoSetState(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactNoStringRefs(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactNoSuspiciousSemicolonInJsx(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactNoThisInSfc(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactNoUnescapedEntities(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactNoUnknownProperty(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -14226,6 +15092,7 @@ impl RuleEnum {
             Self::ReactSelfClosingComp(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactStateInConstructor(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactStylePropObject(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactUseImageSize(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactVoidDomElementsNoChildren(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactPerfJsxNoJsxAsProp(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactPerfJsxNoNewArrayAsProp(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -14260,6 +15127,7 @@ impl RuleEnum {
             Self::UnicornNoConsoleSpaces(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornNoDocumentCookie(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornNoEmptyFile(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::UnicornNoFlatMapIdentity(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornNoHexEscape(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornNoImmediateMutation(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornNoInstanceofArray(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -14305,8 +15173,12 @@ impl RuleEnum {
                 rule.run_on_jest_node(jest_node, ctx)
             }
             Self::UnicornNoUselessSpread(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::UnicornNoUselessStringRaw(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornNoUselessSwitchCase(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornNoUselessUndefined(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::UnicornNoUselessUndefinedInitialization(rule) => {
+                rule.run_on_jest_node(jest_node, ctx)
+            }
             Self::UnicornNoZeroFractions(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornNumberLiteralCase(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornNumericSeparatorsStyle(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -14379,6 +15251,12 @@ impl RuleEnum {
             Self::UnicornSwitchCaseBreakPosition(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornTextEncodingIdentifierCase(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornThrowNewError(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::UnicornUseCollapsedIf(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::UnicornUseConsistentCurlyBraces(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::UnicornUseSimpleNumberKeys(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::UnicornUseSimplifiedLogicExpression(rule) => {
+                rule.run_on_jest_node(jest_node, ctx)
+            }
             Self::JsxA11YAltText(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JsxA11YAnchorAmbiguousText(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JsxA11YAnchorHasContent(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -14404,14 +15282,26 @@ impl RuleEnum {
             Self::JsxA11YNoAriaHiddenOnFocusable(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JsxA11YNoAutofocus(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JsxA11YNoDistractingElements(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::JsxA11YNoInteractiveElementToNoninteractiveRole(rule) => {
+                rule.run_on_jest_node(jest_node, ctx)
+            }
+            Self::JsxA11YNoNoninteractiveElementInteractions(rule) => {
+                rule.run_on_jest_node(jest_node, ctx)
+            }
+            Self::JsxA11YNoNoninteractiveElementToInteractiveRole(rule) => {
+                rule.run_on_jest_node(jest_node, ctx)
+            }
             Self::JsxA11YNoNoninteractiveTabindex(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JsxA11YNoRedundantRoles(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JsxA11YNoStaticElementInteractions(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::JsxA11YNoSvgWithoutTitle(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JsxA11YPreferTagOverRole(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JsxA11YRoleHasRequiredAriaProps(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JsxA11YRoleSupportsAriaProps(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JsxA11YScope(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JsxA11YTabindexNoPositive(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::JsxA11YUseFocusableInteractive(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::JsxA11YUseUniqueElementIds(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::OxcApproxConstant(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::OxcBadArrayMethodOnArguments(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::OxcBadBitwiseOperator(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -14522,6 +15412,7 @@ impl RuleEnum {
             Self::NodeGlobalRequire(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::NodeHandleCallbackErr(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::NodeNoExportsAssign(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::NodeNoGlobalDirnameFilename(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::NodeNoNewRequire(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::NodeNoPathConcat(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::NodeNoProcessEnv(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -14563,6 +15454,7 @@ impl RuleEnum {
             Self::ImportNoCycle(rule) => rule.should_run(ctx),
             Self::ImportNoDefaultExport(rule) => rule.should_run(ctx),
             Self::ImportNoDuplicates(rule) => rule.should_run(ctx),
+            Self::ImportNoDynamicNamespaceImportAccess(rule) => rule.should_run(ctx),
             Self::ImportNoDynamicRequire(rule) => rule.should_run(ctx),
             Self::ImportNoEmptyNamedBlocks(rule) => rule.should_run(ctx),
             Self::ImportNoMutableExports(rule) => rule.should_run(ctx),
@@ -14572,9 +15464,12 @@ impl RuleEnum {
             Self::ImportNoNamedExport(rule) => rule.should_run(ctx),
             Self::ImportNoNamespace(rule) => rule.should_run(ctx),
             Self::ImportNoNodejsModules(rule) => rule.should_run(ctx),
+            Self::ImportNoPrivateImports(rule) => rule.should_run(ctx),
             Self::ImportNoRelativeParentImports(rule) => rule.should_run(ctx),
             Self::ImportNoSelfImport(rule) => rule.should_run(ctx),
             Self::ImportNoUnassignedImport(rule) => rule.should_run(ctx),
+            Self::ImportNoUndeclaredDependencies(rule) => rule.should_run(ctx),
+            Self::ImportNoUnresolvedImports(rule) => rule.should_run(ctx),
             Self::ImportNoWebpackLoaderSyntax(rule) => rule.should_run(ctx),
             Self::ImportPreferDefaultExport(rule) => rule.should_run(ctx),
             Self::ImportUnambiguous(rule) => rule.should_run(ctx),
@@ -14617,6 +15512,7 @@ impl RuleEnum {
             Self::EslintNoClassAssign(rule) => rule.should_run(ctx),
             Self::EslintNoCompareNegZero(rule) => rule.should_run(ctx),
             Self::EslintNoCondAssign(rule) => rule.should_run(ctx),
+            Self::EslintNoConfusingLabels(rule) => rule.should_run(ctx),
             Self::EslintNoConsole(rule) => rule.should_run(ctx),
             Self::EslintNoConstAssign(rule) => rule.should_run(ctx),
             Self::EslintNoConstantBinaryExpression(rule) => rule.should_run(ctx),
@@ -14674,12 +15570,14 @@ impl RuleEnum {
             Self::EslintNoNonoctalDecimalEscape(rule) => rule.should_run(ctx),
             Self::EslintNoObjCalls(rule) => rule.should_run(ctx),
             Self::EslintNoObjectConstructor(rule) => rule.should_run(ctx),
+            Self::EslintNoOctalEscape(rule) => rule.should_run(ctx),
             Self::EslintNoParamReassign(rule) => rule.should_run(ctx),
             Self::EslintNoPlusplus(rule) => rule.should_run(ctx),
             Self::EslintNoPromiseExecutorReturn(rule) => rule.should_run(ctx),
             Self::EslintNoProto(rule) => rule.should_run(ctx),
             Self::EslintNoPrototypeBuiltins(rule) => rule.should_run(ctx),
             Self::EslintNoRedeclare(rule) => rule.should_run(ctx),
+            Self::EslintNoRedundantUseStrict(rule) => rule.should_run(ctx),
             Self::EslintNoRegexSpaces(rule) => rule.should_run(ctx),
             Self::EslintNoRestrictedGlobals(rule) => rule.should_run(ctx),
             Self::EslintNoRestrictedImports(rule) => rule.should_run(ctx),
@@ -14691,7 +15589,9 @@ impl RuleEnum {
             Self::EslintNoSetterReturn(rule) => rule.should_run(ctx),
             Self::EslintNoShadow(rule) => rule.should_run(ctx),
             Self::EslintNoShadowRestrictedNames(rule) => rule.should_run(ctx),
+            Self::EslintNoShoutyConstants(rule) => rule.should_run(ctx),
             Self::EslintNoSparseArrays(rule) => rule.should_run(ctx),
+            Self::EslintNoStringCaseMismatch(rule) => rule.should_run(ctx),
             Self::EslintNoTemplateCurlyInString(rule) => rule.should_run(ctx),
             Self::EslintNoTernary(rule) => rule.should_run(ctx),
             Self::EslintNoThisBeforeSuper(rule) => rule.should_run(ctx),
@@ -14718,6 +15618,7 @@ impl RuleEnum {
             Self::EslintNoUselessComputedKey(rule) => rule.should_run(ctx),
             Self::EslintNoUselessConcat(rule) => rule.should_run(ctx),
             Self::EslintNoUselessConstructor(rule) => rule.should_run(ctx),
+            Self::EslintNoUselessContinue(rule) => rule.should_run(ctx),
             Self::EslintNoUselessEscape(rule) => rule.should_run(ctx),
             Self::EslintNoUselessRename(rule) => rule.should_run(ctx),
             Self::EslintNoUselessReturn(rule) => rule.should_run(ctx),
@@ -14727,6 +15628,7 @@ impl RuleEnum {
             Self::EslintNoWith(rule) => rule.should_run(ctx),
             Self::EslintObjectShorthand(rule) => rule.should_run(ctx),
             Self::EslintOperatorAssignment(rule) => rule.should_run(ctx),
+            Self::EslintPreferArrowCallback(rule) => rule.should_run(ctx),
             Self::EslintPreferConst(rule) => rule.should_run(ctx),
             Self::EslintPreferDestructuring(rule) => rule.should_run(ctx),
             Self::EslintPreferExponentiationOperator(rule) => rule.should_run(ctx),
@@ -14747,6 +15649,9 @@ impl RuleEnum {
             Self::EslintSymbolDescription(rule) => rule.should_run(ctx),
             Self::EslintUnicodeBom(rule) => rule.should_run(ctx),
             Self::EslintUseIsnan(rule) => rule.should_run(ctx),
+            Self::EslintUseRegexLiterals(rule) => rule.should_run(ctx),
+            Self::EslintUseSingleVarDeclarator(rule) => rule.should_run(ctx),
+            Self::EslintUseWhile(rule) => rule.should_run(ctx),
             Self::EslintValidTypeof(rule) => rule.should_run(ctx),
             Self::EslintVarsOnTop(rule) => rule.should_run(ctx),
             Self::EslintYoda(rule) => rule.should_run(ctx),
@@ -14766,7 +15671,9 @@ impl RuleEnum {
             Self::TypescriptConsistentTypeImports(rule) => rule.should_run(ctx),
             Self::TypescriptDotNotation(rule) => rule.should_run(ctx),
             Self::TypescriptExplicitFunctionReturnType(rule) => rule.should_run(ctx),
+            Self::TypescriptExplicitMemberAccessibility(rule) => rule.should_run(ctx),
             Self::TypescriptExplicitModuleBoundaryTypes(rule) => rule.should_run(ctx),
+            Self::TypescriptNamingConvention(rule) => rule.should_run(ctx),
             Self::TypescriptNoArrayDelete(rule) => rule.should_run(ctx),
             Self::TypescriptNoBaseToString(rule) => rule.should_run(ctx),
             Self::TypescriptNoConfusingNonNullAssertion(rule) => rule.should_run(ctx),
@@ -14777,11 +15684,15 @@ impl RuleEnum {
             Self::TypescriptNoDynamicDelete(rule) => rule.should_run(ctx),
             Self::TypescriptNoEmptyInterface(rule) => rule.should_run(ctx),
             Self::TypescriptNoEmptyObjectType(rule) => rule.should_run(ctx),
+            Self::TypescriptNoEmptyTypeParameters(rule) => rule.should_run(ctx),
+            Self::TypescriptNoEnum(rule) => rule.should_run(ctx),
+            Self::TypescriptNoEvolvingTypes(rule) => rule.should_run(ctx),
             Self::TypescriptNoExplicitAny(rule) => rule.should_run(ctx),
             Self::TypescriptNoExtraNonNullAssertion(rule) => rule.should_run(ctx),
             Self::TypescriptNoExtraneousClass(rule) => rule.should_run(ctx),
             Self::TypescriptNoFloatingPromises(rule) => rule.should_run(ctx),
             Self::TypescriptNoForInArray(rule) => rule.should_run(ctx),
+            Self::TypescriptNoImplicitAnyLet(rule) => rule.should_run(ctx),
             Self::TypescriptNoImpliedEval(rule) => rule.should_run(ctx),
             Self::TypescriptNoImportTypeSideEffects(rule) => rule.should_run(ctx),
             Self::TypescriptNoInferrableTypes(rule) => rule.should_run(ctx),
@@ -14799,6 +15710,7 @@ impl RuleEnum {
             Self::TypescriptNoRequireImports(rule) => rule.should_run(ctx),
             Self::TypescriptNoRestrictedTypes(rule) => rule.should_run(ctx),
             Self::TypescriptNoThisAlias(rule) => rule.should_run(ctx),
+            Self::TypescriptNoThisInStatic(rule) => rule.should_run(ctx),
             Self::TypescriptNoUnnecessaryBooleanLiteralCompare(rule) => rule.should_run(ctx),
             Self::TypescriptNoUnnecessaryCondition(rule) => rule.should_run(ctx),
             Self::TypescriptNoUnnecessaryParameterPropertyAssignment(rule) => rule.should_run(ctx),
@@ -14946,14 +15858,18 @@ impl RuleEnum {
             Self::ReactNoDidMountSetState(rule) => rule.should_run(ctx),
             Self::ReactNoDirectMutationState(rule) => rule.should_run(ctx),
             Self::ReactNoFindDomNode(rule) => rule.should_run(ctx),
+            Self::ReactNoForwardRef(rule) => rule.should_run(ctx),
             Self::ReactNoIsMounted(rule) => rule.should_run(ctx),
+            Self::ReactNoJsxLiterals(rule) => rule.should_run(ctx),
             Self::ReactNoMultiComp(rule) => rule.should_run(ctx),
             Self::ReactNoNamespace(rule) => rule.should_run(ctx),
             Self::ReactNoReactChildren(rule) => rule.should_run(ctx),
+            Self::ReactNoReactSpecificProps(rule) => rule.should_run(ctx),
             Self::ReactNoRedundantShouldComponentUpdate(rule) => rule.should_run(ctx),
             Self::ReactNoRenderReturnValue(rule) => rule.should_run(ctx),
             Self::ReactNoSetState(rule) => rule.should_run(ctx),
             Self::ReactNoStringRefs(rule) => rule.should_run(ctx),
+            Self::ReactNoSuspiciousSemicolonInJsx(rule) => rule.should_run(ctx),
             Self::ReactNoThisInSfc(rule) => rule.should_run(ctx),
             Self::ReactNoUnescapedEntities(rule) => rule.should_run(ctx),
             Self::ReactNoUnknownProperty(rule) => rule.should_run(ctx),
@@ -14968,6 +15884,7 @@ impl RuleEnum {
             Self::ReactSelfClosingComp(rule) => rule.should_run(ctx),
             Self::ReactStateInConstructor(rule) => rule.should_run(ctx),
             Self::ReactStylePropObject(rule) => rule.should_run(ctx),
+            Self::ReactUseImageSize(rule) => rule.should_run(ctx),
             Self::ReactVoidDomElementsNoChildren(rule) => rule.should_run(ctx),
             Self::ReactPerfJsxNoJsxAsProp(rule) => rule.should_run(ctx),
             Self::ReactPerfJsxNoNewArrayAsProp(rule) => rule.should_run(ctx),
@@ -15000,6 +15917,7 @@ impl RuleEnum {
             Self::UnicornNoConsoleSpaces(rule) => rule.should_run(ctx),
             Self::UnicornNoDocumentCookie(rule) => rule.should_run(ctx),
             Self::UnicornNoEmptyFile(rule) => rule.should_run(ctx),
+            Self::UnicornNoFlatMapIdentity(rule) => rule.should_run(ctx),
             Self::UnicornNoHexEscape(rule) => rule.should_run(ctx),
             Self::UnicornNoImmediateMutation(rule) => rule.should_run(ctx),
             Self::UnicornNoInstanceofArray(rule) => rule.should_run(ctx),
@@ -15033,8 +15951,10 @@ impl RuleEnum {
             Self::UnicornNoUselessLengthCheck(rule) => rule.should_run(ctx),
             Self::UnicornNoUselessPromiseResolveReject(rule) => rule.should_run(ctx),
             Self::UnicornNoUselessSpread(rule) => rule.should_run(ctx),
+            Self::UnicornNoUselessStringRaw(rule) => rule.should_run(ctx),
             Self::UnicornNoUselessSwitchCase(rule) => rule.should_run(ctx),
             Self::UnicornNoUselessUndefined(rule) => rule.should_run(ctx),
+            Self::UnicornNoUselessUndefinedInitialization(rule) => rule.should_run(ctx),
             Self::UnicornNoZeroFractions(rule) => rule.should_run(ctx),
             Self::UnicornNumberLiteralCase(rule) => rule.should_run(ctx),
             Self::UnicornNumericSeparatorsStyle(rule) => rule.should_run(ctx),
@@ -15099,6 +16019,10 @@ impl RuleEnum {
             Self::UnicornSwitchCaseBreakPosition(rule) => rule.should_run(ctx),
             Self::UnicornTextEncodingIdentifierCase(rule) => rule.should_run(ctx),
             Self::UnicornThrowNewError(rule) => rule.should_run(ctx),
+            Self::UnicornUseCollapsedIf(rule) => rule.should_run(ctx),
+            Self::UnicornUseConsistentCurlyBraces(rule) => rule.should_run(ctx),
+            Self::UnicornUseSimpleNumberKeys(rule) => rule.should_run(ctx),
+            Self::UnicornUseSimplifiedLogicExpression(rule) => rule.should_run(ctx),
             Self::JsxA11YAltText(rule) => rule.should_run(ctx),
             Self::JsxA11YAnchorAmbiguousText(rule) => rule.should_run(ctx),
             Self::JsxA11YAnchorHasContent(rule) => rule.should_run(ctx),
@@ -15122,14 +16046,20 @@ impl RuleEnum {
             Self::JsxA11YNoAriaHiddenOnFocusable(rule) => rule.should_run(ctx),
             Self::JsxA11YNoAutofocus(rule) => rule.should_run(ctx),
             Self::JsxA11YNoDistractingElements(rule) => rule.should_run(ctx),
+            Self::JsxA11YNoInteractiveElementToNoninteractiveRole(rule) => rule.should_run(ctx),
+            Self::JsxA11YNoNoninteractiveElementInteractions(rule) => rule.should_run(ctx),
+            Self::JsxA11YNoNoninteractiveElementToInteractiveRole(rule) => rule.should_run(ctx),
             Self::JsxA11YNoNoninteractiveTabindex(rule) => rule.should_run(ctx),
             Self::JsxA11YNoRedundantRoles(rule) => rule.should_run(ctx),
             Self::JsxA11YNoStaticElementInteractions(rule) => rule.should_run(ctx),
+            Self::JsxA11YNoSvgWithoutTitle(rule) => rule.should_run(ctx),
             Self::JsxA11YPreferTagOverRole(rule) => rule.should_run(ctx),
             Self::JsxA11YRoleHasRequiredAriaProps(rule) => rule.should_run(ctx),
             Self::JsxA11YRoleSupportsAriaProps(rule) => rule.should_run(ctx),
             Self::JsxA11YScope(rule) => rule.should_run(ctx),
             Self::JsxA11YTabindexNoPositive(rule) => rule.should_run(ctx),
+            Self::JsxA11YUseFocusableInteractive(rule) => rule.should_run(ctx),
+            Self::JsxA11YUseUniqueElementIds(rule) => rule.should_run(ctx),
             Self::OxcApproxConstant(rule) => rule.should_run(ctx),
             Self::OxcBadArrayMethodOnArguments(rule) => rule.should_run(ctx),
             Self::OxcBadBitwiseOperator(rule) => rule.should_run(ctx),
@@ -15236,6 +16166,7 @@ impl RuleEnum {
             Self::NodeGlobalRequire(rule) => rule.should_run(ctx),
             Self::NodeHandleCallbackErr(rule) => rule.should_run(ctx),
             Self::NodeNoExportsAssign(rule) => rule.should_run(ctx),
+            Self::NodeNoGlobalDirnameFilename(rule) => rule.should_run(ctx),
             Self::NodeNoNewRequire(rule) => rule.should_run(ctx),
             Self::NodeNoPathConcat(rule) => rule.should_run(ctx),
             Self::NodeNoProcessEnv(rule) => rule.should_run(ctx),
@@ -15281,6 +16212,9 @@ impl RuleEnum {
             Self::ImportNoCycle(_) => ImportNoCycle::IS_TSGOLINT_RULE,
             Self::ImportNoDefaultExport(_) => ImportNoDefaultExport::IS_TSGOLINT_RULE,
             Self::ImportNoDuplicates(_) => ImportNoDuplicates::IS_TSGOLINT_RULE,
+            Self::ImportNoDynamicNamespaceImportAccess(_) => {
+                ImportNoDynamicNamespaceImportAccess::IS_TSGOLINT_RULE
+            }
             Self::ImportNoDynamicRequire(_) => ImportNoDynamicRequire::IS_TSGOLINT_RULE,
             Self::ImportNoEmptyNamedBlocks(_) => ImportNoEmptyNamedBlocks::IS_TSGOLINT_RULE,
             Self::ImportNoMutableExports(_) => ImportNoMutableExports::IS_TSGOLINT_RULE,
@@ -15290,11 +16224,16 @@ impl RuleEnum {
             Self::ImportNoNamedExport(_) => ImportNoNamedExport::IS_TSGOLINT_RULE,
             Self::ImportNoNamespace(_) => ImportNoNamespace::IS_TSGOLINT_RULE,
             Self::ImportNoNodejsModules(_) => ImportNoNodejsModules::IS_TSGOLINT_RULE,
+            Self::ImportNoPrivateImports(_) => ImportNoPrivateImports::IS_TSGOLINT_RULE,
             Self::ImportNoRelativeParentImports(_) => {
                 ImportNoRelativeParentImports::IS_TSGOLINT_RULE
             }
             Self::ImportNoSelfImport(_) => ImportNoSelfImport::IS_TSGOLINT_RULE,
             Self::ImportNoUnassignedImport(_) => ImportNoUnassignedImport::IS_TSGOLINT_RULE,
+            Self::ImportNoUndeclaredDependencies(_) => {
+                ImportNoUndeclaredDependencies::IS_TSGOLINT_RULE
+            }
+            Self::ImportNoUnresolvedImports(_) => ImportNoUnresolvedImports::IS_TSGOLINT_RULE,
             Self::ImportNoWebpackLoaderSyntax(_) => ImportNoWebpackLoaderSyntax::IS_TSGOLINT_RULE,
             Self::ImportPreferDefaultExport(_) => ImportPreferDefaultExport::IS_TSGOLINT_RULE,
             Self::ImportUnambiguous(_) => ImportUnambiguous::IS_TSGOLINT_RULE,
@@ -15337,6 +16276,7 @@ impl RuleEnum {
             Self::EslintNoClassAssign(_) => EslintNoClassAssign::IS_TSGOLINT_RULE,
             Self::EslintNoCompareNegZero(_) => EslintNoCompareNegZero::IS_TSGOLINT_RULE,
             Self::EslintNoCondAssign(_) => EslintNoCondAssign::IS_TSGOLINT_RULE,
+            Self::EslintNoConfusingLabels(_) => EslintNoConfusingLabels::IS_TSGOLINT_RULE,
             Self::EslintNoConsole(_) => EslintNoConsole::IS_TSGOLINT_RULE,
             Self::EslintNoConstAssign(_) => EslintNoConstAssign::IS_TSGOLINT_RULE,
             Self::EslintNoConstantBinaryExpression(_) => {
@@ -15402,6 +16342,7 @@ impl RuleEnum {
             }
             Self::EslintNoObjCalls(_) => EslintNoObjCalls::IS_TSGOLINT_RULE,
             Self::EslintNoObjectConstructor(_) => EslintNoObjectConstructor::IS_TSGOLINT_RULE,
+            Self::EslintNoOctalEscape(_) => EslintNoOctalEscape::IS_TSGOLINT_RULE,
             Self::EslintNoParamReassign(_) => EslintNoParamReassign::IS_TSGOLINT_RULE,
             Self::EslintNoPlusplus(_) => EslintNoPlusplus::IS_TSGOLINT_RULE,
             Self::EslintNoPromiseExecutorReturn(_) => {
@@ -15410,6 +16351,7 @@ impl RuleEnum {
             Self::EslintNoProto(_) => EslintNoProto::IS_TSGOLINT_RULE,
             Self::EslintNoPrototypeBuiltins(_) => EslintNoPrototypeBuiltins::IS_TSGOLINT_RULE,
             Self::EslintNoRedeclare(_) => EslintNoRedeclare::IS_TSGOLINT_RULE,
+            Self::EslintNoRedundantUseStrict(_) => EslintNoRedundantUseStrict::IS_TSGOLINT_RULE,
             Self::EslintNoRegexSpaces(_) => EslintNoRegexSpaces::IS_TSGOLINT_RULE,
             Self::EslintNoRestrictedGlobals(_) => EslintNoRestrictedGlobals::IS_TSGOLINT_RULE,
             Self::EslintNoRestrictedImports(_) => EslintNoRestrictedImports::IS_TSGOLINT_RULE,
@@ -15423,7 +16365,9 @@ impl RuleEnum {
             Self::EslintNoShadowRestrictedNames(_) => {
                 EslintNoShadowRestrictedNames::IS_TSGOLINT_RULE
             }
+            Self::EslintNoShoutyConstants(_) => EslintNoShoutyConstants::IS_TSGOLINT_RULE,
             Self::EslintNoSparseArrays(_) => EslintNoSparseArrays::IS_TSGOLINT_RULE,
+            Self::EslintNoStringCaseMismatch(_) => EslintNoStringCaseMismatch::IS_TSGOLINT_RULE,
             Self::EslintNoTemplateCurlyInString(_) => {
                 EslintNoTemplateCurlyInString::IS_TSGOLINT_RULE
             }
@@ -15458,6 +16402,7 @@ impl RuleEnum {
             Self::EslintNoUselessComputedKey(_) => EslintNoUselessComputedKey::IS_TSGOLINT_RULE,
             Self::EslintNoUselessConcat(_) => EslintNoUselessConcat::IS_TSGOLINT_RULE,
             Self::EslintNoUselessConstructor(_) => EslintNoUselessConstructor::IS_TSGOLINT_RULE,
+            Self::EslintNoUselessContinue(_) => EslintNoUselessContinue::IS_TSGOLINT_RULE,
             Self::EslintNoUselessEscape(_) => EslintNoUselessEscape::IS_TSGOLINT_RULE,
             Self::EslintNoUselessRename(_) => EslintNoUselessRename::IS_TSGOLINT_RULE,
             Self::EslintNoUselessReturn(_) => EslintNoUselessReturn::IS_TSGOLINT_RULE,
@@ -15467,6 +16412,7 @@ impl RuleEnum {
             Self::EslintNoWith(_) => EslintNoWith::IS_TSGOLINT_RULE,
             Self::EslintObjectShorthand(_) => EslintObjectShorthand::IS_TSGOLINT_RULE,
             Self::EslintOperatorAssignment(_) => EslintOperatorAssignment::IS_TSGOLINT_RULE,
+            Self::EslintPreferArrowCallback(_) => EslintPreferArrowCallback::IS_TSGOLINT_RULE,
             Self::EslintPreferConst(_) => EslintPreferConst::IS_TSGOLINT_RULE,
             Self::EslintPreferDestructuring(_) => EslintPreferDestructuring::IS_TSGOLINT_RULE,
             Self::EslintPreferExponentiationOperator(_) => {
@@ -15491,6 +16437,9 @@ impl RuleEnum {
             Self::EslintSymbolDescription(_) => EslintSymbolDescription::IS_TSGOLINT_RULE,
             Self::EslintUnicodeBom(_) => EslintUnicodeBom::IS_TSGOLINT_RULE,
             Self::EslintUseIsnan(_) => EslintUseIsnan::IS_TSGOLINT_RULE,
+            Self::EslintUseRegexLiterals(_) => EslintUseRegexLiterals::IS_TSGOLINT_RULE,
+            Self::EslintUseSingleVarDeclarator(_) => EslintUseSingleVarDeclarator::IS_TSGOLINT_RULE,
+            Self::EslintUseWhile(_) => EslintUseWhile::IS_TSGOLINT_RULE,
             Self::EslintValidTypeof(_) => EslintValidTypeof::IS_TSGOLINT_RULE,
             Self::EslintVarsOnTop(_) => EslintVarsOnTop::IS_TSGOLINT_RULE,
             Self::EslintYoda(_) => EslintYoda::IS_TSGOLINT_RULE,
@@ -15528,9 +16477,13 @@ impl RuleEnum {
             Self::TypescriptExplicitFunctionReturnType(_) => {
                 TypescriptExplicitFunctionReturnType::IS_TSGOLINT_RULE
             }
+            Self::TypescriptExplicitMemberAccessibility(_) => {
+                TypescriptExplicitMemberAccessibility::IS_TSGOLINT_RULE
+            }
             Self::TypescriptExplicitModuleBoundaryTypes(_) => {
                 TypescriptExplicitModuleBoundaryTypes::IS_TSGOLINT_RULE
             }
+            Self::TypescriptNamingConvention(_) => TypescriptNamingConvention::IS_TSGOLINT_RULE,
             Self::TypescriptNoArrayDelete(_) => TypescriptNoArrayDelete::IS_TSGOLINT_RULE,
             Self::TypescriptNoBaseToString(_) => TypescriptNoBaseToString::IS_TSGOLINT_RULE,
             Self::TypescriptNoConfusingNonNullAssertion(_) => {
@@ -15549,6 +16502,11 @@ impl RuleEnum {
             Self::TypescriptNoDynamicDelete(_) => TypescriptNoDynamicDelete::IS_TSGOLINT_RULE,
             Self::TypescriptNoEmptyInterface(_) => TypescriptNoEmptyInterface::IS_TSGOLINT_RULE,
             Self::TypescriptNoEmptyObjectType(_) => TypescriptNoEmptyObjectType::IS_TSGOLINT_RULE,
+            Self::TypescriptNoEmptyTypeParameters(_) => {
+                TypescriptNoEmptyTypeParameters::IS_TSGOLINT_RULE
+            }
+            Self::TypescriptNoEnum(_) => TypescriptNoEnum::IS_TSGOLINT_RULE,
+            Self::TypescriptNoEvolvingTypes(_) => TypescriptNoEvolvingTypes::IS_TSGOLINT_RULE,
             Self::TypescriptNoExplicitAny(_) => TypescriptNoExplicitAny::IS_TSGOLINT_RULE,
             Self::TypescriptNoExtraNonNullAssertion(_) => {
                 TypescriptNoExtraNonNullAssertion::IS_TSGOLINT_RULE
@@ -15556,6 +16514,7 @@ impl RuleEnum {
             Self::TypescriptNoExtraneousClass(_) => TypescriptNoExtraneousClass::IS_TSGOLINT_RULE,
             Self::TypescriptNoFloatingPromises(_) => TypescriptNoFloatingPromises::IS_TSGOLINT_RULE,
             Self::TypescriptNoForInArray(_) => TypescriptNoForInArray::IS_TSGOLINT_RULE,
+            Self::TypescriptNoImplicitAnyLet(_) => TypescriptNoImplicitAnyLet::IS_TSGOLINT_RULE,
             Self::TypescriptNoImpliedEval(_) => TypescriptNoImpliedEval::IS_TSGOLINT_RULE,
             Self::TypescriptNoImportTypeSideEffects(_) => {
                 TypescriptNoImportTypeSideEffects::IS_TSGOLINT_RULE
@@ -15583,6 +16542,7 @@ impl RuleEnum {
             Self::TypescriptNoRequireImports(_) => TypescriptNoRequireImports::IS_TSGOLINT_RULE,
             Self::TypescriptNoRestrictedTypes(_) => TypescriptNoRestrictedTypes::IS_TSGOLINT_RULE,
             Self::TypescriptNoThisAlias(_) => TypescriptNoThisAlias::IS_TSGOLINT_RULE,
+            Self::TypescriptNoThisInStatic(_) => TypescriptNoThisInStatic::IS_TSGOLINT_RULE,
             Self::TypescriptNoUnnecessaryBooleanLiteralCompare(_) => {
                 TypescriptNoUnnecessaryBooleanLiteralCompare::IS_TSGOLINT_RULE
             }
@@ -15824,16 +16784,22 @@ impl RuleEnum {
             Self::ReactNoDidMountSetState(_) => ReactNoDidMountSetState::IS_TSGOLINT_RULE,
             Self::ReactNoDirectMutationState(_) => ReactNoDirectMutationState::IS_TSGOLINT_RULE,
             Self::ReactNoFindDomNode(_) => ReactNoFindDomNode::IS_TSGOLINT_RULE,
+            Self::ReactNoForwardRef(_) => ReactNoForwardRef::IS_TSGOLINT_RULE,
             Self::ReactNoIsMounted(_) => ReactNoIsMounted::IS_TSGOLINT_RULE,
+            Self::ReactNoJsxLiterals(_) => ReactNoJsxLiterals::IS_TSGOLINT_RULE,
             Self::ReactNoMultiComp(_) => ReactNoMultiComp::IS_TSGOLINT_RULE,
             Self::ReactNoNamespace(_) => ReactNoNamespace::IS_TSGOLINT_RULE,
             Self::ReactNoReactChildren(_) => ReactNoReactChildren::IS_TSGOLINT_RULE,
+            Self::ReactNoReactSpecificProps(_) => ReactNoReactSpecificProps::IS_TSGOLINT_RULE,
             Self::ReactNoRedundantShouldComponentUpdate(_) => {
                 ReactNoRedundantShouldComponentUpdate::IS_TSGOLINT_RULE
             }
             Self::ReactNoRenderReturnValue(_) => ReactNoRenderReturnValue::IS_TSGOLINT_RULE,
             Self::ReactNoSetState(_) => ReactNoSetState::IS_TSGOLINT_RULE,
             Self::ReactNoStringRefs(_) => ReactNoStringRefs::IS_TSGOLINT_RULE,
+            Self::ReactNoSuspiciousSemicolonInJsx(_) => {
+                ReactNoSuspiciousSemicolonInJsx::IS_TSGOLINT_RULE
+            }
             Self::ReactNoThisInSfc(_) => ReactNoThisInSfc::IS_TSGOLINT_RULE,
             Self::ReactNoUnescapedEntities(_) => ReactNoUnescapedEntities::IS_TSGOLINT_RULE,
             Self::ReactNoUnknownProperty(_) => ReactNoUnknownProperty::IS_TSGOLINT_RULE,
@@ -15848,6 +16814,7 @@ impl RuleEnum {
             Self::ReactSelfClosingComp(_) => ReactSelfClosingComp::IS_TSGOLINT_RULE,
             Self::ReactStateInConstructor(_) => ReactStateInConstructor::IS_TSGOLINT_RULE,
             Self::ReactStylePropObject(_) => ReactStylePropObject::IS_TSGOLINT_RULE,
+            Self::ReactUseImageSize(_) => ReactUseImageSize::IS_TSGOLINT_RULE,
             Self::ReactVoidDomElementsNoChildren(_) => {
                 ReactVoidDomElementsNoChildren::IS_TSGOLINT_RULE
             }
@@ -15904,6 +16871,7 @@ impl RuleEnum {
             Self::UnicornNoConsoleSpaces(_) => UnicornNoConsoleSpaces::IS_TSGOLINT_RULE,
             Self::UnicornNoDocumentCookie(_) => UnicornNoDocumentCookie::IS_TSGOLINT_RULE,
             Self::UnicornNoEmptyFile(_) => UnicornNoEmptyFile::IS_TSGOLINT_RULE,
+            Self::UnicornNoFlatMapIdentity(_) => UnicornNoFlatMapIdentity::IS_TSGOLINT_RULE,
             Self::UnicornNoHexEscape(_) => UnicornNoHexEscape::IS_TSGOLINT_RULE,
             Self::UnicornNoImmediateMutation(_) => UnicornNoImmediateMutation::IS_TSGOLINT_RULE,
             Self::UnicornNoInstanceofArray(_) => UnicornNoInstanceofArray::IS_TSGOLINT_RULE,
@@ -15959,8 +16927,12 @@ impl RuleEnum {
                 UnicornNoUselessPromiseResolveReject::IS_TSGOLINT_RULE
             }
             Self::UnicornNoUselessSpread(_) => UnicornNoUselessSpread::IS_TSGOLINT_RULE,
+            Self::UnicornNoUselessStringRaw(_) => UnicornNoUselessStringRaw::IS_TSGOLINT_RULE,
             Self::UnicornNoUselessSwitchCase(_) => UnicornNoUselessSwitchCase::IS_TSGOLINT_RULE,
             Self::UnicornNoUselessUndefined(_) => UnicornNoUselessUndefined::IS_TSGOLINT_RULE,
+            Self::UnicornNoUselessUndefinedInitialization(_) => {
+                UnicornNoUselessUndefinedInitialization::IS_TSGOLINT_RULE
+            }
             Self::UnicornNoZeroFractions(_) => UnicornNoZeroFractions::IS_TSGOLINT_RULE,
             Self::UnicornNumberLiteralCase(_) => UnicornNumberLiteralCase::IS_TSGOLINT_RULE,
             Self::UnicornNumericSeparatorsStyle(_) => {
@@ -16071,6 +17043,14 @@ impl RuleEnum {
                 UnicornTextEncodingIdentifierCase::IS_TSGOLINT_RULE
             }
             Self::UnicornThrowNewError(_) => UnicornThrowNewError::IS_TSGOLINT_RULE,
+            Self::UnicornUseCollapsedIf(_) => UnicornUseCollapsedIf::IS_TSGOLINT_RULE,
+            Self::UnicornUseConsistentCurlyBraces(_) => {
+                UnicornUseConsistentCurlyBraces::IS_TSGOLINT_RULE
+            }
+            Self::UnicornUseSimpleNumberKeys(_) => UnicornUseSimpleNumberKeys::IS_TSGOLINT_RULE,
+            Self::UnicornUseSimplifiedLogicExpression(_) => {
+                UnicornUseSimplifiedLogicExpression::IS_TSGOLINT_RULE
+            }
             Self::JsxA11YAltText(_) => JsxA11YAltText::IS_TSGOLINT_RULE,
             Self::JsxA11YAnchorAmbiguousText(_) => JsxA11YAnchorAmbiguousText::IS_TSGOLINT_RULE,
             Self::JsxA11YAnchorHasContent(_) => JsxA11YAnchorHasContent::IS_TSGOLINT_RULE,
@@ -16106,6 +17086,15 @@ impl RuleEnum {
             }
             Self::JsxA11YNoAutofocus(_) => JsxA11YNoAutofocus::IS_TSGOLINT_RULE,
             Self::JsxA11YNoDistractingElements(_) => JsxA11YNoDistractingElements::IS_TSGOLINT_RULE,
+            Self::JsxA11YNoInteractiveElementToNoninteractiveRole(_) => {
+                JsxA11YNoInteractiveElementToNoninteractiveRole::IS_TSGOLINT_RULE
+            }
+            Self::JsxA11YNoNoninteractiveElementInteractions(_) => {
+                JsxA11YNoNoninteractiveElementInteractions::IS_TSGOLINT_RULE
+            }
+            Self::JsxA11YNoNoninteractiveElementToInteractiveRole(_) => {
+                JsxA11YNoNoninteractiveElementToInteractiveRole::IS_TSGOLINT_RULE
+            }
             Self::JsxA11YNoNoninteractiveTabindex(_) => {
                 JsxA11YNoNoninteractiveTabindex::IS_TSGOLINT_RULE
             }
@@ -16113,6 +17102,7 @@ impl RuleEnum {
             Self::JsxA11YNoStaticElementInteractions(_) => {
                 JsxA11YNoStaticElementInteractions::IS_TSGOLINT_RULE
             }
+            Self::JsxA11YNoSvgWithoutTitle(_) => JsxA11YNoSvgWithoutTitle::IS_TSGOLINT_RULE,
             Self::JsxA11YPreferTagOverRole(_) => JsxA11YPreferTagOverRole::IS_TSGOLINT_RULE,
             Self::JsxA11YRoleHasRequiredAriaProps(_) => {
                 JsxA11YRoleHasRequiredAriaProps::IS_TSGOLINT_RULE
@@ -16120,6 +17110,10 @@ impl RuleEnum {
             Self::JsxA11YRoleSupportsAriaProps(_) => JsxA11YRoleSupportsAriaProps::IS_TSGOLINT_RULE,
             Self::JsxA11YScope(_) => JsxA11YScope::IS_TSGOLINT_RULE,
             Self::JsxA11YTabindexNoPositive(_) => JsxA11YTabindexNoPositive::IS_TSGOLINT_RULE,
+            Self::JsxA11YUseFocusableInteractive(_) => {
+                JsxA11YUseFocusableInteractive::IS_TSGOLINT_RULE
+            }
+            Self::JsxA11YUseUniqueElementIds(_) => JsxA11YUseUniqueElementIds::IS_TSGOLINT_RULE,
             Self::OxcApproxConstant(_) => OxcApproxConstant::IS_TSGOLINT_RULE,
             Self::OxcBadArrayMethodOnArguments(_) => OxcBadArrayMethodOnArguments::IS_TSGOLINT_RULE,
             Self::OxcBadBitwiseOperator(_) => OxcBadBitwiseOperator::IS_TSGOLINT_RULE,
@@ -16252,6 +17246,7 @@ impl RuleEnum {
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::IS_TSGOLINT_RULE,
             Self::NodeHandleCallbackErr(_) => NodeHandleCallbackErr::IS_TSGOLINT_RULE,
             Self::NodeNoExportsAssign(_) => NodeNoExportsAssign::IS_TSGOLINT_RULE,
+            Self::NodeNoGlobalDirnameFilename(_) => NodeNoGlobalDirnameFilename::IS_TSGOLINT_RULE,
             Self::NodeNoNewRequire(_) => NodeNoNewRequire::IS_TSGOLINT_RULE,
             Self::NodeNoPathConcat(_) => NodeNoPathConcat::IS_TSGOLINT_RULE,
             Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::IS_TSGOLINT_RULE,
@@ -16298,6 +17293,9 @@ impl RuleEnum {
             Self::ImportNoCycle(_) => ImportNoCycle::HAS_CONFIG,
             Self::ImportNoDefaultExport(_) => ImportNoDefaultExport::HAS_CONFIG,
             Self::ImportNoDuplicates(_) => ImportNoDuplicates::HAS_CONFIG,
+            Self::ImportNoDynamicNamespaceImportAccess(_) => {
+                ImportNoDynamicNamespaceImportAccess::HAS_CONFIG
+            }
             Self::ImportNoDynamicRequire(_) => ImportNoDynamicRequire::HAS_CONFIG,
             Self::ImportNoEmptyNamedBlocks(_) => ImportNoEmptyNamedBlocks::HAS_CONFIG,
             Self::ImportNoMutableExports(_) => ImportNoMutableExports::HAS_CONFIG,
@@ -16307,9 +17305,12 @@ impl RuleEnum {
             Self::ImportNoNamedExport(_) => ImportNoNamedExport::HAS_CONFIG,
             Self::ImportNoNamespace(_) => ImportNoNamespace::HAS_CONFIG,
             Self::ImportNoNodejsModules(_) => ImportNoNodejsModules::HAS_CONFIG,
+            Self::ImportNoPrivateImports(_) => ImportNoPrivateImports::HAS_CONFIG,
             Self::ImportNoRelativeParentImports(_) => ImportNoRelativeParentImports::HAS_CONFIG,
             Self::ImportNoSelfImport(_) => ImportNoSelfImport::HAS_CONFIG,
             Self::ImportNoUnassignedImport(_) => ImportNoUnassignedImport::HAS_CONFIG,
+            Self::ImportNoUndeclaredDependencies(_) => ImportNoUndeclaredDependencies::HAS_CONFIG,
+            Self::ImportNoUnresolvedImports(_) => ImportNoUnresolvedImports::HAS_CONFIG,
             Self::ImportNoWebpackLoaderSyntax(_) => ImportNoWebpackLoaderSyntax::HAS_CONFIG,
             Self::ImportPreferDefaultExport(_) => ImportPreferDefaultExport::HAS_CONFIG,
             Self::ImportUnambiguous(_) => ImportUnambiguous::HAS_CONFIG,
@@ -16352,6 +17353,7 @@ impl RuleEnum {
             Self::EslintNoClassAssign(_) => EslintNoClassAssign::HAS_CONFIG,
             Self::EslintNoCompareNegZero(_) => EslintNoCompareNegZero::HAS_CONFIG,
             Self::EslintNoCondAssign(_) => EslintNoCondAssign::HAS_CONFIG,
+            Self::EslintNoConfusingLabels(_) => EslintNoConfusingLabels::HAS_CONFIG,
             Self::EslintNoConsole(_) => EslintNoConsole::HAS_CONFIG,
             Self::EslintNoConstAssign(_) => EslintNoConstAssign::HAS_CONFIG,
             Self::EslintNoConstantBinaryExpression(_) => {
@@ -16413,12 +17415,14 @@ impl RuleEnum {
             Self::EslintNoNonoctalDecimalEscape(_) => EslintNoNonoctalDecimalEscape::HAS_CONFIG,
             Self::EslintNoObjCalls(_) => EslintNoObjCalls::HAS_CONFIG,
             Self::EslintNoObjectConstructor(_) => EslintNoObjectConstructor::HAS_CONFIG,
+            Self::EslintNoOctalEscape(_) => EslintNoOctalEscape::HAS_CONFIG,
             Self::EslintNoParamReassign(_) => EslintNoParamReassign::HAS_CONFIG,
             Self::EslintNoPlusplus(_) => EslintNoPlusplus::HAS_CONFIG,
             Self::EslintNoPromiseExecutorReturn(_) => EslintNoPromiseExecutorReturn::HAS_CONFIG,
             Self::EslintNoProto(_) => EslintNoProto::HAS_CONFIG,
             Self::EslintNoPrototypeBuiltins(_) => EslintNoPrototypeBuiltins::HAS_CONFIG,
             Self::EslintNoRedeclare(_) => EslintNoRedeclare::HAS_CONFIG,
+            Self::EslintNoRedundantUseStrict(_) => EslintNoRedundantUseStrict::HAS_CONFIG,
             Self::EslintNoRegexSpaces(_) => EslintNoRegexSpaces::HAS_CONFIG,
             Self::EslintNoRestrictedGlobals(_) => EslintNoRestrictedGlobals::HAS_CONFIG,
             Self::EslintNoRestrictedImports(_) => EslintNoRestrictedImports::HAS_CONFIG,
@@ -16430,7 +17434,9 @@ impl RuleEnum {
             Self::EslintNoSetterReturn(_) => EslintNoSetterReturn::HAS_CONFIG,
             Self::EslintNoShadow(_) => EslintNoShadow::HAS_CONFIG,
             Self::EslintNoShadowRestrictedNames(_) => EslintNoShadowRestrictedNames::HAS_CONFIG,
+            Self::EslintNoShoutyConstants(_) => EslintNoShoutyConstants::HAS_CONFIG,
             Self::EslintNoSparseArrays(_) => EslintNoSparseArrays::HAS_CONFIG,
+            Self::EslintNoStringCaseMismatch(_) => EslintNoStringCaseMismatch::HAS_CONFIG,
             Self::EslintNoTemplateCurlyInString(_) => EslintNoTemplateCurlyInString::HAS_CONFIG,
             Self::EslintNoTernary(_) => EslintNoTernary::HAS_CONFIG,
             Self::EslintNoThisBeforeSuper(_) => EslintNoThisBeforeSuper::HAS_CONFIG,
@@ -16459,6 +17465,7 @@ impl RuleEnum {
             Self::EslintNoUselessComputedKey(_) => EslintNoUselessComputedKey::HAS_CONFIG,
             Self::EslintNoUselessConcat(_) => EslintNoUselessConcat::HAS_CONFIG,
             Self::EslintNoUselessConstructor(_) => EslintNoUselessConstructor::HAS_CONFIG,
+            Self::EslintNoUselessContinue(_) => EslintNoUselessContinue::HAS_CONFIG,
             Self::EslintNoUselessEscape(_) => EslintNoUselessEscape::HAS_CONFIG,
             Self::EslintNoUselessRename(_) => EslintNoUselessRename::HAS_CONFIG,
             Self::EslintNoUselessReturn(_) => EslintNoUselessReturn::HAS_CONFIG,
@@ -16468,6 +17475,7 @@ impl RuleEnum {
             Self::EslintNoWith(_) => EslintNoWith::HAS_CONFIG,
             Self::EslintObjectShorthand(_) => EslintObjectShorthand::HAS_CONFIG,
             Self::EslintOperatorAssignment(_) => EslintOperatorAssignment::HAS_CONFIG,
+            Self::EslintPreferArrowCallback(_) => EslintPreferArrowCallback::HAS_CONFIG,
             Self::EslintPreferConst(_) => EslintPreferConst::HAS_CONFIG,
             Self::EslintPreferDestructuring(_) => EslintPreferDestructuring::HAS_CONFIG,
             Self::EslintPreferExponentiationOperator(_) => {
@@ -16490,6 +17498,9 @@ impl RuleEnum {
             Self::EslintSymbolDescription(_) => EslintSymbolDescription::HAS_CONFIG,
             Self::EslintUnicodeBom(_) => EslintUnicodeBom::HAS_CONFIG,
             Self::EslintUseIsnan(_) => EslintUseIsnan::HAS_CONFIG,
+            Self::EslintUseRegexLiterals(_) => EslintUseRegexLiterals::HAS_CONFIG,
+            Self::EslintUseSingleVarDeclarator(_) => EslintUseSingleVarDeclarator::HAS_CONFIG,
+            Self::EslintUseWhile(_) => EslintUseWhile::HAS_CONFIG,
             Self::EslintValidTypeof(_) => EslintValidTypeof::HAS_CONFIG,
             Self::EslintVarsOnTop(_) => EslintVarsOnTop::HAS_CONFIG,
             Self::EslintYoda(_) => EslintYoda::HAS_CONFIG,
@@ -16523,9 +17534,13 @@ impl RuleEnum {
             Self::TypescriptExplicitFunctionReturnType(_) => {
                 TypescriptExplicitFunctionReturnType::HAS_CONFIG
             }
+            Self::TypescriptExplicitMemberAccessibility(_) => {
+                TypescriptExplicitMemberAccessibility::HAS_CONFIG
+            }
             Self::TypescriptExplicitModuleBoundaryTypes(_) => {
                 TypescriptExplicitModuleBoundaryTypes::HAS_CONFIG
             }
+            Self::TypescriptNamingConvention(_) => TypescriptNamingConvention::HAS_CONFIG,
             Self::TypescriptNoArrayDelete(_) => TypescriptNoArrayDelete::HAS_CONFIG,
             Self::TypescriptNoBaseToString(_) => TypescriptNoBaseToString::HAS_CONFIG,
             Self::TypescriptNoConfusingNonNullAssertion(_) => {
@@ -16542,6 +17557,9 @@ impl RuleEnum {
             Self::TypescriptNoDynamicDelete(_) => TypescriptNoDynamicDelete::HAS_CONFIG,
             Self::TypescriptNoEmptyInterface(_) => TypescriptNoEmptyInterface::HAS_CONFIG,
             Self::TypescriptNoEmptyObjectType(_) => TypescriptNoEmptyObjectType::HAS_CONFIG,
+            Self::TypescriptNoEmptyTypeParameters(_) => TypescriptNoEmptyTypeParameters::HAS_CONFIG,
+            Self::TypescriptNoEnum(_) => TypescriptNoEnum::HAS_CONFIG,
+            Self::TypescriptNoEvolvingTypes(_) => TypescriptNoEvolvingTypes::HAS_CONFIG,
             Self::TypescriptNoExplicitAny(_) => TypescriptNoExplicitAny::HAS_CONFIG,
             Self::TypescriptNoExtraNonNullAssertion(_) => {
                 TypescriptNoExtraNonNullAssertion::HAS_CONFIG
@@ -16549,6 +17567,7 @@ impl RuleEnum {
             Self::TypescriptNoExtraneousClass(_) => TypescriptNoExtraneousClass::HAS_CONFIG,
             Self::TypescriptNoFloatingPromises(_) => TypescriptNoFloatingPromises::HAS_CONFIG,
             Self::TypescriptNoForInArray(_) => TypescriptNoForInArray::HAS_CONFIG,
+            Self::TypescriptNoImplicitAnyLet(_) => TypescriptNoImplicitAnyLet::HAS_CONFIG,
             Self::TypescriptNoImpliedEval(_) => TypescriptNoImpliedEval::HAS_CONFIG,
             Self::TypescriptNoImportTypeSideEffects(_) => {
                 TypescriptNoImportTypeSideEffects::HAS_CONFIG
@@ -16576,6 +17595,7 @@ impl RuleEnum {
             Self::TypescriptNoRequireImports(_) => TypescriptNoRequireImports::HAS_CONFIG,
             Self::TypescriptNoRestrictedTypes(_) => TypescriptNoRestrictedTypes::HAS_CONFIG,
             Self::TypescriptNoThisAlias(_) => TypescriptNoThisAlias::HAS_CONFIG,
+            Self::TypescriptNoThisInStatic(_) => TypescriptNoThisInStatic::HAS_CONFIG,
             Self::TypescriptNoUnnecessaryBooleanLiteralCompare(_) => {
                 TypescriptNoUnnecessaryBooleanLiteralCompare::HAS_CONFIG
             }
@@ -16785,16 +17805,20 @@ impl RuleEnum {
             Self::ReactNoDidMountSetState(_) => ReactNoDidMountSetState::HAS_CONFIG,
             Self::ReactNoDirectMutationState(_) => ReactNoDirectMutationState::HAS_CONFIG,
             Self::ReactNoFindDomNode(_) => ReactNoFindDomNode::HAS_CONFIG,
+            Self::ReactNoForwardRef(_) => ReactNoForwardRef::HAS_CONFIG,
             Self::ReactNoIsMounted(_) => ReactNoIsMounted::HAS_CONFIG,
+            Self::ReactNoJsxLiterals(_) => ReactNoJsxLiterals::HAS_CONFIG,
             Self::ReactNoMultiComp(_) => ReactNoMultiComp::HAS_CONFIG,
             Self::ReactNoNamespace(_) => ReactNoNamespace::HAS_CONFIG,
             Self::ReactNoReactChildren(_) => ReactNoReactChildren::HAS_CONFIG,
+            Self::ReactNoReactSpecificProps(_) => ReactNoReactSpecificProps::HAS_CONFIG,
             Self::ReactNoRedundantShouldComponentUpdate(_) => {
                 ReactNoRedundantShouldComponentUpdate::HAS_CONFIG
             }
             Self::ReactNoRenderReturnValue(_) => ReactNoRenderReturnValue::HAS_CONFIG,
             Self::ReactNoSetState(_) => ReactNoSetState::HAS_CONFIG,
             Self::ReactNoStringRefs(_) => ReactNoStringRefs::HAS_CONFIG,
+            Self::ReactNoSuspiciousSemicolonInJsx(_) => ReactNoSuspiciousSemicolonInJsx::HAS_CONFIG,
             Self::ReactNoThisInSfc(_) => ReactNoThisInSfc::HAS_CONFIG,
             Self::ReactNoUnescapedEntities(_) => ReactNoUnescapedEntities::HAS_CONFIG,
             Self::ReactNoUnknownProperty(_) => ReactNoUnknownProperty::HAS_CONFIG,
@@ -16809,6 +17833,7 @@ impl RuleEnum {
             Self::ReactSelfClosingComp(_) => ReactSelfClosingComp::HAS_CONFIG,
             Self::ReactStateInConstructor(_) => ReactStateInConstructor::HAS_CONFIG,
             Self::ReactStylePropObject(_) => ReactStylePropObject::HAS_CONFIG,
+            Self::ReactUseImageSize(_) => ReactUseImageSize::HAS_CONFIG,
             Self::ReactVoidDomElementsNoChildren(_) => ReactVoidDomElementsNoChildren::HAS_CONFIG,
             Self::ReactPerfJsxNoJsxAsProp(_) => ReactPerfJsxNoJsxAsProp::HAS_CONFIG,
             Self::ReactPerfJsxNoNewArrayAsProp(_) => ReactPerfJsxNoNewArrayAsProp::HAS_CONFIG,
@@ -16849,6 +17874,7 @@ impl RuleEnum {
             Self::UnicornNoConsoleSpaces(_) => UnicornNoConsoleSpaces::HAS_CONFIG,
             Self::UnicornNoDocumentCookie(_) => UnicornNoDocumentCookie::HAS_CONFIG,
             Self::UnicornNoEmptyFile(_) => UnicornNoEmptyFile::HAS_CONFIG,
+            Self::UnicornNoFlatMapIdentity(_) => UnicornNoFlatMapIdentity::HAS_CONFIG,
             Self::UnicornNoHexEscape(_) => UnicornNoHexEscape::HAS_CONFIG,
             Self::UnicornNoImmediateMutation(_) => UnicornNoImmediateMutation::HAS_CONFIG,
             Self::UnicornNoInstanceofArray(_) => UnicornNoInstanceofArray::HAS_CONFIG,
@@ -16904,8 +17930,12 @@ impl RuleEnum {
                 UnicornNoUselessPromiseResolveReject::HAS_CONFIG
             }
             Self::UnicornNoUselessSpread(_) => UnicornNoUselessSpread::HAS_CONFIG,
+            Self::UnicornNoUselessStringRaw(_) => UnicornNoUselessStringRaw::HAS_CONFIG,
             Self::UnicornNoUselessSwitchCase(_) => UnicornNoUselessSwitchCase::HAS_CONFIG,
             Self::UnicornNoUselessUndefined(_) => UnicornNoUselessUndefined::HAS_CONFIG,
+            Self::UnicornNoUselessUndefinedInitialization(_) => {
+                UnicornNoUselessUndefinedInitialization::HAS_CONFIG
+            }
             Self::UnicornNoZeroFractions(_) => UnicornNoZeroFractions::HAS_CONFIG,
             Self::UnicornNumberLiteralCase(_) => UnicornNumberLiteralCase::HAS_CONFIG,
             Self::UnicornNumericSeparatorsStyle(_) => UnicornNumericSeparatorsStyle::HAS_CONFIG,
@@ -16986,6 +18016,12 @@ impl RuleEnum {
                 UnicornTextEncodingIdentifierCase::HAS_CONFIG
             }
             Self::UnicornThrowNewError(_) => UnicornThrowNewError::HAS_CONFIG,
+            Self::UnicornUseCollapsedIf(_) => UnicornUseCollapsedIf::HAS_CONFIG,
+            Self::UnicornUseConsistentCurlyBraces(_) => UnicornUseConsistentCurlyBraces::HAS_CONFIG,
+            Self::UnicornUseSimpleNumberKeys(_) => UnicornUseSimpleNumberKeys::HAS_CONFIG,
+            Self::UnicornUseSimplifiedLogicExpression(_) => {
+                UnicornUseSimplifiedLogicExpression::HAS_CONFIG
+            }
             Self::JsxA11YAltText(_) => JsxA11YAltText::HAS_CONFIG,
             Self::JsxA11YAnchorAmbiguousText(_) => JsxA11YAnchorAmbiguousText::HAS_CONFIG,
             Self::JsxA11YAnchorHasContent(_) => JsxA11YAnchorHasContent::HAS_CONFIG,
@@ -17013,16 +18049,28 @@ impl RuleEnum {
             Self::JsxA11YNoAriaHiddenOnFocusable(_) => JsxA11YNoAriaHiddenOnFocusable::HAS_CONFIG,
             Self::JsxA11YNoAutofocus(_) => JsxA11YNoAutofocus::HAS_CONFIG,
             Self::JsxA11YNoDistractingElements(_) => JsxA11YNoDistractingElements::HAS_CONFIG,
+            Self::JsxA11YNoInteractiveElementToNoninteractiveRole(_) => {
+                JsxA11YNoInteractiveElementToNoninteractiveRole::HAS_CONFIG
+            }
+            Self::JsxA11YNoNoninteractiveElementInteractions(_) => {
+                JsxA11YNoNoninteractiveElementInteractions::HAS_CONFIG
+            }
+            Self::JsxA11YNoNoninteractiveElementToInteractiveRole(_) => {
+                JsxA11YNoNoninteractiveElementToInteractiveRole::HAS_CONFIG
+            }
             Self::JsxA11YNoNoninteractiveTabindex(_) => JsxA11YNoNoninteractiveTabindex::HAS_CONFIG,
             Self::JsxA11YNoRedundantRoles(_) => JsxA11YNoRedundantRoles::HAS_CONFIG,
             Self::JsxA11YNoStaticElementInteractions(_) => {
                 JsxA11YNoStaticElementInteractions::HAS_CONFIG
             }
+            Self::JsxA11YNoSvgWithoutTitle(_) => JsxA11YNoSvgWithoutTitle::HAS_CONFIG,
             Self::JsxA11YPreferTagOverRole(_) => JsxA11YPreferTagOverRole::HAS_CONFIG,
             Self::JsxA11YRoleHasRequiredAriaProps(_) => JsxA11YRoleHasRequiredAriaProps::HAS_CONFIG,
             Self::JsxA11YRoleSupportsAriaProps(_) => JsxA11YRoleSupportsAriaProps::HAS_CONFIG,
             Self::JsxA11YScope(_) => JsxA11YScope::HAS_CONFIG,
             Self::JsxA11YTabindexNoPositive(_) => JsxA11YTabindexNoPositive::HAS_CONFIG,
+            Self::JsxA11YUseFocusableInteractive(_) => JsxA11YUseFocusableInteractive::HAS_CONFIG,
+            Self::JsxA11YUseUniqueElementIds(_) => JsxA11YUseUniqueElementIds::HAS_CONFIG,
             Self::OxcApproxConstant(_) => OxcApproxConstant::HAS_CONFIG,
             Self::OxcBadArrayMethodOnArguments(_) => OxcBadArrayMethodOnArguments::HAS_CONFIG,
             Self::OxcBadBitwiseOperator(_) => OxcBadBitwiseOperator::HAS_CONFIG,
@@ -17139,6 +18187,7 @@ impl RuleEnum {
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::HAS_CONFIG,
             Self::NodeHandleCallbackErr(_) => NodeHandleCallbackErr::HAS_CONFIG,
             Self::NodeNoExportsAssign(_) => NodeNoExportsAssign::HAS_CONFIG,
+            Self::NodeNoGlobalDirnameFilename(_) => NodeNoGlobalDirnameFilename::HAS_CONFIG,
             Self::NodeNoNewRequire(_) => NodeNoNewRequire::HAS_CONFIG,
             Self::NodeNoPathConcat(_) => NodeNoPathConcat::HAS_CONFIG,
             Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::HAS_CONFIG,
@@ -17182,6 +18231,7 @@ impl RuleEnum {
             Self::ImportNoCycle(rule) => rule.types_info(),
             Self::ImportNoDefaultExport(rule) => rule.types_info(),
             Self::ImportNoDuplicates(rule) => rule.types_info(),
+            Self::ImportNoDynamicNamespaceImportAccess(rule) => rule.types_info(),
             Self::ImportNoDynamicRequire(rule) => rule.types_info(),
             Self::ImportNoEmptyNamedBlocks(rule) => rule.types_info(),
             Self::ImportNoMutableExports(rule) => rule.types_info(),
@@ -17191,9 +18241,12 @@ impl RuleEnum {
             Self::ImportNoNamedExport(rule) => rule.types_info(),
             Self::ImportNoNamespace(rule) => rule.types_info(),
             Self::ImportNoNodejsModules(rule) => rule.types_info(),
+            Self::ImportNoPrivateImports(rule) => rule.types_info(),
             Self::ImportNoRelativeParentImports(rule) => rule.types_info(),
             Self::ImportNoSelfImport(rule) => rule.types_info(),
             Self::ImportNoUnassignedImport(rule) => rule.types_info(),
+            Self::ImportNoUndeclaredDependencies(rule) => rule.types_info(),
+            Self::ImportNoUnresolvedImports(rule) => rule.types_info(),
             Self::ImportNoWebpackLoaderSyntax(rule) => rule.types_info(),
             Self::ImportPreferDefaultExport(rule) => rule.types_info(),
             Self::ImportUnambiguous(rule) => rule.types_info(),
@@ -17236,6 +18289,7 @@ impl RuleEnum {
             Self::EslintNoClassAssign(rule) => rule.types_info(),
             Self::EslintNoCompareNegZero(rule) => rule.types_info(),
             Self::EslintNoCondAssign(rule) => rule.types_info(),
+            Self::EslintNoConfusingLabels(rule) => rule.types_info(),
             Self::EslintNoConsole(rule) => rule.types_info(),
             Self::EslintNoConstAssign(rule) => rule.types_info(),
             Self::EslintNoConstantBinaryExpression(rule) => rule.types_info(),
@@ -17293,12 +18347,14 @@ impl RuleEnum {
             Self::EslintNoNonoctalDecimalEscape(rule) => rule.types_info(),
             Self::EslintNoObjCalls(rule) => rule.types_info(),
             Self::EslintNoObjectConstructor(rule) => rule.types_info(),
+            Self::EslintNoOctalEscape(rule) => rule.types_info(),
             Self::EslintNoParamReassign(rule) => rule.types_info(),
             Self::EslintNoPlusplus(rule) => rule.types_info(),
             Self::EslintNoPromiseExecutorReturn(rule) => rule.types_info(),
             Self::EslintNoProto(rule) => rule.types_info(),
             Self::EslintNoPrototypeBuiltins(rule) => rule.types_info(),
             Self::EslintNoRedeclare(rule) => rule.types_info(),
+            Self::EslintNoRedundantUseStrict(rule) => rule.types_info(),
             Self::EslintNoRegexSpaces(rule) => rule.types_info(),
             Self::EslintNoRestrictedGlobals(rule) => rule.types_info(),
             Self::EslintNoRestrictedImports(rule) => rule.types_info(),
@@ -17310,7 +18366,9 @@ impl RuleEnum {
             Self::EslintNoSetterReturn(rule) => rule.types_info(),
             Self::EslintNoShadow(rule) => rule.types_info(),
             Self::EslintNoShadowRestrictedNames(rule) => rule.types_info(),
+            Self::EslintNoShoutyConstants(rule) => rule.types_info(),
             Self::EslintNoSparseArrays(rule) => rule.types_info(),
+            Self::EslintNoStringCaseMismatch(rule) => rule.types_info(),
             Self::EslintNoTemplateCurlyInString(rule) => rule.types_info(),
             Self::EslintNoTernary(rule) => rule.types_info(),
             Self::EslintNoThisBeforeSuper(rule) => rule.types_info(),
@@ -17337,6 +18395,7 @@ impl RuleEnum {
             Self::EslintNoUselessComputedKey(rule) => rule.types_info(),
             Self::EslintNoUselessConcat(rule) => rule.types_info(),
             Self::EslintNoUselessConstructor(rule) => rule.types_info(),
+            Self::EslintNoUselessContinue(rule) => rule.types_info(),
             Self::EslintNoUselessEscape(rule) => rule.types_info(),
             Self::EslintNoUselessRename(rule) => rule.types_info(),
             Self::EslintNoUselessReturn(rule) => rule.types_info(),
@@ -17346,6 +18405,7 @@ impl RuleEnum {
             Self::EslintNoWith(rule) => rule.types_info(),
             Self::EslintObjectShorthand(rule) => rule.types_info(),
             Self::EslintOperatorAssignment(rule) => rule.types_info(),
+            Self::EslintPreferArrowCallback(rule) => rule.types_info(),
             Self::EslintPreferConst(rule) => rule.types_info(),
             Self::EslintPreferDestructuring(rule) => rule.types_info(),
             Self::EslintPreferExponentiationOperator(rule) => rule.types_info(),
@@ -17366,6 +18426,9 @@ impl RuleEnum {
             Self::EslintSymbolDescription(rule) => rule.types_info(),
             Self::EslintUnicodeBom(rule) => rule.types_info(),
             Self::EslintUseIsnan(rule) => rule.types_info(),
+            Self::EslintUseRegexLiterals(rule) => rule.types_info(),
+            Self::EslintUseSingleVarDeclarator(rule) => rule.types_info(),
+            Self::EslintUseWhile(rule) => rule.types_info(),
             Self::EslintValidTypeof(rule) => rule.types_info(),
             Self::EslintVarsOnTop(rule) => rule.types_info(),
             Self::EslintYoda(rule) => rule.types_info(),
@@ -17385,7 +18448,9 @@ impl RuleEnum {
             Self::TypescriptConsistentTypeImports(rule) => rule.types_info(),
             Self::TypescriptDotNotation(rule) => rule.types_info(),
             Self::TypescriptExplicitFunctionReturnType(rule) => rule.types_info(),
+            Self::TypescriptExplicitMemberAccessibility(rule) => rule.types_info(),
             Self::TypescriptExplicitModuleBoundaryTypes(rule) => rule.types_info(),
+            Self::TypescriptNamingConvention(rule) => rule.types_info(),
             Self::TypescriptNoArrayDelete(rule) => rule.types_info(),
             Self::TypescriptNoBaseToString(rule) => rule.types_info(),
             Self::TypescriptNoConfusingNonNullAssertion(rule) => rule.types_info(),
@@ -17396,11 +18461,15 @@ impl RuleEnum {
             Self::TypescriptNoDynamicDelete(rule) => rule.types_info(),
             Self::TypescriptNoEmptyInterface(rule) => rule.types_info(),
             Self::TypescriptNoEmptyObjectType(rule) => rule.types_info(),
+            Self::TypescriptNoEmptyTypeParameters(rule) => rule.types_info(),
+            Self::TypescriptNoEnum(rule) => rule.types_info(),
+            Self::TypescriptNoEvolvingTypes(rule) => rule.types_info(),
             Self::TypescriptNoExplicitAny(rule) => rule.types_info(),
             Self::TypescriptNoExtraNonNullAssertion(rule) => rule.types_info(),
             Self::TypescriptNoExtraneousClass(rule) => rule.types_info(),
             Self::TypescriptNoFloatingPromises(rule) => rule.types_info(),
             Self::TypescriptNoForInArray(rule) => rule.types_info(),
+            Self::TypescriptNoImplicitAnyLet(rule) => rule.types_info(),
             Self::TypescriptNoImpliedEval(rule) => rule.types_info(),
             Self::TypescriptNoImportTypeSideEffects(rule) => rule.types_info(),
             Self::TypescriptNoInferrableTypes(rule) => rule.types_info(),
@@ -17418,6 +18487,7 @@ impl RuleEnum {
             Self::TypescriptNoRequireImports(rule) => rule.types_info(),
             Self::TypescriptNoRestrictedTypes(rule) => rule.types_info(),
             Self::TypescriptNoThisAlias(rule) => rule.types_info(),
+            Self::TypescriptNoThisInStatic(rule) => rule.types_info(),
             Self::TypescriptNoUnnecessaryBooleanLiteralCompare(rule) => rule.types_info(),
             Self::TypescriptNoUnnecessaryCondition(rule) => rule.types_info(),
             Self::TypescriptNoUnnecessaryParameterPropertyAssignment(rule) => rule.types_info(),
@@ -17565,14 +18635,18 @@ impl RuleEnum {
             Self::ReactNoDidMountSetState(rule) => rule.types_info(),
             Self::ReactNoDirectMutationState(rule) => rule.types_info(),
             Self::ReactNoFindDomNode(rule) => rule.types_info(),
+            Self::ReactNoForwardRef(rule) => rule.types_info(),
             Self::ReactNoIsMounted(rule) => rule.types_info(),
+            Self::ReactNoJsxLiterals(rule) => rule.types_info(),
             Self::ReactNoMultiComp(rule) => rule.types_info(),
             Self::ReactNoNamespace(rule) => rule.types_info(),
             Self::ReactNoReactChildren(rule) => rule.types_info(),
+            Self::ReactNoReactSpecificProps(rule) => rule.types_info(),
             Self::ReactNoRedundantShouldComponentUpdate(rule) => rule.types_info(),
             Self::ReactNoRenderReturnValue(rule) => rule.types_info(),
             Self::ReactNoSetState(rule) => rule.types_info(),
             Self::ReactNoStringRefs(rule) => rule.types_info(),
+            Self::ReactNoSuspiciousSemicolonInJsx(rule) => rule.types_info(),
             Self::ReactNoThisInSfc(rule) => rule.types_info(),
             Self::ReactNoUnescapedEntities(rule) => rule.types_info(),
             Self::ReactNoUnknownProperty(rule) => rule.types_info(),
@@ -17587,6 +18661,7 @@ impl RuleEnum {
             Self::ReactSelfClosingComp(rule) => rule.types_info(),
             Self::ReactStateInConstructor(rule) => rule.types_info(),
             Self::ReactStylePropObject(rule) => rule.types_info(),
+            Self::ReactUseImageSize(rule) => rule.types_info(),
             Self::ReactVoidDomElementsNoChildren(rule) => rule.types_info(),
             Self::ReactPerfJsxNoJsxAsProp(rule) => rule.types_info(),
             Self::ReactPerfJsxNoNewArrayAsProp(rule) => rule.types_info(),
@@ -17619,6 +18694,7 @@ impl RuleEnum {
             Self::UnicornNoConsoleSpaces(rule) => rule.types_info(),
             Self::UnicornNoDocumentCookie(rule) => rule.types_info(),
             Self::UnicornNoEmptyFile(rule) => rule.types_info(),
+            Self::UnicornNoFlatMapIdentity(rule) => rule.types_info(),
             Self::UnicornNoHexEscape(rule) => rule.types_info(),
             Self::UnicornNoImmediateMutation(rule) => rule.types_info(),
             Self::UnicornNoInstanceofArray(rule) => rule.types_info(),
@@ -17652,8 +18728,10 @@ impl RuleEnum {
             Self::UnicornNoUselessLengthCheck(rule) => rule.types_info(),
             Self::UnicornNoUselessPromiseResolveReject(rule) => rule.types_info(),
             Self::UnicornNoUselessSpread(rule) => rule.types_info(),
+            Self::UnicornNoUselessStringRaw(rule) => rule.types_info(),
             Self::UnicornNoUselessSwitchCase(rule) => rule.types_info(),
             Self::UnicornNoUselessUndefined(rule) => rule.types_info(),
+            Self::UnicornNoUselessUndefinedInitialization(rule) => rule.types_info(),
             Self::UnicornNoZeroFractions(rule) => rule.types_info(),
             Self::UnicornNumberLiteralCase(rule) => rule.types_info(),
             Self::UnicornNumericSeparatorsStyle(rule) => rule.types_info(),
@@ -17718,6 +18796,10 @@ impl RuleEnum {
             Self::UnicornSwitchCaseBreakPosition(rule) => rule.types_info(),
             Self::UnicornTextEncodingIdentifierCase(rule) => rule.types_info(),
             Self::UnicornThrowNewError(rule) => rule.types_info(),
+            Self::UnicornUseCollapsedIf(rule) => rule.types_info(),
+            Self::UnicornUseConsistentCurlyBraces(rule) => rule.types_info(),
+            Self::UnicornUseSimpleNumberKeys(rule) => rule.types_info(),
+            Self::UnicornUseSimplifiedLogicExpression(rule) => rule.types_info(),
             Self::JsxA11YAltText(rule) => rule.types_info(),
             Self::JsxA11YAnchorAmbiguousText(rule) => rule.types_info(),
             Self::JsxA11YAnchorHasContent(rule) => rule.types_info(),
@@ -17741,14 +18823,20 @@ impl RuleEnum {
             Self::JsxA11YNoAriaHiddenOnFocusable(rule) => rule.types_info(),
             Self::JsxA11YNoAutofocus(rule) => rule.types_info(),
             Self::JsxA11YNoDistractingElements(rule) => rule.types_info(),
+            Self::JsxA11YNoInteractiveElementToNoninteractiveRole(rule) => rule.types_info(),
+            Self::JsxA11YNoNoninteractiveElementInteractions(rule) => rule.types_info(),
+            Self::JsxA11YNoNoninteractiveElementToInteractiveRole(rule) => rule.types_info(),
             Self::JsxA11YNoNoninteractiveTabindex(rule) => rule.types_info(),
             Self::JsxA11YNoRedundantRoles(rule) => rule.types_info(),
             Self::JsxA11YNoStaticElementInteractions(rule) => rule.types_info(),
+            Self::JsxA11YNoSvgWithoutTitle(rule) => rule.types_info(),
             Self::JsxA11YPreferTagOverRole(rule) => rule.types_info(),
             Self::JsxA11YRoleHasRequiredAriaProps(rule) => rule.types_info(),
             Self::JsxA11YRoleSupportsAriaProps(rule) => rule.types_info(),
             Self::JsxA11YScope(rule) => rule.types_info(),
             Self::JsxA11YTabindexNoPositive(rule) => rule.types_info(),
+            Self::JsxA11YUseFocusableInteractive(rule) => rule.types_info(),
+            Self::JsxA11YUseUniqueElementIds(rule) => rule.types_info(),
             Self::OxcApproxConstant(rule) => rule.types_info(),
             Self::OxcBadArrayMethodOnArguments(rule) => rule.types_info(),
             Self::OxcBadBitwiseOperator(rule) => rule.types_info(),
@@ -17855,6 +18943,7 @@ impl RuleEnum {
             Self::NodeGlobalRequire(rule) => rule.types_info(),
             Self::NodeHandleCallbackErr(rule) => rule.types_info(),
             Self::NodeNoExportsAssign(rule) => rule.types_info(),
+            Self::NodeNoGlobalDirnameFilename(rule) => rule.types_info(),
             Self::NodeNoNewRequire(rule) => rule.types_info(),
             Self::NodeNoPathConcat(rule) => rule.types_info(),
             Self::NodeNoProcessEnv(rule) => rule.types_info(),
@@ -17896,6 +18985,7 @@ impl RuleEnum {
             Self::ImportNoCycle(rule) => rule.run_info(),
             Self::ImportNoDefaultExport(rule) => rule.run_info(),
             Self::ImportNoDuplicates(rule) => rule.run_info(),
+            Self::ImportNoDynamicNamespaceImportAccess(rule) => rule.run_info(),
             Self::ImportNoDynamicRequire(rule) => rule.run_info(),
             Self::ImportNoEmptyNamedBlocks(rule) => rule.run_info(),
             Self::ImportNoMutableExports(rule) => rule.run_info(),
@@ -17905,9 +18995,12 @@ impl RuleEnum {
             Self::ImportNoNamedExport(rule) => rule.run_info(),
             Self::ImportNoNamespace(rule) => rule.run_info(),
             Self::ImportNoNodejsModules(rule) => rule.run_info(),
+            Self::ImportNoPrivateImports(rule) => rule.run_info(),
             Self::ImportNoRelativeParentImports(rule) => rule.run_info(),
             Self::ImportNoSelfImport(rule) => rule.run_info(),
             Self::ImportNoUnassignedImport(rule) => rule.run_info(),
+            Self::ImportNoUndeclaredDependencies(rule) => rule.run_info(),
+            Self::ImportNoUnresolvedImports(rule) => rule.run_info(),
             Self::ImportNoWebpackLoaderSyntax(rule) => rule.run_info(),
             Self::ImportPreferDefaultExport(rule) => rule.run_info(),
             Self::ImportUnambiguous(rule) => rule.run_info(),
@@ -17950,6 +19043,7 @@ impl RuleEnum {
             Self::EslintNoClassAssign(rule) => rule.run_info(),
             Self::EslintNoCompareNegZero(rule) => rule.run_info(),
             Self::EslintNoCondAssign(rule) => rule.run_info(),
+            Self::EslintNoConfusingLabels(rule) => rule.run_info(),
             Self::EslintNoConsole(rule) => rule.run_info(),
             Self::EslintNoConstAssign(rule) => rule.run_info(),
             Self::EslintNoConstantBinaryExpression(rule) => rule.run_info(),
@@ -18007,12 +19101,14 @@ impl RuleEnum {
             Self::EslintNoNonoctalDecimalEscape(rule) => rule.run_info(),
             Self::EslintNoObjCalls(rule) => rule.run_info(),
             Self::EslintNoObjectConstructor(rule) => rule.run_info(),
+            Self::EslintNoOctalEscape(rule) => rule.run_info(),
             Self::EslintNoParamReassign(rule) => rule.run_info(),
             Self::EslintNoPlusplus(rule) => rule.run_info(),
             Self::EslintNoPromiseExecutorReturn(rule) => rule.run_info(),
             Self::EslintNoProto(rule) => rule.run_info(),
             Self::EslintNoPrototypeBuiltins(rule) => rule.run_info(),
             Self::EslintNoRedeclare(rule) => rule.run_info(),
+            Self::EslintNoRedundantUseStrict(rule) => rule.run_info(),
             Self::EslintNoRegexSpaces(rule) => rule.run_info(),
             Self::EslintNoRestrictedGlobals(rule) => rule.run_info(),
             Self::EslintNoRestrictedImports(rule) => rule.run_info(),
@@ -18024,7 +19120,9 @@ impl RuleEnum {
             Self::EslintNoSetterReturn(rule) => rule.run_info(),
             Self::EslintNoShadow(rule) => rule.run_info(),
             Self::EslintNoShadowRestrictedNames(rule) => rule.run_info(),
+            Self::EslintNoShoutyConstants(rule) => rule.run_info(),
             Self::EslintNoSparseArrays(rule) => rule.run_info(),
+            Self::EslintNoStringCaseMismatch(rule) => rule.run_info(),
             Self::EslintNoTemplateCurlyInString(rule) => rule.run_info(),
             Self::EslintNoTernary(rule) => rule.run_info(),
             Self::EslintNoThisBeforeSuper(rule) => rule.run_info(),
@@ -18051,6 +19149,7 @@ impl RuleEnum {
             Self::EslintNoUselessComputedKey(rule) => rule.run_info(),
             Self::EslintNoUselessConcat(rule) => rule.run_info(),
             Self::EslintNoUselessConstructor(rule) => rule.run_info(),
+            Self::EslintNoUselessContinue(rule) => rule.run_info(),
             Self::EslintNoUselessEscape(rule) => rule.run_info(),
             Self::EslintNoUselessRename(rule) => rule.run_info(),
             Self::EslintNoUselessReturn(rule) => rule.run_info(),
@@ -18060,6 +19159,7 @@ impl RuleEnum {
             Self::EslintNoWith(rule) => rule.run_info(),
             Self::EslintObjectShorthand(rule) => rule.run_info(),
             Self::EslintOperatorAssignment(rule) => rule.run_info(),
+            Self::EslintPreferArrowCallback(rule) => rule.run_info(),
             Self::EslintPreferConst(rule) => rule.run_info(),
             Self::EslintPreferDestructuring(rule) => rule.run_info(),
             Self::EslintPreferExponentiationOperator(rule) => rule.run_info(),
@@ -18080,6 +19180,9 @@ impl RuleEnum {
             Self::EslintSymbolDescription(rule) => rule.run_info(),
             Self::EslintUnicodeBom(rule) => rule.run_info(),
             Self::EslintUseIsnan(rule) => rule.run_info(),
+            Self::EslintUseRegexLiterals(rule) => rule.run_info(),
+            Self::EslintUseSingleVarDeclarator(rule) => rule.run_info(),
+            Self::EslintUseWhile(rule) => rule.run_info(),
             Self::EslintValidTypeof(rule) => rule.run_info(),
             Self::EslintVarsOnTop(rule) => rule.run_info(),
             Self::EslintYoda(rule) => rule.run_info(),
@@ -18099,7 +19202,9 @@ impl RuleEnum {
             Self::TypescriptConsistentTypeImports(rule) => rule.run_info(),
             Self::TypescriptDotNotation(rule) => rule.run_info(),
             Self::TypescriptExplicitFunctionReturnType(rule) => rule.run_info(),
+            Self::TypescriptExplicitMemberAccessibility(rule) => rule.run_info(),
             Self::TypescriptExplicitModuleBoundaryTypes(rule) => rule.run_info(),
+            Self::TypescriptNamingConvention(rule) => rule.run_info(),
             Self::TypescriptNoArrayDelete(rule) => rule.run_info(),
             Self::TypescriptNoBaseToString(rule) => rule.run_info(),
             Self::TypescriptNoConfusingNonNullAssertion(rule) => rule.run_info(),
@@ -18110,11 +19215,15 @@ impl RuleEnum {
             Self::TypescriptNoDynamicDelete(rule) => rule.run_info(),
             Self::TypescriptNoEmptyInterface(rule) => rule.run_info(),
             Self::TypescriptNoEmptyObjectType(rule) => rule.run_info(),
+            Self::TypescriptNoEmptyTypeParameters(rule) => rule.run_info(),
+            Self::TypescriptNoEnum(rule) => rule.run_info(),
+            Self::TypescriptNoEvolvingTypes(rule) => rule.run_info(),
             Self::TypescriptNoExplicitAny(rule) => rule.run_info(),
             Self::TypescriptNoExtraNonNullAssertion(rule) => rule.run_info(),
             Self::TypescriptNoExtraneousClass(rule) => rule.run_info(),
             Self::TypescriptNoFloatingPromises(rule) => rule.run_info(),
             Self::TypescriptNoForInArray(rule) => rule.run_info(),
+            Self::TypescriptNoImplicitAnyLet(rule) => rule.run_info(),
             Self::TypescriptNoImpliedEval(rule) => rule.run_info(),
             Self::TypescriptNoImportTypeSideEffects(rule) => rule.run_info(),
             Self::TypescriptNoInferrableTypes(rule) => rule.run_info(),
@@ -18132,6 +19241,7 @@ impl RuleEnum {
             Self::TypescriptNoRequireImports(rule) => rule.run_info(),
             Self::TypescriptNoRestrictedTypes(rule) => rule.run_info(),
             Self::TypescriptNoThisAlias(rule) => rule.run_info(),
+            Self::TypescriptNoThisInStatic(rule) => rule.run_info(),
             Self::TypescriptNoUnnecessaryBooleanLiteralCompare(rule) => rule.run_info(),
             Self::TypescriptNoUnnecessaryCondition(rule) => rule.run_info(),
             Self::TypescriptNoUnnecessaryParameterPropertyAssignment(rule) => rule.run_info(),
@@ -18279,14 +19389,18 @@ impl RuleEnum {
             Self::ReactNoDidMountSetState(rule) => rule.run_info(),
             Self::ReactNoDirectMutationState(rule) => rule.run_info(),
             Self::ReactNoFindDomNode(rule) => rule.run_info(),
+            Self::ReactNoForwardRef(rule) => rule.run_info(),
             Self::ReactNoIsMounted(rule) => rule.run_info(),
+            Self::ReactNoJsxLiterals(rule) => rule.run_info(),
             Self::ReactNoMultiComp(rule) => rule.run_info(),
             Self::ReactNoNamespace(rule) => rule.run_info(),
             Self::ReactNoReactChildren(rule) => rule.run_info(),
+            Self::ReactNoReactSpecificProps(rule) => rule.run_info(),
             Self::ReactNoRedundantShouldComponentUpdate(rule) => rule.run_info(),
             Self::ReactNoRenderReturnValue(rule) => rule.run_info(),
             Self::ReactNoSetState(rule) => rule.run_info(),
             Self::ReactNoStringRefs(rule) => rule.run_info(),
+            Self::ReactNoSuspiciousSemicolonInJsx(rule) => rule.run_info(),
             Self::ReactNoThisInSfc(rule) => rule.run_info(),
             Self::ReactNoUnescapedEntities(rule) => rule.run_info(),
             Self::ReactNoUnknownProperty(rule) => rule.run_info(),
@@ -18301,6 +19415,7 @@ impl RuleEnum {
             Self::ReactSelfClosingComp(rule) => rule.run_info(),
             Self::ReactStateInConstructor(rule) => rule.run_info(),
             Self::ReactStylePropObject(rule) => rule.run_info(),
+            Self::ReactUseImageSize(rule) => rule.run_info(),
             Self::ReactVoidDomElementsNoChildren(rule) => rule.run_info(),
             Self::ReactPerfJsxNoJsxAsProp(rule) => rule.run_info(),
             Self::ReactPerfJsxNoNewArrayAsProp(rule) => rule.run_info(),
@@ -18333,6 +19448,7 @@ impl RuleEnum {
             Self::UnicornNoConsoleSpaces(rule) => rule.run_info(),
             Self::UnicornNoDocumentCookie(rule) => rule.run_info(),
             Self::UnicornNoEmptyFile(rule) => rule.run_info(),
+            Self::UnicornNoFlatMapIdentity(rule) => rule.run_info(),
             Self::UnicornNoHexEscape(rule) => rule.run_info(),
             Self::UnicornNoImmediateMutation(rule) => rule.run_info(),
             Self::UnicornNoInstanceofArray(rule) => rule.run_info(),
@@ -18366,8 +19482,10 @@ impl RuleEnum {
             Self::UnicornNoUselessLengthCheck(rule) => rule.run_info(),
             Self::UnicornNoUselessPromiseResolveReject(rule) => rule.run_info(),
             Self::UnicornNoUselessSpread(rule) => rule.run_info(),
+            Self::UnicornNoUselessStringRaw(rule) => rule.run_info(),
             Self::UnicornNoUselessSwitchCase(rule) => rule.run_info(),
             Self::UnicornNoUselessUndefined(rule) => rule.run_info(),
+            Self::UnicornNoUselessUndefinedInitialization(rule) => rule.run_info(),
             Self::UnicornNoZeroFractions(rule) => rule.run_info(),
             Self::UnicornNumberLiteralCase(rule) => rule.run_info(),
             Self::UnicornNumericSeparatorsStyle(rule) => rule.run_info(),
@@ -18432,6 +19550,10 @@ impl RuleEnum {
             Self::UnicornSwitchCaseBreakPosition(rule) => rule.run_info(),
             Self::UnicornTextEncodingIdentifierCase(rule) => rule.run_info(),
             Self::UnicornThrowNewError(rule) => rule.run_info(),
+            Self::UnicornUseCollapsedIf(rule) => rule.run_info(),
+            Self::UnicornUseConsistentCurlyBraces(rule) => rule.run_info(),
+            Self::UnicornUseSimpleNumberKeys(rule) => rule.run_info(),
+            Self::UnicornUseSimplifiedLogicExpression(rule) => rule.run_info(),
             Self::JsxA11YAltText(rule) => rule.run_info(),
             Self::JsxA11YAnchorAmbiguousText(rule) => rule.run_info(),
             Self::JsxA11YAnchorHasContent(rule) => rule.run_info(),
@@ -18455,14 +19577,20 @@ impl RuleEnum {
             Self::JsxA11YNoAriaHiddenOnFocusable(rule) => rule.run_info(),
             Self::JsxA11YNoAutofocus(rule) => rule.run_info(),
             Self::JsxA11YNoDistractingElements(rule) => rule.run_info(),
+            Self::JsxA11YNoInteractiveElementToNoninteractiveRole(rule) => rule.run_info(),
+            Self::JsxA11YNoNoninteractiveElementInteractions(rule) => rule.run_info(),
+            Self::JsxA11YNoNoninteractiveElementToInteractiveRole(rule) => rule.run_info(),
             Self::JsxA11YNoNoninteractiveTabindex(rule) => rule.run_info(),
             Self::JsxA11YNoRedundantRoles(rule) => rule.run_info(),
             Self::JsxA11YNoStaticElementInteractions(rule) => rule.run_info(),
+            Self::JsxA11YNoSvgWithoutTitle(rule) => rule.run_info(),
             Self::JsxA11YPreferTagOverRole(rule) => rule.run_info(),
             Self::JsxA11YRoleHasRequiredAriaProps(rule) => rule.run_info(),
             Self::JsxA11YRoleSupportsAriaProps(rule) => rule.run_info(),
             Self::JsxA11YScope(rule) => rule.run_info(),
             Self::JsxA11YTabindexNoPositive(rule) => rule.run_info(),
+            Self::JsxA11YUseFocusableInteractive(rule) => rule.run_info(),
+            Self::JsxA11YUseUniqueElementIds(rule) => rule.run_info(),
             Self::OxcApproxConstant(rule) => rule.run_info(),
             Self::OxcBadArrayMethodOnArguments(rule) => rule.run_info(),
             Self::OxcBadBitwiseOperator(rule) => rule.run_info(),
@@ -18569,6 +19697,7 @@ impl RuleEnum {
             Self::NodeGlobalRequire(rule) => rule.run_info(),
             Self::NodeHandleCallbackErr(rule) => rule.run_info(),
             Self::NodeNoExportsAssign(rule) => rule.run_info(),
+            Self::NodeNoGlobalDirnameFilename(rule) => rule.run_info(),
             Self::NodeNoNewRequire(rule) => rule.run_info(),
             Self::NodeNoPathConcat(rule) => rule.run_info(),
             Self::NodeNoProcessEnv(rule) => rule.run_info(),
@@ -18632,6 +19761,9 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::ImportNoCycle(ImportNoCycle::default()),
         RuleEnum::ImportNoDefaultExport(ImportNoDefaultExport::default()),
         RuleEnum::ImportNoDuplicates(ImportNoDuplicates::default()),
+        RuleEnum::ImportNoDynamicNamespaceImportAccess(
+            ImportNoDynamicNamespaceImportAccess::default(),
+        ),
         RuleEnum::ImportNoDynamicRequire(ImportNoDynamicRequire::default()),
         RuleEnum::ImportNoEmptyNamedBlocks(ImportNoEmptyNamedBlocks::default()),
         RuleEnum::ImportNoMutableExports(ImportNoMutableExports::default()),
@@ -18641,9 +19773,12 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::ImportNoNamedExport(ImportNoNamedExport::default()),
         RuleEnum::ImportNoNamespace(ImportNoNamespace::default()),
         RuleEnum::ImportNoNodejsModules(ImportNoNodejsModules::default()),
+        RuleEnum::ImportNoPrivateImports(ImportNoPrivateImports::default()),
         RuleEnum::ImportNoRelativeParentImports(ImportNoRelativeParentImports::default()),
         RuleEnum::ImportNoSelfImport(ImportNoSelfImport::default()),
         RuleEnum::ImportNoUnassignedImport(ImportNoUnassignedImport::default()),
+        RuleEnum::ImportNoUndeclaredDependencies(ImportNoUndeclaredDependencies::default()),
+        RuleEnum::ImportNoUnresolvedImports(ImportNoUnresolvedImports::default()),
         RuleEnum::ImportNoWebpackLoaderSyntax(ImportNoWebpackLoaderSyntax::default()),
         RuleEnum::ImportPreferDefaultExport(ImportPreferDefaultExport::default()),
         RuleEnum::ImportUnambiguous(ImportUnambiguous::default()),
@@ -18686,6 +19821,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::EslintNoClassAssign(EslintNoClassAssign::default()),
         RuleEnum::EslintNoCompareNegZero(EslintNoCompareNegZero::default()),
         RuleEnum::EslintNoCondAssign(EslintNoCondAssign::default()),
+        RuleEnum::EslintNoConfusingLabels(EslintNoConfusingLabels::default()),
         RuleEnum::EslintNoConsole(EslintNoConsole::default()),
         RuleEnum::EslintNoConstAssign(EslintNoConstAssign::default()),
         RuleEnum::EslintNoConstantBinaryExpression(EslintNoConstantBinaryExpression::default()),
@@ -18743,12 +19879,14 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::EslintNoNonoctalDecimalEscape(EslintNoNonoctalDecimalEscape::default()),
         RuleEnum::EslintNoObjCalls(EslintNoObjCalls::default()),
         RuleEnum::EslintNoObjectConstructor(EslintNoObjectConstructor::default()),
+        RuleEnum::EslintNoOctalEscape(EslintNoOctalEscape::default()),
         RuleEnum::EslintNoParamReassign(EslintNoParamReassign::default()),
         RuleEnum::EslintNoPlusplus(EslintNoPlusplus::default()),
         RuleEnum::EslintNoPromiseExecutorReturn(EslintNoPromiseExecutorReturn::default()),
         RuleEnum::EslintNoProto(EslintNoProto::default()),
         RuleEnum::EslintNoPrototypeBuiltins(EslintNoPrototypeBuiltins::default()),
         RuleEnum::EslintNoRedeclare(EslintNoRedeclare::default()),
+        RuleEnum::EslintNoRedundantUseStrict(EslintNoRedundantUseStrict::default()),
         RuleEnum::EslintNoRegexSpaces(EslintNoRegexSpaces::default()),
         RuleEnum::EslintNoRestrictedGlobals(EslintNoRestrictedGlobals::default()),
         RuleEnum::EslintNoRestrictedImports(EslintNoRestrictedImports::default()),
@@ -18760,7 +19898,9 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::EslintNoSetterReturn(EslintNoSetterReturn::default()),
         RuleEnum::EslintNoShadow(EslintNoShadow::default()),
         RuleEnum::EslintNoShadowRestrictedNames(EslintNoShadowRestrictedNames::default()),
+        RuleEnum::EslintNoShoutyConstants(EslintNoShoutyConstants::default()),
         RuleEnum::EslintNoSparseArrays(EslintNoSparseArrays::default()),
+        RuleEnum::EslintNoStringCaseMismatch(EslintNoStringCaseMismatch::default()),
         RuleEnum::EslintNoTemplateCurlyInString(EslintNoTemplateCurlyInString::default()),
         RuleEnum::EslintNoTernary(EslintNoTernary::default()),
         RuleEnum::EslintNoThisBeforeSuper(EslintNoThisBeforeSuper::default()),
@@ -18787,6 +19927,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::EslintNoUselessComputedKey(EslintNoUselessComputedKey::default()),
         RuleEnum::EslintNoUselessConcat(EslintNoUselessConcat::default()),
         RuleEnum::EslintNoUselessConstructor(EslintNoUselessConstructor::default()),
+        RuleEnum::EslintNoUselessContinue(EslintNoUselessContinue::default()),
         RuleEnum::EslintNoUselessEscape(EslintNoUselessEscape::default()),
         RuleEnum::EslintNoUselessRename(EslintNoUselessRename::default()),
         RuleEnum::EslintNoUselessReturn(EslintNoUselessReturn::default()),
@@ -18796,6 +19937,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::EslintNoWith(EslintNoWith::default()),
         RuleEnum::EslintObjectShorthand(EslintObjectShorthand::default()),
         RuleEnum::EslintOperatorAssignment(EslintOperatorAssignment::default()),
+        RuleEnum::EslintPreferArrowCallback(EslintPreferArrowCallback::default()),
         RuleEnum::EslintPreferConst(EslintPreferConst::default()),
         RuleEnum::EslintPreferDestructuring(EslintPreferDestructuring::default()),
         RuleEnum::EslintPreferExponentiationOperator(EslintPreferExponentiationOperator::default()),
@@ -18816,6 +19958,9 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::EslintSymbolDescription(EslintSymbolDescription::default()),
         RuleEnum::EslintUnicodeBom(EslintUnicodeBom::default()),
         RuleEnum::EslintUseIsnan(EslintUseIsnan::default()),
+        RuleEnum::EslintUseRegexLiterals(EslintUseRegexLiterals::default()),
+        RuleEnum::EslintUseSingleVarDeclarator(EslintUseSingleVarDeclarator::default()),
+        RuleEnum::EslintUseWhile(EslintUseWhile::default()),
         RuleEnum::EslintValidTypeof(EslintValidTypeof::default()),
         RuleEnum::EslintVarsOnTop(EslintVarsOnTop::default()),
         RuleEnum::EslintYoda(EslintYoda::default()),
@@ -18847,9 +19992,13 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::TypescriptExplicitFunctionReturnType(
             TypescriptExplicitFunctionReturnType::default(),
         ),
+        RuleEnum::TypescriptExplicitMemberAccessibility(
+            TypescriptExplicitMemberAccessibility::default(),
+        ),
         RuleEnum::TypescriptExplicitModuleBoundaryTypes(
             TypescriptExplicitModuleBoundaryTypes::default(),
         ),
+        RuleEnum::TypescriptNamingConvention(TypescriptNamingConvention::default()),
         RuleEnum::TypescriptNoArrayDelete(TypescriptNoArrayDelete::default()),
         RuleEnum::TypescriptNoBaseToString(TypescriptNoBaseToString::default()),
         RuleEnum::TypescriptNoConfusingNonNullAssertion(
@@ -18866,11 +20015,15 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::TypescriptNoDynamicDelete(TypescriptNoDynamicDelete::default()),
         RuleEnum::TypescriptNoEmptyInterface(TypescriptNoEmptyInterface::default()),
         RuleEnum::TypescriptNoEmptyObjectType(TypescriptNoEmptyObjectType::default()),
+        RuleEnum::TypescriptNoEmptyTypeParameters(TypescriptNoEmptyTypeParameters::default()),
+        RuleEnum::TypescriptNoEnum(TypescriptNoEnum::default()),
+        RuleEnum::TypescriptNoEvolvingTypes(TypescriptNoEvolvingTypes::default()),
         RuleEnum::TypescriptNoExplicitAny(TypescriptNoExplicitAny::default()),
         RuleEnum::TypescriptNoExtraNonNullAssertion(TypescriptNoExtraNonNullAssertion::default()),
         RuleEnum::TypescriptNoExtraneousClass(TypescriptNoExtraneousClass::default()),
         RuleEnum::TypescriptNoFloatingPromises(TypescriptNoFloatingPromises::default()),
         RuleEnum::TypescriptNoForInArray(TypescriptNoForInArray::default()),
+        RuleEnum::TypescriptNoImplicitAnyLet(TypescriptNoImplicitAnyLet::default()),
         RuleEnum::TypescriptNoImpliedEval(TypescriptNoImpliedEval::default()),
         RuleEnum::TypescriptNoImportTypeSideEffects(TypescriptNoImportTypeSideEffects::default()),
         RuleEnum::TypescriptNoInferrableTypes(TypescriptNoInferrableTypes::default()),
@@ -18896,6 +20049,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::TypescriptNoRequireImports(TypescriptNoRequireImports::default()),
         RuleEnum::TypescriptNoRestrictedTypes(TypescriptNoRestrictedTypes::default()),
         RuleEnum::TypescriptNoThisAlias(TypescriptNoThisAlias::default()),
+        RuleEnum::TypescriptNoThisInStatic(TypescriptNoThisInStatic::default()),
         RuleEnum::TypescriptNoUnnecessaryBooleanLiteralCompare(
             TypescriptNoUnnecessaryBooleanLiteralCompare::default(),
         ),
@@ -19081,16 +20235,20 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::ReactNoDidMountSetState(ReactNoDidMountSetState::default()),
         RuleEnum::ReactNoDirectMutationState(ReactNoDirectMutationState::default()),
         RuleEnum::ReactNoFindDomNode(ReactNoFindDomNode::default()),
+        RuleEnum::ReactNoForwardRef(ReactNoForwardRef::default()),
         RuleEnum::ReactNoIsMounted(ReactNoIsMounted::default()),
+        RuleEnum::ReactNoJsxLiterals(ReactNoJsxLiterals::default()),
         RuleEnum::ReactNoMultiComp(ReactNoMultiComp::default()),
         RuleEnum::ReactNoNamespace(ReactNoNamespace::default()),
         RuleEnum::ReactNoReactChildren(ReactNoReactChildren::default()),
+        RuleEnum::ReactNoReactSpecificProps(ReactNoReactSpecificProps::default()),
         RuleEnum::ReactNoRedundantShouldComponentUpdate(
             ReactNoRedundantShouldComponentUpdate::default(),
         ),
         RuleEnum::ReactNoRenderReturnValue(ReactNoRenderReturnValue::default()),
         RuleEnum::ReactNoSetState(ReactNoSetState::default()),
         RuleEnum::ReactNoStringRefs(ReactNoStringRefs::default()),
+        RuleEnum::ReactNoSuspiciousSemicolonInJsx(ReactNoSuspiciousSemicolonInJsx::default()),
         RuleEnum::ReactNoThisInSfc(ReactNoThisInSfc::default()),
         RuleEnum::ReactNoUnescapedEntities(ReactNoUnescapedEntities::default()),
         RuleEnum::ReactNoUnknownProperty(ReactNoUnknownProperty::default()),
@@ -19105,6 +20263,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::ReactSelfClosingComp(ReactSelfClosingComp::default()),
         RuleEnum::ReactStateInConstructor(ReactStateInConstructor::default()),
         RuleEnum::ReactStylePropObject(ReactStylePropObject::default()),
+        RuleEnum::ReactUseImageSize(ReactUseImageSize::default()),
         RuleEnum::ReactVoidDomElementsNoChildren(ReactVoidDomElementsNoChildren::default()),
         RuleEnum::ReactPerfJsxNoJsxAsProp(ReactPerfJsxNoJsxAsProp::default()),
         RuleEnum::ReactPerfJsxNoNewArrayAsProp(ReactPerfJsxNoNewArrayAsProp::default()),
@@ -19139,6 +20298,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::UnicornNoConsoleSpaces(UnicornNoConsoleSpaces::default()),
         RuleEnum::UnicornNoDocumentCookie(UnicornNoDocumentCookie::default()),
         RuleEnum::UnicornNoEmptyFile(UnicornNoEmptyFile::default()),
+        RuleEnum::UnicornNoFlatMapIdentity(UnicornNoFlatMapIdentity::default()),
         RuleEnum::UnicornNoHexEscape(UnicornNoHexEscape::default()),
         RuleEnum::UnicornNoImmediateMutation(UnicornNoImmediateMutation::default()),
         RuleEnum::UnicornNoInstanceofArray(UnicornNoInstanceofArray::default()),
@@ -19184,8 +20344,12 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
             UnicornNoUselessPromiseResolveReject::default(),
         ),
         RuleEnum::UnicornNoUselessSpread(UnicornNoUselessSpread::default()),
+        RuleEnum::UnicornNoUselessStringRaw(UnicornNoUselessStringRaw::default()),
         RuleEnum::UnicornNoUselessSwitchCase(UnicornNoUselessSwitchCase::default()),
         RuleEnum::UnicornNoUselessUndefined(UnicornNoUselessUndefined::default()),
+        RuleEnum::UnicornNoUselessUndefinedInitialization(
+            UnicornNoUselessUndefinedInitialization::default(),
+        ),
         RuleEnum::UnicornNoZeroFractions(UnicornNoZeroFractions::default()),
         RuleEnum::UnicornNumberLiteralCase(UnicornNumberLiteralCase::default()),
         RuleEnum::UnicornNumericSeparatorsStyle(UnicornNumericSeparatorsStyle::default()),
@@ -19258,6 +20422,12 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::UnicornSwitchCaseBreakPosition(UnicornSwitchCaseBreakPosition::default()),
         RuleEnum::UnicornTextEncodingIdentifierCase(UnicornTextEncodingIdentifierCase::default()),
         RuleEnum::UnicornThrowNewError(UnicornThrowNewError::default()),
+        RuleEnum::UnicornUseCollapsedIf(UnicornUseCollapsedIf::default()),
+        RuleEnum::UnicornUseConsistentCurlyBraces(UnicornUseConsistentCurlyBraces::default()),
+        RuleEnum::UnicornUseSimpleNumberKeys(UnicornUseSimpleNumberKeys::default()),
+        RuleEnum::UnicornUseSimplifiedLogicExpression(
+            UnicornUseSimplifiedLogicExpression::default(),
+        ),
         RuleEnum::JsxA11YAltText(JsxA11YAltText::default()),
         RuleEnum::JsxA11YAnchorAmbiguousText(JsxA11YAnchorAmbiguousText::default()),
         RuleEnum::JsxA11YAnchorHasContent(JsxA11YAnchorHasContent::default()),
@@ -19283,14 +20453,26 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::JsxA11YNoAriaHiddenOnFocusable(JsxA11YNoAriaHiddenOnFocusable::default()),
         RuleEnum::JsxA11YNoAutofocus(JsxA11YNoAutofocus::default()),
         RuleEnum::JsxA11YNoDistractingElements(JsxA11YNoDistractingElements::default()),
+        RuleEnum::JsxA11YNoInteractiveElementToNoninteractiveRole(
+            JsxA11YNoInteractiveElementToNoninteractiveRole::default(),
+        ),
+        RuleEnum::JsxA11YNoNoninteractiveElementInteractions(
+            JsxA11YNoNoninteractiveElementInteractions::default(),
+        ),
+        RuleEnum::JsxA11YNoNoninteractiveElementToInteractiveRole(
+            JsxA11YNoNoninteractiveElementToInteractiveRole::default(),
+        ),
         RuleEnum::JsxA11YNoNoninteractiveTabindex(JsxA11YNoNoninteractiveTabindex::default()),
         RuleEnum::JsxA11YNoRedundantRoles(JsxA11YNoRedundantRoles::default()),
         RuleEnum::JsxA11YNoStaticElementInteractions(JsxA11YNoStaticElementInteractions::default()),
+        RuleEnum::JsxA11YNoSvgWithoutTitle(JsxA11YNoSvgWithoutTitle::default()),
         RuleEnum::JsxA11YPreferTagOverRole(JsxA11YPreferTagOverRole::default()),
         RuleEnum::JsxA11YRoleHasRequiredAriaProps(JsxA11YRoleHasRequiredAriaProps::default()),
         RuleEnum::JsxA11YRoleSupportsAriaProps(JsxA11YRoleSupportsAriaProps::default()),
         RuleEnum::JsxA11YScope(JsxA11YScope::default()),
         RuleEnum::JsxA11YTabindexNoPositive(JsxA11YTabindexNoPositive::default()),
+        RuleEnum::JsxA11YUseFocusableInteractive(JsxA11YUseFocusableInteractive::default()),
+        RuleEnum::JsxA11YUseUniqueElementIds(JsxA11YUseUniqueElementIds::default()),
         RuleEnum::OxcApproxConstant(OxcApproxConstant::default()),
         RuleEnum::OxcBadArrayMethodOnArguments(OxcBadArrayMethodOnArguments::default()),
         RuleEnum::OxcBadBitwiseOperator(OxcBadBitwiseOperator::default()),
@@ -19401,6 +20583,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::NodeGlobalRequire(NodeGlobalRequire::default()),
         RuleEnum::NodeHandleCallbackErr(NodeHandleCallbackErr::default()),
         RuleEnum::NodeNoExportsAssign(NodeNoExportsAssign::default()),
+        RuleEnum::NodeNoGlobalDirnameFilename(NodeNoGlobalDirnameFilename::default()),
         RuleEnum::NodeNoNewRequire(NodeNoNewRequire::default()),
         RuleEnum::NodeNoPathConcat(NodeNoPathConcat::default()),
         RuleEnum::NodeNoProcessEnv(NodeNoProcessEnv::default()),

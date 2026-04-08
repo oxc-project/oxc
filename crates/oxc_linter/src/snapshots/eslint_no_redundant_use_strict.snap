@@ -1,0 +1,10 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint(no-redundant-use-strict): Redundant 'use strict' directive.
+   ╭─[no_redundant_use_strict.tsx:1:32]
+ 1 │ "use strict"; function foo() { "use strict"; return 1; }
+   ·                                ─────────────
+   ╰────
+  help: Remove this 'use strict' directive because the code is already in strict mode (ESM modules are always strict, or an outer scope already has 'use strict').

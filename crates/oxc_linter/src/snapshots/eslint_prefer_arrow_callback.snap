@@ -1,0 +1,31 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint(prefer-arrow-callback): Unexpected function expression.
+   ╭─[prefer_arrow_callback.tsx:1:5]
+ 1 │ foo(function(a) { return a; });
+   ·     ────────
+   ╰────
+  help: Use an arrow function instead of a function expression.
+
+  ⚠ eslint(prefer-arrow-callback): Unexpected function expression.
+   ╭─[prefer_arrow_callback.tsx:1:5]
+ 1 │ foo(function() { return 1; });
+   ·     ────────
+   ╰────
+  help: Use an arrow function instead of a function expression.
+
+  ⚠ eslint(prefer-arrow-callback): Unexpected function expression.
+   ╭─[prefer_arrow_callback.tsx:1:12]
+ 1 │ [1, 2].map(function(x) { return x * 2; });
+   ·            ────────
+   ╰────
+  help: Use an arrow function instead of a function expression.
+
+  ⚠ eslint(prefer-arrow-callback): Unexpected function expression.
+   ╭─[prefer_arrow_callback.tsx:1:12]
+ 1 │ setTimeout(function() { console.log('hi'); }, 100);
+   ·            ────────
+   ╰────
+  help: Use an arrow function instead of a function expression.

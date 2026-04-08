@@ -1,0 +1,17 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint-plugin-react(no-forward-ref): Do not use `React.forwardRef`.
+   ╭─[no_forward_ref.tsx:1:17]
+ 1 │ const MyInput = React.forwardRef((props, ref) => <input ref={ref} />);
+   ·                 ─────────────────────────────────────────────────────
+   ╰────
+  help: In React 19+, `ref` is available as a prop. Use the `ref` prop directly instead of `forwardRef`.
+
+  ⚠ eslint-plugin-react(no-forward-ref): Do not use `React.forwardRef`.
+   ╭─[no_forward_ref.tsx:1:17]
+ 1 │ const MyInput = forwardRef((props, ref) => <input ref={ref} />);
+   ·                 ───────────────────────────────────────────────
+   ╰────
+  help: In React 19+, `ref` is available as a prop. Use the `ref` prop directly instead of `forwardRef`.

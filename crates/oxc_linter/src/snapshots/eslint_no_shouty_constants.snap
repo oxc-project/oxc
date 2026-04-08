@@ -1,0 +1,24 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint(no-shouty-constants): SCREAMING_SNAKE_CASE variable `FOO_BAR` is assigned a simple string literal.
+   ╭─[no_shouty_constants.tsx:1:7]
+ 1 │ const FOO_BAR = "foo_bar";
+   ·       ───────
+   ╰────
+  help: UPPER_CASE names are conventionally reserved for true constants. Use camelCase or rename if this value is not a meaningful constant.
+
+  ⚠ eslint(no-shouty-constants): SCREAMING_SNAKE_CASE variable `BAR_BAZ` is assigned a simple string literal.
+   ╭─[no_shouty_constants.tsx:1:7]
+ 1 │ const BAR_BAZ = "bar-baz";
+   ·       ───────
+   ╰────
+  help: UPPER_CASE names are conventionally reserved for true constants. Use camelCase or rename if this value is not a meaningful constant.
+
+  ⚠ eslint(no-shouty-constants): SCREAMING_SNAKE_CASE variable `HELLO_WORLD` is assigned a simple string literal.
+   ╭─[no_shouty_constants.tsx:1:7]
+ 1 │ const HELLO_WORLD = "helloworld";
+   ·       ───────────
+   ╰────
+  help: UPPER_CASE names are conventionally reserved for true constants. Use camelCase or rename if this value is not a meaningful constant.

@@ -1,0 +1,10 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint-plugin-react(no-suspicious-semicolon-in-jsx): Suspicious semicolon as JSX text content.
+   ╭─[no_suspicious_semicolon_in_jsx.tsx:1:6]
+ 1 │ <div>;</div>
+   ·      ─
+   ╰────
+  help: This semicolon appears as visible text in the rendered output. If you meant to end a statement, move it outside the JSX expression.

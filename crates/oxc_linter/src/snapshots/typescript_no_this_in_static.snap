@@ -1,0 +1,24 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ typescript-eslint(no-this-in-static): Unexpected `this` in a static method.
+   ╭─[no_this_in_static.tsx:1:35]
+ 1 │ class Foo { static bar() { return this.baz; } }
+   ·                                   ────
+   ╰────
+  help: In static methods, `this` refers to the class constructor, not an instance. Use the class name directly instead.
+
+  ⚠ typescript-eslint(no-this-in-static): Unexpected `this` in a static method.
+   ╭─[no_this_in_static.tsx:1:28]
+ 1 │ class Foo { static bar() { this.baz(); } }
+   ·                            ────
+   ╰────
+  help: In static methods, `this` refers to the class constructor, not an instance. Use the class name directly instead.
+
+  ⚠ typescript-eslint(no-this-in-static): Unexpected `this` in a static method.
+   ╭─[no_this_in_static.tsx:1:41]
+ 1 │ class Foo { static bar = () => { return this.baz; }; }
+   ·                                         ────
+   ╰────
+  help: In static methods, `this` refers to the class constructor, not an instance. Use the class name directly instead.

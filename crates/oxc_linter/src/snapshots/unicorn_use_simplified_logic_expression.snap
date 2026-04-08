@@ -1,0 +1,59 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint-plugin-unicorn(use-simplified-logic-expression): This logical expression can be simplified.
+   ╭─[use_simplified_logic_expression.tsx:1:11]
+ 1 │ const a = x || true;
+   ·           ─────────
+   ╰────
+  help: Simplify to: `true`
+
+  ⚠ eslint-plugin-unicorn(use-simplified-logic-expression): This logical expression can be simplified.
+   ╭─[use_simplified_logic_expression.tsx:1:11]
+ 1 │ const b = x && false;
+   ·           ──────────
+   ╰────
+  help: Simplify to: `false`
+
+  ⚠ eslint-plugin-unicorn(use-simplified-logic-expression): This logical expression can be simplified.
+   ╭─[use_simplified_logic_expression.tsx:1:11]
+ 1 │ const c = x || false;
+   ·           ──────────
+   ╰────
+  help: Simplify to: `x`
+
+  ⚠ eslint-plugin-unicorn(use-simplified-logic-expression): This logical expression can be simplified.
+   ╭─[use_simplified_logic_expression.tsx:1:11]
+ 1 │ const d = x && true;
+   ·           ─────────
+   ╰────
+  help: Simplify to: `x`
+
+  ⚠ eslint-plugin-unicorn(use-simplified-logic-expression): This logical expression can be simplified.
+   ╭─[use_simplified_logic_expression.tsx:1:11]
+ 1 │ const e = true || x;
+   ·           ─────────
+   ╰────
+  help: Simplify to: `true`
+
+  ⚠ eslint-plugin-unicorn(use-simplified-logic-expression): This logical expression can be simplified.
+   ╭─[use_simplified_logic_expression.tsx:1:11]
+ 1 │ const f = false && x;
+   ·           ──────────
+   ╰────
+  help: Simplify to: `false`
+
+  ⚠ eslint-plugin-unicorn(use-simplified-logic-expression): This logical expression can be simplified.
+   ╭─[use_simplified_logic_expression.tsx:1:11]
+ 1 │ const g = false || x;
+   ·           ──────────
+   ╰────
+  help: Simplify to: `x`
+
+  ⚠ eslint-plugin-unicorn(use-simplified-logic-expression): This logical expression can be simplified.
+   ╭─[use_simplified_logic_expression.tsx:1:11]
+ 1 │ const h = true && x;
+   ·           ─────────
+   ╰────
+  help: Simplify to: `x`

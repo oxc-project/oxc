@@ -1,0 +1,17 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ typescript-eslint(no-evolving-types): Variable is initialized to a value that will cause its type to evolve.
+   ╭─[no_evolving_types.tsx:1:5]
+ 1 │ let arr = [];
+   ·     ────────
+   ╰────
+  help: Add an explicit type annotation to prevent the type from evolving implicitly.
+
+  ⚠ typescript-eslint(no-evolving-types): Variable is initialized to a value that will cause its type to evolve.
+   ╭─[no_evolving_types.tsx:1:5]
+ 1 │ let val = null;
+   ·     ──────────
+   ╰────
+  help: Add an explicit type annotation to prevent the type from evolving implicitly.

@@ -1,0 +1,66 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint(no-octal-escape): Don't use octal escape sequences.
+   ╭─[no_octal_escape.tsx:1:12]
+ 1 │ var foo = '\1';
+   ·            ──
+   ╰────
+  help: Use Unicode or hexadecimal escape sequences instead of octal escape sequences.
+
+  ⚠ eslint(no-octal-escape): Don't use octal escape sequences.
+   ╭─[no_octal_escape.tsx:1:12]
+ 1 │ var foo = '\2';
+   ·            ──
+   ╰────
+  help: Use Unicode or hexadecimal escape sequences instead of octal escape sequences.
+
+  ⚠ eslint(no-octal-escape): Don't use octal escape sequences.
+   ╭─[no_octal_escape.tsx:1:12]
+ 1 │ var foo = '\7';
+   ·            ──
+   ╰────
+  help: Use Unicode or hexadecimal escape sequences instead of octal escape sequences.
+
+  ⚠ eslint(no-octal-escape): Don't use octal escape sequences.
+   ╭─[no_octal_escape.tsx:1:12]
+ 1 │ var foo = "\00";
+   ·            ───
+   ╰────
+  help: Use Unicode or hexadecimal escape sequences instead of octal escape sequences.
+
+  ⚠ eslint(no-octal-escape): Don't use octal escape sequences.
+   ╭─[no_octal_escape.tsx:1:12]
+ 1 │ var foo = '\251';
+   ·            ────
+   ╰────
+  help: Use Unicode or hexadecimal escape sequences instead of octal escape sequences.
+
+  ⚠ eslint(no-octal-escape): Don't use octal escape sequences.
+   ╭─[no_octal_escape.tsx:1:12]
+ 1 │ var foo = '\377';
+   ·            ────
+   ╰────
+  help: Use Unicode or hexadecimal escape sequences instead of octal escape sequences.
+
+  ⚠ eslint(no-octal-escape): Don't use octal escape sequences.
+   ╭─[no_octal_escape.tsx:1:12]
+ 1 │ var foo = '\012';
+   ·            ────
+   ╰────
+  help: Use Unicode or hexadecimal escape sequences instead of octal escape sequences.
+
+  ⚠ eslint(no-octal-escape): Don't use octal escape sequences.
+   ╭─[no_octal_escape.tsx:1:22]
+ 1 │ var foo = "Copyright \251";
+   ·                      ────
+   ╰────
+  help: Use Unicode or hexadecimal escape sequences instead of octal escape sequences.
+
+  ⚠ eslint(no-octal-escape): Don't use octal escape sequences.
+   ╭─[no_octal_escape.tsx:1:12]
+ 1 │ var foo = "\1";
+   ·            ──
+   ╰────
+  help: Use Unicode or hexadecimal escape sequences instead of octal escape sequences.

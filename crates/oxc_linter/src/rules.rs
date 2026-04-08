@@ -22,6 +22,7 @@ pub(crate) mod import {
     pub mod no_cycle;
     pub mod no_default_export;
     pub mod no_duplicates;
+    pub mod no_dynamic_namespace_import_access;
     pub mod no_dynamic_require;
     pub mod no_empty_named_blocks;
     pub mod no_mutable_exports;
@@ -31,9 +32,12 @@ pub(crate) mod import {
     pub mod no_named_export;
     pub mod no_namespace;
     pub mod no_nodejs_modules;
+    pub mod no_private_imports;
     pub mod no_relative_parent_imports;
     pub mod no_self_import;
     pub mod no_unassigned_import;
+    pub mod no_undeclared_dependencies;
+    pub mod no_unresolved_imports;
     pub mod no_webpack_loader_syntax;
     pub mod prefer_default_export;
     pub mod unambiguous;
@@ -79,6 +83,7 @@ pub(crate) mod eslint {
     pub mod no_class_assign;
     pub mod no_compare_neg_zero;
     pub mod no_cond_assign;
+    pub mod no_confusing_labels;
     pub mod no_console;
     pub mod no_const_assign;
     pub mod no_constant_binary_expression;
@@ -136,12 +141,14 @@ pub(crate) mod eslint {
     pub mod no_nonoctal_decimal_escape;
     pub mod no_obj_calls;
     pub mod no_object_constructor;
+    pub mod no_octal_escape;
     pub mod no_param_reassign;
     pub mod no_plusplus;
     pub mod no_promise_executor_return;
     pub mod no_proto;
     pub mod no_prototype_builtins;
     pub mod no_redeclare;
+    pub mod no_redundant_use_strict;
     pub mod no_regex_spaces;
     pub mod no_restricted_globals;
     pub mod no_restricted_imports;
@@ -153,7 +160,9 @@ pub(crate) mod eslint {
     pub mod no_setter_return;
     pub mod no_shadow;
     pub mod no_shadow_restricted_names;
+    pub mod no_shouty_constants;
     pub mod no_sparse_arrays;
+    pub mod no_string_case_mismatch;
     pub mod no_template_curly_in_string;
     pub mod no_ternary;
     pub mod no_this_before_super;
@@ -180,6 +189,7 @@ pub(crate) mod eslint {
     pub mod no_useless_computed_key;
     pub mod no_useless_concat;
     pub mod no_useless_constructor;
+    pub mod no_useless_continue;
     pub mod no_useless_escape;
     pub mod no_useless_rename;
     pub mod no_useless_return;
@@ -189,6 +199,7 @@ pub(crate) mod eslint {
     pub mod no_with;
     pub mod object_shorthand;
     pub mod operator_assignment;
+    pub mod prefer_arrow_callback;
     pub mod prefer_const;
     pub mod prefer_destructuring;
     pub mod prefer_exponentiation_operator;
@@ -209,6 +220,9 @@ pub(crate) mod eslint {
     pub mod symbol_description;
     pub mod unicode_bom;
     pub mod use_isnan;
+    pub mod use_regex_literals;
+    pub mod use_single_var_declarator;
+    pub mod use_while;
     pub mod valid_typeof;
     pub mod vars_on_top;
     pub mod yoda;
@@ -231,7 +245,9 @@ pub(crate) mod typescript {
     pub mod consistent_type_imports;
     pub mod dot_notation;
     pub mod explicit_function_return_type;
+    pub mod explicit_member_accessibility;
     pub mod explicit_module_boundary_types;
+    pub mod naming_convention;
     pub mod no_array_delete;
     pub mod no_base_to_string;
     pub mod no_confusing_non_null_assertion;
@@ -242,11 +258,15 @@ pub(crate) mod typescript {
     pub mod no_dynamic_delete;
     pub mod no_empty_interface;
     pub mod no_empty_object_type;
+    pub mod no_empty_type_parameters;
+    pub mod no_enum;
+    pub mod no_evolving_types;
     pub mod no_explicit_any;
     pub mod no_extra_non_null_assertion;
     pub mod no_extraneous_class;
     pub mod no_floating_promises;
     pub mod no_for_in_array;
+    pub mod no_implicit_any_let;
     pub mod no_implied_eval;
     pub mod no_import_type_side_effects;
     pub mod no_inferrable_types;
@@ -264,6 +284,7 @@ pub(crate) mod typescript {
     pub mod no_require_imports;
     pub mod no_restricted_types;
     pub mod no_this_alias;
+    pub mod no_this_in_static;
     pub mod no_unnecessary_boolean_literal_compare;
     pub mod no_unnecessary_condition;
     pub mod no_unnecessary_parameter_property_assignment;
@@ -417,14 +438,18 @@ pub(crate) mod react {
     pub mod no_did_mount_set_state;
     pub mod no_direct_mutation_state;
     pub mod no_find_dom_node;
+    pub mod no_forward_ref;
     pub mod no_is_mounted;
+    pub mod no_jsx_literals;
     pub mod no_multi_comp;
     pub mod no_namespace;
     pub mod no_react_children;
+    pub mod no_react_specific_props;
     pub mod no_redundant_should_component_update;
     pub mod no_render_return_value;
     pub mod no_set_state;
     pub mod no_string_refs;
+    pub mod no_suspicious_semicolon_in_jsx;
     pub mod no_this_in_sfc;
     pub mod no_unescaped_entities;
     pub mod no_unknown_property;
@@ -439,6 +464,7 @@ pub(crate) mod react {
     pub mod self_closing_comp;
     pub mod state_in_constructor;
     pub mod style_prop_object;
+    pub mod use_image_size;
     pub mod void_dom_elements_no_children;
 }
 
@@ -477,6 +503,7 @@ pub(crate) mod unicorn {
     pub mod no_console_spaces;
     pub mod no_document_cookie;
     pub mod no_empty_file;
+    pub mod no_flat_map_identity;
     pub mod no_hex_escape;
     pub mod no_immediate_mutation;
     pub mod no_instanceof_array;
@@ -510,8 +537,10 @@ pub(crate) mod unicorn {
     pub mod no_useless_length_check;
     pub mod no_useless_promise_resolve_reject;
     pub mod no_useless_spread;
+    pub mod no_useless_string_raw;
     pub mod no_useless_switch_case;
     pub mod no_useless_undefined;
+    pub mod no_useless_undefined_initialization;
     pub mod no_zero_fractions;
     pub mod number_literal_case;
     pub mod numeric_separators_style;
@@ -576,6 +605,10 @@ pub(crate) mod unicorn {
     pub mod switch_case_break_position;
     pub mod text_encoding_identifier_case;
     pub mod throw_new_error;
+    pub mod use_collapsed_if;
+    pub mod use_consistent_curly_braces;
+    pub mod use_simple_number_keys;
+    pub mod use_simplified_logic_expression;
 }
 
 pub(crate) mod jsx_a11y {
@@ -602,14 +635,20 @@ pub(crate) mod jsx_a11y {
     pub mod no_aria_hidden_on_focusable;
     pub mod no_autofocus;
     pub mod no_distracting_elements;
+    pub mod no_interactive_element_to_noninteractive_role;
+    pub mod no_noninteractive_element_interactions;
+    pub mod no_noninteractive_element_to_interactive_role;
     pub mod no_noninteractive_tabindex;
     pub mod no_redundant_roles;
     pub mod no_static_element_interactions;
+    pub mod no_svg_without_title;
     pub mod prefer_tag_over_role;
     pub mod role_has_required_aria_props;
     pub mod role_supports_aria_props;
     pub mod scope;
     pub mod tabindex_no_positive;
+    pub mod use_focusable_interactive;
+    pub mod use_unique_element_ids;
 }
 
 pub(crate) mod oxc {
@@ -735,6 +774,7 @@ pub(crate) mod node {
     pub mod global_require;
     pub mod handle_callback_err;
     pub mod no_exports_assign;
+    pub mod no_global_dirname_filename;
     pub mod no_new_require;
     pub mod no_path_concat;
     pub mod no_process_env;

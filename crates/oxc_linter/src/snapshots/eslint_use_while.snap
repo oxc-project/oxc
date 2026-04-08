@@ -1,0 +1,24 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint(use-while): Use `while` instead of `for` with no init and update.
+   ╭─[use_while.tsx:1:1]
+ 1 │ for (; x < 10;) { x++; }
+   · ───
+   ╰────
+  help: Replace `for(;condition;)` with `while(condition)` for clarity.
+
+  ⚠ eslint(use-while): Use `while` instead of `for` with no init and update.
+   ╭─[use_while.tsx:1:1]
+ 1 │ for (;;) { break; }
+   · ───
+   ╰────
+  help: Replace `for(;condition;)` with `while(condition)` for clarity.
+
+  ⚠ eslint(use-while): Use `while` instead of `for` with no init and update.
+   ╭─[use_while.tsx:1:1]
+ 1 │ for (; true;) { doSomething(); }
+   · ───
+   ╰────
+  help: Replace `for(;condition;)` with `while(condition)` for clarity.

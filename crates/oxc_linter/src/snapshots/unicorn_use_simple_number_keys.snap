@@ -1,0 +1,38 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint-plugin-unicorn(use-simple-number-keys): Use a simpler number as a property key.
+   ╭─[use_simple_number_keys.tsx:1:15]
+ 1 │ const obj = { 1.0: 'foo' };
+   ·               ───
+   ╰────
+  help: Simplify the numeric property key (e.g., use `1` instead of `1.0`).
+
+  ⚠ eslint-plugin-unicorn(use-simple-number-keys): Use a simpler number as a property key.
+   ╭─[use_simple_number_keys.tsx:1:15]
+ 1 │ const obj = { 0x1: 'foo' };
+   ·               ───
+   ╰────
+  help: Simplify the numeric property key (e.g., use `1` instead of `1.0`).
+
+  ⚠ eslint-plugin-unicorn(use-simple-number-keys): Use a simpler number as a property key.
+   ╭─[use_simple_number_keys.tsx:1:15]
+ 1 │ const obj = { 0o1: 'foo' };
+   ·               ───
+   ╰────
+  help: Simplify the numeric property key (e.g., use `1` instead of `1.0`).
+
+  ⚠ eslint-plugin-unicorn(use-simple-number-keys): Use a simpler number as a property key.
+   ╭─[use_simple_number_keys.tsx:1:15]
+ 1 │ const obj = { 0b1: 'foo' };
+   ·               ───
+   ╰────
+  help: Simplify the numeric property key (e.g., use `1` instead of `1.0`).
+
+  ⚠ eslint-plugin-unicorn(use-simple-number-keys): Use a simpler number as a property key.
+   ╭─[use_simple_number_keys.tsx:1:15]
+ 1 │ const obj = { 1e2: 'foo' };
+   ·               ───
+   ╰────
+  help: Simplify the numeric property key (e.g., use `1` instead of `1.0`).

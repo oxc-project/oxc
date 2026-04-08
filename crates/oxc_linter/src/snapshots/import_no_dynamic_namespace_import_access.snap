@@ -1,0 +1,10 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint-plugin-import(no-dynamic-namespace-import-access): Dynamic access to namespace import defeats tree-shaking.
+   ╭─[no_dynamic_namespace_import_access.tsx:1:38]
+ 1 │ import * as ns from 'mod'; const x = ns[key];
+   ·                                      ───────
+   ╰────
+  help: Use named imports instead of dynamically accessing namespace imports.

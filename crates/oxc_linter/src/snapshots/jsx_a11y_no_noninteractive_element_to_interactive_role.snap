@@ -1,0 +1,24 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive element should not be assigned an interactive role.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:6]
+ 1 │ <div role="button" />
+   ·      ─────────────
+   ╰────
+  help: Use an interactive HTML element instead of adding an interactive role to a non-interactive element.
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive element should not be assigned an interactive role.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:7]
+ 1 │ <span role="link" />
+   ·       ───────────
+   ╰────
+  help: Use an interactive HTML element instead of adding an interactive role to a non-interactive element.
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive element should not be assigned an interactive role.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:4]
+ 1 │ <p role="checkbox" />
+   ·    ───────────────
+   ╰────
+  help: Use an interactive HTML element instead of adding an interactive role to a non-interactive element.

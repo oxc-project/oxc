@@ -1,0 +1,17 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint-plugin-jsx-a11y(use-focusable-interactive): Interactive elements must be focusable.
+   ╭─[use_focusable_interactive.tsx:1:1]
+ 1 │ <div role="button" />
+   · ─────────────────────
+   ╰────
+  help: Add a `tabIndex` attribute to make this interactive element focusable, or use a natively focusable element.
+
+  ⚠ eslint-plugin-jsx-a11y(use-focusable-interactive): Interactive elements must be focusable.
+   ╭─[use_focusable_interactive.tsx:1:1]
+ 1 │ <span role="link" />
+   · ────────────────────
+   ╰────
+  help: Add a `tabIndex` attribute to make this interactive element focusable, or use a natively focusable element.

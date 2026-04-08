@@ -1,0 +1,24 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ typescript-eslint(no-implicit-any-let): Variable declaration without type annotation or initializer implicitly has `any` type.
+   ╭─[no_implicit_any_let.tsx:1:5]
+ 1 │ let x;
+   ·     ─
+   ╰────
+  help: Add an explicit type annotation or initialize the variable.
+
+  ⚠ typescript-eslint(no-implicit-any-let): Variable declaration without type annotation or initializer implicitly has `any` type.
+   ╭─[no_implicit_any_let.tsx:1:5]
+ 1 │ let a, b;
+   ·     ─
+   ╰────
+  help: Add an explicit type annotation or initialize the variable.
+
+  ⚠ typescript-eslint(no-implicit-any-let): Variable declaration without type annotation or initializer implicitly has `any` type.
+   ╭─[no_implicit_any_let.tsx:1:8]
+ 1 │ let a, b;
+   ·        ─
+   ╰────
+  help: Add an explicit type annotation or initialize the variable.

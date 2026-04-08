@@ -1,0 +1,38 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint(no-useless-continue): Unnecessary continue statement.
+   ╭─[no_useless_continue.tsx:1:48]
+ 1 │ for (let i = 0; i < 10; i++) { doSomething(i); continue; }
+   ·                                                ─────────
+   ╰────
+  help: Remove this continue statement since it is the last statement in the loop body and has no effect.
+
+  ⚠ eslint(no-useless-continue): Unnecessary continue statement.
+   ╭─[no_useless_continue.tsx:1:31]
+ 1 │ while (true) { doSomething(); continue; }
+   ·                               ─────────
+   ╰────
+  help: Remove this continue statement since it is the last statement in the loop body and has no effect.
+
+  ⚠ eslint(no-useless-continue): Unnecessary continue statement.
+   ╭─[no_useless_continue.tsx:1:36]
+ 1 │ for (const x of arr) { process(x); continue; }
+   ·                                    ─────────
+   ╰────
+  help: Remove this continue statement since it is the last statement in the loop body and has no effect.
+
+  ⚠ eslint(no-useless-continue): Unnecessary continue statement.
+   ╭─[no_useless_continue.tsx:1:36]
+ 1 │ for (const k in obj) { process(k); continue; }
+   ·                                    ─────────
+   ╰────
+  help: Remove this continue statement since it is the last statement in the loop body and has no effect.
+
+  ⚠ eslint(no-useless-continue): Unnecessary continue statement.
+   ╭─[no_useless_continue.tsx:1:21]
+ 1 │ do { doSomething(); continue; } while (true);
+   ·                     ─────────
+   ╰────
+  help: Remove this continue statement since it is the last statement in the loop body and has no effect.

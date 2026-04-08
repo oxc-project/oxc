@@ -1,0 +1,38 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ typescript-eslint(naming-convention): Class `my_class` does not match the expected naming convention.
+   ╭─[naming_convention.tsx:1:7]
+ 1 │ class my_class {}
+   ·       ────────
+   ╰────
+  help: Rename to match the `PascalCase` naming convention.
+
+  ⚠ typescript-eslint(naming-convention): Interface `my_interface` does not match the expected naming convention.
+   ╭─[naming_convention.tsx:1:11]
+ 1 │ interface my_interface {}
+   ·           ────────────
+   ╰────
+  help: Rename to match the `PascalCase` naming convention.
+
+  ⚠ typescript-eslint(naming-convention): Type alias `my_type` does not match the expected naming convention.
+   ╭─[naming_convention.tsx:1:6]
+ 1 │ type my_type = string;
+   ·      ───────
+   ╰────
+  help: Rename to match the `PascalCase` naming convention.
+
+  ⚠ typescript-eslint(naming-convention): Enum `my_enum` does not match the expected naming convention.
+   ╭─[naming_convention.tsx:1:6]
+ 1 │ enum my_enum { my_value }
+   ·      ───────
+   ╰────
+  help: Rename to match the `PascalCase` naming convention.
+
+  ⚠ typescript-eslint(naming-convention): Enum member `my_value` does not match the expected naming convention.
+   ╭─[naming_convention.tsx:1:16]
+ 1 │ enum my_enum { my_value }
+   ·                ────────
+   ╰────
+  help: Rename to match the `PascalCase or UPPER_CASE` naming convention.

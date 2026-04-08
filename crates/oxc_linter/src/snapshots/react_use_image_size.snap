@@ -1,0 +1,24 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint-plugin-react(use-image-size): Image element is missing `width` and/or `height` attributes.
+   ╭─[use_image_size.tsx:1:1]
+ 1 │ <img src="photo.jpg" />
+   · ───────────────────────
+   ╰────
+  help: Add explicit `width` and `height` attributes to `<img>` elements to prevent layout shifts.
+
+  ⚠ eslint-plugin-react(use-image-size): Image element is missing `width` and/or `height` attributes.
+   ╭─[use_image_size.tsx:1:1]
+ 1 │ <img src="photo.jpg" width="100" />
+   · ───────────────────────────────────
+   ╰────
+  help: Add explicit `width` and `height` attributes to `<img>` elements to prevent layout shifts.
+
+  ⚠ eslint-plugin-react(use-image-size): Image element is missing `width` and/or `height` attributes.
+   ╭─[use_image_size.tsx:1:1]
+ 1 │ <img src="photo.jpg" height="100" />
+   · ────────────────────────────────────
+   ╰────
+  help: Add explicit `width` and `height` attributes to `<img>` elements to prevent layout shifts.
