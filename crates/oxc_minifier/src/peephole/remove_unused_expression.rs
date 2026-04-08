@@ -242,7 +242,122 @@ impl<'a> PeepholeOptimizations {
             ctx.state.changed = true;
             return false;
         }
+
+        // `new (class { ... })(args)` — drop if the instantiation is side-effect-free.
+        let is_removable_class = if let Expression::ClassExpression(class) = &new_expr.callee {
+            Self::new_class_instantiation_is_side_effect_free(class, &new_expr.arguments, ctx)
+        } else {
+            false
+        };
+
+        if is_removable_class {
+            let Expression::ClassExpression(class) = &mut new_expr.callee else { unreachable!() };
+            // remove_unused_class returns None when it encounters class-definition-level
+            // side effects it cannot extract (decorators, non-empty static blocks, etc.).
+            let Some(class_exprs) = Self::remove_unused_class(class, ctx) else {
+                return false;
+            };
+            let span = new_expr.span;
+            let arg_exprs =
+                Self::fold_arguments_into_needed_expressions(&mut new_expr.arguments, ctx);
+            // Class expression is evaluated before arguments in JS,
+            // so class side effects must come first.
+            let mut exprs = class_exprs;
+            exprs.extend(arg_exprs);
+
+            if exprs.is_empty() {
+                return true;
+            } else if exprs.len() == 1 {
+                *e = exprs.pop().unwrap();
+                ctx.state.changed = true;
+                return false;
+            }
+            *e = ctx.ast.expression_sequence(span, exprs);
+            ctx.state.changed = true;
+            return false;
+        }
+
         false
+    }
+
+    /// Returns `true` if `new (class { ... })(args)` can be safely dropped.
+    ///
+    /// This checks construction-time side effects that `remove_unused_class`
+    /// does NOT check (it only checks class-definition-time effects):
+    /// - Constructor body must be empty (or absent)
+    /// - If the class has a `super_class`, it must be a known pure global constructor
+    ///   and the class must not have an explicit constructor (default forwards to `super`)
+    /// - Instance property/accessor initializers must be side-effect-free
+    fn new_class_instantiation_is_side_effect_free(
+        class: &Class<'a>,
+        new_args: &[Argument<'a>],
+        ctx: &TraverseCtx<'a>,
+    ) -> bool {
+        if let Some(super_class) = &class.super_class {
+            if !Self::super_constructor_is_pure(super_class, new_args, ctx) {
+                return false;
+            }
+            for element in &class.body.body {
+                if let ClassElement::MethodDefinition(method) = element
+                    && method.kind == MethodDefinitionKind::Constructor
+                {
+                    return false;
+                }
+            }
+        } else {
+            for element in &class.body.body {
+                if let ClassElement::MethodDefinition(method) = element
+                    && method.kind == MethodDefinitionKind::Constructor
+                    && method.value.body.as_ref().is_some_and(|b| !b.statements.is_empty())
+                {
+                    return false;
+                }
+            }
+        }
+
+        // Instance property/accessor initializers run during construction.
+        for element in &class.body.body {
+            match element {
+                ClassElement::PropertyDefinition(prop) if !prop.r#static => {
+                    if prop.value.as_ref().is_some_and(|v| v.may_have_side_effects(ctx)) {
+                        return false;
+                    }
+                }
+                ClassElement::AccessorProperty(prop) if !prop.r#static => {
+                    if prop.value.as_ref().is_some_and(|v| v.may_have_side_effects(ctx)) {
+                        return false;
+                    }
+                }
+                _ => {}
+            }
+        }
+
+        true
+    }
+
+    /// Check if the default constructor's `super(...args)` call to a known
+    /// global constructor is side-effect-free.
+    fn super_constructor_is_pure(
+        super_class: &Expression<'a>,
+        new_args: &[Argument<'a>],
+        ctx: &TraverseCtx<'a>,
+    ) -> bool {
+        let Expression::Identifier(ident) = super_class else { return false };
+        if !ctx.is_global_reference(ident) {
+            return false;
+        }
+
+        match ident.name.as_str() {
+            // Unconditionally pure: ToBoolean / ToObject never throw.
+            "Object" | "Boolean" => true,
+            // Error constructors: ToString(msg) throws on Symbol, so the
+            // first argument must be provably non-Symbol.
+            "Error" | "EvalError" | "RangeError" | "ReferenceError" | "SyntaxError"
+            | "TypeError" | "URIError" => new_args.first().is_none_or(|arg| {
+                arg.as_expression().is_some_and(|e| e.to_primitive(ctx).is_symbol() == Some(false))
+            }),
+            _ => false,
+        }
     }
 
     // "`${1}2${foo()}3`" -> "`${foo()}`"

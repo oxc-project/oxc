@@ -476,3 +476,84 @@ fn remove_unused_class_expression() {
     // TypeError
     test_same_options("(class extends (() => {}) {})", &options);
 }
+
+#[test]
+fn remove_unused_new_class_expression() {
+    let options = CompressOptions::smallest();
+
+    // Basic: empty class, no args
+    test_options("new (class {})()", "", &options);
+    test_options("new (class {})(1, 2)", "", &options);
+
+    // Arguments with side effects are preserved
+    test_options("new (class {})(foo())", "foo()", &options);
+    test_options("new (class {})(foo(), bar())", "foo(), bar()", &options);
+
+    // Empty constructor
+    test_options("new (class { constructor() {} })()", "", &options);
+
+    // Constructor with body — keep
+    test_same_options("new (class { constructor() { foo() } })()", &options);
+
+    // Extends unknown — keep
+    test_same_options("new (class extends Foo {})()", &options);
+    test_same_options("new (class extends Foo { constructor() { super() } })()", &options);
+
+    // Extends known pure global constructors — drop
+    test_options("new (class extends Error {})()", "", &options);
+    test_options("new (class extends TypeError {})()", "", &options);
+    test_options("new (class extends RangeError {})()", "", &options);
+    test_options("new (class extends Object {})()", "", &options);
+    test_options("new (class extends Boolean {})()", "", &options);
+
+    // Extends Error with safe arguments (string literal → not Symbol)
+    test_options("new (class extends Error {})(\"msg\")", "", &options);
+    test_options("new (class extends Error {})(1)", "", &options);
+    test_options("new (class extends Error {})(true)", "", &options);
+    test_options("new (class extends Error {})(null)", "", &options);
+
+    // Extends Error with unsafe arguments (might be Symbol → keep)
+    test_same_options("new (class extends Error {})(x)", &options);
+    test_same_options("new (class extends Error {})(foo())", &options);
+
+    // Extends known constructor with explicit constructor — keep
+    // (explicit constructor in derived class may have arbitrary code)
+    test_same_options("new (class extends Error { constructor() { super() } })()", &options);
+
+    // Extends known constructor with instance props
+    test_options("new (class extends Error { foo = 1 })()", "", &options);
+    test_same_options("new (class extends Error { foo = bar })()", &options);
+
+    // Instance property initializers run during construction
+    test_same_options("new (class { foo = bar })()", &options);
+    test_options("new (class { foo = 1 })()", "", &options);
+    test_options("new (class { foo })()", "", &options);
+
+    // Static side effects are extracted (class-definition-time)
+    test_options("new (class { [foo]() {} })()", "foo", &options);
+    test_options("new (class { [foo]() {} })(bar())", "foo, bar()", &options);
+
+    // Methods (non-static, non-computed) are safe
+    test_options("new (class { foo() {} })()", "", &options);
+
+    // Decorators — keep
+    test_same_options("new (class { @dec foo() {} })()", &options);
+    test_same_options("new (@dec class {})()", &options);
+
+    // Static blocks with body — keep
+    test_same_options("new (class { static { foo } })()", &options);
+    test_options("new (class { static {} })()", "", &options);
+
+    // Static property with side effects — keep
+    test_same_options("new (class { static foo = bar })()", &options);
+    test_options("new (class { static foo = 1 })()", "", &options);
+
+    // Issue #13068 examples (without call parens: `new class{}` is valid JS)
+    test_options("new class{}", "", &options);
+    test_options("new class extends Error{}", "", &options);
+    test_options(
+        "new class extends Error{name=`StaleReactionError`;message=\"The reaction that called `getAbortSignal()` was re-run or destroyed\"}",
+        "",
+        &options,
+    );
+}
