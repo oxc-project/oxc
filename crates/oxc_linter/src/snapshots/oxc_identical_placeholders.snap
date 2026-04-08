@@ -1,0 +1,18 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 444
+---
+
+  ⚠ oxc(identical-placeholders): Placeholders at `greeting` do not match reference locale `/Users/alexeylyakhov/projects/oxc/crates/oxc_linter/fixtures/import/i18n_catalog/en/messages.json`.
+   ╭─[identical_placeholders.json:1:13]
+ 1 │ {"greeting":"Bonjour","count":"{count} éléments","simple":"Tableau de bord"}
+   ·             ─────────
+   ╰────
+  help: missing: {name}
+
+  ⚠ oxc(identical-placeholders): Placeholders at `greeting` do not match reference locale `/Users/alexeylyakhov/projects/oxc/crates/oxc_linter/fixtures/import/i18n_catalog/en/messages.json`.
+   ╭─[identical_placeholders.json:1:13]
+ 1 │ {"greeting":"Bonjour {name} {extra}","count":"{count} éléments","simple":"Tableau de bord"}
+   ·             ────────────────────────
+   ╰────
+  help: extra: {extra}

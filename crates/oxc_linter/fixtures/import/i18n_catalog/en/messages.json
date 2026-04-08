@@ -1,0 +1,5 @@
+{
+  "greeting": "Hello {name}",
+  "count": "{count} items",
+  "simple": "Dashboard"
+}

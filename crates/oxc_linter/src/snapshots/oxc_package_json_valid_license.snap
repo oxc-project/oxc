@@ -1,0 +1,53 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 444
+---
+
+  ⚠ oxc(package-json-valid-license): The `license` field in package.json must be a string.
+   ╭─[/Users/alexeylyakhov/projects/oxc/crates/oxc_linter/fixtures/import/package.json:1:12]
+ 1 │ {"license":1}
+   ·            ─
+   ╰────
+  help: Use a string value such as `MIT`, `(MIT OR Apache-2.0)`, or `UNLICENSED`.
+
+  ⚠ oxc(package-json-valid-license): The `license` field in package.json must be a valid SPDX expression, `UNLICENSED`, or `SEE LICENSE IN <file>`.
+   ╭─[/Users/alexeylyakhov/projects/oxc/crates/oxc_linter/fixtures/import/package.json:1:12]
+ 1 │ {"license":"GPL3"}
+   ·            ──────
+   ╰────
+  help: Use a valid SPDX identifier or expression such as `MIT` or `(MIT OR Apache-2.0)`, `UNLICENSED`, or `SEE LICENSE IN LICENSE.md`.
+
+  ⚠ oxc(package-json-valid-license): The `license` field in package.json must be a valid SPDX expression, `UNLICENSED`, or `SEE LICENSE IN <file>`.
+   ╭─[/Users/alexeylyakhov/projects/oxc/crates/oxc_linter/fixtures/import/package.json:1:12]
+ 1 │ {"license":"MIT OR NOPE"}
+   ·            ─────────────
+   ╰────
+  help: Use a valid SPDX identifier or expression such as `MIT` or `(MIT OR Apache-2.0)`, `UNLICENSED`, or `SEE LICENSE IN LICENSE.md`.
+
+  ⚠ oxc(package-json-valid-license): The `license` field in package.json must be a valid SPDX expression, `UNLICENSED`, or `SEE LICENSE IN <file>`.
+   ╭─[/Users/alexeylyakhov/projects/oxc/crates/oxc_linter/fixtures/import/package.json:1:12]
+ 1 │ {"license":"NOASSERTION"}
+   ·            ─────────────
+   ╰────
+  help: Use a valid SPDX identifier or expression such as `MIT` or `(MIT OR Apache-2.0)`, `UNLICENSED`, or `SEE LICENSE IN LICENSE.md`.
+
+  ⚠ oxc(package-json-valid-license): The `license` field in package.json must be a valid SPDX expression, `UNLICENSED`, or `SEE LICENSE IN <file>`.
+   ╭─[/Users/alexeylyakhov/projects/oxc/crates/oxc_linter/fixtures/import/package.json:1:12]
+ 1 │ {"license":"LicenseRef-Custom"}
+   ·            ───────────────────
+   ╰────
+  help: Use a valid SPDX identifier or expression such as `MIT` or `(MIT OR Apache-2.0)`, `UNLICENSED`, or `SEE LICENSE IN LICENSE.md`.
+
+  ⚠ oxc(package-json-valid-license): The `license` field in package.json must be a valid SPDX expression, `UNLICENSED`, or `SEE LICENSE IN <file>`.
+   ╭─[/Users/alexeylyakhov/projects/oxc/crates/oxc_linter/fixtures/import/package.json:1:12]
+ 1 │ {"license":"SEE LICENSE IN "}
+   ·            ─────────────────
+   ╰────
+  help: Use a valid SPDX identifier or expression such as `MIT` or `(MIT OR Apache-2.0)`, `UNLICENSED`, or `SEE LICENSE IN LICENSE.md`.
+
+  ⚠ oxc(package-json-valid-license): The `license` field in package.json must be a string.
+   ╭─[/Users/alexeylyakhov/projects/oxc/crates/oxc_linter/fixtures/import/package.json:1:12]
+ 1 │ {"license":{"type":"MIT"}}
+   ·            ──────────────
+   ╰────
+  help: Use a string value such as `MIT`, `(MIT OR Apache-2.0)`, or `UNLICENSED`.

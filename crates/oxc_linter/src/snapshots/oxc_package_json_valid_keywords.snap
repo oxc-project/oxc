@@ -1,0 +1,32 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 444
+---
+
+  ⚠ oxc(package-json-valid-keywords): The `keywords` field in package.json must be an array of non-empty strings.
+   ╭─[/Users/alexeylyakhov/projects/oxc/crates/oxc_linter/fixtures/import/package.json:1:13]
+ 1 │ {"keywords":"lint"}
+   ·             ──────
+   ╰────
+  help: Use an array of keyword strings for package discoverability.
+
+  ⚠ oxc(package-json-valid-keywords): The `keywords` field in package.json must be an array of non-empty strings.
+   ╭─[/Users/alexeylyakhov/projects/oxc/crates/oxc_linter/fixtures/import/package.json:1:13]
+ 1 │ {"keywords":1}
+   ·             ─
+   ╰────
+  help: Use an array of keyword strings for package discoverability.
+
+  ⚠ oxc(package-json-valid-keywords): The `keywords` field in package.json must be an array of non-empty strings.
+   ╭─[/Users/alexeylyakhov/projects/oxc/crates/oxc_linter/fixtures/import/package.json:1:21]
+ 1 │ {"keywords":["lint",""]}
+   ·                     ──
+   ╰────
+  help: Use an array of keyword strings for package discoverability.
+
+  ⚠ oxc(package-json-valid-keywords): The `keywords` field in package.json must be an array of non-empty strings.
+   ╭─[/Users/alexeylyakhov/projects/oxc/crates/oxc_linter/fixtures/import/package.json:1:21]
+ 1 │ {"keywords":["lint",1]}
+   ·                     ─
+   ╰────
+  help: Use an array of keyword strings for package discoverability.

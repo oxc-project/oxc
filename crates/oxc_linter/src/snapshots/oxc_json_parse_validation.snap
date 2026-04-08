@@ -1,0 +1,39 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 444
+---
+
+  ⚠ oxc(json-parse-validation): Validate `JSON.parse()` results before using them.
+   ╭─[json_parse_validation.ts:1:14]
+ 1 │ const data = JSON.parse(text);
+   ·              ────────────────
+   ╰────
+  help: Wrap `JSON.parse(...)` with `safeParse(...)`/`parse(...)`, or validate the assigned value within the next few statements.
+
+  ⚠ oxc(json-parse-validation): Validate `JSON.parse()` results before using them.
+   ╭─[json_parse_validation.ts:1:8]
+ 1 │ handle(JSON.parse(text));
+   ·        ────────────────
+   ╰────
+  help: Wrap `JSON.parse(...)` with `safeParse(...)`/`parse(...)`, or validate the assigned value within the next few statements.
+
+  ⚠ oxc(json-parse-validation): Validate `JSON.parse()` results before using them.
+   ╭─[json_parse_validation.ts:1:13]
+ 1 │ const raw = JSON.parse(text); doSomething(raw);
+   ·             ────────────────
+   ╰────
+  help: Wrap `JSON.parse(...)` with `safeParse(...)`/`parse(...)`, or validate the assigned value within the next few statements.
+
+  ⚠ oxc(json-parse-validation): Validate `JSON.parse()` results before using them.
+   ╭─[json_parse_validation.ts:1:16]
+ 1 │ let raw; raw = JSON.parse(text); doSomething(raw);
+   ·                ────────────────
+   ╰────
+  help: Wrap `JSON.parse(...)` with `safeParse(...)`/`parse(...)`, or validate the assigned value within the next few statements.
+
+  ⚠ oxc(json-parse-validation): Validate `JSON.parse()` results before using them.
+   ╭─[json_parse_validation.ts:1:13]
+ 1 │ const raw = JSON.parse(text); foo(); bar(); baz(); qux(); v.safeParse(MySchema, raw);
+   ·             ────────────────
+   ╰────
+  help: Wrap `JSON.parse(...)` with `safeParse(...)`/`parse(...)`, or validate the assigned value within the next few statements.

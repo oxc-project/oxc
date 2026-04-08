@@ -639,6 +639,36 @@ pub(crate) mod oxc {
     pub mod number_arg_out_of_range;
     pub mod only_used_in_recursion;
     pub mod uninvoked_array_callback;
+
+    pub mod identical_keys;
+    pub mod identical_placeholders;
+    pub mod json_no_comments;
+    pub mod json_no_duplicate_keys;
+    pub mod json_no_trailing_commas;
+    pub mod json_parse_validation;
+    mod json_utils;
+    pub mod package_json_no_duplicate_dependencies;
+    pub mod package_json_no_empty_fields;
+    pub mod package_json_no_redundant_publish_config;
+    pub mod package_json_order_properties;
+    pub mod package_json_repository_shorthand;
+    pub mod package_json_require_type;
+    pub mod package_json_require_version;
+    pub mod package_json_sort_collections;
+    pub mod package_json_valid_bin;
+    pub mod package_json_valid_description;
+    pub mod package_json_valid_engines;
+    pub mod package_json_valid_keywords;
+    pub mod package_json_valid_license;
+    pub mod package_json_valid_man;
+    pub mod package_json_valid_name;
+    pub mod package_json_valid_private;
+    pub mod package_json_valid_repository;
+    pub mod package_json_valid_type;
+    pub mod package_json_valid_version;
+    pub mod sorted_json_keys;
+    pub mod valid_json;
+    pub mod valid_message_syntax;
 }
 
 pub(crate) mod nextjs {
