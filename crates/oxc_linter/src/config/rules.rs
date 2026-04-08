@@ -402,8 +402,72 @@ pub(super) fn unalias_plugin_name(plugin_name: &str, rule_name: &str) -> (String
         "@next" | "@next/next" => ("nextjs", rule_name),
         // For backwards compatibility, react hook rules reside in the react plugin.
         "react-hooks" => ("react", rule_name),
+        // The native rule lives in the react plugin but mirrors eslint-plugin-react-refresh.
+        "react-refresh" if rule_name == "only-export-components" => {
+            ("react", "only-export-components")
+        }
+        // The native rule lives in the react plugin.
+        "react-dom" if rule_name == "no-dangerously-set-innerhtml" => ("react", "no-danger"),
+        // The native rule lives in the oxc plugin.
+        "i18next" if rule_name == "no-literal-string" => ("oxc", "no-literal-string"),
+        // The native rule lives in the oxc plugin.
+        "package-json" if rule_name == "no-empty-fields" => ("oxc", "package-json-no-empty-fields"),
+        // The native rule lives in the oxc plugin.
+        "package-json" if rule_name == "no-redundant-publishConfig" => {
+            ("oxc", "package-json-no-redundant-publish-config")
+        }
+        // The native rule lives in the oxc plugin.
+        "package-json" if rule_name == "order-properties" => {
+            ("oxc", "package-json-order-properties")
+        }
+        // The native rule lives in the oxc plugin.
+        "package-json" if rule_name == "sort-collections" => {
+            ("oxc", "package-json-sort-collections")
+        }
+        // The native rule lives in the oxc plugin.
+        "package-json" if rule_name == "require-type" => ("oxc", "package-json-require-type"),
+        // The native rule lives in the oxc plugin.
+        "package-json" if rule_name == "require-version" => ("oxc", "package-json-require-version"),
+        // The native rule lives in the oxc plugin.
+        "package-json" if rule_name == "repository-shorthand" => {
+            ("oxc", "package-json-repository-shorthand")
+        }
+        // The native rule lives in the oxc plugin.
+        "package-json" if rule_name == "valid-bin" => ("oxc", "package-json-valid-bin"),
+        // The native rule lives in the oxc plugin.
+        "package-json" if rule_name == "valid-description" => {
+            ("oxc", "package-json-valid-description")
+        }
+        // The native rule lives in the oxc plugin.
+        "package-json" if rule_name == "valid-license" => ("oxc", "package-json-valid-license"),
+        // The native rule lives in the oxc plugin.
+        "package-json" if rule_name == "valid-man" => ("oxc", "package-json-valid-man"),
+        // The native rule lives in the oxc plugin.
+        "package-json" if rule_name == "valid-name" => ("oxc", "package-json-valid-name"),
+        // The native rule lives in the oxc plugin.
+        "package-json" if rule_name == "valid-private" => ("oxc", "package-json-valid-private"),
+        // The native rule lives in the oxc plugin.
+        "package-json" if rule_name == "valid-repository" => {
+            ("oxc", "package-json-valid-repository")
+        }
+        // The native rule lives in the oxc plugin.
+        "package-json" if rule_name == "valid-type" => ("oxc", "package-json-valid-type"),
+        // The native rule lives in the oxc plugin.
+        "package-json" if rule_name == "valid-version" => ("oxc", "package-json-valid-version"),
+        // The native rule lives in the oxc plugin.
+        "json" if rule_name == "*" || rule_name == "json" => ("oxc", "valid-json"),
+        // The native rule lives in the oxc plugin.
+        "i18n-json" if rule_name == "identical-keys" => ("oxc", "identical-keys"),
+        // The native rule lives in the oxc plugin.
+        "i18n-json" if rule_name == "sorted-keys" => ("oxc", "sorted-json-keys"),
+        // The native rule lives in the oxc plugin.
+        "i18n-json" if rule_name == "valid-json" => ("oxc", "valid-json"),
+        // The native rule lives in the oxc plugin.
+        "i18n-json" if rule_name == "valid-message-syntax" => ("oxc", "valid-message-syntax"),
         // For backwards compatibility, deepscan rules reside in the oxc plugin.
         "deepscan" => ("oxc", rule_name),
+        // The native rule lives in the oxc plugin.
+        "optimize-regex" if rule_name == "optimize-regex" => ("oxc", "optimize-regex"),
         _ => (plugin_name, rule_name),
     };
 
@@ -498,6 +562,31 @@ mod test {
             "dummy": ["error", "arg1", "args2"],
             "@next/next/noop": 2,
             "@next/something": "error",
+            "react-refresh/only-export-components": "warn",
+            "react-dom/no-dangerously-set-innerhtml": "warn",
+            "i18next/no-literal-string": "warn",
+            "package-json/no-empty-fields": "warn",
+            "package-json/no-redundant-publishConfig": "warn",
+            "package-json/order-properties": "warn",
+            "package-json/sort-collections": "warn",
+            "package-json/require-type": "warn",
+            "package-json/require-version": "warn",
+            "package-json/repository-shorthand": "warn",
+            "package-json/valid-bin": "warn",
+            "package-json/valid-description": "warn",
+            "package-json/valid-license": "warn",
+            "package-json/valid-man": "warn",
+            "package-json/valid-name": "warn",
+            "package-json/valid-private": "warn",
+            "package-json/valid-repository": "warn",
+            "package-json/valid-type": "warn",
+            "package-json/valid-version": "warn",
+            "json/*": ["warn", { "allowComments": true }],
+            "i18n-json/identical-keys": "warn",
+            "i18n-json/sorted-keys": "warn",
+            "i18n-json/valid-json": "warn",
+            "i18n-json/valid-message-syntax": "warn",
+            "optimize-regex/optimize-regex": "warn",
             "@tanstack/query/exhaustive-deps": "warn",
             "@scope/whatever": "warn",
         }))
@@ -538,16 +627,269 @@ mod test {
 
         // Scoped package with nested name - split at last `/`
         let r6 = rules.next().unwrap();
-        assert_eq!(r6.rule_name, "exhaustive-deps");
-        assert_eq!(r6.plugin_name, "@tanstack/query");
+        assert_eq!(r6.rule_name, "only-export-components");
+        assert_eq!(r6.plugin_name, "react");
         assert!(r6.severity.is_warn_deny());
         assert!(r6.config.is_empty());
 
         let r7 = rules.next().unwrap();
-        assert_eq!(r7.rule_name, "whatever");
-        assert_eq!(r7.plugin_name, "@scope");
+        assert_eq!(r7.rule_name, "no-danger");
+        assert_eq!(r7.plugin_name, "react");
         assert!(r7.severity.is_warn_deny());
         assert!(r7.config.is_empty());
+
+        let r8 = rules.next().unwrap();
+        assert_eq!(r8.rule_name, "no-literal-string");
+        assert_eq!(r8.plugin_name, "oxc");
+        assert!(r8.severity.is_warn_deny());
+        assert!(r8.config.is_empty());
+
+        let r9 = rules.next().unwrap();
+        assert_eq!(r9.rule_name, "package-json-no-empty-fields");
+        assert_eq!(r9.plugin_name, "oxc");
+        assert!(r9.severity.is_warn_deny());
+        assert!(r9.config.is_empty());
+
+        let r10 = rules.next().unwrap();
+        assert_eq!(r10.rule_name, "package-json-no-redundant-publish-config");
+        assert_eq!(r10.plugin_name, "oxc");
+        assert!(r10.severity.is_warn_deny());
+        assert!(r10.config.is_empty());
+
+        let r11 = rules.next().unwrap();
+        assert_eq!(r11.rule_name, "package-json-order-properties");
+        assert_eq!(r11.plugin_name, "oxc");
+        assert!(r11.severity.is_warn_deny());
+        assert!(r11.config.is_empty());
+
+        let r12 = rules.next().unwrap();
+        assert_eq!(r12.rule_name, "package-json-sort-collections");
+        assert_eq!(r12.plugin_name, "oxc");
+        assert!(r12.severity.is_warn_deny());
+        assert!(r12.config.is_empty());
+
+        let r13 = rules.next().unwrap();
+        assert_eq!(r13.rule_name, "package-json-require-type");
+        assert_eq!(r13.plugin_name, "oxc");
+        assert!(r13.severity.is_warn_deny());
+        assert!(r13.config.is_empty());
+
+        let r14 = rules.next().unwrap();
+        assert_eq!(r14.rule_name, "package-json-require-version");
+        assert_eq!(r14.plugin_name, "oxc");
+        assert!(r14.severity.is_warn_deny());
+        assert!(r14.config.is_empty());
+
+        let r15 = rules.next().unwrap();
+        assert_eq!(r15.rule_name, "package-json-repository-shorthand");
+        assert_eq!(r15.plugin_name, "oxc");
+        assert!(r15.severity.is_warn_deny());
+        assert!(r15.config.is_empty());
+
+        let r16 = rules.next().unwrap();
+        assert_eq!(r16.rule_name, "package-json-valid-bin");
+        assert_eq!(r16.plugin_name, "oxc");
+        assert!(r16.severity.is_warn_deny());
+        assert!(r16.config.is_empty());
+
+        let r17 = rules.next().unwrap();
+        assert_eq!(r17.rule_name, "package-json-valid-description");
+        assert_eq!(r17.plugin_name, "oxc");
+        assert!(r17.severity.is_warn_deny());
+        assert!(r17.config.is_empty());
+
+        let r18 = rules.next().unwrap();
+        assert_eq!(r18.rule_name, "package-json-valid-license");
+        assert_eq!(r18.plugin_name, "oxc");
+        assert!(r18.severity.is_warn_deny());
+        assert!(r18.config.is_empty());
+
+        let r19 = rules.next().unwrap();
+        assert_eq!(r19.rule_name, "package-json-valid-man");
+        assert_eq!(r19.plugin_name, "oxc");
+        assert!(r19.severity.is_warn_deny());
+        assert!(r19.config.is_empty());
+
+        let r20 = rules.next().unwrap();
+        assert_eq!(r20.rule_name, "package-json-valid-name");
+        assert_eq!(r20.plugin_name, "oxc");
+        assert!(r20.severity.is_warn_deny());
+        assert!(r20.config.is_empty());
+
+        let r21 = rules.next().unwrap();
+        assert_eq!(r21.rule_name, "package-json-valid-private");
+        assert_eq!(r21.plugin_name, "oxc");
+        assert!(r21.severity.is_warn_deny());
+        assert!(r21.config.is_empty());
+
+        let r22 = rules.next().unwrap();
+        assert_eq!(r22.rule_name, "package-json-valid-repository");
+        assert_eq!(r22.plugin_name, "oxc");
+        assert!(r22.severity.is_warn_deny());
+        assert!(r22.config.is_empty());
+
+        let r23 = rules.next().unwrap();
+        assert_eq!(r23.rule_name, "package-json-valid-type");
+        assert_eq!(r23.plugin_name, "oxc");
+        assert!(r23.severity.is_warn_deny());
+        assert!(r23.config.is_empty());
+
+        let r24 = rules.next().unwrap();
+        assert_eq!(r24.rule_name, "package-json-valid-version");
+        assert_eq!(r24.plugin_name, "oxc");
+        assert!(r24.severity.is_warn_deny());
+        assert!(r24.config.is_empty());
+
+        let r25 = rules.next().unwrap();
+        assert_eq!(r25.rule_name, "valid-json");
+        assert_eq!(r25.plugin_name, "oxc");
+        assert!(r25.severity.is_warn_deny());
+        assert_eq!(r25.config.as_slice(), &[serde_json::json!({ "allowComments": true })]);
+
+        let r26 = rules.next().unwrap();
+        assert_eq!(r26.rule_name, "identical-keys");
+        assert_eq!(r26.plugin_name, "oxc");
+        assert!(r26.severity.is_warn_deny());
+        assert!(r26.config.is_empty());
+
+        let r27 = rules.next().unwrap();
+        assert_eq!(r27.rule_name, "sorted-json-keys");
+        assert_eq!(r27.plugin_name, "oxc");
+        assert!(r27.severity.is_warn_deny());
+        assert!(r27.config.is_empty());
+
+        let r28 = rules.next().unwrap();
+        assert_eq!(r28.rule_name, "valid-json");
+        assert_eq!(r28.plugin_name, "oxc");
+        assert!(r28.severity.is_warn_deny());
+        assert!(r28.config.is_empty());
+
+        let r29 = rules.next().unwrap();
+        assert_eq!(r29.rule_name, "valid-message-syntax");
+        assert_eq!(r29.plugin_name, "oxc");
+        assert!(r29.severity.is_warn_deny());
+        assert!(r29.config.is_empty());
+
+        let r30 = rules.next().unwrap();
+        assert_eq!(r30.rule_name, "optimize-regex");
+        assert_eq!(r30.plugin_name, "oxc");
+        assert!(r30.severity.is_warn_deny());
+        assert!(r30.config.is_empty());
+
+        let r31 = rules.next().unwrap();
+        assert_eq!(r31.rule_name, "exhaustive-deps");
+        assert_eq!(r31.plugin_name, "@tanstack/query");
+        assert!(r31.severity.is_warn_deny());
+        assert!(r31.config.is_empty());
+
+        let r32 = rules.next().unwrap();
+        assert_eq!(r32.rule_name, "whatever");
+        assert_eq!(r32.plugin_name, "@scope");
+        assert!(r32.severity.is_warn_deny());
+        assert!(r32.config.is_empty());
+    }
+
+    #[test]
+    fn test_unalias_plugin_name_for_react_compat_rules() {
+        use super::unalias_plugin_name;
+
+        assert_eq!(
+            unalias_plugin_name("react-refresh", "only-export-components"),
+            ("react".to_string(), "only-export-components".to_string())
+        );
+        assert_eq!(
+            unalias_plugin_name("react-dom", "no-dangerously-set-innerhtml"),
+            ("react".to_string(), "no-danger".to_string())
+        );
+        assert_eq!(
+            unalias_plugin_name("i18next", "no-literal-string"),
+            ("oxc".to_string(), "no-literal-string".to_string())
+        );
+        assert_eq!(
+            unalias_plugin_name("package-json", "no-empty-fields"),
+            ("oxc".to_string(), "package-json-no-empty-fields".to_string())
+        );
+        assert_eq!(
+            unalias_plugin_name("package-json", "no-redundant-publishConfig"),
+            ("oxc".to_string(), "package-json-no-redundant-publish-config".to_string())
+        );
+        assert_eq!(
+            unalias_plugin_name("package-json", "order-properties"),
+            ("oxc".to_string(), "package-json-order-properties".to_string())
+        );
+        assert_eq!(
+            unalias_plugin_name("package-json", "sort-collections"),
+            ("oxc".to_string(), "package-json-sort-collections".to_string())
+        );
+        assert_eq!(
+            unalias_plugin_name("package-json", "require-type"),
+            ("oxc".to_string(), "package-json-require-type".to_string())
+        );
+        assert_eq!(
+            unalias_plugin_name("package-json", "require-version"),
+            ("oxc".to_string(), "package-json-require-version".to_string())
+        );
+        assert_eq!(
+            unalias_plugin_name("package-json", "repository-shorthand"),
+            ("oxc".to_string(), "package-json-repository-shorthand".to_string())
+        );
+        assert_eq!(
+            unalias_plugin_name("package-json", "valid-bin"),
+            ("oxc".to_string(), "package-json-valid-bin".to_string())
+        );
+        assert_eq!(
+            unalias_plugin_name("package-json", "valid-description"),
+            ("oxc".to_string(), "package-json-valid-description".to_string())
+        );
+        assert_eq!(
+            unalias_plugin_name("package-json", "valid-license"),
+            ("oxc".to_string(), "package-json-valid-license".to_string())
+        );
+        assert_eq!(
+            unalias_plugin_name("package-json", "valid-man"),
+            ("oxc".to_string(), "package-json-valid-man".to_string())
+        );
+        assert_eq!(
+            unalias_plugin_name("package-json", "valid-name"),
+            ("oxc".to_string(), "package-json-valid-name".to_string())
+        );
+        assert_eq!(
+            unalias_plugin_name("package-json", "valid-private"),
+            ("oxc".to_string(), "package-json-valid-private".to_string())
+        );
+        assert_eq!(
+            unalias_plugin_name("package-json", "valid-repository"),
+            ("oxc".to_string(), "package-json-valid-repository".to_string())
+        );
+        assert_eq!(
+            unalias_plugin_name("package-json", "valid-type"),
+            ("oxc".to_string(), "package-json-valid-type".to_string())
+        );
+        assert_eq!(
+            unalias_plugin_name("package-json", "valid-version"),
+            ("oxc".to_string(), "package-json-valid-version".to_string())
+        );
+        assert_eq!(unalias_plugin_name("json", "*"), ("oxc".to_string(), "valid-json".to_string()));
+        assert_eq!(
+            unalias_plugin_name("i18n-json", "identical-keys"),
+            ("oxc".to_string(), "identical-keys".to_string())
+        );
+        assert_eq!(
+            unalias_plugin_name("i18n-json", "sorted-keys"),
+            ("oxc".to_string(), "sorted-json-keys".to_string())
+        );
+        assert_eq!(
+            unalias_plugin_name("i18n-json", "valid-json"),
+            ("oxc".to_string(), "valid-json".to_string())
+        );
+        assert_eq!(
+            unalias_plugin_name("i18n-json", "valid-message-syntax"),
+            ("oxc".to_string(), "valid-message-syntax".to_string())
+        );
+        assert_eq!(
+            unalias_plugin_name("optimize-regex", "optimize-regex"),
+            ("oxc".to_string(), "optimize-regex".to_string())
+        );
     }
 
     #[test]
