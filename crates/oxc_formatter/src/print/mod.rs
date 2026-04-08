@@ -1109,7 +1109,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSEnumBody<'a>> {
         if self.members().is_empty() {
             write!(
                 f,
-                group(&format_args!(format_dangling_comments(self.span()), soft_line_break()))
+                format_dangling_comments(self.span()).with_block_indent()
             );
         } else {
             write!(f, block_indent(self.members()));
