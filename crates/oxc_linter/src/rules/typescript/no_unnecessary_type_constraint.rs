@@ -76,7 +76,7 @@ declare_oxc_lint!(
     NoUnnecessaryTypeConstraint,
     typescript,
     suspicious,
-    pending
+    fix
 );
 
 impl Rule for NoUnnecessaryTypeConstraint {
@@ -95,12 +95,16 @@ impl Rule for NoUnnecessaryTypeConstraint {
                 TSType::TSUnknownKeyword(t) => ("unknown", t.span),
                 _ => continue,
             };
-            ctx.diagnostic(no_unnecessary_type_constraint_diagnostic(
-                param.name.name.as_str(),
-                value,
-                param.name.span,
-                ty_span,
-            ));
+            let delete_span = Span::new(param.name.span.end, ty_span.end);
+            ctx.diagnostic_with_fix(
+                no_unnecessary_type_constraint_diagnostic(
+                    param.name.name.as_str(),
+                    value,
+                    param.name.span,
+                    ty_span,
+                ),
+                |fixer| fixer.delete_range(delete_span),
+            );
         }
     }
 
@@ -151,6 +155,15 @@ fn test() {
         "type Data<T extends unknown> = {};",
     ];
 
+    let fix = vec![
+        ("function data<T extends any>() {}", "function data<T>() {}"),
+        ("function data<T extends unknown>() {}", "function data<T>() {}"),
+        ("class Data<T extends unknown> {}", "class Data<T> {}"),
+        ("interface Data<T extends unknown> {}", "interface Data<T> {}"),
+        ("type Data<T extends unknown> = {};", "type Data<T> = {};"),
+    ];
+
     Tester::new(NoUnnecessaryTypeConstraint::NAME, NoUnnecessaryTypeConstraint::PLUGIN, pass, fail)
+        .expect_fix(fix)
         .test_and_snapshot();
 }

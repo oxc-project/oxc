@@ -65,7 +65,7 @@ declare_oxc_lint!(
     NoNonNullAssertedNullishCoalescing,
     typescript,
     restriction,
-    pending,
+    suggestion,
 );
 
 impl Rule for NoNonNullAssertedNullishCoalescing {
@@ -79,7 +79,12 @@ impl Rule for NoNonNullAssertedNullishCoalescing {
             return;
         }
 
-        ctx.diagnostic(no_non_null_asserted_nullish_coalescing_diagnostic(ts_non_null_expr.span));
+        let bang_end = ts_non_null_expr.span.end;
+        let bang_start = bang_end - 1;
+        ctx.diagnostic_with_suggestion(
+            no_non_null_asserted_nullish_coalescing_diagnostic(ts_non_null_expr.span),
+            |fixer| fixer.delete_range(Span::new(bang_start, bang_end)),
+        );
     }
 
     fn should_run(&self, ctx: &ContextHost) -> bool {
@@ -213,11 +218,23 @@ fn test() {
                   ",
     ];
 
+    let fix = vec![
+        ("foo! ?? bar;", "foo ?? bar;"),
+        ("foo! ?? bar!;", "foo ?? bar!;"),
+        ("foo.bazz! ?? bar;", "foo.bazz ?? bar;"),
+        ("foo.bazz! ?? bar!;", "foo.bazz ?? bar!;"),
+        ("foo!.bazz! ?? bar;", "foo!.bazz ?? bar;"),
+        ("foo!.bazz! ?? bar!;", "foo!.bazz ?? bar!;"),
+        ("foo()! ?? bar;", "foo() ?? bar;"),
+        ("foo()! ?? bar!;", "foo() ?? bar!;"),
+    ];
+
     Tester::new(
         NoNonNullAssertedNullishCoalescing::NAME,
         NoNonNullAssertedNullishCoalescing::PLUGIN,
         pass,
         fail,
     )
+    .expect_fix(fix)
     .test_and_snapshot();
 }

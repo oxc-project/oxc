@@ -77,7 +77,7 @@ declare_oxc_lint!(
     NoNamespace,
     import,
     style,
-    pending,  // TODO: fixer
+    pending,
     config = NoNamespaceConfig,
 );
 

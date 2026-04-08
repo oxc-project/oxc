@@ -78,7 +78,7 @@ declare_oxc_lint!(
     First,
     import,
     style,
-    pending, // TODO: fixer
+    pending,
     config = AbsoluteFirst,
 );
 

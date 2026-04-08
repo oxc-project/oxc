@@ -50,7 +50,7 @@ declare_oxc_lint!(
     NoTypos,
     nextjs,
     correctness,
-    pending
+    suggestion
 );
 
 const NEXTJS_DATA_FETCHING_FUNCTIONS: [&str; 3] =
@@ -99,7 +99,9 @@ impl Rule for NoTypos {
 
 fn check_function_name(name: &str, span: Span, ctx: &LintContext) {
     if let Some(suggestion) = best_match(name, NEXTJS_DATA_FETCHING_FUNCTIONS, THRESHOLD) {
-        ctx.diagnostic(no_typos_diagnostic(name, suggestion, span));
+        ctx.diagnostic_with_suggestion(no_typos_diagnostic(name, suggestion, span), |fixer| {
+            fixer.replace(span, suggestion)
+        });
     }
 }
 
@@ -253,5 +255,26 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoTypos::NAME, NoTypos::PLUGIN, pass, fail).test_and_snapshot();
+    let fix = vec![
+        (
+            r"export const getStaticpaths = async () => {};",
+            r"export const getStaticPaths = async () => {};",
+            None,
+            Some(PathBuf::from("pages/test.tsx")),
+        ),
+        (
+            r"export async function getStaticPathss(){};",
+            r"export async function getStaticPaths(){};",
+            None,
+            Some(PathBuf::from("pages/test.tsx")),
+        ),
+        (
+            r"export async function getServurSideProps(){};",
+            r"export async function getServerSideProps(){};",
+            None,
+            Some(PathBuf::from("pages/test.tsx")),
+        ),
+    ];
+
+    Tester::new(NoTypos::NAME, NoTypos::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();
 }
