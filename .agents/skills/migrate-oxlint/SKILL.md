@@ -142,7 +142,7 @@ Install the core oxlint package (use `yarn install`, `pnpm install`, `vp install
 npm install -D oxlint
 ```
 
-If you want to add the `oxlint-tsgolint` package, if you intend to use type-aware rules that require TypeScript type information:
+If you set `"typeAware": true` in `.oxlintrc.json`, you must also install `oxlint-tsgolint` — it provides the TypeScript compiler required for type-aware rules:
 
 ```bash
 npm install -D oxlint-tsgolint
@@ -293,7 +293,6 @@ For each match, decide whether to replace or remove it:
 
 ## Tips
 
-- For ESLint core rules not yet natively in oxlint, prefer `oxlint-plugin-eslint` (see Step 4) over keeping a parallel ESLint process — it keeps all linting in one command and avoids ESLint dependencies. Running ESLint alongside oxlint is only necessary when you rely on third-party ESLint plugins that have no oxlint equivalent and do not work as oxlint JS plugins.
 - List available rules: Run `npx oxlint --rules` to see all supported rules, or refer to the [rule documentation](https://oxc.rs/docs/guide/usage/linter/rules.html).
 - Schema support: Add `"$schema": "./node_modules/oxlint/configuration_schema.json"` to `.oxlintrc.json` for editor autocompletion if the migration tool didn't do it automatically.
 - Output formats: `default`, `stylish`, `json`, `github`, `gitlab`, `junit`, `checkstyle`, `unix`
