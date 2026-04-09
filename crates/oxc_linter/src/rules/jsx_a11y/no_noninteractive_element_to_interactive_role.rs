@@ -10,7 +10,9 @@ use crate::{
     context::LintContext,
     globals::HTML_TAG,
     rule::Rule,
-    utils::{get_element_type, has_jsx_prop_ignore_case, is_interactive_role, is_non_interactive_element},
+    utils::{
+        get_element_type, has_jsx_prop_ignore_case, is_interactive_role, is_non_interactive_element,
+    },
 };
 
 fn no_noninteractive_element_to_interactive_role_diagnostic(span: Span) -> OxcDiagnostic {
@@ -63,7 +65,9 @@ fn default_allowed_roles() -> BTreeMap<CompactStr, Vec<CompactStr>> {
 }
 
 #[derive(Debug, Clone)]
-pub struct NoNoninteractiveElementToInteractiveRole(Box<NoNoninteractiveElementToInteractiveRoleConfig>);
+pub struct NoNoninteractiveElementToInteractiveRole(
+    Box<NoNoninteractiveElementToInteractiveRoleConfig>,
+);
 
 #[derive(Debug, Clone)]
 struct NoNoninteractiveElementToInteractiveRoleConfig {
@@ -179,8 +183,12 @@ impl Rule for NoNoninteractiveElementToInteractiveRole {
         }
 
         // Report if the element is non-interactive AND the role is interactive.
-        if is_non_interactive_element(&element_type, jsx_el) && is_interactive_role_for_this_rule(first_role) {
-            ctx.diagnostic(no_noninteractive_element_to_interactive_role_diagnostic(role_attr.span));
+        if is_non_interactive_element(&element_type, jsx_el)
+            && is_interactive_role_for_this_rule(first_role)
+        {
+            ctx.diagnostic(no_noninteractive_element_to_interactive_role_diagnostic(
+                role_attr.span,
+            ));
         }
     }
 
@@ -196,10 +204,8 @@ impl Rule for NoNoninteractiveElementToInteractiveRole {
         let mut allowed_roles = BTreeMap::new();
         for (element, roles_value) in obj {
             if let Some(roles_arr) = roles_value.as_array() {
-                let roles: Vec<CompactStr> = roles_arr
-                    .iter()
-                    .filter_map(|v| v.as_str().map(CompactStr::new))
-                    .collect();
+                let roles: Vec<CompactStr> =
+                    roles_arr.iter().filter_map(|v| v.as_str().map(CompactStr::new)).collect();
                 allowed_roles.insert(CompactStr::new(element), roles);
             }
         }
