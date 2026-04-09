@@ -2,6 +2,9 @@
 
 Thank you for your interest in contributing to Oxc!
 
+> [!IMPORTANT]
+> Please read the complete contributing guide on the [website](https://oxc.rs/docs/contribute/introduction.html).
+
 Please check out our [good first issues](https://github.com/oxc-project/oxc/contribute) or ask for guidance on [Discord](https://discord.gg/9uXCAwqQZW).
 
 We welcome and appreciate any form of contributions.
@@ -17,6 +20,3 @@ When using AI tools (including LLMs like ChatGPT, Claude, Copilot, etc.) to cont
 
 We encourage the use of AI tools to assist with development, but all contributions must be thoroughly reviewed and tested by the contributor before submission. AI-generated code should be understood, validated, and adapted to meet Oxc's standards.
 
----
-
-Please see the complete contributing guide on the [website](https://oxc.rs/docs/contribute/introduction.html).
