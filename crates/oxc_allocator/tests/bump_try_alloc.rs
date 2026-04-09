@@ -9,7 +9,7 @@
 )]
 
 use oxc_allocator::bump::{AllocOrInitError, Bump};
-use rand::Rng;
+use rand::RngExt as _;
 use std::alloc::{GlobalAlloc, Layout, System};
 use std::sync::atomic::{AtomicBool, Ordering};
 
@@ -145,10 +145,10 @@ fn main() {
             let layout = Layout::from_size_align(bump.chunk_capacity(), 1).unwrap();
             assert!(bump.try_alloc_layout(layout).is_ok());
 
-            let mut rng = rand::thread_rng();
+            let mut rng = rand::rng();
 
             for _ in 0..NUM_TESTS {
-                if rng.r#gen() {
+                if rng.random() {
                     GLOBAL_ALLOCATOR.toggle_returning_null();
                 }
 
