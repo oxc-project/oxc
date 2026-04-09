@@ -123,42 +123,39 @@ fn main() {
                 assert!(Bump::try_with_capacity(1).is_err());
             });
         }),
-        test!(
-            "test try_alloc_layout with and without global allocation failures",
-            || {
-                const NUM_TESTS: usize = 5000;
-                const MAX_BYTES_ALLOCATED: usize = 65536;
+        test!("test try_alloc_layout with and without global allocation failures", || {
+            const NUM_TESTS: usize = 5000;
+            const MAX_BYTES_ALLOCATED: usize = 65536;
 
-                let mut bump = Bump::try_new().unwrap();
-                let mut bytes_allocated = bump.chunk_capacity();
+            let mut bump = Bump::try_new().unwrap();
+            let mut bytes_allocated = bump.chunk_capacity();
 
-                // Bump preallocates space in the initial chunk, so we need to
-                // use up this block prior to the actual test
-                let layout = Layout::from_size_align(bump.chunk_capacity(), 1).unwrap();
-                assert!(bump.try_alloc_layout(layout).is_ok());
+            // Bump preallocates space in the initial chunk, so we need to
+            // use up this block prior to the actual test
+            let layout = Layout::from_size_align(bump.chunk_capacity(), 1).unwrap();
+            assert!(bump.try_alloc_layout(layout).is_ok());
 
-                let mut rng = rand::thread_rng();
+            let mut rng = rand::thread_rng();
 
-                for _ in 0..NUM_TESTS {
-                    if rng.gen() {
-                        GLOBAL_ALLOCATOR.toggle_returning_null();
-                    }
-
-                    let layout = Layout::from_size_align(bump.chunk_capacity() + 1, 1).unwrap();
-                    if GLOBAL_ALLOCATOR.is_returning_null() {
-                        assert!(bump.try_alloc_layout(layout).is_err());
-                    } else {
-                        assert!(bump.try_alloc_layout(layout).is_ok());
-                        bytes_allocated += bump.chunk_capacity();
-                    }
-
-                    if bytes_allocated >= MAX_BYTES_ALLOCATED {
-                        bump = GLOBAL_ALLOCATOR.with_successful_allocs(|| Bump::try_new().unwrap());
-                        bytes_allocated = bump.chunk_capacity();
-                    }
+            for _ in 0..NUM_TESTS {
+                if rng.r#gen() {
+                    GLOBAL_ALLOCATOR.toggle_returning_null();
                 }
-            },
-        ),
+
+                let layout = Layout::from_size_align(bump.chunk_capacity() + 1, 1).unwrap();
+                if GLOBAL_ALLOCATOR.is_returning_null() {
+                    assert!(bump.try_alloc_layout(layout).is_err());
+                } else {
+                    assert!(bump.try_alloc_layout(layout).is_ok());
+                    bytes_allocated += bump.chunk_capacity();
+                }
+
+                if bytes_allocated >= MAX_BYTES_ALLOCATED {
+                    bump = GLOBAL_ALLOCATOR.with_successful_allocs(|| Bump::try_new().unwrap());
+                    bytes_allocated = bump.chunk_capacity();
+                }
+            }
+        },),
         test!("test try_alloc with and without global allocation failures", || {
             test_static_size_alloc(
                 |bump| assert!(bump.try_alloc(1u8).is_ok()),
