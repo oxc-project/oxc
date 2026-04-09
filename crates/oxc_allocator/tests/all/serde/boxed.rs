@@ -1,8 +1,8 @@
 #![cfg(all(feature = "boxed", feature = "serde"))]
 
-use super::{assert_eq_json, Mixed, Test};
+use super::{Mixed, Test, assert_eq_json};
 
-use bumpalo::{boxed::Box, Bump};
+use bumpalo::{Bump, boxed::Box};
 
 macro_rules! compare_std_box {
     (in $bump:ident; $x:expr) => {

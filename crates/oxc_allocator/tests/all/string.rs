@@ -1,5 +1,5 @@
 #![cfg(feature = "collections")]
-use bumpalo::{collections::String, format, Bump};
+use bumpalo::{Bump, collections::String, format};
 use std::fmt::Write;
 
 #[test]

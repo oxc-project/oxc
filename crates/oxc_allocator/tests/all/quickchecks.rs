@@ -45,20 +45,10 @@ where
         match x % 6 {
             0 => Elems::OneT(T::arbitrary(g)),
             1 => Elems::TwoT(T::arbitrary(g), T::arbitrary(g)),
-            2 => Elems::FourT(
-                T::arbitrary(g),
-                T::arbitrary(g),
-                T::arbitrary(g),
-                T::arbitrary(g),
-            ),
+            2 => Elems::FourT(T::arbitrary(g), T::arbitrary(g), T::arbitrary(g), T::arbitrary(g)),
             3 => Elems::OneU(U::arbitrary(g)),
             4 => Elems::TwoU(U::arbitrary(g), U::arbitrary(g)),
-            5 => Elems::FourU(
-                U::arbitrary(g),
-                U::arbitrary(g),
-                U::arbitrary(g),
-                U::arbitrary(g),
-            ),
+            5 => Elems::FourU(U::arbitrary(g), U::arbitrary(g), U::arbitrary(g), U::arbitrary(g)),
             _ => unreachable!(),
         }
     }

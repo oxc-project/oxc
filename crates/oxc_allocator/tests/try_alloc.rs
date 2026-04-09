@@ -46,11 +46,7 @@ impl Allocator {
 
 unsafe impl GlobalAlloc for Allocator {
     unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
-        if self.is_returning_null() {
-            core::ptr::null_mut()
-        } else {
-            System.alloc(layout)
-        }
+        if self.is_returning_null() { core::ptr::null_mut() } else { System.alloc(layout) }
     }
 
     unsafe fn dealloc(&self, ptr: *mut u8, layout: Layout) {
@@ -163,52 +159,40 @@ fn main() {
                 }
             },
         ),
-        test!(
-            "test try_alloc with and without global allocation failures",
-            || {
-                test_static_size_alloc(
-                    |bump| assert!(bump.try_alloc(1u8).is_ok()),
-                    |bump| assert!(bump.try_alloc(1u8).is_err()),
-                );
-            },
-        ),
-        test!(
-            "test try_alloc_with with and without global allocation failures",
-            || {
-                test_static_size_alloc(
-                    |bump| assert!(bump.try_alloc_with(|| 1u8).is_ok()),
-                    |bump| assert!(bump.try_alloc_with(|| 1u8).is_err()),
-                );
-            },
-        ),
-        test!(
-            "test try_alloc_try_with (Ok) with and without global allocation failures",
-            || {
-                test_static_size_alloc(
-                    |bump| assert!(bump.try_alloc_try_with::<_, _, ()>(|| Ok(1u8)).is_ok()),
-                    |bump| assert!(bump.try_alloc_try_with::<_, _, ()>(|| Ok(1u8)).is_err()),
-                );
-            },
-        ),
-        test!(
-            "test try_alloc_try_with (Err) with and without global allocation failures",
-            || {
-                test_static_size_alloc(
-                    |bump| {
-                        assert!(matches!(
-                            bump.try_alloc_try_with::<_, u8, _>(|| Err(())),
-                            Err(AllocOrInitError::Init(_))
-                        ));
-                    },
-                    |bump| {
-                        assert!(matches!(
-                            bump.try_alloc_try_with::<_, u8, _>(|| Err(())),
-                            Err(AllocOrInitError::Alloc(_))
-                        ));
-                    },
-                );
-            },
-        ),
+        test!("test try_alloc with and without global allocation failures", || {
+            test_static_size_alloc(
+                |bump| assert!(bump.try_alloc(1u8).is_ok()),
+                |bump| assert!(bump.try_alloc(1u8).is_err()),
+            );
+        },),
+        test!("test try_alloc_with with and without global allocation failures", || {
+            test_static_size_alloc(
+                |bump| assert!(bump.try_alloc_with(|| 1u8).is_ok()),
+                |bump| assert!(bump.try_alloc_with(|| 1u8).is_err()),
+            );
+        },),
+        test!("test try_alloc_try_with (Ok) with and without global allocation failures", || {
+            test_static_size_alloc(
+                |bump| assert!(bump.try_alloc_try_with::<_, _, ()>(|| Ok(1u8)).is_ok()),
+                |bump| assert!(bump.try_alloc_try_with::<_, _, ()>(|| Ok(1u8)).is_err()),
+            );
+        },),
+        test!("test try_alloc_try_with (Err) with and without global allocation failures", || {
+            test_static_size_alloc(
+                |bump| {
+                    assert!(matches!(
+                        bump.try_alloc_try_with::<_, u8, _>(|| Err(())),
+                        Err(AllocOrInitError::Init(_))
+                    ));
+                },
+                |bump| {
+                    assert!(matches!(
+                        bump.try_alloc_try_with::<_, u8, _>(|| Err(())),
+                        Err(AllocOrInitError::Alloc(_))
+                    ));
+                },
+            );
+        },),
         #[cfg(feature = "collections")]
         test!("test Vec::try_reserve and Vec::try_reserve_exact", || {
             use bumpalo::collections::Vec;

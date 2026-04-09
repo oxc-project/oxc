@@ -1,7 +1,7 @@
 #![cfg(feature = "collections")]
 
 use crate::quickcheck;
-use bumpalo::{collections::Vec, vec, Bump};
+use bumpalo::{Bump, collections::Vec, vec};
 use std::cell::{Cell, RefCell};
 use std::ops::Deref;
 
@@ -33,14 +33,8 @@ fn recursive_vecs() {
         edges: Cell<Vec<'a, &'a Node<'a>>>,
     }
 
-    let node1: &Node = b.alloc(Node {
-        myself: Cell::new(None),
-        edges: Cell::new(Vec::new_in(&b)),
-    });
-    let node2: &Node = b.alloc(Node {
-        myself: Cell::new(None),
-        edges: Cell::new(Vec::new_in(&b)),
-    });
+    let node1: &Node = b.alloc(Node { myself: Cell::new(None), edges: Cell::new(Vec::new_in(&b)) });
+    let node2: &Node = b.alloc(Node { myself: Cell::new(None), edges: Cell::new(Vec::new_in(&b)) });
 
     node1.myself.set(Some(node1));
     node1.edges.set(bumpalo::vec![in &b; node1, node1, node2]);

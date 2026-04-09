@@ -7,10 +7,7 @@ mod vec;
 #[macro_export]
 macro_rules! assert_eq_json {
     ($a:ident, $b:ident) => {
-        assert_eq!(
-            serde_json::to_string(&$a).unwrap(),
-            serde_json::to_string(&$b).unwrap(),
-        )
+        assert_eq!(serde_json::to_string(&$a).unwrap(), serde_json::to_string(&$b).unwrap(),)
     };
 }
 use assert_eq_json;

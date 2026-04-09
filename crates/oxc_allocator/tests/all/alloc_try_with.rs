@@ -23,9 +23,7 @@ fn alloc_try_with_large_array() -> Result<(), ()> {
 fn alloc_try_with_large_array_err() {
     let b = Bump::new();
 
-    assert!(b
-        .alloc_try_with(|| Result::<[u8; 10_000_000], _>::Err(()))
-        .is_err());
+    assert!(b.alloc_try_with(|| Result::<[u8; 10_000_000], _>::Err(())).is_err());
 }
 
 #[allow(dead_code)]
@@ -58,9 +56,7 @@ fn alloc_try_with_large_struct() -> Result<(), ()> {
 fn alloc_try_with_large_struct_err() {
     let b = Bump::new();
 
-    assert!(b
-        .alloc_try_with(|| Result::<LargeStruct, _>::Err(()))
-        .is_err());
+    assert!(b.alloc_try_with(|| Result::<LargeStruct, _>::Err(())).is_err());
 }
 
 #[test]
@@ -88,9 +84,7 @@ fn alloc_try_with_large_tuple() -> Result<(), ()> {
 fn alloc_try_with_large_tuple_err() {
     let b = Bump::new();
 
-    assert!(b
-        .alloc_try_with(|| { Result::<(u32, LargeStruct), _>::Err(()) })
-        .is_err());
+    assert!(b.alloc_try_with(|| { Result::<(u32, LargeStruct), _>::Err(()) }).is_err());
 }
 
 enum LargeEnum {
@@ -114,9 +108,7 @@ fn alloc_try_with_large_enum() -> Result<(), ()> {
 fn alloc_try_with_large_enum_err() {
     let b = Bump::new();
 
-    assert!(b
-        .alloc_try_with(|| Result::<LargeEnum, _>::Err(()))
-        .is_err());
+    assert!(b.alloc_try_with(|| Result::<LargeEnum, _>::Err(())).is_err());
 }
 
 #[test]
@@ -124,9 +116,7 @@ fn alloc_try_with_large_enum_err() {
 fn alloc_slice_try_fill_with_large_length() {
     let b = Bump::new();
 
-    assert!(b
-        .alloc_slice_try_fill_with(10_000_000, |_| Err::<u8, _>(()))
-        .is_err());
+    assert!(b.alloc_slice_try_fill_with(10_000_000, |_| Err::<u8, _>(())).is_err());
 }
 
 #[test]
@@ -134,8 +124,6 @@ fn alloc_slice_try_fill_with_large_length() {
 fn alloc_slice_try_fill_iter_large_length() {
     let b = Bump::new();
 
-    let elems = repeat(Err::<u8, _>(()))
-        .take(10_000_000)
-        .collect::<Vec<_>>();
+    let elems = repeat(Err::<u8, _>(())).take(10_000_000).collect::<Vec<_>>();
     assert!(b.alloc_slice_try_fill_iter(elems).is_err());
 }

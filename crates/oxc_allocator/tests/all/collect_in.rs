@@ -1,8 +1,8 @@
 #![cfg(feature = "collections")]
 
 use crate::quickcheck;
-use bumpalo::collections::{CollectIn, String, Vec};
 use bumpalo::Bump;
+use bumpalo::collections::{CollectIn, String, Vec};
 use std::string::String as StdString;
 use std::vec::Vec as StdVec;
 

@@ -128,9 +128,7 @@ fn allocator_grow_zeroed() {
 
     // Make an initial allocation.
     let first_layout = Layout::from_size_align(4, 4).expect("create a layout");
-    let mut p = bump
-        .allocate_zeroed(first_layout)
-        .expect("allocate a first chunk");
+    let mut p = bump.allocate_zeroed(first_layout).expect("allocate a first chunk");
     let allocated = bump.allocated_bytes();
     unsafe { p.as_mut().fill(42) };
     let p = p.cast();

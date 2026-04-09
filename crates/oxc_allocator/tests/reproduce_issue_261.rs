@@ -1,5 +1,5 @@
 #![cfg(feature = "collections")]
-use bumpalo::{collections::string::String, Bump};
+use bumpalo::{Bump, collections::string::String};
 use std::panic::AssertUnwindSafe;
 
 #[test]

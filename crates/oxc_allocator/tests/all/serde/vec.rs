@@ -1,8 +1,8 @@
 #![cfg(all(feature = "collections", feature = "serde"))]
 
-use super::{assert_eq_json, Mixed, Test};
+use super::{Mixed, Test, assert_eq_json};
 
-use bumpalo::{vec, Bump};
+use bumpalo::{Bump, vec};
 
 macro_rules! compare_std_vec {
     (in $bump:ident; $($x:expr),+) => {{

@@ -2,14 +2,11 @@
 
 use super::assert_eq_json;
 
-use bumpalo::{collections::string::String, Bump};
+use bumpalo::{Bump, collections::string::String};
 
 macro_rules! compare_std_str {
     (in $bump:ident; $x:expr) => {
-        (
-            String::from_str_in($x, &$bump),
-            std::string::String::from($x),
-        )
+        (String::from_str_in($x, &$bump), std::string::String::from($x))
     };
 }
 
