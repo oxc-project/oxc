@@ -8,7 +8,7 @@ use oxc_span::{GetSpan, Span};
 use crate::{
     Context, ParserConfig as Config, ParserImpl, diagnostics,
     error_handler::FatalError,
-    lexer::{Kind, LexerCheckpoint, LexerContext, Token},
+    lexer::{Kind, LexerCheckpoint, Token},
 };
 
 #[derive(Clone)]
@@ -222,9 +222,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// Expect the next next token to be a `JsxString` or any other token
     /// # Errors
     pub(crate) fn expect_jsx_attribute_value(&mut self, kind: Kind) {
-        self.lexer.set_context(LexerContext::JsxAttributeValue);
-        self.expect(kind);
-        self.lexer.set_context(LexerContext::Regular);
+        if !self.at(kind) {
+            self.handle_expect_failure(kind);
+        }
+        self.prev_token_end = self.token.end();
+        self.token = self.lexer.next_jsx_attribute_value();
     }
 
     /// Tell lexer to read a regex
