@@ -219,12 +219,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.advance_for_jsx_child();
     }
 
-    /// Expect the next next token to be a `JsxString` or any other token
-    /// # Errors
-    pub(crate) fn expect_jsx_attribute_value(&mut self, kind: Kind) {
-        if !self.at(kind) {
-            self.handle_expect_failure(kind);
-        }
+    /// Move to the next token, lexing it as a JSX attribute value.
+    pub(crate) fn advance_for_jsx_attribute_value(&mut self) {
         self.prev_token_end = self.token.end();
         self.token = self.lexer.next_jsx_attribute_value();
     }
