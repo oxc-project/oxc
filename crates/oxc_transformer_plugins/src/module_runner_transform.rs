@@ -58,7 +58,7 @@ use oxc_span::{Ident, SPAN};
 use oxc_syntax::identifier::is_identifier_name;
 use oxc_traverse::{Ancestor, BoundIdentifier, Traverse, traverse_mut};
 
-use crate::TraverseCtx;
+type TraverseCtx<'a> = oxc_traverse::TraverseCtx<'a, ()>;
 
 #[derive(Debug, Default)]
 pub struct ModuleRunnerTransform<'a> {
