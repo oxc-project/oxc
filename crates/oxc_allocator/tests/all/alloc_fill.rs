@@ -1,4 +1,4 @@
-use bumpalo::Bump;
+use oxc_allocator::bump::Bump;
 use std::alloc::Layout;
 use std::cmp;
 use std::iter::repeat;

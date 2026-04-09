@@ -1,4 +1,4 @@
-use bumpalo::Bump;
+use oxc_allocator::bump::Bump;
 
 #[test]
 fn allocation_limit_trivial() {

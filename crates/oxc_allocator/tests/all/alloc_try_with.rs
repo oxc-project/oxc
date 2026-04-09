@@ -6,7 +6,7 @@
 
 use std::iter::repeat;
 
-use bumpalo::Bump;
+use oxc_allocator::bump::Bump;
 
 #[test]
 #[cfg_attr(debug_assertions, ignore)]

@@ -1,4 +1,4 @@
-use bumpalo::{AllocOrInitError, Bump};
+use oxc_allocator::bump::{AllocOrInitError, Bump};
 use rand::Rng;
 use std::alloc::{GlobalAlloc, Layout, System};
 use std::sync::atomic::{AtomicBool, Ordering};

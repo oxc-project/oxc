@@ -1,4 +1,4 @@
-use bumpalo::Bump;
+use oxc_allocator::bump::Bump;
 
 #[test]
 fn try_with_capacity_too_large() {

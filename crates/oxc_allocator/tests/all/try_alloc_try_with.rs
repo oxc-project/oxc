@@ -4,7 +4,7 @@
 // We only run them when debug_assertions are not set, as we expect them to fail outside release
 // mode.
 
-use bumpalo::{AllocOrInitError, Bump};
+use oxc_allocator::bump::{AllocOrInitError, Bump};
 
 #[test]
 #[cfg_attr(debug_assertions, ignore)]

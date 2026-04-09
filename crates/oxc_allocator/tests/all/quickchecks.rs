@@ -1,6 +1,6 @@
 use crate::quickcheck;
 use ::quickcheck::{Arbitrary, Gen};
-use bumpalo::Bump;
+use oxc_allocator::bump::Bump;
 use std::mem;
 
 #[derive(Clone, Debug, PartialEq)]
