@@ -3,7 +3,7 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{
     ast_nodes::{AstNode, AstNodes},
-    format_args,
+    best_fitting, format_args,
     formatter::{
         Buffer, Format, Formatter, SourceText, buffer::RemoveSoftLinesBuffer, prelude::*,
         trivia::FormatTrailingComments,
@@ -110,6 +110,7 @@ impl<'a, 'b> FormatJsArrowFunctionExpression<'a, 'b> {
                                 arrow,
                                 self.options.call_argument_layout.is_some(),
                                 true,
+                                false,
                                 self.options.cache_mode
                             ),
                             space(),
@@ -162,6 +163,43 @@ impl<'a, 'b> FormatJsArrowFunctionExpression<'a, 'b> {
                             ))]
                         );
                     };
+                }
+
+                if let Some(Expression::ConditionalExpression(conditional)) = arrow_expression {
+                    let expanded_signature = format_with(|f| {
+                        write!(
+                            f,
+                            [
+                                format_signature(
+                                    arrow,
+                                    self.options.call_argument_layout.is_some(),
+                                    true,
+                                    true,
+                                    self.options.cache_mode
+                                ),
+                                space(),
+                                "=>"
+                            ]
+                        );
+                    });
+
+                    let conditional_body_with_parens = format_with(|f| {
+                        write!(f, [space(), token("("), format_body, token(")")]);
+                    });
+
+                    if should_inline_conditional_arrow_body(conditional, arrow.span.start, f) {
+                        write!(
+                            f,
+                            [best_fitting!(
+                                format_args!(formatted_signature, conditional_body_with_parens),
+                                format_args!(expanded_signature, conditional_body_with_parens),
+                            )]
+                        );
+                    } else {
+                        write!(f, [expanded_signature, soft_line_indent_or_space(&format_body)]);
+                    }
+
+                    return;
                 }
 
                 write!(f, formatted_signature);
@@ -577,6 +615,7 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
                                     arrow,
                                     is_grouped_call_arg_layout,
                                     is_first,
+                                    false,
                                     self.options.cache_mode
                                 )
                             ]
@@ -726,6 +765,27 @@ fn should_add_parens(body: &AstNode<'_, FunctionBody<'_>>) -> bool {
     }
 }
 
+fn should_inline_conditional_arrow_body(
+    conditional: &ConditionalExpression<'_>,
+    arrow_start: u32,
+    f: &Formatter<'_, '_>,
+) -> bool {
+    let source_text = f.source_text();
+    let width = TextWidth::from_text(source_text.text_for(conditional), f.options().indent_width);
+    let line_prefix = source_text.slice_to(arrow_start);
+    let line_start = line_prefix.rfind('\n').map_or(0, |index| index + 1);
+    let line_prefix = &line_prefix[line_start..];
+    let indent_end = line_prefix
+        .char_indices()
+        .find_map(|(index, c)| (!c.is_whitespace()).then_some(index))
+        .unwrap_or(line_prefix.len());
+    let indent_width = TextWidth::from_text(&line_prefix[..indent_end], f.options().indent_width);
+
+    !width.is_multiline()
+        // Account for the indentation plus the suffix on the expanded signature line: `) => (`.
+        && width.value() + indent_width.value() + 6 <= u32::from(f.options().line_width.value())
+}
+
 fn has_rest_object_or_array_parameter(params: &FormalParameters) -> bool {
     params.rest.is_some()
         || params.items.iter().any(|param| param.pattern.is_destructuring_pattern())
@@ -739,6 +799,7 @@ fn format_signature<'a, 'b>(
     arrow: &'b AstNode<'a, ArrowFunctionExpression<'a>>,
     is_grouped_call_argument: bool,
     is_first_in_chain: bool,
+    force_expand: bool,
     cache_mode: FunctionCacheMode,
 ) -> impl Format<'a> + 'b {
     format_with(move |f| {
@@ -749,6 +810,7 @@ fn format_signature<'a, 'b>(
                 arrow.params(),
                 arrow.return_type().map(FormatNodeWithoutTrailingComments),
             ))
+            .should_expand(force_expand)
             .fmt(f);
         });
         let format_head = FormatContentWithCacheMode::new(arrow.params.span, content, cache_mode);

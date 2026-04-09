@@ -1,0 +1,33 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+const foo = {
+  bar() {
+    const getArrayIndex = (aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, b) => a ? b : c;
+  },
+};
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+const foo = {
+  bar() {
+    const getArrayIndex = (
+      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,
+      b,
+    ) => (a ? b : c);
+  },
+};
+
+-------------------
+{ printWidth: 100 }
+-------------------
+const foo = {
+  bar() {
+    const getArrayIndex = (aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, b) => (a ? b : c);
+  },
+};
+
+===================== End =====================
