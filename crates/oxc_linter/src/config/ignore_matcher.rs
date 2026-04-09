@@ -104,13 +104,13 @@ mod tests {
 
     #[test]
     fn test_lint_file_outside_root_with_ignore_patterns() {
-      let base_patterns = vec!["*.js".to_string()];
-      let base_root = Path::new("/repo1");
+        let base_patterns = vec!["*.js".to_string()];
+        let base_root = Path::new("/repo1");
 
-      let matcher = LintIgnoreMatcher::new(&base_patterns, base_root, vec![]);
-      
-      // Test that matcher doesn't panic when checking whether we should ignore a file
-      // outside root.
-      assert!(!matcher.should_ignore(Path::new("/repo2")));
+        let matcher = LintIgnoreMatcher::new(&base_patterns, base_root, vec![]);
+
+        // Test that matcher doesn't panic when checking whether we should ignore a file
+        // outside root.
+        assert!(!matcher.should_ignore(Path::new("/repo2")));
     }
 }
