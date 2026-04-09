@@ -3,7 +3,8 @@ use std::collections::BTreeMap;
 use oxc_ast::{AstKind, ast::JSXAttributeValue};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
+use oxc_str::CompactStr;
 
 use crate::{
     AstNode,
@@ -177,7 +178,7 @@ impl Rule for NoNoninteractiveElementToInteractiveRole {
 
         // Skip if this element-role combination is allowed by config.
         if let Some(allowed) = self.0.allowed_roles.get(element_type.as_ref()) {
-            if allowed.iter().any(|r| r.as_str() == first_role) {
+            if allowed.iter().any(|r: &CompactStr| r.as_str() == first_role) {
                 return;
             }
         }
