@@ -14,8 +14,8 @@ rust-version.workspace = true
 description.workspace = true
 
 [[test]]
-name = "try_alloc"
-path = "tests/try_alloc.rs"
+name = "bump_try_alloc"
+path = "tests/bump_try_alloc.rs"
 harness = false
 
 [lints]
