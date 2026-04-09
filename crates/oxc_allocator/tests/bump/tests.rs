@@ -122,7 +122,14 @@ fn alloc_slice_copy() {
 fn alloc_slice_clone() {
     let b = Bump::new();
 
-    let src = vec![vec![0], vec![1, 2], vec![3, 4, 5], vec![6, 7, 8, 9]];
+    // Original bumpalo test uses `Vec<Vec<i32>>`, but bump allocators don't run
+    // destructors, so the inner Vecs' heap buffers would leak. Use a non-Copy
+    // Clone type that doesn't heap-allocate to avoid Miri leak detection.
+    // (bumpalo works around this with `-Zmiri-ignore-leaks`.)
+    #[derive(Clone, Debug, PartialEq, Eq)]
+    struct Val(i32);
+
+    let src = vec![Val(0), Val(1), Val(2), Val(3)];
     let dst = b.alloc_slice_clone(&src);
 
     assert_eq!(src, dst);
