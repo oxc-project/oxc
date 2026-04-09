@@ -129,13 +129,6 @@ impl DisabledRule {
             }
         }
     }
-
-    pub fn directive_prefix(&self) -> DirectivePrefix {
-        match self {
-            DisabledRule::All { directive_prefix, .. }
-            | DisabledRule::Single { directive_prefix, .. } => *directive_prefix,
-        }
-    }
 }
 
 /// Represents a single rule within a disable/enable comment directive.
@@ -244,6 +237,9 @@ pub struct DisableRuleComment {
     /// Full outer span of the comment (including `//` or `/* */` delimiters).
     /// Used for diagnostic labels.
     pub span: Span,
+    /// Span of the directive text inside the comment delimiters.
+    /// Used for diagnostics that should not be suppressible by the directive itself.
+    pub directive_span: Span,
     /// Span used for the fix. Extends to cover the whole line (including leading
     /// whitespace and the trailing newline) when the comment is the only content
     /// on that line; otherwise equals `span`.
@@ -320,7 +316,12 @@ impl DisableDirectives {
                     if rule_name.contains('/') {
                         name == rule_name
                     } else {
-                        name.rsplit_once('/').map_or(name.as_str(), |(_, rule)| rule) == rule_name
+                        let name_without_plugin =
+                            name.rsplit_once('/').map_or(name.as_str(), |(_, rule)| rule);
+                        name_without_plugin == rule_name
+                            // Special-case mapping: `vitest/no-restricted-vi-methods` is implemented by `jest/no-restricted-jest-methods`.
+                            || (name == "vitest/no-restricted-vi-methods"
+                                && rule_name == "no-restricted-jest-methods")
                     }
                 }
             };
@@ -377,6 +378,7 @@ impl DisableDirectives {
                     (!used[*used_index]).then_some(DisableRuleComment {
                         directive_prefix: comment.directive_prefix,
                         span: comment.span,
+                        directive_span: comment.directive_span,
                         fix_span: comment.fix_span,
                         r#type: RuleCommentType::All { used_index: *used_index },
                     })
@@ -401,6 +403,7 @@ impl DisableDirectives {
                     Some(DisableRuleComment {
                         directive_prefix: comment.directive_prefix,
                         span: comment.span,
+                        directive_span: comment.directive_span,
                         fix_span: comment.fix_span,
                         r#type: comment_type,
                     })
@@ -537,6 +540,7 @@ impl DisableDirectivesBuilder {
                     self.disable_rule_comments.push(DisableRuleComment {
                         directive_prefix,
                         span: outer_span,
+                        directive_span: comment_span,
                         fix_span: comment_fix_span,
                         r#type: RuleCommentType::All { used_index },
                     });
@@ -577,6 +581,7 @@ impl DisableDirectivesBuilder {
                         self.disable_rule_comments.push(DisableRuleComment {
                             directive_prefix,
                             span: outer_span,
+                            directive_span: comment_span,
                             fix_span: comment_fix_span,
                             r#type: RuleCommentType::All { used_index },
                         });
@@ -609,6 +614,7 @@ impl DisableDirectivesBuilder {
                         self.disable_rule_comments.push(DisableRuleComment {
                             directive_prefix,
                             span: outer_span,
+                            directive_span: comment_span,
                             fix_span: comment_fix_span,
                             r#type: RuleCommentType::Single(rules),
                         });
@@ -644,6 +650,7 @@ impl DisableDirectivesBuilder {
                         self.disable_rule_comments.push(DisableRuleComment {
                             directive_prefix,
                             span: outer_span,
+                            directive_span: comment_span,
                             fix_span: comment_fix_span,
                             r#type: RuleCommentType::All { used_index },
                         });
@@ -676,6 +683,7 @@ impl DisableDirectivesBuilder {
                         self.disable_rule_comments.push(DisableRuleComment {
                             directive_prefix,
                             span: outer_span,
+                            directive_span: comment_span,
                             fix_span: comment_fix_span,
                             r#type: RuleCommentType::Single(rules),
                         });
@@ -709,6 +717,7 @@ impl DisableDirectivesBuilder {
                     self.disable_rule_comments.push(DisableRuleComment {
                         directive_prefix,
                         span: outer_span,
+                        directive_span: comment_span,
                         fix_span: comment_fix_span,
                         r#type: RuleCommentType::Single(rules),
                     });
@@ -725,8 +734,7 @@ impl DisableDirectivesBuilder {
                         disable_comment_span,
                         disable_fix_span,
                         used_index,
-                    )) =
-                        self.disable_all_start.take()
+                    )) = self.disable_all_start.take()
                     {
                         self.add_interval(
                             start,
@@ -755,8 +763,7 @@ impl DisableDirectivesBuilder {
                             disable_comment_span,
                             disable_fix_span,
                             used_index,
-                        )) =
-                            self.disable_start_map.remove(rule_name)
+                        )) = self.disable_start_map.remove(rule_name)
                         {
                             self.add_interval(
                                 start,
@@ -803,10 +810,8 @@ impl DisableDirectivesBuilder {
 
         // Lone `eslint-disable rule_name`
         let disable_start_map = self.disable_start_map.drain().collect::<Vec<_>>();
-        for (
-            rule_name,
-            (start, directive_prefix, name_span, comment_span, fix_span, used_index),
-        ) in disable_start_map
+        for (rule_name, (start, directive_prefix, name_span, comment_span, fix_span, used_index)) in
+            disable_start_map
         {
             self.add_interval(
                 start,
@@ -1472,7 +1477,7 @@ mod tests {
         let directives = DisableDirectivesBuilder::new().build(semantic.source_text(), comments);
 
         let rule_names = match &directives.disable_rule_comments()[0].r#type {
-            RuleCommentType::All => Vec::new(),
+            RuleCommentType::All { .. } => Vec::new(),
             RuleCommentType::Single(rules) => {
                 rules.iter().map(|rule| rule.rule_name.as_str()).collect()
             }
@@ -1888,6 +1893,7 @@ mod tests {
             directive_prefix: DirectivePrefix::Eslint,
             rule_name: "no-bitwise".to_string(),
             name_span: Span::new(no_bitwise_start, no_bitwise_end),
+            used_index: 0,
         }
         .create_fix(source_text, comment_span);
 
@@ -1901,6 +1907,7 @@ mod tests {
             directive_prefix: DirectivePrefix::Eslint,
             rule_name: "no-implicit-coercion".to_string(),
             name_span: Span::new(no_implicit_start, no_implicit_end),
+            used_index: 1,
         }
         .create_fix(source_text, comment_span);
 

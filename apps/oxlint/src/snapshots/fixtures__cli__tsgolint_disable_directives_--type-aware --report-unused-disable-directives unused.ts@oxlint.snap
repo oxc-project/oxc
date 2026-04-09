@@ -59,10 +59,10 @@ working directory: fixtures/cli/tsgolint_disable_directives
   help: Consider using this expression or removing it
 
   ! Unused eslint-disable directive (no problems were reported).
-    ,-[unused.ts:22:3]
+    ,-[unused.ts:22:1]
  21 | // This disable directive is UNUSED (no floating promise here)
  22 | /* eslint-disable @typescript-eslint/no-floating-promises */
-    :   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
  23 | const x = 1 + 2
     `----
 
@@ -75,6 +75,7 @@ working directory: fixtures/cli/tsgolint_disable_directives
  24 | /* eslint-enable @typescript-eslint/no-floating-promises */
     `----
   help: Consider removing this declaration.
+
 Found 8 warnings and 0 errors.
 Finished in <variable>ms on 1 file with 110 rules using 1 threads.
 ----------

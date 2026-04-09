@@ -95,13 +95,12 @@ fn bench_unused_disable_directives(criterion: &mut Criterion) {
                 Arc::new(ModuleRecord::new(path, &parser_ret.module_record, &semantic));
 
             runner.run(|| {
-                let context_sub_hosts =
-                    vec![ContextSubHost::new(
-                        semantic,
-                        Arc::clone(&module_record),
-                        0,
-                        ContextSubHostOptions::default(),
-                    )];
+                let context_sub_hosts = vec![ContextSubHost::new(
+                    semantic,
+                    Arc::clone(&module_record),
+                    0,
+                    ContextSubHostOptions::default(),
+                )];
                 let (messages, directives) =
                     linter.run_with_disable_directives(path, context_sub_hosts, &allocator, None);
                 let diagnostics = create_unused_directives_diagnostics(

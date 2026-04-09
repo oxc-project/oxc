@@ -81,12 +81,14 @@ impl Rule for NoAbusiveEslintDisable {
         for comment in ctx.disable_directives().disable_rule_comments() {
             match &comment.r#type {
                 RuleCommentType::All { .. } => {
-                    ctx.diagnostic(no_abusive_eslint_disable_diagnostic(comment.span));
+                    ctx.diagnostic(no_abusive_eslint_disable_diagnostic(comment.directive_span));
                 }
                 RuleCommentType::Single(rules) => {
                     for rule in rules {
                         if !is_valid_rule_name(&rule.rule_name) {
-                            ctx.diagnostic(no_abusive_eslint_disable_diagnostic(comment.span));
+                            ctx.diagnostic(no_abusive_eslint_disable_diagnostic(
+                                comment.directive_span,
+                            ));
                         }
                     }
                 }
