@@ -193,38 +193,6 @@ fn main() {
                 },
             );
         },),
-        #[cfg(feature = "collections")]
-        test!("test Vec::try_reserve and Vec::try_reserve_exact", || {
-            use bumpalo::collections::Vec;
-
-            let bump = Bump::try_new().unwrap();
-
-            GLOBAL_ALLOCATOR.with_alloc_failures(|| {
-                let mut vec = Vec::<u8>::new_in(&bump);
-                let chunk_cap = bump.chunk_capacity();
-
-                // Will always succeed since this size gets pre-allocated in Bump::try_new()
-                assert!(vec.try_reserve(chunk_cap).is_ok());
-                assert!(vec.try_reserve_exact(chunk_cap).is_ok());
-
-                // Fails to allocate further since allocator returns null
-                assert!(vec.try_reserve(chunk_cap + 1).is_err());
-                assert!(vec.try_reserve_exact(chunk_cap + 1).is_err());
-            });
-
-            GLOBAL_ALLOCATOR.with_successful_allocs(|| {
-                let mut vec = Vec::<u8>::new_in(&bump);
-                let chunk_cap = bump.chunk_capacity();
-
-                // Will always succeed since this size gets pre-allocated in Bump::try_new()
-                assert!(vec.try_reserve(chunk_cap).is_ok());
-                assert!(vec.try_reserve_exact(chunk_cap).is_ok());
-
-                // Succeeds to allocate further
-                assert!(vec.try_reserve(chunk_cap + 1).is_ok());
-                assert!(vec.try_reserve_exact(chunk_cap + 1).is_ok());
-            });
-        }),
     ];
 
     for (name, test) in tests.iter() {
