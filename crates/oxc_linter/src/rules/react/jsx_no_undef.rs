@@ -13,7 +13,9 @@ use crate::{
 };
 
 fn jsx_no_undef_diagnostic(ident_name: &str, span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("'{ident_name}' is not defined.")).with_label(span)
+    OxcDiagnostic::warn(format!("'{ident_name}' is not defined."))
+        .with_help(format!("Import or define '{ident_name}' before using it in JSX."))
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

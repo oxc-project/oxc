@@ -9,6 +9,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                          ──────────
  3 │                   
    ╰────
+  help: Pass each prop individually instead of using the spread operator.
 
   ⚠ eslint-plugin-react(jsx-props-no-spreading): Prop spreading is forbidden
    ╭─[jsx_props_no_spreading.tsx:2:26]
@@ -17,6 +18,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                          ──────────
  3 │                   
    ╰────
+  help: Pass each prop individually instead of using the spread operator.
 
   ⚠ eslint-plugin-react(jsx-props-no-spreading): Prop spreading is forbidden
    ╭─[jsx_props_no_spreading.tsx:2:26]
@@ -25,6 +27,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                          ──────────
  3 │                   
    ╰────
+  help: Pass each prop individually instead of using the spread operator.
 
   ⚠ eslint-plugin-react(jsx-props-no-spreading): Prop spreading is forbidden
    ╭─[jsx_props_no_spreading.tsx:5:30]
@@ -33,6 +36,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                              ──────────
  6 │                     </App>
    ╰────
+  help: Pass each prop individually instead of using the spread operator.
 
   ⚠ eslint-plugin-react(jsx-props-no-spreading): Prop spreading is forbidden
    ╭─[jsx_props_no_spreading.tsx:6:29]
@@ -41,6 +45,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                             ──────────
  7 │                     </App>
    ╰────
+  help: Pass each prop individually instead of using the spread operator.
 
   ⚠ eslint-plugin-react(jsx-props-no-spreading): Prop spreading is forbidden
    ╭─[jsx_props_no_spreading.tsx:6:29]
@@ -49,6 +54,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                             ──────────
  7 │                     </App>
    ╰────
+  help: Pass each prop individually instead of using the spread operator.
 
   ⚠ eslint-plugin-react(jsx-props-no-spreading): Prop spreading is forbidden
    ╭─[jsx_props_no_spreading.tsx:5:31]
@@ -57,6 +63,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                               ──────────
  6 │                        <img {...props}/>
    ╰────
+  help: Pass each prop individually instead of using the spread operator.
 
   ⚠ eslint-plugin-react(jsx-props-no-spreading): Prop spreading is forbidden
    ╭─[jsx_props_no_spreading.tsx:6:29]
@@ -65,6 +72,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                             ──────────
  7 │                        <div {...props}/>
    ╰────
+  help: Pass each prop individually instead of using the spread operator.
 
   ⚠ eslint-plugin-react(jsx-props-no-spreading): Prop spreading is forbidden
    ╭─[jsx_props_no_spreading.tsx:6:31]
@@ -73,6 +81,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                               ──────────
  7 │                     </App>
    ╰────
+  help: Pass each prop individually instead of using the spread operator.
 
   ⚠ eslint-plugin-react(jsx-props-no-spreading): Prop spreading is forbidden
    ╭─[jsx_props_no_spreading.tsx:3:28]
@@ -81,6 +90,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                            ────────────────────────────
  4 │                     </App>
    ╰────
+  help: Pass each prop individually instead of using the spread operator.
 
   ⚠ eslint-plugin-react(jsx-props-no-spreading): Prop spreading is forbidden
    ╭─[jsx_props_no_spreading.tsx:3:28]
@@ -89,6 +99,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                            ───────────────────────
  4 │                     </App>
    ╰────
+  help: Pass each prop individually instead of using the spread operator.
 
   ⚠ eslint-plugin-react(jsx-props-no-spreading): Prop spreading is forbidden
    ╭─[jsx_props_no_spreading.tsx:3:28]
@@ -97,6 +108,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                            ─────────────────
  4 │                     </App>
    ╰────
+  help: Pass each prop individually instead of using the spread operator.
 
   ⚠ eslint-plugin-react(jsx-props-no-spreading): Prop spreading is forbidden
    ╭─[jsx_props_no_spreading.tsx:3:28]
@@ -105,6 +117,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                            ───────────
  4 │                     </App>
    ╰────
+  help: Pass each prop individually instead of using the spread operator.
 
   ⚠ eslint-plugin-react(jsx-props-no-spreading): Prop spreading is forbidden
    ╭─[jsx_props_no_spreading.tsx:4:42]
@@ -113,3 +126,4 @@ source: crates/oxc_linter/src/tester.rs
    ·                                          ──────────
  5 │                        <Nav.Item {...props}/>
    ╰────
+  help: Pass each prop individually instead of using the spread operator.

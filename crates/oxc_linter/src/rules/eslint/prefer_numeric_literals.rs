@@ -16,6 +16,7 @@ use crate::{
 
 fn prefer_numeric_literals_diagnostic(span: Span, prefix_name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Use {prefix_name} literals instead of parseInt()."))
+        .with_help("Replace the parseInt() call with the equivalent numeric literal prefix (0b for binary, 0o for octal, 0x for hexadecimal).")
         .with_label(span)
 }
 

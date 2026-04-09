@@ -7,24 +7,28 @@ source: crates/oxc_linter/src/tester.rs
  1 │ Promise.done()
    · ────────────
    ╰────
+  help: Use a spec-compliant Promise method instead of `Promise.done`.
 
   ⚠ eslint-plugin-promise(spec-only): Avoid using non-standard `Promise.done` method.
    ╭─[spec_only.tsx:1:1]
  1 │ Promise.done()
    · ────────────
    ╰────
+  help: Use a spec-compliant Promise method instead of `Promise.done`.
 
   ⚠ eslint-plugin-promise(spec-only): Avoid using non-standard `Promise.something` method.
    ╭─[spec_only.tsx:1:1]
  1 │ Promise.something()
    · ─────────────────
    ╰────
+  help: Use a spec-compliant Promise method instead of `Promise.something`.
 
   ⚠ eslint-plugin-promise(spec-only): Avoid using non-standard `Promise.done` method.
    ╭─[spec_only.tsx:1:5]
  1 │ new Promise.done()
    ·     ────────────
    ╰────
+  help: Use a spec-compliant Promise method instead of `Promise.done`.
 
   ⚠ eslint-plugin-promise(spec-only): Avoid using non-standard `Promise.done` method.
    ╭─[spec_only.tsx:4:22]
@@ -33,6 +37,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                      ────────────
  5 │             }
    ╰────
+  help: Use a spec-compliant Promise method instead of `Promise.done`.
 
   ⚠ eslint-plugin-promise(spec-only): Avoid using non-standard `Promise.done` method.
    ╭─[spec_only.tsx:3:20]
@@ -41,15 +46,18 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ────────────
  4 │             }
    ╰────
+  help: Use a spec-compliant Promise method instead of `Promise.done`.
 
   ⚠ eslint-plugin-promise(spec-only): Avoid using non-standard `Promise.notPermittedMethod` method.
    ╭─[spec_only.tsx:1:1]
  1 │ Promise.notPermittedMethod()
    · ──────────────────────────
    ╰────
+  help: Use a spec-compliant Promise method instead of `Promise.notPermittedMethod`.
 
   ⚠ eslint-plugin-promise(spec-only): Avoid using non-standard `Promise.differingCase` method.
    ╭─[spec_only.tsx:1:1]
  1 │ Promise.differingCase()
    · ─────────────────────
    ╰────
+  help: Use a spec-compliant Promise method instead of `Promise.differingCase`.
