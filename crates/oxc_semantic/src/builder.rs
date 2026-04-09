@@ -1076,7 +1076,12 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         #[cfg(feature = "cfg")]
         self.record_ast_nodes();
+        // The test of a conditional is always a pure read — strip MemberWriteTarget
+        // so that `(a ? x : y).foo = 1` doesn't mark `a` as a property-write target.
+        let saved_flags = self.current_reference_flags;
+        self.current_reference_flags -= ReferenceFlags::MemberWriteTarget;
         self.visit_expression(&expr.test);
+        self.current_reference_flags = saved_flags;
         #[cfg(feature = "cfg")]
         let test_node_id = self.retrieve_recorded_ast_node();
 
