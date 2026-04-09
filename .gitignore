@@ -1,6 +1,3 @@
-# OS
-.DS_Store
-
 # Rust
 target/
 **/*.rs.bk

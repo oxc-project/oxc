@@ -130,8 +130,8 @@ declare_oxc_lint!(
 );
 
 // The shared `is_interactive_role` utility does not include composite widget roles
-// (`grid`, `tablist`, `tree`, `treegrid`) or `progressbar`. These are interactive
-// per the WAI-ARIA spec and the original eslint-plugin-jsx-a11y rule.
+// (`grid`, `tablist`, `tree`, `treegrid`). These are interactive per the WAI-ARIA
+// spec and the original eslint-plugin-jsx-a11y rule, so we add them here.
 // See: https://www.w3.org/TR/wai-aria/#widget_roles
 const ADDITIONAL_INTERACTIVE_ROLES: [&str; 4] = ["grid", "tablist", "tree", "treegrid"];
 
