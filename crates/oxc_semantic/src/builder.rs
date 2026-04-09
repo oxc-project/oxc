@@ -16,7 +16,8 @@ use oxc_cfg::{
     IterationInstructionKind, ReturnInstructionKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_span::{Ident, IdentHashMap, SourceType, Span};
+use oxc_span::{SourceType, Span};
+use oxc_str::{Ident, IdentHashMap};
 use oxc_syntax::{
     node::{NodeFlags, NodeId},
     reference::{Reference, ReferenceFlags, ReferenceId},

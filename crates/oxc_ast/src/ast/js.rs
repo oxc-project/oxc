@@ -25,7 +25,8 @@ use std::cell::Cell;
 use oxc_allocator::{Box, CloneIn, Dummy, GetAddress, TakeIn, UnstableAddress, Vec};
 use oxc_ast_macros::ast;
 use oxc_estree::ESTree;
-use oxc_span::{ContentEq, GetSpan, GetSpanMut, Ident, SourceType, Span, Str};
+use oxc_span::{ContentEq, GetSpan, GetSpanMut, SourceType, Span};
+use oxc_str::{Ident, Str};
 use oxc_syntax::{
     node::NodeId,
     operator::{

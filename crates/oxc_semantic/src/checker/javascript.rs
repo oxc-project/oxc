@@ -5,6 +5,7 @@ use oxc_allocator::GetAddress;
 use oxc_ast::{AstKind, ModuleDeclarationKind, ast::*};
 use oxc_ecmascript::{BoundNames, IsSimpleParameterList, PropName};
 use oxc_span::{GetSpan, ModuleKind, Span, best_match};
+use oxc_str::Ident;
 use oxc_syntax::{
     class::ClassId,
     number::NumberBase,
@@ -34,11 +35,7 @@ pub fn check_unresolved_exports(program: &Program<'_>, ctx: &SemanticBuilder<'_>
                 {
                     let names = available_names.get_or_insert_with(|| {
                         let root_scope_id = ctx.scoping.root_scope_id();
-                        ctx.scoping
-                            .get_bindings(root_scope_id)
-                            .keys()
-                            .map(oxc_span::Ident::as_str)
-                            .collect()
+                        ctx.scoping.get_bindings(root_scope_id).keys().map(Ident::as_str).collect()
                     });
                     let suggestion =
                         best_match(&ident.name, names.iter().copied(), SUGGESTION_THRESHOLD);

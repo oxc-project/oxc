@@ -2,7 +2,7 @@ use oxc_ast::{
     AstKind,
     ast::{Argument, Expression, FormalParameter},
 };
-use oxc_span::Str;
+use oxc_str::Str;
 
 /// Check if the given node is registering an endpoint handler or middleware to
 /// a route or Express application object. If it is, it

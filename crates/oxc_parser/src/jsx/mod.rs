@@ -2,7 +2,8 @@
 
 use oxc_allocator::{Allocator, Box, Dummy, Vec};
 use oxc_ast::ast::*;
-use oxc_span::{GetSpan, Span, Str};
+use oxc_span::{GetSpan, Span};
+use oxc_str::Str;
 
 use crate::{ParserConfig as Config, ParserImpl, diagnostics, lexer::Kind};
 

@@ -24,7 +24,8 @@ use oxc_diagnostics::{DiagnosticSender, DiagnosticService, Error, OxcDiagnostic}
 use oxc_parser::{ParseOptions, Parser, Token, config::RuntimeParserConfig};
 use oxc_resolver::Resolver;
 use oxc_semantic::{Semantic, SemanticBuilder};
-use oxc_span::{CompactStr, SourceType, VALID_EXTENSIONS};
+use oxc_span::{SourceType, VALID_EXTENSIONS};
+use oxc_str::CompactStr;
 
 use crate::{
     Fixer, Linter, Message, PossibleFixes,

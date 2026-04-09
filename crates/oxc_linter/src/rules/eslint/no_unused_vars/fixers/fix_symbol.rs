@@ -1,5 +1,6 @@
 use oxc_ast::{AstKind, ast::*};
-use oxc_span::{CompactStr, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
+use oxc_str::CompactStr;
 
 use super::Symbol;
 use crate::fixer::{Fix, RuleFix, RuleFixer};

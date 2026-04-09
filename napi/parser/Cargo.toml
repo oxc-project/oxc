@@ -27,6 +27,7 @@ oxc_ast_macros = { workspace = true }
 oxc_estree = { workspace = true }
 oxc_estree_tokens = { workspace = true }
 oxc_napi = { workspace = true }
+oxc_str = { workspace = true }
 
 rustc-hash = { workspace = true }
 

@@ -8,7 +8,7 @@ use oxc_resolver::{ResolveOptions, Resolver};
 use rustc_hash::{FxHashMap, FxHashSet};
 use url::Url;
 
-use oxc_span::{CompactStr, format_compact_str};
+use oxc_str::{CompactStr, format_compact_str};
 
 use crate::{
     AllowWarnDeny, ExternalPluginStore, LintConfig, LintFilter, LintFilterKind, Oxlintrc,

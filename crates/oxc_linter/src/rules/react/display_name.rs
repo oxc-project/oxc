@@ -12,7 +12,8 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::PropName;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNode, Reference, SymbolId};
-use oxc_span::{CompactStr, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
+use oxc_str::CompactStr;
 
 use crate::{
     ast_util::iter_outer_expressions,
@@ -347,7 +348,7 @@ fn has_display_name_via_semantic(
     component_name: Option<&CompactStr>,
     ctx: &LintContext,
 ) -> bool {
-    let component_name_str = component_name.map(oxc_span::CompactStr::as_str);
+    let component_name_str = component_name.map(CompactStr::as_str);
 
     // Check all references to this symbol
     for reference in ctx.scoping().get_resolved_references(symbol_id) {

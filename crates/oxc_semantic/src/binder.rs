@@ -3,7 +3,7 @@
 use oxc_allocator::{GetAddress, UnstableAddress};
 use oxc_ast::{AstKind, ast::*};
 use oxc_ecmascript::{BoundNames, IsSimpleParameterList};
-use oxc_span::Ident;
+use oxc_str::Ident;
 use oxc_syntax::{node::NodeId, scope::ScopeFlags, symbol::SymbolFlags};
 
 use crate::{SemanticBuilder, checker::is_function_decl_part_of_if_statement};

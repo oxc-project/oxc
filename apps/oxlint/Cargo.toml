@@ -39,6 +39,7 @@ oxc_napi = { workspace = true }
 oxc_parser = { workspace = true }
 oxc_semantic = { workspace = true }
 oxc_span = { workspace = true }
+oxc_str = { workspace = true }
 
 bpaf = { workspace = true, features = ["autocomplete", "bright-color", "derive"] }
 cow-utils = { workspace = true }

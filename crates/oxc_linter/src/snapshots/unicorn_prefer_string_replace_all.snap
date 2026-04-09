@@ -1,7 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-
   ⚠ eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()` when using a regex with the global flag.
    ╭─[prefer_string_replace_all.tsx:1:5]
  1 │ foo.replace(/a/g, bar)
@@ -274,3 +273,17 @@ source: crates/oxc_linter/src/tester.rs
    ·                          ────────
    ╰────
   help: Replace `/world/g` with `'world'`.
+
+  ⚠ eslint-plugin-unicorn(prefer-string-replace-all): This pattern can be replaced with `foo`.
+   ╭─[prefer_string_replace_all.tsx:1:16]
+ 1 │ foo.replaceAll(/foo/gu, bar)
+   ·                ───────
+   ╰────
+  help: Replace `/foo/gu` with `'foo'`.
+
+  ⚠ eslint-plugin-unicorn(prefer-string-replace-all): This pattern can be replaced with `foo`.
+   ╭─[prefer_string_replace_all.tsx:1:16]
+ 1 │ foo.replaceAll(/foo/gv, bar)
+   ·                ───────
+   ╰────
+  help: Replace `/foo/gv` with `'foo'`.

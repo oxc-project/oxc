@@ -25,6 +25,7 @@ oxc_ast_macros = { workspace = true }
 oxc_estree = { workspace = true }
 oxc_index = { workspace = true }
 oxc_span = { workspace = true }
+oxc_str = { workspace = true }
 
 bitflags = { workspace = true }
 cow-utils = { workspace = true }

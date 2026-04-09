@@ -106,7 +106,8 @@ use rustc_hash::FxHashMap;
 
 use oxc_ast::{NONE, ast::*};
 use oxc_ast_visit::{VisitMut, walk_mut};
-use oxc_span::{Ident, SPAN};
+use oxc_span::SPAN;
+use oxc_str::Ident;
 use oxc_syntax::{
     node::NodeId,
     scope::{ScopeFlags, ScopeId},

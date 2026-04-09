@@ -8,7 +8,8 @@ use oxc_ast::{
 use oxc_ast_visit::{Visit, walk};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
+use oxc_str::CompactStr;
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::{

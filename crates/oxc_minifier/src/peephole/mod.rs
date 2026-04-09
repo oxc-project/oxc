@@ -125,6 +125,7 @@ impl<'a> PeepholeOptimizations {
 impl<'a> Traverse<'a> for PeepholeOptimizations {
     fn enter_program(&mut self, _program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         ctx.state.symbol_values.clear();
+        ctx.state.proto_write_symbols.clear();
         ctx.state.changed = false;
     }
 
@@ -205,10 +206,14 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
                 }
                 Statement::TryStatement(_) => Self::try_fold_try(stmt, ctx),
                 Statement::LabeledStatement(_) => Self::try_fold_labeled(stmt, ctx),
-                Statement::FunctionDeclaration(_) => {
+                Statement::FunctionDeclaration(f) => {
+                    Self::init_function_declaration_symbol_value(f.id.as_ref(), ctx);
                     Self::remove_unused_function_declaration(stmt, ctx);
                 }
-                Statement::ClassDeclaration(_) => Self::remove_unused_class_declaration(stmt, ctx),
+                Statement::ClassDeclaration(c) => {
+                    Self::init_class_declaration_symbol_value(c, ctx);
+                    Self::remove_unused_class_declaration(stmt, ctx);
+                }
                 Statement::ImportDeclaration(_) => Self::remove_unused_import_specifiers(stmt, ctx),
                 _ => {}
             }

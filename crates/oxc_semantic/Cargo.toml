@@ -29,6 +29,7 @@ oxc_ecmascript = { workspace = true }
 oxc_index = { workspace = true }
 oxc_jsdoc = { workspace = true, optional = true }
 oxc_span = { workspace = true }
+oxc_str = { workspace = true }
 oxc_syntax = { workspace = true, features = ["to_js_string"] }
 
 itertools = { workspace = true }

@@ -8,11 +8,12 @@ use oxc::{
     allocator::{Allocator, FromIn, Vec},
     ast::ast::{Comment, Program},
     diagnostics::{LabeledSpan, NamedSource, OxcDiagnostic, Severity},
-    span::{Span, Str, format_str},
+    span::Span,
     syntax::module_record::{DynamicImport, ExportEntry, ImportEntry, ModuleRecord, NameSpan},
 };
 use oxc_ast_macros::ast;
 use oxc_estree::ESTree;
+use oxc_str::{Str, format_str};
 
 /// The main struct containing all deserializable data in raw transfer.
 #[ast]

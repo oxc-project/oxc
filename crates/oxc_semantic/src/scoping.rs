@@ -5,7 +5,8 @@ use self_cell::self_cell;
 
 use oxc_allocator::{Allocator, CloneIn, Vec as ArenaVec};
 use oxc_index::IndexVec;
-use oxc_span::{ArenaIdentHashMap, Ident, Span};
+use oxc_span::Span;
+use oxc_str::{ArenaIdentHashMap, Ident};
 use oxc_syntax::constant_value::ConstantValue;
 use oxc_syntax::{
     node::NodeId,

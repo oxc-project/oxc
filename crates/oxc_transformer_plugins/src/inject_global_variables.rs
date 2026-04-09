@@ -5,7 +5,8 @@ use cow_utils::CowUtils;
 use oxc_allocator::Allocator;
 use oxc_ast::{AstBuilder, NONE, ast::*};
 use oxc_semantic::Scoping;
-use oxc_span::{CompactStr, SPAN, format_compact_str};
+use oxc_span::SPAN;
+use oxc_str::{CompactStr, format_compact_str};
 use oxc_syntax::identifier;
 use oxc_traverse::{Traverse, traverse_mut};
 

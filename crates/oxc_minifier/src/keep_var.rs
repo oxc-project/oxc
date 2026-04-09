@@ -2,7 +2,8 @@ use oxc_allocator::Box as ArenaBox;
 use oxc_ast::{AstBuilder, NONE, ast::*};
 use oxc_ast_visit::Visit;
 use oxc_ecmascript::BoundNames;
-use oxc_span::{SPAN, Span, Str};
+use oxc_span::{SPAN, Span};
+use oxc_str::Str;
 use oxc_syntax::symbol::SymbolId;
 
 pub struct KeepVar<'a> {

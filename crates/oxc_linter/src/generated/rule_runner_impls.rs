@@ -2360,7 +2360,7 @@ impl RuleRunner for crate::rules::jest::valid_describe_callback::ValidDescribeCa
 
 impl RuleRunner for crate::rules::jest::valid_expect::ValidExpect {
     const NODE_TYPES: Option<&AstTypesBitset> = None;
-    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnJestNode;
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnce;
 }
 
 impl RuleRunner for crate::rules::jest::valid_expect_in_promise::ValidExpectInPromise {
