@@ -15,7 +15,7 @@ fn allocation_limit_trivial() {
 
 #[test]
 fn change_allocation_limit_with_live_allocations() {
-    let bump = Bump::new();
+    let bump = Bump::with_capacity(448);
 
     bump.set_allocation_limit(Some(512));
 
@@ -23,7 +23,7 @@ fn change_allocation_limit_with_live_allocations() {
 
     assert!(bump.try_alloc([0; 2048]).is_err());
 
-    bump.set_allocation_limit(Some(16384));
+    bump.set_allocation_limit(Some(32768));
 
     assert!(bump.try_alloc([0; 2048]).is_ok());
     assert!(bump.allocation_limit().unwrap() >= bump.allocated_bytes());
@@ -58,7 +58,7 @@ fn reset_preserves_allocation_limits() {
 
 #[test]
 fn reset_updates_allocated_bytes() {
-    let mut bump = Bump::new();
+    let mut bump = Bump::with_capacity(512);
 
     bump.alloc([0; 1 << 9]);
 
