@@ -13,6 +13,16 @@ repository.workspace = true
 rust-version.workspace = true
 description.workspace = true
 
+[[test]]
+name = "all"
+path = "tests/all/main.rs"
+harness = false
+
+[[test]]
+name = "try_alloc"
+path = "tests/try_alloc.rs"
+harness = false
+
 [lints]
 workspace = true
 
@@ -35,6 +45,8 @@ serde = { workspace = true, optional = true }
 
 [dev-dependencies]
 oxc_estree = { workspace = true, features = ["serialize"] }
+quickcheck = "=1.0.3"
+rand = "0.8.5"
 serde = { workspace = true }
 serde_json = { workspace = true }
 
