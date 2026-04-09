@@ -337,11 +337,12 @@ impl CliRunner {
             LintServiceOptions::new(self.cwd.clone()).with_cross_module(use_cross_module);
 
         let config_store = ConfigStore::new(lint_config, nested_configs, external_plugin_store);
+        let skip_type_aware = self.options.skip_type_aware;
         let type_check_only = self.options.type_check_only;
-        let type_aware =
-            type_check_only || self.options.type_aware || config_store.type_aware_enabled();
-        let type_check =
-            type_check_only || self.options.type_check || config_store.type_check_enabled();
+        let type_aware = !skip_type_aware
+            && (type_check_only || self.options.type_aware || config_store.type_aware_enabled());
+        let type_check = !skip_type_aware
+            && (type_check_only || self.options.type_check || config_store.type_check_enabled());
         if type_check && !type_aware {
             print_and_flush_stdout(
                 stdout,
@@ -1443,6 +1444,14 @@ mod test {
     fn test_tsgolint_config_type_aware_false_overridden_by_cli_flag() {
         let args =
             &["--type-aware", "-c", "config-type-aware-false.json", "no-floating-promises.ts"];
+        Tester::new().with_cwd("fixtures/cli/tsgolint".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_tsgolint_config_type_aware_true_overridden_by_skip_flag() {
+        let args =
+            &["--skip-type-aware", "-c", "config-type-aware.json", "no-floating-promises.ts"];
         Tester::new().with_cwd("fixtures/cli/tsgolint".into()).test_and_snapshot(args);
     }
 

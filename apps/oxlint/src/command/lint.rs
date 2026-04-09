@@ -54,6 +54,11 @@ pub struct LintCommand {
     #[bpaf(switch, hide_usage)]
     pub type_aware: bool,
 
+    /// Disable type-aware rules even if enabled in the config file.
+    /// Useful for overriding `typeAware: true` in config (e.g. for fast pre-commit hooks).
+    #[bpaf(switch, hide_usage)]
+    pub skip_type_aware: bool,
+
     /// Enable experimental type checking (includes TypeScript compiler diagnostics)
     #[bpaf(switch, hide_usage)]
     pub type_check: bool,
