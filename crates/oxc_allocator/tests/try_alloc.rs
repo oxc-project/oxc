@@ -1,3 +1,5 @@
+#![expect(unsafe_op_in_unsafe_fn)]
+
 use oxc_allocator::bump::{AllocOrInitError, Bump};
 use rand::Rng;
 use std::alloc::{GlobalAlloc, Layout, System};
