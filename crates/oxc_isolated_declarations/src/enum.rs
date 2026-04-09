@@ -3,7 +3,8 @@ use rustc_hash::FxHashMap;
 use oxc_allocator::CloneIn;
 use oxc_ast::ast::*;
 use oxc_ecmascript::{ToInt32, ToUint32};
-use oxc_span::{GetSpan, SPAN, Str};
+use oxc_span::{GetSpan, SPAN};
+use oxc_str::Str;
 use oxc_syntax::{
     number::{NumberBase, ToJsString},
     operator::{BinaryOperator, UnaryOperator},

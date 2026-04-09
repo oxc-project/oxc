@@ -1,6 +1,6 @@
 commit: 91b4ce32
 
-Passed: 210/346
+Passed: 210/347
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -555,38 +555,29 @@ x Output mismatch
 x Output mismatch
 
 
-# legacy-decorators (8/93)
+# legacy-decorators (8/94)
 * oxc/accessor/input.ts
+x Output mismatch
+
+* oxc/accessor-name-collision/input.ts
 Bindings mismatch:
-after transform: ScopeId(0): ["C", "_a", "_foo$bar", "_foo$bar2", "a", "dec", "foo"]
-rebuilt        : ScopeId(0): ["C", "_a", "_foo$bar", "_foo$bar2"]
-Reference symbol mismatch for "a":
-after transform: SymbolId(4) "a"
+after transform: ScopeId(0): ["Foo", "_prop", "_prop2", "_prop3", "prop", "property"]
+rebuilt        : ScopeId(0): ["Foo", "_prop", "_prop2", "_prop3", "prop"]
+Reference symbol mismatch for "property":
+after transform: SymbolId(0) "property"
 rebuilt        : <None>
-Reference symbol mismatch for "a":
-after transform: SymbolId(4) "a"
+Reference symbol mismatch for "property":
+after transform: SymbolId(0) "property"
 rebuilt        : <None>
-Reference symbol mismatch for "foo":
-after transform: SymbolId(5) "foo"
+Reference symbol mismatch for "property":
+after transform: SymbolId(0) "property"
 rebuilt        : <None>
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
+Reference symbol mismatch for "property":
+after transform: SymbolId(0) "property"
 rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["PropertyDescriptor", "babelHelpers"]
-rebuilt        : ["a", "babelHelpers", "dec", "foo"]
+rebuilt        : ["babelHelpers", "property"]
 
 * oxc/accessor-with-class-properties/input.ts
 Bindings mismatch:

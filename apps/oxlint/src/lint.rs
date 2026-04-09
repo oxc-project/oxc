@@ -13,8 +13,9 @@ use ignore::{gitignore::Gitignore, overrides::OverrideBuilder};
 
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, GraphicalReportHandler, OxcDiagnostic};
 use oxc_linter::{
-    AllowWarnDeny, ConfigStore, ConfigStoreBuilder, ExternalLinter, ExternalPluginStore,
-    InvalidFilterKind, LintFilter, LintOptions, LintRunner, LintServiceOptions, Linter,
+    AllowWarnDeny, ConfigBuilderError, ConfigStore, ConfigStoreBuilder, ExternalLinter,
+    ExternalPluginStore, InvalidFilterKind, LintFilter, LintOptions, LintRunner,
+    LintServiceOptions, Linter,
 };
 
 #[cfg(feature = "napi")]
@@ -289,7 +290,7 @@ impl CliRunner {
                     stdout,
                     &format!(
                         "Failed to parse oxlint configuration file.\n{}\n",
-                        render_report(&handler, &OxcDiagnostic::error(e.to_string()))
+                        render_config_builder_error(&handler, e)
                     ),
                 );
                 return CliRunResult::InvalidOptionConfig;
@@ -308,7 +309,7 @@ impl CliRunner {
                     stdout,
                     &format!(
                         "Failed to build configuration.\n{}\n",
-                        render_report(&handler, &OxcDiagnostic::error(e.to_string()))
+                        render_config_builder_error(&handler, e)
                     ),
                 );
                 return CliRunResult::InvalidOptionConfig;
@@ -336,8 +337,11 @@ impl CliRunner {
             LintServiceOptions::new(self.cwd.clone()).with_cross_module(use_cross_module);
 
         let config_store = ConfigStore::new(lint_config, nested_configs, external_plugin_store);
-        let type_aware = self.options.type_aware || config_store.type_aware_enabled();
-        let type_check = self.options.type_check || config_store.type_check_enabled();
+        let type_check_only = self.options.type_check_only;
+        let type_aware =
+            type_check_only || self.options.type_aware || config_store.type_aware_enabled();
+        let type_check =
+            type_check_only || self.options.type_check || config_store.type_check_enabled();
         if type_check && !type_aware {
             print_and_flush_stdout(
                 stdout,
@@ -345,20 +349,31 @@ impl CliRunner {
             );
             return CliRunResult::InvalidOptionTypeCheckWithoutTypeAware;
         }
+        if type_check_only && fix_options.is_enabled() {
+            print_and_flush_stdout(
+                stdout,
+                "The `--type-check-only` option cannot be used with fix flags.\nRemove `--fix`, `--fix-suggestions`, and `--fix-dangerously`.\n",
+            );
+            return CliRunResult::InvalidOptionTypeCheckOnlyWithFix;
+        }
         let deny_warnings = warning_options.deny_warnings || config_store.deny_warnings();
         let max_warnings = warning_options.max_warnings.or(config_store.max_warnings());
 
         // Only propagate Warn/Deny; treat Allow (off) as disabling reports.
-        let report_unused_directives = match inline_config_options.report_unused_directives {
-            ReportUnusedDirectives::WithoutSeverity(true) => Some(AllowWarnDeny::Warn),
-            ReportUnusedDirectives::WithSeverity(Some(severity)) if severity.is_warn_deny() => {
-                Some(severity)
+        let report_unused_directives = if type_check_only {
+            None
+        } else {
+            match inline_config_options.report_unused_directives {
+                ReportUnusedDirectives::WithoutSeverity(true) => Some(AllowWarnDeny::Warn),
+                ReportUnusedDirectives::WithSeverity(Some(severity)) if severity.is_warn_deny() => {
+                    Some(severity)
+                }
+                ReportUnusedDirectives::WithSeverity(Some(_)) => None,
+                _ => match config_store.report_unused_disable_directives() {
+                    Some(severity) if severity.is_warn_deny() => Some(severity),
+                    _ => None,
+                },
             }
-            ReportUnusedDirectives::WithSeverity(Some(_)) => None,
-            _ => match config_store.report_unused_disable_directives() {
-                Some(severity) if severity.is_warn_deny() => Some(severity),
-                _ => None,
-            },
         };
         let (mut diagnostic_service, tx_error) = Self::get_diagnostic_service(
             &output_formatter,
@@ -412,7 +427,8 @@ impl CliRunner {
             }
         }
 
-        let number_of_rules = linter.number_of_rules(type_aware);
+        let number_of_rules =
+            if type_check_only { None } else { linter.number_of_rules(type_aware) };
 
         if number_of_files == 0 {
             return Self::handle_no_files_found(
@@ -431,6 +447,7 @@ impl CliRunner {
             .with_type_check(type_check)
             .with_silent(misc_options.silent)
             .with_fix_kind(fix_options.fix_kind())
+            .with_type_check_only(type_check_only)
             .build()
         {
             Ok(runner) => runner,
@@ -597,6 +614,19 @@ fn render_report(handler: &GraphicalReportHandler, diagnostic: &OxcDiagnostic) -
     let mut err = String::new();
     handler.render_report(&mut err, diagnostic).unwrap();
     err
+}
+
+fn render_config_builder_error(
+    handler: &GraphicalReportHandler,
+    error: ConfigBuilderError,
+) -> String {
+    match error {
+        ConfigBuilderError::RuleConfigurationErrors { errors } => errors
+            .iter()
+            .map(|e| render_report(handler, &OxcDiagnostic::error(e.to_string())))
+            .collect::<String>(),
+        _ => render_report(handler, &OxcDiagnostic::error(error.to_string())),
+    }
 }
 
 #[cfg(test)]
@@ -1433,6 +1463,31 @@ mod test {
 
     #[test]
     #[cfg(not(target_endian = "big"))]
+    fn test_tsgolint_type_check_only() {
+        let args = &["--type-check-only"];
+        Tester::new().with_cwd("fixtures/cli/tsgolint_type_error".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_tsgolint_type_check_only_reports_syntax_errors() {
+        let args = &["--type-check-only"];
+        Tester::new()
+            .with_cwd("fixtures/cli/tsgolint_type_check_only_syntax_error".into())
+            .test_and_snapshot(args);
+    }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_tsgolint_type_check_only_reports_partial_loader_syntax_errors() {
+        let args = &["--type-check-only"];
+        Tester::new()
+            .with_cwd("fixtures/cli/tsgolint_type_check_only_svelte_syntax_error".into())
+            .test_and_snapshot(args);
+    }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
     fn test_tsgolint_type_check_requires_type_aware() {
         let args = &["--type-check"];
         Tester::new().with_cwd("fixtures/cli/tsgolint_type_error".into()).test_and_snapshot(args);
@@ -1463,6 +1518,13 @@ mod test {
     #[cfg(not(target_endian = "big"))]
     fn test_tsgolint_type_check_false_overridden_by_cli_flag() {
         let args = &["--type-check", "-c", "config-type-check-false.json"];
+        Tester::new().with_cwd("fixtures/cli/tsgolint_type_error".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_tsgolint_type_check_only_rejects_fix_flags() {
+        let args = &["--type-check-only", "--fix"];
         Tester::new().with_cwd("fixtures/cli/tsgolint_type_error".into()).test_and_snapshot(args);
     }
 
@@ -1598,6 +1660,13 @@ export { redundant };
     fn test_invalid_config_invalid_config_in_override() {
         Tester::new()
             .with_cwd("fixtures/cli/invalid_config_in_override".into())
+            .test_and_snapshot(&[]);
+    }
+
+    #[test]
+    fn test_invalid_config_missing_rule_in_override() {
+        Tester::new()
+            .with_cwd("fixtures/cli/invalid_config_missing_rule_in_override".into())
             .test_and_snapshot(&[]);
     }
 

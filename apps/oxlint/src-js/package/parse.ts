@@ -99,7 +99,6 @@ export function initBuffer() {
   const arrayBuffer = new ArrayBuffer(ARRAY_BUFFER_SIZE);
   const offset = getBufferOffset(new Uint8Array(arrayBuffer));
   buffer = new Uint8Array(arrayBuffer, offset, BUFFER_SIZE) as BufferWithArrays;
-  buffer.uint32 = new Uint32Array(arrayBuffer, offset, BUFFER_SIZE / 4);
   buffer.int32 = new Int32Array(arrayBuffer, offset, BUFFER_SIZE / 4);
   buffer.float64 = new Float64Array(arrayBuffer, offset, BUFFER_SIZE / 8);
 

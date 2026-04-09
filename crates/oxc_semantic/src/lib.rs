@@ -279,7 +279,8 @@ impl<'a> Semantic<'a> {
 mod tests {
     use oxc_allocator::Allocator;
     use oxc_ast::{AstKind, ast::VariableDeclarationKind};
-    use oxc_span::{Ident, SourceType, Str};
+    use oxc_span::SourceType;
+    use oxc_str::{Str, static_ident};
 
     use super::*;
 
@@ -309,7 +310,7 @@ mod tests {
 
         let top_level_a = semantic
             .scoping()
-            .get_binding(semantic.scoping().root_scope_id(), Ident::new_const("a"))
+            .get_binding(semantic.scoping().root_scope_id(), static_ident!("a"))
             .unwrap();
 
         let decl = semantic.symbol_declaration(top_level_a);
@@ -331,7 +332,7 @@ mod tests {
         let semantic = get_semantic(&allocator, source, SourceType::default());
         let scopes = semantic.scoping();
 
-        assert!(scopes.get_binding(scopes.root_scope_id(), Ident::new_const("Fn")).is_some());
+        assert!(scopes.get_binding(scopes.root_scope_id(), static_ident!("Fn")).is_some());
     }
 
     #[test]

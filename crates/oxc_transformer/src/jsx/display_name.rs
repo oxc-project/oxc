@@ -46,7 +46,8 @@
 //! * Babel plugin implementation: <https://github.com/babel/babel/blob/v7.26.2/packages/babel-plugin-transform-react-display-name/src/index.ts>
 
 use oxc_ast::ast::*;
-use oxc_span::{SPAN, Str};
+use oxc_span::SPAN;
+use oxc_str::Str;
 use oxc_traverse::{Ancestor, Traverse};
 
 use crate::{context::TraverseCtx, state::TransformState};

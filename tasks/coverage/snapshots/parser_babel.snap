@@ -12265,7 +12265,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Try inserting a semicolon here
 
-  × A rest parameter cannot be optional
+  × TS(1047): A rest parameter cannot be optional
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/arrow-function/async-rest-optional-parameter/input.ts:1:14]
  1 │ async(...args?: any[]) : any => {}
    ·              ─

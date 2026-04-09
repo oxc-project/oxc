@@ -9,7 +9,7 @@ use oxc_ast::{
     },
 };
 use oxc_semantic::{AstNode, ReferenceId, Semantic, SymbolId};
-use oxc_span::CompactStr;
+use oxc_str::CompactStr;
 
 use crate::LintContext;
 pub use crate::utils::jest::parse_jest_fn::{

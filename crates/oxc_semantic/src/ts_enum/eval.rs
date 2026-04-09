@@ -3,7 +3,7 @@ use oxc_ast::ast::{
     UnaryExpression,
 };
 use oxc_ecmascript::{ToInt32, ToUint32};
-use oxc_span::CompactStr;
+use oxc_str::CompactStr;
 use oxc_syntax::{
     constant_value::ConstantValue,
     number::ToJsString,

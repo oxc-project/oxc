@@ -134,16 +134,7 @@ impl CliRunner {
             config_resolver.config_dir(),
             &ignore_patterns,
         ) {
-            Ok(Some(walker)) => walker,
-            // All target paths are ignored
-            Ok(None) => {
-                if runtime_options.no_error_on_unmatched_pattern {
-                    utils::print_and_flush(stderr, "No files found matching the given patterns.\n");
-                    return CliRunResult::None;
-                }
-                utils::print_and_flush(stderr, "Expected at least one target file\n");
-                return CliRunResult::NoFilesFound;
-            }
+            Ok(walker) => walker,
             Err(err) => {
                 utils::print_and_flush(
                     stderr,
@@ -231,7 +222,10 @@ impl CliRunner {
                 return CliRunResult::None;
             }
 
-            utils::print_and_flush(stderr, "Expected at least one target file\n");
+            utils::print_and_flush(
+                stderr,
+                "Expected at least one target file. All matched files may have been excluded by ignore rules.\n",
+            );
             return CliRunResult::NoFilesFound;
         }
 

@@ -54,7 +54,8 @@ use oxc_allocator::{Allocator, Box as ArenaBox, TakeIn, Vec as ArenaVec};
 use oxc_ast::{NONE, ast::*};
 use oxc_ecmascript::BoundNames;
 use oxc_semantic::{ReferenceFlags, ScopeFlags, Scoping, SymbolFlags, SymbolId};
-use oxc_span::{Ident, SPAN};
+use oxc_span::SPAN;
+use oxc_str::{Ident, static_ident};
 use oxc_syntax::identifier::is_identifier_name;
 use oxc_traverse::{Ancestor, BoundIdentifier, Traverse, traverse_mut};
 
@@ -95,14 +96,6 @@ impl<'a> ModuleRunnerTransform<'a> {
         (self.deps, self.dynamic_deps)
     }
 }
-
-const SSR_MODULE_EXPORTS_KEY: Ident<'static> = Ident::new_const("__vite_ssr_exports__");
-const SSR_EXPORT_DEFAULT_KEY: Ident<'static> = Ident::new_const("__vite_ssr_export_default__");
-const SSR_IMPORT_KEY: Ident<'static> = Ident::new_const("__vite_ssr_import__");
-const SSR_DYNAMIC_IMPORT_KEY: Ident<'static> = Ident::new_const("__vite_ssr_dynamic_import__");
-const SSR_EXPORT_ALL_KEY: Ident<'static> = Ident::new_const("__vite_ssr_exportAll__");
-const SSR_IMPORT_META_KEY: Ident<'static> = Ident::new_const("__vite_ssr_import_meta__");
-const DEFAULT: Ident<'static> = Ident::new_const("default");
 
 impl<'a> Traverse<'a, ()> for ModuleRunnerTransform<'a> {
     #[inline]
@@ -263,7 +256,11 @@ impl<'a> ModuleRunnerTransform<'a> {
         }
 
         let flags = ReferenceFlags::Read;
-        let callee = ctx.create_unbound_ident_expr(SPAN, SSR_DYNAMIC_IMPORT_KEY, flags);
+        let callee = ctx.create_unbound_ident_expr(
+            SPAN,
+            static_ident!("__vite_ssr_dynamic_import__"),
+            flags,
+        );
         let arguments = options.into_iter().map(Argument::from);
         let arguments = ctx.ast.vec_from_iter(iter::once(Argument::from(source)).chain(arguments));
         *expr = ctx.ast.expression_call(span, callee, NONE, arguments, false);
@@ -276,7 +273,11 @@ impl<'a> ModuleRunnerTransform<'a> {
             unreachable!();
         };
 
-        *expr = ctx.create_unbound_ident_expr(meta.span, SSR_IMPORT_META_KEY, ReferenceFlags::Read);
+        *expr = ctx.create_unbound_ident_expr(
+            meta.span,
+            static_ident!("__vite_ssr_import_meta__"),
+            ReferenceFlags::Read,
+        );
     }
 
     /// Transform import declaration (`import { foo } from 'vue'`).
@@ -506,7 +507,8 @@ impl<'a> ModuleRunnerTransform<'a> {
             hoist_imports.push(import);
             hoist_exports.push(export);
         } else {
-            let callee = ctx.ast.expression_identifier(SPAN, SSR_EXPORT_ALL_KEY);
+            let callee =
+                ctx.ast.expression_identifier(SPAN, static_ident!("__vite_ssr_exportAll__"));
             let arguments = ctx.ast.vec1(Argument::from(ident));
             // `export * from 'vue'` -> `__vite_ssr_exportAll__(__vite_ssr_import_0__);`
             let call = ctx.ast.expression_call(SPAN, callee, NONE, arguments, false);
@@ -555,7 +557,12 @@ impl<'a> ModuleRunnerTransform<'a> {
                 if let Some(id) = &func.id {
                     let ident = BoundIdentifier::from_binding_ident(id).create_read_expression(ctx);
                     new_stmts.push(Statement::FunctionDeclaration(func));
-                    hoist_exports.push(Self::create_export(span, ident, DEFAULT, ctx));
+                    hoist_exports.push(Self::create_export(
+                        span,
+                        ident,
+                        static_ident!("default"),
+                        ctx,
+                    ));
                 } else {
                     func.r#type = FunctionType::FunctionExpression;
                     let right = Expression::FunctionExpression(func);
@@ -568,7 +575,12 @@ impl<'a> ModuleRunnerTransform<'a> {
                 if let Some(id) = &class.id {
                     let ident = BoundIdentifier::from_binding_ident(id).create_read_expression(ctx);
                     new_stmts.push(Statement::ClassDeclaration(class));
-                    hoist_exports.push(Self::create_export(span, ident, DEFAULT, ctx));
+                    hoist_exports.push(Self::create_export(
+                        span,
+                        ident,
+                        static_ident!("default"),
+                        ctx,
+                    ));
                 } else {
                     class.r#type = ClassType::ClassExpression;
                     let right = Expression::ClassExpression(class);
@@ -603,7 +615,13 @@ impl<'a> ModuleRunnerTransform<'a> {
                 }
                 ImportDeclarationSpecifier::ImportDefaultSpecifier(specifier) => {
                     let ImportDefaultSpecifier { span, local, .. } = specifier.unbox();
-                    self.insert_import_binding(span, binding, local, DEFAULT.into(), ctx)
+                    self.insert_import_binding(
+                        span,
+                        binding,
+                        local,
+                        static_ident!("default").into(),
+                        ctx,
+                    )
                 }
                 ImportDeclarationSpecifier::ImportNamespaceSpecifier(_) => {
                     unreachable!()
@@ -687,7 +705,11 @@ impl<'a> ModuleRunnerTransform<'a> {
         arguments: ArenaVec<'a, Argument<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
-        let callee = ctx.create_unbound_ident_expr(SPAN, SSR_IMPORT_KEY, ReferenceFlags::Read);
+        let callee = ctx.create_unbound_ident_expr(
+            SPAN,
+            static_ident!("__vite_ssr_import__"),
+            ReferenceFlags::Read,
+        );
         let call = ctx.ast.expression_call(SPAN, callee, NONE, arguments, false);
         let init = ctx.ast.expression_await(SPAN, call);
 
@@ -775,7 +797,7 @@ impl<'a> ModuleRunnerTransform<'a> {
         let arguments = ctx.ast.vec_from_array([
             Argument::from(ctx.create_unbound_ident_expr(
                 SPAN,
-                SSR_MODULE_EXPORTS_KEY,
+                static_ident!("__vite_ssr_exports__"),
                 ReferenceFlags::Read,
             )),
             Argument::from(ctx.ast.expression_string_literal(SPAN, exported_name, None)),
@@ -788,8 +810,12 @@ impl<'a> ModuleRunnerTransform<'a> {
     fn create_export_default(span: Span, ctx: &mut TraverseCtx<'a>) -> Statement<'a> {
         Self::create_export(
             span,
-            ctx.create_unbound_ident_expr(SPAN, SSR_EXPORT_DEFAULT_KEY, ReferenceFlags::Read),
-            DEFAULT,
+            ctx.create_unbound_ident_expr(
+                SPAN,
+                static_ident!("__vite_ssr_export_default__"),
+                ReferenceFlags::Read,
+            ),
+            static_ident!("default"),
             ctx,
         )
     }
@@ -801,7 +827,7 @@ impl<'a> ModuleRunnerTransform<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
         let binding = ctx.generate_binding_in_current_scope(
-            SSR_EXPORT_DEFAULT_KEY,
+            static_ident!("__vite_ssr_export_default__"),
             SymbolFlags::BlockScopedVariable,
         );
         let pattern = binding.create_binding_pattern(ctx);

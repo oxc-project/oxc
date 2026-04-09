@@ -9,7 +9,8 @@ use oxc_ast::{
     },
 };
 use oxc_ast_visit::Visit;
-use oxc_span::{GetSpan, SPAN, Str};
+use oxc_span::{GetSpan, SPAN};
+use oxc_str::Str;
 use oxc_syntax::scope::{ScopeFlags, ScopeId};
 
 use crate::{IsolatedDeclarations, diagnostics::type_containing_private_name};

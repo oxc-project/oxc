@@ -174,7 +174,8 @@
 //! If you are seeing compile-time errors in `src/ast/macros.rs`, this will be the cause.
 
 // Re-export AST types from other crates
-pub use oxc_span::{Language, LanguageVariant, ModuleKind, SourceType, Span, Str};
+pub use oxc_span::{Language, LanguageVariant, ModuleKind, SourceType, Span};
+pub use oxc_str::Str;
 pub use oxc_syntax::{
     number::{BigintBase, NumberBase},
     operator::{

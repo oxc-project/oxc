@@ -74,6 +74,34 @@ Finished in <variable>ms on 6 files using 1 threads.
 
 --------------------
 --------------------
+arguments: --check .//simple.js
+working directory: multiple_files/fixtures
+exit code: 1
+--- STDOUT ---------
+Checking formatting...
+
+simple.js (<variable>ms)
+
+Format issues found in above 1 files. Run without \`--check\` to fix.
+Finished in <variable>ms on 1 files using 1 threads.
+--- STDERR ---------
+
+--------------------
+--------------------
+arguments: --check .///simple.js
+working directory: multiple_files/fixtures
+exit code: 1
+--- STDOUT ---------
+Checking formatting...
+
+simple.js (<variable>ms)
+
+Format issues found in above 1 files. Run without \`--check\` to fix.
+Finished in <variable>ms on 1 files using 1 threads.
+--- STDERR ---------
+
+--------------------
+--------------------
 arguments: --check !*.{ts,tsx}
 working directory: multiple_files/fixtures
 exit code: 1

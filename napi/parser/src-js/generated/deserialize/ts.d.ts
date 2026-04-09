@@ -4,7 +4,6 @@
 import type * as ESTree from "@oxc-project/types";
 
 type BufferWithArrays = Uint8Array & {
-  uint32: Uint32Array;
   int32: Int32Array;
   float64: Float64Array;
 };

@@ -1819,9 +1819,10 @@ function deserializeFunctionType(pos) {
 }
 
 function deserializeFormalParameters(pos) {
-  let params = deserializeVecFormalParameter(pos + 16);
-  if (int32[(pos + 40) >> 2] !== 0 && int32[(pos + 44) >> 2] !== 0) {
-    pos = int32[(pos + 40) >> 2];
+  let params = deserializeVecFormalParameter(pos + 16),
+    restFieldPos32 = (pos >> 2) + 10;
+  if (int32[restFieldPos32] !== 0 && int32[restFieldPos32 + 1] !== 0) {
+    pos = int32[restFieldPos32];
     let end,
       rest = {
         type: "RestElement",
@@ -1846,7 +1847,8 @@ function deserializeFormalParameters(pos) {
 
 function deserializeFormalParameter(pos) {
   let param,
-    hasInitializer = int32[(pos + 64) >> 2] !== 0 && int32[(pos + 68) >> 2] !== 0;
+    initializerFieldPos32 = (pos >> 2) + 16,
+    hasInitializer = int32[initializerFieldPos32] !== 0 && int32[initializerFieldPos32 + 1] !== 0;
   {
     let accessibility = deserializeOptionTSAccessibility(pos + 13),
       readonly = deserializeBool(pos + 14),
@@ -2529,7 +2531,7 @@ function deserializeNumericLiteral(pos) {
     type: "Literal",
     value: deserializeF64(pos + 32),
     raw:
-      int32[(pos + 16) >> 2] === 0 && int32[(pos + 20) >> 2] === 0
+      int32[(pos >> 2) + 4] === 0 && int32[(pos >> 2) + 5] === 0
         ? null
         : sourceText.slice(start, end),
     start,
@@ -2544,7 +2546,7 @@ function deserializeStringLiteral(pos) {
       type: "Literal",
       value: null,
       raw:
-        int32[(pos + 32) >> 2] === 0 && int32[(pos + 36) >> 2] === 0
+        int32[(pos >> 2) + 8] === 0 && int32[(pos >> 2) + 9] === 0
           ? null
           : sourceText.slice(start, end),
       start,
@@ -2565,7 +2567,7 @@ function deserializeBigIntLiteral(pos) {
     type: "Literal",
     value: BigInt(bigint),
     raw:
-      int32[(pos + 32) >> 2] === 0 && int32[(pos + 36) >> 2] === 0
+      int32[(pos >> 2) + 8] === 0 && int32[(pos >> 2) + 9] === 0
         ? null
         : sourceText.slice(start, end),
     bigint,
@@ -2581,7 +2583,7 @@ function deserializeRegExpLiteral(pos) {
       type: "Literal",
       value: null,
       raw:
-        int32[(pos + 48) >> 2] === 0 && int32[(pos + 52) >> 2] === 0
+        int32[(pos >> 2) + 12] === 0 && int32[(pos >> 2) + 13] === 0
           ? null
           : sourceText.slice(start, end),
       regex: null,
@@ -2995,7 +2997,7 @@ function deserializeJSXText(pos) {
     type: "JSXText",
     value: deserializeStr(pos + 16),
     raw:
-      int32[(pos + 32) >> 2] === 0 && int32[(pos + 36) >> 2] === 0
+      int32[(pos >> 2) + 8] === 0 && int32[(pos >> 2) + 9] === 0
         ? null
         : sourceText.slice(start, end),
     start,
@@ -4820,7 +4822,7 @@ function deserializeVecComment(pos) {
   let arr = [],
     pos32 = pos >> 2;
   pos = int32[pos32];
-  let endPos = pos + int32[pos32 + 2] * 16;
+  let endPos = pos + (int32[pos32 + 2] << 4);
   for (; pos !== endPos; ) {
     arr.push(deserializeComment(pos));
     pos += 16;
@@ -4829,7 +4831,7 @@ function deserializeVecComment(pos) {
 }
 
 function deserializeOptionHashbang(pos) {
-  return int32[(pos + 16) >> 2] === 0 && int32[(pos + 20) >> 2] === 0
+  return int32[(pos >> 2) + 4] === 0 && int32[(pos >> 2) + 5] === 0
     ? null
     : deserializeHashbang(pos);
 }
@@ -4850,7 +4852,7 @@ function deserializeVecStatement(pos) {
   let arr = [],
     pos32 = pos >> 2;
   pos = int32[pos32];
-  let endPos = pos + int32[pos32 + 2] * 16;
+  let endPos = pos + (int32[pos32 + 2] << 4);
   for (; pos !== endPos; ) {
     arr.push(deserializeStatement(pos));
     pos += 16;
@@ -5038,7 +5040,7 @@ function deserializeVecObjectPropertyKind(pos) {
   let arr = [],
     pos32 = pos >> 2;
   pos = int32[pos32];
-  let endPos = pos + int32[pos32 + 2] * 16;
+  let endPos = pos + (int32[pos32 + 2] << 4);
   for (; pos !== endPos; ) {
     arr.push(deserializeObjectPropertyKind(pos));
     pos += 16;
@@ -5078,7 +5080,7 @@ function deserializeVecExpression(pos) {
   let arr = [],
     pos32 = pos >> 2;
   pos = int32[pos32];
-  let endPos = pos + int32[pos32 + 2] * 16;
+  let endPos = pos + (int32[pos32 + 2] << 4);
   for (; pos !== endPos; ) {
     arr.push(deserializeExpression(pos));
     pos += 16;
@@ -5091,13 +5093,13 @@ function deserializeBoxTSTypeParameterInstantiation(pos) {
 }
 
 function deserializeOptionBoxTSTypeParameterInstantiation(pos) {
-  return int32[pos >> 2] === 0 && int32[(pos + 4) >> 2] === 0
+  return int32[pos >> 2] === 0 && int32[(pos >> 2) + 1] === 0
     ? null
     : deserializeBoxTSTypeParameterInstantiation(pos);
 }
 
 function deserializeOptionStr(pos) {
-  return int32[pos >> 2] === 0 && int32[(pos + 4) >> 2] === 0 ? null : deserializeStr(pos);
+  return int32[pos >> 2] === 0 && int32[(pos >> 2) + 1] === 0 ? null : deserializeStr(pos);
 }
 
 function deserializeBoxComputedMemberExpression(pos) {
@@ -5116,7 +5118,7 @@ function deserializeVecArgument(pos) {
   let arr = [],
     pos32 = pos >> 2;
   pos = int32[pos32];
-  let endPos = pos + int32[pos32 + 2] * 16;
+  let endPos = pos + (int32[pos32 + 2] << 4);
   for (; pos !== endPos; ) {
     arr.push(deserializeArgument(pos));
     pos += 16;
@@ -5140,7 +5142,7 @@ function deserializeVecOptionAssignmentTargetMaybeDefault(pos) {
   let arr = [],
     pos32 = pos >> 2;
   pos = int32[pos32];
-  let endPos = pos + int32[pos32 + 2] * 16;
+  let endPos = pos + (int32[pos32 + 2] << 4);
   for (; pos !== endPos; ) {
     arr.push(deserializeOptionAssignmentTargetMaybeDefault(pos));
     pos += 16;
@@ -5153,7 +5155,7 @@ function deserializeBoxAssignmentTargetRest(pos) {
 }
 
 function deserializeOptionBoxAssignmentTargetRest(pos) {
-  return int32[pos >> 2] === 0 && int32[(pos + 4) >> 2] === 0
+  return int32[pos >> 2] === 0 && int32[(pos >> 2) + 1] === 0
     ? null
     : deserializeBoxAssignmentTargetRest(pos);
 }
@@ -5162,7 +5164,7 @@ function deserializeVecAssignmentTargetProperty(pos) {
   let arr = [],
     pos32 = pos >> 2;
   pos = int32[pos32];
-  let endPos = pos + int32[pos32 + 2] * 16;
+  let endPos = pos + (int32[pos32 + 2] << 4);
   for (; pos !== endPos; ) {
     arr.push(deserializeAssignmentTargetProperty(pos));
     pos += 16;
@@ -5303,7 +5305,7 @@ function deserializeBoxTSTypeAnnotation(pos) {
 }
 
 function deserializeOptionBoxTSTypeAnnotation(pos) {
-  return int32[pos >> 2] === 0 && int32[(pos + 4) >> 2] === 0
+  return int32[pos >> 2] === 0 && int32[(pos >> 2) + 1] === 0
     ? null
     : deserializeBoxTSTypeAnnotation(pos);
 }
@@ -5317,7 +5319,7 @@ function deserializeOptionForStatementInit(pos) {
 }
 
 function deserializeOptionLabelIdentifier(pos) {
-  return int32[(pos + 16) >> 2] === 0 && int32[(pos + 20) >> 2] === 0
+  return int32[(pos >> 2) + 4] === 0 && int32[(pos >> 2) + 5] === 0
     ? null
     : deserializeLabelIdentifier(pos);
 }
@@ -5339,13 +5341,13 @@ function deserializeBoxCatchClause(pos) {
 }
 
 function deserializeOptionBoxCatchClause(pos) {
-  return int32[pos >> 2] === 0 && int32[(pos + 4) >> 2] === 0
+  return int32[pos >> 2] === 0 && int32[(pos >> 2) + 1] === 0
     ? null
     : deserializeBoxCatchClause(pos);
 }
 
 function deserializeOptionBoxBlockStatement(pos) {
-  return int32[pos >> 2] === 0 && int32[(pos + 4) >> 2] === 0
+  return int32[pos >> 2] === 0 && int32[(pos >> 2) + 1] === 0
     ? null
     : deserializeBoxBlockStatement(pos);
 }
@@ -5387,7 +5389,7 @@ function deserializeBoxBindingRestElement(pos) {
 }
 
 function deserializeOptionBoxBindingRestElement(pos) {
-  return int32[pos >> 2] === 0 && int32[(pos + 4) >> 2] === 0
+  return int32[pos >> 2] === 0 && int32[(pos >> 2) + 1] === 0
     ? null
     : deserializeBoxBindingRestElement(pos);
 }
@@ -5400,7 +5402,7 @@ function deserializeVecOptionBindingPattern(pos) {
   let arr = [],
     pos32 = pos >> 2;
   pos = int32[pos32];
-  let endPos = pos + int32[pos32 + 2] * 16;
+  let endPos = pos + (int32[pos32 + 2] << 4);
   for (; pos !== endPos; ) {
     arr.push(deserializeOptionBindingPattern(pos));
     pos += 16;
@@ -5409,7 +5411,7 @@ function deserializeVecOptionBindingPattern(pos) {
 }
 
 function deserializeOptionBindingIdentifier(pos) {
-  return int32[(pos + 16) >> 2] === 0 && int32[(pos + 20) >> 2] === 0
+  return int32[(pos >> 2) + 4] === 0 && int32[(pos >> 2) + 5] === 0
     ? null
     : deserializeBindingIdentifier(pos);
 }
@@ -5419,7 +5421,7 @@ function deserializeBoxTSTypeParameterDeclaration(pos) {
 }
 
 function deserializeOptionBoxTSTypeParameterDeclaration(pos) {
-  return int32[pos >> 2] === 0 && int32[(pos + 4) >> 2] === 0
+  return int32[pos >> 2] === 0 && int32[(pos >> 2) + 1] === 0
     ? null
     : deserializeBoxTSTypeParameterDeclaration(pos);
 }
@@ -5429,7 +5431,7 @@ function deserializeBoxTSThisParameter(pos) {
 }
 
 function deserializeOptionBoxTSThisParameter(pos) {
-  return int32[pos >> 2] === 0 && int32[(pos + 4) >> 2] === 0
+  return int32[pos >> 2] === 0 && int32[(pos >> 2) + 1] === 0
     ? null
     : deserializeBoxTSThisParameter(pos);
 }
@@ -5443,7 +5445,7 @@ function deserializeBoxFunctionBody(pos) {
 }
 
 function deserializeOptionBoxFunctionBody(pos) {
-  return int32[pos >> 2] === 0 && int32[(pos + 4) >> 2] === 0
+  return int32[pos >> 2] === 0 && int32[(pos >> 2) + 1] === 0
     ? null
     : deserializeBoxFunctionBody(pos);
 }
@@ -5464,7 +5466,7 @@ function deserializeVecDecorator(pos) {
   let arr = [],
     pos32 = pos >> 2;
   pos = int32[pos32];
-  let endPos = pos + int32[pos32 + 2] * 32;
+  let endPos = pos + (int32[pos32 + 2] << 5);
   for (; pos !== endPos; ) {
     arr.push(deserializeDecorator(pos));
     pos += 32;
@@ -5477,7 +5479,7 @@ function deserializeBoxExpression(pos) {
 }
 
 function deserializeOptionBoxExpression(pos) {
-  return int32[pos >> 2] === 0 && int32[(pos + 4) >> 2] === 0
+  return int32[pos >> 2] === 0 && int32[(pos >> 2) + 1] === 0
     ? null
     : deserializeBoxExpression(pos);
 }
@@ -5506,7 +5508,7 @@ function deserializeVecClassElement(pos) {
   let arr = [],
     pos32 = pos >> 2;
   pos = int32[pos32];
-  let endPos = pos + int32[pos32 + 2] * 16;
+  let endPos = pos + (int32[pos32 + 2] << 4);
   for (; pos !== endPos; ) {
     arr.push(deserializeClassElement(pos));
     pos += 16;
@@ -5566,7 +5568,7 @@ function deserializeVecImportDeclarationSpecifier(pos) {
   let arr = [],
     pos32 = pos >> 2;
   pos = int32[pos32];
-  let endPos = pos + int32[pos32 + 2] * 16;
+  let endPos = pos + (int32[pos32 + 2] << 4);
   for (; pos !== endPos; ) {
     arr.push(deserializeImportDeclarationSpecifier(pos));
     pos += 16;
@@ -5575,7 +5577,7 @@ function deserializeVecImportDeclarationSpecifier(pos) {
 }
 
 function deserializeOptionVecImportDeclarationSpecifier(pos) {
-  return int32[pos >> 2] === 0 && int32[(pos + 4) >> 2] === 0
+  return int32[pos >> 2] === 0 && int32[(pos >> 2) + 1] === 0
     ? null
     : deserializeVecImportDeclarationSpecifier(pos);
 }
@@ -5585,7 +5587,7 @@ function deserializeBoxWithClause(pos) {
 }
 
 function deserializeOptionBoxWithClause(pos) {
-  return int32[pos >> 2] === 0 && int32[(pos + 4) >> 2] === 0
+  return int32[pos >> 2] === 0 && int32[(pos >> 2) + 1] === 0
     ? null
     : deserializeBoxWithClause(pos);
 }
@@ -5622,7 +5624,7 @@ function deserializeVecExportSpecifier(pos) {
   let arr = [],
     pos32 = pos >> 2;
   pos = int32[pos32];
-  let endPos = pos + int32[pos32 + 2] * 128;
+  let endPos = pos + (int32[pos32 + 2] << 7);
   for (; pos !== endPos; ) {
     arr.push(deserializeExportSpecifier(pos));
     pos += 128;
@@ -5654,7 +5656,7 @@ function deserializeVecJSXChild(pos) {
   let arr = [],
     pos32 = pos >> 2;
   pos = int32[pos32];
-  let endPos = pos + int32[pos32 + 2] * 16;
+  let endPos = pos + (int32[pos32 + 2] << 4);
   for (; pos !== endPos; ) {
     arr.push(deserializeJSXChild(pos));
     pos += 16;
@@ -5667,7 +5669,7 @@ function deserializeBoxJSXClosingElement(pos) {
 }
 
 function deserializeOptionBoxJSXClosingElement(pos) {
-  return int32[pos >> 2] === 0 && int32[(pos + 4) >> 2] === 0
+  return int32[pos >> 2] === 0 && int32[(pos >> 2) + 1] === 0
     ? null
     : deserializeBoxJSXClosingElement(pos);
 }
@@ -5676,7 +5678,7 @@ function deserializeVecJSXAttributeItem(pos) {
   let arr = [],
     pos32 = pos >> 2;
   pos = int32[pos32];
-  let endPos = pos + int32[pos32 + 2] * 16;
+  let endPos = pos + (int32[pos32 + 2] << 4);
   for (; pos !== endPos; ) {
     arr.push(deserializeJSXAttributeItem(pos));
     pos += 16;
@@ -5884,7 +5886,7 @@ function deserializeVecTSType(pos) {
   let arr = [],
     pos32 = pos >> 2;
   pos = int32[pos32];
-  let endPos = pos + int32[pos32 + 2] * 16;
+  let endPos = pos + (int32[pos32 + 2] << 4);
   for (; pos !== endPos; ) {
     arr.push(deserializeTSType(pos));
     pos += 16;
@@ -5896,7 +5898,7 @@ function deserializeVecTSTupleElement(pos) {
   let arr = [],
     pos32 = pos >> 2;
   pos = int32[pos32];
-  let endPos = pos + int32[pos32 + 2] * 16;
+  let endPos = pos + (int32[pos32 + 2] << 4);
   for (; pos !== endPos; ) {
     arr.push(deserializeTSTupleElement(pos));
     pos += 16;
@@ -5952,7 +5954,7 @@ function deserializeVecTSSignature(pos) {
   let arr = [],
     pos32 = pos >> 2;
   pos = int32[pos32];
-  let endPos = pos + int32[pos32 + 2] * 16;
+  let endPos = pos + (int32[pos32 + 2] << 4);
   for (; pos !== endPos; ) {
     arr.push(deserializeTSSignature(pos));
     pos += 16;
@@ -6001,7 +6003,7 @@ function deserializeBoxTSTypeParameter(pos) {
 }
 
 function deserializeOptionBoxObjectExpression(pos) {
-  return int32[pos >> 2] === 0 && int32[(pos + 4) >> 2] === 0
+  return int32[pos >> 2] === 0 && int32[(pos >> 2) + 1] === 0
     ? null
     : deserializeBoxObjectExpression(pos);
 }
@@ -6027,7 +6029,7 @@ function deserializeI32(pos) {
 }
 
 function deserializeOptionNameSpan(pos) {
-  return int32[(pos + 8) >> 2] === 0 && int32[(pos + 12) >> 2] === 0
+  return int32[(pos >> 2) + 2] === 0 && int32[(pos >> 2) + 3] === 0
     ? null
     : deserializeNameSpan(pos);
 }
@@ -6072,7 +6074,7 @@ function deserializeVecStaticExport(pos) {
   let arr = [],
     pos32 = pos >> 2;
   pos = int32[pos32];
-  let endPos = pos + int32[pos32 + 2] * 32;
+  let endPos = pos + (int32[pos32 + 2] << 5);
   for (; pos !== endPos; ) {
     arr.push(deserializeStaticExport(pos));
     pos += 32;
@@ -6084,7 +6086,7 @@ function deserializeVecDynamicImport(pos) {
   let arr = [],
     pos32 = pos >> 2;
   pos = int32[pos32];
-  let endPos = pos + int32[pos32 + 2] * 16;
+  let endPos = pos + (int32[pos32 + 2] << 4);
   for (; pos !== endPos; ) {
     arr.push(deserializeDynamicImport(pos));
     pos += 16;
@@ -6096,7 +6098,7 @@ function deserializeVecSpan(pos) {
   let arr = [],
     pos32 = pos >> 2;
   pos = int32[pos32];
-  let endPos = pos + int32[pos32 + 2] * 8;
+  let endPos = pos + (int32[pos32 + 2] << 3);
   for (; pos !== endPos; ) {
     arr.push(deserializeSpan(pos));
     pos += 8;

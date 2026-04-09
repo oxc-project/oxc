@@ -1,7 +1,8 @@
 use std::{cell::RefCell, rc::Rc};
 
+use oxc_str::CompactStr;
+
 use miette::JSONReportHandler;
-use oxc_span::CompactStr;
 use rustc_hash::FxHashSet;
 use serde::Serialize;
 

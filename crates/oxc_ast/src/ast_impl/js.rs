@@ -3,7 +3,8 @@ use std::{
     fmt::{self, Display},
 };
 
-use oxc_span::{GetSpan, Ident, Span, Str};
+use oxc_span::{GetSpan, Span};
+use oxc_str::{Ident, Str};
 use oxc_syntax::{operator::UnaryOperator, scope::ScopeFlags, symbol::SymbolId};
 
 use crate::ast::*;

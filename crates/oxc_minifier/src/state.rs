@@ -2,7 +2,8 @@ use oxc_ecmascript::constant_evaluation::ConstantValue;
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_data_structures::stack::NonEmptyStack;
-use oxc_span::{SourceType, Str};
+use oxc_span::SourceType;
+use oxc_str::Str;
 use oxc_syntax::symbol::SymbolId;
 
 use crate::{CompressOptions, symbol_value::SymbolValues};
@@ -23,6 +24,11 @@ pub struct MinifierState<'a> {
     /// Private member usage for classes
     pub class_symbols_stack: ClassSymbolsStack<'a>,
 
+    /// Symbols that have `__proto__` member writes.
+    /// Writing to `__proto__` changes the prototype chain, potentially installing
+    /// setters that make subsequent property writes side-effectful.
+    pub proto_write_symbols: FxHashSet<SymbolId>,
+
     pub changed: bool,
 }
 
@@ -35,6 +41,7 @@ impl MinifierState<'_> {
             pure_functions: FxHashMap::default(),
             symbol_values: SymbolValues::default(),
             class_symbols_stack: ClassSymbolsStack::new(),
+            proto_write_symbols: FxHashSet::default(),
             changed: false,
         }
     }

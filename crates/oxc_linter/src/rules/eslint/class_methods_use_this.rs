@@ -1,6 +1,9 @@
 use std::{borrow::Cow, ops::Deref};
 
 use itertools::Itertools;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+
 use oxc_ast::{
     AstKind,
     ast::{AccessorProperty, Expression, PropertyDefinition, TSAccessibility},
@@ -9,9 +12,8 @@ use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNode;
-use oxc_span::{CompactStr, GetSpan, Span};
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
+use oxc_span::{GetSpan, Span};
+use oxc_str::CompactStr;
 
 use crate::{LintContext, rule::Rule};
 

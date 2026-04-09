@@ -76,7 +76,8 @@ use oxc_ast::{
     ast::{Argument, CallExpression, Expression},
 };
 use oxc_semantic::{ReferenceFlags, SymbolFlags};
-use oxc_span::{SPAN, Span, Str};
+use oxc_span::{SPAN, Span};
+use oxc_str::Str;
 use oxc_traverse::BoundIdentifier;
 
 use crate::context::TraverseCtx;

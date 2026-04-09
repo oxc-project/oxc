@@ -6,7 +6,7 @@ use std::{
 
 use rustc_hash::FxHashSet;
 
-use oxc_span::CompactStr;
+use oxc_str::CompactStr;
 
 use crate::ModuleRecord;
 

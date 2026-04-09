@@ -174,6 +174,15 @@ export interface TreeShakeOptions {
    */
   propertyReadSideEffects?: boolean | 'always'
   /**
+   * Whether property write accesses (assignments to member expressions) have side effects.
+   *
+   * When false, assignments like `obj.prop = value` are considered side-effect-free
+   * (assuming the object and value expressions themselves are side-effect-free).
+   *
+   * @default true
+   */
+  propertyWriteSideEffects?: boolean
+  /**
    * Whether accessing a global variable has side effects.
    *
    * Accessing a non-existing global variable will throw an error.

@@ -5,7 +5,8 @@ use self_cell::self_cell;
 
 use oxc_allocator::{Allocator, CloneIn, Vec as ArenaVec};
 use oxc_index::IndexVec;
-use oxc_span::{ArenaIdentHashMap, Ident, Span};
+use oxc_span::Span;
+use oxc_str::{ArenaIdentHashMap, Ident};
 use oxc_syntax::constant_value::ConstantValue;
 use oxc_syntax::{
     node::NodeId,
@@ -569,6 +570,20 @@ impl Scoping {
             let reference_ids = &mut cell.resolved_references[symbol_id.index()];
             let index = reference_ids.iter().position(|&id| id == reference_id).unwrap();
             reference_ids.swap_remove(index);
+        });
+    }
+
+    /// Retain only resolved references that are in the given set.
+    ///
+    /// This is an O(n) batch operation across all symbols, much more efficient than
+    /// calling `delete_resolved_reference` repeatedly when many references from the
+    /// same symbol need to be removed (which would be O(n²) due to the linear scan
+    /// in each deletion).
+    pub fn retain_resolved_references(&mut self, live_references: &FxHashSet<ReferenceId>) {
+        self.cell.with_dependent_mut(|_allocator, cell| {
+            for reference_ids in &mut cell.resolved_references {
+                reference_ids.retain(|id| live_references.contains(id));
+            }
         });
     }
 

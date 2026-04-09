@@ -1,6 +1,7 @@
 use oxc_allocator::{Box as ArenaBox, CloneIn, TakeIn, Vec as ArenaVec};
 use oxc_ast::{NONE, ast::*};
-use oxc_span::{GetSpan, SPAN, Str};
+use oxc_span::{GetSpan, SPAN};
+use oxc_str::Str;
 
 use crate::{IsolatedDeclarations, diagnostics::default_export_inferred};
 

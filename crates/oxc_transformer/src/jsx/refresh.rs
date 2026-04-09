@@ -17,7 +17,8 @@ use oxc_ast_visit::{
     walk::{walk_call_expression, walk_declaration},
 };
 use oxc_semantic::{ReferenceFlags, ScopeFlags, ScopeId, SymbolFlags, SymbolId};
-use oxc_span::{GetSpan, Ident, SPAN, Str};
+use oxc_span::{GetSpan, SPAN};
+use oxc_str::{Ident, Str};
 use oxc_syntax::operator::AssignmentOperator;
 use oxc_traverse::{Ancestor, BoundIdentifier, Traverse};
 

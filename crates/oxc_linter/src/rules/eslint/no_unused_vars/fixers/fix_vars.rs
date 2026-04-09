@@ -3,7 +3,8 @@ use oxc_ast::{
     ast::{Expression, ForInStatement, ForOfStatement, VariableDeclarator},
 };
 use oxc_semantic::NodeId;
-use oxc_span::{CompactStr, GetSpan, Ident};
+use oxc_span::GetSpan;
+use oxc_str::{CompactStr, Ident};
 
 use super::{BindingInfo, NoUnusedVars, Symbol, count_whitespace_or_commas};
 use crate::{

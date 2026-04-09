@@ -20,7 +20,7 @@ exit code: 2
 Checking formatting...
 
 --- STDERR ---------
-Expected at least one target file
+Expected at least one target file. All matched files may have been excluded by ignore rules.
 --------------------"
 `;
 
@@ -33,7 +33,7 @@ exit code: 2
 Checking formatting...
 
 --- STDERR ---------
-Expected at least one target file
+Expected at least one target file. All matched files may have been excluded by ignore rules.
 --------------------
 --------------------
 arguments: --check --no-error-on-unmatched-pattern __nonexistent__/**/*.js
@@ -54,7 +54,9 @@ arguments: --check --no-error-on-unmatched-pattern ignored-by-config/bad.js
 working directory: no_error_on_unmatched_pattern/fixtures
 exit code: 0
 --- STDOUT ---------
+Checking formatting...
 
+Finished in <variable>ms on 0 files using 1 threads.
 --- STDERR ---------
 No files found matching the given patterns.
 --------------------
@@ -63,7 +65,9 @@ arguments: --check --no-error-on-unmatched-pattern ignored-by-config
 working directory: no_error_on_unmatched_pattern/fixtures
 exit code: 0
 --- STDOUT ---------
+Checking formatting...
 
+Finished in <variable>ms on 0 files using 1 threads.
 --- STDERR ---------
 No files found matching the given patterns.
 --------------------
@@ -72,7 +76,9 @@ arguments: --check --no-error-on-unmatched-pattern ignored-by-prettierignore/bad
 working directory: no_error_on_unmatched_pattern/fixtures
 exit code: 0
 --- STDOUT ---------
+Checking formatting...
 
+Finished in <variable>ms on 0 files using 1 threads.
 --- STDERR ---------
 No files found matching the given patterns.
 --------------------
@@ -81,7 +87,9 @@ arguments: --check --no-error-on-unmatched-pattern --ignore-path custom.ignore i
 working directory: no_error_on_unmatched_pattern/fixtures
 exit code: 0
 --- STDOUT ---------
+Checking formatting...
 
+Finished in <variable>ms on 0 files using 1 threads.
 --- STDERR ---------
 No files found matching the given patterns.
 --------------------"

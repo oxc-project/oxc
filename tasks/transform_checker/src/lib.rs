@@ -99,7 +99,7 @@ use oxc_ast::ast::*;
 use oxc_ast_visit::{Visit, walk};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::{Scoping, SemanticBuilder};
-use oxc_span::CompactStr;
+use oxc_str::CompactStr;
 use oxc_syntax::{
     reference::{ReferenceFlags, ReferenceId},
     scope::{ScopeFlags, ScopeId},

@@ -11,11 +11,7 @@ mod span;
 
 pub use cmp::ContentEq;
 pub use edit_distance::{best_match, min_edit_distance};
-pub use oxc_str::ident;
-pub use oxc_str::{
-    ArenaIdentHashMap, CompactStr, Ident, IdentHashMap, IdentHashSet,
-    MAX_INLINE_LEN as STR_MAX_INLINE_LEN, Str, format_compact_str, format_ident, format_str,
-};
+use oxc_str::{CompactStr, Ident, Str};
 pub use source_type::{
     FileExtension, Language, LanguageVariant, ModuleKind, SourceType, UnknownExtension,
     VALID_EXTENSIONS,

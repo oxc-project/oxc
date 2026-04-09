@@ -4,7 +4,8 @@
 //! including type checking, conversions, and tree traversal helpers.
 
 use oxc_allocator::{Address, GetAddress, UnstableAddress};
-use oxc_span::{GetSpan, Ident, Str};
+use oxc_span::GetSpan;
+use oxc_str::{Ident, Str};
 
 use super::{AstKind, ast::*};
 

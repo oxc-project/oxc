@@ -27,6 +27,7 @@ oxc_index = { workspace = true }
 oxc_semantic = { workspace = true }
 oxc_sourcemap = { workspace = true, optional = true }
 oxc_span = { workspace = true }
+oxc_str = { workspace = true }
 oxc_syntax = { workspace = true }
 
 bitflags = { workspace = true }

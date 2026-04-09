@@ -8,50 +8,36 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-#![expect(
-    clippy::collapsible_if,
-    clippy::equatable_if_let,
-    clippy::legacy_numeric_constants,
-    clippy::missing_safety_doc,
-    clippy::redundant_closure_for_method_calls,
-    clippy::undocumented_unsafe_blocks,
-    clippy::uninlined_format_args,
-    clippy::unnecessary_literal_bound,
-    clippy::unused_self,
-    unsafe_op_in_unsafe_fn
-)]
+#![expect(clippy::undocumented_unsafe_blocks)]
 #![allow(unstable_name_collisions)]
 #![allow(dead_code)]
-#![allow(deprecated)]
 
 //! Memory allocation APIs
 //!
 //! This module was originally copied from `bumpalo` at commit a47f6d6b7b5fee9c99a285f0de80257a0a982ef3
 //! (2 commits after 3.20.2 release). Changes have been made since.
 
-use core::cmp;
-use core::fmt;
-use core::mem;
-use core::ptr::{self, NonNull};
-use core::usize;
-
-pub use core::alloc::{Layout, LayoutErr};
+use std::{
+    alloc::{Layout, LayoutError},
+    cmp, fmt, mem,
+    ptr::{self, NonNull},
+};
 
 #[cold]
-fn new_layout_err() -> LayoutErr {
+fn new_layout_err() -> LayoutError {
     Layout::from_size_align(1, 3).unwrap_err()
 }
 
 #[cold]
 #[inline(never)]
 pub fn handle_alloc_error(layout: Layout) -> ! {
-    panic!("encountered allocation error: {:?}", layout)
+    panic!("encountered allocation error: {layout:?}")
 }
 
 pub trait UnstableLayoutMethods {
     fn padding_needed_for(&self, align: usize) -> usize;
-    fn repeat(&self, n: usize) -> Result<(Layout, usize), LayoutErr>;
-    fn array<T>(n: usize) -> Result<Layout, LayoutErr>;
+    fn repeat(&self, n: usize) -> Result<(Layout, usize), LayoutError>;
+    fn array<T>(n: usize) -> Result<Layout, LayoutError>;
 }
 
 impl UnstableLayoutMethods for Layout {
@@ -81,7 +67,7 @@ impl UnstableLayoutMethods for Layout {
         len_rounded_up.wrapping_sub(len)
     }
 
-    fn repeat(&self, n: usize) -> Result<(Layout, usize), LayoutErr> {
+    fn repeat(&self, n: usize) -> Result<(Layout, usize), LayoutError> {
         let padded_size = self
             .size()
             .checked_add(self.padding_needed_for(self.align()))
@@ -95,7 +81,7 @@ impl UnstableLayoutMethods for Layout {
         }
     }
 
-    fn array<T>(n: usize) -> Result<Layout, LayoutErr> {
+    fn array<T>(n: usize) -> Result<Layout, LayoutError> {
         Layout::new::<T>().repeat(n).map(|(k, offs)| {
             debug_assert!(offs == mem::size_of::<T>());
             k
@@ -138,7 +124,8 @@ pub struct CannotReallocInPlace;
 
 // #[unstable(feature = "allocator_api", issue = "32838")]
 impl CannotReallocInPlace {
-    pub fn description(&self) -> &str {
+    #[expect(clippy::unused_self, reason = "part of public API")]
+    pub fn description(&self) -> &'static str {
         "cannot reallocate allocator's memory in place"
     }
 }
@@ -215,7 +202,7 @@ impl fmt::Display for CannotReallocInPlace {
 ///    currently allocated via an allocator `a`, then it is legal to
 ///    use that layout to deallocate it, i.e. `a.dealloc(ptr, k);`.
 ///
-/// # Unsafety
+/// # SAFETY
 ///
 /// The `Alloc` trait is an `unsafe` trait for a number of reasons, and
 /// implementors must ensure that they adhere to these contracts:
@@ -252,7 +239,7 @@ pub unsafe trait Alloc {
     /// behavior, e.g. to ensure initialization to particular sets of
     /// bit patterns.)
     ///
-    /// # Safety
+    /// # SAFETY
     ///
     /// This function is unsafe because undefined behavior can result
     /// if the caller does not ensure that `layout` has non-zero size.
@@ -282,7 +269,7 @@ pub unsafe trait Alloc {
 
     /// Deallocate the memory referenced by `ptr`.
     ///
-    /// # Safety
+    /// # SAFETY
     ///
     /// This function is unsafe because undefined behavior can result
     /// if the caller does not ensure all of the following:
@@ -351,7 +338,7 @@ pub unsafe trait Alloc {
     /// block has not been transferred to this allocator, and the
     /// contents of the memory block are unaltered.
     ///
-    /// # Safety
+    /// # SAFETY
     ///
     /// This function is unsafe because undefined behavior can result
     /// if the caller does not ensure all of the following:
@@ -396,22 +383,29 @@ pub unsafe trait Alloc {
     ) -> Result<NonNull<u8>, AllocErr> {
         let old_size = layout.size();
 
+        #[expect(clippy::collapsible_else_if)]
         if new_size >= old_size {
-            if let Ok(()) = self.grow_in_place(ptr, layout, new_size) {
+            if unsafe { self.grow_in_place(ptr, layout, new_size) }.is_ok() {
                 return Ok(ptr);
             }
-        } else if new_size < old_size {
-            if let Ok(()) = self.shrink_in_place(ptr, layout, new_size) {
+        } else {
+            if unsafe { self.shrink_in_place(ptr, layout, new_size) }.is_ok() {
                 return Ok(ptr);
             }
         }
 
         // otherwise, fall back on alloc + copy + dealloc.
-        let new_layout = Layout::from_size_align_unchecked(new_size, layout.align());
-        let result = self.alloc(new_layout);
+        let new_layout = unsafe { Layout::from_size_align_unchecked(new_size, layout.align()) };
+        let result = unsafe { self.alloc(new_layout) };
         if let Ok(new_ptr) = result {
-            ptr::copy_nonoverlapping(ptr.as_ptr(), new_ptr.as_ptr(), cmp::min(old_size, new_size));
-            self.dealloc(ptr, layout);
+            unsafe {
+                ptr::copy_nonoverlapping(
+                    ptr.as_ptr(),
+                    new_ptr.as_ptr(),
+                    cmp::min(old_size, new_size),
+                );
+                self.dealloc(ptr, layout);
+            }
         }
         result
     }
@@ -419,7 +413,7 @@ pub unsafe trait Alloc {
     /// Behaves like `alloc`, but also ensures that the contents
     /// are set to zero before being returned.
     ///
-    /// # Safety
+    /// # SAFETY
     ///
     /// This function is unsafe for the same reasons that `alloc` is.
     ///
@@ -436,9 +430,9 @@ pub unsafe trait Alloc {
     /// [`handle_alloc_error`]: ../../alloc/alloc/fn.handle_alloc_error.html
     unsafe fn alloc_zeroed(&mut self, layout: Layout) -> Result<NonNull<u8>, AllocErr> {
         let size = layout.size();
-        let p = self.alloc(layout);
+        let p = unsafe { self.alloc(layout) };
         if let Ok(p) = p {
-            ptr::write_bytes(p.as_ptr(), 0, size);
+            unsafe { ptr::write_bytes(p.as_ptr(), 0, size) };
         }
         p
     }
@@ -447,7 +441,7 @@ pub unsafe trait Alloc {
     /// the returned block. For some `layout` inputs, like arrays, this
     /// may include extra storage usable for additional data.
     ///
-    /// # Safety
+    /// # SAFETY
     ///
     /// This function is unsafe for the same reasons that `alloc` is.
     ///
@@ -464,14 +458,14 @@ pub unsafe trait Alloc {
     /// [`handle_alloc_error`]: ../../alloc/alloc/fn.handle_alloc_error.html
     unsafe fn alloc_excess(&mut self, layout: Layout) -> Result<Excess, AllocErr> {
         let usable_size = self.usable_size(&layout);
-        self.alloc(layout).map(|p| Excess(p, usable_size.1))
+        unsafe { self.alloc(layout) }.map(|p| Excess(p, usable_size.1))
     }
 
     /// Behaves like `realloc`, but also returns the whole size of
     /// the returned block. For some `layout` inputs, like arrays, this
     /// may include extra storage usable for additional data.
     ///
-    /// # Safety
+    /// # SAFETY
     ///
     /// This function is unsafe for the same reasons that `realloc` is.
     ///
@@ -492,9 +486,9 @@ pub unsafe trait Alloc {
         layout: Layout,
         new_size: usize,
     ) -> Result<Excess, AllocErr> {
-        let new_layout = Layout::from_size_align_unchecked(new_size, layout.align());
+        let new_layout = unsafe { Layout::from_size_align_unchecked(new_size, layout.align()) };
         let usable_size = self.usable_size(&new_layout);
-        self.realloc(ptr, layout, new_size).map(|p| Excess(p, usable_size.1))
+        unsafe { self.realloc(ptr, layout, new_size) }.map(|p| Excess(p, usable_size.1))
     }
 
     /// Attempts to extend the allocation referenced by `ptr` to fit `new_size`.
@@ -510,7 +504,7 @@ pub unsafe trait Alloc {
     /// memory block referenced by `ptr` has not been transferred, and
     /// the contents of the memory block are unaltered.
     ///
-    /// # Safety
+    /// # SAFETY
     ///
     /// This function is unsafe because undefined behavior can result
     /// if the caller does not ensure all of the following:
@@ -562,7 +556,7 @@ pub unsafe trait Alloc {
     /// the memory block has not been transferred, and the contents of
     /// the memory block are unaltered.
     ///
-    /// # Safety
+    /// # SAFETY
     ///
     /// This function is unsafe because undefined behavior can result
     /// if the caller does not ensure all of the following:
@@ -636,7 +630,7 @@ pub unsafe trait Alloc {
         Self: Sized,
     {
         let k = Layout::new::<T>();
-        if k.size() > 0 { unsafe { self.alloc(k).map(|p| p.cast()) } } else { Err(AllocErr) }
+        if k.size() > 0 { unsafe { self.alloc(k).map(NonNull::cast) } } else { Err(AllocErr) }
     }
 
     /// Deallocates a block suitable for holding an instance of `T`.
@@ -648,7 +642,7 @@ pub unsafe trait Alloc {
     ///
     /// Captures a common usage pattern for allocators.
     ///
-    /// # Safety
+    /// # SAFETY
     ///
     /// This function is unsafe because undefined behavior can result
     /// if the caller does not ensure both:
@@ -662,7 +656,7 @@ pub unsafe trait Alloc {
     {
         let k = Layout::new::<T>();
         if k.size() > 0 {
-            self.dealloc(ptr.cast(), k);
+            unsafe { self.dealloc(ptr.cast(), k) };
         }
     }
 
@@ -703,7 +697,7 @@ pub unsafe trait Alloc {
         Self: Sized,
     {
         match Layout::array::<T>(n) {
-            Ok(layout) if layout.size() > 0 => unsafe { self.alloc(layout).map(|p| p.cast()) },
+            Ok(layout) if layout.size() > 0 => unsafe { self.alloc(layout).map(NonNull::cast) },
             _ => Err(AllocErr),
         }
     }
@@ -717,7 +711,7 @@ pub unsafe trait Alloc {
     /// The returned block is suitable for passing to the
     /// `alloc`/`realloc` methods of this allocator.
     ///
-    /// # Safety
+    /// # SAFETY
     ///
     /// This function is unsafe because undefined behavior can result
     /// if the caller does not ensure all of the following:
@@ -754,7 +748,7 @@ pub unsafe trait Alloc {
         match (Layout::array::<T>(n_old), Layout::array::<T>(n_new)) {
             (Ok(ref k_old), Ok(ref k_new)) if k_old.size() > 0 && k_new.size() > 0 => {
                 debug_assert!(k_old.align() == k_new.align());
-                self.realloc(ptr.cast(), *k_old, k_new.size()).map(NonNull::cast)
+                unsafe { self.realloc(ptr.cast(), *k_old, k_new.size()) }.map(NonNull::cast)
             }
             _ => Err(AllocErr),
         }
@@ -764,7 +758,7 @@ pub unsafe trait Alloc {
     ///
     /// Captures a common usage pattern for allocators.
     ///
-    /// # Safety
+    /// # SAFETY
     ///
     /// This function is unsafe because undefined behavior can result
     /// if the caller does not ensure both:
@@ -786,7 +780,7 @@ pub unsafe trait Alloc {
     {
         match Layout::array::<T>(n) {
             Ok(k) if k.size() > 0 => {
-                self.dealloc(ptr.cast(), k);
+                unsafe { self.dealloc(ptr.cast(), k) };
                 Ok(())
             }
             _ => Err(AllocErr),

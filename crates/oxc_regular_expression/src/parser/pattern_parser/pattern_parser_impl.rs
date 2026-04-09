@@ -1,6 +1,6 @@
 use oxc_allocator::{Allocator, Box, Vec};
 use oxc_diagnostics::Result;
-use oxc_span::Str;
+use oxc_str::Str;
 
 use crate::{
     ast, diagnostics,

@@ -37,12 +37,12 @@ export const IS_JSX_FLAG_POS = 2147483613;
 export const HAS_BOM_FLAG_POS = 2147483614;
 
 /**
- * Byte offset of the tokens offset within the buffer, divided by 4 (for `Uint32Array` indexing).
+ * Byte offset of the tokens offset within the buffer, divided by 4 (for `Int32Array` indexing).
  */
 export const TOKENS_OFFSET_POS_32 = 536870901;
 
 /**
- * Byte offset of the tokens length within the buffer, divided by 4 (for `Uint32Array` indexing).
+ * Byte offset of the tokens length within the buffer, divided by 4 (for `Int32Array` indexing).
  */
 export const TOKENS_LEN_POS_32 = 536870902;
 

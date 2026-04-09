@@ -527,10 +527,9 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
 
     /// Creates a `Vec<'a, T>` directly from the raw components of another vector.
     ///
-    /// # Safety
+    /// # SAFETY
     ///
-    /// This is highly unsafe, due to the number of invariants that aren't
-    /// checked:
+    /// This is highly unsafe, due to the number of invariants that aren't checked:
     ///
     /// * `ptr` needs to have been previously allocated via [`String`] / `Vec<'a, T>`
     ///   (at least, it's highly likely to be incorrect if it wasn't).
@@ -653,7 +652,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     /// This will explicitly set the size of the vector, without actually modifying its buffers,
     /// so it is up to the caller to ensure that the vector is actually the specified size.
     ///
-    /// # Safety
+    /// # SAFETY
     ///
     /// * `new_len` must be less than or equal to `u32::MAX`.
     /// * `new_len` must be less than or equal to [`capacity()`].

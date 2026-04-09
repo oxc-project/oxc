@@ -58,6 +58,10 @@ pub struct LintCommand {
     #[bpaf(switch, hide_usage)]
     pub type_check: bool,
 
+    /// Run only TypeScript type checking diagnostics without regular lint diagnostics
+    #[bpaf(long("type-check-only"), switch, hide)]
+    pub type_check_only: bool,
+
     #[bpaf(external)]
     pub inline_config_options: InlineConfigOptions,
 
@@ -644,6 +648,14 @@ mod lint_options {
         assert!(options.type_check);
         let options = get_lint_options(".");
         assert!(!options.type_check);
+    }
+
+    #[test]
+    fn type_check_only() {
+        let options = get_lint_options("--type-check-only");
+        assert!(options.type_check_only);
+        let options = get_lint_options(".");
+        assert!(!options.type_check_only);
     }
 }
 

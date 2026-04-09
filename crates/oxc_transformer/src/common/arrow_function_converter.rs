@@ -96,7 +96,8 @@ use oxc_ast::{NONE, ast::*};
 use oxc_ast_visit::{VisitMut, walk_mut::walk_expression};
 use oxc_data_structures::stack::{NonEmptyStack, SparseStack};
 use oxc_semantic::{ReferenceFlags, SymbolId};
-use oxc_span::{GetSpan, Ident, SPAN};
+use oxc_span::{GetSpan, SPAN};
+use oxc_str::Ident;
 use oxc_syntax::{
     scope::{ScopeFlags, ScopeId},
     symbol::SymbolFlags,

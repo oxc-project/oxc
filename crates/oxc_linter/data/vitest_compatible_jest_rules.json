@@ -44,5 +44,6 @@
   "require-top-level-describe",
   "valid-describe-callback",
   "valid-expect",
+  "valid-expect-in-promise",
   "valid-title"
 ]

@@ -24,6 +24,7 @@ oxc_allocator = { workspace = true }
 oxc_ast_macros = { workspace = true }
 oxc_diagnostics = { workspace = true }
 oxc_span = { workspace = true }
+oxc_str = { workspace = true }
 
 bitflags = { workspace = true }
 phf = { workspace = true, features = ["macros"] }
