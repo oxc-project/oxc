@@ -173,6 +173,10 @@ fn run<'a>(
                 if property_name == "skip" && ctx.frameworks().is_vitest() {
                     return;
                 }
+                // test.extend() is a test factory, not a test call itself
+                if property_name == "extend" {
+                    return;
+                }
             }
 
             let assert_function_names = if ctx.frameworks().is_vitest() {
@@ -506,6 +510,8 @@ fn test() {
         ),
         ("it('test', async () => { const array = [1]; for (const element of array) { expect(element).toBe(1); } });", None),
         (r"it('msg', async () => { const r = foo(); return expect(r).rejects.toThrow(); });", None),
+        // test.extend() is a test factory, not a test call
+        ("const myTest = test.extend({});", None),
     ];
 
     let mut fail = vec![
@@ -809,6 +815,28 @@ fn test() {
                 assertType(concat('a', 2))
             ",
             Some(serde_json::json!([{ "assertFunctionNames": ["assertType"] }])),
+        ),
+        // test.extend() is a test factory, not a test call
+        (
+            "
+                import { test } from 'vitest';
+                const myTest = test.extend({
+                    fixture: async ({}, use) => { await use('value'); },
+                });
+            ",
+            None,
+        ),
+        (
+            "
+                import { test, expect } from 'vitest';
+                const myTest = test.extend({
+                    result: async ({}, use) => { await use(42); },
+                });
+                myTest('works', ({ result }) => {
+                    expect(result).toBe(42);
+                });
+            ",
+            None,
         ),
     ];
 

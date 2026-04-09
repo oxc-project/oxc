@@ -106,6 +106,12 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
     if let AstKind::CallExpression(call_expr) = node.kind() {
         if let Some(jest_fn_call) = parse_general_jest_fn_call(call_expr, possible_jest_node, ctx) {
             let ParsedGeneralJestFnCall { kind, members, name, .. } = jest_fn_call;
+            // test.extend() is a test factory, not a test call itself
+            if let Some(member) = members.first()
+                && member.is_name_equal("extend")
+            {
+                return;
+            }
             // `test('foo')`
             let kind = match kind {
                 JestFnKind::Expect | JestFnKind::ExpectTypeOf | JestFnKind::Unknown => return,
@@ -194,6 +200,8 @@ fn test() {
             None,
         ),
         ("import { test } from './test-utils'; test('something');", None),
+        // test.extend() is a test factory, not a test call
+        ("const myTest = test.extend({});", None),
     ];
 
     let mut fail = vec![
@@ -255,6 +263,13 @@ fn test() {
             import { test } from './test-utils';
 	    test('something');
         ",
+        // test.extend() is a test factory, not a test call
+        r#"
+            import { test } from 'vitest';
+            const myTest = test.extend({
+                fixture: async ({}, use) => { await use('value'); },
+            });
+        "#,
     ];
 
     let fail_vitest = vec![
