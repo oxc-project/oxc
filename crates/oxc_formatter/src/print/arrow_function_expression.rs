@@ -165,7 +165,9 @@ impl<'a, 'b> FormatJsArrowFunctionExpression<'a, 'b> {
                     };
                 }
 
-                if let Some(Expression::ConditionalExpression(conditional)) = arrow_expression {
+                if let Some(Expression::ConditionalExpression(conditional)) = arrow_expression
+                    && f.context().source_type().is_typescript()
+                {
                     let expanded_signature = format_with(|f| {
                         write!(
                             f,
@@ -183,16 +185,27 @@ impl<'a, 'b> FormatJsArrowFunctionExpression<'a, 'b> {
                         );
                     });
 
-                    let conditional_body_with_parens = format_with(|f| {
-                        write!(f, [space(), token("("), format_body, token(")")]);
+                    let should_add_parens = arrow.expression && should_add_parens(body);
+                    let conditional_body_inline = format_with(|f| {
+                        write!(f, space());
+
+                        if should_add_parens {
+                            write!(f, token("("));
+                        }
+
+                        write!(f, format_body);
+
+                        if should_add_parens {
+                            write!(f, token(")"));
+                        }
                     });
 
                     if should_inline_conditional_arrow_body(conditional, arrow.span.start, f) {
                         write!(
                             f,
                             [best_fitting!(
-                                format_args!(formatted_signature, conditional_body_with_parens),
-                                format_args!(expanded_signature, conditional_body_with_parens),
+                                format_args!(formatted_signature, conditional_body_inline),
+                                format_args!(expanded_signature, conditional_body_inline),
                             )]
                         );
                     } else {
