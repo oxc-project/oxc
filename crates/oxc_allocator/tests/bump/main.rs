@@ -3,7 +3,6 @@
     clippy::cast_possible_truncation,
     clippy::dbg_macro,
     clippy::explicit_into_iter_loop,
-    clippy::ignore_without_reason,
     clippy::items_after_statements,
     clippy::large_enum_variant,
     clippy::large_stack_arrays,
@@ -23,6 +22,8 @@
     clippy::undocumented_unsafe_blocks,
     clippy::uninlined_format_args
 )]
+// `#[ignore]` attrs only exist when `debug_assertions` is enabled
+#![cfg_attr(debug_assertions, expect(clippy::ignore_without_reason))]
 
 mod alloc_fill;
 mod alloc_try_with;
