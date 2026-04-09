@@ -1,4 +1,12 @@
-#![expect(unsafe_op_in_unsafe_fn)]
+#![expect(
+    unsafe_op_in_unsafe_fn,
+    clippy::allow_attributes,
+    clippy::explicit_iter_loop,
+    clippy::ignored_unit_patterns,
+    clippy::print_stderr,
+    clippy::undocumented_unsafe_blocks,
+    clippy::uninlined_format_args
+)]
 
 use oxc_allocator::bump::{AllocOrInitError, Bump};
 use rand::Rng;
