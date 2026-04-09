@@ -14,11 +14,6 @@ rust-version.workspace = true
 description.workspace = true
 
 [[test]]
-name = "all"
-path = "tests/all/main.rs"
-harness = false
-
-[[test]]
 name = "try_alloc"
 path = "tests/try_alloc.rs"
 harness = false
