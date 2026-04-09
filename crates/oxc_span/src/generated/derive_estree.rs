@@ -32,8 +32,8 @@ impl ESTree for ModuleKind {
 impl ESTree for Span {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("start", &self.start);
-        state.serialize_field("end", &self.end);
+        state.serialize_field("start", &crate::serialize::SpanStart(self));
+        state.serialize_field("end", &crate::serialize::SpanEnd(self));
         state.end();
     }
 }

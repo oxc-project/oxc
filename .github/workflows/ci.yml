@@ -451,15 +451,18 @@ jobs:
   doc:
     name: Doc
     runs-on: namespace-profile-linux-x64-default
+    env:
+      # FIXME(ci): Unpin once rust-lang/rust#154878 is resolved.
+      TOOLCHAIN: nightly-2026-04-01
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
       - uses: namespacelabs/nscloud-cache-action@a90bb5d4b27522ce881c6e98eebd7d7e6d1653f9 # v1.4.2
         with:
           path: /home/runner/.rustup
           cache: rust
-      - run: rustup toolchain install nightly --profile minimal --component rust-docs
+      - run: rustup toolchain install "${TOOLCHAIN}" --profile minimal --component rust-docs
       # https://github.com/rust-lang/rust/issues/146895
-      - run: RUSTDOCFLAGS='-D warnings' cargo +nightly doc --no-deps --document-private-items -Zrustdoc-mergeable-info
+      - run: RUSTDOCFLAGS='-D warnings' cargo +"${TOOLCHAIN}" doc --no-deps --document-private-items -Zrustdoc-mergeable-info
 
   conformance:
     name: Conformance

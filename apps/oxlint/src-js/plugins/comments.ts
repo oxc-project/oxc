@@ -14,7 +14,7 @@ import {
 } from "../generated/constants.ts";
 import { computeLoc } from "./location.ts";
 import { FLAG_NOT_DESERIALIZED, FLAG_DESERIALIZED } from "./tokens.ts";
-import { EMPTY_UINT8_ARRAY, EMPTY_UINT32_ARRAY } from "../utils/typed_arrays.ts";
+import { EMPTY_UINT8_ARRAY, EMPTY_INT32_ARRAY } from "../utils/typed_arrays.ts";
 import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 
 import type { Location, Span } from "./location.ts";
@@ -37,7 +37,7 @@ export let comments: CommentType[] | null = null;
 // Typed array views over the comments region of the buffer.
 // These persist for the lifetime of the file (cleared in `resetComments`).
 let commentsUint8: Uint8Array | null = null;
-export let commentsUint32: Uint32Array | null = null;
+export let commentsInt32: Int32Array | null = null;
 
 // Number of comments for the current file.
 export let commentsLen = 0;
@@ -62,13 +62,13 @@ let activeCommentsWithLocCount = 0;
 // preventing source text strings from being held alive by stale `value` slices.
 //
 // Pre-allocated in `initCommentsBuffer` to avoid growth during deserialization.
-// `Uint32Array` rather than `Array` to avoid GC tracing and write barriers.
+// `Int32Array` rather than `Array` to avoid GC tracing and write barriers.
 //
 // `deserializedCommentsLen` is the number of deserialized comments in current file.
 // If all comments have been deserialized (`allCommentsDeserialized === true`), `deserializedCommentsLen` is 0,
 // and no further indexes are written to `deserializedCommentIndexes`. `resetComments` will reset all comments,
 // up to `commentsLen`.
-let deserializedCommentIndexes = EMPTY_UINT32_ARRAY;
+let deserializedCommentIndexes = EMPTY_INT32_ARRAY;
 let deserializedCommentsLen = 0;
 
 // Minimum capacity (in `u32`s) of `deserializedCommentIndexes`, when not empty.
@@ -181,7 +181,7 @@ export function initComments(): void {
 export function deserializeComments(): void {
   debugAssert(!allCommentsDeserialized, "Comments already deserialized");
 
-  if (commentsUint32 === null) initCommentsBuffer();
+  if (commentsInt32 === null) initCommentsBuffer();
 
   for (let i = 0; i < commentsLen; i++) {
     deserializeCommentIfNeeded(i);
@@ -197,14 +197,14 @@ export function deserializeComments(): void {
 /**
  * Initialize typed array views over the comments region of the buffer.
  *
- * Populates `commentsUint8`, `commentsUint32`, and `commentsLen`, and grows `cachedComments` if needed.
+ * Populates `commentsUint8`, `commentsInt32`, and `commentsLen`, and grows `cachedComments` if needed.
  * Does NOT deserialize comments - they are deserialized lazily via `deserializeCommentIfNeeded`.
  *
  * Exception: If the file has a hashbang, eagerly deserializes the first comment and sets its type to `Shebang`.
  */
 export function initCommentsBuffer(): void {
   debugAssert(
-    commentsUint8 === null && commentsUint32 === null,
+    commentsUint8 === null && commentsInt32 === null,
     "Comments buffer already initialized",
   );
 
@@ -217,16 +217,16 @@ export function initCommentsBuffer(): void {
   if (sourceText === null) initSourceText();
   debugAssertIsNonNull(sourceText);
 
-  const { uint32 } = buffer;
-  const programPos32 = uint32[DATA_POINTER_POS_32] >> 2;
-  const commentsPos = uint32[programPos32 + (COMMENTS_OFFSET >> 2)];
-  commentsLen = uint32[programPos32 + (COMMENTS_LEN_OFFSET >> 2)];
+  const { int32 } = buffer;
+  const programPos32 = int32[DATA_POINTER_POS_32] >> 2;
+  const commentsPos = int32[programPos32 + (COMMENTS_OFFSET >> 2)];
+  commentsLen = int32[programPos32 + (COMMENTS_LEN_OFFSET >> 2)];
 
   // Fast path for files with no comments
   if (commentsLen === 0) {
     comments = EMPTY_COMMENTS;
     commentsUint8 = EMPTY_UINT8_ARRAY;
-    commentsUint32 = EMPTY_UINT32_ARRAY;
+    commentsInt32 = EMPTY_INT32_ARRAY;
     allCommentsDeserialized = true;
     return;
   }
@@ -236,7 +236,7 @@ export function initCommentsBuffer(): void {
   const arrayBuffer = buffer.buffer,
     absolutePos = buffer.byteOffset + commentsPos;
   commentsUint8 = new Uint8Array(arrayBuffer, absolutePos, commentsLen * COMMENT_SIZE);
-  commentsUint32 = new Uint32Array(arrayBuffer, absolutePos, commentsLen * (COMMENT_SIZE >> 2));
+  commentsInt32 = new Int32Array(arrayBuffer, absolutePos, commentsLen * (COMMENT_SIZE >> 2));
 
   // Grow caches if needed. After first few files, caches should have grown large enough to service all files.
   // Later files will skip this step, and allocations stop.
@@ -246,11 +246,11 @@ export function initCommentsBuffer(): void {
     } while (cachedComments.length < commentsLen);
 
     // Grow `deserializedCommentIndexes` if needed.
-    // `Uint32Array`s can't grow in place, so allocate a new one.
+    // `Int32Array`s can't grow in place, so allocate a new one.
     // First allocation uses minimum capacity. Subsequent growths double, to avoid frequent reallocations.
     const indexesLen = deserializedCommentIndexes.length;
     if (indexesLen < commentsLen) {
-      deserializedCommentIndexes = new Uint32Array(
+      deserializedCommentIndexes = new Int32Array(
         Math.max(
           commentsLen,
           indexesLen === 0 ? DESERIALIZED_COMMENT_INDEXES_MIN_CAPACITY : indexesLen << 1,
@@ -263,8 +263,8 @@ export function initCommentsBuffer(): void {
   // We do this here instead of lazily when comment 0 is deserialized, to remove code
   // from `deserializeCommentIfNeeded`, which can be called many times.
   // Rust side adds hashbang comment to start of comments `Vec` as a `Line` comment.
-  // `commentsUint32[0]` is the start of the first comment.
-  if (commentsUint32[0] === 0 && sourceText.startsWith("#!")) {
+  // `commentsInt32[0]` is the start of the first comment.
+  if (commentsInt32[0] === 0 && sourceText.startsWith("#!")) {
     getComment(0).type = "Shebang";
   }
 
@@ -324,8 +324,8 @@ function deserializeCommentIfNeeded(index: number): Comment | null {
   const isBlock = commentsUint8![pos + COMMENT_KIND_OFFSET] !== COMMENT_LINE_KIND;
 
   const pos32 = pos >> 2,
-    start = commentsUint32![pos32],
-    end = commentsUint32![pos32 + 1];
+    start = commentsInt32![pos32],
+    end = commentsInt32![pos32 + 1];
 
   comment.type = isBlock ? "Block" : "Line";
   // Line comments: `// text` -> slice `start + 2..end`
@@ -348,8 +348,8 @@ function debugCheckValidRanges(): void {
   let lastEnd = 0;
   for (let i = 0; i < commentsLen; i++) {
     const pos32 = i << 2;
-    const start = commentsUint32![pos32];
-    const end = commentsUint32![pos32 + 1];
+    const start = commentsInt32![pos32];
+    const end = commentsInt32![pos32 + 1];
     if (end <= start) throw new Error(`Invalid comment range: ${start}-${end}`);
     if (start < lastEnd) {
       throw new Error(`Overlapping comments: last end: ${lastEnd}, next start: ${start}`);
@@ -398,7 +398,7 @@ function debugCheckDeserializedComments(): void {
  */
 export function resetComments(): void {
   // Early exit if comments were never accessed (e.g. no rules used comments-related methods)
-  if (commentsUint32 === null) {
+  if (commentsInt32 === null) {
     debugAssertAllCommentsCleared();
     return;
   }
@@ -437,7 +437,7 @@ export function resetComments(): void {
   // Reset other state
   comments = null;
   commentsUint8 = null;
-  commentsUint32 = null;
+  commentsInt32 = null;
   commentsLen = 0;
 
   debugAssertAllCommentsCleared();

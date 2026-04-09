@@ -757,7 +757,7 @@ impl<'a> ReactRefresh<'a> {
         }
 
         let declarator = decl.declarations.first_mut().unwrap_or_else(|| unreachable!());
-        let init = declarator.init.as_mut()?;
+        let init = declarator.init.as_mut()?.without_parentheses_mut();
         let id = declarator.id.get_binding_identifier()?;
         let symbol_id = id.symbol_id();
 

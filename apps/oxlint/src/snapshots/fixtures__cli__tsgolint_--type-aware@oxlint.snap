@@ -9,9 +9,11 @@ working directory: fixtures/cli/tsgolint
   x typescript-eslint(await-thenable): Unexpected `await` of a non-Promise (non-"Thenable") value.
    ,-[await-thenable.ts:1:1]
  1 | await 12;
-   : ^^^^^
+   : ^^^^^ ^|
+   :   |    `-- This expression is not Promise-like
  2 | 
    `----
+  help: Remove `await` if the value is synchronous, or change the expression to return a Promise or Thenable before awaiting it.
 
   x typescript-eslint(consistent-return): Function 'maybe' expected a return value.
    ,-[consistent-return.ts:5:3]
@@ -309,15 +311,18 @@ working directory: fixtures/cli/tsgolint
  3 | 
    `----
 
-  x typescript-eslint(no-unnecessary-condition): Unnecessary comparison between literal values.
+  x typescript-eslint(no-unsafe-enum-comparison): The two values in this comparison do not have a shared enum type.
     ,-[no-unsafe-enum-comparison.ts:9:20]
   8 | }
   9 | const comparison = Status.Open === Color.Red;
-    :                    ^^^^^^^^^^^^^^^^^^^^^^^^^
+    :                    ^^^^^|^^^^^^^^^^^^^^^^^^^|
+    :                         |            |      `-- Right operand: Color.Red
+    :                         `-- Left operand: Status.Open
  10 | 
     `----
+  help: Compare enum values to members of the same enum, or convert both sides to the same primitive type before comparing them.
 
-  x typescript-eslint(no-unsafe-enum-comparison): The two values in this comparison do not have a shared enum type.
+  x typescript-eslint(no-unnecessary-condition): Unnecessary comparison between literal values.
     ,-[no-unsafe-enum-comparison.ts:9:20]
   8 | }
   9 | const comparison = Status.Open === Color.Red;

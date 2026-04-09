@@ -1,19 +1,18 @@
 use std::{
     ffi::OsStr,
     path::{Path, PathBuf},
-    sync::{Mutex, mpsc},
+    sync::{Arc, Mutex, mpsc},
 };
 
-use ignore::{
-    gitignore::{Gitignore, GitignoreBuilder},
-    overrides::OverrideBuilder,
-};
+use fast_glob::glob_match;
+use ignore::gitignore::{Gitignore, GitignoreBuilder};
 use rustc_hash::FxHashSet;
 
 use crate::core::{FormatFileStrategy, utils::normalize_relative_path};
 
 pub struct Walk {
-    inner: ignore::WalkParallel,
+    inner: Option<ignore::WalkParallel>,
+    glob_matcher: Option<Arc<GlobMatcher>>,
 }
 
 impl Walk {
@@ -24,7 +23,7 @@ impl Walk {
         with_node_modules: bool,
         config_dir: Option<&Path>,
         ignore_patterns: &[String],
-    ) -> Result<Option<Self>, String> {
+    ) -> Result<Self, String> {
         //
         // Classify and normalize specified paths
         //
@@ -42,9 +41,12 @@ impl Walk {
                 continue;
             }
 
-            // Normalize `./` prefix
-            let normalized =
-                if let Some(stripped) = path_str.strip_prefix("./") { stripped } else { &path_str };
+            // Normalize `./` prefix (and any consecutive slashes, e.g. `.//src/app.js`)
+            let normalized = if let Some(stripped) = path_str.strip_prefix("./") {
+                stripped.trim_start_matches('/')
+            } else {
+                &path_str
+            };
 
             // Separate glob patterns from concrete paths
             if is_glob_pattern(normalized, cwd) {
@@ -64,10 +66,10 @@ impl Walk {
             target_paths.insert(full_path);
         }
 
-        // Expand glob patterns and add to target paths
-        // NOTE: See `expand_glob_patterns()` for why we pre-expand globs here
+        // When glob patterns exist, walk from cwd to find matching files during traversal.
+        // Concrete file paths are still added individually as base paths.
         if !glob_patterns.is_empty() {
-            target_paths.extend(expand_glob_patterns(cwd, &glob_patterns, with_node_modules)?);
+            target_paths.insert(cwd.to_path_buf());
         }
 
         // Default to `cwd` if no positive paths were specified.
@@ -81,7 +83,7 @@ impl Walk {
         //
         // Use multiple matchers, each with correct root for pattern resolution:
         // - Ignore files: root = parent directory of the ignore file
-        // - `.ignorePatterns`: root = parent directory of `.oxfmtrc.json`
+        // - `.ignorePatterns`: root = parent directory of config file
         // - Exclude paths (`!` prefix): root = cwd
         //
         // NOTE: Git ignore files are handled by `WalkBuilder` itself
@@ -149,10 +151,19 @@ impl Walk {
             .filter(|path| !is_ignored(&matchers, path, path.is_dir(), true))
             .collect();
 
-        // If no target paths remain after filtering, return `None`.
+        // If no target paths remain after filtering, return an empty walker.
         // Not an error, but nothing to format, leave it to the caller how to handle.
         let Some(first_path) = target_paths.first() else {
-            return Ok(None);
+            return Ok(Self { inner: None, glob_matcher: None });
+        };
+
+        // Build the glob matcher for walk-time filtering.
+        // When glob patterns exist, files are matched against them during `visit()`.
+        // When no globs, `visit()` has zero overhead.
+        let glob_matcher = if glob_patterns.is_empty() {
+            None
+        } else {
+            Some(Arc::new(GlobMatcher::new(cwd.to_path_buf(), glob_patterns, &target_paths)))
         };
 
         // Add all non-`!` prefixed paths to the walker base
@@ -183,27 +194,57 @@ impl Walk {
                 return false;
             }
 
-            // NOTE: In addition to ignoring based on ignore files and patterns here,
-            // we also apply extra filtering in the visitor `visit()` below.
+            // NOTE: Glob pattern matching is NOT done here in `filter_entry()`.
+            // Glob patterns like `**/*.js` cannot be used to skip directories,
+            // since any directory could contain matching files at any depth.
+            // Glob filtering is instead done per-file in the visitor `visit()` below.
+            //
+            // In addition to ignoring based on ignore files and patterns here,
+            // we also apply extra filtering in `visit()`.
             // We need to return `bool` for `filter_entry()` here,
             // but we don't want to duplicate logic in the visitor again.
             true
         });
 
-        let inner = apply_walk_settings(&mut inner).build_parallel();
-        Ok(Some(Self { inner }))
+        let inner = inner
+            // Do not follow symlinks like Prettier does.
+            // See https://github.com/prettier/prettier/pull/14627
+            .follow_links(false)
+            // Include hidden files and directories except those we explicitly skip
+            .hidden(false)
+            // Do not respect `.ignore` file
+            .ignore(false)
+            // Do not search upward
+            // NOTE: Prettier only searches current working directory
+            .parents(false)
+            // Also do not respect globals
+            .git_global(false)
+            // But respect downward nested `.gitignore` files
+            // NOTE: Prettier does not: https://github.com/prettier/prettier/issues/4081
+            .git_ignore(true)
+            // Also do not respect `.git/info/exclude`
+            .git_exclude(false)
+            // Git is not required
+            .require_git(false)
+            .build_parallel();
+
+        Ok(Self { inner: Some(inner), glob_matcher })
     }
 
-    /// Stream entries through a channel as they are discovered
+    /// Stream entries through a channel as they are discovered.
+    /// If no target paths remain (empty walker), returns an immediately-closed channel.
     pub fn stream_entries(self) -> mpsc::Receiver<FormatFileStrategy> {
         let (sender, receiver) = mpsc::channel::<FormatFileStrategy>();
 
-        // Spawn the walk operation in a separate thread
-        rayon::spawn(move || {
-            let mut builder = WalkBuilder { sender };
-            self.inner.visit(&mut builder);
-            // Channel will be closed when builder is dropped
-        });
+        if let Some(inner) = self.inner {
+            // Spawn the walk operation in a separate thread
+            rayon::spawn(move || {
+                let mut builder = WalkVisitorBuilder { sender, glob_matcher: self.glob_matcher };
+                inner.visit(&mut builder);
+                // Channel will be closed when builder is dropped
+            });
+        }
+        // else: sender is dropped here, receiver will yield nothing
 
         receiver
     }
@@ -256,60 +297,6 @@ fn is_glob_pattern(s: &str, cwd: &Path) -> bool {
     has_glob_chars && !cwd.join(s).exists()
 }
 
-// NOTE: Why pre-expand globs?
-// An alternative approach would be:
-// - to always walk the entire `cwd`
-// - and filter by both concrete paths and glob patterns
-//
-// However, this would be inefficient for common use cases
-// like `oxfmt src/a.js` or pre-commit hooks that specify only staged files.
-//
-// Pre-expanding globs allows us to walk only the necessary paths.
-// And this only happens if glob patterns are specified.
-//
-// NOTE: Why not use `ignore::Overrides` in the main walk?
-// `ignore::Overrides` have the highest priority in the `ignore` crate,
-// so files matching the glob would be collected even if they're in `.gitignore`!
-/// Expand glob patterns to concrete file paths.
-fn expand_glob_patterns(
-    cwd: &Path,
-    patterns: &[String],
-    with_node_modules: bool,
-) -> Result<Vec<PathBuf>, String> {
-    let mut ob = OverrideBuilder::new(cwd);
-    for pattern in patterns {
-        ob.add(pattern).map_err(|e| format!("Invalid glob pattern `{pattern}`: {e}"))?;
-    }
-    let overrides = ob.build().map_err(|e| format!("Failed to build glob overrides: {e}"))?;
-
-    let mut builder = ignore::WalkBuilder::new(cwd);
-    builder.overrides(overrides);
-    // Skip ignored directories to align with the main walk behavior.
-    builder.filter_entry(move |entry| {
-        !(entry.file_type().is_some_and(|ft| ft.is_dir())
-            && is_ignored_dir(entry.file_name(), with_node_modules))
-    });
-
-    let paths = Mutex::new(vec![]);
-    apply_walk_settings(&mut builder).build_parallel().run(|| {
-        Box::new(|entry| {
-            match entry {
-                Ok(entry) => {
-                    // Align with main walk: only include files
-                    #[expect(clippy::filetype_is_file)]
-                    if entry.file_type().is_some_and(|ft| ft.is_file()) {
-                        paths.lock().unwrap().push(entry.into_path());
-                    }
-                    ignore::WalkState::Continue
-                }
-                Err(_err) => ignore::WalkState::Skip,
-            }
-        })
-    });
-
-    Ok(paths.into_inner().unwrap())
-}
-
 fn load_ignore_paths(cwd: &Path, ignore_paths: &[PathBuf]) -> Result<Vec<PathBuf>, String> {
     // If specified, resolve absolute paths and check existence
     if !ignore_paths.is_empty() {
@@ -334,45 +321,80 @@ fn load_ignore_paths(cwd: &Path, ignore_paths: &[PathBuf]) -> Result<Vec<PathBuf
         .collect())
 }
 
-/// Apply common walk settings.
-/// This ensures consistent behavior across glob expansion and main walk.
-fn apply_walk_settings(builder: &mut ignore::WalkBuilder) -> &mut ignore::WalkBuilder {
-    builder
-        // Do not follow symlinks like Prettier does.
-        // See https://github.com/prettier/prettier/pull/14627
-        .follow_links(false)
-        // Include hidden files and directories except those we explicitly skip
-        .hidden(false)
-        // Do not respect `.ignore` file
-        .ignore(false)
-        // Do not search upward
-        // NOTE: Prettier only searches current working directory
-        .parents(false)
-        // Also do not respect globals
-        .git_global(false)
-        // But respect downward nested `.gitignore` files
-        // NOTE: Prettier does not: https://github.com/prettier/prettier/issues/4081
-        .git_ignore(true)
-        // Also do not respect `.git/info/exclude`
-        .git_exclude(false)
-        // Git is not required
-        .require_git(false)
+// ---
+
+/// Matches file paths against glob patterns during walk.
+///
+/// When glob patterns are specified via CLI args,
+/// files are matched against them during the walk's `visit()` callback.
+///
+/// Uses `fast_glob::glob_match` instead of `ignore::Overrides` because
+/// overrides have the highest priority in the `ignore` crate and would bypass `.gitignore` rules.
+///
+/// Also tracks concrete target paths (non-glob) because when globs are present,
+/// cwd is added as a base path, which means concrete paths can be visited twice.
+/// (as direct base paths and during the cwd walk)
+/// This struct handles both acceptance and dedup of those paths via `matches()`.
+struct GlobMatcher {
+    /// cwd for computing relative paths for glob matching.
+    cwd: PathBuf,
+    /// Normalized glob pattern strings for matching via `fast_glob::glob_match`.
+    glob_patterns: Vec<String>,
+    /// Concrete target paths (absolute) specified via CLI.
+    /// These are always accepted even when glob filtering is active.
+    concrete_paths: FxHashSet<PathBuf>,
+    /// Tracks seen concrete paths to avoid duplicates (visited both as
+    /// direct base paths and via cwd walk).
+    seen: Mutex<FxHashSet<PathBuf>>,
+}
+
+impl GlobMatcher {
+    fn new(cwd: PathBuf, glob_patterns: Vec<String>, target_paths: &[PathBuf]) -> Self {
+        // Normalize glob patterns: patterns without `/` are prefixed with `**/`
+        // to match at any depth (gitignore/prettier semantics).
+        // e.g., `*.js` → `**/*.js`, `foo/**/*.js` stays as-is.
+        let glob_patterns = glob_patterns
+            .into_iter()
+            .map(|pat| if pat.contains('/') { pat } else { format!("**/{pat}") })
+            .collect();
+        // Store concrete paths (excluding cwd itself) for dedup and acceptance.
+        let concrete_paths = target_paths.iter().filter(|p| p.as_path() != cwd).cloned().collect();
+        Self { cwd, glob_patterns, concrete_paths, seen: Mutex::new(FxHashSet::default()) }
+    }
+
+    /// Returns `true` if the path matches any glob pattern or is a concrete target path.
+    /// Concrete paths are deduplicated (they can appear both as direct base paths and via cwd walk).
+    fn matches(&self, path: &Path) -> bool {
+        // Accept concrete paths (explicitly specified via CLI), with dedup
+        if self.concrete_paths.contains(path) {
+            return self.seen.lock().unwrap().insert(path.to_path_buf());
+        }
+
+        // Match against glob patterns using cwd-relative path
+        let relative = path.strip_prefix(&self.cwd).unwrap_or(path).to_string_lossy();
+        self.glob_patterns.iter().any(|pattern| glob_match(pattern, relative.as_ref()))
+    }
 }
 
 // ---
 
-struct WalkBuilder {
+struct WalkVisitorBuilder {
     sender: mpsc::Sender<FormatFileStrategy>,
+    glob_matcher: Option<Arc<GlobMatcher>>,
 }
 
-impl<'s> ignore::ParallelVisitorBuilder<'s> for WalkBuilder {
+impl<'s> ignore::ParallelVisitorBuilder<'s> for WalkVisitorBuilder {
     fn build(&mut self) -> Box<dyn ignore::ParallelVisitor + 's> {
-        Box::new(WalkVisitor { sender: self.sender.clone() })
+        Box::new(WalkVisitor {
+            sender: self.sender.clone(),
+            glob_matcher: self.glob_matcher.clone(),
+        })
     }
 }
 
 struct WalkVisitor {
     sender: mpsc::Sender<FormatFileStrategy>,
+    glob_matcher: Option<Arc<GlobMatcher>>,
 }
 
 impl ignore::ParallelVisitor for WalkVisitor {
@@ -386,13 +408,24 @@ impl ignore::ParallelVisitor for WalkVisitor {
                 // Use `is_file()` to detect symlinks to the directory named `.js`
                 #[expect(clippy::filetype_is_file)]
                 if file_type.is_file() {
-                    // Determine this file should be handled or NOT
+                    let path = entry.into_path();
+
+                    // When glob matcher is active,
+                    // only accept files that match glob patterns or explicitly specified concrete paths.
+                    if let Some(glob_matcher) = &self.glob_matcher
+                        && !glob_matcher.matches(&path)
+                    {
+                        return ignore::WalkState::Continue;
+                    }
+
+                    // Otherwise, all files are specified as base paths
+
                     // Tier 1 = `.js`, `.tsx`, etc: JS/TS files supported by `oxc_formatter`
                     // Tier 2 = `.toml`, etc: Some files supported by `oxfmt` directly
                     // Tier 3 = `.html`, `.json`, etc: Other files supported by Prettier
                     // (Tier 4 = `.astro`, `.svelte`, etc: Other files supported by Prettier plugins)
                     // Everything else: Ignored
-                    let Ok(strategy) = FormatFileStrategy::try_from(entry.into_path()) else {
+                    let Ok(strategy) = FormatFileStrategy::try_from(path) else {
                         return ignore::WalkState::Continue;
                     };
 

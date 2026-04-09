@@ -382,6 +382,7 @@ pub(crate) mod jest {
     pub mod require_top_level_describe;
     pub mod valid_describe_callback;
     pub mod valid_expect;
+    pub mod valid_expect_in_promise;
     pub mod valid_title;
 }
 
@@ -459,6 +460,7 @@ pub(crate) mod unicorn {
     pub mod consistent_empty_array_spread;
     pub mod consistent_existence_index_check;
     pub mod consistent_function_scoping;
+    pub mod consistent_template_literal_escape;
     pub mod custom_error_definition;
     pub mod empty_brace_spaces;
     pub mod error_message;

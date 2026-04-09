@@ -2,7 +2,7 @@ use std::path::{Path, PathBuf};
 
 use editorconfig_parser::{
     EditorConfig, EditorConfigProperties, EditorConfigProperty, EndOfLine, IndentStyle,
-    MaxLineLength,
+    MaxLineLength, QuoteType,
 };
 use fast_glob::glob_match;
 use serde_json::Value;
@@ -613,6 +613,7 @@ fn load_editorconfig(
 /// - indent_size
 /// - tab_width
 /// - insert_final_newline
+/// - quote_type
 fn has_editorconfig_overrides(editorconfig: &EditorConfig, path: &Path) -> bool {
     let sections = editorconfig.sections();
 
@@ -635,6 +636,7 @@ fn has_editorconfig_overrides(editorconfig: &EditorConfig, path: &Path) -> bool 
                 || resolved.indent_size != root.indent_size
                 || resolved.tab_width != root.tab_width
                 || resolved.insert_final_newline != root.insert_final_newline
+                || resolved.quote_type != root.quote_type
         }
         // No `[*]` section means any resolved property is an override
         None => {
@@ -644,6 +646,7 @@ fn has_editorconfig_overrides(editorconfig: &EditorConfig, path: &Path) -> bool 
                 || resolved.indent_size != EditorConfigProperty::Unset
                 || resolved.tab_width != EditorConfigProperty::Unset
                 || resolved.insert_final_newline != EditorConfigProperty::Unset
+                || resolved.quote_type != EditorConfigProperty::Unset
         }
     }
 }
@@ -696,5 +699,17 @@ fn apply_editorconfig(config: &mut FormatConfig, props: &EditorConfigProperties)
         && let EditorConfigProperty::Value(v) = props.insert_final_newline
     {
         config.insert_final_newline = Some(v);
+    }
+
+    if config.single_quote.is_none() {
+        match props.quote_type {
+            EditorConfigProperty::Value(QuoteType::Single) => {
+                config.single_quote = Some(true);
+            }
+            EditorConfigProperty::Value(QuoteType::Double) => {
+                config.single_quote = Some(false);
+            }
+            _ => {}
+        }
     }
 }
