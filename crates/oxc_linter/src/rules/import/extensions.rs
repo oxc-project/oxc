@@ -1722,9 +1722,10 @@ fn test() {
             r"import Component from './Component.test.ts';",
             Some(json!(["never", { "ts": "never" }])),
         ),
-        // Importing with wrong extension (.ts instead of .js)
-        (r"import bar from './color.ts'", Some(json!([{ "ts": "never" }]))),
         (r"import utils from './utils.spec.js';", Some(json!(["never", { "js": "never" }]))),
+        // Importing with wrong extension (.ts instead of .js) should fail when written
+        // extension isn't allowed.
+        (r"import example from './color.ts'", Some(json!([{ "ts": "never" }]))),
         // TODO: This should probably fail? Needs further investigation.
         // (
         //     r"import useState from '@foo/bar/useState';",
