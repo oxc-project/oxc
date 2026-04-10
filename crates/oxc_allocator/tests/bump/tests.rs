@@ -88,7 +88,8 @@ fn oom_instead_of_bump_pointer_overflow() {
     };
 
     // This should panic.
-    bump.alloc_layout(layout);
+    let new_ptr = bump.alloc_layout(layout);
+    dbg!(new_ptr);
 }
 
 #[test]
