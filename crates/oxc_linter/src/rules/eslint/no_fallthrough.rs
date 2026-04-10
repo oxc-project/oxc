@@ -614,6 +614,8 @@ fn test() {
       } });"#,
             None,
         ),
+        // Issue #21320: breaks on multi-line case statements
+        ("switch(foo) {\n  case A\n    .B:\n  case B.A:\n    break;\n}", None),
     ];
 
     let fail = vec![
