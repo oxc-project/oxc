@@ -282,7 +282,6 @@ impl ExtensionsConfig {
         &self,
         ext_str: &str,
         extension_is_written: bool,
-        has_resolved_extension: bool,
         require_extension: Option<ExtensionRule>,
     ) -> bool {
         match (extension_is_written, require_extension) {
@@ -293,12 +292,7 @@ impl ExtensionsConfig {
             // Extension is missing - check if it should be required
             (false, Some(ExtensionRule::Always)) => {
                 // Per-extension "never" overrides global "always"
-                // Lenient: when no module resolution, check if any standard extension has "never"
-                if has_resolved_extension {
-                    !self.is_never(ext_str)
-                } else {
-                    !self.has_any_never_rules()
-                }
+                !self.is_never(ext_str)
             }
             (false, _) => self.is_always(ext_str),
         }
@@ -569,7 +563,6 @@ impl Extensions {
             if config.should_flag_extension(
                 ext_str,
                 written_extension.is_some(),
-                resolved_extension.is_some(),
                 require_extension,
             ) {
                 if written_extension.is_some() {
