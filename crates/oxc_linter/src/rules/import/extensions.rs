@@ -290,10 +290,7 @@ impl ExtensionsConfig {
             (true, _) => self.is_never(ext_str),
 
             // Extension is missing - check if it should be required
-            (false, Some(ExtensionRule::Always)) => {
-                // Per-extension "never" overrides global "always"
-                !self.is_never(ext_str)
-            }
+            (false, Some(ExtensionRule::Always)) => !self.is_never(ext_str),
             (false, _) => self.is_always(ext_str),
         }
     }
