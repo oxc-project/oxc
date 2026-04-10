@@ -373,6 +373,7 @@ Equivalent to passing `--max-warnings` on the CLI.
 
 ### options.reportUnusedDisableDirectives
 
+type: `"allow" | "off" | "warn" | "error" | "deny" | integer`
 
 
 Report unused disable directives (e.g. `// oxlint-disable-line` or `// eslint-disable-line`).
