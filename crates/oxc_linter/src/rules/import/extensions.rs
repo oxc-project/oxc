@@ -300,6 +300,19 @@ impl ExtensionsConfig {
         }
     }
 
+    fn should_skip_extension(
+        &self,
+        ext_str: &str,
+        require_extension: Option<ExtensionRule>,
+    ) -> bool {
+        // Skip validation for unconfigured extensions (prevents false positives)
+        // unless there's a global rule or it's a standard extension
+        // (cheapest checks first: is_none, matches!, then hash lookup)
+        require_extension.is_none()
+            && !ExtensionsConfig::is_standard_extension(ext_str)
+            && !self.has_rule(ext_str)
+    }
+
     /// Build configuration from JSON value with optional default rule.
     ///
     /// This function dynamically parses extension configurations from JSON, supporting
@@ -548,9 +561,9 @@ impl Extensions {
 
         if written_extension.or(resolved_extension).is_some() {
             if let Some(extension) = written_extension {
-                if self.should_skip_extension(extension, require_extension, config) {
+                if config.should_skip_extension(extension, require_extension) {
                     return;
-                };
+                }
                 if config.should_extension_be_omitted(extension, require_extension) {
                     ctx.diagnostic(extension_should_not_be_included_in_diagnostic(
                         span, extension, is_import,
@@ -559,9 +572,9 @@ impl Extensions {
             }
 
             if let Some(extension) = resolved_extension {
-                if self.should_skip_extension(extension, require_extension, config) {
+                if config.should_skip_extension(extension, require_extension) {
                     return;
-                };
+                }
                 if config.is_extension_missing(extension, require_extension) {
                     ctx.diagnostic(extension_missing_diagnostic(span, is_import));
                 }
@@ -574,20 +587,6 @@ impl Extensions {
             }
         }
         // Note: IgnorePackages is converted to Always in build_config, so no branch needed
-    }
-
-    fn should_skip_extension(
-        &self,
-        ext_str: &str,
-        require_extension: Option<ExtensionRule>,
-        config: &Box<ExtensionsConfig>,
-    ) -> bool {
-        // Skip validation for unconfigured extensions (prevents false positives)
-        // unless there's a global rule or it's a standard extension
-        // (cheapest checks first: is_none, matches!, then hash lookup)
-        require_extension.is_none()
-            && !ExtensionsConfig::is_standard_extension(ext_str)
-            && !config.has_rule(ext_str)
     }
 
     /// Unified import/require processing with all pre-validation checks.
