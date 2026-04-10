@@ -90,6 +90,7 @@ fn oom_instead_of_bump_pointer_overflow() {
     // This should panic.
     let new_ptr = bump.alloc_layout(layout);
     dbg!(new_ptr);
+    dbg!(bump.current_chunk_footer());
 }
 
 #[test]
