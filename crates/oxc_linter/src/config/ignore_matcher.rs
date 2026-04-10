@@ -103,7 +103,7 @@ mod tests {
     }
 
     #[test]
-    fn test_lint_file_outside_root_with_ignore_patterns() {
+    fn test_lint_file_outside_root() {
         let base_patterns = vec!["pattern".to_string()];
         let base_root = Path::new("/repo1");
 
