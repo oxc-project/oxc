@@ -24,6 +24,7 @@ const DIRECTIVES: &[&str] = &[
     "globals ",
     "exported",
     "prettier-ignore",
+    "biome-ignore",
     "oxfmt-ignore",
 ];
 
@@ -464,6 +465,10 @@ fn test() {
         ("// prettier-ignore-end", None),
         ("// oxfmt-ignore", None),
         ("/* oxfmt-ignore */", None),
+        ("// biome-ignore", None),
+        ("/* biome-ignore */", None),
+        ("// biome-ignore-end", None),
+        ("// biome-ignore-start", None),
         ("#!foo", None),
         ("#!foo", Some(serde_json::json!(["always"]))),
         ("#!Foo", Some(serde_json::json!(["never"]))),
@@ -545,6 +550,8 @@ fn test() {
         // Formatter directives with "always"
         ("// prettier-ignore", Some(serde_json::json!(["always"]))),
         ("/* prettier-ignore */", Some(serde_json::json!(["always"]))),
+        ("// biome-ignore", Some(serde_json::json!(["always"]))),
+        ("/* biome-ignore */", Some(serde_json::json!(["always"]))),
         ("// oxfmt-ignore", Some(serde_json::json!(["always"]))),
         ("/* oxfmt-ignore */", Some(serde_json::json!(["always"]))),
         ("//lowercase", Some(serde_json::json!(["never"]))),
