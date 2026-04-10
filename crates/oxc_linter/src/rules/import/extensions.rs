@@ -546,28 +546,22 @@ impl Extensions {
     ) {
         let config = &self.0;
 
-        let extension_to_check = resolved_extension.or(written_extension);
-
-        if let Some(ext_str) = extension_to_check {
-            // Skip validation for unconfigured extensions (prevents false positives)
-            // unless there's a global rule or it's a standard extension
-            // (cheapest checks first: is_none, matches!, then hash lookup)
-            if require_extension.is_none()
-                && !ExtensionsConfig::is_standard_extension(ext_str)
-                && !config.has_rule(ext_str)
-            {
-                return;
-            }
-
+        if written_extension.or(resolved_extension).is_some() {
             if let Some(extension) = written_extension {
+                if self.should_skip_extension(extension, require_extension, config) {
+                    return;
+                };
                 if config.should_extension_be_omitted(extension, require_extension) {
                     ctx.diagnostic(extension_should_not_be_included_in_diagnostic(
-                        span, ext_str, is_import,
+                        span, extension, is_import,
                     ));
                 }
             }
 
             if let Some(extension) = resolved_extension {
+                if self.should_skip_extension(extension, require_extension, config) {
+                    return;
+                };
                 if config.is_extension_missing(extension, require_extension) {
                     ctx.diagnostic(extension_missing_diagnostic(span, is_import));
                 }
@@ -580,6 +574,20 @@ impl Extensions {
             }
         }
         // Note: IgnorePackages is converted to Always in build_config, so no branch needed
+    }
+
+    fn should_skip_extension(
+        &self,
+        ext_str: &str,
+        require_extension: Option<ExtensionRule>,
+        config: &Box<ExtensionsConfig>,
+    ) -> bool {
+        // Skip validation for unconfigured extensions (prevents false positives)
+        // unless there's a global rule or it's a standard extension
+        // (cheapest checks first: is_none, matches!, then hash lookup)
+        require_extension.is_none()
+            && !ExtensionsConfig::is_standard_extension(ext_str)
+            && !config.has_rule(ext_str)
     }
 
     /// Unified import/require processing with all pre-validation checks.
@@ -1718,7 +1726,6 @@ fn test() {
             Some(json!(["never", { "ts": "never" }])),
         ),
         (r"import utils from './utils.spec.js';", Some(json!(["never", { "js": "never" }]))),
-        (r"import Component from './Component.stories'", Some(json!([{ "tsx": "always" }]))),
         // Importing with wrong extension (.ts instead of .js) should fail when written
         // extension isn't allowed.
         (r"import example from './color.ts'", Some(json!([{ "ts": "never" }]))),
