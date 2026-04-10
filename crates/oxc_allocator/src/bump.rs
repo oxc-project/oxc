@@ -292,7 +292,7 @@ pub struct Bump<const MIN_ALIGN: usize = 1> {
 #[repr(C)]
 #[repr(align(16))]
 #[derive(Debug)]
-struct ChunkFooter {
+pub struct ChunkFooter {
     // Pointer to the start of this chunk allocation. This footer is always at
     // the end of the chunk.
     data: NonNull<u8>,
@@ -2536,7 +2536,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
 
 /// Methods only available when `from_raw_parts` feature is enabled.
 /// These methods are only used by raw transfer.
-#[cfg(feature = "from_raw_parts")]
+// #[cfg(feature = "from_raw_parts")]
 impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// Construct a static-sized [`Bump`] from an existing memory allocation.
     ///
@@ -2634,6 +2634,12 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
         // SAFETY: Caller guarantees `Bump` has at least 1 allocated chunk, and `ptr` is valid.
         #[expect(clippy::unnecessary_safety_comment)]
         chunk_footer.ptr.set(ptr);
+    }
+
+    /// Get cursor pointer for this [`Bump`]'s current chunk.
+    pub fn current_chunk_footer(&self) -> &ChunkFooter {
+        // SAFETY: `current_chunk_footer` always points to a valid `ChunkFooter`
+        unsafe { self.current_chunk_footer.get().as_ref() }
     }
 
     /// Get pointer to end of the data region of this [`Bump`]'s current chunk

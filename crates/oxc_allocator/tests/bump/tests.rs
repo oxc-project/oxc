@@ -64,7 +64,6 @@ fn can_iterate_over_allocated_things() {
 }
 
 #[cfg(not(miri))] // Miri does not panic on OOM, the interpreter halts
-#[cfg(target_pointer_width = "64")] // TODO: Not sure why this test fails on 32-bit
 #[test]
 #[should_panic(expected = "out of memory")]
 fn oom_instead_of_bump_pointer_overflow() {
@@ -72,8 +71,12 @@ fn oom_instead_of_bump_pointer_overflow() {
     let x = bump.alloc(0_u8);
     let p = x as *mut u8 as usize;
 
+    dbg!(bump.current_chunk_footer());
+    dbg!(p);
+
     // A size guaranteed to overflow the bump pointer.
     let size = (isize::MAX as usize) - p + 1;
+    dbg!(size);
     let align = 1;
     let layout = match Layout::from_size_align(size, align) {
         Err(e) => {

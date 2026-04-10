@@ -129,7 +129,7 @@ jobs:
       - run: cross test --lib --bins --tests --all-features --target s390x-unknown-linux-gnu
 
   test-32bit:
-    if: ${{ github.ref_name == 'main' }}
+    #if: ${{ github.ref_name == 'main' }}
     name: Test 32-bit # armv7-unknown-linux-gnueabihf is a 32-bit target
     runs-on: namespace-profile-linux-x64-default
     steps:
@@ -143,7 +143,8 @@ jobs:
           tool: cross
       # `--lib --bins --tests` to skip doctests which are very slow to run via `cross`.
       # https://github.com/cross-rs/cross/issues/1703
-      - run: cross test --workspace --lib --bins --tests --all-features --exclude oxc_language_server --exclude oxc_linter --exclude oxlint --target armv7-unknown-linux-gnueabihf
+      # - run: cross test --workspace --lib --bins --tests --all-features --exclude oxc_language_server --exclude oxc_linter --exclude oxlint --target armv7-unknown-linux-gnueabihf
+      - run: cross test -p oxc_allocator --test bump oom_instead_of_bump_pointer_overflow --target armv7-unknown-linux-gnueabihf -- --nocapture
 
   test-wasm32-wasip1-threads:
     name: Test wasm32-wasip1-threads
