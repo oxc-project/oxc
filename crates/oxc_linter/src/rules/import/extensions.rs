@@ -278,20 +278,25 @@ impl ExtensionsConfig {
     ///
     /// Returns `true` if the import violates the configured extension rules.
     /// Per-extension rules override global rules (e.g., `{ "js": "never" }` overrides global "always").
-    pub fn should_flag_extension(
+    pub fn should_extension_be_omitted(
         &self,
         ext_str: &str,
-        extension_is_written: bool,
         require_extension: Option<ExtensionRule>,
     ) -> bool {
-        match (extension_is_written, require_extension) {
-            // Extension is written - check if it should be forbidden
-            (true, Some(ExtensionRule::Never)) => !self.is_always(ext_str),
-            (true, _) => self.is_never(ext_str),
+        match require_extension {
+            Some(ExtensionRule::Never) => !self.is_always(ext_str),
+            _ => self.is_never(ext_str),
+        }
+    }
 
-            // Extension is missing - check if it should be required
-            (false, Some(ExtensionRule::Always)) => !self.is_never(ext_str),
-            (false, _) => self.is_always(ext_str),
+    pub fn is_extension_missing(
+        &self,
+        ext_str: &str,
+        require_extension: Option<ExtensionRule>,
+    ) -> bool {
+        match require_extension {
+            Some(ExtensionRule::Always) => !self.is_never(ext_str),
+            _ => self.is_always(ext_str),
         }
     }
 
@@ -541,10 +546,7 @@ impl Extensions {
     ) {
         let config = &self.0;
 
-        // Start by checking whether written extension should be omitted. Fallback to
-        // resolved extension when there's no written extension and check whether it's
-        // required.
-        let extension_to_check = written_extension.or(resolved_extension);
+        let extension_to_check = resolved_extension.or(written_extension);
 
         if let Some(ext_str) = extension_to_check {
             // Skip validation for unconfigured extensions (prevents false positives)
@@ -557,13 +559,16 @@ impl Extensions {
                 return;
             }
 
-            if config.should_flag_extension(ext_str, written_extension.is_some(), require_extension)
-            {
-                if written_extension.is_some() {
+            if let Some(extension) = written_extension {
+                if config.should_extension_be_omitted(extension, require_extension) {
                     ctx.diagnostic(extension_should_not_be_included_in_diagnostic(
                         span, ext_str, is_import,
                     ));
-                } else {
+                }
+            }
+
+            if let Some(extension) = resolved_extension {
+                if config.is_extension_missing(extension, require_extension) {
                     ctx.diagnostic(extension_missing_diagnostic(span, is_import));
                 }
             }
@@ -1713,6 +1718,7 @@ fn test() {
             Some(json!(["never", { "ts": "never" }])),
         ),
         (r"import utils from './utils.spec.js';", Some(json!(["never", { "js": "never" }]))),
+        (r"import Component from './Component.stories'", Some(json!([{ "tsx": "always" }]))),
         // Importing with wrong extension (.ts instead of .js) should fail when written
         // extension isn't allowed.
         (r"import example from './color.ts'", Some(json!([{ "ts": "never" }]))),
