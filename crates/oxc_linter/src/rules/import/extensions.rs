@@ -550,8 +550,7 @@ impl Extensions {
     ) {
         let config = &self.0;
 
-        // Prefer resolved extension (actual file), fallback to written extension (import text)
-        let extension_to_check = resolved_extension.or(written_extension);
+        let extension_to_check = written_extension.or(resolved_extension);
 
         if let Some(ext_str) = extension_to_check {
             // Skip validation for unconfigured extensions (prevents false positives)
@@ -564,25 +563,13 @@ impl Extensions {
                 return;
             }
 
-            // Determine if the extension being checked is actually written in the import
-            // For files with multiple extensions (e.g., foo.stories.tsx), we need to check
-            // if the ACTUAL file extension (resolved) matches what's written in the import.
-            // If resolved is "tsx" but written is "stories", then tsx is NOT written.
-            let extension_is_written = if let Some(resolved) = resolved_extension {
-                // If we have a resolved extension, check if it matches the written extension
-                written_extension == Some(resolved)
-            } else {
-                // Otherwise, just check if there's any written extension
-                written_extension.is_some()
-            };
-
             if config.should_flag_extension(
                 ext_str,
-                extension_is_written,
+                written_extension.is_some(),
                 resolved_extension.is_some(),
                 require_extension,
             ) {
-                if extension_is_written {
+                if written_extension.is_some() {
                     ctx.diagnostic(extension_should_not_be_included_in_diagnostic(
                         span, ext_str, is_import,
                     ));
@@ -1735,6 +1722,8 @@ fn test() {
             r"import Component from './Component.test.ts';",
             Some(json!(["never", { "ts": "never" }])),
         ),
+        // Importing with wrong extension (.ts instead of .js)
+        (r"import bar from './color.ts'", Some(json!([{ "ts": "never" }]))),
         (r"import utils from './utils.spec.js';", Some(json!(["never", { "js": "never" }]))),
         // TODO: This should probably fail? Needs further investigation.
         // (
