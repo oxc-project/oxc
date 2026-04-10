@@ -551,7 +551,7 @@ impl Extensions {
         let config = &self.0;
 
         // Start by checking whether written extension should be omitted. Fallback to
-        // resolved extension when there's no written extension and check whether it's 
+        // resolved extension when there's no written extension and check whether it's
         // required.
         let extension_to_check = written_extension.or(resolved_extension);
 
