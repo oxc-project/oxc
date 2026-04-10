@@ -560,11 +560,8 @@ impl Extensions {
                 return;
             }
 
-            if config.should_flag_extension(
-                ext_str,
-                written_extension.is_some(),
-                require_extension,
-            ) {
+            if config.should_flag_extension(ext_str, written_extension.is_some(), require_extension)
+            {
                 if written_extension.is_some() {
                     ctx.diagnostic(extension_should_not_be_included_in_diagnostic(
                         span, ext_str, is_import,
