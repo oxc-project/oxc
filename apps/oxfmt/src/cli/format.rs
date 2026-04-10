@@ -134,16 +134,7 @@ impl CliRunner {
             config_resolver.config_dir(),
             &ignore_patterns,
         ) {
-            Ok(Some(walker)) => walker,
-            // All target paths are ignored
-            Ok(None) => {
-                if runtime_options.no_error_on_unmatched_pattern {
-                    utils::print_and_flush(stderr, "No files found matching the given patterns.\n");
-                    return CliRunResult::None;
-                }
-                utils::print_and_flush(stderr, "Expected at least one target file\n");
-                return CliRunResult::NoFilesFound;
-            }
+            Ok(walker) => walker,
             Err(err) => {
                 utils::print_and_flush(
                     stderr,
@@ -172,12 +163,11 @@ impl CliRunner {
         let source_formatter = source_formatter.with_external_formatter(self.external_formatter);
 
         let no_config = config_resolver.config_dir().is_none() && editorconfig_path.is_none();
-        let format_mode_clone = format_mode.clone();
 
         // Spawn a thread to run formatting service with streaming entries
         rayon::spawn(move || {
             let format_service =
-                FormatService::new(cwd, format_mode_clone, source_formatter, config_resolver);
+                FormatService::new(cwd, format_mode, source_formatter, config_resolver);
             format_service.run_streaming(rx_entry, &tx_error, &tx_success);
         });
 
@@ -232,7 +222,10 @@ impl CliRunner {
                 return CliRunResult::None;
             }
 
-            utils::print_and_flush(stderr, "Expected at least one target file\n");
+            utils::print_and_flush(
+                stderr,
+                "Expected at least one target file. All matched files may have been excluded by ignore rules.\n",
+            );
             return CliRunResult::NoFilesFound;
         }
 

@@ -95,6 +95,15 @@ impl LintService {
         self.runtime.run_source(file_system, paths)
     }
 
+    pub fn collect_parse_diagnostics(
+        &self,
+        file_system: &(dyn RuntimeFileSystem + Sync + Send),
+        paths: Vec<Arc<OsStr>>,
+        tx_error: &DiagnosticSender,
+    ) {
+        self.runtime.collect_parse_diagnostics(file_system, paths, tx_error);
+    }
+
     /// For tests
     #[cfg(test)]
     pub(crate) fn run_test_source(

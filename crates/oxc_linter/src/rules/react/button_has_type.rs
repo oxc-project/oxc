@@ -293,6 +293,9 @@ fn test() {
 			      "#,
             None,
         ),
+        // Issue #20938: document.createElement('button') / document["createElement"]("button") should not raise an error because it object callee is from document
+        (r#"document.createElement("button");"#, None),
+        (r#"document["createElement"]("button");"#, None),
     ];
 
     let fail = vec![

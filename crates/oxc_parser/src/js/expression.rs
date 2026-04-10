@@ -3,7 +3,8 @@ use oxc_allocator::{Box, TakeIn, Vec};
 use oxc_ast::ast::*;
 #[cfg(feature = "regular_expression")]
 use oxc_regular_expression::ast::Pattern;
-use oxc_span::{GetSpan, Ident, Span, Str};
+use oxc_span::{GetSpan, Span};
+use oxc_str::{Ident, Str};
 use oxc_syntax::{
     number::{BigintBase, NumberBase},
     precedence::Precedence,

@@ -3,7 +3,7 @@
 use oxc_allocator::{GetAddress, UnstableAddress};
 use oxc_ast::{AstKind, ast::*};
 use oxc_ecmascript::{BoundNames, IsSimpleParameterList};
-use oxc_span::Ident;
+use oxc_str::Ident;
 use oxc_syntax::{node::NodeId, scope::ScopeFlags, symbol::SymbolFlags};
 
 use crate::{SemanticBuilder, checker::is_function_decl_part_of_if_statement};
@@ -64,7 +64,7 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
 
                 for &scope_id in &var_scope_ids {
                     if let Some(symbol_id) =
-                        builder.check_redeclaration(scope_id, span, name, excludes, true)
+                        builder.check_redeclaration(scope_id, span, name, excludes)
                     {
                         builder.add_redeclare_variable(symbol_id, includes, span);
                         declared_symbol_id = Some(symbol_id);

@@ -13,7 +13,8 @@ use oxc_allocator::{Allocator, CloneIn, Vec as ArenaVec};
 use oxc_ast::{AstBuilder, NONE, ast::*};
 use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_span::{GetSpan, IdentHashSet, SPAN, SourceType, Str};
+use oxc_span::{GetSpan, SPAN, SourceType};
+use oxc_str::{IdentHashSet, Str};
 
 use crate::{diagnostics::function_with_assigning_properties, scope::ScopeTree};
 

@@ -93,7 +93,8 @@ use oxc_allocator::{
 };
 use oxc_ast::{AstBuilder, NONE, ast::*};
 use oxc_ecmascript::PropName;
-use oxc_span::{Ident, SPAN, Span, Str};
+use oxc_span::{SPAN, Span};
+use oxc_str::{Ident, Str};
 use oxc_syntax::{
     identifier::{is_identifier_name, is_white_space_single_line},
     keyword::is_reserved_keyword,

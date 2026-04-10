@@ -1107,10 +1107,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSEnumDeclaration<'a>> {
 impl<'a> FormatWrite<'a> for AstNode<'a, TSEnumBody<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         if self.members().is_empty() {
-            write!(
-                f,
-                group(&format_args!(format_dangling_comments(self.span()), soft_line_break()))
-            );
+            write!(f, format_dangling_comments(self.span()).with_block_indent());
         } else {
             write!(f, block_indent(self.members()));
         }
@@ -1185,7 +1182,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSParenthesizedType<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeOperator<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
-        write!(f, [self.operator().to_str(), hard_space(), self.type_annotation()]);
+        write!(f, [self.operator().to_str(), space(), self.type_annotation()]);
     }
 }
 

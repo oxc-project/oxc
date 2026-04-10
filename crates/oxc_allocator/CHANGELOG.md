@@ -4,6 +4,23 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.124.0] - 2026-04-06
+
+### 🐛 Bug Fixes
+
+- fc7f60c allocator: Revert changes to `get_current_chunk_footer_field_offset` (#20964) (overlookmotel)
+
+### ⚡ Performance
+
+- 91cf105 allocator: Increase initial chunk size from 512B to 16KB (#20968) (overlookmotel)
+- cbc0c21 allocator: Add `#[cold]` to to error handling functions (#20967) (overlookmotel)
+
+### 📚 Documentation
+
+- f5e228f allocator: Fix typo in comment (#20972) (overlookmotel)
+- 7159d51 allocator: Improve doc comment examples for `vec2::Vec` (#20969) (overlookmotel)
+- b1da750 allocator, data_structures: Correct comments (#20966) (overlookmotel)
+
 ## [0.123.0] - 2026-03-30
 
 ### ⚡ Performance

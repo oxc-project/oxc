@@ -11,7 +11,8 @@ use oxc_ast::ast::*;
 use oxc_data_structures::{code_buffer::CodeBuffer, stack::Stack};
 use oxc_index::IndexVec;
 use oxc_semantic::Scoping;
-use oxc_span::{CompactStr, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
+use oxc_str::CompactStr;
 use oxc_syntax::{
     class::ClassId,
     identifier::{is_identifier_part, is_identifier_part_ascii},

@@ -10,7 +10,7 @@ use num_bigint::BigInt;
 use num_traits::Num;
 
 use oxc_allocator::Allocator;
-use oxc_span::{Str, format_str};
+use oxc_str::{Str, format_str};
 
 use super::kind::Kind;
 

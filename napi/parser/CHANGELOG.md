@@ -4,6 +4,19 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.124.0] - 2026-04-06
+
+### ⚡ Performance
+
+- fb52383 napi/parser, linter/plugins: Clear buffers and source texts earlier (#21025) (overlookmotel)
+- 3b7dec4 napi/parser, linter/plugins: Use `utf8Slice` for decoding UTF-8 strings (#21022) (overlookmotel)
+- 012c924 napi/parser, linter/plugins: Speed up decoding strings in raw transfer (#21021) (overlookmotel)
+- 55e1e9b napi/parser, linter/plugins: Initialize vars as 0 (#21020) (overlookmotel)
+- c25ef02 napi/parser, linter/plugins: Simplify branch condition in `deserializeStr` (#21019) (overlookmotel)
+- 9f494c3 napi/parser, linter/plugins: Raw transfer use `String.fromCharCode` in string decoding (#21018) (overlookmotel)
+- 0503a78 napi/parser, linter/plugins: Faster deserialization of `raw` fields (#20923) (overlookmotel)
+- a24f75e napi/parser: Optimize string deserialization for non-ASCII sources (#20834) (Joshua Tuddenham)
+
 ## [0.122.0] - 2026-03-23
 
 ### ⚡ Performance

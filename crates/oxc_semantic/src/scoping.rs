@@ -5,7 +5,9 @@ use self_cell::self_cell;
 
 use oxc_allocator::{Allocator, CloneIn, Vec as ArenaVec};
 use oxc_index::IndexVec;
-use oxc_span::{ArenaIdentHashMap, Ident, Span};
+use oxc_span::Span;
+use oxc_str::{ArenaIdentHashMap, Ident};
+use oxc_syntax::constant_value::ConstantValue;
 use oxc_syntax::{
     node::NodeId,
     reference::{Reference, ReferenceId},
@@ -79,6 +81,8 @@ multi_index_vec! {
 ///
 /// ## Scope Tree
 ///
+use crate::ts_enum::EnumData;
+
 /// The scope tree stores lexical scopes created by a program, and all the
 /// variable bindings each scope creates.
 ///
@@ -93,6 +97,9 @@ pub struct Scoping {
 
     /// Function or Variable Symbol IDs that are marked with `@__NO_SIDE_EFFECTS__`.
     pub(crate) no_side_effects: FxHashSet<SymbolId>,
+
+    /// Pre-computed enum member values and scope mappings.
+    pub(crate) enum_data: EnumData,
 
     /* Scope Tree - single allocation for all scope-indexed flat fields */
     scope_table: ScopeTable,
@@ -112,6 +119,7 @@ impl Default for Scoping {
             symbol_table: SymbolTable::new(),
             references: IndexVec::new(),
             no_side_effects: FxHashSet::default(),
+            enum_data: EnumData::default(),
             scope_table: ScopeTable::new(),
             cell: ScopingCell::new(Allocator::default(), |allocator| ScopingInner {
                 symbol_names: ArenaVec::new_in(allocator),
@@ -565,6 +573,20 @@ impl Scoping {
         });
     }
 
+    /// Retain only resolved references that are in the given set.
+    ///
+    /// This is an O(n) batch operation across all symbols, much more efficient than
+    /// calling `delete_resolved_reference` repeatedly when many references from the
+    /// same symbol need to be removed (which would be O(n²) due to the linear scan
+    /// in each deletion).
+    pub fn retain_resolved_references(&mut self, live_references: &FxHashSet<ReferenceId>) {
+        self.cell.with_dependent_mut(|_allocator, cell| {
+            for reference_ids in &mut cell.resolved_references {
+                reference_ids.retain(|id| live_references.contains(id));
+            }
+        });
+    }
+
     /// Reserve additional capacity for symbols, references, and scopes.
     pub fn reserve(
         &mut self,
@@ -588,6 +610,28 @@ impl Scoping {
     /// Symbols marked with `@__NO_SIDE_EFFECTS__`.
     pub fn no_side_effects(&self) -> &FxHashSet<SymbolId> {
         &self.no_side_effects
+    }
+
+    /// Get the computed constant value for an enum member symbol.
+    pub fn get_enum_member_value(&self, symbol_id: SymbolId) -> Option<&ConstantValue> {
+        self.enum_data.get_member_value(symbol_id)
+    }
+
+    /// Set a computed constant value for an enum member symbol.
+    pub(crate) fn set_enum_member_value(&mut self, symbol_id: SymbolId, value: ConstantValue) {
+        self.enum_data.set_member_value(symbol_id, value);
+    }
+
+    /// Get the body scopes for an enum declaration symbol.
+    /// Returns multiple scopes for merged enum declarations.
+    pub fn get_enum_body_scopes(&self, symbol_id: SymbolId) -> Option<&[ScopeId]> {
+        self.enum_data.get_body_scopes(symbol_id)
+    }
+
+    /// Add a body scope for an enum declaration symbol.
+    /// Appends to the list (supports merged enum declarations).
+    pub(crate) fn add_enum_body_scope(&mut self, symbol_id: SymbolId, scope_id: ScopeId) {
+        self.enum_data.add_body_scope(symbol_id, scope_id);
     }
 }
 
@@ -918,6 +962,7 @@ impl Scoping {
             symbol_table: self.symbol_table.clone(),
             references: self.references.clone(),
             no_side_effects: self.no_side_effects.clone(),
+            enum_data: self.enum_data.clone(),
             scope_table: self.scope_table.clone(),
             cell: {
                 let allocator = Allocator::with_capacity(used_bytes);

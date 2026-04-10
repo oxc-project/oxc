@@ -1,4 +1,4 @@
-use oxc_span::Str;
+use oxc_str::Str;
 use rustc_hash::FxHashSet;
 
 use crate::parser::reader::Reader;

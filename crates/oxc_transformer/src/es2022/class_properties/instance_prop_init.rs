@@ -8,7 +8,7 @@ use rustc_hash::FxHashMap;
 use oxc_ast::ast::*;
 use oxc_ast_visit::Visit;
 use oxc_data_structures::stack::Stack;
-use oxc_span::Ident;
+use oxc_str::Ident;
 use oxc_syntax::{
     scope::{ScopeFlags, ScopeId},
     symbol::SymbolId,

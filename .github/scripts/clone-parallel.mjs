@@ -10,12 +10,12 @@ import { existsSync, mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 
 // Submodule commit SHAs - updated automatically by .github/workflows/update_submodules.yml
-// NOTE: Prettier version is now pinned to `v3.8.0` (not updated by workflow above), Update manually as needed
-const TEST262_SHA = "5c8206929d81b2d3d727ca6aac56c18358c8d790";
-const BABEL_SHA = "0124e7c78434e604d82b3a800f1b70b6750cc965";
-const TYPESCRIPT_SHA = "4f7b4175fe38424fffebb0a20355633bc077d52c";
-const PRETTIER_SHA = "812a4d0071270f61a7aa549d625b618be7e09d71";
-const ESTREE_CONFORMANCE_SHA = "dc0f79bf3df93139dcc242281a9308a17e3956a2";
+// NOTE: Prettier version is now pinned to `v3.8.2` (not updated by workflow above), Update manually as needed
+const TEST262_SHA = "ff0d1611d3d5084dabf7b6887c45a7321ec1b531";
+const BABEL_SHA = "91b4ce32d2f992ada4dd9bf5ed87bfaa9e7c5fe0";
+const TYPESCRIPT_SHA = "7b8cb3bdf82f400642b73173f941335775d6f730";
+const PRETTIER_SHA = "b31557cf331a02acf83e7e29d1001b070189a0d9";
+const ESTREE_CONFORMANCE_SHA = "d5e48e748f9a14e46e18a8ad25ba5ac7ba78307c";
 const NODE_COMPAT_TABLE_SHA = "499beb6f1daa36f10c26b85a7f3ec3b3448ded23";
 
 const repoRoot = join(import.meta.dirname, "..", "..");

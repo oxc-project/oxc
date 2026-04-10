@@ -1076,7 +1076,8 @@ fn should_skip_diagnostic(
     } else {
         debug_assert!(
             false,
-            "disable_directives_map should have an entry for every file we linted"
+            "missing disable_directives_map entry for {}; expected directives to be collected for every linted file",
+            path.display()
         );
         false
     }

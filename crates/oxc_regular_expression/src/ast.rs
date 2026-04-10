@@ -2,7 +2,8 @@ use bitflags::bitflags;
 
 use oxc_allocator::{Box, CloneIn, GetAddress, Vec};
 use oxc_ast_macros::ast;
-use oxc_span::{ContentEq, Span, Str};
+use oxc_span::{ContentEq, Span};
+use oxc_str::Str;
 
 /// The root of the `PatternParser` result.
 #[ast]

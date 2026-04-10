@@ -9,7 +9,8 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
+use oxc_str::CompactStr;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -55,8 +56,10 @@ pub struct JsxNoTargetBlank {
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize, Serialize)]
 #[serde(rename_all = "kebab-case")]
 enum EnforceDynamicLinksEnum {
+    /// Always enforce dynamic links.
     #[default]
     Always,
+    /// Always enforce static links.
     Never,
 }
 

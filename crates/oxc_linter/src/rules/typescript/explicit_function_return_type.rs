@@ -8,7 +8,8 @@ use oxc_ast::{
 use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
+use oxc_str::CompactStr;
 use oxc_syntax::operator::UnaryOperator;
 use rustc_hash::FxHashSet;
 use schemars::JsonSchema;

@@ -8,7 +8,8 @@ use oxc_ast_visit::{VisitMut, walk_mut};
 use oxc_data_structures::stack::NonEmptyStack;
 use oxc_ecmascript::{ToInt32, ToUint32};
 use oxc_semantic::{ScopeFlags, ScopeId};
-use oxc_span::{Ident, IdentHashMap, SPAN, Span, Str};
+use oxc_span::{SPAN, Span};
+use oxc_str::{Ident, IdentHashMap, Str};
 use oxc_syntax::{
     number::{NumberBase, ToJsString},
     operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator},

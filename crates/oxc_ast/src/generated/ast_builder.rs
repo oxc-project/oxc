@@ -14,7 +14,7 @@ use oxc_syntax::{
     symbol::SymbolId,
 };
 
-use oxc_span::{Ident, Str};
+use oxc_str::{Ident, Str};
 
 use crate::{AstBuilder, ast::*};
 

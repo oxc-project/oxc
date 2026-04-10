@@ -5,7 +5,8 @@ use std::mem::transmute;
 
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
-use oxc_span::{GetSpan, Ident};
+use oxc_span::GetSpan;
+use oxc_str::Ident;
 use oxc_syntax::node::NodeId;
 
 use crate::ast_nodes::AstNode;

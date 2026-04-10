@@ -1,9 +1,9 @@
-commit: 0124e7c7
+commit: 91b4ce32
 
 parser_babel Summary:
 AST Parsed     : 2232/2232 (100.00%)
 Positive Passed: 2218/2232 (99.37%)
-Negative Passed: 1689/1705 (99.06%)
+Negative Passed: 1691/1709 (98.95%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/unparenthesized-assert-and-assign/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/unparenthesized-type-assertion-and-assign/input.ts
@@ -30,9 +30,13 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/ty
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/equals-require-in-script/input.ts
 
+Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/invalid-within-single-statement-context/input.ts
+
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/module-identifier-invalid/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/keyword-qualified-type-2/input.ts
+
+Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-alias/invalid-within-single-statement-context/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/const-type-parameters-invalid/input.ts
 
@@ -139,14 +143,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-override/input.ts
-
-  × TS(1183): An implementation cannot be declared in ambient contexts.
-    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-override/input.ts:17:19]
- 16 │ declare class DeclaredClass extends BaseClass {
- 17 │   override test() {}
-    ·                   ▲
- 18 │ }
-    ╰────
 
   × Identifier `show` has already been declared
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-override/input.ts:2:12]
@@ -12269,7 +12265,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Try inserting a semicolon here
 
-  × A rest parameter cannot be optional
+  × TS(1047): A rest parameter cannot be optional
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/arrow-function/async-rest-optional-parameter/input.ts:1:14]
  1 │ async(...args?: any[]) : any => {}
    ·              ─
@@ -12510,6 +12506,38 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
     ·        ─
  15 │ }
     ╰────
+
+  × TS(2369): A parameter property is only allowed in a constructor implementation.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/constructor-overload-modifiers-invalid/input.ts:2:17]
+ 1 │ class C {
+ 2 │     constructor(public x: number, private y: number);
+   ·                 ────────────────
+ 3 │     constructor(protected x: string, readonly y: string);
+   ╰────
+
+  × TS(2369): A parameter property is only allowed in a constructor implementation.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/constructor-overload-modifiers-invalid/input.ts:2:35]
+ 1 │ class C {
+ 2 │     constructor(public x: number, private y: number);
+   ·                                   ─────────────────
+ 3 │     constructor(protected x: string, readonly y: string);
+   ╰────
+
+  × TS(2369): A parameter property is only allowed in a constructor implementation.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/constructor-overload-modifiers-invalid/input.ts:3:17]
+ 2 │     constructor(public x: number, private y: number);
+ 3 │     constructor(protected x: string, readonly y: string);
+   ·                 ───────────────────
+ 4 │     constructor(x: any, y: any) {}
+   ╰────
+
+  × TS(2369): A parameter property is only allowed in a constructor implementation.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/constructor-overload-modifiers-invalid/input.ts:3:38]
+ 2 │     constructor(public x: number, private y: number);
+ 3 │     constructor(protected x: string, readonly y: string);
+   ·                                      ──────────────────
+ 4 │     constructor(x: any, y: any) {}
+   ╰────
 
   × TS(1029): 'override' modifier must precede 'readonly' modifier.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/constructor-with-invalid-order-modifiers-1/input.ts:2:24]
@@ -13317,6 +13345,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  5 │   await using B, C;
    ·               ─
  6 │ }
+   ╰────
+
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-namespace-class-method-implementation/input.ts:3:14]
+ 2 │   class C {
+ 3 │     method() {}
+   ·              ▲
+ 4 │   }
    ╰────
 
   × TS(1545): 'using' declarations are not allowed in ambient contexts.

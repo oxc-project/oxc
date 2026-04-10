@@ -1,6 +1,7 @@
 use oxc_allocator::{Box, Vec};
 use oxc_ast::ast::*;
-use oxc_span::{GetSpan, Span, Str};
+use oxc_span::{GetSpan, Span};
+use oxc_str::Str;
 
 use super::{VariableDeclarationParent, grammar::CoverGrammar};
 use crate::{

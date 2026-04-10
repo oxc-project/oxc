@@ -28,18 +28,15 @@
     ],
     "unicode-bom": ["error", "never"],
     "typescript/consistent-indexed-object-style": ["error", "record"],
-    "typescript/ban-ts-comment": ["error", { "ts-expect-error": "allow-with-description" }]
+    "typescript/ban-ts-comment": ["error", { "ts-expect-error": "allow-with-description" }],
+    "vitest/require-mock-type-parameters": "off",
+    "vitest/prefer-snapshot-hint": "off"
   },
   "overrides": [
     {
       "files": ["tasks/e2e/test/*.test.ts"],
       "rules": {
-        "vitest/valid-title": [
-          "error",
-          {
-            "typecheck": true
-          }
-        ]
+        "vitest/valid-title": ["off"]
       }
     },
     {

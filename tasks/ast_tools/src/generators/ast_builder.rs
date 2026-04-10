@@ -91,7 +91,7 @@ impl Generator for AstBuilderGenerator {
             };
 
             ///@@line_break
-            use oxc_span::{Ident, Str};
+            use oxc_str::{Ident, Str};
 
             ///@@line_break
             use crate::{AstBuilder, ast::*};

@@ -1,6 +1,6 @@
 {
   "name": "oxfmt",
-  "version": "0.43.0",
+  "version": "0.44.0",
   "description": "Formatter for the JavaScript Oxidation Compiler",
   "keywords": [
     "formatter",
@@ -34,6 +34,13 @@
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
   "dependencies": {
     "tinypool": "2.1.0"
   },

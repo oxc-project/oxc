@@ -21,9 +21,25 @@ use crate::{LintContext, OxlintSettings};
 pub fn is_create_element_call(call_expr: &CallExpression) -> bool {
     match &call_expr.callee {
         Expression::StaticMemberExpression(member_expr) => {
+            if member_expr
+                .object
+                .get_identifier_reference()
+                .is_some_and(|object_caller| object_caller.name == "document")
+            {
+                return false;
+            }
+
             member_expr.property.name == "createElement"
         }
         Expression::ComputedMemberExpression(member_expr) => {
+            if member_expr
+                .object
+                .get_identifier_reference()
+                .is_some_and(|object_caller| object_caller.name == "document")
+            {
+                return false;
+            }
+
             member_expr.static_property_name().is_some_and(|name| name == "createElement")
         }
         Expression::Identifier(ident) => ident.name == "createElement",
