@@ -1,8 +1,8 @@
-commit: 4f7b4175
+commit: 7b8cb3bd
 
 parser_typescript Summary:
-AST Parsed     : 9828/9831 (99.97%)
-Positive Passed: 9817/9831 (99.86%)
+AST Parsed     : 9829/9832 (99.97%)
+Positive Passed: 9818/9832 (99.86%)
 Negative Passed: 1534/2587 (59.30%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration3.ts
 
@@ -6481,7 +6481,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╰────
   help: Try inserting a semicolon here
 
-  × A rest parameter cannot be optional
+  × TS(1047): A rest parameter cannot be optional
    ╭─[typescript/tests/cases/compiler/fatarrowfunctionsOptionalArgsErrors1.ts:2:8]
  1 │ (arg1?, arg2) => 101;
  2 │ (...arg?) => 102;
@@ -8696,7 +8696,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  19 │ var t4 =
     ╰────
 
-  × A rest parameter cannot be optional
+  × TS(1047): A rest parameter cannot be optional
     ╭─[typescript/tests/cases/compiler/noCrashOnMixin2.ts:11:40]
  10 │ 
  11 │ type Constructor<T = {}> = new (...args?: any[]) => T;
@@ -10517,7 +10517,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·                  ─
    ╰────
 
-  × A rest parameter cannot be optional
+  × TS(1047): A rest parameter cannot be optional
    ╭─[typescript/tests/cases/compiler/restParamAsOptional.ts:1:16]
  1 │ function f(...x?) { }
    ·                ─
@@ -17319,7 +17319,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  8 │ a0([1, 2, [["world"]], "string"]);  // Error
    ╰────
 
-  × A rest parameter cannot be optional
+  × TS(1047): A rest parameter cannot be optional
     ╭─[typescript/tests/cases/conformance/es6/destructuring/destructuringParameterDeclaration4.ts:14:17]
  13 │ function a2(...a: someArray) { }  // Error, rest parameter must be array type
  14 │ function a3(...b?) { }            // Error, can't be optional
@@ -24174,7 +24174,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │ }
    ╰────
 
-  × A rest parameter cannot be optional
+  × TS(1047): A rest parameter cannot be optional
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ParameterLists/parserParameterList11.ts:1:8]
  1 │ (...arg?) => 102;
    ·        ─
@@ -24271,7 +24271,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  5 │ }
    ╰────
 
-  × A rest parameter cannot be optional
+  × TS(1047): A rest parameter cannot be optional
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ParameterLists/parserParameterList9.ts:2:14]
  1 │ class C {
  2 │    foo(...bar?) { }

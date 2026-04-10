@@ -11,7 +11,8 @@ use oxc_allocator::{Allocator, BitSet, HashSet, Vec};
 use oxc_ast::ast::{Declaration, Program, Statement};
 use oxc_data_structures::inline_string::InlineString;
 use oxc_semantic::{AstNodes, Reference, Scoping, Semantic, SemanticBuilder, SymbolId};
-use oxc_span::{CompactStr, Ident, SourceType, Str};
+use oxc_span::SourceType;
+use oxc_str::{CompactStr, Ident, Str};
 
 pub(crate) mod base54;
 mod keep_names;

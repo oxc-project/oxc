@@ -154,3 +154,39 @@ source: crates/oxc_linter/src/tester.rs
  3 │           ), []);
    ╰────
   help: Use a unique data-dependent key to avoid unnecessary rerenders
+
+  ⚠ eslint-plugin-react(no-array-index-key): Usage of Array index in keys is not allowed
+   ╭─[no_array_index_key.tsx:2:20]
+ 1 │ things.map((thing, index) => (
+ 2 │             <Hello key={index.toString()} />
+   ·                    ──────────────────────
+ 3 │           ));
+   ╰────
+  help: Use a unique data-dependent key to avoid unnecessary rerenders
+
+  ⚠ eslint-plugin-react(no-array-index-key): Usage of Array index in keys is not allowed
+   ╭─[no_array_index_key.tsx:2:20]
+ 1 │ things.map((thing, index) => (
+ 2 │             <Hello key={String(index)} />
+   ·                    ───────────────────
+ 3 │           ));
+   ╰────
+  help: Use a unique data-dependent key to avoid unnecessary rerenders
+
+  ⚠ eslint-plugin-react(no-array-index-key): Usage of Array index in keys is not allowed
+   ╭─[no_array_index_key.tsx:2:41]
+ 1 │ things.map((thing, index) => (
+ 2 │             React.cloneElement(thing, { key: index.toString() })
+   ·                                         ─────────────────────
+ 3 │           ));
+   ╰────
+  help: Use a unique data-dependent key to avoid unnecessary rerenders
+
+  ⚠ eslint-plugin-react(no-array-index-key): Usage of Array index in keys is not allowed
+   ╭─[no_array_index_key.tsx:2:41]
+ 1 │ things.map((thing, index) => (
+ 2 │             React.cloneElement(thing, { key: String(index) })
+   ·                                         ──────────────────
+ 3 │           ));
+   ╰────
+  help: Use a unique data-dependent key to avoid unnecessary rerenders

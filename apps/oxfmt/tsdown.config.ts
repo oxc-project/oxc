@@ -12,6 +12,7 @@ export default defineConfig({
   outDir: "dist",
   shims: false,
   fixedExtension: false,
+  define: { "import.meta.vitest": "undefined" },
   deps: {
     // Optional peer plugins that `prettier-plugin-tailwindcss` tries to dynamic import.
     // They are not installed and not needed for us,

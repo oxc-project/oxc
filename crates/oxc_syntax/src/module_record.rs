@@ -3,7 +3,8 @@
 use oxc_allocator::{Allocator, HashMap, Vec};
 use oxc_ast_macros::ast;
 use oxc_estree::ESTree;
-use oxc_span::{Span, Str};
+use oxc_span::Span;
+use oxc_str::Str;
 
 /// ESM Module Record
 ///

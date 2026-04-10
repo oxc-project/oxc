@@ -1,7 +1,8 @@
 use std::borrow::Cow;
 
 use oxc_allocator::{Allocator, AllocatorAccessor, Box, FromIn, IntoIn, Vec};
-use oxc_span::{Ident, SPAN, Span, Str};
+use oxc_span::{SPAN, Span};
+use oxc_str::{Ident, Str};
 use oxc_syntax::{
     comment_node::CommentNodeId, number::NumberBase, operator::UnaryOperator, scope::ScopeId,
 };

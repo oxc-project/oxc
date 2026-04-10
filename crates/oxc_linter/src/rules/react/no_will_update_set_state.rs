@@ -23,8 +23,10 @@ fn no_will_update_set_state_diagnostic(span: Span) -> OxcDiagnostic {
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "kebab-case")]
 pub enum NoWillUpdateSetStateConfig {
+    /// Forbids any call to `this.setState` in `componentWillUpdate` outside of functions.
     #[default]
     Allowed,
+    /// Makes this rule more strict by disallowing calls to `this.setState`` even within functions.
     DisallowInFunc,
 }
 

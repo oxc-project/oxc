@@ -24,7 +24,8 @@ use oxc_diagnostics::{DiagnosticSender, DiagnosticService, Error, OxcDiagnostic}
 use oxc_parser::{ParseOptions, Parser, Token, config::RuntimeParserConfig};
 use oxc_resolver::Resolver;
 use oxc_semantic::{Semantic, SemanticBuilder};
-use oxc_span::{CompactStr, SourceType, VALID_EXTENSIONS};
+use oxc_span::{SourceType, VALID_EXTENSIONS};
+use oxc_str::CompactStr;
 
 use crate::{
     Fixer, Linter, Message, PossibleFixes,
@@ -785,6 +786,58 @@ impl Runtime {
         });
 
         messages.into_inner().unwrap()
+    }
+
+    pub(super) fn collect_parse_diagnostics(
+        &self,
+        file_system: &(dyn RuntimeFileSystem + Sync + Send),
+        paths: Vec<Arc<OsStr>>,
+        tx_error: &DiagnosticSender,
+    ) {
+        self.modules_by_path.pin().reserve(paths.len());
+        let paths_set: IndexSet<Arc<OsStr>, FxBuildHasher> = paths.into_iter().collect();
+
+        rayon::scope(|scope| {
+            self.resolve_modules(
+                file_system,
+                &paths_set,
+                scope,
+                true,
+                Some(tx_error),
+                |me, mut module_to_lint| {
+                    module_to_lint.content.with_dependent_mut(
+                        |_allocator_guard,
+                         ModuleContentDependent { source_text, section_contents }| {
+                            assert_eq!(
+                                module_to_lint.section_module_records.len(),
+                                section_contents.len()
+                            );
+
+                            for (record_result, _section) in module_to_lint
+                                .section_module_records
+                                .into_iter()
+                                .zip(section_contents.drain(..))
+                            {
+                                match record_result {
+                                    Ok(_) => {}
+                                    Err(diagnostics) => {
+                                        if !diagnostics.is_empty() {
+                                            let wrapped = DiagnosticService::wrap_diagnostics(
+                                                &me.cwd,
+                                                Path::new(&module_to_lint.path),
+                                                source_text,
+                                                diagnostics,
+                                            );
+                                            tx_error.send(wrapped).unwrap();
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                    );
+                },
+            );
+        });
     }
 
     #[cfg(test)]

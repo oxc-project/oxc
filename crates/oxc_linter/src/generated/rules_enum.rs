@@ -111,6 +111,7 @@ pub use crate::rules::eslint::no_proto::NoProto as EslintNoProto;
 pub use crate::rules::eslint::no_prototype_builtins::NoPrototypeBuiltins as EslintNoPrototypeBuiltins;
 pub use crate::rules::eslint::no_redeclare::NoRedeclare as EslintNoRedeclare;
 pub use crate::rules::eslint::no_regex_spaces::NoRegexSpaces as EslintNoRegexSpaces;
+pub use crate::rules::eslint::no_restricted_exports::NoRestrictedExports as EslintNoRestrictedExports;
 pub use crate::rules::eslint::no_restricted_globals::NoRestrictedGlobals as EslintNoRestrictedGlobals;
 pub use crate::rules::eslint::no_restricted_imports::NoRestrictedImports as EslintNoRestrictedImports;
 pub use crate::rules::eslint::no_return_assign::NoReturnAssign as EslintNoReturnAssign;
@@ -240,6 +241,7 @@ pub use crate::rules::jest::no_test_prefixes::NoTestPrefixes as JestNoTestPrefix
 pub use crate::rules::jest::no_test_return_statement::NoTestReturnStatement as JestNoTestReturnStatement;
 pub use crate::rules::jest::no_unneeded_async_expect_function::NoUnneededAsyncExpectFunction as JestNoUnneededAsyncExpectFunction;
 pub use crate::rules::jest::no_untyped_mock_factory::NoUntypedMockFactory as JestNoUntypedMockFactory;
+pub use crate::rules::jest::padding_around_after_all_blocks::PaddingAroundAfterAllBlocks as JestPaddingAroundAfterAllBlocks;
 pub use crate::rules::jest::padding_around_test_blocks::PaddingAroundTestBlocks as JestPaddingAroundTestBlocks;
 pub use crate::rules::jest::prefer_called_with::PreferCalledWith as JestPreferCalledWith;
 pub use crate::rules::jest::prefer_comparison_matcher::PreferComparisonMatcher as JestPreferComparisonMatcher;
@@ -266,6 +268,7 @@ pub use crate::rules::jest::require_to_throw_message::RequireToThrowMessage as J
 pub use crate::rules::jest::require_top_level_describe::RequireTopLevelDescribe as JestRequireTopLevelDescribe;
 pub use crate::rules::jest::valid_describe_callback::ValidDescribeCallback as JestValidDescribeCallback;
 pub use crate::rules::jest::valid_expect::ValidExpect as JestValidExpect;
+pub use crate::rules::jest::valid_expect_in_promise::ValidExpectInPromise as JestValidExpectInPromise;
 pub use crate::rules::jest::valid_title::ValidTitle as JestValidTitle;
 pub use crate::rules::jsdoc::check_access::CheckAccess as JsdocCheckAccess;
 pub use crate::rules::jsdoc::check_property_names::CheckPropertyNames as JsdocCheckPropertyNames;
@@ -392,6 +395,7 @@ pub use crate::rules::react::exhaustive_deps::ExhaustiveDeps as ReactExhaustiveD
 pub use crate::rules::react::forbid_dom_props::ForbidDomProps as ReactForbidDomProps;
 pub use crate::rules::react::forbid_elements::ForbidElements as ReactForbidElements;
 pub use crate::rules::react::forward_ref_uses_ref::ForwardRefUsesRef as ReactForwardRefUsesRef;
+pub use crate::rules::react::hook_use_state::HookUseState as ReactHookUseState;
 pub use crate::rules::react::iframe_missing_sandbox::IframeMissingSandbox as ReactIframeMissingSandbox;
 pub use crate::rules::react::jsx_boolean_value::JsxBooleanValue as ReactJsxBooleanValue;
 pub use crate::rules::react::jsx_curly_brace_presence::JsxCurlyBracePresence as ReactJsxCurlyBracePresence;
@@ -559,6 +563,7 @@ pub use crate::rules::unicorn::consistent_date_clone::ConsistentDateClone as Uni
 pub use crate::rules::unicorn::consistent_empty_array_spread::ConsistentEmptyArraySpread as UnicornConsistentEmptyArraySpread;
 pub use crate::rules::unicorn::consistent_existence_index_check::ConsistentExistenceIndexCheck as UnicornConsistentExistenceIndexCheck;
 pub use crate::rules::unicorn::consistent_function_scoping::ConsistentFunctionScoping as UnicornConsistentFunctionScoping;
+pub use crate::rules::unicorn::consistent_template_literal_escape::ConsistentTemplateLiteralEscape as UnicornConsistentTemplateLiteralEscape;
 pub use crate::rules::unicorn::custom_error_definition::CustomErrorDefinition as UnicornCustomErrorDefinition;
 pub use crate::rules::unicorn::empty_brace_spaces::EmptyBraceSpaces as UnicornEmptyBraceSpaces;
 pub use crate::rules::unicorn::error_message::ErrorMessage as UnicornErrorMessage;
@@ -610,6 +615,7 @@ pub use crate::rules::unicorn::no_unreadable_iife::NoUnreadableIife as UnicornNo
 pub use crate::rules::unicorn::no_useless_collection_argument::NoUselessCollectionArgument as UnicornNoUselessCollectionArgument;
 pub use crate::rules::unicorn::no_useless_error_capture_stack_trace::NoUselessErrorCaptureStackTrace as UnicornNoUselessErrorCaptureStackTrace;
 pub use crate::rules::unicorn::no_useless_fallback_in_spread::NoUselessFallbackInSpread as UnicornNoUselessFallbackInSpread;
+pub use crate::rules::unicorn::no_useless_iterator_to_array::NoUselessIteratorToArray as UnicornNoUselessIteratorToArray;
 pub use crate::rules::unicorn::no_useless_length_check::NoUselessLengthCheck as UnicornNoUselessLengthCheck;
 pub use crate::rules::unicorn::no_useless_promise_resolve_reject::NoUselessPromiseResolveReject as UnicornNoUselessPromiseResolveReject;
 pub use crate::rules::unicorn::no_useless_spread::NoUselessSpread as UnicornNoUselessSpread;
@@ -638,6 +644,7 @@ pub use crate::rules::unicorn::prefer_dom_node_remove::PreferDomNodeRemove as Un
 pub use crate::rules::unicorn::prefer_dom_node_text_content::PreferDomNodeTextContent as UnicornPreferDomNodeTextContent;
 pub use crate::rules::unicorn::prefer_event_target::PreferEventTarget as UnicornPreferEventTarget;
 pub use crate::rules::unicorn::prefer_global_this::PreferGlobalThis as UnicornPreferGlobalThis;
+pub use crate::rules::unicorn::prefer_import_meta_properties::PreferImportMetaProperties as UnicornPreferImportMetaProperties;
 pub use crate::rules::unicorn::prefer_includes::PreferIncludes as UnicornPreferIncludes;
 pub use crate::rules::unicorn::prefer_keyboard_event_key::PreferKeyboardEventKey as UnicornPreferKeyboardEventKey;
 pub use crate::rules::unicorn::prefer_logical_operator_over_ternary::PreferLogicalOperatorOverTernary as UnicornPreferLogicalOperatorOverTernary;
@@ -863,6 +870,7 @@ pub enum RuleEnum {
     EslintNoPrototypeBuiltins(EslintNoPrototypeBuiltins),
     EslintNoRedeclare(EslintNoRedeclare),
     EslintNoRegexSpaces(EslintNoRegexSpaces),
+    EslintNoRestrictedExports(EslintNoRestrictedExports),
     EslintNoRestrictedGlobals(EslintNoRestrictedGlobals),
     EslintNoRestrictedImports(EslintNoRestrictedImports),
     EslintNoReturnAssign(EslintNoReturnAssign),
@@ -1070,6 +1078,7 @@ pub enum RuleEnum {
     JestNoTestReturnStatement(JestNoTestReturnStatement),
     JestNoUnneededAsyncExpectFunction(JestNoUnneededAsyncExpectFunction),
     JestNoUntypedMockFactory(JestNoUntypedMockFactory),
+    JestPaddingAroundAfterAllBlocks(JestPaddingAroundAfterAllBlocks),
     JestPaddingAroundTestBlocks(JestPaddingAroundTestBlocks),
     JestPreferCalledWith(JestPreferCalledWith),
     JestPreferComparisonMatcher(JestPreferComparisonMatcher),
@@ -1096,6 +1105,7 @@ pub enum RuleEnum {
     JestRequireTopLevelDescribe(JestRequireTopLevelDescribe),
     JestValidDescribeCallback(JestValidDescribeCallback),
     JestValidExpect(JestValidExpect),
+    JestValidExpectInPromise(JestValidExpectInPromise),
     JestValidTitle(JestValidTitle),
     ReactButtonHasType(ReactButtonHasType),
     ReactCheckedRequiresOnchangeOrReadonly(ReactCheckedRequiresOnchangeOrReadonly),
@@ -1104,6 +1114,7 @@ pub enum RuleEnum {
     ReactForbidDomProps(ReactForbidDomProps),
     ReactForbidElements(ReactForbidElements),
     ReactForwardRefUsesRef(ReactForwardRefUsesRef),
+    ReactHookUseState(ReactHookUseState),
     ReactIframeMissingSandbox(ReactIframeMissingSandbox),
     ReactJsxBooleanValue(ReactJsxBooleanValue),
     ReactJsxCurlyBracePresence(ReactJsxCurlyBracePresence),
@@ -1163,6 +1174,7 @@ pub enum RuleEnum {
     UnicornConsistentEmptyArraySpread(UnicornConsistentEmptyArraySpread),
     UnicornConsistentExistenceIndexCheck(UnicornConsistentExistenceIndexCheck),
     UnicornConsistentFunctionScoping(UnicornConsistentFunctionScoping),
+    UnicornConsistentTemplateLiteralEscape(UnicornConsistentTemplateLiteralEscape),
     UnicornCustomErrorDefinition(UnicornCustomErrorDefinition),
     UnicornEmptyBraceSpaces(UnicornEmptyBraceSpaces),
     UnicornErrorMessage(UnicornErrorMessage),
@@ -1214,6 +1226,7 @@ pub enum RuleEnum {
     UnicornNoUselessCollectionArgument(UnicornNoUselessCollectionArgument),
     UnicornNoUselessErrorCaptureStackTrace(UnicornNoUselessErrorCaptureStackTrace),
     UnicornNoUselessFallbackInSpread(UnicornNoUselessFallbackInSpread),
+    UnicornNoUselessIteratorToArray(UnicornNoUselessIteratorToArray),
     UnicornNoUselessLengthCheck(UnicornNoUselessLengthCheck),
     UnicornNoUselessPromiseResolveReject(UnicornNoUselessPromiseResolveReject),
     UnicornNoUselessSpread(UnicornNoUselessSpread),
@@ -1242,6 +1255,7 @@ pub enum RuleEnum {
     UnicornPreferDomNodeTextContent(UnicornPreferDomNodeTextContent),
     UnicornPreferEventTarget(UnicornPreferEventTarget),
     UnicornPreferGlobalThis(UnicornPreferGlobalThis),
+    UnicornPreferImportMetaProperties(UnicornPreferImportMetaProperties),
     UnicornPreferIncludes(UnicornPreferIncludes),
     UnicornPreferKeyboardEventKey(UnicornPreferKeyboardEventKey),
     UnicornPreferLogicalOperatorOverTernary(UnicornPreferLogicalOperatorOverTernary),
@@ -1579,7 +1593,8 @@ const ESLINT_NO_PROTO_ID: usize = ESLINT_NO_PROMISE_EXECUTOR_RETURN_ID + 1usize;
 const ESLINT_NO_PROTOTYPE_BUILTINS_ID: usize = ESLINT_NO_PROTO_ID + 1usize;
 const ESLINT_NO_REDECLARE_ID: usize = ESLINT_NO_PROTOTYPE_BUILTINS_ID + 1usize;
 const ESLINT_NO_REGEX_SPACES_ID: usize = ESLINT_NO_REDECLARE_ID + 1usize;
-const ESLINT_NO_RESTRICTED_GLOBALS_ID: usize = ESLINT_NO_REGEX_SPACES_ID + 1usize;
+const ESLINT_NO_RESTRICTED_EXPORTS_ID: usize = ESLINT_NO_REGEX_SPACES_ID + 1usize;
+const ESLINT_NO_RESTRICTED_GLOBALS_ID: usize = ESLINT_NO_RESTRICTED_EXPORTS_ID + 1usize;
 const ESLINT_NO_RESTRICTED_IMPORTS_ID: usize = ESLINT_NO_RESTRICTED_GLOBALS_ID + 1usize;
 const ESLINT_NO_RETURN_ASSIGN_ID: usize = ESLINT_NO_RESTRICTED_IMPORTS_ID + 1usize;
 const ESLINT_NO_SCRIPT_URL_ID: usize = ESLINT_NO_RETURN_ASSIGN_ID + 1usize;
@@ -1829,7 +1844,8 @@ const JEST_NO_TEST_PREFIXES_ID: usize = JEST_NO_STANDALONE_EXPECT_ID + 1usize;
 const JEST_NO_TEST_RETURN_STATEMENT_ID: usize = JEST_NO_TEST_PREFIXES_ID + 1usize;
 const JEST_NO_UNNEEDED_ASYNC_EXPECT_FUNCTION_ID: usize = JEST_NO_TEST_RETURN_STATEMENT_ID + 1usize;
 const JEST_NO_UNTYPED_MOCK_FACTORY_ID: usize = JEST_NO_UNNEEDED_ASYNC_EXPECT_FUNCTION_ID + 1usize;
-const JEST_PADDING_AROUND_TEST_BLOCKS_ID: usize = JEST_NO_UNTYPED_MOCK_FACTORY_ID + 1usize;
+const JEST_PADDING_AROUND_AFTER_ALL_BLOCKS_ID: usize = JEST_NO_UNTYPED_MOCK_FACTORY_ID + 1usize;
+const JEST_PADDING_AROUND_TEST_BLOCKS_ID: usize = JEST_PADDING_AROUND_AFTER_ALL_BLOCKS_ID + 1usize;
 const JEST_PREFER_CALLED_WITH_ID: usize = JEST_PADDING_AROUND_TEST_BLOCKS_ID + 1usize;
 const JEST_PREFER_COMPARISON_MATCHER_ID: usize = JEST_PREFER_CALLED_WITH_ID + 1usize;
 const JEST_PREFER_EACH_ID: usize = JEST_PREFER_COMPARISON_MATCHER_ID + 1usize;
@@ -1855,7 +1871,8 @@ const JEST_REQUIRE_TO_THROW_MESSAGE_ID: usize = JEST_REQUIRE_HOOK_ID + 1usize;
 const JEST_REQUIRE_TOP_LEVEL_DESCRIBE_ID: usize = JEST_REQUIRE_TO_THROW_MESSAGE_ID + 1usize;
 const JEST_VALID_DESCRIBE_CALLBACK_ID: usize = JEST_REQUIRE_TOP_LEVEL_DESCRIBE_ID + 1usize;
 const JEST_VALID_EXPECT_ID: usize = JEST_VALID_DESCRIBE_CALLBACK_ID + 1usize;
-const JEST_VALID_TITLE_ID: usize = JEST_VALID_EXPECT_ID + 1usize;
+const JEST_VALID_EXPECT_IN_PROMISE_ID: usize = JEST_VALID_EXPECT_ID + 1usize;
+const JEST_VALID_TITLE_ID: usize = JEST_VALID_EXPECT_IN_PROMISE_ID + 1usize;
 const REACT_BUTTON_HAS_TYPE_ID: usize = JEST_VALID_TITLE_ID + 1usize;
 const REACT_CHECKED_REQUIRES_ONCHANGE_OR_READONLY_ID: usize = REACT_BUTTON_HAS_TYPE_ID + 1usize;
 const REACT_DISPLAY_NAME_ID: usize = REACT_CHECKED_REQUIRES_ONCHANGE_OR_READONLY_ID + 1usize;
@@ -1863,7 +1880,8 @@ const REACT_EXHAUSTIVE_DEPS_ID: usize = REACT_DISPLAY_NAME_ID + 1usize;
 const REACT_FORBID_DOM_PROPS_ID: usize = REACT_EXHAUSTIVE_DEPS_ID + 1usize;
 const REACT_FORBID_ELEMENTS_ID: usize = REACT_FORBID_DOM_PROPS_ID + 1usize;
 const REACT_FORWARD_REF_USES_REF_ID: usize = REACT_FORBID_ELEMENTS_ID + 1usize;
-const REACT_IFRAME_MISSING_SANDBOX_ID: usize = REACT_FORWARD_REF_USES_REF_ID + 1usize;
+const REACT_HOOK_USE_STATE_ID: usize = REACT_FORWARD_REF_USES_REF_ID + 1usize;
+const REACT_IFRAME_MISSING_SANDBOX_ID: usize = REACT_HOOK_USE_STATE_ID + 1usize;
 const REACT_JSX_BOOLEAN_VALUE_ID: usize = REACT_IFRAME_MISSING_SANDBOX_ID + 1usize;
 const REACT_JSX_CURLY_BRACE_PRESENCE_ID: usize = REACT_JSX_BOOLEAN_VALUE_ID + 1usize;
 const REACT_JSX_FILENAME_EXTENSION_ID: usize = REACT_JSX_CURLY_BRACE_PRESENCE_ID + 1usize;
@@ -1928,7 +1946,10 @@ const UNICORN_CONSISTENT_EXISTENCE_INDEX_CHECK_ID: usize =
     UNICORN_CONSISTENT_EMPTY_ARRAY_SPREAD_ID + 1usize;
 const UNICORN_CONSISTENT_FUNCTION_SCOPING_ID: usize =
     UNICORN_CONSISTENT_EXISTENCE_INDEX_CHECK_ID + 1usize;
-const UNICORN_CUSTOM_ERROR_DEFINITION_ID: usize = UNICORN_CONSISTENT_FUNCTION_SCOPING_ID + 1usize;
+const UNICORN_CONSISTENT_TEMPLATE_LITERAL_ESCAPE_ID: usize =
+    UNICORN_CONSISTENT_FUNCTION_SCOPING_ID + 1usize;
+const UNICORN_CUSTOM_ERROR_DEFINITION_ID: usize =
+    UNICORN_CONSISTENT_TEMPLATE_LITERAL_ESCAPE_ID + 1usize;
 const UNICORN_EMPTY_BRACE_SPACES_ID: usize = UNICORN_CUSTOM_ERROR_DEFINITION_ID + 1usize;
 const UNICORN_ERROR_MESSAGE_ID: usize = UNICORN_EMPTY_BRACE_SPACES_ID + 1usize;
 const UNICORN_ESCAPE_CASE_ID: usize = UNICORN_ERROR_MESSAGE_ID + 1usize;
@@ -1990,7 +2011,9 @@ const UNICORN_NO_USELESS_ERROR_CAPTURE_STACK_TRACE_ID: usize =
     UNICORN_NO_USELESS_COLLECTION_ARGUMENT_ID + 1usize;
 const UNICORN_NO_USELESS_FALLBACK_IN_SPREAD_ID: usize =
     UNICORN_NO_USELESS_ERROR_CAPTURE_STACK_TRACE_ID + 1usize;
-const UNICORN_NO_USELESS_LENGTH_CHECK_ID: usize = UNICORN_NO_USELESS_FALLBACK_IN_SPREAD_ID + 1usize;
+const UNICORN_NO_USELESS_ITERATOR_TO_ARRAY_ID: usize =
+    UNICORN_NO_USELESS_FALLBACK_IN_SPREAD_ID + 1usize;
+const UNICORN_NO_USELESS_LENGTH_CHECK_ID: usize = UNICORN_NO_USELESS_ITERATOR_TO_ARRAY_ID + 1usize;
 const UNICORN_NO_USELESS_PROMISE_RESOLVE_REJECT_ID: usize =
     UNICORN_NO_USELESS_LENGTH_CHECK_ID + 1usize;
 const UNICORN_NO_USELESS_SPREAD_ID: usize = UNICORN_NO_USELESS_PROMISE_RESOLVE_REJECT_ID + 1usize;
@@ -2019,7 +2042,8 @@ const UNICORN_PREFER_DOM_NODE_REMOVE_ID: usize = UNICORN_PREFER_DOM_NODE_DATASET
 const UNICORN_PREFER_DOM_NODE_TEXT_CONTENT_ID: usize = UNICORN_PREFER_DOM_NODE_REMOVE_ID + 1usize;
 const UNICORN_PREFER_EVENT_TARGET_ID: usize = UNICORN_PREFER_DOM_NODE_TEXT_CONTENT_ID + 1usize;
 const UNICORN_PREFER_GLOBAL_THIS_ID: usize = UNICORN_PREFER_EVENT_TARGET_ID + 1usize;
-const UNICORN_PREFER_INCLUDES_ID: usize = UNICORN_PREFER_GLOBAL_THIS_ID + 1usize;
+const UNICORN_PREFER_IMPORT_META_PROPERTIES_ID: usize = UNICORN_PREFER_GLOBAL_THIS_ID + 1usize;
+const UNICORN_PREFER_INCLUDES_ID: usize = UNICORN_PREFER_IMPORT_META_PROPERTIES_ID + 1usize;
 const UNICORN_PREFER_KEYBOARD_EVENT_KEY_ID: usize = UNICORN_PREFER_INCLUDES_ID + 1usize;
 const UNICORN_PREFER_LOGICAL_OPERATOR_OVER_TERNARY_ID: usize =
     UNICORN_PREFER_KEYBOARD_EVENT_KEY_ID + 1usize;
@@ -2381,6 +2405,7 @@ impl RuleEnum {
             Self::EslintNoPrototypeBuiltins(_) => ESLINT_NO_PROTOTYPE_BUILTINS_ID,
             Self::EslintNoRedeclare(_) => ESLINT_NO_REDECLARE_ID,
             Self::EslintNoRegexSpaces(_) => ESLINT_NO_REGEX_SPACES_ID,
+            Self::EslintNoRestrictedExports(_) => ESLINT_NO_RESTRICTED_EXPORTS_ID,
             Self::EslintNoRestrictedGlobals(_) => ESLINT_NO_RESTRICTED_GLOBALS_ID,
             Self::EslintNoRestrictedImports(_) => ESLINT_NO_RESTRICTED_IMPORTS_ID,
             Self::EslintNoReturnAssign(_) => ESLINT_NO_RETURN_ASSIGN_ID,
@@ -2652,6 +2677,7 @@ impl RuleEnum {
             Self::JestNoTestReturnStatement(_) => JEST_NO_TEST_RETURN_STATEMENT_ID,
             Self::JestNoUnneededAsyncExpectFunction(_) => JEST_NO_UNNEEDED_ASYNC_EXPECT_FUNCTION_ID,
             Self::JestNoUntypedMockFactory(_) => JEST_NO_UNTYPED_MOCK_FACTORY_ID,
+            Self::JestPaddingAroundAfterAllBlocks(_) => JEST_PADDING_AROUND_AFTER_ALL_BLOCKS_ID,
             Self::JestPaddingAroundTestBlocks(_) => JEST_PADDING_AROUND_TEST_BLOCKS_ID,
             Self::JestPreferCalledWith(_) => JEST_PREFER_CALLED_WITH_ID,
             Self::JestPreferComparisonMatcher(_) => JEST_PREFER_COMPARISON_MATCHER_ID,
@@ -2678,6 +2704,7 @@ impl RuleEnum {
             Self::JestRequireTopLevelDescribe(_) => JEST_REQUIRE_TOP_LEVEL_DESCRIBE_ID,
             Self::JestValidDescribeCallback(_) => JEST_VALID_DESCRIBE_CALLBACK_ID,
             Self::JestValidExpect(_) => JEST_VALID_EXPECT_ID,
+            Self::JestValidExpectInPromise(_) => JEST_VALID_EXPECT_IN_PROMISE_ID,
             Self::JestValidTitle(_) => JEST_VALID_TITLE_ID,
             Self::ReactButtonHasType(_) => REACT_BUTTON_HAS_TYPE_ID,
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => {
@@ -2688,6 +2715,7 @@ impl RuleEnum {
             Self::ReactForbidDomProps(_) => REACT_FORBID_DOM_PROPS_ID,
             Self::ReactForbidElements(_) => REACT_FORBID_ELEMENTS_ID,
             Self::ReactForwardRefUsesRef(_) => REACT_FORWARD_REF_USES_REF_ID,
+            Self::ReactHookUseState(_) => REACT_HOOK_USE_STATE_ID,
             Self::ReactIframeMissingSandbox(_) => REACT_IFRAME_MISSING_SANDBOX_ID,
             Self::ReactJsxBooleanValue(_) => REACT_JSX_BOOLEAN_VALUE_ID,
             Self::ReactJsxCurlyBracePresence(_) => REACT_JSX_CURLY_BRACE_PRESENCE_ID,
@@ -2753,6 +2781,9 @@ impl RuleEnum {
                 UNICORN_CONSISTENT_EXISTENCE_INDEX_CHECK_ID
             }
             Self::UnicornConsistentFunctionScoping(_) => UNICORN_CONSISTENT_FUNCTION_SCOPING_ID,
+            Self::UnicornConsistentTemplateLiteralEscape(_) => {
+                UNICORN_CONSISTENT_TEMPLATE_LITERAL_ESCAPE_ID
+            }
             Self::UnicornCustomErrorDefinition(_) => UNICORN_CUSTOM_ERROR_DEFINITION_ID,
             Self::UnicornEmptyBraceSpaces(_) => UNICORN_EMPTY_BRACE_SPACES_ID,
             Self::UnicornErrorMessage(_) => UNICORN_ERROR_MESSAGE_ID,
@@ -2818,6 +2849,7 @@ impl RuleEnum {
                 UNICORN_NO_USELESS_ERROR_CAPTURE_STACK_TRACE_ID
             }
             Self::UnicornNoUselessFallbackInSpread(_) => UNICORN_NO_USELESS_FALLBACK_IN_SPREAD_ID,
+            Self::UnicornNoUselessIteratorToArray(_) => UNICORN_NO_USELESS_ITERATOR_TO_ARRAY_ID,
             Self::UnicornNoUselessLengthCheck(_) => UNICORN_NO_USELESS_LENGTH_CHECK_ID,
             Self::UnicornNoUselessPromiseResolveReject(_) => {
                 UNICORN_NO_USELESS_PROMISE_RESOLVE_REJECT_ID
@@ -2848,6 +2880,7 @@ impl RuleEnum {
             Self::UnicornPreferDomNodeTextContent(_) => UNICORN_PREFER_DOM_NODE_TEXT_CONTENT_ID,
             Self::UnicornPreferEventTarget(_) => UNICORN_PREFER_EVENT_TARGET_ID,
             Self::UnicornPreferGlobalThis(_) => UNICORN_PREFER_GLOBAL_THIS_ID,
+            Self::UnicornPreferImportMetaProperties(_) => UNICORN_PREFER_IMPORT_META_PROPERTIES_ID,
             Self::UnicornPreferIncludes(_) => UNICORN_PREFER_INCLUDES_ID,
             Self::UnicornPreferKeyboardEventKey(_) => UNICORN_PREFER_KEYBOARD_EVENT_KEY_ID,
             Self::UnicornPreferLogicalOperatorOverTernary(_) => {
@@ -3204,6 +3237,7 @@ impl RuleEnum {
             Self::EslintNoPrototypeBuiltins(_) => EslintNoPrototypeBuiltins::NAME,
             Self::EslintNoRedeclare(_) => EslintNoRedeclare::NAME,
             Self::EslintNoRegexSpaces(_) => EslintNoRegexSpaces::NAME,
+            Self::EslintNoRestrictedExports(_) => EslintNoRestrictedExports::NAME,
             Self::EslintNoRestrictedGlobals(_) => EslintNoRestrictedGlobals::NAME,
             Self::EslintNoRestrictedImports(_) => EslintNoRestrictedImports::NAME,
             Self::EslintNoReturnAssign(_) => EslintNoReturnAssign::NAME,
@@ -3473,6 +3507,7 @@ impl RuleEnum {
             Self::JestNoTestReturnStatement(_) => JestNoTestReturnStatement::NAME,
             Self::JestNoUnneededAsyncExpectFunction(_) => JestNoUnneededAsyncExpectFunction::NAME,
             Self::JestNoUntypedMockFactory(_) => JestNoUntypedMockFactory::NAME,
+            Self::JestPaddingAroundAfterAllBlocks(_) => JestPaddingAroundAfterAllBlocks::NAME,
             Self::JestPaddingAroundTestBlocks(_) => JestPaddingAroundTestBlocks::NAME,
             Self::JestPreferCalledWith(_) => JestPreferCalledWith::NAME,
             Self::JestPreferComparisonMatcher(_) => JestPreferComparisonMatcher::NAME,
@@ -3499,6 +3534,7 @@ impl RuleEnum {
             Self::JestRequireTopLevelDescribe(_) => JestRequireTopLevelDescribe::NAME,
             Self::JestValidDescribeCallback(_) => JestValidDescribeCallback::NAME,
             Self::JestValidExpect(_) => JestValidExpect::NAME,
+            Self::JestValidExpectInPromise(_) => JestValidExpectInPromise::NAME,
             Self::JestValidTitle(_) => JestValidTitle::NAME,
             Self::ReactButtonHasType(_) => ReactButtonHasType::NAME,
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => {
@@ -3509,6 +3545,7 @@ impl RuleEnum {
             Self::ReactForbidDomProps(_) => ReactForbidDomProps::NAME,
             Self::ReactForbidElements(_) => ReactForbidElements::NAME,
             Self::ReactForwardRefUsesRef(_) => ReactForwardRefUsesRef::NAME,
+            Self::ReactHookUseState(_) => ReactHookUseState::NAME,
             Self::ReactIframeMissingSandbox(_) => ReactIframeMissingSandbox::NAME,
             Self::ReactJsxBooleanValue(_) => ReactJsxBooleanValue::NAME,
             Self::ReactJsxCurlyBracePresence(_) => ReactJsxCurlyBracePresence::NAME,
@@ -3572,6 +3609,9 @@ impl RuleEnum {
                 UnicornConsistentExistenceIndexCheck::NAME
             }
             Self::UnicornConsistentFunctionScoping(_) => UnicornConsistentFunctionScoping::NAME,
+            Self::UnicornConsistentTemplateLiteralEscape(_) => {
+                UnicornConsistentTemplateLiteralEscape::NAME
+            }
             Self::UnicornCustomErrorDefinition(_) => UnicornCustomErrorDefinition::NAME,
             Self::UnicornEmptyBraceSpaces(_) => UnicornEmptyBraceSpaces::NAME,
             Self::UnicornErrorMessage(_) => UnicornErrorMessage::NAME,
@@ -3633,6 +3673,7 @@ impl RuleEnum {
                 UnicornNoUselessErrorCaptureStackTrace::NAME
             }
             Self::UnicornNoUselessFallbackInSpread(_) => UnicornNoUselessFallbackInSpread::NAME,
+            Self::UnicornNoUselessIteratorToArray(_) => UnicornNoUselessIteratorToArray::NAME,
             Self::UnicornNoUselessLengthCheck(_) => UnicornNoUselessLengthCheck::NAME,
             Self::UnicornNoUselessPromiseResolveReject(_) => {
                 UnicornNoUselessPromiseResolveReject::NAME
@@ -3663,6 +3704,7 @@ impl RuleEnum {
             Self::UnicornPreferDomNodeTextContent(_) => UnicornPreferDomNodeTextContent::NAME,
             Self::UnicornPreferEventTarget(_) => UnicornPreferEventTarget::NAME,
             Self::UnicornPreferGlobalThis(_) => UnicornPreferGlobalThis::NAME,
+            Self::UnicornPreferImportMetaProperties(_) => UnicornPreferImportMetaProperties::NAME,
             Self::UnicornPreferIncludes(_) => UnicornPreferIncludes::NAME,
             Self::UnicornPreferKeyboardEventKey(_) => UnicornPreferKeyboardEventKey::NAME,
             Self::UnicornPreferLogicalOperatorOverTernary(_) => {
@@ -4017,6 +4059,7 @@ impl RuleEnum {
             Self::EslintNoPrototypeBuiltins(_) => EslintNoPrototypeBuiltins::CATEGORY,
             Self::EslintNoRedeclare(_) => EslintNoRedeclare::CATEGORY,
             Self::EslintNoRegexSpaces(_) => EslintNoRegexSpaces::CATEGORY,
+            Self::EslintNoRestrictedExports(_) => EslintNoRestrictedExports::CATEGORY,
             Self::EslintNoRestrictedGlobals(_) => EslintNoRestrictedGlobals::CATEGORY,
             Self::EslintNoRestrictedImports(_) => EslintNoRestrictedImports::CATEGORY,
             Self::EslintNoReturnAssign(_) => EslintNoReturnAssign::CATEGORY,
@@ -4308,6 +4351,7 @@ impl RuleEnum {
                 JestNoUnneededAsyncExpectFunction::CATEGORY
             }
             Self::JestNoUntypedMockFactory(_) => JestNoUntypedMockFactory::CATEGORY,
+            Self::JestPaddingAroundAfterAllBlocks(_) => JestPaddingAroundAfterAllBlocks::CATEGORY,
             Self::JestPaddingAroundTestBlocks(_) => JestPaddingAroundTestBlocks::CATEGORY,
             Self::JestPreferCalledWith(_) => JestPreferCalledWith::CATEGORY,
             Self::JestPreferComparisonMatcher(_) => JestPreferComparisonMatcher::CATEGORY,
@@ -4334,6 +4378,7 @@ impl RuleEnum {
             Self::JestRequireTopLevelDescribe(_) => JestRequireTopLevelDescribe::CATEGORY,
             Self::JestValidDescribeCallback(_) => JestValidDescribeCallback::CATEGORY,
             Self::JestValidExpect(_) => JestValidExpect::CATEGORY,
+            Self::JestValidExpectInPromise(_) => JestValidExpectInPromise::CATEGORY,
             Self::JestValidTitle(_) => JestValidTitle::CATEGORY,
             Self::ReactButtonHasType(_) => ReactButtonHasType::CATEGORY,
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => {
@@ -4344,6 +4389,7 @@ impl RuleEnum {
             Self::ReactForbidDomProps(_) => ReactForbidDomProps::CATEGORY,
             Self::ReactForbidElements(_) => ReactForbidElements::CATEGORY,
             Self::ReactForwardRefUsesRef(_) => ReactForwardRefUsesRef::CATEGORY,
+            Self::ReactHookUseState(_) => ReactHookUseState::CATEGORY,
             Self::ReactIframeMissingSandbox(_) => ReactIframeMissingSandbox::CATEGORY,
             Self::ReactJsxBooleanValue(_) => ReactJsxBooleanValue::CATEGORY,
             Self::ReactJsxCurlyBracePresence(_) => ReactJsxCurlyBracePresence::CATEGORY,
@@ -4411,6 +4457,9 @@ impl RuleEnum {
                 UnicornConsistentExistenceIndexCheck::CATEGORY
             }
             Self::UnicornConsistentFunctionScoping(_) => UnicornConsistentFunctionScoping::CATEGORY,
+            Self::UnicornConsistentTemplateLiteralEscape(_) => {
+                UnicornConsistentTemplateLiteralEscape::CATEGORY
+            }
             Self::UnicornCustomErrorDefinition(_) => UnicornCustomErrorDefinition::CATEGORY,
             Self::UnicornEmptyBraceSpaces(_) => UnicornEmptyBraceSpaces::CATEGORY,
             Self::UnicornErrorMessage(_) => UnicornErrorMessage::CATEGORY,
@@ -4478,6 +4527,7 @@ impl RuleEnum {
                 UnicornNoUselessErrorCaptureStackTrace::CATEGORY
             }
             Self::UnicornNoUselessFallbackInSpread(_) => UnicornNoUselessFallbackInSpread::CATEGORY,
+            Self::UnicornNoUselessIteratorToArray(_) => UnicornNoUselessIteratorToArray::CATEGORY,
             Self::UnicornNoUselessLengthCheck(_) => UnicornNoUselessLengthCheck::CATEGORY,
             Self::UnicornNoUselessPromiseResolveReject(_) => {
                 UnicornNoUselessPromiseResolveReject::CATEGORY
@@ -4508,6 +4558,9 @@ impl RuleEnum {
             Self::UnicornPreferDomNodeTextContent(_) => UnicornPreferDomNodeTextContent::CATEGORY,
             Self::UnicornPreferEventTarget(_) => UnicornPreferEventTarget::CATEGORY,
             Self::UnicornPreferGlobalThis(_) => UnicornPreferGlobalThis::CATEGORY,
+            Self::UnicornPreferImportMetaProperties(_) => {
+                UnicornPreferImportMetaProperties::CATEGORY
+            }
             Self::UnicornPreferIncludes(_) => UnicornPreferIncludes::CATEGORY,
             Self::UnicornPreferKeyboardEventKey(_) => UnicornPreferKeyboardEventKey::CATEGORY,
             Self::UnicornPreferLogicalOperatorOverTernary(_) => {
@@ -4879,6 +4932,7 @@ impl RuleEnum {
             Self::EslintNoPrototypeBuiltins(_) => EslintNoPrototypeBuiltins::FIX,
             Self::EslintNoRedeclare(_) => EslintNoRedeclare::FIX,
             Self::EslintNoRegexSpaces(_) => EslintNoRegexSpaces::FIX,
+            Self::EslintNoRestrictedExports(_) => EslintNoRestrictedExports::FIX,
             Self::EslintNoRestrictedGlobals(_) => EslintNoRestrictedGlobals::FIX,
             Self::EslintNoRestrictedImports(_) => EslintNoRestrictedImports::FIX,
             Self::EslintNoReturnAssign(_) => EslintNoReturnAssign::FIX,
@@ -5148,6 +5202,7 @@ impl RuleEnum {
             Self::JestNoTestReturnStatement(_) => JestNoTestReturnStatement::FIX,
             Self::JestNoUnneededAsyncExpectFunction(_) => JestNoUnneededAsyncExpectFunction::FIX,
             Self::JestNoUntypedMockFactory(_) => JestNoUntypedMockFactory::FIX,
+            Self::JestPaddingAroundAfterAllBlocks(_) => JestPaddingAroundAfterAllBlocks::FIX,
             Self::JestPaddingAroundTestBlocks(_) => JestPaddingAroundTestBlocks::FIX,
             Self::JestPreferCalledWith(_) => JestPreferCalledWith::FIX,
             Self::JestPreferComparisonMatcher(_) => JestPreferComparisonMatcher::FIX,
@@ -5174,6 +5229,7 @@ impl RuleEnum {
             Self::JestRequireTopLevelDescribe(_) => JestRequireTopLevelDescribe::FIX,
             Self::JestValidDescribeCallback(_) => JestValidDescribeCallback::FIX,
             Self::JestValidExpect(_) => JestValidExpect::FIX,
+            Self::JestValidExpectInPromise(_) => JestValidExpectInPromise::FIX,
             Self::JestValidTitle(_) => JestValidTitle::FIX,
             Self::ReactButtonHasType(_) => ReactButtonHasType::FIX,
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => {
@@ -5184,6 +5240,7 @@ impl RuleEnum {
             Self::ReactForbidDomProps(_) => ReactForbidDomProps::FIX,
             Self::ReactForbidElements(_) => ReactForbidElements::FIX,
             Self::ReactForwardRefUsesRef(_) => ReactForwardRefUsesRef::FIX,
+            Self::ReactHookUseState(_) => ReactHookUseState::FIX,
             Self::ReactIframeMissingSandbox(_) => ReactIframeMissingSandbox::FIX,
             Self::ReactJsxBooleanValue(_) => ReactJsxBooleanValue::FIX,
             Self::ReactJsxCurlyBracePresence(_) => ReactJsxCurlyBracePresence::FIX,
@@ -5247,6 +5304,9 @@ impl RuleEnum {
                 UnicornConsistentExistenceIndexCheck::FIX
             }
             Self::UnicornConsistentFunctionScoping(_) => UnicornConsistentFunctionScoping::FIX,
+            Self::UnicornConsistentTemplateLiteralEscape(_) => {
+                UnicornConsistentTemplateLiteralEscape::FIX
+            }
             Self::UnicornCustomErrorDefinition(_) => UnicornCustomErrorDefinition::FIX,
             Self::UnicornEmptyBraceSpaces(_) => UnicornEmptyBraceSpaces::FIX,
             Self::UnicornErrorMessage(_) => UnicornErrorMessage::FIX,
@@ -5308,6 +5368,7 @@ impl RuleEnum {
                 UnicornNoUselessErrorCaptureStackTrace::FIX
             }
             Self::UnicornNoUselessFallbackInSpread(_) => UnicornNoUselessFallbackInSpread::FIX,
+            Self::UnicornNoUselessIteratorToArray(_) => UnicornNoUselessIteratorToArray::FIX,
             Self::UnicornNoUselessLengthCheck(_) => UnicornNoUselessLengthCheck::FIX,
             Self::UnicornNoUselessPromiseResolveReject(_) => {
                 UnicornNoUselessPromiseResolveReject::FIX
@@ -5338,6 +5399,7 @@ impl RuleEnum {
             Self::UnicornPreferDomNodeTextContent(_) => UnicornPreferDomNodeTextContent::FIX,
             Self::UnicornPreferEventTarget(_) => UnicornPreferEventTarget::FIX,
             Self::UnicornPreferGlobalThis(_) => UnicornPreferGlobalThis::FIX,
+            Self::UnicornPreferImportMetaProperties(_) => UnicornPreferImportMetaProperties::FIX,
             Self::UnicornPreferIncludes(_) => UnicornPreferIncludes::FIX,
             Self::UnicornPreferKeyboardEventKey(_) => UnicornPreferKeyboardEventKey::FIX,
             Self::UnicornPreferLogicalOperatorOverTernary(_) => {
@@ -5707,6 +5769,7 @@ impl RuleEnum {
             Self::EslintNoPrototypeBuiltins(_) => EslintNoPrototypeBuiltins::documentation(),
             Self::EslintNoRedeclare(_) => EslintNoRedeclare::documentation(),
             Self::EslintNoRegexSpaces(_) => EslintNoRegexSpaces::documentation(),
+            Self::EslintNoRestrictedExports(_) => EslintNoRestrictedExports::documentation(),
             Self::EslintNoRestrictedGlobals(_) => EslintNoRestrictedGlobals::documentation(),
             Self::EslintNoRestrictedImports(_) => EslintNoRestrictedImports::documentation(),
             Self::EslintNoReturnAssign(_) => EslintNoReturnAssign::documentation(),
@@ -6050,6 +6113,9 @@ impl RuleEnum {
                 JestNoUnneededAsyncExpectFunction::documentation()
             }
             Self::JestNoUntypedMockFactory(_) => JestNoUntypedMockFactory::documentation(),
+            Self::JestPaddingAroundAfterAllBlocks(_) => {
+                JestPaddingAroundAfterAllBlocks::documentation()
+            }
             Self::JestPaddingAroundTestBlocks(_) => JestPaddingAroundTestBlocks::documentation(),
             Self::JestPreferCalledWith(_) => JestPreferCalledWith::documentation(),
             Self::JestPreferComparisonMatcher(_) => JestPreferComparisonMatcher::documentation(),
@@ -6082,6 +6148,7 @@ impl RuleEnum {
             Self::JestRequireTopLevelDescribe(_) => JestRequireTopLevelDescribe::documentation(),
             Self::JestValidDescribeCallback(_) => JestValidDescribeCallback::documentation(),
             Self::JestValidExpect(_) => JestValidExpect::documentation(),
+            Self::JestValidExpectInPromise(_) => JestValidExpectInPromise::documentation(),
             Self::JestValidTitle(_) => JestValidTitle::documentation(),
             Self::ReactButtonHasType(_) => ReactButtonHasType::documentation(),
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => {
@@ -6092,6 +6159,7 @@ impl RuleEnum {
             Self::ReactForbidDomProps(_) => ReactForbidDomProps::documentation(),
             Self::ReactForbidElements(_) => ReactForbidElements::documentation(),
             Self::ReactForwardRefUsesRef(_) => ReactForwardRefUsesRef::documentation(),
+            Self::ReactHookUseState(_) => ReactHookUseState::documentation(),
             Self::ReactIframeMissingSandbox(_) => ReactIframeMissingSandbox::documentation(),
             Self::ReactJsxBooleanValue(_) => ReactJsxBooleanValue::documentation(),
             Self::ReactJsxCurlyBracePresence(_) => ReactJsxCurlyBracePresence::documentation(),
@@ -6166,6 +6234,9 @@ impl RuleEnum {
             }
             Self::UnicornConsistentFunctionScoping(_) => {
                 UnicornConsistentFunctionScoping::documentation()
+            }
+            Self::UnicornConsistentTemplateLiteralEscape(_) => {
+                UnicornConsistentTemplateLiteralEscape::documentation()
             }
             Self::UnicornCustomErrorDefinition(_) => UnicornCustomErrorDefinition::documentation(),
             Self::UnicornEmptyBraceSpaces(_) => UnicornEmptyBraceSpaces::documentation(),
@@ -6250,6 +6321,9 @@ impl RuleEnum {
             Self::UnicornNoUselessFallbackInSpread(_) => {
                 UnicornNoUselessFallbackInSpread::documentation()
             }
+            Self::UnicornNoUselessIteratorToArray(_) => {
+                UnicornNoUselessIteratorToArray::documentation()
+            }
             Self::UnicornNoUselessLengthCheck(_) => UnicornNoUselessLengthCheck::documentation(),
             Self::UnicornNoUselessPromiseResolveReject(_) => {
                 UnicornNoUselessPromiseResolveReject::documentation()
@@ -6290,6 +6364,9 @@ impl RuleEnum {
             }
             Self::UnicornPreferEventTarget(_) => UnicornPreferEventTarget::documentation(),
             Self::UnicornPreferGlobalThis(_) => UnicornPreferGlobalThis::documentation(),
+            Self::UnicornPreferImportMetaProperties(_) => {
+                UnicornPreferImportMetaProperties::documentation()
+            }
             Self::UnicornPreferIncludes(_) => UnicornPreferIncludes::documentation(),
             Self::UnicornPreferKeyboardEventKey(_) => {
                 UnicornPreferKeyboardEventKey::documentation()
@@ -6913,6 +6990,10 @@ impl RuleEnum {
                 .or_else(|| EslintNoRedeclare::schema(generator)),
             Self::EslintNoRegexSpaces(_) => EslintNoRegexSpaces::config_schema(generator)
                 .or_else(|| EslintNoRegexSpaces::schema(generator)),
+            Self::EslintNoRestrictedExports(_) => {
+                EslintNoRestrictedExports::config_schema(generator)
+                    .or_else(|| EslintNoRestrictedExports::schema(generator))
+            }
             Self::EslintNoRestrictedGlobals(_) => {
                 EslintNoRestrictedGlobals::config_schema(generator)
                     .or_else(|| EslintNoRestrictedGlobals::schema(generator))
@@ -7543,6 +7624,10 @@ impl RuleEnum {
             }
             Self::JestNoUntypedMockFactory(_) => JestNoUntypedMockFactory::config_schema(generator)
                 .or_else(|| JestNoUntypedMockFactory::schema(generator)),
+            Self::JestPaddingAroundAfterAllBlocks(_) => {
+                JestPaddingAroundAfterAllBlocks::config_schema(generator)
+                    .or_else(|| JestPaddingAroundAfterAllBlocks::schema(generator))
+            }
             Self::JestPaddingAroundTestBlocks(_) => {
                 JestPaddingAroundTestBlocks::config_schema(generator)
                     .or_else(|| JestPaddingAroundTestBlocks::schema(generator))
@@ -7615,6 +7700,8 @@ impl RuleEnum {
             }
             Self::JestValidExpect(_) => JestValidExpect::config_schema(generator)
                 .or_else(|| JestValidExpect::schema(generator)),
+            Self::JestValidExpectInPromise(_) => JestValidExpectInPromise::config_schema(generator)
+                .or_else(|| JestValidExpectInPromise::schema(generator)),
             Self::JestValidTitle(_) => JestValidTitle::config_schema(generator)
                 .or_else(|| JestValidTitle::schema(generator)),
             Self::ReactButtonHasType(_) => ReactButtonHasType::config_schema(generator)
@@ -7633,6 +7720,8 @@ impl RuleEnum {
                 .or_else(|| ReactForbidElements::schema(generator)),
             Self::ReactForwardRefUsesRef(_) => ReactForwardRefUsesRef::config_schema(generator)
                 .or_else(|| ReactForwardRefUsesRef::schema(generator)),
+            Self::ReactHookUseState(_) => ReactHookUseState::config_schema(generator)
+                .or_else(|| ReactHookUseState::schema(generator)),
             Self::ReactIframeMissingSandbox(_) => {
                 ReactIframeMissingSandbox::config_schema(generator)
                     .or_else(|| ReactIframeMissingSandbox::schema(generator))
@@ -7796,6 +7885,10 @@ impl RuleEnum {
                 UnicornConsistentFunctionScoping::config_schema(generator)
                     .or_else(|| UnicornConsistentFunctionScoping::schema(generator))
             }
+            Self::UnicornConsistentTemplateLiteralEscape(_) => {
+                UnicornConsistentTemplateLiteralEscape::config_schema(generator)
+                    .or_else(|| UnicornConsistentTemplateLiteralEscape::schema(generator))
+            }
             Self::UnicornCustomErrorDefinition(_) => {
                 UnicornCustomErrorDefinition::config_schema(generator)
                     .or_else(|| UnicornCustomErrorDefinition::schema(generator))
@@ -7951,6 +8044,10 @@ impl RuleEnum {
                 UnicornNoUselessFallbackInSpread::config_schema(generator)
                     .or_else(|| UnicornNoUselessFallbackInSpread::schema(generator))
             }
+            Self::UnicornNoUselessIteratorToArray(_) => {
+                UnicornNoUselessIteratorToArray::config_schema(generator)
+                    .or_else(|| UnicornNoUselessIteratorToArray::schema(generator))
+            }
             Self::UnicornNoUselessLengthCheck(_) => {
                 UnicornNoUselessLengthCheck::config_schema(generator)
                     .or_else(|| UnicornNoUselessLengthCheck::schema(generator))
@@ -8039,6 +8136,10 @@ impl RuleEnum {
                 .or_else(|| UnicornPreferEventTarget::schema(generator)),
             Self::UnicornPreferGlobalThis(_) => UnicornPreferGlobalThis::config_schema(generator)
                 .or_else(|| UnicornPreferGlobalThis::schema(generator)),
+            Self::UnicornPreferImportMetaProperties(_) => {
+                UnicornPreferImportMetaProperties::config_schema(generator)
+                    .or_else(|| UnicornPreferImportMetaProperties::schema(generator))
+            }
             Self::UnicornPreferIncludes(_) => UnicornPreferIncludes::config_schema(generator)
                 .or_else(|| UnicornPreferIncludes::schema(generator)),
             Self::UnicornPreferKeyboardEventKey(_) => {
@@ -8741,6 +8842,7 @@ impl RuleEnum {
             Self::EslintNoPrototypeBuiltins(_) => "eslint",
             Self::EslintNoRedeclare(_) => "eslint",
             Self::EslintNoRegexSpaces(_) => "eslint",
+            Self::EslintNoRestrictedExports(_) => "eslint",
             Self::EslintNoRestrictedGlobals(_) => "eslint",
             Self::EslintNoRestrictedImports(_) => "eslint",
             Self::EslintNoReturnAssign(_) => "eslint",
@@ -8946,6 +9048,7 @@ impl RuleEnum {
             Self::JestNoTestReturnStatement(_) => "jest",
             Self::JestNoUnneededAsyncExpectFunction(_) => "jest",
             Self::JestNoUntypedMockFactory(_) => "jest",
+            Self::JestPaddingAroundAfterAllBlocks(_) => "jest",
             Self::JestPaddingAroundTestBlocks(_) => "jest",
             Self::JestPreferCalledWith(_) => "jest",
             Self::JestPreferComparisonMatcher(_) => "jest",
@@ -8972,6 +9075,7 @@ impl RuleEnum {
             Self::JestRequireTopLevelDescribe(_) => "jest",
             Self::JestValidDescribeCallback(_) => "jest",
             Self::JestValidExpect(_) => "jest",
+            Self::JestValidExpectInPromise(_) => "jest",
             Self::JestValidTitle(_) => "jest",
             Self::ReactButtonHasType(_) => "react",
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => "react",
@@ -8980,6 +9084,7 @@ impl RuleEnum {
             Self::ReactForbidDomProps(_) => "react",
             Self::ReactForbidElements(_) => "react",
             Self::ReactForwardRefUsesRef(_) => "react",
+            Self::ReactHookUseState(_) => "react",
             Self::ReactIframeMissingSandbox(_) => "react",
             Self::ReactJsxBooleanValue(_) => "react",
             Self::ReactJsxCurlyBracePresence(_) => "react",
@@ -9039,6 +9144,7 @@ impl RuleEnum {
             Self::UnicornConsistentEmptyArraySpread(_) => "unicorn",
             Self::UnicornConsistentExistenceIndexCheck(_) => "unicorn",
             Self::UnicornConsistentFunctionScoping(_) => "unicorn",
+            Self::UnicornConsistentTemplateLiteralEscape(_) => "unicorn",
             Self::UnicornCustomErrorDefinition(_) => "unicorn",
             Self::UnicornEmptyBraceSpaces(_) => "unicorn",
             Self::UnicornErrorMessage(_) => "unicorn",
@@ -9090,6 +9196,7 @@ impl RuleEnum {
             Self::UnicornNoUselessCollectionArgument(_) => "unicorn",
             Self::UnicornNoUselessErrorCaptureStackTrace(_) => "unicorn",
             Self::UnicornNoUselessFallbackInSpread(_) => "unicorn",
+            Self::UnicornNoUselessIteratorToArray(_) => "unicorn",
             Self::UnicornNoUselessLengthCheck(_) => "unicorn",
             Self::UnicornNoUselessPromiseResolveReject(_) => "unicorn",
             Self::UnicornNoUselessSpread(_) => "unicorn",
@@ -9118,6 +9225,7 @@ impl RuleEnum {
             Self::UnicornPreferDomNodeTextContent(_) => "unicorn",
             Self::UnicornPreferEventTarget(_) => "unicorn",
             Self::UnicornPreferGlobalThis(_) => "unicorn",
+            Self::UnicornPreferImportMetaProperties(_) => "unicorn",
             Self::UnicornPreferIncludes(_) => "unicorn",
             Self::UnicornPreferKeyboardEventKey(_) => "unicorn",
             Self::UnicornPreferLogicalOperatorOverTernary(_) => "unicorn",
@@ -9725,6 +9833,9 @@ impl RuleEnum {
             Self::EslintNoRegexSpaces(_) => {
                 Ok(Self::EslintNoRegexSpaces(EslintNoRegexSpaces::from_configuration(value)?))
             }
+            Self::EslintNoRestrictedExports(_) => Ok(Self::EslintNoRestrictedExports(
+                EslintNoRestrictedExports::from_configuration(value)?,
+            )),
             Self::EslintNoRestrictedGlobals(_) => Ok(Self::EslintNoRestrictedGlobals(
                 EslintNoRestrictedGlobals::from_configuration(value)?,
             )),
@@ -10428,6 +10539,9 @@ impl RuleEnum {
             Self::JestNoUntypedMockFactory(_) => Ok(Self::JestNoUntypedMockFactory(
                 JestNoUntypedMockFactory::from_configuration(value)?,
             )),
+            Self::JestPaddingAroundAfterAllBlocks(_) => Ok(Self::JestPaddingAroundAfterAllBlocks(
+                JestPaddingAroundAfterAllBlocks::from_configuration(value)?,
+            )),
             Self::JestPaddingAroundTestBlocks(_) => Ok(Self::JestPaddingAroundTestBlocks(
                 JestPaddingAroundTestBlocks::from_configuration(value)?,
             )),
@@ -10506,6 +10620,9 @@ impl RuleEnum {
             Self::JestValidExpect(_) => {
                 Ok(Self::JestValidExpect(JestValidExpect::from_configuration(value)?))
             }
+            Self::JestValidExpectInPromise(_) => Ok(Self::JestValidExpectInPromise(
+                JestValidExpectInPromise::from_configuration(value)?,
+            )),
             Self::JestValidTitle(_) => {
                 Ok(Self::JestValidTitle(JestValidTitle::from_configuration(value)?))
             }
@@ -10531,6 +10648,9 @@ impl RuleEnum {
             }
             Self::ReactForwardRefUsesRef(_) => {
                 Ok(Self::ReactForwardRefUsesRef(ReactForwardRefUsesRef::from_configuration(value)?))
+            }
+            Self::ReactHookUseState(_) => {
+                Ok(Self::ReactHookUseState(ReactHookUseState::from_configuration(value)?))
             }
             Self::ReactIframeMissingSandbox(_) => Ok(Self::ReactIframeMissingSandbox(
                 ReactIframeMissingSandbox::from_configuration(value)?,
@@ -10717,6 +10837,11 @@ impl RuleEnum {
                     UnicornConsistentFunctionScoping::from_configuration(value)?,
                 ))
             }
+            Self::UnicornConsistentTemplateLiteralEscape(_) => {
+                Ok(Self::UnicornConsistentTemplateLiteralEscape(
+                    UnicornConsistentTemplateLiteralEscape::from_configuration(value)?,
+                ))
+            }
             Self::UnicornCustomErrorDefinition(_) => Ok(Self::UnicornCustomErrorDefinition(
                 UnicornCustomErrorDefinition::from_configuration(value)?,
             )),
@@ -10892,6 +11017,9 @@ impl RuleEnum {
                     UnicornNoUselessFallbackInSpread::from_configuration(value)?,
                 ))
             }
+            Self::UnicornNoUselessIteratorToArray(_) => Ok(Self::UnicornNoUselessIteratorToArray(
+                UnicornNoUselessIteratorToArray::from_configuration(value)?,
+            )),
             Self::UnicornNoUselessLengthCheck(_) => Ok(Self::UnicornNoUselessLengthCheck(
                 UnicornNoUselessLengthCheck::from_configuration(value)?,
             )),
@@ -10978,6 +11106,11 @@ impl RuleEnum {
             Self::UnicornPreferGlobalThis(_) => Ok(Self::UnicornPreferGlobalThis(
                 UnicornPreferGlobalThis::from_configuration(value)?,
             )),
+            Self::UnicornPreferImportMetaProperties(_) => {
+                Ok(Self::UnicornPreferImportMetaProperties(
+                    UnicornPreferImportMetaProperties::from_configuration(value)?,
+                ))
+            }
             Self::UnicornPreferIncludes(_) => {
                 Ok(Self::UnicornPreferIncludes(UnicornPreferIncludes::from_configuration(value)?))
             }
@@ -11746,6 +11879,7 @@ impl RuleEnum {
             Self::EslintNoPrototypeBuiltins(rule) => rule.to_configuration(),
             Self::EslintNoRedeclare(rule) => rule.to_configuration(),
             Self::EslintNoRegexSpaces(rule) => rule.to_configuration(),
+            Self::EslintNoRestrictedExports(rule) => rule.to_configuration(),
             Self::EslintNoRestrictedGlobals(rule) => rule.to_configuration(),
             Self::EslintNoRestrictedImports(rule) => rule.to_configuration(),
             Self::EslintNoReturnAssign(rule) => rule.to_configuration(),
@@ -11953,6 +12087,7 @@ impl RuleEnum {
             Self::JestNoTestReturnStatement(rule) => rule.to_configuration(),
             Self::JestNoUnneededAsyncExpectFunction(rule) => rule.to_configuration(),
             Self::JestNoUntypedMockFactory(rule) => rule.to_configuration(),
+            Self::JestPaddingAroundAfterAllBlocks(rule) => rule.to_configuration(),
             Self::JestPaddingAroundTestBlocks(rule) => rule.to_configuration(),
             Self::JestPreferCalledWith(rule) => rule.to_configuration(),
             Self::JestPreferComparisonMatcher(rule) => rule.to_configuration(),
@@ -11979,6 +12114,7 @@ impl RuleEnum {
             Self::JestRequireTopLevelDescribe(rule) => rule.to_configuration(),
             Self::JestValidDescribeCallback(rule) => rule.to_configuration(),
             Self::JestValidExpect(rule) => rule.to_configuration(),
+            Self::JestValidExpectInPromise(rule) => rule.to_configuration(),
             Self::JestValidTitle(rule) => rule.to_configuration(),
             Self::ReactButtonHasType(rule) => rule.to_configuration(),
             Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => rule.to_configuration(),
@@ -11987,6 +12123,7 @@ impl RuleEnum {
             Self::ReactForbidDomProps(rule) => rule.to_configuration(),
             Self::ReactForbidElements(rule) => rule.to_configuration(),
             Self::ReactForwardRefUsesRef(rule) => rule.to_configuration(),
+            Self::ReactHookUseState(rule) => rule.to_configuration(),
             Self::ReactIframeMissingSandbox(rule) => rule.to_configuration(),
             Self::ReactJsxBooleanValue(rule) => rule.to_configuration(),
             Self::ReactJsxCurlyBracePresence(rule) => rule.to_configuration(),
@@ -12046,6 +12183,7 @@ impl RuleEnum {
             Self::UnicornConsistentEmptyArraySpread(rule) => rule.to_configuration(),
             Self::UnicornConsistentExistenceIndexCheck(rule) => rule.to_configuration(),
             Self::UnicornConsistentFunctionScoping(rule) => rule.to_configuration(),
+            Self::UnicornConsistentTemplateLiteralEscape(rule) => rule.to_configuration(),
             Self::UnicornCustomErrorDefinition(rule) => rule.to_configuration(),
             Self::UnicornEmptyBraceSpaces(rule) => rule.to_configuration(),
             Self::UnicornErrorMessage(rule) => rule.to_configuration(),
@@ -12097,6 +12235,7 @@ impl RuleEnum {
             Self::UnicornNoUselessCollectionArgument(rule) => rule.to_configuration(),
             Self::UnicornNoUselessErrorCaptureStackTrace(rule) => rule.to_configuration(),
             Self::UnicornNoUselessFallbackInSpread(rule) => rule.to_configuration(),
+            Self::UnicornNoUselessIteratorToArray(rule) => rule.to_configuration(),
             Self::UnicornNoUselessLengthCheck(rule) => rule.to_configuration(),
             Self::UnicornNoUselessPromiseResolveReject(rule) => rule.to_configuration(),
             Self::UnicornNoUselessSpread(rule) => rule.to_configuration(),
@@ -12125,6 +12264,7 @@ impl RuleEnum {
             Self::UnicornPreferDomNodeTextContent(rule) => rule.to_configuration(),
             Self::UnicornPreferEventTarget(rule) => rule.to_configuration(),
             Self::UnicornPreferGlobalThis(rule) => rule.to_configuration(),
+            Self::UnicornPreferImportMetaProperties(rule) => rule.to_configuration(),
             Self::UnicornPreferIncludes(rule) => rule.to_configuration(),
             Self::UnicornPreferKeyboardEventKey(rule) => rule.to_configuration(),
             Self::UnicornPreferLogicalOperatorOverTernary(rule) => rule.to_configuration(),
@@ -12465,6 +12605,7 @@ impl RuleEnum {
             Self::EslintNoPrototypeBuiltins(rule) => rule.run(node, ctx),
             Self::EslintNoRedeclare(rule) => rule.run(node, ctx),
             Self::EslintNoRegexSpaces(rule) => rule.run(node, ctx),
+            Self::EslintNoRestrictedExports(rule) => rule.run(node, ctx),
             Self::EslintNoRestrictedGlobals(rule) => rule.run(node, ctx),
             Self::EslintNoRestrictedImports(rule) => rule.run(node, ctx),
             Self::EslintNoReturnAssign(rule) => rule.run(node, ctx),
@@ -12670,6 +12811,7 @@ impl RuleEnum {
             Self::JestNoTestReturnStatement(rule) => rule.run(node, ctx),
             Self::JestNoUnneededAsyncExpectFunction(rule) => rule.run(node, ctx),
             Self::JestNoUntypedMockFactory(rule) => rule.run(node, ctx),
+            Self::JestPaddingAroundAfterAllBlocks(rule) => rule.run(node, ctx),
             Self::JestPaddingAroundTestBlocks(rule) => rule.run(node, ctx),
             Self::JestPreferCalledWith(rule) => rule.run(node, ctx),
             Self::JestPreferComparisonMatcher(rule) => rule.run(node, ctx),
@@ -12696,6 +12838,7 @@ impl RuleEnum {
             Self::JestRequireTopLevelDescribe(rule) => rule.run(node, ctx),
             Self::JestValidDescribeCallback(rule) => rule.run(node, ctx),
             Self::JestValidExpect(rule) => rule.run(node, ctx),
+            Self::JestValidExpectInPromise(rule) => rule.run(node, ctx),
             Self::JestValidTitle(rule) => rule.run(node, ctx),
             Self::ReactButtonHasType(rule) => rule.run(node, ctx),
             Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => rule.run(node, ctx),
@@ -12704,6 +12847,7 @@ impl RuleEnum {
             Self::ReactForbidDomProps(rule) => rule.run(node, ctx),
             Self::ReactForbidElements(rule) => rule.run(node, ctx),
             Self::ReactForwardRefUsesRef(rule) => rule.run(node, ctx),
+            Self::ReactHookUseState(rule) => rule.run(node, ctx),
             Self::ReactIframeMissingSandbox(rule) => rule.run(node, ctx),
             Self::ReactJsxBooleanValue(rule) => rule.run(node, ctx),
             Self::ReactJsxCurlyBracePresence(rule) => rule.run(node, ctx),
@@ -12763,6 +12907,7 @@ impl RuleEnum {
             Self::UnicornConsistentEmptyArraySpread(rule) => rule.run(node, ctx),
             Self::UnicornConsistentExistenceIndexCheck(rule) => rule.run(node, ctx),
             Self::UnicornConsistentFunctionScoping(rule) => rule.run(node, ctx),
+            Self::UnicornConsistentTemplateLiteralEscape(rule) => rule.run(node, ctx),
             Self::UnicornCustomErrorDefinition(rule) => rule.run(node, ctx),
             Self::UnicornEmptyBraceSpaces(rule) => rule.run(node, ctx),
             Self::UnicornErrorMessage(rule) => rule.run(node, ctx),
@@ -12814,6 +12959,7 @@ impl RuleEnum {
             Self::UnicornNoUselessCollectionArgument(rule) => rule.run(node, ctx),
             Self::UnicornNoUselessErrorCaptureStackTrace(rule) => rule.run(node, ctx),
             Self::UnicornNoUselessFallbackInSpread(rule) => rule.run(node, ctx),
+            Self::UnicornNoUselessIteratorToArray(rule) => rule.run(node, ctx),
             Self::UnicornNoUselessLengthCheck(rule) => rule.run(node, ctx),
             Self::UnicornNoUselessPromiseResolveReject(rule) => rule.run(node, ctx),
             Self::UnicornNoUselessSpread(rule) => rule.run(node, ctx),
@@ -12842,6 +12988,7 @@ impl RuleEnum {
             Self::UnicornPreferDomNodeTextContent(rule) => rule.run(node, ctx),
             Self::UnicornPreferEventTarget(rule) => rule.run(node, ctx),
             Self::UnicornPreferGlobalThis(rule) => rule.run(node, ctx),
+            Self::UnicornPreferImportMetaProperties(rule) => rule.run(node, ctx),
             Self::UnicornPreferIncludes(rule) => rule.run(node, ctx),
             Self::UnicornPreferKeyboardEventKey(rule) => rule.run(node, ctx),
             Self::UnicornPreferLogicalOperatorOverTernary(rule) => rule.run(node, ctx),
@@ -13180,6 +13327,7 @@ impl RuleEnum {
             Self::EslintNoPrototypeBuiltins(rule) => rule.run_once(ctx),
             Self::EslintNoRedeclare(rule) => rule.run_once(ctx),
             Self::EslintNoRegexSpaces(rule) => rule.run_once(ctx),
+            Self::EslintNoRestrictedExports(rule) => rule.run_once(ctx),
             Self::EslintNoRestrictedGlobals(rule) => rule.run_once(ctx),
             Self::EslintNoRestrictedImports(rule) => rule.run_once(ctx),
             Self::EslintNoReturnAssign(rule) => rule.run_once(ctx),
@@ -13385,6 +13533,7 @@ impl RuleEnum {
             Self::JestNoTestReturnStatement(rule) => rule.run_once(ctx),
             Self::JestNoUnneededAsyncExpectFunction(rule) => rule.run_once(ctx),
             Self::JestNoUntypedMockFactory(rule) => rule.run_once(ctx),
+            Self::JestPaddingAroundAfterAllBlocks(rule) => rule.run_once(ctx),
             Self::JestPaddingAroundTestBlocks(rule) => rule.run_once(ctx),
             Self::JestPreferCalledWith(rule) => rule.run_once(ctx),
             Self::JestPreferComparisonMatcher(rule) => rule.run_once(ctx),
@@ -13411,6 +13560,7 @@ impl RuleEnum {
             Self::JestRequireTopLevelDescribe(rule) => rule.run_once(ctx),
             Self::JestValidDescribeCallback(rule) => rule.run_once(ctx),
             Self::JestValidExpect(rule) => rule.run_once(ctx),
+            Self::JestValidExpectInPromise(rule) => rule.run_once(ctx),
             Self::JestValidTitle(rule) => rule.run_once(ctx),
             Self::ReactButtonHasType(rule) => rule.run_once(ctx),
             Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => rule.run_once(ctx),
@@ -13419,6 +13569,7 @@ impl RuleEnum {
             Self::ReactForbidDomProps(rule) => rule.run_once(ctx),
             Self::ReactForbidElements(rule) => rule.run_once(ctx),
             Self::ReactForwardRefUsesRef(rule) => rule.run_once(ctx),
+            Self::ReactHookUseState(rule) => rule.run_once(ctx),
             Self::ReactIframeMissingSandbox(rule) => rule.run_once(ctx),
             Self::ReactJsxBooleanValue(rule) => rule.run_once(ctx),
             Self::ReactJsxCurlyBracePresence(rule) => rule.run_once(ctx),
@@ -13478,6 +13629,7 @@ impl RuleEnum {
             Self::UnicornConsistentEmptyArraySpread(rule) => rule.run_once(ctx),
             Self::UnicornConsistentExistenceIndexCheck(rule) => rule.run_once(ctx),
             Self::UnicornConsistentFunctionScoping(rule) => rule.run_once(ctx),
+            Self::UnicornConsistentTemplateLiteralEscape(rule) => rule.run_once(ctx),
             Self::UnicornCustomErrorDefinition(rule) => rule.run_once(ctx),
             Self::UnicornEmptyBraceSpaces(rule) => rule.run_once(ctx),
             Self::UnicornErrorMessage(rule) => rule.run_once(ctx),
@@ -13529,6 +13681,7 @@ impl RuleEnum {
             Self::UnicornNoUselessCollectionArgument(rule) => rule.run_once(ctx),
             Self::UnicornNoUselessErrorCaptureStackTrace(rule) => rule.run_once(ctx),
             Self::UnicornNoUselessFallbackInSpread(rule) => rule.run_once(ctx),
+            Self::UnicornNoUselessIteratorToArray(rule) => rule.run_once(ctx),
             Self::UnicornNoUselessLengthCheck(rule) => rule.run_once(ctx),
             Self::UnicornNoUselessPromiseResolveReject(rule) => rule.run_once(ctx),
             Self::UnicornNoUselessSpread(rule) => rule.run_once(ctx),
@@ -13557,6 +13710,7 @@ impl RuleEnum {
             Self::UnicornPreferDomNodeTextContent(rule) => rule.run_once(ctx),
             Self::UnicornPreferEventTarget(rule) => rule.run_once(ctx),
             Self::UnicornPreferGlobalThis(rule) => rule.run_once(ctx),
+            Self::UnicornPreferImportMetaProperties(rule) => rule.run_once(ctx),
             Self::UnicornPreferIncludes(rule) => rule.run_once(ctx),
             Self::UnicornPreferKeyboardEventKey(rule) => rule.run_once(ctx),
             Self::UnicornPreferLogicalOperatorOverTernary(rule) => rule.run_once(ctx),
@@ -13899,6 +14053,7 @@ impl RuleEnum {
             Self::EslintNoPrototypeBuiltins(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoRedeclare(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoRegexSpaces(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::EslintNoRestrictedExports(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoRestrictedGlobals(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoRestrictedImports(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoReturnAssign(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -14168,6 +14323,7 @@ impl RuleEnum {
             Self::JestNoTestReturnStatement(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JestNoUnneededAsyncExpectFunction(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JestNoUntypedMockFactory(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::JestPaddingAroundAfterAllBlocks(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JestPaddingAroundTestBlocks(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JestPreferCalledWith(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JestPreferComparisonMatcher(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -14194,6 +14350,7 @@ impl RuleEnum {
             Self::JestRequireTopLevelDescribe(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JestValidDescribeCallback(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JestValidExpect(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::JestValidExpectInPromise(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JestValidTitle(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactButtonHasType(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => {
@@ -14204,6 +14361,7 @@ impl RuleEnum {
             Self::ReactForbidDomProps(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactForbidElements(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactForwardRefUsesRef(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactHookUseState(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactIframeMissingSandbox(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactJsxBooleanValue(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactJsxCurlyBracePresence(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -14267,6 +14425,9 @@ impl RuleEnum {
                 rule.run_on_jest_node(jest_node, ctx)
             }
             Self::UnicornConsistentFunctionScoping(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::UnicornConsistentTemplateLiteralEscape(rule) => {
+                rule.run_on_jest_node(jest_node, ctx)
+            }
             Self::UnicornCustomErrorDefinition(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornEmptyBraceSpaces(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornErrorMessage(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -14328,6 +14489,7 @@ impl RuleEnum {
                 rule.run_on_jest_node(jest_node, ctx)
             }
             Self::UnicornNoUselessFallbackInSpread(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::UnicornNoUselessIteratorToArray(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornNoUselessLengthCheck(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornNoUselessPromiseResolveReject(rule) => {
                 rule.run_on_jest_node(jest_node, ctx)
@@ -14358,6 +14520,7 @@ impl RuleEnum {
             Self::UnicornPreferDomNodeTextContent(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornPreferEventTarget(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornPreferGlobalThis(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::UnicornPreferImportMetaProperties(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornPreferIncludes(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornPreferKeyboardEventKey(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornPreferLogicalOperatorOverTernary(rule) => {
@@ -14710,6 +14873,7 @@ impl RuleEnum {
             Self::EslintNoPrototypeBuiltins(rule) => rule.should_run(ctx),
             Self::EslintNoRedeclare(rule) => rule.should_run(ctx),
             Self::EslintNoRegexSpaces(rule) => rule.should_run(ctx),
+            Self::EslintNoRestrictedExports(rule) => rule.should_run(ctx),
             Self::EslintNoRestrictedGlobals(rule) => rule.should_run(ctx),
             Self::EslintNoRestrictedImports(rule) => rule.should_run(ctx),
             Self::EslintNoReturnAssign(rule) => rule.should_run(ctx),
@@ -14915,6 +15079,7 @@ impl RuleEnum {
             Self::JestNoTestReturnStatement(rule) => rule.should_run(ctx),
             Self::JestNoUnneededAsyncExpectFunction(rule) => rule.should_run(ctx),
             Self::JestNoUntypedMockFactory(rule) => rule.should_run(ctx),
+            Self::JestPaddingAroundAfterAllBlocks(rule) => rule.should_run(ctx),
             Self::JestPaddingAroundTestBlocks(rule) => rule.should_run(ctx),
             Self::JestPreferCalledWith(rule) => rule.should_run(ctx),
             Self::JestPreferComparisonMatcher(rule) => rule.should_run(ctx),
@@ -14941,6 +15106,7 @@ impl RuleEnum {
             Self::JestRequireTopLevelDescribe(rule) => rule.should_run(ctx),
             Self::JestValidDescribeCallback(rule) => rule.should_run(ctx),
             Self::JestValidExpect(rule) => rule.should_run(ctx),
+            Self::JestValidExpectInPromise(rule) => rule.should_run(ctx),
             Self::JestValidTitle(rule) => rule.should_run(ctx),
             Self::ReactButtonHasType(rule) => rule.should_run(ctx),
             Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => rule.should_run(ctx),
@@ -14949,6 +15115,7 @@ impl RuleEnum {
             Self::ReactForbidDomProps(rule) => rule.should_run(ctx),
             Self::ReactForbidElements(rule) => rule.should_run(ctx),
             Self::ReactForwardRefUsesRef(rule) => rule.should_run(ctx),
+            Self::ReactHookUseState(rule) => rule.should_run(ctx),
             Self::ReactIframeMissingSandbox(rule) => rule.should_run(ctx),
             Self::ReactJsxBooleanValue(rule) => rule.should_run(ctx),
             Self::ReactJsxCurlyBracePresence(rule) => rule.should_run(ctx),
@@ -15008,6 +15175,7 @@ impl RuleEnum {
             Self::UnicornConsistentEmptyArraySpread(rule) => rule.should_run(ctx),
             Self::UnicornConsistentExistenceIndexCheck(rule) => rule.should_run(ctx),
             Self::UnicornConsistentFunctionScoping(rule) => rule.should_run(ctx),
+            Self::UnicornConsistentTemplateLiteralEscape(rule) => rule.should_run(ctx),
             Self::UnicornCustomErrorDefinition(rule) => rule.should_run(ctx),
             Self::UnicornEmptyBraceSpaces(rule) => rule.should_run(ctx),
             Self::UnicornErrorMessage(rule) => rule.should_run(ctx),
@@ -15059,6 +15227,7 @@ impl RuleEnum {
             Self::UnicornNoUselessCollectionArgument(rule) => rule.should_run(ctx),
             Self::UnicornNoUselessErrorCaptureStackTrace(rule) => rule.should_run(ctx),
             Self::UnicornNoUselessFallbackInSpread(rule) => rule.should_run(ctx),
+            Self::UnicornNoUselessIteratorToArray(rule) => rule.should_run(ctx),
             Self::UnicornNoUselessLengthCheck(rule) => rule.should_run(ctx),
             Self::UnicornNoUselessPromiseResolveReject(rule) => rule.should_run(ctx),
             Self::UnicornNoUselessSpread(rule) => rule.should_run(ctx),
@@ -15087,6 +15256,7 @@ impl RuleEnum {
             Self::UnicornPreferDomNodeTextContent(rule) => rule.should_run(ctx),
             Self::UnicornPreferEventTarget(rule) => rule.should_run(ctx),
             Self::UnicornPreferGlobalThis(rule) => rule.should_run(ctx),
+            Self::UnicornPreferImportMetaProperties(rule) => rule.should_run(ctx),
             Self::UnicornPreferIncludes(rule) => rule.should_run(ctx),
             Self::UnicornPreferKeyboardEventKey(rule) => rule.should_run(ctx),
             Self::UnicornPreferLogicalOperatorOverTernary(rule) => rule.should_run(ctx),
@@ -15441,6 +15611,7 @@ impl RuleEnum {
             Self::EslintNoPrototypeBuiltins(_) => EslintNoPrototypeBuiltins::IS_TSGOLINT_RULE,
             Self::EslintNoRedeclare(_) => EslintNoRedeclare::IS_TSGOLINT_RULE,
             Self::EslintNoRegexSpaces(_) => EslintNoRegexSpaces::IS_TSGOLINT_RULE,
+            Self::EslintNoRestrictedExports(_) => EslintNoRestrictedExports::IS_TSGOLINT_RULE,
             Self::EslintNoRestrictedGlobals(_) => EslintNoRestrictedGlobals::IS_TSGOLINT_RULE,
             Self::EslintNoRestrictedImports(_) => EslintNoRestrictedImports::IS_TSGOLINT_RULE,
             Self::EslintNoReturnAssign(_) => EslintNoReturnAssign::IS_TSGOLINT_RULE,
@@ -15784,6 +15955,9 @@ impl RuleEnum {
                 JestNoUnneededAsyncExpectFunction::IS_TSGOLINT_RULE
             }
             Self::JestNoUntypedMockFactory(_) => JestNoUntypedMockFactory::IS_TSGOLINT_RULE,
+            Self::JestPaddingAroundAfterAllBlocks(_) => {
+                JestPaddingAroundAfterAllBlocks::IS_TSGOLINT_RULE
+            }
             Self::JestPaddingAroundTestBlocks(_) => JestPaddingAroundTestBlocks::IS_TSGOLINT_RULE,
             Self::JestPreferCalledWith(_) => JestPreferCalledWith::IS_TSGOLINT_RULE,
             Self::JestPreferComparisonMatcher(_) => JestPreferComparisonMatcher::IS_TSGOLINT_RULE,
@@ -15816,6 +15990,7 @@ impl RuleEnum {
             Self::JestRequireTopLevelDescribe(_) => JestRequireTopLevelDescribe::IS_TSGOLINT_RULE,
             Self::JestValidDescribeCallback(_) => JestValidDescribeCallback::IS_TSGOLINT_RULE,
             Self::JestValidExpect(_) => JestValidExpect::IS_TSGOLINT_RULE,
+            Self::JestValidExpectInPromise(_) => JestValidExpectInPromise::IS_TSGOLINT_RULE,
             Self::JestValidTitle(_) => JestValidTitle::IS_TSGOLINT_RULE,
             Self::ReactButtonHasType(_) => ReactButtonHasType::IS_TSGOLINT_RULE,
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => {
@@ -15826,6 +16001,7 @@ impl RuleEnum {
             Self::ReactForbidDomProps(_) => ReactForbidDomProps::IS_TSGOLINT_RULE,
             Self::ReactForbidElements(_) => ReactForbidElements::IS_TSGOLINT_RULE,
             Self::ReactForwardRefUsesRef(_) => ReactForwardRefUsesRef::IS_TSGOLINT_RULE,
+            Self::ReactHookUseState(_) => ReactHookUseState::IS_TSGOLINT_RULE,
             Self::ReactIframeMissingSandbox(_) => ReactIframeMissingSandbox::IS_TSGOLINT_RULE,
             Self::ReactJsxBooleanValue(_) => ReactJsxBooleanValue::IS_TSGOLINT_RULE,
             Self::ReactJsxCurlyBracePresence(_) => ReactJsxCurlyBracePresence::IS_TSGOLINT_RULE,
@@ -15900,6 +16076,9 @@ impl RuleEnum {
             }
             Self::UnicornConsistentFunctionScoping(_) => {
                 UnicornConsistentFunctionScoping::IS_TSGOLINT_RULE
+            }
+            Self::UnicornConsistentTemplateLiteralEscape(_) => {
+                UnicornConsistentTemplateLiteralEscape::IS_TSGOLINT_RULE
             }
             Self::UnicornCustomErrorDefinition(_) => UnicornCustomErrorDefinition::IS_TSGOLINT_RULE,
             Self::UnicornEmptyBraceSpaces(_) => UnicornEmptyBraceSpaces::IS_TSGOLINT_RULE,
@@ -15984,6 +16163,9 @@ impl RuleEnum {
             Self::UnicornNoUselessFallbackInSpread(_) => {
                 UnicornNoUselessFallbackInSpread::IS_TSGOLINT_RULE
             }
+            Self::UnicornNoUselessIteratorToArray(_) => {
+                UnicornNoUselessIteratorToArray::IS_TSGOLINT_RULE
+            }
             Self::UnicornNoUselessLengthCheck(_) => UnicornNoUselessLengthCheck::IS_TSGOLINT_RULE,
             Self::UnicornNoUselessPromiseResolveReject(_) => {
                 UnicornNoUselessPromiseResolveReject::IS_TSGOLINT_RULE
@@ -16024,6 +16206,9 @@ impl RuleEnum {
             }
             Self::UnicornPreferEventTarget(_) => UnicornPreferEventTarget::IS_TSGOLINT_RULE,
             Self::UnicornPreferGlobalThis(_) => UnicornPreferGlobalThis::IS_TSGOLINT_RULE,
+            Self::UnicornPreferImportMetaProperties(_) => {
+                UnicornPreferImportMetaProperties::IS_TSGOLINT_RULE
+            }
             Self::UnicornPreferIncludes(_) => UnicornPreferIncludes::IS_TSGOLINT_RULE,
             Self::UnicornPreferKeyboardEventKey(_) => {
                 UnicornPreferKeyboardEventKey::IS_TSGOLINT_RULE
@@ -16453,6 +16638,7 @@ impl RuleEnum {
             Self::EslintNoPrototypeBuiltins(_) => EslintNoPrototypeBuiltins::HAS_CONFIG,
             Self::EslintNoRedeclare(_) => EslintNoRedeclare::HAS_CONFIG,
             Self::EslintNoRegexSpaces(_) => EslintNoRegexSpaces::HAS_CONFIG,
+            Self::EslintNoRestrictedExports(_) => EslintNoRestrictedExports::HAS_CONFIG,
             Self::EslintNoRestrictedGlobals(_) => EslintNoRestrictedGlobals::HAS_CONFIG,
             Self::EslintNoRestrictedImports(_) => EslintNoRestrictedImports::HAS_CONFIG,
             Self::EslintNoReturnAssign(_) => EslintNoReturnAssign::HAS_CONFIG,
@@ -16754,6 +16940,7 @@ impl RuleEnum {
                 JestNoUnneededAsyncExpectFunction::HAS_CONFIG
             }
             Self::JestNoUntypedMockFactory(_) => JestNoUntypedMockFactory::HAS_CONFIG,
+            Self::JestPaddingAroundAfterAllBlocks(_) => JestPaddingAroundAfterAllBlocks::HAS_CONFIG,
             Self::JestPaddingAroundTestBlocks(_) => JestPaddingAroundTestBlocks::HAS_CONFIG,
             Self::JestPreferCalledWith(_) => JestPreferCalledWith::HAS_CONFIG,
             Self::JestPreferComparisonMatcher(_) => JestPreferComparisonMatcher::HAS_CONFIG,
@@ -16780,6 +16967,7 @@ impl RuleEnum {
             Self::JestRequireTopLevelDescribe(_) => JestRequireTopLevelDescribe::HAS_CONFIG,
             Self::JestValidDescribeCallback(_) => JestValidDescribeCallback::HAS_CONFIG,
             Self::JestValidExpect(_) => JestValidExpect::HAS_CONFIG,
+            Self::JestValidExpectInPromise(_) => JestValidExpectInPromise::HAS_CONFIG,
             Self::JestValidTitle(_) => JestValidTitle::HAS_CONFIG,
             Self::ReactButtonHasType(_) => ReactButtonHasType::HAS_CONFIG,
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => {
@@ -16790,6 +16978,7 @@ impl RuleEnum {
             Self::ReactForbidDomProps(_) => ReactForbidDomProps::HAS_CONFIG,
             Self::ReactForbidElements(_) => ReactForbidElements::HAS_CONFIG,
             Self::ReactForwardRefUsesRef(_) => ReactForwardRefUsesRef::HAS_CONFIG,
+            Self::ReactHookUseState(_) => ReactHookUseState::HAS_CONFIG,
             Self::ReactIframeMissingSandbox(_) => ReactIframeMissingSandbox::HAS_CONFIG,
             Self::ReactJsxBooleanValue(_) => ReactJsxBooleanValue::HAS_CONFIG,
             Self::ReactJsxCurlyBracePresence(_) => ReactJsxCurlyBracePresence::HAS_CONFIG,
@@ -16858,6 +17047,9 @@ impl RuleEnum {
             }
             Self::UnicornConsistentFunctionScoping(_) => {
                 UnicornConsistentFunctionScoping::HAS_CONFIG
+            }
+            Self::UnicornConsistentTemplateLiteralEscape(_) => {
+                UnicornConsistentTemplateLiteralEscape::HAS_CONFIG
             }
             Self::UnicornCustomErrorDefinition(_) => UnicornCustomErrorDefinition::HAS_CONFIG,
             Self::UnicornEmptyBraceSpaces(_) => UnicornEmptyBraceSpaces::HAS_CONFIG,
@@ -16932,6 +17124,7 @@ impl RuleEnum {
             Self::UnicornNoUselessFallbackInSpread(_) => {
                 UnicornNoUselessFallbackInSpread::HAS_CONFIG
             }
+            Self::UnicornNoUselessIteratorToArray(_) => UnicornNoUselessIteratorToArray::HAS_CONFIG,
             Self::UnicornNoUselessLengthCheck(_) => UnicornNoUselessLengthCheck::HAS_CONFIG,
             Self::UnicornNoUselessPromiseResolveReject(_) => {
                 UnicornNoUselessPromiseResolveReject::HAS_CONFIG
@@ -16962,6 +17155,9 @@ impl RuleEnum {
             Self::UnicornPreferDomNodeTextContent(_) => UnicornPreferDomNodeTextContent::HAS_CONFIG,
             Self::UnicornPreferEventTarget(_) => UnicornPreferEventTarget::HAS_CONFIG,
             Self::UnicornPreferGlobalThis(_) => UnicornPreferGlobalThis::HAS_CONFIG,
+            Self::UnicornPreferImportMetaProperties(_) => {
+                UnicornPreferImportMetaProperties::HAS_CONFIG
+            }
             Self::UnicornPreferIncludes(_) => UnicornPreferIncludes::HAS_CONFIG,
             Self::UnicornPreferKeyboardEventKey(_) => UnicornPreferKeyboardEventKey::HAS_CONFIG,
             Self::UnicornPreferLogicalOperatorOverTernary(_) => {
@@ -17336,6 +17532,7 @@ impl RuleEnum {
             Self::EslintNoPrototypeBuiltins(rule) => rule.types_info(),
             Self::EslintNoRedeclare(rule) => rule.types_info(),
             Self::EslintNoRegexSpaces(rule) => rule.types_info(),
+            Self::EslintNoRestrictedExports(rule) => rule.types_info(),
             Self::EslintNoRestrictedGlobals(rule) => rule.types_info(),
             Self::EslintNoRestrictedImports(rule) => rule.types_info(),
             Self::EslintNoReturnAssign(rule) => rule.types_info(),
@@ -17541,6 +17738,7 @@ impl RuleEnum {
             Self::JestNoTestReturnStatement(rule) => rule.types_info(),
             Self::JestNoUnneededAsyncExpectFunction(rule) => rule.types_info(),
             Self::JestNoUntypedMockFactory(rule) => rule.types_info(),
+            Self::JestPaddingAroundAfterAllBlocks(rule) => rule.types_info(),
             Self::JestPaddingAroundTestBlocks(rule) => rule.types_info(),
             Self::JestPreferCalledWith(rule) => rule.types_info(),
             Self::JestPreferComparisonMatcher(rule) => rule.types_info(),
@@ -17567,6 +17765,7 @@ impl RuleEnum {
             Self::JestRequireTopLevelDescribe(rule) => rule.types_info(),
             Self::JestValidDescribeCallback(rule) => rule.types_info(),
             Self::JestValidExpect(rule) => rule.types_info(),
+            Self::JestValidExpectInPromise(rule) => rule.types_info(),
             Self::JestValidTitle(rule) => rule.types_info(),
             Self::ReactButtonHasType(rule) => rule.types_info(),
             Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => rule.types_info(),
@@ -17575,6 +17774,7 @@ impl RuleEnum {
             Self::ReactForbidDomProps(rule) => rule.types_info(),
             Self::ReactForbidElements(rule) => rule.types_info(),
             Self::ReactForwardRefUsesRef(rule) => rule.types_info(),
+            Self::ReactHookUseState(rule) => rule.types_info(),
             Self::ReactIframeMissingSandbox(rule) => rule.types_info(),
             Self::ReactJsxBooleanValue(rule) => rule.types_info(),
             Self::ReactJsxCurlyBracePresence(rule) => rule.types_info(),
@@ -17634,6 +17834,7 @@ impl RuleEnum {
             Self::UnicornConsistentEmptyArraySpread(rule) => rule.types_info(),
             Self::UnicornConsistentExistenceIndexCheck(rule) => rule.types_info(),
             Self::UnicornConsistentFunctionScoping(rule) => rule.types_info(),
+            Self::UnicornConsistentTemplateLiteralEscape(rule) => rule.types_info(),
             Self::UnicornCustomErrorDefinition(rule) => rule.types_info(),
             Self::UnicornEmptyBraceSpaces(rule) => rule.types_info(),
             Self::UnicornErrorMessage(rule) => rule.types_info(),
@@ -17685,6 +17886,7 @@ impl RuleEnum {
             Self::UnicornNoUselessCollectionArgument(rule) => rule.types_info(),
             Self::UnicornNoUselessErrorCaptureStackTrace(rule) => rule.types_info(),
             Self::UnicornNoUselessFallbackInSpread(rule) => rule.types_info(),
+            Self::UnicornNoUselessIteratorToArray(rule) => rule.types_info(),
             Self::UnicornNoUselessLengthCheck(rule) => rule.types_info(),
             Self::UnicornNoUselessPromiseResolveReject(rule) => rule.types_info(),
             Self::UnicornNoUselessSpread(rule) => rule.types_info(),
@@ -17713,6 +17915,7 @@ impl RuleEnum {
             Self::UnicornPreferDomNodeTextContent(rule) => rule.types_info(),
             Self::UnicornPreferEventTarget(rule) => rule.types_info(),
             Self::UnicornPreferGlobalThis(rule) => rule.types_info(),
+            Self::UnicornPreferImportMetaProperties(rule) => rule.types_info(),
             Self::UnicornPreferIncludes(rule) => rule.types_info(),
             Self::UnicornPreferKeyboardEventKey(rule) => rule.types_info(),
             Self::UnicornPreferLogicalOperatorOverTernary(rule) => rule.types_info(),
@@ -18051,6 +18254,7 @@ impl RuleEnum {
             Self::EslintNoPrototypeBuiltins(rule) => rule.run_info(),
             Self::EslintNoRedeclare(rule) => rule.run_info(),
             Self::EslintNoRegexSpaces(rule) => rule.run_info(),
+            Self::EslintNoRestrictedExports(rule) => rule.run_info(),
             Self::EslintNoRestrictedGlobals(rule) => rule.run_info(),
             Self::EslintNoRestrictedImports(rule) => rule.run_info(),
             Self::EslintNoReturnAssign(rule) => rule.run_info(),
@@ -18256,6 +18460,7 @@ impl RuleEnum {
             Self::JestNoTestReturnStatement(rule) => rule.run_info(),
             Self::JestNoUnneededAsyncExpectFunction(rule) => rule.run_info(),
             Self::JestNoUntypedMockFactory(rule) => rule.run_info(),
+            Self::JestPaddingAroundAfterAllBlocks(rule) => rule.run_info(),
             Self::JestPaddingAroundTestBlocks(rule) => rule.run_info(),
             Self::JestPreferCalledWith(rule) => rule.run_info(),
             Self::JestPreferComparisonMatcher(rule) => rule.run_info(),
@@ -18282,6 +18487,7 @@ impl RuleEnum {
             Self::JestRequireTopLevelDescribe(rule) => rule.run_info(),
             Self::JestValidDescribeCallback(rule) => rule.run_info(),
             Self::JestValidExpect(rule) => rule.run_info(),
+            Self::JestValidExpectInPromise(rule) => rule.run_info(),
             Self::JestValidTitle(rule) => rule.run_info(),
             Self::ReactButtonHasType(rule) => rule.run_info(),
             Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => rule.run_info(),
@@ -18290,6 +18496,7 @@ impl RuleEnum {
             Self::ReactForbidDomProps(rule) => rule.run_info(),
             Self::ReactForbidElements(rule) => rule.run_info(),
             Self::ReactForwardRefUsesRef(rule) => rule.run_info(),
+            Self::ReactHookUseState(rule) => rule.run_info(),
             Self::ReactIframeMissingSandbox(rule) => rule.run_info(),
             Self::ReactJsxBooleanValue(rule) => rule.run_info(),
             Self::ReactJsxCurlyBracePresence(rule) => rule.run_info(),
@@ -18349,6 +18556,7 @@ impl RuleEnum {
             Self::UnicornConsistentEmptyArraySpread(rule) => rule.run_info(),
             Self::UnicornConsistentExistenceIndexCheck(rule) => rule.run_info(),
             Self::UnicornConsistentFunctionScoping(rule) => rule.run_info(),
+            Self::UnicornConsistentTemplateLiteralEscape(rule) => rule.run_info(),
             Self::UnicornCustomErrorDefinition(rule) => rule.run_info(),
             Self::UnicornEmptyBraceSpaces(rule) => rule.run_info(),
             Self::UnicornErrorMessage(rule) => rule.run_info(),
@@ -18400,6 +18608,7 @@ impl RuleEnum {
             Self::UnicornNoUselessCollectionArgument(rule) => rule.run_info(),
             Self::UnicornNoUselessErrorCaptureStackTrace(rule) => rule.run_info(),
             Self::UnicornNoUselessFallbackInSpread(rule) => rule.run_info(),
+            Self::UnicornNoUselessIteratorToArray(rule) => rule.run_info(),
             Self::UnicornNoUselessLengthCheck(rule) => rule.run_info(),
             Self::UnicornNoUselessPromiseResolveReject(rule) => rule.run_info(),
             Self::UnicornNoUselessSpread(rule) => rule.run_info(),
@@ -18428,6 +18637,7 @@ impl RuleEnum {
             Self::UnicornPreferDomNodeTextContent(rule) => rule.run_info(),
             Self::UnicornPreferEventTarget(rule) => rule.run_info(),
             Self::UnicornPreferGlobalThis(rule) => rule.run_info(),
+            Self::UnicornPreferImportMetaProperties(rule) => rule.run_info(),
             Self::UnicornPreferIncludes(rule) => rule.run_info(),
             Self::UnicornPreferKeyboardEventKey(rule) => rule.run_info(),
             Self::UnicornPreferLogicalOperatorOverTernary(rule) => rule.run_info(),
@@ -18788,6 +18998,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::EslintNoPrototypeBuiltins(EslintNoPrototypeBuiltins::default()),
         RuleEnum::EslintNoRedeclare(EslintNoRedeclare::default()),
         RuleEnum::EslintNoRegexSpaces(EslintNoRegexSpaces::default()),
+        RuleEnum::EslintNoRestrictedExports(EslintNoRestrictedExports::default()),
         RuleEnum::EslintNoRestrictedGlobals(EslintNoRestrictedGlobals::default()),
         RuleEnum::EslintNoRestrictedImports(EslintNoRestrictedImports::default()),
         RuleEnum::EslintNoReturnAssign(EslintNoReturnAssign::default()),
@@ -19057,6 +19268,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::JestNoTestReturnStatement(JestNoTestReturnStatement::default()),
         RuleEnum::JestNoUnneededAsyncExpectFunction(JestNoUnneededAsyncExpectFunction::default()),
         RuleEnum::JestNoUntypedMockFactory(JestNoUntypedMockFactory::default()),
+        RuleEnum::JestPaddingAroundAfterAllBlocks(JestPaddingAroundAfterAllBlocks::default()),
         RuleEnum::JestPaddingAroundTestBlocks(JestPaddingAroundTestBlocks::default()),
         RuleEnum::JestPreferCalledWith(JestPreferCalledWith::default()),
         RuleEnum::JestPreferComparisonMatcher(JestPreferComparisonMatcher::default()),
@@ -19083,6 +19295,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::JestRequireTopLevelDescribe(JestRequireTopLevelDescribe::default()),
         RuleEnum::JestValidDescribeCallback(JestValidDescribeCallback::default()),
         RuleEnum::JestValidExpect(JestValidExpect::default()),
+        RuleEnum::JestValidExpectInPromise(JestValidExpectInPromise::default()),
         RuleEnum::JestValidTitle(JestValidTitle::default()),
         RuleEnum::ReactButtonHasType(ReactButtonHasType::default()),
         RuleEnum::ReactCheckedRequiresOnchangeOrReadonly(
@@ -19093,6 +19306,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::ReactForbidDomProps(ReactForbidDomProps::default()),
         RuleEnum::ReactForbidElements(ReactForbidElements::default()),
         RuleEnum::ReactForwardRefUsesRef(ReactForwardRefUsesRef::default()),
+        RuleEnum::ReactHookUseState(ReactHookUseState::default()),
         RuleEnum::ReactIframeMissingSandbox(ReactIframeMissingSandbox::default()),
         RuleEnum::ReactJsxBooleanValue(ReactJsxBooleanValue::default()),
         RuleEnum::ReactJsxCurlyBracePresence(ReactJsxCurlyBracePresence::default()),
@@ -19156,6 +19370,9 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
             UnicornConsistentExistenceIndexCheck::default(),
         ),
         RuleEnum::UnicornConsistentFunctionScoping(UnicornConsistentFunctionScoping::default()),
+        RuleEnum::UnicornConsistentTemplateLiteralEscape(
+            UnicornConsistentTemplateLiteralEscape::default(),
+        ),
         RuleEnum::UnicornCustomErrorDefinition(UnicornCustomErrorDefinition::default()),
         RuleEnum::UnicornEmptyBraceSpaces(UnicornEmptyBraceSpaces::default()),
         RuleEnum::UnicornErrorMessage(UnicornErrorMessage::default()),
@@ -19217,6 +19434,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
             UnicornNoUselessErrorCaptureStackTrace::default(),
         ),
         RuleEnum::UnicornNoUselessFallbackInSpread(UnicornNoUselessFallbackInSpread::default()),
+        RuleEnum::UnicornNoUselessIteratorToArray(UnicornNoUselessIteratorToArray::default()),
         RuleEnum::UnicornNoUselessLengthCheck(UnicornNoUselessLengthCheck::default()),
         RuleEnum::UnicornNoUselessPromiseResolveReject(
             UnicornNoUselessPromiseResolveReject::default(),
@@ -19247,6 +19465,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::UnicornPreferDomNodeTextContent(UnicornPreferDomNodeTextContent::default()),
         RuleEnum::UnicornPreferEventTarget(UnicornPreferEventTarget::default()),
         RuleEnum::UnicornPreferGlobalThis(UnicornPreferGlobalThis::default()),
+        RuleEnum::UnicornPreferImportMetaProperties(UnicornPreferImportMetaProperties::default()),
         RuleEnum::UnicornPreferIncludes(UnicornPreferIncludes::default()),
         RuleEnum::UnicornPreferKeyboardEventKey(UnicornPreferKeyboardEventKey::default()),
         RuleEnum::UnicornPreferLogicalOperatorOverTernary(

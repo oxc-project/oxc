@@ -26,6 +26,7 @@ oxc_codegen = { workspace = true, optional = true, features = ["sourcemap"] }
 oxc_minifier = { workspace = true, optional = true }
 oxc_parser = { workspace = true, optional = true }
 oxc_span = { workspace = true, features = ["serialize"], optional = true }
+oxc_str = { workspace = true }
 oxc_syntax = { workspace = true, features = ["serialize"], optional = true }
 
 bitflags = { workspace = true }

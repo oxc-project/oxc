@@ -5,7 +5,8 @@ use rustc_hash::FxHashMap;
 
 use oxc_ast::{AstKind, ast::*};
 use oxc_ecmascript::BoundNames;
-use oxc_span::{GetSpan, Span, Str};
+use oxc_span::{GetSpan, Span};
+use oxc_str::Str;
 
 use crate::{builder::SemanticBuilder, diagnostics};
 

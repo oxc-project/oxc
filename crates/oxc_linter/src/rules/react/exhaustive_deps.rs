@@ -23,7 +23,8 @@ use oxc_ast_visit::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{ReferenceId, ScopeId, Semantic, SymbolId};
-use oxc_span::{GetSpan, Span, Str};
+use oxc_span::{GetSpan, Span};
+use oxc_str::Str;
 use oxc_syntax::scope::ScopeFlags;
 
 use crate::{
@@ -920,7 +921,7 @@ impl Eq for Dependency<'_> {}
 impl Dependency<'_> {
     #[expect(clippy::inherent_to_string)]
     fn to_string(&self) -> String {
-        std::iter::once(&self.name).chain(self.chain.iter()).map(oxc_span::Str::as_str).join(".")
+        std::iter::once(&self.name).chain(self.chain.iter()).map(Str::as_str).join(".")
     }
 
     fn contains(&self, other: &Self) -> bool {
@@ -1614,7 +1615,8 @@ mod fix {
         AstBuilder,
         ast::{ArrayExpression, Expression},
     };
-    use oxc_span::{GetSpan, SPAN, Str};
+    use oxc_span::{GetSpan, SPAN};
+    use oxc_str::Str;
 
     use crate::{
         fixer::{RuleFix, RuleFixer},

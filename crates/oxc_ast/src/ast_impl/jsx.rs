@@ -2,7 +2,7 @@
 
 use std::fmt::{self, Display};
 
-use oxc_span::Str;
+use oxc_str::Str;
 
 use crate::ast::*;
 

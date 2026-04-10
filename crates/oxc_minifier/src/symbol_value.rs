@@ -15,6 +15,16 @@ pub struct SymbolValue<'a> {
     pub read_references_count: u32,
     pub write_references_count: u32,
 
+    /// Number of read references that are member write targets (e.g. `a` in `a.foo = 1`).
+    /// These reads exist only to access the object for a property write, not to use the value.
+    /// Always <= `read_references_count`.
+    pub member_write_target_read_count: u32,
+
+    /// Whether the symbol's value is guaranteed fresh (cannot alias another binding).
+    /// True for function/class declarations and variable declarations initialized
+    /// with object/array/function/class literals.
+    pub is_fresh_value: bool,
+
     pub scope_id: ScopeId,
 }
 

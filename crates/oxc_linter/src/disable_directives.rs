@@ -19,8 +19,13 @@ enum DisabledRule {
     ///    ^^^^^^^^^^^^^^^ comment_span
     /// ```
     All {
-        /// Span of the comment containing the disable directive
+        /// Full outer span of the comment (including `//` or `/* */` delimiters).
+        /// Used for diagnostic labels.
         comment_span: Span,
+        /// Span used for the fix.  Extends to cover the whole line (including leading
+        /// whitespace and the trailing newline) when the comment is the only content
+        /// on that line; otherwise equals `comment_span`.
+        fix_span: Span,
         /// Whether this is a line-specific directive (`-next-line` or `-line`).
         is_next_line: bool,
     },
@@ -40,10 +45,13 @@ enum DisabledRule {
         ///
         /// For `/* eslint-disable no-debugger */`, this points to "no-debugger".
         name_span: Span,
-        /// Span of the entire comment content containing the disable directive.
-        ///
-        /// For `/* eslint-disable no-debugger */`, this points to "eslint-disable no-debugger".
+        /// Full outer span of the comment (including `//` or `/* */` delimiters).
+        /// Used for diagnostic labels.
         comment_span: Span,
+        /// Span used for the fix.  Extends to cover the whole line (including leading
+        /// whitespace and the trailing newline) when the comment is the only content
+        /// on that line; otherwise equals `comment_span`.
+        fix_span: Span,
         /// Whether this is a line-specific directive (`-next-line` or `-line`).
         /// When true, only diagnostics starting within the interval are suppressed.
         /// When false, any diagnostic overlapping the interval is suppressed.
@@ -57,6 +65,12 @@ impl DisabledRule {
             DisabledRule::All { comment_span, .. } | DisabledRule::Single { comment_span, .. } => {
                 comment_span
             }
+        }
+    }
+
+    pub fn fix_span(&self) -> &Span {
+        match self {
+            DisabledRule::All { fix_span, .. } | DisabledRule::Single { fix_span, .. } => fix_span,
         }
     }
 
@@ -158,8 +172,13 @@ pub enum RuleCommentType {
 /// A comment which disables one or more specific rules
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub struct DisableRuleComment {
-    /// Span of the comment
+    /// Full outer span of the comment (including `//` or `/* */` delimiters).
+    /// Used for diagnostic labels.
     pub span: Span,
+    /// Span used for the fix.  Extends to cover the whole line (including leading
+    /// whitespace and the trailing newline) when the comment is the only content
+    /// on that line; otherwise equals `span`.
+    pub fix_span: Span,
     /// Rules disabled by the comment
     pub r#type: RuleCommentType,
 }
@@ -265,6 +284,9 @@ impl DisableDirectives {
                     return None;
                 }
 
+                // All intervals in the group share the same comment, so they have the same fix_span.
+                let fix_span = *group_vec[0].val.fix_span();
+
                 let rules: Vec<RuleCommentRule> = group_vec
                     .iter()
                     .filter_map(|interval| {
@@ -293,12 +315,14 @@ impl DisableDirectives {
                 if rules.len() == group_vec.len() {
                     return Some(DisableRuleComment {
                         span: *comment_span,
+                        fix_span,
                         r#type: RuleCommentType::All,
                     });
                 }
 
                 Some(DisableRuleComment {
                     span: *comment_span,
+                    fix_span,
                     r#type: RuleCommentType::Single(rules),
                 })
             })
@@ -310,9 +334,9 @@ pub struct DisableDirectivesBuilder {
     /// All the disabled rules with their corresponding covering spans
     intervals: Lapper<u32, DisabledRule>,
     /// Start of `eslint-disable` or `oxlint-disable`
-    disable_all_start: Option<(u32, Span)>,
+    disable_all_start: Option<(u32, Span, Span)>,
     /// Start of `eslint-disable` or `oxlint-disable` rule_name`
-    disable_start_map: FxHashMap<String, (u32, Span, Span)>,
+    disable_start_map: FxHashMap<String, (u32, Span, Span, Span)>,
     /// All comments that disable one or more specific rules
     disable_rule_comments: Vec<DisableRuleComment>,
     /// Spans of unused enable directives
@@ -345,6 +369,41 @@ impl DisableDirectivesBuilder {
         self.intervals.insert(Interval { start, stop, val });
     }
 
+    /// Computes the fix span for a disable-directive comment.
+    ///
+    /// If the comment is the only non-whitespace content on its line, returns a
+    /// span that covers the entire line (including leading whitespace and the
+    /// trailing newline).  Otherwise returns the comment's full outer span
+    /// (including `//` or `/* */` delimiters).
+    ///
+    /// This span is stored in [`DisabledRule`] so that `Fix::delete(span)`
+    /// produces the correct edit without any extra post-processing in callers.
+    #[expect(clippy::cast_possible_truncation)]
+    pub(crate) fn compute_comment_fix_span(comment: &Comment, source_text: &str) -> Span {
+        let outer_start = comment.span.start as usize;
+        let outer_end = comment.span.end as usize;
+
+        // Find the start of the current line (character after the preceding `\n`, or 0).
+        let line_start = source_text[..outer_start].rfind('\n').map_or(0, |i| i + 1);
+
+        // Find the end of the current line, including the newline character itself.
+        let line_end =
+            source_text[outer_end..].find('\n').map_or(source_text.len(), |i| outer_end + i + 1);
+
+        let before_on_line = &source_text[line_start..outer_start];
+        let after_on_line = source_text[outer_end..line_end].trim_end_matches(['\r', '\n']);
+
+        if before_on_line.trim().is_empty() && after_on_line.trim().is_empty() {
+            // The comment is the only meaningful content on the line – the fix
+            // should delete the whole line.
+            Span::new(line_start as u32, line_end as u32)
+        } else {
+            // There is other content on the same line – only delete the comment
+            // itself (including its delimiters).
+            comment.span
+        }
+    }
+
     #[expect(clippy::cast_possible_truncation)] // for `as u32`
     fn build_impl(&mut self, source_text: &str, comments: &[Comment]) {
         let source_len = source_text.len() as u32;
@@ -362,6 +421,13 @@ impl DisableDirectivesBuilder {
 
         for comment in comments {
             let comment_span = comment.content_span();
+            // `comment.span` is the full outer span (including `//` or `/* */` delimiters).
+            // It is used as the diagnostic span.
+            let outer_span = comment.span;
+            // Pre-compute the fix span for this comment:
+            // - whole line (incl. leading whitespace + newline) if the comment is alone on the line
+            // - outer comment span (incl. `//` / `/* */` delimiters) otherwise
+            let comment_fix_span = Self::compute_comment_fix_span(comment, source_text);
             let text_source = comment_span.source_text(source_text);
             let text = text_source.trim_start();
             let mut rule_name_start = comment_span.start + (text_source.len() - text.len()) as u32;
@@ -373,10 +439,12 @@ impl DisableDirectivesBuilder {
                 // `eslint-disable`
                 if text.trim().is_empty() {
                     if self.disable_all_start.is_none() {
-                        self.disable_all_start = Some((comment_span.end, comment_span));
+                        self.disable_all_start =
+                            Some((comment_span.end, outer_span, comment_fix_span));
                     }
                     self.disable_rule_comments.push(DisableRuleComment {
                         span: comment_span,
+                        fix_span: comment_fix_span,
                         r#type: RuleCommentType::All,
                     });
                     continue;
@@ -402,10 +470,15 @@ impl DisableDirectivesBuilder {
                         self.add_interval(
                             comment_span.end,
                             stop,
-                            DisabledRule::All { comment_span, is_next_line: true },
+                            DisabledRule::All {
+                                comment_span: outer_span,
+                                fix_span: comment_fix_span,
+                                is_next_line: true,
+                            },
                         );
                         self.disable_rule_comments.push(DisableRuleComment {
                             span: comment_span,
+                            fix_span: comment_fix_span,
                             r#type: RuleCommentType::All,
                         });
                     } else {
@@ -418,7 +491,8 @@ impl DisableDirectivesBuilder {
                                 DisabledRule::Single {
                                     rule_name: rule_name.to_string(),
                                     name_span,
-                                    comment_span,
+                                    comment_span: outer_span,
+                                    fix_span: comment_fix_span,
                                     is_next_line: true,
                                 },
                             );
@@ -429,6 +503,7 @@ impl DisableDirectivesBuilder {
                         });
                         self.disable_rule_comments.push(DisableRuleComment {
                             span: comment_span,
+                            fix_span: comment_fix_span,
                             r#type: RuleCommentType::Single(rules),
                         });
                     }
@@ -450,10 +525,15 @@ impl DisableDirectivesBuilder {
                         self.add_interval(
                             start,
                             stop,
-                            DisabledRule::All { comment_span, is_next_line: true },
+                            DisabledRule::All {
+                                comment_span: outer_span,
+                                fix_span: comment_fix_span,
+                                is_next_line: true,
+                            },
                         );
                         self.disable_rule_comments.push(DisableRuleComment {
                             span: comment_span,
+                            fix_span: comment_fix_span,
                             r#type: RuleCommentType::All,
                         });
                     } else {
@@ -466,7 +546,8 @@ impl DisableDirectivesBuilder {
                                 DisabledRule::Single {
                                     rule_name: rule_name.to_string(),
                                     name_span,
-                                    comment_span,
+                                    comment_span: outer_span,
+                                    fix_span: comment_fix_span,
                                     is_next_line: true,
                                 },
                             );
@@ -477,6 +558,7 @@ impl DisableDirectivesBuilder {
                         });
                         self.disable_rule_comments.push(DisableRuleComment {
                             span: comment_span,
+                            fix_span: comment_fix_span,
                             r#type: RuleCommentType::Single(rules),
                         });
                     }
@@ -491,12 +573,14 @@ impl DisableDirectivesBuilder {
                         self.disable_start_map.entry(rule_name.to_string()).or_insert((
                             comment_span.end,
                             name_span,
-                            comment_span,
+                            outer_span,
+                            comment_fix_span,
                         ));
                         rules.push(RuleCommentRule { rule_name: rule_name.to_string(), name_span });
                     });
                     self.disable_rule_comments.push(DisableRuleComment {
                         span: comment_span,
+                        fix_span: comment_fix_span,
                         r#type: RuleCommentType::Single(rules),
                     });
                     continue;
@@ -509,11 +593,15 @@ impl DisableDirectivesBuilder {
                 rule_name_start += 13; // eslint-enable is 13 bytes
                 // `eslint-enable`
                 if text.trim().is_empty() {
-                    if let Some((start, _)) = self.disable_all_start.take() {
+                    if let Some((start, _, _)) = self.disable_all_start.take() {
                         self.add_interval(
                             start,
                             comment_span.start,
-                            DisabledRule::All { comment_span, is_next_line: false },
+                            DisabledRule::All {
+                                comment_span: outer_span,
+                                fix_span: comment_fix_span,
+                                is_next_line: false,
+                            },
                         );
                     } else {
                         // collect as unused enable (see more at note comments in beginning of this method)
@@ -522,14 +610,15 @@ impl DisableDirectivesBuilder {
                 } else {
                     // `eslint-enable rule-name1, rule-name2`
                     Self::get_rule_names(text, rule_name_start, |rule_name, name_span| {
-                        if let Some((start, _, _)) = self.disable_start_map.remove(rule_name) {
+                        if let Some((start, _, _, _)) = self.disable_start_map.remove(rule_name) {
                             self.add_interval(
                                 start,
                                 comment_span.start,
                                 DisabledRule::Single {
                                     rule_name: rule_name.to_string(),
                                     name_span,
-                                    comment_span,
+                                    comment_span: outer_span,
+                                    fix_span: comment_fix_span,
                                     is_next_line: false,
                                 },
                             );
@@ -543,21 +632,27 @@ impl DisableDirectivesBuilder {
         }
 
         // Lone `eslint-disable`
-        if let Some((start, comment_span)) = self.disable_all_start {
+        if let Some((start, comment_span, fix_span)) = self.disable_all_start {
             self.add_interval(
                 start,
                 source_len,
-                DisabledRule::All { comment_span, is_next_line: false },
+                DisabledRule::All { comment_span, fix_span, is_next_line: false },
             );
         }
 
         // Lone `eslint-disable rule_name`
         let disable_start_map = self.disable_start_map.drain().collect::<Vec<_>>();
-        for (rule_name, (start, name_span, comment_span)) in disable_start_map {
+        for (rule_name, (start, name_span, comment_span, fix_span)) in disable_start_map {
             self.add_interval(
                 start,
                 source_len,
-                DisabledRule::Single { rule_name, name_span, comment_span, is_next_line: false },
+                DisabledRule::Single {
+                    rule_name,
+                    name_span,
+                    comment_span,
+                    fix_span,
+                    is_next_line: false,
+                },
             );
         }
 
@@ -1088,9 +1183,14 @@ mod tests {
         semantic_ret.semantic
     }
 
+    /// Replicates the `compute_comment_fix_span` logic for use in tests.
+    fn comment_fix_span(comment: &Comment, source_text: &str) -> Span {
+        DisableDirectivesBuilder::compute_comment_fix_span(comment, source_text)
+    }
+
     fn test_directives(
         create_source_text: impl Fn(&str) -> String,
-        test: impl Fn(&[Comment], DisableDirectives),
+        test: impl Fn(&str, &[Comment], DisableDirectives),
     ) {
         let allocator = Allocator::default();
         for prefix in ["eslint", "oxlint"] {
@@ -1099,7 +1199,7 @@ mod tests {
             let comments = semantic.comments();
             let directives =
                 DisableDirectivesBuilder::new().build(semantic.source_text(), comments);
-            test(comments, directives);
+            test(semantic.source_text(), comments, directives);
         }
     }
 
@@ -1126,7 +1226,7 @@ mod tests {
                     "
                 )
             },
-            |comments, directives| {
+            |_source_text, comments, directives| {
                 let unused = directives.unused_enable_comments();
 
                 assert_eq!(unused.len(), 1);
@@ -1151,7 +1251,7 @@ mod tests {
                     "
                 )
             },
-            |comments, directives| {
+            |_source_text, comments, directives| {
                 let unused = directives.unused_enable_comments();
 
                 assert_eq!(unused.len(), 2);
@@ -1187,7 +1287,7 @@ mod tests {
                     "
                 )
             },
-            |_, directives| {
+            |_source_text, _, directives| {
                 // no mark unused
 
                 let unused = directives.unused_enable_comments();
@@ -1208,15 +1308,32 @@ mod tests {
                     "
                 )
             },
-            |comments, directives| {
-                // no mark unused
-
+            |source_text, comments, directives| {
                 let unused = directives.collect_unused_disable_comments();
 
                 assert_eq!(unused.len(), 1);
 
                 let comment = unused.first().unwrap();
-                assert_eq!(comment.span, comments.first().unwrap().content_span());
+                let outer_span = comments.first().unwrap().span;
+
+                // Diagnostic span must be the original comment outer span (no line extension).
+                assert_eq!(
+                    comment.span, outer_span,
+                    "diagnostic span must be the original comment span"
+                );
+
+                // Fix span must extend to cover the whole line when the comment is alone on it.
+                let line_has_only_comment = source_text[..outer_span.start as usize]
+                    .rsplit_once('\n')
+                    .is_none_or(|(_, before)| before.trim().is_empty());
+                if line_has_only_comment {
+                    assert!(
+                        comment.fix_span.start < outer_span.start
+                            || comment.fix_span.end > outer_span.end,
+                        "fix span should extend beyond the comment when alone on a line"
+                    );
+                }
+
                 assert_eq!(comment.r#type, RuleCommentType::All);
             },
         );
@@ -1233,15 +1350,32 @@ mod tests {
                     "
                 )
             },
-            |comments, directives| {
-                // no mark unused
-
+            |source_text, comments, directives| {
                 let unused = directives.collect_unused_disable_comments();
 
                 assert_eq!(unused.len(), 1);
 
                 let comment = unused.first().unwrap();
-                assert_eq!(comment.span, comments.first().unwrap().content_span());
+                let outer_span = comments.first().unwrap().span;
+
+                // Diagnostic span must be the original comment outer span (no line extension).
+                assert_eq!(
+                    comment.span, outer_span,
+                    "diagnostic span must be the original comment span"
+                );
+
+                // Fix span must extend to cover the whole line when the comment is alone on it.
+                let line_has_only_comment = source_text[..outer_span.start as usize]
+                    .rsplit_once('\n')
+                    .is_none_or(|(_, before)| before.trim().is_empty());
+                if line_has_only_comment {
+                    assert!(
+                        comment.fix_span.start < outer_span.start
+                            || comment.fix_span.end > outer_span.end,
+                        "fix span should extend beyond the comment when alone on a line"
+                    );
+                }
+
                 assert_eq!(comment.r#type, RuleCommentType::All);
             },
         );
@@ -1260,17 +1394,24 @@ mod tests {
                     "
                 )
             },
-            |comments, directives| {
+            |source_text, comments, directives| {
+                // Mark each directive as used by constructing the matching `DisabledRule` with the
+                // correct spans (same as what `build_impl` stores).
+                let fix_span_0 = comment_fix_span(&comments[0], source_text);
+                let fix_span_1 = comment_fix_span(&comments[1], source_text);
+
                 directives.mark_disable_directive_used(DisabledRule::Single {
                     rule_name: "no-console".to_string(),
                     name_span: Span::sized(comments[0].content_span().start + 16, 10),
-                    comment_span: comments[0].content_span(),
+                    comment_span: comments[0].span,
+                    fix_span: fix_span_0,
                     is_next_line: false,
                 });
                 directives.mark_disable_directive_used(DisabledRule::Single {
                     rule_name: "no-debugger".to_string(),
                     name_span: Span::sized(comments[1].content_span().start + 16, 11),
-                    comment_span: comments[1].content_span(),
+                    comment_span: comments[1].span,
+                    fix_span: fix_span_1,
                     is_next_line: false,
                 });
 
@@ -1296,7 +1437,9 @@ mod tests {
     #[expect(clippy::cast_possible_truncation)] // for `as u32`
     fn test_rule_comment_rule_create_fix() {
         let source_text = "// eslint-disable-next-line max-params, no-console, no-debugger";
-        let comment_span = Span::sized(3, source_text.len() as u32 - 3);
+        // comment_span now represents the fix span (outer span including `//`, whole line if alone).
+        // Since this string has no newline, the fix span = outer span = Span::new(0, len).
+        let comment_span = Span::new(0, source_text.len() as u32);
 
         let max_params_fix =
             RuleCommentRule { rule_name: "max-params".to_string(), name_span: Span::sized(28, 10) }
@@ -1331,7 +1474,7 @@ mod tests {
         // This test is expected to panic because it is a standalone rule.
         // Standalone rules should be `RuleCommentType::All`.
         let source_text = "// eslint-disable-next-line max-params";
-        let comment_span = Span::sized(3, source_text.len() as u32 - 3);
+        let comment_span = Span::new(0, source_text.len() as u32);
 
         RuleCommentRule { rule_name: "max-params".to_string(), name_span: Span::sized(28, 10) }
             .create_fix(source_text, comment_span);
@@ -1381,5 +1524,113 @@ function test() {
             !directives.contains("no-console", second_console_log_span),
             "eslint-disable-next-line should NOT suppress diagnostics on lines after the next line"
         );
+    }
+
+    /// Helper: apply a `Fix::delete` on `span` to `source_text` and return the resulting string.
+    fn apply_delete(source_text: &str, span: Span) -> String {
+        let start = span.start as usize;
+        let end = span.end as usize;
+        format!("{}{}", &source_text[..start], &source_text[end..])
+    }
+
+    #[test]
+    fn fix_span_line_comment_alone_on_line() {
+        // A `// eslint-disable` on its own line.
+        // - diagnostic `span` = outer comment span (no line extension)
+        // - `fix_span` = the whole line (including the newline)
+        let source_text = "const x = 1;\n// eslint-disable no-console\nconsole.log(x);\n";
+        let allocator = Allocator::default();
+        let semantic = process_source(&allocator, source_text);
+        let directives =
+            DisableDirectivesBuilder::new().build(semantic.source_text(), semantic.comments());
+
+        let unused = directives.collect_unused_disable_comments();
+        assert_eq!(unused.len(), 1);
+
+        // span must be the outer comment span only (no line extension).
+        let comment_outer_span = semantic.comments()[0].span;
+        assert_eq!(
+            unused[0].span, comment_outer_span,
+            "diagnostic span must be the outer comment span"
+        );
+
+        // fix_span must delete the whole line.
+        let result = apply_delete(source_text, unused[0].fix_span);
+        assert_eq!(result, "const x = 1;\nconsole.log(x);\n");
+    }
+
+    #[test]
+    fn fix_span_block_comment_alone_on_line() {
+        // A `/* eslint-disable */` on its own line.
+        // - diagnostic `span` = outer comment span (no line extension)
+        // - `fix_span` = the whole line (including the newline)
+        let source_text = "const x = 1;\n/* eslint-disable no-console */\nconsole.log(x);\n";
+        let allocator = Allocator::default();
+        let semantic = process_source(&allocator, source_text);
+        let directives =
+            DisableDirectivesBuilder::new().build(semantic.source_text(), semantic.comments());
+
+        let unused = directives.collect_unused_disable_comments();
+        assert_eq!(unused.len(), 1);
+
+        // span must be the outer comment span only.
+        let comment_outer_span = semantic.comments()[0].span;
+        assert_eq!(
+            unused[0].span, comment_outer_span,
+            "diagnostic span must be the outer comment span"
+        );
+
+        // fix_span must delete the whole line.
+        let result = apply_delete(source_text, unused[0].fix_span);
+        assert_eq!(result, "const x = 1;\nconsole.log(x);\n");
+    }
+
+    #[test]
+    fn fix_span_comment_on_line_with_code() {
+        // An `eslint-disable-line` style comment after code.
+        // Both `span` and `fix_span` should cover just the comment (no line extension since
+        // there is code before it on the same line).
+        let source_text = "const x = 1; // eslint-disable-line no-unused-vars\n";
+        let allocator = Allocator::default();
+        let semantic = process_source(&allocator, source_text);
+        let directives =
+            DisableDirectivesBuilder::new().build(semantic.source_text(), semantic.comments());
+
+        let unused = directives.collect_unused_disable_comments();
+        assert_eq!(unused.len(), 1);
+
+        // fix_span deletes only the comment; code on the same line is preserved.
+        let result = apply_delete(source_text, unused[0].fix_span);
+        assert!(result.contains("const x = 1;"), "code on the line must not be removed");
+        assert!(!result.contains("eslint-disable"), "directive must be removed");
+        // Must not leave `//` behind.
+        assert!(!result.contains("//"), "must not leave an empty `//` behind");
+    }
+
+    #[test]
+    fn fix_span_indented_line_comment() {
+        // An indented directive on its own line.
+        // - `span` = outer comment span (no indentation)
+        // - `fix_span` = whole line including indentation and newline
+        let source_text =
+            "function f() {\n    // eslint-disable-next-line no-console\n    console.log();\n}\n";
+        let allocator = Allocator::default();
+        let semantic = process_source(&allocator, source_text);
+        let directives =
+            DisableDirectivesBuilder::new().build(semantic.source_text(), semantic.comments());
+
+        let unused = directives.collect_unused_disable_comments();
+        assert_eq!(unused.len(), 1);
+
+        // span must be the outer comment span (starts at `//`, not at the indentation).
+        let comment_outer_span = semantic.comments()[0].span;
+        assert_eq!(
+            unused[0].span, comment_outer_span,
+            "diagnostic span must be the outer comment span"
+        );
+
+        // fix_span must delete the whole line (including the 4-space indentation).
+        let result = apply_delete(source_text, unused[0].fix_span);
+        assert_eq!(result, "function f() {\n    console.log();\n}\n");
     }
 }

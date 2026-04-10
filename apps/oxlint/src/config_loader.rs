@@ -16,6 +16,8 @@ use crate::{
     DEFAULT_JSONC_OXLINTRC_NAME, DEFAULT_OXLINTRC_NAME, DEFAULT_TS_OXLINTRC_NAME, VITE_CONFIG_NAME,
 };
 
+const NODE_MODULES_DIR: &str = "node_modules";
+
 #[cfg(feature = "napi")]
 use crate::js_config;
 use crate::js_config::JsConfigResult;
@@ -54,9 +56,15 @@ pub fn discover_configs_in_ancestors<P: AsRef<Path>>(
 
     for file in files {
         let path = file.as_ref();
+        let mut base_config_found = false;
         // Start from the file's parent directory and walk up the tree
         let mut current = path.parent();
         while let Some(dir) = current {
+            if base_config_found {
+                // Stop if we've reached the base config file (e.g., root oxlintrc)
+                // to avoid duplicate loading and filling nested config with configs outside from the root config.
+                break;
+            }
             // Stop if we've already checked this directory (and its ancestors)
             let inserted = visited_dirs.insert(dir.to_path_buf());
             if !inserted {
@@ -64,8 +72,8 @@ pub fn discover_configs_in_ancestors<P: AsRef<Path>>(
             }
             for config in find_configs_in_directory(dir) {
                 if config.path() == base_config_path {
-                    // Skip the base config file (e.g., root oxlintrc) to avoid duplicate loading
-                    continue;
+                    base_config_found = true;
+                    break;
                 }
                 config_paths.insert(config);
             }
@@ -156,6 +164,12 @@ impl ignore::ParallelVisitor for ConfigWalkCollector {
     fn visit(&mut self, entry: Result<DirEntry, ignore::Error>) -> ignore::WalkState {
         match entry {
             Ok(entry) => {
+                // Skip node_modules directories entirely - they are not part of the project
+                if entry.file_type().is_some_and(|ft| ft.is_dir())
+                    && entry.file_name() == NODE_MODULES_DIR
+                {
+                    return ignore::WalkState::Skip;
+                }
                 if let Some(config) = to_discovered_config(&entry, &self.base_config_path) {
                     self.configs.push(config);
                 }
@@ -1305,5 +1319,40 @@ mod test {
 
         let result = loader.load_root_config(root_dir.path(), None);
         assert!(result.is_err(), "Expected an error when both JSONC and TS configs exist");
+    }
+
+    #[test]
+    fn test_discover_configs_skips_node_modules() {
+        use super::discover_configs_in_tree;
+
+        let root_dir = tempfile::tempdir().unwrap();
+        // Create a valid root config
+        let base_config = root_dir.path().join(".oxlintrc.json");
+        std::fs::write(&base_config, r#"{ "rules": {} }"#).unwrap();
+
+        // Create a nested node_modules directory with a config file inside
+        let node_modules = root_dir.path().join("node_modules").join("some-pkg");
+        std::fs::create_dir_all(&node_modules).unwrap();
+        std::fs::write(node_modules.join(".oxlintrc.json"), r#"{ "rules": {} }"#).unwrap();
+
+        // Create a legitimate nested config (not in node_modules)
+        let nested_dir = root_dir.path().join("packages").join("foo");
+        std::fs::create_dir_all(&nested_dir).unwrap();
+        std::fs::write(nested_dir.join(".oxlintrc.json"), r#"{ "rules": {} }"#).unwrap();
+
+        let discovered: Vec<_> =
+            discover_configs_in_tree(root_dir.path(), &base_config).into_iter().collect();
+
+        // Should find the nested config but NOT the one inside node_modules
+        assert_eq!(discovered.len(), 1, "Expected only 1 config (not the node_modules one)");
+        let path = match &discovered[0] {
+            DiscoveredConfig::Json(p) => p.clone(),
+            _ => panic!("Expected Json config"),
+        };
+        assert!(
+            path.starts_with(nested_dir),
+            "Expected config in packages/foo, got: {}",
+            path.display()
+        );
     }
 }

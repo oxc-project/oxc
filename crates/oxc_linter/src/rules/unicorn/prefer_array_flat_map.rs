@@ -52,6 +52,10 @@ impl Rule for PreferArrayFlatMap {
             return;
         };
 
+        if flat_call_expr.optional {
+            return;
+        }
+
         if flat_call_expr.arguments.len() > 1 {
             return;
         }
@@ -62,10 +66,20 @@ impl Rule for PreferArrayFlatMap {
         let Some(member_expr) = flat_call_expr.callee.as_member_expression() else {
             return;
         };
+
+        if member_expr.optional() {
+            return;
+        }
+
         let Expression::CallExpression(call_expr) = &member_expr.object().without_parentheses()
         else {
             return;
         };
+
+        if call_expr.optional {
+            return;
+        }
+
         if !is_method_call(call_expr, None, Some(&["map"]), None, None) {
             return;
         }
@@ -128,10 +142,9 @@ fn test() {
         "const bar = [1,2,3].map((i) => i)",
         "const bar = [1,2,3].map((i) => { return i; })",
         "const bar = foo.map(i => i)",
-        // TODO: Fix the rule so these tests pass.
-        // "const bar = foo.map?.(i => [i]).flat()",
-        // "const bar = foo.map(i => [i])?.flat()",
-        // "const bar = foo.map(i => [i]).flat?.()",
+        "const bar = foo.map?.(i => [i]).flat()",
+        "const bar = foo.map(i => [i])?.flat()",
+        "const bar = foo.map(i => [i]).flat?.()",
         "const bar = [[1],[2],[3]].flat()",
         "const bar = [1,2,3].map(i => [i]).sort().flat()",
         "let bar = [1,2,3].map(i => [i]);

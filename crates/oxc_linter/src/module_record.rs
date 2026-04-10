@@ -9,7 +9,8 @@ use std::{
 use rustc_hash::FxHashMap;
 
 use oxc_semantic::Semantic;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
+use oxc_str::CompactStr;
 pub use oxc_syntax::module_record::RequestedModule;
 
 /// ESM Module Record

@@ -11,7 +11,8 @@ use oxc_allocator::{Box, CloneIn, Dummy, TakeIn, UnstableAddress};
 use oxc_ast_macros::ast;
 use oxc_estree::ESTree;
 use oxc_regular_expression::ast::Pattern;
-use oxc_span::{ContentEq, GetSpan, GetSpanMut, Span, Str};
+use oxc_span::{ContentEq, GetSpan, GetSpanMut, Span};
+use oxc_str::Str;
 use oxc_syntax::{
     node::NodeId,
     number::{BigintBase, NumberBase},

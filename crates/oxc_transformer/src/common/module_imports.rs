@@ -34,7 +34,8 @@ use indexmap::{IndexMap, map::Entry as IndexMapEntry};
 
 use oxc_ast::{NONE, ast::*};
 use oxc_semantic::ReferenceFlags;
-use oxc_span::{SPAN, Str};
+use oxc_span::SPAN;
+use oxc_str::Str;
 use oxc_syntax::symbol::SymbolId;
 use oxc_traverse::BoundIdentifier;
 

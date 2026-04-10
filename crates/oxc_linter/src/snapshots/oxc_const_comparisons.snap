@@ -289,6 +289,33 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: This logical expression will always evaluate to the same value as the expression itself.
 
+  ⚠ oxc(const-comparisons): Both sides of the logical operator are equivalent
+   ╭─[const_comparisons.tsx:1:1]
+ 1 │ a == b && b == a
+   · ───┬──    ───┬──
+   ·    │         ╰── This equivalent expression will always evaluate to true
+   ·    ╰── If this expression evaluates to true
+   ╰────
+  help: This logical expression will always evaluate to the same value as either side.
+
+  ⚠ oxc(const-comparisons): Both sides of the logical operator are equivalent
+   ╭─[const_comparisons.tsx:1:1]
+ 1 │ a == (b) && (b) == a
+   · ────┬───    ────┬───
+   ·     │           ╰── This equivalent expression will always evaluate to true
+   ·     ╰── If this expression evaluates to true
+   ╰────
+  help: This logical expression will always evaluate to the same value as either side.
+
+  ⚠ oxc(const-comparisons): Both sides of the logical operator are equivalent
+   ╭─[const_comparisons.tsx:1:1]
+ 1 │ a != b || b != a
+   · ───┬──    ───┬──
+   ·    │         ╰── This equivalent expression will always evaluate to true
+   ·    ╰── If this expression evaluates to true
+   ╰────
+  help: This logical expression will always evaluate to the same value as either side.
+
   ⚠ oxc(const-comparisons): Both sides of the logical operator are the same
    ╭─[const_comparisons.tsx:1:1]
  1 │ !foo && !foo
@@ -318,7 +345,7 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[const_comparisons.tsx:1:1]
  1 │ !foo && foo
    · ──┬─    ─┬─
-   ·   │      ╰── This expression will never evaluate to true
+   ·   │      ╰── This expression cannot also evaluate to true
    ·   ╰── If this expression evaluates to true
    ╰────
   help: This logical expression will always evaluate to false
@@ -327,7 +354,7 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[const_comparisons.tsx:1:1]
  1 │ foo && !foo
    · ─┬─    ──┬─
-   ·  │       ╰── This expression will never evaluate to true
+   ·  │       ╰── This expression cannot also evaluate to true
    ·  ╰── If this expression evaluates to true
    ╰────
   help: This logical expression will always evaluate to false
@@ -336,8 +363,8 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[const_comparisons.tsx:1:1]
  1 │ !foo || foo
    · ──┬─    ─┬─
-   ·   │      ╰── This expression will never evaluate to true
-   ·   ╰── If this expression evaluates to true
+   ·   │      ╰── This expression must evaluate to true
+   ·   ╰── If this expression evaluates to false
    ╰────
   help: This logical expression will always evaluate to true
 
@@ -345,8 +372,53 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[const_comparisons.tsx:1:1]
  1 │ foo || !foo
    · ─┬─    ──┬─
-   ·  │       ╰── This expression will never evaluate to true
-   ·  ╰── If this expression evaluates to true
+   ·  │       ╰── This expression must evaluate to true
+   ·  ╰── If this expression evaluates to false
+   ╰────
+  help: This logical expression will always evaluate to true
+
+  ⚠ oxc(const-comparisons): Unexpected constant comparison
+   ╭─[const_comparisons.tsx:1:1]
+ 1 │ a == b && a != b
+   · ───┬──    ───┬──
+   ·    │         ╰── This expression cannot also evaluate to true
+   ·    ╰── If this expression evaluates to true
+   ╰────
+  help: This logical expression will always evaluate to false
+
+  ⚠ oxc(const-comparisons): Unexpected constant comparison
+   ╭─[const_comparisons.tsx:1:1]
+ 1 │ a != b && b == a
+   · ───┬──    ───┬──
+   ·    │         ╰── This expression cannot also evaluate to true
+   ·    ╰── If this expression evaluates to true
+   ╰────
+  help: This logical expression will always evaluate to false
+
+  ⚠ oxc(const-comparisons): Unexpected constant comparison
+   ╭─[const_comparisons.tsx:1:1]
+ 1 │ a !== a && a === a
+   · ───┬───    ───┬───
+   ·    │          ╰── This expression cannot also evaluate to true
+   ·    ╰── If this expression evaluates to true
+   ╰────
+  help: This logical expression will always evaluate to false
+
+  ⚠ oxc(const-comparisons): Unexpected constant comparison
+   ╭─[const_comparisons.tsx:1:1]
+ 1 │ a === b || a !== b
+   · ───┬───    ───┬───
+   ·    │          ╰── This expression must evaluate to true
+   ·    ╰── If this expression evaluates to false
+   ╰────
+  help: This logical expression will always evaluate to true
+
+  ⚠ oxc(const-comparisons): Unexpected constant comparison
+   ╭─[const_comparisons.tsx:1:1]
+ 1 │ a !== a || a === a
+   · ───┬───    ───┬───
+   ·    │          ╰── This expression must evaluate to true
+   ·    ╰── If this expression evaluates to false
    ╰────
   help: This logical expression will always evaluate to true
 

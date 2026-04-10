@@ -169,8 +169,9 @@ fn deep_merge(a: &OxlintSettingsJson, b: &OxlintSettingsJson) -> OxlintSettingsJ
 mod test {
     use std::borrow::Cow;
 
-    use oxc_span::CompactStr;
     use serde::Deserialize;
+
+    use oxc_str::CompactStr;
 
     use super::OxlintSettings;
     use crate::config::settings::react::ComponentAttrs;

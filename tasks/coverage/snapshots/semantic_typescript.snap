@@ -1,8 +1,8 @@
-commit: 4f7b4175
+commit: 7b8cb3bd
 
 semantic_typescript Summary:
-AST Parsed     : 4772/4772 (100.00%)
-Positive Passed: 2665/4772 (55.85%)
+AST Parsed     : 4773/4773 (100.00%)
+Positive Passed: 2665/4773 (55.83%)
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/2dArrays.ts
 Symbol reference IDs mismatch for "Cell":
 after transform: SymbolId(0): [ReferenceId(1)]
@@ -1481,6 +1481,26 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/classOrderBug.ts
 Symbol reference IDs mismatch for "foo":
 after transform: SymbolId(2): [ReferenceId(0), ReferenceId(1)]
 rebuilt        : SymbolId(3): [ReferenceId(2)]
+
+semantic Error: tasks/coverage/typescript/tests/cases/compiler/classPropertyInferenceFromBroaderTypeConst.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["C", "D", "DEFAULT", "_defineProperty", "c", "expectAB"]
+rebuilt        : ScopeId(0): ["C", "D", "DEFAULT", "_defineProperty"]
+Symbol reference IDs mismatch for "C":
+after transform: SymbolId(2): [ReferenceId(2)]
+rebuilt        : SymbolId(2): []
+Reference symbol mismatch for "expectAB":
+after transform: SymbolId(4) "expectAB"
+rebuilt        : <None>
+Reference symbol mismatch for "c":
+after transform: SymbolId(3) "c"
+rebuilt        : <None>
+Reference symbol mismatch for "c":
+after transform: SymbolId(3) "c"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: ["require"]
+rebuilt        : ["c", "expectAB", "require"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/classReferencedInContextualParameterWithinItsOwnBaseExpression.ts
 Bindings mismatch:
@@ -19803,8 +19823,8 @@ rebuilt        : ScopeId(0): ["C1", "_a_accessor_storage", "_b_accessor_storage"
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/autoAccessorAllowedModifiers.ts
 Bindings mismatch:
-after transform: ScopeId(0): ["C1", "C2", "C3", "_08_accessor_storage", "_C1_brand", "_a_accessor_storage", "_b_accessor_storage", "_c_accessor_storage", "_classPrivateFieldGet", "_classPrivateFieldInitSpec", "_classPrivateFieldSet", "_classPrivateMethodInitSpec", "_d_accessor_storage", "_e_accessor_storage", "_f_accessor_storage", "_g_accessor_storage", "_get_j", "_h_accessor_storage", "_i_accessor_storage", "_i_accessor_storage2", "_j_accessor_storage", "_k_accessor_storage", "_m_computed_accessor_storage", "_n_accessor_storage", "_set_j"]
-rebuilt        : ScopeId(0): ["C1", "C2", "_08_accessor_storage", "_C1_brand", "_a_accessor_storage", "_b_accessor_storage", "_c_accessor_storage", "_classPrivateFieldGet", "_classPrivateFieldInitSpec", "_classPrivateFieldSet", "_classPrivateMethodInitSpec", "_d_accessor_storage", "_e_accessor_storage", "_f_accessor_storage", "_g_accessor_storage", "_get_j", "_h_accessor_storage", "_i_accessor_storage", "_i_accessor_storage2", "_j_accessor_storage", "_k_accessor_storage", "_m_computed_accessor_storage", "_n_accessor_storage", "_set_j"]
+after transform: ScopeId(0): ["C1", "C2", "C3", "_108_accessor_storage", "_C1_brand", "_a_accessor_storage", "_b_accessor_storage", "_c_accessor_storage", "_classPrivateFieldGet", "_classPrivateFieldInitSpec", "_classPrivateFieldSet", "_classPrivateMethodInitSpec", "_d_accessor_storage", "_e_accessor_storage", "_f_accessor_storage", "_g_accessor_storage", "_get_j", "_h_accessor_storage", "_i_accessor_storage", "_i_accessor_storage2", "_j_accessor_storage", "_k_accessor_storage", "_m_computed_accessor_storage", "_n_accessor_storage", "_set_j"]
+rebuilt        : ScopeId(0): ["C1", "C2", "_108_accessor_storage", "_C1_brand", "_a_accessor_storage", "_b_accessor_storage", "_c_accessor_storage", "_classPrivateFieldGet", "_classPrivateFieldInitSpec", "_classPrivateFieldSet", "_classPrivateMethodInitSpec", "_d_accessor_storage", "_e_accessor_storage", "_f_accessor_storage", "_g_accessor_storage", "_get_j", "_h_accessor_storage", "_i_accessor_storage", "_i_accessor_storage2", "_j_accessor_storage", "_k_accessor_storage", "_m_computed_accessor_storage", "_n_accessor_storage", "_set_j"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/overrideInterfaceProperty.ts
 Reference symbol mismatch for "Mup":

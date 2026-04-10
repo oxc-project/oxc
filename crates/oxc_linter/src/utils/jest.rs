@@ -9,7 +9,7 @@ use oxc_ast::{
     },
 };
 use oxc_semantic::{AstNode, ReferenceId, Semantic, SymbolId};
-use oxc_span::CompactStr;
+use oxc_str::CompactStr;
 
 use crate::LintContext;
 pub use crate::utils::jest::parse_jest_fn::{
@@ -17,7 +17,9 @@ pub use crate::utils::jest::parse_jest_fn::{
     MemberExpressionElement, ParsedExpectFnCall, ParsedGeneralJestFnCall,
     ParsedJestFnCall as ParsedJestFnCallNew, parse_jest_fn_call,
 };
+pub use padding_around_block::report_missing_padding_before_jest_block;
 
+mod padding_around_block;
 mod parse_jest_fn;
 
 const JEST_METHOD_NAMES: [&str; 19] = [

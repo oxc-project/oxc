@@ -17,7 +17,8 @@ use oxc_ast_visit::{
     walk::{walk_call_expression, walk_declaration},
 };
 use oxc_semantic::{ReferenceFlags, ScopeFlags, ScopeId, SymbolFlags, SymbolId};
-use oxc_span::{GetSpan, Ident, SPAN, Str};
+use oxc_span::{GetSpan, SPAN};
+use oxc_str::{Ident, Str};
 use oxc_syntax::operator::AssignmentOperator;
 use oxc_traverse::{Ancestor, BoundIdentifier, Traverse};
 
@@ -757,7 +758,7 @@ impl<'a> ReactRefresh<'a> {
         }
 
         let declarator = decl.declarations.first_mut().unwrap_or_else(|| unreachable!());
-        let init = declarator.init.as_mut()?;
+        let init = declarator.init.as_mut()?.without_parentheses_mut();
         let id = declarator.id.get_binding_identifier()?;
         let symbol_id = id.symbol_id();
 

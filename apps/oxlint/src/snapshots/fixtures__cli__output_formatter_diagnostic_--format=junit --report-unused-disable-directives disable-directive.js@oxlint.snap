@@ -9,13 +9,13 @@ working directory: fixtures/cli/output_formatter_diagnostic
 <testsuites name="Oxlint" tests="3" failures="3" errors="0">
     <testsuite name="disable-directive.js" tests="3" disabled="0" errors="0" failures="3">
         <testcase name="">
-            <failure message="Unused eslint-disable directive (no problems were reported).">line 9, column 3, Unused eslint-disable directive (no problems were reported).</failure>
+            <failure message="Unused eslint-disable directive (no problems were reported).">line 9, column 1, Unused eslint-disable directive (no problems were reported).</failure>
         </testcase>
         <testcase name="">
-            <failure message="Unused eslint-disable directive (no problems were reported).">line 12, column 3, Unused eslint-disable directive (no problems were reported).</failure>
+            <failure message="Unused eslint-disable directive (no problems were reported).">line 12, column 1, Unused eslint-disable directive (no problems were reported).</failure>
         </testcase>
         <testcase name="">
-            <failure message="Unused eslint-disable directive (no problems were reported).">line 15, column 3, Unused eslint-disable directive (no problems were reported).</failure>
+            <failure message="Unused eslint-disable directive (no problems were reported).">line 15, column 1, Unused eslint-disable directive (no problems were reported).</failure>
         </testcase>
     </testsuite>
 </testsuites>

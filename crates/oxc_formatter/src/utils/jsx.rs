@@ -200,6 +200,11 @@ impl<'a> JsxWord<'a> {
     pub(crate) fn is_single_character(&self) -> bool {
         self.text.chars().count() == 1
     }
+
+    pub(crate) fn is_single_alphabetic_character(&self) -> bool {
+        let mut chars = self.text.chars();
+        matches!(chars.next(), Some(c) if c.is_alphabetic()) && chars.next().is_none()
+    }
 }
 
 impl<'a> Format<'a> for JsxWord<'a> {

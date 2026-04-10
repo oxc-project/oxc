@@ -4,6 +4,42 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.59.0] - 2026-04-06
+
+### 🚀 Features
+
+- 9cfe57e linter/unicorn: Implement prefer-import-meta-properties rule (#20662) (Irfan - ئىرفان)
+- 1edb391 linter/eslint: Implement `no-restricted-exports` rule (#20592) (Nicolas Le Cam)
+- 0f12bcd linter/react: Implement  `hook-use-state` rule (#20986) (Khaled Labeb)
+- 7fdf722 linter/unicorn: Implement `no-useless-iterator-to-array` rule (#20945) (Mikhail Baev)
+- 39c8f2c linter/jest: Implement padding-around-after-all-blocks (#21034) (Sapphire)
+- ac39e51 linter/eslint-vitest-plugin: Prefer importing vitest globals (#20960) (Said Atrahouch)
+- 0b84de1 oxlint: Support allow option for prefer-promise-reject-errors (#20934) (camc314)
+- 23db851 linter/consistent-return: Move rule from nursery to suspicious (#20920) (camc314)
+- 9a27e32 linter/no-unnecessary-type-conversion: Move rule from nursery to suspicious (#20919) (camc314)
+- 1ca7b58 linter/dot-notation: Move rule from nursery to style (#20918) (camc314)
+- 73ba81a linter/consistent-type-exports: Move rule from nursery to style (#20917) (camc314)
+- b9199b1 linter/unicorn: Implement switch-case-break-position (#20872) (Mikhail Baev)
+- 3435ff8 linter: Implements `prefer-snapshot-hint` rule in Jest and Vitest (#20870) (Said Atrahouch)
+- 98510d2 linter: Implement react/prefer-function-component (#19652) (Connor Shea)
+- 871f9d9 linter: Implement no-useless-assignment (#15466) (Zhaoting Zhou)
+- 0f01fbd linter: Implement eslint/object-shorthand (#17688) (yue)
+
+### 🐛 Bug Fixes
+
+- 9bc77dd linter/no-unused-private-class-members: False positive with await expr (#21067) (camc314)
+- 60a57cd linter/const-comparisons: Detect equality contradictions (#21065) (camc314)
+- 2bb2be2 linter/no-array-index-key: False positive when index is passed as function argument (#21012) (bab)
+- 6492953 linter/no-this-in-sfc: Only flag `this` used as member expression object (#20961) (bab)
+- af89923 linter/no-namespace: Support glob pattern matching against basename (#21031) (bab)
+- 3b953bc linter/button-has-type: Ignore `document.createElement` calls (#21008) (Said Atrahouch)
+- 8c36070 linter/unicorn: Add support for `Array.from()` for `prefer-set-size` rule (#21016) (Mikhail Baev)
+- c1a48f0 linter: Detect vitest import from vite-plus/test (#20976) (Said Atrahouch)
+- ca79960 linter/no-array-index-key: Move span to `key` property (#20947) (camc314)
+- 2098274 linter: Add suggestion for `jest/prefer-equality-matcher` (#20925) (eryue0220)
+- 6eb77ec linter: Allow default-import barrels in import/named (#20757) (Bazyli Brzóska)
+- 9c218ef linter/eslint-vitest-plugin: Remove pending fix status for require-local-test-context-for-concurrent-snapshot (#20890) (Said Atrahouch)
+
 ## [1.58.0] - 2026-03-30
 
 ### 💥 BREAKING CHANGES

@@ -57,7 +57,8 @@ use oxc_allocator::{Box as ArenaBox, StringBuilder as ArenaStringBuilder, TakeIn
 use oxc_ast::{NONE, ast::*};
 use oxc_ast_visit::Visit;
 use oxc_semantic::{ReferenceFlags, ScopeFlags, ScopeId, SymbolFlags};
-use oxc_span::{GetSpan, Ident, SPAN};
+use oxc_span::{GetSpan, SPAN};
+use oxc_str::Ident;
 use oxc_syntax::{
     identifier::{is_identifier_name, is_identifier_part, is_identifier_start},
     keyword::is_reserved_keyword,

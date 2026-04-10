@@ -3,7 +3,7 @@
 //! This crate provides [`Str`], [`Ident`], and [`CompactStr`] types for efficient string handling.
 
 mod compact_str;
-pub mod ident;
+mod ident;
 mod str;
 
 pub use compact_str::{CompactStr, MAX_INLINE_LEN};
@@ -16,4 +16,6 @@ pub mod __internal {
     pub use compact_str::format_compact;
     // Used by `format_str!` and `format_ident!` macros
     pub use oxc_allocator::StringBuilder as ArenaStringBuilder;
+    // Used by `static_ident!` macro
+    pub use crate::ident::new_const_ident;
 }

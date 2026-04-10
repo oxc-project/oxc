@@ -427,7 +427,7 @@ pub fn invalid_binding_rest_element(span: Span) -> OxcDiagnostic {
 
 #[cold]
 pub fn a_rest_parameter_cannot_be_optional(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("A rest parameter cannot be optional")
+    ts_error("1047", "A rest parameter cannot be optional")
         .with_label(span)
         .with_help("Remove this `?`. The default value is an empty array")
 }

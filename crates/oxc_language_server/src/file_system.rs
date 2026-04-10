@@ -1,10 +1,12 @@
+use std::sync::Arc;
+
 use tower_lsp_server::ls_types::Uri;
 
 use crate::{ConcurrentHashMap, LanguageId, TextDocument};
 
 #[derive(Debug, Default)]
 pub struct LSPFileSystem {
-    files: ConcurrentHashMap<Uri, (LanguageId, String)>,
+    files: ConcurrentHashMap<Uri, (LanguageId, Arc<str>)>,
 }
 
 impl LSPFileSystem {
@@ -14,11 +16,11 @@ impl LSPFileSystem {
 
     pub fn set(&self, uri: Uri, content: String) {
         let language_id = self.get_language_id(&uri).unwrap_or_default();
-        self.files.pin().insert(uri, (language_id, content));
+        self.files.pin().insert(uri, (language_id, Arc::from(content)));
     }
 
     pub fn set_with_language(&self, uri: Uri, language_id: LanguageId, content: String) {
-        self.files.pin().insert(uri, (language_id, content));
+        self.files.pin().insert(uri, (language_id, Arc::from(content)));
     }
 
     pub fn get_language_id(&self, uri: &Uri) -> Option<LanguageId> {
@@ -31,7 +33,7 @@ impl LSPFileSystem {
             |(language_id, content)| TextDocument {
                 uri,
                 language_id: language_id.clone(),
-                text: Some(content.clone()),
+                text: Some(Arc::clone(content)),
             },
         )
     }
