@@ -5,6 +5,8 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_str::CompactStr;
+use schemars::JsonSchema;
+use serde::Deserialize;
 
 use crate::{
     AstNode,
@@ -70,7 +72,7 @@ pub struct NoNoninteractiveElementToInteractiveRole(
     Box<NoNoninteractiveElementToInteractiveRoleConfig>,
 );
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Deserialize, JsonSchema)]
 struct NoNoninteractiveElementToInteractiveRoleConfig {
     /// A mapping of HTML element names to arrays of ARIA role strings that are
     /// allowed overrides for that element. For example, `{ "ul": ["menu", "tablist"] }`
@@ -127,6 +129,7 @@ declare_oxc_lint!(
     NoNoninteractiveElementToInteractiveRole,
     jsx_a11y,
     correctness,
+    config = NoNoninteractiveElementToInteractiveRoleConfig,
 );
 
 // The shared `is_interactive_role` utility does not include composite widget roles
@@ -177,10 +180,10 @@ impl Rule for NoNoninteractiveElementToInteractiveRole {
         }
 
         // Skip if this element-role combination is allowed by config.
-        if let Some(allowed) = self.0.allowed_roles.get(element_type.as_ref()) {
-            if allowed.iter().any(|r: &CompactStr| r.as_str() == first_role) {
-                return;
-            }
+        if let Some(allowed) = self.0.allowed_roles.get(element_type.as_ref())
+            && allowed.iter().any(|r: &CompactStr| r.as_str() == first_role)
+        {
+            return;
         }
 
         // Report if the element is non-interactive AND the role is interactive.
