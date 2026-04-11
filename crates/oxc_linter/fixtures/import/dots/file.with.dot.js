@@ -1,1 +1,1 @@
-// This will be used for the failing test in import/extensions when filename contains dots
+// This will be used in the failing test in import/extensions when filename contains dots
