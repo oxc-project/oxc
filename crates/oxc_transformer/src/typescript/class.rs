@@ -2,6 +2,7 @@ use oxc_allocator::{TakeIn, Vec as ArenaVec};
 use oxc_ast::ast::*;
 use oxc_semantic::ScopeFlags;
 use oxc_span::SPAN;
+use oxc_str::Ident;
 use oxc_syntax::operator::AssignmentOperator;
 use oxc_traverse::BoundIdentifier;
 
@@ -381,12 +382,15 @@ impl<'a> TypeScript<'a> {
         params: &ArenaVec<'a, FormalParameter<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> impl Iterator<Item = Statement<'a>> {
+        let source_text = ctx.state.source_text;
         params
             .iter()
             .filter(|param| param.has_modifier())
             .filter_map(|param| param.pattern.get_binding_identifier())
             .map(|id| {
-                let target = create_this_property_assignment(id.span, id.name, ctx);
+                // `id.name` may be renamed by clash detection; use span to recover the original source name.
+                let prop_name = Ident::from(id.span.source_text(source_text));
+                let target = create_this_property_assignment(id.span, prop_name, ctx);
                 let value = BoundIdentifier::from_binding_ident(id).create_read_expression(ctx);
                 Self::create_assignment(target, value, ctx)
             })
