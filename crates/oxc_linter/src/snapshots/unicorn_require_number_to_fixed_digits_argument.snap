@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-assertion_line: 444
 ---
 
   ⚠ eslint-plugin-unicorn(require-number-to-fixed-digits-argument): Number method .toFixed() should have an argument
