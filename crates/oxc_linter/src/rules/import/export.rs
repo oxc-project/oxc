@@ -4,12 +4,14 @@ use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
+use oxc_str::CompactStr;
 
 use crate::{ModuleRecord, context::LintContext, rule::Rule};
 
 fn no_named_export(module_name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("No named exports found in module '{module_name}'"))
+        .with_help("Remove the `export *` re-export, or add named exports to the target module.")
         .with_label(span)
 }
 
@@ -93,6 +95,7 @@ impl Rule for Export {
 
                 ctx.diagnostic(
                     OxcDiagnostic::warn(format!("Multiple exports of name '{name}'."))
+                        .with_help("Rename or remove the duplicate export so each name is exported only once.")
                         .with_labels(labels),
                 );
             }

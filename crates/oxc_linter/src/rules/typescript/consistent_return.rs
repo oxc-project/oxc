@@ -47,7 +47,7 @@ declare_oxc_lint!(
     /// ```
     ConsistentReturn(tsgolint),
     typescript,
-    nursery,
+    suspicious,
     config = ConsistentReturnConfig,
 );
 

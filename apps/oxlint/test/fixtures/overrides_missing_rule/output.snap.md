@@ -3,7 +3,7 @@
 
 # stdout
 ```
-Failed to build configuration from <fixture>/.oxlintrc.json.
+Failed to build configuration.
 
   x Rule 'missing' not found in plugin 'basic-custom-plugin'
 ```

@@ -7,7 +7,8 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::{ToBoolean, WithoutGlobalReferenceInformation};
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
+use oxc_str::CompactStr;
 use oxc_syntax::operator::UnaryOperator;
 
 use crate::{

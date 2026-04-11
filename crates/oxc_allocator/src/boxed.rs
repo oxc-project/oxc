@@ -12,9 +12,9 @@ use std::{
     ptr::{self, NonNull},
 };
 
-#[cfg(any(feature = "serialize", test))]
+#[cfg(feature = "serialize")]
 use oxc_estree::{ESTree, Serializer as ESTreeSerializer};
-#[cfg(any(feature = "serialize", test))]
+#[cfg(feature = "serialize")]
 use serde::{Serialize, Serializer as SerdeSerializer};
 
 use crate::Allocator;
@@ -263,14 +263,14 @@ impl<T: ?Sized + Debug> Debug for Box<'_, T> {
 // }
 // }
 
-#[cfg(any(feature = "serialize", test))]
+#[cfg(feature = "serialize")]
 impl<T: Serialize> Serialize for Box<'_, T> {
     fn serialize<S: SerdeSerializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         self.deref().serialize(serializer)
     }
 }
 
-#[cfg(any(feature = "serialize", test))]
+#[cfg(feature = "serialize")]
 impl<T: ESTree> ESTree for Box<'_, T> {
     fn serialize<S: ESTreeSerializer>(&self, serializer: S) {
         self.deref().serialize(serializer);
@@ -351,6 +351,7 @@ mod test {
         assert_eq!(hash(&a), hash(&b));
     }
 
+    #[cfg(feature = "serialize")]
     #[test]
     fn box_serialize() {
         let allocator = Allocator::default();
@@ -359,6 +360,7 @@ mod test {
         assert_eq!(s, r#""x""#);
     }
 
+    #[cfg(feature = "serialize")]
     #[test]
     fn box_serialize_estree() {
         use oxc_estree::{CompactTSSerializer, ESTree};

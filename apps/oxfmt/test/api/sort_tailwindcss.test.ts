@@ -634,6 +634,20 @@ shadow-lg\` : "font-normal"}\`} />;`;
     expect(result.errors).toStrictEqual([]);
   });
 
+  // https://github.com/oxc-project/oxc/issues/20397
+  it("should preserve trailing space in ternary inside binary concat", async () => {
+    const input = `const A = <div className={"h-fit m-1 w-full " + (flag1 ? "block " : "hidden ") + (flag2 ? "p-2" : "p-4")} />;`;
+
+    const result = await format("test.tsx", input, {
+      experimentalTailwindcss: {},
+    });
+
+    expect(result.code).toContain('"m-1 h-fit w-full "');
+    expect(result.code).toContain('"block "');
+    expect(result.code).toContain('"hidden "');
+    expect(result.errors).toStrictEqual([]);
+  });
+
   // Tests for template literals in binary expressions
   it("should sort template literal on right side of binary expression", async () => {
     const input = "const A = <div className={a + ` p-4 flex `} />;";

@@ -1568,7 +1568,7 @@ impl<'a> PeepholeOptimizations {
                 // If the identifier is not a getter and the identifier is read-only,
                 // we know that the value is same even if we reordered the expression.
                 if let Some(symbol_id) = ctx.scoping().get_reference(id.reference_id()).symbol_id()
-                    && !ctx.scoping().symbol_is_mutated(symbol_id)
+                    && !Self::is_symbol_mutated(symbol_id, ctx)
                 {
                     return None;
                 }
@@ -1980,33 +1980,8 @@ impl<'a> PeepholeOptimizations {
             Expression::ObjectExpression(obj_expr) => {
                 for prop in &mut obj_expr.properties {
                     match prop {
-                        ObjectPropertyKind::ObjectProperty(prop) => match prop.key {
-                            PropertyKey::StaticIdentifier(_)
-                            | PropertyKey::PrivateIdentifier(_) => {
-                                if let Some(changed) =
-                                    Self::substitute_single_use_symbol_in_expression(
-                                        &mut prop.value,
-                                        search_for,
-                                        replacement,
-                                        replacement_has_side_effect,
-                                        ctx,
-                                    )
-                                {
-                                    if prop.shorthand && prop.key.is_specific_id("__proto__") {
-                                        // { __proto__ } -> { ['__proto__']: value }
-                                        prop.computed = true;
-                                        prop.key =
-                                            PropertyKey::from(ctx.ast.expression_string_literal(
-                                                prop.key.span(),
-                                                "__proto__",
-                                                None,
-                                            ));
-                                    }
-                                    prop.shorthand = false;
-                                    return Some(changed);
-                                }
-                            }
-                            match_expression!(PropertyKey) => {
+                        ObjectPropertyKind::ObjectProperty(prop) => {
+                            if prop.computed {
                                 if let Some(changed) =
                                     Self::substitute_single_use_symbol_in_expression(
                                         prop.key.to_expression_mut(),
@@ -2021,7 +1996,28 @@ impl<'a> PeepholeOptimizations {
                                 // Stop now because computed keys have side effects
                                 return Some(false);
                             }
-                        },
+
+                            if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
+                                &mut prop.value,
+                                search_for,
+                                replacement,
+                                replacement_has_side_effect,
+                                ctx,
+                            ) {
+                                if prop.shorthand && prop.key.is_specific_id("__proto__") {
+                                    // { __proto__ } -> { ['__proto__']: value }
+                                    prop.computed = true;
+                                    prop.key =
+                                        PropertyKey::from(ctx.ast.expression_string_literal(
+                                            prop.key.span(),
+                                            "__proto__",
+                                            None,
+                                        ));
+                                }
+                                prop.shorthand = false;
+                                return Some(changed);
+                            }
+                        }
                         ObjectPropertyKind::SpreadProperty(prop) => {
                             if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
                                 &mut prop.argument,

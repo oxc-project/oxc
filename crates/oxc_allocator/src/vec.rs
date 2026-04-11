@@ -14,10 +14,10 @@ use std::{
     slice::SliceIndex,
 };
 
-#[cfg(any(feature = "serialize", test))]
+#[cfg(feature = "serialize")]
 use serde::{Serialize, Serializer as SerdeSerializer};
 
-#[cfg(any(feature = "serialize", test))]
+#[cfg(feature = "serialize")]
 use oxc_estree::{ConcatElement, ESTree, SequenceSerializer, Serializer as ESTreeSerializer};
 
 use crate::{Allocator, Box, bump::Bump, vec2::Vec as InnerVecGeneric};
@@ -308,14 +308,14 @@ impl<'a, T: 'a> From<Vec<'a, T>> for Box<'a, [T]> {
     }
 }
 
-#[cfg(any(feature = "serialize", test))]
+#[cfg(feature = "serialize")]
 impl<T: Serialize> Serialize for Vec<'_, T> {
     fn serialize<S: SerdeSerializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         self.as_slice().serialize(serializer)
     }
 }
 
-#[cfg(any(feature = "serialize", test))]
+#[cfg(feature = "serialize")]
 impl<T: ESTree> ESTree for Vec<'_, T> {
     fn serialize<S: ESTreeSerializer>(&self, serializer: S) {
         self.as_slice().serialize(serializer);
@@ -375,6 +375,7 @@ mod test {
         assert_eq!(boxed_slice.as_ref(), &["x", "y"]);
     }
 
+    #[cfg(feature = "serialize")]
     #[test]
     fn vec_serialize() {
         let allocator = Allocator::default();
@@ -384,6 +385,7 @@ mod test {
         assert_eq!(s, r#"["x"]"#);
     }
 
+    #[cfg(feature = "serialize")]
     #[test]
     fn vec_serialize_estree() {
         use oxc_estree::{CompactTSSerializer, ESTree};

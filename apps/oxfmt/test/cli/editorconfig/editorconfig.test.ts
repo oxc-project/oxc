@@ -78,6 +78,29 @@ describe("editorconfig", () => {
     expect(snapshot).toMatchSnapshot();
   });
 
+  // .editorconfig:
+  //   [*] indent_style=space, tab_width=8
+  //   (no indent_size)
+  //
+  // Expected: useTabs=false, tabWidth=8 (tab_width used as fallback for indent_size)
+  // - Indentation should use 8 spaces
+  it("tab_width fallback when indent_size is not set", async () => {
+    const cwd = join(fixturesDir, "tab_width_fallback");
+    const snapshot = await runWriteModeAndSnapshot(cwd, ["test.js"]);
+    expect(snapshot).toMatchSnapshot();
+  });
+
+  // .editorconfig:
+  //   [*] quote_type=single
+  //
+  // Expected: singleQuote=true
+  // - String literals should use single quotes instead of double quotes
+  it("quote_type maps to singleQuote", async () => {
+    const cwd = join(fixturesDir, "quote_type");
+    const snapshot = await runWriteModeAndSnapshot(cwd, ["test.js"]);
+    expect(snapshot).toMatchSnapshot();
+  });
+
   // .editorconfig: (empty file)
   //
   // Expected: default settings (useTabs=false, tabWidth=2)

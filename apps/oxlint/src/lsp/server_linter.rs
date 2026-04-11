@@ -24,15 +24,16 @@ use oxc_linter::{
 };
 
 use oxc_language_server::{
-    Capabilities, ConcurrentHashMap, DiagnosticMode, DiagnosticResult, Tool, ToolBuilder,
-    ToolRestartChanges,
+    Capabilities, ConcurrentHashMap, DiagnosticMode, DiagnosticResult, TextDocument, Tool,
+    ToolBuilder, ToolRestartChanges,
 };
 
 use crate::{
     config_loader::{ConfigLoader, build_nested_configs, discover_configs_in_tree},
     lsp::{
         code_actions::{
-            CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC, apply_all_fix_code_action, apply_fix_code_actions,
+            CODE_ACTION_KIND_SOURCE_FIX_ALL_DANGEROUS_OXC, CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC,
+            apply_all_fix_code_action, apply_dangerous_fix_code_action, apply_fix_code_actions,
             fix_all_text_edit,
         },
         commands::{FIX_ALL_COMMAND_ID, FixAllCommandArgs},
@@ -90,20 +91,6 @@ impl ServerLinterBuilder {
             }
         }
 
-        let mut nested_ignore_patterns = Vec::new();
-        let mut extended_paths = FxHashSet::default();
-        let nested_configs = if options.use_nested_configs() {
-            self.create_nested_configs(
-                &root_path,
-                &mut external_plugin_store,
-                &mut nested_ignore_patterns,
-                &mut extended_paths,
-                Some(root_uri.as_str()),
-            )
-        } else {
-            FxHashMap::default()
-        };
-
         let config_path = options.config_path.as_ref().filter(|p| !p.is_empty()).map(PathBuf::from);
         let loader = ConfigLoader::new(
             external_linter,
@@ -122,6 +109,21 @@ impl ServerLinterBuilder {
                     Oxlintrc::default()
                 }
             };
+
+        let mut nested_ignore_patterns = Vec::new();
+        let mut extended_paths = FxHashSet::default();
+        let nested_configs = if options.use_nested_configs() {
+            self.create_nested_configs(
+                &root_path,
+                &oxlintrc.path,
+                &mut external_plugin_store,
+                &mut nested_ignore_patterns,
+                &mut extended_paths,
+                Some(root_uri.as_str()),
+            )
+        } else {
+            FxHashMap::default()
+        };
 
         let base_patterns = oxlintrc.ignore_patterns.clone();
 
@@ -226,6 +228,7 @@ impl ServerLinterBuilder {
             Self::create_ignore_glob(&root_path),
             extended_paths,
             runner,
+            fix_kind,
             lint_options.report_unused_directive,
         )
     }
@@ -237,64 +240,21 @@ impl ToolBuilder for ServerLinterBuilder {
         capabilities: &mut ServerCapabilities,
         backend_capabilities: &mut Capabilities,
     ) {
-        let mut code_action_kinds = capabilities
-            .code_action_provider
-            .as_ref()
-            .and_then(|cap| match cap {
-                CodeActionProviderCapability::Simple(_) => None,
-                CodeActionProviderCapability::Options(options) => options.code_action_kinds.clone(),
-            })
-            .unwrap_or_default();
-
-        if !code_action_kinds.contains(&CodeActionKind::QUICKFIX) {
-            code_action_kinds.push(CodeActionKind::QUICKFIX);
-        }
-        if !code_action_kinds.contains(&CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC) {
-            code_action_kinds.push(CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC);
-        }
-        if !code_action_kinds.contains(&CodeActionKind::SOURCE_FIX_ALL) {
-            code_action_kinds.push(CodeActionKind::SOURCE_FIX_ALL);
-        }
-
-        // override code action kinds if the code action provider is already set
         capabilities.code_action_provider =
             Some(CodeActionProviderCapability::Options(CodeActionOptions {
-                code_action_kinds: Some(code_action_kinds),
-                work_done_progress_options: capabilities
-                    .code_action_provider
-                    .as_ref()
-                    .and_then(|cap| match cap {
-                        CodeActionProviderCapability::Simple(_) => None,
-                        CodeActionProviderCapability::Options(options) => {
-                            Some(options.work_done_progress_options)
-                        }
-                    })
-                    .unwrap_or_default(),
-                resolve_provider: capabilities.code_action_provider.as_ref().and_then(|cap| {
-                    match cap {
-                        CodeActionProviderCapability::Simple(_) => None,
-                        CodeActionProviderCapability::Options(options) => options.resolve_provider,
-                    }
-                }),
+                code_action_kinds: Some(vec![
+                    CodeActionKind::QUICKFIX,
+                    CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC,
+                    CODE_ACTION_KIND_SOURCE_FIX_ALL_DANGEROUS_OXC,
+                    CodeActionKind::SOURCE_FIX_ALL,
+                ]),
+                work_done_progress_options: WorkDoneProgressOptions::default(),
+                resolve_provider: None,
             }));
 
-        let mut commands = capabilities
-            .execute_command_provider
-            .as_ref()
-            .map_or(vec![], |opts| opts.commands.clone());
-
-        if !commands.contains(&FIX_ALL_COMMAND_ID.to_string()) {
-            commands.push(FIX_ALL_COMMAND_ID.to_string());
-        }
-
         capabilities.execute_command_provider = Some(ExecuteCommandOptions {
-            commands,
-            work_done_progress_options: WorkDoneProgressOptions {
-                work_done_progress: capabilities
-                    .execute_command_provider
-                    .as_ref()
-                    .and_then(|provider| provider.work_done_progress_options.work_done_progress),
-            },
+            commands: vec![FIX_ALL_COMMAND_ID.to_string()],
+            work_done_progress_options: WorkDoneProgressOptions::default(),
         });
 
         // The server supports pull and push diagnostics.
@@ -342,12 +302,13 @@ impl ServerLinterBuilder {
     fn create_nested_configs(
         &self,
         root_path: &Path,
+        base_config_path: &Path,
         external_plugin_store: &mut ExternalPluginStore,
         nested_ignore_patterns: &mut Vec<(Vec<String>, PathBuf)>,
         extended_paths: &mut FxHashSet<PathBuf>,
         workspace_uri: Option<&str>,
     ) -> FxHashMap<PathBuf, Config> {
-        let config_paths = discover_configs_in_tree(root_path);
+        let config_paths = discover_configs_in_tree(root_path, base_config_path);
 
         #[cfg_attr(not(feature = "napi"), allow(unused_mut))]
         let mut loader = ConfigLoader::new(
@@ -418,6 +379,7 @@ pub struct ServerLinter {
     extended_paths: FxHashSet<PathBuf>,
     code_actions: Arc<ConcurrentHashMap<Uri, Option<Vec<LinterCodeAction>>>>,
     runner: LintRunner,
+    fix_kind: FixKind,
     unused_directives_severity: Option<AllowWarnDeny>,
 }
 
@@ -540,13 +502,8 @@ impl Tool for ServerLinter {
         }
     }
 
-    /// Check if the linter should know about the given command
-    fn is_responsible_for_command(&self, command: &str) -> bool {
-        command == FIX_ALL_COMMAND_ID
-    }
-
     /// Tries to execute the given command with the provided arguments.
-    /// If the command is not recognized, returns `Ok(None)`.
+    /// If the command is not recognized, returns `Err(ErrorCode)`.
     /// If the command is recognized and executed it can return:
     /// - `Ok(Some(WorkspaceEdit))` if the command was executed successfully and produced a workspace edit.
     /// - `Ok(None)` if the command was executed successfully but did not produce any workspace edit.
@@ -559,7 +516,7 @@ impl Tool for ServerLinter {
         arguments: Vec<serde_json::Value>,
     ) -> Result<Option<WorkspaceEdit>, ErrorCode> {
         if command != FIX_ALL_COMMAND_ID {
-            return Ok(None);
+            return Err(ErrorCode::InvalidParams);
         }
 
         let args = FixAllCommandArgs::try_from(arguments).map_err(|_| ErrorCode::InvalidParams)?;
@@ -650,6 +607,18 @@ impl Tool for ServerLinter {
                     continue;
                 };
                 code_actions_vec.push(CodeActionOrCommand::CodeAction(fix_all));
+            } else if kind == CODE_ACTION_KIND_SOURCE_FIX_ALL_DANGEROUS_OXC {
+                if !self.fix_kind.is_dangerous() {
+                    warn!(
+                        "Linter is not configured to provide dangerous fixes. Please set `fixKind` to `dangerous_fix` or `dangerous_fix_or_suggestion` in the server configuration to enable it."
+                    );
+                    continue;
+                }
+                let Some(fix_all) = apply_dangerous_fix_code_action(actions.clone(), uri.clone())
+                else {
+                    continue;
+                };
+                code_actions_vec.push(CodeActionOrCommand::CodeAction(fix_all));
             } else if kind == CodeActionKind::QUICKFIX {
                 for action in actions.clone() {
                     let fix_actions = apply_fix_code_actions(action, uri);
@@ -664,28 +633,28 @@ impl Tool for ServerLinter {
 
     /// Lint a file with the current linter
     /// - If the file is not lintable or ignored, an empty vector is returned
-    fn run_diagnostic(&self, uri: &Uri, content: Option<&str>) -> DiagnosticResult {
-        Ok(vec![(uri.clone(), self.run_file(uri, content)?)])
+    fn run_diagnostic(&self, document: &TextDocument) -> DiagnosticResult {
+        Ok(vec![(document.uri.clone(), self.run_file(document.uri, document.text.as_deref())?)])
     }
 
     /// Lint a file with the current linter
     /// - If the file is not lintable or ignored, an empty vector is returned
     /// - If the linter is not set to `OnType`, an empty vector is returned
-    fn run_diagnostic_on_change(&self, uri: &Uri, content: Option<&str>) -> DiagnosticResult {
+    fn run_diagnostic_on_change(&self, document: &TextDocument) -> DiagnosticResult {
         if self.run != Run::OnType {
             return Ok(vec![]);
         }
-        self.run_diagnostic(uri, content)
+        self.run_diagnostic(document)
     }
 
     /// Lint a file with the current linter
     /// - If the file is not lintable or ignored, an empty vector is returned
     /// - If the linter is not set to `OnSave`, an empty vector is returned
-    fn run_diagnostic_on_save(&self, uri: &Uri, content: Option<&str>) -> DiagnosticResult {
+    fn run_diagnostic_on_save(&self, document: &TextDocument) -> DiagnosticResult {
         if self.run != Run::OnSave {
             return Ok(vec![]);
         }
-        self.run_diagnostic(uri, content)
+        self.run_diagnostic(document)
     }
 
     fn remove_uri_cache(&self, uri: &Uri) {
@@ -703,6 +672,7 @@ impl ServerLinter {
         gitignore_glob: Vec<Gitignore>,
         extended_paths: FxHashSet<PathBuf>,
         runner: LintRunner,
+        fix_kind: FixKind,
         unused_directives_severity: Option<AllowWarnDeny>,
     ) -> Self {
         Self {
@@ -713,6 +683,7 @@ impl ServerLinter {
             extended_paths,
             code_actions: Arc::new(ConcurrentHashMap::default()),
             runner,
+            fix_kind,
             unused_directives_severity,
         }
     }
@@ -878,19 +849,21 @@ impl ServerLinter {
 #[cfg(test)]
 mod tests_builder {
     use tower_lsp_server::ls_types::{
-        CodeActionKind, CodeActionOptions, CodeActionProviderCapability, ExecuteCommandOptions,
-        ServerCapabilities, WorkDoneProgressOptions,
+        CodeActionKind, CodeActionProviderCapability, ServerCapabilities,
     };
 
     use oxc_language_server::{Capabilities, DiagnosticMode, ToolBuilder};
 
     use crate::lsp::{
-        code_actions::CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC, commands::FIX_ALL_COMMAND_ID,
+        code_actions::{
+            CODE_ACTION_KIND_SOURCE_FIX_ALL_DANGEROUS_OXC, CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC,
+        },
+        commands::FIX_ALL_COMMAND_ID,
         server_linter::ServerLinterBuilder,
     };
 
     #[test]
-    fn test_server_capabilities_empty_capabilities() {
+    fn test_server_capabilities_default_providers() {
         let builder = ServerLinterBuilder::default();
         let mut capabilities = ServerCapabilities::default();
 
@@ -902,133 +875,14 @@ mod tests_builder {
                 let code_action_kinds = options.code_action_kinds.as_ref().unwrap();
                 assert!(code_action_kinds.contains(&CodeActionKind::QUICKFIX));
                 assert!(code_action_kinds.contains(&CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC));
+                assert!(code_action_kinds.contains(&CODE_ACTION_KIND_SOURCE_FIX_ALL_DANGEROUS_OXC));
                 assert!(code_action_kinds.contains(&CodeActionKind::SOURCE_FIX_ALL));
-                assert_eq!(code_action_kinds.len(), 3);
+                assert_eq!(code_action_kinds.len(), 4);
             }
             _ => panic!("Expected code action provider options"),
         }
 
         // Should set execute command provider with fix all command
-        let execute_command_provider = capabilities.execute_command_provider.as_ref().unwrap();
-        assert!(execute_command_provider.commands.contains(&FIX_ALL_COMMAND_ID.to_string()));
-        assert_eq!(execute_command_provider.commands.len(), 1);
-    }
-
-    #[test]
-    fn test_server_capabilities_with_existing_code_action_kinds() {
-        let builder = ServerLinterBuilder::default();
-        let mut capabilities = ServerCapabilities {
-            code_action_provider: Some(CodeActionProviderCapability::Options(CodeActionOptions {
-                code_action_kinds: Some(vec![CodeActionKind::REFACTOR]),
-                work_done_progress_options: WorkDoneProgressOptions::default(),
-                resolve_provider: Some(true),
-            })),
-            ..Default::default()
-        };
-
-        builder.server_capabilities(&mut capabilities, &mut Capabilities::default());
-
-        match &capabilities.code_action_provider {
-            Some(CodeActionProviderCapability::Options(options)) => {
-                let code_action_kinds = options.code_action_kinds.as_ref().unwrap();
-                assert!(code_action_kinds.contains(&CodeActionKind::REFACTOR));
-                assert!(code_action_kinds.contains(&CodeActionKind::QUICKFIX));
-                assert!(code_action_kinds.contains(&CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC));
-                assert!(code_action_kinds.contains(&CodeActionKind::SOURCE_FIX_ALL));
-                assert_eq!(code_action_kinds.len(), 4);
-                assert_eq!(options.resolve_provider, Some(true));
-            }
-            _ => panic!("Expected code action provider options"),
-        }
-    }
-
-    #[test]
-    fn test_server_capabilities_with_existing_quickfix_kind() {
-        let builder = ServerLinterBuilder::default();
-        let mut capabilities = ServerCapabilities {
-            code_action_provider: Some(CodeActionProviderCapability::Options(CodeActionOptions {
-                code_action_kinds: Some(vec![CodeActionKind::QUICKFIX]),
-                work_done_progress_options: WorkDoneProgressOptions::default(),
-                resolve_provider: None,
-            })),
-            ..Default::default()
-        };
-
-        builder.server_capabilities(&mut capabilities, &mut Capabilities::default());
-
-        match &capabilities.code_action_provider {
-            Some(CodeActionProviderCapability::Options(options)) => {
-                let code_action_kinds = options.code_action_kinds.as_ref().unwrap();
-                assert!(code_action_kinds.contains(&CodeActionKind::QUICKFIX));
-                assert!(code_action_kinds.contains(&CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC));
-                assert!(code_action_kinds.contains(&CodeActionKind::SOURCE_FIX_ALL));
-                assert_eq!(code_action_kinds.len(), 3);
-            }
-            _ => panic!("Expected code action provider options"),
-        }
-    }
-
-    #[test]
-    fn test_server_capabilities_with_simple_code_action_provider() {
-        let builder = ServerLinterBuilder::default();
-        let mut capabilities = ServerCapabilities {
-            code_action_provider: Some(CodeActionProviderCapability::Simple(true)),
-            ..Default::default()
-        };
-
-        builder.server_capabilities(&mut capabilities, &mut Capabilities::default());
-
-        // Should override with options
-        match &capabilities.code_action_provider {
-            Some(CodeActionProviderCapability::Options(options)) => {
-                let code_action_kinds = options.code_action_kinds.as_ref().unwrap();
-                assert!(code_action_kinds.contains(&CodeActionKind::QUICKFIX));
-                assert!(code_action_kinds.contains(&CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC));
-                assert!(code_action_kinds.contains(&CodeActionKind::SOURCE_FIX_ALL));
-                assert_eq!(code_action_kinds.len(), 3);
-            }
-            _ => panic!("Expected code action provider options"),
-        }
-    }
-
-    #[test]
-    fn test_server_capabilities_with_existing_commands() {
-        let builder = ServerLinterBuilder::default();
-        let mut capabilities = ServerCapabilities {
-            execute_command_provider: Some(ExecuteCommandOptions {
-                commands: vec!["existing.command".to_string()],
-                work_done_progress_options: WorkDoneProgressOptions {
-                    work_done_progress: Some(true),
-                },
-            }),
-            ..Default::default()
-        };
-
-        builder.server_capabilities(&mut capabilities, &mut Capabilities::default());
-
-        let execute_command_provider = capabilities.execute_command_provider.as_ref().unwrap();
-        assert!(execute_command_provider.commands.contains(&"existing.command".to_string()));
-        assert!(execute_command_provider.commands.contains(&FIX_ALL_COMMAND_ID.to_string()));
-        assert_eq!(execute_command_provider.commands.len(), 2);
-        assert_eq!(
-            execute_command_provider.work_done_progress_options.work_done_progress,
-            Some(true)
-        );
-    }
-
-    #[test]
-    fn test_server_capabilities_with_existing_fix_all_command() {
-        let builder = ServerLinterBuilder::default();
-        let mut capabilities = ServerCapabilities {
-            execute_command_provider: Some(ExecuteCommandOptions {
-                commands: vec![FIX_ALL_COMMAND_ID.to_string()],
-                work_done_progress_options: WorkDoneProgressOptions::default(),
-            }),
-            ..Default::default()
-        };
-
-        builder.server_capabilities(&mut capabilities, &mut Capabilities::default());
-
         let execute_command_provider = capabilities.execute_command_provider.as_ref().unwrap();
         assert!(execute_command_provider.commands.contains(&FIX_ALL_COMMAND_ID.to_string()));
         assert_eq!(execute_command_provider.commands.len(), 1);
@@ -1242,7 +1096,9 @@ mod test {
     };
 
     use crate::lsp::{
-        code_actions::CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC,
+        code_actions::{
+            CODE_ACTION_KIND_SOURCE_FIX_ALL_DANGEROUS_OXC, CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC,
+        },
         server_linter::ServerLinterBuilder,
         tester::{Tester, get_file_path},
     };
@@ -1253,8 +1109,10 @@ mod test {
         let mut nested_ignore_patterns = Vec::new();
         let mut external_plugin_store = ExternalPluginStore::new(false);
         let mut extended_paths = FxHashSet::default();
+        let base_config_path = get_file_path("fixtures/lsp/init_nested_configs/.oxlintrc.json");
         let configs = builder.create_nested_configs(
             &get_file_path("fixtures/lsp/init_nested_configs"),
+            &base_config_path,
             &mut external_plugin_store,
             &mut nested_ignore_patterns,
             &mut extended_paths,
@@ -1264,10 +1122,44 @@ mod test {
         // sorting the key because for consistent tests results
         configs_dirs.sort();
 
-        assert!(configs_dirs.len() == 3);
-        assert!(configs_dirs[2].ends_with("deep2"));
-        assert!(configs_dirs[1].ends_with("deep1"));
-        assert!(configs_dirs[0].ends_with("init_nested_configs"));
+        assert_eq!(configs_dirs.len(), 2);
+        assert!(configs_dirs[1].ends_with("deep2"));
+        assert!(configs_dirs[0].ends_with("deep1"));
+    }
+
+    #[test]
+    fn test_fix_all_dangerous_returns_dangerous_fix_action() {
+        let tester =
+            Tester::new("fixtures/lsp/dangerous_fix", json!({ "fixKind": "dangerous_fix" }));
+        let linter = tester.create_linter();
+        let range = Range::new(Position::new(0, 0), Position::new(u32::MAX, u32::MAX));
+        let uri = tester.get_file_uri("unused_var.js");
+        let _ = linter.run_file(&uri, Some("let a = 1;")).unwrap();
+
+        // source.fixAll should only return safe fixes, not dangerous ones
+        let safe_actions = linter.get_code_actions_or_commands(
+            &uri,
+            &range,
+            &CodeActionContext {
+                only: Some(vec![CodeActionKind::SOURCE_FIX_ALL]),
+                ..Default::default()
+            },
+        );
+        assert!(safe_actions.is_empty(), "source.fixAll should not apply dangerous fixes");
+
+        // source.fixAllDangerous.oxc should return dangerous fix actions when fix_kind is dangerous
+        let dangerous_actions = linter.get_code_actions_or_commands(
+            &uri,
+            &range,
+            &CodeActionContext {
+                only: Some(vec![CODE_ACTION_KIND_SOURCE_FIX_ALL_DANGEROUS_OXC]),
+                ..Default::default()
+            },
+        );
+        assert!(
+            !dangerous_actions.is_empty(),
+            "source.fixAllDangerous.oxc should return dangerous fix action when fix_kind is dangerous"
+        );
     }
 
     #[test]

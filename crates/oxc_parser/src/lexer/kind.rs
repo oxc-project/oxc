@@ -217,10 +217,14 @@ impl Kind {
         matches!(self, Eof)
     }
 
-    /// All numeric literals are contiguous from Decimal..=HexBigInt in the enum.
+    #[rustfmt::skip]
     #[inline]
     pub const fn is_number(self) -> bool {
-        matches!(self as u8, x if x >= Decimal as u8 && x <= HexBigInt as u8)
+        matches!(
+            self,
+            Decimal | Float | Binary | Octal | Hex | PositiveExponential | NegativeExponential
+            | DecimalBigInt | BinaryBigInt | OctalBigInt | HexBigInt
+        )
     }
 
     #[inline] // Inline into `read_non_decimal` - see comment there as to why
@@ -363,10 +367,20 @@ impl Kind {
     }
 
     /// [Keywords and Reserved Words](https://tc39.es/ecma262/#sec-keywords-and-reserved-words)
-    /// All keywords are contiguous from Await..=Null in the enum for optimal range check.
     #[inline]
     pub const fn is_any_keyword(self) -> bool {
-        matches!(self as u8, x if x >= Await as u8 && x <= Null as u8)
+        // Note: `is_future_reserved_keyword` is a subset of `is_strict_mode_contextual_keyword`,
+        // so the last arm is redundant. We include it anyway so each spec category is represented:
+        // - Reserved words: https://tc39.es/ecma262/#prod-ReservedWord
+        // - Contextual keywords: https://tc39.es/ecma262/#sec-keywords-and-reserved-words
+        // - Strict mode reserved words: https://tc39.es/ecma262/#sec-strict-mode-of-ecmascript
+        // - Future reserved words: https://tc39.es/ecma262/#sec-future-reserved-words
+        // The compiler optimizes all four calls into a single range check (2 instructions total),
+        // so keeping `is_future_reserved_keyword` has no performance impact.
+        self.is_reserved_keyword()
+            || self.is_contextual_keyword()
+            || self.is_strict_mode_contextual_keyword()
+            || self.is_future_reserved_keyword()
     }
 
     #[rustfmt::skip]

@@ -239,6 +239,18 @@ impl Renderer {
                         }
                         continue;
                     }
+
+                    // Handle oneOf used by enums with documented variants.
+                    // Schemars generates oneOf with each variant as a separate
+                    // schema object (e.g. {type: "string", enum: ["value"]}).
+                    if let Some(one_of) = &nested_subschemas.one_of {
+                        for nested in one_of {
+                            let nested = Self::get_schema_object(nested);
+                            let nested = self.get_referenced_schema(nested);
+                            flattened_schemas.push(nested);
+                        }
+                        continue;
+                    }
                 }
                 flattened_schemas.push(subschema);
             }

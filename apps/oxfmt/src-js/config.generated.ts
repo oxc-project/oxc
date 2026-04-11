@@ -7,12 +7,15 @@ export type ArrowParensConfig = "always" | "avoid";
 export type EmbeddedLanguageFormattingConfig = "auto" | "off";
 export type EndOfLineConfig = "lf" | "crlf" | "cr";
 export type HtmlWhitespaceSensitivityConfig = "css" | "strict" | "ignore";
+export type JsdocUserConfig = boolean | JsdocConfig;
 export type ObjectWrapConfig = "preserve" | "collapse";
 export type ProseWrapConfig = "always" | "never" | "preserve";
 export type QuotePropsConfig = "as-needed" | "consistent" | "preserve";
+export type SortImportsUserConfig = boolean | SortImportsConfig;
 export type SortGroupItemConfig = NewlinesBetweenMarker | string | string[];
 export type SortOrderConfig = "asc" | "desc";
 export type SortPackageJsonUserConfig = boolean | SortPackageJsonConfig;
+export type SortTailwindcssUserConfig = boolean | SortTailwindcssConfig;
 export type TrailingCommaConfig = "all" | "es5" | "none";
 
 /**
@@ -79,6 +82,18 @@ export interface Oxfmtrc {
    */
   insertFinalNewline?: boolean;
   /**
+   * Enable JSDoc comment formatting.
+   *
+   * When enabled, JSDoc comments are normalized and reformatted:
+   * tag aliases are canonicalized, descriptions are capitalized,
+   * long lines are wrapped, and short comments are collapsed to single-line.
+   *
+   * Pass `true` or an object to enable with defaults, or omit/set `false` to disable.
+   *
+   * - Default: Disabled
+   */
+  jsdoc?: JsdocUserConfig;
+  /**
    * Use single quotes instead of double quotes in JSX.
    *
    * - Default: `false`
@@ -143,6 +158,7 @@ export interface Oxfmtrc {
    * For JSX, you can set the `jsxSingleQuote` option.
    *
    * - Default: `false`
+   * - Overrides `.editorconfig.quote_type`
    */
   singleQuote?: boolean;
   /**
@@ -151,9 +167,11 @@ export interface Oxfmtrc {
    * Using the similar algorithm as [eslint-plugin-perfectionist/sort-imports](https://perfectionist.dev/rules/sort-imports).
    * For details, see each field's documentation.
    *
+   * Pass `true` or an object to enable with defaults, or omit/set `false` to disable.
+   *
    * - Default: Disabled
    */
-  sortImports?: SortImportsConfig;
+  sortImports?: SortImportsUserConfig;
   /**
    * Sort `package.json` keys.
    *
@@ -171,14 +189,16 @@ export interface Oxfmtrc {
    * Option names omit the `tailwind` prefix used in the original plugin (e.g., `config` instead of `tailwindConfig`).
    * For details, see each field's documentation.
    *
+   * Pass `true` or an object to enable with defaults, or omit/set `false` to disable.
+   *
    * - Default: Disabled
    */
-  sortTailwindcss?: SortTailwindcssConfig;
+  sortTailwindcss?: SortTailwindcssUserConfig;
   /**
    * Specify the number of spaces per indentation-level.
    *
    * - Default: `2`
-   * - Overrides `.editorconfig.indent_size`
+   * - Overrides `.editorconfig.indent_size` (falls back to `.editorconfig.tab_width`)
    */
   tabWidth?: number;
   /**
@@ -202,6 +222,82 @@ export interface Oxfmtrc {
    * - Default: `false`
    */
   vueIndentScriptAndStyle?: boolean;
+  [k: string]: unknown;
+}
+export interface JsdocConfig {
+  /**
+   * Append default values to `@param` descriptions (e.g. "Default is `value`").
+   *
+   * - Default: `true`
+   */
+  addDefaultToDescription?: boolean;
+  /**
+   * Add spaces inside JSDoc type braces: `{string}` → `{ string }`.
+   *
+   * - Default: `false`
+   */
+  bracketSpacing?: boolean;
+  /**
+   * Capitalize the first letter of tag descriptions.
+   *
+   * - Default: `true`
+   */
+  capitalizeDescriptions?: boolean;
+  /**
+   * How to format comment blocks.
+   *
+   * - `"singleLine"` — Convert to single-line `/** content * /` when possible.
+   * - `"multiline"` — Always use multi-line format.
+   * - `"keep"` — Preserve original formatting.
+   *
+   * - Default: `"singleLine"`
+   */
+  commentLineStrategy?: string;
+  /**
+   * Emit `@description` tag instead of inline description.
+   *
+   * - Default: `false`
+   */
+  descriptionTag?: boolean;
+  /**
+   * Add a trailing dot to the end of descriptions.
+   *
+   * - Default: `false`
+   */
+  descriptionWithDot?: boolean;
+  /**
+   * Preserve indentation in unparsable `@example` code.
+   *
+   * - Default: `false`
+   */
+  keepUnparsableExampleIndent?: boolean;
+  /**
+   * Strategy for wrapping description lines at print width.
+   *
+   * - `"greedy"` — Always re-wrap text to fit within print width.
+   * - `"balance"` — Preserve original line breaks if all lines fit within print width.
+   *
+   * - Default: `"greedy"`
+   */
+  lineWrappingStyle?: string;
+  /**
+   * Use fenced code blocks (```` ``` ````) instead of 4-space indentation for code without a language tag.
+   *
+   * - Default: `false`
+   */
+  preferCodeFences?: boolean;
+  /**
+   * Add a blank line between the last `@param` and `@returns`.
+   *
+   * - Default: `false`
+   */
+  separateReturnsFromParam?: boolean;
+  /**
+   * Add blank lines between different tag groups (e.g. between `@param` and `@returns`).
+   *
+   * - Default: `false`
+   */
+  separateTagGroups?: boolean;
   [k: string]: unknown;
 }
 export interface OxfmtOverrideConfig {
@@ -271,6 +367,18 @@ export interface FormatConfig {
    */
   insertFinalNewline?: boolean;
   /**
+   * Enable JSDoc comment formatting.
+   *
+   * When enabled, JSDoc comments are normalized and reformatted:
+   * tag aliases are canonicalized, descriptions are capitalized,
+   * long lines are wrapped, and short comments are collapsed to single-line.
+   *
+   * Pass `true` or an object to enable with defaults, or omit/set `false` to disable.
+   *
+   * - Default: Disabled
+   */
+  jsdoc?: JsdocUserConfig;
+  /**
    * Use single quotes instead of double quotes in JSX.
    *
    * - Default: `false`
@@ -328,6 +436,7 @@ export interface FormatConfig {
    * For JSX, you can set the `jsxSingleQuote` option.
    *
    * - Default: `false`
+   * - Overrides `.editorconfig.quote_type`
    */
   singleQuote?: boolean;
   /**
@@ -336,9 +445,11 @@ export interface FormatConfig {
    * Using the similar algorithm as [eslint-plugin-perfectionist/sort-imports](https://perfectionist.dev/rules/sort-imports).
    * For details, see each field's documentation.
    *
+   * Pass `true` or an object to enable with defaults, or omit/set `false` to disable.
+   *
    * - Default: Disabled
    */
-  sortImports?: SortImportsConfig;
+  sortImports?: SortImportsUserConfig;
   /**
    * Sort `package.json` keys.
    *
@@ -356,14 +467,16 @@ export interface FormatConfig {
    * Option names omit the `tailwind` prefix used in the original plugin (e.g., `config` instead of `tailwindConfig`).
    * For details, see each field's documentation.
    *
+   * Pass `true` or an object to enable with defaults, or omit/set `false` to disable.
+   *
    * - Default: Disabled
    */
-  sortTailwindcss?: SortTailwindcssConfig;
+  sortTailwindcss?: SortTailwindcssUserConfig;
   /**
    * Specify the number of spaces per indentation-level.
    *
    * - Default: `2`
-   * - Overrides `.editorconfig.indent_size`
+   * - Overrides `.editorconfig.indent_size` (falls back to `.editorconfig.tab_width`)
    */
   tabWidth?: number;
   /**

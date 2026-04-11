@@ -131,22 +131,30 @@ impl<'a> Format<'a> for FormatAdjacentArgument<'a, '_> {
 /// Traversing the left nodes is necessary in case the first node is parenthesized because
 /// parentheses will be removed (and be re-added by the return statement, but only if the argument breaks)
 fn has_argument_leading_comments(argument: &AstNode<Expression>, f: &Formatter<'_, '_>) -> bool {
+    let comments = f.context().comments();
+
+    // Comments inside type cast parens (e.g., `/** @type {X} */ (/* here */ expr)`) are handled
+    // by `format_type_cast_comment_node` and should not trigger outer parenthesization.
+    let type_cast_comment_end = comments
+        .get_type_cast_comment_index(argument.span())
+        .map(|idx| comments.unprinted_comments()[idx].span.end);
+
     for left_side in ExpressionLeftSide::from(argument).iter() {
         let start = left_side.span().start;
-        let comments = f.context().comments();
         let leading_comments = comments.comments_before(start);
 
-        if leading_comments
-            .iter()
-            .any(|comment| comment.is_multiline_block() || comment.followed_by_newline())
-        {
+        if leading_comments.iter().any(|comment| {
+            (comment.is_multiline_block() || comment.followed_by_newline())
+                && type_cast_comment_end.is_none_or(|end| comment.span.start < end)
+        }) {
             return true;
         }
 
         let is_own_line_comment_or_multi_line_comment = |leading_comments: &[Comment]| {
-            leading_comments
-                .iter()
-                .any(|comment| comment.is_multiline_block() || comment.preceded_by_newline())
+            leading_comments.iter().any(|comment| {
+                (comment.is_multiline_block() || comment.preceded_by_newline())
+                    && type_cast_comment_end.is_none_or(|end| comment.span.start < end)
+            })
         };
 
         // Yield expressions only need to check the leading comments on the left side.

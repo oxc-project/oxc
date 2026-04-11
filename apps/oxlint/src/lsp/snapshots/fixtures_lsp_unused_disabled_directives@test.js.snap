@@ -31,8 +31,8 @@ tags: None
 
 code: ""
 code_description.href: "None"
-message: "Unused eslint-disable directive (no problems were reported)."
-range: Range { start: Position { line: 0, character: 2 }, end: Position { line: 0, character: 56 } }
+message: "Unused oxlint-disable directive (no problems were reported)."
+range: Range { start: Position { line: 0, character: 0 }, end: Position { line: 0, character: 56 } }
 related_information: None
 severity: Some(Error)
 source: Some("oxc")
@@ -40,7 +40,7 @@ tags: None
 
 code: ""
 code_description.href: "None"
-message: "Unused eslint-disable directive (no problems were reported from no-for-loop)."
+message: "Unused oxlint-disable directive (no problems were reported from no-for-loop)."
 range: Range { start: Position { line: 5, character: 41 }, end: Position { line: 5, character: 52 } }
 related_information: None
 severity: Some(Error)
@@ -49,14 +49,32 @@ tags: None
 
 code: ""
 code_description.href: "None"
-message: "Unused eslint-disable directive (no problems were reported)."
-range: Range { start: Position { line: 8, character: 2 }, end: Position { line: 8, character: 52 } }
+message: "Unused oxlint-disable directive (no problems were reported)."
+range: Range { start: Position { line: 8, character: 0 }, end: Position { line: 8, character: 52 } }
 related_information: None
 severity: Some(Error)
 source: Some("oxc")
 tags: None
 
 ########### Code Actions/Commands
+CodeAction: 
+Title: Delete this code.
+Is Preferred: Some(true)
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 9,
+            character: 0,
+        },
+        end: Position {
+            line: 9,
+            character: 29,
+        },
+    },
+    new_text: "",
+}
+
+
 CodeAction: 
 Title: Disable no-console for this line
 Is Preferred: Some(false)
@@ -154,11 +172,11 @@ TextEdit: TextEdit {
     range: Range {
         start: Position {
             line: 0,
-            character: 2,
+            character: 0,
         },
         end: Position {
-            line: 0,
-            character: 56,
+            line: 1,
+            character: 0,
         },
     },
     new_text: "",
@@ -190,11 +208,11 @@ TextEdit: TextEdit {
     range: Range {
         start: Position {
             line: 8,
-            character: 2,
+            character: 0,
         },
         end: Position {
-            line: 8,
-            character: 52,
+            line: 9,
+            character: 0,
         },
     },
     new_text: "",
@@ -205,6 +223,19 @@ TextEdit: TextEdit {
 CodeAction: 
 Title: fix all safe fixable oxlint issues
 Is Preferred: Some(true)
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 0,
+            character: 0,
+        },
+        end: Position {
+            line: 1,
+            character: 0,
+        },
+    },
+    new_text: "",
+}
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -221,19 +252,6 @@ TextEdit: TextEdit {
 TextEdit: TextEdit {
     range: Range {
         start: Position {
-            line: 0,
-            character: 2,
-        },
-        end: Position {
-            line: 0,
-            character: 56,
-        },
-    },
-    new_text: "",
-}
-TextEdit: TextEdit {
-    range: Range {
-        start: Position {
             line: 5,
             character: 39,
         },
@@ -248,11 +266,11 @@ TextEdit: TextEdit {
     range: Range {
         start: Position {
             line: 8,
-            character: 2,
+            character: 0,
         },
         end: Position {
-            line: 8,
-            character: 52,
+            line: 9,
+            character: 0,
         },
     },
     new_text: "",

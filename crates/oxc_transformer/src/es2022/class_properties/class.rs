@@ -3,7 +3,8 @@
 
 use oxc_allocator::{Address, GetAddress, TakeIn, UnstableAddress};
 use oxc_ast::{NONE, ast::*};
-use oxc_span::{Ident, SPAN};
+use oxc_span::SPAN;
+use oxc_str::Ident;
 use oxc_syntax::{
     node::NodeId,
     reference::ReferenceFlags,

@@ -36,6 +36,7 @@ const {
       type: 'module',
     })
 
+
     return worker
   },
   overwriteImports(importObject) {

@@ -143,6 +143,11 @@ impl FormatJsxChildList {
                 // A new line between some JSX text and an element
                 JsxChild::Newline => {
                     let is_soft_break = {
+                        // Prettier's single-character heuristic: punctuation connectors (e.g. `,`,
+                        // `.`) adjacent to a JSX element use a soft break; a single alphabetic
+                        // character starting a text run (e.g. `I` in `I have...`) uses a hard
+                        // break to preserve semantic whitespace between siblings.
+                        //
                         // Here we handle the case when we have a newline between a single-character word and a jsx element
                         // We need to use the previous and the next element
                         // [JsxChild::Word, JsxChild::Newline, JsxChild::NonText]
@@ -180,6 +185,15 @@ impl FormatJsxChildList {
                                 matches!(child.as_ref(), JSXChild::Element(element) if
                                     element.closing_element.is_none())
                             );
+                            // When a single alphabetic character (e.g. "I", "a") is
+                            // followed by more words, it is the start of a text run
+                            // (e.g. "I have...") and the newline must be preserved as a
+                            // hard break. Punctuation (e.g. ",", ".") is a connector and
+                            // may still use a soft break.
+                            let is_next_next_word =
+                                matches!(next_next_element, Some(JsxChild::Word(_)));
+                            let is_single_char_alphabetic =
+                                next_word.is_single_alphabetic_character();
                             let has_new_line_and_self_closing = is_next_next_element_new_line
                                 && matches!(
                                     children_iter.peek_next_next(),
@@ -191,6 +205,7 @@ impl FormatJsxChildList {
                             !has_new_line_and_self_closing
                                 && !is_next_next_element_self_closing
                                 && next_word.is_single_character()
+                                && (!is_single_char_alphabetic || !is_next_next_word)
                         } else {
                             false
                         }

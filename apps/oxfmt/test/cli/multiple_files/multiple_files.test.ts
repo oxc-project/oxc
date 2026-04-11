@@ -11,6 +11,9 @@ describe("multiple_files", () => {
       ["--check"],
       ["--check", "."],
       ["--check", "./"],
+      // https://github.com/oxc-project/oxc/issues/21086
+      ["--check", ".//simple.js"],
+      ["--check", ".///simple.js"],
       ["--check", "!*.{ts,tsx}"],
     ];
 

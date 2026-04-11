@@ -9,7 +9,8 @@ use oxc_ast_visit::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeFlags;
-use oxc_span::{CompactStr, GetSpan, Ident, Span};
+use oxc_span::{GetSpan, Span};
+use oxc_str::{CompactStr, Ident};
 use oxc_syntax::node::NodeId;
 use rustc_hash::FxHashMap;
 use schemars::JsonSchema;
@@ -704,6 +705,27 @@ impl<'a> Visit<'a> for ExplicitTypesChecker<'a, '_> {
 
         self.ctx.diagnostic(func_missing_argument_type(it.span));
     }
+
+    fn visit_ts_as_expression(&mut self, it: &TSAsExpression<'a>) {
+        if is_skippable_typed_expression(&it.expression) {
+            return;
+        }
+        walk::walk_ts_as_expression(self, it);
+    }
+
+    fn visit_ts_satisfies_expression(&mut self, it: &TSSatisfiesExpression<'a>) {
+        if is_skippable_typed_expression(&it.expression) {
+            return;
+        }
+        walk::walk_ts_satisfies_expression(self, it);
+    }
+
+    fn visit_ts_type_assertion(&mut self, it: &TSTypeAssertion<'a>) {
+        if is_skippable_typed_expression(&it.expression) {
+            return;
+        }
+        walk::walk_ts_type_assertion(self, it);
+    }
 }
 
 /// like [`Expression::get_inner_expression`], but does not skip over most ts syntax
@@ -713,6 +735,16 @@ fn get_typed_inner_expression<'a, 'e>(expr: &'e Expression<'a>) -> &'e Expressio
         Expression::TSNonNullExpression(expr) => get_typed_inner_expression(&expr.expression),
         _ => expr,
     }
+}
+
+fn is_skippable_typed_expression(expr: &Expression<'_>) -> bool {
+    matches!(
+        get_typed_inner_expression(expr),
+        Expression::ArrowFunctionExpression(_)
+            | Expression::FunctionExpression(_)
+            | Expression::ObjectExpression(_)
+            | Expression::ArrayExpression(_)
+    )
 }
 
 #[cfg(test)]
@@ -923,10 +955,6 @@ mod test {
             (
                 "const x = (() => {}) as Foo;",
                 Some(json!([{ "allowTypedFunctionExpressions": true }])),
-            ),
-            (
-                "type F = (x: number) => number; export const f = (x => x) satisfies F;",
-                None,
             ),
             (
                 "
@@ -1559,6 +1587,37 @@ mod test {
             export const widgetSettingsDeserializer = new JsonInterfaceDeserializer<WidgetSettings, SupportedWidget>(
               raw => raw.widgetSpecificationId as SupportedWidget
             );
+            ",
+                None,
+            ),
+            (
+                "type F = (x: number) => number; export const f = (x => x) satisfies F;",
+                None,
+            ),
+            (
+                "
+            type F = () => number;
+
+            export const OBJ = {
+              f: (() => 42) satisfies F,
+            };
+            ",
+                None,
+            ),
+            (
+                "
+            type F = () => number;
+
+            export class Class {
+              g = (() => 42) satisfies F;
+            }
+            ",
+                None,
+            ),
+            (
+                "
+            interface T { f: () => number; }
+            export const NESTED_OBJ = { t: { f: () => 42, } satisfies T, };
             ",
                 None,
             ),

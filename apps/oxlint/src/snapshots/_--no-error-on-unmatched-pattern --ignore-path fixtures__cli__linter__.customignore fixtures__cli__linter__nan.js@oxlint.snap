@@ -1,0 +1,11 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --no-error-on-unmatched-pattern --ignore-path fixtures/cli/linter/.customignore fixtures/cli/linter/nan.js
+working directory: 
+----------
+Finished in <variable>ms on 0 files using 1 threads.
+----------
+CLI result: LintSucceeded
+----------

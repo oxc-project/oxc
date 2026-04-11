@@ -184,6 +184,11 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, ObjectPropertyKind<'a>>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ObjectProperty<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
+        if f.comments().has_trailing_suppression_comment(self.span().end) {
+            write!(f, [FormatSuppressedNode(self.span())]);
+            return;
+        }
+
         let is_accessor = match &self.kind() {
             PropertyKind::Init => false,
             PropertyKind::Get => {
@@ -635,6 +640,8 @@ impl<'a> Format<'a> for FormatCommentForEmptyStatement<'a, '_> {
 struct FormatTestOfIfAndWhileStatement<'a, 'b>(&'b AstNode<'a, Expression<'a>>);
 impl<'a> Format<'a> for FormatTestOfIfAndWhileStatement<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+        // FormatNodeWithoutTrailingComments already handles suppression comments internally,
+        // so no separate has_trailing_suppression_comment check is needed here.
         write!(f, FormatNodeWithoutTrailingComments(self.0));
         let comments = f.context().comments().comments_before_character(self.0.span().end, b')');
         if !comments.is_empty() {
@@ -1100,10 +1107,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSEnumDeclaration<'a>> {
 impl<'a> FormatWrite<'a> for AstNode<'a, TSEnumBody<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         if self.members().is_empty() {
-            write!(
-                f,
-                group(&format_args!(format_dangling_comments(self.span()), soft_line_break()))
-            );
+            write!(f, format_dangling_comments(self.span()).with_block_indent());
         } else {
             write!(f, block_indent(self.members()));
         }
@@ -1178,7 +1182,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSParenthesizedType<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeOperator<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
-        write!(f, [self.operator().to_str(), hard_space(), self.type_annotation()]);
+        write!(f, [self.operator().to_str(), space(), self.type_annotation()]);
     }
 }
 
@@ -1392,12 +1396,11 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSInterfaceDeclaration<'a>> {
                     ]
                 );
             } else {
-                let format_extends =
-                    format_with(|f| write!(f, [space(), "extends", space(), extends]));
+                let format_extends = format_with(|f| write!(f, ["extends", space(), extends]));
                 if group_mode {
                     write!(f, [soft_line_break_or_space(), group(&format_extends)]);
                 } else {
-                    write!(f, format_extends);
+                    write!(f, [space(), format_extends]);
                 }
             }
 
@@ -1484,6 +1487,14 @@ impl<'a> Format<'a> for FormatTSSignature<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         if f.comments().is_suppressed(self.signature.span().start) {
             return write!(f, [self.signature]);
+        }
+
+        if f.comments().has_trailing_suppression_comment(self.signature.span().end) {
+            write!(f, [FormatSuppressedNode(self.signature.span())]);
+            let comments =
+                f.context().comments().end_of_line_comments_after(self.signature.span().end);
+            write!(f, FormatTrailingComments::Comments(comments));
+            return;
         }
 
         write!(f, [&self.signature]);

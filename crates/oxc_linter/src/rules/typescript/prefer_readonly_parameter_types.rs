@@ -69,7 +69,7 @@ declare_oxc_lint!(
     /// ```
     PreferReadonlyParameterTypes(tsgolint),
     typescript,
-    nursery,
+    pedantic,
     config = PreferReadonlyParameterTypesConfig,
 );
 

@@ -9,6 +9,7 @@ import { HAS_BOM_FLAG_POS } from "../generated/constants.ts";
 import { typeAssertIs, debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 import { getErrorMessage } from "../utils/utils.ts";
 import { setGlobalsForFile, resetGlobals } from "./globals.ts";
+import { resetWeakMaps } from "./weak_map.ts";
 import { switchWorkspace } from "./workspace.ts";
 import {
   addVisitorToCompiled,
@@ -33,6 +34,10 @@ export const buffers: (BufferWithArrays | null)[] = [];
 
 // Array of `after` hooks to run after traversal. This array reused for every file.
 const afterHooks: AfterHook[] = [];
+
+// Reusable property descriptor for updating `options` value on rule context objects.
+// `value` is updated before each call. Other attributes are omitted to retain existing values.
+const OPTIONS_DESCRIPTOR: PropertyDescriptor = { value: null };
 
 /**
  * Lint a file.
@@ -127,7 +132,7 @@ export function lintFileImpl(
   } else {
     typeAssertIs<BufferWithArrays>(buffer);
     const { buffer: arrayBuffer, byteOffset } = buffer;
-    buffer.uint32 = new Uint32Array(arrayBuffer, byteOffset);
+    buffer.int32 = new Int32Array(arrayBuffer, byteOffset);
     buffer.float64 = new Float64Array(arrayBuffer, byteOffset);
 
     for (let i = bufferId - buffers.length; i >= 0; i--) {
@@ -200,10 +205,11 @@ export function lintFileImpl(
     debugAssert(optionsId < allOptions.length, "Options ID out of bounds");
 
     // If the rule has no user-provided options, use the plugin-provided default
-    // options (which falls back to `DEFAULT_OPTIONS`)
-    Object.defineProperty(ruleDetails.context, "options", {
-      value: optionsId === DEFAULT_OPTIONS_ID ? ruleDetails.defaultOptions : allOptions[optionsId],
-    });
+    // options (which falls back to `DEFAULT_OPTIONS`).
+    // Reuse `OPTIONS_DESCRIPTOR` object to avoid unnecessarily creating a temporary object each time.
+    OPTIONS_DESCRIPTOR.value =
+      optionsId === DEFAULT_OPTIONS_ID ? ruleDetails.defaultOptions : allOptions[optionsId];
+    Object.defineProperty(ruleDetails.context, "options", OPTIONS_DESCRIPTOR);
 
     let { visitor } = ruleDetails;
     if (visitor === null) {
@@ -305,6 +311,7 @@ export function resetFile() {
   resetSourceAndAst();
   resetSettings();
   resetGlobals();
+  resetWeakMaps();
 }
 
 /**

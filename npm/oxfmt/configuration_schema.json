@@ -63,6 +63,15 @@
       "type": "boolean",
       "markdownDescription": "Whether to insert a final newline at the end of the file.\n\n- Default: `true`\n- Overrides `.editorconfig.insert_final_newline`"
     },
+    "jsdoc": {
+      "description": "Enable JSDoc comment formatting.\n\nWhen enabled, JSDoc comments are normalized and reformatted:\ntag aliases are canonicalized, descriptions are capitalized,\nlong lines are wrapped, and short comments are collapsed to single-line.\n\nPass `true` or an object to enable with defaults, or omit/set `false` to disable.\n\n- Default: Disabled",
+      "allOf": [
+        {
+          "$ref": "#/definitions/JsdocUserConfig"
+        }
+      ],
+      "markdownDescription": "Enable JSDoc comment formatting.\n\nWhen enabled, JSDoc comments are normalized and reformatted:\ntag aliases are canonicalized, descriptions are capitalized,\nlong lines are wrapped, and short comments are collapsed to single-line.\n\nPass `true` or an object to enable with defaults, or omit/set `false` to disable.\n\n- Default: Disabled"
+    },
     "jsxSingleQuote": {
       "description": "Use single quotes instead of double quotes in JSX.\n\n- Default: `false`",
       "type": "boolean",
@@ -121,18 +130,18 @@
       "markdownDescription": "Enforce single attribute per line in HTML, Vue, and JSX.\n\n- Default: `false`"
     },
     "singleQuote": {
-      "description": "Use single quotes instead of double quotes.\n\nFor JSX, you can set the `jsxSingleQuote` option.\n\n- Default: `false`",
+      "description": "Use single quotes instead of double quotes.\n\nFor JSX, you can set the `jsxSingleQuote` option.\n\n- Default: `false`\n- Overrides `.editorconfig.quote_type`",
       "type": "boolean",
-      "markdownDescription": "Use single quotes instead of double quotes.\n\nFor JSX, you can set the `jsxSingleQuote` option.\n\n- Default: `false`"
+      "markdownDescription": "Use single quotes instead of double quotes.\n\nFor JSX, you can set the `jsxSingleQuote` option.\n\n- Default: `false`\n- Overrides `.editorconfig.quote_type`"
     },
     "sortImports": {
-      "description": "Sort import statements.\n\nUsing the similar algorithm as [eslint-plugin-perfectionist/sort-imports](https://perfectionist.dev/rules/sort-imports).\nFor details, see each field's documentation.\n\n- Default: Disabled",
+      "description": "Sort import statements.\n\nUsing the similar algorithm as [eslint-plugin-perfectionist/sort-imports](https://perfectionist.dev/rules/sort-imports).\nFor details, see each field's documentation.\n\nPass `true` or an object to enable with defaults, or omit/set `false` to disable.\n\n- Default: Disabled",
       "allOf": [
         {
-          "$ref": "#/definitions/SortImportsConfig"
+          "$ref": "#/definitions/SortImportsUserConfig"
         }
       ],
-      "markdownDescription": "Sort import statements.\n\nUsing the similar algorithm as [eslint-plugin-perfectionist/sort-imports](https://perfectionist.dev/rules/sort-imports).\nFor details, see each field's documentation.\n\n- Default: Disabled"
+      "markdownDescription": "Sort import statements.\n\nUsing the similar algorithm as [eslint-plugin-perfectionist/sort-imports](https://perfectionist.dev/rules/sort-imports).\nFor details, see each field's documentation.\n\nPass `true` or an object to enable with defaults, or omit/set `false` to disable.\n\n- Default: Disabled"
     },
     "sortPackageJson": {
       "description": "Sort `package.json` keys.\n\nThe algorithm is NOT compatible with [prettier-plugin-sort-packagejson](https://github.com/matzkoh/prettier-plugin-packagejson).\nBut we believe it is clearer and easier to navigate.\nFor details, see each field's documentation.\n\n- Default: `true`",
@@ -144,20 +153,20 @@
       "markdownDescription": "Sort `package.json` keys.\n\nThe algorithm is NOT compatible with [prettier-plugin-sort-packagejson](https://github.com/matzkoh/prettier-plugin-packagejson).\nBut we believe it is clearer and easier to navigate.\nFor details, see each field's documentation.\n\n- Default: `true`"
     },
     "sortTailwindcss": {
-      "description": "Sort Tailwind CSS classes.\n\nUsing the same algorithm as [prettier-plugin-tailwindcss](https://github.com/tailwindlabs/prettier-plugin-tailwindcss).\nOption names omit the `tailwind` prefix used in the original plugin (e.g., `config` instead of `tailwindConfig`).\nFor details, see each field's documentation.\n\n- Default: Disabled",
+      "description": "Sort Tailwind CSS classes.\n\nUsing the same algorithm as [prettier-plugin-tailwindcss](https://github.com/tailwindlabs/prettier-plugin-tailwindcss).\nOption names omit the `tailwind` prefix used in the original plugin (e.g., `config` instead of `tailwindConfig`).\nFor details, see each field's documentation.\n\nPass `true` or an object to enable with defaults, or omit/set `false` to disable.\n\n- Default: Disabled",
       "allOf": [
         {
-          "$ref": "#/definitions/SortTailwindcssConfig"
+          "$ref": "#/definitions/SortTailwindcssUserConfig"
         }
       ],
-      "markdownDescription": "Sort Tailwind CSS classes.\n\nUsing the same algorithm as [prettier-plugin-tailwindcss](https://github.com/tailwindlabs/prettier-plugin-tailwindcss).\nOption names omit the `tailwind` prefix used in the original plugin (e.g., `config` instead of `tailwindConfig`).\nFor details, see each field's documentation.\n\n- Default: Disabled"
+      "markdownDescription": "Sort Tailwind CSS classes.\n\nUsing the same algorithm as [prettier-plugin-tailwindcss](https://github.com/tailwindlabs/prettier-plugin-tailwindcss).\nOption names omit the `tailwind` prefix used in the original plugin (e.g., `config` instead of `tailwindConfig`).\nFor details, see each field's documentation.\n\nPass `true` or an object to enable with defaults, or omit/set `false` to disable.\n\n- Default: Disabled"
     },
     "tabWidth": {
-      "description": "Specify the number of spaces per indentation-level.\n\n- Default: `2`\n- Overrides `.editorconfig.indent_size`",
+      "description": "Specify the number of spaces per indentation-level.\n\n- Default: `2`\n- Overrides `.editorconfig.indent_size` (falls back to `.editorconfig.tab_width`)",
       "type": "integer",
       "format": "uint8",
       "minimum": 0.0,
-      "markdownDescription": "Specify the number of spaces per indentation-level.\n\n- Default: `2`\n- Overrides `.editorconfig.indent_size`"
+      "markdownDescription": "Specify the number of spaces per indentation-level.\n\n- Default: `2`\n- Overrides `.editorconfig.indent_size` (falls back to `.editorconfig.tab_width`)"
     },
     "trailingComma": {
       "description": "Print trailing commas wherever possible in multi-line comma-separated syntactic structures.\n\nA single-line array, for example, never gets trailing commas.\n\n- Default: `\"all\"`",
@@ -291,6 +300,15 @@
           "type": "boolean",
           "markdownDescription": "Whether to insert a final newline at the end of the file.\n\n- Default: `true`\n- Overrides `.editorconfig.insert_final_newline`"
         },
+        "jsdoc": {
+          "description": "Enable JSDoc comment formatting.\n\nWhen enabled, JSDoc comments are normalized and reformatted:\ntag aliases are canonicalized, descriptions are capitalized,\nlong lines are wrapped, and short comments are collapsed to single-line.\n\nPass `true` or an object to enable with defaults, or omit/set `false` to disable.\n\n- Default: Disabled",
+          "allOf": [
+            {
+              "$ref": "#/definitions/JsdocUserConfig"
+            }
+          ],
+          "markdownDescription": "Enable JSDoc comment formatting.\n\nWhen enabled, JSDoc comments are normalized and reformatted:\ntag aliases are canonicalized, descriptions are capitalized,\nlong lines are wrapped, and short comments are collapsed to single-line.\n\nPass `true` or an object to enable with defaults, or omit/set `false` to disable.\n\n- Default: Disabled"
+        },
         "jsxSingleQuote": {
           "description": "Use single quotes instead of double quotes in JSX.\n\n- Default: `false`",
           "type": "boolean",
@@ -341,18 +359,18 @@
           "markdownDescription": "Enforce single attribute per line in HTML, Vue, and JSX.\n\n- Default: `false`"
         },
         "singleQuote": {
-          "description": "Use single quotes instead of double quotes.\n\nFor JSX, you can set the `jsxSingleQuote` option.\n\n- Default: `false`",
+          "description": "Use single quotes instead of double quotes.\n\nFor JSX, you can set the `jsxSingleQuote` option.\n\n- Default: `false`\n- Overrides `.editorconfig.quote_type`",
           "type": "boolean",
-          "markdownDescription": "Use single quotes instead of double quotes.\n\nFor JSX, you can set the `jsxSingleQuote` option.\n\n- Default: `false`"
+          "markdownDescription": "Use single quotes instead of double quotes.\n\nFor JSX, you can set the `jsxSingleQuote` option.\n\n- Default: `false`\n- Overrides `.editorconfig.quote_type`"
         },
         "sortImports": {
-          "description": "Sort import statements.\n\nUsing the similar algorithm as [eslint-plugin-perfectionist/sort-imports](https://perfectionist.dev/rules/sort-imports).\nFor details, see each field's documentation.\n\n- Default: Disabled",
+          "description": "Sort import statements.\n\nUsing the similar algorithm as [eslint-plugin-perfectionist/sort-imports](https://perfectionist.dev/rules/sort-imports).\nFor details, see each field's documentation.\n\nPass `true` or an object to enable with defaults, or omit/set `false` to disable.\n\n- Default: Disabled",
           "allOf": [
             {
-              "$ref": "#/definitions/SortImportsConfig"
+              "$ref": "#/definitions/SortImportsUserConfig"
             }
           ],
-          "markdownDescription": "Sort import statements.\n\nUsing the similar algorithm as [eslint-plugin-perfectionist/sort-imports](https://perfectionist.dev/rules/sort-imports).\nFor details, see each field's documentation.\n\n- Default: Disabled"
+          "markdownDescription": "Sort import statements.\n\nUsing the similar algorithm as [eslint-plugin-perfectionist/sort-imports](https://perfectionist.dev/rules/sort-imports).\nFor details, see each field's documentation.\n\nPass `true` or an object to enable with defaults, or omit/set `false` to disable.\n\n- Default: Disabled"
         },
         "sortPackageJson": {
           "description": "Sort `package.json` keys.\n\nThe algorithm is NOT compatible with [prettier-plugin-sort-packagejson](https://github.com/matzkoh/prettier-plugin-packagejson).\nBut we believe it is clearer and easier to navigate.\nFor details, see each field's documentation.\n\n- Default: `true`",
@@ -364,20 +382,20 @@
           "markdownDescription": "Sort `package.json` keys.\n\nThe algorithm is NOT compatible with [prettier-plugin-sort-packagejson](https://github.com/matzkoh/prettier-plugin-packagejson).\nBut we believe it is clearer and easier to navigate.\nFor details, see each field's documentation.\n\n- Default: `true`"
         },
         "sortTailwindcss": {
-          "description": "Sort Tailwind CSS classes.\n\nUsing the same algorithm as [prettier-plugin-tailwindcss](https://github.com/tailwindlabs/prettier-plugin-tailwindcss).\nOption names omit the `tailwind` prefix used in the original plugin (e.g., `config` instead of `tailwindConfig`).\nFor details, see each field's documentation.\n\n- Default: Disabled",
+          "description": "Sort Tailwind CSS classes.\n\nUsing the same algorithm as [prettier-plugin-tailwindcss](https://github.com/tailwindlabs/prettier-plugin-tailwindcss).\nOption names omit the `tailwind` prefix used in the original plugin (e.g., `config` instead of `tailwindConfig`).\nFor details, see each field's documentation.\n\nPass `true` or an object to enable with defaults, or omit/set `false` to disable.\n\n- Default: Disabled",
           "allOf": [
             {
-              "$ref": "#/definitions/SortTailwindcssConfig"
+              "$ref": "#/definitions/SortTailwindcssUserConfig"
             }
           ],
-          "markdownDescription": "Sort Tailwind CSS classes.\n\nUsing the same algorithm as [prettier-plugin-tailwindcss](https://github.com/tailwindlabs/prettier-plugin-tailwindcss).\nOption names omit the `tailwind` prefix used in the original plugin (e.g., `config` instead of `tailwindConfig`).\nFor details, see each field's documentation.\n\n- Default: Disabled"
+          "markdownDescription": "Sort Tailwind CSS classes.\n\nUsing the same algorithm as [prettier-plugin-tailwindcss](https://github.com/tailwindlabs/prettier-plugin-tailwindcss).\nOption names omit the `tailwind` prefix used in the original plugin (e.g., `config` instead of `tailwindConfig`).\nFor details, see each field's documentation.\n\nPass `true` or an object to enable with defaults, or omit/set `false` to disable.\n\n- Default: Disabled"
         },
         "tabWidth": {
-          "description": "Specify the number of spaces per indentation-level.\n\n- Default: `2`\n- Overrides `.editorconfig.indent_size`",
+          "description": "Specify the number of spaces per indentation-level.\n\n- Default: `2`\n- Overrides `.editorconfig.indent_size` (falls back to `.editorconfig.tab_width`)",
           "type": "integer",
           "format": "uint8",
           "minimum": 0.0,
-          "markdownDescription": "Specify the number of spaces per indentation-level.\n\n- Default: `2`\n- Overrides `.editorconfig.indent_size`"
+          "markdownDescription": "Specify the number of spaces per indentation-level.\n\n- Default: `2`\n- Overrides `.editorconfig.indent_size` (falls back to `.editorconfig.tab_width`)"
         },
         "trailingComma": {
           "description": "Print trailing commas wherever possible in multi-line comma-separated syntactic structures.\n\nA single-line array, for example, never gets trailing commas.\n\n- Default: `\"all\"`",
@@ -406,6 +424,76 @@
         "css",
         "strict",
         "ignore"
+      ]
+    },
+    "JsdocConfig": {
+      "type": "object",
+      "properties": {
+        "addDefaultToDescription": {
+          "description": "Append default values to `@param` descriptions (e.g. \"Default is `value`\").\n\n- Default: `true`",
+          "type": "boolean",
+          "markdownDescription": "Append default values to `@param` descriptions (e.g. \"Default is `value`\").\n\n- Default: `true`"
+        },
+        "bracketSpacing": {
+          "description": "Add spaces inside JSDoc type braces: `{string}` → `{ string }`.\n\n- Default: `false`",
+          "type": "boolean",
+          "markdownDescription": "Add spaces inside JSDoc type braces: `{string}` → `{ string }`.\n\n- Default: `false`"
+        },
+        "capitalizeDescriptions": {
+          "description": "Capitalize the first letter of tag descriptions.\n\n- Default: `true`",
+          "type": "boolean",
+          "markdownDescription": "Capitalize the first letter of tag descriptions.\n\n- Default: `true`"
+        },
+        "commentLineStrategy": {
+          "description": "How to format comment blocks.\n\n- `\"singleLine\"` — Convert to single-line `/** content */` when possible.\n- `\"multiline\"` — Always use multi-line format.\n- `\"keep\"` — Preserve original formatting.\n\n- Default: `\"singleLine\"`",
+          "type": "string",
+          "markdownDescription": "How to format comment blocks.\n\n- `\"singleLine\"` — Convert to single-line `/** content */` when possible.\n- `\"multiline\"` — Always use multi-line format.\n- `\"keep\"` — Preserve original formatting.\n\n- Default: `\"singleLine\"`"
+        },
+        "descriptionTag": {
+          "description": "Emit `@description` tag instead of inline description.\n\n- Default: `false`",
+          "type": "boolean",
+          "markdownDescription": "Emit `@description` tag instead of inline description.\n\n- Default: `false`"
+        },
+        "descriptionWithDot": {
+          "description": "Add a trailing dot to the end of descriptions.\n\n- Default: `false`",
+          "type": "boolean",
+          "markdownDescription": "Add a trailing dot to the end of descriptions.\n\n- Default: `false`"
+        },
+        "keepUnparsableExampleIndent": {
+          "description": "Preserve indentation in unparsable `@example` code.\n\n- Default: `false`",
+          "type": "boolean",
+          "markdownDescription": "Preserve indentation in unparsable `@example` code.\n\n- Default: `false`"
+        },
+        "lineWrappingStyle": {
+          "description": "Strategy for wrapping description lines at print width.\n\n- `\"greedy\"` — Always re-wrap text to fit within print width.\n- `\"balance\"` — Preserve original line breaks if all lines fit within print width.\n\n- Default: `\"greedy\"`",
+          "type": "string",
+          "markdownDescription": "Strategy for wrapping description lines at print width.\n\n- `\"greedy\"` — Always re-wrap text to fit within print width.\n- `\"balance\"` — Preserve original line breaks if all lines fit within print width.\n\n- Default: `\"greedy\"`"
+        },
+        "preferCodeFences": {
+          "description": "Use fenced code blocks (```` ``` ````) instead of 4-space indentation for code without a language tag.\n\n- Default: `false`",
+          "type": "boolean",
+          "markdownDescription": "Use fenced code blocks (```` ``` ````) instead of 4-space indentation for code without a language tag.\n\n- Default: `false`"
+        },
+        "separateReturnsFromParam": {
+          "description": "Add a blank line between the last `@param` and `@returns`.\n\n- Default: `false`",
+          "type": "boolean",
+          "markdownDescription": "Add a blank line between the last `@param` and `@returns`.\n\n- Default: `false`"
+        },
+        "separateTagGroups": {
+          "description": "Add blank lines between different tag groups (e.g. between `@param` and `@returns`).\n\n- Default: `false`",
+          "type": "boolean",
+          "markdownDescription": "Add blank lines between different tag groups (e.g. between `@param` and `@returns`).\n\n- Default: `false`"
+        }
+      }
+    },
+    "JsdocUserConfig": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "$ref": "#/definitions/JsdocConfig"
+        }
       ]
     },
     "NewlinesBetweenMarker": {
@@ -567,6 +655,16 @@
         }
       }
     },
+    "SortImportsUserConfig": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "$ref": "#/definitions/SortImportsConfig"
+        }
+      ]
+    },
     "SortOrderConfig": {
       "type": "string",
       "enum": [
@@ -634,6 +732,16 @@
           "markdownDescription": "Path to your Tailwind CSS stylesheet (v4).\n\nNOTE: Paths are resolved relative to the Oxfmt configuration file.\n\n- Default: Installed Tailwind CSS's `theme.css`"
         }
       }
+    },
+    "SortTailwindcssUserConfig": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "$ref": "#/definitions/SortTailwindcssConfig"
+        }
+      ]
     },
     "TrailingCommaConfig": {
       "type": "string",

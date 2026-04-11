@@ -4,6 +4,24 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.123.0] - 2026-03-30
+
+### 🚀 Features
+
+- 2917bb2 minifier: Minify `x ? 1 : 0` to `+x` or `+!!x` (#20594) (John Costa)
+
+### 🐛 Bug Fixes
+
+- 1a370a6 minifier: Inline single-use vars past non-computed object keys (#20810) (Ulrich Stark)
+- 9a5ff73 semantic: Hoist Annex B block-scoped function declarations to var scope (#20728) (Dunqing)
+
+## [0.121.0] - 2026-03-19
+
+### 🐛 Bug Fixes
+
+- 4ae3f3f ecmascript: Apply coercion-is-pure assumption to constructor side-effect detection (#20420) (Dunqing)
+- efeba28 ecmascript: Add argument validation for NewExpression side-effect detection (#20395) (Dunqing)
+
 ## [0.120.0] - 2026-03-16
 
 ### 🐛 Bug Fixes

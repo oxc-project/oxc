@@ -141,8 +141,8 @@ impl<'a> StringBuilder<'a> {
     /// This is more efficient than creating a `StringBuilder`, and then making multiple [`push`] calls
     /// to fill it.
     ///
-    /// If you're not altering the `StringBuilder` after this call, and just converting it to an `Atom`,
-    /// `Atom::from_strs_array_in` may be slightly more efficient.
+    /// If you're not altering the `StringBuilder` after this call, and just converting it to a `Str`,
+    /// `Str::from_strs_array_in` may be slightly more efficient.
     ///
     /// # Panics
     ///
@@ -524,9 +524,10 @@ impl<'a> StringBuilder<'a> {
             // `DEFAULT_MIN_CAPACITY` in `with_capacity_in` and `from_str_in`, then can remove this line.
             let additional = cmp::max(current_capacity, DEFAULT_MIN_CAPACITY);
 
-            let new_capacity = current_capacity
-                .checked_add(additional)
-                .expect("attempt to grow `StringBuilder` beyond `isize::MAX` bytes");
+            // `current_capacity` is max `isize::MAX` bytes.
+            // `additional` is also max `isize::MAX` bytes.
+            // Therefore this addition cannot overflow.
+            let new_capacity = current_capacity + additional;
 
             // SAFETY: We already allocated this, so must have a valid layout
             let old_layout = unsafe { Layout::from_size_align_unchecked(current_capacity, 1) };

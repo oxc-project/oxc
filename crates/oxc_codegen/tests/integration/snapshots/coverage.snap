@@ -140,3 +140,21 @@ try {
 } catch (err) {
 	handle(err);
 }
+
+########## 23
+const a = Math.random() ? 1 : /* istanbul ignore next */ 2;
+----------
+const a = Math.random() ? 1 : /* istanbul ignore next */ 2;
+
+########## 24
+switch (Math.random()) {
+  case 0.5: break;
+  /* istanbul ignore next */
+  default: break;
+}
+----------
+switch (Math.random()) {
+	case .5: break;
+	/* istanbul ignore next */
+	default: break;
+}

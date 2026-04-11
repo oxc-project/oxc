@@ -57,7 +57,7 @@ export type LintPluginOptionsSchema =
   | "node"
   | "vue";
 export type LintPlugins = LintPluginOptionsSchema[];
-export type DummyRule = AllowWarnDeny | unknown[];
+export type DummyRule = AllowWarnDeny | [AllowWarnDeny, ...unknown[]];
 export type OxlintOverrides = OxlintOverride[];
 export type TagNamePreference =
   | string

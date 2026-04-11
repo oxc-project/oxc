@@ -58,6 +58,10 @@ pub struct LintCommand {
     #[bpaf(switch, hide_usage)]
     pub type_check: bool,
 
+    /// Run only TypeScript type checking diagnostics without regular lint diagnostics
+    #[bpaf(long("type-check-only"), switch, hide)]
+    pub type_check_only: bool,
+
     #[bpaf(external)]
     pub inline_config_options: InlineConfigOptions,
 
@@ -127,7 +131,11 @@ pub struct BasicOptions {
     /// Oxlint automatically discovers the relevant `tsconfig.json` for each file.
     /// Use this only when your project uses a non-standard tsconfig name or location.
     ///
-    /// NOTE: Type checking and Type aware rules will still use the tsconfig discovered automatically, and will not be affected by this option.
+    /// ::: warning
+    /// Avoid using this option. It can cause differences between import resolution,
+    /// and type-aware linting. Type aware linting **does not** respect this option,
+    /// and will always discover the appropriate `tsconfig.json` for each file automatically.
+    /// :::
     #[bpaf(argument("./tsconfig.json"), hide_usage)]
     pub tsconfig: Option<PathBuf>,
 
@@ -640,6 +648,14 @@ mod lint_options {
         assert!(options.type_check);
         let options = get_lint_options(".");
         assert!(!options.type_check);
+    }
+
+    #[test]
+    fn type_check_only() {
+        let options = get_lint_options("--type-check-only");
+        assert!(options.type_check_only);
+        let options = get_lint_options(".");
+        assert!(!options.type_check_only);
     }
 }
 
