@@ -723,3 +723,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────────────────────────────
    ╰────
   help: Remove the file extension from this import.
+
+  ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration.
+   ╭─[extensions.tsx:1:1]
+ 1 │ import dot from './dots/file.with.dot';
+   · ───────────────────────────────────────
+   ╰────
+  help: Add a file extension to this import.
