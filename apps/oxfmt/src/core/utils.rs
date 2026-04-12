@@ -71,7 +71,7 @@ pub fn print_and_flush(writer: &mut dyn Write, message: &str) {
     }
 
     writer.write_all(message.as_bytes()).or_else(check_for_writer_error).unwrap();
-    writer.flush().unwrap();
+    writer.flush().or_else(check_for_writer_error).unwrap();
 }
 
 /// Normalize a relative path by:
