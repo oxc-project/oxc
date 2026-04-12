@@ -365,7 +365,7 @@ impl<'a> AssignmentLike<'a, '_> {
                 if let Some(span) = type_span {
                     let comments = f.context().comments().comments_before(span.start);
                     if comments.len() == 1 {
-                        write!(f, [FormatTrailingComments::Comments(comments)]);
+                        write!(f, [indent(&FormatTrailingComments::Comments(comments))]);
                     }
                 }
 

@@ -1,0 +1,24 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+type myType =
+  /** Some comment */
+  | 'VALUE';
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+type myType =
+  /** Some comment */
+  "VALUE";
+
+-------------------
+{ printWidth: 100 }
+-------------------
+type myType =
+  /** Some comment */
+  "VALUE";
+
+===================== End =====================
