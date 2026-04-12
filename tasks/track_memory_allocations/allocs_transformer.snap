@@ -2,9 +2,9 @@ File                       | File size      || Sys allocs     | Sys reallocs   |
 -------------------------------------------------------------------------------------------------------------------------------------------
 checker.ts                 | 2.92 MB        ||             61 |              1 ||           4398 |             64
 
-cal.com.tsx                | 1.06 MB        ||             42 |              3 ||          38172 |           3515
+cal.com.tsx                | 1.06 MB        ||             42 |              3 ||          38201 |           3515
 
-RadixUIAdoptionSection.jsx | 2.52 kB        ||             22 |              3 ||            257 |             24
+RadixUIAdoptionSection.jsx | 2.52 kB        ||             22 |              3 ||            259 |             24
 
 pdf.mjs                    | 567.30 kB      ||             15 |              0 ||              2 |              0
 

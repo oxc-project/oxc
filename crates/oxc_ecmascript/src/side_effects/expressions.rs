@@ -26,7 +26,6 @@ impl<'a> MayHaveSideEffects<'a> for Expression<'a> {
             | Expression::NullLiteral(_)
             | Expression::RegExpLiteral(_)
             | Expression::MetaProperty(_)
-            | Expression::ThisExpression(_)
             | Expression::ArrowFunctionExpression(_)
             | Expression::FunctionExpression(_)
             | Expression::Super(_) => false,

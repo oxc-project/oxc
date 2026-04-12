@@ -186,8 +186,50 @@ type: `Record<string, boolean>`
 Predefine global variables.
 
 Environments specify what global variables are predefined.
-See [ESLint's list of environments](https://eslint.org/docs/v8.x/use/configure/language-options#specifying-environments)
-for what environments are available and what each one provides.
+Available environments:
+- amd - require() and define() globals.
+- applescript - AppleScript globals.
+- astro - Astro globals.
+- atomtest - Atom test globals.
+- audioworklet - AudioWorklet globals.
+- browser - browser globals.
+- builtin - Latest ECMAScript globals, equivalent to es2026.
+- commonjs - CommonJS globals and scoping.
+- embertest - Ember test globals.
+- es2015 - ECMAScript 2015 globals.
+- es2016 - ECMAScript 2016 globals.
+- es2017 - ECMAScript 2017 globals.
+- es2018 - ECMAScript 2018 globals.
+- es2019 - ECMAScript 2019 globals.
+- es2020 - ECMAScript 2020 globals.
+- es2021 - ECMAScript 2021 globals.
+- es2022 - ECMAScript 2022 globals.
+- es2023 - ECMAScript 2023 globals.
+- es2024 - ECMAScript 2024 globals.
+- es2025 - ECMAScript 2025 globals.
+- es2026 - ECMAScript 2026 globals.
+- es6 - ECMAScript 6 globals except modules.
+- greasemonkey - GreaseMonkey globals.
+- jasmine - Jasmine globals.
+- jest - Jest globals.
+- jquery - jQuery globals.
+- meteor - Meteor globals.
+- mocha - Mocha globals.
+- mongo - MongoDB globals.
+- nashorn - Java 8 Nashorn globals.
+- node - Node.js globals and scoping.
+- phantomjs - PhantomJS globals.
+- prototypejs - Prototype.js globals.
+- protractor - Protractor globals.
+- qunit - QUnit globals.
+- serviceworker - Service Worker globals.
+- shared-node-browser - Node.js and Browser common globals.
+- shelljs - ShellJS globals.
+- svelte - Svelte globals.
+- vitest - Vitest globals.
+- vue - Vue globals.
+- webextensions - WebExtensions globals.
+- worker - Web Workers globals.
 
 
 ## extends

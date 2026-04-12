@@ -327,7 +327,7 @@ impl Rule for NoFallthrough {
             let is_illegal_fallthrough = {
                 let is_fallthrough = !case.consequent.is_empty()
                     || (!self.0.allow_empty_case
-                        && Self::has_blanks_between(ctx, case.span.start..next_case.span.start));
+                        && Self::has_blanks_between(ctx, case.span.end..next_case.span.start));
                 is_fallthrough
                     && self.maybe_allow_fallthrough_trivia(ctx, case, next_case).is_none()
             };
@@ -614,6 +614,8 @@ fn test() {
       } });"#,
             None,
         ),
+        // Issue #21320: breaks on multi-line case statements
+        ("switch(foo) {\n  case A\n    .B:\n  case B.A:\n    break;\n}", None),
     ];
 
     let fail = vec![

@@ -188,7 +188,7 @@ fast-glob = "1.0.0" # Fast glob matching
 flate2 = "1.1.8" # Compression
 futures = "0.3.31" # Async utilities
 handlebars = "6.4.0" # Template engine
-hashbrown = { version = "0.16.1", default-features = false } # Fast hash map
+hashbrown = { version = "0.17.0", default-features = false } # Fast hash map
 humansize = "2.1.3" # Human-readable sizes
 icu_segmenter = "2.1.2" # Unicode segmentation
 ignore = "0.4.25" # Gitignore matching
