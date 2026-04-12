@@ -297,6 +297,13 @@ fn collect_fixable_properties<'a>(
         return None;
     }
 
+    if let (Some(first), Some(last)) = (object.properties.first(), object.properties.last())
+        && (ctx.has_comments_between(Span::new(object.span.start, first.span().start))
+            || ctx.has_comments_between(Span::new(last.span().end, object.span.end)))
+    {
+        return None;
+    }
+
     let mut spread_pos = SpreadPos::Start;
     let mut props = Vec::with_capacity(object.properties.len());
 
@@ -1306,6 +1313,116 @@ fn test() {
 };",
         ),
         // spellchecker:on
+        // No fix when there are comments on properties that could be moved (issue #20873)
+        (
+            "const values = {
+  c: 3,
+  b: 2,
+  a: 1, // Inline comment on a
+};",
+            "const values = {
+  c: 3,
+  b: 2,
+  a: 1, // Inline comment on a
+};",
+        ),
+        (
+            "const values = {
+  c: 3,
+  a: 1, // Inline comment on a
+  b: 2,
+};",
+            "const values = {
+  c: 3,
+  a: 1, // Inline comment on a
+  b: 2,
+};",
+        ),
+        (
+            "const values = {
+  c: 3, // c
+  b: 2, // b
+  a: 1, // c
+};",
+            "const values = {
+  c: 3, // c
+  b: 2, // b
+  a: 1, // c
+};",
+        ),
+        (
+            "const values = {
+  // Comment above c
+  c: 3,
+  // Comment above b
+  b: 2,
+  // Comment above a
+  a: 1,
+};",
+            "const values = {
+  // Comment above c
+  c: 3,
+  // Comment above b
+  b: 2,
+  // Comment above a
+  a: 1,
+};",
+        ),
+        (
+            "const values = {
+  /* Comment above c */
+  c: 3,
+  /* Comment above b */
+  b: 2,
+  /* Comment above a */
+  a: 1,
+};",
+            "const values = {
+  /* Comment above c */
+  c: 3,
+  /* Comment above b */
+  b: 2,
+  /* Comment above a */
+  a: 1,
+};",
+        ),
+        (
+            "const values = {
+  /** jsdoc Comment on c */
+  c: 3,
+  /** jsdoc Comment on b */
+  b: 2,
+  /** jsdoc Comment on a */
+  a: 1,
+};",
+            "const values = {
+  /** jsdoc Comment on c */
+  c: 3,
+  /** jsdoc Comment on b */
+  b: 2,
+  /** jsdoc Comment on a */
+  a: 1,
+};",
+        ),
+        (
+            "const values = { /** inline jsdoc on b */ b: 2, a: 1}",
+            "const values = { /** inline jsdoc on b */ b: 2, a: 1}",
+        ),
+        (
+            "const values = { b: 2, /** inline jsdoc on a */ a: 1}",
+            "const values = { b: 2, /** inline jsdoc on a */ a: 1}",
+        ),
+        // Not sure where these comments belong -> should probably not autofix
+        (
+            "const values = { /* comment */ b: 2, a: 1}",
+            "const values = { /* comment */ b: 2, a: 1}",
+        ),
+        ("const values = {b: 2, /* comment */ a: 1}", "const values = {b: 2, /* comment */ a: 1}"),
+        (
+            "const values = {b: 2, a: 1 /* comment */ }",
+            "const values = {b: 2, a: 1 /* comment */ }",
+        ),
+        // ****************
     ];
 
     Tester::new(SortKeys::NAME, SortKeys::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();
