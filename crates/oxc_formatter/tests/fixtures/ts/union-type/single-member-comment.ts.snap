@@ -2,23 +2,47 @@
 source: crates/oxc_formatter/tests/fixtures/mod.rs
 ---
 ==================== Input ====================
-type myType =
+type firstType =
   /** Some comment */
   | 'VALUE';
+
+type secondType = 
+  // Comment
+  | 'STRING';
+
+type thirdType =
+  // Another comment
+  & 'TYPE';
 
 ==================== Output ====================
 ------------------
 { printWidth: 80 }
 ------------------
-type myType =
+type firstType =
   /** Some comment */
   "VALUE";
+
+type secondType =
+  // Comment
+  "STRING";
+
+type thirdType =
+  // Another comment
+  "TYPE";
 
 -------------------
 { printWidth: 100 }
 -------------------
-type myType =
+type firstType =
   /** Some comment */
   "VALUE";
+
+type secondType =
+  // Comment
+  "STRING";
+
+type thirdType =
+  // Another comment
+  "TYPE";
 
 ===================== End =====================
