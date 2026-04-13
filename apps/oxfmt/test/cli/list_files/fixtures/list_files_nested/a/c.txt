@@ -1,0 +1,1 @@
+This file should not be listed when config ignorePatterns are active.

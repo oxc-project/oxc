@@ -109,6 +109,8 @@ pub enum OutputMode {
     Check,
     /// List mode - list files that would be changed
     ListDifferent,
+    /// List mode - list all target files selected by matching rules
+    ListFiles,
 }
 
 fn output_mode() -> impl bpaf::Parser<OutputMode> {
@@ -121,11 +123,15 @@ fn output_mode() -> impl bpaf::Parser<OutputMode> {
         .req_flag(OutputMode::Check)
         .hide_usage();
     let list_different = bpaf::long("list-different")
-        .help("List files that would be changed")
+        .help("List only selected files that would be changed")
         .req_flag(OutputMode::ListDifferent)
         .hide_usage();
+    let list_files = bpaf::long("list-files")
+        .help("List all files selected for processing")
+        .req_flag(OutputMode::ListFiles)
+        .hide_usage();
 
-    bpaf::construct!([write, check, list_different]).group_help("Output Options:")
+    bpaf::construct!([write, check, list_different, list_files]).group_help("Output Options:")
 }
 
 /// Migration Source

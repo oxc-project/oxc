@@ -1,5 +1,6 @@
 use std::{env, io::BufWriter, path::PathBuf, sync::mpsc, time::Instant};
 
+use cow_utils::CowUtils;
 use oxc_diagnostics::DiagnosticService;
 
 use super::{
@@ -104,6 +105,55 @@ impl CliRunner {
             }
         };
 
+        let walker = match Walk::build(
+            &cwd,
+            &paths,
+            &ignore_options.ignore_path,
+            ignore_options.with_node_modules,
+            config_resolver.config_dir(),
+            &ignore_patterns,
+        ) {
+            Ok(walker) => walker,
+            Err(err) => {
+                utils::print_and_flush(
+                    stderr,
+                    &format!("Failed to parse target paths or ignore settings.\n{err}\n"),
+                );
+                return CliRunResult::InvalidOptionConfig;
+            }
+        };
+
+        if matches!(format_mode, OutputMode::ListFiles) {
+            let mut target_files = walker
+                .stream_entries()
+                .into_iter()
+                .map(|entry| {
+                    entry
+                        .path()
+                        // Show path relative to `cwd` for cleaner output
+                        .strip_prefix(&cwd)
+                        .unwrap_or(entry.path())
+                        .to_string_lossy()
+                        // Normalize path separators for consistent output across platforms
+                        .cow_replace('\\', "/")
+                        .into_owned()
+                })
+                .collect::<Vec<_>>();
+
+            if target_files.is_empty() {
+                if runtime_options.no_error_on_unmatched_pattern {
+                    utils::print_and_flush(stderr, "No files found matching the given patterns.\n");
+                    return CliRunResult::None;
+                }
+                utils::print_and_flush(stderr, "Expected at least one target file\n");
+                return CliRunResult::NoFilesFound;
+            }
+
+            target_files.sort_unstable();
+            utils::print_and_flush(stdout, &target_files.join("\n"));
+            return CliRunResult::None;
+        }
+
         // Use `block_in_place()` to avoid nested async runtime access
         #[cfg(feature = "napi")]
         match tokio::task::block_in_place(|| {
@@ -125,24 +175,6 @@ impl CliRunner {
                 return CliRunResult::InvalidOptionConfig;
             }
         }
-
-        let walker = match Walk::build(
-            &cwd,
-            &paths,
-            &ignore_options.ignore_path,
-            ignore_options.with_node_modules,
-            config_resolver.config_dir(),
-            &ignore_patterns,
-        ) {
-            Ok(walker) => walker,
-            Err(err) => {
-                utils::print_and_flush(
-                    stderr,
-                    &format!("Failed to parse target paths or ignore settings.\n{err}\n"),
-                );
-                return CliRunResult::InvalidOptionConfig;
-            }
-        };
 
         // Get the receiver for streaming entries
         let rx_entry = walker.stream_entries();
@@ -242,6 +274,9 @@ impl CliRunner {
             // `--list-different` outputs nothing here, mismatched paths are already printed to stdout
             (OutputMode::ListDifferent, 0) => CliRunResult::FormatSucceeded,
             (OutputMode::ListDifferent, _) => CliRunResult::FormatMismatch,
+            (OutputMode::ListFiles, _) => {
+                unreachable!("`--list-files` should return before formatting")
+            }
             // `--check` outputs friendly summary
             (OutputMode::Check, 0) => {
                 utils::print_and_flush(stdout, "All matched files use the correct format.\n");
