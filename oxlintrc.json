@@ -40,6 +40,19 @@
       }
     },
     {
+      // TODO: enable TS strict mode for these files and remove the override
+      "files": [
+        "napi/parser/test/**",
+        "napi/parser/test-browser/**",
+        "napi/parser/vitest.config.ts",
+        "napi/parser/vitest.config.browser.ts",
+        "tasks/e2e/**"
+      ],
+      "rules": {
+        "typescript/no-useless-default-assignment": "off"
+      }
+    },
+    {
       "files": ["apps/oxlint/test/fixtures/**"],
       "rules": {
         "no-restricted-imports": [
