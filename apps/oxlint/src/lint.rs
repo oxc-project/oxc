@@ -1210,6 +1210,15 @@ mod test {
     }
 
     #[test]
+    fn test_report_unused_directives_with_oxlint_prefix_only() {
+        let args = &["-c", ".oxlintrc.json", "--report-unused-disable-directives"];
+
+        Tester::new()
+            .with_cwd("fixtures/cli/report_unused_directives_oxlint_only".into())
+            .test_and_snapshot(args);
+    }
+
+    #[test]
     fn test_nested_config() {
         let args = &[];
         Tester::new().with_cwd("fixtures/cli/nested_config".into()).test_and_snapshot(args);

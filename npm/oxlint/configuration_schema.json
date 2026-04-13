@@ -220,6 +220,15 @@
         }
       ]
     },
+    "DisableDirectivePrefix": {
+      "description": "Prefixes recognized for disable and enable directive comments.",
+      "type": "string",
+      "enum": [
+        "eslint",
+        "oxlint"
+      ],
+      "markdownDescription": "Prefixes recognized for disable and enable directive comments."
+    },
     "DummyRule": {
       "anyOf": [
         {
@@ -527,6 +536,14 @@
           "description": "Ensure warnings produce a non-zero exit code.\n\nEquivalent to passing `--deny-warnings` on the CLI.",
           "type": "boolean",
           "markdownDescription": "Ensure warnings produce a non-zero exit code.\n\nEquivalent to passing `--deny-warnings` on the CLI."
+        },
+        "disableDirectivePrefixes": {
+          "description": "Directive prefixes to recognize for `*-disable`, `*-disable-line`,\n`*-disable-next-line`, and matching `*-enable` comments.\n\n`reportUnusedDisableDirectives` uses the same prefix set.\n\nDefaults to `[\"oxlint\", \"eslint\"]`.\nOnly supported in the root configuration file.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DisableDirectivePrefix"
+          },
+          "markdownDescription": "Directive prefixes to recognize for `*-disable`, `*-disable-line`,\n`*-disable-next-line`, and matching `*-enable` comments.\n\n`reportUnusedDisableDirectives` uses the same prefix set.\n\nDefaults to `[\"oxlint\", \"eslint\"]`.\nOnly supported in the root configuration file."
         },
         "maxWarnings": {
           "description": "Specify a warning threshold. Exits with an error status if warnings exceed this value.\n\nEquivalent to passing `--max-warnings` on the CLI.",

@@ -21,6 +21,42 @@ use super::{
     settings::OxlintSettings,
 };
 
+/// Prefixes recognized for disable and enable directive comments.
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+pub enum DisableDirectivePrefix {
+    Eslint,
+    Oxlint,
+}
+
+impl DisableDirectivePrefix {
+    pub const DEFAULTS: [Self; 2] = [Self::Oxlint, Self::Eslint];
+
+    #[must_use]
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::Eslint => "eslint",
+            Self::Oxlint => "oxlint",
+        }
+    }
+
+    #[must_use]
+    pub const fn disable_directive_name(self) -> &'static str {
+        match self {
+            Self::Eslint => "eslint-disable",
+            Self::Oxlint => "oxlint-disable",
+        }
+    }
+
+    #[must_use]
+    pub const fn enable_directive_name(self) -> &'static str {
+        match self {
+            Self::Eslint => "eslint-enable",
+            Self::Oxlint => "oxlint-enable",
+        }
+    }
+}
+
 /// Options for the linter.
 #[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
 #[serde(default, deny_unknown_fields, rename_all = "camelCase")]
@@ -57,6 +93,15 @@ pub struct OxlintOptions {
     /// Only supported in the root configuration file.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub report_unused_disable_directives: Option<AllowWarnDeny>,
+    /// Directive prefixes to recognize for `*-disable`, `*-disable-line`,
+    /// `*-disable-next-line`, and matching `*-enable` comments.
+    ///
+    /// `reportUnusedDisableDirectives` uses the same prefix set.
+    ///
+    /// Defaults to `["oxlint", "eslint"]`.
+    /// Only supported in the root configuration file.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub disable_directive_prefixes: Option<Vec<DisableDirectivePrefix>>,
 }
 
 impl OxlintOptions {
@@ -67,6 +112,7 @@ impl OxlintOptions {
             && self.deny_warnings.is_none()
             && self.max_warnings.is_none()
             && self.report_unused_disable_directives.is_none()
+            && self.disable_directive_prefixes.is_none()
     }
 
     #[must_use]
@@ -79,6 +125,10 @@ impl OxlintOptions {
             report_unused_disable_directives: self
                 .report_unused_disable_directives
                 .or(other.report_unused_disable_directives),
+            disable_directive_prefixes: self
+                .disable_directive_prefixes
+                .clone()
+                .or_else(|| other.disable_directive_prefixes.clone()),
         }
     }
 }
@@ -479,6 +529,7 @@ mod test {
         assert_eq!(config.options.deny_warnings, None);
         assert_eq!(config.options.max_warnings, None);
         assert_eq!(config.options.report_unused_disable_directives, None);
+        assert_eq!(config.options.disable_directive_prefixes, None);
     }
 
     #[test]
@@ -548,6 +599,24 @@ mod test {
         )
         .unwrap();
         assert_eq!(config.options.report_unused_disable_directives, Some(AllowWarnDeny::Allow));
+
+        let config: Oxlintrc = serde_json::from_value(
+            json!({ "options": { "disableDirectivePrefixes": ["oxlint"] } }),
+        )
+        .unwrap();
+        assert_eq!(
+            config.options.disable_directive_prefixes,
+            Some(vec![DisableDirectivePrefix::Oxlint])
+        );
+
+        let config: Oxlintrc = serde_json::from_value(
+            json!({ "options": { "disableDirectivePrefixes": ["oxlint", "eslint"] } }),
+        )
+        .unwrap();
+        assert_eq!(
+            config.options.disable_directive_prefixes,
+            Some(vec![DisableDirectivePrefix::Oxlint, DisableDirectivePrefix::Eslint])
+        );
     }
 
     #[test]
@@ -566,6 +635,10 @@ mod test {
 
         let config: Result<Oxlintrc, _> =
             serde_json::from_value(json!({ "reportUnusedDisableDirectives": "warn" }));
+        assert!(config.is_err());
+
+        let config: Result<Oxlintrc, _> =
+            serde_json::from_value(json!({ "disableDirectivePrefixes": ["oxlint"] }));
         assert!(config.is_err());
     }
 
@@ -613,6 +686,37 @@ mod test {
         base.path = PathBuf::from("/root/base.json");
         let merged = root.merge(base);
         assert_eq!(merged.options.report_unused_disable_directives, Some(AllowWarnDeny::Warn));
+
+        // root wins over base for disableDirectivePrefixes
+        let mut root: Oxlintrc = serde_json::from_value(
+            json!({ "options": { "disableDirectivePrefixes": ["oxlint"] } }),
+        )
+        .unwrap();
+        root.path = PathBuf::from("/root/.oxlintrc.json");
+        let mut base: Oxlintrc = serde_json::from_value(
+            json!({ "options": { "disableDirectivePrefixes": ["eslint"] } }),
+        )
+        .unwrap();
+        base.path = PathBuf::from("/root/base.json");
+        let merged = root.merge(base);
+        assert_eq!(
+            merged.options.disable_directive_prefixes,
+            Some(vec![DisableDirectivePrefix::Oxlint])
+        );
+
+        // base value propagates when root does not set the field
+        let mut root: Oxlintrc = serde_json::from_value(json!({})).unwrap();
+        root.path = PathBuf::from("/root/.oxlintrc.json");
+        let mut base: Oxlintrc = serde_json::from_value(
+            json!({ "options": { "disableDirectivePrefixes": ["eslint"] } }),
+        )
+        .unwrap();
+        base.path = PathBuf::from("/root/base.json");
+        let merged = root.merge(base);
+        assert_eq!(
+            merged.options.disable_directive_prefixes,
+            Some(vec![DisableDirectivePrefix::Eslint])
+        );
     }
 
     #[test]

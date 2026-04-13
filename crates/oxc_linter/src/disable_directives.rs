@@ -6,7 +6,7 @@ use oxc_span::Span;
 use rust_lapper::{Interval, Lapper};
 use rustc_hash::FxHashMap;
 
-use crate::{FixKind, fixer::Fix};
+use crate::{FixKind, config::DisableDirectivePrefix, fixer::Fix};
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 enum DisabledRule {
@@ -19,6 +19,8 @@ enum DisabledRule {
     ///    ^^^^^^^^^^^^^^^ comment_span
     /// ```
     All {
+        /// Prefix used by the directive comment (`eslint` or `oxlint`).
+        directive_prefix: DisableDirectivePrefix,
         /// Full outer span of the comment (including `//` or `/* */` delimiters).
         /// Used for diagnostic labels.
         comment_span: Span,
@@ -39,6 +41,8 @@ enum DisabledRule {
     ///                   ^^^^^^^^^^^  name_span (for "no-debugger")
     /// ```
     Single {
+        /// Prefix used by the directive comment (`eslint` or `oxlint`).
+        directive_prefix: DisableDirectivePrefix,
         /// Name of the disabled rule (e.g., "no-debugger", "no-console")
         rule_name: String,
         /// Span of the rule name within the comment.
@@ -81,6 +85,13 @@ impl DisabledRule {
             }
         }
     }
+
+    pub fn directive_prefix(&self) -> DisableDirectivePrefix {
+        match self {
+            DisabledRule::All { directive_prefix, .. }
+            | DisabledRule::Single { directive_prefix, .. } => *directive_prefix,
+        }
+    }
 }
 
 /// Represents a single rule within a disable/enable comment directive.
@@ -96,6 +107,8 @@ impl DisabledRule {
 /// ```
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct RuleCommentRule {
+    /// Prefix used by the directive comment (`eslint` or `oxlint`).
+    pub directive_prefix: DisableDirectivePrefix,
     /// Name of the rule (e.g., "no-debugger", "no-console")
     pub rule_name: String,
     /// Span of the rule name within the comment.
@@ -172,6 +185,8 @@ pub enum RuleCommentType {
 /// A comment which disables one or more specific rules
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub struct DisableRuleComment {
+    /// Prefix used by the directive comment (`eslint` or `oxlint`).
+    pub directive_prefix: DisableDirectivePrefix,
     /// Full outer span of the comment (including `//` or `/* */` delimiters).
     /// Used for diagnostic labels.
     pub span: Span,
@@ -190,7 +205,7 @@ pub struct DisableDirectives {
     /// All comments that disable one or more specific rules
     disable_rule_comments: Box<[DisableRuleComment]>,
     /// Spans of unused enable directives
-    unused_enable_comments: Box<[(Option<String>, Span)]>,
+    unused_enable_comments: Box<[(DisableDirectivePrefix, Option<String>, Span)]>,
     /// Spans of used enable directives, to filter out unused
     used_disable_comments: RefCell<Vec<DisabledRule>>,
 }
@@ -262,7 +277,7 @@ impl DisableDirectives {
         &self.disable_rule_comments
     }
 
-    pub fn unused_enable_comments(&self) -> &[(Option<String>, Span)] {
+    pub fn unused_enable_comments(&self) -> &[(DisableDirectivePrefix, Option<String>, Span)] {
         &self.unused_enable_comments
     }
 
@@ -296,11 +311,13 @@ impl DisableDirectives {
                         match &interval.val {
                             DisabledRule::Single { rule_name, name_span, .. } => {
                                 Some(RuleCommentRule {
+                                    directive_prefix: interval.val.directive_prefix(),
                                     rule_name: rule_name.clone(),
                                     name_span: *name_span,
                                 })
                             }
                             DisabledRule::All { .. } => Some(RuleCommentRule {
+                                directive_prefix: interval.val.directive_prefix(),
                                 rule_name: "all".to_string(),
                                 name_span: *comment_span,
                             }),
@@ -314,6 +331,7 @@ impl DisableDirectives {
 
                 if rules.len() == group_vec.len() {
                     return Some(DisableRuleComment {
+                        directive_prefix: group_vec[0].val.directive_prefix(),
                         span: *comment_span,
                         fix_span,
                         r#type: RuleCommentType::All,
@@ -321,6 +339,7 @@ impl DisableDirectives {
                 }
 
                 Some(DisableRuleComment {
+                    directive_prefix: group_vec[0].val.directive_prefix(),
                     span: *comment_span,
                     fix_span,
                     r#type: RuleCommentType::Single(rules),
@@ -331,27 +350,41 @@ impl DisableDirectives {
 }
 
 pub struct DisableDirectivesBuilder {
+    /// Which directive prefixes should be recognized.
+    enabled_prefixes: Vec<DisableDirectivePrefix>,
     /// All the disabled rules with their corresponding covering spans
     intervals: Lapper<u32, DisabledRule>,
     /// Start of `eslint-disable` or `oxlint-disable`
-    disable_all_start: Option<(u32, Span, Span)>,
+    disable_all_start: Option<(u32, DisableDirectivePrefix, Span, Span)>,
     /// Start of `eslint-disable` or `oxlint-disable` rule_name`
-    disable_start_map: FxHashMap<String, (u32, Span, Span, Span)>,
+    disable_start_map: FxHashMap<String, (u32, DisableDirectivePrefix, Span, Span, Span)>,
     /// All comments that disable one or more specific rules
     disable_rule_comments: Vec<DisableRuleComment>,
     /// Spans of unused enable directives
-    unused_enable_comments: Vec<(Option<String>, Span)>,
+    unused_enable_comments: Vec<(DisableDirectivePrefix, Option<String>, Span)>,
 }
 
 impl DisableDirectivesBuilder {
     pub fn new() -> Self {
         Self {
+            enabled_prefixes: DisableDirectivePrefix::DEFAULTS.to_vec(),
             intervals: Lapper::new(vec![]),
             disable_all_start: None,
             disable_start_map: FxHashMap::default(),
             disable_rule_comments: vec![],
             unused_enable_comments: vec![],
         }
+    }
+
+    #[must_use]
+    pub fn with_prefixes(mut self, prefixes: &[DisableDirectivePrefix]) -> Self {
+        self.enabled_prefixes.clear();
+        for prefix in prefixes {
+            if !self.enabled_prefixes.contains(prefix) {
+                self.enabled_prefixes.push(*prefix);
+            }
+        }
+        self
     }
 
     pub fn build(mut self, source_text: &str, comments: &[Comment]) -> DisableDirectives {
@@ -417,7 +450,8 @@ impl DisableDirectivesBuilder {
         // https://github.com/eslint/eslint/blob/f67d5e875324a9d899598b11807a9c7624021432/lib/linter/apply-disable-directives.js#L308
 
         // enable directive keep the same logic for checking unused
-        let mut unused_enable_directives: Vec<(Option<String>, Span)> = vec![];
+        let mut unused_enable_directives: Vec<(DisableDirectivePrefix, Option<String>, Span)> =
+            vec![];
 
         for comment in comments {
             let comment_span = comment.content_span();
@@ -432,17 +466,20 @@ impl DisableDirectivesBuilder {
             let text = text_source.trim_start();
             let mut rule_name_start = comment_span.start + (text_source.len() - text.len()) as u32;
 
-            if let Some(text) =
-                text.strip_prefix("eslint-disable").or_else(|| text.strip_prefix("oxlint-disable"))
-            {
-                rule_name_start += 14; // eslint-disable and oxlint-disable are each 14 bytes
+            if let Some((directive_prefix, text)) = self.match_disable_directive(text) {
+                rule_name_start += directive_prefix.disable_directive_name().len() as u32;
                 // `eslint-disable`
                 if text.trim().is_empty() {
                     if self.disable_all_start.is_none() {
-                        self.disable_all_start =
-                            Some((comment_span.end, outer_span, comment_fix_span));
+                        self.disable_all_start = Some((
+                            comment_span.end,
+                            directive_prefix,
+                            outer_span,
+                            comment_fix_span,
+                        ));
                     }
                     self.disable_rule_comments.push(DisableRuleComment {
+                        directive_prefix,
                         span: comment_span,
                         fix_span: comment_fix_span,
                         r#type: RuleCommentType::All,
@@ -471,12 +508,14 @@ impl DisableDirectivesBuilder {
                             comment_span.end,
                             stop,
                             DisabledRule::All {
+                                directive_prefix,
                                 comment_span: outer_span,
                                 fix_span: comment_fix_span,
                                 is_next_line: true,
                             },
                         );
                         self.disable_rule_comments.push(DisableRuleComment {
+                            directive_prefix,
                             span: comment_span,
                             fix_span: comment_fix_span,
                             r#type: RuleCommentType::All,
@@ -489,6 +528,7 @@ impl DisableDirectivesBuilder {
                                 comment_span.end,
                                 stop,
                                 DisabledRule::Single {
+                                    directive_prefix,
                                     rule_name: rule_name.to_string(),
                                     name_span,
                                     comment_span: outer_span,
@@ -497,11 +537,13 @@ impl DisableDirectivesBuilder {
                                 },
                             );
                             rules.push(RuleCommentRule {
+                                directive_prefix,
                                 rule_name: rule_name.to_string(),
                                 name_span,
                             });
                         });
                         self.disable_rule_comments.push(DisableRuleComment {
+                            directive_prefix,
                             span: comment_span,
                             fix_span: comment_fix_span,
                             r#type: RuleCommentType::Single(rules),
@@ -526,12 +568,14 @@ impl DisableDirectivesBuilder {
                             start,
                             stop,
                             DisabledRule::All {
+                                directive_prefix,
                                 comment_span: outer_span,
                                 fix_span: comment_fix_span,
                                 is_next_line: true,
                             },
                         );
                         self.disable_rule_comments.push(DisableRuleComment {
+                            directive_prefix,
                             span: comment_span,
                             fix_span: comment_fix_span,
                             r#type: RuleCommentType::All,
@@ -544,6 +588,7 @@ impl DisableDirectivesBuilder {
                                 start,
                                 stop,
                                 DisabledRule::Single {
+                                    directive_prefix,
                                     rule_name: rule_name.to_string(),
                                     name_span,
                                     comment_span: outer_span,
@@ -552,11 +597,13 @@ impl DisableDirectivesBuilder {
                                 },
                             );
                             rules.push(RuleCommentRule {
+                                directive_prefix,
                                 rule_name: rule_name.to_string(),
                                 name_span,
                             });
                         });
                         self.disable_rule_comments.push(DisableRuleComment {
+                            directive_prefix,
                             span: comment_span,
                             fix_span: comment_fix_span,
                             r#type: RuleCommentType::Single(rules),
@@ -572,13 +619,19 @@ impl DisableDirectivesBuilder {
                     Self::get_rule_names(text, rule_name_start, |rule_name, name_span| {
                         self.disable_start_map.entry(rule_name.to_string()).or_insert((
                             comment_span.end,
+                            directive_prefix,
                             name_span,
                             outer_span,
                             comment_fix_span,
                         ));
-                        rules.push(RuleCommentRule { rule_name: rule_name.to_string(), name_span });
+                        rules.push(RuleCommentRule {
+                            directive_prefix,
+                            rule_name: rule_name.to_string(),
+                            name_span,
+                        });
                     });
                     self.disable_rule_comments.push(DisableRuleComment {
+                        directive_prefix,
                         span: comment_span,
                         fix_span: comment_fix_span,
                         r#type: RuleCommentType::Single(rules),
@@ -587,17 +640,16 @@ impl DisableDirectivesBuilder {
                 }
             }
 
-            if let Some(text) =
-                text.strip_prefix("eslint-enable").or_else(|| text.strip_prefix("oxlint-enable"))
-            {
-                rule_name_start += 13; // eslint-enable is 13 bytes
+            if let Some((directive_prefix, text)) = self.match_enable_directive(text) {
+                rule_name_start += directive_prefix.enable_directive_name().len() as u32;
                 // `eslint-enable`
                 if text.trim().is_empty() {
-                    if let Some((start, _, _)) = self.disable_all_start.take() {
+                    if let Some((start, disable_prefix, _, _)) = self.disable_all_start.take() {
                         self.add_interval(
                             start,
                             comment_span.start,
                             DisabledRule::All {
+                                directive_prefix: disable_prefix,
                                 comment_span: outer_span,
                                 fix_span: comment_fix_span,
                                 is_next_line: false,
@@ -605,16 +657,19 @@ impl DisableDirectivesBuilder {
                         );
                     } else {
                         // collect as unused enable (see more at note comments in beginning of this method)
-                        unused_enable_directives.push((None, comment_span));
+                        unused_enable_directives.push((directive_prefix, None, comment_span));
                     }
                 } else {
                     // `eslint-enable rule-name1, rule-name2`
                     Self::get_rule_names(text, rule_name_start, |rule_name, name_span| {
-                        if let Some((start, _, _, _)) = self.disable_start_map.remove(rule_name) {
+                        if let Some((start, disable_prefix, _, _, _)) =
+                            self.disable_start_map.remove(rule_name)
+                        {
                             self.add_interval(
                                 start,
                                 comment_span.start,
                                 DisabledRule::Single {
+                                    directive_prefix: disable_prefix,
                                     rule_name: rule_name.to_string(),
                                     name_span,
                                     comment_span: outer_span,
@@ -624,7 +679,11 @@ impl DisableDirectivesBuilder {
                             );
                         } else {
                             // collect as unused enable (see more at note comments in beginning of this method)
-                            unused_enable_directives.push((Some(rule_name.to_string()), name_span));
+                            unused_enable_directives.push((
+                                directive_prefix,
+                                Some(rule_name.to_string()),
+                                name_span,
+                            ));
                         }
                     });
                 }
@@ -632,21 +691,24 @@ impl DisableDirectivesBuilder {
         }
 
         // Lone `eslint-disable`
-        if let Some((start, comment_span, fix_span)) = self.disable_all_start {
+        if let Some((start, directive_prefix, comment_span, fix_span)) = self.disable_all_start {
             self.add_interval(
                 start,
                 source_len,
-                DisabledRule::All { comment_span, fix_span, is_next_line: false },
+                DisabledRule::All { directive_prefix, comment_span, fix_span, is_next_line: false },
             );
         }
 
         // Lone `eslint-disable rule_name`
         let disable_start_map = self.disable_start_map.drain().collect::<Vec<_>>();
-        for (rule_name, (start, name_span, comment_span, fix_span)) in disable_start_map {
+        for (rule_name, (start, directive_prefix, name_span, comment_span, fix_span)) in
+            disable_start_map
+        {
             self.add_interval(
                 start,
                 source_len,
                 DisabledRule::Single {
+                    directive_prefix,
                     rule_name,
                     name_span,
                     comment_span,
@@ -658,6 +720,24 @@ impl DisableDirectivesBuilder {
 
         // Collect unused `enable` directives
         self.unused_enable_comments = unused_enable_directives;
+    }
+
+    fn match_disable_directive<'a>(
+        &self,
+        text: &'a str,
+    ) -> Option<(DisableDirectivePrefix, &'a str)> {
+        self.enabled_prefixes.iter().find_map(|prefix| {
+            text.strip_prefix(prefix.disable_directive_name()).map(|rest| (*prefix, rest))
+        })
+    }
+
+    fn match_enable_directive<'a>(
+        &self,
+        text: &'a str,
+    ) -> Option<(DisableDirectivePrefix, &'a str)> {
+        self.enabled_prefixes.iter().find_map(|prefix| {
+            text.strip_prefix(prefix.enable_directive_name()).map(|rest| (*prefix, rest))
+        })
     }
 
     #[expect(clippy::cast_possible_truncation)] // for `as u32`
@@ -1123,9 +1203,10 @@ pub fn create_unused_directives_diagnostics(
         match unused_comment.r#type {
             RuleCommentType::All => {
                 diagnostics.push(
-                    OxcDiagnostic::warn(
-                        "Unused eslint-disable directive (no problems were reported).",
-                    )
+                    OxcDiagnostic::warn(format!(
+                        "Unused {} directive (no problems were reported).",
+                        unused_comment.directive_prefix.disable_directive_name()
+                    ))
                     .with_label(span)
                     .with_severity(severity),
                 );
@@ -1133,7 +1214,8 @@ pub fn create_unused_directives_diagnostics(
             RuleCommentType::Single(rules) => {
                 for rule in rules {
                     let rule_message = format!(
-                        "Unused eslint-disable directive (no problems were reported from {}).",
+                        "Unused {} directive (no problems were reported from {}).",
+                        rule.directive_prefix.disable_directive_name(),
                         rule.rule_name
                     );
                     diagnostics.push(
@@ -1148,14 +1230,19 @@ pub fn create_unused_directives_diagnostics(
 
     // Report unused enable comments
     let unused_enable = directives.unused_enable_comments();
-    for (rule_name, span) in unused_enable {
+    for (directive_prefix, rule_name, span) in unused_enable {
         let message = if let Some(rule_name) = rule_name {
             format!(
-                "Unused eslint-enable directive (no matching eslint-disable directives were found for {rule_name})."
+                "Unused {} directive (no matching {} directives were found for {rule_name}).",
+                directive_prefix.enable_directive_name(),
+                directive_prefix.disable_directive_name(),
             )
         } else {
-            "Unused eslint-enable directive (no matching eslint-disable directives were found)."
-                .to_string()
+            format!(
+                "Unused {} directive (no matching {} directives were found).",
+                directive_prefix.enable_directive_name(),
+                directive_prefix.disable_directive_name(),
+            )
         };
         diagnostics.push(OxcDiagnostic::warn(message).with_label(*span).with_severity(severity));
     }
@@ -1171,7 +1258,10 @@ mod tests {
     use oxc_semantic::{Semantic, SemanticBuilder};
     use oxc_span::{SourceType, Span};
 
-    use crate::disable_directives::{DisabledRule, RuleCommentRule, RuleCommentType};
+    use crate::{
+        config::DisableDirectivePrefix,
+        disable_directives::{DisabledRule, RuleCommentRule, RuleCommentType},
+    };
 
     use super::{DisableDirectives, DisableDirectivesBuilder};
 
@@ -1186,6 +1276,18 @@ mod tests {
     /// Replicates the `compute_comment_fix_span` logic for use in tests.
     fn comment_fix_span(comment: &Comment, source_text: &str) -> Span {
         DisableDirectivesBuilder::compute_comment_fix_span(comment, source_text)
+    }
+
+    fn directive_prefix_for_comment(
+        comment: &Comment,
+        source_text: &str,
+    ) -> DisableDirectivePrefix {
+        let text = comment.content_span().source_text(source_text).trim_start();
+        if text.starts_with("oxlint-") {
+            DisableDirectivePrefix::Oxlint
+        } else {
+            DisableDirectivePrefix::Eslint
+        }
     }
 
     fn test_directives(
@@ -1231,7 +1333,7 @@ mod tests {
 
                 assert_eq!(unused.len(), 1);
 
-                let (unused_rule_name, unused_span) = unused.first().unwrap();
+                let (_unused_prefix, unused_rule_name, unused_span) = unused.first().unwrap();
                 let comment_span = comments.first().unwrap().content_span();
                 assert_eq!(unused_rule_name.as_deref(), None);
                 assert_eq!(*unused_span, comment_span);
@@ -1256,15 +1358,22 @@ mod tests {
 
                 assert_eq!(unused.len(), 2);
 
-                let (unused_rule_name_no_debugger, unused_span_no_debugger) =
-                    unused.first().unwrap();
+                let (
+                    _unused_prefix_no_debugger,
+                    unused_rule_name_no_debugger,
+                    unused_span_no_debugger,
+                ) = unused.first().unwrap();
                 assert_eq!(unused_rule_name_no_debugger.as_deref(), Some("no-debugger"));
                 assert_eq!(
                     *unused_span_no_debugger,
                     Span::sized(comments[0].content_span().start + 15, 11)
                 );
 
-                let (unused_rule_name_no_console, unused_span_no_console) = unused.last().unwrap();
+                let (
+                    _unused_prefix_no_console,
+                    unused_rule_name_no_console,
+                    unused_span_no_console,
+                ) = unused.last().unwrap();
                 assert_eq!(unused_rule_name_no_console.as_deref(), Some("no-console"));
                 assert_eq!(
                     *unused_span_no_console,
@@ -1295,6 +1404,30 @@ mod tests {
                 assert!(unused.is_empty());
             },
         );
+    }
+
+    #[test]
+    fn only_configured_prefixes_are_recognized() {
+        let allocator = Allocator::default();
+        let source_text = r"
+            /* eslint-disable no-console */
+            console.log('eslint');
+            /* oxlint-disable no-debugger */
+            debugger;
+            /* eslint-enable no-console */
+            /* oxlint-enable no-debugger */
+        ";
+        let semantic = process_source(&allocator, source_text);
+        let directives = DisableDirectivesBuilder::new()
+            .with_prefixes(&[DisableDirectivePrefix::Oxlint])
+            .build(semantic.source_text(), semantic.comments());
+
+        let console_start = source_text.find("console.log").unwrap() as u32;
+        let debugger_start = source_text.find("debugger;").unwrap() as u32;
+
+        assert!(!directives.contains("no-console", Span::sized(console_start, 11)));
+        assert!(directives.contains("no-debugger", Span::sized(debugger_start, 8)));
+        assert!(directives.unused_enable_comments().is_empty());
     }
 
     #[test]
@@ -1401,6 +1534,7 @@ mod tests {
                 let fix_span_1 = comment_fix_span(&comments[1], source_text);
 
                 directives.mark_disable_directive_used(DisabledRule::Single {
+                    directive_prefix: directive_prefix_for_comment(&comments[0], source_text),
                     rule_name: "no-console".to_string(),
                     name_span: Span::sized(comments[0].content_span().start + 16, 10),
                     comment_span: comments[0].span,
@@ -1408,6 +1542,7 @@ mod tests {
                     is_next_line: false,
                 });
                 directives.mark_disable_directive_used(DisabledRule::Single {
+                    directive_prefix: directive_prefix_for_comment(&comments[1], source_text),
                     rule_name: "no-debugger".to_string(),
                     name_span: Span::sized(comments[1].content_span().start + 16, 11),
                     comment_span: comments[1].span,
@@ -1441,21 +1576,28 @@ mod tests {
         // Since this string has no newline, the fix span = outer span = Span::new(0, len).
         let comment_span = Span::new(0, source_text.len() as u32);
 
-        let max_params_fix =
-            RuleCommentRule { rule_name: "max-params".to_string(), name_span: Span::sized(28, 10) }
-                .create_fix(source_text, comment_span);
+        let max_params_fix = RuleCommentRule {
+            directive_prefix: DisableDirectivePrefix::Eslint,
+            rule_name: "max-params".to_string(),
+            name_span: Span::sized(28, 10),
+        }
+        .create_fix(source_text, comment_span);
 
         assert_eq!(&source_text[28..38], "max-params");
         assert_eq!(max_params_fix.span, Span::sized(28, 11)); // max-params is 10 + 1 for the comma
 
-        let no_console_fix =
-            RuleCommentRule { rule_name: "no-console".to_string(), name_span: Span::sized(40, 10) }
-                .create_fix(source_text, comment_span);
+        let no_console_fix = RuleCommentRule {
+            directive_prefix: DisableDirectivePrefix::Eslint,
+            rule_name: "no-console".to_string(),
+            name_span: Span::sized(40, 10),
+        }
+        .create_fix(source_text, comment_span);
 
         assert_eq!(&source_text[40..50], "no-console");
         assert_eq!(no_console_fix.span, Span::sized(38, 12)); // no-console is 10 + 2 for the comma before and the space
 
         let no_debugger_fix = RuleCommentRule {
+            directive_prefix: DisableDirectivePrefix::Eslint,
             rule_name: "no-debugger".to_string(),
             name_span: Span::sized(52, 11),
         }
@@ -1476,8 +1618,12 @@ mod tests {
         let source_text = "// eslint-disable-next-line max-params";
         let comment_span = Span::new(0, source_text.len() as u32);
 
-        RuleCommentRule { rule_name: "max-params".to_string(), name_span: Span::sized(28, 10) }
-            .create_fix(source_text, comment_span);
+        RuleCommentRule {
+            directive_prefix: DisableDirectivePrefix::Eslint,
+            rule_name: "max-params".to_string(),
+            name_span: Span::sized(28, 10),
+        }
+        .create_fix(source_text, comment_span);
     }
 
     #[test]

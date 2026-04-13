@@ -170,7 +170,7 @@ impl<'a> ContextHost<'a> {
     /// If `sub_hosts` is empty.
     pub fn new<P: AsRef<Path>>(
         file_path: P,
-        sub_hosts: Vec<ContextSubHost<'a>>,
+        mut sub_hosts: Vec<ContextSubHost<'a>>,
         options: LintOptions,
         config: Arc<LintConfig>,
     ) -> Self {
@@ -183,6 +183,16 @@ impl<'a> ContextHost<'a> {
 
         let file_path = file_path.as_ref().to_path_buf().into_boxed_path();
         let file_extension = file_path.extension().map(|ext| ext.to_owned().into_boxed_os_str());
+        let directive_prefixes = config.options.disable_directive_prefixes.as_deref();
+
+        for sub_host in &mut sub_hosts {
+            let builder = match directive_prefixes {
+                Some(prefixes) => DisableDirectivesBuilder::new().with_prefixes(prefixes),
+                None => DisableDirectivesBuilder::new(),
+            };
+            sub_host.disable_directives =
+                builder.build(sub_host.semantic.source_text(), sub_host.semantic.comments());
+        }
 
         Self {
             sub_hosts,
@@ -324,20 +334,23 @@ impl<'a> ContextHost<'a> {
         // report unused disable
         // relate to lint result, check after linter run finish
         let unused_disable_comments = self.disable_directives().collect_unused_disable_comments();
-        let message_for_disable = "Unused eslint-disable directive (no problems were reported).";
         let fix_message = "remove unused disable directive";
         let source_text = self.semantic().source_text();
 
         for unused_disable_comment in unused_disable_comments {
             let span = unused_disable_comment.span;
             let fix_span = unused_disable_comment.fix_span;
+            let disable_directive_name =
+                unused_disable_comment.directive_prefix.disable_directive_name();
             match &unused_disable_comment.r#type {
                 RuleCommentType::All => {
                     // eslint-disable
                     self.push_diagnostic(Message::new(
-                        OxcDiagnostic::error(message_for_disable)
-                            .with_label(span)
-                            .with_severity(rule_severity),
+                        OxcDiagnostic::error(format!(
+                            "Unused {disable_directive_name} directive (no problems were reported)."
+                        ))
+                        .with_label(span)
+                        .with_severity(rule_severity),
                         PossibleFixes::Single(
                             Fix::delete(fix_span)
                                 .with_kind(FixKind::Suggestion)
@@ -348,8 +361,9 @@ impl<'a> ContextHost<'a> {
                 RuleCommentType::Single(rules_vec) => {
                     for rule in rules_vec {
                         let rule_message = Cow::<str>::Owned(format!(
-                            "Unused eslint-disable directive (no problems were reported from {}).",
-                            rule.rule_name
+                            "Unused {} directive (no problems were reported from {}).",
+                            rule.directive_prefix.disable_directive_name(),
+                            rule.rule_name,
                         ));
 
                         let fix = rule.create_fix(source_text, span).with_message(fix_message);
@@ -370,13 +384,21 @@ impl<'a> ContextHost<'a> {
             Vec::with_capacity(unused_enable_comments.len());
         // report unused enable
         // not relate to lint result, check during comment directives' construction
-        let message_for_enable =
-            "Unused eslint-enable directive (no matching eslint-disable directives were found).";
-        for (rule_name, enable_comment_span) in self.disable_directives().unused_enable_comments() {
+        for (directive_prefix, rule_name, enable_comment_span) in
+            self.disable_directives().unused_enable_comments()
+        {
+            let enable_directive_name = directive_prefix.enable_directive_name();
+            let disable_directive_name = directive_prefix.disable_directive_name();
             unused_directive_diagnostics.push((
-                rule_name.as_ref().map_or(Cow::Borrowed(message_for_enable), |name| {
+                rule_name.as_ref().map_or_else(
+                    || {
+                        Cow::Owned(format!(
+                            "Unused {enable_directive_name} directive (no matching {disable_directive_name} directives were found)."
+                        ))
+                    },
+                    |name| {
                     Cow::Owned(format!(
-                        "Unused eslint-enable directive (no matching eslint-disable directives were found for {name})."
+                        "Unused {enable_directive_name} directive (no matching {disable_directive_name} directives were found for {name})."
                     ))
                 }),
                 *enable_comment_span,

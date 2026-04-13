@@ -1,0 +1,9 @@
+{
+    "options": {
+        "disableDirectivePrefixes": ["oxlint"]
+    },
+    "rules": {
+        "no-console": "warn",
+        "no-debugger": "warn"
+    }
+}
