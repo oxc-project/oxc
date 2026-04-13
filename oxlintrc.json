@@ -49,7 +49,12 @@
         "tasks/e2e/**"
       ],
       "rules": {
-        "typescript/no-useless-default-assignment": "off"
+        "typescript/no-useless-default-assignment": "off",
+        // TODO(camc314): there's some weird interaction between overrides
+        // and vitest/jest mappings happening here, these three lines shouldn't be necessary
+        "vitest/expect-expect": "error",
+        "vitest/no-standalone-expect": "error",
+        "vitest/no-conditional-expect": "error",
       }
     },
     {
