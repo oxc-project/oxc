@@ -260,9 +260,13 @@ const loadPluginVitestRules = (linter) => {
 
 /** @param {import("eslint").Linter} linter */
 const loadPluginVueRules = (linter) => {
-  const pluginVueRecommendedRules = new Map(
-    Object.entries(pluginVueConfigs.recommended.rules || {}),
-  );
+  // config extends chain: recommended -> strongly-recommended -> essential -> base
+  const pluginVueRecommendedRules = new Set([
+    ...Object.keys(pluginVueConfigs.base || {}),
+    ...Object.keys(pluginVueConfigs.essential || {}),
+    ...Object.keys(pluginVueConfigs["strongly-recommended"] || {}),
+    ...Object.keys(pluginVueConfigs.recommended || {}),
+  ]);
   for (const [name, rule] of Object.entries(pluginVueRules)) {
     const prefixedName = `vue/${name}`;
 
