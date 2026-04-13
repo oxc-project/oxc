@@ -2350,6 +2350,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "oxc_release_rule_versions"
+version = "0.0.0"
+dependencies = [
+ "oxc_tasks_common",
+ "pico-args",
+ "proc-macro2",
+ "syn",
+]
+
+[[package]]
 name = "oxc_resolver"
 version = "11.19.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
