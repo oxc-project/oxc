@@ -4,6 +4,29 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.125.0] - 2026-04-13
+
+### 🐛 Bug Fixes
+
+- b43250a allocator: Move allocation tracking into `Bump` (#21342) (overlookmotel)
+- 36f505f allocator: `StringBuilder` use `Allocator::alloc_layout` (#21340) (overlookmotel)
+- 7a08a6f allocator: Fix allocation counting in `Allocator::alloc_concat_strs_array` (#21336) (overlookmotel)
+- bd8bd39 allocator: Remove unsafe hacks from `from_raw_parts` methods (#21283) (overlookmotel)
+- 8f4c340 allocator: Remove dangerous pointer const to mut cast (#21279) (overlookmotel)
+
+### ⚡ Performance
+
+- c3ca6f6 allocator: `StringBuilder::from_strs_array_in` check for 0 length earlier (#21338) (overlookmotel)
+- c2422bb allocator: `Allocator::alloc_concat_strs_array` check for 0 length earlier (#21337) (overlookmotel)
+- 04b0fdc allocator: Mark `Allocator::alloc_layout` as `#[inline(always)]` (#21335) (overlookmotel)
+- 17aee9e allocator: Use `offset_from_unsigned` in `ChunkFooter::as_raw_parts` (#21280) (overlookmotel)
+
+### 📚 Documentation
+
+- f5e1845 allocator: Upgrade headers in doc comments for `Bump` (#21263) (overlookmotel)
+- 2870174 allocator: Upper case `SAFETY` in comments (#21253) (overlookmotel)
+- dd47359 allocator: Add doc comments for panics and errors (#21230) (overlookmotel)
+
 ## [0.124.0] - 2026-04-06
 
 ### 🐛 Bug Fixes
