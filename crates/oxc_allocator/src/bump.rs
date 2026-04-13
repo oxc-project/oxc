@@ -566,7 +566,8 @@ impl Bump<1> {
     /// let bump = Bump::try_new();
     /// # let _ = bump.unwrap();
     /// ```
-    #[expect(clippy::missing_errors_doc, reason = "`try_with_capacity(0)` always returns `Ok`")]
+    /// # Errors
+    /// Returns `Err` if the allocator fails to allocate memory.
     pub fn try_new() -> Result<Self, AllocErr> {
         Bump::try_with_capacity(0)
     }
