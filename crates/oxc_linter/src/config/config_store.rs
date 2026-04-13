@@ -78,6 +78,13 @@ pub struct Config {
 }
 
 impl Config {
+    fn builtin_rule_plugins(mut plugins: LintPlugins) -> LintPlugins {
+        if plugins.contains(LintPlugins::VITEST) {
+            plugins |= LintPlugins::JEST;
+        }
+        plugins
+    }
+
     pub fn new(
         rules: Vec<(RuleEnum, AllowWarnDeny)>,
         mut external_rules: Vec<(ExternalRuleId, ExternalOptionsId, AllowWarnDeny)>,
@@ -155,12 +162,13 @@ impl Config {
             }
         }
 
+        let builtin_rule_plugins = Self::builtin_rule_plugins(plugins);
         let mut rules = self
             .base_rules
             .iter()
             .filter(|(rule, _)| {
                 LintPlugins::try_from(rule.plugin_name())
-                    .is_ok_and(|plugin| plugins.contains(plugin))
+                    .is_ok_and(|plugin| builtin_rule_plugins.contains(plugin))
             })
             .cloned()
             .collect::<FxHashMap<_, _>>();
@@ -169,7 +177,7 @@ impl Config {
             .iter()
             .filter(|rule| {
                 LintPlugins::try_from(rule.plugin_name())
-                    .is_ok_and(|plugin| plugins.contains(plugin))
+                    .is_ok_and(|plugin| builtin_rule_plugins.contains(plugin))
             })
             .cloned()
             .collect::<Vec<_>>();
@@ -405,8 +413,8 @@ mod test {
         },
         rule::Rule,
         rules::{
-            EslintCurly, EslintNoUnusedVars, ReactJsxFilenameExtension, TypescriptNoExplicitAny,
-            TypescriptNoMisusedPromises,
+            EslintCurly, EslintNoUnusedVars, JestExpectExpect, ReactJsxFilenameExtension,
+            TypescriptNoExplicitAny, TypescriptNoMisusedPromises,
         },
     };
 
@@ -881,6 +889,63 @@ mod test {
         assert!(
             jsx_filename_rule.is_none(),
             "jsx-filename-extension should be disabled (not present in active rules)"
+        );
+    }
+
+    #[test]
+    fn test_vitest_root_override_keeps_jest_compatible_rules() {
+        let base_config = LintConfig {
+            plugins: LintPlugins::VITEST | LintPlugins::TYPESCRIPT,
+            env: OxlintEnv::default(),
+            settings: OxlintSettings::default(),
+            globals: OxlintGlobals::default(),
+            path: None,
+            options: OxlintOptions::default(),
+        };
+
+        let base_rules = vec![
+            (RuleEnum::JestExpectExpect(JestExpectExpect::default()), AllowWarnDeny::Deny),
+            (
+                RuleEnum::TypescriptNoExplicitAny(TypescriptNoExplicitAny::default()),
+                AllowWarnDeny::Deny,
+            ),
+        ];
+
+        let overrides = ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {
+            env: None,
+            files: GlobSet::new(vec!["*.test.ts"]),
+            plugins: None,
+            globals: None,
+            rules: ResolvedOxlintOverrideRules {
+                builtin_rules: vec![(
+                    RuleEnum::TypescriptNoExplicitAny(TypescriptNoExplicitAny::default()),
+                    AllowWarnDeny::Allow,
+                )],
+                external_rules: vec![],
+            },
+        }]);
+
+        let store = ConfigStore::new(
+            Config::new(base_rules, vec![], OxlintCategories::default(), base_config, overrides),
+            FxHashMap::default(),
+            ExternalPluginStore::default(),
+        );
+
+        let rules_for_test_file = store.resolve("foo.test.ts".as_ref());
+
+        assert!(
+            rules_for_test_file
+                .rules
+                .iter()
+                .any(|(rule, _)| matches!(rule, RuleEnum::JestExpectExpect(_))),
+            "vitest-compatible jest rules should remain enabled when an override matches"
+        );
+        assert!(
+            rules_for_test_file
+                .rules
+                .iter()
+                .all(|(rule, _)| !matches!(rule, RuleEnum::TypescriptNoExplicitAny(_))),
+            "the override should still disable the targeted typescript rule"
         );
     }
 
