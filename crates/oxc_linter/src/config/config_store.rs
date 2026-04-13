@@ -405,16 +405,16 @@ mod test {
     use crate::{
         AllowWarnDeny, ExternalOptionsId, ExternalPluginStore, LintPlugins, RuleCategory, RuleEnum,
         config::{
-            LintConfig, OxlintEnv, OxlintGlobals, OxlintSettings,
+            ConfigStoreBuilder, LintConfig, OxlintEnv, OxlintGlobals, OxlintSettings,
             categories::OxlintCategories,
             config_store::{Config, ResolvedOxlintOverride, ResolvedOxlintOverrideRules},
             overrides::GlobSet,
-            oxlintrc::OxlintOptions,
+            oxlintrc::{OxlintOptions, Oxlintrc},
         },
         rule::Rule,
         rules::{
-            EslintCurly, EslintNoUnusedVars, JestExpectExpect, ReactJsxFilenameExtension,
-            TypescriptNoExplicitAny, TypescriptNoMisusedPromises,
+            EslintCurly, EslintNoUnusedVars, ReactJsxFilenameExtension, TypescriptNoExplicitAny,
+            TypescriptNoMisusedPromises,
         },
     };
 
@@ -894,57 +894,37 @@ mod test {
 
     #[test]
     fn test_vitest_root_override_keeps_jest_compatible_rules() {
-        let base_config = LintConfig {
-            plugins: LintPlugins::VITEST | LintPlugins::TYPESCRIPT,
-            env: OxlintEnv::default(),
-            settings: OxlintSettings::default(),
-            globals: OxlintGlobals::default(),
-            path: None,
-            options: OxlintOptions::default(),
-        };
-
-        let base_rules = vec![
-            (RuleEnum::JestExpectExpect(JestExpectExpect::default()), AllowWarnDeny::Deny),
-            (
-                RuleEnum::TypescriptNoExplicitAny(TypescriptNoExplicitAny::default()),
-                AllowWarnDeny::Deny,
-            ),
-        ];
-
-        let overrides = ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {
-            env: None,
-            files: GlobSet::new(vec!["*.test.ts"]),
-            plugins: None,
-            globals: None,
-            rules: ResolvedOxlintOverrideRules {
-                builtin_rules: vec![(
-                    RuleEnum::TypescriptNoExplicitAny(TypescriptNoExplicitAny::default()),
-                    AllowWarnDeny::Allow,
-                )],
-                external_rules: vec![],
-            },
-        }]);
-
-        let store = ConfigStore::new(
-            Config::new(base_rules, vec![], OxlintCategories::default(), base_config, overrides),
-            FxHashMap::default(),
-            ExternalPluginStore::default(),
+        let config = config_from_str(
+            r#"
+            {
+                "plugins": ["vitest", "typescript"],
+                "rules": {
+                    "vitest/expect-expect": "error",
+                    "typescript/no-explicit-any": "error"
+                },
+                "overrides": [
+                    {
+                        "files": ["*.test.ts"],
+                        "rules": { "typescript/no-explicit-any": "off" }
+                    }
+                ]
+            }
+            "#,
         );
 
-        let rules_for_test_file = store.resolve("foo.test.ts".as_ref());
+        let rules_for_test_file = config.apply_overrides("foo.test.ts".as_ref());
 
         assert!(
             rules_for_test_file
                 .rules
                 .iter()
-                .any(|(rule, _)| matches!(rule, RuleEnum::JestExpectExpect(_))),
+                .any(|(rule, _)| rule.plugin_name() == "jest" && rule.name() == "expect-expect"),
             "vitest-compatible jest rules should remain enabled when an override matches"
         );
         assert!(
-            rules_for_test_file
-                .rules
-                .iter()
-                .all(|(rule, _)| !matches!(rule, RuleEnum::TypescriptNoExplicitAny(_))),
+            rules_for_test_file.rules.iter().all(|(rule, _)| {
+                !(rule.plugin_name() == "typescript" && rule.name() == "no-explicit-any")
+            }),
             "the override should still disable the targeted typescript rule"
         );
     }
@@ -1374,5 +1354,19 @@ mod test {
         );
         let store = ConfigStore::new(base, FxHashMap::default(), ExternalPluginStore::default());
         assert_eq!(store.max_warnings(), None);
+    }
+
+    fn config_from_str(s: &str) -> Config {
+        let mut external_plugin_store = ExternalPluginStore::default();
+        ConfigStoreBuilder::from_oxlintrc(
+            true,
+            serde_json::from_str::<Oxlintrc>(s).unwrap(),
+            None,
+            &mut external_plugin_store,
+            None,
+        )
+        .unwrap()
+        .build(&mut external_plugin_store)
+        .unwrap()
     }
 }
