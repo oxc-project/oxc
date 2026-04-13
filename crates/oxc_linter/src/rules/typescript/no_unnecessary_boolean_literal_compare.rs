@@ -84,6 +84,7 @@ declare_oxc_lint!(
     suspicious,
     pending,
     config = NoUnnecessaryBooleanLiteralCompareConfig,
+    version = "1.12.0",
 );
 
 impl Rule for NoUnnecessaryBooleanLiteralCompare {

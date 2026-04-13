@@ -85,7 +85,8 @@ declare_oxc_lint!(
     GetterReturn,
     eslint,
     nursery,
-    config = GetterReturn
+    config = GetterReturn,
+    version = "0.0.3",
 );
 
 impl Rule for GetterReturn {

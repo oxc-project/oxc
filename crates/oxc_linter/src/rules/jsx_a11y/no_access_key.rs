@@ -42,6 +42,7 @@ declare_oxc_lint!(
     jsx_a11y,
     correctness,
     suggestion,
+    version = "0.0.21",
 );
 
 impl Rule for NoAccessKey {

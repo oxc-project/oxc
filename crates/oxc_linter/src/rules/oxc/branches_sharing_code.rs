@@ -85,7 +85,8 @@ declare_oxc_lint!(
     /// ```
     BranchesSharingCode,
     oxc,
-    nursery
+    nursery,
+    version = "1.22.0",
 );
 
 impl Rule for BranchesSharingCode {

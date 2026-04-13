@@ -54,6 +54,7 @@ declare_oxc_lint!(
     import,
     restriction,
     config = NoDynamicRequire,
+    version = "0.9.3",
 );
 
 impl Rule for NoDynamicRequire {

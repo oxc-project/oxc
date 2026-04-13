@@ -95,7 +95,8 @@ declare_oxc_lint!(
     eslint,
     style,
     conditional_fix,
-    config = SortKeysConfig
+    config = SortKeysConfig,
+    version = "0.9.4",
 );
 
 impl Rule for SortKeys {

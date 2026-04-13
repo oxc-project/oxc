@@ -50,7 +50,8 @@ declare_oxc_lint!(
     RequireModuleSpecifiers,
     unicorn,
     suspicious,
-    fix
+    fix,
+    version = "1.20.0",
 );
 
 impl Rule for RequireModuleSpecifiers {

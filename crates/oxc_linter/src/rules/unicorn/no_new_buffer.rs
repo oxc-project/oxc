@@ -41,7 +41,8 @@ declare_oxc_lint!(
     NoNewBuffer,
     unicorn,
     pedantic,
-    suggestion
+    suggestion,
+    version = "0.0.16",
 );
 
 impl Rule for NoNewBuffer {

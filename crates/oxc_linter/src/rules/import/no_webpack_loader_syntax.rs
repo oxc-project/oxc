@@ -50,6 +50,7 @@ declare_oxc_lint!(
     NoWebpackLoaderSyntax,
     import,
     restriction,
+    version = "0.7.0",
 );
 
 impl Rule for NoWebpackLoaderSyntax {

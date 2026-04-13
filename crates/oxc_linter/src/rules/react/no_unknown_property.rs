@@ -95,6 +95,7 @@ declare_oxc_lint!(
     restriction,
     pending,
     config = NoUnknownPropertyConfig,
+    version = "0.2.0",
 );
 
 const ATTRIBUTE_TAGS_MAP: Map<&'static str, Set<&'static str>> = phf_map! {

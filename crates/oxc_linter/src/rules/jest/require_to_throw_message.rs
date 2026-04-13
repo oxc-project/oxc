@@ -65,7 +65,8 @@ declare_oxc_lint!(
     /// ```
     RequireToThrowMessage,
     jest,
-    correctness
+    correctness,
+    version = "0.2.9",
 );
 
 impl Rule for RequireToThrowMessage {

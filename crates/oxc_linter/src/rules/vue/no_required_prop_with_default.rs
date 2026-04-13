@@ -76,7 +76,8 @@ declare_oxc_lint!(
     NoRequiredPropWithDefault,
     vue,
     suspicious,
-    suggestion
+    suggestion,
+    version = "1.17.0",
 );
 
 impl Rule for NoRequiredPropWithDefault {

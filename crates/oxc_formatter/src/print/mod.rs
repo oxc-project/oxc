@@ -43,7 +43,7 @@ pub use function::FormatFunctionOptions;
 
 use cow_utils::CowUtils;
 
-use oxc_allocator::{StringBuilder, Vec};
+use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
@@ -1087,8 +1087,8 @@ impl<'a> FormatWrite<'a> for AstNode<'a, RegExpLiteral<'a>> {
         flags_buf[..len].copy_from_slice(flags.as_bytes());
         flags_buf[..len].sort_unstable();
         let flags = str::from_utf8(&flags_buf[..len]).unwrap();
-        let s = StringBuilder::from_strs_array_in([pattern, "/", flags], f.context().allocator());
-        write!(f, text(s.into_str()));
+        let s = f.context().allocator().alloc_concat_strs_array([pattern, "/", flags]);
+        write!(f, text(s));
     }
 }
 

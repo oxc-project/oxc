@@ -45,7 +45,8 @@ declare_oxc_lint!(
     NoDebugger,
     eslint,
     correctness,
-    fix
+    fix,
+    version = "0.0.3",
 );
 
 impl Rule for NoDebugger {

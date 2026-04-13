@@ -72,6 +72,7 @@ declare_oxc_lint!(
     oxc,
     restriction,
     config = NoBarrelFile,
+    version = "0.3.0",
 );
 
 impl Rule for NoBarrelFile {

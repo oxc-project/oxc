@@ -109,6 +109,7 @@ declare_oxc_lint!(
     react,
     correctness,
     config = JsxKey,
+    version = "0.0.14",
 );
 
 impl Rule for JsxKey {

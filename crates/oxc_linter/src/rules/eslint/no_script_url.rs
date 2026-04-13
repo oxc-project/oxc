@@ -37,7 +37,8 @@ declare_oxc_lint!(
     /// ```
     NoScriptUrl,
     eslint,
-    style
+    style,
+    version = "0.2.15",
 );
 
 impl Rule for NoScriptUrl {

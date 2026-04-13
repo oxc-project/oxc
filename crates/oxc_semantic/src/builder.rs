@@ -1077,7 +1077,12 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         #[cfg(feature = "cfg")]
         self.record_ast_nodes();
+        // The test of a conditional is always a pure read — strip MemberWriteTarget
+        // so that `(a ? x : y).foo = 1` doesn't mark `a` as a property-write target.
+        let saved_flags = self.current_reference_flags;
+        self.current_reference_flags -= ReferenceFlags::MemberWriteTarget;
         self.visit_expression(&expr.test);
+        self.current_reference_flags = saved_flags;
         #[cfg(feature = "cfg")]
         let test_node_id = self.retrieve_recorded_ast_node();
 
@@ -2027,14 +2032,27 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.leave_node(kind);
     }
 
+    fn visit_unary_expression(&mut self, it: &UnaryExpression<'a>) {
+        let kind = AstKind::UnaryExpression(self.alloc(it));
+        self.enter_node(kind);
+        // `delete a.foo` — the argument is in a property-write context.
+        // Set Write so `visit_member_expression` can detect it and mark MemberWriteTarget.
+        // Only for member expressions — `delete x` (bare identifier in sloppy mode)
+        // is not a property modification.
+        if it.operator == UnaryOperator::Delete && it.argument.is_member_expression() {
+            self.current_reference_flags = ReferenceFlags::Write;
+        }
+        self.visit_expression(&it.argument);
+        self.leave_node(kind);
+    }
+
     fn visit_member_expression(&mut self, it: &MemberExpression<'a>) {
         // A.B = 1;
         // ^^^ Can't treat A as a Write reference since it's A's property(B) that changes.
-        // For write-only references (simple `=` assignment), mark as MemberWriteTarget
-        // so the minifier can identify property-write-only references.
-        // Compound assignments (`+=`) and update expressions (`++`) have Read|Write flags,
-        // so `is_write_only()` is false and they correctly skip this branch.
-        if self.current_reference_flags.is_write_only() {
+        // When the member expression is in any write context (simple `=`, compound `+=`,
+        // update `++`, `delete`, for-in/of), mark as MemberWriteTarget so downstream
+        // consumers can identify property-modification-only references.
+        if self.current_reference_flags.is_write() {
             self.current_reference_flags = ReferenceFlags::Read | ReferenceFlags::MemberWriteTarget;
         } else {
             self.current_reference_flags -= ReferenceFlags::Write;

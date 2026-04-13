@@ -44,6 +44,7 @@ declare_oxc_lint!(
     NoReturnInFinally,
     promise,
     nursery,
+    version = "0.7.1",
 );
 
 impl Rule for NoReturnInFinally {

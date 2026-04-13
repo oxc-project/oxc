@@ -247,6 +247,7 @@ declare_oxc_lint!(
     jest,
     correctness,
     config = SnapshotHintMode,
+    version = "1.59.0",
 );
 
 impl Rule for PreferSnapshotHint {

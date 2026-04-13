@@ -95,6 +95,7 @@ declare_oxc_lint!(
     typescript,
     nursery, // TODO(camc314): move to correctness
     config = NoUnnecessaryConditionConfig,
+    version = "1.48.0",
 );
 
 impl Rule for NoUnnecessaryCondition {

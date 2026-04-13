@@ -63,7 +63,8 @@ declare_oxc_lint!(
     /// ```
     NoUnwantedPolyfillio,
     nextjs,
-    correctness
+    correctness,
+    version = "0.2.7",
 );
 
 impl Rule for NoUnwantedPolyfillio {

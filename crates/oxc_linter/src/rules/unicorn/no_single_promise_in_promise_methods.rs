@@ -55,7 +55,8 @@ declare_oxc_lint!(
     NoSinglePromiseInPromiseMethods,
     unicorn,
     correctness,
-    conditional_fix
+    conditional_fix,
+    version = "0.2.18",
 );
 
 impl Rule for NoSinglePromiseInPromiseMethods {

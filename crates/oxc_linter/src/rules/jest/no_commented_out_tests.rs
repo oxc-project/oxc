@@ -51,7 +51,8 @@ declare_oxc_lint!(
     /// ```
     NoCommentedOutTests,
     jest,
-    suspicious
+    suspicious,
+    version = "0.0.8",
 );
 
 //  /^\s*[xf]?(test|it|describe)(\.\w+|\[['"]\w+['"]\])?\s*\(/mu

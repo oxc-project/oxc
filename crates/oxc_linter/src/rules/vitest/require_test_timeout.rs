@@ -94,6 +94,7 @@ declare_oxc_lint!(
     RequireTestTimeout,
     vitest,
     restriction,
+    version = "1.58.0",
 );
 
 impl Rule for RequireTestTimeout {

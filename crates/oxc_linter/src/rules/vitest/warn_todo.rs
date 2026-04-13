@@ -49,6 +49,7 @@ declare_oxc_lint!(
     WarnTodo,
     vitest,
     correctness,
+    version = "1.37.0",
 );
 
 impl Rule for WarnTodo {

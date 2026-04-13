@@ -471,9 +471,11 @@ fn test_identifier_reference() {
 fn test_simple_expressions() {
     test("1n", false);
     test("true", false);
-    test("this", false);
     test("import.meta", false);
     test("(() => {})", false);
+
+    // referencing `this` in a derived class before `super()` is called causes a ReferenceError
+    test("this", true);
 }
 
 #[test]

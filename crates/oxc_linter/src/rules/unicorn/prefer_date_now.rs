@@ -54,7 +54,8 @@ declare_oxc_lint!(
     PreferDateNow,
     unicorn,
     pedantic,
-    fix
+    fix,
+    version = "0.0.16",
 );
 
 impl Rule for PreferDateNow {

@@ -93,6 +93,7 @@ declare_oxc_lint!(
     correctness,
     fix,
     config = NoUselessEscapeConfig,
+    version = "0.0.5",
 );
 
 impl Rule for NoUselessEscape {

@@ -193,6 +193,7 @@ declare_oxc_lint!(
     unicorn,
     style,
     config = FilenameCaseConfigJson,
+    version = "0.0.14",
 );
 
 impl Rule for FilenameCase {

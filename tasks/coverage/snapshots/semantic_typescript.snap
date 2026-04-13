@@ -17946,13 +17946,7 @@ after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Symbol reference IDs mismatch for "E":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(6)]
-rebuilt        : SymbolId(0): [ReferenceId(6)]
-Symbol reference IDs mismatch for "E":
-after transform: SymbolId(3): [ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(4), ReferenceId(5)]
-rebuilt        : SymbolId(1): [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(4), ReferenceId(5)]
-Reference symbol mismatch for "E":
-after transform: SymbolId(0) "E"
-rebuilt        : SymbolId(1) "E"
+rebuilt        : SymbolId(0): [ReferenceId(5)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/underscoreMapFirst.ts
 Bindings mismatch:

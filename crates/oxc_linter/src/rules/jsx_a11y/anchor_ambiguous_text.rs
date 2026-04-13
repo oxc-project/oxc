@@ -94,6 +94,7 @@ declare_oxc_lint!(
     jsx_a11y,
     restriction,
     config = AnchorAmbiguousTextConfig,
+    version = "0.13.2",
 );
 
 impl Rule for AnchorAmbiguousText {

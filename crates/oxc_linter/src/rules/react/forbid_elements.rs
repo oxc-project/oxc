@@ -124,6 +124,7 @@ declare_oxc_lint!(
     react,
     restriction,
     config = ForbidElementsConfig,
+    version = "0.16.11",
 );
 
 impl Rule for ForbidElements {

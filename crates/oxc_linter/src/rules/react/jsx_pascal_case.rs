@@ -108,6 +108,7 @@ declare_oxc_lint!(
     react,
     style,
     config = JsxPascalCaseConfig,
+    version = "1.19.0",
 );
 
 impl Rule for JsxPascalCase {

@@ -46,7 +46,8 @@ declare_oxc_lint!(
     /// ```
     NoAwaitInLoop,
     eslint,
-    perf
+    perf,
+    version = "0.3.2",
 );
 
 impl Rule for NoAwaitInLoop {

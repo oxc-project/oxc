@@ -57,7 +57,8 @@ declare_oxc_lint!(
     PreferEnumInitializers,
     typescript,
     pedantic,
-    suggestion
+    suggestion,
+    version = "0.3.2",
 );
 
 impl Rule for PreferEnumInitializers {

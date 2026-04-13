@@ -98,6 +98,7 @@ declare_oxc_lint!(
     GlobalRequire,
     node,
     style,
+    version = "1.36.0",
 );
 
 impl Rule for GlobalRequire {

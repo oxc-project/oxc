@@ -70,7 +70,8 @@ declare_oxc_lint!(
     /// ```
     NoIdenticalTitle,
     jest,
-    style
+    style,
+    version = "0.0.14",
 );
 
 impl Rule for NoIdenticalTitle {

@@ -322,6 +322,7 @@ declare_oxc_lint!(
     style,
     fix,
     config = JsxCurlyBracePresence,
+    version = "0.7.0",
 );
 
 impl Rule for JsxCurlyBracePresence {

@@ -44,6 +44,7 @@ declare_oxc_lint!(
     eslint,
     style,
     fix,
+    version = "0.4.0",
 );
 
 impl Rule for PreferExponentiationOperator {

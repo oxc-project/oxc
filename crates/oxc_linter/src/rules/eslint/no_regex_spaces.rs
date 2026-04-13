@@ -52,7 +52,8 @@ declare_oxc_lint!(
     NoRegexSpaces,
     eslint,
     restriction,
-    fix
+    fix,
+    version = "0.0.18",
 );
 
 impl Rule for NoRegexSpaces {

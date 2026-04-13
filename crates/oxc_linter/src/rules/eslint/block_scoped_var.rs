@@ -123,6 +123,7 @@ declare_oxc_lint!(
     BlockScopedVar,
     eslint,
     suspicious,
+    version = "0.16.9",
 );
 
 impl Rule for BlockScopedVar {

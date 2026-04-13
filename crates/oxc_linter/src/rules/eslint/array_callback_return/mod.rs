@@ -162,7 +162,8 @@ declare_oxc_lint!(
     eslint,
     pedantic,
     pending,
-    config = ArrayCallbackReturn
+    config = ArrayCallbackReturn,
+    version = "0.0.3",
 );
 
 impl Rule for ArrayCallbackReturn {

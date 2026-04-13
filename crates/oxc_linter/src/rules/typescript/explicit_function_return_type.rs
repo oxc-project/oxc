@@ -135,6 +135,7 @@ declare_oxc_lint!(
     typescript,
     restriction,
     config = ExplicitFunctionReturnTypeConfig,
+    version = "0.4.4",
 );
 
 fn explicit_function_return_type_diagnostic(span: Span) -> OxcDiagnostic {

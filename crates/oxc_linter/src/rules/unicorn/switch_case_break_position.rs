@@ -47,6 +47,7 @@ declare_oxc_lint!(
     unicorn,
     style,
     pending,
+    version = "1.59.0",
 );
 
 impl Rule for SwitchCaseBreakPosition {

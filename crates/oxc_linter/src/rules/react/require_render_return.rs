@@ -69,7 +69,8 @@ declare_oxc_lint!(
     /// ```
     RequireRenderReturn,
     react,
-    nursery
+    nursery,
+    version = "0.2.0",
 );
 
 impl Rule for RequireRenderReturn {

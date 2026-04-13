@@ -87,6 +87,7 @@ declare_oxc_lint!(
     jest,
     style,
     config = NoRestrictedJestMethodsConfig,
+    version = "0.2.3",
 );
 
 impl Rule for NoRestrictedJestMethods {

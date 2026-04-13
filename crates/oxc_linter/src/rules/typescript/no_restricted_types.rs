@@ -146,6 +146,7 @@ declare_oxc_lint!(
     restriction,
     fix_suggestion,
     config = NoRestrictedTypesConfig,
+    version = "1.31.0",
 );
 
 impl Rule for NoRestrictedTypes {

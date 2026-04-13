@@ -82,6 +82,7 @@ declare_oxc_lint!(
     jsx_a11y,
     correctness,
     config = NoStaticElementInteractionsConfig,
+    version = "1.37.0",
 );
 
 impl Rule for NoStaticElementInteractions {

@@ -62,6 +62,7 @@ declare_oxc_lint!(
     eslint,
     restriction,
     config = NoRestrictedGlobals,
+    version = "0.4.0",
 );
 
 impl Rule for NoRestrictedGlobals {

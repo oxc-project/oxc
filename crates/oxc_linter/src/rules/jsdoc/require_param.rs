@@ -102,6 +102,7 @@ declare_oxc_lint!(
     pedantic,
     pending,
     config = RequireParamConfig,
+    version = "0.4.3",
 );
 
 impl Rule for RequireParam {

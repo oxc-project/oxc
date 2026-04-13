@@ -56,6 +56,7 @@ declare_oxc_lint!(
     typescript,
     correctness,
     suggestion,
+    version = "0.15.13",
 );
 
 impl Rule for NoUnnecessaryParameterPropertyAssignment {

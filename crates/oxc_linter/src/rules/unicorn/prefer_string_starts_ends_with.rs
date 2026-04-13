@@ -51,7 +51,8 @@ declare_oxc_lint!(
     PreferStringStartsEndsWith,
     unicorn,
     correctness,
-    fix
+    fix,
+    version = "0.0.18",
 );
 
 impl Rule for PreferStringStartsEndsWith {

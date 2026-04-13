@@ -48,7 +48,8 @@ declare_oxc_lint!(
     NoUnescapedEntities,
     react,
     pedantic,
-    pending
+    pending,
+    version = "0.0.15",
 );
 
 impl Rule for NoUnescapedEntities {

@@ -47,7 +47,8 @@ declare_oxc_lint!(
     /// ```
     Export,
     import,
-    nursery
+    nursery,
+    version = "0.0.21",
 );
 
 impl Rule for Export {

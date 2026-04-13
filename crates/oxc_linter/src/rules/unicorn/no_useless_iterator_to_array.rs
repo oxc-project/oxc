@@ -132,6 +132,7 @@ declare_oxc_lint!(
     unicorn,
     nursery,
     pending,
+    version = "1.59.0",
 );
 
 impl Rule for NoUselessIteratorToArray {

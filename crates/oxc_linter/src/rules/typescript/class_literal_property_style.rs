@@ -39,8 +39,42 @@ fn prefer_getter_style_diagnostic(span: Span) -> OxcDiagnostic {
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "lowercase")]
 pub enum ClassLiteralPropertyStyleOption {
+    /// Enforce using readonly fields for literal values.
+    ///
+    /// Examples of **incorrect** code with this option:
+    /// ```ts
+    /// class C {
+    ///   get name() {
+    ///     return "oxc";
+    ///   }
+    /// }
+    /// ```
+    ///
+    /// Examples of **correct** code with this option:
+    /// ```ts
+    /// class C {
+    ///   readonly name = "oxc";
+    /// }
+    /// ```
     #[default]
     Fields,
+    /// Enforce using getters for literal values.
+    ///
+    /// Examples of **incorrect** code with this option:
+    /// ```ts
+    /// class C {
+    ///   readonly name = "oxc";
+    /// }
+    /// ```
+    ///
+    /// Examples of **correct** code with this option:
+    /// ```ts
+    /// class C {
+    ///   get name() {
+    ///     return "oxc";
+    ///   }
+    /// }
+    /// ```
     Getters,
 }
 
@@ -92,7 +126,8 @@ declare_oxc_lint!(
     typescript,
     style,
     pending,
-    config = ClassLiteralPropertyStyleOption
+    config = ClassLiteralPropertyStyleOption,
+    version = "1.47.0",
 );
 
 impl Rule for ClassLiteralPropertyStyle {

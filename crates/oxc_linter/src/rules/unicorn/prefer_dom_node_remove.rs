@@ -44,7 +44,8 @@ declare_oxc_lint!(
     PreferDomNodeRemove,
     unicorn,
     pedantic,
-    pending
+    pending,
+    version = "0.0.18",
 );
 
 /// Returns `true` if the expression is a type that can never be a DOM node

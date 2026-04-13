@@ -87,6 +87,7 @@ declare_oxc_lint!(
     jest,
     correctness,
     config = NoStandaloneExpectConfig,
+    version = "0.0.13",
 );
 
 impl Rule for NoStandaloneExpect {

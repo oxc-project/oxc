@@ -92,7 +92,8 @@ declare_oxc_lint!(
     IframeMissingSandbox,
     react,
     suspicious,
-    pending
+    pending,
+    version = "0.10.0",
 );
 
 impl Rule for IframeMissingSandbox {

@@ -110,6 +110,7 @@ declare_oxc_lint!(
     style,
     fix_dangerous,
     config = Mode,
+    version = "0.15.13",
 );
 
 impl Rule for OperatorAssignment {

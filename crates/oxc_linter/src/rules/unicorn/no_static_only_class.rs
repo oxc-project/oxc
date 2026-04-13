@@ -54,7 +54,8 @@ declare_oxc_lint!(
     NoStaticOnlyClass,
     unicorn,
     pedantic,
-    fix_dangerous
+    fix_dangerous,
+    version = "0.0.16",
 );
 
 impl Rule for NoStaticOnlyClass {

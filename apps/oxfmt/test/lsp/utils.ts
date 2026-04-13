@@ -26,9 +26,9 @@ import type {
 
 const CLI_PATH = join(import.meta.dirname, "..", "..", "dist", "cli.js");
 
-export function createLspConnection() {
+export function createLspConnection(env: Record<string, string> = {}) {
   const proc = spawn("node", [CLI_PATH, "--lsp"], {
-    // env: { ...process.env, OXC_LOG: "info" }, for debugging
+    env: { ...process.env, ...env },
   });
 
   const connection = createMessageConnection(

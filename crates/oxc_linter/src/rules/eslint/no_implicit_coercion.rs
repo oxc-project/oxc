@@ -177,6 +177,7 @@ declare_oxc_lint!(
     style,
     fix,
     config = NoImplicitCoercionConfig,
+    version = "1.33.0",
 );
 
 impl Rule for NoImplicitCoercion {

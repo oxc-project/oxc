@@ -176,6 +176,33 @@ export async function lintSingleFileFixture(
     client,
   );
 }
+export async function lintMultiFileFixture(
+  fixturesDir: string,
+  fixturePaths: {
+    path: string;
+    languageId: string;
+  }[],
+): Promise<string> {
+  const workspaceUri = pathToFileURL(dirname(join(fixturesDir, fixturePaths[0].path))).href;
+  await using client = createLspConnection();
+  await client.initialize(
+    [{ uri: workspaceUri, name: "workspace-0" }],
+    PULL_DIAGNOSTICS_CAPABILITY,
+  );
+  const snapshots = [];
+  for (const fixturePath of fixturePaths) {
+    snapshots.push(
+      // oxlint-disable-next-line no-await-in-loop -- for snapshot consistency
+      await getDiagnosticSnapshot(
+        fixturePath.path,
+        join(fixturesDir, fixturePath.path),
+        fixturePath.languageId,
+        client,
+      ),
+    );
+  }
+  return snapshots.join("\n\n");
+}
 
 export async function lintMultiWorkspaceFixture(
   fixturesDir: string,

@@ -105,6 +105,7 @@ declare_oxc_lint!(
     eslint,
     style,
     config = NoMultiAssign,
+    version = "0.15.4",
 );
 
 impl Rule for NoMultiAssign {

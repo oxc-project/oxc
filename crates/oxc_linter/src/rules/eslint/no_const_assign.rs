@@ -52,7 +52,8 @@ declare_oxc_lint!(
     /// ```
     NoConstAssign,
     eslint,
-    correctness
+    correctness,
+    version = "0.0.3",
 );
 
 impl Rule for NoConstAssign {

@@ -167,7 +167,8 @@ declare_oxc_lint!(
     ConsistentEachFor,
     vitest,
     correctness,
-    config = ConsistentEachForJson
+    config = ConsistentEachForJson,
+    version = "1.39.0",
 );
 
 impl Rule for ConsistentEachFor {

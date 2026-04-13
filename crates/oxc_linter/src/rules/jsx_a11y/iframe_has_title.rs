@@ -56,7 +56,8 @@ declare_oxc_lint!(
     /// ```
     IframeHasTitle,
     jsx_a11y,
-    correctness
+    correctness,
+    version = "0.0.19",
 );
 
 impl Rule for IframeHasTitle {

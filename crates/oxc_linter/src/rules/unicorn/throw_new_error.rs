@@ -49,7 +49,8 @@ declare_oxc_lint!(
     ThrowNewError,
     unicorn,
     style,
-    fix
+    fix,
+    version = "0.0.14",
 );
 
 impl Rule for ThrowNewError {

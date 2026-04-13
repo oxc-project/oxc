@@ -69,6 +69,30 @@ pub struct LintCommandInfo {
     pub start_time: Duration,
 }
 
+impl LintCommandInfo {
+    pub(super) fn format_execution_summary(&self) -> String {
+        let ms = self.start_time.as_millis();
+        let time = if ms < 1000 {
+            format!("{ms}ms")
+        } else {
+            format!("{:.1}s", self.start_time.as_secs_f64())
+        };
+        let s = if self.number_of_files == 1 { "" } else { "s" };
+
+        if let Some(number_of_rules) = self.number_of_rules {
+            format!(
+                "Finished in {time} on {} file{s} with {number_of_rules} rules using {} threads.\n",
+                self.number_of_files, self.threads_count
+            )
+        } else {
+            format!(
+                "Finished in {time} on {} file{s} using {} threads.\n",
+                self.number_of_files, self.threads_count
+            )
+        }
+    }
+}
+
 /// An Interface for the different output formats.
 /// The Formatter is then managed by [`OutputFormatter`].
 trait InternalFormatter {

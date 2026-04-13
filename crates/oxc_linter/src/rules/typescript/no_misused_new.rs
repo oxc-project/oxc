@@ -69,7 +69,8 @@ declare_oxc_lint!(
     /// ```
     NoMisusedNew,
     typescript,
-    correctness
+    correctness,
+    version = "0.0.7",
 );
 
 impl Rule for NoMisusedNew {

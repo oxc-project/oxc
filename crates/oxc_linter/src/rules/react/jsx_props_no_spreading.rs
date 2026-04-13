@@ -87,7 +87,8 @@ declare_oxc_lint!(
     JsxPropsNoSpreading,
     react,
     style,
-    config = JsxPropsNoSpreadingConfig
+    config = JsxPropsNoSpreadingConfig,
+    version = "1.33.0",
 );
 
 impl Rule for JsxPropsNoSpreading {

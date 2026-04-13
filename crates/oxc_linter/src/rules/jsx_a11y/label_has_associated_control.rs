@@ -125,7 +125,8 @@ declare_oxc_lint!(
     LabelHasAssociatedControl,
     jsx_a11y,
     correctness,
-    config = LabelHasAssociatedControlConfig
+    config = LabelHasAssociatedControlConfig,
+    version = "0.9.1",
 );
 
 impl Rule for LabelHasAssociatedControl {

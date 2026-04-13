@@ -51,7 +51,8 @@ declare_oxc_lint!(
     /// ```
     ErrorMessage,
     unicorn,
-    style
+    style,
+    version = "0.0.14",
 );
 
 impl Rule for ErrorMessage {

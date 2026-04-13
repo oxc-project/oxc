@@ -44,18 +44,32 @@ fn is_vite_plus_config(path: &Path) -> bool {
     path.file_name().and_then(|f| f.to_str()).is_some_and(|name| name == VITE_PLUS_CONFIG_NAME)
 }
 
+/// Whether Vite+ mode is active (i.e., `VP_VERSION` env var is set).
+#[cfg(feature = "napi")]
+fn is_vite_plus_mode() -> bool {
+    std::env::var_os("VP_VERSION").is_some()
+}
+
 /// Returns an iterator of all supported config file names, in priority order.
+///
+/// When `VP_VERSION` env var is set, only `vite.config.ts` is recognized.
+/// When it is not set, `vite.config.ts` is excluded from the candidates.
 pub fn all_config_file_names() -> impl Iterator<Item = String> {
     #[cfg(feature = "napi")]
     {
+        if is_vite_plus_mode() {
+            return vec![VITE_PLUS_CONFIG_NAME.to_string()].into_iter();
+        }
         JSON_CONFIG_FILES
             .iter()
             .copied()
-            .chain([OXFMT_JS_CONFIG_NAME, VITE_PLUS_CONFIG_NAME])
+            .chain([OXFMT_JS_CONFIG_NAME])
             .map(ToString::to_string)
+            .collect::<Vec<_>>()
+            .into_iter()
     }
     #[cfg(not(feature = "napi"))]
-    JSON_CONFIG_FILES.iter().map(|f| (*f).to_string())
+    JSON_CONFIG_FILES.iter().map(|f| (*f).to_string()).collect::<Vec<_>>().into_iter()
 }
 
 pub fn resolve_editorconfig_path(cwd: &Path) -> Option<PathBuf> {

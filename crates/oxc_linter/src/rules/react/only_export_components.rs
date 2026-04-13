@@ -163,6 +163,7 @@ declare_oxc_lint!(
     react,
     restriction,
     config = OnlyExportComponentsConfig,
+    version = "1.23.0",
 );
 
 static DEFAULT_REACT_HOCS: &[&str] = &["memo", "forwardRef"];

@@ -103,6 +103,7 @@ declare_oxc_lint!(
     correctness,
     suggestion,
     config = ValidExpectConfig,
+    version = "0.0.14",
 );
 
 impl Rule for ValidExpect {

@@ -176,6 +176,7 @@ declare_oxc_lint!(
     style,
     conditional_fix,
     config = ConsistentTypeImportsConfig,
+    version = "0.5.2",
 );
 
 impl Rule for ConsistentTypeImports {

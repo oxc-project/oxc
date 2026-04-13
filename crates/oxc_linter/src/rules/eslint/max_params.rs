@@ -150,6 +150,7 @@ declare_oxc_lint!(
     eslint,
     style,
     config = MaxParamsConfig,
+    version = "0.2.14",
 );
 
 impl Rule for MaxParams {

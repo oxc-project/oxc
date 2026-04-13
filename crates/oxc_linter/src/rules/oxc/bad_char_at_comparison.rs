@@ -46,7 +46,8 @@ declare_oxc_lint!(
     /// ```
     BadCharAtComparison,
     oxc,
-    correctness
+    correctness,
+    version = "0.0.22",
 );
 
 impl Rule for BadCharAtComparison {

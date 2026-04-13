@@ -59,7 +59,8 @@ declare_oxc_lint!(
     PreferNumericLiterals,
     eslint,
     style,
-    conditional_fix
+    conditional_fix,
+    version = "0.7.0",
 );
 
 impl Rule for PreferNumericLiterals {

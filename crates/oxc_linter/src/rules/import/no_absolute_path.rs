@@ -106,6 +106,7 @@ declare_oxc_lint!(
     suspicious,
     pending,
     config = NoAbsolutePath,
+    version = "0.15.13",
 );
 
 impl Rule for NoAbsolutePath {

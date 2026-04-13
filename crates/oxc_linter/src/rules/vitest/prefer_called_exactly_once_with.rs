@@ -188,6 +188,7 @@ declare_oxc_lint!(
     vitest,
     style,
     dangerous_fix,
+    version = "1.58.0",
 );
 
 impl Rule for PreferCalledExactlyOnceWith {

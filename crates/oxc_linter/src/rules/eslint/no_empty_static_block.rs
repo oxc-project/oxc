@@ -52,6 +52,7 @@ declare_oxc_lint!(
     eslint,
     correctness,
     suggestion,
+    version = "0.0.19",
 );
 
 impl Rule for NoEmptyStaticBlock {

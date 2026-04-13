@@ -23,8 +23,7 @@ pub struct ArrayTypeConfig {
     /// The array type expected for mutable cases.
     default: ArrayOption,
     /// The array type expected for readonly cases. If omitted, the value for `default` will be used.
-    #[schemars(with = "ArrayOption")]
-    readonly: Option<ArrayOption>,
+    readonly: Option<ReadonlyArrayOption>,
 }
 
 impl std::ops::Deref for ArrayType {
@@ -38,10 +37,105 @@ impl std::ops::Deref for ArrayType {
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize, Serialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum ArrayOption {
+    /// Enforce using `T[]` for all array types.
+    ///
+    /// Example of **incorrect** code for this option:
+    /// ```ts
+    /// const arr: Array<number> = new Array<number>();
+    /// ```
+    ///
+    /// Example of **correct** code for this option:
+    /// ```ts
+    /// const arr: number[] = new Array<number>();
+    /// ```
     #[default]
     Array,
+    /// Enforce using `T[]` for simple types, and `Array<T>` for complex types.
+    ///
+    /// Example of **incorrect** code for this option:
+    /// ```ts
+    /// const a: (string | number)[] = ['a', 'b'];
+    /// const b: { prop: string }[] = [{ prop: 'a' }];
+    /// const c: Array<MyType> = ['a', 'b'];
+    /// const d: Array<string> = ['a', 'b'];
+    /// ```
+    ///
+    /// Example of **correct** code for this option:
+    /// ```ts
+    /// const a: Array<string | number> = ['a', 'b'];
+    /// const b: Array<{ prop: string }> = [{ prop: 'a' }];
+    /// const c: string[] = ['a', 'b'];
+    /// const d: MyType[] = ['a', 'b'];
+    /// ```
     ArraySimple,
+    /// Enforce using `Array<T>` for all array types.
+    ///
+    /// Example of **incorrect** code for this option:
+    /// ```ts
+    /// const arr: number[] = new Array<number>();
+    /// ```
+    ///
+    /// Example of **correct** code for this option:
+    /// ```ts
+    /// const arr: Array<number> = new Array<number>();
+    /// ```
     Generic,
+}
+
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize, Serialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum ReadonlyArrayOption {
+    /// Enforce using `readonly T[]` for all readonly array types.
+    ///
+    /// Example of **incorrect** code for this option:
+    /// ```ts
+    /// const arr: ReadonlyArray<number> = [];
+    /// ```
+    ///
+    /// Example of **correct** code for this option:
+    /// ```ts
+    /// const arr: readonly number[] = [];
+    /// ```
+    #[default]
+    Array,
+    /// Enforce using `readonly T[]` for simple types, and `ReadonlyArray<T>` for complex types.
+    ///
+    /// Example of **incorrect** code for this option:
+    /// ```ts
+    /// const a: readonly (string | number)[] = [];
+    /// const b: ReadonlyArray<number> = [];
+    /// ```
+    ///
+    /// Example of **correct** code for this option:
+    /// ```ts
+    /// const a: ReadonlyArray<string | number> = [];
+    /// const b: readonly number[] = [];
+    /// ```
+    ArraySimple,
+    /// Enforce using `ReadonlyArray<T>` for all readonly array types.
+    ///
+    /// Example of **incorrect** code for this option:
+    /// ```ts
+    /// const arr: readonly number[] = [];
+    /// const arr2: readonly (string | number)[] = [];
+    /// ```
+    ///
+    /// Example of **correct** code for this option:
+    /// ```ts
+    /// const arr: ReadonlyArray<number> = [];
+    /// const arr2: ReadonlyArray<string | number> = [];
+    /// ```
+    Generic,
+}
+
+impl From<ReadonlyArrayOption> for ArrayOption {
+    fn from(value: ReadonlyArrayOption) -> Self {
+        match value {
+            ReadonlyArrayOption::Array => ArrayOption::Array,
+            ReadonlyArrayOption::ArraySimple => ArrayOption::ArraySimple,
+            ReadonlyArrayOption::Generic => ArrayOption::Generic,
+        }
+    }
 }
 
 declare_oxc_lint!(
@@ -55,48 +149,23 @@ declare_oxc_lint!(
     ///
     /// ### Examples
     ///
-    /// Examples of **incorrect** code for this rule:
+    /// Examples of **incorrect** code for this rule (with default configuration):
     /// ```typescript
-    /// /*oxlint array-type: ["error", { "default": "array" }] */
     /// const arr: Array<number> = new Array<number>();
+    /// const readonlyArr: ReadonlyArray<number> = [1, 2, 3];
     /// ```
     ///
+    /// Examples of **correct** code for this rule (with default configuration):
     /// ```typescript
-    /// /*oxlint array-type: ["error", { "default": "generic" }] */
     /// const arr: number[] = new Array<number>();
-    /// ```
-    ///
-    /// ```typescript
-    /// /*oxlint array-type: ["error", { "default": "array-simple" }] */
-    /// const a: (string | number)[] = ['a', 'b'];
-    /// const b: { prop: string }[] = [{ prop: 'a' }];
-    /// const c: Array<MyType> = ['a', 'b'];
-    /// const d: Array<string> = ['a', 'b'];
-    /// ```
-    ///
-    /// Examples of **correct** code for this rule:
-    /// ```typescript
-    /// /*oxlint array-type: ["error", { "default": "array" }] */
-    /// const arr: number[] = new Array<number>();
-    /// ```
-    ///
-    /// ```typescript
-    /// /*oxlint array-type: ["error", { "default": "generic" }] */
-    /// const arr: Array<number> = new Array<number>();
-    /// ```
-    ///
-    /// ```typescript
-    /// /*oxlint array-type: ["error", { "default": "array-simple" }] */
-    /// const a: Array<string | number> = ['a', 'b'];
-    /// const b: Array<{ prop: string }> = [{ prop: 'a' }];
-    /// const c: string[] = ['a', 'b'];
-    /// const d: MyType[] = ['a', 'b'];
+    /// const readonlyArr: readonly number[] = [1, 2, 3];
     /// ```
     ArrayType,
     typescript,
     style,
     fix,
     config = ArrayTypeConfig,
+    version = "0.2.8",
 );
 
 fn generic(readonly_prefix: &str, name: &str, type_name: &str, span: Span) -> OxcDiagnostic {
@@ -145,7 +214,7 @@ impl Rule for ArrayType {
                     ts_array_type.span,
                     &ts_array_type.element_type,
                     self.default_config(),
-                    self.readonly_config(),
+                    &self.readonly_config(),
                     ctx,
                 );
             }
@@ -154,17 +223,13 @@ impl Rule for ArrayType {
                     |type_name| matches!(type_name.name.as_str(), "Array" | "ReadonlyArray"),
                 ) =>
             {
-                if should_skip_type_reference(
-                    node,
-                    self.default_config(),
-                    self.readonly_config(),
-                    ctx,
-                ) {
+                let readonly_config = self.readonly_config();
+                if should_skip_type_reference(node, self.default_config(), &readonly_config, ctx) {
                     return;
                 }
                 check_and_report_error_reference(
                     self.default_config(),
-                    self.readonly_config(),
+                    &readonly_config,
                     ts_type_reference,
                     ctx,
                 );
@@ -183,8 +248,12 @@ impl ArrayType {
         &self.default
     }
 
-    fn readonly_config(&self) -> &ArrayOption {
-        if let Some(readonly) = &self.readonly { readonly } else { &self.default }
+    fn readonly_config(&self) -> ArrayOption {
+        if let Some(readonly) = &self.readonly {
+            readonly.clone().into()
+        } else {
+            self.default.clone()
+        }
     }
 }
 

@@ -109,6 +109,7 @@ declare_oxc_lint!(
     style,
     fix,
     config = JsxBooleanValueConfig,
+    version = "0.7.0",
 );
 
 impl Rule for JsxBooleanValue {

@@ -54,7 +54,8 @@ declare_oxc_lint!(
     /// - [IANA Language Subtag Registry](https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry)
     Lang,
     jsx_a11y,
-    correctness
+    correctness,
+    version = "0.1.1",
 );
 
 impl Rule for Lang {

@@ -86,7 +86,8 @@ declare_oxc_lint!(
     NoShadow,
     eslint,
     suspicious,
-    config = NoShadowConfig
+    config = NoShadowConfig,
+    version = "1.48.0",
 );
 
 impl Rule for NoShadow {

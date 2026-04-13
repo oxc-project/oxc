@@ -22,6 +22,9 @@ pub struct LintRuleMeta {
     /// This is the name of a struct/enum/whatever implementing
     /// schemars::JsonSchema
     config: Option<Ident>,
+    /// The version of oxlint in which this rule was first available.
+    #[cfg(feature = "ruledocs")]
+    version: Option<LitStr>,
 }
 
 impl Parse for LintRuleMeta {
@@ -86,6 +89,8 @@ impl Parse for LintRuleMeta {
         // Do not provide a default value here so that it can be set there instead.
         let mut fix: Option<Ident> = None;
         let mut config: Option<Ident> = None;
+        #[cfg(feature = "ruledocs")]
+        let mut version: Option<LitStr> = None;
 
         // remaining options are `key = value` pairs, with the exception of
         // fix kinds. Those can be short-handed to just the fix kind
@@ -110,6 +115,16 @@ impl Parse for LintRuleMeta {
                 "config" => {
                     input.parse::<Token!(=)>()?;
                     config.replace(input.parse()?);
+                }
+                // version = "x.y.z"
+                "version" => {
+                    input.parse::<Token!(=)>()?;
+                    #[cfg(feature = "ruledocs")]
+                    version.replace(input.parse()?);
+                    #[cfg(not(feature = "ruledocs"))]
+                    {
+                        let _ = input.parse::<LitStr>()?;
+                    }
                 }
                 _ => {
                     if input.peek(Token!(=)) || fix.is_some() {
@@ -150,6 +165,8 @@ impl Parse for LintRuleMeta {
             documentation,
             used_in_test: false,
             config,
+            #[cfg(feature = "ruledocs")]
+            version,
         })
     }
 }
@@ -169,6 +186,8 @@ pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
         documentation,
         used_in_test,
         config,
+        #[cfg(feature = "ruledocs")]
+        version,
     } = metadata;
 
     let canonical_name = rule_name_converter().convert(name.to_string());
@@ -235,6 +254,15 @@ pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
         }),
     };
 
+    #[cfg(not(feature = "ruledocs"))]
+    let version: Option<proc_macro2::TokenStream> = None;
+    #[cfg(feature = "ruledocs")]
+    let version = version.map(|v| {
+        quote! {
+            const VERSION: Option<&'static str> = Some(#v);
+        }
+    });
+
     let output = quote! {
         #import_statement
 
@@ -254,6 +282,8 @@ pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
             #has_config
 
             #config_schema
+
+            #version
         }
     };
 

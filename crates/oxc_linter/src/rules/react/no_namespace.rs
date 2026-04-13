@@ -44,6 +44,7 @@ declare_oxc_lint!(
     NoNamespace,
     react,
     suspicious,
+    version = "0.15.13",
 );
 
 impl Rule for NoNamespace {

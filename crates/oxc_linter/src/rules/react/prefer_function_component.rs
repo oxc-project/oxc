@@ -87,6 +87,7 @@ declare_oxc_lint!(
     react,
     restriction,
     config = PreferFunctionComponent,
+    version = "1.59.0",
 );
 
 impl Rule for PreferFunctionComponent {

@@ -243,7 +243,8 @@ declare_oxc_lint!(
     eslint,
     style,
     pending, // TODO: enforceConst, probably copy from https://github.com/oxc-project/oxc/pull/5144
-    config = NoMagicNumbersConfig
+    config = NoMagicNumbersConfig,
+    version = "0.9.3",
 );
 
 #[derive(Debug)]

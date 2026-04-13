@@ -34,6 +34,7 @@
     "n/prefer-node-protocol": "No need to implement, already implemented by `unicorn/prefer-node-protocol`.",
     "n/no-process-exit": "No need to implement, already implemented by `unicorn/no-process-exit`.",
     "n/file-extension-in-import": "No need to implement, already implemented by `import/extensions`.",
+    "n/no-callback-literal": "Use type-aware linting with `--type-aware --type-check` (or enable `options.typeAware` in config) and TypeScript callback typing (`err: Error | null | undefined`) to catch non-Error literals in error-first callbacks.",
     "import/enforce-node-protocol-usage": "No need to implement, already implemented by `unicorn/prefer-node-protocol`.",
     "import/no-deprecated": "No need to implement, already implemented by `typescript/no-deprecated` via tsgolint.",
     "n/no-restricted-import": "No need to implement, already implemented by `no-restricted-imports` rule.",
@@ -47,6 +48,7 @@
     "jest/no-unnecessary-assertion": "Requires type information. Not currently possible to implement in oxlint.",
     "jest/unbound-method": "Requires type information. Not currently possible to implement in oxlint.",
     "jest/no-error-equal": "Requires type information. Not currently possible to implement in oxlint.",
+    "jest/valid-expect-with-promise": "Requires type information. Not currently possible to implement in oxlint.",
     "vitest/unbound-method": "Requires type information. Not currently possible to implement in oxlint.",
     "vitest/prefer-vi-mocked": "Requires type information. Not currently possible to implement in oxlint.",
 
