@@ -178,9 +178,7 @@ mod tests {
     fn test_docs_rule_pages_include_version_frontmatter() {
         let mut generator = SchemaGenerator::new(SchemaSettings::default());
         let table = RuleTable::new(Some(&mut generator));
-        let pages = render_rule_doc_pages(generator, &table).collect::<Vec<_>>();
-        let (_, docs, rule) = pages
-            .into_iter()
+        let (_, docs, rule) = render_rule_doc_pages(generator, &table)
             .find(|(_, _, rule)| rule.plugin == "eslint" && rule.name == "no-unused-vars")
             .unwrap();
 

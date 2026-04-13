@@ -203,6 +203,8 @@ mod test {
         let rules = rules.as_array().unwrap();
 
         assert!(!rules.is_empty());
-        assert!(rules.iter().all(|rule| rule.get("version").is_some()));
+        assert!(rules.iter().all(|rule| {
+            rule.get("version").and_then(Value::as_str).is_some_and(|version| !version.is_empty())
+        }));
     }
 }
