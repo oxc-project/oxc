@@ -1613,10 +1613,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     /// except by the pointer `other`, and that they are not read after this call.
     #[inline]
     unsafe fn append_elements(&mut self, other: *const [T]) {
-        // See https://github.com/oxc-project/oxc/pull/11092 for why this `#[allow]` attribute.
-        // TODO: Remove this once we bump MSRV and it's no longer required.
-        #[allow(clippy::needless_borrow, clippy::allow_attributes)]
-        let count = (&*other).len();
+        let count = other.len();
         self.reserve(count);
         let len = self.len_usize();
         ptr::copy_nonoverlapping(other as *const T, self.as_mut_ptr().add(len), count);
