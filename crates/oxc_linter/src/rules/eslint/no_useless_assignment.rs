@@ -329,18 +329,20 @@ impl Rule for NoUselessAssignment {
                             EdgeType::Jump => {
                                 scratch_live.union(&cfg_traverse_state[succ_id].live);
 
-                                // `continue` edges are modeled as `Jump`s to the loop header, so
-                                // account for values that are first observed on the next iteration.
-                                if Self::is_continue_to_loop_header(
+                                // `continue` edges are modeled as `Jump`s into the loop cycle, so
+                                // account for values that are first observed on a later iteration.
+                                scratch_find_loop.clear();
+                                if let Some(loop_header) = Self::continue_loop_header(
                                     ctx.cfg(),
                                     graph,
                                     block_node_id,
                                     edge.target(),
+                                    &mut scratch_find_loop,
                                 ) {
                                     Self::merge_loop_liveness(
                                         &allocator,
                                         graph,
-                                        edge.target(),
+                                        loop_header,
                                         &cfg_ops,
                                         &mut cached_loop_liveness,
                                         &mut scratch_loop_req,
@@ -649,16 +651,25 @@ impl NoUselessAssignment {
         scratch_live.union(scratch_loop_req);
     }
 
-    fn is_continue_to_loop_header(
+    fn continue_loop_header(
         cfg: &ControlFlowGraph,
         graph: &Graph,
         source: BlockNodeId,
         target: BlockNodeId,
-    ) -> bool {
-        graph
+        visited: &mut BitSet,
+    ) -> Option<BlockNodeId> {
+        if !cfg.is_reachable(target, source) {
+            return None;
+        }
+
+        if graph
             .edges_directed(target, Direction::Incoming)
             .any(|edge| matches!(edge.weight(), EdgeType::Backedge))
-            && cfg.is_reachable(target, source)
+        {
+            return Some(target);
+        }
+
+        Self::find_loop_start(graph, target, visited)
     }
 }
 #[test]
@@ -1117,6 +1128,16 @@ fn test() {
                 }
             }
         ",
+        "function anyChanges(before, after) {
+                        let hasChanges = false;
+                        for (const key of Object.keys(after)) {
+                            if (!(key in before)) {
+                                hasChanges = true;
+                                continue;
+                            }
+                        }
+                        return hasChanges;
+                    }",
     ];
 
     let fail = vec![
