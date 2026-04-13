@@ -658,18 +658,16 @@ impl NoUselessAssignment {
         target: BlockNodeId,
         visited: &mut BitSet,
     ) -> Option<BlockNodeId> {
-        if !cfg.is_reachable(target, source) {
-            return None;
-        }
-
-        if graph
+        let loop_header = if graph
             .edges_directed(target, Direction::Incoming)
             .any(|edge| matches!(edge.weight(), EdgeType::Backedge))
         {
-            return Some(target);
-        }
+            Some(target)
+        } else {
+            Self::find_loop_start(graph, target, visited)
+        }?;
 
-        Self::find_loop_start(graph, target, visited)
+        cfg.is_reachable(target, source).then_some(loop_header)
     }
 }
 #[test]
