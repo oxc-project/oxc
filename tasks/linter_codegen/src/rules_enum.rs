@@ -186,6 +186,14 @@ fn generate_rule_enum_impl(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
         })
         .collect();
 
+    let version_arms: Vec<TokenStream> = rule_entries
+        .iter()
+        .map(|rule| {
+            let enum_name = make_enum_ident(rule);
+            quote! { Self::#enum_name(_) => #enum_name::VERSION }
+        })
+        .collect();
+
     let plugin_name_arms: Vec<TokenStream> = rule_entries
         .iter()
         .map(|rule| {
@@ -315,6 +323,13 @@ fn generate_rule_enum_impl(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
             pub fn schema(&self, generator: &mut schemars::SchemaGenerator) -> Option<schemars::schema::Schema> {
                 match self {
                     #(#schema_arms),*
+                }
+            }
+
+            #[cfg(feature = "ruledocs")]
+            pub fn version(&self) -> Option<&'static str> {
+                match self {
+                    #(#version_arms),*
                 }
             }
 

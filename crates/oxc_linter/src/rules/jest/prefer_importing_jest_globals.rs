@@ -124,7 +124,8 @@ declare_oxc_lint!(
     jest,
     style,
     fix,
-    config = PreferImportingJestGlobalsConfig
+    config = PreferImportingJestGlobalsConfig,
+    version = "1.60.0"
 );
 
 impl Rule for PreferImportingJestGlobals {

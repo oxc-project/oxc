@@ -101,7 +101,8 @@ declare_oxc_lint!(
     /// ```
     ValidExpectInPromise,
     jest,
-    correctness
+    correctness,
+    version = "1.60.0"
 );
 
 impl Rule for ValidExpectInPromise {
