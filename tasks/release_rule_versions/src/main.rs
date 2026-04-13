@@ -45,7 +45,7 @@ fn run() -> Result<(), String> {
             for violation in violations {
                 eprintln!("{violation}");
             }
-            Err("stable rules still use version = \"next\"".to_string())
+            Err("rule version validation failed".to_string())
         }
         _ => Err("usage: cargo run -p oxc_release_rule_versions -- <rewrite|check> [options]"
             .to_string()),

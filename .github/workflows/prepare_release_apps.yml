@@ -50,6 +50,9 @@ jobs:
       - name: Rewrite rule versions
         run: cargo run -p oxc_release_rule_versions -- rewrite --release-version "${{ steps.run.outputs.OXLINT_VERSION }}"
 
+      - name: Validate rule versions
+        run: cargo run -p oxc_release_rule_versions -- check
+
       - uses: oxc-project/setup-node@4c26e7cb3605b6bdef5450dacd02c434b10fd8ba # v1.2.0
 
       - name: Rebuild NAPI bindings
