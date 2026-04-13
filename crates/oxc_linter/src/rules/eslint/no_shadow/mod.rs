@@ -5,7 +5,7 @@ mod tests;
 
 use std::path::Path;
 
-use javascript_globals::GLOBALS;
+use javascript_globals::GLOBALS_BUILTIN;
 use oxc_allocator::GetAddress;
 use oxc_ast::{
     AstKind,
@@ -698,17 +698,7 @@ fn is_type_only(flags: SymbolFlags) -> bool {
 }
 
 fn is_builtin_global_name(ctx: &LintContext, name: &str) -> bool {
-    if ctx.globals().is_enabled(name) {
-        return true;
-    }
-    for env_name in ctx.env().iter() {
-        if let Some(globals) = GLOBALS.get(env_name)
-            && globals.contains_key(name)
-        {
-            return true;
-        }
-    }
-    false
+    ctx.globals().is_enabled(name) || GLOBALS_BUILTIN.contains_key(name)
 }
 
 fn is_definition_file(path: &Path) -> bool {

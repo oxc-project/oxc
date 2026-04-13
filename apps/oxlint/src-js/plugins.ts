@@ -9,7 +9,7 @@ export type * as ESTree from "./generated/types";
 export type { Comment } from "./plugins/comments.ts";
 export type { Context, LanguageOptions } from "./plugins/context.ts";
 export type { Fix, Fixer, FixFn } from "./plugins/fix.ts";
-export type { Globals, Envs } from "./plugins/globals.ts";
+export type { Globals } from "./plugins/globals.ts";
 export type { CreateOnceRule, CreateRule, Plugin, Rule } from "./plugins/load.ts";
 export type { Options, RuleOptionsSchema } from "./plugins/options.ts";
 export type { Diagnostic, DiagnosticData, Suggestion } from "./plugins/report.ts";

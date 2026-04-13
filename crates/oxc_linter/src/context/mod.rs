@@ -2,7 +2,7 @@
 
 use std::{ffi::OsStr, ops::Deref, path::Path, rc::Rc};
 
-use javascript_globals::{GLOBALS, GLOBALS_BUILTIN, GLOBALS_ES2026};
+use javascript_globals::{GLOBALS_BUILTIN, GLOBALS_ES2026};
 
 use oxc_ast::ast::IdentifierReference;
 use oxc_cfg::ControlFlowGraph;
@@ -13,7 +13,7 @@ use oxc_span::Span;
 #[cfg(debug_assertions)]
 use crate::rule::RuleFixMeta;
 use crate::{
-    AllowWarnDeny, FrameworkFlags, ModuleRecord, OxlintEnv, OxlintGlobals, OxlintSettings,
+    AllowWarnDeny, FrameworkFlags, ModuleRecord, OxlintGlobals, OxlintSettings,
     WEBSITE_BASE_RULES_URL,
     config::GlobalValue,
     disable_directives::DisableDirectives,
@@ -229,29 +229,9 @@ impl<'a> LintContext<'a> {
             return Some(*value);
         }
 
-        self.get_env_global_entry(name)
-    }
-
-    /// Runtime environments turned on/off by the user.
-    ///
-    /// Examples of environments are `builtin`, `browser`, `node`, etc.
-    #[inline]
-    pub fn env(&self) -> &OxlintEnv {
-        &self.parent.config.env
-    }
-
-    fn get_env_global_entry(&self, var: &str) -> Option<GlobalValue> {
         // builtin is always readonly
-        if GLOBALS_BUILTIN.contains_key(var) {
+        if GLOBALS_BUILTIN.contains_key(name) {
             return Some(GlobalValue::Readonly);
-        }
-
-        for env in self.env().iter() {
-            if let Some(env) = GLOBALS.get(env)
-                && let Some(value) = env.get(var)
-            {
-                return Some(GlobalValue::from(*value));
-            }
         }
 
         None
@@ -271,7 +251,8 @@ impl<'a> LintContext<'a> {
         if self.globals().is_enabled(var) {
             return true;
         }
-        self.env_contains_var(var)
+
+        GLOBALS_BUILTIN.contains_key(var)
     }
 
     pub fn is_ecma_script_global(&self, var: &str) -> bool {
@@ -280,20 +261,6 @@ impl<'a> LintContext<'a> {
         }
 
         GLOBALS_ES2026.contains_key(var) || GLOBALS_BUILTIN.contains_key(var)
-    }
-
-    fn env_contains_var(&self, var: &str) -> bool {
-        if GLOBALS_BUILTIN.contains_key(var) {
-            return true;
-        }
-        for env in self.env().iter() {
-            if let Some(env) = GLOBALS.get(env)
-                && env.contains_key(var)
-            {
-                return true;
-            }
-        }
-        false
     }
 
     /* Diagnostics */
