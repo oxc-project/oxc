@@ -54,7 +54,7 @@
         // and vitest/jest mappings happening here, these three lines shouldn't be necessary
         "vitest/expect-expect": "error",
         "vitest/no-standalone-expect": "error",
-        "vitest/no-conditional-expect": "error",
+        "vitest/no-conditional-expect": "error"
       }
     },
     {
