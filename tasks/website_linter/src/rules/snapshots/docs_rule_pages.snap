@@ -1,11 +1,13 @@
 ---
 source: tasks/website_linter/src/rules/mod.rs
+assertion_line: 173
 expression: snapshot
 ---
 --- eslint/no-unused-vars.md ---
 ---
 title: "eslint/no-unused-vars"
 category: "Correctness"
+version: "0.7.0"
 default: true
 type_aware: false
 fix: "conditional_dangerous_fix_or_suggestion"
@@ -620,6 +622,7 @@ console.log(b);
 ---
 title: "import/namespace"
 category: "Correctness"
+version: "0.2.11"
 default: false
 type_aware: false
 fix: "none"
@@ -712,6 +715,7 @@ Whether to allow computed references to an imported namespace.
 ---
 title: "jest/expect-expect"
 category: "Correctness"
+version: "0.0.12"
 default: false
 type_aware: false
 fix: "none"
@@ -795,6 +799,7 @@ NOTE: The default value is `["expect"]` for Jest and
 ---
 title: "nextjs/no-duplicate-head"
 category: "Correctness"
+version: "0.3.3"
 default: false
 type_aware: false
 fix: "none"
@@ -874,6 +879,7 @@ export default MyDocument
 ---
 title: "promise/no-callback-in-promise"
 category: "Correctness"
+version: "0.10.0"
 default: false
 type_aware: false
 fix: "none"
@@ -967,6 +973,7 @@ Boolean as to whether callbacks in timeout functions like `setTimeout` will err.
 ---
 title: "react/no-will-update-set-state"
 category: "Correctness"
+version: "1.37.0"
 default: false
 type_aware: false
 fix: "none"
@@ -1051,6 +1058,7 @@ Makes this rule more strict by disallowing calls to `this.setState`` even within
 ---
 title: "typescript/no-floating-promises"
 category: "Correctness"
+version: "1.11.0"
 default: true
 type_aware: true
 fix: "fixable_suggestion"
@@ -1329,6 +1337,7 @@ Ignore Promises that are void expressions.
 ---
 title: "vue/no-lifecycle-after-await"
 category: "Correctness"
+version: "1.39.0"
 default: false
 type_aware: false
 fix: "none"
@@ -1393,6 +1402,7 @@ export default {
 ---
 title: "unicorn/prefer-array-find"
 category: "Perf"
+version: "0.16.12"
 default: false
 type_aware: false
 fix: "pending"
@@ -1444,6 +1454,7 @@ const match = users.find(fn);
 ---
 title: "oxc/no-barrel-file"
 category: "Restriction"
+version: "0.3.0"
 default: false
 type_aware: false
 fix: "none"
@@ -1522,6 +1533,7 @@ before the rule is triggered.
 ---
 title: "react/forbid-dom-props"
 category: "Restriction"
+version: "1.24.0"
 default: false
 type_aware: false
 fix: "none"
@@ -1637,6 +1649,7 @@ The name of the prop to forbid.
 ---
 title: "typescript/no-explicit-any"
 category: "Restriction"
+version: "0.0.13"
 default: false
 type_aware: false
 fix: "conditional_fix"
@@ -1730,6 +1743,7 @@ Whether to ignore rest parameter arrays.
 ---
 title: "jsdoc/require-returns"
 category: "Pedantic"
+version: "0.4.0"
 default: false
 type_aware: false
 fix: "pending"
@@ -1837,6 +1851,7 @@ Whether to require a `@returns` tag for async functions.
 ---
 title: "react/rules-of-hooks"
 category: "Pedantic"
+version: "0.3.3"
 default: false
 type_aware: false
 fix: "none"
@@ -1921,6 +1936,7 @@ function useCustomHook() {
 ---
 title: "typescript/class-literal-property-style"
 category: "Style"
+version: "1.47.0"
 default: false
 type_aware: false
 fix: "pending"

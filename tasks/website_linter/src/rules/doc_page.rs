@@ -39,6 +39,7 @@ impl Context {
             documentation,
             schema,
             plugin,
+            version,
             turned_on_by_default,
             autofix,
             category,
@@ -66,7 +67,7 @@ impl Context {
 
         writeln!(
             self.page,
-            "---\ntitle: \"{title}\"\ncategory: \"{category}\"\ndefault: {default}\ntype_aware: {type_aware}\nfix: \"{fix}\"\n---\n"
+            "---\ntitle: \"{title}\"\ncategory: \"{category}\"\nversion: \"{version}\"\ndefault: {default}\ntype_aware: {type_aware}\nfix: \"{fix}\"\n---\n"
         )?;
 
         writeln!(
