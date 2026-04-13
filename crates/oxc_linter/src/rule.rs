@@ -298,6 +298,9 @@ pub trait RuleMeta {
     /// Defaults to `false`. Rules that accept configuration options will have
     /// this set to `true` by the macro-generated impl.
     const HAS_CONFIG: bool = false;
+
+    /// Tags describing properties of this rule (e.g. recommended).
+    const TAGS: RuleTag = RuleTag::empty();
 }
 
 /// Rule categories defined by rust-clippy
@@ -383,7 +386,23 @@ impl fmt::Display for RuleCategory {
         f.write_str(category_name)
     }
 }
+bitflags::bitflags! {
+    /// Tags that can be applied to a lint rule to describe its properties.
+    ///
+    /// Tags are used to categorize rules and can be used to filter rules.
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+    pub struct RuleTag: u8 {
+        /// Rule is part of the recommended set for its plugin.
+        const Recommended = 1 << 0;
+    }
+}
 
+impl RuleTag {
+    /// Returns `true` if this tag set includes [`RuleTag::Recommended`].
+    pub fn is_recommended(self) -> bool {
+        self.contains(Self::Recommended)
+    }
+}
 // NOTE: this could be packed into a single byte if we wanted. I don't think
 // this is needed, but we could do it if it would have a performance impact.
 /// Describes the auto-fixing capabilities of a `Rule`.
