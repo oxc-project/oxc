@@ -8731,7 +8731,6 @@ impl RuleEnum {
                 .or_else(|| VueValidDefineProps::schema(generator)),
         }
     }
-    #[cfg(feature = "ruledocs")]
     pub fn version(&self) -> Option<&'static str> {
         match self {
             Self::ImportConsistentTypeSpecifierStyle(_) => {

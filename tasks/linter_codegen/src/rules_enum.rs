@@ -326,7 +326,6 @@ fn generate_rule_enum_impl(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
                 }
             }
 
-            #[cfg(feature = "ruledocs")]
             pub fn version(&self) -> Option<&'static str> {
                 match self {
                     #(#version_arms),*
