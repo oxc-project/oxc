@@ -1,5 +1,6 @@
 use std::{
     fmt, fs, io,
+    io::Write,
     path::{Path, PathBuf},
 };
 
@@ -10,6 +11,7 @@ use syn::{
     spanned::Spanned,
     visit::Visit,
 };
+use tempfile::NamedTempFile;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RewriteReport {
@@ -100,6 +102,7 @@ pub fn rewrite_rule_versions(root: &Path, _release_version: &str) -> Result<Rewr
     let rules_root = canonical_rules_root(root)?;
     let mut rewritten_rules = Vec::new();
     let mut file_rewrites = Vec::new();
+    let mut prepared_file_rewrites = Vec::new();
 
     for path in collect_rule_files(&rules_root)? {
         let source = fs::read_to_string(&path)?;
@@ -118,8 +121,11 @@ pub fn rewrite_rule_versions(root: &Path, _release_version: &str) -> Result<Rewr
 
     for file_rewrite in file_rewrites {
         ensure_path_is_within_rules_root(&file_rewrite.path, &rules_root)?;
-        fs::write(&file_rewrite.path, file_rewrite.rewritten_source)?;
-        rewritten_rules.extend(file_rewrite.rewritten_rules);
+        prepared_file_rewrites.push(PreparedFileRewrite::new(file_rewrite)?);
+    }
+
+    for prepared_file_rewrite in prepared_file_rewrites {
+        rewritten_rules.extend(prepared_file_rewrite.persist()?);
     }
 
     Ok(RewriteReport { rewritten_rules })
@@ -173,6 +179,38 @@ impl FileRewrite {
             rewritten_source,
             rewritten_rules: rewrites.into_iter().map(|rewrite| rewrite.rule_name).collect(),
         }
+    }
+}
+
+struct PreparedFileRewrite {
+    path: PathBuf,
+    temp_file: NamedTempFile,
+    rewritten_rules: Vec<String>,
+}
+
+impl PreparedFileRewrite {
+    fn new(file_rewrite: FileRewrite) -> Result<Self, Error> {
+        let Some(parent) = file_rewrite.path.parent() else {
+            return Err(Error::Io(io::Error::new(
+                io::ErrorKind::InvalidInput,
+                format!("{} has no parent directory", file_rewrite.path.display()),
+            )));
+        };
+
+        let mut temp_file = NamedTempFile::new_in(parent)?;
+        temp_file.write_all(file_rewrite.rewritten_source.as_bytes())?;
+        temp_file.as_file_mut().sync_all()?;
+
+        Ok(Self {
+            path: file_rewrite.path,
+            temp_file,
+            rewritten_rules: file_rewrite.rewritten_rules,
+        })
+    }
+
+    fn persist(self) -> Result<Vec<String>, Error> {
+        self.temp_file.persist(&self.path).map_err(|error| Error::Io(error.error))?;
+        Ok(self.rewritten_rules)
     }
 }
 
@@ -435,6 +473,7 @@ fn is_valid_release_version(version: &str) -> bool {
 mod test {
     use super::*;
     use oxc_tasks_common::project_root;
+    use tempfile::TempDir;
 
     #[test]
     fn prepare_release_workflow_validates_after_rewrite() {
@@ -450,7 +489,7 @@ mod test {
     #[test]
     fn rewrite_updates_stable_next_versions() {
         let dir = create_test_rules_dir();
-        let stable_rule = dir.join("crates/oxc_linter/src/rules/eslint/no_debugger.rs");
+        let stable_rule = dir.path().join("crates/oxc_linter/src/rules/eslint/no_debugger.rs");
         write_rule(
             &stable_rule,
             r#"
@@ -466,7 +505,7 @@ declare_oxc_lint!(
 "#,
         );
 
-        let report = rewrite_rule_versions(&dir, "1.61.0").unwrap();
+        let report = rewrite_rule_versions(dir.path(), "1.61.0").unwrap();
         let updated = fs::read_to_string(stable_rule).unwrap();
 
         assert_eq!(report.rewritten_rules, ["NoDebugger"]);
@@ -477,7 +516,7 @@ declare_oxc_lint!(
     #[test]
     fn rewrite_keeps_nursery_next_versions() {
         let dir = create_test_rules_dir();
-        let nursery_rule = dir.join("crates/oxc_linter/src/rules/eslint/no_debugger.rs");
+        let nursery_rule = dir.path().join("crates/oxc_linter/src/rules/eslint/no_debugger.rs");
         write_rule(
             &nursery_rule,
             r#"
@@ -493,7 +532,7 @@ declare_oxc_lint!(
 "#,
         );
 
-        let report = rewrite_rule_versions(&dir, "1.61.0").unwrap();
+        let report = rewrite_rule_versions(dir.path(), "1.61.0").unwrap();
         let updated = fs::read_to_string(nursery_rule).unwrap();
 
         assert!(report.rewritten_rules.is_empty());
@@ -504,7 +543,7 @@ declare_oxc_lint!(
     fn check_only_reports_stable_next_versions() {
         let dir = create_test_rules_dir();
         write_rule(
-            &dir.join("crates/oxc_linter/src/rules/eslint/no_debugger.rs"),
+            &dir.path().join("crates/oxc_linter/src/rules/eslint/no_debugger.rs"),
             r#"
 use oxc_macros::declare_oxc_lint;
 
@@ -518,7 +557,7 @@ declare_oxc_lint!(
 "#,
         );
         write_rule(
-            &dir.join("crates/oxc_linter/src/rules/eslint/no_alert.rs"),
+            &dir.path().join("crates/oxc_linter/src/rules/eslint/no_alert.rs"),
             r#"
 use oxc_macros::declare_oxc_lint;
 
@@ -532,7 +571,7 @@ declare_oxc_lint!(
 "#,
         );
 
-        let violations = check_rule_versions(&dir).unwrap();
+        let violations = check_rule_versions(dir.path()).unwrap();
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].rule_name, "NoDebugger");
@@ -544,7 +583,7 @@ declare_oxc_lint!(
     fn rewrite_rejects_invalid_release_versions() {
         let dir = create_test_rules_dir();
 
-        let error = rewrite_rule_versions(&dir, "foo").unwrap_err();
+        let error = rewrite_rule_versions(dir.path(), "foo").unwrap_err();
 
         assert!(matches!(error, Error::InvalidReleaseVersion(version) if version == "foo"));
     }
@@ -553,7 +592,7 @@ declare_oxc_lint!(
     fn check_reports_invalid_stable_versions() {
         let dir = create_test_rules_dir();
         write_rule(
-            &dir.join("crates/oxc_linter/src/rules/eslint/no_debugger.rs"),
+            &dir.path().join("crates/oxc_linter/src/rules/eslint/no_debugger.rs"),
             r#"
 use oxc_macros::declare_oxc_lint;
 
@@ -567,7 +606,7 @@ declare_oxc_lint!(
 "#,
         );
 
-        let violations = check_rule_versions(&dir).unwrap();
+        let violations = check_rule_versions(dir.path()).unwrap();
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].kind, RuleVersionViolationKind::Invalid("foo".to_string()));
@@ -576,8 +615,8 @@ declare_oxc_lint!(
     #[test]
     fn rewrite_is_atomic_when_a_later_file_fails_to_parse() {
         let dir = create_test_rules_dir();
-        let stable_rule = dir.join("crates/oxc_linter/src/rules/eslint/a_good.rs");
-        let invalid_rule = dir.join("crates/oxc_linter/src/rules/eslint/b_bad.rs");
+        let stable_rule = dir.path().join("crates/oxc_linter/src/rules/eslint/a_good.rs");
+        let invalid_rule = dir.path().join("crates/oxc_linter/src/rules/eslint/b_bad.rs");
         write_rule(
             &stable_rule,
             r#"
@@ -606,7 +645,7 @@ declare_oxc_lint!(
 "#,
         );
 
-        let error = rewrite_rule_versions(&dir, "1.61.0").unwrap_err();
+        let error = rewrite_rule_versions(dir.path(), "1.61.0").unwrap_err();
         let stable_rule_after = fs::read_to_string(stable_rule).unwrap();
 
         assert!(matches!(error, Error::Parse { .. }));
@@ -619,8 +658,8 @@ declare_oxc_lint!(
         use std::os::unix::fs::symlink;
 
         let dir = create_test_rules_dir();
-        let external_rule = dir.join("outside.rs");
-        let symlink_path = dir.join("crates/oxc_linter/src/rules/eslint/symlink_rule.rs");
+        let external_rule = dir.path().join("outside.rs");
+        let symlink_path = dir.path().join("crates/oxc_linter/src/rules/eslint/symlink_rule.rs");
         write_rule(
             &external_rule,
             r#"
@@ -637,7 +676,7 @@ declare_oxc_lint!(
         );
         symlink(&external_rule, &symlink_path).unwrap();
 
-        let error = rewrite_rule_versions(&dir, "1.61.0").unwrap_err();
+        let error = rewrite_rule_versions(dir.path(), "1.61.0").unwrap_err();
 
         assert!(
             matches!(
@@ -649,13 +688,62 @@ declare_oxc_lint!(
         );
     }
 
-    fn create_test_rules_dir() -> PathBuf {
-        let dir = std::env::temp_dir().join(format!(
-            "oxc-release-rule-versions-{}-{}",
-            std::process::id(),
-            std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()
-        ));
-        fs::create_dir_all(dir.join("crates/oxc_linter/src/rules/eslint")).unwrap();
+    #[cfg(unix)]
+    #[test]
+    fn rewrite_does_not_modify_files_when_a_later_write_would_fail() {
+        use std::os::unix::fs::PermissionsExt;
+
+        let dir = create_test_rules_dir();
+        let first_rule = dir.path().join("crates/oxc_linter/src/rules/eslint/a_first.rs");
+        let locked_dir = dir.path().join("crates/oxc_linter/src/rules/locked");
+        let locked_rule = locked_dir.join("b_second.rs");
+
+        fs::create_dir_all(&locked_dir).unwrap();
+        write_rule(
+            &first_rule,
+            r#"
+use oxc_macros::declare_oxc_lint;
+
+declare_oxc_lint!(
+    /// docs
+    FirstRule,
+    eslint,
+    correctness,
+    version = "next",
+);
+"#,
+        );
+        write_rule(
+            &locked_rule,
+            r#"
+use oxc_macros::declare_oxc_lint;
+
+declare_oxc_lint!(
+    /// docs
+    SecondRule,
+    eslint,
+    correctness,
+    version = "next",
+);
+"#,
+        );
+
+        fs::set_permissions(&locked_rule, fs::Permissions::from_mode(0o444)).unwrap();
+        fs::set_permissions(&locked_dir, fs::Permissions::from_mode(0o555)).unwrap();
+
+        let error = rewrite_rule_versions(dir.path(), "1.61.0").unwrap_err();
+        let first_rule_after = fs::read_to_string(first_rule).unwrap();
+
+        assert!(matches!(error, Error::Io(_)));
+        assert!(
+            first_rule_after.contains(r#"version = "next""#),
+            "earlier files should remain unchanged when a later write fails"
+        );
+    }
+
+    fn create_test_rules_dir() -> TempDir {
+        let dir = tempfile::Builder::new().prefix("oxc-release-rule-versions-").tempdir().unwrap();
+        fs::create_dir_all(dir.path().join("crates/oxc_linter/src/rules/eslint")).unwrap();
         dir
     }
 

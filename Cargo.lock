@@ -2357,6 +2357,7 @@ dependencies = [
  "pico-args",
  "proc-macro2",
  "syn",
+ "tempfile",
 ]
 
 [[package]]
