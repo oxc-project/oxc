@@ -14,7 +14,7 @@ working directory: fixtures/cli/output_formatter_diagnostic
  10 | const foo = 3;
     `----
 
-  ! Unused eslint-disable directive (no problems were reported).
+  ! Unused oxlint-disable directive (no problems were reported).
     ,-[disable-directive.js:12:1]
  11 | 
  12 | // oxlint-disable-next-line no-debugger
@@ -22,7 +22,7 @@ working directory: fixtures/cli/output_formatter_diagnostic
  13 | const bar = 3;
     `----
 
-  ! Unused eslint-disable directive (no problems were reported).
+  ! Unused oxlint-disable directive (no problems were reported).
     ,-[disable-directive.js:15:1]
  14 | 
  15 | // oxlint-disable-next-line eslint/no-debugger

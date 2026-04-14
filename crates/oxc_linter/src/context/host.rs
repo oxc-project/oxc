@@ -183,15 +183,13 @@ impl<'a> ContextHost<'a> {
 
         let file_path = file_path.as_ref().to_path_buf().into_boxed_path();
         let file_extension = file_path.extension().map(|ext| ext.to_owned().into_boxed_os_str());
-        let directive_prefixes = config.options.disable_directive_prefixes.as_deref();
+        let support_eslint_disable_directives =
+            config.options.support_eslint_disable_directives.unwrap_or(true);
 
         for sub_host in &mut sub_hosts {
-            let builder = match directive_prefixes {
-                Some(prefixes) => DisableDirectivesBuilder::new().with_prefixes(prefixes),
-                None => DisableDirectivesBuilder::new(),
-            };
-            sub_host.disable_directives =
-                builder.build(sub_host.semantic.source_text(), sub_host.semantic.comments());
+            sub_host.disable_directives = DisableDirectivesBuilder::new()
+                .with_support_eslint_disable_directives(support_eslint_disable_directives)
+                .build(sub_host.semantic.source_text(), sub_host.semantic.comments());
         }
 
         Self {

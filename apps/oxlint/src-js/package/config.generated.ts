@@ -37,10 +37,6 @@ export type ExternalPluginEntry =
       specifier: string;
     };
 /**
- * Prefixes recognized for disable and enable directive comments.
- */
-export type DisableDirectivePrefix = "eslint" | "oxlint";
-/**
  * A set of glob patterns.
  */
 export type GlobSet = string[];
@@ -439,16 +435,6 @@ export interface OxlintOptions {
    */
   denyWarnings?: boolean;
   /**
-   * Directive prefixes to recognize for `*-disable`, `*-disable-line`,
-   * `*-disable-next-line`, and matching `*-enable` comments.
-   *
-   * `reportUnusedDisableDirectives` uses the same prefix set.
-   *
-   * Defaults to `["oxlint", "eslint"]`.
-   * Only supported in the root configuration file.
-   */
-  disableDirectivePrefixes?: DisableDirectivePrefix[];
-  /**
    * Specify a warning threshold. Exits with an error status if warnings exceed this value.
    *
    * Equivalent to passing `--max-warnings` on the CLI.
@@ -462,6 +448,16 @@ export interface OxlintOptions {
    * Only supported in the root configuration file.
    */
   reportUnusedDisableDirectives?: AllowWarnDeny;
+  /**
+   * Whether oxlint should recognize `eslint-disable*` and `eslint-enable*`
+   * directives in addition to its native `oxlint-*` directives.
+   *
+   * `reportUnusedDisableDirectives` uses the same setting.
+   *
+   * Defaults to `true`.
+   * Only supported in the root configuration file.
+   */
+  supportEslintDisableDirectives?: boolean;
   /**
    * Enable rules that require type information.
    *

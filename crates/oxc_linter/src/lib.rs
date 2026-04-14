@@ -63,13 +63,13 @@ mod lint_runner;
 
 pub use crate::config::plugins::normalize_plugin_name;
 pub use crate::disable_directives::{
-    DisableDirectives, DisableRuleComment, RuleCommentRule, RuleCommentType,
+    DirectivePrefix, DisableDirectives, DisableRuleComment, RuleCommentRule, RuleCommentType,
     create_unused_directives_diagnostics,
 };
 pub use crate::{
     config::{
-        Config, ConfigBuilderError, ConfigStore, ConfigStoreBuilder, DisableDirectivePrefix,
-        ESLintRule, LintIgnoreMatcher, LintPlugins, Oxlintrc, ResolvedLinterState,
+        Config, ConfigBuilderError, ConfigStore, ConfigStoreBuilder, ESLintRule, LintIgnoreMatcher,
+        LintPlugins, Oxlintrc, ResolvedLinterState,
     },
     context::{ContextSubHost, LintContext},
     external_linter::{

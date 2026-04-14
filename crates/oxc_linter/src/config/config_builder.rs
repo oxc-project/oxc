@@ -1455,19 +1455,13 @@ mod test {
         );
 
         let config =
-            config_store_from_str(r#"{ "options": {"disableDirectivePrefixes": ["oxlint"] } }"#);
-        assert_eq!(
-            config.base.config.options.disable_directive_prefixes,
-            Some(vec![crate::DisableDirectivePrefix::Oxlint])
-        );
+            config_store_from_str(r#"{ "options": {"supportEslintDisableDirectives": false } }"#);
+        assert_eq!(config.base.config.options.support_eslint_disable_directives, Some(false));
 
         let config = config_store_from_str(
-            r#"{ "extends": ["fixtures/extends_config/options/disable_directive_prefixes_oxlint.json"] }"#,
+            r#"{ "extends": ["fixtures/extends_config/options/support_eslint_disable_directives_false.json"] }"#,
         );
-        assert_eq!(
-            config.base.config.options.disable_directive_prefixes,
-            Some(vec![crate::DisableDirectivePrefix::Oxlint])
-        );
+        assert_eq!(config.base.config.options.support_eslint_disable_directives, Some(false));
 
         let config = config_store_from_str(
             r#"{ "extends": ["fixtures/extends_config/options/deny_warnings_true.json"] }"#,

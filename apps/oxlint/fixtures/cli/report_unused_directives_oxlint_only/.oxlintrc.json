@@ -1,6 +1,6 @@
 {
     "options": {
-        "disableDirectivePrefixes": ["oxlint"]
+        "supportEslintDisableDirectives": false
     },
     "rules": {
         "no-console": "warn",
