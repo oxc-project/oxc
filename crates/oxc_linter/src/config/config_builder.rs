@@ -1655,7 +1655,17 @@ mod test {
     }
 
     fn config_store_from_str(s: &str) -> Config {
-        config_builder_from_str(s).build(&mut ExternalPluginStore::default()).unwrap()
+        let mut external_plugin_store = ExternalPluginStore::default();
+        ConfigStoreBuilder::from_oxlintrc(
+            true,
+            serde_json::from_str(s).unwrap(),
+            None,
+            &mut external_plugin_store,
+            None,
+        )
+        .unwrap()
+        .build(&mut external_plugin_store)
+        .unwrap()
     }
 
     fn config_builder_from_str(s: &str) -> ConfigStoreBuilder {
