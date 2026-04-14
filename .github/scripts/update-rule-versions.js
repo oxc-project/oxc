@@ -1,0 +1,247 @@
+#!/usr/bin/env node
+/* eslint-disable no-console */
+
+const fs = require("node:fs");
+const path = require("node:path");
+
+const DEFAULT_RULES_ROOT = path.join("crates", "oxc_linter", "src", "rules");
+const DECLARE_RULE_MACRO = "declare_oxc_lint!(";
+const NEXT_VERSION_TEXT = 'version = "next"';
+const NEXT_VERSION_REGEX = /version\s*=\s*"next"/;
+const VALID_CATEGORIES = new Set([
+  "correctness",
+  "suspicious",
+  "pedantic",
+  "perf",
+  "style",
+  "restriction",
+  "nursery",
+]);
+
+function validateReleaseVersion(releaseVersion) {
+  if (!/^\d+\.\d+\.\d+$/.test(releaseVersion)) {
+    throw new Error(`release version must be x.y.z, got \`${releaseVersion}\``);
+  }
+}
+
+function collectRuleFiles(dir) {
+  const files = [];
+
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const entryPath = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      files.push(...collectRuleFiles(entryPath));
+    } else if (entry.isFile() && entry.name.endsWith(".rs")) {
+      files.push(entryPath);
+    }
+  }
+
+  files.sort();
+  return files;
+}
+
+function normalizePath(filePath) {
+  return filePath.split(path.sep).join("/");
+}
+
+function replaceVersionLiteral(line, releaseVersion) {
+  const match = line.match(/^(\s*version\s*=\s*)"next"(.*)$/);
+  if (!match) {
+    throw new Error(`could not rewrite version line: ${line.trim()}`);
+  }
+
+  return `${match[1]}"${releaseVersion}"${match[2]}`;
+}
+
+function analyzeRuleFile(source, filePath, releaseVersion, repoRoot) {
+  const relativeFile = normalizePath(path.relative(repoRoot, filePath));
+  const lines = source.split("\n");
+  const updatedLines = [...lines];
+  const coveredNextVersionLines = new Set();
+  const updatedRules = [];
+  const skippedNurseryRules = [];
+
+  for (let startLine = 0; startLine < lines.length; startLine++) {
+    if (!lines[startLine].includes(DECLARE_RULE_MACRO)) {
+      continue;
+    }
+
+    let endLine = startLine + 1;
+    while (endLine < lines.length && lines[endLine].trim() !== ");") {
+      endLine += 1;
+    }
+
+    if (endLine >= lines.length) {
+      throw new Error(`${relativeFile}: unterminated declare_oxc_lint! block`);
+    }
+
+    const metadataEntries = [];
+    for (let lineIndex = startLine + 1; lineIndex < endLine; lineIndex++) {
+      const trimmed = lines[lineIndex].trim();
+      if (!trimmed || trimmed.startsWith("///")) {
+        continue;
+      }
+
+      metadataEntries.push({ lineIndex, trimmed });
+    }
+
+    const versionEntry = metadataEntries.find(({ trimmed }) => NEXT_VERSION_REGEX.test(trimmed));
+    if (!versionEntry) {
+      startLine = endLine;
+      continue;
+    }
+
+    if (metadataEntries.length < 3) {
+      throw new Error(`${relativeFile}: could not parse rule category from declare_oxc_lint! block`);
+    }
+
+    const ruleName = metadataEntries[0].trimmed.replace(/,$/, "");
+    const category = metadataEntries[2].trimmed.replace(/,$/, "");
+
+    if (!VALID_CATEGORIES.has(category)) {
+      throw new Error(`${relativeFile}: unknown rule category \`${category}\``);
+    }
+
+    coveredNextVersionLines.add(versionEntry.lineIndex);
+
+    if (category === "nursery") {
+      skippedNurseryRules.push({ file: relativeFile, ruleName });
+      startLine = endLine;
+      continue;
+    }
+
+    updatedLines[versionEntry.lineIndex] =
+      replaceVersionLiteral(lines[versionEntry.lineIndex], releaseVersion);
+    updatedRules.push({ file: relativeFile, ruleName, from: "next", to: releaseVersion });
+    startLine = endLine;
+  }
+
+  for (const [lineIndex, line] of lines.entries()) {
+    if (NEXT_VERSION_REGEX.test(line) && !coveredNextVersionLines.has(lineIndex)) {
+      throw new Error(`${relativeFile}: found \`${NEXT_VERSION_TEXT}\` outside a declare_oxc_lint! block`);
+    }
+  }
+
+  return {
+    updatedSource: updatedLines.join("\n"),
+    updatedRules,
+    skippedNurseryRules,
+  };
+}
+
+function rewriteNextRuleVersions({ root, releaseVersion, dryRun = false }) {
+  validateReleaseVersion(releaseVersion);
+
+  const repoRoot = path.resolve(root);
+  const rulesRoot = path.join(repoRoot, DEFAULT_RULES_ROOT);
+  if (!fs.existsSync(rulesRoot)) {
+    throw new Error(`rules root does not exist: ${rulesRoot}`);
+  }
+
+  const report = { updatedRules: [], skippedNurseryRules: [] };
+
+  for (const filePath of collectRuleFiles(rulesRoot)) {
+    const source = fs.readFileSync(filePath, "utf8");
+    if (!source.includes(NEXT_VERSION_TEXT)) {
+      continue;
+    }
+
+    const fileReport = analyzeRuleFile(source, filePath, releaseVersion, repoRoot);
+    report.updatedRules.push(...fileReport.updatedRules);
+    report.skippedNurseryRules.push(...fileReport.skippedNurseryRules);
+
+    if (!dryRun && fileReport.updatedRules.length > 0) {
+      fs.writeFileSync(filePath, fileReport.updatedSource);
+    }
+  }
+
+  return report;
+}
+
+function printReport(report, dryRun) {
+  if (report.updatedRules.length === 0) {
+    console.log("No stable rule versions needed updating.");
+  } else {
+    console.log(`${dryRun ? "Would update" : "Updated"} ${report.updatedRules.length} rule version(s):`);
+    for (const change of report.updatedRules) {
+      console.log(
+        `- ${change.file}: ${change.ruleName} ${NEXT_VERSION_TEXT} -> version = "${change.to}"`,
+      );
+    }
+  }
+
+  if (report.skippedNurseryRules.length > 0) {
+    console.log(`Skipped ${report.skippedNurseryRules.length} nursery rule(s):`);
+    for (const skippedRule of report.skippedNurseryRules) {
+      console.log(`- ${skippedRule.file}: ${skippedRule.ruleName}`);
+    }
+  }
+}
+
+function parseArgs(argv) {
+  const options = {
+    root: process.cwd(),
+    releaseVersion: "",
+    dryRun: false,
+  };
+
+  for (let index = 0; index < argv.length; index++) {
+    const arg = argv[index];
+    if ((arg === "--release-version" || arg === "-r") && argv[index + 1]) {
+      options.releaseVersion = argv[index + 1];
+      index += 1;
+    } else if ((arg === "--root" || arg === "-C") && argv[index + 1]) {
+      options.root = argv[index + 1];
+      index += 1;
+    } else if (arg === "--dry-run" || arg === "-n") {
+      options.dryRun = true;
+    } else if (arg === "--help" || arg === "-h") {
+      options.help = true;
+    } else {
+      throw new Error(`unknown argument: ${arg}`);
+    }
+  }
+
+  return options;
+}
+
+function printHelp() {
+  console.log(`Usage:
+  node .github/scripts/update-rule-versions.js --release-version <x.y.z> [--root <path>] [--dry-run]
+
+Options:
+  --release-version, -r  Version to replace \`version = "next"\` with
+  --root, -C             Repository root (defaults to current working directory)
+  --dry-run, -n          Print the changes without writing files
+  --help, -h             Show this help
+`);
+}
+
+function main(argv = process.argv.slice(2)) {
+  const options = parseArgs(argv);
+  if (options.help) {
+    printHelp();
+    return;
+  }
+  if (!options.releaseVersion) {
+    throw new Error("missing required `--release-version <x.y.z>`");
+  }
+
+  const report = rewriteNextRuleVersions(options);
+  printReport(report, options.dryRun);
+}
+
+if (require.main === module) {
+  try {
+    main();
+  } catch (error) {
+    console.error(error.message);
+    process.exitCode = 1;
+  }
+}
+
+module.exports = {
+  analyzeRuleFile,
+  rewriteNextRuleVersions,
+  validateReleaseVersion,
+};
