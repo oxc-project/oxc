@@ -24,13 +24,18 @@ function validateReleaseVersion(releaseVersion) {
   }
 }
 
-function collectRuleFiles(dir) {
+function collectRuleFiles(dir, repoRoot) {
   const files = [];
 
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     const entryPath = path.join(dir, entry.name);
+    if (entry.isSymbolicLink()) {
+      const relativePath = normalizePath(path.relative(repoRoot, entryPath));
+      throw new Error(`${relativePath}: symlinked rule paths are not supported`);
+    }
+
     if (entry.isDirectory()) {
-      files.push(...collectRuleFiles(entryPath));
+      files.push(...collectRuleFiles(entryPath, repoRoot));
     } else if (entry.isFile() && entry.name.endsWith(".rs")) {
       files.push(entryPath);
     }
@@ -178,7 +183,7 @@ function rewriteNextRuleVersions({ root, releaseVersion, dryRun = false }) {
 
   const report = { updatedRules: [], skippedNurseryRules: [] };
 
-  for (const filePath of collectRuleFiles(rulesRoot)) {
+  for (const filePath of collectRuleFiles(rulesRoot, repoRoot)) {
     const source = fs.readFileSync(filePath, "utf8");
     if (!source.includes(NEXT_VERSION_TEXT)) {
       continue;

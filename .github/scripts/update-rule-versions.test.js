@@ -249,6 +249,32 @@ test("fails if version next is outside a declare_oxc_lint block", () => {
   );
 });
 
+test("fails if the rules tree contains symlinked rule files", { skip: process.platform === "win32" }, () => {
+  const root = createTempRepo();
+  const dir = rulesDir(root);
+  fs.mkdirSync(dir, { recursive: true });
+
+  fs.writeFileSync(
+    path.join(root, "real_rule.rs"),
+    `
+use oxc_macros::declare_oxc_lint;
+
+declare_oxc_lint!(
+    NoDebugger,
+    eslint,
+    correctness,
+    version = "next",
+);
+`.trimStart(),
+  );
+  fs.symlinkSync(path.join(root, "real_rule.rs"), path.join(dir, "linked_rule.rs"));
+
+  assert.throws(
+    () => rewriteNextRuleVersions({ root, releaseVersion: "1.61.0" }),
+    /symlinked rule paths are not supported/,
+  );
+});
+
 test("supports dry-run through the CLI", () => {
   const root = createTempRepo();
   writeRule(
