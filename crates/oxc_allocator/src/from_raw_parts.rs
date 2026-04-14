@@ -1,6 +1,7 @@
 //! Define additional methods, used only by raw transfer:
 //!
 //! * [`Allocator::from_raw_parts`]
+//! * [`Allocator::cursor_ptr`]
 //! * [`Allocator::set_cursor_ptr`]
 //! * [`Allocator::data_end_ptr`]
 //! * [`Allocator::end_ptr`]
@@ -44,6 +45,11 @@ impl Allocator {
         // SAFETY: Safety requirements of `Arena::from_raw_parts` are the same as for this method
         let arena = unsafe { Arena::from_raw_parts(ptr, size) };
         Self::from_arena(arena)
+    }
+
+    /// Get cursor pointer for this [`Allocator`]'s current chunk.
+    pub fn cursor_ptr(&self) -> NonNull<u8> {
+        self.arena().cursor_ptr()
     }
 
     /// Set cursor pointer for this [`Allocator`]'s current chunk.

@@ -442,14 +442,14 @@ impl Linter {
         // So instead we get a pointer to `Program`.
         // The pointer is obtained initially from `&Program` in `Semantic`, but that pointer
         // has no provenance for mutation, so can't be converted to `&mut Program`.
-        // So create a new pointer to `Program` which inherits `data_end_ptr`'s provenance,
+        // So create a new pointer to `Program` which inherits `cursor_ptr`'s provenance,
         // which does allow mutation.
         //
         // We then drop `Semantic`, after which no references to any AST nodes remain.
         // We can then safety convert the pointer to `&mut Program`.
         //
         // `Program` was created in `allocator`, and that allocator is a `FixedSizeAllocator`,
-        // so only has 1 chunk. So `data_end_ptr` and `Program` are within the same allocation.
+        // so only has 1 chunk. So `cursor_ptr` and `Program` are within the same allocation.
         // All callers of `Linter::run` obtain `allocator` and `Semantic` from `ModuleContent`,
         // which ensure they are in same allocation.
         // However, we have no static guarantee of this, so strictly speaking it's unsound.
@@ -458,8 +458,7 @@ impl Linter {
         let ctx_host = Rc::get_mut(ctx_host).unwrap();
         let semantic = mem::take(ctx_host.semantic_mut());
         let program_addr = NonNull::from(semantic.nodes().program()).addr();
-        let mut program_ptr =
-            allocator.data_end_ptr().cast::<Program<'a>>().with_addr(program_addr);
+        let mut program_ptr = allocator.cursor_ptr().cast::<Program<'a>>().with_addr(program_addr);
         drop(semantic);
         // SAFETY: Now that we've dropped `Semantic`, no references to any AST nodes remain,
         // so can get a mutable reference to `Program` without aliasing violations.

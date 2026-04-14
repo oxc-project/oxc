@@ -2647,6 +2647,13 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
         Self::new_impl(chunk_footer_ptr, Some(size_without_footer))
     }
 
+    /// Get cursor pointer for this [`Arena`]'s current chunk.
+    pub fn cursor_ptr(&self) -> NonNull<u8> {
+        // SAFETY: `current_chunk_footer` always points to a valid `ChunkFooter`
+        let chunk_footer = unsafe { self.current_chunk_footer.get().as_ref() };
+        chunk_footer.ptr.get()
+    }
+
     /// Set cursor pointer for this [`Arena`]'s current chunk.
     ///
     /// This is dangerous, and this method should not ordinarily be used.
