@@ -32,6 +32,7 @@ all = [
   "code_buffer",
   "fieldless_enum",
   "inline_string",
+  "non_null",
   "rope",
   "slice_iter",
   "stack",
@@ -41,6 +42,7 @@ box_macros = []
 code_buffer = ["assert_unchecked"]
 fieldless_enum = []
 inline_string = ["assert_unchecked"]
+non_null = []
 rope = ["dep:ropey"]
 slice_iter = ["assert_unchecked"]
 stack = []
