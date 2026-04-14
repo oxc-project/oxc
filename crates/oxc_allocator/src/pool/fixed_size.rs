@@ -507,6 +507,19 @@ pub unsafe fn free_fixed_size_allocator(metadata_ptr: NonNull<FixedSizeAllocator
 }
 
 impl Allocator {
+    /// Get pointer to the `RawTransferMetadata` for this [`Allocator`].
+    ///
+    /// # SAFETY
+    /// This `Allocator` must have been created by a `FixedSizeAllocator`.
+    #[expect(clippy::unnecessary_safety_comment)]
+    pub unsafe fn raw_transfer_metadata_ptr(&self) -> NonNull<u8> {
+        // SAFETY: Caller guarantees this `Allocator` was created by a `FixedSizeAllocator`.
+        //
+        // `RawTransferMetadata` sits after the end of the chunk owned by the `Allocator`.
+        // `end_ptr` is end of the allocator chunk (after the chunk header).
+        self.end_ptr()
+    }
+
     /// Get pointer to the `FixedSizeAllocatorMetadata` for this [`Allocator`].
     ///
     /// # SAFETY
@@ -518,11 +531,15 @@ impl Allocator {
         //
         // `FixedSizeAllocator::new` writes `FixedSizeAllocatorMetadata` after the end of
         // the chunk owned by the `Allocator`, and `RawTransferMetadata` (see above).
-        // `end_ptr` is end of the allocator chunk (after the chunk header).
+        // `raw_transfer_metadata_ptr` is position of the `RawTransferMetadata` in the buffer.
         // So `end_ptr + RAW_METADATA_SIZE` points to a valid, initialized `FixedSizeAllocatorMetadata`.
         //
         // We never create `&mut` references to `FixedSizeAllocatorMetadata`,
         // and it's not part of the buffer sent to JS, so no danger of aliasing violations.
-        unsafe { self.end_ptr().add(RAW_METADATA_SIZE).cast::<FixedSizeAllocatorMetadata>() }
+        unsafe {
+            self.raw_transfer_metadata_ptr()
+                .add(RAW_METADATA_SIZE)
+                .cast::<FixedSizeAllocatorMetadata>()
+        }
     }
 }

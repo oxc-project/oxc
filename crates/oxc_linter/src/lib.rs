@@ -659,10 +659,12 @@ impl Linter {
             tokens_offset,
             tokens_len,
         );
-        let metadata_ptr = allocator.end_ptr().cast::<RawTransferMetadata>();
-        // SAFETY: `Allocator` was created by `FixedSizeAllocator` which reserved space after `end_ptr`
-        // for a `RawTransferMetadata`. `end_ptr` is aligned for `RawTransferMetadata`.
-        unsafe { metadata_ptr.write(metadata) };
+        // SAFETY: `Allocator` was created by `FixedSizeAllocator` which reserved space at `metadata_ptr`
+        // for a `RawTransferMetadata`. `metadata_ptr` is aligned for `RawTransferMetadata`.
+        unsafe {
+            let metadata_ptr = allocator.raw_transfer_metadata_ptr().cast::<RawTransferMetadata>();
+            metadata_ptr.write(metadata);
+        }
 
         let path = path.to_string_lossy();
         let path = path.as_ref();
