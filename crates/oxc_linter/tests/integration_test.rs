@@ -8,7 +8,8 @@ declare_oxc_lint_test!(
     /// # which is multiline
     TestRule,
     eslint,
-    correctness
+    correctness,
+    version = "next"
 );
 
 #[expect(dead_code)]
@@ -20,7 +21,8 @@ declare_oxc_lint_test!(
     /// Dummy description2
     TestRule2,
     eslint,
-    correctness
+    correctness,
+    version = "next"
 );
 
 #[test]
