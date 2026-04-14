@@ -100,7 +100,6 @@ impl From<io::Error> for Error {
 pub fn rewrite_rule_versions(root: &Path, _release_version: &str) -> Result<RewriteReport, Error> {
     let release_version = validate_release_version(_release_version)?;
     let rules_root = canonical_rules_root(root)?;
-    let mut rewritten_rules = Vec::new();
     let mut file_rewrites = Vec::new();
     let mut prepared_file_rewrites = Vec::new();
 
@@ -124,9 +123,7 @@ pub fn rewrite_rule_versions(root: &Path, _release_version: &str) -> Result<Rewr
         prepared_file_rewrites.push(PreparedFileRewrite::new(file_rewrite)?);
     }
 
-    for prepared_file_rewrite in prepared_file_rewrites {
-        rewritten_rules.extend(prepared_file_rewrite.persist()?);
-    }
+    let rewritten_rules = persist_prepared_file_rewrites(prepared_file_rewrites)?;
 
     Ok(RewriteReport { rewritten_rules })
 }
@@ -160,13 +157,15 @@ struct Rewrite {
 
 struct FileRewrite {
     path: PathBuf,
+    original_source: String,
     rewritten_source: String,
     rewritten_rules: Vec<String>,
 }
 
 impl FileRewrite {
     fn new(path: PathBuf, source: String, rewrites: Vec<Rewrite>) -> Self {
-        let mut rewritten_source = source;
+        let original_source = source;
+        let mut rewritten_source = original_source.clone();
         for rewrite in rewrites.iter().rev() {
             rewritten_source.replace_range(
                 rewrite.version_range.start..rewrite.version_range.end,
@@ -176,6 +175,7 @@ impl FileRewrite {
 
         Self {
             path,
+            original_source,
             rewritten_source,
             rewritten_rules: rewrites.into_iter().map(|rewrite| rewrite.rule_name).collect(),
         }
@@ -185,6 +185,7 @@ impl FileRewrite {
 struct PreparedFileRewrite {
     path: PathBuf,
     temp_file: NamedTempFile,
+    backup_file: NamedTempFile,
     rewritten_rules: Vec<String>,
 }
 
@@ -201,17 +202,91 @@ impl PreparedFileRewrite {
         temp_file.write_all(file_rewrite.rewritten_source.as_bytes())?;
         temp_file.as_file_mut().sync_all()?;
 
+        let mut backup_file = NamedTempFile::new_in(parent)?;
+        backup_file.write_all(file_rewrite.original_source.as_bytes())?;
+        backup_file.as_file_mut().sync_all()?;
+
         Ok(Self {
             path: file_rewrite.path,
             temp_file,
+            backup_file,
             rewritten_rules: file_rewrite.rewritten_rules,
         })
     }
 
-    fn persist(self) -> Result<Vec<String>, Error> {
-        self.temp_file.persist(&self.path).map_err(|error| Error::Io(error.error))?;
-        Ok(self.rewritten_rules)
+    fn path(&self) -> &Path {
+        &self.path
     }
+
+    fn persist(self) -> Result<PersistedFileRewrite, Error> {
+        self.temp_file.persist(&self.path).map_err(|error| Error::Io(error.error))?;
+        Ok(PersistedFileRewrite {
+            path: self.path,
+            backup_file: self.backup_file,
+            rewritten_rules: self.rewritten_rules,
+        })
+    }
+}
+
+struct PersistedFileRewrite {
+    path: PathBuf,
+    backup_file: NamedTempFile,
+    rewritten_rules: Vec<String>,
+}
+
+impl PersistedFileRewrite {
+    fn rollback(self) -> Result<(), Error> {
+        self.backup_file.persist(&self.path).map_err(|error| Error::Io(error.error))?;
+        Ok(())
+    }
+}
+
+fn persist_prepared_file_rewrites(
+    prepared_file_rewrites: Vec<PreparedFileRewrite>,
+) -> Result<Vec<String>, Error> {
+    let mut rewritten_rules = Vec::new();
+    let mut persisted_file_rewrites = Vec::new();
+
+    for prepared_file_rewrite in prepared_file_rewrites {
+        if let Err(error) = run_before_persist_hook(prepared_file_rewrite.path()) {
+            rollback_persisted_file_rewrites(persisted_file_rewrites)?;
+            return Err(error);
+        }
+
+        match prepared_file_rewrite.persist() {
+            Ok(persisted_file_rewrite) => {
+                rewritten_rules.extend(persisted_file_rewrite.rewritten_rules.iter().cloned());
+                persisted_file_rewrites.push(persisted_file_rewrite);
+            }
+            Err(error) => {
+                rollback_persisted_file_rewrites(persisted_file_rewrites)?;
+                return Err(error);
+            }
+        }
+    }
+
+    Ok(rewritten_rules)
+}
+
+fn rollback_persisted_file_rewrites(
+    persisted_file_rewrites: Vec<PersistedFileRewrite>,
+) -> Result<(), Error> {
+    let mut first_error = None;
+
+    for persisted_file_rewrite in persisted_file_rewrites.into_iter().rev() {
+        if let Err(error) = persisted_file_rewrite.rollback() {
+            if first_error.is_none() {
+                first_error = Some(error);
+            }
+        }
+    }
+
+    first_error.map_or(Ok(()), Err)
+}
+
+#[cfg(not(test))]
+fn run_before_persist_hook(_path: &Path) -> Result<(), Error> {
+    Ok(())
 }
 
 #[derive(Debug)]
@@ -471,9 +546,30 @@ fn is_valid_release_version(version: &str) -> bool {
 
 #[cfg(test)]
 mod test {
+    use std::{
+        cell::{Cell, RefCell},
+        rc::Rc,
+    };
+
     use super::*;
     use oxc_tasks_common::project_root;
     use tempfile::TempDir;
+
+    thread_local! {
+        pub(super) static BEFORE_PERSIST_HOOK: RefCell<Option<Box<dyn FnMut(&Path) -> Result<(), Error>>>> = RefCell::new(None);
+    }
+
+    fn with_before_persist_hook<R>(
+        hook: impl FnMut(&Path) -> Result<(), Error> + 'static,
+        f: impl FnOnce() -> R,
+    ) -> R {
+        BEFORE_PERSIST_HOOK.with(|slot| {
+            let previous = slot.borrow_mut().replace(Box::new(hook));
+            let result = f();
+            *slot.borrow_mut() = previous;
+            result
+        })
+    }
 
     #[test]
     fn prepare_release_workflow_validates_after_rewrite() {
@@ -741,6 +837,67 @@ declare_oxc_lint!(
         );
     }
 
+    #[test]
+    fn rewrite_rolls_back_if_a_later_persist_fails() {
+        let dir = create_test_rules_dir();
+        let first_rule = dir.path().join("crates/oxc_linter/src/rules/eslint/a_first.rs");
+        let second_rule_dir = dir.path().join("crates/oxc_linter/src/rules/locked");
+        let second_rule = second_rule_dir.join("b_second.rs");
+
+        fs::create_dir_all(&second_rule_dir).unwrap();
+        write_rule(
+            &first_rule,
+            r#"
+use oxc_macros::declare_oxc_lint;
+
+declare_oxc_lint!(
+    /// docs
+    FirstRule,
+    eslint,
+    correctness,
+    version = "next",
+);
+"#,
+        );
+        write_rule(
+            &second_rule,
+            r#"
+use oxc_macros::declare_oxc_lint;
+
+declare_oxc_lint!(
+    /// docs
+    SecondRule,
+    eslint,
+    correctness,
+    version = "next",
+);
+"#,
+        );
+
+        let hook_calls = Rc::new(Cell::new(0));
+        let hook_calls_for_closure = Rc::clone(&hook_calls);
+
+        let error = with_before_persist_hook(
+            move |_| {
+                hook_calls_for_closure.set(hook_calls_for_closure.get() + 1);
+                if hook_calls_for_closure.get() == 2 {
+                    return Err(Error::Io(io::Error::other("injected persist failure")));
+                }
+                Ok(())
+            },
+            || rewrite_rule_versions(dir.path(), "1.61.0"),
+        )
+        .unwrap_err();
+
+        let first_rule_after = fs::read_to_string(first_rule).unwrap();
+
+        assert!(matches!(error, Error::Io(_)));
+        assert!(
+            first_rule_after.contains(r#"version = "next""#),
+            "earlier files should be rolled back if a later persist fails"
+        );
+    }
+
     fn create_test_rules_dir() -> TempDir {
         let dir = tempfile::Builder::new().prefix("oxc-release-rule-versions-").tempdir().unwrap();
         fs::create_dir_all(dir.path().join("crates/oxc_linter/src/rules/eslint")).unwrap();
@@ -750,4 +907,10 @@ declare_oxc_lint!(
     fn write_rule(path: &Path, source: &str) {
         fs::write(path, source.trim_start()).unwrap();
     }
+}
+
+#[cfg(test)]
+fn run_before_persist_hook(path: &Path) -> Result<(), Error> {
+    test::BEFORE_PERSIST_HOOK
+        .with(|hook| if let Some(hook) = hook.borrow_mut().as_mut() { hook(path) } else { Ok(()) })
 }
