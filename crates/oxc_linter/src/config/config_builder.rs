@@ -42,6 +42,9 @@ pub struct ConfigStoreBuilder {
     // Collect all `extends` file paths for the language server.
     // The server will tell the clients to watch for the extends files.
     pub extended_paths: Vec<PathBuf>,
+
+    /// Non-fatal warnings collected during configuration (e.g., skipped named configs).
+    pub warnings: Vec<String>,
 }
 
 impl Default for ConfigStoreBuilder {
@@ -62,8 +65,9 @@ impl ConfigStoreBuilder {
         let categories: OxlintCategories = OxlintCategories::default();
         let overrides = OxlintOverrides::default();
         let extended_paths = Vec::new();
+        let warnings = Vec::new();
 
-        Self { rules, external_rules, config, categories, overrides, extended_paths }
+        Self { rules, external_rules, config, categories, overrides, extended_paths, warnings }
     }
 
     /// Warn on all rules in all plugins and categories, including those in `nursery`.
@@ -77,7 +81,8 @@ impl ConfigStoreBuilder {
         let rules = RULES.iter().map(|rule| (rule.clone(), AllowWarnDeny::Warn)).collect();
         let external_rules = FxHashMap::default();
         let extended_paths = Vec::new();
-        Self { rules, external_rules, config, categories, overrides, extended_paths }
+        let warnings = Vec::new();
+        Self { rules, external_rules, config, categories, overrides, extended_paths, warnings }
     }
 
     /// Create a [`ConfigStoreBuilder`] from a loaded or manually built [`Oxlintrc`].
@@ -148,7 +153,7 @@ impl ConfigStoreBuilder {
         fn resolve_oxlintrc_config(
             config: Oxlintrc,
             in_object_extends: bool,
-        ) -> Result<(Oxlintrc, Vec<PathBuf>), ConfigBuilderError> {
+        ) -> Result<(Oxlintrc, Vec<PathBuf>, Vec<String>), ConfigBuilderError> {
             if in_object_extends {
                 check_no_relative_js_plugins_in_extends(&config)?;
             }
@@ -158,23 +163,30 @@ impl ConfigStoreBuilder {
             let extends = config.extends.clone();
             let extends_configs = config.extends_configs.clone();
             let mut extended_paths = Vec::new();
+            let mut warnings = Vec::new();
 
             let mut oxlintrc = config;
 
             for config in extends_configs.into_iter().rev() {
-                let (extends, extends_paths) = resolve_oxlintrc_config(config, true)?;
+                let (extends, extends_paths, child_warnings) = resolve_oxlintrc_config(config, true)?;
                 oxlintrc = oxlintrc.merge(extends);
                 extended_paths.extend(extends_paths);
+                warnings.extend(child_warnings);
             }
 
             for path in extends.iter().rev() {
-                if path.starts_with("eslint:") || path.starts_with("plugin:") {
-                    // `eslint:` and `plugin:` named configs are not supported
-                    continue;
-                }
+                let path_str = path.to_string_lossy();
                 // if path does not include a ".", then we will heuristically skip it since it
                 // kind of looks like it might be a named config
-                if !path.to_string_lossy().contains('.') {
+                if !path_str.contains('.') {
+                    // Only warn for entries that don't match well-known ESLint prefixes
+                    if !path_str.starts_with("eslint:") && !path_str.starts_with("plugin:") {
+                        warnings.push(format!(
+                            "Skipping unsupported named config \"{path_str}\" in extends. \
+                             Oxlint does not support ESLint shared configs. \
+                             If this is a file path, add a file extension (e.g., \".json\")."
+                        ));
+                    }
                     continue;
                 }
 
@@ -192,16 +204,17 @@ impl ConfigStoreBuilder {
 
                 extended_paths.push(path.clone());
 
-                let (extends, extends_paths) = resolve_oxlintrc_config(extends_oxlintrc, false)?;
+                let (extends, extends_paths, child_warnings) = resolve_oxlintrc_config(extends_oxlintrc, false)?;
 
                 oxlintrc = oxlintrc.merge(extends);
                 extended_paths.extend(extends_paths);
+                warnings.extend(child_warnings);
             }
 
-            Ok((oxlintrc, extended_paths))
+            Ok((oxlintrc, extended_paths, warnings))
         }
 
-        let (oxlintrc, extended_paths) = resolve_oxlintrc_config(oxlintrc, false)?;
+        let (oxlintrc, extended_paths, config_warnings) = resolve_oxlintrc_config(oxlintrc, false)?;
 
         // Collect external plugins from both base config and overrides
         let mut external_plugins: FxHashSet<&ExternalPluginEntry> = FxHashSet::default();
@@ -274,6 +287,7 @@ impl ConfigStoreBuilder {
             categories,
             overrides: oxlintrc.overrides,
             extended_paths,
+            warnings: config_warnings,
         };
 
         for filter in oxlintrc.categories.filters() {
@@ -1504,6 +1518,25 @@ mod test {
     }
 
     #[test]
+    fn test_warns_on_skipped_named_configs() {
+        let builder = config_builder_from_str(
+            r#"{ "extends": ["prettier", "this-does-not-exist"] }"#,
+        );
+        assert_eq!(builder.warnings.len(), 2);
+        let all_warnings = builder.warnings.join("\n");
+        assert!(all_warnings.contains("prettier"), "expected warning about 'prettier', got: {all_warnings}");
+        assert!(all_warnings.contains("this-does-not-exist"), "expected warning about 'this-does-not-exist', got: {all_warnings}");
+    }
+
+    #[test]
+    fn test_no_warnings_for_eslint_plugin_prefixed_configs() {
+        let builder = config_builder_from_str(
+            r#"{ "extends": ["eslint:recommended", "plugin:unicorn/recommended"] }"#,
+        );
+        assert!(builder.warnings.is_empty(), "unexpected warnings: {:?}", builder.warnings);
+    }
+
+    #[test]
     fn test_extends_overrides_precedence() {
         // Test that current config's overrides take priority over extended config's overrides
         // This is consistent with how base-level rules work (current overrides extended)
@@ -1615,6 +1648,10 @@ mod test {
     }
 
     fn config_store_from_str(s: &str) -> Config {
+        config_builder_from_str(s).build(&mut ExternalPluginStore::default()).unwrap()
+    }
+
+    fn config_builder_from_str(s: &str) -> ConfigStoreBuilder {
         let mut external_plugin_store = ExternalPluginStore::default();
         ConfigStoreBuilder::from_oxlintrc(
             true,
@@ -1623,8 +1660,6 @@ mod test {
             &mut external_plugin_store,
             None,
         )
-        .unwrap()
-        .build(&mut external_plugin_store)
         .unwrap()
     }
 }
