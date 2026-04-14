@@ -284,12 +284,7 @@ impl CliRunner {
             &mut external_plugin_store,
             None,
         ) {
-            Ok(builder) => {
-                for warning in &builder.warnings {
-                    eprintln!("warning: {warning}");
-                }
-                builder
-            }
+            Ok(builder) => builder,
             Err(e) => {
                 print_and_flush_stdout(
                     stdout,
