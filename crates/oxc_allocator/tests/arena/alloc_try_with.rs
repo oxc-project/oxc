@@ -6,12 +6,12 @@
 
 use std::iter::repeat;
 
-use oxc_allocator::bump::Bump;
+use oxc_allocator::arena::Arena;
 
 #[test]
 #[cfg_attr(debug_assertions, ignore)]
 fn alloc_try_with_large_array() -> Result<(), ()> {
-    let b = Bump::new();
+    let b = Arena::new();
 
     b.alloc_try_with(|| Ok([4u8; 10_000_000]))?;
 
@@ -21,7 +21,7 @@ fn alloc_try_with_large_array() -> Result<(), ()> {
 #[test]
 #[cfg_attr(debug_assertions, ignore)]
 fn alloc_try_with_large_array_err() {
-    let b = Bump::new();
+    let b = Arena::new();
 
     assert!(b.alloc_try_with(|| Result::<[u8; 10_000_000], _>::Err(())).is_err());
 }
@@ -37,7 +37,7 @@ struct LargeStruct {
 #[test]
 #[cfg_attr(debug_assertions, ignore)]
 fn alloc_try_with_large_struct() -> Result<(), ()> {
-    let b = Bump::new();
+    let b = Arena::new();
 
     b.alloc_try_with(|| {
         Ok(LargeStruct {
@@ -54,7 +54,7 @@ fn alloc_try_with_large_struct() -> Result<(), ()> {
 #[test]
 #[cfg_attr(debug_assertions, ignore)]
 fn alloc_try_with_large_struct_err() {
-    let b = Bump::new();
+    let b = Arena::new();
 
     assert!(b.alloc_try_with(|| Result::<LargeStruct, _>::Err(())).is_err());
 }
@@ -62,7 +62,7 @@ fn alloc_try_with_large_struct_err() {
 #[test]
 #[cfg_attr(debug_assertions, ignore)]
 fn alloc_try_with_large_tuple() -> Result<(), ()> {
-    let b = Bump::new();
+    let b = Arena::new();
 
     b.alloc_try_with(|| {
         Ok((
@@ -82,7 +82,7 @@ fn alloc_try_with_large_tuple() -> Result<(), ()> {
 #[test]
 #[cfg_attr(debug_assertions, ignore)]
 fn alloc_try_with_large_tuple_err() {
-    let b = Bump::new();
+    let b = Arena::new();
 
     assert!(b.alloc_try_with(|| { Result::<(u32, LargeStruct), _>::Err(()) }).is_err());
 }
@@ -96,7 +96,7 @@ enum LargeEnum {
 #[test]
 #[cfg_attr(debug_assertions, ignore)]
 fn alloc_try_with_large_enum() -> Result<(), ()> {
-    let b = Bump::new();
+    let b = Arena::new();
 
     b.alloc_try_with(|| Ok(LargeEnum::Small))?;
 
@@ -106,7 +106,7 @@ fn alloc_try_with_large_enum() -> Result<(), ()> {
 #[test]
 #[cfg_attr(debug_assertions, ignore)]
 fn alloc_try_with_large_enum_err() {
-    let b = Bump::new();
+    let b = Arena::new();
 
     assert!(b.alloc_try_with(|| Result::<LargeEnum, _>::Err(())).is_err());
 }
@@ -114,7 +114,7 @@ fn alloc_try_with_large_enum_err() {
 #[test]
 #[cfg_attr(debug_assertions, ignore)]
 fn alloc_slice_try_fill_with_large_length() {
-    let b = Bump::new();
+    let b = Arena::new();
 
     assert!(b.alloc_slice_try_fill_with(10_000_000, |_| Err::<u8, _>(())).is_err());
 }
@@ -122,7 +122,7 @@ fn alloc_slice_try_fill_with_large_length() {
 #[test]
 #[cfg_attr(debug_assertions, ignore)]
 fn alloc_slice_try_fill_iter_large_length() {
-    let b = Bump::new();
+    let b = Arena::new();
 
     let elems = repeat(Err::<u8, _>(())).take(10_000_000).collect::<Vec<_>>();
     assert!(b.alloc_slice_try_fill_iter(elems).is_err());

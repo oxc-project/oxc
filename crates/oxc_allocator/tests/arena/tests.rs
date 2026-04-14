@@ -1,4 +1,4 @@
-use oxc_allocator::bump::Bump;
+use oxc_allocator::arena::Arena;
 use std::alloc::Layout;
 use std::fmt::Debug;
 use std::mem;
@@ -6,7 +6,7 @@ use std::usize;
 
 #[test]
 fn can_iterate_over_allocated_things() {
-    let mut bump = Bump::new();
+    let mut arena = Arena::new();
 
     #[cfg(not(miri))]
     const MAX: u64 = 131_072;
@@ -18,7 +18,7 @@ fn can_iterate_over_allocated_things() {
     let mut last = None;
 
     for i in 0..MAX {
-        let this = bump.alloc(i);
+        let this = arena.alloc(i);
         assert_eq!(*this, i);
         let this = this as *const _ as usize;
 
@@ -42,7 +42,7 @@ fn can_iterate_over_allocated_things() {
 
     // Safe because we always allocated objects of the same type in this arena,
     // and their size >= their align.
-    for ch in bump.iter_allocated_chunks() {
+    for ch in arena.iter_allocated_chunks() {
         let chunk_end = ch.as_ptr() as usize + ch.len();
         println!("iter chunk ending @ {:#x}", chunk_end);
         assert_eq!(
@@ -68,8 +68,8 @@ fn can_iterate_over_allocated_things() {
 #[test]
 #[should_panic(expected = "out of memory")]
 fn oom_instead_of_bump_pointer_overflow() {
-    let bump = Bump::new();
-    let x = bump.alloc(0_u8);
+    let arena = Arena::new();
+    let x = arena.alloc(0_u8);
     let p = x as *mut u8 as usize;
 
     // A size guaranteed to overflow the bump pointer.
@@ -85,12 +85,12 @@ fn oom_instead_of_bump_pointer_overflow() {
     };
 
     // This should panic.
-    bump.alloc_layout(layout);
+    arena.alloc_layout(layout);
 }
 
 #[test]
 fn force_new_chunk_fits_well() {
-    let b = Bump::new();
+    let b = Arena::new();
 
     // Use the first chunk for something
     b.alloc_layout(Layout::from_size_align(1, 1).unwrap());
@@ -102,7 +102,7 @@ fn force_new_chunk_fits_well() {
 
 #[test]
 fn alloc_with_strong_alignment() {
-    let b = Bump::new();
+    let b = Arena::new();
 
     // 64 is probably the strongest alignment we'll see in practice
     // e.g. AVX-512 types, or cache line padding optimizations
@@ -111,7 +111,7 @@ fn alloc_with_strong_alignment() {
 
 #[test]
 fn alloc_slice_copy() {
-    let b = Bump::new();
+    let b = Arena::new();
 
     let src: &[u16] = &[0xFEED, 0xFACE, 0xA7, 0xCAFE];
     let dst = b.alloc_slice_copy(src);
@@ -121,7 +121,7 @@ fn alloc_slice_copy() {
 
 #[test]
 fn alloc_slice_clone() {
-    let b = Bump::new();
+    let b = Arena::new();
 
     // Original bumpalo test uses `Vec<Vec<i32>>`, but bump allocators don't run
     // destructors, so the inner Vecs' heap buffers would leak. Use a non-Copy
@@ -138,7 +138,7 @@ fn alloc_slice_clone() {
 
 #[test]
 fn small_size_and_large_align() {
-    let b = Bump::new();
+    let b = Arena::new();
     let layout = std::alloc::Layout::from_size_align(1, 0x1000).unwrap();
     b.alloc_layout(layout);
 }
@@ -149,7 +149,7 @@ where
     I: Clone + Iterator<Item = T> + DoubleEndedIterator,
 {
     for &initial_size in &[0, 1, 8, 11, 0x1000, 0x12345] {
-        let mut b = Bump::<1>::with_min_align_and_capacity(initial_size);
+        let mut b = Arena::<1>::with_min_align_and_capacity(initial_size);
 
         for v in iter.clone() {
             b.alloc(v);
@@ -186,7 +186,7 @@ fn with_capacity_test() {
 
 #[test]
 fn test_reset() {
-    let mut b = Bump::new();
+    let mut b = Arena::new();
 
     for i in 0u64..10_000 {
         b.alloc(i);
@@ -205,7 +205,7 @@ fn test_reset() {
 #[test]
 fn test_alignment() {
     for &alignment in &[2, 4, 8, 16, 32, 64] {
-        let b = Bump::with_capacity(513);
+        let b = Arena::with_capacity(513);
         let layout = std::alloc::Layout::from_size_align(alignment, alignment).unwrap();
 
         for _ in 0..1024 {
@@ -217,27 +217,27 @@ fn test_alignment() {
 
 #[test]
 fn test_chunk_capacity() {
-    let b = Bump::with_capacity(512);
+    let b = Arena::with_capacity(512);
     let orig_capacity = b.chunk_capacity();
     b.alloc(true);
     assert!(b.chunk_capacity() < orig_capacity);
 }
 
 #[test]
-fn bump_is_send() {
+fn arena_is_send() {
     fn assert_send(_: impl Send) {}
-    assert_send(Bump::new());
+    assert_send(Arena::new());
 }
 
 #[test]
 fn test_debug_assert_data_le_bump_ptr_pr_313() {
-    let bump = Bump::new();
-    bump.set_allocation_limit(Some(1));
-    bump.alloc_layout(Layout::from_size_align(0, 16).unwrap());
+    let arena = Arena::new();
+    arena.set_allocation_limit(Some(1));
+    arena.alloc_layout(Layout::from_size_align(0, 16).unwrap());
 }
 
 #[test]
 fn test_debug_assert_ptr_align_pr_313() {
-    let bump = Bump::<16>::with_min_align();
-    bump.alloc(0u8);
+    let arena = Arena::<16>::with_min_align();
+    arena.alloc(0u8);
 }

@@ -11,7 +11,7 @@
 
 use std::cell::Cell;
 
-use crate::{Allocator, bump::Bump};
+use crate::{Allocator, arena::Arena};
 
 /// Counters of allocations and reallocations made in an [`Allocator`].
 #[derive(Default, Debug)]
@@ -58,8 +58,8 @@ impl AllocationStats {
     }
 }
 
-impl Bump {
-    /// Get number of allocations and reallocations made in this [`Bump`].
+impl Arena {
+    /// Get number of allocations and reallocations made in this [`Arena`].
     fn get_allocation_stats(&self) -> (usize, usize) {
         let num_alloc = self.stats.num_alloc.get();
         let num_realloc = self.stats.num_realloc.get();
@@ -71,6 +71,6 @@ impl Allocator {
     /// Get number of allocations and reallocations made in this [`Allocator`].
     #[doc(hidden)]
     pub fn get_allocation_stats(&self) -> (usize, usize) {
-        self.bump().get_allocation_stats()
+        self.arena().get_allocation_stats()
     }
 }

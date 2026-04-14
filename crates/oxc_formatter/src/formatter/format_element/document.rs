@@ -25,7 +25,7 @@ impl<'a> Document<'a> {
         elements: ArenaVec<'a, FormatElement<'a>>,
         sorted_tailwind_classes: Vec<String>,
     ) -> Self {
-        Self { elements: elements.into_bump_slice(), sorted_tailwind_classes }
+        Self { elements: elements.into_arena_slice(), sorted_tailwind_classes }
     }
 
     /// Consumes the document and returns its elements and sorted Tailwind CSS classes.
@@ -38,7 +38,7 @@ impl<'a> Document<'a> {
     /// If you have modified the elements and want to update the document,
     /// use this method to set the new elements.
     pub fn replace_elements(&mut self, elements: ArenaVec<'a, FormatElement<'a>>) {
-        self.elements = elements.into_bump_slice();
+        self.elements = elements.into_arena_slice();
     }
 }
 

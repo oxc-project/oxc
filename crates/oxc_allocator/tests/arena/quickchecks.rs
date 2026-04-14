@@ -1,6 +1,6 @@
 use crate::quickcheck;
 use ::quickcheck::{Arbitrary, Gen};
-use oxc_allocator::bump::Bump;
+use oxc_allocator::arena::Arena;
 use std::mem;
 
 #[derive(Clone, Debug, PartialEq)]
@@ -110,11 +110,11 @@ fn range<T>(t: &T) -> (usize, usize) {
 
 quickcheck! {
     fn can_allocate_big_values(values: Vec<BigValue>) -> () {
-        let bump = Bump::new();
+        let arena = Arena::new();
         let mut alloced = vec![];
 
         for vals in values.iter().cloned() {
-            alloced.push(bump.alloc(vals));
+            alloced.push(arena.alloc(vals));
         }
 
         for (vals, alloc) in values.iter().zip(alloced.into_iter()) {
@@ -123,11 +123,11 @@ quickcheck! {
     }
 
     fn big_allocations_never_overlap(values: Vec<BigValue>) -> () {
-        let bump = Bump::new();
+        let arena = Arena::new();
         let mut alloced = vec![];
 
         for v in values {
-            let a = bump.alloc(v);
+            let a = arena.alloc(v);
             let start = a as *const _ as usize;
             let end = unsafe { (a as *const BigValue).offset(1) as usize };
             let range = (start, end);
@@ -141,28 +141,28 @@ quickcheck! {
     }
 
     fn can_allocate_heterogeneous_things_and_they_dont_overlap(things: Vec<Elems<u8, u64>>) -> () {
-        let bump = Bump::new();
+        let arena = Arena::new();
         let mut ranges = vec![];
 
         for t in things {
             let r = match t {
                 Elems::OneT(a) => {
-                    range(bump.alloc(a))
+                    range(arena.alloc(a))
                 },
                 Elems::TwoT(a, b) => {
-                    range(bump.alloc([a, b]))
+                    range(arena.alloc([a, b]))
                 },
                 Elems::FourT(a, b, c, d) => {
-                    range(bump.alloc([a, b, c, d]))
+                    range(arena.alloc([a, b, c, d]))
                 },
                 Elems::OneU(a) => {
-                    range(bump.alloc(a))
+                    range(arena.alloc(a))
                 },
                 Elems::TwoU(a, b) => {
-                    range(bump.alloc([a, b]))
+                    range(arena.alloc([a, b]))
                 },
                 Elems::FourU(a, b, c, d) => {
-                    range(bump.alloc([a, b, c, d]))
+                    range(arena.alloc([a, b, c, d]))
                 },
             };
 
@@ -178,7 +178,7 @@ quickcheck! {
     fn test_alignment_chunks(sizes: Vec<usize>) -> () {
         const SUPPORTED_ALIGNMENTS: &[usize] = &[1, 2, 4, 8, 16];
         for &alignment in SUPPORTED_ALIGNMENTS {
-            let mut b = Bump::<1>::with_min_align_and_capacity(513);
+            let mut b = Arena::<1>::with_min_align_and_capacity(513);
             let mut sizes = sizes.iter().map(|&size| (size % 10) * alignment).collect::<Vec<_>>();
 
             for &size in &sizes {
@@ -200,7 +200,7 @@ quickcheck! {
     }
 
     fn alloc_slices(allocs: Vec<(u8, usize)>) -> () {
-        let b = Bump::new();
+        let b = Arena::new();
         let mut allocated: Vec<(usize, usize)> = vec![];
         for (val, len) in allocs {
             let len = len % 100;
@@ -219,7 +219,7 @@ quickcheck! {
     }
 
     fn alloc_strs(allocs: Vec<String>) -> () {
-        let b = Bump::new();
+        let b = Arena::new();
         let allocated: Vec<&str> = allocs.iter().map(|s| b.alloc_str(s) as &_).collect();
         for (val, alloc) in allocs.into_iter().zip(allocated) {
             assert_eq!(val, alloc);
@@ -227,7 +227,7 @@ quickcheck! {
     }
 
     fn all_allocations_in_a_chunk(values: Vec<BigValue>) -> () {
-        let b = Bump::new();
+        let b = Arena::new();
         let allocated: Vec<&BigValue> = values.into_iter().map(|val| b.alloc(val) as &_).collect();
         let chunks: Vec<(*mut u8, usize)> = unsafe { b.iter_allocated_chunks_raw() }.collect();
         for alloc in allocated.into_iter() {
@@ -240,7 +240,7 @@ quickcheck! {
     }
 
     fn chunks_and_raw_chunks_are_same(values: Vec<BigValue>) -> () {
-        let mut b = Bump::new();
+        let mut b = Arena::new();
         for val in values {
             b.alloc(val);
         }
@@ -258,9 +258,9 @@ quickcheck! {
     // function. This test runs afoul of that bug.
     #[cfg(not(miri))]
     fn limit_is_never_exceeded(limit: usize) -> bool {
-        let bump = Bump::new();
+        let arena = Arena::new();
 
-        bump.set_allocation_limit(Some(limit));
+        arena.set_allocation_limit(Some(limit));
 
         // The exact numbers here on how much to allocate are a bit murky but we
         // have two main goals.
@@ -269,14 +269,14 @@ quickcheck! {
         // - Allocate in increments small enough that at least a few allocations succeed
         let layout = std::alloc::Layout::array::<u8>(limit / 16).unwrap();
         for _ in 0..32 {
-            let _ = bump.try_alloc_layout(layout);
+            let _ = arena.try_alloc_layout(layout);
         }
 
-        bump.allocated_bytes() <= limit
+        arena.allocated_bytes() <= limit
     }
 
     fn allocated_bytes_including_metadata(allocs: Vec<usize>) -> () {
-        let b = Bump::new();
+        let b = Arena::new();
         let mut slice_bytes = 0;
         let allocs_len = allocs.len();
         for len in allocs {
