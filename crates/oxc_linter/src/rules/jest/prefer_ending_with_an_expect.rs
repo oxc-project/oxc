@@ -208,18 +208,15 @@ impl Rule for PreferEndingWithAnExpect {
             return;
         };
 
-        let contains_test_name = if self.additional_test_block_functions.is_empty() {
-            true
-        } else {
-            self.additional_test_block_functions.contains(&name)
-        };
-
-        if parsed_jest_fn
+        // Only real test callbacks should be checked here. Other Jest/Vitest APIs
+        // such as `vi.mock(..., factory)` also accept functions in the second slot.
+        let is_test_block = parsed_jest_fn
             .kind
             .to_general()
-            .is_some_and(|test_kind| matches!(test_kind, JestGeneralFnKind::Describe))
-            || !contains_test_name
-        {
+            .is_some_and(|test_kind| matches!(test_kind, JestGeneralFnKind::Test));
+        let is_additional_test_block = self.additional_test_block_functions.contains(&name);
+
+        if !is_test_block && !is_additional_test_block {
             return;
         }
 
@@ -477,6 +474,11 @@ fn test() {
                 .expect(456);
             });",
             Some(serde_json::json!([{ "assertFunctionNames": ["tester.foo.bar.expect"] }])),
+        ),
+        (
+            "import { vi } from 'vitest';
+            vi.mock(import('foo'), () => vi.fn());",
+            None,
         ),
     ];
 
