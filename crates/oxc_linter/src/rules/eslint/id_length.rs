@@ -34,8 +34,10 @@ const DEFAULT_MIN_LENGTH: u64 = 2;
 #[derive(Debug, Default, Clone, PartialEq, JsonSchema, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 enum PropertyKind {
+    /// Property names are checked just like other identifiers
     #[default]
     Always,
+    /// Property names are not checked for length.
     Never,
 }
 
@@ -68,8 +70,7 @@ pub struct IdLengthConfig {
     /// Whether to check TypeScript generic type parameter names.
     /// Defaults to `true`.
     check_generic: bool,
-    /// When set to `"never"`, property names are not checked for length.
-    /// When set to `"always"` (default), property names are checked just like other identifiers.
+    /// Whether to check property names for length.
     properties: PropertyKind,
 }
 
@@ -178,7 +179,8 @@ declare_oxc_lint!(
     IdLength,
     eslint,
     style,
-    config = IdLengthConfig
+    config = IdLengthConfig,
+    version = "1.4.0",
 );
 
 impl Rule for IdLength {

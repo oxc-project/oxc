@@ -165,7 +165,8 @@ declare_oxc_lint!(
     ///
     RulesOfHooks,
     react,
-    pedantic
+    pedantic,
+    version = "0.3.3",
 );
 
 impl Rule for RulesOfHooks {

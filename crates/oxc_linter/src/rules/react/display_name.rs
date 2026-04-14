@@ -64,6 +64,7 @@ declare_oxc_lint!(
     react,
     pedantic,
     config = DisplayNameConfig,
+    version = "1.42.0",
 );
 
 #[derive(Debug)]

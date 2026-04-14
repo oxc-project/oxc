@@ -35,8 +35,10 @@ fn extension_only_for_jsx_diagnostic(ext: &str, span: Span) -> OxcDiagnostic {
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize, Serialize)]
 #[serde(rename_all = "kebab-case")]
 enum AllowType {
+    /// Always allow a `.jsx` file extension.
     #[default]
     Always,
+    /// Only allow `.jsx` file extension for files that contain JSX syntax.
     AsNeeded,
 }
 
@@ -115,6 +117,7 @@ declare_oxc_lint!(
     restriction,
     pending,
     config = JsxFilenameExtensionConfig,
+    version = "0.15.14",
 );
 
 impl Rule for JsxFilenameExtension {

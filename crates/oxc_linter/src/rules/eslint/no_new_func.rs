@@ -57,7 +57,8 @@ declare_oxc_lint!(
     /// ```
     NoNewFunc,
     eslint,
-    style
+    style,
+    version = "0.9.2",
 );
 
 impl Rule for NoNewFunc {

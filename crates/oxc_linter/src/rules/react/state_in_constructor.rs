@@ -124,6 +124,7 @@ declare_oxc_lint!(
     react,
     style,
     config = StateInConstructorConfig,
+    version = "1.26.0",
 );
 
 impl Rule for StateInConstructor {

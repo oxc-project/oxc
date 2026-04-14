@@ -270,6 +270,7 @@ declare_oxc_lint!(
     correctness,
     safe_fixes_and_dangerous_suggestions,
     config = ExhaustiveDepsConfigJson,
+    version = "0.12.0",
 );
 
 const HOOKS_USELESS_WITHOUT_DEPENDENCIES: [&str; 2] = ["useCallback", "useMemo"];

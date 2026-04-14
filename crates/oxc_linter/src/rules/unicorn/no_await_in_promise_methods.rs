@@ -49,7 +49,8 @@ declare_oxc_lint!(
     NoAwaitInPromiseMethods,
     unicorn,
     correctness,
-    suggestion
+    suggestion,
+    version = "0.2.18",
 );
 
 impl Rule for NoAwaitInPromiseMethods {

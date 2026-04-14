@@ -46,7 +46,8 @@ declare_oxc_lint!(
     PreferMathTrunc,
     unicorn,
     pedantic,
-    suggestion
+    suggestion,
+    version = "0.0.18",
 );
 
 impl Rule for PreferMathTrunc {

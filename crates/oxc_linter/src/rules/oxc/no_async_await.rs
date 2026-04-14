@@ -40,7 +40,8 @@ declare_oxc_lint!(
     /// ```
     NoAsyncAwait,
     oxc,
-    restriction
+    restriction,
+    version = "0.4.2",
 );
 
 impl Rule for NoAsyncAwait {

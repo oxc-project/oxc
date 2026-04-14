@@ -69,7 +69,8 @@ declare_oxc_lint!(
     PreferKeyboardEventKey,
     unicorn,
     style,
-    fix
+    fix,
+    version = "1.33.0",
 );
 
 impl Rule for PreferKeyboardEventKey {

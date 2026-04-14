@@ -70,7 +70,8 @@ declare_oxc_lint!(
     NoCaseDeclarations,
     eslint,
     pedantic,
-    pending
+    pending,
+    version = "0.0.4",
 );
 
 impl Rule for NoCaseDeclarations {

@@ -54,7 +54,8 @@ declare_oxc_lint!(
     NoArrayForEach,
     unicorn,
     restriction,
-    pending
+    pending,
+    version = "0.0.19",
 );
 
 impl Rule for NoArrayForEach {

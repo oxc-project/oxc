@@ -101,6 +101,7 @@ declare_oxc_lint!(
     jest,
     style,
     config = NoHooksConfig,
+    version = "0.0.16",
 );
 
 impl Rule for NoHooks {

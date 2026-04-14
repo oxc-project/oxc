@@ -92,6 +92,7 @@ declare_oxc_lint!(
     style,
     conditional_fix,
     config = PreferConst,
+    version = "1.43.0",
 );
 
 impl Rule for PreferConst {

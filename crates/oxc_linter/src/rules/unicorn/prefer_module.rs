@@ -57,7 +57,8 @@ declare_oxc_lint!(
     PreferModule,
     unicorn,
     restriction,
-    pending
+    pending,
+    version = "1.50.0",
 );
 
 impl Rule for PreferModule {

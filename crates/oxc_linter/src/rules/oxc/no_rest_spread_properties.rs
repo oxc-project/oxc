@@ -87,6 +87,7 @@ declare_oxc_lint!(
     oxc,
     restriction,
     config = NoRestSpreadPropertiesOptions,
+    version = "0.4.2",
 );
 
 impl Rule for NoRestSpreadProperties {

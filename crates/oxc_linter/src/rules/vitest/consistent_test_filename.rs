@@ -99,6 +99,7 @@ declare_oxc_lint!(
     vitest,
     style,
     config = ConsistentTestFilenameConfig,
+    version = "1.36.0",
 );
 
 fn compile_matcher_pattern(matcher_pattern: &serde_json::Value) -> Option<lazy_regex::Regex> {

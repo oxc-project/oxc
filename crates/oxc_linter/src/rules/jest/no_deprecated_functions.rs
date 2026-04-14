@@ -97,6 +97,7 @@ declare_oxc_lint!(
     style,
     fix,
     config = NoDeprecatedFunctionsConfig,
+    version = "0.0.18",
 );
 
 fn deprecated_functions_map(deprecated_fn: &str) -> Option<(usize, &'static str)> {

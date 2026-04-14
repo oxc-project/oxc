@@ -52,7 +52,8 @@ declare_oxc_lint!(
     /// ```
     NoUselessCatch,
     eslint,
-    correctness
+    correctness,
+    version = "0.0.5",
 );
 
 impl Rule for NoUselessCatch {

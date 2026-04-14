@@ -39,6 +39,7 @@ declare_oxc_lint!(
     NoNamedDefault,
     import,
     style,
+    version = "0.15.3",
 );
 
 impl Rule for NoNamedDefault {

@@ -52,7 +52,8 @@ declare_oxc_lint!(
     PreferForOf,
     typescript,
     style,
-    pending
+    pending,
+    version = "0.2.16",
 );
 
 trait ExpressionExt {

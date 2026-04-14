@@ -69,7 +69,8 @@ declare_oxc_lint!(
     /// ```
     NoDuplicateHead,
     nextjs,
-    correctness
+    correctness,
+    version = "0.3.3",
 );
 
 impl Rule for NoDuplicateHead {

@@ -4,6 +4,21 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.45.0] - 2026-04-13
+
+### 🚀 Features
+
+- e3081e1 oxfmt: Gate `vite.config.ts` recognition behind `VP_VERSION` env var (#21295) (leaysgur)
+- 5b0b573 oxfmt: Update prettier to 3.8.2 (#21294) (leaysgur)
+- 0d67834 oxfmt: Show hint for all files are ignored case (#21154) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- ec7f6ed oxlint, oxfmt: Apply `check_for_writer_error` to `.flush()` (#21343) (Craig Morrison)
+- 22babde oxfmt: Fix unicode char escaping (#21162) (leaysgur)
+- 94fe774 oxfmt: Handle paths with consecutive leading slashes (#21155) (leaysgur)
+- 50c389b oxfmt: Support `.editorconfig` `quote_type` (#20989) (leaysgur)
+
 ## [0.44.0] - 2026-04-06
 
 ### 🚀 Features

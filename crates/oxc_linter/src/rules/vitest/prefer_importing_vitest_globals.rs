@@ -89,7 +89,8 @@ declare_oxc_lint!(
     PreferImportingVitestGlobals,
     vitest,
     style,
-    fix
+    fix,
+    version = "1.59.0",
 );
 
 impl Rule for PreferImportingVitestGlobals {

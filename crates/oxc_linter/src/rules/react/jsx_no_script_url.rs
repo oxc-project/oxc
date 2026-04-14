@@ -76,6 +76,7 @@ declare_oxc_lint!(
     suspicious,
     pending,
     config = JsxNoScriptUrlConfig,
+    version = "0.13.2",
 );
 
 fn is_link_attribute(tag_name: &str, prop_value_literal: String, ctx: &LintContext) -> bool {

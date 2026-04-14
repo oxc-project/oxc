@@ -50,7 +50,8 @@ declare_oxc_lint!(
     /// ```
     NumberArgOutOfRange,
     oxc,
-    correctness
+    correctness,
+    version = "0.0.3",
 );
 
 impl Rule for NumberArgOutOfRange {

@@ -62,6 +62,7 @@ declare_oxc_lint!(
     unicorn,
     restriction,
     pending,
+    version = "0.3.3",
 );
 
 impl Rule for NoAnonymousDefaultExport {

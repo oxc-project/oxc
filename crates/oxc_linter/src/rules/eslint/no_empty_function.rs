@@ -300,8 +300,9 @@ declare_oxc_lint!(
     NoEmptyFunction,
     eslint,
     restriction,
-    pending,
+    suggestion,
     config = NoEmptyFunctionConfig,
+    version = "0.3.3",
 );
 
 impl Rule for NoEmptyFunction {
@@ -322,7 +323,14 @@ impl Rule for NoEmptyFunction {
         else {
             return;
         };
-        ctx.diagnostic(no_empty_function_diagnostic(fb.span, kind, fn_name));
+        ctx.diagnostic_with_suggestion(
+            no_empty_function_diagnostic(fb.span, kind, fn_name),
+            |fixer| {
+                fixer
+                    .replace(Span::new(fb.span.start + 1, fb.span.end - 1), " /* empty */ ")
+                    .with_message(format!("Add comment inside empty {kind}."))
+            },
+        );
     }
 }
 
@@ -1214,5 +1222,66 @@ fn test() {
         ("class A extends B { override foo() {} }", None),
     ];
 
-    Tester::new(NoEmptyFunction::NAME, NoEmptyFunction::PLUGIN, pass, fail).test_and_snapshot();
+    let fix = vec![
+        ("function foo() {}", "function foo() { /* empty */ }", None),
+        ("var foo = function () {};", "var foo = function () { /* empty */ };", None),
+        (
+            "var obj = { foo: function() {} };",
+            "var obj = { foo: function() { /* empty */ } };",
+            None,
+        ),
+        ("var foo = () => { \n\n  }", "var foo = () => { /* empty */ }", None),
+        ("function* gen() {}", "function* gen() { /* empty */ }", None),
+        ("async function foo() {}", "async function foo() { /* empty */ }", None),
+        ("var obj = { foo() {} }", "var obj = { foo() { /* empty */ } }", None),
+        ("var obj = { *foo() {} }", "var obj = { *foo() { /* empty */ } }", None),
+        ("var obj = { async foo() {} }", "var obj = { async foo() { /* empty */ } }", None),
+        ("class A { constructor() { } }", "class A { constructor() { /* empty */ } }", None),
+        (
+            "class A { private constructor() {} }",
+            "class A { private constructor() { /* empty */ } }",
+            None,
+        ),
+        (
+            "class A { protected constructor() {} }",
+            "class A { protected constructor() { /* empty */ } }",
+            None,
+        ),
+        ("class A { foo() { } }", "class A { foo() { /* empty */ } }", None),
+        ("class A { static foo() {} }", "class A { static foo() { /* empty */ } }", None),
+        ("class A { get foo() {} }", "class A { get foo() { /* empty */ } }", None),
+        ("class A { set foo(value) {} }", "class A { set foo(value) { /* empty */ } }", None),
+        (
+            "class A extends B { override foo() {} }",
+            "class A extends B { override foo() { /* empty */ } }",
+            None,
+        ),
+        (
+            "class A { @decorator() foo() {} }",
+            "class A { @decorator() foo() { /* empty */ } }",
+            None,
+        ),
+        (
+            "
+        const obj = {
+            foo: function() {
+            },
+            bar: function*() {
+            },
+            foobar() {
+            }
+        };",
+            "
+        const obj = {
+            foo: function() { /* empty */ },
+            bar: function*() { /* empty */ },
+            foobar() { /* empty */ }
+        };",
+            None,
+        ),
+    ];
+
+    Tester::new(NoEmptyFunction::NAME, NoEmptyFunction::PLUGIN, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

@@ -84,7 +84,8 @@ declare_oxc_lint!(
     /// ```
     NoControlRegex,
     eslint,
-    correctness
+    correctness,
+    version = "0.0.7",
 );
 
 impl Rule for NoControlRegex {

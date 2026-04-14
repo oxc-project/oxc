@@ -15,11 +15,12 @@ declare global {
 
 const CLI_PATH = join(import.meta.dirname, "..", "..", "dist", "cli.js");
 
-export function runCli(cwd: string, args: string[]) {
+export function runCli(cwd: string, args: string[], env: Record<string, string> = {}) {
   return execa("node", [CLI_PATH, ...args, "--threads=1"], {
     cwd,
     reject: false,
     timeout: 5000,
+    env: { ...process.env, ...env },
   });
 }
 
@@ -30,10 +31,14 @@ export function runCliStdin(input: string, filepath: string, pipe?: string) {
 }
 
 // Test function for running the CLI with various arguments
-export async function runAndSnapshot(cwd: string, testCases: string[][]): Promise<string> {
+export async function runAndSnapshot(
+  cwd: string,
+  testCases: string[][],
+  env: Record<string, string> = {},
+): Promise<string> {
   const snapshot = [];
   for (const args of testCases) {
-    const result = await runCli(cwd, args);
+    const result = await runCli(cwd, args, env);
     snapshot.push(formatSnapshot(cwd, args, result));
   }
   return normalizeOutput(snapshot.join("\n"), cwd);

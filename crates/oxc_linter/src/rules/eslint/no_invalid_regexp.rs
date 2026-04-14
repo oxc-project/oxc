@@ -71,6 +71,7 @@ declare_oxc_lint!(
     eslint,
     correctness,
     config = NoInvalidRegexpConfig,
+    version = "0.9.4",
 );
 
 #[derive(Debug, Clone, Deserialize, Default, JsonSchema)]

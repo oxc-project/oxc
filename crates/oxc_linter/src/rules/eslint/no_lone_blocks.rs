@@ -53,6 +53,7 @@ declare_oxc_lint!(
     NoLoneBlocks,
     eslint,
     style,
+    version = "0.15.6",
 );
 
 impl Rule for NoLoneBlocks {

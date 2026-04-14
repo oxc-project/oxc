@@ -4,6 +4,43 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.60.0] - 2026-04-13
+
+### 💥 BREAKING CHANGES
+
+- 382958a span: [**BREAKING**] Remove re-exports of string types from `oxc_span` crate (#21246) (overlookmotel)
+- 7354f3c linter: [**BREAKING**] Error on no matched files (#21144) (camc314)
+
+### 🚀 Features
+
+- f99ecda oxlint: Gate `vite.config.ts` recognition behind `VP_VERSION` env var (#21298) (leaysgur)
+- ae45312 linter: Introduce `--type-check-only` flag (#21184) (camc314)
+- 1893be1 linter/no-useless-default-assignment: Move rule from nursery to correctness (#21113) (camc314)
+
+### 🐛 Bug Fixes
+
+- 5e55735 oxlint/lsp: Skip .git directories in LSP walkers (#21316) (camc314)
+- ec7f6ed oxlint, oxfmt: Apply `check_for_writer_error` to `.flush()` (#21343) (Craig Morrison)
+- 1b3abc3 linter: Exclude boundary tokens from JSXText whitespace check in isSpaceBetweenTokens (#21313) (bab)
+- ecbcf5e linter: More info to summary output for GitHub formatter (#21330) (Théo LUDWIG)
+- af8e122 linter: Render each config error as a separate diagnostic (#21120) (bab)
+- 472f8ee linter: Mark complete comment for unused disable directives + lsp fix (#21092) (copilot-swe-agent)
+
+### ⚡ Performance
+
+- addcd02 napi/parser, linter/plugins: Raw transfer deserializer for `Vec`s use shift instead of multiply where possible (#21142) (overlookmotel)
+- 3068ded napi/parser, linter/plugins: Shift before add when calculating positions in raw transfer deserializer (#21141) (overlookmotel)
+- eb400b8 napi/parser, linter/plugins: Remove `uint32` buffer view (#21140) (overlookmotel)
+- 7a86613 linter/plugins: Use `Int32Array`s for tokens and comments buffers (#21136) (overlookmotel)
+- 8c51121 napi/parser, linter/plugins: Raw transfer deserialize `Span` fields as `i32`s (#21135) (overlookmotel)
+- bc1bcdd napi/parser, linter/plugins: Inline trivial raw transfer field deserializers into node object definitions (#21134) (overlookmotel)
+- c0278ab napi/parser, linter/plugins: Use `Int32Array` in raw transfer deserializer (#21132) (overlookmotel)
+- 43482c7 linter/plugins: Use `>>` not `>>>` in binary search loops (#21129) (overlookmotel)
+
+### 📚 Documentation
+
+- 305350d linter/plugins: Correct comments (#21130) (overlookmotel)
+
 ## [1.59.0] - 2026-04-06
 
 ### 💥 BREAKING CHANGES

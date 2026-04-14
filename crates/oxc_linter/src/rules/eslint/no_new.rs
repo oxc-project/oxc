@@ -43,6 +43,7 @@ declare_oxc_lint!(
     NoNew,
     eslint,
     suspicious,
+    version = "0.4.0",
 );
 
 impl Rule for NoNew {

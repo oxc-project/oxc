@@ -85,7 +85,8 @@ declare_oxc_lint!(
     NoExtraLabel,
     eslint,
     style,
-    fix
+    fix,
+    version = "0.15.4",
 );
 
 impl Rule for NoExtraLabel {

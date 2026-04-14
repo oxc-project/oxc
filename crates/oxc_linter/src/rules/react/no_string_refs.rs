@@ -86,6 +86,7 @@ declare_oxc_lint!(
     react,
     correctness,
     config = NoStringRefs,
+    version = "0.0.15",
 );
 
 fn contains_string_literal(

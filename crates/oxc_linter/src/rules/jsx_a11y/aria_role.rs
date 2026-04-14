@@ -99,6 +99,7 @@ declare_oxc_lint!(
     jsx_a11y,
     correctness,
     config = AriaRoleConfig,
+    version = "0.1.1",
 );
 
 impl Rule for AriaRole {

@@ -80,6 +80,7 @@ declare_oxc_lint!(
     react,
     correctness,
     config = NoDidMountSetStateConfig,
+    version = "1.36.0",
 );
 
 impl Rule for NoDidMountSetState {

@@ -184,6 +184,7 @@ declare_oxc_lint!(
     promise,
     suspicious,
     config = AlwaysReturnConfig,
+    version = "1.13.0",
 );
 
 const PROCESS_METHODS: [&str; 2] = ["exit", "abort"];

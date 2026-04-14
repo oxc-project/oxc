@@ -342,6 +342,10 @@ impl ServerLinterBuilder {
             .ignore(true)
             .hidden(false)
             .git_global(false)
+            .filter_entry(|entry| {
+                !(entry.file_name() == ".git"
+                    && entry.file_type().is_some_and(|file_type| file_type.is_dir()))
+            })
             .build()
             .flatten();
 
@@ -452,12 +456,18 @@ impl Tool for ServerLinter {
         let mut watchers = match options.config_path.as_deref() {
             Some("") | None => {
                 // Watch both JSON/JSONC and TS config files
-                vec![
-                    "**/.oxlintrc.json".to_string(),
-                    "**/.oxlintrc.jsonc".to_string(),
-                    "**/oxlint.config.ts".to_string(),
-                    "**/vite.config.ts".to_string(),
-                ]
+                #[cfg(feature = "napi")]
+                if crate::is_vite_plus_mode() {
+                    vec!["**/vite.config.ts".to_string()]
+                } else {
+                    vec![
+                        "**/.oxlintrc.json".to_string(),
+                        "**/.oxlintrc.jsonc".to_string(),
+                        "**/oxlint.config.ts".to_string(),
+                    ]
+                }
+                #[cfg(not(feature = "napi"))]
+                vec!["**/.oxlintrc.json".to_string(), "**/.oxlintrc.jsonc".to_string()]
             }
             Some(v) => vec![v.to_string()],
         };
@@ -940,11 +950,10 @@ mod test_watchers {
             let patterns =
                 Tester::new("fixtures/lsp/watchers/default", json!({})).get_watcher_patterns();
 
-            assert_eq!(patterns.len(), 4);
+            assert_eq!(patterns.len(), 3);
             assert_eq!(patterns[0], "**/.oxlintrc.json".to_string());
             assert_eq!(patterns[1], "**/.oxlintrc.jsonc".to_string());
             assert_eq!(patterns[2], "**/oxlint.config.ts".to_string());
-            assert_eq!(patterns[3], "**/vite.config.ts".to_string());
         }
 
         #[test]
@@ -957,11 +966,10 @@ mod test_watchers {
             )
             .get_watcher_patterns();
 
-            assert_eq!(patterns.len(), 4);
+            assert_eq!(patterns.len(), 3);
             assert_eq!(patterns[0], "**/.oxlintrc.json".to_string());
             assert_eq!(patterns[1], "**/.oxlintrc.jsonc".to_string());
             assert_eq!(patterns[2], "**/oxlint.config.ts".to_string());
-            assert_eq!(patterns[3], "**/vite.config.ts".to_string());
         }
 
         #[test]
@@ -983,13 +991,12 @@ mod test_watchers {
             let patterns = Tester::new("fixtures/lsp/watchers/linter_extends", json!({}))
                 .get_watcher_patterns();
 
-            // The `.oxlintrc.json` extends `./lint.json` -> 5 watchers (json, jsonc, ts, vite, lint.json)
-            assert_eq!(patterns.len(), 5);
+            // The `.oxlintrc.json` extends `./lint.json` -> 4 watchers (json, jsonc, ts, lint.json)
+            assert_eq!(patterns.len(), 4);
             assert_eq!(patterns[0], "**/.oxlintrc.json".to_string());
             assert_eq!(patterns[1], "**/.oxlintrc.jsonc".to_string());
             assert_eq!(patterns[2], "**/oxlint.config.ts".to_string());
-            assert_eq!(patterns[3], "**/vite.config.ts".to_string());
-            assert_eq!(patterns[4], "lint.json".to_string());
+            assert_eq!(patterns[3], "lint.json".to_string());
         }
 
         #[test]
@@ -1017,12 +1024,11 @@ mod test_watchers {
             )
             .get_watcher_patterns();
 
-            assert_eq!(patterns.len(), 5);
+            assert_eq!(patterns.len(), 4);
             assert_eq!(patterns[0], "**/.oxlintrc.json".to_string());
             assert_eq!(patterns[1], "**/.oxlintrc.jsonc".to_string());
             assert_eq!(patterns[2], "**/oxlint.config.ts".to_string());
-            assert_eq!(patterns[3], "**/vite.config.ts".to_string());
-            assert_eq!(patterns[4], "**/tsconfig*.json".to_string());
+            assert_eq!(patterns[3], "**/tsconfig*.json".to_string());
         }
     }
 
@@ -1073,19 +1079,18 @@ mod test_watchers {
                         "typeAware": true
                     }));
             assert!(watch_patterns.is_some());
-            assert_eq!(watch_patterns.as_ref().unwrap().len(), 5);
+            assert_eq!(watch_patterns.as_ref().unwrap().len(), 4);
             assert_eq!(watch_patterns.as_ref().unwrap()[0], "**/.oxlintrc.json".to_string());
             assert_eq!(watch_patterns.as_ref().unwrap()[1], "**/.oxlintrc.jsonc".to_string());
             assert_eq!(watch_patterns.as_ref().unwrap()[2], "**/oxlint.config.ts".to_string());
-            assert_eq!(watch_patterns.as_ref().unwrap()[3], "**/vite.config.ts".to_string());
-            assert_eq!(watch_patterns.as_ref().unwrap()[4], "**/tsconfig*.json".to_string());
+            assert_eq!(watch_patterns.as_ref().unwrap()[3], "**/tsconfig*.json".to_string());
         }
     }
 }
 
 #[cfg(test)]
 mod test {
-    use std::path::PathBuf;
+    use std::{fs, path::PathBuf};
 
     use oxc_language_server::Tool;
     use oxc_linter::ExternalPluginStore;
@@ -1125,6 +1130,23 @@ mod test {
         assert_eq!(configs_dirs.len(), 2);
         assert!(configs_dirs[1].ends_with("deep2"));
         assert!(configs_dirs[0].ends_with("deep1"));
+    }
+
+    #[test]
+    fn test_create_ignore_glob_skips_git_dir() {
+        let root_dir = tempfile::tempdir().unwrap();
+        let app_dir = root_dir.path().join("apps").join("foo");
+        fs::create_dir_all(&app_dir).unwrap();
+        fs::write(app_dir.join(".gitignore"), "dist/\n").unwrap();
+
+        let git_dir = root_dir.path().join(".git").join("info");
+        fs::create_dir_all(&git_dir).unwrap();
+        fs::write(git_dir.join(".gitignore"), "refs/\n").unwrap();
+
+        let ignore_globs = ServerLinterBuilder::create_ignore_glob(root_dir.path());
+
+        assert_eq!(ignore_globs.len(), 1);
+        assert!(ignore_globs[0].path().starts_with(&app_dir));
     }
 
     #[test]

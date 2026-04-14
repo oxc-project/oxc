@@ -80,6 +80,7 @@ declare_oxc_lint!(
     jest,
     style,
     config = MaxExpects,
+    version = "0.0.18",
 );
 
 impl Rule for MaxExpects {

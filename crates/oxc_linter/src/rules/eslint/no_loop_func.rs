@@ -51,7 +51,8 @@ declare_oxc_lint!(
     /// ```
     NoLoopFunc,
     eslint,
-    pedantic
+    pedantic,
+    version = "1.33.0",
 );
 
 impl Rule for NoLoopFunc {

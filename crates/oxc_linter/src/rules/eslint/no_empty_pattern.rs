@@ -78,6 +78,7 @@ declare_oxc_lint!(
     NoEmptyPattern,
     eslint,
     correctness,
+    version = "0.0.3",
 );
 
 impl Rule for NoEmptyPattern {

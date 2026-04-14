@@ -80,6 +80,7 @@ declare_oxc_lint!(
     style,
     none,
     config = PreferPromiseRejectErrors,
+    version = "0.15.7",
 );
 
 impl Rule for PreferPromiseRejectErrors {

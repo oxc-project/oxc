@@ -69,6 +69,7 @@ declare_oxc_lint!(
     jsx_a11y,
     correctness,
     config = HeadingHasContentConfig,
+    version = "0.0.19",
 );
 
 // always including <h1> thru <h6>

@@ -61,7 +61,8 @@ declare_oxc_lint!(
     NoUnneededAsyncExpectFunction,
     jest,
     style,
-    fix
+    fix,
+    version = "1.39.0",
 );
 
 impl Rule for NoUnneededAsyncExpectFunction {

@@ -62,7 +62,8 @@ declare_oxc_lint!(
     /// ```
     NoDisabledTests,
     jest,
-    correctness
+    correctness,
+    version = "0.0.7",
 );
 
 fn no_disabled_tests_diagnostic(x1: &'static str, x2: &'static str, span3: Span) -> OxcDiagnostic {

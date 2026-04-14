@@ -50,7 +50,8 @@ declare_oxc_lint!(
     /// ```
     NoContinue,
     eslint,
-    style
+    style,
+    version = "0.2.14",
 );
 
 impl Rule for NoContinue {

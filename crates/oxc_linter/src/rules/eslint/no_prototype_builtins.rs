@@ -44,7 +44,8 @@ declare_oxc_lint!(
     NoPrototypeBuiltins,
     eslint,
     pedantic,
-    pending
+    pending,
+    version = "0.0.5",
 );
 
 const DISALLOWED_PROPS: &[&str; 3] = &["hasOwnProperty", "isPrototypeOf", "propertyIsEnumerable"];

@@ -41,7 +41,8 @@ declare_oxc_lint!(
     NoInstanceofArray,
     unicorn,
     pedantic,
-    fix
+    fix,
+    version = "0.0.8",
 );
 
 impl Rule for NoInstanceofArray {

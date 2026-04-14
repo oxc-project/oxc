@@ -139,6 +139,7 @@ declare_oxc_lint!(
     style,
     fix,
     config = ConsistentTestItConfig,
+    version = "0.5.3",
 );
 
 impl Rule for ConsistentTestIt {

@@ -73,6 +73,7 @@ declare_oxc_lint!(
     eslint,
     pedantic,
     config = MaxClassesPerFileConfig,
+    version = "0.3.4",
 );
 
 impl Rule for MaxClassesPerFile {

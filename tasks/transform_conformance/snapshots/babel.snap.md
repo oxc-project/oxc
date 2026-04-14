@@ -1,6 +1,6 @@
 commit: 91b4ce32
 
-Passed: 690/1165
+Passed: 693/1165
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -1174,7 +1174,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-preset-typescript (7/12)
+# babel-preset-typescript (8/12)
 * node-extensions/import-in-cts/input.cts
 x Output mismatch
 
@@ -1183,9 +1183,6 @@ Unresolved references mismatch:
 after transform: ["T", "x"]
 rebuilt        : ["x"]
 
-* opts/optimizeConstEnums/input.ts
-x Output mismatch
-
 * opts/rewriteImportExtensions/input.ts
 x Output mismatch
 
@@ -1193,7 +1190,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (53/157)
+# babel-plugin-transform-typescript (55/157)
 * cast/as-expression/input.ts
 Unresolved references mismatch:
 after transform: ["T", "x"]
@@ -2362,14 +2359,13 @@ Symbol span mismatch for "N":
 after transform: SymbolId(0): Span { start: 10, end: 11 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 
-* optimize-const-enums/custom-values/input.ts
-x Output mismatch
-
 * optimize-const-enums/custom-values-exported/input.ts
 x Output mismatch
 
 * optimize-const-enums/declare/input.ts
-x Output mismatch
+Bindings mismatch:
+after transform: ScopeId(0): ["A"]
+rebuilt        : ScopeId(0): []
 
 * optimize-const-enums/export-const-enum/input.ts
 x Output mismatch
@@ -2384,13 +2380,26 @@ x Output mismatch
 x Output mismatch
 
 * optimize-const-enums/local/input.ts
-x Output mismatch
-
-* optimize-const-enums/local-shadowed/input.ts
-x Output mismatch
+Reference symbol mismatch for "A":
+after transform: SymbolId(0) "A"
+rebuilt        : <None>
+Reference symbol mismatch for "A":
+after transform: SymbolId(0) "A"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["A"]
 
 * optimize-const-enums/merged/input.ts
-x Output mismatch
+Reference symbol mismatch for "A":
+after transform: SymbolId(0) "A"
+rebuilt        : <None>
+Reference symbol mismatch for "A":
+after transform: SymbolId(0) "A"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["A"]
 
 * optimize-const-enums/merged-exported/input.ts
 x Output mismatch

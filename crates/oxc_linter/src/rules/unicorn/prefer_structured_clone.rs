@@ -75,6 +75,7 @@ declare_oxc_lint!(
     style,
     suggestion,
     config = PreferStructuredCloneConfig,
+    version = "0.9.0",
 );
 
 impl Rule for PreferStructuredClone {

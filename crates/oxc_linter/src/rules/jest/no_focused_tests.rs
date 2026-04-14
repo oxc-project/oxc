@@ -65,7 +65,8 @@ declare_oxc_lint!(
     NoFocusedTests,
     jest,
     correctness,
-    fix
+    fix,
+    version = "0.0.8",
 );
 
 impl Rule for NoFocusedTests {

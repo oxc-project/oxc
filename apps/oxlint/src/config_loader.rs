@@ -12,10 +12,12 @@ use oxc_linter::{
 };
 use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
 
-use crate::{
-    DEFAULT_JSONC_OXLINTRC_NAME, DEFAULT_OXLINTRC_NAME, DEFAULT_TS_OXLINTRC_NAME, VITE_CONFIG_NAME,
-};
+use crate::{DEFAULT_JSONC_OXLINTRC_NAME, DEFAULT_OXLINTRC_NAME, DEFAULT_TS_OXLINTRC_NAME};
 
+#[cfg(feature = "napi")]
+use crate::{VITE_CONFIG_NAME, is_vite_plus_mode};
+
+const GIT_DIR: &str = ".git";
 const NODE_MODULES_DIR: &str = "node_modules";
 
 #[cfg(feature = "napi")]
@@ -164,9 +166,11 @@ impl ignore::ParallelVisitor for ConfigWalkCollector {
     fn visit(&mut self, entry: Result<DirEntry, ignore::Error>) -> ignore::WalkState {
         match entry {
             Ok(entry) => {
-                // Skip node_modules directories entirely - they are not part of the project
+                // Skip `.git` and `node_modules` directories entirely - they are not part of the
+                // lintable project tree for config discovery.
                 if entry.file_type().is_some_and(|ft| ft.is_dir())
-                    && entry.file_name() == NODE_MODULES_DIR
+                    && (entry.file_name() == OsStr::new(GIT_DIR)
+                        || entry.file_name() == OsStr::new(NODE_MODULES_DIR))
                 {
                     return ignore::WalkState::Skip;
                 }
@@ -506,9 +510,21 @@ impl<'a> ConfigLoader<'a> {
 
     /// Try to load config from a specific directory.
     ///
-    /// Checks for both `.oxlintrc.json` and `oxlint.config.ts` files in the given directory.
+    /// In Vite+ mode (`VP_VERSION` set): only checks for `vite.config.ts`.
+    /// Otherwise: checks for `.oxlintrc.json`, `.oxlintrc.jsonc`, and `oxlint.config.ts`.
+    ///
     /// Returns `Ok(Some(config))` if found, `Ok(None)` if not found, or `Err` on error.
     fn try_load_config_from_dir(&self, dir: &Path) -> Result<Option<Oxlintrc>, OxcDiagnostic> {
+        // Vite+ mode: only vite.config.ts is a candidate
+        #[cfg(feature = "napi")]
+        if is_vite_plus_mode() {
+            let vite_config_path = dir.join(VITE_CONFIG_NAME);
+            if vite_config_path.is_file() {
+                return self.load_root_js_config(&vite_config_path);
+            }
+            return Ok(None);
+        }
+
         let json_path = dir.join(DEFAULT_OXLINTRC_NAME);
         let jsonc_path = dir.join(DEFAULT_JSONC_OXLINTRC_NAME);
         let ts_path = dir.join(DEFAULT_TS_OXLINTRC_NAME);
@@ -536,13 +552,6 @@ impl<'a> ConfigLoader<'a> {
         }
         if jsonc_exists {
             return Oxlintrc::from_file(&jsonc_path).map(Some);
-        }
-
-        // Fallback: check for vite.config.ts with .lint field (lowest priority)
-        // If .lint field is missing, `load_root_js_config` returns `Ok(None)` to skip.
-        let vite_config_path = dir.join(VITE_CONFIG_NAME);
-        if vite_config_path.is_file() {
-            return self.load_root_js_config(&vite_config_path);
         }
 
         Ok(None)
@@ -1345,6 +1354,37 @@ mod test {
 
         // Should find the nested config but NOT the one inside node_modules
         assert_eq!(discovered.len(), 1, "Expected only 1 config (not the node_modules one)");
+        let path = match &discovered[0] {
+            DiscoveredConfig::Json(p) => p.clone(),
+            _ => panic!("Expected Json config"),
+        };
+        assert!(
+            path.starts_with(nested_dir),
+            "Expected config in packages/foo, got: {}",
+            path.display()
+        );
+    }
+
+    #[test]
+    fn test_discover_configs_skips_git_dir() {
+        use super::discover_configs_in_tree;
+
+        let root_dir = tempfile::tempdir().unwrap();
+        let base_config = root_dir.path().join(".oxlintrc.json");
+        std::fs::write(&base_config, r#"{ "rules": {} }"#).unwrap();
+
+        let git_dir = root_dir.path().join(".git").join("hooks");
+        std::fs::create_dir_all(&git_dir).unwrap();
+        std::fs::write(git_dir.join(".oxlintrc.json"), r#"{ "rules": {} }"#).unwrap();
+
+        let nested_dir = root_dir.path().join("packages").join("foo");
+        std::fs::create_dir_all(&nested_dir).unwrap();
+        std::fs::write(nested_dir.join(".oxlintrc.json"), r#"{ "rules": {} }"#).unwrap();
+
+        let discovered: Vec<_> =
+            discover_configs_in_tree(root_dir.path(), &base_config).into_iter().collect();
+
+        assert_eq!(discovered.len(), 1, "Expected only 1 config (not the .git one)");
         let path = match &discovered[0] {
             DiscoveredConfig::Json(p) => p.clone(),
             _ => panic!("Expected Json config"),

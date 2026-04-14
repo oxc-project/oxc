@@ -22,6 +22,8 @@ pub struct LintRuleMeta {
     /// This is the name of a struct/enum/whatever implementing
     /// schemars::JsonSchema
     config: Option<Ident>,
+    /// The version of oxlint in which this rule was first available.
+    version: LitStr,
 }
 
 impl Parse for LintRuleMeta {
@@ -86,6 +88,7 @@ impl Parse for LintRuleMeta {
         // Do not provide a default value here so that it can be set there instead.
         let mut fix: Option<Ident> = None;
         let mut config: Option<Ident> = None;
+        let mut version: Option<LitStr> = None;
 
         // remaining options are `key = value` pairs, with the exception of
         // fix kinds. Those can be short-handed to just the fix kind
@@ -111,6 +114,11 @@ impl Parse for LintRuleMeta {
                     input.parse::<Token!(=)>()?;
                     config.replace(input.parse()?);
                 }
+                // version = "x.y.z" or version = "next"
+                "version" => {
+                    input.parse::<Token!(=)>()?;
+                    version.replace(input.parse()?);
+                }
                 _ => {
                     if input.peek(Token!(=)) || fix.is_some() {
                         panic!("invalid key: {key}");
@@ -129,6 +137,13 @@ impl Parse for LintRuleMeta {
                 "unexpected tokens in rule declaration, missing a comma?",
             ));
         }
+
+        let Some(version) = version else {
+            return Err(Error::new(
+                struct_name.span(),
+                "missing `version = \"x.y.z\"` or `version = \"next\"` in `declare_oxc_lint!`",
+            ));
+        };
 
         // Validate that any markdown fenced code blocks (```) in rule docs are properly closed.
         // If the total number of fences found is odd, a block was not closed.
@@ -150,6 +165,7 @@ impl Parse for LintRuleMeta {
             documentation,
             used_in_test: false,
             config,
+            version,
         })
     }
 }
@@ -169,6 +185,7 @@ pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
         documentation,
         used_in_test,
         config,
+        version,
     } = metadata;
 
     let canonical_name = rule_name_converter().convert(name.to_string());
@@ -235,6 +252,12 @@ pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
         }),
     };
 
+    let version_const = {
+        quote! {
+            const VERSION: &'static str = #version;
+        }
+    };
+
     let output = quote! {
         #import_statement
 
@@ -254,6 +277,8 @@ pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
             #has_config
 
             #config_schema
+
+            #version_const
         }
     };
 

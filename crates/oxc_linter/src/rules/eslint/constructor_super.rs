@@ -113,6 +113,7 @@ declare_oxc_lint!(
     ConstructorSuper,
     eslint,
     correctness,
+    version = "0.0.3",
 );
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

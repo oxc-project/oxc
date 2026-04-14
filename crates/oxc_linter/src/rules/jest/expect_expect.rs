@@ -1,5 +1,3 @@
-use cow_utils::CowUtils;
-use lazy_regex::Regex;
 use rustc_hash::FxHashSet;
 
 use oxc_ast::{
@@ -19,7 +17,8 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{
-        JestFnKind, JestGeneralFnKind, PossibleJestNode, get_node_name, is_type_of_jest_fn_call,
+        JestFnKind, JestGeneralFnKind, PossibleJestNode, convert_pattern, get_node_name,
+        is_type_of_jest_fn_call, matches_assert_function_name,
     },
 };
 
@@ -103,6 +102,7 @@ declare_oxc_lint!(
     jest,
     correctness,
     config = ExpectExpectConfig,
+    version = "0.0.12",
 );
 
 impl Rule for ExpectExpect {
@@ -315,32 +315,6 @@ impl<'a> Visit<'a> for AssertionVisitor<'a, '_> {
     fn visit_function(&mut self, _func: &Function<'a>, _flags: ScopeFlags) {}
 
     fn visit_formal_parameter(&mut self, _param: &FormalParameter<'a>) {}
-}
-
-/// Checks if node names returned by getNodeName matches any of the given star patterns
-fn matches_assert_function_name(name: &str, patterns: &[CompactStr]) -> bool {
-    patterns.iter().any(|pattern| Regex::new(pattern).unwrap().is_match(name))
-}
-
-fn convert_pattern(pattern: &str) -> CompactStr {
-    // Pre-process pattern, e.g.
-    // request.*.expect -> request.[a-z\\d]*.expect
-    // request.**.expect -> request.[a-z\\d\\.]*.expect
-    // request.**.expect* -> request.[a-z\\d\\.]*.expect[a-z\\d]*
-    let pattern = pattern
-        .split('.')
-        .map(|p| {
-            if p == "**" {
-                CompactStr::from("[a-z\\d\\.]*")
-            } else {
-                p.cow_replace('*', "[a-z\\d]*").into()
-            }
-        })
-        .collect::<Vec<_>>()
-        .join("\\.");
-
-    // 'a.b.c' -> /^a\.b\.c(\.|$)/iu
-    format!("(?ui)^{pattern}(\\.|$)").into()
 }
 
 #[test]

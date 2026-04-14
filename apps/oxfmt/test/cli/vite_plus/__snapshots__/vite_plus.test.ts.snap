@@ -1,0 +1,121 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`vite_plus > basic: reads fmt field from vite.config.ts 1`] = `
+"--------------------
+arguments: --check test.ts
+working directory: vite_plus/fixtures/basic
+exit code: 1
+--- STDOUT ---------
+Checking formatting...
+
+test.ts (<variable>ms)
+
+Format issues found in above 1 files. Run without \`--check\` to fix.
+Finished in <variable>ms on 1 files using 1 threads.
+--- STDERR ---------
+
+--------------------"
+`;
+
+exports[`vite_plus > error: auto-discovered vite.config.ts that fails to load 1`] = `
+"--------------------
+arguments: --check test.ts
+working directory: vite_plus/fixtures/error_load_failure/child
+exit code: 1
+--- STDOUT ---------
+
+--- STDERR ---------
+Failed to load configuration file.
+<cwd>/vite.config.ts
+Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'non-existent-module' imported from <cwd>/vite.config.ts
+Ensure the file has a valid default export of a JSON-serializable configuration object.
+--------------------"
+`;
+
+exports[`vite_plus > error: explicit --config vite.config.ts that fails to load 1`] = `
+"--------------------
+arguments: --check --config vite.config.ts test.ts
+working directory: vite_plus/fixtures/error_load_failure/child
+exit code: 1
+--- STDOUT ---------
+
+--- STDERR ---------
+Failed to load configuration file.
+<cwd>/vite.config.ts
+Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'non-existent-module' imported from <cwd>/vite.config.ts
+Ensure the file has a valid default export of a JSON-serializable configuration object.
+--------------------"
+`;
+
+exports[`vite_plus > error: explicit --config vite.config.ts without fmt field 1`] = `
+"--------------------
+arguments: --check --config vite.config.ts test.ts
+working directory: vite_plus/fixtures/no_fmt_field
+exit code: 1
+--- STDOUT ---------
+
+--- STDERR ---------
+Failed to load configuration file.
+Expected a \`fmt\` field in the default export of <cwd>/vite.config.ts
+--------------------"
+`;
+
+exports[`vite_plus > priority: oxfmt.config.ts is ignored, vite.config.ts is used 1`] = `
+"--------------------
+arguments: --check test.ts
+working directory: vite_plus/fixtures/priority
+exit code: 0
+--- STDOUT ---------
+Checking formatting...
+
+All matched files use the correct format.
+Finished in <variable>ms on 1 files using 1 threads.
+--- STDERR ---------
+
+--------------------"
+`;
+
+exports[`vite_plus > skip: auto-discovered vite.config.ts with function export uses defaults 1`] = `
+"--------------------
+arguments: --check test.ts
+working directory: vite_plus/fixtures/skip_fn_export
+exit code: 0
+--- STDOUT ---------
+Checking formatting...
+
+All matched files use the correct format.
+Finished in <variable>ms on 1 files using 1 threads.
+--- STDERR ---------
+
+--------------------"
+`;
+
+exports[`vite_plus > skip: auto-discovered vite.config.ts without fmt field uses defaults 1`] = `
+"--------------------
+arguments: --check test.ts
+working directory: vite_plus/fixtures/no_fmt_field
+exit code: 0
+--- STDOUT ---------
+Checking formatting...
+
+All matched files use the correct format.
+Finished in <variable>ms on 1 files using 1 threads.
+--- STDERR ---------
+
+--------------------"
+`;
+
+exports[`vite_plus > skip: parent oxfmtrc is not found when vite.config.ts without fmt is skipped 1`] = `
+"--------------------
+arguments: --check test.ts
+working directory: vite_plus/fixtures/skip_finds_parent/child
+exit code: 0
+--- STDOUT ---------
+Checking formatting...
+
+All matched files use the correct format.
+Finished in <variable>ms on 1 files using 1 threads.
+--- STDERR ---------
+
+--------------------"
+`;

@@ -1023,7 +1023,20 @@ var Hello = createReactClass({
 
 This rule accepts one of the following string values:
 
-type: `"allowed" | "disallow-in-func"`
+### `"allowed"`
+
+
+
+Forbids any call to `this.setState` in `componentWillUpdate` outside of functions.
+
+
+### `"disallow-in-func"`
+
+
+
+Makes this rule more strict by disallowing calls to `this.setState`` even within functions.
+
+
 
 
 
@@ -1954,7 +1967,52 @@ class C {
 
 This rule accepts one of the following string values:
 
-type: `"fields" | "getters"`
+### `"fields"`
+
+
+
+Enforce using readonly fields for literal values.
+
+Examples of **incorrect** code with this option:
+```ts
+class C {
+get name() {
+return "oxc";
+}
+}
+```
+
+Examples of **correct** code with this option:
+```ts
+class C {
+readonly name = "oxc";
+}
+```
+
+
+### `"getters"`
+
+
+
+Enforce using getters for literal values.
+
+Examples of **incorrect** code with this option:
+```ts
+class C {
+readonly name = "oxc";
+}
+```
+
+Examples of **correct** code with this option:
+```ts
+class C {
+get name() {
+return "oxc";
+}
+}
+```
+
+
 
 
 

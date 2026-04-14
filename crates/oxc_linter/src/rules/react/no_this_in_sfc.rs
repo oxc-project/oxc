@@ -64,7 +64,8 @@ declare_oxc_lint!(
     /// ```
     NoThisInSfc,
     react,
-    correctness
+    correctness,
+    version = "1.37.0",
 );
 
 impl Rule for NoThisInSfc {

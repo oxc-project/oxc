@@ -53,7 +53,8 @@ declare_oxc_lint!(
     ConsistentEmptyArraySpread,
     unicorn,
     pedantic,
-    suggestion
+    suggestion,
+    version = "0.10.1",
 );
 
 impl Rule for ConsistentEmptyArraySpread {

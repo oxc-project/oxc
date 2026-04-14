@@ -73,7 +73,8 @@ declare_oxc_lint!(
     /// ```
     NoThenable,
     unicorn,
-    correctness
+    correctness,
+    version = "0.0.13",
 );
 
 impl Rule for NoThenable {

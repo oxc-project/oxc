@@ -114,7 +114,8 @@ declare_oxc_lint!(
     RequireTopLevelDescribe,
     jest,
     style,
-    config = RequireTopLevelDescribe
+    config = RequireTopLevelDescribe,
+    version = "0.4.2",
 );
 
 impl Rule for RequireTopLevelDescribe {

@@ -92,6 +92,7 @@ declare_oxc_lint!(
     pedantic,
     conditional_fix_dangerous,
     config = RadixType,
+    version = "0.3.3",
 );
 
 impl Rule for Radix {

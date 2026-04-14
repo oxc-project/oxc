@@ -183,6 +183,7 @@ declare_oxc_lint!(
     pedantic,
     conditional_fix,
     config = NoElseReturn,
+    version = "0.9.10",
 );
 
 fn is_safe_from_name_collisions(

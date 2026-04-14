@@ -56,7 +56,8 @@ declare_oxc_lint!(
     /// ```
     NoMocksImport,
     jest,
-    style
+    style,
+    version = "0.0.13",
 );
 
 impl Rule for NoMocksImport {

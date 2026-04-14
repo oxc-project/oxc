@@ -46,6 +46,7 @@ declare_oxc_lint!(
     unicorn,
     style,
     fix_dangerous,
+    version = "0.0.19",
 );
 
 impl Rule for NoAwaitExpressionMember {

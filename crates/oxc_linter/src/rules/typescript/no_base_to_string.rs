@@ -79,6 +79,7 @@ declare_oxc_lint!(
     typescript,
     correctness,
     config = NoBaseToStringConfig,
+    version = "1.12.0",
 );
 
 impl Rule for NoBaseToString {
