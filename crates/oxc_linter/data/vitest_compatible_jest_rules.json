@@ -24,6 +24,5 @@
   "require-hook",
   "require-to-throw-message",
   "valid-describe-callback",
-  "valid-expect",
   "valid-expect-in-promise"
 ]

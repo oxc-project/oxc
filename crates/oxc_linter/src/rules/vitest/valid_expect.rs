@@ -11,7 +11,7 @@ pub struct ValidExpect(Box<ValidExpectConfig>);
 
 declare_oxc_lint!(
     ValidExpect,
-    jest,
+    vitest,
     correctness,
     suggestion,
     config = ValidExpectConfig,

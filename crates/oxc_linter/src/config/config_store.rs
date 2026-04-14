@@ -904,7 +904,7 @@ mod test {
             {
                 "plugins": ["vitest", "typescript"],
                 "rules": {
-                    "vitest/valid-expect": "error",
+                    "vitest/valid-expect-in-promise": "error",
                     "typescript/no-explicit-any": "error"
                 },
                 "overrides": [
@@ -920,10 +920,8 @@ mod test {
         let rules_for_test_file = config.apply_overrides("foo.test.ts".as_ref());
 
         assert!(
-            rules_for_test_file
-                .rules
-                .iter()
-                .any(|(rule, _)| rule.plugin_name() == "jest" && rule.name() == "valid-expect"),
+            rules_for_test_file.rules.iter().any(|(rule, _)| rule.plugin_name() == "jest"
+                && rule.name() == "valid-expect-in-promise"),
             "vitest-compatible jest rules should remain enabled when an override matches"
         );
         assert!(
