@@ -935,16 +935,16 @@ fn test() {
             ",
             None,
         ),
-        // (
-        //     "
-        // namespace foo.bar {
-        //   export interface User {
-        //     name: string;
-        //   }
-        // }
-        //     ",
-        //     None,
-        // ),
+        (
+            "
+        namespace foo.bar {
+          export interface User {
+            name: string;
+          }
+        }
+            ",
+            None,
+        ),
         // exported self-referencing types
         (
             "
