@@ -2681,17 +2681,6 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
         #[expect(clippy::unnecessary_safety_comment)]
         chunk_footer.ptr.set(ptr);
     }
-
-    /// Get pointer to end of this [`Arena`]'s current chunk (after the `ChunkFooter`).
-    pub fn end_ptr(&self) -> NonNull<u8> {
-        let chunk_footer_ptr = self.current_chunk_footer.get();
-
-        // SAFETY: `chunk_footer_ptr` always points to a valid `ChunkFooter`,
-        // so stepping past it cannot be out of bounds of the chunk's allocation.
-        // If `Arena` has not allocated, so `chunk_footer_ptr` returns a pointer to the static empty chunk,
-        // it's still valid.
-        unsafe { chunk_footer_ptr.add(1).cast::<u8>() }
-    }
 }
 
 /// An iterator over each chunk of allocated memory that

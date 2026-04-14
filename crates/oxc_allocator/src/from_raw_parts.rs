@@ -3,7 +3,6 @@
 //! * [`Allocator::from_raw_parts`]
 //! * [`Allocator::cursor_ptr`]
 //! * [`Allocator::set_cursor_ptr`]
-//! * [`Allocator::end_ptr`]
 
 use std::ptr::NonNull;
 
@@ -69,10 +68,5 @@ impl Allocator {
         // SAFETY: Caller guarantees `Allocator` has at least 1 allocated chunk, and `ptr` is valid.
         // The `Arena` contained in `Allocator` has `MIN_ALIGN = 1`, so no alignment requirement for `ptr`.
         unsafe { self.arena().set_cursor_ptr(ptr) };
-    }
-
-    /// Get pointer to end of this [`Allocator`]'s current chunk (after the `ChunkFooter`).
-    pub fn end_ptr(&self) -> NonNull<u8> {
-        self.arena().end_ptr()
     }
 }
