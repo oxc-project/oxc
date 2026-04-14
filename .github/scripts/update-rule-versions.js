@@ -53,6 +53,10 @@ function replaceVersionLiteral(line, releaseVersion) {
   return `${match[1]}"${releaseVersion}"${match[2]}`;
 }
 
+function trimTrailingLineComment(line) {
+  return line.replace(/\s*\/\/.*$/, "").trim();
+}
+
 function analyzeRuleFile(source, filePath, releaseVersion, repoRoot) {
   const relativeFile = normalizePath(path.relative(repoRoot, filePath));
   const lines = source.split("\n");
@@ -95,8 +99,8 @@ function analyzeRuleFile(source, filePath, releaseVersion, repoRoot) {
       throw new Error(`${relativeFile}: could not parse rule category from declare_oxc_lint! block`);
     }
 
-    const ruleName = metadataEntries[0].trimmed.replace(/,$/, "");
-    const category = metadataEntries[2].trimmed.replace(/,$/, "");
+    const ruleName = trimTrailingLineComment(metadataEntries[0].trimmed).replace(/,$/, "");
+    const category = trimTrailingLineComment(metadataEntries[2].trimmed).replace(/,$/, "");
 
     if (!VALID_CATEGORIES.has(category)) {
       throw new Error(`${relativeFile}: unknown rule category \`${category}\``);
