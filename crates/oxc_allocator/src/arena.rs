@@ -2682,12 +2682,6 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
         chunk_footer.ptr.set(ptr);
     }
 
-    /// Get pointer to end of the data region of this [`Arena`]'s current chunk
-    /// i.e to the start of the `ChunkFooter`.
-    pub fn data_end_ptr(&self) -> NonNull<u8> {
-        self.current_chunk_footer.get().cast::<u8>()
-    }
-
     /// Get pointer to end of this [`Arena`]'s current chunk (after the `ChunkFooter`).
     pub fn end_ptr(&self) -> NonNull<u8> {
         let chunk_footer_ptr = self.current_chunk_footer.get();
