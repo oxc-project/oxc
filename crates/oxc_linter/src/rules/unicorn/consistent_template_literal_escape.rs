@@ -40,7 +40,8 @@ declare_oxc_lint!(
     ConsistentTemplateLiteralEscape,
     unicorn,
     style,
-    fix
+    fix,
+    version = "1.60.0"
 );
 
 impl Rule for ConsistentTemplateLiteralEscape {
