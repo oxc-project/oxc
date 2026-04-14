@@ -53,6 +53,37 @@ declare_oxc_lint!(
   assert.match(updatedSource, /version = "1\.61\.0"/);
 });
 
+test("rewrites spacing variants of version next", () => {
+  const root = createTempRepo();
+  writeRule(
+    root,
+    "no_debugger.rs",
+    `
+use oxc_macros::declare_oxc_lint;
+
+declare_oxc_lint!(
+    NoDebugger,
+    eslint,
+    correctness,
+    version= "next",
+);
+`,
+  );
+
+  const report = rewriteNextRuleVersions({ root, releaseVersion: "1.61.0" });
+  const updatedSource = fs.readFileSync(path.join(rulesDir(root), "no_debugger.rs"), "utf8");
+
+  assert.deepEqual(report.updatedRules, [
+    {
+      file: "crates/oxc_linter/src/rules/eslint/no_debugger.rs",
+      ruleName: "NoDebugger",
+      from: "next",
+      to: "1.61.0",
+    },
+  ]);
+  assert.match(updatedSource, /version= "1\.61\.0"/);
+});
+
 test("keeps nursery rules on next", () => {
   const root = createTempRepo();
   writeRule(
@@ -239,7 +270,7 @@ test("fails if version next is outside a declare_oxc_lint block", () => {
     root,
     "broken.rs",
     `
-// version = "next"
+const BROKEN: &str = r#"version = "next""#;
 `,
   );
 
@@ -247,6 +278,36 @@ test("fails if version next is outside a declare_oxc_lint block", () => {
     () => rewriteNextRuleVersions({ root, releaseVersion: "1.61.0" }),
     /outside a declare_oxc_lint! block/,
   );
+});
+
+test("ignores inline comments in the stray next-version scan", () => {
+  const root = createTempRepo();
+  writeRule(
+    root,
+    "no_debugger.rs",
+    `
+use oxc_macros::declare_oxc_lint;
+
+declare_oxc_lint!(
+    NoDebugger,
+    eslint,
+    nursery, // keep version = "next"
+    version = "next",
+);
+`,
+  );
+
+  const report = rewriteNextRuleVersions({ root, releaseVersion: "1.61.0" });
+  const updatedSource = fs.readFileSync(path.join(rulesDir(root), "no_debugger.rs"), "utf8");
+
+  assert.deepEqual(report.updatedRules, []);
+  assert.deepEqual(report.skippedNurseryRules, [
+    {
+      file: "crates/oxc_linter/src/rules/eslint/no_debugger.rs",
+      ruleName: "NoDebugger",
+    },
+  ]);
+  assert.match(updatedSource, /version = "next"/);
 });
 
 test("fails if the rules tree contains symlinked rule files", { skip: process.platform === "win32" }, () => {

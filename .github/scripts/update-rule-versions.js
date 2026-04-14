@@ -156,8 +156,9 @@ function analyzeRuleFile(source, filePath, releaseVersion, repoRoot) {
       ({ startLine, endLine }) =>
         lineIndex > startLine && lineIndex < endLine && isCommentOnlyLine(line.trim()),
     );
+    const strippedLine = stripTrailingComments(line);
     if (
-      NEXT_VERSION_REGEX.test(line) &&
+      NEXT_VERSION_REGEX.test(strippedLine) &&
       !coveredNextVersionLines.has(lineIndex) &&
       !isCommentLineInsideDeclareRuleBlock
     ) {
@@ -185,7 +186,7 @@ function rewriteNextRuleVersions({ root, releaseVersion, dryRun = false }) {
 
   for (const filePath of collectRuleFiles(rulesRoot, repoRoot)) {
     const source = fs.readFileSync(filePath, "utf8");
-    if (!source.includes(NEXT_VERSION_TEXT)) {
+    if (!NEXT_VERSION_REGEX.test(source)) {
       continue;
     }
 
