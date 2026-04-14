@@ -325,7 +325,12 @@ impl Rule for ConsistentTypeImports {
     }
 
     fn should_run(&self, ctx: &ContextHost) -> bool {
+        // ignore vue/svelte/astro files, because the linter cannot see
+        // template usage and would produce false positives.
         ctx.source_type().is_typescript()
+            && !ctx
+                .file_extension()
+                .is_some_and(|ext| ext == "vue" || ext == "svelte" || ext == "astro")
     }
 }
 
@@ -3427,4 +3432,56 @@ export class Foo extends Bar {}
     Tester::new(ConsistentTypeImports::NAME, ConsistentTypeImports::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
+}
+
+#[test]
+fn test_should_run() {
+    use std::path::PathBuf;
+
+    use crate::tester::Tester;
+
+    let pass = vec![
+        (
+            r#"<script setup lang="ts">
+                import { obj } from './utils';
+                type _TypeofObj = typeof obj;
+            </script>"#,
+            None,
+            None,
+            Some(PathBuf::from("src/foo/bar.vue")),
+        ),
+        (
+            r#"<script setup lang="ts">
+                import ChildComponent from './ChildComponent.vue';
+                const childComponentRef = ref<InstanceType<typeof ChildComponent>>();
+            </script>"#,
+            None,
+            None,
+            Some(PathBuf::from("src/foo/bar.vue")),
+        ),
+        (
+            r"---
+import Welcome from '../components/Welcome.astro';
+type _TypeofWelcome = typeof Welcome;
+---
+<Welcome />",
+            None,
+            None,
+            Some(PathBuf::from("src/foo/bar.astro")),
+        ),
+        (
+            r#"<script lang="ts">
+                import Nested from './Nested.svelte';
+                type _TypeofNested = typeof Nested;
+            </script>
+            <Nested answer={42} />"#,
+            None,
+            None,
+            Some(PathBuf::from("src/foo/bar.svelte")),
+        ),
+    ];
+
+    Tester::new(ConsistentTypeImports::NAME, ConsistentTypeImports::PLUGIN, pass, vec![])
+        .intentionally_allow_no_fix_tests()
+        .test();
 }
