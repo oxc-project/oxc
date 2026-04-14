@@ -18,7 +18,7 @@ use oxc_linter::{
 };
 
 use crate::{
-    generated::raw_transfer_constants::{BLOCK_ALIGN, BUFFER_SIZE},
+    generated::raw_transfer_constants::BUFFER_SIZE,
     run::{
         JsCreateWorkspaceCb, JsDestroyWorkspaceCb, JsLintFileCb, JsLoadPluginCb,
         JsSetupRuleConfigsCb,
@@ -270,17 +270,8 @@ unsafe fn get_buffer(
     // Buffer has not already been sent to JS. Send it.
 
     // Get pointer to start of allocator chunk.
-    // Note: `Allocator::data_ptr` would not provide the right pointer, because source text
-    // gets written to start of the allocator chunk, and `data_ptr` gets moved to after it.
-    // SAFETY: Fixed-size allocators have their chunk aligned on `BLOCK_ALIGN`,
-    // and size less than `BLOCK_ALIGN`. So we can get pointer to start of `Allocator` chunk
-    // by rounding down to next multiple of `BLOCK_ALIGN`. That can't go out of bounds of
-    // the backing allocation.
-    let chunk_ptr = unsafe {
-        let ptr = metadata_ptr.cast::<u8>();
-        let offset = ptr.as_ptr() as usize % BLOCK_ALIGN;
-        ptr.sub(offset)
-    };
+    // SAFETY: `allocator` is a fixed-size allocator.
+    let chunk_ptr = unsafe { allocator.chunk_start_ptr() };
 
     // SAFETY:
     // Range of memory starting at `chunk_ptr` and encompassing `BUFFER_SIZE` is all within
