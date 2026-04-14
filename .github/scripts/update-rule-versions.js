@@ -53,8 +53,31 @@ function replaceVersionLiteral(line, releaseVersion) {
   return `${match[1]}"${releaseVersion}"${match[2]}`;
 }
 
-function trimTrailingLineComment(line) {
-  return line.replace(/\s*\/\/.*$/, "").trim();
+function isCommentOnlyLine(trimmedLine) {
+  return (
+    trimmedLine.startsWith("///") ||
+    trimmedLine.startsWith("//") ||
+    trimmedLine.startsWith("/*") ||
+    trimmedLine.startsWith("*") ||
+    trimmedLine.startsWith("*/")
+  );
+}
+
+function stripTrailingComments(line) {
+  return line
+    .replace(/\s*\/\/.*$/, "")
+    .replace(/\s*\/\*.*\*\/\s*$/, "")
+    .trim();
+}
+
+function normalizeMetadataLine(line) {
+  const trimmedLine = line.trim();
+  if (!trimmedLine || isCommentOnlyLine(trimmedLine)) {
+    return null;
+  }
+
+  const strippedLine = stripTrailingComments(trimmedLine);
+  return strippedLine || null;
 }
 
 function analyzeRuleFile(source, filePath, releaseVersion, repoRoot) {
@@ -62,6 +85,7 @@ function analyzeRuleFile(source, filePath, releaseVersion, repoRoot) {
   const lines = source.split("\n");
   const updatedLines = [...lines];
   const coveredNextVersionLines = new Set();
+  const declareRuleBlocks = [];
   const updatedRules = [];
   const skippedNurseryRules = [];
 
@@ -79,14 +103,16 @@ function analyzeRuleFile(source, filePath, releaseVersion, repoRoot) {
       throw new Error(`${relativeFile}: unterminated declare_oxc_lint! block`);
     }
 
+    declareRuleBlocks.push({ startLine, endLine });
+
     const metadataEntries = [];
     for (let lineIndex = startLine + 1; lineIndex < endLine; lineIndex++) {
-      const trimmed = lines[lineIndex].trim();
-      if (!trimmed || trimmed.startsWith("///")) {
+      const normalizedLine = normalizeMetadataLine(lines[lineIndex]);
+      if (!normalizedLine) {
         continue;
       }
 
-      metadataEntries.push({ lineIndex, trimmed });
+      metadataEntries.push({ lineIndex, trimmed: normalizedLine });
     }
 
     const versionEntry = metadataEntries.find(({ trimmed }) => NEXT_VERSION_REGEX.test(trimmed));
@@ -99,8 +125,8 @@ function analyzeRuleFile(source, filePath, releaseVersion, repoRoot) {
       throw new Error(`${relativeFile}: could not parse rule category from declare_oxc_lint! block`);
     }
 
-    const ruleName = trimTrailingLineComment(metadataEntries[0].trimmed).replace(/,$/, "");
-    const category = trimTrailingLineComment(metadataEntries[2].trimmed).replace(/,$/, "");
+    const ruleName = metadataEntries[0].trimmed.replace(/,$/, "");
+    const category = metadataEntries[2].trimmed.replace(/,$/, "");
 
     if (!VALID_CATEGORIES.has(category)) {
       throw new Error(`${relativeFile}: unknown rule category \`${category}\``);
@@ -121,7 +147,15 @@ function analyzeRuleFile(source, filePath, releaseVersion, repoRoot) {
   }
 
   for (const [lineIndex, line] of lines.entries()) {
-    if (NEXT_VERSION_REGEX.test(line) && !coveredNextVersionLines.has(lineIndex)) {
+    const isCommentLineInsideDeclareRuleBlock = declareRuleBlocks.some(
+      ({ startLine, endLine }) =>
+        lineIndex > startLine && lineIndex < endLine && isCommentOnlyLine(line.trim()),
+    );
+    if (
+      NEXT_VERSION_REGEX.test(line) &&
+      !coveredNextVersionLines.has(lineIndex) &&
+      !isCommentLineInsideDeclareRuleBlock
+    ) {
       throw new Error(`${relativeFile}: found \`${NEXT_VERSION_TEXT}\` outside a declare_oxc_lint! block`);
     }
   }

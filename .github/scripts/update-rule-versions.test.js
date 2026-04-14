@@ -115,6 +115,99 @@ declare_oxc_lint!(
   assert.match(updatedSource, /version = "next"/);
 });
 
+test("ignores standalone comment lines inside declare_oxc_lint blocks", () => {
+  const root = createTempRepo();
+  writeRule(
+    root,
+    "no_debugger.rs",
+    `
+use oxc_macros::declare_oxc_lint;
+
+declare_oxc_lint!(
+    NoDebugger,
+    eslint,
+    // comment about incubation status
+    nursery,
+    version = "next",
+);
+`,
+  );
+
+  const report = rewriteNextRuleVersions({ root, releaseVersion: "1.61.0" });
+  const updatedSource = fs.readFileSync(path.join(rulesDir(root), "no_debugger.rs"), "utf8");
+
+  assert.deepEqual(report.updatedRules, []);
+  assert.deepEqual(report.skippedNurseryRules, [
+    {
+      file: "crates/oxc_linter/src/rules/eslint/no_debugger.rs",
+      ruleName: "NoDebugger",
+    },
+  ]);
+  assert.match(updatedSource, /version = "next"/);
+});
+
+test("accepts block comments on category lines", () => {
+  const root = createTempRepo();
+  writeRule(
+    root,
+    "no_debugger.rs",
+    `
+use oxc_macros::declare_oxc_lint;
+
+declare_oxc_lint!(
+    NoDebugger,
+    eslint,
+    nursery, /* move after more bake time */
+    version = "next",
+);
+`,
+  );
+
+  const report = rewriteNextRuleVersions({ root, releaseVersion: "1.61.0" });
+  const updatedSource = fs.readFileSync(path.join(rulesDir(root), "no_debugger.rs"), "utf8");
+
+  assert.deepEqual(report.updatedRules, []);
+  assert.deepEqual(report.skippedNurseryRules, [
+    {
+      file: "crates/oxc_linter/src/rules/eslint/no_debugger.rs",
+      ruleName: "NoDebugger",
+    },
+  ]);
+  assert.match(updatedSource, /version = "next"/);
+});
+
+test("ignores doc examples containing version next inside declare_oxc_lint blocks", () => {
+  const root = createTempRepo();
+  writeRule(
+    root,
+    "no_debugger.rs",
+    `
+use oxc_macros::declare_oxc_lint;
+
+declare_oxc_lint!(
+    /// Example config: version = "next"
+    NoDebugger,
+    eslint,
+    correctness,
+    version = "next",
+);
+`,
+  );
+
+  const report = rewriteNextRuleVersions({ root, releaseVersion: "1.61.0" });
+  const updatedSource = fs.readFileSync(path.join(rulesDir(root), "no_debugger.rs"), "utf8");
+
+  assert.deepEqual(report.updatedRules, [
+    {
+      file: "crates/oxc_linter/src/rules/eslint/no_debugger.rs",
+      ruleName: "NoDebugger",
+      from: "next",
+      to: "1.61.0",
+    },
+  ]);
+  assert.match(updatedSource, /version = "1\.61\.0"/);
+});
+
 test("supports dry-run without modifying files", () => {
   const root = createTempRepo();
   writeRule(
