@@ -50,7 +50,9 @@ jobs:
           } > ./target/PR_BODY.md
 
       - name: Rewrite rule versions
-        run: node .github/scripts/update-rule-versions.js --release-version "${{ steps.run.outputs.OXLINT_VERSION }}"
+        env:
+          OXLINT_VERSION: ${{ steps.run.outputs.OXLINT_VERSION }}
+        run: node .github/scripts/update-rule-versions.js --release-version "$OXLINT_VERSION"
 
       - name: Rebuild NAPI bindings
         run: |
