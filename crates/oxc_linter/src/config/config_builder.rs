@@ -168,7 +168,8 @@ impl ConfigStoreBuilder {
             let mut oxlintrc = config;
 
             for config in extends_configs.into_iter().rev() {
-                let (extends, extends_paths, child_warnings) = resolve_oxlintrc_config(config, true)?;
+                let (extends, extends_paths, child_warnings) =
+                    resolve_oxlintrc_config(config, true)?;
                 oxlintrc = oxlintrc.merge(extends);
                 extended_paths.extend(extends_paths);
                 warnings.extend(child_warnings);
@@ -204,7 +205,8 @@ impl ConfigStoreBuilder {
 
                 extended_paths.push(path.clone());
 
-                let (extends, extends_paths, child_warnings) = resolve_oxlintrc_config(extends_oxlintrc, false)?;
+                let (extends, extends_paths, child_warnings) =
+                    resolve_oxlintrc_config(extends_oxlintrc, false)?;
 
                 oxlintrc = oxlintrc.merge(extends);
                 extended_paths.extend(extends_paths);
@@ -1519,13 +1521,18 @@ mod test {
 
     #[test]
     fn test_warns_on_skipped_named_configs() {
-        let builder = config_builder_from_str(
-            r#"{ "extends": ["prettier", "this-does-not-exist"] }"#,
-        );
+        let builder =
+            config_builder_from_str(r#"{ "extends": ["prettier", "this-does-not-exist"] }"#);
         assert_eq!(builder.warnings.len(), 2);
         let all_warnings = builder.warnings.join("\n");
-        assert!(all_warnings.contains("prettier"), "expected warning about 'prettier', got: {all_warnings}");
-        assert!(all_warnings.contains("this-does-not-exist"), "expected warning about 'this-does-not-exist', got: {all_warnings}");
+        assert!(
+            all_warnings.contains("prettier"),
+            "expected warning about 'prettier', got: {all_warnings}"
+        );
+        assert!(
+            all_warnings.contains("this-does-not-exist"),
+            "expected warning about 'this-does-not-exist', got: {all_warnings}"
+        );
     }
 
     #[test]
