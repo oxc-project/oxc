@@ -70,8 +70,8 @@ function isCommentOnlyLine(trimmedLine) {
 
 function stripTrailingComments(line) {
   return line
-    .replace(/\s*\/\/.*$/, "")
     .replace(/\s*\/\*.*\*\/\s*$/, "")
+    .replace(/\s*\/\/.*$/, "")
     .trim();
 }
 
