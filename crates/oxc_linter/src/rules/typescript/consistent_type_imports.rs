@@ -103,6 +103,11 @@ declare_oxc_lint!(
     ///
     /// Enforce consistent usage of type imports.
     ///
+    /// #### Ignored Files
+    /// This rule ignores `.astro`, `.svelte` and `.vue` files entirely. Since Oxlint does
+    /// not support parsing template syntax, this rule cannot tell if a variable
+    /// is used or unused in a Vue / Svelte / Astro file.
+    ///
     /// ### Why is this bad?
     ///
     /// Inconsistent usage of type imports can make the code harder to read and understand.
@@ -325,8 +330,6 @@ impl Rule for ConsistentTypeImports {
     }
 
     fn should_run(&self, ctx: &ContextHost) -> bool {
-        // ignore vue/svelte/astro files, because the linter cannot see
-        // template usage and would produce false positives.
         ctx.source_type().is_typescript()
             && !ctx
                 .file_extension()
