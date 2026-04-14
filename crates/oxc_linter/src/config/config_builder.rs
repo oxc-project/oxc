@@ -162,8 +162,7 @@ impl ConfigStoreBuilder {
             let mut oxlintrc = config;
 
             for config in extends_configs.into_iter().rev() {
-                let (extends, extends_paths) =
-                    resolve_oxlintrc_config(config, true)?;
+                let (extends, extends_paths) = resolve_oxlintrc_config(config, true)?;
                 oxlintrc = oxlintrc.merge(extends);
                 extended_paths.extend(extends_paths);
             }
@@ -193,8 +192,7 @@ impl ConfigStoreBuilder {
 
                 extended_paths.push(path.clone());
 
-                let (extends, extends_paths) =
-                    resolve_oxlintrc_config(extends_oxlintrc, false)?;
+                let (extends, extends_paths) = resolve_oxlintrc_config(extends_oxlintrc, false)?;
 
                 oxlintrc = oxlintrc.merge(extends);
                 extended_paths.extend(extends_paths);
@@ -1503,14 +1501,8 @@ mod test {
             ("prettier", r#"{ "extends": ["prettier"] }"#),
             ("this-does-not-exist", r#"{ "extends": ["this-does-not-exist"] }"#),
             ("eslint:recommended", r#"{ "extends": ["eslint:recommended"] }"#),
-            (
-                "plugin:unicorn/recommended",
-                r#"{ "extends": ["plugin:unicorn/recommended"] }"#,
-            ),
-            (
-                "next/core-web-vitals",
-                r#"{ "extends": ["next/core-web-vitals"] }"#,
-            ),
+            ("plugin:unicorn/recommended", r#"{ "extends": ["plugin:unicorn/recommended"] }"#),
+            ("next/core-web-vitals", r#"{ "extends": ["next/core-web-vitals"] }"#),
         ];
 
         for (name, json) in cases {
