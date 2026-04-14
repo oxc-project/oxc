@@ -8,7 +8,7 @@
     clippy::uninlined_format_args
 )]
 
-use oxc_allocator::bump::{AllocOrInitError, Bump};
+use oxc_allocator::arena::{AllocOrInitError, Arena};
 use rand::RngExt as _;
 use std::alloc::{GlobalAlloc, Layout, System};
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -97,53 +97,56 @@ fn main() {
         };
     }
 
-    fn test_static_size_alloc(assert_alloc_ok: fn(bump: &Bump), assert_alloc_err: fn(bump: &Bump)) {
+    fn test_static_size_alloc(
+        assert_alloc_ok: fn(arena: &Arena),
+        assert_alloc_err: fn(arena: &Arena),
+    ) {
         // Unlike with `try_alloc_layout`, it's not that easy to test a variety
         // of size/capacity combinations here.
-        // Since nothing in Bump is really random, and we have to start fresh
+        // Since nothing in Arena is really random, and we have to start fresh
         // each time, just checking each case once is enough.
         for &fail_alloc in &[false, true] {
-            let bump = GLOBAL_ALLOCATOR.with_successful_allocs(|| {
+            let arena = GLOBAL_ALLOCATOR.with_successful_allocs(|| {
                 // We can't query the remaining free space in the current chunk,
-                // so we have to create a new Bump for each test and fill it to
+                // so we have to create a new Arena for each test and fill it to
                 // the brink of a new allocation.
-                let bump = Bump::try_new().unwrap();
+                let arena = Arena::try_new().unwrap();
 
-                // Bump preallocates space in the initial chunk, so we need to
+                // Arena preallocates space in the initial chunk, so we need to
                 // use up this block prior to the actual test
-                let layout = Layout::from_size_align(bump.chunk_capacity(), 1).unwrap();
-                assert!(bump.try_alloc_layout(layout).is_ok());
+                let layout = Layout::from_size_align(arena.chunk_capacity(), 1).unwrap();
+                assert!(arena.try_alloc_layout(layout).is_ok());
 
-                bump
+                arena
             });
 
             GLOBAL_ALLOCATOR.set_returning_null(fail_alloc);
 
             if fail_alloc {
-                assert_alloc_err(&bump);
+                assert_alloc_err(&arena);
             } else {
-                assert_alloc_ok(&bump);
+                assert_alloc_ok(&arena);
             }
         }
     }
 
     let tests = [
-        test!("Bump::try_new fails when global allocator fails", || {
+        test!("Arena::try_new fails when global allocator fails", || {
             GLOBAL_ALLOCATOR.with_alloc_failures(|| {
-                assert!(Bump::try_with_capacity(1).is_err());
+                assert!(Arena::try_with_capacity(1).is_err());
             });
         }),
         test!("test try_alloc_layout with and without global allocation failures", || {
             const NUM_TESTS: usize = 5000;
             const MAX_BYTES_ALLOCATED: usize = 65536;
 
-            let mut bump = Bump::try_new().unwrap();
-            let mut bytes_allocated = bump.chunk_capacity();
+            let mut arena = Arena::try_new().unwrap();
+            let mut bytes_allocated = arena.chunk_capacity();
 
-            // Bump preallocates space in the initial chunk, so we need to
+            // Arena preallocates space in the initial chunk, so we need to
             // use up this block prior to the actual test
-            let layout = Layout::from_size_align(bump.chunk_capacity(), 1).unwrap();
-            assert!(bump.try_alloc_layout(layout).is_ok());
+            let layout = Layout::from_size_align(arena.chunk_capacity(), 1).unwrap();
+            assert!(arena.try_alloc_layout(layout).is_ok());
 
             let mut rng = rand::rng();
 
@@ -152,49 +155,49 @@ fn main() {
                     GLOBAL_ALLOCATOR.toggle_returning_null();
                 }
 
-                let layout = Layout::from_size_align(bump.chunk_capacity() + 1, 1).unwrap();
+                let layout = Layout::from_size_align(arena.chunk_capacity() + 1, 1).unwrap();
                 if GLOBAL_ALLOCATOR.is_returning_null() {
-                    assert!(bump.try_alloc_layout(layout).is_err());
+                    assert!(arena.try_alloc_layout(layout).is_err());
                 } else {
-                    assert!(bump.try_alloc_layout(layout).is_ok());
-                    bytes_allocated += bump.chunk_capacity();
+                    assert!(arena.try_alloc_layout(layout).is_ok());
+                    bytes_allocated += arena.chunk_capacity();
                 }
 
                 if bytes_allocated >= MAX_BYTES_ALLOCATED {
-                    bump = GLOBAL_ALLOCATOR.with_successful_allocs(|| Bump::try_new().unwrap());
-                    bytes_allocated = bump.chunk_capacity();
+                    arena = GLOBAL_ALLOCATOR.with_successful_allocs(|| Arena::try_new().unwrap());
+                    bytes_allocated = arena.chunk_capacity();
                 }
             }
         },),
         test!("test try_alloc with and without global allocation failures", || {
             test_static_size_alloc(
-                |bump| assert!(bump.try_alloc(1u8).is_ok()),
-                |bump| assert!(bump.try_alloc(1u8).is_err()),
+                |arena| assert!(arena.try_alloc(1u8).is_ok()),
+                |arena| assert!(arena.try_alloc(1u8).is_err()),
             );
         },),
         test!("test try_alloc_with with and without global allocation failures", || {
             test_static_size_alloc(
-                |bump| assert!(bump.try_alloc_with(|| 1u8).is_ok()),
-                |bump| assert!(bump.try_alloc_with(|| 1u8).is_err()),
+                |arena| assert!(arena.try_alloc_with(|| 1u8).is_ok()),
+                |arena| assert!(arena.try_alloc_with(|| 1u8).is_err()),
             );
         },),
         test!("test try_alloc_try_with (Ok) with and without global allocation failures", || {
             test_static_size_alloc(
-                |bump| assert!(bump.try_alloc_try_with::<_, _, ()>(|| Ok(1u8)).is_ok()),
-                |bump| assert!(bump.try_alloc_try_with::<_, _, ()>(|| Ok(1u8)).is_err()),
+                |arena| assert!(arena.try_alloc_try_with::<_, _, ()>(|| Ok(1u8)).is_ok()),
+                |arena| assert!(arena.try_alloc_try_with::<_, _, ()>(|| Ok(1u8)).is_err()),
             );
         },),
         test!("test try_alloc_try_with (Err) with and without global allocation failures", || {
             test_static_size_alloc(
-                |bump| {
+                |arena| {
                     assert!(matches!(
-                        bump.try_alloc_try_with::<_, u8, _>(|| Err(())),
+                        arena.try_alloc_try_with::<_, u8, _>(|| Err(())),
                         Err(AllocOrInitError::Init(_))
                     ));
                 },
-                |bump| {
+                |arena| {
                     assert!(matches!(
-                        bump.try_alloc_try_with::<_, u8, _>(|| Err(())),
+                        arena.try_alloc_try_with::<_, u8, _>(|| Err(())),
                         Err(AllocOrInitError::Alloc(_))
                     ));
                 },

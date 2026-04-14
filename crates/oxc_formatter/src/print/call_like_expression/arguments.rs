@@ -742,7 +742,7 @@ fn write_grouped_arguments<'a>(
 
         buffer.write_element(FormatElement::Tag(Tag::EndEntry));
 
-        buffer.into_vec().into_bump_slice()
+        buffer.into_vec().into_arena_slice()
     };
 
     // Now reformat the first or last argument if they happen to be a function or arrow function expression.
@@ -861,7 +861,7 @@ fn write_grouped_arguments<'a>(
 
         buffer.write_element(FormatElement::Tag(Tag::EndEntry));
 
-        buffer.into_vec().into_bump_slice()
+        buffer.into_vec().into_arena_slice()
     };
 
     // If the grouped content breaks, then we can skip the most_flat variant,
@@ -896,7 +896,7 @@ fn write_grouped_arguments<'a>(
 
             buffer.write_element(FormatElement::Tag(Tag::EndEntry));
 
-            buffer.into_vec().into_bump_slice()
+            buffer.into_vec().into_arena_slice()
         };
 
         ArenaVec::from_array_in([most_flat, middle_variant, most_expanded], f.context().allocator())

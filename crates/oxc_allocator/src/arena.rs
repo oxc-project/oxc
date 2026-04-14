@@ -26,7 +26,7 @@ pub use crate::bumpalo_alloc::AllocErr;
 #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
 use crate::tracking::AllocationStats;
 
-/// An error returned from [`Bump::try_alloc_try_with`].
+/// An error returned from [`Arena::try_alloc_try_with`].
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub enum AllocOrInitError<E> {
     /// Indicates that the initial allocation failed.
@@ -52,11 +52,11 @@ impl<E: Display> Display for AllocOrInitError<E> {
     }
 }
 
-/// An arena to bump allocate into.
+/// An arena to allocate into.
 ///
 /// # No `Drop`s
 ///
-/// Objects that are bump-allocated will never have their [`Drop`] implementation
+/// Objects that are allocated will never have their [`Drop`] implementation
 /// called &mdash; unless you do it manually yourself. This makes it relatively
 /// easy to leak memory or other resources.
 ///
@@ -67,12 +67,12 @@ impl<E: Display> Display for AllocOrInitError<E> {
 /// * any other resource that must be cleaned up (e.g. an `mmap`)
 ///
 /// and relies on its `Drop` implementation to clean up the internal resource,
-/// then if you allocate that type with a `Bump`, you need to find a new way to
+/// then if you allocate that type with an `Arena`, you need to find a new way to
 /// clean up after it yourself.
 ///
 /// Potential solutions are:
 ///
-/// * Using [`bumpalo::boxed::Box::new_in`] instead of [`Bump::alloc`], that
+/// * Using [`oxc_allocator::Box::new_in`] instead of [`Arena::alloc`], that
 ///   will drop wrapped values similarly to [`std::boxed::Box`]. Note that this
 ///   requires enabling the `"boxed"` Cargo feature for this crate. **This is
 ///   often the easiest solution.**
@@ -80,9 +80,9 @@ impl<E: Display> Display for AllocOrInitError<E> {
 /// * Calling [`drop_in_place`][drop_in_place] or using
 ///   [`std::mem::ManuallyDrop`][manuallydrop] to manually drop these types.
 ///
-/// * Using [`bumpalo::collections::Vec`] instead of [`std::vec::Vec`].
+/// * Using [`oxc_allocator::Vec`] instead of [`std::vec::Vec`].
 ///
-/// * Avoiding allocating these problematic types within a `Bump`.
+/// * Avoiding allocating these problematic types within an `Arena`.
 ///
 /// Note that not calling `Drop` is memory safe! Destructors are never
 /// guaranteed to run in Rust, you can't rely on them for enforcing memory
@@ -93,32 +93,32 @@ impl<E: Display> Display for AllocOrInitError<E> {
 /// [`std::fs::File`]: https://doc.rust-lang.org/std/fs/struct.File.html
 /// [drop_in_place]: https://doc.rust-lang.org/std/ptr/fn.drop_in_place.html
 /// [manuallydrop]: https://doc.rust-lang.org/std/mem/struct.ManuallyDrop.html
-/// [`bumpalo::collections::Vec`]: collections/vec/struct.Vec.html
+/// [`oxc_allocator::Vec`]: crate::Vec
 /// [`std::vec::Vec`]: https://doc.rust-lang.org/std/vec/struct.Vec.html
-/// [`bumpalo::boxed::Box::new_in`]: boxed/struct.Box.html#method.new_in
+/// [`oxc_allocator::Box::new_in`]: crate::Box::new_in
 /// [`std::boxed::Box`]: https://doc.rust-lang.org/std/boxed/struct.Box.html
 ///
 /// # Example
 ///
 /// ```
-/// # use oxc_allocator::bump::Bump;
+/// # use oxc_allocator::arena::Arena;
 ///
-/// // Create a new bump arena.
-/// let bump = Bump::new();
+/// // Create a new arena.
+/// let arena = Arena::new();
 ///
 /// // Allocate values into the arena.
-/// let forty_two = bump.alloc(42);
+/// let forty_two = arena.alloc(42);
 /// assert_eq!(*forty_two, 42);
 ///
 /// // Mutable references are returned from allocation.
-/// let mut s = bump.alloc("bumpalo");
-/// *s = "the bump allocator; and also is a buffalo";
+/// let mut n = arena.alloc(123u64);
+/// *n = 456;
 /// ```
 ///
 /// # Allocation Methods Come in Many Flavors
 ///
-/// There are various allocation methods on `Bump`, the simplest being
-/// [`alloc`][Bump::alloc]. The others exist to satisfy some combination of
+/// There are various allocation methods on `Arena`, the simplest being
+/// [`alloc`][Arena::alloc]. The others exist to satisfy some combination of
 /// fallible allocation and initialization. The allocation methods are
 /// summarized in the following table:
 ///
@@ -155,11 +155,11 @@ impl<E: Display> Display for AllocOrInitError<E> {
 /// scenarios, rather than raising a panic on OOM.
 ///
 /// ```
-/// # use oxc_allocator::bump::Bump;
+/// # use oxc_allocator::arena::Arena;
 ///
-/// let bump = Bump::new();
+/// let arena = Arena::new();
 ///
-/// match bump.try_alloc(MyStruct {
+/// match arena.try_alloc(MyStruct {
 ///     // ...
 /// }) {
 ///     Ok(my_struct) => {
@@ -183,13 +183,13 @@ impl<E: Display> Display for AllocOrInitError<E> {
 /// space for storing `x` on the heap.
 ///
 /// This can be useful in certain edge-cases related to compiler optimizations.
-/// When evaluating for example `bump.alloc(x)`, semantically `x` is first put
+/// When evaluating for example `arena.alloc(x)`, semantically `x` is first put
 /// on the stack and then moved onto the heap. In some cases, the compiler is
 /// able to optimize this into constructing `x` directly on the heap, however
 /// in many cases it does not.
 ///
 /// The `…alloc_with` functions try to help the compiler be smarter. In most
-/// cases doing for example `bump.try_alloc_with(|| x)` on release mode will be
+/// cases doing for example `arena.try_alloc_with(|| x)` on release mode will be
 /// enough to help the compiler realize that this optimization is valid and
 /// to construct `x` directly onto the heap.
 ///
@@ -223,16 +223,16 @@ impl<E: Display> Display for AllocOrInitError<E> {
 /// in <code>self</code>.</summary>
 ///
 /// For example, the following will always leak also space for the [`Result`]
-/// into this `Bump`, even though the inner reference isn't kept and the [`Err`]
+/// into this `Arena`, even though the inner reference isn't kept and the [`Err`]
 /// payload is returned semantically by value:
 ///
 /// ```rust
-/// # use oxc_allocator::bump::Bump;
+/// # use oxc_allocator::arena::Arena;
 ///
-/// let bump = Bump::new();
+/// let arena = Arena::new();
 ///
-/// let r: Result<&mut [u8; 1000], ()> = bump.alloc_try_with(|| {
-///     let _ = bump.alloc(0_u8);
+/// let r: Result<&mut [u8; 1000], ()> = arena.alloc_try_with(|| {
+///     let _ = arena.alloc(0_u8);
 ///     Err(())
 /// });
 ///
@@ -242,42 +242,42 @@ impl<E: Display> Display for AllocOrInitError<E> {
 ///</details></p>
 ///
 /// Since [`Err`] payloads are first placed on the heap and then moved to the
-/// stack, `bump.…alloc_try_with(|| x)?` is likely to execute more slowly than
-/// the matching `bump.…alloc(x?)` in case of initialization failure. If this
+/// stack, `arena.…alloc_try_with(|| x)?` is likely to execute more slowly than
+/// the matching `arena.…alloc(x?)` in case of initialization failure. If this
 /// happens frequently, using the plain un-suffixed method may perform better.
 ///
 /// [`Result`]: https://doc.rust-lang.org/std/result/enum.Result.html
 /// [`Ok`]: https://doc.rust-lang.org/std/result/enum.Result.html#variant.Ok
 /// [`Err`]: https://doc.rust-lang.org/std/result/enum.Result.html#variant.Err
 ///
-/// ## `Bump` Allocation Limits
+/// ## `Arena` Allocation Limits
 ///
-/// `bumpalo` supports setting a limit on the maximum bytes of memory that can
-/// be allocated for use in a particular `Bump` arena. This limit can be set and removed with
-/// [`set_allocation_limit`][Bump::set_allocation_limit].
+/// `Arena` supports setting a limit on the maximum bytes of memory that can
+/// be allocated for use in a particular `Arena` arena. This limit can be set and removed with
+/// [`set_allocation_limit`].
 /// The allocation limit is only enforced when allocating new backing chunks for
-/// a `Bump`. Updating the allocation limit will not affect existing allocations
-/// or any future allocations within the `Bump`'s current chunk.
+/// an `Arena`. Updating the allocation limit will not affect existing allocations
+/// or any future allocations within the `Arena`'s current chunk.
 ///
 /// ### Example
 ///
 /// ```
-/// # use oxc_allocator::bump::Bump;
+/// # use oxc_allocator::arena::Arena;
 ///
-/// let bump = Bump::new();
+/// let arena = Arena::new();
 ///
-/// assert_eq!(bump.allocation_limit(), None);
-/// bump.set_allocation_limit(Some(0));
+/// assert_eq!(arena.allocation_limit(), None);
+/// arena.set_allocation_limit(Some(0));
 ///
-/// assert!(bump.try_alloc(5).is_err());
+/// assert!(arena.try_alloc(5).is_err());
 ///
-/// bump.set_allocation_limit(Some(6));
+/// arena.set_allocation_limit(Some(6));
 ///
-/// assert_eq!(bump.allocation_limit(), Some(6));
+/// assert_eq!(arena.allocation_limit(), Some(6));
 ///
-/// bump.set_allocation_limit(None);
+/// arena.set_allocation_limit(None);
 ///
-/// assert_eq!(bump.allocation_limit(), None);
+/// assert_eq!(arena.allocation_limit(), None);
 /// ```
 ///
 /// ### Warning
@@ -285,12 +285,14 @@ impl<E: Display> Display for AllocOrInitError<E> {
 /// Because of backwards compatibility, allocations that fail
 /// due to allocation limits will not present differently than
 /// errors due to resource exhaustion.
+///
+/// [`set_allocation_limit`]: Arena::set_allocation_limit
 #[derive(Debug)]
-pub struct Bump<const MIN_ALIGN: usize = 1> {
+pub struct Arena<const MIN_ALIGN: usize = 1> {
     // The current chunk we are bump allocating within.
     current_chunk_footer: Cell<NonNull<ChunkFooter>>,
     allocation_limit: Cell<Option<usize>>,
-    /// Used to track number of allocations made in this `Bump` when `track_allocations` feature is enabled
+    /// Used to track number of allocations made in this `Arena` when `track_allocations` feature is enabled
     #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
     pub(crate) stats: AllocationStats,
 }
@@ -375,13 +377,13 @@ impl ChunkFooter {
     }
 }
 
-impl<const MIN_ALIGN: usize> Default for Bump<MIN_ALIGN> {
+impl<const MIN_ALIGN: usize> Default for Arena<MIN_ALIGN> {
     fn default() -> Self {
         Self::with_min_align()
     }
 }
 
-impl<const MIN_ALIGN: usize> Drop for Bump<MIN_ALIGN> {
+impl<const MIN_ALIGN: usize> Drop for Arena<MIN_ALIGN> {
     fn drop(&mut self) {
         unsafe {
             dealloc_chunk_list(self.current_chunk_footer.get());
@@ -400,11 +402,11 @@ unsafe fn dealloc_chunk_list(mut footer: NonNull<ChunkFooter>) {
     }
 }
 
-// `Bump`s are safe to send between threads because nothing aliases its owned
+// `Arena`s are safe to send between threads because nothing aliases its owned
 // chunks until you start allocating from it. But by the time you allocate from
-// it, the returned references to allocations borrow the `Bump` and therefore
-// prevent sending the `Bump` across threads until the borrows end.
-unsafe impl<const MIN_ALIGN: usize> Send for Bump<MIN_ALIGN> {}
+// it, the returned references to allocations borrow the `Arena` and therefore
+// prevent sending the `Arena` across threads until the borrows end.
+unsafe impl<const MIN_ALIGN: usize> Send for Arena<MIN_ALIGN> {}
 
 #[inline]
 fn is_pointer_aligned_to<T>(pointer: *mut T, align: usize) -> bool {
@@ -507,7 +509,7 @@ const OVERHEAD: usize = match round_up_to(MALLOC_OVERHEAD + CHUNK_FOOTER_SIZE, C
 };
 
 // The target size of our first allocation, including our overhead.
-// The available bump capacity will be slightly smaller.
+// The available capacity will be slightly smaller.
 // 16 KiB covers the majority of real-world JS/TS files.
 const FIRST_ALLOCATION_GOAL: usize = 16 * 1024;
 
@@ -538,48 +540,47 @@ fn allocation_size_overflow<T>() -> T {
     panic!("requested allocation size overflowed")
 }
 
-// NB: We don't have constructors as methods on `impl<N> Bump<N>` that return
+// NB: We don't have constructors as methods on `impl<N> Arena<N>` that return
 // `Self` because then `rustc` can't infer the `N` if it isn't explicitly
 // provided, even though it has a default value. There doesn't seem to be a good
-// workaround, other than putting constructors on the `Bump<DEFAULT>`; even
+// workaround, other than putting constructors on the `Arena<DEFAULT>`; even
 // `std` does this same thing with `HashMap`, for example.
-impl Bump<1> {
-    /// Construct a new arena to bump allocate into.
+impl Arena<1> {
+    /// Construct a new arena to allocate into.
     ///
     /// # Example
     ///
     /// ```
-    /// # use oxc_allocator::bump::Bump;
-    /// let bump = Bump::new();
-    /// # let _ = bump;
+    /// # use oxc_allocator::arena::Arena;
+    /// let arena = Arena::new();
+    /// # let _ = arena;
     /// ```
     pub fn new() -> Self {
         Self::with_capacity(0)
     }
 
-    /// Attempt to construct a new arena to bump allocate into.
+    /// Attempt to construct a new arena to allocate into.
     ///
     /// # Example
     ///
     /// ```
-    /// # use oxc_allocator::bump::Bump;
-    /// let bump = Bump::try_new();
-    /// # let _ = bump.unwrap();
+    /// # use oxc_allocator::arena::Arena;
+    /// let arena = Arena::try_new();
+    /// # let _ = arena.unwrap();
     /// ```
     #[expect(clippy::missing_errors_doc, reason = "`try_with_capacity(0)` always returns `Ok`")]
     pub fn try_new() -> Result<Self, AllocErr> {
-        Bump::try_with_capacity(0)
+        Arena::try_with_capacity(0)
     }
 
-    /// Construct a new arena with the specified byte capacity to bump allocate
-    /// into.
+    /// Construct a new arena with the specified byte capacity to allocate into.
     ///
     /// # Example
     ///
     /// ```
-    /// # use oxc_allocator::bump::Bump;
-    /// let bump = Bump::with_capacity(100);
-    /// # let _ = bump;
+    /// # use oxc_allocator::arena::Arena;
+    /// let arena = Arena::with_capacity(100);
+    /// # let _ = arena;
     /// ```
     ///
     /// # Panics
@@ -589,18 +590,17 @@ impl Bump<1> {
         Self::try_with_capacity(capacity).unwrap_or_else(|_| oom())
     }
 
-    /// Attempt to construct a new arena with the specified byte capacity to
-    /// bump allocate into.
+    /// Attempt to construct a new arena with the specified byte capacity to allocate into.
     ///
     /// Propagates errors when allocating the initial capacity.
     ///
     /// # Example
     ///
     /// ```
-    /// # use oxc_allocator::bump::{AllocErr, Bump};
+    /// # use oxc_allocator::arena::{AllocErr, Arena};
     /// # fn _foo() -> Result<(), AllocErr> {
-    /// let bump = Bump::try_with_capacity(100)?;
-    /// # let _ = bump;
+    /// let arena = Arena::try_with_capacity(100)?;
+    /// # let _ = arena;
     /// # Ok(())
     /// # }
     /// ```
@@ -620,8 +620,8 @@ impl Bump<1> {
     }
 }
 
-impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
-    /// Create a new `Bump` that enforces a minimum alignment.
+impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
+    /// Create a new `Arena` that enforces a minimum alignment.
     ///
     /// The minimum alignment must be a power of two and no larger than `16`.
     ///
@@ -633,12 +633,12 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// # Example
     ///
     /// ```
-    /// # use oxc_allocator::bump::Bump;
+    /// # use oxc_allocator::arena::Arena;
     ///
-    /// type BumpAlign8 = Bump<8>;
-    /// let bump = BumpAlign8::with_min_align();
+    /// type ArenaAlign8 = Arena<8>;
+    /// let arena = ArenaAlign8::with_min_align();
     /// for x in 0..u8::MAX {
-    ///     let x = bump.alloc(x);
+    ///     let x = arena.alloc(x);
     ///     assert_eq!((x as *mut _ as usize) % 8, 0, "x is aligned to 8");
     /// }
     /// ```
@@ -648,9 +648,9 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// Panics on invalid minimum alignments.
     //
     // Because of `rustc`'s poor type inference for default type/const
-    // parameters (see the comment above the `impl Bump` block with no const
+    // parameters (see the comment above the `impl Arena` block with no const
     // `MIN_ALIGN` parameter) and because we don't want to force everyone to
-    // specify a minimum alignment with `Bump::new()` et al, we have a separate
+    // specify a minimum alignment with `Arena::new()` et al, we have a separate
     // constructor for specifying the minimum alignment.
     pub fn with_min_align() -> Self {
         assert!(MIN_ALIGN.is_power_of_two(), "MIN_ALIGN must be a power of two; found {MIN_ALIGN}");
@@ -662,7 +662,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
         Self::new_impl(EMPTY_CHUNK.get(), None)
     }
 
-    /// Create a new `Bump` that enforces a minimum alignment and starts with
+    /// Create a new `Arena` that enforces a minimum alignment and starts with
     /// room for at least `capacity` bytes.
     ///
     /// The minimum alignment must be a power of two and no larger than `16`.
@@ -675,16 +675,16 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// # Example
     ///
     /// ```
-    /// # use oxc_allocator::bump::Bump;
+    /// # use oxc_allocator::arena::Arena;
     ///
-    /// type BumpAlign8 = Bump<8>;
-    /// let mut bump = BumpAlign8::with_min_align_and_capacity(8 * 100);
+    /// type ArenaAlign8 = Arena<8>;
+    /// let mut arena = ArenaAlign8::with_min_align_and_capacity(8 * 100);
     /// for x in 0..100_u64 {
-    ///     let x = bump.alloc(x);
+    ///     let x = arena.alloc(x);
     ///     assert_eq!((x as *mut _ as usize) % 8, 0, "x is aligned to 8");
     /// }
     /// assert_eq!(
-    ///     bump.iter_allocated_chunks().count(), 1,
+    ///     arena.iter_allocated_chunks().count(), 1,
     ///     "initial chunk had capacity for all allocations",
     /// );
     /// ```
@@ -698,7 +698,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
         Self::try_with_min_align_and_capacity(capacity).unwrap_or_else(|_| oom())
     }
 
-    /// Create a new `Bump` that enforces a minimum alignment and starts with
+    /// Create a new `Arena` that enforces a minimum alignment and starts with
     /// room for at least `capacity` bytes.
     ///
     /// The minimum alignment must be a power of two and no larger than `16`.
@@ -711,16 +711,16 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// # Example
     ///
     /// ```
-    /// # use oxc_allocator::bump::{AllocErr, Bump};
+    /// # use oxc_allocator::arena::{AllocErr, Arena};
     /// # fn _foo() -> Result<(), AllocErr> {
-    /// type BumpAlign8 = Bump<8>;
-    /// let mut bump = BumpAlign8::try_with_min_align_and_capacity(8 * 100)?;
+    /// type ArenaAlign8 = Arena<8>;
+    /// let mut arena = ArenaAlign8::try_with_min_align_and_capacity(8 * 100)?;
     /// for x in 0..100_u64 {
-    ///     let x = bump.alloc(x);
+    ///     let x = arena.alloc(x);
     ///     assert_eq!((x as *mut _ as usize) % 8, 0, "x is aligned to 8");
     /// }
     /// assert_eq!(
-    ///     bump.iter_allocated_chunks().count(), 1,
+    ///     arena.iter_allocated_chunks().count(), 1,
     ///     "initial chunk had capacity for all allocations",
     /// );
     /// # Ok(())
@@ -760,7 +760,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
             Self::new_chunk(
                 // `new_size_without_footer` here was `None` in original `bumpalo` code.
                 // Changed to `Some(capacity)` when we increased `FIRST_ALLOCATION_GOAL` to 16 KiB,
-                // to avoid `Bump::with_capacity` allocating 16 KiB even when requested `capacity` is much smaller.
+                // to avoid `Arena::with_capacity` allocating 16 KiB even when requested `capacity` is much smaller.
                 Self::new_chunk_memory_details(Some(capacity), layout).ok_or(AllocErr)?,
                 layout,
                 EMPTY_CHUNK.get(),
@@ -771,9 +771,9 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
         Ok(Self::new_impl(chunk_footer, None))
     }
 
-    /// Create a new `Bump` from a chunk footer pointer and an optional allocation limit.
+    /// Create a new `Arena` from a chunk footer pointer and an optional allocation limit.
     ///
-    /// This is a helper function for all code paths which create a `Bump`.
+    /// This is a helper function for all code paths which create an `Arena`.
     #[inline(always)]
     fn new_impl(chunk_footer_ptr: NonNull<ChunkFooter>, allocation_limit: Option<usize>) -> Self {
         Self {
@@ -784,20 +784,20 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
         }
     }
 
-    /// Get this bump arena's minimum alignment.
+    /// Get this arena's minimum alignment.
     ///
     /// All objects allocated in this arena get aligned to this value.
     ///
     /// # Example
     ///
     /// ```
-    /// # use oxc_allocator::bump::Bump;
+    /// # use oxc_allocator::arena::Arena;
     ///
-    /// let bump2 = Bump::<2>::with_min_align();
-    /// assert_eq!(bump2.min_align(), 2);
+    /// let arena2 = Arena::<2>::with_min_align();
+    /// assert_eq!(arena2.min_align(), 2);
     ///
-    /// let bump4 = Bump::<4>::with_min_align();
-    /// assert_eq!(bump4.min_align(), 4);
+    /// let arena4 = Arena::<4>::with_min_align();
+    /// assert_eq!(arena4.min_align(), 4);
     /// ```
     #[inline]
     #[expect(clippy::unused_self, reason = "part of public API")]
@@ -810,19 +810,19 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// # Example
     ///
     /// ```
-    /// # use oxc_allocator::bump::Bump;
+    /// # use oxc_allocator::arena::Arena;
     ///
-    /// let bump = Bump::with_capacity(0);
+    /// let arena = Arena::with_capacity(0);
     ///
-    /// assert_eq!(bump.allocation_limit(), None);
+    /// assert_eq!(arena.allocation_limit(), None);
     ///
-    /// bump.set_allocation_limit(Some(6));
+    /// arena.set_allocation_limit(Some(6));
     ///
-    /// assert_eq!(bump.allocation_limit(), Some(6));
+    /// assert_eq!(arena.allocation_limit(), Some(6));
     ///
-    /// bump.set_allocation_limit(None);
+    /// arena.set_allocation_limit(None);
     ///
-    /// assert_eq!(bump.allocation_limit(), None);
+    /// assert_eq!(arena.allocation_limit(), None);
     /// ```
     pub fn allocation_limit(&self) -> Option<usize> {
         self.allocation_limit.get()
@@ -831,19 +831,19 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// Set the allocation limit in bytes for this arena.
     ///
     /// The allocation limit is only enforced when allocating new backing chunks for
-    /// a `Bump`. Updating the allocation limit will not affect existing allocations
-    /// or any future allocations within the `Bump`'s current chunk.
+    /// an `Arena`. Updating the allocation limit will not affect existing allocations
+    /// or any future allocations within the `Arena`'s current chunk.
     ///
     /// # Example
     ///
     /// ```
-    /// # use oxc_allocator::bump::Bump;
+    /// # use oxc_allocator::arena::Arena;
     ///
-    /// let bump = Bump::with_capacity(0);
+    /// let arena = Arena::with_capacity(0);
     ///
-    /// bump.set_allocation_limit(Some(0));
+    /// arena.set_allocation_limit(Some(0));
     ///
-    /// assert!(bump.try_alloc(5).is_err());
+    /// assert!(arena.try_alloc(5).is_err());
     /// ```
     pub fn set_allocation_limit(&self, limit: Option<usize>) {
         self.allocation_limit.set(limit);
@@ -863,7 +863,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     }
 
     /// Whether a request to allocate a new chunk with a given size for a given
-    /// requested layout will fit under the allocation limit set on a `Bump`.
+    /// requested layout will fit under the allocation limit set on an `Arena`.
     fn chunk_fits_under_limit(
         allocation_limit_remaining: Option<usize>,
         new_chunk_memory_details: NewChunkMemoryDetails,
@@ -977,37 +977,37 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
         }
     }
 
-    /// Reset this bump allocator.
+    /// Reset this arena.
     ///
     /// Performs mass deallocation on everything allocated in this arena by
     /// resetting the pointer into the underlying chunk of memory to the start
     /// of the chunk. Does not run any `Drop` implementations on deallocated
-    /// objects; see [the top-level documentation](struct.Bump.html) for details.
+    /// objects; see [the top-level documentation](struct.Arena.html) for details.
     ///
-    /// If this arena has allocated multiple chunks to bump allocate into, then
+    /// If this arena has allocated multiple chunks to allocate into, then
     /// the excess chunks are returned to the global allocator.
     ///
     /// # Example
     ///
     /// ```
-    /// # use oxc_allocator::bump::Bump;
+    /// # use oxc_allocator::arena::Arena;
     ///
-    /// let mut bump = Bump::new();
+    /// let mut arena = Arena::new();
     ///
     /// // Allocate a bunch of things.
     /// {
     ///     for i in 0..100 {
-    ///         bump.alloc(i);
+    ///         arena.alloc(i);
     ///     }
     /// }
     ///
     /// // Reset the arena.
-    /// bump.reset();
+    /// arena.reset();
     ///
     /// // Allocate some new things in the space previously occupied by the
     /// // original things.
     /// for j in 200..400 {
-    ///     bump.alloc(j);
+    ///     arena.alloc(j);
     /// }
     ///```
     pub fn reset(&mut self) {
@@ -1050,7 +1050,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
         }
     }
 
-    /// Allocate an object in this `Bump` and return an exclusive reference to
+    /// Allocate an object in this `Arena` and return an exclusive reference to
     /// it.
     ///
     /// # Panics
@@ -1060,10 +1060,10 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// # Example
     ///
     /// ```
-    /// # use oxc_allocator::bump::Bump;
+    /// # use oxc_allocator::arena::Arena;
     ///
-    /// let bump = Bump::new();
-    /// let x = bump.alloc("hello");
+    /// let arena = Arena::new();
+    /// let x = arena.alloc("hello");
     /// assert_eq!(*x, "hello");
     /// ```
     #[inline(always)]
@@ -1071,7 +1071,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
         self.alloc_with(|| val)
     }
 
-    /// Try to allocate an object in this `Bump` and return an exclusive
+    /// Try to allocate an object in this `Arena` and return an exclusive
     /// reference to it.
     ///
     /// # Errors
@@ -1081,10 +1081,10 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// # Example
     ///
     /// ```
-    /// # use oxc_allocator::bump::Bump;
+    /// # use oxc_allocator::arena::Arena;
     ///
-    /// let bump = Bump::new();
-    /// let x = bump.try_alloc("hello");
+    /// let arena = Arena::new();
+    /// let x = arena.try_alloc("hello");
     /// assert_eq!(x, Ok(&mut "hello"));
     /// ```
     #[inline(always)]
@@ -1092,7 +1092,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
         self.try_alloc_with(|| val)
     }
 
-    /// Pre-allocate space for an object in this `Bump`, initializes it using
+    /// Pre-allocate space for an object in this `Arena`, initializes it using
     /// the closure, then returns an exclusive reference to it.
     ///
     /// See [The `_with` Method Suffix](#initializer-functions-the-_with-method-suffix) for a
@@ -1107,10 +1107,10 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// # Example
     ///
     /// ```
-    /// # use oxc_allocator::bump::Bump;
+    /// # use oxc_allocator::arena::Arena;
     ///
-    /// let bump = Bump::new();
-    /// let x = bump.alloc_with(|| "hello");
+    /// let arena = Arena::new();
+    /// let x = arena.alloc_with(|| "hello");
     /// assert_eq!(*x, "hello");
     /// ```
     #[expect(clippy::mut_from_ref)]
@@ -1147,7 +1147,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
         }
     }
 
-    /// Tries to pre-allocate space for an object in this `Bump`, initializes
+    /// Tries to pre-allocate space for an object in this `Arena`, initializes
     /// it using the closure, then returns an exclusive reference to it.
     ///
     /// See [The `_with` Method Suffix](#initializer-functions-the-_with-method-suffix) for a
@@ -1162,10 +1162,10 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// # Example
     ///
     /// ```
-    /// # use oxc_allocator::bump::Bump;
+    /// # use oxc_allocator::arena::Arena;
     ///
-    /// let bump = Bump::new();
-    /// let x = bump.try_alloc_with(|| "hello");
+    /// let arena = Arena::new();
+    /// let x = arena.try_alloc_with(|| "hello");
     /// assert_eq!(x, Ok(&mut "hello"));
     /// ```
     #[expect(clippy::mut_from_ref)]
@@ -1203,7 +1203,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
         }
     }
 
-    /// Pre-allocates space for a [`Result`] in this `Bump`, initializes it using
+    /// Pre-allocates space for a [`Result`] in this `Arena`, initializes it using
     /// the closure, then returns an exclusive reference to its `T` if [`Ok`].
     ///
     /// Iff the allocation fails, the closure is not run.
@@ -1234,10 +1234,10 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// # Example
     ///
     /// ```
-    /// # use oxc_allocator::bump::Bump;
+    /// # use oxc_allocator::arena::Arena;
     ///
-    /// let bump = Bump::new();
-    /// let x = bump.alloc_try_with(|| Ok("hello"))?;
+    /// let arena = Arena::new();
+    /// let x = arena.alloc_try_with(|| Ok("hello"))?;
     /// assert_eq!(*x, "hello");
     /// # Result::<_, ()>::Ok(())
     /// ```
@@ -1312,7 +1312,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
         }
     }
 
-    /// Tries to pre-allocates space for a [`Result`] in this `Bump`,
+    /// Tries to pre-allocates space for a [`Result`] in this `Arena`,
     /// initializes it using the closure, then returns an exclusive reference
     /// to its `T` if all [`Ok`].
     ///
@@ -1345,10 +1345,10 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// # Example
     ///
     /// ```
-    /// # use oxc_allocator::bump::{AllocOrInitError, Bump};
+    /// # use oxc_allocator::arena::{AllocOrInitError, Arena};
     ///
-    /// let bump = Bump::new();
-    /// let x = bump.try_alloc_try_with(|| Ok("hello"))?;
+    /// let arena = Arena::new();
+    /// let x = arena.try_alloc_try_with(|| Ok("hello"))?;
     /// assert_eq!(*x, "hello");
     /// # Result::<_, AllocOrInitError<()>>::Ok(())
     /// ```
@@ -1423,7 +1423,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
         }
     }
 
-    /// `Copy` a slice into this `Bump` and return an exclusive reference to
+    /// `Copy` a slice into this `Arena` and return an exclusive reference to
     /// the copy.
     ///
     /// # Panics
@@ -1433,10 +1433,10 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// # Example
     ///
     /// ```
-    /// # use oxc_allocator::bump::Bump;
+    /// # use oxc_allocator::arena::Arena;
     ///
-    /// let bump = Bump::new();
-    /// let x = bump.alloc_slice_copy(&[1, 2, 3]);
+    /// let arena = Arena::new();
+    /// let x = arena.alloc_slice_copy(&[1, 2, 3]);
     /// assert_eq!(x, &[1, 2, 3]);
     /// ```
     #[expect(clippy::mut_from_ref)]
@@ -1459,23 +1459,23 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// # Example
     ///
     /// ```
-    /// # use oxc_allocator::bump::{AllocErr, Bump};
+    /// # use oxc_allocator::arena::{AllocErr, Arena};
     ///
-    /// let bump = Bump::new();
-    /// let x = bump.try_alloc_slice_copy(&[1, 2, 3]);
+    /// let arena = Arena::new();
+    /// let x = arena.try_alloc_slice_copy(&[1, 2, 3]);
     /// assert_eq!(x, Ok(&mut[1, 2, 3] as &mut [_]));
     ///
     ///
-    /// let bump = Bump::new();
-    /// bump.set_allocation_limit(Some(4));
-    /// let x = bump.try_alloc_slice_copy(&[1, 2, 3, 4, 5, 6]);
+    /// let arena = Arena::new();
+    /// arena.set_allocation_limit(Some(4));
+    /// let x = arena.try_alloc_slice_copy(&[1, 2, 3, 4, 5, 6]);
     /// assert_eq!(x, Err(AllocErr)); // too big
     /// ```
     ///
     /// # Errors
     ///
     /// Returns `Err(AllocErr)` if reserving a fresh `Layout::for_value(src)`
-    /// region via [`Bump::try_alloc_layout`] fails — that is, if the current
+    /// region via [`Arena::try_alloc_layout`] fails — that is, if the current
     /// chunk has no room, a new chunk cannot be obtained from the underlying
     /// allocator, or the configured `allocation_limit` would be exceeded.
     #[expect(clippy::mut_from_ref)]
@@ -1493,7 +1493,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
         Ok(result)
     }
 
-    /// `Clone` a slice into this `Bump` and return an exclusive reference to
+    /// `Clone` a slice into this `Arena` and return an exclusive reference to
     /// the clone. Prefer [`alloc_slice_copy`](#method.alloc_slice_copy) if `T` is `Copy`.
     ///
     /// # Panics
@@ -1503,7 +1503,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// # Example
     ///
     /// ```
-    /// # use oxc_allocator::bump::Bump;
+    /// # use oxc_allocator::arena::Arena;
     ///
     /// #[derive(Clone, Debug, Eq, PartialEq)]
     /// struct Sheep {
@@ -1516,8 +1516,8 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     ///     Sheep { name: "Cathy".into() },
     /// ];
     ///
-    /// let bump = Bump::new();
-    /// let clones = bump.alloc_slice_clone(&originals);
+    /// let arena = Arena::new();
+    /// let clones = arena.alloc_slice_clone(&originals);
     /// assert_eq!(originals, clones);
     /// ```
     #[expect(clippy::mut_from_ref)]
@@ -1543,7 +1543,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// # Errors
     ///
     /// Returns `Err(AllocErr)` if reserving a fresh `Layout::for_value(src)`
-    /// region via [`Bump::try_alloc_layout`] fails (no room in the current
+    /// region via [`Arena::try_alloc_layout`] fails (no room in the current
     /// chunk, a new chunk cannot be obtained from the underlying allocator,
     /// or the configured `allocation_limit` would be exceeded).
     #[expect(clippy::mut_from_ref)]
@@ -1564,7 +1564,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
         }
     }
 
-    /// `Copy` a string slice into this `Bump` and return an exclusive reference to it.
+    /// `Copy` a string slice into this `Arena` and return an exclusive reference to it.
     ///
     /// # Panics
     ///
@@ -1573,10 +1573,10 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// # Example
     ///
     /// ```
-    /// # use oxc_allocator::bump::Bump;
+    /// # use oxc_allocator::arena::Arena;
     ///
-    /// let bump = Bump::new();
-    /// let hello = bump.alloc_str("hello world");
+    /// let arena = Arena::new();
+    /// let hello = arena.alloc_str("hello world");
     /// assert_eq!("hello world", hello);
     /// ```
     #[expect(clippy::mut_from_ref)]
@@ -1594,24 +1594,24 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// # Example
     ///
     /// ```
-    /// # use oxc_allocator::bump::{AllocErr, Bump};
+    /// # use oxc_allocator::arena::{AllocErr, Arena};
     ///
-    /// let bump = Bump::new();
-    /// let hello = bump.try_alloc_str("hello world").unwrap();
+    /// let arena = Arena::new();
+    /// let hello = arena.try_alloc_str("hello world").unwrap();
     /// assert_eq!("hello world", hello);
     ///
     ///
-    /// let bump = Bump::new();
-    /// bump.set_allocation_limit(Some(5));
-    /// let hello = bump.try_alloc_str("hello world");
+    /// let arena = Arena::new();
+    /// arena.set_allocation_limit(Some(5));
+    /// let hello = arena.try_alloc_str("hello world");
     /// assert_eq!(Err(AllocErr), hello);
     /// ```
     ///
     /// # Errors
     ///
-    /// Forwards the error from [`Bump::try_alloc_slice_copy`]: returns
+    /// Forwards the error from [`Arena::try_alloc_slice_copy`]: returns
     /// `Err(AllocErr)` if reserving `src.len()` bytes via
-    /// [`Bump::try_alloc_layout`] fails because the current chunk has no
+    /// [`Arena::try_alloc_layout`] fails because the current chunk has no
     /// room, a new chunk cannot be obtained from the underlying allocator,
     /// or the configured `allocation_limit` would be exceeded.
     #[expect(clippy::mut_from_ref)]
@@ -1624,7 +1624,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
         }
     }
 
-    /// Allocates a new slice of size `len` into this `Bump` and returns an
+    /// Allocates a new slice of size `len` into this `Arena` and returns an
     /// exclusive reference to the copy.
     ///
     /// The elements of the slice are initialized using the supplied closure.
@@ -1637,10 +1637,10 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// # Example
     ///
     /// ```
-    /// # use oxc_allocator::bump::Bump;
+    /// # use oxc_allocator::arena::Arena;
     ///
-    /// let bump = Bump::new();
-    /// let x = bump.alloc_slice_fill_with(5, |i| 5 * (i + 1));
+    /// let arena = Arena::new();
+    /// let x = arena.alloc_slice_fill_with(5, |i| 5 * (i + 1));
     /// assert_eq!(x, &[5, 10, 15, 20, 25]);
     /// ```
     #[expect(clippy::mut_from_ref)]
@@ -1663,7 +1663,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
         }
     }
 
-    /// Allocates a new slice of size `len` into this `Bump` and returns an
+    /// Allocates a new slice of size `len` into this `Arena` and returns an
     /// exclusive reference to the copy, failing if the closure return an Err.
     ///
     /// The elements of the slice are initialized using the supplied closure.
@@ -1676,18 +1676,18 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// # Example
     ///
     /// ```
-    /// # use oxc_allocator::bump::Bump;
+    /// # use oxc_allocator::arena::Arena;
     ///
-    /// let bump = Bump::new();
-    /// let x: Result<&mut [usize], ()> = bump.alloc_slice_try_fill_with(5, |i| Ok(5 * i));
-    /// assert_eq!(x, Ok(bump.alloc_slice_copy(&[0, 5, 10, 15, 20])));
+    /// let arena = Arena::new();
+    /// let x: Result<&mut [usize], ()> = arena.alloc_slice_try_fill_with(5, |i| Ok(5 * i));
+    /// assert_eq!(x, Ok(arena.alloc_slice_copy(&[0, 5, 10, 15, 20])));
     /// ```
     ///
     /// ```
-    /// # use oxc_allocator::bump::Bump;
+    /// # use oxc_allocator::arena::Arena;
     ///
-    /// let bump = Bump::new();
-    /// let x: Result<&mut [usize], ()> = bump.alloc_slice_try_fill_with(
+    /// let arena = Arena::new();
+    /// let x: Result<&mut [usize], ()> = arena.alloc_slice_try_fill_with(
     ///    5,
     ///    |n| if n == 2 { Err(()) } else { Ok(n) }
     /// );
@@ -1700,7 +1700,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// soon as it returns `Err` for any element; any elements already written
     /// are abandoned and the just-made backing allocation is deallocated.
     /// Allocation failure is *not* reported via `Err` here — it panics via
-    /// [`Bump::alloc_layout`] instead.
+    /// [`Arena::alloc_layout`] instead.
     #[expect(clippy::mut_from_ref)]
     #[inline(always)]
     pub fn alloc_slice_try_fill_with<T, F, E>(&self, len: usize, mut f: F) -> Result<&mut [T], E>
@@ -1728,7 +1728,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
         }
     }
 
-    /// Allocates a new slice of size `len` into this `Bump` and returns an
+    /// Allocates a new slice of size `len` into this `Arena` and returns an
     /// exclusive reference to the copy.
     ///
     /// The elements of the slice are initialized using the supplied closure.
@@ -1737,16 +1737,16 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// # Example
     ///
     /// ```
-    /// # use oxc_allocator::bump::{AllocErr, Bump};
+    /// # use oxc_allocator::arena::{AllocErr, Arena};
     ///
-    /// let bump = Bump::new();
-    /// let x = bump.try_alloc_slice_fill_with(5, |i| 5 * (i + 1));
+    /// let arena = Arena::new();
+    /// let x = arena.try_alloc_slice_fill_with(5, |i| 5 * (i + 1));
     /// assert_eq!(x, Ok(&mut[5usize, 10, 15, 20, 25] as &mut [_]));
     ///
     ///
-    /// let bump = Bump::new();
-    /// bump.set_allocation_limit(Some(4));
-    /// let x = bump.try_alloc_slice_fill_with(10, |i| 5 * (i + 1));
+    /// let arena = Arena::new();
+    /// arena.set_allocation_limit(Some(4));
+    /// let x = arena.try_alloc_slice_fill_with(10, |i| 5 * (i + 1));
     /// assert_eq!(x, Err(AllocErr));
     /// ```
     ///
@@ -1754,7 +1754,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     ///
     /// Returns `Err(AllocErr)` if [`Layout::array::<T>(len)`](Layout::array)
     /// fails (for example because `len * size_of::<T>()` overflows `isize`),
-    /// or if reserving that layout via [`Bump::try_alloc_layout`] fails
+    /// or if reserving that layout via [`Arena::try_alloc_layout`] fails
     /// because there is no room in the current chunk, a new chunk cannot be
     /// obtained from the underlying allocator, or the configured
     /// `allocation_limit` would be exceeded.
@@ -1782,7 +1782,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
         }
     }
 
-    /// Allocates a new slice of size `len` into this `Bump` and returns an
+    /// Allocates a new slice of size `len` into this `Arena` and returns an
     /// exclusive reference to the copy.
     ///
     /// All elements of the slice are initialized to `value`.
@@ -1794,10 +1794,10 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// # Example
     ///
     /// ```
-    /// # use oxc_allocator::bump::Bump;
+    /// # use oxc_allocator::arena::Arena;
     ///
-    /// let bump = Bump::new();
-    /// let x = bump.alloc_slice_fill_copy(5, 42);
+    /// let arena = Arena::new();
+    /// let x = arena.alloc_slice_fill_copy(5, 42);
     /// assert_eq!(x, &[42, 42, 42, 42, 42]);
     /// ```
     #[inline(always)]
@@ -1809,9 +1809,9 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     ///
     /// # Errors
     ///
-    /// Forwards the error from [`Bump::try_alloc_slice_fill_with`]: returns
+    /// Forwards the error from [`Arena::try_alloc_slice_fill_with`]: returns
     /// `Err(AllocErr)` if constructing `Layout::array::<T>(len)` fails or the
-    /// underlying [`Bump::try_alloc_layout`] call fails (no room in the
+    /// underlying [`Arena::try_alloc_layout`] call fails (no room in the
     /// current chunk, underlying allocator failure, or `allocation_limit`
     /// exceeded).
     #[inline(always)]
@@ -1823,7 +1823,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
         self.try_alloc_slice_fill_with(len, |_| value)
     }
 
-    /// Allocates a new slice of size `len` slice into this `Bump` and return an
+    /// Allocates a new slice of size `len` slice into this `Arena` and return an
     /// exclusive reference to the copy.
     ///
     /// All elements of the slice are initialized to `value.clone()`.
@@ -1835,11 +1835,11 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// # Example
     ///
     /// ```
-    /// # use oxc_allocator::bump::Bump;
+    /// # use oxc_allocator::arena::Arena;
     ///
-    /// let bump = Bump::new();
-    /// let s: String = "Hello Bump!".to_string();
-    /// let x: &[String] = bump.alloc_slice_fill_clone(2, &s);
+    /// let arena = Arena::new();
+    /// let s: String = "Hello Arena!".to_string();
+    /// let x: &[String] = arena.alloc_slice_fill_clone(2, &s);
     /// assert_eq!(x.len(), 2);
     /// assert_eq!(&x[0], &s);
     /// assert_eq!(&x[1], &s);
@@ -1853,9 +1853,9 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     ///
     /// # Errors
     ///
-    /// Forwards the error from [`Bump::try_alloc_slice_fill_with`]: returns
+    /// Forwards the error from [`Arena::try_alloc_slice_fill_with`]: returns
     /// `Err(AllocErr)` if constructing `Layout::array::<T>(len)` fails or the
-    /// underlying [`Bump::try_alloc_layout`] call fails (no room in the
+    /// underlying [`Arena::try_alloc_layout`] call fails (no room in the
     /// current chunk, underlying allocator failure, or `allocation_limit`
     /// exceeded).
     #[inline(always)]
@@ -1867,7 +1867,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
         self.try_alloc_slice_fill_with(len, |_| value.clone())
     }
 
-    /// Allocates a new slice of size `len` slice into this `Bump` and return an
+    /// Allocates a new slice of size `len` slice into this `Arena` and return an
     /// exclusive reference to the copy.
     ///
     /// The elements are initialized using the supplied iterator.
@@ -1880,10 +1880,10 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// # Example
     ///
     /// ```
-    /// # use oxc_allocator::bump::Bump;
+    /// # use oxc_allocator::arena::Arena;
     ///
-    /// let bump = Bump::new();
-    /// let x: &[i32] = bump.alloc_slice_fill_iter([2, 3, 5].iter().cloned().map(|i| i * i));
+    /// let arena = Arena::new();
+    /// let x: &[i32] = arena.alloc_slice_fill_iter([2, 3, 5].iter().cloned().map(|i| i * i));
     /// assert_eq!(x, [4, 9, 25]);
     /// ```
     #[inline(always)]
@@ -1898,7 +1898,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
         })
     }
 
-    /// Allocates a new slice of size `len` slice into this `Bump` and return an
+    /// Allocates a new slice of size `len` slice into this `Arena` and return an
     /// exclusive reference to the copy, failing if the iterator returns an Err.
     ///
     /// The elements are initialized using the supplied iterator.
@@ -1911,20 +1911,20 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// # Examples
     ///
     /// ```
-    /// # use oxc_allocator::bump::Bump;
+    /// # use oxc_allocator::arena::Arena;
     ///
-    /// let bump = Bump::new();
-    /// let x: Result<&mut [i32], ()> = bump.alloc_slice_try_fill_iter(
+    /// let arena = Arena::new();
+    /// let x: Result<&mut [i32], ()> = arena.alloc_slice_try_fill_iter(
     ///    [2, 3, 5].iter().cloned().map(|i| Ok(i * i))
     /// );
-    /// assert_eq!(x, Ok(bump.alloc_slice_copy(&[4, 9, 25])));
+    /// assert_eq!(x, Ok(arena.alloc_slice_copy(&[4, 9, 25])));
     /// ```
     ///
     /// ```
-    /// # use oxc_allocator::bump::Bump;
+    /// # use oxc_allocator::arena::Arena;
     ///
-    /// let bump = Bump::new();
-    /// let x: Result<&mut [i32], ()> = bump.alloc_slice_try_fill_iter(
+    /// let arena = Arena::new();
+    /// let x: Result<&mut [i32], ()> = arena.alloc_slice_try_fill_iter(
     ///    [Ok(2), Err(()), Ok(5)].iter().cloned()
     /// );
     /// assert_eq!(x, Err(()));
@@ -1933,7 +1933,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// # Errors
     ///
     /// Returns `Err(E)` propagated from the first `Err` item yielded by
-    /// `iter`, forwarded through [`Bump::alloc_slice_try_fill_with`]. As in
+    /// `iter`, forwarded through [`Arena::alloc_slice_try_fill_with`]. As in
     /// that method, allocation failure is reported by panicking rather than
     /// via `Err`.
     #[inline(always)]
@@ -1948,7 +1948,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
         })
     }
 
-    /// Allocates a new slice of size `iter.len()` slice into this `Bump` and return an
+    /// Allocates a new slice of size `iter.len()` slice into this `Arena` and return an
     /// exclusive reference to the copy. Does not panic on failure.
     ///
     /// The elements are initialized using the supplied iterator.
@@ -1956,10 +1956,10 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// # Example
     ///
     /// ```
-    /// # use oxc_allocator::bump::Bump;
+    /// # use oxc_allocator::arena::Arena;
     ///
-    /// let bump = Bump::new();
-    /// let x: &[i32] = bump.try_alloc_slice_fill_iter([2, 3, 5]
+    /// let arena = Arena::new();
+    /// let x: &[i32] = arena.try_alloc_slice_fill_iter([2, 3, 5]
     ///     .iter().cloned().map(|i| i * i)).unwrap();
     /// assert_eq!(x, [4, 9, 25]);
     /// ```
@@ -1972,9 +1972,9 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     ///
     /// # Errors
     ///
-    /// Forwards the error from [`Bump::try_alloc_slice_fill_with`]: returns
+    /// Forwards the error from [`Arena::try_alloc_slice_fill_with`]: returns
     /// `Err(AllocErr)` if constructing `Layout::array::<T>(iter.len())`
-    /// fails or the underlying [`Bump::try_alloc_layout`] call fails (no
+    /// fails or the underlying [`Arena::try_alloc_layout`] call fails (no
     /// room in the current chunk, underlying allocator failure, or
     /// `allocation_limit` exceeded).
     #[inline(always)]
@@ -1989,7 +1989,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
         })
     }
 
-    /// Allocates a new slice of size `len` slice into this `Bump` and return an
+    /// Allocates a new slice of size `len` slice into this `Arena` and return an
     /// exclusive reference to the copy.
     ///
     /// All elements of the slice are initialized to [`T::default()`].
@@ -2003,10 +2003,10 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// # Example
     ///
     /// ```
-    /// # use oxc_allocator::bump::Bump;
+    /// # use oxc_allocator::arena::Arena;
     ///
-    /// let bump = Bump::new();
-    /// let x = bump.alloc_slice_fill_default::<u32>(5);
+    /// let arena = Arena::new();
+    /// let x = arena.alloc_slice_fill_default::<u32>(5);
     /// assert_eq!(x, &[0, 0, 0, 0, 0]);
     /// ```
     #[inline(always)]
@@ -2018,9 +2018,9 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     ///
     /// # Errors
     ///
-    /// Forwards the error from [`Bump::try_alloc_slice_fill_with`]: returns
+    /// Forwards the error from [`Arena::try_alloc_slice_fill_with`]: returns
     /// `Err(AllocErr)` if constructing `Layout::array::<T>(len)` fails or the
-    /// underlying [`Bump::try_alloc_layout`] call fails (no room in the
+    /// underlying [`Arena::try_alloc_layout`] call fails (no room in the
     /// current chunk, underlying allocator failure, or `allocation_limit`
     /// exceeded).
     #[inline(always)]
@@ -2170,11 +2170,11 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// # Example
     ///
     /// ```
-    /// # use oxc_allocator::bump::Bump;
+    /// # use oxc_allocator::arena::Arena;
     ///
-    /// let bump = Bump::with_capacity(100);
+    /// let arena = Arena::with_capacity(100);
     ///
-    /// let capacity = bump.chunk_capacity();
+    /// let capacity = arena.chunk_capacity();
     /// assert!(capacity >= 100);
     /// ```
     pub fn chunk_capacity(&self) -> usize {
@@ -2184,8 +2184,8 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
         current_footer.ptr.get().as_ptr() as usize - current_footer.data.as_ptr() as usize
     }
 
-    /// Slow path allocation for when we need to allocate a new chunk from the
-    /// parent bump set because there isn't enough room in our current chunk.
+    /// Slow path allocation for when we need to allocate a new chunk,
+    /// because there isn't enough room in our current chunk.
     #[inline(never)]
     #[cold]
     fn alloc_layout_slow(&self, layout: Layout) -> Option<NonNull<u8>> {
@@ -2243,7 +2243,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     }
 
     /// Returns an iterator over each chunk of allocated memory that
-    /// this arena has bump allocated into.
+    /// this arena has allocated into.
     ///
     /// The chunks are returned ordered by allocation time, with the most
     /// recently allocated chunk being returned first, and the least recently
@@ -2255,7 +2255,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     ///
     /// # SAFETY
     ///
-    /// Because this method takes `&mut self`, we know that the bump arena
+    /// Because this method takes `&mut self`, we know that the arena
     /// reference is unique and therefore there aren't any active references to
     /// any of the objects we've allocated in it either. This potential aliasing
     /// of exclusive references is one common footgun for unsafe code that we
@@ -2278,27 +2278,26 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// responsibility to ensure that these properties hold before calling
     /// `MaybeUninit::assume_init` or otherwise reading the returned values.
     ///
-    /// Finally, you must also ensure that any values allocated into the bump
-    /// arena have not had their `Drop` implementations called on them,
-    /// e.g. after dropping a [`bumpalo::boxed::Box<T>`][crate::boxed::Box].
+    /// Finally, you must also ensure that any values allocated into the arena
+    /// have not had their `Drop` implementations called on them.
     ///
     /// # Example
     ///
     /// ```
-    /// # use oxc_allocator::bump::Bump;
+    /// # use oxc_allocator::arena::Arena;
     ///
-    /// let mut bump = Bump::new();
+    /// let mut arena = Arena::new();
     ///
-    /// // Allocate a bunch of `i32`s in this bump arena, potentially causing
+    /// // Allocate a bunch of `i32`s in this arena, potentially causing
     /// // additional memory chunks to be reserved.
     /// for i in 0..10000 {
-    ///     bump.alloc(i);
+    ///     arena.alloc(i);
     /// }
     ///
-    /// // Iterate over each chunk we've bump allocated into. This is safe
+    /// // Iterate over each chunk we've allocated into. This is safe
     /// // because we have only allocated `i32`s in this arena, which fulfills
     /// // the above requirements.
-    /// for ch in bump.iter_allocated_chunks() {
+    /// for ch in arena.iter_allocated_chunks() {
     ///     println!("Used a chunk that is {} bytes long", ch.len());
     ///     println!("The first byte is {:?}", unsafe {
     ///         ch[0].assume_init()
@@ -2310,13 +2309,13 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// // through the chunk's data, we get them in the order 'c', then 'b',
     /// // then 'a'.
     ///
-    /// bump.reset();
-    /// bump.alloc(b'a');
-    /// bump.alloc(b'b');
-    /// bump.alloc(b'c');
+    /// arena.reset();
+    /// arena.alloc(b'a');
+    /// arena.alloc(b'b');
+    /// arena.alloc(b'c');
     ///
-    /// assert_eq!(bump.iter_allocated_chunks().count(), 1);
-    /// let chunk = bump.iter_allocated_chunks().nth(0).unwrap();
+    /// assert_eq!(arena.iter_allocated_chunks().count(), 1);
+    /// let chunk = arena.iter_allocated_chunks().nth(0).unwrap();
     /// assert_eq!(chunk.len(), 3);
     ///
     /// // Safe because we've only allocated `u8`s in this arena, which
@@ -2330,13 +2329,13 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     pub fn iter_allocated_chunks(&mut self) -> ChunkIter<'_, MIN_ALIGN> {
         // SAFETY: Ensured by mutable borrow of `self`.
         let raw = unsafe { self.iter_allocated_chunks_raw() };
-        ChunkIter { raw, bump: PhantomData }
+        ChunkIter { raw, arena: PhantomData }
     }
 
     /// Returns an iterator over raw pointers to chunks of allocated memory that
-    /// this arena has bump allocated into.
+    /// this arena has allocated into.
     ///
-    /// This is an unsafe version of [`iter_allocated_chunks()`](Bump::iter_allocated_chunks),
+    /// This is an unsafe version of [`iter_allocated_chunks()`](Arena::iter_allocated_chunks),
     /// with the caller responsible for safe usage of the returned pointers as
     /// well as ensuring that the iterator is not invalidated by new
     /// allocations.
@@ -2349,33 +2348,33 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// previously allocated data.
     ///
     /// In addition, all of the caveats when reading the chunk data from
-    /// [`iter_allocated_chunks()`](Bump::iter_allocated_chunks) still apply.
+    /// [`iter_allocated_chunks()`](Arena::iter_allocated_chunks) still apply.
     pub unsafe fn iter_allocated_chunks_raw(&self) -> ChunkRawIter<'_, MIN_ALIGN> {
-        ChunkRawIter { footer: self.current_chunk_footer.get(), bump: PhantomData }
+        ChunkRawIter { footer: self.current_chunk_footer.get(), arena: PhantomData }
     }
 
     /// Calculates the number of bytes currently allocated across all chunks in
-    /// this bump arena.
+    /// this arena.
     ///
     /// If you allocate types of different alignments or types with
     /// larger-than-typical alignment in the same arena, some padding
-    /// bytes might get allocated in the bump arena. Note that those padding
+    /// bytes might get allocated in the arena. Note that those padding
     /// bytes will add to this method's resulting sum, so you cannot rely
     /// on it only counting the sum of the sizes of the things
     /// you've allocated in the arena.
     ///
-    /// The allocated bytes do not include the size of bumpalo's metadata,
+    /// The allocated bytes do not include the size of arena metadata,
     /// so the amount of memory requested from the Rust allocator is higher
     /// than the returned value.
     ///
     /// # Example
     ///
     /// ```
-    /// # use oxc_allocator::bump::Bump;
+    /// # use oxc_allocator::arena::Arena;
     ///
-    /// let bump = Bump::new();
-    /// let _x = bump.alloc_slice_fill_default::<u32>(5);
-    /// let bytes = bump.allocated_bytes();
+    /// let arena = Arena::new();
+    /// let _x = arena.alloc_slice_fill_default::<u32>(5);
+    /// let bytes = arena.allocated_bytes();
     /// assert!(bytes >= size_of::<u32>() * 5);
     /// ```
     pub fn allocated_bytes(&self) -> usize {
@@ -2384,10 +2383,10 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
         unsafe { footer.as_ref().allocated_bytes }
     }
 
-    /// Calculates the number of bytes requested from the Rust allocator for this `Bump`.
+    /// Calculates the number of bytes requested from the Rust allocator for this `Arena`.
     ///
     /// This number is equal to the [`allocated_bytes()`](Self::allocated_bytes) plus
-    /// the size of the bump metadata.
+    /// the size of the metadata.
     pub fn allocated_bytes_including_metadata(&self) -> usize {
         let metadata_size =
             unsafe { self.iter_allocated_chunks_raw().count() * mem::size_of::<ChunkFooter>() };
@@ -2580,14 +2579,14 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
 /// Methods only available when `from_raw_parts` feature is enabled.
 /// These methods are only used by raw transfer.
 #[cfg(feature = "from_raw_parts")]
-impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
-    /// Construct a static-sized [`Bump`] from an existing memory allocation.
+impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
+    /// Construct a static-sized [`Arena`] from an existing memory allocation.
     ///
-    /// The [`Bump`] which is returned takes ownership of the memory allocation,
-    /// and the allocation will be freed if the `Bump` is dropped.
-    /// If caller wishes to prevent that happening, they must wrap the `Bump` in `ManuallyDrop`.
+    /// The [`Arena`] which is returned takes ownership of the memory allocation,
+    /// and the allocation will be freed if the `Arena` is dropped.
+    /// If caller wishes to prevent that happening, they must wrap the `Arena` in `ManuallyDrop`.
     ///
-    /// The [`Bump`] returned by this function cannot grow.
+    /// The [`Arena`] returned by this function cannot grow.
     ///
     /// # SAFETY
     ///
@@ -2596,7 +2595,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// * `size` must be at least [`CHUNK_FOOTER_SIZE`].
     /// * The memory region starting at `ptr` and encompassing `size` bytes must be within a single allocation.
     /// * The memory region starting at `ptr` and encompassing `size` bytes must have been allocated from system
-    ///   allocator with alignment of [`CHUNK_ALIGN`] (or caller must wrap the `Bump` in `ManuallyDrop`
+    ///   allocator with alignment of [`CHUNK_ALIGN`] (or caller must wrap the `Arena` in `ManuallyDrop`
     ///   and ensure the backing memory is freed correctly themselves).
     /// * `ptr` must have permission for writes.
     ///
@@ -2640,25 +2639,25 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
         // Therefore `chunk_footer_ptr` is valid for writing a `ChunkFooter`.
         unsafe { chunk_footer_ptr.write(chunk_footer) };
 
-        // Create `Bump` with allocation limit of `size_without_footer`.
+        // Create `Arena` with allocation limit of `size_without_footer`.
         // i.e. it cannot grow because it's already exactly at its limit.
         // This means that the memory chunk we've just created will remain its only chunk.
-        // Therefore it can never be deallocated, until the `Bump` is dropped.
-        // `Bump::reset` would only reset the "cursor" pointer, not deallocate the memory.
+        // Therefore it can never be deallocated, until the `Arena` is dropped.
+        // `Arena::reset` would only reset the "cursor" pointer, not deallocate the memory.
         Self::new_impl(chunk_footer_ptr, Some(size_without_footer))
     }
 
-    /// Set cursor pointer for this [`Bump`]'s current chunk.
+    /// Set cursor pointer for this [`Arena`]'s current chunk.
     ///
     /// This is dangerous, and this method should not ordinarily be used.
-    /// It is only here for manually resetting the `Bump`.
+    /// It is only here for manually resetting the `Arena`.
     ///
     /// # SAFETY
     ///
-    /// * `Bump` must have at least 1 allocated chunk.
-    ///   It is UB to call this method on an `Bump` which has not allocated
-    ///   i.e. fresh from `Bump::new`.
-    /// * `ptr` must point to within the `Bump`'s current chunk.
+    /// * `Arena` must have at least 1 allocated chunk.
+    ///   It is UB to call this method on an `Arena` which has not allocated
+    ///   i.e. fresh from `Arena::new`.
+    /// * `ptr` must point to within the `Arena`'s current chunk.
     /// * `ptr` must be equal to or after data pointer for this chunk.
     /// * `ptr` must be equal to or before the chunk's `ChunkFooter`.
     /// * `ptr` must be aligned to `MIN_ALIGN`.
@@ -2671,31 +2670,31 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
         debug_assert!(ptr.as_ptr().cast_const() <= ptr::from_ref(chunk_footer).cast::<u8>());
         debug_assert!(ptr.addr().get().is_multiple_of(MIN_ALIGN));
 
-        // SAFETY: Caller guarantees `Bump` has at least 1 allocated chunk, and `ptr` is valid.
+        // SAFETY: Caller guarantees `Arena` has at least 1 allocated chunk, and `ptr` is valid.
         #[expect(clippy::unnecessary_safety_comment)]
         chunk_footer.ptr.set(ptr);
     }
 
-    /// Get pointer to end of the data region of this [`Bump`]'s current chunk
+    /// Get pointer to end of the data region of this [`Arena`]'s current chunk
     /// i.e to the start of the `ChunkFooter`.
     pub fn data_end_ptr(&self) -> NonNull<u8> {
         self.current_chunk_footer.get().cast::<u8>()
     }
 
-    /// Get pointer to end of this [`Bump`]'s current chunk (after the `ChunkFooter`).
+    /// Get pointer to end of this [`Arena`]'s current chunk (after the `ChunkFooter`).
     pub fn end_ptr(&self) -> NonNull<u8> {
         let chunk_footer_ptr = self.current_chunk_footer.get();
 
         // SAFETY: `chunk_footer_ptr` always points to a valid `ChunkFooter`,
         // so stepping past it cannot be out of bounds of the chunk's allocation.
-        // If `Bump` has not allocated, so `chunk_footer_ptr` returns a pointer to the static empty chunk,
+        // If `Arena` has not allocated, so `chunk_footer_ptr` returns a pointer to the static empty chunk,
         // it's still valid.
         unsafe { chunk_footer_ptr.add(1).cast::<u8>() }
     }
 }
 
 /// An iterator over each chunk of allocated memory that
-/// an arena has bump allocated into.
+/// an arena has allocated into.
 ///
 /// The chunks are returned ordered by allocation time, with the most recently
 /// allocated chunk being returned first.
@@ -2704,14 +2703,14 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
 /// recent allocation being earlier in the slice.
 ///
 /// This struct is created by the [`iter_allocated_chunks`] method on
-/// [`Bump`]. See that function for a safety description regarding reading from the returned items.
+/// [`Arena`]. See that function for a safety description regarding reading from the returned items.
 ///
-/// [`Bump`]: struct.Bump.html
-/// [`iter_allocated_chunks`]: struct.Bump.html#method.iter_allocated_chunks
+/// [`Arena`]: struct.Arena.html
+/// [`iter_allocated_chunks`]: struct.Arena.html#method.iter_allocated_chunks
 #[derive(Debug)]
 pub struct ChunkIter<'a, const MIN_ALIGN: usize = 1> {
     raw: ChunkRawIter<'a, MIN_ALIGN>,
-    bump: PhantomData<&'a mut Bump<MIN_ALIGN>>,
+    arena: PhantomData<&'a mut Arena<MIN_ALIGN>>,
 }
 
 impl<'a, const MIN_ALIGN: usize> Iterator for ChunkIter<'a, MIN_ALIGN> {
@@ -2729,20 +2728,20 @@ impl<'a, const MIN_ALIGN: usize> Iterator for ChunkIter<'a, MIN_ALIGN> {
 impl<const MIN_ALIGN: usize> iter::FusedIterator for ChunkIter<'_, MIN_ALIGN> {}
 
 /// An iterator over raw pointers to chunks of allocated memory that this
-/// arena has bump allocated into.
+/// arena has allocated into.
 ///
 /// See [`ChunkIter`] for details regarding the returned chunks.
 ///
 /// This struct is created by the [`iter_allocated_chunks_raw`] method on
-/// [`Bump`]. See that function for a safety description regarding reading from
+/// [`Arena`]. See that function for a safety description regarding reading from
 /// the returned items.
 ///
-/// [`Bump`]: struct.Bump.html
-/// [`iter_allocated_chunks_raw`]: struct.Bump.html#method.iter_allocated_chunks_raw
+/// [`Arena`]: struct.Arena.html
+/// [`iter_allocated_chunks_raw`]: struct.Arena.html#method.iter_allocated_chunks_raw
 #[derive(Debug)]
 pub struct ChunkRawIter<'a, const MIN_ALIGN: usize = 1> {
     footer: NonNull<ChunkFooter>,
-    bump: PhantomData<&'a Bump<MIN_ALIGN>>,
+    arena: PhantomData<&'a Arena<MIN_ALIGN>>,
 }
 
 impl<const MIN_ALIGN: usize> Iterator for ChunkRawIter<'_, MIN_ALIGN> {
@@ -2768,7 +2767,7 @@ fn oom() -> ! {
     panic!("out of memory")
 }
 
-unsafe impl<const MIN_ALIGN: usize> BumpaloAlloc for &Bump<MIN_ALIGN> {
+unsafe impl<const MIN_ALIGN: usize> BumpaloAlloc for &Arena<MIN_ALIGN> {
     #[inline(always)]
     unsafe fn alloc(&mut self, layout: Layout) -> Result<NonNull<u8>, AllocErr> {
         self.try_alloc_layout(layout)
@@ -2776,7 +2775,7 @@ unsafe impl<const MIN_ALIGN: usize> BumpaloAlloc for &Bump<MIN_ALIGN> {
 
     #[inline]
     unsafe fn dealloc(&mut self, ptr: NonNull<u8>, layout: Layout) {
-        unsafe { Bump::<MIN_ALIGN>::dealloc(self, ptr, layout) };
+        unsafe { Arena::<MIN_ALIGN>::dealloc(self, ptr, layout) };
     }
 
     #[inline]
@@ -2794,25 +2793,25 @@ unsafe impl<const MIN_ALIGN: usize> BumpaloAlloc for &Bump<MIN_ALIGN> {
 
         let new_layout = layout_from_size_align(new_size, layout.align())?;
         if new_size <= old_size {
-            unsafe { Bump::shrink(self, ptr, layout, new_layout) }
+            unsafe { Arena::shrink(self, ptr, layout, new_layout) }
         } else {
-            unsafe { Bump::grow(self, ptr, layout, new_layout) }
+            unsafe { Arena::grow(self, ptr, layout, new_layout) }
         }
     }
 }
 
-/// This function tests that Bump isn't Sync.
+/// This function tests that Arena isn't Sync.
 /// ```compile_fail
-/// use oxc_allocator::Bump;
+/// use oxc_allocator::arena::Arena;
 /// fn _requires_sync<T: Sync>(_value: T) {}
-/// fn _bump_not_sync(b: Bump) {
+/// fn _arena_not_sync(b: Arena) {
 ///    _requires_sync(b);
 /// }
 /// ```
 #[cfg(doctest)]
 fn _doctest_only() {}
 
-unsafe impl<const MIN_ALIGN: usize> Allocator for &Bump<MIN_ALIGN> {
+unsafe impl<const MIN_ALIGN: usize> Allocator for &Arena<MIN_ALIGN> {
     #[inline]
     fn allocate(&self, layout: Layout) -> Result<NonNull<[u8]>, AllocError> {
         self.try_alloc_layout(layout)
@@ -2824,7 +2823,7 @@ unsafe impl<const MIN_ALIGN: usize> Allocator for &Bump<MIN_ALIGN> {
 
     #[inline]
     unsafe fn deallocate(&self, ptr: NonNull<u8>, layout: Layout) {
-        unsafe { Bump::<MIN_ALIGN>::dealloc(self, ptr, layout) };
+        unsafe { Arena::<MIN_ALIGN>::dealloc(self, ptr, layout) };
     }
 
     #[inline]
@@ -2834,7 +2833,7 @@ unsafe impl<const MIN_ALIGN: usize> Allocator for &Bump<MIN_ALIGN> {
         old_layout: Layout,
         new_layout: Layout,
     ) -> Result<NonNull<[u8]>, AllocError> {
-        unsafe { Bump::<MIN_ALIGN>::shrink(self, ptr, old_layout, new_layout) }
+        unsafe { Arena::<MIN_ALIGN>::shrink(self, ptr, old_layout, new_layout) }
             .map(|p| unsafe {
                 NonNull::new_unchecked(ptr::slice_from_raw_parts_mut(p.as_ptr(), new_layout.size()))
             })
@@ -2848,7 +2847,7 @@ unsafe impl<const MIN_ALIGN: usize> Allocator for &Bump<MIN_ALIGN> {
         old_layout: Layout,
         new_layout: Layout,
     ) -> Result<NonNull<[u8]>, AllocError> {
-        unsafe { Bump::<MIN_ALIGN>::grow(self, ptr, old_layout, new_layout) }
+        unsafe { Arena::<MIN_ALIGN>::grow(self, ptr, old_layout, new_layout) }
             .map(|p| unsafe {
                 NonNull::new_unchecked(ptr::slice_from_raw_parts_mut(p.as_ptr(), new_layout.size()))
             })
@@ -2870,7 +2869,7 @@ unsafe impl<const MIN_ALIGN: usize> Allocator for &Bump<MIN_ALIGN> {
 
 // NB: Only tests which require private types, fields, or methods should be in
 // here. Anything that can just be tested via public API surface should be in
-// `bumpalo/tests/all/*`.
+// `tests/arena/*`.
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -2892,7 +2891,7 @@ mod tests {
     // Uses private `DEFAULT_CHUNK_SIZE_WITHOUT_FOOTER` and `CHUNK_FOOTER_SIZE`.
     #[test]
     fn allocated_bytes() {
-        let mut b = Bump::new();
+        let mut b = Arena::new();
 
         assert_eq!(b.allocated_bytes(), 0);
         assert_eq!(b.allocated_bytes_including_metadata(), 0);
@@ -2919,7 +2918,7 @@ mod tests {
     fn test_realloc() {
         unsafe {
             const CAPACITY: usize = DEFAULT_CHUNK_SIZE_WITHOUT_FOOTER;
-            let mut b = Bump::<1>::with_min_align_and_capacity(CAPACITY);
+            let mut b = Arena::<1>::with_min_align_and_capacity(CAPACITY);
 
             // `realloc` doesn't shrink allocations that aren't "worth it".
             let layout = Layout::from_size_align(100, 1).unwrap();
@@ -2964,7 +2963,7 @@ mod tests {
     // Uses our private `bumpalo_alloc` module.
     #[test]
     fn invalid_read() {
-        let mut b = &Bump::new();
+        let mut b = &Arena::new();
 
         unsafe {
             let l1 = Layout::from_size_align(12000, 4).unwrap();

@@ -4,12 +4,12 @@
 // We only run them when debug_assertions are not set, as we expect them to fail outside release
 // mode.
 
-use oxc_allocator::bump::Bump;
+use oxc_allocator::arena::Arena;
 
 #[test]
 #[cfg_attr(debug_assertions, ignore)]
 fn try_alloc_with_large_array() {
-    let b = Bump::new();
+    let b = Arena::new();
 
     b.try_alloc_with(|| [4u8; 10_000_000]).unwrap();
 }
@@ -25,7 +25,7 @@ struct LargeStruct {
 #[test]
 #[cfg_attr(debug_assertions, ignore)]
 fn try_alloc_with_large_struct() {
-    let b = Bump::new();
+    let b = Arena::new();
 
     b.try_alloc_with(|| LargeStruct {
         small: 1,
@@ -39,7 +39,7 @@ fn try_alloc_with_large_struct() {
 #[test]
 #[cfg_attr(debug_assertions, ignore)]
 fn try_alloc_with_large_tuple() {
-    let b = Bump::new();
+    let b = Arena::new();
 
     b.try_alloc_with(|| {
         (
@@ -64,7 +64,7 @@ enum LargeEnum {
 #[test]
 #[cfg_attr(debug_assertions, ignore)]
 fn try_alloc_with_large_enum() {
-    let b = Bump::new();
+    let b = Arena::new();
 
     b.try_alloc_with(|| LargeEnum::Small).unwrap();
 }

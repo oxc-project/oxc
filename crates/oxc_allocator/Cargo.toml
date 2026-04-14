@@ -14,8 +14,8 @@ rust-version.workspace = true
 description.workspace = true
 
 [[test]]
-name = "bump_try_alloc"
-path = "tests/bump_try_alloc.rs"
+name = "arena_try_alloc"
+path = "tests/arena_try_alloc.rs"
 harness = false
 
 [lints]
@@ -46,7 +46,7 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 
 # Enable `testing` feature in tests and doctests.
-# Allows doctests to use `bump` module without exposing it publicly.
+# Allows doctests to use `arena` module without exposing it publicly.
 oxc_allocator = { path = ".", features = ["testing"] }
 
 [features]

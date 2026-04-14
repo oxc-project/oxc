@@ -61,11 +61,11 @@ mod tracking;
 mod vec;
 mod vec2;
 
-// Only expose `bump` module for doc tests
+// Only expose `arena` module for doc tests
 #[cfg(not(feature = "testing"))]
-mod bump;
+mod arena;
 #[cfg(feature = "testing")]
-pub mod bump;
+pub mod arena;
 
 pub use accessor::AllocatorAccessor;
 pub use address::{Address, GetAddress, UnstableAddress};
