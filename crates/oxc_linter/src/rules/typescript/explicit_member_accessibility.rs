@@ -340,8 +340,9 @@ impl ExplicitMemberAccessibility {
             AccessibilityLevel::NoPublic => {
                 if param.accessibility == Some(TSAccessibility::Public) && param.readonly {
                     let search_start = search_start_after_decorators(param.span, &param.decorators);
+                    let search_end = param.pattern.span().start;
                     let (public_span, removal_range) =
-                        find_public_spans(ctx.source_text(), search_start);
+                        find_public_spans(ctx, search_start, search_end);
                     ctx.diagnostic_with_fix(
                         unwanted_public_accessibility_diagnostic(
                             public_span,
@@ -378,7 +379,7 @@ impl ExplicitMemberAccessibility {
             && accessibility == Some(TSAccessibility::Public)
         {
             let search_start = search_start_after_decorators(node_span, decorators);
-            let (public_span, removal_range) = find_public_spans(ctx.source_text(), search_start);
+            let (public_span, removal_range) = find_public_spans(ctx, search_start, key_span.start);
             ctx.diagnostic_with_fix(
                 unwanted_public_accessibility_diagnostic(public_span, node_type, name),
                 |fixer| fixer.delete_range(removal_range),
@@ -406,11 +407,11 @@ fn find_insert_position(node_span: Span, decorators: &[Decorator<'_>], source: &
 
 /// Returns `(keyword_span, removal_span)` where `keyword_span` covers just the `public` keyword
 /// and `removal_span` also includes trailing whitespace.
-fn find_public_spans(source: &str, search_start: u32) -> (Span, Span) {
-    let text = &source[search_start as usize..];
-    let offset = text.find("public").expect("Expected 'public' keyword in source");
-    #[expect(clippy::cast_possible_truncation)]
-    let start = search_start + offset as u32;
+fn find_public_spans(ctx: &LintContext<'_>, search_start: u32, search_end: u32) -> (Span, Span) {
+    let start = search_start
+        + ctx
+            .find_next_token_within(search_start, search_end, "public")
+            .expect("Expected 'public' keyword in source");
     let keyword_span = Span::new(start, start + 6);
 
     let bytes = source.as_bytes();
