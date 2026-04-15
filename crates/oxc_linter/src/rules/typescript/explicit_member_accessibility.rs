@@ -393,16 +393,7 @@ fn search_start_after_decorators(node_span: Span, decorators: &[Decorator<'_>]) 
 }
 
 fn find_insert_position(node_span: Span, decorators: &[Decorator<'_>], source: &str) -> u32 {
-    let start = search_start_after_decorators(node_span, decorators);
-    let bytes = source.as_bytes();
-    let mut pos = start;
-    while (pos as usize) < bytes.len() {
-        match bytes[pos as usize] {
-            b' ' | b'\t' | b'\n' | b'\r' => pos += 1,
-            _ => break,
-        }
-    }
-    pos
+    skip_ascii_whitespace(source, search_start_after_decorators(node_span, decorators))
 }
 
 /// Returns `(keyword_span, removal_span)` where `keyword_span` covers just the `public` keyword
@@ -413,16 +404,15 @@ fn find_public_spans(ctx: &LintContext<'_>, search_start: u32, search_end: u32) 
             .find_next_token_within(search_start, search_end, "public")
             .expect("Expected 'public' keyword in source");
     let keyword_span = Span::new(start, start + 6);
-
-    let bytes = source.as_bytes();
-    let mut end = start + 6;
-    while (end as usize) < bytes.len() {
-        match bytes[end as usize] {
-            b' ' | b'\t' | b'\n' | b'\r' => end += 1,
-            _ => break,
-        }
-    }
+    let end = skip_ascii_whitespace(ctx.source_text(), start + 6);
     (keyword_span, Span::new(start, end))
+}
+
+#[expect(clippy::cast_possible_truncation)]
+fn skip_ascii_whitespace(source: &str, start: u32) -> u32 {
+    let bytes = &source.as_bytes()[start as usize..];
+    let offset = bytes.iter().position(|byte| !byte.is_ascii_whitespace()).unwrap_or(bytes.len());
+    start + offset as u32
 }
 
 fn method_definition_kind_to_str(kind: MethodDefinitionKind) -> &'static str {
@@ -1360,6 +1350,19 @@ fn test() {
             Some(
                 serde_json::json!([ { "accessibility": "no-public", "overrides": { "parameterProperties": "no-public" }, }, ]),
             ),
+        ),
+        (
+            "
+            class Test {
+              @dec /*public*/ public foo() {}
+            }
+                  ",
+            "
+            class Test {
+              @dec /*public*/ foo() {}
+            }
+                  ",
+            Some(serde_json::json!([ { "accessibility": "no-public", }, ])),
         ),
     ];
 
