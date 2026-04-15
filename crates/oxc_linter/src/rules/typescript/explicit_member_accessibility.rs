@@ -437,310 +437,302 @@ fn test() {
     let pass = vec![
         (
             "
-			class Test {
-			  public constructor(private foo: string) {}
-			}
-			      ",
-            Some(serde_json::json!([{
-                "accessibility": "explicit",
-                "overrides": { "parameterProperties": "explicit" },
-            }])),
+            class Test {
+              public constructor(private foo: string) {}
+            }
+                  ",
+            Some(
+                serde_json::json!([ { "accessibility": "explicit", "overrides": { "parameterProperties": "explicit" }, }, ]),
+            ),
         ),
         (
             "
-			class Test {
-			  public constructor(private readonly foo: string) {}
-			}
-			      ",
-            Some(serde_json::json!([{
-                "accessibility": "explicit",
-                "overrides": { "parameterProperties": "explicit" },
-            }])),
+            class Test {
+              public constructor(private readonly foo: string) {}
+            }
+                  ",
+            Some(
+                serde_json::json!([ { "accessibility": "explicit", "overrides": { "parameterProperties": "explicit" }, }, ]),
+            ),
         ),
         (
             "
-			class Test {
-			  public constructor(private foo: string) {}
-			}
-			      ",
-            Some(serde_json::json!([{
-                "accessibility": "explicit",
-                "overrides": { "parameterProperties": "off" },
-            }])),
+            class Test {
+              public constructor(private foo: string) {}
+            }
+                  ",
+            Some(
+                serde_json::json!([ { "accessibility": "explicit", "overrides": { "parameterProperties": "off" }, }, ]),
+            ),
         ),
         (
             "
-			class Test {
-			  public constructor(protected foo: string) {}
-			}
-			      ",
-            Some(serde_json::json!([{
-                "accessibility": "explicit",
-                "overrides": { "parameterProperties": "off" },
-            }])),
+            class Test {
+              public constructor(protected foo: string) {}
+            }
+                  ",
+            Some(
+                serde_json::json!([ { "accessibility": "explicit", "overrides": { "parameterProperties": "off" }, }, ]),
+            ),
         ),
         (
             "
-			class Test {
-			  public constructor(public foo: string) {}
-			}
-			      ",
-            Some(serde_json::json!([{
-                "accessibility": "explicit",
-                "overrides": { "parameterProperties": "off" },
-            }])),
+            class Test {
+              public constructor(public foo: string) {}
+            }
+                  ",
+            Some(
+                serde_json::json!([ { "accessibility": "explicit", "overrides": { "parameterProperties": "off" }, }, ]),
+            ),
         ),
         (
             "
-			class Test {
-			  public constructor(readonly foo: string) {}
-			}
-			      ",
-            Some(serde_json::json!([{
-                "accessibility": "explicit",
-                "overrides": { "parameterProperties": "off" },
-            }])),
+            class Test {
+              public constructor(readonly foo: string) {}
+            }
+                  ",
+            Some(
+                serde_json::json!([ { "accessibility": "explicit", "overrides": { "parameterProperties": "off" }, }, ]),
+            ),
         ),
         (
             "
-			class Test {
-			  public constructor(private readonly foo: string) {}
-			}
-			      ",
-            Some(serde_json::json!([{
-                "accessibility": "explicit",
-                "overrides": { "parameterProperties": "off" },
-            }])),
+            class Test {
+              public constructor(private readonly foo: string) {}
+            }
+                  ",
+            Some(
+                serde_json::json!([ { "accessibility": "explicit", "overrides": { "parameterProperties": "off" }, }, ]),
+            ),
         ),
         (
             "
-			class Test {
-			  protected name: string;
-			  private x: number;
-			  public getX() {
-			    return this.x;
-			  }
-			}
-			      ",
+            class Test {
+              protected name: string;
+              private x: number;
+              public getX() {
+                return this.x;
+              }
+            }
+                  ",
             None,
         ),
         (
             "
-			class Test {
-			  protected name: string;
-			  protected foo?: string;
-			  public 'foo-bar'?: string;
-			}
-			      ",
+            class Test {
+              protected name: string;
+              protected foo?: string;
+              public 'foo-bar'?: string;
+            }
+                  ",
             None,
         ),
         (
             "
-			class Test {
-			  public constructor({ x, y }: { x: number; y: number }) {}
-			}
-			      ",
+            class Test {
+              public constructor({ x, y }: { x: number; y: number }) {}
+            }
+                  ",
             None,
         ),
         (
             "
-			class Test {
-			  protected name: string;
-			  protected foo?: string;
-			  public getX() {
-			    return this.x;
-			  }
-			}
-			      ",
+            class Test {
+              protected name: string;
+              protected foo?: string;
+              public getX() {
+                return this.x;
+              }
+            }
+                  ",
             Some(serde_json::json!([{ "accessibility": "explicit" }])),
         ),
         (
             "
-			class Test {
-			  protected name: string;
-			  protected foo?: string;
-			  getX() {
-			    return this.x;
-			  }
-			}
-			      ",
+            class Test {
+              protected name: string;
+              protected foo?: string;
+              getX() {
+                return this.x;
+              }
+            }
+                  ",
             Some(serde_json::json!([{ "accessibility": "no-public" }])),
         ),
         (
             "
-			class Test {
-			  name: string;
-			  foo?: string;
-			  getX() {
-			    return this.x;
-			  }
-			  get fooName(): string {
-			    return this.foo + ' ' + this.name;
-			  }
-			}
-			      ",
+            class Test {
+              name: string;
+              foo?: string;
+              getX() {
+                return this.x;
+              }
+              get fooName(): string {
+                return this.foo + ' ' + this.name;
+              }
+            }
+                  ",
             Some(serde_json::json!([{ "accessibility": "no-public" }])),
         ),
         (
             "
-			class Test {
-			  private x: number;
-			  constructor(x: number) {
-			    this.x = x;
-			  }
-			  get internalValue() {
-			    return this.x;
-			  }
-			  private set internalValue(value: number) {
-			    this.x = value;
-			  }
-			  public square(): number {
-			    return this.x * this.x;
-			  }
-			}
-			      ",
+            class Test {
+              private x: number;
+              constructor(x: number) {
+                this.x = x;
+              }
+              get internalValue() {
+                return this.x;
+              }
+              private set internalValue(value: number) {
+                this.x = value;
+              }
+              public square(): number {
+                return this.x * this.x;
+              }
+            }
+                  ",
             Some(
                 serde_json::json!([{ "overrides": { "accessors": "off", "constructors": "off" } }]),
             ),
         ),
         (
             "
-			class Test {
-			  private x: number;
-			  public constructor(x: number) {
-			    this.x = x;
-			  }
-			  public get internalValue() {
-			    return this.x;
-			  }
-			  public set internalValue(value: number) {
-			    this.x = value;
-			  }
-			  public square(): number {
-			    return this.x * this.x;
-			  }
-			  half(): number {
-			    return this.x / 2;
-			  }
-			}
-			      ",
+            class Test {
+              private x: number;
+              public constructor(x: number) {
+                this.x = x;
+              }
+              public get internalValue() {
+                return this.x;
+              }
+              public set internalValue(value: number) {
+                this.x = value;
+              }
+              public square(): number {
+                return this.x * this.x;
+              }
+              half(): number {
+                return this.x / 2;
+              }
+            }
+                  ",
             Some(serde_json::json!([{ "overrides": { "methods": "off" } }])),
         ),
         (
             "
-			class Test {
-			  constructor(private x: number) {}
-			}
-			      ",
+            class Test {
+              constructor(private x: number) {}
+            }
+                  ",
             Some(serde_json::json!([{ "accessibility": "no-public" }])),
         ),
         (
             "
-			class Test {
-			  constructor(public x: number) {}
-			}
-			      ",
-            Some(serde_json::json!([{
-                "accessibility": "no-public",
-                "overrides": { "parameterProperties": "off" },
-            }])),
+            class Test {
+              constructor(public x: number) {}
+            }
+                  ",
+            Some(
+                serde_json::json!([ { "accessibility": "no-public", "overrides": { "parameterProperties": "off" }, }, ]),
+            ),
         ),
         (
             "
-			class Test {
-			  constructor(public foo: number) {}
-			}
-			      ",
+            class Test {
+              constructor(public foo: number) {}
+            }
+                  ",
             Some(serde_json::json!([{ "accessibility": "no-public" }])),
         ),
         (
             "
-			class Test {
-			  public getX() {
-			    return this.x;
-			  }
-			}
-			      ",
+            class Test {
+              public getX() {
+                return this.x;
+              }
+            }
+                  ",
             Some(serde_json::json!([{ "ignoredMethodNames": ["getX"] }])),
         ),
         (
             "
-			class Test {
-			  public static getX() {
-			    return this.x;
-			  }
-			}
-			      ",
+            class Test {
+              public static getX() {
+                return this.x;
+              }
+            }
+                  ",
             Some(serde_json::json!([{ "ignoredMethodNames": ["getX"] }])),
         ),
         (
             "
-			class Test {
-			  get getX() {
-			    return this.x;
-			  }
-			}
-			      ",
+            class Test {
+              get getX() {
+                return this.x;
+              }
+            }
+                  ",
             Some(serde_json::json!([{ "ignoredMethodNames": ["getX"] }])),
         ),
         (
             "
-			class Test {
-			  getX() {
-			    return this.x;
-			  }
-			}
-			      ",
+            class Test {
+              getX() {
+                return this.x;
+              }
+            }
+                  ",
             Some(serde_json::json!([{ "ignoredMethodNames": ["getX"] }])),
         ),
         (
             "
-			class Test {
-			  x = 2;
-			}
-			      ",
+            class Test {
+              x = 2;
+            }
+                  ",
             Some(serde_json::json!([{ "overrides": { "properties": "off" } }])),
         ),
         (
             "
-			class Test {
-			  private x = 2;
-			}
-			      ",
+            class Test {
+              private x = 2;
+            }
+                  ",
             Some(serde_json::json!([{ "overrides": { "properties": "explicit" } }])),
         ),
         (
             "
-			class Test {
-			  x = 2;
-			  private x = 2;
-			}
-			      ",
+            class Test {
+              x = 2;
+              private x = 2;
+            }
+                  ",
             Some(serde_json::json!([{ "overrides": { "properties": "no-public" } }])),
         ),
         (
             "
-			class Test {
-			  #foo = 1;
-			  #bar() {}
-			}
-			      ",
+            class Test {
+              #foo = 1;
+              #bar() {}
+            }
+                  ",
             Some(serde_json::json!([{ "accessibility": "explicit" }])),
         ),
         (
             "
-			class Test {
-			  private accessor foo = 1;
-			}
-			      ",
+            class Test {
+              private accessor foo = 1;
+            }
+                  ",
             None,
         ),
         (
             "
-			abstract class Test {
-			  private abstract accessor foo: number;
-			}
-			      ",
+            abstract class Test {
+              private abstract accessor foo: number;
+            }
+                  ",
             None,
         ),
     ];
@@ -748,379 +740,363 @@ fn test() {
     let fail = vec![
         (
             "
-			export class XXXX {
-			  public constructor(readonly value: string) {}
-			}
-			      ",
-            Some(serde_json::json!([{
-                "accessibility": "off",
-                "overrides": { "parameterProperties": "explicit" },
-            }])),
+            export class XXXX {
+              public constructor(readonly value: string) {}
+            }
+                  ",
+            Some(
+                serde_json::json!([ { "accessibility": "off", "overrides": { "parameterProperties": "explicit", }, }, ]),
+            ),
         ),
         (
             "
-			export class WithParameterProperty {
-			  public constructor(readonly value: string) {}
-			}
-			      ",
+            export class WithParameterProperty {
+              public constructor(readonly value: string) {}
+            }
+                  ",
             Some(serde_json::json!([{ "accessibility": "explicit" }])),
         ),
         (
             "
-			export class XXXX {
-			  public constructor(readonly samosa: string) {}
-			}
-			      ",
-            Some(serde_json::json!([{
-                "accessibility": "off",
-                "overrides": {
-                    "constructors": "explicit",
-                    "parameterProperties": "explicit",
-                },
-            }])),
+            export class XXXX {
+              public constructor(readonly samosa: string) {}
+            }
+                  ",
+            Some(
+                serde_json::json!([ { "accessibility": "off", "overrides": { "constructors": "explicit", "parameterProperties": "explicit", }, }, ]),
+            ),
         ),
         (
             "
-			class Test {
-			  public constructor(readonly foo: string) {}
-			}
-			      ",
-            Some(serde_json::json!([{
-                "accessibility": "explicit",
-                "overrides": { "parameterProperties": "explicit" },
-            }])),
+            class Test {
+              public constructor(readonly foo: string) {}
+            }
+                  ",
+            Some(
+                serde_json::json!([ { "accessibility": "explicit", "overrides": { "parameterProperties": "explicit" }, }, ]),
+            ),
         ),
         (
             "
-			class Test {
-			  x: number;
-			  public getX() {
-			    return this.x;
-			  }
-			}
-			      ",
+            class Test {
+              x: number;
+              public getX() {
+                return this.x;
+              }
+            }
+                  ",
             None,
         ),
         (
             "
-			class Test {
-			  private x: number;
-			  getX() {
-			    return this.x;
-			  }
-			}
-			      ",
+            class Test {
+              private x: number;
+              getX() {
+                return this.x;
+              }
+            }
+                  ",
             None,
         ),
         (
             "
-			class Test {
-			  x?: number;
-			  getX?() {
-			    return this.x;
-			  }
-			}
-			      ",
+            class Test {
+              x?: number;
+              getX?() {
+                return this.x;
+              }
+            }
+                  ",
             None,
         ),
         (
             "
-			class Test {
-			  protected name: string;
-			  protected foo?: string;
-			  public getX() {
-			    return this.x;
-			  }
-			}
-			      ",
+            class Test {
+              protected name: string;
+              protected foo?: string;
+              public getX() {
+                return this.x;
+              }
+            }
+                  ",
             Some(serde_json::json!([{ "accessibility": "no-public" }])),
         ),
         (
             "
-			class Test {
-			  protected name: string;
-			  public foo?: string;
-			  getX() {
-			    return this.x;
-			  }
-			}
-			      ",
+            class Test {
+              protected name: string;
+              public foo?: string;
+              getX() {
+                return this.x;
+              }
+            }
+                  ",
             Some(serde_json::json!([{ "accessibility": "no-public" }])),
         ),
         (
             "
-			class Test {
-			  public x: number;
-			  public getX() {
-			    return this.x;
-			  }
-			}
-			      ",
+            class Test {
+              public x: number;
+              public getX() {
+                return this.x;
+              }
+            }
+                  ",
             Some(serde_json::json!([{ "accessibility": "no-public" }])),
         ),
         (
             "
-			class Test {
-			  private x: number;
-			  constructor(x: number) {
-			    this.x = x;
-			  }
-			  get internalValue() {
-			    return this.x;
-			  }
-			  set internalValue(value: number) {
-			    this.x = value;
-			  }
-			}
-			      ",
+            class Test {
+              private x: number;
+              constructor(x: number) {
+                this.x = x;
+              }
+              get internalValue() {
+                return this.x;
+              }
+              set internalValue(value: number) {
+                this.x = value;
+              }
+            }
+                  ",
             Some(serde_json::json!([{ "overrides": { "constructors": "no-public" } }])),
         ),
         (
             "
-			class Test {
-			  private x: number;
-			  constructor(x: number) {
-			    this.x = x;
-			  }
-			  get internalValue() {
-			    return this.x;
-			  }
-			  set internalValue(value: number) {
-			    this.x = value;
-			  }
-			}
-			      ",
+            class Test {
+              private x: number;
+              constructor(x: number) {
+                this.x = x;
+              }
+              get internalValue() {
+                return this.x;
+              }
+              set internalValue(value: number) {
+                this.x = value;
+              }
+            }
+                  ",
             None,
         ),
         (
             "
-			class Test {
-			  constructor(public x: number) {}
-			  public foo(): string {
-			    return 'foo';
-			  }
-			}
-			      ",
-            Some(serde_json::json!([{
-                "overrides": { "parameterProperties": "no-public" },
-            }])),
+            class Test {
+              constructor(public x: number) {}
+              public foo(): string {
+                return 'foo';
+              }
+            }
+                  ",
+            Some(serde_json::json!([ { "overrides": { "parameterProperties": "no-public" }, }, ])),
         ),
         (
             "
-			class Test {
-			  constructor(public x: number) {}
-			}
-			      ",
+            class Test {
+              constructor(public x: number) {}
+            }
+                  ",
             None,
         ),
         (
             "
-			class Test {
-			  constructor(public readonly x: number) {}
-			}
-			      ",
-            Some(serde_json::json!([{
-                "accessibility": "off",
-                "overrides": { "parameterProperties": "no-public" },
-            }])),
+            class Test {
+              constructor(public readonly x: number) {}
+            }
+                  ",
+            Some(
+                serde_json::json!([ { "accessibility": "off", "overrides": { "parameterProperties": "no-public" }, }, ]),
+            ),
         ),
         (
             "
-			class Test {
-			  x = 2;
-			}
-			      ",
-            Some(serde_json::json!([{
-                "accessibility": "off",
-                "overrides": { "properties": "explicit" },
-            }])),
+            class Test {
+              x = 2;
+            }
+                  ",
+            Some(
+                serde_json::json!([ { "accessibility": "off", "overrides": { "properties": "explicit" }, }, ]),
+            ),
         ),
         (
             "
-			class Test {
-			  public x = 2;
-			  private x = 2;
-			}
-			      ",
-            Some(serde_json::json!([{
-                "accessibility": "off",
-                "overrides": { "properties": "no-public" },
-            }])),
+            class Test {
+              public x = 2;
+              private x = 2;
+            }
+                  ",
+            Some(
+                serde_json::json!([ { "accessibility": "off", "overrides": { "properties": "no-public" }, }, ]),
+            ),
         ),
         (
             "
-			class Test {
-			  constructor(public x: any[]) {}
-			}
-			      ",
+            class Test {
+              constructor(public x: any[]) {}
+            }
+                  ",
             Some(serde_json::json!([{ "accessibility": "explicit" }])),
         ),
         (
             "
-			class Test {
-			  public /*public*/constructor(private foo: string) {}
-			}
-			      ",
+            class Test {
+              public /*public*/constructor(private foo: string) {}
+            }
+                  ",
+            Some(serde_json::json!([ { "accessibility": "no-public", }, ])),
+        ),
+        (
+            "
+            class Test {
+              @public
+              public foo() {}
+            }
+                  ",
+            Some(serde_json::json!([ { "accessibility": "no-public", }, ])),
+        ),
+        (
+            "
+            class Test {
+              @public
+              public foo;
+            }
+                  ",
+            Some(serde_json::json!([ { "accessibility": "no-public", }, ])),
+        ),
+        (
+            "
+            class Test {
+              public foo = '';
+            }
+                  ",
+            Some(serde_json::json!([ { "accessibility": "no-public", }, ])),
+        ),
+        (
+            "
+            class Test {
+              constructor(public/* Hi there */ readonly foo) {}
+            }
+                  ",
+            Some(
+                serde_json::json!([ { "accessibility": "no-public", "overrides": { "parameterProperties": "no-public" }, }, ]),
+            ),
+        ),
+        (
+            "
+            class Test {
+              constructor(public readonly foo: string) {}
+            }
+                  ",
+            Some(serde_json::json!([ { "accessibility": "no-public", }, ])),
+        ),
+        (
+            "
+            class EnsureWhiteSPaceSpan {
+              public constructor() {}
+            }
+                  ",
+            Some(
+                serde_json::json!([ { "accessibility": "no-public", "overrides": { "parameterProperties": "no-public" }, }, ]),
+            ),
+        ),
+        (
+            "
+            class EnsureWhiteSPaceSpan {
+              public /* */ constructor() {}
+            }
+                  ",
+            Some(
+                serde_json::json!([ { "accessibility": "no-public", "overrides": { "parameterProperties": "no-public" }, }, ]),
+            ),
+        ),
+        (
+            "
+            class Test {
+              public 'foo' = 1;
+              public 'foo foo' = 2;
+              public 'bar'() {}
+              public 'bar bar'() {}
+            }
+                  ",
             Some(serde_json::json!([{ "accessibility": "no-public" }])),
         ),
         (
             "
-			class Test {
-			  @public
-			  public foo() {}
-			}
-			      ",
-            Some(serde_json::json!([{ "accessibility": "no-public" }])),
-        ),
-        (
-            "
-			class Test {
-			  @public
-			  public foo;
-			}
-			      ",
-            Some(serde_json::json!([{ "accessibility": "no-public" }])),
-        ),
-        (
-            "
-			class Test {
-			  public foo = '';
-			}
-			      ",
-            Some(serde_json::json!([{ "accessibility": "no-public" }])),
-        ),
-        (
-            "
-			class Test {
-			  constructor(public/* Hi there */ readonly foo) {}
-			}
-			      ",
-            Some(serde_json::json!([{
-                "accessibility": "no-public",
-                "overrides": { "parameterProperties": "no-public" },
-            }])),
-        ),
-        (
-            "
-			class Test {
-			  constructor(public readonly foo: string) {}
-			}
-			      ",
-            Some(serde_json::json!([{ "accessibility": "no-public" }])),
-        ),
-        (
-            "
-			class EnsureWhiteSPaceSpan {
-			  public constructor() {}
-			}
-			      ",
-            Some(serde_json::json!([{
-                "accessibility": "no-public",
-                "overrides": { "parameterProperties": "no-public" },
-            }])),
-        ),
-        (
-            "
-			class EnsureWhiteSPaceSpan {
-			  public /* */ constructor() {}
-			}
-			      ",
-            Some(serde_json::json!([{
-                "accessibility": "no-public",
-                "overrides": { "parameterProperties": "no-public" },
-            }])),
-        ),
-        (
-            "
-			class Test {
-			  public 'foo' = 1;
-			  public 'foo foo' = 2;
-			  public 'bar'() {}
-			  public 'bar bar'() {}
-			}
-			      ",
-            Some(serde_json::json!([{ "accessibility": "no-public" }])),
-        ),
-        (
-            "
-			abstract class SomeClass {
-			  abstract method(): string;
-			}
-			      ",
+            abstract class SomeClass {
+              abstract method(): string;
+            }
+                  ",
             Some(serde_json::json!([{ "accessibility": "explicit" }])),
         ),
         (
             "
-			abstract class SomeClass {
-			  public abstract method(): string;
-			}
-			      ",
-            Some(serde_json::json!([{
-                "accessibility": "no-public",
-                "overrides": { "parameterProperties": "no-public" },
-            }])),
+            abstract class SomeClass {
+              public abstract method(): string;
+            }
+                  ",
+            Some(
+                serde_json::json!([ { "accessibility": "no-public", "overrides": { "parameterProperties": "no-public" }, }, ]),
+            ),
         ),
         (
             "
-			abstract class SomeClass {
-			  abstract x: string;
-			}
-			      ",
+            abstract class SomeClass {
+              abstract x: string;
+            }
+                  ",
             Some(serde_json::json!([{ "accessibility": "explicit" }])),
         ),
         (
             "
-			abstract class SomeClass {
-			  public abstract x: string;
-			}
-			      ",
-            Some(serde_json::json!([{
-                "accessibility": "no-public",
-                "overrides": { "parameterProperties": "no-public" },
-            }])),
+            abstract class SomeClass {
+              public abstract x: string;
+            }
+                  ",
+            Some(
+                serde_json::json!([ { "accessibility": "no-public", "overrides": { "parameterProperties": "no-public" }, }, ]),
+            ),
         ),
         (
             "
-			class SomeClass {
-			  accessor foo = 1;
-			}
-			      ",
+            class SomeClass {
+              accessor foo = 1;
+            }
+                  ",
             Some(serde_json::json!([{ "accessibility": "explicit" }])),
         ),
         (
             "
-			abstract class SomeClass {
-			  abstract accessor foo: string;
-			}
-			      ",
+            abstract class SomeClass {
+              abstract accessor foo: string;
+            }
+                  ",
             Some(serde_json::json!([{ "accessibility": "explicit" }])),
         ),
         (
             "
-			class DecoratedClass {
-			  constructor(@foo @bar() readonly arg: string) {}
-			  @foo @bar() x: string;
-			  @foo @bar() getX() {
-			    return this.x;
-			  }
-			  @foo
-			  @bar()
-			  get y() {
-			    return this.x;
-			  }
-			  @foo @bar() set z(@foo @bar() value: x) {
-			    this.x = x;
-			  }
-			}
-			      ",
+            class DecoratedClass {
+              constructor(@foo @bar() readonly arg: string) {}
+              @foo @bar() x: string;
+              @foo @bar() getX() {
+                return this.x;
+              }
+              @foo
+              @bar()
+              get y() {
+                return this.x;
+              }
+              @foo @bar() set z(@foo @bar() value: x) {
+                this.x = x;
+              }
+            }
+                  ",
             None,
         ),
         (
             "
-			abstract class SomeClass {
-			  abstract ['computed-method-name'](): string;
-			}
-			      ",
+            abstract class SomeClass {
+              abstract ['computed-method-name'](): string;
+            }
+                  ",
             Some(serde_json::json!([{ "accessibility": "explicit" }])),
         ),
     ];
@@ -1128,268 +1104,262 @@ fn test() {
     let fix = vec![
         (
             "
-			class Test {
-			  protected name: string;
-			  protected foo?: string;
-			  public getX() {
-			    return this.x;
-			  }
-			}
-			      ",
+            class Test {
+              protected name: string;
+              protected foo?: string;
+              public getX() {
+                return this.x;
+              }
+            }
+                  ",
             "
-			class Test {
-			  protected name: string;
-			  protected foo?: string;
-			  getX() {
-			    return this.x;
-			  }
-			}
-			      ",
+            class Test {
+              protected name: string;
+              protected foo?: string;
+              getX() {
+                return this.x;
+              }
+            }
+                  ",
             Some(serde_json::json!([{ "accessibility": "no-public" }])),
         ),
         (
             "
-			class Test {
-			  protected name: string;
-			  public foo?: string;
-			  getX() {
-			    return this.x;
-			  }
-			}
-			      ",
+            class Test {
+              protected name: string;
+              public foo?: string;
+              getX() {
+                return this.x;
+              }
+            }
+                  ",
             "
-			class Test {
-			  protected name: string;
-			  foo?: string;
-			  getX() {
-			    return this.x;
-			  }
-			}
-			      ",
+            class Test {
+              protected name: string;
+              foo?: string;
+              getX() {
+                return this.x;
+              }
+            }
+                  ",
             Some(serde_json::json!([{ "accessibility": "no-public" }])),
         ),
         (
             "
-			class Test {
-			  public x: number;
-			  public getX() {
-			    return this.x;
-			  }
-			}
-			      ",
+            class Test {
+              public x: number;
+              public getX() {
+                return this.x;
+              }
+            }
+                  ",
             "
-			class Test {
-			  x: number;
-			  getX() {
-			    return this.x;
-			  }
-			}
-			      ",
+            class Test {
+              x: number;
+              getX() {
+                return this.x;
+              }
+            }
+                  ",
             Some(serde_json::json!([{ "accessibility": "no-public" }])),
         ),
         (
             "
-			class Test {
-			  constructor(public readonly x: number) {}
-			}
-			      ",
+            class Test {
+              constructor(public readonly x: number) {}
+            }
+                  ",
             "
-			class Test {
-			  constructor(readonly x: number) {}
-			}
-			      ",
-            Some(serde_json::json!([{
-                "accessibility": "off",
-                "overrides": { "parameterProperties": "no-public" },
-            }])),
+            class Test {
+              constructor(readonly x: number) {}
+            }
+                  ",
+            Some(
+                serde_json::json!([ { "accessibility": "off", "overrides": { "parameterProperties": "no-public" }, }, ]),
+            ),
         ),
         (
             "
-			class Test {
-			  public x = 2;
-			  private x = 2;
-			}
-			      ",
+            class Test {
+              public x = 2;
+              private x = 2;
+            }
+                  ",
             "
-			class Test {
-			  x = 2;
-			  private x = 2;
-			}
-			      ",
-            Some(serde_json::json!([{
-                "accessibility": "off",
-                "overrides": { "properties": "no-public" },
-            }])),
+            class Test {
+              x = 2;
+              private x = 2;
+            }
+                  ",
+            Some(
+                serde_json::json!([ { "accessibility": "off", "overrides": { "properties": "no-public" }, }, ]),
+            ),
         ),
         (
             "
-			class Test {
-			  public /*public*/constructor(private foo: string) {}
-			}
-			      ",
+            class Test {
+              public /*public*/constructor(private foo: string) {}
+            }
+                  ",
             "
-			class Test {
-			  /*public*/constructor(private foo: string) {}
-			}
-			      ",
+            class Test {
+              /*public*/constructor(private foo: string) {}
+            }
+                  ",
+            Some(serde_json::json!([ { "accessibility": "no-public", }, ])),
+        ),
+        (
+            "
+            class Test {
+              @public
+              public foo() {}
+            }
+                  ",
+            "
+            class Test {
+              @public
+              foo() {}
+            }
+                  ",
+            Some(serde_json::json!([ { "accessibility": "no-public", }, ])),
+        ),
+        (
+            "
+            class Test {
+              @public
+              public foo;
+            }
+                  ",
+            "
+            class Test {
+              @public
+              foo;
+            }
+                  ",
+            Some(serde_json::json!([ { "accessibility": "no-public", }, ])),
+        ),
+        (
+            "
+            class Test {
+              public foo = '';
+            }
+                  ",
+            "
+            class Test {
+              foo = '';
+            }
+                  ",
+            Some(serde_json::json!([ { "accessibility": "no-public", }, ])),
+        ),
+        (
+            "
+            class Test {
+              constructor(public/* Hi there */ readonly foo) {}
+            }
+                  ",
+            "
+            class Test {
+              constructor(/* Hi there */ readonly foo) {}
+            }
+                  ",
+            Some(
+                serde_json::json!([ { "accessibility": "no-public", "overrides": { "parameterProperties": "no-public" }, }, ]),
+            ),
+        ),
+        (
+            "
+            class Test {
+              constructor(public readonly foo: string) {}
+            }
+                  ",
+            "
+            class Test {
+              constructor(readonly foo: string) {}
+            }
+                  ",
+            Some(serde_json::json!([ { "accessibility": "no-public", }, ])),
+        ),
+        (
+            "
+            class EnsureWhiteSPaceSpan {
+              public constructor() {}
+            }
+                  ",
+            "
+            class EnsureWhiteSPaceSpan {
+              constructor() {}
+            }
+                  ",
+            Some(
+                serde_json::json!([ { "accessibility": "no-public", "overrides": { "parameterProperties": "no-public" }, }, ]),
+            ),
+        ),
+        (
+            "
+            class EnsureWhiteSPaceSpan {
+              public /* */ constructor() {}
+            }
+                  ",
+            "
+            class EnsureWhiteSPaceSpan {
+              /* */ constructor() {}
+            }
+                  ",
+            Some(
+                serde_json::json!([ { "accessibility": "no-public", "overrides": { "parameterProperties": "no-public" }, }, ]),
+            ),
+        ),
+        (
+            "
+            class Test {
+              public 'foo' = 1;
+              public 'foo foo' = 2;
+              public 'bar'() {}
+              public 'bar bar'() {}
+            }
+                  ",
+            "
+            class Test {
+              'foo' = 1;
+              'foo foo' = 2;
+              'bar'() {}
+              'bar bar'() {}
+            }
+                  ",
             Some(serde_json::json!([{ "accessibility": "no-public" }])),
         ),
         (
             "
-			class Test {
-			  @public
-			  public foo() {}
-			}
-			      ",
+            abstract class SomeClass {
+              public abstract method(): string;
+            }
+                  ",
             "
-			class Test {
-			  @public
-			  foo() {}
-			}
-			      ",
-            Some(serde_json::json!([{ "accessibility": "no-public" }])),
+            abstract class SomeClass {
+              abstract method(): string;
+            }
+                  ",
+            Some(
+                serde_json::json!([ { "accessibility": "no-public", "overrides": { "parameterProperties": "no-public" }, }, ]),
+            ),
         ),
         (
             "
-			class Test {
-			  @public
-			  public foo;
-			}
-			      ",
+            abstract class SomeClass {
+              public abstract x: string;
+            }
+                  ",
             "
-			class Test {
-			  @public
-			  foo;
-			}
-			      ",
-            Some(serde_json::json!([{ "accessibility": "no-public" }])),
-        ),
-        (
-            "
-			class Test {
-			  public foo = '';
-			}
-			      ",
-            "
-			class Test {
-			  foo = '';
-			}
-			      ",
-            Some(serde_json::json!([{ "accessibility": "no-public" }])),
-        ),
-        (
-            "
-			class Test {
-			  constructor(public/* Hi there */ readonly foo) {}
-			}
-			      ",
-            "
-			class Test {
-			  constructor(/* Hi there */ readonly foo) {}
-			}
-			      ",
-            Some(serde_json::json!([{
-                "accessibility": "no-public",
-                "overrides": { "parameterProperties": "no-public" },
-            }])),
-        ),
-        (
-            "
-			class Test {
-			  constructor(public readonly foo: string) {}
-			}
-			      ",
-            "
-			class Test {
-			  constructor(readonly foo: string) {}
-			}
-			      ",
-            Some(serde_json::json!([{ "accessibility": "no-public" }])),
-        ),
-        (
-            "
-			class EnsureWhiteSPaceSpan {
-			  public constructor() {}
-			}
-			      ",
-            "
-			class EnsureWhiteSPaceSpan {
-			  constructor() {}
-			}
-			      ",
-            Some(serde_json::json!([{
-                "accessibility": "no-public",
-                "overrides": { "parameterProperties": "no-public" },
-            }])),
-        ),
-        (
-            "
-			class EnsureWhiteSPaceSpan {
-			  public /* */ constructor() {}
-			}
-			      ",
-            "
-			class EnsureWhiteSPaceSpan {
-			  /* */ constructor() {}
-			}
-			      ",
-            Some(serde_json::json!([{
-                "accessibility": "no-public",
-                "overrides": { "parameterProperties": "no-public" },
-            }])),
-        ),
-        (
-            "
-			class Test {
-			  public 'foo' = 1;
-			  public 'foo foo' = 2;
-			  public 'bar'() {}
-			  public 'bar bar'() {}
-			}
-			      ",
-            "
-			class Test {
-			  'foo' = 1;
-			  'foo foo' = 2;
-			  'bar'() {}
-			  'bar bar'() {}
-			}
-			      ",
-            Some(serde_json::json!([{ "accessibility": "no-public" }])),
-        ),
-        (
-            "
-			abstract class SomeClass {
-			  public abstract method(): string;
-			}
-			      ",
-            "
-			abstract class SomeClass {
-			  abstract method(): string;
-			}
-			      ",
-            Some(serde_json::json!([{
-                "accessibility": "no-public",
-                "overrides": { "parameterProperties": "no-public" },
-            }])),
-        ),
-        (
-            "
-			abstract class SomeClass {
-			  public abstract x: string;
-			}
-			      ",
-            "
-			abstract class SomeClass {
-			  abstract x: string;
-			}
-			      ",
-            Some(serde_json::json!([{
-                "accessibility": "no-public",
-                "overrides": { "parameterProperties": "no-public" },
-            }])),
+            abstract class SomeClass {
+              abstract x: string;
+            }
+                  ",
+            Some(
+                serde_json::json!([ { "accessibility": "no-public", "overrides": { "parameterProperties": "no-public" }, }, ]),
+            ),
         ),
     ];
+
     Tester::new(ExplicitMemberAccessibility::NAME, ExplicitMemberAccessibility::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();

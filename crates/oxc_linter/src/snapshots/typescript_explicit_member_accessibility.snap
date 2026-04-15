@@ -3,7 +3,7 @@ source: crates/oxc_linter/src/tester.rs
 ---
 
   ⚠ typescript-eslint(explicit-member-accessibility): Missing accessibility modifier on parameter property value.
-   ╭─[explicit_member_accessibility.tsx:3:34]
+   ╭─[explicit_member_accessibility.tsx:3:43]
  2 │             export class XXXX {
  3 │               public constructor(readonly value: string) {}
    ·                                           ─────
@@ -12,7 +12,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add an explicit 'public', 'private', or 'protected' modifier. Members without a modifier are implicitly public, which may not be intentional.
 
   ⚠ typescript-eslint(explicit-member-accessibility): Missing accessibility modifier on parameter property value.
-   ╭─[explicit_member_accessibility.tsx:3:34]
+   ╭─[explicit_member_accessibility.tsx:3:43]
  2 │             export class WithParameterProperty {
  3 │               public constructor(readonly value: string) {}
    ·                                           ─────
@@ -21,7 +21,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add an explicit 'public', 'private', or 'protected' modifier. Members without a modifier are implicitly public, which may not be intentional.
 
   ⚠ typescript-eslint(explicit-member-accessibility): Missing accessibility modifier on parameter property samosa.
-   ╭─[explicit_member_accessibility.tsx:3:34]
+   ╭─[explicit_member_accessibility.tsx:3:43]
  2 │             export class XXXX {
  3 │               public constructor(readonly samosa: string) {}
    ·                                           ──────
@@ -30,7 +30,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add an explicit 'public', 'private', or 'protected' modifier. Members without a modifier are implicitly public, which may not be intentional.
 
   ⚠ typescript-eslint(explicit-member-accessibility): Missing accessibility modifier on parameter property foo.
-   ╭─[explicit_member_accessibility.tsx:3:34]
+   ╭─[explicit_member_accessibility.tsx:3:43]
  2 │             class Test {
  3 │               public constructor(readonly foo: string) {}
    ·                                           ───
@@ -39,7 +39,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add an explicit 'public', 'private', or 'protected' modifier. Members without a modifier are implicitly public, which may not be intentional.
 
   ⚠ typescript-eslint(explicit-member-accessibility): Missing accessibility modifier on class property x.
-   ╭─[explicit_member_accessibility.tsx:3:6]
+   ╭─[explicit_member_accessibility.tsx:3:15]
  2 │             class Test {
  3 │               x: number;
    ·               ─
@@ -48,7 +48,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add an explicit 'public', 'private', or 'protected' modifier. Members without a modifier are implicitly public, which may not be intentional.
 
   ⚠ typescript-eslint(explicit-member-accessibility): Missing accessibility modifier on method definition getX.
-   ╭─[explicit_member_accessibility.tsx:4:6]
+   ╭─[explicit_member_accessibility.tsx:4:15]
  3 │               private x: number;
  4 │               getX() {
    ·               ────
@@ -57,7 +57,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add an explicit 'public', 'private', or 'protected' modifier. Members without a modifier are implicitly public, which may not be intentional.
 
   ⚠ typescript-eslint(explicit-member-accessibility): Missing accessibility modifier on class property x.
-   ╭─[explicit_member_accessibility.tsx:3:6]
+   ╭─[explicit_member_accessibility.tsx:3:15]
  2 │             class Test {
  3 │               x?: number;
    ·               ─
@@ -66,7 +66,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add an explicit 'public', 'private', or 'protected' modifier. Members without a modifier are implicitly public, which may not be intentional.
 
   ⚠ typescript-eslint(explicit-member-accessibility): Missing accessibility modifier on method definition getX.
-   ╭─[explicit_member_accessibility.tsx:4:6]
+   ╭─[explicit_member_accessibility.tsx:4:15]
  3 │               x?: number;
  4 │               getX?() {
    ·               ────
@@ -75,7 +75,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add an explicit 'public', 'private', or 'protected' modifier. Members without a modifier are implicitly public, which may not be intentional.
 
   ⚠ typescript-eslint(explicit-member-accessibility): Public accessibility modifier on method definition getX.
-   ╭─[explicit_member_accessibility.tsx:5:6]
+   ╭─[explicit_member_accessibility.tsx:5:15]
  4 │               protected foo?: string;
  5 │               public getX() {
    ·               ──────
@@ -84,7 +84,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Remove the 'public' modifier. Members are public by default, so the modifier is redundant.
 
   ⚠ typescript-eslint(explicit-member-accessibility): Public accessibility modifier on class property foo.
-   ╭─[explicit_member_accessibility.tsx:4:6]
+   ╭─[explicit_member_accessibility.tsx:4:15]
  3 │               protected name: string;
  4 │               public foo?: string;
    ·               ──────
@@ -93,7 +93,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Remove the 'public' modifier. Members are public by default, so the modifier is redundant.
 
   ⚠ typescript-eslint(explicit-member-accessibility): Public accessibility modifier on class property x.
-   ╭─[explicit_member_accessibility.tsx:3:6]
+   ╭─[explicit_member_accessibility.tsx:3:15]
  2 │             class Test {
  3 │               public x: number;
    ·               ──────
@@ -102,7 +102,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Remove the 'public' modifier. Members are public by default, so the modifier is redundant.
 
   ⚠ typescript-eslint(explicit-member-accessibility): Public accessibility modifier on method definition getX.
-   ╭─[explicit_member_accessibility.tsx:4:6]
+   ╭─[explicit_member_accessibility.tsx:4:15]
  3 │               public x: number;
  4 │               public getX() {
    ·               ──────
@@ -111,7 +111,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Remove the 'public' modifier. Members are public by default, so the modifier is redundant.
 
   ⚠ typescript-eslint(explicit-member-accessibility): Missing accessibility modifier on get property accessor internalValue.
-   ╭─[explicit_member_accessibility.tsx:7:10]
+   ╭─[explicit_member_accessibility.tsx:7:19]
  6 │               }
  7 │               get internalValue() {
    ·                   ─────────────
@@ -120,7 +120,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add an explicit 'public', 'private', or 'protected' modifier. Members without a modifier are implicitly public, which may not be intentional.
 
   ⚠ typescript-eslint(explicit-member-accessibility): Missing accessibility modifier on set property accessor internalValue.
-    ╭─[explicit_member_accessibility.tsx:10:10]
+    ╭─[explicit_member_accessibility.tsx:10:19]
   9 │               }
  10 │               set internalValue(value: number) {
     ·                   ─────────────
@@ -129,7 +129,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add an explicit 'public', 'private', or 'protected' modifier. Members without a modifier are implicitly public, which may not be intentional.
 
   ⚠ typescript-eslint(explicit-member-accessibility): Missing accessibility modifier on method definition constructor.
-   ╭─[explicit_member_accessibility.tsx:4:6]
+   ╭─[explicit_member_accessibility.tsx:4:15]
  3 │               private x: number;
  4 │               constructor(x: number) {
    ·               ───────────
@@ -138,7 +138,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add an explicit 'public', 'private', or 'protected' modifier. Members without a modifier are implicitly public, which may not be intentional.
 
   ⚠ typescript-eslint(explicit-member-accessibility): Missing accessibility modifier on get property accessor internalValue.
-   ╭─[explicit_member_accessibility.tsx:7:10]
+   ╭─[explicit_member_accessibility.tsx:7:19]
  6 │               }
  7 │               get internalValue() {
    ·                   ─────────────
@@ -147,7 +147,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add an explicit 'public', 'private', or 'protected' modifier. Members without a modifier are implicitly public, which may not be intentional.
 
   ⚠ typescript-eslint(explicit-member-accessibility): Missing accessibility modifier on set property accessor internalValue.
-    ╭─[explicit_member_accessibility.tsx:10:10]
+    ╭─[explicit_member_accessibility.tsx:10:19]
   9 │               }
  10 │               set internalValue(value: number) {
     ·                   ─────────────
@@ -156,7 +156,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add an explicit 'public', 'private', or 'protected' modifier. Members without a modifier are implicitly public, which may not be intentional.
 
   ⚠ typescript-eslint(explicit-member-accessibility): Missing accessibility modifier on method definition constructor.
-   ╭─[explicit_member_accessibility.tsx:3:6]
+   ╭─[explicit_member_accessibility.tsx:3:15]
  2 │             class Test {
  3 │               constructor(public x: number) {}
    ·               ───────────
@@ -165,7 +165,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add an explicit 'public', 'private', or 'protected' modifier. Members without a modifier are implicitly public, which may not be intentional.
 
   ⚠ typescript-eslint(explicit-member-accessibility): Missing accessibility modifier on method definition constructor.
-   ╭─[explicit_member_accessibility.tsx:3:6]
+   ╭─[explicit_member_accessibility.tsx:3:15]
  2 │             class Test {
  3 │               constructor(public x: number) {}
    ·               ───────────
@@ -174,7 +174,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add an explicit 'public', 'private', or 'protected' modifier. Members without a modifier are implicitly public, which may not be intentional.
 
   ⚠ typescript-eslint(explicit-member-accessibility): Public accessibility modifier on parameter property x.
-   ╭─[explicit_member_accessibility.tsx:3:18]
+   ╭─[explicit_member_accessibility.tsx:3:27]
  2 │             class Test {
  3 │               constructor(public readonly x: number) {}
    ·                           ──────
@@ -183,7 +183,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Remove the 'public' modifier. Members are public by default, so the modifier is redundant.
 
   ⚠ typescript-eslint(explicit-member-accessibility): Missing accessibility modifier on class property x.
-   ╭─[explicit_member_accessibility.tsx:3:6]
+   ╭─[explicit_member_accessibility.tsx:3:15]
  2 │             class Test {
  3 │               x = 2;
    ·               ─
@@ -192,7 +192,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add an explicit 'public', 'private', or 'protected' modifier. Members without a modifier are implicitly public, which may not be intentional.
 
   ⚠ typescript-eslint(explicit-member-accessibility): Public accessibility modifier on class property x.
-   ╭─[explicit_member_accessibility.tsx:3:6]
+   ╭─[explicit_member_accessibility.tsx:3:15]
  2 │             class Test {
  3 │               public x = 2;
    ·               ──────
@@ -201,7 +201,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Remove the 'public' modifier. Members are public by default, so the modifier is redundant.
 
   ⚠ typescript-eslint(explicit-member-accessibility): Missing accessibility modifier on method definition constructor.
-   ╭─[explicit_member_accessibility.tsx:3:6]
+   ╭─[explicit_member_accessibility.tsx:3:15]
  2 │             class Test {
  3 │               constructor(public x: any[]) {}
    ·               ───────────
@@ -210,7 +210,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add an explicit 'public', 'private', or 'protected' modifier. Members without a modifier are implicitly public, which may not be intentional.
 
   ⚠ typescript-eslint(explicit-member-accessibility): Public accessibility modifier on method definition constructor.
-   ╭─[explicit_member_accessibility.tsx:3:6]
+   ╭─[explicit_member_accessibility.tsx:3:15]
  2 │             class Test {
  3 │               public /*public*/constructor(private foo: string) {}
    ·               ──────
@@ -219,7 +219,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Remove the 'public' modifier. Members are public by default, so the modifier is redundant.
 
   ⚠ typescript-eslint(explicit-member-accessibility): Public accessibility modifier on method definition foo.
-   ╭─[explicit_member_accessibility.tsx:4:6]
+   ╭─[explicit_member_accessibility.tsx:4:15]
  3 │               @public
  4 │               public foo() {}
    ·               ──────
@@ -228,7 +228,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Remove the 'public' modifier. Members are public by default, so the modifier is redundant.
 
   ⚠ typescript-eslint(explicit-member-accessibility): Public accessibility modifier on class property foo.
-   ╭─[explicit_member_accessibility.tsx:4:6]
+   ╭─[explicit_member_accessibility.tsx:4:15]
  3 │               @public
  4 │               public foo;
    ·               ──────
@@ -237,7 +237,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Remove the 'public' modifier. Members are public by default, so the modifier is redundant.
 
   ⚠ typescript-eslint(explicit-member-accessibility): Public accessibility modifier on class property foo.
-   ╭─[explicit_member_accessibility.tsx:3:6]
+   ╭─[explicit_member_accessibility.tsx:3:15]
  2 │             class Test {
  3 │               public foo = '';
    ·               ──────
@@ -246,7 +246,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Remove the 'public' modifier. Members are public by default, so the modifier is redundant.
 
   ⚠ typescript-eslint(explicit-member-accessibility): Public accessibility modifier on parameter property foo.
-   ╭─[explicit_member_accessibility.tsx:3:18]
+   ╭─[explicit_member_accessibility.tsx:3:27]
  2 │             class Test {
  3 │               constructor(public/* Hi there */ readonly foo) {}
    ·                           ──────
@@ -255,7 +255,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Remove the 'public' modifier. Members are public by default, so the modifier is redundant.
 
   ⚠ typescript-eslint(explicit-member-accessibility): Public accessibility modifier on parameter property foo.
-   ╭─[explicit_member_accessibility.tsx:3:18]
+   ╭─[explicit_member_accessibility.tsx:3:27]
  2 │             class Test {
  3 │               constructor(public readonly foo: string) {}
    ·                           ──────
@@ -264,7 +264,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Remove the 'public' modifier. Members are public by default, so the modifier is redundant.
 
   ⚠ typescript-eslint(explicit-member-accessibility): Public accessibility modifier on method definition constructor.
-   ╭─[explicit_member_accessibility.tsx:3:6]
+   ╭─[explicit_member_accessibility.tsx:3:15]
  2 │             class EnsureWhiteSPaceSpan {
  3 │               public constructor() {}
    ·               ──────
@@ -273,7 +273,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Remove the 'public' modifier. Members are public by default, so the modifier is redundant.
 
   ⚠ typescript-eslint(explicit-member-accessibility): Public accessibility modifier on method definition constructor.
-   ╭─[explicit_member_accessibility.tsx:3:6]
+   ╭─[explicit_member_accessibility.tsx:3:15]
  2 │             class EnsureWhiteSPaceSpan {
  3 │               public /* */ constructor() {}
    ·               ──────
@@ -282,7 +282,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Remove the 'public' modifier. Members are public by default, so the modifier is redundant.
 
   ⚠ typescript-eslint(explicit-member-accessibility): Public accessibility modifier on class property foo.
-   ╭─[explicit_member_accessibility.tsx:3:6]
+   ╭─[explicit_member_accessibility.tsx:3:15]
  2 │             class Test {
  3 │               public 'foo' = 1;
    ·               ──────
@@ -291,7 +291,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Remove the 'public' modifier. Members are public by default, so the modifier is redundant.
 
   ⚠ typescript-eslint(explicit-member-accessibility): Public accessibility modifier on class property foo foo.
-   ╭─[explicit_member_accessibility.tsx:4:6]
+   ╭─[explicit_member_accessibility.tsx:4:15]
  3 │               public 'foo' = 1;
  4 │               public 'foo foo' = 2;
    ·               ──────
@@ -300,7 +300,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Remove the 'public' modifier. Members are public by default, so the modifier is redundant.
 
   ⚠ typescript-eslint(explicit-member-accessibility): Public accessibility modifier on method definition bar.
-   ╭─[explicit_member_accessibility.tsx:5:6]
+   ╭─[explicit_member_accessibility.tsx:5:15]
  4 │               public 'foo foo' = 2;
  5 │               public 'bar'() {}
    ·               ──────
@@ -309,7 +309,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Remove the 'public' modifier. Members are public by default, so the modifier is redundant.
 
   ⚠ typescript-eslint(explicit-member-accessibility): Public accessibility modifier on method definition bar bar.
-   ╭─[explicit_member_accessibility.tsx:6:6]
+   ╭─[explicit_member_accessibility.tsx:6:15]
  5 │               public 'bar'() {}
  6 │               public 'bar bar'() {}
    ·               ──────
@@ -318,7 +318,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Remove the 'public' modifier. Members are public by default, so the modifier is redundant.
 
   ⚠ typescript-eslint(explicit-member-accessibility): Missing accessibility modifier on method definition method.
-   ╭─[explicit_member_accessibility.tsx:3:15]
+   ╭─[explicit_member_accessibility.tsx:3:24]
  2 │             abstract class SomeClass {
  3 │               abstract method(): string;
    ·                        ──────
@@ -327,7 +327,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add an explicit 'public', 'private', or 'protected' modifier. Members without a modifier are implicitly public, which may not be intentional.
 
   ⚠ typescript-eslint(explicit-member-accessibility): Public accessibility modifier on method definition method.
-   ╭─[explicit_member_accessibility.tsx:3:6]
+   ╭─[explicit_member_accessibility.tsx:3:15]
  2 │             abstract class SomeClass {
  3 │               public abstract method(): string;
    ·               ──────
@@ -336,7 +336,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Remove the 'public' modifier. Members are public by default, so the modifier is redundant.
 
   ⚠ typescript-eslint(explicit-member-accessibility): Missing accessibility modifier on class property x.
-   ╭─[explicit_member_accessibility.tsx:3:15]
+   ╭─[explicit_member_accessibility.tsx:3:24]
  2 │             abstract class SomeClass {
  3 │               abstract x: string;
    ·                        ─
@@ -345,7 +345,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add an explicit 'public', 'private', or 'protected' modifier. Members without a modifier are implicitly public, which may not be intentional.
 
   ⚠ typescript-eslint(explicit-member-accessibility): Public accessibility modifier on class property x.
-   ╭─[explicit_member_accessibility.tsx:3:6]
+   ╭─[explicit_member_accessibility.tsx:3:15]
  2 │             abstract class SomeClass {
  3 │               public abstract x: string;
    ·               ──────
@@ -354,7 +354,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Remove the 'public' modifier. Members are public by default, so the modifier is redundant.
 
   ⚠ typescript-eslint(explicit-member-accessibility): Missing accessibility modifier on class property foo.
-   ╭─[explicit_member_accessibility.tsx:3:15]
+   ╭─[explicit_member_accessibility.tsx:3:24]
  2 │             class SomeClass {
  3 │               accessor foo = 1;
    ·                        ───
@@ -363,7 +363,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add an explicit 'public', 'private', or 'protected' modifier. Members without a modifier are implicitly public, which may not be intentional.
 
   ⚠ typescript-eslint(explicit-member-accessibility): Missing accessibility modifier on class property foo.
-   ╭─[explicit_member_accessibility.tsx:3:24]
+   ╭─[explicit_member_accessibility.tsx:3:33]
  2 │             abstract class SomeClass {
  3 │               abstract accessor foo: string;
    ·                                 ───
@@ -372,7 +372,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add an explicit 'public', 'private', or 'protected' modifier. Members without a modifier are implicitly public, which may not be intentional.
 
   ⚠ typescript-eslint(explicit-member-accessibility): Missing accessibility modifier on method definition constructor.
-   ╭─[explicit_member_accessibility.tsx:3:6]
+   ╭─[explicit_member_accessibility.tsx:3:15]
  2 │             class DecoratedClass {
  3 │               constructor(@foo @bar() readonly arg: string) {}
    ·               ───────────
@@ -381,7 +381,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add an explicit 'public', 'private', or 'protected' modifier. Members without a modifier are implicitly public, which may not be intentional.
 
   ⚠ typescript-eslint(explicit-member-accessibility): Missing accessibility modifier on parameter property arg.
-   ╭─[explicit_member_accessibility.tsx:3:39]
+   ╭─[explicit_member_accessibility.tsx:3:48]
  2 │             class DecoratedClass {
  3 │               constructor(@foo @bar() readonly arg: string) {}
    ·                                                ───
@@ -390,7 +390,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add an explicit 'public', 'private', or 'protected' modifier. Members without a modifier are implicitly public, which may not be intentional.
 
   ⚠ typescript-eslint(explicit-member-accessibility): Missing accessibility modifier on class property x.
-   ╭─[explicit_member_accessibility.tsx:4:18]
+   ╭─[explicit_member_accessibility.tsx:4:27]
  3 │               constructor(@foo @bar() readonly arg: string) {}
  4 │               @foo @bar() x: string;
    ·                           ─
@@ -399,7 +399,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add an explicit 'public', 'private', or 'protected' modifier. Members without a modifier are implicitly public, which may not be intentional.
 
   ⚠ typescript-eslint(explicit-member-accessibility): Missing accessibility modifier on method definition getX.
-   ╭─[explicit_member_accessibility.tsx:5:18]
+   ╭─[explicit_member_accessibility.tsx:5:27]
  4 │               @foo @bar() x: string;
  5 │               @foo @bar() getX() {
    ·                           ────
@@ -408,7 +408,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add an explicit 'public', 'private', or 'protected' modifier. Members without a modifier are implicitly public, which may not be intentional.
 
   ⚠ typescript-eslint(explicit-member-accessibility): Missing accessibility modifier on get property accessor y.
-    ╭─[explicit_member_accessibility.tsx:10:10]
+    ╭─[explicit_member_accessibility.tsx:10:19]
   9 │               @bar()
  10 │               get y() {
     ·                   ─
@@ -417,7 +417,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add an explicit 'public', 'private', or 'protected' modifier. Members without a modifier are implicitly public, which may not be intentional.
 
   ⚠ typescript-eslint(explicit-member-accessibility): Missing accessibility modifier on set property accessor z.
-    ╭─[explicit_member_accessibility.tsx:13:22]
+    ╭─[explicit_member_accessibility.tsx:13:31]
  12 │               }
  13 │               @foo @bar() set z(@foo @bar() value: x) {
     ·                               ─
@@ -426,7 +426,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add an explicit 'public', 'private', or 'protected' modifier. Members without a modifier are implicitly public, which may not be intentional.
 
   ⚠ typescript-eslint(explicit-member-accessibility): Missing accessibility modifier on method definition computed-method-name.
-   ╭─[explicit_member_accessibility.tsx:3:16]
+   ╭─[explicit_member_accessibility.tsx:3:25]
  2 │             abstract class SomeClass {
  3 │               abstract ['computed-method-name'](): string;
    ·                         ──────────────────────
