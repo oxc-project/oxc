@@ -24,11 +24,12 @@ working directory: fixtures/cli/tsgolint
    `----
 
   x typescript-eslint(consistent-type-exports): Type export LocalType is not a value and should be exported using `export type`.
-   ,-[consistent-type-exports.ts:7:1]
+   ,-[consistent-type-exports.ts:7:10]
  6 | 
  7 | export { LocalType, localValue };
-   : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   :          ^^^^^^^^^
    `----
+  help: Try adding the `type` keyword: `type LocalType`
 
   x typescript-eslint(dot-notation): ["bar"] is better written in dot notation.
    ,-[dot-notation.ts:4:5]
@@ -42,7 +43,8 @@ working directory: fixtures/cli/tsgolint
    ,-[no-array-delete.ts:2:1]
  1 | declare const arr: number[];
  2 | delete arr[0];
-   : ^^^^^^^^^^^^^
+   : ^^^^^^ ^|^
+   :    |    `-- This expression evaluates to an array.
    `----
 
   x typescript-eslint(no-base-to-string): '({})' will use Object's default stringification format ('[object Object]') when stringified.
@@ -79,7 +81,8 @@ working directory: fixtures/cli/tsgolint
   x typescript-eslint(no-duplicate-type-constituents): Union type constituent is duplicated with  'A'.
    ,-[no-duplicate-type-constituents.ts:1:17]
  1 | type T1 = 'A' | 'A';
-   :                 ^^^
+   :           ^|^   ^^^
+   :            `-- Type ''A'' is first declared here.
  2 | 
    `----
 

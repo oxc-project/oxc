@@ -401,7 +401,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let span = self.start_span();
         let name = self.parse_jsx_attribute_name();
         let value = if self.at(Kind::Eq) {
-            self.expect_jsx_attribute_value(Kind::Eq);
+            self.advance_for_jsx_attribute_value();
             Some(self.parse_jsx_attribute_value())
         } else {
             None

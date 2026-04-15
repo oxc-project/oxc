@@ -1,7 +1,6 @@
 use oxc_allocator::arena::Arena;
 use std::alloc::Layout;
 use std::cmp;
-use std::iter::repeat;
 use std::mem;
 
 #[test]
@@ -30,37 +29,6 @@ fn alloc_slice_fill_zero() {
         ptr2 as *mut _ as usize,
         (ptr3.as_ptr() as usize) + b.min_align().max(u8_layout.align()),
     );
-}
-
-#[test]
-fn alloc_slice_try_fill_with_succeeds() {
-    let b = Arena::new();
-    let res: Result<&mut [usize], ()> = b.alloc_slice_try_fill_with(100, |n| Ok(n));
-    assert_eq!(res.map(|arr| arr[50]), Ok(50));
-}
-
-#[test]
-fn alloc_slice_try_fill_with_fails() {
-    let b = Arena::new();
-    let res: Result<&mut [u16], ()> =
-        b.alloc_slice_try_fill_with(1000, |n| if n == 100 { Err(()) } else { Ok(42) });
-    assert_eq!(res, Err(()));
-}
-
-#[test]
-fn alloc_slice_try_fill_iter_succeeds() {
-    let b = Arena::new();
-    let elems = repeat(42).take(10).collect::<Vec<_>>();
-    let res: Result<&mut [u16], ()> = b.alloc_slice_try_fill_iter(elems.into_iter().map(Ok));
-    assert_eq!(res.map(|arr| arr[5]), Ok(42));
-}
-
-#[test]
-fn alloc_slice_try_fill_iter_fails() {
-    let b = Arena::new();
-    let elems = repeat(()).take(10).collect::<Vec<_>>();
-    let res: Result<&mut [u16], ()> = b.alloc_slice_try_fill_iter(elems.into_iter().map(Err));
-    assert_eq!(res, Err(()));
 }
 
 #[test]

@@ -1290,6 +1290,14 @@ fn test_namespaces() {
             }
         }
         ",
+        "
+        export namespace editor.multiplayer {
+          export type AwarenessPayload = { d: any; };
+        }
+        export namespace editor.internal.export_settings {
+          export type Format = 'png' | 'svg';
+        }
+        ",
     ];
 
     let fail = vec![
@@ -1304,6 +1312,7 @@ fn test_namespaces() {
         ",
         "declare module 'bun:test' { type Matchers2<T> = {} }",
         "declare module 'bun:test' { class MyClass<T> {} }",
+        "export namespace N { namespace Inner {} }",
     ];
 
     Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)

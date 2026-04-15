@@ -2,13 +2,12 @@
     unsafe_op_in_unsafe_fn,
     clippy::allow_attributes,
     clippy::explicit_iter_loop,
-    clippy::ignored_unit_patterns,
     clippy::print_stderr,
     clippy::undocumented_unsafe_blocks,
     clippy::uninlined_format_args
 )]
 
-use oxc_allocator::arena::{AllocOrInitError, Arena};
+use oxc_allocator::arena::Arena;
 use rand::RngExt as _;
 use std::alloc::{GlobalAlloc, Layout, System};
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -179,28 +178,6 @@ fn main() {
             test_static_size_alloc(
                 |arena| assert!(arena.try_alloc_with(|| 1u8).is_ok()),
                 |arena| assert!(arena.try_alloc_with(|| 1u8).is_err()),
-            );
-        },),
-        test!("test try_alloc_try_with (Ok) with and without global allocation failures", || {
-            test_static_size_alloc(
-                |arena| assert!(arena.try_alloc_try_with::<_, _, ()>(|| Ok(1u8)).is_ok()),
-                |arena| assert!(arena.try_alloc_try_with::<_, _, ()>(|| Ok(1u8)).is_err()),
-            );
-        },),
-        test!("test try_alloc_try_with (Err) with and without global allocation failures", || {
-            test_static_size_alloc(
-                |arena| {
-                    assert!(matches!(
-                        arena.try_alloc_try_with::<_, u8, _>(|| Err(())),
-                        Err(AllocOrInitError::Init(_))
-                    ));
-                },
-                |arena| {
-                    assert!(matches!(
-                        arena.try_alloc_try_with::<_, u8, _>(|| Err(())),
-                        Err(AllocOrInitError::Alloc(_))
-                    ));
-                },
             );
         },),
     ];

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { format, defineConfig } from "../../dist/index.js";
-import type { FormatOptions } from "../../dist/index.js";
+import type { FormatConfig } from "../../dist/index.js";
 
 describe("defineConfig() API", () => {
   it("`defineConfig()` function exists", () => {
@@ -36,7 +36,7 @@ describe("format() API", () => {
   });
 
   it("should TS types and options work", async () => {
-    const options: FormatOptions = {
+    const options: FormatConfig = {
       quoteProps: "as-needed", // Can be string literal
       printWidth: 120,
       semi: false,

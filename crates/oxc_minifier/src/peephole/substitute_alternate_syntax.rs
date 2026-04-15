@@ -886,46 +886,49 @@ impl<'a> PeepholeOptimizations {
                 .then(|| r_id.take_in(ctx.ast))
         };
 
-        let base_arr = ctx.ast.expression_array(
-            SPAN,
-            ctx.ast.vec1(ctx.ast.array_expression_element_spread_element(
+        if let Some(r_id_pat) = r_id_pat {
+            let base_arr = ctx.ast.expression_array(
                 SPAN,
-                Expression::Identifier(arguments_id.take_in_box(ctx.ast)),
-            )),
-        );
-        // wrap with `.slice(offset)`
-        let arr = if offset > 0.0 {
-            let obj = base_arr;
-            let callee =
-                Expression::StaticMemberExpression(ctx.ast.alloc_static_member_expression(
+                ctx.ast.vec1(ctx.ast.array_expression_element_spread_element(
                     SPAN,
-                    obj,
-                    ctx.ast.identifier_name(SPAN, "slice"),
+                    Expression::Identifier(arguments_id.take_in_box(ctx.ast)),
+                )),
+            );
+            // wrap with `.slice(offset)`
+            let arr = if offset > 0.0 {
+                let obj = base_arr;
+                let callee =
+                    Expression::StaticMemberExpression(ctx.ast.alloc_static_member_expression(
+                        SPAN,
+                        obj,
+                        ctx.ast.identifier_name(SPAN, "slice"),
+                        false,
+                    ));
+                ctx.ast.expression_call(
+                    SPAN,
+                    callee,
+                    NONE,
+                    ctx.ast.vec1(Argument::from(ctx.ast.expression_numeric_literal(
+                        SPAN,
+                        offset,
+                        None,
+                        NumberBase::Decimal,
+                    ))),
                     false,
-                ));
-            ctx.ast.expression_call(
-                SPAN,
-                callee,
-                NONE,
-                ctx.ast.vec1(Argument::from(ctx.ast.expression_numeric_literal(
-                    SPAN,
-                    offset,
-                    None,
-                    NumberBase::Decimal,
-                ))),
-                false,
-            )
-        } else {
-            base_arr
-        };
+                )
+            } else {
+                base_arr
+            };
 
-        var_init.declarations = if let Some(r_id_pat) = r_id_pat {
             let new_decl =
                 ctx.ast.variable_declarator(SPAN, var_init.kind, r_id_pat, NONE, Some(arr), false);
-            ctx.ast.vec1(new_decl)
+            var_init.declarations = ctx.ast.vec1(new_decl);
         } else {
-            ctx.ast.vec()
-        };
+            // `for (var; 0;)` with an empty `VariableDeclaration` is invalid JS when printed and
+            // makes `try_fold_for` hoist a bogus `var;`. Use `for (; 0;)` instead so dead-code
+            // folding becomes an empty statement.
+            for_stmt.init = None;
+        }
         for_stmt.test =
             Some(ctx.ast.expression_numeric_literal(for_stmt.span, 0.0, None, NumberBase::Decimal));
         for_stmt.update = None;
@@ -1581,6 +1584,10 @@ impl<'a> PeepholeOptimizations {
             && let Some(param) = &catch.param
             && let BindingPattern::BindingIdentifier(ident) = &param.pattern
             && (catch.body.body.is_empty() || ctx.scoping().symbol_is_unused(ident.symbol_id()))
+            // Don't remove catch parameter when the body has a `var` with the same name.
+            // In `catch (e) { var e = x }`, `var e` hoists to function scope but the assignment
+            // targets the catch parameter. Removing the catch param changes semantics.
+            && ctx.scoping().symbol_redeclarations(ident.symbol_id()).is_empty()
         {
             catch.param = None;
         }

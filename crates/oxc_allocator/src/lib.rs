@@ -44,7 +44,6 @@ mod allocator_api2;
 #[cfg(feature = "bitset")]
 mod bitset;
 mod boxed;
-mod bumpalo_alloc;
 mod clone_in;
 mod convert;
 #[cfg(feature = "from_raw_parts")]
