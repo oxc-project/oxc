@@ -21,7 +21,11 @@ function writeRule(root, fileName, source) {
   fs.writeFileSync(path.join(dir, fileName), source.trimStart());
 }
 
-test("rewrites stable rule versions from next to the release version", () => {
+function registerTest(...args) {
+  void test(...args);
+}
+
+registerTest("rewrites stable rule versions from next to the release version", () => {
   const root = createTempRepo();
   writeRule(
     root,
@@ -53,7 +57,7 @@ declare_oxc_lint!(
   assert.match(updatedSource, /version = "1\.61\.0"/);
 });
 
-test("rewrites spacing variants of version next", () => {
+registerTest("rewrites spacing variants of version next", () => {
   const root = createTempRepo();
   writeRule(
     root,
@@ -84,7 +88,7 @@ declare_oxc_lint!(
   assert.match(updatedSource, /version= "1\.61\.0"/);
 });
 
-test("keeps nursery rules on next", () => {
+registerTest("keeps nursery rules on next", () => {
   const root = createTempRepo();
   writeRule(
     root,
@@ -115,7 +119,7 @@ declare_oxc_lint!(
   assert.match(updatedSource, /version = "next"/);
 });
 
-test("accepts inline comments on category lines", () => {
+registerTest("accepts inline comments on category lines", () => {
   const root = createTempRepo();
   writeRule(
     root,
@@ -146,7 +150,7 @@ declare_oxc_lint!(
   assert.match(updatedSource, /version = "next"/);
 });
 
-test("ignores standalone comment lines inside declare_oxc_lint blocks", () => {
+registerTest("ignores standalone comment lines inside declare_oxc_lint blocks", () => {
   const root = createTempRepo();
   writeRule(
     root,
@@ -177,7 +181,7 @@ declare_oxc_lint!(
   assert.match(updatedSource, /version = "next"/);
 });
 
-test("accepts block comments on category lines", () => {
+registerTest("accepts block comments on category lines", () => {
   const root = createTempRepo();
   writeRule(
     root,
@@ -207,7 +211,7 @@ declare_oxc_lint!(
   assert.match(updatedSource, /version = "next"/);
 });
 
-test("accepts block comments with urls on category lines", () => {
+registerTest("accepts block comments with urls on category lines", () => {
   const root = createTempRepo();
   writeRule(
     root,
@@ -237,7 +241,7 @@ declare_oxc_lint!(
   assert.match(updatedSource, /version = "next"/);
 });
 
-test("ignores doc examples containing version next inside declare_oxc_lint blocks", () => {
+registerTest("ignores doc examples containing version next inside declare_oxc_lint blocks", () => {
   const root = createTempRepo();
   writeRule(
     root,
@@ -269,7 +273,7 @@ declare_oxc_lint!(
   assert.match(updatedSource, /version = "1\.61\.0"/);
 });
 
-test("supports dry-run without modifying files", () => {
+registerTest("supports dry-run without modifying files", () => {
   const root = createTempRepo();
   writeRule(
     root,
@@ -294,7 +298,7 @@ declare_oxc_lint!(
   assert.match(sourceAfterDryRun, /version = "next"/);
 });
 
-test("fails if version next is outside a declare_oxc_lint block", () => {
+registerTest("fails if version next is outside a declare_oxc_lint block", () => {
   const root = createTempRepo();
   writeRule(
     root,
@@ -310,7 +314,7 @@ const BROKEN: &str = r#"version = "next""#;
   );
 });
 
-test("ignores inline comments in the stray next-version scan", () => {
+registerTest("ignores inline comments in the stray next-version scan", () => {
   const root = createTempRepo();
   writeRule(
     root,
@@ -340,14 +344,17 @@ declare_oxc_lint!(
   assert.match(updatedSource, /version = "next"/);
 });
 
-test("fails if the rules tree contains symlinked rule files", { skip: process.platform === "win32" }, () => {
-  const root = createTempRepo();
-  const dir = rulesDir(root);
-  fs.mkdirSync(dir, { recursive: true });
+registerTest(
+  "fails if the rules tree contains symlinked rule files",
+  { skip: process.platform === "win32" },
+  () => {
+    const root = createTempRepo();
+    const dir = rulesDir(root);
+    fs.mkdirSync(dir, { recursive: true });
 
-  fs.writeFileSync(
-    path.join(root, "real_rule.rs"),
-    `
+    fs.writeFileSync(
+      path.join(root, "real_rule.rs"),
+      `
 use oxc_macros::declare_oxc_lint;
 
 declare_oxc_lint!(
@@ -357,16 +364,17 @@ declare_oxc_lint!(
     version = "next",
 );
 `.trimStart(),
-  );
-  fs.symlinkSync(path.join(root, "real_rule.rs"), path.join(dir, "linked_rule.rs"));
+    );
+    fs.symlinkSync(path.join(root, "real_rule.rs"), path.join(dir, "linked_rule.rs"));
 
-  assert.throws(
-    () => rewriteNextRuleVersions({ root, releaseVersion: "1.61.0" }),
-    /symlinked rule paths are not supported/,
-  );
-});
+    assert.throws(
+      () => rewriteNextRuleVersions({ root, releaseVersion: "1.61.0" }),
+      /symlinked rule paths are not supported/,
+    );
+  },
+);
 
-test("supports dry-run through the CLI", () => {
+registerTest("supports dry-run through the CLI", () => {
   const root = createTempRepo();
   writeRule(
     root,

@@ -41,8 +41,18 @@ function collectRuleFiles(dir, repoRoot) {
     }
   }
 
-  files.sort();
+  files.sort(compareStrings);
   return files;
+}
+
+function compareStrings(a, b) {
+  if (a < b) {
+    return -1;
+  }
+  if (a > b) {
+    return 1;
+  }
+  return 0;
 }
 
 function normalizePath(filePath) {
@@ -127,7 +137,9 @@ function analyzeRuleFile(source, filePath, releaseVersion, repoRoot) {
     }
 
     if (metadataEntries.length < 3) {
-      throw new Error(`${relativeFile}: could not parse rule category from declare_oxc_lint! block`);
+      throw new Error(
+        `${relativeFile}: could not parse rule category from declare_oxc_lint! block`,
+      );
     }
 
     const ruleName = metadataEntries[0].trimmed.replace(/,$/, "");
@@ -145,8 +157,10 @@ function analyzeRuleFile(source, filePath, releaseVersion, repoRoot) {
       continue;
     }
 
-    updatedLines[versionEntry.lineIndex] =
-      replaceVersionLiteral(lines[versionEntry.lineIndex], releaseVersion);
+    updatedLines[versionEntry.lineIndex] = replaceVersionLiteral(
+      lines[versionEntry.lineIndex],
+      releaseVersion,
+    );
     updatedRules.push({ file: relativeFile, ruleName, from: "next", to: releaseVersion });
     startLine = endLine;
   }
@@ -162,7 +176,9 @@ function analyzeRuleFile(source, filePath, releaseVersion, repoRoot) {
       !coveredNextVersionLines.has(lineIndex) &&
       !isCommentLineInsideDeclareRuleBlock
     ) {
-      throw new Error(`${relativeFile}: found \`${NEXT_VERSION_TEXT}\` outside a declare_oxc_lint! block`);
+      throw new Error(
+        `${relativeFile}: found \`${NEXT_VERSION_TEXT}\` outside a declare_oxc_lint! block`,
+      );
     }
   }
 
@@ -206,7 +222,9 @@ function printReport(report, dryRun) {
   if (report.updatedRules.length === 0) {
     console.log("No stable rule versions needed updating.");
   } else {
-    console.log(`${dryRun ? "Would update" : "Updated"} ${report.updatedRules.length} rule version(s):`);
+    console.log(
+      `${dryRun ? "Would update" : "Updated"} ${report.updatedRules.length} rule version(s):`,
+    );
     for (const change of report.updatedRules) {
       console.log(
         `- ${change.file}: ${change.ruleName} ${NEXT_VERSION_TEXT} -> version = "${change.to}"`,
