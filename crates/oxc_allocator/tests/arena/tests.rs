@@ -230,13 +230,6 @@ fn arena_is_send() {
 }
 
 #[test]
-fn test_debug_assert_data_le_bump_ptr_pr_313() {
-    let arena = Arena::new();
-    arena.set_allocation_limit(Some(1));
-    arena.alloc_layout(Layout::from_size_align(0, 16).unwrap());
-}
-
-#[test]
 fn test_debug_assert_ptr_align_pr_313() {
     let arena = Arena::<16>::with_min_align();
     arena.alloc(0u8);

@@ -60,11 +60,11 @@ importers:
   apps/oxfmt:
     dependencies:
       prettier:
-        specifier: 3.8.2
-        version: 3.8.2
+        specifier: 3.8.3
+        version: 3.8.3
       prettier-plugin-tailwindcss:
         specifier: 0.0.0-insiders.3997fbd
-        version: 0.0.0-insiders.3997fbd(prettier@3.8.2)
+        version: 0.0.0-insiders.3997fbd(prettier@3.8.3)
       tinypool:
         specifier: 2.1.0
         version: 2.1.0
@@ -4333,8 +4333,8 @@ packages:
       prettier-plugin-svelte:
         optional: true
 
-  prettier@3.8.2:
-    resolution: {integrity: sha512-8c3mgTe0ASwWAJK+78dpviD+A8EqhndQPUBpNUIPt6+xWlIigCwfN01lWr9MAede4uqXGTEKeQWTvzb3vjia0Q==}
+  prettier@3.8.3:
+    resolution: {integrity: sha512-7igPTM53cGHMW8xWuVTydi2KO233VFiTNyF5hLJqpilHfmn8C8gPf+PS7dUT64YcXFbiMGZxS9pCSxL/Dxm/Jw==}
     engines: {node: '>=14'}
     hasBin: true
 
@@ -8339,7 +8339,7 @@ snapshots:
       js-yaml: 4.1.1
       lodash: 4.17.21
       minimist: 1.2.8
-      prettier: 3.8.2
+      prettier: 3.8.3
       tinyglobby: 0.2.16
 
   json-schema-traverse@0.4.1: {}
@@ -8655,11 +8655,11 @@ snapshots:
 
   prelude-ls@1.2.1: {}
 
-  prettier-plugin-tailwindcss@0.0.0-insiders.3997fbd(prettier@3.8.2):
+  prettier-plugin-tailwindcss@0.0.0-insiders.3997fbd(prettier@3.8.3):
     dependencies:
-      prettier: 3.8.2
+      prettier: 3.8.3
 
-  prettier@3.8.2: {}
+  prettier@3.8.3: {}
 
   pretty-ms@9.3.0:
     dependencies:

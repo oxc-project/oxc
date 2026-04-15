@@ -1,0 +1,14 @@
+[
+  { "cwd": "no_config", "args": ["--migrate", "biome"] },
+  { "cwd": "already_exists", "args": ["--migrate", "biome"] },
+  { "cwd": "basic_config", "args": ["--migrate", "biome"] },
+  { "cwd": "jsonc_config", "args": ["--migrate", "biome"] },
+  { "cwd": "both_json_jsonc", "args": ["--migrate", "biome"] },
+  { "cwd": "defaults", "args": ["--migrate", "biome"] },
+  { "cwd": "js_overrides", "args": ["--migrate", "biome"] },
+  { "cwd": "arrow_parens", "args": ["--migrate", "biome"] },
+  { "cwd": "attribute_position", "args": ["--migrate", "biome"] },
+  { "cwd": "ignore_patterns", "args": ["--migrate", "biome"] },
+  { "cwd": "force_ignore", "args": ["--migrate", "biome"] },
+  { "cwd": "warn_overrides", "args": ["--migrate", "biome"] }
+]

@@ -253,46 +253,19 @@ quickcheck! {
         }
     }
 
-    // MIRI exits with failure when we try to allocate more memory than its
-    // sandbox has, rather than returning null from the allocation
-    // function. This test runs afoul of that bug.
-    #[cfg(not(miri))]
-    fn limit_is_never_exceeded(limit: usize) -> bool {
-        let arena = Arena::new();
-
-        arena.set_allocation_limit(Some(limit));
-
-        // The exact numbers here on how much to allocate are a bit murky but we
-        // have two main goals.
-        //
-        // - Attempt to allocate over the allocation limit imposed
-        // - Allocate in increments small enough that at least a few allocations succeed
-        let layout = std::alloc::Layout::array::<u8>(limit / 16).unwrap();
-        for _ in 0..32 {
-            let _ = arena.try_alloc_layout(layout);
-        }
-
-        arena.allocated_bytes() <= limit
-    }
-
-    fn allocated_bytes_including_metadata(allocs: Vec<usize>) -> () {
+    fn allocated_bytes_tracking(allocs: Vec<usize>) -> () {
         let b = Arena::new();
         let mut slice_bytes = 0;
-        let allocs_len = allocs.len();
         for len in allocs {
             const MAX_LEN: usize = 512;
             let len = len % MAX_LEN;
             b.alloc_slice_fill_copy(len, 0);
             slice_bytes += len;
             let allocated_bytes = b.allocated_bytes();
-            let allocated_bytes_including_metadata = b.allocated_bytes_including_metadata();
             if slice_bytes == 0 {
                 assert_eq!(allocated_bytes, 0);
-                assert_eq!(allocated_bytes_including_metadata, 0);
             } else {
                 assert!(allocated_bytes >= slice_bytes);
-                assert!(allocated_bytes_including_metadata > allocated_bytes);
-                assert!(allocated_bytes_including_metadata < allocated_bytes + allocs_len * 100);
             }
         }
     }

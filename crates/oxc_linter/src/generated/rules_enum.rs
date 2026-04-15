@@ -467,6 +467,7 @@ pub use crate::rules::typescript::consistent_type_exports::ConsistentTypeExports
 pub use crate::rules::typescript::consistent_type_imports::ConsistentTypeImports as TypescriptConsistentTypeImports;
 pub use crate::rules::typescript::dot_notation::DotNotation as TypescriptDotNotation;
 pub use crate::rules::typescript::explicit_function_return_type::ExplicitFunctionReturnType as TypescriptExplicitFunctionReturnType;
+pub use crate::rules::typescript::explicit_member_accessibility::ExplicitMemberAccessibility as TypescriptExplicitMemberAccessibility;
 pub use crate::rules::typescript::explicit_module_boundary_types::ExplicitModuleBoundaryTypes as TypescriptExplicitModuleBoundaryTypes;
 pub use crate::rules::typescript::no_array_delete::NoArrayDelete as TypescriptNoArrayDelete;
 pub use crate::rules::typescript::no_base_to_string::NoBaseToString as TypescriptNoBaseToString;
@@ -958,6 +959,7 @@ pub enum RuleEnum {
     TypescriptConsistentTypeImports(TypescriptConsistentTypeImports),
     TypescriptDotNotation(TypescriptDotNotation),
     TypescriptExplicitFunctionReturnType(TypescriptExplicitFunctionReturnType),
+    TypescriptExplicitMemberAccessibility(TypescriptExplicitMemberAccessibility),
     TypescriptExplicitModuleBoundaryTypes(TypescriptExplicitModuleBoundaryTypes),
     TypescriptNoArrayDelete(TypescriptNoArrayDelete),
     TypescriptNoBaseToString(TypescriptNoBaseToString),
@@ -1688,8 +1690,10 @@ const TYPESCRIPT_CONSISTENT_TYPE_EXPORTS_ID: usize =
 const TYPESCRIPT_CONSISTENT_TYPE_IMPORTS_ID: usize = TYPESCRIPT_CONSISTENT_TYPE_EXPORTS_ID + 1usize;
 const TYPESCRIPT_DOT_NOTATION_ID: usize = TYPESCRIPT_CONSISTENT_TYPE_IMPORTS_ID + 1usize;
 const TYPESCRIPT_EXPLICIT_FUNCTION_RETURN_TYPE_ID: usize = TYPESCRIPT_DOT_NOTATION_ID + 1usize;
-const TYPESCRIPT_EXPLICIT_MODULE_BOUNDARY_TYPES_ID: usize =
+const TYPESCRIPT_EXPLICIT_MEMBER_ACCESSIBILITY_ID: usize =
     TYPESCRIPT_EXPLICIT_FUNCTION_RETURN_TYPE_ID + 1usize;
+const TYPESCRIPT_EXPLICIT_MODULE_BOUNDARY_TYPES_ID: usize =
+    TYPESCRIPT_EXPLICIT_MEMBER_ACCESSIBILITY_ID + 1usize;
 const TYPESCRIPT_NO_ARRAY_DELETE_ID: usize = TYPESCRIPT_EXPLICIT_MODULE_BOUNDARY_TYPES_ID + 1usize;
 const TYPESCRIPT_NO_BASE_TO_STRING_ID: usize = TYPESCRIPT_NO_ARRAY_DELETE_ID + 1usize;
 const TYPESCRIPT_NO_CONFUSING_NON_NULL_ASSERTION_ID: usize =
@@ -2508,6 +2512,9 @@ impl RuleEnum {
             Self::TypescriptDotNotation(_) => TYPESCRIPT_DOT_NOTATION_ID,
             Self::TypescriptExplicitFunctionReturnType(_) => {
                 TYPESCRIPT_EXPLICIT_FUNCTION_RETURN_TYPE_ID
+            }
+            Self::TypescriptExplicitMemberAccessibility(_) => {
+                TYPESCRIPT_EXPLICIT_MEMBER_ACCESSIBILITY_ID
             }
             Self::TypescriptExplicitModuleBoundaryTypes(_) => {
                 TYPESCRIPT_EXPLICIT_MODULE_BOUNDARY_TYPES_ID
@@ -3343,6 +3350,9 @@ impl RuleEnum {
             Self::TypescriptExplicitFunctionReturnType(_) => {
                 TypescriptExplicitFunctionReturnType::NAME
             }
+            Self::TypescriptExplicitMemberAccessibility(_) => {
+                TypescriptExplicitMemberAccessibility::NAME
+            }
             Self::TypescriptExplicitModuleBoundaryTypes(_) => {
                 TypescriptExplicitModuleBoundaryTypes::NAME
             }
@@ -4172,6 +4182,9 @@ impl RuleEnum {
             Self::TypescriptDotNotation(_) => TypescriptDotNotation::CATEGORY,
             Self::TypescriptExplicitFunctionReturnType(_) => {
                 TypescriptExplicitFunctionReturnType::CATEGORY
+            }
+            Self::TypescriptExplicitMemberAccessibility(_) => {
+                TypescriptExplicitMemberAccessibility::CATEGORY
             }
             Self::TypescriptExplicitModuleBoundaryTypes(_) => {
                 TypescriptExplicitModuleBoundaryTypes::CATEGORY
@@ -5042,6 +5055,9 @@ impl RuleEnum {
             Self::TypescriptExplicitFunctionReturnType(_) => {
                 TypescriptExplicitFunctionReturnType::FIX
             }
+            Self::TypescriptExplicitMemberAccessibility(_) => {
+                TypescriptExplicitMemberAccessibility::FIX
+            }
             Self::TypescriptExplicitModuleBoundaryTypes(_) => {
                 TypescriptExplicitModuleBoundaryTypes::FIX
             }
@@ -5900,6 +5916,9 @@ impl RuleEnum {
             Self::TypescriptDotNotation(_) => TypescriptDotNotation::documentation(),
             Self::TypescriptExplicitFunctionReturnType(_) => {
                 TypescriptExplicitFunctionReturnType::documentation()
+            }
+            Self::TypescriptExplicitMemberAccessibility(_) => {
+                TypescriptExplicitMemberAccessibility::documentation()
             }
             Self::TypescriptExplicitModuleBoundaryTypes(_) => {
                 TypescriptExplicitModuleBoundaryTypes::documentation()
@@ -7245,6 +7264,10 @@ impl RuleEnum {
             Self::TypescriptExplicitFunctionReturnType(_) => {
                 TypescriptExplicitFunctionReturnType::config_schema(generator)
                     .or_else(|| TypescriptExplicitFunctionReturnType::schema(generator))
+            }
+            Self::TypescriptExplicitMemberAccessibility(_) => {
+                TypescriptExplicitMemberAccessibility::config_schema(generator)
+                    .or_else(|| TypescriptExplicitMemberAccessibility::schema(generator))
             }
             Self::TypescriptExplicitModuleBoundaryTypes(_) => {
                 TypescriptExplicitModuleBoundaryTypes::config_schema(generator)
@@ -8954,6 +8977,7 @@ impl RuleEnum {
             Self::TypescriptConsistentTypeImports(_) => "typescript",
             Self::TypescriptDotNotation(_) => "typescript",
             Self::TypescriptExplicitFunctionReturnType(_) => "typescript",
+            Self::TypescriptExplicitMemberAccessibility(_) => "typescript",
             Self::TypescriptExplicitModuleBoundaryTypes(_) => "typescript",
             Self::TypescriptNoArrayDelete(_) => "typescript",
             Self::TypescriptNoBaseToString(_) => "typescript",
@@ -10129,6 +10153,11 @@ impl RuleEnum {
             Self::TypescriptExplicitFunctionReturnType(_) => {
                 Ok(Self::TypescriptExplicitFunctionReturnType(
                     TypescriptExplicitFunctionReturnType::from_configuration(value)?,
+                ))
+            }
+            Self::TypescriptExplicitMemberAccessibility(_) => {
+                Ok(Self::TypescriptExplicitMemberAccessibility(
+                    TypescriptExplicitMemberAccessibility::from_configuration(value)?,
                 ))
             }
             Self::TypescriptExplicitModuleBoundaryTypes(_) => {
@@ -11999,6 +12028,7 @@ impl RuleEnum {
             Self::TypescriptConsistentTypeImports(rule) => rule.to_configuration(),
             Self::TypescriptDotNotation(rule) => rule.to_configuration(),
             Self::TypescriptExplicitFunctionReturnType(rule) => rule.to_configuration(),
+            Self::TypescriptExplicitMemberAccessibility(rule) => rule.to_configuration(),
             Self::TypescriptExplicitModuleBoundaryTypes(rule) => rule.to_configuration(),
             Self::TypescriptNoArrayDelete(rule) => rule.to_configuration(),
             Self::TypescriptNoBaseToString(rule) => rule.to_configuration(),
@@ -12727,6 +12757,7 @@ impl RuleEnum {
             Self::TypescriptConsistentTypeImports(rule) => rule.run(node, ctx),
             Self::TypescriptDotNotation(rule) => rule.run(node, ctx),
             Self::TypescriptExplicitFunctionReturnType(rule) => rule.run(node, ctx),
+            Self::TypescriptExplicitMemberAccessibility(rule) => rule.run(node, ctx),
             Self::TypescriptExplicitModuleBoundaryTypes(rule) => rule.run(node, ctx),
             Self::TypescriptNoArrayDelete(rule) => rule.run(node, ctx),
             Self::TypescriptNoBaseToString(rule) => rule.run(node, ctx),
@@ -13451,6 +13482,7 @@ impl RuleEnum {
             Self::TypescriptConsistentTypeImports(rule) => rule.run_once(ctx),
             Self::TypescriptDotNotation(rule) => rule.run_once(ctx),
             Self::TypescriptExplicitFunctionReturnType(rule) => rule.run_once(ctx),
+            Self::TypescriptExplicitMemberAccessibility(rule) => rule.run_once(ctx),
             Self::TypescriptExplicitModuleBoundaryTypes(rule) => rule.run_once(ctx),
             Self::TypescriptNoArrayDelete(rule) => rule.run_once(ctx),
             Self::TypescriptNoBaseToString(rule) => rule.run_once(ctx),
@@ -14189,6 +14221,9 @@ impl RuleEnum {
             Self::TypescriptConsistentTypeImports(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::TypescriptDotNotation(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::TypescriptExplicitFunctionReturnType(rule) => {
+                rule.run_on_jest_node(jest_node, ctx)
+            }
+            Self::TypescriptExplicitMemberAccessibility(rule) => {
                 rule.run_on_jest_node(jest_node, ctx)
             }
             Self::TypescriptExplicitModuleBoundaryTypes(rule) => {
@@ -15001,6 +15036,7 @@ impl RuleEnum {
             Self::TypescriptConsistentTypeImports(rule) => rule.should_run(ctx),
             Self::TypescriptDotNotation(rule) => rule.should_run(ctx),
             Self::TypescriptExplicitFunctionReturnType(rule) => rule.should_run(ctx),
+            Self::TypescriptExplicitMemberAccessibility(rule) => rule.should_run(ctx),
             Self::TypescriptExplicitModuleBoundaryTypes(rule) => rule.should_run(ctx),
             Self::TypescriptNoArrayDelete(rule) => rule.should_run(ctx),
             Self::TypescriptNoBaseToString(rule) => rule.should_run(ctx),
@@ -15772,6 +15808,9 @@ impl RuleEnum {
             Self::TypescriptDotNotation(_) => TypescriptDotNotation::IS_TSGOLINT_RULE,
             Self::TypescriptExplicitFunctionReturnType(_) => {
                 TypescriptExplicitFunctionReturnType::IS_TSGOLINT_RULE
+            }
+            Self::TypescriptExplicitMemberAccessibility(_) => {
+                TypescriptExplicitMemberAccessibility::IS_TSGOLINT_RULE
             }
             Self::TypescriptExplicitModuleBoundaryTypes(_) => {
                 TypescriptExplicitModuleBoundaryTypes::IS_TSGOLINT_RULE
@@ -16790,6 +16829,9 @@ impl RuleEnum {
             Self::TypescriptExplicitFunctionReturnType(_) => {
                 TypescriptExplicitFunctionReturnType::HAS_CONFIG
             }
+            Self::TypescriptExplicitMemberAccessibility(_) => {
+                TypescriptExplicitMemberAccessibility::HAS_CONFIG
+            }
             Self::TypescriptExplicitModuleBoundaryTypes(_) => {
                 TypescriptExplicitModuleBoundaryTypes::HAS_CONFIG
             }
@@ -17668,6 +17710,7 @@ impl RuleEnum {
             Self::TypescriptConsistentTypeImports(rule) => rule.types_info(),
             Self::TypescriptDotNotation(rule) => rule.types_info(),
             Self::TypescriptExplicitFunctionReturnType(rule) => rule.types_info(),
+            Self::TypescriptExplicitMemberAccessibility(rule) => rule.types_info(),
             Self::TypescriptExplicitModuleBoundaryTypes(rule) => rule.types_info(),
             Self::TypescriptNoArrayDelete(rule) => rule.types_info(),
             Self::TypescriptNoBaseToString(rule) => rule.types_info(),
@@ -18392,6 +18435,7 @@ impl RuleEnum {
             Self::TypescriptConsistentTypeImports(rule) => rule.run_info(),
             Self::TypescriptDotNotation(rule) => rule.run_info(),
             Self::TypescriptExplicitFunctionReturnType(rule) => rule.run_info(),
+            Self::TypescriptExplicitMemberAccessibility(rule) => rule.run_info(),
             Self::TypescriptExplicitModuleBoundaryTypes(rule) => rule.run_info(),
             Self::TypescriptNoArrayDelete(rule) => rule.run_info(),
             Self::TypescriptNoBaseToString(rule) => rule.run_info(),
@@ -19149,6 +19193,9 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::TypescriptDotNotation(TypescriptDotNotation::default()),
         RuleEnum::TypescriptExplicitFunctionReturnType(
             TypescriptExplicitFunctionReturnType::default(),
+        ),
+        RuleEnum::TypescriptExplicitMemberAccessibility(
+            TypescriptExplicitMemberAccessibility::default(),
         ),
         RuleEnum::TypescriptExplicitModuleBoundaryTypes(
             TypescriptExplicitModuleBoundaryTypes::default(),
