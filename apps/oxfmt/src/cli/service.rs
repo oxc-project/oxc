@@ -55,7 +55,7 @@ impl FormatService {
                         .with_help("This may be due to the file being a binary or inaccessible."),
                     ],
                 );
-                tx_error.send(diagnostics).unwrap();
+                let _ = tx_error.send(diagnostics);
                 return;
             };
 
@@ -72,7 +72,7 @@ impl FormatService {
                             &source_text,
                             diagnostics,
                         );
-                        tx_error.send(errors).unwrap();
+                        let _ = tx_error.send(errors);
                         return;
                     }
                 };
@@ -91,7 +91,7 @@ impl FormatService {
                                 path.display()
                             ))],
                         );
-                        tx_error.send(diagnostics).unwrap();
+                        let _ = tx_error.send(diagnostics);
                         return;
                     }
                 }
@@ -118,7 +118,7 @@ impl FormatService {
                 }
                 _ => SuccessResult::Unchanged,
             };
-            tx_success.send(result).unwrap();
+            let _ = tx_success.send(result);
         });
     }
 }
