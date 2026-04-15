@@ -110,7 +110,7 @@ function analyzeRuleFile(source, filePath, releaseVersion, repoRoot) {
     }
 
     let endLine = startLine + 1;
-    while (endLine < lines.length && lines[endLine].trim() !== ");") {
+    while (endLine < lines.length && stripTrailingComments(lines[endLine]) !== ");") {
       endLine += 1;
     }
 

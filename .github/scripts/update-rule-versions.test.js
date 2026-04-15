@@ -273,6 +273,30 @@ declare_oxc_lint!(
   assert.match(updatedSource, /version = "1\.61\.0"/);
 });
 
+registerTest("accepts commented declare_oxc_lint terminators", () => {
+  const root = createTempRepo();
+  writeRule(
+    root,
+    "no_debugger.rs",
+    `
+use oxc_macros::declare_oxc_lint;
+
+declare_oxc_lint!(
+    NoDebugger,
+    eslint,
+    correctness,
+    version = "next",
+); // keep note
+`,
+  );
+
+  const report = rewriteNextRuleVersions({ root, releaseVersion: "1.61.0" });
+  const updatedSource = fs.readFileSync(path.join(rulesDir(root), "no_debugger.rs"), "utf8");
+
+  assert.equal(report.updatedRules.length, 1);
+  assert.match(updatedSource, /version = "1\.61\.0"/);
+});
+
 registerTest("supports dry-run without modifying files", () => {
   const root = createTempRepo();
   writeRule(
