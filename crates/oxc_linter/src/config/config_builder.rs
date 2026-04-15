@@ -168,14 +168,14 @@ impl ConfigStoreBuilder {
             }
 
             for path in extends.iter().rev() {
-                if path.starts_with("eslint:") || path.starts_with("plugin:") {
-                    // `eslint:` and `plugin:` named configs are not supported
-                    continue;
-                }
-                // if path does not include a ".", then we will heuristically skip it since it
-                // kind of looks like it might be a named config
-                if !path.to_string_lossy().contains('.') {
-                    continue;
+                let path_str = path.to_string_lossy();
+                // if path does not include a ".", it is likely a named config (e.g., "prettier",
+                // "eslint:recommended", "plugin:unicorn/recommended") rather than a file path.
+                // Oxlint does not support named configs.
+                if !path_str.contains('.') {
+                    return Err(ConfigBuilderError::UnsupportedNamedConfig {
+                        name: path_str.to_string(),
+                    });
                 }
 
                 let path = match root_path {
@@ -746,6 +746,10 @@ pub enum ConfigBuilderError {
         /// The errors that occurred
         errors: Vec<OverrideRulesError>,
     },
+    /// An unsupported named config was found in `extends`.
+    UnsupportedNamedConfig {
+        name: String,
+    },
 }
 
 impl Display for ConfigBuilderError {
@@ -814,6 +818,14 @@ impl Display for ConfigBuilderError {
                     write!(f, "{error}")?;
                 }
                 Ok(())
+            }
+            ConfigBuilderError::UnsupportedNamedConfig { name } => {
+                write!(
+                    f,
+                    "Unsupported named config \"{name}\" in extends. \
+                     Oxlint does not support ESLint shared configs. \
+                     If this is a file path, add a file extension (e.g., \".json\")."
+                )
             }
         }
     }
@@ -1484,23 +1496,35 @@ mod test {
     }
 
     #[test]
-    fn test_not_extends_named_configs() {
-        // For now, test that extending named configs is just ignored
-        let config = config_store_from_str(
-            r#"
-        {
-            "extends": [
-                "next/core-web-vitals",
-                "eslint:recommended",
-                "plugin:@typescript-eslint/strict-type-checked",
-                "prettier",
-                "plugin:unicorn/recommended"
-            ]
+    fn test_errors_on_named_configs() {
+        let cases = [
+            ("prettier", r#"{ "extends": ["prettier"] }"#),
+            ("this-does-not-exist", r#"{ "extends": ["this-does-not-exist"] }"#),
+            ("eslint:recommended", r#"{ "extends": ["eslint:recommended"] }"#),
+            ("plugin:unicorn/recommended", r#"{ "extends": ["plugin:unicorn/recommended"] }"#),
+            ("next/core-web-vitals", r#"{ "extends": ["next/core-web-vitals"] }"#),
+        ];
+
+        for (name, json) in cases {
+            let mut external_plugin_store = ExternalPluginStore::default();
+            let result = ConfigStoreBuilder::from_oxlintrc(
+                true,
+                serde_json::from_str(json).unwrap(),
+                None,
+                &mut external_plugin_store,
+                None,
+            );
+            let err = result.unwrap_err();
+            assert!(
+                matches!(err, ConfigBuilderError::UnsupportedNamedConfig { .. }),
+                "expected UnsupportedNamedConfig for \"{name}\", got: {err}"
+            );
+            let err_msg = err.to_string();
+            assert!(
+                err_msg.contains(name),
+                "error message should contain \"{name}\", got: {err_msg}"
+            );
         }
-        "#,
-        );
-        assert_eq!(config.plugins(), LintPlugins::default());
-        assert!(config.rules().is_empty());
     }
 
     #[test]

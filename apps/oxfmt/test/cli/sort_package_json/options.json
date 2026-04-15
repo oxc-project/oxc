@@ -1,0 +1,5 @@
+[
+  { "args": ["package.json"] },
+  { "args": ["-c", "disabled.json", "package.json"] },
+  { "args": ["-c", "sort_scripts.json", "package.json"] }
+]

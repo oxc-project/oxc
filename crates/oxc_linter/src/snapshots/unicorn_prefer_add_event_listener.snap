@@ -7,36 +7,42 @@ source: crates/oxc_linter/src/tester.rs
  1 │ foo.onclick = () => {}
    ·     ───────
    ╰────
+  help: `addEventListener()` can register multiple handlers and accepts options such as `{ once: true }`; assigning to `on<event>` replaces any previously registered handler.
 
   ⚠ eslint-plugin-unicorn(prefer-add-event-listener): Prefer `addEventListener()` over their `on`-function counterparts.
    ╭─[prefer_add_event_listener.tsx:1:5]
  1 │ foo.onclick = 1
    ·     ───────
    ╰────
+  help: `addEventListener()` can register multiple handlers and accepts options such as `{ once: true }`; assigning to `on<event>` replaces any previously registered handler.
 
   ⚠ eslint-plugin-unicorn(prefer-add-event-listener): Prefer `addEventListener()` over their `on`-function counterparts.
    ╭─[prefer_add_event_listener.tsx:1:9]
  1 │ foo.bar.onclick = onClick
    ·         ───────
    ╰────
+  help: `addEventListener()` can register multiple handlers and accepts options such as `{ once: true }`; assigning to `on<event>` replaces any previously registered handler.
 
   ⚠ eslint-plugin-unicorn(prefer-add-event-listener): Prefer `addEventListener()` over their `on`-function counterparts.
    ╭─[prefer_add_event_listener.tsx:1:23]
  1 │ const bar = null; foo.onclick = bar;
    ·                       ───────
    ╰────
+  help: `addEventListener()` can register multiple handlers and accepts options such as `{ once: true }`; assigning to `on<event>` replaces any previously registered handler.
 
   ⚠ eslint-plugin-unicorn(prefer-add-event-listener): Prefer `addEventListener()` over their `on`-function counterparts.
    ╭─[prefer_add_event_listener.tsx:1:5]
  1 │ foo.onkeydown = () => {}
    ·     ─────────
    ╰────
+  help: `addEventListener()` can register multiple handlers and accepts options such as `{ once: true }`; assigning to `on<event>` replaces any previously registered handler.
 
   ⚠ eslint-plugin-unicorn(prefer-add-event-listener): Prefer `addEventListener()` over their `on`-function counterparts.
    ╭─[prefer_add_event_listener.tsx:1:5]
  1 │ foo.ondragend = () => {}
    ·     ─────────
    ╰────
+  help: `addEventListener()` can register multiple handlers and accepts options such as `{ once: true }`; assigning to `on<event>` replaces any previously registered handler.
 
   ⚠ eslint-plugin-unicorn(prefer-add-event-listener): Prefer `addEventListener()` over their `on`-function counterparts.
    ╭─[prefer_add_event_listener.tsx:1:5]
@@ -44,42 +50,49 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───────
  2 │                 console.log(e);
    ╰────
+  help: `addEventListener()` can register multiple handlers and accepts options such as `{ once: true }`; assigning to `on<event>` replaces any previously registered handler.
 
   ⚠ eslint-plugin-unicorn(prefer-add-event-listener): Prefer `addEventListener()` over their `on`-function counterparts.
    ╭─[prefer_add_event_listener.tsx:1:5]
  1 │ foo.onclick = null
    ·     ───────
    ╰────
+  help: `addEventListener()` can register multiple handlers and accepts options such as `{ once: true }`; assigning to `on<event>` replaces any previously registered handler.
 
   ⚠ eslint-plugin-unicorn(prefer-add-event-listener): Prefer `addEventListener()` over their `on`-function counterparts.
    ╭─[prefer_add_event_listener.tsx:1:5]
  1 │ foo.onclick = undefined
    ·     ───────
    ╰────
+  help: `addEventListener()` can register multiple handlers and accepts options such as `{ once: true }`; assigning to `on<event>` replaces any previously registered handler.
 
   ⚠ eslint-plugin-unicorn(prefer-add-event-listener): Prefer `addEventListener()` over their `on`-function counterparts.
    ╭─[prefer_add_event_listener.tsx:1:8]
  1 │ window.onbeforeunload = null
    ·        ──────────────
    ╰────
+  help: `addEventListener()` can register multiple handlers and accepts options such as `{ once: true }`; assigning to `on<event>` replaces any previously registered handler.
 
   ⚠ eslint-plugin-unicorn(prefer-add-event-listener): Prefer `addEventListener()` over their `on`-function counterparts.
    ╭─[prefer_add_event_listener.tsx:1:8]
  1 │ window.onbeforeunload = undefined
    ·        ──────────────
    ╰────
+  help: `addEventListener()` can register multiple handlers and accepts options such as `{ once: true }`; assigning to `on<event>` replaces any previously registered handler.
 
   ⚠ eslint-plugin-unicorn(prefer-add-event-listener): Prefer `addEventListener()` over their `on`-function counterparts.
    ╭─[prefer_add_event_listener.tsx:1:8]
  1 │ window.onbeforeunload = foo
    ·        ──────────────
    ╰────
+  help: `addEventListener()` can register multiple handlers and accepts options such as `{ once: true }`; assigning to `on<event>` replaces any previously registered handler.
 
   ⚠ eslint-plugin-unicorn(prefer-add-event-listener): Prefer `addEventListener()` over their `on`-function counterparts.
    ╭─[prefer_add_event_listener.tsx:1:8]
  1 │ window.onbeforeunload = () => 'foo'
    ·        ──────────────
    ╰────
+  help: `addEventListener()` can register multiple handlers and accepts options such as `{ once: true }`; assigning to `on<event>` replaces any previously registered handler.
 
   ⚠ eslint-plugin-unicorn(prefer-add-event-listener): Prefer `addEventListener()` over their `on`-function counterparts.
    ╭─[prefer_add_event_listener.tsx:1:8]
@@ -87,6 +100,7 @@ source: crates/oxc_linter/src/tester.rs
    ·        ──────────────
  2 │                 return bar;
    ╰────
+  help: `addEventListener()` can register multiple handlers and accepts options such as `{ once: true }`; assigning to `on<event>` replaces any previously registered handler.
 
   ⚠ eslint-plugin-unicorn(prefer-add-event-listener): Prefer `addEventListener()` over their `on`-function counterparts.
    ╭─[prefer_add_event_listener.tsx:1:8]
@@ -94,6 +108,7 @@ source: crates/oxc_linter/src/tester.rs
    ·        ──────────────
  2 │                 return 'bar';
    ╰────
+  help: `addEventListener()` can register multiple handlers and accepts options such as `{ once: true }`; assigning to `on<event>` replaces any previously registered handler.
 
   ⚠ eslint-plugin-unicorn(prefer-add-event-listener): Prefer `addEventListener()` over their `on`-function counterparts.
    ╭─[prefer_add_event_listener.tsx:1:8]
@@ -101,6 +116,7 @@ source: crates/oxc_linter/src/tester.rs
    ·        ──────────────
  2 │                 return;
    ╰────
+  help: `addEventListener()` can register multiple handlers and accepts options such as `{ once: true }`; assigning to `on<event>` replaces any previously registered handler.
 
   ⚠ eslint-plugin-unicorn(prefer-add-event-listener): Prefer `addEventListener()` over their `on`-function counterparts.
    ╭─[prefer_add_event_listener.tsx:1:8]
@@ -108,6 +124,7 @@ source: crates/oxc_linter/src/tester.rs
    ·        ──────────────
  2 │                 (() => {
    ╰────
+  help: `addEventListener()` can register multiple handlers and accepts options such as `{ once: true }`; assigning to `on<event>` replaces any previously registered handler.
 
   ⚠ eslint-plugin-unicorn(prefer-add-event-listener): Prefer `addEventListener()` over their `on`-function counterparts.
    ╭─[prefer_add_event_listener.tsx:1:8]
@@ -115,6 +132,7 @@ source: crates/oxc_linter/src/tester.rs
    ·        ──────────────
  2 │                 console.log(e);
    ╰────
+  help: `addEventListener()` can register multiple handlers and accepts options such as `{ once: true }`; assigning to `on<event>` replaces any previously registered handler.
 
   ⚠ eslint-plugin-unicorn(prefer-add-event-listener): Prefer `addEventListener()` over their `on`-function counterparts.
    ╭─[prefer_add_event_listener.tsx:2:17]
@@ -122,6 +140,7 @@ source: crates/oxc_linter/src/tester.rs
  2 │             foo.onerror = () => {};
    ·                 ───────
    ╰────
+  help: `addEventListener()` can register multiple handlers and accepts options such as `{ once: true }`; assigning to `on<event>` replaces any previously registered handler.
 
   ⚠ eslint-plugin-unicorn(prefer-add-event-listener): Prefer `addEventListener()` over their `on`-function counterparts.
    ╭─[prefer_add_event_listener.tsx:2:17]
@@ -129,6 +148,7 @@ source: crates/oxc_linter/src/tester.rs
  2 │             foo.onerror = () => {};
    ·                 ───────
    ╰────
+  help: `addEventListener()` can register multiple handlers and accepts options such as `{ once: true }`; assigning to `on<event>` replaces any previously registered handler.
 
   ⚠ eslint-plugin-unicorn(prefer-add-event-listener): Prefer `addEventListener()` over their `on`-function counterparts.
    ╭─[prefer_add_event_listener.tsx:1:5]
@@ -136,6 +156,7 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───────
  2 │             function bar() {
    ╰────
+  help: `addEventListener()` can register multiple handlers and accepts options such as `{ once: true }`; assigning to `on<event>` replaces any previously registered handler.
 
   ⚠ eslint-plugin-unicorn(prefer-add-event-listener): Prefer `addEventListener()` over their `on`-function counterparts.
    ╭─[prefer_add_event_listener.tsx:4:21]
@@ -144,93 +165,109 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ───────
  5 │             }
    ╰────
+  help: `addEventListener()` can register multiple handlers and accepts options such as `{ once: true }`; assigning to `on<event>` replaces any previously registered handler.
 
   ⚠ eslint-plugin-unicorn(prefer-add-event-listener): Prefer `addEventListener()` over their `on`-function counterparts.
    ╭─[prefer_add_event_listener.tsx:1:15]
  1 │ myWorker.port.onmessage = function(e) {}
    ·               ─────────
    ╰────
+  help: `addEventListener()` can register multiple handlers and accepts options such as `{ once: true }`; assigning to `on<event>` replaces any previously registered handler.
 
   ⚠ eslint-plugin-unicorn(prefer-add-event-listener): Prefer `addEventListener()` over their `on`-function counterparts.
    ╭─[prefer_add_event_listener.tsx:1:9]
  1 │ ((foo)).onclick = ((0, listener))
    ·         ───────
    ╰────
+  help: `addEventListener()` can register multiple handlers and accepts options such as `{ once: true }`; assigning to `on<event>` replaces any previously registered handler.
 
   ⚠ eslint-plugin-unicorn(prefer-add-event-listener): Prefer `addEventListener()` over their `on`-function counterparts.
    ╭─[prefer_add_event_listener.tsx:1:8]
  1 │ window.onload = window.onunload = function() {};
    ·        ──────
    ╰────
+  help: `addEventListener()` can register multiple handlers and accepts options such as `{ once: true }`; assigning to `on<event>` replaces any previously registered handler.
 
   ⚠ eslint-plugin-unicorn(prefer-add-event-listener): Prefer `addEventListener()` over their `on`-function counterparts.
    ╭─[prefer_add_event_listener.tsx:1:24]
  1 │ window.onload = window.onunload = function() {};
    ·                        ────────
    ╰────
+  help: `addEventListener()` can register multiple handlers and accepts options such as `{ once: true }`; assigning to `on<event>` replaces any previously registered handler.
 
   ⚠ eslint-plugin-unicorn(prefer-add-event-listener): Prefer `addEventListener()` over their `on`-function counterparts.
    ╭─[prefer_add_event_listener.tsx:1:8]
  1 │ window.onunload ??= function() {};
    ·        ────────
    ╰────
+  help: `addEventListener()` can register multiple handlers and accepts options such as `{ once: true }`; assigning to `on<event>` replaces any previously registered handler.
 
   ⚠ eslint-plugin-unicorn(prefer-add-event-listener): Prefer `addEventListener()` over their `on`-function counterparts.
    ╭─[prefer_add_event_listener.tsx:1:8]
  1 │ window.onunload ||= function() {};
    ·        ────────
    ╰────
+  help: `addEventListener()` can register multiple handlers and accepts options such as `{ once: true }`; assigning to `on<event>` replaces any previously registered handler.
 
   ⚠ eslint-plugin-unicorn(prefer-add-event-listener): Prefer `addEventListener()` over their `on`-function counterparts.
    ╭─[prefer_add_event_listener.tsx:1:8]
  1 │ window.onunload += function() {};
    ·        ────────
    ╰────
+  help: `addEventListener()` can register multiple handlers and accepts options such as `{ once: true }`; assigning to `on<event>` replaces any previously registered handler.
 
   ⚠ eslint-plugin-unicorn(prefer-add-event-listener): Prefer `addEventListener()` over their `on`-function counterparts.
    ╭─[prefer_add_event_listener.tsx:1:5]
  1 │ foo.onclick = true
    ·     ───────
    ╰────
+  help: `addEventListener()` can register multiple handlers and accepts options such as `{ once: true }`; assigning to `on<event>` replaces any previously registered handler.
 
   ⚠ eslint-plugin-unicorn(prefer-add-event-listener): Prefer `addEventListener()` over their `on`-function counterparts.
    ╭─[prefer_add_event_listener.tsx:1:5]
  1 │ foo.onclick = 'bar'
    ·     ───────
    ╰────
+  help: `addEventListener()` can register multiple handlers and accepts options such as `{ once: true }`; assigning to `on<event>` replaces any previously registered handler.
 
   ⚠ eslint-plugin-unicorn(prefer-add-event-listener): Prefer `addEventListener()` over their `on`-function counterparts.
    ╭─[prefer_add_event_listener.tsx:1:5]
  1 │ foo.onclick = `bar`
    ·     ───────
    ╰────
+  help: `addEventListener()` can register multiple handlers and accepts options such as `{ once: true }`; assigning to `on<event>` replaces any previously registered handler.
 
   ⚠ eslint-plugin-unicorn(prefer-add-event-listener): Prefer `addEventListener()` over their `on`-function counterparts.
    ╭─[prefer_add_event_listener.tsx:1:5]
  1 │ foo.onclick = {}
    ·     ───────
    ╰────
+  help: `addEventListener()` can register multiple handlers and accepts options such as `{ once: true }`; assigning to `on<event>` replaces any previously registered handler.
 
   ⚠ eslint-plugin-unicorn(prefer-add-event-listener): Prefer `addEventListener()` over their `on`-function counterparts.
    ╭─[prefer_add_event_listener.tsx:1:5]
  1 │ foo.onclick = []
    ·     ───────
    ╰────
+  help: `addEventListener()` can register multiple handlers and accepts options such as `{ once: true }`; assigning to `on<event>` replaces any previously registered handler.
 
   ⚠ eslint-plugin-unicorn(prefer-add-event-listener): Prefer `addEventListener()` over their `on`-function counterparts.
    ╭─[prefer_add_event_listener.tsx:1:5]
  1 │ foo.onclick = void 0
    ·     ───────
    ╰────
+  help: `addEventListener()` can register multiple handlers and accepts options such as `{ once: true }`; assigning to `on<event>` replaces any previously registered handler.
 
   ⚠ eslint-plugin-unicorn(prefer-add-event-listener): Prefer `addEventListener()` over their `on`-function counterparts.
    ╭─[prefer_add_event_listener.tsx:1:5]
  1 │ foo.onclick = new Handler()
    ·     ───────
    ╰────
+  help: `addEventListener()` can register multiple handlers and accepts options such as `{ once: true }`; assigning to `on<event>` replaces any previously registered handler.
 
   ⚠ eslint-plugin-unicorn(prefer-add-event-listener): Prefer `addEventListener()` over their `on`-function counterparts.
    ╭─[prefer_add_event_listener.tsx:1:21]
  1 │ (el as HTMLElement).onmouseenter = onAnchorMouseEnter;
    ·                     ────────────
    ╰────
+  help: `addEventListener()` can register multiple handlers and accepts options such as `{ once: true }`; assigning to `on<event>` replaces any previously registered handler.

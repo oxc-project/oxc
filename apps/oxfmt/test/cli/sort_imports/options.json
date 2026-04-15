@@ -1,0 +1,4 @@
+[
+  { "cwd": "custom_groups", "args": ["--check", "input.ts"] },
+  { "cwd": "custom_groups_selector_modifiers", "args": ["--check", "input.ts"] }
+]

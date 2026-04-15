@@ -126,11 +126,12 @@ impl Rule for ValidExpectInPromise {
             return;
         };
 
-        if parsed_jest_fn
+        let is_test_block = parsed_jest_fn
             .kind
             .to_general()
-            .is_some_and(|test_kind| matches!(test_kind, JestGeneralFnKind::Describe))
-        {
+            .is_some_and(|test_kind| matches!(test_kind, JestGeneralFnKind::Test));
+
+        if !is_test_block {
             return;
         }
 

@@ -1,0 +1,9 @@
+[
+  { "args": ["."] },
+  { "args": ["--config", ".oxfmtrc.json", "."] },
+  { "args": ["--check", "**/*.js"] },
+  { "cwd": "no-root-config", "args": ["."] },
+  { "cwd": "prettierignore-with-nested", "args": ["."] },
+  { "cwd": "empty-child-config", "args": ["."] },
+  { "cwd": "with-ignore-patterns", "args": ["."] }
+]
