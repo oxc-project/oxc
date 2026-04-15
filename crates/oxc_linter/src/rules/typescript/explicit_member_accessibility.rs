@@ -31,7 +31,7 @@ enum AccessibilityLevel {
     Off,
 }
 
-#[derive(Debug, Clone, Deserialize, JsonSchema)]
+#[derive(Default, Debug, Clone, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 struct AccessibilityOverrides {
     /// Which member accessibility modifier requirements to apply for accessors (getters/setters).
@@ -44,18 +44,6 @@ struct AccessibilityOverrides {
     parameter_properties: Option<AccessibilityLevel>,
     /// Which member accessibility modifier requirements to apply for properties.
     properties: Option<AccessibilityLevel>,
-}
-
-impl Default for AccessibilityOverrides {
-    fn default() -> Self {
-        Self {
-            accessors: None,
-            constructors: None,
-            methods: None,
-            parameter_properties: None,
-            properties: None,
-        }
-    }
 }
 
 #[derive(Debug, Default, Clone, Deserialize)]
