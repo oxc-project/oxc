@@ -674,3 +674,48 @@ fn test_property_write_side_effects() {
         CompressOptions { unused: CompressOptionsUnused::Remove, ..CompressOptions::smallest() };
     test_same_options("function A() {} A.from = () => {};", &default_opts);
 }
+
+#[test]
+fn test_update_expression_respects_property_read_side_effects() {
+    // `obj.prop++` performs an implicit read, so it's side-effectful when
+    // `property_read_side_effects` is `All` — even if writes are free.
+    let options = CompressOptions {
+        unused: CompressOptionsUnused::Remove,
+        treeshake: TreeShakeOptions {
+            property_write_side_effects: false,
+            property_read_side_effects: PropertyReadSideEffects::All,
+            ..TreeShakeOptions::default()
+        },
+        ..CompressOptions::smallest()
+    };
+
+    test_options(
+        "import { counter } from './c'; counter.value++; console.log(counter);",
+        "import { counter } from './c'; counter.value++, console.log(counter);",
+        &options,
+    );
+    test_options(
+        "import { counter } from './c'; ++counter.count; console.log(counter);",
+        "import { counter } from './c'; ++counter.count, console.log(counter);",
+        &options,
+    );
+    test_options(
+        "import { counter } from './c'; counter['another']--; console.log(counter);",
+        "import { counter } from './c'; counter.another--, console.log(counter);",
+        &options,
+    );
+
+    // Static block runs on class evaluation.
+    test_options(
+        "import { counter } from './c'; (class { static { ++counter.count; } }); console.log(counter);",
+        "import { counter } from './c'; (class { static { ++counter.count; } }), console.log(counter);",
+        &options,
+    );
+
+    // Computed key runs on class evaluation; class body is unused, so only the key's side effect is extracted.
+    test_options(
+        "import { counter } from './c'; class A { [counter.another++] = 123; } console.log(counter);",
+        "import { counter } from './c'; counter.another++, console.log(counter);",
+        &options,
+    );
+}

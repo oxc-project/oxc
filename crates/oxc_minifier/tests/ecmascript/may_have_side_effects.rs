@@ -1450,12 +1450,12 @@ fn test_property_write_side_effects_support() {
     test_with_ctx("a['b'] += 1", &no_write_ctx, true);
     test_with_ctx("a.#b += 1", &no_write_ctx, true);
 
-    // Update expressions have an implicit read
-    test_with_ctx("a.b++", &no_write_ctx, false);
-    test_with_ctx("a.b--", &no_write_ctx, false);
-    test_with_ctx("++a.b", &no_write_ctx, false);
-    test_with_ctx("a['b']++", &no_write_ctx, false);
-    test_with_ctx("a.#b++", &no_write_ctx, false);
+    // Update expressions have an implicit read — side-effectful when reads have side effects
+    test_with_ctx("a.b++", &no_write_ctx, true);
+    test_with_ctx("a.b--", &no_write_ctx, true);
+    test_with_ctx("++a.b", &no_write_ctx, true);
+    test_with_ctx("a['b']++", &no_write_ctx, true);
+    test_with_ctx("a.#b++", &no_write_ctx, true);
 
     // Compound assignments and updates always have side effects due to implicit coercions
     // (ToPrimitive/ToNumeric), even with both write and read side effects off
@@ -1466,11 +1466,11 @@ fn test_property_write_side_effects_support() {
     };
     test_with_ctx("a.b = 1", &no_side_effects_ctx, false); // simple assign is free
     test_with_ctx("a.b += 1", &no_side_effects_ctx, true); // compound: ToNumeric coercion
-    test_with_ctx("a.b++", &no_side_effects_ctx, false); // update: ToNumeric coercion
+    test_with_ctx("a.b++", &no_side_effects_ctx, true); // update: ToNumeric coercion
     test_with_ctx("a['b'] += 1", &no_side_effects_ctx, true);
-    test_with_ctx("a['b']++", &no_side_effects_ctx, false);
+    test_with_ctx("a['b']++", &no_side_effects_ctx, true);
     test_with_ctx("a.#b += 1", &no_side_effects_ctx, true);
-    test_with_ctx("a.#b++", &no_side_effects_ctx, false);
+    test_with_ctx("a.#b++", &no_side_effects_ctx, true);
 
     // Sub-expression side effects still propagate
     test_with_ctx("(foo()).b = 1", &no_side_effects_ctx, true);
