@@ -199,6 +199,7 @@ function rewriteNextRuleVersions({ root, releaseVersion, dryRun = false }) {
   }
 
   const report = { updatedRules: [], skippedNurseryRules: [] };
+  const pendingWrites = [];
 
   for (const filePath of collectRuleFiles(rulesRoot, repoRoot)) {
     const source = fs.readFileSync(filePath, "utf8");
@@ -211,7 +212,13 @@ function rewriteNextRuleVersions({ root, releaseVersion, dryRun = false }) {
     report.skippedNurseryRules.push(...fileReport.skippedNurseryRules);
 
     if (!dryRun && fileReport.updatedRules.length > 0) {
-      fs.writeFileSync(filePath, fileReport.updatedSource);
+      pendingWrites.push({ filePath, updatedSource: fileReport.updatedSource });
+    }
+  }
+
+  if (!dryRun) {
+    for (const pendingWrite of pendingWrites) {
+      fs.writeFileSync(pendingWrite.filePath, pendingWrite.updatedSource);
     }
   }
 

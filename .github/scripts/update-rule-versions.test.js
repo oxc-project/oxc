@@ -298,6 +298,46 @@ declare_oxc_lint!(
   assert.match(sourceAfterDryRun, /version = "next"/);
 });
 
+registerTest("does not persist earlier rewrites if a later file fails validation", () => {
+  const root = createTempRepo();
+  writeRule(
+    root,
+    "a_valid.rs",
+    `
+use oxc_macros::declare_oxc_lint;
+
+declare_oxc_lint!(
+    RuleA,
+    eslint,
+    correctness,
+    version = "next",
+);
+`,
+  );
+  writeRule(
+    root,
+    "z_invalid.rs",
+    `
+use oxc_macros::declare_oxc_lint;
+
+declare_oxc_lint!(
+    RuleZ,
+    eslint,
+    made_up_category,
+    version = "next",
+);
+`,
+  );
+
+  assert.throws(
+    () => rewriteNextRuleVersions({ root, releaseVersion: "1.61.0" }),
+    /unknown rule category `made_up_category`/,
+  );
+
+  const sourceAfterFailure = fs.readFileSync(path.join(rulesDir(root), "a_valid.rs"), "utf8");
+  assert.match(sourceAfterFailure, /version = "next"/);
+});
+
 registerTest("fails if version next is outside a declare_oxc_lint block", () => {
   const root = createTempRepo();
   writeRule(
