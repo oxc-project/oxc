@@ -9,7 +9,6 @@ mod external_formatter;
 #[cfg(feature = "napi")]
 mod js_config;
 
-#[cfg(feature = "napi")]
 pub use config::all_config_file_names;
 #[cfg(feature = "napi")]
 pub use config::resolve_options_from_value;

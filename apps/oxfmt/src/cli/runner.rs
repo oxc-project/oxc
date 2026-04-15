@@ -7,7 +7,7 @@ use super::{
     reporter::DefaultReporter,
     result::CliRunResult,
     service::{FormatService, SuccessResult},
-    walk::Walk,
+    walk::{FormatEntry, ScopedWalker, resolve_ignore_paths},
 };
 #[cfg(feature = "napi")]
 use crate::core::JsConfigLoaderCb;
@@ -75,10 +75,7 @@ impl CliRunner {
         };
         let num_of_threads = rayon::current_num_threads();
 
-        // Find and load config file
-        // NOTE: Currently, we only load single config file.
-        // - from `--config` if specified
-        // - else, search nearest config file from cwd upwards
+        // Find and load root config file
         let editorconfig_path = resolve_editorconfig_path(&cwd);
         let mut config_resolver = match ConfigResolver::from_config(
             &cwd,
@@ -126,15 +123,9 @@ impl CliRunner {
             }
         }
 
-        let walker = match Walk::build(
-            &cwd,
-            &paths,
-            &ignore_options.ignore_path,
-            ignore_options.with_node_modules,
-            config_resolver.config_dir(),
-            &ignore_patterns,
-        ) {
-            Ok(walker) => walker,
+        // Resolve ignore paths early to validate before walk starts
+        let resolved_ignore_paths = match resolve_ignore_paths(&cwd, &ignore_options.ignore_path) {
+            Ok(paths) => paths,
             Err(err) => {
                 utils::print_and_flush(
                     stderr,
@@ -144,8 +135,8 @@ impl CliRunner {
             }
         };
 
-        // Get the receiver for streaming entries
-        let rx_entry = walker.stream_entries();
+        // Shared channel for format entries from all scopes
+        let (tx_entry, rx_entry) = mpsc::channel::<FormatEntry>();
         // Collect format results (changed paths or unchanged count)
         let (tx_success, rx_success) = mpsc::channel();
         // Diagnostic from formatting service
@@ -157,19 +148,42 @@ impl CliRunner {
             utils::print_and_flush(stdout, "\n");
         }
 
+        let scoped_walker = ScopedWalker::new(cwd.clone(), &paths);
+
         // Create `SourceFormatter` instance
         let source_formatter = SourceFormatter::new(num_of_threads);
         #[cfg(feature = "napi")]
         let source_formatter = source_formatter.with_external_formatter(self.external_formatter);
 
-        let no_config = config_resolver.config_dir().is_none() && editorconfig_path.is_none();
-
-        // Spawn a thread to run formatting service with streaming entries
-        rayon::spawn(move || {
-            let format_service =
-                FormatService::new(cwd, format_mode, source_formatter, config_resolver);
+        // Spawn formatting service on a dedicated thread so it doesn't occupy the rayon pool.
+        // It just blocks on `rx_entry` waiting for entries; `par_bridge()` inside still uses rayon.
+        std::thread::spawn(move || {
+            let format_service = FormatService::new(cwd, format_mode, source_formatter);
             format_service.run_streaming(rx_entry, &tx_error, &tx_success);
         });
+
+        // Run scoped walks (root + nested) — sends entries to `tx_entry`
+        let any_config_found = match scoped_walker.run(
+            config_resolver,
+            &resolved_ignore_paths,
+            &ignore_patterns,
+            ignore_options.with_node_modules,
+            // Nested config detection is disabled when `--config` is explicitly specified
+            config_options.config.is_none(),
+            editorconfig_path.as_deref(),
+            #[cfg(feature = "napi")]
+            self.js_config_loader.as_ref(),
+            &tx_entry,
+        ) {
+            Ok(found) => found,
+            Err(err) => {
+                drop(tx_entry);
+                utils::print_and_flush(stderr, &format!("Failed to parse configuration.\n{err}\n"));
+                return CliRunResult::InvalidOptionConfig;
+            }
+        };
+        // Drop sender so the formatting service knows no more entries are coming
+        drop(tx_entry);
 
         // Collect results and separate changed paths from unchanged count
         let mut changed_paths: Vec<String> = vec![];
@@ -204,7 +218,7 @@ impl CliRunner {
                 ),
             );
             // Config stats: only show when no config is found
-            if no_config {
+            if !any_config_found && editorconfig_path.is_none() {
                 #[cfg(feature = "napi")]
                 let hint = "No config found, using defaults. Please add a config file or try `oxfmt --init` if needed.\n";
                 #[cfg(not(feature = "napi"))]

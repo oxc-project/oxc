@@ -45,7 +45,7 @@ Checking formatting...
 nested/deep/test.js (<variable>ms)
 
 Format issues found in above 1 files. Run without \`--check\` to fix.
-Finished in <variable>ms on 1 files using 1 threads.
+Finished in <variable>ms on 2 files using 1 threads.
 --- STDERR ---------
 
 --------------------"

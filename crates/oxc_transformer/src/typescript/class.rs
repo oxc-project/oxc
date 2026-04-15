@@ -90,13 +90,27 @@ impl<'a> TypeScript<'a> {
     /// we don't need extra transformation for static properties, the output is the same as instance properties
     /// transformation, and the greatest advantage is we don't need to care about `this` usage in static block.
     pub(super) fn transform_class_fields(&self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
+        // When any non-private instance field has an initializer, all instance field
+        // initializers (including private) must be hoisted to the constructor to preserve
+        // execution order. This matches TypeScript's `WillHoistInitializersToConstructor`:
+        // https://github.com/microsoft/TypeScript/blob/7b8cb3bdf8/src/compiler/transformers/classFields.ts#L339
+        let will_hoist_initializers_to_constructor = class.body.body.iter().any(|e| {
+            matches!(e, ClassElement::PropertyDefinition(prop)
+                if !prop.r#static && !prop.declare && !prop.key.is_private_identifier() && prop.value.is_some()
+            )
+        });
+
         let mut constructor = None;
         let mut property_assignments = Vec::new();
         let mut computed_key_assignments = Vec::new();
         for element in &mut class.body.body {
             match element {
-                // `set_public_class_fields: true` only needs to transform non-private class fields.
-                ClassElement::PropertyDefinition(prop) if !prop.key.is_private_identifier() => {
+                // Skip static private properties — converting them to static blocks
+                // would lose the private field declaration.
+                ClassElement::PropertyDefinition(prop)
+                    if !prop.key.is_private_identifier()
+                        || (!prop.r#static && will_hoist_initializers_to_constructor) =>
+                {
                     if let Some(value) = prop.value.take() {
                         let assignment = self.convert_property_definition(
                             &mut prop.key,
@@ -283,8 +297,15 @@ impl<'a> TypeScript<'a> {
             PropertyKey::StaticIdentifier(ident) => {
                 create_this_property_access(SPAN, ident.name, ctx)
             }
-            PropertyKey::PrivateIdentifier(_) => {
-                unreachable!("PrivateIdentifier is skipped in transform_class_fields");
+            PropertyKey::PrivateIdentifier(ident) => {
+                // Accessor backing fields: `this.#prop = value`
+                let ident = ctx.ast.private_identifier(SPAN, ident.name);
+                ctx.ast.member_expression_private_field_expression(
+                    SPAN,
+                    ctx.ast.expression_this(SPAN),
+                    ident,
+                    false,
+                )
             }
             key @ match_expression!(PropertyKey) => {
                 let key = key.to_expression_mut();

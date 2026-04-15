@@ -14,7 +14,7 @@ import { dirname, join } from "node:path";
 const TEST262_SHA = "ff0d1611d3d5084dabf7b6887c45a7321ec1b531";
 const BABEL_SHA = "91b4ce32d2f992ada4dd9bf5ed87bfaa9e7c5fe0";
 const TYPESCRIPT_SHA = "7b8cb3bdf82f400642b73173f941335775d6f730";
-const PRETTIER_SHA = "b31557cf331a02acf83e7e29d1001b070189a0d9";
+const PRETTIER_SHA = "d7108a79ec745c04292aabf22c4c1adbd690b191";
 const ESTREE_CONFORMANCE_SHA = "d5e48e748f9a14e46e18a8ad25ba5ac7ba78307c";
 const NODE_COMPAT_TABLE_SHA = "499beb6f1daa36f10c26b85a7f3ec3b3448ded23";
 
