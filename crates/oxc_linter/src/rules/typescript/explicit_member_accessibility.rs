@@ -228,20 +228,13 @@ impl ExplicitMemberAccessibility {
             return;
         }
 
-        let (check, node_type) = match method.kind {
-            MethodDefinitionKind::Constructor => {
-                (self.overrides.constructors.unwrap_or(self.accessibility), "method definition")
-            }
-            MethodDefinitionKind::Get => {
-                (self.overrides.accessors.unwrap_or(self.accessibility), "get property accessor")
-            }
-            MethodDefinitionKind::Set => {
-                (self.overrides.accessors.unwrap_or(self.accessibility), "set property accessor")
-            }
-            MethodDefinitionKind::Method => {
-                (self.overrides.methods.unwrap_or(self.accessibility), "method definition")
-            }
+        let check = match method.kind {
+            MethodDefinitionKind::Constructor => self.overrides.constructors,
+            MethodDefinitionKind::Get | MethodDefinitionKind::Set => self.overrides.accessors,
+            MethodDefinitionKind::Method => self.overrides.methods,
         };
+
+        let check = check.unwrap_or(self.accessibility);
 
         let method_name = method.key.name().unwrap_or(Cow::Borrowed(""));
 
@@ -254,7 +247,7 @@ impl ExplicitMemberAccessibility {
         Self::check_member_accessibility(
             check,
             method.accessibility,
-            node_type,
+            method_definition_kind_to_str(method.kind),
             &method_name,
             method.span,
             method.key.span(),
@@ -429,6 +422,14 @@ fn find_public_spans(source: &str, search_start: u32) -> (Span, Span) {
         }
     }
     (keyword_span, Span::new(start, end))
+}
+
+fn method_definition_kind_to_str(kind: MethodDefinitionKind) -> &'static str {
+    match kind {
+        MethodDefinitionKind::Method | MethodDefinitionKind::Constructor => "method definition",
+        MethodDefinitionKind::Get => "get property accessor",
+        MethodDefinitionKind::Set => "set property accessor",
+    }
 }
 
 #[test]
