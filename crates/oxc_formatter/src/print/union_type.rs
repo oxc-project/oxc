@@ -50,17 +50,11 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSUnionType<'a>> {
                         || (self.types.len() == 1
                             && !matches!(
                                 self.types.first(),
-                                Some(
-                                    TSType::TSParenthesizedType(_) | TSType::TSUnionType(_)
-                                )
+                                Some(TSType::TSParenthesizedType(_) | TSType::TSUnionType(_))
                             )
-                            && self
-                                .types
-                                .first()
-                                .is_some_and(|first| {
-                                    f.comments()
-                                        .has_leading_own_line_comment(first.span().start)
-                                })));
+                            && self.types.first().is_some_and(|first| {
+                                f.comments().has_leading_own_line_comment(first.span().start)
+                            })));
             if !has_alias_level_own_line_comments {
                 return format_union_types(self.types(), Span::default(), true, f);
             }
@@ -92,13 +86,9 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSUnionType<'a>> {
             && !matches!(
                 self.types.first(),
                 Some(TSType::TSParenthesizedType(_) | TSType::TSUnionType(_))
-            )
-        {
+            ) {
             f.context().comments().comments_before(
-                self.types
-                    .first()
-                    .map(|t| t.span().start)
-                    .unwrap_or(self.span().start),
+                self.types.first().map(|t| t.span().start).unwrap_or(self.span().start),
             )
         } else {
             f.context().comments().comments_before(self.span().start)
