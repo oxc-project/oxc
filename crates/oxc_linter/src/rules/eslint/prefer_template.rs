@@ -226,8 +226,7 @@ fn has_string_literal(node: &Expression) -> bool {
         Expression::BinaryExpression(binary) if binary.operator == BinaryOperator::Addition => {
             has_string_literal(&binary.right) || has_string_literal(&binary.left)
         }
-        Expression::StringLiteral(_) | Expression::TemplateLiteral(_) => true,
-        _ => false,
+        _ => node.is_string_literal(),
     }
 }
 
@@ -373,10 +372,8 @@ fn check_should_report(expr: &BinaryExpression) -> bool {
     let left = expr.left.get_inner_expression();
     let right = expr.right.get_inner_expression();
 
-    let left_is_string =
-        matches!(left, Expression::StringLiteral(_) | Expression::TemplateLiteral(_));
-    let right_is_string =
-        matches!(right, Expression::StringLiteral(_) | Expression::TemplateLiteral(_));
+    let left_is_string = left.is_string_literal();
+    let right_is_string = right.is_string_literal();
 
     match (left_is_string, right_is_string) {
         // 'a' + 'v'
@@ -396,8 +393,7 @@ fn all_none_string_literal(expr: &Expression) -> bool {
             all_none_string_literal(binary.left.get_inner_expression())
                 && all_none_string_literal(binary.right.get_inner_expression())
         }
-        Expression::StringLiteral(_) | Expression::TemplateLiteral(_) => false,
-        _ => true,
+        _ => !expr.is_string_literal(),
     }
 }
 
@@ -407,8 +403,7 @@ fn any_none_string_literal(expr: &Expression) -> bool {
             any_none_string_literal(binary.left.get_inner_expression())
                 || any_none_string_literal(binary.right.get_inner_expression())
         }
-        Expression::StringLiteral(_) | Expression::TemplateLiteral(_) => false,
-        _ => true,
+        _ => !expr.is_string_literal(),
     }
 }
 
