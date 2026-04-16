@@ -3549,12 +3549,12 @@ fn test() {
     // Dynamic import() tests
     let pass_dynamic_import = vec![
         // Non-matching source
-        (r#"import('bar')"#, Some(serde_json::json!(["foo"]))),
+        (r"import('bar')", Some(serde_json::json!(["foo"]))),
         // Non-string-literal argument (variable) should be ignored
-        (r#"import(variable)"#, Some(serde_json::json!(["foo"]))),
+        (r"import(variable)", Some(serde_json::json!(["foo"]))),
         // importNames should NOT apply to dynamic imports
         (
-            r#"import('foo')"#,
+            r"import('foo')",
             Some(serde_json::json!([{
                 "paths": [{
                     "name": "foo",
@@ -3569,10 +3569,10 @@ fn test() {
 
     let fail_dynamic_import = vec![
         // Simple string restriction
-        (r#"import('fs')"#, Some(serde_json::json!(["fs"]))),
+        (r"import('fs')", Some(serde_json::json!(["fs"]))),
         // Path with message
         (
-            r#"import('foo')"#,
+            r"import('foo')",
             Some(serde_json::json!([{
                 "paths": [{
                     "name": "foo",
@@ -3582,14 +3582,14 @@ fn test() {
         ),
         // Pattern restriction
         (
-            r#"import('lodash/pick')"#,
+            r"import('lodash/pick')",
             Some(serde_json::json!([{
                 "patterns": ["lodash/*"]
             }])),
         ),
         // Pattern with group and message
         (
-            r#"import('foo')"#,
+            r"import('foo')",
             Some(serde_json::json!([{
                 "patterns": [{
                     "group": ["foo"],
@@ -3599,7 +3599,7 @@ fn test() {
         ),
         // Regex pattern
         (
-            r#"import('@app/api')"#,
+            r"import('@app/api')",
             Some(serde_json::json!([{
                 "patterns": [{
                     "regex": "@app/(api|enums).*"
