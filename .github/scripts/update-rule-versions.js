@@ -130,10 +130,6 @@ function rewriteNextRuleVersions({ root, releaseVersion }) {
 
   for (const filePath of collectRuleFiles(rulesRoot)) {
     const source = fs.readFileSync(filePath, "utf8");
-    if (!NEXT_VERSION_REGEX.test(source)) {
-      continue;
-    }
-
     const fileReport = analyzeRuleFile(source, filePath, releaseVersion, repoRoot);
     report.updatedRules.push(...fileReport.updatedRules);
     report.skippedNurseryRules.push(...fileReport.skippedNurseryRules);
