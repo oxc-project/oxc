@@ -98,6 +98,10 @@ A single `cli.test.ts` auto-discovers and runs all fixture directories via `util
   - `fixtures/` — input files for the test cases
   - `*.snap.md` — file snapshots (one per test case, named `0.snap.md`, `1.snap.md`, …)
 - Adding a new CLI test: create a new directory with `options.json` and `fixtures/`, then run the test to generate snapshots
+  - `fixtures/` represents a single project structure
+  - Multiple test cases (different args, cwd, etc.) against the same structure go in one `options.json`
+  - If a scenario needs a different project layout, create a separate directory
+  - Name related directories with a shared prefix (e.g., `nested_config/`, `nested_config_no_root/`)
 - If exceptional test cases are required, place a separate `*.test.ts` file for them
 
 ### `test/lsp/`: LSP integration tests

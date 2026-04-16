@@ -12,7 +12,8 @@ use oxc_language_server::{
 
 use crate::core::{
     ConfigResolver, ExternalFormatter, FormatFileStrategy, FormatResult, JsConfigLoaderCb,
-    SourceFormatter, all_config_file_names, resolve_editorconfig_path, utils,
+    SourceFormatter, all_config_file_names, has_config_in_directory, resolve_editorconfig_path,
+    utils,
 };
 use crate::lsp::create_fake_file_path_from_language_id;
 use crate::lsp::options::FormatOptions as LSPFormatOptions;
@@ -124,17 +125,10 @@ enum ConfigScope {
     Explicit,
 }
 
-/// A cached config entry: resolver + per-scope ignore patterns.
-struct CachedConfig {
-    resolver: ConfigResolver,
-    /// Ignore glob built from this config's `ignorePatterns`.
-    ignore_glob: Option<Gitignore>,
-}
-
 pub struct ServerFormatter {
     root_path: PathBuf,
     source_formatter: SourceFormatter,
-    config_cache: ConcurrentHashMap<ConfigScope, CachedConfig>,
+    config_cache: ConcurrentHashMap<ConfigScope, ConfigResolver>,
     js_config_loader: JsConfigLoaderCb,
     editorconfig_path: Option<PathBuf>,
     /// `.prettierignore` glob (workspace-level, shared across all scopes).
@@ -307,20 +301,17 @@ impl ServerFormatter {
         };
 
         for dir in start_dir.ancestors() {
-            for filename in all_config_file_names() {
-                let path = dir.join(filename);
-                if path.exists() {
-                    return ConfigScope::Dir(dir.to_path_buf());
-                }
+            if has_config_in_directory(dir) {
+                return ConfigScope::Dir(dir.to_path_buf());
             }
         }
 
         ConfigScope::Fallback
     }
 
-    /// Load a `CachedConfig` for the given directory.
+    /// Load a `ConfigResolver` for the given directory.
     /// Falls back to default config on any error.
-    fn load_cached_config(&self, cwd: &Path) -> CachedConfig {
+    fn load_cached_config(&self, cwd: &Path) -> ConfigResolver {
         let result = ConfigResolver::from_config(
             cwd,
             self.explicit_config_path.as_deref(),
@@ -328,9 +319,8 @@ impl ServerFormatter {
             Some(&self.js_config_loader),
         )
         .and_then(|mut resolver| {
-            let ignore_patterns = resolver.build_and_validate()?;
-            let ignore_glob = Self::build_scope_ignore_glob(cwd, &ignore_patterns);
-            Ok(CachedConfig { resolver, ignore_glob })
+            resolver.build_and_validate()?;
+            Ok(resolver)
         });
 
         result.unwrap_or_else(|err| {
@@ -340,22 +330,8 @@ impl ServerFormatter {
             resolver
                 .build_and_validate()
                 .expect("Default ConfigResolver validation should never fail");
-            CachedConfig { resolver, ignore_glob: None }
+            resolver
         })
-    }
-
-    /// Build an ignore glob from per-scope `ignorePatterns`.
-    fn build_scope_ignore_glob(cwd: &Path, ignore_patterns: &[String]) -> Option<Gitignore> {
-        if ignore_patterns.is_empty() {
-            return None;
-        }
-        let mut builder = GitignoreBuilder::new(cwd);
-        for pattern in ignore_patterns {
-            if let Err(err) = builder.add_line(None, pattern) {
-                warn!("Invalid ignore pattern: {pattern}: {err}");
-            }
-        }
-        builder.build().ok()
     }
 
     /// Resolve config and format a file at the given path.
@@ -376,16 +352,12 @@ impl ServerFormatter {
             self.load_cached_config(cwd)
         });
 
-        if cached
-            .ignore_glob
-            .as_ref()
-            .is_some_and(|glob| glob.matched_path_or_any_parents(path, path.is_dir()).is_ignore())
-        {
+        if cached.is_path_ignored(path, path.is_dir()) {
             debug!("File is ignored by config ignorePatterns: {}", path.display());
             return None;
         }
 
-        let resolved_options = cached.resolver.resolve(&strategy);
+        let resolved_options = cached.resolve(&strategy);
         debug!("resolved_options = {resolved_options:?}");
 
         Some(tokio::task::block_in_place(|| {

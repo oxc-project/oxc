@@ -5,6 +5,7 @@ use editorconfig_parser::{
     MaxLineLength, QuoteType,
 };
 use fast_glob::glob_match;
+use ignore::gitignore::{Gitignore, GitignoreBuilder};
 use serde_json::Value;
 use tracing::instrument;
 
@@ -54,22 +55,21 @@ fn is_vite_plus_mode() -> bool {
 ///
 /// When `VP_VERSION` env var is set, only `vite.config.ts` is recognized.
 /// When it is not set, `vite.config.ts` is excluded from the candidates.
-pub fn all_config_file_names() -> impl Iterator<Item = String> {
+pub fn all_config_file_names() -> impl Iterator<Item = &'static str> {
     #[cfg(feature = "napi")]
     {
         if is_vite_plus_mode() {
-            return vec![VITE_PLUS_CONFIG_NAME.to_string()].into_iter();
+            return vec![VITE_PLUS_CONFIG_NAME].into_iter();
         }
         JSON_CONFIG_FILES
             .iter()
             .copied()
             .chain([OXFMT_JS_CONFIG_NAME])
-            .map(ToString::to_string)
             .collect::<Vec<_>>()
             .into_iter()
     }
     #[cfg(not(feature = "napi"))]
-    JSON_CONFIG_FILES.iter().map(|f| (*f).to_string()).collect::<Vec<_>>().into_iter()
+    JSON_CONFIG_FILES.iter().copied()
 }
 
 pub fn resolve_editorconfig_path(cwd: &Path) -> Option<PathBuf> {
@@ -208,6 +208,8 @@ pub struct ConfigResolver {
     oxfmtrc_overrides: Option<OxfmtrcOverrides>,
     /// Parsed `.editorconfig`, if any.
     editorconfig: Option<EditorConfig>,
+    /// Ignore glob built from this config's `ignorePatterns`.
+    ignore_glob: Option<Gitignore>,
 }
 
 impl ConfigResolver {
@@ -218,12 +220,33 @@ impl ConfigResolver {
         config_dir: Option<PathBuf>,
         editorconfig: Option<EditorConfig>,
     ) -> Self {
-        Self { raw_config, config_dir, cached_options: None, oxfmtrc_overrides: None, editorconfig }
+        Self {
+            raw_config,
+            config_dir,
+            cached_options: None,
+            oxfmtrc_overrides: None,
+            editorconfig,
+            ignore_glob: None,
+        }
     }
 
     /// Returns the directory containing the config file, if any was loaded.
     pub fn config_dir(&self) -> Option<&Path> {
         self.config_dir.as_deref()
+    }
+
+    /// Returns `true` if this config has any `ignorePatterns`.
+    pub fn has_ignore_patterns(&self) -> bool {
+        self.ignore_glob.is_some()
+    }
+
+    /// Returns `true` if the given path should be ignored by this config's `ignorePatterns`.
+    pub fn is_path_ignored(&self, path: &Path, is_dir: bool) -> bool {
+        self.ignore_glob.as_ref().is_some_and(|glob| {
+            // `matched_path_or_any_parents()` panics if path is not under the glob's root.
+            path.starts_with(glob.path())
+                && glob.matched_path_or_any_parents(path, is_dir).is_ignore()
+        })
     }
 
     /// Create a resolver, handling both JSON/JSONC and JS/TS config files.
@@ -310,7 +333,7 @@ impl ConfigResolver {
         editorconfig_path: Option<&Path>,
         #[cfg(feature = "napi")] js_config_loader: Option<&JsConfigLoaderCb>,
     ) -> Result<Self, String> {
-        let candidates: Vec<String> = all_config_file_names().collect();
+        let candidates: Vec<&str> = all_config_file_names().collect();
         for dir in cwd.ancestors() {
             for filename in &candidates {
                 let path = dir.join(filename);
@@ -392,7 +415,7 @@ impl ConfigResolver {
     /// # Errors
     /// Returns error if config deserialization fails.
     #[instrument(level = "debug", name = "oxfmt::config::build_and_validate", skip_all)]
-    pub fn build_and_validate(&mut self) -> Result<Vec<String>, String> {
+    pub fn build_and_validate(&mut self) -> Result<(), String> {
         let oxfmtrc: Oxfmtrc =
             serde_json::from_value(self.raw_config.clone()).map_err(|err| err.to_string())?;
 
@@ -437,8 +460,11 @@ impl ConfigResolver {
         // Save cache for fast path: no per-file overrides
         self.cached_options = Some((oxfmt_options, external_options));
 
+        // Build ignore glob from `ignorePatterns` config field
         let ignore_patterns = oxfmtrc.ignore_patterns.unwrap_or_default();
-        Ok(ignore_patterns)
+        self.ignore_glob = build_ignore_glob(self.config_dir.as_deref(), &ignore_patterns)?;
+
+        Ok(())
     }
 
     /// Resolve format options for a specific file.
@@ -726,4 +752,34 @@ fn apply_editorconfig(config: &mut FormatConfig, props: &EditorConfigProperties)
             _ => {}
         }
     }
+}
+
+// ---
+
+/// Check if a directory contains any recognized config file.
+pub fn has_config_in_directory(dir: &Path) -> bool {
+    all_config_file_names().any(|name| dir.join(name).exists())
+}
+
+/// Build an ignore glob from config `ignorePatterns`.
+/// Patterns are resolved relative to the config file's directory.
+fn build_ignore_glob(
+    config_dir: Option<&Path>,
+    ignore_patterns: &[String],
+) -> Result<Option<Gitignore>, String> {
+    if ignore_patterns.is_empty() {
+        return Ok(None);
+    }
+    let Some(config_dir) = config_dir else {
+        return Ok(None);
+    };
+
+    let mut builder = GitignoreBuilder::new(config_dir);
+    for pattern in ignore_patterns {
+        if builder.add_line(None, pattern).is_err() {
+            return Err(format!("Failed to add ignore pattern `{pattern}` from `ignorePatterns`"));
+        }
+    }
+    let gitignore = builder.build().map_err(|_| "Failed to build ignores".to_string())?;
+    Ok(Some(gitignore))
 }

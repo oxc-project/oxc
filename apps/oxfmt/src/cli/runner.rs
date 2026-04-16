@@ -77,7 +77,7 @@ impl CliRunner {
 
         // Find and load root config file
         let editorconfig_path = resolve_editorconfig_path(&cwd);
-        let mut config_resolver = match ConfigResolver::from_config(
+        let mut root_config_resolver = match ConfigResolver::from_config(
             &cwd,
             config_options.config.as_deref(),
             editorconfig_path.as_deref(),
@@ -93,13 +93,10 @@ impl CliRunner {
                 return CliRunResult::InvalidOptionConfig;
             }
         };
-        let ignore_patterns = match config_resolver.build_and_validate() {
-            Ok(patterns) => patterns,
-            Err(err) => {
-                utils::print_and_flush(stderr, &format!("Failed to parse configuration.\n{err}\n"));
-                return CliRunResult::InvalidOptionConfig;
-            }
-        };
+        if let Err(err) = root_config_resolver.build_and_validate() {
+            utils::print_and_flush(stderr, &format!("Failed to parse configuration.\n{err}\n"));
+            return CliRunResult::InvalidOptionConfig;
+        }
 
         // Use `block_in_place()` to avoid nested async runtime access
         #[cfg(feature = "napi")]
@@ -164,9 +161,8 @@ impl CliRunner {
 
         // Run scoped walks (root + nested) — sends entries to `tx_entry`
         let any_config_found = match scoped_walker.run(
-            config_resolver,
+            root_config_resolver,
             &resolved_ignore_paths,
-            &ignore_patterns,
             ignore_options.with_node_modules,
             // Nested config detection is disabled when `--config` is explicitly specified
             config_options.config.is_none(),

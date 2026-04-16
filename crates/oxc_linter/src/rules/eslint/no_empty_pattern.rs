@@ -1,9 +1,16 @@
-use oxc_ast::AstKind;
+use schemars::JsonSchema;
+use serde::Deserialize;
+
+use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn no_empty_array_pattern_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Empty array binding pattern")
@@ -17,8 +24,13 @@ fn no_empty_object_pattern_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
-pub struct NoEmptyPattern;
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
+pub struct NoEmptyPattern {
+    /// When set to `true`, this rule allows empty object patterns used directly as function
+    /// parameters, including parameters defaulted to an empty object literal.
+    allow_object_patterns_as_parameters: bool,
+}
 
 declare_oxc_lint!(
     /// ### What it does
@@ -78,10 +90,15 @@ declare_oxc_lint!(
     NoEmptyPattern,
     eslint,
     correctness,
+    config = NoEmptyPattern,
     version = "0.0.3",
 );
 
 impl Rule for NoEmptyPattern {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::ArrayPattern(array) => {
@@ -90,7 +107,7 @@ impl Rule for NoEmptyPattern {
                 }
             }
             AstKind::ObjectPattern(object) => {
-                if object.is_empty() {
+                if object.is_empty() && !self.is_allowed_empty_parameter_object_pattern(node, ctx) {
                     ctx.diagnostic(no_empty_object_pattern_diagnostic(object.span));
                 }
             }
@@ -99,31 +116,93 @@ impl Rule for NoEmptyPattern {
     }
 }
 
+impl NoEmptyPattern {
+    fn is_allowed_empty_parameter_object_pattern<'a>(
+        &self,
+        node: &AstNode<'a>,
+        ctx: &LintContext<'a>,
+    ) -> bool {
+        if self.allow_object_patterns_as_parameters
+            && let AstKind::FormalParameter(parameter) = ctx.nodes().parent_kind(node.id())
+        {
+            return parameter
+                .initializer
+                .as_ref()
+                .is_none_or(|expr| matches!(&**expr, Expression::ObjectExpression(expr) if expr.properties.is_empty()));
+        }
+        false
+    }
+}
+
 #[test]
 fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        "var {a = {}} = foo;",
-        "var {a, b = {}} = foo;",
-        "var {a = []} = foo;",
-        "function foo({a = {}}) {}",
-        "function foo({a = []}) {}",
-        "var [a] = foo",
-        "var {...x} = foo;",
-        "var [...x] = foo;",
+        ("var {a = {}} = foo;", None),       // { "ecmaVersion": 6 },
+        ("var {a, b = {}} = foo;", None),    // { "ecmaVersion": 6 },
+        ("var {a = []} = foo;", None),       // { "ecmaVersion": 6 },
+        ("function foo({a = {}}) {}", None), // { "ecmaVersion": 6 },
+        ("function foo({a = []}) {}", None), // { "ecmaVersion": 6 },
+        ("var [a] = foo", None),             // { "ecmaVersion": 6 },
+        (
+            "function foo({}) {}",
+            Some(serde_json::json!([{ "allowObjectPatternsAsParameters": true }])),
+        ), // { "ecmaVersion": 6 },
+        (
+            "var foo = function({}) {}",
+            Some(serde_json::json!([{ "allowObjectPatternsAsParameters": true }])),
+        ), // { "ecmaVersion": 6 },
+        (
+            "var foo = ({}) => {}",
+            Some(serde_json::json!([{ "allowObjectPatternsAsParameters": true }])),
+        ), // { "ecmaVersion": 6 },
+        (
+            "function foo({} = {}) {}",
+            Some(serde_json::json!([{ "allowObjectPatternsAsParameters": true }])),
+        ), // { "ecmaVersion": 6 },
+        (
+            "var foo = function({} = {}) {}",
+            Some(serde_json::json!([{ "allowObjectPatternsAsParameters": true }])),
+        ), // { "ecmaVersion": 6 },
+        (
+            "var foo = ({} = {}) => {}",
+            Some(serde_json::json!([{ "allowObjectPatternsAsParameters": true }])),
+        ), // { "ecmaVersion": 6 }
     ];
 
     let fail = vec![
-        "var {} = foo",
-        "var [] = foo",
-        "var {a: {}} = foo",
-        "var {a, b: {}} = foo",
-        "var {a: []} = foo",
-        "function foo({}) {}",
-        "function foo([]) {}",
-        "function foo({a: {}}) {}",
-        "function foo({a: []}) {}",
+        ("var {} = foo", None),             // { "ecmaVersion": 6 },
+        ("var [] = foo", None),             // { "ecmaVersion": 6 },
+        ("var {a: {}} = foo", None),        // { "ecmaVersion": 6 },
+        ("var {a, b: {}} = foo", None),     // { "ecmaVersion": 6 },
+        ("var {a: []} = foo", None),        // { "ecmaVersion": 6 },
+        ("function foo({}) {}", None),      // { "ecmaVersion": 6 },
+        ("function foo([]) {}", None),      // { "ecmaVersion": 6 },
+        ("function foo({a: {}}) {}", None), // { "ecmaVersion": 6 },
+        ("function foo({a: []}) {}", None), // { "ecmaVersion": 6 },
+        ("function foo({}) {}", Some(serde_json::json!([{}]))), // { "ecmaVersion": 6 },
+        ("var foo = function({}) {}", Some(serde_json::json!([{}]))), // { "ecmaVersion": 6 },
+        ("var foo = ({}) => {}", Some(serde_json::json!([{}]))), // { "ecmaVersion": 6 },
+        ("function foo({} = {}) {}", Some(serde_json::json!([{}]))), // { "ecmaVersion": 6 },
+        ("var foo = function({} = {}) {}", Some(serde_json::json!([{}]))), // { "ecmaVersion": 6 },
+        ("var foo = ({} = {}) => {}", Some(serde_json::json!([{}]))), // { "ecmaVersion": 6 },
+        (
+            "var foo = ({a: {}}) => {}",
+            Some(serde_json::json!([{ "allowObjectPatternsAsParameters": true }])),
+        ), // { "ecmaVersion": 6 },
+        (
+            "var foo = ({} = bar) => {}",
+            Some(serde_json::json!([{ "allowObjectPatternsAsParameters": true }])),
+        ), // { "ecmaVersion": 6 },
+        (
+            "var foo = ({} = { bar: 1 }) => {}",
+            Some(serde_json::json!([{ "allowObjectPatternsAsParameters": true }])),
+        ), // { "ecmaVersion": 6 },
+        (
+            "var foo = ([]) => {}",
+            Some(serde_json::json!([{ "allowObjectPatternsAsParameters": true }])),
+        ), // { "ecmaVersion": 6 }
     ];
 
     Tester::new(NoEmptyPattern::NAME, NoEmptyPattern::PLUGIN, pass, fail).test_and_snapshot();
