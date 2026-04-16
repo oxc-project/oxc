@@ -9,15 +9,6 @@ const DEFAULT_RULES_ROOT = path.join("crates", "oxc_linter", "src", "rules");
 const DECLARE_RULE_MACRO = "declare_oxc_lint!(";
 const NEXT_VERSION_TEXT = 'version = "next"';
 const NEXT_VERSION_REGEX = /version\s*=\s*"next"/;
-const VALID_CATEGORIES = new Set([
-  "correctness",
-  "suspicious",
-  "pedantic",
-  "perf",
-  "style",
-  "restriction",
-  "nursery",
-]);
 
 function collectRuleFiles(dir, repoRoot) {
   const files = [];
@@ -97,10 +88,6 @@ function analyzeRuleFile(source, filePath, releaseVersion, repoRoot) {
 
     const ruleName = bodyMatch[1];
     const category = bodyMatch[3];
-
-    if (!VALID_CATEGORIES.has(category)) {
-      throw new Error(`${relativeFile}: unknown rule category \`${category}\``);
-    }
 
     // Step 3: Check if version = "next" exists in the macro body
     const versionMatch = body.match(NEXT_VERSION_REGEX);
