@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /* eslint-disable no-console */
 
+const { execFileSync } = require("node:child_process");
 const fs = require("node:fs");
 const path = require("node:path");
 const { parseArgs } = require("node:util");
@@ -10,49 +11,35 @@ const DECLARE_RULE_MACRO = "declare_oxc_lint!(";
 const NEXT_VERSION_TEXT = 'version = "next"';
 const NEXT_VERSION_REGEX = /version\s*=\s*"next"/;
 
-function collectRuleFiles(dir, repoRoot) {
-  const files = [];
-
-  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-    const entryPath = path.join(dir, entry.name);
-    if (entry.isSymbolicLink()) {
-      const relativePath = normalizePath(path.relative(repoRoot, entryPath));
-      throw new Error(`${relativePath}: symlinked rule paths are not supported`);
-    }
-
-    if (entry.isDirectory()) {
-      files.push(...collectRuleFiles(entryPath, repoRoot));
-    } else if (entry.isFile() && entry.name.endsWith(".rs")) {
-      files.push(entryPath);
-    }
+function collectRuleFiles(rulesRoot) {
+  try {
+    const output = execFileSync("grep", ["-rl", NEXT_VERSION_TEXT, "--include=*.rs", rulesRoot], {
+      encoding: "utf8",
+    });
+    return output.trim().split("\n").filter(Boolean).sort();
+  } catch {
+    // grep exits with code 1 when no matches are found
+    return [];
   }
-
-  files.sort(compareStrings);
-  return files;
-}
-
-function compareStrings(a, b) {
-  if (a < b) {
-    return -1;
-  }
-  if (a > b) {
-    return 1;
-  }
-  return 0;
 }
 
 function normalizePath(filePath) {
   return filePath.split(path.sep).join("/");
 }
 
-// Regex to match the structured fields after doc comments inside declare_oxc_lint!():
-//   RuleName,
-//   plugin_name,
-//   category,
-//   ...optional fields like `fix`, `conditional_fix`, `pending`...
-//   version = "next",
-const COMMENT_LINE_REGEX = /^[ \t]*\/\/.*\n/gm;
-const MACRO_BODY_REGEX = /(?:^[ \t]*\/\/\/.*\n)*[ \t]*(\w+)\s*,\s*\n\s*(\w+)\s*,\s*\n\s*(\w+)\s*,/m;
+// Finds the next "word," field in body starting from `from`, skipping comments and whitespace.
+// Returns { word, end } where end is the index after the comma, or null if not found.
+function findNextField(body, from) {
+  const match = body.slice(from).match(/(\w+)\s*,/);
+  if (!match) return null;
+  return { word: match[1], end: from + match.index + match[0].length };
+}
+
+// Skips past any /// doc comment lines at the start of body.
+function skipDocComments(body) {
+  const match = body.match(/^(?:\s*\/\/\/.*\n)*/);
+  return match ? match[0].length : 0;
+}
 
 function analyzeRuleFile(source, filePath, releaseVersion, repoRoot) {
   const relativeFile = normalizePath(path.relative(repoRoot, filePath));
@@ -69,36 +56,49 @@ function analyzeRuleFile(source, filePath, releaseVersion, repoRoot) {
 
     const bodyStart = macroStart + DECLARE_RULE_MACRO.length;
 
-    // Find the closing );
-    const macroEnd = updatedSource.indexOf(");", bodyStart);
-    if (macroEnd === -1) {
+    // Find the closing ); on its own line (not inside doc comments)
+    const macroEndMatch = updatedSource.slice(bodyStart).match(/^\s*\);/m);
+    if (!macroEndMatch) {
       throw new Error(`${relativeFile}: unterminated declare_oxc_lint! block`);
     }
+    const macroEnd = bodyStart + macroEndMatch.index;
+    const macroEndFull = macroEnd + macroEndMatch[0].length;
 
     const body = updatedSource.slice(bodyStart, macroEnd);
 
-    // Step 2: Extract rule name, plugin, and category from the body
-    // Strip // comment lines so they don't interfere with field matching
-    const strippedBody = body.replace(COMMENT_LINE_REGEX, "");
-    const bodyMatch = strippedBody.match(MACRO_BODY_REGEX);
-    if (!bodyMatch) {
-      searchFrom = macroEnd + 2;
+    // Step 2: Skip doc comments, then parse fields in order: name, plugin, category
+    const pos = skipDocComments(body);
+
+    const nameField = findNextField(body, pos);
+    if (!nameField) {
+      searchFrom = macroEndFull;
+      continue;
+    }
+    const ruleName = nameField.word;
+
+    const pluginField = findNextField(body, nameField.end);
+    if (!pluginField) {
+      searchFrom = macroEndFull;
       continue;
     }
 
-    const ruleName = bodyMatch[1];
-    const category = bodyMatch[3];
+    const categoryField = findNextField(body, pluginField.end);
+    if (!categoryField) {
+      searchFrom = macroEndFull;
+      continue;
+    }
+    const category = categoryField.word;
 
     // Step 3: Check if version = "next" exists in the macro body
     const versionMatch = body.match(NEXT_VERSION_REGEX);
     if (!versionMatch) {
-      searchFrom = macroEnd + 2;
+      searchFrom = macroEndFull;
       continue;
     }
 
     if (category === "nursery") {
       skippedNurseryRules.push({ file: relativeFile, ruleName });
-      searchFrom = macroEnd + 2;
+      searchFrom = macroEndFull;
       continue;
     }
 
@@ -112,7 +112,7 @@ function analyzeRuleFile(source, filePath, releaseVersion, repoRoot) {
       updatedSource.slice(nextIndex + nextLiteral.length);
 
     updatedRules.push({ file: relativeFile, ruleName, from: "next", to: releaseVersion });
-    searchFrom = macroEnd + 2;
+    searchFrom = macroEndFull;
   }
 
   return {
@@ -131,7 +131,7 @@ function rewriteNextRuleVersions({ root, releaseVersion }) {
 
   const report = { updatedRules: [], skippedNurseryRules: [], pendingWrites: [] };
 
-  for (const filePath of collectRuleFiles(rulesRoot, repoRoot)) {
+  for (const filePath of collectRuleFiles(rulesRoot)) {
     const source = fs.readFileSync(filePath, "utf8");
     if (!NEXT_VERSION_REGEX.test(source)) {
       continue;
