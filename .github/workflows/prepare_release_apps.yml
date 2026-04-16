@@ -52,7 +52,7 @@ jobs:
       - name: Rewrite rule versions
         env:
           OXLINT_VERSION: ${{ steps.run.outputs.OXLINT_VERSION }}
-        run: node .github/scripts/update-rule-versions.js --release-version "$OXLINT_VERSION"
+        run: node .github/scripts/update-rule-versions.js --release-version "$OXLINT_VERSION" --write
 
       - name: Rebuild NAPI bindings
         run: |

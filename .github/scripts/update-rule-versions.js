@@ -273,24 +273,23 @@ function main(argv = process.argv.slice(2)) {
     options: {
       "release-version": { type: "string", short: "r" },
       root: { type: "string", short: "C", default: process.cwd() },
-      "dry-run": { type: "boolean", short: "n", default: false },
+      write: { type: "boolean", short: "w", default: false },
       help: { type: "boolean", short: "h" },
     },
     strict: true,
   });
 
-  const dryRun = values["dry-run"];
   const releaseVersion = values["release-version"];
-  const { root } = values;
+  const { root, write } = values;
 
   if (values.help) {
     console.log(`Usage:
-  node .github/scripts/update-rule-versions.js --release-version <x.y.z> [--root <path>] [--dry-run]
+  node .github/scripts/update-rule-versions.js --release-version <x.y.z> [--root <path>] [--write]
 
 Options:
   --release-version, -r  Version to replace \`version = "next"\` with
   --root, -C             Repository root (defaults to current working directory)
-  --dry-run, -n          Print the changes without writing files
+  --write, -w            Write changes to files (default: dry-run)
   --help, -h             Show this help
 `);
     return;
@@ -304,12 +303,12 @@ Options:
   }
 
   const report = rewriteNextRuleVersions({ root, releaseVersion });
-  if (!dryRun) {
-    for (const { filePath, updatedSource } of pendingWrites) {
+  if (write) {
+    for (const { filePath, updatedSource } of report.pendingWrites) {
       fs.writeFileSync(filePath, updatedSource);
     }
   }
-  printReport(report, dryRun);
+  printReport(report, !write);
 }
 
 if (require.main === module) {
