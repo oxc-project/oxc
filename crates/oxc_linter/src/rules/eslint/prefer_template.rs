@@ -357,12 +357,11 @@ fn escape_dollar_and_backtick(raw: &str) -> String {
 
 /// Unescape the original quote character: `\'` → `'` or `\"` → `"`.
 /// Ports: `.replace(new RegExp(\`\\\\${quote}\`, "gu"), quote)`
+#[expect(clippy::disallowed_methods)]
 fn unescape_quote(s: &str, quote_char: char) -> String {
     let escaped = format!("\\{quote_char}");
     s.replace(&*escaped, &quote_char.to_string())
 }
-
-// ---- Detection helpers ----
 
 fn check_should_report(expr: &BinaryExpression) -> bool {
     if expr.operator != BinaryOperator::Addition {
