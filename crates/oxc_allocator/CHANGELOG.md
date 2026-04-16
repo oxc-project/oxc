@@ -4,6 +4,17 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.126.0] - 2026-04-15
+
+### 💥 BREAKING CHANGES
+
+- 24fb7eb allocator: [**BREAKING**] Rename `Box` and `Vec` methods (#21395) (overlookmotel)
+
+### 📚 Documentation
+
+- c5b19bb allocator: Reformat comments in `Arena` (#21448) (overlookmotel)
+- 922cbee allocator: Remove references to "bump" from comments (#21397) (overlookmotel)
+
 ## [0.125.0] - 2026-04-13
 
 ### 🐛 Bug Fixes

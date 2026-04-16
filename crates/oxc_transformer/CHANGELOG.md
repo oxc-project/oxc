@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.126.0] - 2026-04-15
+
+### 🐛 Bug Fixes
+
+- 56af2f4 transformer/async-to-generator: Correct scope of inferred named FE in async-to-generator (#21458) (Dunqing)
+- 4fb73a7 transformer/typescript: Preserve execution order for accessor with `useDefineForClassFields: false` (#21369) (Dunqing)
+
 ## [0.125.0] - 2026-04-13
 
 ### 💥 BREAKING CHANGES

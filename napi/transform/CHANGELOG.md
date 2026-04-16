@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.126.0] - 2026-04-15
+
+### 🚀 Features
+
+- f5deb55 napi/transform: Expose `optimizeConstEnums` and `optimizeEnums` options (#21388) (Dunqing)
+
 ## [0.125.0] - 2026-04-13
 
 ### 🚀 Features
