@@ -1,16 +1,45 @@
 #!/usr/bin/env node
 /* eslint-disable no-console */
 
-const { execFileSync } = require("node:child_process");
-const fs = require("node:fs");
-const path = require("node:path");
-const { parseArgs } = require("node:util");
+import { execFileSync } from "node:child_process";
+import { existsSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
+import path from "node:path";
+import { parseArgs } from "node:util";
 
 const DEFAULT_RULES_ROOT = path.join("crates", "oxc_linter", "src", "rules");
 const DECLARE_RULE_MACRO = "declare_oxc_lint!(";
 const NEXT_VERSION_REGEX = /version\s*=\s*"next"/;
 
-function collectRuleFiles(rulesRoot) {
+type RuleChange = {
+  file: string;
+  ruleName: string;
+  from: "next";
+  to: string;
+};
+
+type SkippedRule = {
+  file: string;
+  ruleName: string;
+};
+
+type PendingWrite = {
+  filePath: string;
+  updatedSource: string;
+};
+
+type AnalyzeReport = {
+  updatedSource: string;
+  updatedRules: RuleChange[];
+  skippedNurseryRules: SkippedRule[];
+};
+
+type RewriteReport = {
+  updatedRules: RuleChange[];
+  skippedNurseryRules: SkippedRule[];
+  pendingWrites: PendingWrite[];
+};
+
+function collectRuleFiles(rulesRoot: string): string[] {
   try {
     const output = execFileSync(
       "grep",
@@ -26,22 +55,27 @@ function collectRuleFiles(rulesRoot) {
 
 // Finds the next "word," field in body starting from `from`, skipping comments and whitespace.
 // Returns { word, end } where end is the index after the comma, or null if not found.
-function findNextField(body, from) {
+function findNextField(body: string, from: number): { word: string; end: number } | null {
   const match = body.slice(from).match(/(\w+)\s*,/);
   if (!match) return null;
   return { word: match[1], end: from + match.index + match[0].length };
 }
 
 // Skips past any /// doc comment lines at the start of body.
-function skipDocComments(body) {
+function skipDocComments(body: string): number {
   const match = body.match(/^(?:\s*\/\/\/.*\n)*/);
   return match ? match[0].length : 0;
 }
 
-function analyzeRuleFile(source, filePath, releaseVersion, repoRoot) {
+export function analyzeRuleFile(
+  source: string,
+  filePath: string,
+  releaseVersion: string,
+  repoRoot: string,
+): AnalyzeReport {
   const relativeFile = path.relative(repoRoot, filePath).replaceAll(path.sep, "/");
-  const updatedRules = [];
-  const skippedNurseryRules = [];
+  const updatedRules: RuleChange[] = [];
+  const skippedNurseryRules: SkippedRule[] = [];
 
   let updatedSource = source;
   let searchFrom = 0;
@@ -119,17 +153,23 @@ function analyzeRuleFile(source, filePath, releaseVersion, repoRoot) {
   };
 }
 
-function rewriteNextRuleVersions({ root, releaseVersion }) {
+function rewriteNextRuleVersions({
+  root,
+  releaseVersion,
+}: {
+  root: string;
+  releaseVersion: string;
+}): RewriteReport {
   const repoRoot = path.resolve(root);
   const rulesRoot = path.join(repoRoot, DEFAULT_RULES_ROOT);
-  if (!fs.existsSync(rulesRoot)) {
+  if (!existsSync(rulesRoot)) {
     throw new Error(`rules root does not exist: ${rulesRoot}`);
   }
 
-  const report = { updatedRules: [], skippedNurseryRules: [], pendingWrites: [] };
+  const report: RewriteReport = { updatedRules: [], skippedNurseryRules: [], pendingWrites: [] };
 
   for (const filePath of collectRuleFiles(rulesRoot)) {
-    const source = fs.readFileSync(filePath, "utf8");
+    const source = readFileSync(filePath, "utf8");
     const fileReport = analyzeRuleFile(source, filePath, releaseVersion, repoRoot);
     report.updatedRules.push(...fileReport.updatedRules);
     report.skippedNurseryRules.push(...fileReport.skippedNurseryRules);
@@ -142,7 +182,7 @@ function rewriteNextRuleVersions({ root, releaseVersion }) {
   return report;
 }
 
-function printReport(report, dryRun) {
+function printReport(report: RewriteReport, dryRun: boolean): void {
   if (report.updatedRules.length === 0) {
     console.log("No stable rule versions needed updating.");
   } else {
@@ -164,7 +204,7 @@ function printReport(report, dryRun) {
   }
 }
 
-function main(argv = process.argv.slice(2)) {
+function main(argv: string[] = process.argv.slice(2)): void {
   const { values } = parseArgs({
     args: argv,
     options: {
@@ -181,7 +221,7 @@ function main(argv = process.argv.slice(2)) {
 
   if (values.help) {
     console.log(`Usage:
-  node .github/scripts/update-rule-versions.js --release-version <x.y.z> [--root <path>] [--write]
+  node .github/scripts/update-rule-versions.mts --release-version <x.y.z> [--root <path>] [--write]
 
 Options:
   --release-version, -r  Version to replace \`version = "next"\` with
@@ -202,21 +242,29 @@ Options:
   const report = rewriteNextRuleVersions({ root, releaseVersion });
   if (write) {
     for (const { filePath, updatedSource } of report.pendingWrites) {
-      fs.writeFileSync(filePath, updatedSource);
+      writeFileSync(filePath, updatedSource);
     }
   }
   printReport(report, !write);
 }
 
-if (require.main === module) {
+const isMain = (() => {
+  if (!process.argv[1]) {
+    return false;
+  }
+
+  try {
+    return import.meta.filename === realpathSync(process.argv[1]);
+  } catch {
+    return false;
+  }
+})();
+
+if (isMain) {
   try {
     main();
   } catch (error) {
-    console.error(error.message);
+    console.error(error instanceof Error ? error.message : String(error));
     process.exitCode = 1;
   }
 }
-
-module.exports = {
-  analyzeRuleFile,
-};

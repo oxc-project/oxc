@@ -1,19 +1,19 @@
-const test = require("node:test");
-const assert = require("node:assert/strict");
-const path = require("node:path");
+import assert from "node:assert/strict";
+import path from "node:path";
+import test from "node:test";
 
-const { analyzeRuleFile } = require("./update-rule-versions.js");
+import { analyzeRuleFile } from "./update-rule-versions.mts";
 
 const REPO_ROOT = "/repo";
 const RULES_DIR = "crates/oxc_linter/src/rules/eslint";
 
-function analyze(source, fileName = "no_debugger.rs") {
+function analyze(source: string, fileName = "no_debugger.rs") {
   const filePath = path.join(REPO_ROOT, RULES_DIR, fileName);
   return analyzeRuleFile(source.trimStart(), filePath, "1.61.0", REPO_ROOT);
 }
 
-function registerTest(...args) {
-  void test(...args);
+function registerTest(name: string, fn: () => void): void {
+  void test(name, fn);
 }
 
 registerTest("rewrites stable rule versions from next to the release version", () => {
