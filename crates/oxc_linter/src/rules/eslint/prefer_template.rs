@@ -139,7 +139,7 @@ fn build_template_for_expr(
     if let Expression::StringLiteral(lit) = inner {
         let raw = &source_text[lit.span.start as usize + 1..lit.span.end as usize - 1];
         let quote_char = source_text.as_bytes()[lit.span.start as usize];
-        let escaped = escape_string_for_template(raw, quote_char);
+        let escaped = escape_string_for_template(raw, quote_char as char);
         return format!("`{escaped}`");
     }
 
@@ -274,7 +274,7 @@ fn ends_with_template_curly(node: &Expression) -> bool {
 /// Ports ESLint's two-step approach:
 /// 1. Escape unescaped `${` and backticks (preserving already-escaped ones)
 /// 2. Unescape the original quote character (no longer needed in template literals)
-fn escape_string_for_template(raw: &str, quote_char: u8) -> String {
+fn escape_string_for_template(raw: &str, quote_char: char) -> String {
     // Step 1: Escape ${ and ` that aren't already properly escaped
     let step1 = escape_dollar_and_backtick(raw);
     // Step 2: Unescape the quote character (\' → ' or \" → ")
@@ -357,11 +357,9 @@ fn escape_dollar_and_backtick(raw: &str) -> String {
 
 /// Unescape the original quote character: `\'` → `'` or `\"` → `"`.
 /// Ports: `.replace(new RegExp(\`\\\\${quote}\`, "gu"), quote)`
-fn unescape_quote(s: &str, quote_char: u8) -> String {
-    use cow_utils::CowUtils;
-    let quote = quote_char as char;
-    let escaped = format!("\\{quote}");
-    s.cow_replace(&*escaped, &quote.to_string()).into_owned()
+fn unescape_quote(s: &str, quote_char: char) -> String {
+    let escaped = format!("\\{quote_char}");
+    s.replace(&*escaped, &quote_char.to_string())
 }
 
 // ---- Detection helpers ----
@@ -499,8 +497,6 @@ fn test() {
         r#""Hello " + "'world' " + test"#,
     ];
 
-    // Fix expectations ported from:
-    // https://github.com/eslint/eslint/blob/main/tests/lib/rules/prefer-template.js
     let fix = vec![
         ("var foo = 'hello, ' + name + '!';", "var foo = `hello, ${  name  }!`;", None),
         ("var foo = bar + 'baz';", "var foo = `${bar  }baz`;", None),
