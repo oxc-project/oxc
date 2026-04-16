@@ -69,19 +69,19 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
             let footer_ptr = self.current_chunk_footer.get();
             let footer = footer_ptr.as_ref();
 
-            let ptr = footer.ptr.get().as_ptr();
-            let start = footer.data.as_ptr();
+            let cursor_ptr = footer.cursor_ptr.get().as_ptr();
+            let start_ptr = footer.start_ptr.as_ptr();
             debug_assert!(
-                start <= ptr,
-                "start pointer {start:#p} should be less than or equal to bump pointer {ptr:#p}"
+                start_ptr <= cursor_ptr,
+                "start pointer {start_ptr:#p} should be less than or equal to bump pointer {cursor_ptr:#p}"
             );
             debug_assert!(
-                ptr <= footer_ptr.cast::<u8>().as_ptr(),
-                "bump pointer {ptr:#p} should be less than or equal to footer pointer {footer_ptr:#p}"
+                cursor_ptr <= footer_ptr.cast::<u8>().as_ptr(),
+                "bump pointer {cursor_ptr:#p} should be less than or equal to footer pointer {footer_ptr:#p}"
             );
             debug_assert!(
-                is_pointer_aligned_to(ptr, MIN_ALIGN),
-                "bump pointer {ptr:#p} should be aligned to the minimum alignment of {MIN_ALIGN:#x}"
+                is_pointer_aligned_to(cursor_ptr, MIN_ALIGN),
+                "bump pointer {cursor_ptr:#p} should be aligned to the minimum alignment of {MIN_ALIGN:#x}"
             );
             // This `match` should be boiled away by LLVM: `MIN_ALIGN` is a constant and the layout's alignment
             // is also constant in practice after inlining
@@ -91,12 +91,12 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
                     // This might overflow since we cannot rely on `Layout`'s guarantees.
                     let aligned_size = round_up_to(layout.size(), MIN_ALIGN)?;
 
-                    let capacity = (ptr as usize) - (start as usize);
+                    let capacity = (cursor_ptr as usize) - (start_ptr as usize);
                     if aligned_size > capacity {
                         return None;
                     }
 
-                    ptr.wrapping_sub(aligned_size)
+                    cursor_ptr.wrapping_sub(aligned_size)
                 }
                 Ordering::Equal => {
                     // `Layout` guarantees that rounding the size up to its align cannot overflow
@@ -104,12 +104,12 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
                     // which is why we need to do this rounding)
                     let aligned_size = round_up_to_unchecked(layout.size(), layout.align());
 
-                    let capacity = (ptr as usize) - (start as usize);
+                    let capacity = (cursor_ptr as usize) - (start_ptr as usize);
                     if aligned_size > capacity {
                         return None;
                     }
 
-                    ptr.wrapping_sub(aligned_size)
+                    cursor_ptr.wrapping_sub(aligned_size)
                 }
                 Ordering::Greater => {
                     // `Layout` guarantees that rounding the size up to its align cannot overflow
@@ -117,9 +117,9 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
                     // which is why we need to do this rounding)
                     let aligned_size = round_up_to_unchecked(layout.size(), layout.align());
 
-                    let aligned_ptr = round_mut_ptr_down_to(ptr, layout.align());
-                    let capacity = (aligned_ptr as usize).wrapping_sub(start as usize);
-                    if aligned_ptr < start || aligned_size > capacity {
+                    let aligned_ptr = round_mut_ptr_down_to(cursor_ptr, layout.align());
+                    let capacity = (aligned_ptr as usize).wrapping_sub(start_ptr as usize);
+                    if aligned_ptr < start_ptr || aligned_size > capacity {
                         return None;
                     }
 
@@ -137,14 +137,14 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
                 "pointer {aligned_ptr:#p} should be aligned to minimum alignment of {MIN_ALIGN:#}"
             );
             debug_assert!(
-                start <= aligned_ptr && aligned_ptr <= ptr,
-                "pointer {aligned_ptr:#p} should be in range {start:#p}..{ptr:#p}"
+                start_ptr <= aligned_ptr && aligned_ptr <= cursor_ptr,
+                "pointer {aligned_ptr:#p} should be in range {start_ptr:#p}..{cursor_ptr:#p}"
             );
 
             debug_assert!(!aligned_ptr.is_null());
             let aligned_ptr = NonNull::new_unchecked(aligned_ptr);
 
-            footer.ptr.set(aligned_ptr);
+            footer.cursor_ptr.set(aligned_ptr);
             Some(aligned_ptr)
         }
     }
@@ -183,7 +183,7 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
                 Self::new_chunk(new_chunk_memory_details, layout, current_footer)
             })?;
 
-            debug_assert_eq!(new_footer.as_ref().data.as_ptr() as usize % layout.align(), 0);
+            debug_assert_eq!(new_footer.as_ref().start_ptr.as_ptr() as usize % layout.align(), 0);
 
             // Set the new chunk as our new current chunk
             self.current_chunk_footer.set(new_footer);
@@ -201,16 +201,16 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
         // otherwise they are simply leaked - at least until somebody calls `reset()`
         unsafe {
             if self.is_last_allocation(ptr) {
-                let ptr = self.current_chunk_footer.get().as_ref().ptr.get();
-                let ptr = ptr.as_ptr().add(layout.size());
+                let cursor_ptr = self.current_chunk_footer.get().as_ref().cursor_ptr.get();
+                let cursor_ptr = cursor_ptr.as_ptr().add(layout.size());
 
-                let ptr = round_mut_ptr_up_to_unchecked(ptr, MIN_ALIGN);
+                let cursor_ptr = round_mut_ptr_up_to_unchecked(cursor_ptr, MIN_ALIGN);
                 debug_assert!(
-                    is_pointer_aligned_to(ptr, MIN_ALIGN),
-                    "bump pointer {ptr:#p} should be aligned to the minimum alignment of {MIN_ALIGN:#x}"
+                    is_pointer_aligned_to(cursor_ptr, MIN_ALIGN),
+                    "bump pointer {cursor_ptr:#p} should be aligned to the minimum alignment of {MIN_ALIGN:#x}"
                 );
-                let ptr = NonNull::new_unchecked(ptr);
-                self.current_chunk_footer.get().as_ref().ptr.set(ptr);
+                let cursor_ptr = NonNull::new_unchecked(cursor_ptr);
+                self.current_chunk_footer.get().as_ref().cursor_ptr.set(cursor_ptr);
             }
         }
     }
@@ -292,12 +292,12 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
                 let footer = footer.as_ref();
 
                 // Note: `new_ptr` is aligned, because ptr *has to* be aligned, and we made sure delta is aligned
-                let new_ptr = NonNull::new_unchecked(footer.ptr.get().as_ptr().add(delta));
+                let new_ptr = NonNull::new_unchecked(footer.cursor_ptr.get().as_ptr().add(delta));
                 debug_assert!(
                     is_pointer_aligned_to(new_ptr.as_ptr(), MIN_ALIGN),
                     "bump pointer {new_ptr:#p} should be aligned to the minimum alignment of {MIN_ALIGN:#x}"
                 );
-                footer.ptr.set(new_ptr);
+                footer.cursor_ptr.set(new_ptr);
 
                 // Note: We know it is non-overlapping because of the size check in the `if` condition
                 ptr::copy_nonoverlapping(ptr.as_ptr(), new_ptr.as_ptr(), new_size);
@@ -362,7 +362,7 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
     unsafe fn is_last_allocation(&self, ptr: NonNull<u8>) -> bool {
         let footer = self.current_chunk_footer.get();
         let footer = unsafe { footer.as_ref() };
-        footer.ptr.get() == ptr
+        footer.cursor_ptr.get() == ptr
     }
 }
 

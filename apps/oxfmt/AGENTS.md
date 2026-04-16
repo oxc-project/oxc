@@ -80,22 +80,35 @@ npx prettier --config=fmt.json <file>
 
 ## Test Organization (`test/` directory)
 
-Tests are organized by domain and colocated with strict structural rules.
+Tests are organized into specific domains, each with its own structure.
 
-- 1:1:1 Rule: Each test directory contains exactly
-  - 1 test file (`*.test.ts` with the same name with directory)
-  - 0 or 1 `fixtures/` directory (if needed)
-  - Snapshots are colocated automatically by Vitest
-- No Upward References (except `utils.ts` and `oxfmt` binary)
-  - Test files may only reference:
-    - Files within their own directory
-    - Shared `utils.ts` in parent directories
+### `test/api/`: Formatting result tests
 
-When adding new tests:
+Focuses on verifying formatting output. Use the Node.js API. No fixtures, test inputs are inline in each test file.
 
-- Place test in the appropriate domain directory
-- If the test needs fixtures, create a `fixtures/` subdirectory
-- If multiple test cases share a fixture structure, use subdirectories within `fixtures/` (e.g., `fixtures/basic/`, `fixtures/nested/`)
+- Multiple `*.test.ts` files coexist in a flat directory (no subdirectories)
+- Snapshots are colocated in `__snapshots__/` by Vitest
+
+### `test/cli/`: CLI fixture-driven tests
+
+A single `cli.test.ts` auto-discovers and runs all fixture directories via `utils.ts`.
+
+- Each fixture directory contains:
+  - `options.json` — array of test cases (args, cwd, env, stdin, etc.)
+  - `fixtures/` — input files for the test cases
+  - `*.snap.md` — file snapshots (one per test case, named `0.snap.md`, `1.snap.md`, …)
+- Adding a new CLI test: create a new directory with `options.json` and `fixtures/`, then run the test to generate snapshots
+- If exceptional test cases are required, place a separate `*.test.ts` file for them
+
+### `test/lsp/`: LSP integration tests
+
+Each test directory follows the 1:1:1 rule:
+
+- 1 test file (`*.test.ts` with the same name as the directory)
+- 0 or 1 `fixtures/` directory
+- Snapshots are colocated in `__snapshots__/` by Vitest
+
+Shared helpers are in `utils.ts` at the `test/lsp/` level.
 
 ## After updating `Oxfmtrc` (Under `src/core/oxfmtrc`)
 

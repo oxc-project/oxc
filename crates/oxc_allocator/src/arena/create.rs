@@ -13,7 +13,7 @@ use crate::tracking::AllocationStats;
 
 use super::{
     Arena, CHUNK_ALIGN, CHUNK_FOOTER_SIZE, ChunkFooter, EMPTY_CHUNK,
-    utils::{layout_from_size_align, oom, round_mut_ptr_down_to, round_up_to},
+    utils::{layout_from_size_align, oom, round_up_to},
 };
 
 /// The typical page size these days.
@@ -166,22 +166,12 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
     ///     assert_eq!((x as *mut _ as usize) % 8, 0, "x is aligned to 8");
     /// }
     /// ```
-    ///
-    /// # Panics
-    ///
-    /// Panics on invalid minimum alignments.
     //
     // Because of `rustc`'s poor type inference for default type/const parameters (see the comment above
     // the `impl Arena` block with no const `MIN_ALIGN` parameter), and because we don't want to force everyone
     // to specify a minimum alignment with `Arena::new()` et al, we have a separate constructor
     // for specifying the minimum alignment.
     pub fn with_min_align() -> Self {
-        assert!(MIN_ALIGN.is_power_of_two(), "MIN_ALIGN must be a power of two; found {MIN_ALIGN}");
-        assert!(
-            MIN_ALIGN <= CHUNK_ALIGN,
-            "MIN_ALIGN may not be larger than {CHUNK_ALIGN}; found {MIN_ALIGN}"
-        );
-
         Self::new_impl(EMPTY_CHUNK.get())
     }
 
@@ -211,8 +201,6 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
     /// ```
     ///
     /// # Panics
-    ///
-    /// Panics on invalid minimum alignments.
     ///
     /// Panics if allocating the initial capacity fails.
     pub fn with_min_align_and_capacity(capacity: usize) -> Self {
@@ -246,11 +234,6 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
     /// # }
     /// ```
     ///
-    /// # Panics
-    ///
-    /// * Panics on invalid minimum alignments.
-    /// * Panics if allocating the initial capacity fails.
-    ///
     /// # Errors
     ///
     /// Returns `Err(AllocErr)` if any of:
@@ -262,12 +245,6 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
     ///
     /// When `capacity` is 0, no allocation is performed, and `Ok` is always returned.
     pub fn try_with_min_align_and_capacity(capacity: usize) -> Result<Self, AllocErr> {
-        assert!(MIN_ALIGN.is_power_of_two(), "MIN_ALIGN must be a power of two; found {MIN_ALIGN}");
-        assert!(
-            MIN_ALIGN <= CHUNK_ALIGN,
-            "MIN_ALIGN may not be larger than {CHUNK_ALIGN}; found {MIN_ALIGN}"
-        );
-
         if capacity == 0 {
             return Ok(Self::new_impl(EMPTY_CHUNK.get()));
         }
@@ -292,8 +269,15 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
     /// Create a new `Arena` from a chunk footer pointer.
     ///
     /// This is a helper function for all code paths which create an `Arena`.
+    /// All code paths which create an `Arena` must go through this method in order to validate `MIN_ALIGN`.
     #[inline(always)]
     pub(super) fn new_impl(chunk_footer_ptr: NonNull<ChunkFooter>) -> Self {
+        // Const assert that `MIN_ALIGN` is valid.
+        // This line must be present - the validation assertions don't run unless the const is referenced
+        // in active code paths. This method is called by all other methods which create an `Arena`,
+        // so we only need it here to ensure that it's impossible to create an `Arena` with an invalid `MIN_ALIGN`.
+        const { Self::MIN_ALIGN };
+
         Self {
             current_chunk_footer: Cell::new(chunk_footer_ptr),
             can_grow: true,
@@ -357,12 +341,12 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
 
             debug_assert!(size >= requested_layout.size());
 
-            let data = alloc::alloc(layout);
-            let data = NonNull::new(data)?;
+            let start_ptr = alloc::alloc(layout);
+            let start_ptr = NonNull::new(start_ptr)?;
 
             // The `ChunkFooter` is at the end of the chunk
-            let footer_ptr = data.as_ptr().add(new_size_without_footer);
-            debug_assert_eq!((data.as_ptr() as usize) % align, 0);
+            let footer_ptr = start_ptr.as_ptr().add(new_size_without_footer);
+            debug_assert_eq!((start_ptr.as_ptr() as usize) % align, 0);
             debug_assert_eq!(footer_ptr as usize % CHUNK_ALIGN, 0);
             #[expect(
                 clippy::cast_ptr_alignment,
@@ -370,21 +354,20 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
             )]
             let footer_ptr = footer_ptr.cast::<ChunkFooter>();
 
-            // The bump pointer is initialized to the end of the range we will bump out of, rounded down to
-            // the minimum alignment. It is the `NewChunkMemoryDetails` constructor's responsibility to ensure
-            // that even after this rounding we have enough non-zero capacity in the chunk.
-            let ptr = round_mut_ptr_down_to(footer_ptr.cast::<u8>(), MIN_ALIGN);
-            debug_assert_eq!(ptr as usize % MIN_ALIGN, 0);
-            debug_assert!(
-                data.as_ptr() <= ptr,
-                "bump pointer {ptr:#p} should still be greater than or equal to the \
-                 start of the bump chunk {data:#p}"
+            // Initial cursor sits at the footer, which is the end of the allocatable region.
+            // The footer is aligned on `CHUNK_ALIGN`, which is `>= MIN_ALIGN`, so this is already aligned to `MIN_ALIGN`.
+            let cursor_ptr = NonNull::new_unchecked(footer_ptr.cast::<u8>());
+            debug_assert_eq!(cursor_ptr.as_ptr() as usize % MIN_ALIGN, 0);
+
+            ptr::write(
+                footer_ptr,
+                ChunkFooter {
+                    start_ptr,
+                    layout,
+                    previous_chunk_footer_ptr: Cell::new(prev),
+                    cursor_ptr: Cell::new(cursor_ptr),
+                },
             );
-            debug_assert_eq!((ptr as usize) - (data.as_ptr() as usize), new_size_without_footer);
-
-            let ptr = Cell::new(NonNull::new_unchecked(ptr));
-
-            ptr::write(footer_ptr, ChunkFooter { data, layout, prev: Cell::new(prev), ptr });
 
             Some(NonNull::new_unchecked(footer_ptr))
         }

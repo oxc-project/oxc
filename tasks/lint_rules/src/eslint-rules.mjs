@@ -262,10 +262,10 @@ const loadPluginVitestRules = (linter) => {
 const loadPluginVueRules = (linter) => {
   // config extends chain: recommended -> strongly-recommended -> essential -> base
   const pluginVueRecommendedRules = new Set([
-    ...Object.keys(pluginVueConfigs.base || {}),
-    ...Object.keys(pluginVueConfigs.essential || {}),
-    ...Object.keys(pluginVueConfigs["strongly-recommended"] || {}),
-    ...Object.keys(pluginVueConfigs.recommended || {}),
+    ...Object.keys(pluginVueConfigs.base.rules || {}),
+    ...Object.keys(pluginVueConfigs.essential.rules || {}),
+    ...Object.keys(pluginVueConfigs["strongly-recommended"].rules || {}),
+    ...Object.keys(pluginVueConfigs.recommended.rules || {}),
   ]);
   for (const [name, rule] of Object.entries(pluginVueRules)) {
     const prefixedName = `vue/${name}`;

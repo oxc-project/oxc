@@ -21,7 +21,8 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
         let current_footer = self.current_chunk_footer.get();
         let current_footer = unsafe { current_footer.as_ref() };
 
-        current_footer.ptr.get().as_ptr() as usize - current_footer.data.as_ptr() as usize
+        current_footer.cursor_ptr.get().as_ptr() as usize
+            - current_footer.start_ptr.as_ptr() as usize
     }
 
     /// Get an iterator over each chunk of allocated memory that this arena has allocated into.
@@ -152,7 +153,7 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
         unsafe {
             while !footer_ptr.as_ref().is_empty() {
                 total += footer_ptr.as_ref().layout.size() - CHUNK_FOOTER_SIZE;
-                footer_ptr = footer_ptr.as_ref().prev.get();
+                footer_ptr = footer_ptr.as_ref().previous_chunk_footer_ptr.get();
             }
         }
         total
@@ -213,7 +214,7 @@ impl<const MIN_ALIGN: usize> Iterator for ChunkRawIter<'_, MIN_ALIGN> {
                 return None;
             }
             let (ptr, len) = foot.as_raw_parts();
-            self.footer = foot.prev.get();
+            self.footer = foot.previous_chunk_footer_ptr.get();
             Some((ptr, len))
         }
     }

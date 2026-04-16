@@ -53,24 +53,26 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
             let cur_chunk = self.current_chunk_footer.get();
 
             // Deallocate all chunks except the current one
-            let prev_chunk = cur_chunk.as_ref().prev.replace(EMPTY_CHUNK.get());
+            let prev_chunk =
+                cur_chunk.as_ref().previous_chunk_footer_ptr.replace(EMPTY_CHUNK.get());
             dealloc_chunk_list(prev_chunk);
 
-            // Reset the bump finger to the end of the chunk
+            // Reset the bump cursor to the end of the chunk
             debug_assert!(
                 is_pointer_aligned_to(cur_chunk.as_ptr(), MIN_ALIGN),
                 "bump pointer {cur_chunk:#p} should be aligned to the minimum alignment of {MIN_ALIGN:#x}"
             );
-            cur_chunk.as_ref().ptr.set(cur_chunk.cast());
+            cur_chunk.as_ref().cursor_ptr.set(cur_chunk.cast());
 
+            let current_chunk_footer = self.current_chunk_footer.get().as_ref();
             debug_assert!(
-                self.current_chunk_footer.get().as_ref().prev.get().as_ref().is_empty(),
+                current_chunk_footer.previous_chunk_footer_ptr.get().as_ref().is_empty(),
                 "We should only have a single chunk"
             );
             debug_assert_eq!(
-                self.current_chunk_footer.get().as_ref().ptr.get(),
+                current_chunk_footer.cursor_ptr.get(),
                 self.current_chunk_footer.get().cast(),
-                "Our chunk's bump finger should be reset to the start of its allocation"
+                "Our chunk's bump cursor should be reset to the start of its allocation"
             );
         }
     }
@@ -90,8 +92,8 @@ unsafe fn dealloc_chunk_list(mut footer: NonNull<ChunkFooter>) {
     unsafe {
         while !footer.as_ref().is_empty() {
             let f = footer;
-            footer = f.as_ref().prev.get();
-            alloc::dealloc(f.as_ref().data.as_ptr(), f.as_ref().layout);
+            footer = f.as_ref().previous_chunk_footer_ptr.get();
+            alloc::dealloc(f.as_ref().start_ptr.as_ptr(), f.as_ref().layout);
         }
     }
 }

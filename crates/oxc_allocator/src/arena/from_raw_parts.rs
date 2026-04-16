@@ -28,18 +28,7 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
     ///   from system allocator with alignment of [`CHUNK_ALIGN`] (or caller must wrap the `Arena` in `ManuallyDrop`
     ///   and ensure the backing memory is freed correctly themselves).
     /// * `ptr` must have permission for writes.
-    ///
-    /// # Panics
-    ///
-    /// Panics on invalid minimum alignments.
     pub unsafe fn from_raw_parts(ptr: NonNull<u8>, size: usize) -> Self {
-        // Validate `MIN_ALIGN`. These checks will be removed by compiler as `MIN_ALIGN` is statically known.
-        assert!(MIN_ALIGN.is_power_of_two(), "MIN_ALIGN must be a power of two; found {MIN_ALIGN}");
-        assert!(
-            MIN_ALIGN <= CHUNK_ALIGN,
-            "MIN_ALIGN may not be larger than {CHUNK_ALIGN}; found {MIN_ALIGN}"
-        );
-
         // Debug assert that `ptr` and `size` fulfill size and alignment requirements
         debug_assert!((ptr.as_ptr() as usize).is_multiple_of(CHUNK_ALIGN));
         debug_assert!(size.is_multiple_of(CHUNK_ALIGN));
@@ -56,10 +45,10 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
         // Caller guarantees region from `ptr` to `ptr + size` forms a single allocation, so it must be a valid layout.
         let layout = unsafe { Layout::from_size_align_unchecked(size, CHUNK_ALIGN) };
         let chunk_footer = ChunkFooter {
-            data: ptr,
+            start_ptr: ptr,
             layout,
-            prev: Cell::new(EMPTY_CHUNK.get()),
-            ptr: Cell::new(chunk_footer_ptr.cast::<u8>()),
+            previous_chunk_footer_ptr: Cell::new(EMPTY_CHUNK.get()),
+            cursor_ptr: Cell::new(chunk_footer_ptr.cast::<u8>()),
         };
 
         // SAFETY: If caller has upheld safety requirements, `chunk_footer_ptr` is `CHUNK_FOOTER_SIZE` bytes
@@ -93,13 +82,13 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
         // SAFETY: `current_chunk_footer` always points to a valid `ChunkFooter`
         let chunk_footer = unsafe { self.current_chunk_footer.get().as_ref() };
 
-        debug_assert!(ptr.as_ptr() >= chunk_footer.data.as_ptr());
+        debug_assert!(ptr.as_ptr() >= chunk_footer.start_ptr.as_ptr());
         debug_assert!(ptr.as_ptr().cast_const() <= ptr::from_ref(chunk_footer).cast::<u8>());
         debug_assert!(ptr.addr().get().is_multiple_of(MIN_ALIGN));
 
         // SAFETY: Caller guarantees `Arena` has at least 1 allocated chunk, and `ptr` is valid
         #[expect(clippy::unnecessary_safety_comment)]
-        chunk_footer.ptr.set(ptr);
+        chunk_footer.cursor_ptr.set(ptr);
     }
 
     /// Get pointer to end of the data region of this [`Arena`]'s current chunk
