@@ -8,7 +8,7 @@ use oxc_ecmascript::{
 use oxc_span::{GetSpan, SPAN};
 use oxc_syntax::operator::{BinaryOperator, LogicalOperator};
 
-use crate::TraverseCtx;
+use crate::{TraverseCtx, generated::ancestor::Ancestor};
 
 use super::PeepholeOptimizations;
 
@@ -39,9 +39,16 @@ impl<'a> PeepholeOptimizations {
 
     pub fn fold_static_member_expr(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::StaticMemberExpression(e) = expr else { return };
-        // TODO: tryFoldObjectPropAccess(n, left, name)
         if e.object.may_have_side_effects(ctx) {
             return;
+        }
+        if !e.optional && !Self::is_in_callee_position(ctx) {
+            let name = e.property.name.as_str();
+            if let Some(changed) = Self::try_fold_object_prop_access(&mut e.object, name, ctx) {
+                *expr = changed;
+                ctx.state.changed = true;
+                return;
+            }
         }
         if let Some(changed) = e.evaluate_value(ctx).map(|value| ctx.value_to_expr(e.span, value)) {
             *expr = changed;
@@ -51,14 +58,67 @@ impl<'a> PeepholeOptimizations {
 
     pub fn fold_computed_member_expr(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::ComputedMemberExpression(e) = expr else { return };
-        // TODO: tryFoldObjectPropAccess(n, left, name)
         if e.object.may_have_side_effects(ctx) || e.expression.may_have_side_effects(ctx) {
             return;
+        }
+        if !e.optional
+            && !Self::is_in_callee_position(ctx)
+            && let Expression::StringLiteral(s) = &e.expression
+        {
+            let name = s.value.as_str().to_owned();
+            if let Some(changed) = Self::try_fold_object_prop_access(&mut e.object, &name, ctx) {
+                *expr = changed;
+                ctx.state.changed = true;
+                return;
+            }
         }
         if let Some(changed) = e.evaluate_value(ctx).map(|value| ctx.value_to_expr(e.span, value)) {
             *expr = changed;
             ctx.state.changed = true;
         }
+    }
+
+    fn is_in_callee_position(ctx: &TraverseCtx<'a>) -> bool {
+        matches!(
+            ctx.parent(),
+            Ancestor::CallExpressionCallee(_)
+                | Ancestor::NewExpressionCallee(_)
+                | Ancestor::TaggedTemplateExpressionTag(_)
+        )
+    }
+
+    fn try_fold_object_prop_access(
+        object: &mut Expression<'a>,
+        name: &str,
+        ctx: &TraverseCtx<'a>,
+    ) -> Option<Expression<'a>> {
+        if name == "__proto__" {
+            return None;
+        }
+        let Expression::ObjectExpression(obj) = object else { return None };
+        let mut last_match: Option<usize> = None;
+        for (i, prop) in obj.properties.iter().enumerate() {
+            match prop {
+                ObjectPropertyKind::SpreadProperty(_) => return None,
+                ObjectPropertyKind::ObjectProperty(p) => {
+                    let key_name = p.key.static_name()?;
+                    if !p.computed && key_name == "__proto__" {
+                        return None;
+                    }
+                    if key_name == name {
+                        if p.kind != PropertyKind::Init || p.method {
+                            return None;
+                        }
+                        last_match = Some(i);
+                    }
+                }
+            }
+        }
+        let i = last_match?;
+        let ObjectPropertyKind::ObjectProperty(p) = &mut obj.properties[i] else {
+            return None;
+        };
+        Some(p.value.take_in(ctx.ast))
     }
 
     pub fn fold_logical_expr(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
