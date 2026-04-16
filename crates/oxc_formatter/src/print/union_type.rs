@@ -35,11 +35,32 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSUnionType<'a>> {
             //   /** JSDoc */
             //   | 'VALUE';
             // ```
+            // Also skip the hug shortcut when own-line comments appear inside the
+            // single-member union (between `|` and the member):
+            // ```ts
+            // type A = |
+            //   // Comment
+            //   'VALUE';
+            // ```
             // Those comments must be handled by the normal union formatting path,
             // so they are printed with correct indentation.
             let has_alias_level_own_line_comments =
                 matches!(self.parent(), AstNodes::TSTypeAliasDeclaration(_))
-                    && f.comments().has_leading_own_line_comment(self.span().start);
+                    && (f.comments().has_leading_own_line_comment(self.span().start)
+                        || (self.types.len() == 1
+                            && !matches!(
+                                self.types.first(),
+                                Some(
+                                    TSType::TSParenthesizedType(_) | TSType::TSUnionType(_)
+                                )
+                            )
+                            && self
+                                .types
+                                .first()
+                                .is_some_and(|first| {
+                                    f.comments()
+                                        .has_leading_own_line_comment(first.span().start)
+                                })));
             if !has_alias_level_own_line_comments {
                 return format_union_types(self.types(), Span::default(), true, f);
             }
@@ -57,7 +78,31 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSUnionType<'a>> {
         // So the head of the current nested union type chain is `| (| (A | B))`
         // if we encounter a leading comment when navigating up the chain,
         // we consider the current union type as having leading comments
-        let leading_comments = f.context().comments().comments_before(self.span().start);
+        // For single-member unions at the alias level, also include comments
+        // between `|` and the first member as "leading comments" of the union.
+        // This ensures `type A = | \n // Comment \n "A"` formats the comment
+        // outside the inner content group, producing the same output as Prettier:
+        // ```ts
+        // type A =
+        //   // Comment
+        //   "A";
+        // ```
+        let leading_comments = if self.types.len() == 1
+            && matches!(self.parent(), AstNodes::TSTypeAliasDeclaration(_))
+            && !matches!(
+                self.types.first(),
+                Some(TSType::TSParenthesizedType(_) | TSType::TSUnionType(_))
+            )
+        {
+            f.context().comments().comments_before(
+                self.types
+                    .first()
+                    .map(|t| t.span().start)
+                    .unwrap_or(self.span().start),
+            )
+        } else {
+            f.context().comments().comments_before(self.span().start)
+        };
         let comment_info = LeadingCommentsInfo::from_comments(leading_comments);
         let mut union_type_at_top = self;
         while let AstNodes::TSUnionType(parent) = union_type_at_top.parent()
