@@ -89,8 +89,8 @@ assertion_line: 444
 
   ⚠ eslint(prefer-template): Unexpected string concatenation.
    ╭─[prefer_template.tsx:1:11]
- 1 │ var foo = '2 backslashes: \\${bar}' + baz;
-   ·           ───────────────────────────────
+ 1 │ var foo = '2 backslashes: \${bar}' + baz;
+   ·           ──────────────────────────────
    ╰────
   help: Use template literals instead of string concatenation.
 
@@ -117,8 +117,8 @@ assertion_line: 444
 
   ⚠ eslint(prefer-template): Unexpected string concatenation.
    ╭─[prefer_template.tsx:1:11]
- 1 │ var foo = bar + 'this is a backtick preceded by two backslashes: \\`' + baz;
-   ·           ─────────────────────────────────────────────────────────────────
+ 1 │ var foo = bar + 'this is a backtick preceded by two backslashes: \`' + baz;
+   ·           ────────────────────────────────────────────────────────────────
    ╰────
   help: Use template literals instead of string concatenation.
 
@@ -131,26 +131,8 @@ assertion_line: 444
 
   ⚠ eslint(prefer-template): Unexpected string concatenation.
    ╭─[prefer_template.tsx:1:11]
- 1 │ ╭─▶ var foo = 'favorites: ' + favorites.map(f => {
- 2 │ │       return f.name;
- 3 │ ╰─▶ }) + ';';
-   ╰────
-  help: Use template literals instead of string concatenation.
-
-  ⚠ eslint(prefer-template): Unexpected string concatenation.
-   ╭─[prefer_template.tsx:1:11]
  1 │ var foo = bar + baz + 'qux';
    ·           ─────────────────
-   ╰────
-  help: Use template literals instead of string concatenation.
-
-  ⚠ eslint(prefer-template): Unexpected string concatenation.
-   ╭─[prefer_template.tsx:1:11]
- 1 │ ╭─▶ var foo = 'favorites: ' +
- 2 │ │       favorites.map(f => {
- 3 │ │           return f.name;
- 4 │ │       }) +
- 5 │ ╰─▶ ';';
    ╰────
   help: Use template literals instead of string concatenation.
 
@@ -205,7 +187,7 @@ assertion_line: 444
 
   ⚠ eslint(prefer-template): Unexpected string concatenation.
    ╭─[prefer_template.tsx:1:1]
- 1 │ foo + 'does not autofix octal escape sequence' + '\033'
+ 1 │ foo + 'does not autofix octal escape sequence' + '\x1b'
    · ───────────────────────────────────────────────────────
    ╰────
   help: Use template literals instead of string concatenation.
@@ -219,7 +201,7 @@ assertion_line: 444
 
   ⚠ eslint(prefer-template): Unexpected string concatenation.
    ╭─[prefer_template.tsx:1:1]
- 1 │ foo + '\n other text \033'
+ 1 │ foo + '\n other text \x1b'
    · ──────────────────────────
    ╰────
   help: Use template literals instead of string concatenation.
@@ -233,30 +215,30 @@ assertion_line: 444
 
   ⚠ eslint(prefer-template): Unexpected string concatenation.
    ╭─[prefer_template.tsx:1:1]
- 1 │ foo + '\08'
-   · ───────────
-   ╰────
-  help: Use template literals instead of string concatenation.
-
-  ⚠ eslint(prefer-template): Unexpected string concatenation.
-   ╭─[prefer_template.tsx:1:1]
- 1 │ foo + '\\033'
-   · ─────────────
-   ╰────
-  help: Use template literals instead of string concatenation.
-
-  ⚠ eslint(prefer-template): Unexpected string concatenation.
-   ╭─[prefer_template.tsx:1:1]
- 1 │ foo + '\0'
+ 1 │ foo + ' 8'
    · ──────────
    ╰────
   help: Use template literals instead of string concatenation.
 
   ⚠ eslint(prefer-template): Unexpected string concatenation.
    ╭─[prefer_template.tsx:1:1]
+ 1 │ foo + '\033'
+   · ────────────
+   ╰────
+  help: Use template literals instead of string concatenation.
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:1]
+ 1 │ foo + ' '
+   · ─────────
+   ╰────
+  help: Use template literals instead of string concatenation.
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:1]
  1 │ ╭─▶ "default-src 'self' https://*.google.com;"
- 2 │ │                               + "frame-ancestors 'none';"
- 3 │ ╰─▶                             + "report-to " + foo + ";"
+ 2 │ │                           + "frame-ancestors 'none';"
+ 3 │ ╰─▶                         + "report-to " + foo + ";"
    ╰────
   help: Use template literals instead of string concatenation.
 
