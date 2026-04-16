@@ -146,25 +146,14 @@ fn build_template_for_expr(
 
     if let Expression::BinaryExpression(binary) = inner {
         if binary.operator == BinaryOperator::Addition && has_string_literal(inner) {
-            return build_template_for_binary(
-                source_text,
-                fixer,
-                binary,
-                text_before,
-                text_after,
-            );
+            return build_template_for_binary(source_text, fixer, binary, text_before, text_after);
         }
     }
 
     // Default: wrap expression in ${}
     // Use the inner (unparenthesized) expression's source text
     let expr_text = &source_text[inner.span().start as usize..inner.span().end as usize];
-    format!(
-        "`${{{}{}{}}}`",
-        text_before.unwrap_or(""),
-        expr_text,
-        text_after.unwrap_or("")
-    )
+    format!("`${{{}{}{}}}`", text_before.unwrap_or(""), expr_text, text_after.unwrap_or(""))
 }
 
 // ---- Octal escape detection ----
@@ -517,49 +506,137 @@ fn test() {
         ("var foo = +100 + 'yen';", "var foo = `${+100  }yen`;", None),
         ("var foo = 'bar' + baz;", "var foo = `bar${  baz}`;", None),
         ("var foo = '￥' + (n * 1000) + '-'", "var foo = `￥${  n * 1000  }-`", None),
-        ("var foo = 'aaa' + aaa; var bar = 'bbb' + bbb;", "var foo = `aaa${  aaa}`; var bar = `bbb${  bbb}`;", None),
+        (
+            "var foo = 'aaa' + aaa; var bar = 'bbb' + bbb;",
+            "var foo = `aaa${  aaa}`; var bar = `bbb${  bbb}`;",
+            None,
+        ),
         ("var string = (number + 1) + 'px';", "var string = `${number + 1  }px`;", None),
         ("var foo = 'bar' + baz + 'qux';", "var foo = `bar${  baz  }qux`;", None),
-        ("var foo = '0 backslashes: ${bar}' + baz;", "var foo = `0 backslashes: \\${bar}${  baz}`;", None),
-        (r"var foo = '1 backslash: \${bar}' + baz;", "var foo = `1 backslash: \\${bar}${  baz}`;", None),
-        ("var foo = '2 backslashes: \\${bar}' + baz;", "var foo = `2 backslashes: \\${bar}${  baz}`;", None),
-        (r"var foo = '3 backslashes: \\\${bar}' + baz;", "var foo = `3 backslashes: \\\\\\${bar}${  baz}`;", None),
-        ("var foo = bar + 'this is a backtick: `' + baz;", "var foo = `${bar  }this is a backtick: \\`${  baz}`;", None),
-        (r"var foo = bar + 'this is a backtick preceded by a backslash: \`' + baz;", "var foo = `${bar  }this is a backtick preceded by a backslash: \\`${  baz}`;", None),
-        ("var foo = bar + 'this is a backtick preceded by two backslashes: \\`' + baz;", "var foo = `${bar  }this is a backtick preceded by two backslashes: \\`${  baz}`;", None),
+        (
+            "var foo = '0 backslashes: ${bar}' + baz;",
+            "var foo = `0 backslashes: \\${bar}${  baz}`;",
+            None,
+        ),
+        (
+            r"var foo = '1 backslash: \${bar}' + baz;",
+            "var foo = `1 backslash: \\${bar}${  baz}`;",
+            None,
+        ),
+        (
+            "var foo = '2 backslashes: \\${bar}' + baz;",
+            "var foo = `2 backslashes: \\${bar}${  baz}`;",
+            None,
+        ),
+        (
+            r"var foo = '3 backslashes: \\\${bar}' + baz;",
+            "var foo = `3 backslashes: \\\\\\${bar}${  baz}`;",
+            None,
+        ),
+        (
+            "var foo = bar + 'this is a backtick: `' + baz;",
+            "var foo = `${bar  }this is a backtick: \\`${  baz}`;",
+            None,
+        ),
+        (
+            r"var foo = bar + 'this is a backtick preceded by a backslash: \`' + baz;",
+            "var foo = `${bar  }this is a backtick preceded by a backslash: \\`${  baz}`;",
+            None,
+        ),
+        (
+            "var foo = bar + 'this is a backtick preceded by two backslashes: \\`' + baz;",
+            "var foo = `${bar  }this is a backtick preceded by two backslashes: \\`${  baz}`;",
+            None,
+        ),
         ("var foo = bar + `${baz}foo`;", "var foo = `${bar  }${baz}foo`;", None),
         ("var foo = bar + baz + 'qux';", "var foo = `${bar + baz  }qux`;", None),
-        ("var foo = /* a */ 'bar' /* b */ + /* c */ baz /* d */ + 'qux' /* e */ ;", "var foo = /* a */ `bar${ /* b */  /* c */ baz /* d */  }qux` /* e */ ;", None),
-        ("var foo = bar + ('baz') + 'qux' + (boop);", "var foo = `${bar  }baz` + `qux${  boop}`;", None),
-        (r"foo + 'unescapes an escaped single quote in a single-quoted string: \''", "`${foo  }unescapes an escaped single quote in a single-quoted string: '`", None),
-        (r#"foo + "unescapes an escaped double quote in a double-quoted string: \"""#, r#"`${foo  }unescapes an escaped double quote in a double-quoted string: "`"#, None),
-        (r#"foo + 'does not unescape an escaped double quote in a single-quoted string: \"'"#, r#"`${foo  }does not unescape an escaped double quote in a single-quoted string: \"`"#, None),
-        (r#"foo + "does not unescape an escaped single quote in a double-quoted string: \'""#, "`${foo  }does not unescape an escaped single quote in a double-quoted string: \\'`", None),
-        (r"foo + 'handles unicode escapes correctly: \x27'", "`${foo  }handles unicode escapes correctly: \\x27`", None),
+        (
+            "var foo = /* a */ 'bar' /* b */ + /* c */ baz /* d */ + 'qux' /* e */ ;",
+            "var foo = /* a */ `bar${ /* b */  /* c */ baz /* d */  }qux` /* e */ ;",
+            None,
+        ),
+        (
+            "var foo = bar + ('baz') + 'qux' + (boop);",
+            "var foo = `${bar  }baz` + `qux${  boop}`;",
+            None,
+        ),
+        (
+            r"foo + 'unescapes an escaped single quote in a single-quoted string: \''",
+            "`${foo  }unescapes an escaped single quote in a single-quoted string: '`",
+            None,
+        ),
+        (
+            r#"foo + "unescapes an escaped double quote in a double-quoted string: \"""#,
+            r#"`${foo  }unescapes an escaped double quote in a double-quoted string: "`"#,
+            None,
+        ),
+        (
+            r#"foo + 'does not unescape an escaped double quote in a single-quoted string: \"'"#,
+            r#"`${foo  }does not unescape an escaped double quote in a single-quoted string: \"`"#,
+            None,
+        ),
+        (
+            r#"foo + "does not unescape an escaped single quote in a double-quoted string: \'""#,
+            "`${foo  }does not unescape an escaped single quote in a double-quoted string: \\'`",
+            None,
+        ),
+        (
+            r"foo + 'handles unicode escapes correctly: \x27'",
+            "`${foo  }handles unicode escapes correctly: \\x27`",
+            None,
+        ),
         // No fix for octal/non-octal decimal escape sequences
-        (r"foo + 'does not autofix non-octal decimal escape sequence' + '\8'", r"foo + 'does not autofix non-octal decimal escape sequence' + '\8'", None),
+        (
+            r"foo + 'does not autofix non-octal decimal escape sequence' + '\8'",
+            r"foo + 'does not autofix non-octal decimal escape sequence' + '\8'",
+            None,
+        ),
         (r"foo + '\0\1'", r"foo + '\0\1'", None),
         ("'a' + 'b' + foo", "`a` + `b${  foo}`", None),
         ("'a' + 'b' + foo + 'c' + 'd'", "`a` + `b${  foo  }c` + `d`", None),
         ("'a' + 'b + c' + foo + 'd' + 'e'", "`a` + `b + c${  foo  }d` + `e`", None),
         ("'a' + 'b' + foo + ('c' + 'd')", "`a` + `b${  foo  }c` + `d`", None),
         ("'a' + 'b' + foo + ('a' + 'b')", "`a` + `b${  foo  }a` + `b`", None),
-        ("'a' + 'b' + foo + ('c' + 'd') + ('e' + 'f')", "`a` + `b${  foo  }c` + `d` + `e` + `f`", None),
+        (
+            "'a' + 'b' + foo + ('c' + 'd') + ('e' + 'f')",
+            "`a` + `b${  foo  }c` + `d` + `e` + `f`",
+            None,
+        ),
         ("foo + ('a' + 'b') + ('c' + 'd')", "`${foo  }a` + `b` + `c` + `d`", None),
-        ("'a' + foo + ('b' + 'c') + ('d' + bar + 'e')", "`a${  foo  }b` + `c` + `d${  bar  }e`", None),
+        (
+            "'a' + foo + ('b' + 'c') + ('d' + bar + 'e')",
+            "`a${  foo  }b` + `c` + `d${  bar  }e`",
+            None,
+        ),
         ("foo + ('b' + 'c') + ('d' + bar + 'e')", "`${foo  }b` + `c` + `d${  bar  }e`", None),
         ("'a' + 'b' + foo + ('c' + 'd' + 'e')", "`a` + `b${  foo  }c` + `d` + `e`", None),
         ("'a' + 'b' + foo + ('c' + bar + 'd')", "`a` + `b${  foo  }c${  bar  }d`", None),
-        ("'a' + 'b' + foo + ('c' + bar + ('d' + 'e') + 'f')", "`a` + `b${  foo  }c${  bar  }d` + `e` + `f`", None),
-        ("'a' + 'b' + foo + ('c' + bar + 'e') + 'f' + test", "`a` + `b${  foo  }c${  bar  }e` + `f${  test}`", None),
-        ("'a' + foo + ('b' + bar + 'c') + ('d' + test)", "`a${  foo  }b${  bar  }c` + `d${  test}`", None),
+        (
+            "'a' + 'b' + foo + ('c' + bar + ('d' + 'e') + 'f')",
+            "`a` + `b${  foo  }c${  bar  }d` + `e` + `f`",
+            None,
+        ),
+        (
+            "'a' + 'b' + foo + ('c' + bar + 'e') + 'f' + test",
+            "`a` + `b${  foo  }c${  bar  }e` + `f${  test}`",
+            None,
+        ),
+        (
+            "'a' + foo + ('b' + bar + 'c') + ('d' + test)",
+            "`a${  foo  }b${  bar  }c` + `d${  test}`",
+            None,
+        ),
         ("'a' + foo + ('b' + 'c') + ('d' + bar)", "`a${  foo  }b` + `c` + `d${  bar}`", None),
         ("foo + ('a' + bar + 'b') + 'c' + test", "`${foo  }a${  bar  }b` + `c${  test}`", None),
         ("'a' + '`b`' + c", "`a` + `\\`b\\`${  c}`", None),
         ("'a' + '`b` + `c`' + d", "`a` + `\\`b\\` + \\`c\\`${  d}`", None),
         ("'a' + b + ('`c`' + '`d`')", "`a${  b  }\\`c\\`` + `\\`d\\``", None),
         ("'`a`' + b + ('`c`' + '`d`')", "`\\`a\\`${  b  }\\`c\\`` + `\\`d\\``", None),
-        ("foo + ('`a`' + bar + '`b`') + '`c`' + test", "`${foo  }\\`a\\`${  bar  }\\`b\\`` + `\\`c\\`${  test}`", None),
+        (
+            "foo + ('`a`' + bar + '`b`') + '`c`' + test",
+            "`${foo  }\\`a\\`${  bar  }\\`b\\`` + `\\`c\\`${  test}`",
+            None,
+        ),
         ("'a' + ('b' + 'c') + d", "`a` + `b` + `c${  d}`", None),
         ("'a' + ('`b`' + '`c`') + d", "`a` + `\\`b\\`` + `\\`c\\`${  d}`", None),
         ("a + ('b' + 'c') + d", "`${a  }b` + `c${  d}`", None),
@@ -567,10 +644,18 @@ fn test() {
         ("a + ('`b`' + '`c`') + d", "`${a  }\\`b\\`` + `\\`c\\`${  d}`", None),
         ("a + ('`b` + `c`' + '`d`') + e", "`${a  }\\`b\\` + \\`c\\`` + `\\`d\\`${  e}`", None),
         ("'a' + ('b' + 'c' + 'd') + e", "`a` + `b` + `c` + `d${  e}`", None),
-        ("'a' + ('b' + 'c' + 'd' + (e + 'f') + 'g' +'h' + 'i') + j", "`a` + `b` + `c` + `d${  e  }fg` +`h` + `i${  j}`", None),
+        (
+            "'a' + ('b' + 'c' + 'd' + (e + 'f') + 'g' +'h' + 'i') + j",
+            "`a` + `b` + `c` + `d${  e  }fg` +`h` + `i${  j}`",
+            None,
+        ),
         ("a + (('b' + 'c') + 'd')", "`${a  }b` + `c` + `d`", None),
         ("(a + 'b') + ('c' + 'd') + e", "`${a  }b` + `c` + `d${  e}`", None),
-        (r#"var foo = "Hello " + "world " + "another " + test"#, "var foo = `Hello ` + `world ` + `another ${  test}`", None),
+        (
+            r#"var foo = "Hello " + "world " + "another " + test"#,
+            "var foo = `Hello ` + `world ` + `another ${  test}`",
+            None,
+        ),
         (r#"'Hello ' + '"world" ' + test"#, r#"`Hello ` + `"world" ${  test}`"#, None),
         (r#""Hello " + "'world' " + test"#, "`Hello ` + `'world' ${  test}`", None),
     ];
