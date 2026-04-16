@@ -158,12 +158,32 @@ mod tests;
 /// [`oxc_allocator::Vec`]: crate::Vec
 /// [`oxc_allocator::Box::new_in`]: crate::Box::new_in
 /// [`alloc`]: Arena::alloc
+//
+// `#[repr(C)]` plus deliberate field ordering to defeat a store-to-load forwarding hazard on aarch64.
+// The fast path reads `cursor_ptr` and `start_ptr`, and writes `cursor_ptr` on every allocation.
+// If `cursor_ptr` and `start_ptr` were adjacent (offsets 0 and 8), LLVM's aarch64 backend fuses them
+// into a single 16-byte `ldp` instruction. That `ldp` then partial-overlaps the 8-byte `cursor_ptr` store
+// from the previous iteration, which breaks store-to-load forwarding and causes a ~3x slowdown in tight allocation loops.
+// `current_chunk_footer` is placed between the two hot pointers so they sit at offsets 0 and 16,
+// forcing LLVM to emit two independent 8-byte `ldr`s, each of which forwards cleanly.
+// More background here: https://eme64.github.io/blog/2024/06/24/Auto-Vectorization-and-Store-to-Load-Forwarding.html
+#[repr(C)]
 #[derive(Debug)]
 pub struct Arena<const MIN_ALIGN: usize = 1> {
+    /// Bump allocation cursor. Always in the range `self.start_ptr..=self.current_chunk_footer`.
+    cursor_ptr: Cell<NonNull<u8>>,
+
     /// The current chunk we are bump allocating within.
     current_chunk_footer: Cell<NonNull<ChunkFooter>>,
+
+    /// Pointer to the start of the current chunk's allocatable region.
+    ///
+    /// Stored here as well as in the `ChunkFooter` so it can be accessed without indirection through the footer.
+    start_ptr: Cell<NonNull<u8>>,
+
     /// Whether this `Arena` is allowed to allocate additional chunks when the current one is full.
     can_grow: bool,
+
     /// Used to track number of allocations made in this `Arena` when `track_allocations` feature is enabled.
     #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
     pub(crate) stats: AllocationStats,
@@ -217,12 +237,14 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
 // therefore prevent sending the `Arena` across threads until the borrows end.
 unsafe impl<const MIN_ALIGN: usize> Send for Arena<MIN_ALIGN> {}
 
-#[repr(C)]
-#[repr(align(16))]
+#[repr(C, align(16))]
 #[derive(Debug)]
 struct ChunkFooter {
     /// Pointer to the start of this chunk allocation.
     /// This footer is always at the end of the chunk.
+    ///
+    /// Only used when deallocating chunks, and when iterating over chunks. Allocation methods use
+    /// `Arena::start_ptr` instead, to avoid the indirection through the footer.
     start_ptr: NonNull<u8>,
 
     /// The layout of this chunk's allocation.
@@ -234,7 +256,9 @@ struct ChunkFooter {
     /// whose `previous_chunk_footer_ptr` link points to itself.
     previous_chunk_footer_ptr: Cell<NonNull<ChunkFooter>>,
 
-    /// Bump allocation cursor that is always in the range `self.start_ptr..=self`.
+    /// Bump allocation cursor, valid only for retired (non-current) chunks. For the current chunk,
+    /// the authoritative cursor lives in `Arena::cursor_ptr`. This field is written when a chunk
+    /// is retired (in the slow path of allocation), so iteration over chunks can read it.
     cursor_ptr: Cell<NonNull<u8>>,
 }
 
@@ -255,18 +279,18 @@ struct EmptyChunkFooter(ChunkFooter);
 unsafe impl Sync for EmptyChunkFooter {}
 
 static EMPTY_CHUNK: EmptyChunkFooter = EmptyChunkFooter(ChunkFooter {
-    // This chunk is empty (except the foot itself)
-    layout: Layout::new::<ChunkFooter>(),
-
     // The start of the (empty) allocatable region for this chunk is itself
     start_ptr: NonNull::from_ref(&EMPTY_CHUNK).cast::<u8>(),
 
-    // The end of the (empty) allocatable region for this chunk is also itself
-    cursor_ptr: Cell::new(NonNull::from_ref(&EMPTY_CHUNK).cast::<u8>()),
+    // This chunk is empty (except the foot itself)
+    layout: Layout::new::<ChunkFooter>(),
 
     // Invariant: The last chunk footer in all `ChunkFooter::previous_chunk_footer_ptr` linked lists
     // is the empty chunk footer, whose `previous_chunk_footer_ptr` points to itself
     previous_chunk_footer_ptr: Cell::new(NonNull::from_ref(&EMPTY_CHUNK.0)),
+
+    // The end of the (empty) allocatable region for this chunk is also itself
+    cursor_ptr: Cell::new(NonNull::from_ref(&EMPTY_CHUNK).cast::<u8>()),
 });
 
 impl EmptyChunkFooter {
@@ -276,18 +300,6 @@ impl EmptyChunkFooter {
 }
 
 impl ChunkFooter {
-    /// Returns the start and length of the currently allocated region of this chunk.
-    fn as_raw_parts(&self) -> (*mut u8, usize) {
-        let start_ptr = self.start_ptr.as_ptr().cast_const();
-        let cursor_ptr = self.cursor_ptr.get().as_ptr();
-        let end_ptr = ptr::from_ref(self).cast::<u8>();
-        debug_assert!(start_ptr <= cursor_ptr.cast_const());
-        debug_assert!(cursor_ptr.cast_const() <= end_ptr);
-        // SAFETY: `cursor_ptr` is always before or equal to `end_ptr`
-        let len = unsafe { end_ptr.offset_from_unsigned(cursor_ptr) };
-        (cursor_ptr, len)
-    }
-
     /// Returns `true` if this chunk is the empty chunk (end of the linked list).
     fn is_empty(&self) -> bool {
         ptr::eq(self, EMPTY_CHUNK.get().as_ptr())

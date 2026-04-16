@@ -57,12 +57,14 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
                 cur_chunk.as_ref().previous_chunk_footer_ptr.replace(EMPTY_CHUNK.get());
             dealloc_chunk_list(prev_chunk);
 
-            // Reset the bump cursor to the end of the chunk
+            // Reset the bump cursor to the end of the chunk.
+            // We don't need to reset `cursor_ptr` in `ChunkFooter`, as it'll be set if the chunk is retired later on.
+            // `iter_allocated_chunks_raw` ignores `cursor_ptr` of the current chunk.
             debug_assert!(
                 is_pointer_aligned_to(cur_chunk.as_ptr(), MIN_ALIGN),
                 "bump pointer {cur_chunk:#p} should be aligned to the minimum alignment of {MIN_ALIGN:#x}"
             );
-            cur_chunk.as_ref().cursor_ptr.set(cur_chunk.cast());
+            self.cursor_ptr.set(cur_chunk.cast::<u8>());
 
             let current_chunk_footer = self.current_chunk_footer.get().as_ref();
             debug_assert!(
@@ -70,8 +72,8 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
                 "We should only have a single chunk"
             );
             debug_assert_eq!(
-                current_chunk_footer.cursor_ptr.get(),
-                self.current_chunk_footer.get().cast(),
+                self.cursor_ptr.get(),
+                self.current_chunk_footer.get().cast::<u8>(),
                 "Our chunk's bump cursor should be reset to the start of its allocation"
             );
         }

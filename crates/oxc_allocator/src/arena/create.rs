@@ -278,8 +278,18 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
         // so we only need it here to ensure that it's impossible to create an `Arena` with an invalid `MIN_ALIGN`.
         const { Self::MIN_ALIGN };
 
+        // SAFETY: `chunk_footer_ptr` points to a valid `ChunkFooter` (either a freshly allocated chunk,
+        // a caller-provided chunk in `from_raw_parts`, or the canonical empty chunk)
+        let start_ptr = unsafe { chunk_footer_ptr.as_ref().start_ptr };
+
+        // Initial cursor sits at the footer, which is the end of the allocatable region.
+        // The footer is aligned on `CHUNK_ALIGN`, which is `>= MIN_ALIGN`, so this is already aligned to `MIN_ALIGN`.
+        let cursor_ptr = chunk_footer_ptr.cast::<u8>();
+
         Self {
+            cursor_ptr: Cell::new(cursor_ptr),
             current_chunk_footer: Cell::new(chunk_footer_ptr),
+            start_ptr: Cell::new(start_ptr),
             can_grow: true,
             #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
             stats: AllocationStats::default(),

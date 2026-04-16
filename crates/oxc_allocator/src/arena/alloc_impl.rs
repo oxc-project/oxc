@@ -66,18 +66,16 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
         // the pointer will be bumped by zero bytes, modulo alignment.
         // This keeps the fast path optimized for non-ZSTs, which are much more common.
         unsafe {
-            let footer_ptr = self.current_chunk_footer.get();
-            let footer = footer_ptr.as_ref();
-
-            let cursor_ptr = footer.cursor_ptr.get().as_ptr();
-            let start_ptr = footer.start_ptr.as_ptr();
+            let cursor_ptr = self.cursor_ptr.get().as_ptr();
+            let start_ptr = self.start_ptr.get().as_ptr();
             debug_assert!(
                 start_ptr <= cursor_ptr,
                 "start pointer {start_ptr:#p} should be less than or equal to bump pointer {cursor_ptr:#p}"
             );
             debug_assert!(
-                cursor_ptr <= footer_ptr.cast::<u8>().as_ptr(),
-                "bump pointer {cursor_ptr:#p} should be less than or equal to footer pointer {footer_ptr:#p}"
+                cursor_ptr <= self.current_chunk_footer.get().cast::<u8>().as_ptr(),
+                "bump pointer {cursor_ptr:#p} should be less than or equal to footer pointer {:#p}",
+                self.current_chunk_footer.get()
             );
             debug_assert!(
                 is_pointer_aligned_to(cursor_ptr, MIN_ALIGN),
@@ -144,7 +142,7 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
             debug_assert!(!aligned_ptr.is_null());
             let aligned_ptr = NonNull::new_unchecked(aligned_ptr);
 
-            footer.cursor_ptr.set(aligned_ptr);
+            self.cursor_ptr.set(aligned_ptr);
             Some(aligned_ptr)
         }
     }
@@ -185,7 +183,23 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
 
             debug_assert_eq!(new_footer.as_ref().start_ptr.as_ptr() as usize % layout.align(), 0);
 
-            // Set the new chunk as our new current chunk
+            // Sync `Arena::cursor_ptr` back to the retiring chunk's footer so iteration over chunks
+            // can read its final cursor position later.
+            //
+            // Do not update `cursor_ptr` of the empty chunk.
+            // That update would be a no-op - when current chunk is the empty chunk, `self.cursor_ptr` always points
+            // to the empty chunk's footer, which is the existing value of empty chunk footer's `cursor_ptr` anyway.
+            // But nonetheless, the empty chunk footer is a `static`, accessible from all threads simultaneously.
+            // Updating it from 2 threads simultaneously would be a data race (UB), even though both writes are no-ops.
+            if !current_footer.as_ref().is_empty() {
+                current_footer.as_ref().cursor_ptr.set(self.cursor_ptr.get());
+            }
+
+            // Set the new chunk as our new current chunk, and sync `start_ptr` and `cursor_ptr` accordingly.
+            // Initial cursor sits at the footer (end of the allocatable region).
+            // The footer is aligned on `CHUNK_ALIGN >= MIN_ALIGN`, so no rounding is needed.
+            self.start_ptr.set(new_footer.as_ref().start_ptr);
+            self.cursor_ptr.set(new_footer.cast::<u8>());
             self.current_chunk_footer.set(new_footer);
 
             // And then we can rely on `try_alloc_layout_fast` to allocate space within this chunk
@@ -201,8 +215,7 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
         // otherwise they are simply leaked - at least until somebody calls `reset()`
         unsafe {
             if self.is_last_allocation(ptr) {
-                let cursor_ptr = self.current_chunk_footer.get().as_ref().cursor_ptr.get();
-                let cursor_ptr = cursor_ptr.as_ptr().add(layout.size());
+                let cursor_ptr = self.cursor_ptr.get().as_ptr().add(layout.size());
 
                 let cursor_ptr = round_mut_ptr_up_to_unchecked(cursor_ptr, MIN_ALIGN);
                 debug_assert!(
@@ -210,7 +223,7 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
                     "bump pointer {cursor_ptr:#p} should be aligned to the minimum alignment of {MIN_ALIGN:#x}"
                 );
                 let cursor_ptr = NonNull::new_unchecked(cursor_ptr);
-                self.current_chunk_footer.get().as_ref().cursor_ptr.set(cursor_ptr);
+                self.cursor_ptr.set(cursor_ptr);
             }
         }
     }
@@ -288,16 +301,13 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
                 && delta >= old_size.div_ceil(2)
         {
             unsafe {
-                let footer = self.current_chunk_footer.get();
-                let footer = footer.as_ref();
-
                 // Note: `new_ptr` is aligned, because ptr *has to* be aligned, and we made sure delta is aligned
-                let new_ptr = NonNull::new_unchecked(footer.cursor_ptr.get().as_ptr().add(delta));
+                let new_ptr = NonNull::new_unchecked(self.cursor_ptr.get().as_ptr().add(delta));
                 debug_assert!(
                     is_pointer_aligned_to(new_ptr.as_ptr(), MIN_ALIGN),
                     "bump pointer {new_ptr:#p} should be aligned to the minimum alignment of {MIN_ALIGN:#x}"
                 );
-                footer.cursor_ptr.set(new_ptr);
+                self.cursor_ptr.set(new_ptr);
 
                 // Note: We know it is non-overlapping because of the size check in the `if` condition
                 ptr::copy_nonoverlapping(ptr.as_ptr(), new_ptr.as_ptr(), new_size);
@@ -360,9 +370,7 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
 
     #[inline]
     unsafe fn is_last_allocation(&self, ptr: NonNull<u8>) -> bool {
-        let footer = self.current_chunk_footer.get();
-        let footer = unsafe { footer.as_ref() };
-        footer.cursor_ptr.get() == ptr
+        self.cursor_ptr.get() == ptr
     }
 }
 
