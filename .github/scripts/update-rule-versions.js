@@ -8,14 +8,15 @@ const { parseArgs } = require("node:util");
 
 const DEFAULT_RULES_ROOT = path.join("crates", "oxc_linter", "src", "rules");
 const DECLARE_RULE_MACRO = "declare_oxc_lint!(";
-const NEXT_VERSION_TEXT = 'version = "next"';
 const NEXT_VERSION_REGEX = /version\s*=\s*"next"/;
 
 function collectRuleFiles(rulesRoot) {
   try {
-    const output = execFileSync("grep", ["-rl", NEXT_VERSION_TEXT, "--include=*.rs", rulesRoot], {
-      encoding: "utf8",
-    });
+    const output = execFileSync(
+      "grep",
+      ["-Erl", 'version[[:space:]]*=[[:space:]]*"next"', "--include=*.rs", rulesRoot],
+      { encoding: "utf8" },
+    );
     return output.trim().split("\n").filter(Boolean).sort();
   } catch {
     // grep exits with code 1 when no matches are found
@@ -154,7 +155,7 @@ function printReport(report, dryRun) {
     );
     for (const change of report.updatedRules) {
       console.log(
-        `- ${change.file}: ${change.ruleName} ${NEXT_VERSION_TEXT} -> version = "${change.to}"`,
+        `- ${change.file}: ${change.ruleName} version = "next" -> version = "${change.to}"`,
       );
     }
   }
