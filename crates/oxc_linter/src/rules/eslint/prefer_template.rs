@@ -66,6 +66,9 @@ impl Rule for PreferTemplate {
             ctx.diagnostic_with_fix(prefer_template_diagnostic(expr.span), |fixer| {
                 let source_text = fixer.source_text();
 
+                // Octal escape sequences (e.g. \033) and non-octal decimal escapes (\8, \9)
+                // are valid in string literals but illegal in template literals.
+                // Report the diagnostic but skip the autofix (matches ESLint's output: null).
                 if has_octal_or_non_octal_decimal_escape_in_binary(source_text, expr) {
                     return fixer.noop();
                 }
