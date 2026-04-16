@@ -223,7 +223,7 @@ function analyzeRuleFile(source, filePath, releaseVersion, repoRoot) {
   };
 }
 
-function rewriteNextRuleVersions({ root, releaseVersion, dryRun = false }) {
+function rewriteNextRuleVersions({ root, releaseVersion }) {
   validateReleaseVersion(releaseVersion);
 
   const repoRoot = path.resolve(root);
@@ -232,8 +232,7 @@ function rewriteNextRuleVersions({ root, releaseVersion, dryRun = false }) {
     throw new Error(`rules root does not exist: ${rulesRoot}`);
   }
 
-  const report = { updatedRules: [], skippedNurseryRules: [] };
-  const pendingWrites = [];
+  const report = { updatedRules: [], skippedNurseryRules: [], pendingWrites: [] };
 
   for (const filePath of collectRuleFiles(rulesRoot, repoRoot)) {
     const source = fs.readFileSync(filePath, "utf8");
@@ -245,14 +244,8 @@ function rewriteNextRuleVersions({ root, releaseVersion, dryRun = false }) {
     report.updatedRules.push(...fileReport.updatedRules);
     report.skippedNurseryRules.push(...fileReport.skippedNurseryRules);
 
-    if (!dryRun && fileReport.updatedRules.length > 0) {
-      pendingWrites.push({ filePath, updatedSource: fileReport.updatedSource });
-    }
-  }
-
-  if (!dryRun) {
-    for (const pendingWrite of pendingWrites) {
-      fs.writeFileSync(pendingWrite.filePath, pendingWrite.updatedSource);
+    if (fileReport.updatedRules.length > 0) {
+      report.pendingWrites.push({ filePath, updatedSource: fileReport.updatedSource });
     }
   }
 
@@ -331,6 +324,11 @@ function main(argv = process.argv.slice(2)) {
   }
 
   const report = rewriteNextRuleVersions(options);
+  if (!options.dryRun) {
+    for (const { filePath, updatedSource } of pendingWrites) {
+      fs.writeFileSync(filePath, updatedSource);
+    }
+  }
   printReport(report, options.dryRun);
 }
 
@@ -345,6 +343,4 @@ if (require.main === module) {
 
 module.exports = {
   analyzeRuleFile,
-  rewriteNextRuleVersions,
-  validateReleaseVersion,
 };
