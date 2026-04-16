@@ -58,7 +58,11 @@ function collectRuleFiles(rulesRoot: string): string[] {
 function findNextField(body: string, from: number): { word: string; end: number } | null {
   const match = body.slice(from).match(/(\w+)\s*,/);
   if (!match) return null;
-  return { word: match[1], end: from + match.index + match[0].length };
+
+  const matchIndex = match.index;
+  if (matchIndex === undefined) return null;
+
+  return { word: match[1], end: from + matchIndex + match[0].length };
 }
 
 // Skips past any /// doc comment lines at the start of body.
@@ -92,7 +96,11 @@ export function analyzeRuleFile(
     if (!macroEndMatch) {
       throw new Error(`${relativeFile}: unterminated declare_oxc_lint! block`);
     }
-    const macroEnd = bodyStart + macroEndMatch.index;
+    const macroEndMatchIndex = macroEndMatch.index;
+    if (macroEndMatchIndex === undefined) {
+      throw new Error(`${relativeFile}: unterminated declare_oxc_lint! block`);
+    }
+    const macroEnd = bodyStart + macroEndMatchIndex;
     const macroEndFull = macroEnd + macroEndMatch[0].length;
 
     const body = updatedSource.slice(bodyStart, macroEnd);
@@ -135,7 +143,12 @@ export function analyzeRuleFile(
 
     // Step 4: Replace only "next" with the release version, preserving spacing
     const nextLiteral = '"next"';
-    const versionStart = bodyStart + versionMatch.index;
+    const versionMatchIndex = versionMatch.index;
+    if (versionMatchIndex === undefined) {
+      searchFrom = macroEndFull;
+      continue;
+    }
+    const versionStart = bodyStart + versionMatchIndex;
     const nextIndex = updatedSource.indexOf(nextLiteral, versionStart);
     updatedSource =
       updatedSource.slice(0, nextIndex) +
