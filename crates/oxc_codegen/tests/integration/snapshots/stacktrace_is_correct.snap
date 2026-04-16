@@ -1,7 +1,8 @@
 ---
 source: crates/oxc_codegen/tests/integration/sourcemap.rs
+assertion_line: 167
 ---
-Node.js version: v24.14.0
+Node.js version: v24.15.0
 
 ## Input
 const fn = () => {
