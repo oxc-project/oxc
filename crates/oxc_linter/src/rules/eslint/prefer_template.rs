@@ -361,7 +361,7 @@ fn unescape_quote(s: &str, quote_char: u8) -> String {
     use cow_utils::CowUtils;
     let quote = quote_char as char;
     let escaped = format!("\\{quote}");
-    s.cow_replace(&*escaped, &*quote.to_string()).into_owned()
+    s.cow_replace(&*escaped, &quote.to_string()).into_owned()
 }
 
 // ---- Detection helpers ----
@@ -603,9 +603,9 @@ fn test() {
             r#""default-src 'self' https://*.google.com;"
             + "frame-ancestors 'none';"
             + "report-to " + foo + ";""#,
-            r#"`default-src 'self' https://*.google.com;`
+            r"`default-src 'self' https://*.google.com;`
             + `frame-ancestors 'none';`
-            + `report-to ${  foo  };`"#,
+            + `report-to ${  foo  };`",
             None,
         ),
         ("'a' + 'b' + foo", "`a` + `b${  foo}`", None),
