@@ -204,13 +204,6 @@ working directory: fixtures/cli/tsgolint
    :                         ^^^^^^
    `----
 
-  x typescript-eslint(no-unnecessary-type-arguments): This value can be trivially inferred for this type parameter, so it can be omitted.
-   ,-[no-unnecessary-type-arguments.ts:4:25]
- 3 | }
- 4 | const result = identity<string>('hello');
-   :                         ^^^^^^
-   `----
-
   x typescript-eslint(no-unnecessary-type-assertion): This assertion is unnecessary since it does not change the type of the expression.
    ,-[no-unnecessary-type-assertion.ts:2:23]
  1 | const str: string = 'hello';
@@ -676,7 +669,7 @@ working directory: fixtures/cli/tsgolint
    `----
   help: If your function does not access `this`, you can annotate it with `this: void`, or consider using an arrow function instead.
 
-Found 0 warnings and 82 errors.
+Found 0 warnings and 81 errors.
 Finished in <variable>ms on 60 files with 59 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors

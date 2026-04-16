@@ -1,11 +1,7 @@
 //! Methods only available when `from_raw_parts` feature is enabled.
 //! These methods are only used by raw transfer.
 
-use std::{
-    alloc::Layout,
-    cell::Cell,
-    ptr::{self, NonNull},
-};
+use std::{alloc::Layout, cell::Cell, ptr::NonNull};
 
 use super::{Arena, CHUNK_ALIGN, CHUNK_FOOTER_SIZE, ChunkFooter, EMPTY_CHUNK};
 
@@ -79,16 +75,13 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
     /// * `ptr` must be aligned to `MIN_ALIGN`.
     /// * No live references to data in the current chunk before `ptr` can exist.
     pub unsafe fn set_cursor_ptr(&self, ptr: NonNull<u8>) {
-        // SAFETY: `current_chunk_footer` always points to a valid `ChunkFooter`
-        let chunk_footer = unsafe { self.current_chunk_footer.get().as_ref() };
-
-        debug_assert!(ptr.as_ptr() >= chunk_footer.start_ptr.as_ptr());
-        debug_assert!(ptr.as_ptr().cast_const() <= ptr::from_ref(chunk_footer).cast::<u8>());
+        debug_assert!(ptr.as_ptr() >= self.start_ptr.get().as_ptr());
+        debug_assert!(ptr.as_ptr() <= self.current_chunk_footer.get().as_ptr().cast::<u8>());
         debug_assert!(ptr.addr().get().is_multiple_of(MIN_ALIGN));
 
         // SAFETY: Caller guarantees `Arena` has at least 1 allocated chunk, and `ptr` is valid
         #[expect(clippy::unnecessary_safety_comment)]
-        chunk_footer.cursor_ptr.set(ptr);
+        self.cursor_ptr.set(ptr);
     }
 
     /// Get pointer to end of the data region of this [`Arena`]'s current chunk

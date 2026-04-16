@@ -387,25 +387,26 @@ fn check_should_report(expr: &BinaryExpression) -> bool {
 }
 
 fn all_none_string_literal(expr: &Expression) -> bool {
-    match expr {
-        Expression::BinaryExpression(binary) if binary.operator == BinaryOperator::Addition => {
-            all_none_string_literal(binary.left.get_inner_expression())
-                && all_none_string_literal(binary.right.get_inner_expression())
-        }
-        _ => !expr.is_string_literal(),
+    if let Expression::BinaryExpression(binary) = expr
+        && binary.operator == BinaryOperator::Addition
+    {
+        return all_none_string_literal(binary.left.get_inner_expression())
+            && all_none_string_literal(binary.right.get_inner_expression());
     }
+
+    !expr.is_string_literal()
 }
 
 fn any_none_string_literal(expr: &Expression) -> bool {
-    match expr {
-        Expression::BinaryExpression(binary) if binary.operator == BinaryOperator::Addition => {
-            any_none_string_literal(binary.left.get_inner_expression())
-                || any_none_string_literal(binary.right.get_inner_expression())
-        }
-        _ => !expr.is_string_literal(),
+    if let Expression::BinaryExpression(binary) = expr
+        && binary.operator == BinaryOperator::Addition
+    {
+        return any_none_string_literal(binary.left.get_inner_expression())
+            || any_none_string_literal(binary.right.get_inner_expression());
     }
-}
 
+    !expr.is_string_literal()
+}
 #[test]
 fn test() {
     use crate::tester::Tester;

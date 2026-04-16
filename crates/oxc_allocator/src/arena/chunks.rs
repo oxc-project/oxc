@@ -1,6 +1,12 @@
 //! Methods to get info about the chunks of memory allocated by an `Arena`, and associated iterator types.
 
-use std::{iter::FusedIterator, marker::PhantomData, mem, ptr::NonNull, slice};
+use std::{
+    iter::FusedIterator,
+    marker::PhantomData,
+    mem,
+    ptr::{self, NonNull},
+    slice,
+};
 
 use super::{Arena, CHUNK_FOOTER_SIZE, ChunkFooter};
 
@@ -18,11 +24,7 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
     /// assert!(capacity >= 100);
     /// ```
     pub fn chunk_capacity(&self) -> usize {
-        let current_footer = self.current_chunk_footer.get();
-        let current_footer = unsafe { current_footer.as_ref() };
-
-        current_footer.cursor_ptr.get().as_ptr() as usize
-            - current_footer.start_ptr.as_ptr() as usize
+        self.cursor_ptr.get().as_ptr() as usize - self.start_ptr.get().as_ptr() as usize
     }
 
     /// Get an iterator over each chunk of allocated memory that this arena has allocated into.
@@ -122,7 +124,14 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
     /// In addition, all of the caveats when reading the chunk data from
     /// [`iter_allocated_chunks()`](Arena::iter_allocated_chunks) still apply.
     pub unsafe fn iter_allocated_chunks_raw(&self) -> ChunkRawIter<'_, MIN_ALIGN> {
-        ChunkRawIter { footer: self.current_chunk_footer.get(), arena: PhantomData }
+        ChunkRawIter {
+            footer: self.current_chunk_footer.get(),
+            // Authoritative cursor for the current chunk lives on `Arena`, not on the chunk's footer.
+            // The iterator consumes this value on its first step, then reads cursors from each
+            // retired chunk's footer.
+            current_chunk_cursor_ptr: Some(self.cursor_ptr.get()),
+            arena: PhantomData,
+        }
     }
 
     /// Calculate the number of bytes currently allocated across all chunks in this arena.
@@ -202,20 +211,38 @@ impl<const MIN_ALIGN: usize> FusedIterator for ChunkIter<'_, MIN_ALIGN> {}
 #[derive(Debug)]
 pub struct ChunkRawIter<'a, const MIN_ALIGN: usize = 1> {
     footer: NonNull<ChunkFooter>,
+    /// Cursor for the current chunk, taken from `Arena::cursor_ptr` at iterator creation.
+    /// Consumed on the first iteration. Subsequent iterations read the cursor from each retired chunk's footer.
+    current_chunk_cursor_ptr: Option<NonNull<u8>>,
     arena: PhantomData<&'a Arena<MIN_ALIGN>>,
 }
 
 impl<const MIN_ALIGN: usize> Iterator for ChunkRawIter<'_, MIN_ALIGN> {
     type Item = (*mut u8, usize);
+
     fn next(&mut self) -> Option<(*mut u8, usize)> {
         unsafe {
             let foot = self.footer.as_ref();
             if foot.is_empty() {
                 return None;
             }
-            let (ptr, len) = foot.as_raw_parts();
+
+            let start_ptr = foot.start_ptr.as_ptr();
+            let cursor_ptr = self
+                .current_chunk_cursor_ptr
+                .take()
+                .unwrap_or_else(|| foot.cursor_ptr.get())
+                .as_ptr();
+            let end_ptr = ptr::from_ref(foot).cast::<u8>();
+
+            debug_assert!(start_ptr <= cursor_ptr);
+            debug_assert!(cursor_ptr.cast_const() <= end_ptr);
+
+            // SAFETY: `cursor_ptr` is always before or equal to `end_ptr`
+            let len = end_ptr.offset_from_unsigned(cursor_ptr.cast_const());
             self.footer = foot.previous_chunk_footer_ptr.get();
-            Some((ptr, len))
+
+            Some((cursor_ptr, len))
         }
     }
 }
