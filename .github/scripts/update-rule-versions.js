@@ -3,6 +3,7 @@
 
 const fs = require("node:fs");
 const path = require("node:path");
+const { parseArgs } = require("node:util");
 
 const DEFAULT_RULES_ROOT = path.join("crates", "oxc_linter", "src", "rules");
 const DECLARE_RULE_MACRO = "declare_oxc_lint!(";
@@ -17,12 +18,6 @@ const VALID_CATEGORIES = new Set([
   "restriction",
   "nursery",
 ]);
-
-function validateReleaseVersion(releaseVersion) {
-  if (!/^\d+\.\d+\.\d+$/.test(releaseVersion)) {
-    throw new Error(`release version must be x.y.z, got \`${releaseVersion}\``);
-  }
-}
 
 function collectRuleFiles(dir, repoRoot) {
   const files = [];
@@ -224,8 +219,6 @@ function analyzeRuleFile(source, filePath, releaseVersion, repoRoot) {
 }
 
 function rewriteNextRuleVersions({ root, releaseVersion }) {
-  validateReleaseVersion(releaseVersion);
-
   const repoRoot = path.resolve(root);
   const rulesRoot = path.join(repoRoot, DEFAULT_RULES_ROOT);
   if (!fs.existsSync(rulesRoot)) {
@@ -274,35 +267,24 @@ function printReport(report, dryRun) {
   }
 }
 
-function parseArgs(argv) {
-  const options = {
-    root: process.cwd(),
-    releaseVersion: "",
-    dryRun: false,
-  };
+function main(argv = process.argv.slice(2)) {
+  const { values } = parseArgs({
+    args: argv,
+    options: {
+      "release-version": { type: "string", short: "r" },
+      root: { type: "string", short: "C", default: process.cwd() },
+      "dry-run": { type: "boolean", short: "n", default: false },
+      help: { type: "boolean", short: "h" },
+    },
+    strict: true,
+  });
 
-  for (let index = 0; index < argv.length; index++) {
-    const arg = argv[index];
-    if ((arg === "--release-version" || arg === "-r") && argv[index + 1]) {
-      options.releaseVersion = argv[index + 1];
-      index += 1;
-    } else if ((arg === "--root" || arg === "-C") && argv[index + 1]) {
-      options.root = argv[index + 1];
-      index += 1;
-    } else if (arg === "--dry-run" || arg === "-n") {
-      options.dryRun = true;
-    } else if (arg === "--help" || arg === "-h") {
-      options.help = true;
-    } else {
-      throw new Error(`unknown argument: ${arg}`);
-    }
-  }
+  const dryRun = values["dry-run"];
+  const releaseVersion = values["release-version"];
+  const { root } = values;
 
-  return options;
-}
-
-function printHelp() {
-  console.log(`Usage:
+  if (values.help) {
+    console.log(`Usage:
   node .github/scripts/update-rule-versions.js --release-version <x.y.z> [--root <path>] [--dry-run]
 
 Options:
@@ -311,25 +293,23 @@ Options:
   --dry-run, -n          Print the changes without writing files
   --help, -h             Show this help
 `);
-}
-
-function main(argv = process.argv.slice(2)) {
-  const options = parseArgs(argv);
-  if (options.help) {
-    printHelp();
     return;
   }
-  if (!options.releaseVersion) {
+
+  if (!releaseVersion) {
     throw new Error("missing required `--release-version <x.y.z>`");
   }
+  if (!/^\d+\.\d+\.\d+$/.test(releaseVersion)) {
+    throw new Error(`release version must be x.y.z, got \`${releaseVersion}\``);
+  }
 
-  const report = rewriteNextRuleVersions(options);
-  if (!options.dryRun) {
+  const report = rewriteNextRuleVersions({ root, releaseVersion });
+  if (!dryRun) {
     for (const { filePath, updatedSource } of pendingWrites) {
       fs.writeFileSync(filePath, updatedSource);
     }
   }
-  printReport(report, options.dryRun);
+  printReport(report, dryRun);
 }
 
 if (require.main === module) {
