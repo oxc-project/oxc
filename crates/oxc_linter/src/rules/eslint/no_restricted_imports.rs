@@ -8,7 +8,7 @@ use serde_json::Value;
 
 use oxc_ast::{
     AstKind,
-    ast::{ImportOrExportKind, StringLiteral, TSImportEqualsDeclaration, TSModuleReference},
+    ast::{Expression, ImportOrExportKind, StringLiteral, TSImportEqualsDeclaration, TSModuleReference},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -981,11 +981,17 @@ impl Rule for NoRestrictedImports {
     }
 
     fn run<'a>(&self, node: &oxc_semantic::AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::TSImportEqualsDeclaration(declaration) = node.kind() else {
-            return;
-        };
-
-        self.report_ts_import_equals_declaration_allowed(ctx, declaration);
+        match node.kind() {
+            AstKind::TSImportEqualsDeclaration(declaration) => {
+                self.report_ts_import_equals_declaration_allowed(ctx, declaration);
+            }
+            AstKind::ImportExpression(import_expr) => {
+                if let Expression::StringLiteral(source) = &import_expr.source {
+                    self.report_import_expression_allowed(ctx, source, import_expr.span);
+                }
+            }
+            _ => {}
+        }
     }
 
     fn run_once(&self, ctx: &LintContext<'_>) {
@@ -1262,6 +1268,76 @@ impl NoRestrictedImports {
             if pattern.get_regex_result(&reference.expression.value) {
                 ctx.diagnostic(get_diagnostic_from_import_name_result_pattern(
                     entry.span, source, result, pattern,
+                ));
+            }
+        }
+
+        if !whitelist_found && !found_errors.is_empty() {
+            for diagnostic in found_errors {
+                ctx.diagnostic(diagnostic);
+            }
+        }
+    }
+
+    fn report_import_expression_allowed(
+        &self,
+        ctx: &LintContext<'_>,
+        source: &StringLiteral,
+        span: Span,
+    ) {
+        for path in &self.paths {
+            if source.value.as_str() != path.name.as_str() {
+                continue;
+            }
+
+            // Dynamic imports are never type-only
+            let result = &path.get_string_literal_result(source, false);
+
+            if *result == ImportNameResult::Allowed {
+                continue;
+            }
+
+            let diagnostic =
+                get_diagnostic_from_import_name_result_path(span, &source.value, result, path);
+
+            ctx.diagnostic(diagnostic);
+        }
+
+        let mut whitelist_found = false;
+        let mut found_errors = vec![];
+
+        for pattern in &self.patterns {
+            // Dynamic imports are never type-only
+            let result = &pattern.get_string_literal_result(source, false);
+
+            if *result == ImportNameResult::Allowed {
+                continue;
+            }
+
+            match pattern.get_group_glob_result(&source.value) {
+                GlobResult::Whitelist => {
+                    whitelist_found = true;
+                    break;
+                }
+                GlobResult::Found => {
+                    let diagnostic = get_diagnostic_from_import_name_result_pattern(
+                        span,
+                        &source.value,
+                        result,
+                        pattern,
+                    );
+
+                    found_errors.push(diagnostic);
+                }
+                GlobResult::None => (),
+            }
+
+            if pattern.get_regex_result(&source.value) {
+                ctx.diagnostic(get_diagnostic_from_import_name_result_pattern(
+                    span,
+                    &source.value,
+                    result,
+                    pattern,
                 ));
             }
         }
@@ -3467,6 +3543,56 @@ fn test() {
             ])),
         ),
     ];
+
+    // Dynamic import() tests
+    let pass_dynamic_import = vec![
+        // Non-matching source
+        (r#"import('bar')"#, Some(serde_json::json!(["foo"]))),
+        // Non-string-literal argument (variable) should be ignored
+        (r#"import(variable)"#, Some(serde_json::json!(["foo"]))),
+        // importNames should NOT apply to dynamic imports
+        (r#"import('foo')"#, Some(serde_json::json!([{
+            "paths": [{
+                "name": "foo",
+                "importNames": ["default"],
+                "message": "Use bar instead."
+            }]
+        }]))),
+        // Template literal (not a string literal) should be ignored
+        ("import(`foo`)", Some(serde_json::json!(["foo"]))),
+    ];
+
+    let fail_dynamic_import = vec![
+        // Simple string restriction
+        (r#"import('fs')"#, Some(serde_json::json!(["fs"]))),
+        // Path with message
+        (r#"import('foo')"#, Some(serde_json::json!([{
+            "paths": [{
+                "name": "foo",
+                "message": "Use bar instead."
+            }]
+        }]))),
+        // Pattern restriction
+        (r#"import('lodash/pick')"#, Some(serde_json::json!([{
+            "patterns": ["lodash/*"]
+        }]))),
+        // Pattern with group and message
+        (r#"import('foo')"#, Some(serde_json::json!([{
+            "patterns": [{
+                "group": ["foo"],
+                "message": "No foo."
+            }]
+        }]))),
+        // Regex pattern
+        (r#"import('@app/api')"#, Some(serde_json::json!([{
+            "patterns": [{
+                "regex": "@app/(api|enums).*"
+            }]
+        }]))),
+    ];
+
+    pass.extend(pass_dynamic_import);
+    fail.extend(fail_dynamic_import);
 
     pass.extend(pass_typescript);
     fail.extend(fail_typescript);

@@ -936,8 +936,10 @@ impl RuleRunner for crate::rules::eslint::no_restricted_globals::NoRestrictedGlo
 }
 
 impl RuleRunner for crate::rules::eslint::no_restricted_imports::NoRestrictedImports {
-    const NODE_TYPES: Option<&AstTypesBitset> =
-        Some(&AstTypesBitset::from_types(&[AstType::TSImportEqualsDeclaration]));
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::ImportExpression,
+        AstType::TSImportEqualsDeclaration,
+    ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Unknown;
 }
 

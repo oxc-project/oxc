@@ -837,6 +837,38 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Example: React is not allowed to be imported
 
+  ⚠ eslint(no-restricted-imports): 'fs' import is restricted from being used.
+   ╭─[no_restricted_imports.tsx:1:1]
+ 1 │ import('fs')
+   · ────────────
+   ╰────
+
+  ⚠ eslint(no-restricted-imports): 'foo' import is restricted from being used.
+   ╭─[no_restricted_imports.tsx:1:1]
+ 1 │ import('foo')
+   · ─────────────
+   ╰────
+  help: Use bar instead.
+
+  ⚠ eslint(no-restricted-imports): 'lodash/pick' import is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:1]
+ 1 │ import('lodash/pick')
+   · ─────────────────────
+   ╰────
+
+  ⚠ eslint(no-restricted-imports): 'foo' import is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:1]
+ 1 │ import('foo')
+   · ─────────────
+   ╰────
+  help: No foo.
+
+  ⚠ eslint(no-restricted-imports): '@app/api' import is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:1]
+ 1 │ import('@app/api')
+   · ──────────────────
+   ╰────
+
   ⚠ eslint(no-restricted-imports): 'import1' import is restricted from being used.
    ╭─[no_restricted_imports.tsx:1:1]
  1 │ import foo from 'import1';
