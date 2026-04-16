@@ -241,6 +241,37 @@ declare_oxc_lint!(
   assert.match(updatedSource, /version = "next"/);
 });
 
+registerTest("accepts multi-line block comments on category lines", () => {
+  const root = createTempRepo();
+  writeRule(
+    root,
+    "no_debugger.rs",
+    `
+use oxc_macros::declare_oxc_lint;
+
+declare_oxc_lint!(
+    NoDebugger,
+    eslint,
+    nursery, /* move after
+      more bake time */
+    version = "next",
+);
+`,
+  );
+
+  const report = rewriteNextRuleVersions({ root, releaseVersion: "1.61.0" });
+  const updatedSource = fs.readFileSync(path.join(rulesDir(root), "no_debugger.rs"), "utf8");
+
+  assert.deepEqual(report.updatedRules, []);
+  assert.deepEqual(report.skippedNurseryRules, [
+    {
+      file: "crates/oxc_linter/src/rules/eslint/no_debugger.rs",
+      ruleName: "NoDebugger",
+    },
+  ]);
+  assert.match(updatedSource, /version = "next"/);
+});
+
 registerTest("ignores doc examples containing version next inside declare_oxc_lint blocks", () => {
   const root = createTempRepo();
   writeRule(
@@ -287,6 +318,31 @@ declare_oxc_lint!(
     correctness,
     version = "next",
 ); // keep note
+`,
+  );
+
+  const report = rewriteNextRuleVersions({ root, releaseVersion: "1.61.0" });
+  const updatedSource = fs.readFileSync(path.join(rulesDir(root), "no_debugger.rs"), "utf8");
+
+  assert.equal(report.updatedRules.length, 1);
+  assert.match(updatedSource, /version = "1\.61\.0"/);
+});
+
+registerTest("accepts multi-line block comments on declare_oxc_lint terminators", () => {
+  const root = createTempRepo();
+  writeRule(
+    root,
+    "no_debugger.rs",
+    `
+use oxc_macros::declare_oxc_lint;
+
+declare_oxc_lint!(
+    NoDebugger,
+    eslint,
+    correctness,
+    version = "next",
+); /* keep
+   note */
 `,
   );
 

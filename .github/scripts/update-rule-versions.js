@@ -68,39 +68,84 @@ function replaceVersionLiteral(line, releaseVersion) {
   return `${match[1]}"${releaseVersion}"${match[2]}`;
 }
 
-function isCommentOnlyLine(trimmedLine) {
-  return (
-    trimmedLine.startsWith("///") ||
-    trimmedLine.startsWith("//") ||
-    trimmedLine.startsWith("/*") ||
-    trimmedLine.startsWith("*") ||
-    trimmedLine.startsWith("*/")
-  );
+function stripCommentsFromLine(line, inBlockComment = false) {
+  let strippedLine = "";
+  let inString = false;
+  let stringDelimiter = "";
+  let isEscaped = false;
+
+  for (let index = 0; index < line.length; index++) {
+    const char = line[index];
+    const nextChar = line[index + 1];
+
+    if (inBlockComment) {
+      if (char === "*" && nextChar === "/") {
+        inBlockComment = false;
+        index += 1;
+      }
+      continue;
+    }
+
+    if (inString) {
+      strippedLine += char;
+      if (isEscaped) {
+        isEscaped = false;
+        continue;
+      }
+      if (char === "\\") {
+        isEscaped = true;
+        continue;
+      }
+      if (char === stringDelimiter) {
+        inString = false;
+      }
+      continue;
+    }
+
+    if (char === '"' || char === "'") {
+      inString = true;
+      stringDelimiter = char;
+      strippedLine += char;
+      continue;
+    }
+
+    if (char === "/" && nextChar === "*") {
+      inBlockComment = true;
+      index += 1;
+      continue;
+    }
+
+    if (char === "/" && nextChar === "/") {
+      break;
+    }
+
+    strippedLine += char;
+  }
+
+  return { strippedLine, inBlockComment };
 }
 
-function stripTrailingComments(line) {
-  return line
-    .replace(/\s*\/\*.*\*\/\s*$/, "")
-    .replace(/\s*\/\/.*$/, "")
-    .trim();
+function stripCommentsFromLines(lines) {
+  let inBlockComment = false;
+
+  return lines.map((line) => {
+    const result = stripCommentsFromLine(line, inBlockComment);
+    inBlockComment = result.inBlockComment;
+    return result.strippedLine;
+  });
 }
 
 function normalizeMetadataLine(line) {
-  const trimmedLine = line.trim();
-  if (!trimmedLine || isCommentOnlyLine(trimmedLine)) {
-    return null;
-  }
-
-  const strippedLine = stripTrailingComments(trimmedLine);
+  const strippedLine = line.trim();
   return strippedLine || null;
 }
 
 function analyzeRuleFile(source, filePath, releaseVersion, repoRoot) {
   const relativeFile = normalizePath(path.relative(repoRoot, filePath));
   const lines = source.split("\n");
+  const strippedLines = stripCommentsFromLines(lines);
   const updatedLines = [...lines];
   const coveredNextVersionLines = new Set();
-  const declareRuleBlocks = [];
   const updatedRules = [];
   const skippedNurseryRules = [];
 
@@ -110,7 +155,7 @@ function analyzeRuleFile(source, filePath, releaseVersion, repoRoot) {
     }
 
     let endLine = startLine + 1;
-    while (endLine < lines.length && stripTrailingComments(lines[endLine]) !== ");") {
+    while (endLine < lines.length && strippedLines[endLine].trim() !== ");") {
       endLine += 1;
     }
 
@@ -118,11 +163,9 @@ function analyzeRuleFile(source, filePath, releaseVersion, repoRoot) {
       throw new Error(`${relativeFile}: unterminated declare_oxc_lint! block`);
     }
 
-    declareRuleBlocks.push({ startLine, endLine });
-
     const metadataEntries = [];
     for (let lineIndex = startLine + 1; lineIndex < endLine; lineIndex++) {
-      const normalizedLine = normalizeMetadataLine(lines[lineIndex]);
+      const normalizedLine = normalizeMetadataLine(strippedLines[lineIndex]);
       if (!normalizedLine) {
         continue;
       }
@@ -165,17 +208,8 @@ function analyzeRuleFile(source, filePath, releaseVersion, repoRoot) {
     startLine = endLine;
   }
 
-  for (const [lineIndex, line] of lines.entries()) {
-    const isCommentLineInsideDeclareRuleBlock = declareRuleBlocks.some(
-      ({ startLine, endLine }) =>
-        lineIndex > startLine && lineIndex < endLine && isCommentOnlyLine(line.trim()),
-    );
-    const strippedLine = stripTrailingComments(line);
-    if (
-      NEXT_VERSION_REGEX.test(strippedLine) &&
-      !coveredNextVersionLines.has(lineIndex) &&
-      !isCommentLineInsideDeclareRuleBlock
-    ) {
+  for (const [lineIndex, strippedLine] of strippedLines.entries()) {
+    if (NEXT_VERSION_REGEX.test(strippedLine) && !coveredNextVersionLines.has(lineIndex)) {
       throw new Error(
         `${relativeFile}: found \`${NEXT_VERSION_TEXT}\` outside a declare_oxc_lint! block`,
       );
