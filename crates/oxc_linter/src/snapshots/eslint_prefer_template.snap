@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+assertion_line: 444
 ---
 
   ⚠ eslint(prefer-template): Unexpected string concatenation.
@@ -236,8 +237,8 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ eslint(prefer-template): Unexpected string concatenation.
    ╭─[prefer_template.tsx:1:1]
  1 │ ╭─▶ "default-src 'self' https://*.google.com;"
- 2 │ │                           + "frame-ancestors 'none';"
- 3 │ ╰─▶                         + "report-to " + foo + ";"
+ 2 │ │                               + "frame-ancestors 'none';"
+ 3 │ ╰─▶                             + "report-to " + foo + ";"
    ╰────
   help: Use template literals instead of string concatenation.
 
