@@ -362,7 +362,7 @@ fn unescape_quote(s: &str, quote_char: u8) -> String {
     s.replace(&escaped, &quote.to_string())
 }
 
-// ---- Detection helpers (unchanged) ----
+// ---- Detection helpers ----
 
 fn check_should_report(expr: &BinaryExpression) -> bool {
     if expr.operator != BinaryOperator::Addition {
