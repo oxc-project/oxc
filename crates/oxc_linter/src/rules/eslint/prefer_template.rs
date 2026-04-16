@@ -147,10 +147,11 @@ fn build_template_for_expr(
         return source_text[inner.span().start as usize..inner.span().end as usize].to_string();
     }
 
-    if let Expression::BinaryExpression(binary) = inner {
-        if binary.operator == BinaryOperator::Addition && has_string_literal(inner) {
-            return build_template_for_binary(source_text, fixer, binary, text_before, text_after);
-        }
+    if let Expression::BinaryExpression(binary) = inner
+        && binary.operator == BinaryOperator::Addition
+        && has_string_literal(inner)
+    {
+        return build_template_for_binary(source_text, fixer, binary, text_before, text_after);
     }
 
     // Default: wrap expression in ${}
@@ -357,9 +358,10 @@ fn escape_dollar_and_backtick(raw: &str) -> String {
 /// Unescape the original quote character: `\'` → `'` or `\"` → `"`.
 /// Ports: `.replace(new RegExp(\`\\\\${quote}\`, "gu"), quote)`
 fn unescape_quote(s: &str, quote_char: u8) -> String {
+    use cow_utils::CowUtils;
     let quote = quote_char as char;
     let escaped = format!("\\{quote}");
-    s.replace(&escaped, &quote.to_string())
+    s.cow_replace(&*escaped, &*quote.to_string()).into_owned()
 }
 
 // ---- Detection helpers ----
