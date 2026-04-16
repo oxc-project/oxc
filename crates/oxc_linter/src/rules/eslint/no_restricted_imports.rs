@@ -8,7 +8,9 @@ use serde_json::Value;
 
 use oxc_ast::{
     AstKind,
-    ast::{Expression, ImportOrExportKind, StringLiteral, TSImportEqualsDeclaration, TSModuleReference},
+    ast::{
+        Expression, ImportOrExportKind, StringLiteral, TSImportEqualsDeclaration, TSModuleReference,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -3551,13 +3553,16 @@ fn test() {
         // Non-string-literal argument (variable) should be ignored
         (r#"import(variable)"#, Some(serde_json::json!(["foo"]))),
         // importNames should NOT apply to dynamic imports
-        (r#"import('foo')"#, Some(serde_json::json!([{
-            "paths": [{
-                "name": "foo",
-                "importNames": ["default"],
-                "message": "Use bar instead."
-            }]
-        }]))),
+        (
+            r#"import('foo')"#,
+            Some(serde_json::json!([{
+                "paths": [{
+                    "name": "foo",
+                    "importNames": ["default"],
+                    "message": "Use bar instead."
+                }]
+            }])),
+        ),
         // Template literal (not a string literal) should be ignored
         ("import(`foo`)", Some(serde_json::json!(["foo"]))),
     ];
@@ -3566,29 +3571,41 @@ fn test() {
         // Simple string restriction
         (r#"import('fs')"#, Some(serde_json::json!(["fs"]))),
         // Path with message
-        (r#"import('foo')"#, Some(serde_json::json!([{
-            "paths": [{
-                "name": "foo",
-                "message": "Use bar instead."
-            }]
-        }]))),
+        (
+            r#"import('foo')"#,
+            Some(serde_json::json!([{
+                "paths": [{
+                    "name": "foo",
+                    "message": "Use bar instead."
+                }]
+            }])),
+        ),
         // Pattern restriction
-        (r#"import('lodash/pick')"#, Some(serde_json::json!([{
-            "patterns": ["lodash/*"]
-        }]))),
+        (
+            r#"import('lodash/pick')"#,
+            Some(serde_json::json!([{
+                "patterns": ["lodash/*"]
+            }])),
+        ),
         // Pattern with group and message
-        (r#"import('foo')"#, Some(serde_json::json!([{
-            "patterns": [{
-                "group": ["foo"],
-                "message": "No foo."
-            }]
-        }]))),
+        (
+            r#"import('foo')"#,
+            Some(serde_json::json!([{
+                "patterns": [{
+                    "group": ["foo"],
+                    "message": "No foo."
+                }]
+            }])),
+        ),
         // Regex pattern
-        (r#"import('@app/api')"#, Some(serde_json::json!([{
-            "patterns": [{
-                "regex": "@app/(api|enums).*"
-            }]
-        }]))),
+        (
+            r#"import('@app/api')"#,
+            Some(serde_json::json!([{
+                "patterns": [{
+                    "regex": "@app/(api|enums).*"
+                }]
+            }])),
+        ),
     ];
 
     pass.extend(pass_dynamic_import);
