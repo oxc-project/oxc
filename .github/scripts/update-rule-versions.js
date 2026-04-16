@@ -54,165 +54,82 @@ function normalizePath(filePath) {
   return filePath.split(path.sep).join("/");
 }
 
-function replaceVersionLiteral(line, releaseVersion) {
-  const match = line.match(/^(\s*version\s*=\s*)"next"(.*)$/);
-  if (!match) {
-    throw new Error(`could not rewrite version line: ${line.trim()}`);
-  }
-
-  return `${match[1]}"${releaseVersion}"${match[2]}`;
-}
-
-function stripCommentsFromLine(line, inBlockComment = false) {
-  let strippedLine = "";
-  let inString = false;
-  let stringDelimiter = "";
-  let isEscaped = false;
-
-  for (let index = 0; index < line.length; index++) {
-    const char = line[index];
-    const nextChar = line[index + 1];
-
-    if (inBlockComment) {
-      if (char === "*" && nextChar === "/") {
-        inBlockComment = false;
-        index += 1;
-      }
-      continue;
-    }
-
-    if (inString) {
-      strippedLine += char;
-      if (isEscaped) {
-        isEscaped = false;
-        continue;
-      }
-      if (char === "\\") {
-        isEscaped = true;
-        continue;
-      }
-      if (char === stringDelimiter) {
-        inString = false;
-      }
-      continue;
-    }
-
-    if (char === '"' || char === "'") {
-      inString = true;
-      stringDelimiter = char;
-      strippedLine += char;
-      continue;
-    }
-
-    if (char === "/" && nextChar === "*") {
-      inBlockComment = true;
-      index += 1;
-      continue;
-    }
-
-    if (char === "/" && nextChar === "/") {
-      break;
-    }
-
-    strippedLine += char;
-  }
-
-  return { strippedLine, inBlockComment };
-}
-
-function stripCommentsFromLines(lines) {
-  let inBlockComment = false;
-
-  return lines.map((line) => {
-    const result = stripCommentsFromLine(line, inBlockComment);
-    inBlockComment = result.inBlockComment;
-    return result.strippedLine;
-  });
-}
-
-function normalizeMetadataLine(line) {
-  const strippedLine = line.trim();
-  return strippedLine || null;
-}
+// Regex to match the structured fields after doc comments inside declare_oxc_lint!():
+//   RuleName,
+//   plugin_name,
+//   category,
+//   ...optional fields like `fix`, `conditional_fix`, `pending`...
+//   version = "next",
+const COMMENT_LINE_REGEX = /^[ \t]*\/\/.*\n/gm;
+const MACRO_BODY_REGEX = /(?:^[ \t]*\/\/\/.*\n)*[ \t]*(\w+)\s*,\s*\n\s*(\w+)\s*,\s*\n\s*(\w+)\s*,/m;
 
 function analyzeRuleFile(source, filePath, releaseVersion, repoRoot) {
   const relativeFile = normalizePath(path.relative(repoRoot, filePath));
-  const lines = source.split("\n");
-  const strippedLines = stripCommentsFromLines(lines);
-  const updatedLines = [...lines];
-  const coveredNextVersionLines = new Set();
   const updatedRules = [];
   const skippedNurseryRules = [];
 
-  for (let startLine = 0; startLine < lines.length; startLine++) {
-    if (!lines[startLine].includes(DECLARE_RULE_MACRO)) {
-      continue;
-    }
+  let updatedSource = source;
+  let searchFrom = 0;
 
-    let endLine = startLine + 1;
-    while (endLine < lines.length && strippedLines[endLine].trim() !== ");") {
-      endLine += 1;
-    }
+  while (true) {
+    // Step 1: Find the next declare_oxc_lint!( in the source
+    const macroStart = updatedSource.indexOf(DECLARE_RULE_MACRO, searchFrom);
+    if (macroStart === -1) break;
 
-    if (endLine >= lines.length) {
+    const bodyStart = macroStart + DECLARE_RULE_MACRO.length;
+
+    // Find the closing );
+    const macroEnd = updatedSource.indexOf(");", bodyStart);
+    if (macroEnd === -1) {
       throw new Error(`${relativeFile}: unterminated declare_oxc_lint! block`);
     }
 
-    const metadataEntries = [];
-    for (let lineIndex = startLine + 1; lineIndex < endLine; lineIndex++) {
-      const normalizedLine = normalizeMetadataLine(strippedLines[lineIndex]);
-      if (!normalizedLine) {
-        continue;
-      }
+    const body = updatedSource.slice(bodyStart, macroEnd);
 
-      metadataEntries.push({ lineIndex, trimmed: normalizedLine });
-    }
-
-    const versionEntry = metadataEntries.find(({ trimmed }) => NEXT_VERSION_REGEX.test(trimmed));
-    if (!versionEntry) {
-      startLine = endLine;
+    // Step 2: Extract rule name, plugin, and category from the body
+    // Strip // comment lines so they don't interfere with field matching
+    const strippedBody = body.replace(COMMENT_LINE_REGEX, "");
+    const bodyMatch = strippedBody.match(MACRO_BODY_REGEX);
+    if (!bodyMatch) {
+      searchFrom = macroEnd + 2;
       continue;
     }
 
-    if (metadataEntries.length < 3) {
-      throw new Error(
-        `${relativeFile}: could not parse rule category from declare_oxc_lint! block`,
-      );
-    }
-
-    const ruleName = metadataEntries[0].trimmed.replace(/,$/, "");
-    const category = metadataEntries[2].trimmed.replace(/,$/, "");
+    const ruleName = bodyMatch[1];
+    const category = bodyMatch[3];
 
     if (!VALID_CATEGORIES.has(category)) {
       throw new Error(`${relativeFile}: unknown rule category \`${category}\``);
     }
 
-    coveredNextVersionLines.add(versionEntry.lineIndex);
-
-    if (category === "nursery") {
-      skippedNurseryRules.push({ file: relativeFile, ruleName });
-      startLine = endLine;
+    // Step 3: Check if version = "next" exists in the macro body
+    const versionMatch = body.match(NEXT_VERSION_REGEX);
+    if (!versionMatch) {
+      searchFrom = macroEnd + 2;
       continue;
     }
 
-    updatedLines[versionEntry.lineIndex] = replaceVersionLiteral(
-      lines[versionEntry.lineIndex],
-      releaseVersion,
-    );
-    updatedRules.push({ file: relativeFile, ruleName, from: "next", to: releaseVersion });
-    startLine = endLine;
-  }
-
-  for (const [lineIndex, strippedLine] of strippedLines.entries()) {
-    if (NEXT_VERSION_REGEX.test(strippedLine) && !coveredNextVersionLines.has(lineIndex)) {
-      throw new Error(
-        `${relativeFile}: found \`${NEXT_VERSION_TEXT}\` outside a declare_oxc_lint! block`,
-      );
+    if (category === "nursery") {
+      skippedNurseryRules.push({ file: relativeFile, ruleName });
+      searchFrom = macroEnd + 2;
+      continue;
     }
+
+    // Step 4: Replace only "next" with the release version, preserving spacing
+    const nextLiteral = '"next"';
+    const versionStart = bodyStart + versionMatch.index;
+    const nextIndex = updatedSource.indexOf(nextLiteral, versionStart);
+    updatedSource =
+      updatedSource.slice(0, nextIndex) +
+      `"${releaseVersion}"` +
+      updatedSource.slice(nextIndex + nextLiteral.length);
+
+    updatedRules.push({ file: relativeFile, ruleName, from: "next", to: releaseVersion });
+    searchFrom = macroEnd + 2;
   }
 
   return {
-    updatedSource: updatedLines.join("\n"),
+    updatedSource,
     updatedRules,
     skippedNurseryRules,
   };

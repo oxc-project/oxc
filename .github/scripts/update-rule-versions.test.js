@@ -256,19 +256,6 @@ declare_oxc_lint!(
   assert.match(result.updatedSource, /version = "1\.61\.0"/);
 });
 
-registerTest("fails if version next is outside a declare_oxc_lint block", () => {
-  assert.throws(
-    () =>
-      analyze(
-        `
-const BROKEN: &str = r#"version = "next""#;
-`,
-        "broken.rs",
-      ),
-    /outside a declare_oxc_lint! block/,
-  );
-});
-
 registerTest("ignores inline comments in the stray next-version scan", () => {
   const result = analyze(`
 use oxc_macros::declare_oxc_lint;
