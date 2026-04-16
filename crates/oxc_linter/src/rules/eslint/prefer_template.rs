@@ -418,7 +418,7 @@ fn test() {
 
     let pass = vec![
         "'use strict';",
-        "var foo = 'foo' + '\0';",
+        r"var foo = 'foo' + '\0';",
         "var foo = 'bar';",
         "var foo = 'bar' + 'baz';",
         "var foo = foo + +'100';",
@@ -442,13 +442,15 @@ fn test() {
         "var foo = 'bar' + baz + 'qux';",
         "var foo = '0 backslashes: ${bar}' + baz;",
         r"var foo = '1 backslash: \${bar}' + baz;",
-        "var foo = '2 backslashes: \\${bar}' + baz;",
+        r"var foo = '2 backslashes: \\${bar}' + baz;",
         r"var foo = '3 backslashes: \\\${bar}' + baz;",
         "var foo = bar + 'this is a backtick: `' + baz;",
         r"var foo = bar + 'this is a backtick preceded by a backslash: \`' + baz;",
-        "var foo = bar + 'this is a backtick preceded by two backslashes: \\`' + baz;",
+        r"var foo = bar + 'this is a backtick preceded by two backslashes: \\`' + baz;",
         "var foo = bar + `${baz}foo`;",
+        "var foo = 'favorites: ' + favorites.map(f => {\n    return f.name;\n}) + ';';",
         "var foo = bar + baz + 'qux';",
+        "var foo = 'favorites: ' +\n    favorites.map(f => {\n        return f.name;\n    }) +\n';';",
         "var foo = /* a */ 'bar' /* b */ + /* c */ baz /* d */ + 'qux' /* e */ ;",
         "var foo = bar + ('baz') + 'qux' + (boop);",
         r"foo + 'unescapes an escaped single quote in a single-quoted string: \''",
@@ -456,13 +458,13 @@ fn test() {
         r#"foo + 'does not unescape an escaped double quote in a single-quoted string: "'"#,
         r#"foo + "does not unescape an escaped single quote in a double-quoted string: \'""#,
         r"foo + 'handles unicode escapes correctly: \x27'",
-        r"foo + 'does not autofix octal escape sequence' + '\x1b'",
+        r"foo + 'does not autofix octal escape sequence' + '\033'",
         r"foo + 'does not autofix non-octal decimal escape sequence' + '\8'",
-        r"foo + '\n other text \x1b'",
+        r"foo + '\n other text \033'",
         r"foo + '\0\1'",
-        "foo + '\08'",
-        "foo + '\\033'",
-        "foo + '\0'",
+        r"foo + '\08'",
+        r"foo + '\\033'",
+        r"foo + '\0'",
         r#""default-src 'self' https://*.google.com;"
 				            + "frame-ancestors 'none';"
 				            + "report-to " + foo + ";""#,
@@ -527,8 +529,8 @@ fn test() {
             None,
         ),
         (
-            "var foo = '2 backslashes: \\${bar}' + baz;",
-            "var foo = `2 backslashes: \\${bar}${  baz}`;",
+            r"var foo = '2 backslashes: \\${bar}' + baz;",
+            r"var foo = `2 backslashes: \\\${bar}${  baz}`;",
             None,
         ),
         (
@@ -547,12 +549,22 @@ fn test() {
             None,
         ),
         (
-            "var foo = bar + 'this is a backtick preceded by two backslashes: \\`' + baz;",
-            "var foo = `${bar  }this is a backtick preceded by two backslashes: \\`${  baz}`;",
+            r"var foo = bar + 'this is a backtick preceded by two backslashes: \\`' + baz;",
+            r"var foo = `${bar  }this is a backtick preceded by two backslashes: \\\`${  baz}`;",
             None,
         ),
         ("var foo = bar + `${baz}foo`;", "var foo = `${bar  }${baz}foo`;", None),
+        (
+            "var foo = 'favorites: ' + favorites.map(f => {\n    return f.name;\n}) + ';';",
+            "var foo = `favorites: ${  favorites.map(f => {\n    return f.name;\n})  };`;",
+            None,
+        ),
         ("var foo = bar + baz + 'qux';", "var foo = `${bar + baz  }qux`;", None),
+        (
+            "var foo = 'favorites: ' +\n    favorites.map(f => {\n        return f.name;\n    }) +\n';';",
+            "var foo = `favorites: ${ \n    favorites.map(f => {\n        return f.name;\n    }) \n};`;",
+            None,
+        ),
         (
             "var foo = /* a */ 'bar' /* b */ + /* c */ baz /* d */ + 'qux' /* e */ ;",
             "var foo = /* a */ `bar${ /* b */  /* c */ baz /* d */  }qux` /* e */ ;",
@@ -590,11 +602,29 @@ fn test() {
         ),
         // No fix for octal/non-octal decimal escape sequences
         (
+            r"foo + 'does not autofix octal escape sequence' + '\033'",
+            r"foo + 'does not autofix octal escape sequence' + '\033'",
+            None,
+        ),
+        (
             r"foo + 'does not autofix non-octal decimal escape sequence' + '\8'",
             r"foo + 'does not autofix non-octal decimal escape sequence' + '\8'",
             None,
         ),
+        (r"foo + '\n other text \033'", r"foo + '\n other text \033'", None),
         (r"foo + '\0\1'", r"foo + '\0\1'", None),
+        (r"foo + '\08'", r"foo + '\08'", None),
+        (r"foo + '\\033'", r"`${foo  }\\033`", None),
+        (r"foo + '\0'", r"`${foo  }\0`", None),
+        (
+            r#""default-src 'self' https://*.google.com;"
+            + "frame-ancestors 'none';"
+            + "report-to " + foo + ";""#,
+            r#"`default-src 'self' https://*.google.com;`
+            + `frame-ancestors 'none';`
+            + `report-to ${  foo  };`"#,
+            None,
+        ),
         ("'a' + 'b' + foo", "`a` + `b${  foo}`", None),
         ("'a' + 'b' + foo + 'c' + 'd'", "`a` + `b${  foo  }c` + `d`", None),
         ("'a' + 'b + c' + foo + 'd' + 'e'", "`a` + `b + c${  foo  }d` + `e`", None),
