@@ -88,7 +88,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSUnionType<'a>> {
                 Some(TSType::TSParenthesizedType(_) | TSType::TSUnionType(_))
             ) {
             f.context().comments().comments_before(
-                self.types.first().map(|t| t.span().start).unwrap_or(self.span().start),
+                self.types.first().map_or(self.span().start, |t| t.span().start),
             )
         } else {
             f.context().comments().comments_before(self.span().start)
