@@ -23,10 +23,6 @@ function collectRuleFiles(rulesRoot) {
   }
 }
 
-function normalizePath(filePath) {
-  return filePath.split(path.sep).join("/");
-}
-
 // Finds the next "word," field in body starting from `from`, skipping comments and whitespace.
 // Returns { word, end } where end is the index after the comma, or null if not found.
 function findNextField(body, from) {
@@ -42,7 +38,7 @@ function skipDocComments(body) {
 }
 
 function analyzeRuleFile(source, filePath, releaseVersion, repoRoot) {
-  const relativeFile = normalizePath(path.relative(repoRoot, filePath));
+  const relativeFile = path.relative(repoRoot, filePath).replaceAll(path.sep, "/");
   const updatedRules = [];
   const skippedNurseryRules = [];
 
