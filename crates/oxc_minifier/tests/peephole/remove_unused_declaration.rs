@@ -59,6 +59,7 @@ fn remove_unused_variable_declaration() {
     test_options("var removeThis = /* @__PURE__ */ (() => stuff())();", "", &options);
     test_options("var removeThis = /* @__PURE__ */ (() => { return stuff() })();", "", &options);
     test_options("var removeThis = /* @__PURE__ */ (() => new Thing())();", "", &options);
+    test_options("var removeThis = /* @__PURE__ */ (() => { stuff() })();", "", &options);
 }
 
 #[test]

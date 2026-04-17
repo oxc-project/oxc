@@ -307,6 +307,7 @@ fn test_fold_iife() {
     test("var a = /* @__PURE__ */ (() => foo())()", "var a = /* @__PURE__ */ foo()");
     test("var a = /* @__PURE__ */ (() => { return foo() })()", "var a = /* @__PURE__ */ foo()");
     test("var a = /* @__PURE__ */ (() => new Foo())()", "var a = /* @__PURE__ */ new Foo()");
+    test("var a = /* @__PURE__ */ (() => { foo() })()", "var a = void 0");
     test_same("var a = /* @__PURE__ */ (() => x)(y, z)");
     test("(/* @__PURE__ */ (() => !0)() ? () => x() : () => {})();", "x();");
     test("/* @__PURE__ */ (() => x)()", "");
