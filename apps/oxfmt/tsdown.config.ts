@@ -1,4 +1,7 @@
 import { defineConfig } from "tsdown";
+import { createRequire } from "node:module";
+
+const require = createRequire(import.meta.url);
 
 export default defineConfig({
   // Build all entry points together to share Prettier chunks
@@ -14,29 +17,36 @@ export default defineConfig({
   fixedExtension: false,
   define: { "import.meta.vitest": "undefined" },
   deps: {
-    // Optional peer plugins that `prettier-plugin-tailwindcss` tries to dynamic import.
-    // They are not installed and not needed for us,
-    // mark as external to suppress "UNRESOLVED_IMPORT" warnings.
     neverBundle: [
+      // Optional peer plugins that `prettier-plugin-tailwindcss` tries to dynamic import.
+      // They are not installed and not needed for us,
+      // mark as external to suppress "UNRESOLVED_IMPORT" warnings.
       "@prettier/plugin-oxc",
       "@prettier/plugin-hermes",
       "@prettier/plugin-pug",
       "@shopify/prettier-plugin-liquid",
       "@zackad/prettier-plugin-twig",
-      "prettier-plugin-astro",
       "prettier-plugin-marko",
-      "prettier-plugin-svelte",
+      // Plugins rely on these, we make them as optional peer dependencies.
+      "svelte/compiler",
+      /^@astrojs\/compiler/,
     ],
     alwaysBundle: [
-      // Bundle it to control version
-      "prettier",
+      // Bundle it to control version.
+      // Includes subpath imports like `prettier/doc`, `prettier/plugins/*`, etc.
+      /^prettier(\/|$)/,
 
       // Need to bundle plugins, since they depend on Prettier,
       // and must be resolved to the same instance of Prettier at runtime.
+      // Tailwind
       "prettier-plugin-tailwindcss",
       "prettier-plugin-tailwindcss/sorter",
-      // Also, it internally loads plugins dynamically, so they also must be bundled
-      /^prettier\/plugins\//,
+
+      // Svelte
+      "prettier-plugin-svelte",
+
+      // Astro
+      "prettier-plugin-astro",
 
       // Cannot bundle: `cli-worker.js` runs in separate thread and can't resolve bundled chunks
       // Be sure to add it to "dependencies" in `npm/oxfmt/package.json`!
@@ -45,5 +55,17 @@ export default defineConfig({
     // tsdown warns about final bundled modules by `alwaysBundle`.
     // But we know what we are doing, just suppress the warnings.
     onlyBundle: false,
+  },
+  inputOptions: {
+    resolve: {
+      alias: {
+        // NOTE: `prettier-plugin-svelte` is written in CJS,
+        // and tsdown(rolldown) does not deduplicate it with the ESM version.
+        // So we need to alias it to the ESM version to avoid duplicates.
+        prettier: require.resolve("prettier").replace("index.cjs", "index.mjs"),
+        "prettier/doc": require.resolve("prettier/doc").replace(".js", ".mjs"),
+        "prettier/plugins/babel": require.resolve("prettier/plugins/babel").replace(".js", ".mjs"),
+      },
+    },
   },
 });

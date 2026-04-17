@@ -21,10 +21,13 @@
   },
   "dependencies": {
     "prettier": "3.8.3",
+    "prettier-plugin-astro": "0.14.1",
+    "prettier-plugin-svelte": "3.5.1",
     "prettier-plugin-tailwindcss": "0.0.0-insiders.3997fbd",
     "tinypool": "2.1.0"
   },
   "devDependencies": {
+    "svelte": "5.55.4",
     "@arethetypeswrong/core": "catalog:",
     "@napi-rs/cli": "catalog:",
     "@types/node": "catalog:",

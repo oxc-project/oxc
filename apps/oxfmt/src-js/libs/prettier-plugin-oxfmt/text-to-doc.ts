@@ -49,6 +49,17 @@ function detectParentContext(parentParser: string, options: Record<string, unkno
     if ("__isEmbeddedTypescriptGenericParameters" in options) return "vue-script-generic";
     return "vue-script";
   }
+  if (parentParser === "svelte") {
+    // These will be needed when we try to override `svelteExpressionParser` and `svelteTSExpressionParser`
+    // if ("_svelte_asFunction" in options) {
+    //   if (options._svelte_asFunction) return "svelte-snippet";
+    //   return "svelte-expression";
+    // }
+    return "svelte-script";
+  }
+  if (parentParser === "astro") {
+    return "astro-script";
+  }
 
   return parentParser;
 }

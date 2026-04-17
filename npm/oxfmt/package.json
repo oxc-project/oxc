@@ -44,6 +44,18 @@
   "dependencies": {
     "tinypool": "2.1.0"
   },
+  "peerDependencies": {
+    "@astrojs/compiler": "^2.9.1",
+    "svelte": "^5.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@astrojs/compiler": {
+      "optional": true
+    },
+    "svelte": {
+      "optional": true
+    }
+  },
   "napi": {
     "binaryName": "oxfmt",
     "packageName": "@oxfmt/binding",

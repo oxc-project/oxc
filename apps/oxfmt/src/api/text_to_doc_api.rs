@@ -60,7 +60,7 @@ pub fn run(
         "vue-for-binding-left" => Some(FragmentKind::VueForBindingLeft),
         "vue-bindings" => Some(FragmentKind::VueBindings),
         "vue-script-generic" => Some(FragmentKind::VueScriptGeneric),
-        // "vue-script"
+        // "vue-script", "svelte-script", "astro-script"
         _ => None,
     };
 

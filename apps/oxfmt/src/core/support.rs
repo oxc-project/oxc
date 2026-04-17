@@ -118,6 +118,8 @@ impl FormatFileStrategy {
 /// Parsers(files) that benefit from Tailwind plugin.
 #[cfg(feature = "napi")]
 static TAILWIND_PARSERS: phf::Set<&'static str> = phf_set! {
+    "astro",
+    "svelte",
     "html",
     "vue",
     "angular",
@@ -132,6 +134,8 @@ static TAILWIND_PARSERS: phf::Set<&'static str> = phf_set! {
 /// - e.g. `__vue_expression` in `vue`, `__ng_directive` in `angular`
 #[cfg(feature = "napi")]
 static OXFMT_PARSERS: phf::Set<&'static str> = phf_set! {
+    "astro",
+    "svelte",
     // "html",
     "vue",
     // "markdown",
@@ -245,6 +249,13 @@ fn get_external_parser_name(file_name: &str, extension: Option<&str>) -> Option<
     }
     if extension == Some("mjml") {
         return Some("mjml");
+    }
+
+    if extension == Some("svelte") {
+        return Some("svelte");
+    }
+    if extension == Some("astro") {
+        return Some("astro");
     }
 
     // CSS and variants

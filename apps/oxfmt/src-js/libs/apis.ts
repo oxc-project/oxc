@@ -18,6 +18,8 @@ const CACHES = {
   prettier: null as typeof import("prettier") | null,
   tailwindPlugin: null as typeof import("prettier-plugin-tailwindcss") | null,
   tailwindSorter: null as typeof import("prettier-plugin-tailwindcss/sorter") | null,
+  sveltePlugin: null as typeof import("prettier-plugin-svelte") | null,
+  astroPlugin: null as typeof import("prettier-plugin-astro") | null,
   oxfmtPlugin: null as Plugin | null,
 };
 
@@ -86,6 +88,10 @@ export type FormatFileParam = {
 export async function formatFile({ code, options }: FormatFileParam): Promise<string> {
   const prettier = CACHES.prettier ?? (await loadPrettier());
 
+  // TODO: Options
+  // TODO: Update comments, plugins order is important
+  if (options.parser === "svelte") await setupSveltePlugin(options);
+  if (options.parser === "astro") await setupAstroPlugin(options);
   // Enable Tailwind CSS plugin for non-JS files if needed
   if ("_useTailwindPlugin" in options) await setupTailwindPlugin(options);
   // Add oxfmt plugin for (j|t)-in-xxx files to use `oxc_formatter` instead of built-in formatter.
@@ -258,6 +264,40 @@ export async function sortTailwindClasses({
   });
 
   return sorter.sortClassAttributes(classes);
+}
+
+// ---
+// Svelte plugin support for svelte files
+// ---
+
+async function loadSveltePlugin(): Promise<typeof import("prettier-plugin-svelte")> {
+  if (!CACHES.sveltePlugin) {
+    CACHES.sveltePlugin = await import("prettier-plugin-svelte");
+  }
+  return CACHES.sveltePlugin;
+}
+
+async function setupSveltePlugin(options: Options): Promise<void> {
+  const sveltePlugin = CACHES.sveltePlugin ?? (await loadSveltePlugin());
+  options.plugins ??= [];
+  options.plugins.push(sveltePlugin as Plugin);
+}
+
+// ---
+// Astro plugin support for astro files
+// ---
+
+async function loadAstroPlugin(): Promise<typeof import("prettier-plugin-astro")> {
+  if (!CACHES.astroPlugin) {
+    CACHES.astroPlugin = await import("prettier-plugin-astro");
+  }
+  return CACHES.astroPlugin;
+}
+
+async function setupAstroPlugin(options: Options): Promise<void> {
+  const astroPlugin = CACHES.astroPlugin ?? (await loadAstroPlugin());
+  options.plugins ??= [];
+  options.plugins.push(astroPlugin as Plugin);
 }
 
 // ---
