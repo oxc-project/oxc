@@ -7,58 +7,58 @@ source: crates/oxc_linter/src/tester.rs
  1 │ <a />
    ·  ─
    ╰────
-  help: Provide an `href` for the `a` element.
+  help: Provide the `href` attribute for the `a` element.
 
-  ⚠ eslint-plugin-jsx-a11y(anchor-is-valid): Use of incorrect `href` for the 'a' element.
+  ⚠ eslint-plugin-jsx-a11y(anchor-is-valid): Use of incorrect `href` for the `a` element.
    ╭─[anchor_is_valid.tsx:1:2]
  1 │ <a href={undefined} />
    ·  ─
    ╰────
   help: Provide a correct `href` for the `a` element.
 
-  ⚠ eslint-plugin-jsx-a11y(anchor-is-valid): Use of incorrect `href` for the 'a' element.
+  ⚠ eslint-plugin-jsx-a11y(anchor-is-valid): Use of incorrect `href` for the `a` element.
    ╭─[anchor_is_valid.tsx:1:2]
  1 │ <a href={null} />
    ·  ─
    ╰────
   help: Provide a correct `href` for the `a` element.
 
-  ⚠ eslint-plugin-jsx-a11y(anchor-is-valid): Use of incorrect `href` for the 'a' element.
+  ⚠ eslint-plugin-jsx-a11y(anchor-is-valid): Use of incorrect `href` for the `a` element.
    ╭─[anchor_is_valid.tsx:1:2]
  1 │ <a href='' />;
    ·  ─
    ╰────
   help: Provide a correct `href` for the `a` element.
 
-  ⚠ eslint-plugin-jsx-a11y(anchor-is-valid): Use of incorrect `href` for the 'a' element.
+  ⚠ eslint-plugin-jsx-a11y(anchor-is-valid): Use of incorrect `href` for the `a` element.
    ╭─[anchor_is_valid.tsx:1:2]
  1 │ <a href='#' />
    ·  ─
    ╰────
   help: Provide a correct `href` for the `a` element.
 
-  ⚠ eslint-plugin-jsx-a11y(anchor-is-valid): Use of incorrect `href` for the 'a' element.
+  ⚠ eslint-plugin-jsx-a11y(anchor-is-valid): Use of incorrect `href` for the `a` element.
    ╭─[anchor_is_valid.tsx:1:2]
  1 │ <a href={'#'} />
    ·  ─
    ╰────
   help: Provide a correct `href` for the `a` element.
 
-  ⚠ eslint-plugin-jsx-a11y(anchor-is-valid): Use of incorrect `href` for the 'a' element.
+  ⚠ eslint-plugin-jsx-a11y(anchor-is-valid): Use of incorrect `href` for the `a` element.
    ╭─[anchor_is_valid.tsx:1:2]
  1 │ <a href={`#`} />
    ·  ─
    ╰────
   help: Provide a correct `href` for the `a` element.
 
-  ⚠ eslint-plugin-jsx-a11y(anchor-is-valid): Use of incorrect `href` for the 'a' element.
+  ⚠ eslint-plugin-jsx-a11y(anchor-is-valid): Use of incorrect `href` for the `a` element.
    ╭─[anchor_is_valid.tsx:1:2]
  1 │ <a href='javascript:void(0)' />
    ·  ─
    ╰────
   help: Provide a correct `href` for the `a` element.
 
-  ⚠ eslint-plugin-jsx-a11y(anchor-is-valid): Use of incorrect `href` for the 'a' element.
+  ⚠ eslint-plugin-jsx-a11y(anchor-is-valid): Use of incorrect `href` for the `a` element.
    ╭─[anchor_is_valid.tsx:1:2]
  1 │ <a href={'javascript:void(0)'} />
    ·  ─
@@ -70,32 +70,46 @@ source: crates/oxc_linter/src/tester.rs
  1 │ <a onClick={() => void 0} />
    ·  ─
    ╰────
-  help: Provide an `href` for the `a` element.
+  help: Provide the `href` attribute for the `a` element.
 
   ⚠ eslint-plugin-jsx-a11y(anchor-is-valid): The `a` element has `href` and `onClick`.
    ╭─[anchor_is_valid.tsx:1:2]
  1 │ <a href='#' onClick={() => void 0} />
    ·  ─
    ╰────
-  help: Use a `button` element instead of an `a` element.
+  help: Use a `button` element instead of `a`.
 
   ⚠ eslint-plugin-jsx-a11y(anchor-is-valid): The `a` element has `href` and `onClick`.
    ╭─[anchor_is_valid.tsx:1:2]
  1 │ <a href='javascript:void(0)' onClick={() => void 0} />
    ·  ─
    ╰────
-  help: Use a `button` element instead of an `a` element.
+  help: Use a `button` element instead of `a`.
 
   ⚠ eslint-plugin-jsx-a11y(anchor-is-valid): The `a` element has `href` and `onClick`.
    ╭─[anchor_is_valid.tsx:1:2]
  1 │ <a href={'javascript:void(0)'} onClick={() => void 0} />
    ·  ─
    ╰────
-  help: Use a `button` element instead of an `a` element.
+  help: Use a `button` element instead of `a`.
 
-  ⚠ eslint-plugin-jsx-a11y(anchor-is-valid): The `a` element has `href` and `onClick`.
+  ⚠ eslint-plugin-jsx-a11y(anchor-is-valid): The `Link` element has `href` and `onClick`.
    ╭─[anchor_is_valid.tsx:1:2]
  1 │ <Link href='#' onClick={() => void 0} />
    ·  ────
    ╰────
-  help: Use a `button` element instead of an `a` element.
+  help: Use a `button` element instead of `Link`.
+
+  ⚠ eslint-plugin-jsx-a11y(anchor-is-valid): Use of incorrect `href` for the `a` element.
+   ╭─[anchor_is_valid.tsx:1:2]
+ 1 │ <a href='#' />
+   ·  ─
+   ╰────
+  help: Provide a correct `href` for the `a` element.
+
+  ⚠ eslint-plugin-jsx-a11y(anchor-is-valid): Use of incorrect `href` for the `a` element.
+   ╭─[anchor_is_valid.tsx:1:2]
+ 1 │ <a href='#' />
+   ·  ─
+   ╰────
+  help: Provide a correct `href` for the `a` element.
