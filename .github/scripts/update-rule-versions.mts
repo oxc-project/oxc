@@ -1,8 +1,7 @@
 #!/usr/bin/env node
 /* eslint-disable no-console */
 
-import { execFileSync } from "node:child_process";
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { parseArgs } from "node:util";
 
@@ -18,20 +17,6 @@ type AnalyzeReport = {
   updatedSource: string;
   updatedRules: RuleChange[];
 };
-
-function collectRuleFiles(rulesRoot: string): string[] {
-  try {
-    const output = execFileSync(
-      "grep",
-      ["-Erl", 'version[[:space:]]*=[[:space:]]*"next"', "--include=*.rs", rulesRoot],
-      { encoding: "utf8" },
-    );
-    return output.trim().split("\n").filter(Boolean).sort();
-  } catch {
-    // grep exits with code 1 when no matches are found
-    return [];
-  }
-}
 
 function analyzeRuleFile(
   source: string,
@@ -105,7 +90,12 @@ if (!existsSync(rulesRoot)) {
 
 let updatedCount = 0;
 
-for (const filePath of collectRuleFiles(rulesRoot)) {
+const ruleFiles = readdirSync(rulesRoot, { recursive: true })
+  .filter((f) => typeof f === "string" && f.endsWith(".rs"))
+  .map((f) => path.join(rulesRoot, String(f)))
+  .sort();
+
+for (const filePath of ruleFiles) {
   const source = readFileSync(filePath, "utf8");
   const fileReport = analyzeRuleFile(source, filePath, releaseVersion, repoRoot);
 
