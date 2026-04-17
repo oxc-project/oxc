@@ -308,6 +308,11 @@ fn test_fold_iife() {
     test("var a = /* @__PURE__ */ (() => { return foo() })()", "var a = /* @__PURE__ */ foo()");
     test("var a = /* @__PURE__ */ (() => new Foo())()", "var a = /* @__PURE__ */ new Foo()");
     test("var a = /* @__PURE__ */ (() => { foo() })()", "var a = void 0");
+    // Idempotent when the inner call already carries its own PURE annotation.
+    test(
+        "var a = /* @__PURE__ */ (() => /* @__PURE__ */ foo())()",
+        "var a = /* @__PURE__ */ foo()",
+    );
     // Sequence-expression body: annotation propagates to each call/new element
     // so a follow-on pass can drop the unused `foo()` and unwrap the sequence.
     test("var a = /* @__PURE__ */ (() => (foo(), bar()))()", "var a = /* @__PURE__ */ bar()");
