@@ -2,7 +2,7 @@
 /* eslint-disable no-console */
 
 import { execFileSync } from "node:child_process";
-import { existsSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { parseArgs } from "node:util";
 
@@ -17,15 +17,9 @@ type RuleChange = {
   to: string;
 };
 
-type SkippedRule = {
-  file: string;
-  ruleName: string;
-};
-
 type AnalyzeReport = {
   updatedSource: string;
   updatedRules: RuleChange[];
-  skippedNurseryRules: SkippedRule[];
 };
 
 function collectRuleFiles(rulesRoot: string): string[] {
@@ -60,7 +54,7 @@ function skipDocComments(body: string): number {
   return match ? match[0].length : 0;
 }
 
-export function analyzeRuleFile(
+function analyzeRuleFile(
   source: string,
   filePath: string,
   releaseVersion: string,
@@ -68,7 +62,6 @@ export function analyzeRuleFile(
 ): AnalyzeReport {
   const relativeFile = path.relative(repoRoot, filePath).replaceAll(path.sep, "/");
   const updatedRules: RuleChange[] = [];
-  const skippedNurseryRules: SkippedRule[] = [];
 
   let updatedSource = source;
   let searchFrom = 0;
@@ -125,7 +118,6 @@ export function analyzeRuleFile(
     }
 
     if (category === "nursery") {
-      skippedNurseryRules.push({ file: relativeFile, ruleName });
       searchFrom = macroEndFull;
       continue;
     }
@@ -151,27 +143,25 @@ export function analyzeRuleFile(
   return {
     updatedSource,
     updatedRules,
-    skippedNurseryRules,
   };
 }
 
-function main(argv: string[] = process.argv.slice(2)): void {
-  const { values } = parseArgs({
-    args: argv,
-    options: {
-      "release-version": { type: "string", short: "r" },
-      root: { type: "string", short: "C", default: process.cwd() },
-      write: { type: "boolean", short: "w", default: false },
-      help: { type: "boolean", short: "h" },
-    },
-    strict: true,
-  });
+const { values } = parseArgs({
+  args: process.argv.slice(2),
+  options: {
+    "release-version": { type: "string", short: "r" },
+    root: { type: "string", short: "C", default: process.cwd() },
+    write: { type: "boolean", short: "w", default: false },
+    help: { type: "boolean", short: "h" },
+  },
+  strict: true,
+});
 
-  const releaseVersion = values["release-version"];
-  const { root, write } = values;
+const releaseVersion = values["release-version"];
+const { root, write } = values;
 
-  if (values.help) {
-    console.log(`Usage:
+if (values.help) {
+  console.log(`Usage:
   node .github/scripts/update-rule-versions.mts --release-version <x.y.z> [--root <path>] [--write]
 
 Options:
@@ -180,69 +170,39 @@ Options:
   --write, -w            Write changes to files (default: dry-run)
   --help, -h             Show this help
 `);
-    return;
-  }
-
-  if (!releaseVersion) {
-    throw new Error("missing required `--release-version <x.y.z>`");
-  }
-  if (!/^\d+\.\d+\.\d+$/.test(releaseVersion)) {
-    throw new Error(`release version must be x.y.z, got \`${releaseVersion}\``);
-  }
-
-  const dryRun = !write;
-  const repoRoot = path.resolve(root);
-  const rulesRoot = path.join(repoRoot, DEFAULT_RULES_ROOT);
-  if (!existsSync(rulesRoot)) {
-    throw new Error(`rules root does not exist: ${rulesRoot}`);
-  }
-
-  let updatedCount = 0;
-  let skippedCount = 0;
-
-  for (const filePath of collectRuleFiles(rulesRoot)) {
-    const source = readFileSync(filePath, "utf8");
-    const fileReport = analyzeRuleFile(source, filePath, releaseVersion, repoRoot);
-
-    for (const change of fileReport.updatedRules) {
-      console.log(
-        `${dryRun ? "Would update" : "Updated"} ${change.file}: ${change.ruleName} version = "next" -> version = "${change.to}"`,
-      );
-    }
-    updatedCount += fileReport.updatedRules.length;
-
-    for (const skipped of fileReport.skippedNurseryRules) {
-      console.log(`Skipped nursery rule ${skipped.file}: ${skipped.ruleName}`);
-    }
-    skippedCount += fileReport.skippedNurseryRules.length;
-
-    if (!dryRun && fileReport.updatedRules.length > 0) {
-      writeFileSync(filePath, fileReport.updatedSource);
-    }
-  }
-
-  console.log(
-    `\nTotal: ${updatedCount} rule(s) ${dryRun ? "would be updated" : "updated"}, ${skippedCount} nursery rule(s) skipped.`,
-  );
+  process.exit(0);
 }
 
-const isMain = (() => {
-  if (!process.argv[1]) {
-    return false;
-  }
+if (!releaseVersion) {
+  throw new Error("missing required `--release-version <x.y.z>`");
+}
+if (!/^\d+\.\d+\.\d+$/.test(releaseVersion)) {
+  throw new Error(`release version must be x.y.z, got \`${releaseVersion}\``);
+}
 
-  try {
-    return import.meta.filename === realpathSync(process.argv[1]);
-  } catch {
-    return false;
-  }
-})();
+const dryRun = !write;
+const repoRoot = path.resolve(root);
+const rulesRoot = path.join(repoRoot, DEFAULT_RULES_ROOT);
+if (!existsSync(rulesRoot)) {
+  throw new Error(`rules root does not exist: ${rulesRoot}`);
+}
 
-if (isMain) {
-  try {
-    main();
-  } catch (error) {
-    console.error(error instanceof Error ? error.message : String(error));
-    process.exitCode = 1;
+let updatedCount = 0;
+
+for (const filePath of collectRuleFiles(rulesRoot)) {
+  const source = readFileSync(filePath, "utf8");
+  const fileReport = analyzeRuleFile(source, filePath, releaseVersion, repoRoot);
+
+  for (const change of fileReport.updatedRules) {
+    console.log(
+      `${dryRun ? "Would update" : "Updated"} ${change.file}: ${change.ruleName} version = "next" -> version = "${change.to}"`,
+    );
+  }
+  updatedCount += fileReport.updatedRules.length;
+
+  if (!dryRun && fileReport.updatedRules.length > 0) {
+    writeFileSync(filePath, fileReport.updatedSource);
   }
 }
+
+console.log(`\nTotal: ${updatedCount} rule(s) ${dryRun ? "would be updated" : "updated"}.`);
