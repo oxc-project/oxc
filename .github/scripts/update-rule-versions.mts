@@ -22,21 +22,10 @@ type SkippedRule = {
   ruleName: string;
 };
 
-type PendingWrite = {
-  filePath: string;
-  updatedSource: string;
-};
-
 type AnalyzeReport = {
   updatedSource: string;
   updatedRules: RuleChange[];
   skippedNurseryRules: SkippedRule[];
-};
-
-type RewriteReport = {
-  updatedRules: RuleChange[];
-  skippedNurseryRules: SkippedRule[];
-  pendingWrites: PendingWrite[];
 };
 
 function collectRuleFiles(rulesRoot: string): string[] {
@@ -166,57 +155,6 @@ export function analyzeRuleFile(
   };
 }
 
-function rewriteNextRuleVersions({
-  root,
-  releaseVersion,
-}: {
-  root: string;
-  releaseVersion: string;
-}): RewriteReport {
-  const repoRoot = path.resolve(root);
-  const rulesRoot = path.join(repoRoot, DEFAULT_RULES_ROOT);
-  if (!existsSync(rulesRoot)) {
-    throw new Error(`rules root does not exist: ${rulesRoot}`);
-  }
-
-  const report: RewriteReport = { updatedRules: [], skippedNurseryRules: [], pendingWrites: [] };
-
-  for (const filePath of collectRuleFiles(rulesRoot)) {
-    const source = readFileSync(filePath, "utf8");
-    const fileReport = analyzeRuleFile(source, filePath, releaseVersion, repoRoot);
-    report.updatedRules.push(...fileReport.updatedRules);
-    report.skippedNurseryRules.push(...fileReport.skippedNurseryRules);
-
-    if (fileReport.updatedRules.length > 0) {
-      report.pendingWrites.push({ filePath, updatedSource: fileReport.updatedSource });
-    }
-  }
-
-  return report;
-}
-
-function printReport(report: RewriteReport, dryRun: boolean): void {
-  if (report.updatedRules.length === 0) {
-    console.log("No stable rule versions needed updating.");
-  } else {
-    console.log(
-      `${dryRun ? "Would update" : "Updated"} ${report.updatedRules.length} rule version(s):`,
-    );
-    for (const change of report.updatedRules) {
-      console.log(
-        `- ${change.file}: ${change.ruleName} version = "next" -> version = "${change.to}"`,
-      );
-    }
-  }
-
-  if (report.skippedNurseryRules.length > 0) {
-    console.log(`Skipped ${report.skippedNurseryRules.length} nursery rule(s):`);
-    for (const skippedRule of report.skippedNurseryRules) {
-      console.log(`- ${skippedRule.file}: ${skippedRule.ruleName}`);
-    }
-  }
-}
-
 function main(argv: string[] = process.argv.slice(2)): void {
   const { values } = parseArgs({
     args: argv,
@@ -252,13 +190,40 @@ Options:
     throw new Error(`release version must be x.y.z, got \`${releaseVersion}\``);
   }
 
-  const report = rewriteNextRuleVersions({ root, releaseVersion });
-  if (write) {
-    for (const { filePath, updatedSource } of report.pendingWrites) {
-      writeFileSync(filePath, updatedSource);
+  const dryRun = !write;
+  const repoRoot = path.resolve(root);
+  const rulesRoot = path.join(repoRoot, DEFAULT_RULES_ROOT);
+  if (!existsSync(rulesRoot)) {
+    throw new Error(`rules root does not exist: ${rulesRoot}`);
+  }
+
+  let updatedCount = 0;
+  let skippedCount = 0;
+
+  for (const filePath of collectRuleFiles(rulesRoot)) {
+    const source = readFileSync(filePath, "utf8");
+    const fileReport = analyzeRuleFile(source, filePath, releaseVersion, repoRoot);
+
+    for (const change of fileReport.updatedRules) {
+      console.log(
+        `${dryRun ? "Would update" : "Updated"} ${change.file}: ${change.ruleName} version = "next" -> version = "${change.to}"`,
+      );
+    }
+    updatedCount += fileReport.updatedRules.length;
+
+    for (const skipped of fileReport.skippedNurseryRules) {
+      console.log(`Skipped nursery rule ${skipped.file}: ${skipped.ruleName}`);
+    }
+    skippedCount += fileReport.skippedNurseryRules.length;
+
+    if (!dryRun && fileReport.updatedRules.length > 0) {
+      writeFileSync(filePath, fileReport.updatedSource);
     }
   }
-  printReport(report, !write);
+
+  console.log(
+    `\nTotal: ${updatedCount} rule(s) ${dryRun ? "would be updated" : "updated"}, ${skippedCount} nursery rule(s) skipped.`,
+  );
 }
 
 const isMain = (() => {
