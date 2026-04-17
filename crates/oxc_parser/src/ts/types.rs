@@ -323,15 +323,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     );
                 }
                 Kind::Question => {
-                    let checkpoint = self.checkpoint();
-                    self.bump_any();
                     // If next token is start of a type we have a conditional type
-                    if self.is_start_of_type(false) {
-                        self.rewind(checkpoint);
-
+                    if self.lookahead(|p| {
+                        p.bump_any();
+                        p.is_start_of_type(false)
+                    }) {
                         return ty;
                     }
-
+                    self.bump_any();
                     ty = self.ast.ts_type_js_doc_nullable_type(
                         self.end_span(span),
                         ty,
@@ -404,15 +403,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 self.ast.ts_type_literal_type(span, TSLiteral::TemplateLiteral(self.alloc(literal)))
             }
             Kind::Minus => {
-                let checkpoint = self.checkpoint();
-                let minus_start_span = self.start_span();
-
-                self.bump_any(); // bump `-`
-
-                if self.cur_kind().is_number() {
+                if self.lexer.peek_token().kind().is_number() {
+                    let minus_start_span = self.start_span();
+                    self.bump_any(); // bump `-`
                     self.parse_literal_type_negative(minus_start_span)
                 } else {
-                    self.rewind(checkpoint);
                     self.parse_type_reference()
                 }
             }

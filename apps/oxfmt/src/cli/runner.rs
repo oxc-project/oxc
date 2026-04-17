@@ -165,7 +165,8 @@ impl CliRunner {
             &resolved_ignore_paths,
             ignore_options.with_node_modules,
             // Nested config detection is disabled when `--config` is explicitly specified
-            config_options.config.is_none(),
+            // or when `--disable-nested-config` is set
+            config_options.config.is_none() && !config_options.disable_nested_config,
             editorconfig_path.as_deref(),
             #[cfg(feature = "napi")]
             self.js_config_loader.as_ref(),

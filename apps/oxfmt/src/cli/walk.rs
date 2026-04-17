@@ -719,11 +719,16 @@ impl WalkVisitor {
             return;
         }
 
-        let resolver = parent
-            .ancestors()
-            .find_map(|a| self.child_scope_map.get(a))
-            .cloned()
-            .unwrap_or_else(|| Arc::clone(&self.root_config_resolver));
+        // PERF: Skip ancestors traversal when no child scopes exist (e.g. `--disable-nested-config`)
+        let resolver = if self.child_scope_map.is_empty() {
+            Arc::clone(&self.root_config_resolver)
+        } else {
+            parent
+                .ancestors()
+                .find_map(|a| self.child_scope_map.get(a))
+                .cloned()
+                .unwrap_or_else(|| Arc::clone(&self.root_config_resolver))
+        };
 
         let parent_ignored = resolver.is_path_ignored(parent, true);
         self.scope_cache.insert(parent.to_path_buf(), (resolver, parent_ignored));
