@@ -26,11 +26,14 @@ fn already_resolved_diagnostic(line: usize, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
         "Promise should not be resolved multiple times. Promise is already resolved on line {line}."
     ))
+    .with_help("Remove duplicate resolve() calls or move earlier resolve to the end.")
     .with_label(span)
 }
 
 fn potentially_already_resolved_diagnostic(line: usize, span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Promise should not be resolved multiple times. Promise is potentially resolved on line {line}.")).with_label(span)
+    OxcDiagnostic::warn(format!("Promise should not be resolved multiple times. Promise is potentially resolved on line {line}."))
+    .with_help("Check for multiple resolve() calls in different code paths.")
+    .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
