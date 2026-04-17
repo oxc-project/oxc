@@ -7,12 +7,9 @@ import path from "node:path";
 import { parseArgs } from "node:util";
 
 const DEFAULT_RULES_ROOT = path.join("crates", "oxc_linter", "src", "rules");
-const DECLARE_RULE_MACRO = "declare_oxc_lint!(";
-const NEXT_VERSION_REGEX = /version\s*=\s*"next"/;
 
 type RuleChange = {
   file: string;
-  ruleName: string;
   from: "next";
   to: string;
 };
@@ -36,24 +33,6 @@ function collectRuleFiles(rulesRoot: string): string[] {
   }
 }
 
-// Finds the next "word," field in body starting from `from`, skipping comments and whitespace.
-// Returns { word, end } where end is the index after the comma, or null if not found.
-function findNextField(body: string, from: number): { word: string; end: number } | null {
-  const match = body.slice(from).match(/(\w+)\s*,/);
-  if (!match) return null;
-
-  const matchIndex = match.index;
-  if (matchIndex === undefined) return null;
-
-  return { word: match[1], end: from + matchIndex + match[0].length };
-}
-
-// Skips past any /// doc comment lines at the start of body.
-function skipDocComments(body: string): number {
-  const match = body.match(/^(?:\s*\/\/\/.*\n)*/);
-  return match ? match[0].length : 0;
-}
-
 function analyzeRuleFile(
   source: string,
   filePath: string,
@@ -63,87 +42,24 @@ function analyzeRuleFile(
   const relativeFile = path.relative(repoRoot, filePath).replaceAll(path.sep, "/");
   const updatedRules: RuleChange[] = [];
 
-  let updatedSource = source;
-  let searchFrom = 0;
+  const updatedSource = source.replace(
+    /declare_oxc_lint!\(([\s\S]*?\n)\s*\);/g,
+    (match, body: string) => {
+      // Strip leading doc comments, then extract comma-delimited fields: name, plugin, category
+      const stripped = body.replace(/^(?:\s*\/\/\/.*\n)*/, "");
+      const fields = [...stripped.matchAll(/(\w+)\s*,/g)];
+      if (fields.length < 3) return match;
 
-  while (true) {
-    // Step 1: Find the next declare_oxc_lint!( in the source
-    const macroStart = updatedSource.indexOf(DECLARE_RULE_MACRO, searchFrom);
-    if (macroStart === -1) break;
+      const category = fields[2][1];
+      if (category === "nursery") return match;
+      if (!/version\s*=\s*"next"/.test(body)) return match;
 
-    const bodyStart = macroStart + DECLARE_RULE_MACRO.length;
+      updatedRules.push({ file: relativeFile, from: "next", to: releaseVersion });
+      return match.replace(/(version\s*=\s*)"next"/, `$1"${releaseVersion}"`);
+    },
+  );
 
-    // Find the closing ); on its own line (not inside doc comments)
-    const macroEndMatch = updatedSource.slice(bodyStart).match(/^\s*\);/m);
-    if (!macroEndMatch) {
-      throw new Error(`${relativeFile}: unterminated declare_oxc_lint! block`);
-    }
-    const macroEndMatchIndex = macroEndMatch.index;
-    if (macroEndMatchIndex === undefined) {
-      throw new Error(`${relativeFile}: unterminated declare_oxc_lint! block`);
-    }
-    const macroEnd = bodyStart + macroEndMatchIndex;
-    const macroEndFull = macroEnd + macroEndMatch[0].length;
-
-    const body = updatedSource.slice(bodyStart, macroEnd);
-
-    // Step 2: Skip doc comments, then parse fields in order: name, plugin, category
-    const pos = skipDocComments(body);
-
-    const nameField = findNextField(body, pos);
-    if (!nameField) {
-      searchFrom = macroEndFull;
-      continue;
-    }
-    const ruleName = nameField.word;
-
-    const pluginField = findNextField(body, nameField.end);
-    if (!pluginField) {
-      searchFrom = macroEndFull;
-      continue;
-    }
-
-    const categoryField = findNextField(body, pluginField.end);
-    if (!categoryField) {
-      searchFrom = macroEndFull;
-      continue;
-    }
-    const category = categoryField.word;
-
-    // Step 3: Check if version = "next" exists in the macro body
-    const versionMatch = body.match(NEXT_VERSION_REGEX);
-    if (!versionMatch) {
-      searchFrom = macroEndFull;
-      continue;
-    }
-
-    if (category === "nursery") {
-      searchFrom = macroEndFull;
-      continue;
-    }
-
-    // Step 4: Replace only "next" with the release version, preserving spacing
-    const nextLiteral = '"next"';
-    const versionMatchIndex = versionMatch.index;
-    if (versionMatchIndex === undefined) {
-      searchFrom = macroEndFull;
-      continue;
-    }
-    const versionStart = bodyStart + versionMatchIndex;
-    const nextIndex = updatedSource.indexOf(nextLiteral, versionStart);
-    updatedSource =
-      updatedSource.slice(0, nextIndex) +
-      `"${releaseVersion}"` +
-      updatedSource.slice(nextIndex + nextLiteral.length);
-
-    updatedRules.push({ file: relativeFile, ruleName, from: "next", to: releaseVersion });
-    searchFrom = macroEndFull;
-  }
-
-  return {
-    updatedSource,
-    updatedRules,
-  };
+  return { updatedSource, updatedRules };
 }
 
 const { values } = parseArgs({
@@ -195,7 +111,7 @@ for (const filePath of collectRuleFiles(rulesRoot)) {
 
   for (const change of fileReport.updatedRules) {
     console.log(
-      `${dryRun ? "Would update" : "Updated"} ${change.file}: ${change.ruleName} version = "next" -> version = "${change.to}"`,
+      `${dryRun ? "Would update" : "Updated"} ${change.file}: version = "next" -> version = "${change.to}"`,
     );
   }
   updatedCount += fileReport.updatedRules.length;
@@ -205,4 +121,4 @@ for (const filePath of collectRuleFiles(rulesRoot)) {
   }
 }
 
-console.log(`\nTotal: ${updatedCount} rule(s) ${dryRun ? "would be updated" : "updated"}.`);
+console.log(`${updatedCount} rule(s) ${dryRun ? "would be updated" : "updated"}.`);
