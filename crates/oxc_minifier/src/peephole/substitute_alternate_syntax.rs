@@ -1710,9 +1710,11 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    /// Take the IIFE body expression out of the AST. If the enclosing IIFE was
-    /// pure-annotated, carry the annotation onto the inlined call/new so
-    /// later passes can still drop it.
+    /// Take the expression being inlined out of the IIFE body. If the enclosing
+    /// IIFE was pure-annotated, carry the annotation onto the inlined call/new
+    /// (recursing into `SequenceExpression` elements) so later passes can still
+    /// drop it. `manual_pure_functions` can't match an arrow/function-expression
+    /// callee, so `is_pure` here really only reflects the outer `/* @__PURE__ */`.
     fn take_propagating_pure(
         expr: &mut Expression<'a>,
         is_pure: bool,
@@ -1720,13 +1722,22 @@ impl<'a> PeepholeOptimizations {
     ) -> Expression<'a> {
         let mut taken = expr.take_in(ctx.ast);
         if is_pure {
-            match &mut taken {
-                Expression::CallExpression(c) => c.pure = true,
-                Expression::NewExpression(n) => n.pure = true,
-                _ => {}
-            }
+            Self::mark_inlined_pure(&mut taken);
         }
         taken
+    }
+
+    fn mark_inlined_pure(expr: &mut Expression<'a>) {
+        match expr {
+            Expression::CallExpression(c) => c.pure = true,
+            Expression::NewExpression(n) => n.pure = true,
+            Expression::SequenceExpression(s) => {
+                for e in &mut s.expressions {
+                    Self::mark_inlined_pure(e);
+                }
+            }
+            _ => {}
+        }
     }
 }
 

@@ -308,6 +308,9 @@ fn test_fold_iife() {
     test("var a = /* @__PURE__ */ (() => { return foo() })()", "var a = /* @__PURE__ */ foo()");
     test("var a = /* @__PURE__ */ (() => new Foo())()", "var a = /* @__PURE__ */ new Foo()");
     test("var a = /* @__PURE__ */ (() => { foo() })()", "var a = void 0");
+    // Sequence-expression body: annotation propagates to each call/new element
+    // so a follow-on pass can drop the unused `foo()` and unwrap the sequence.
+    test("var a = /* @__PURE__ */ (() => (foo(), bar()))()", "var a = /* @__PURE__ */ bar()");
     // IIFE inlining only handles arrows, so function-expression IIFEs are left
     // as-is for the outer call's `pure` to be picked up directly.
     test_same("var a = /* @__PURE__ */ (function() { return foo() })()");
