@@ -305,10 +305,7 @@ fn test_fold_iife() {
     test("var a = /* @__PURE__ */ (() => x)()", "var a = x");
     // https://github.com/oxc-project/oxc/issues/17480
     test("var a = /* @__PURE__ */ (() => foo())()", "var a = /* @__PURE__ */ foo()");
-    test(
-        "var a = /* @__PURE__ */ (() => { return foo() })()",
-        "var a = /* @__PURE__ */ foo()",
-    );
+    test("var a = /* @__PURE__ */ (() => { return foo() })()", "var a = /* @__PURE__ */ foo()");
     test("var a = /* @__PURE__ */ (() => new Foo())()", "var a = /* @__PURE__ */ new Foo()");
     test_same("var a = /* @__PURE__ */ (() => x)(y, z)");
     test("(/* @__PURE__ */ (() => !0)() ? () => x() : () => {})();", "x();");
@@ -322,7 +319,7 @@ fn test_fold_iife() {
     );
     test(
         "function foo(x) { if (x) { return /* @__PURE__ */ (() => bar())() } return x }",
-        "function foo(x) { return x && bar() }",
+        "function foo(x) { return x && /* @__PURE__ */ bar() }",
     );
     test(
         "function foo(x) { if (x) { return /* @__PURE__ */ (() => { return 42 })() } return x }",

@@ -1671,7 +1671,11 @@ impl<'a> PeepholeOptimizations {
                 if is_pure && Self::is_expression_result_unused(ctx) {
                     *e = ctx.ast.void_0(call_expr.span);
                 } else {
-                    *e = expr.take_in(ctx.ast);
+                    let mut inner = expr.take_in(ctx.ast);
+                    if is_pure {
+                        Self::propagate_pure_annotation(&mut inner);
+                    }
+                    *e = inner;
                 }
                 ctx.state.changed = true;
                 return;
@@ -1682,9 +1686,13 @@ impl<'a> PeepholeOptimizations {
                     if is_pure && Self::is_expression_result_unused(ctx) {
                         *e = ctx.ast.void_0(call_expr.span);
                     } else {
+                        let mut inner = expr_stmt.expression.take_in(ctx.ast);
+                        if is_pure {
+                            Self::propagate_pure_annotation(&mut inner);
+                        }
                         *e = ctx.ast.expression_sequence(expr_stmt.span, {
                             let mut sequence = ctx.ast.vec();
-                            sequence.push(expr_stmt.expression.take_in(ctx.ast));
+                            sequence.push(inner);
                             sequence.push(ctx.ast.void_0(call_expr.span));
                             sequence
                         });
@@ -1698,13 +1706,27 @@ impl<'a> PeepholeOptimizations {
                         if is_pure && Self::is_expression_result_unused(ctx) {
                             *e = ctx.ast.void_0(call_expr.span);
                         } else {
-                            *e = argument.take_in(ctx.ast);
+                            let mut inner = argument.take_in(ctx.ast);
+                            if is_pure {
+                                Self::propagate_pure_annotation(&mut inner);
+                            }
+                            *e = inner;
                         }
                         ctx.state.changed = true;
                     }
                 }
                 _ => {}
             }
+        }
+    }
+
+    /// When a pure-annotated IIFE is inlined, propagate the annotation onto
+    /// the inner call/new expression so later passes can still drop it.
+    fn propagate_pure_annotation(expr: &mut Expression<'a>) {
+        match expr {
+            Expression::CallExpression(c) => c.pure = true,
+            Expression::NewExpression(n) => n.pure = true,
+            _ => {}
         }
     }
 }

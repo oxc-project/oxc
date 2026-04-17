@@ -57,11 +57,7 @@ fn remove_unused_variable_declaration() {
 
     // https://github.com/oxc-project/oxc/issues/17480
     test_options("var removeThis = /* @__PURE__ */ (() => stuff())();", "", &options);
-    test_options(
-        "var removeThis = /* @__PURE__ */ (() => { return stuff() })();",
-        "",
-        &options,
-    );
+    test_options("var removeThis = /* @__PURE__ */ (() => { return stuff() })();", "", &options);
     test_options("var removeThis = /* @__PURE__ */ (() => new Thing())();", "", &options);
 }
 
