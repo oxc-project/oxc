@@ -308,6 +308,9 @@ fn test_fold_iife() {
     test("var a = /* @__PURE__ */ (() => { return foo() })()", "var a = /* @__PURE__ */ foo()");
     test("var a = /* @__PURE__ */ (() => new Foo())()", "var a = /* @__PURE__ */ new Foo()");
     test("var a = /* @__PURE__ */ (() => { foo() })()", "var a = void 0");
+    // IIFE inlining only handles arrows, so function-expression IIFEs are left
+    // as-is for the outer call's `pure` to be picked up directly.
+    test_same("var a = /* @__PURE__ */ (function() { return foo() })()");
     test_same("var a = /* @__PURE__ */ (() => x)(y, z)");
     test("(/* @__PURE__ */ (() => !0)() ? () => x() : () => {})();", "x();");
     test("/* @__PURE__ */ (() => x)()", "");
@@ -369,6 +372,9 @@ fn treeshake_options_annotations_false() {
     };
     test_same_options("function test() { bar } /* @__PURE__ */ test()", &options);
     test_same_options("function test() {} /* @__PURE__ */ new test()", &options);
+    // Without annotations, IIFE inlining still fires but must not forward the
+    // ignored PURE annotation onto the unwrapped call.
+    test_options("var a = /* @__PURE__ */ (() => foo())()", "var a = foo()", &options);
 
     let options = CompressOptions {
         treeshake: TreeShakeOptions { annotations: true, ..TreeShakeOptions::default() },

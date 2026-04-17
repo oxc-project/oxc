@@ -60,6 +60,13 @@ fn remove_unused_variable_declaration() {
     test_options("var removeThis = /* @__PURE__ */ (() => { return stuff() })();", "", &options);
     test_options("var removeThis = /* @__PURE__ */ (() => new Thing())();", "", &options);
     test_options("var removeThis = /* @__PURE__ */ (() => { stuff() })();", "", &options);
+    // Function-expression IIFEs aren't inlined, but their outer `pure` flag
+    // still lets the unused-declaration pass drop them.
+    test_options(
+        "var removeThis = /* @__PURE__ */ (function() { return stuff() })();",
+        "",
+        &options,
+    );
 }
 
 #[test]
