@@ -57,12 +57,13 @@ working directory: fixtures/cli/tsgolint_rule_options
     `----
 
   x typescript-eslint(consistent-type-exports): Type export ExportOnlyType is not a value and should be exported using `export type`.
-    ,-[test.ts:91:1]
+    ,-[test.ts:91:10]
  90 | // This SHOULD error because ExportOnlyType is only used as a type.
  91 | export { ExportOnlyType, exportOnlyValue };
-    : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    :          ^^^^^^^^^^^^^^
  92 | 
     `----
+  help: Try adding the `type` keyword: `type ExportOnlyType`
 
   x typescript-eslint(strict-void-return): Value returned in a context where a void return is expected.
      ,-[test.ts:99:25]

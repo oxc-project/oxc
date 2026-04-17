@@ -59,7 +59,8 @@ declare_oxc_lint!(
     CheckPropertyNames,
     jsdoc,
     correctness,
-    pending
+    pending,
+    version = "0.2.18",
 );
 
 impl Rule for CheckPropertyNames {

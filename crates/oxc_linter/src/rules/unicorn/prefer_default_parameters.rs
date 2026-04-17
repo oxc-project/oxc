@@ -62,6 +62,7 @@ declare_oxc_lint!(
     unicorn,
     style,
     fix,
+    version = "1.33.0",
 );
 
 impl Rule for PreferDefaultParameters {

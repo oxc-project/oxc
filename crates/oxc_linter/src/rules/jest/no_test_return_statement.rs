@@ -64,6 +64,7 @@ declare_oxc_lint!(
     NoTestReturnStatement,
     jest,
     style,
+    version = "0.2.0",
 );
 
 impl Rule for NoTestReturnStatement {

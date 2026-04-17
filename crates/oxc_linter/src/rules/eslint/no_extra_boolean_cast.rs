@@ -83,6 +83,7 @@ declare_oxc_lint!(
     correctness,
     conditional_fix_or_conditional_suggestion,
     config = NoExtraBooleanCast,
+    version = "0.0.8",
 );
 
 impl Rule for NoExtraBooleanCast {

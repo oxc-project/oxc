@@ -105,6 +105,7 @@ declare_oxc_lint!(
     import,
     restriction,
     config = NoCommonjs,
+    version = "0.11.0",
 );
 
 fn is_conditional(parent_node: &AstNode, ctx: &LintContext) -> bool {

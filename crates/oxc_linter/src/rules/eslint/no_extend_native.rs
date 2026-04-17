@@ -77,6 +77,7 @@ declare_oxc_lint!(
     eslint,
     suspicious,
     config = NoExtendNativeConfig,
+    version = "0.9.7",
 );
 
 impl Rule for NoExtendNative {

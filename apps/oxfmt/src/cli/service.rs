@@ -6,7 +6,8 @@ use rayon::prelude::*;
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService};
 
 use super::command::OutputMode;
-use crate::core::{ConfigResolver, FormatFileStrategy, FormatResult, SourceFormatter, utils};
+use super::walk::FormatEntry;
+use crate::core::{FormatResult, SourceFormatter, utils};
 
 pub enum SuccessResult {
     Changed(String),
@@ -17,33 +18,28 @@ pub struct FormatService {
     cwd: Box<Path>,
     format_mode: OutputMode,
     formatter: SourceFormatter,
-    config_resolver: ConfigResolver,
 }
 
 impl FormatService {
-    pub fn new<T>(
-        cwd: T,
-        format_mode: OutputMode,
-        formatter: SourceFormatter,
-        config_resolver: ConfigResolver,
-    ) -> Self
+    pub fn new<T>(cwd: T, format_mode: OutputMode, formatter: SourceFormatter) -> Self
     where
         T: Into<Box<Path>>,
     {
-        Self { cwd: cwd.into(), format_mode, formatter, config_resolver }
+        Self { cwd: cwd.into(), format_mode, formatter }
     }
 
     /// Process entries as they are received from the channel
     pub fn run_streaming(
         &self,
-        rx_entry: mpsc::Receiver<FormatFileStrategy>,
+        rx_entry: mpsc::Receiver<FormatEntry>,
         tx_error: &DiagnosticSender,
         tx_success: &mpsc::Sender<SuccessResult>,
     ) {
         rx_entry.into_iter().par_bridge().for_each(|entry| {
             let start_time = matches!(self.format_mode, OutputMode::Check).then(Instant::now);
 
-            let path = entry.path();
+            let FormatEntry { strategy, config_resolver } = entry;
+            let path = strategy.path();
             let Ok(source_text) = utils::read_to_string(path) else {
                 // This happens if binary file is attempted to be formatted
                 // e.g. `.ts` for MPEG-TS video file
@@ -59,15 +55,15 @@ impl FormatService {
                         .with_help("This may be due to the file being a binary or inaccessible."),
                     ],
                 );
-                tx_error.send(diagnostics).unwrap();
+                let _ = tx_error.send(diagnostics);
                 return;
             };
 
-            // Resolve options for this specific file entry
-            let resolved_options = self.config_resolver.resolve(&entry);
+            // Resolve options for this specific file using its scope's config
+            let resolved_options = config_resolver.resolve(&strategy);
 
             let (code, is_changed) =
-                match self.formatter.format(&entry, &source_text, resolved_options) {
+                match self.formatter.format(&strategy, &source_text, resolved_options) {
                     FormatResult::Success { code, is_changed } => (code, is_changed),
                     FormatResult::Error(diagnostics) => {
                         let errors = DiagnosticService::wrap_diagnostics(
@@ -76,7 +72,7 @@ impl FormatService {
                             &source_text,
                             diagnostics,
                         );
-                        tx_error.send(errors).unwrap();
+                        let _ = tx_error.send(errors);
                         return;
                     }
                 };
@@ -95,7 +91,7 @@ impl FormatService {
                                 path.display()
                             ))],
                         );
-                        tx_error.send(diagnostics).unwrap();
+                        let _ = tx_error.send(diagnostics);
                         return;
                     }
                 }
@@ -122,7 +118,7 @@ impl FormatService {
                 }
                 _ => SuccessResult::Unchanged,
             };
-            tx_success.send(result).unwrap();
+            let _ = tx_success.send(result);
         });
     }
 }

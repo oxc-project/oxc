@@ -54,7 +54,8 @@ declare_oxc_lint!(
     /// ```
     NoUnreachable,
     eslint,
-    nursery
+    nursery,
+    version = "0.4.4",
 );
 
 impl Rule for NoUnreachable {

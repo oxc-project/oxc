@@ -59,6 +59,7 @@ declare_oxc_lint!(
     restriction,
     fix,
     config = BomOptionType,
+    version = "0.3.3",
 );
 
 impl Rule for UnicodeBom {

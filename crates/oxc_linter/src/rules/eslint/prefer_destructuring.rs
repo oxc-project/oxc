@@ -90,6 +90,7 @@ declare_oxc_lint!(
     style,
     conditional_fix,
     config = PreferDestructuring,
+    version = "1.10.0",
 );
 
 impl Rule for PreferDestructuring {

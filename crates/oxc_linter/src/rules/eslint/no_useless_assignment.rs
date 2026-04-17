@@ -1,5 +1,5 @@
 use itertools::Itertools;
-use oxc_allocator::{Allocator, BitSet};
+use oxc_allocator::{Allocator, BitSet, CloneIn};
 use smallvec::SmallVec;
 
 use oxc_ast::{
@@ -7,7 +7,7 @@ use oxc_ast::{
     ast::{BindingPattern, Expression, VariableDeclarationKind},
 };
 use oxc_cfg::{
-    BasicBlockId, BlockNodeId, EdgeType, ErrorEdgeKind, Graph,
+    BasicBlockId, BlockNodeId, ControlFlowGraph, EdgeType, ErrorEdgeKind, Graph,
     graph::{
         Direction,
         visit::{Control, DfsEvent, EdgeRef, depth_first_search},
@@ -102,6 +102,7 @@ declare_oxc_lint!(
     NoUselessAssignment,
     eslint,
     nursery,
+    version = "1.59.0",
 );
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -147,6 +148,7 @@ impl Rule for NoUselessAssignment {
         let mut used_compact_indices: SmallVec<[u32; 32]> = SmallVec::new();
         let mut compact_to_scope: Vec<ScopeId> = Vec::new();
         let mut exported_compact_indices: SmallVec<[u32; 8]> = SmallVec::new();
+        let mut captured_read_compact_indices: SmallVec<[u32; 8]> = SmallVec::new();
 
         for symbol_id in ctx.scoping().symbol_ids() {
             let decl_node = ctx.symbol_declaration(symbol_id);
@@ -205,7 +207,9 @@ impl Rule for NoUselessAssignment {
                             compact_idx,
                             var_decl,
                             decl_node,
+                            compact_to_scope[compact_idx as usize],
                             &mut used_compact_indices,
+                            &mut captured_read_compact_indices,
                         );
                         continue;
                     }
@@ -217,7 +221,9 @@ impl Rule for NoUselessAssignment {
                         compact_idx,
                         var_decl,
                         decl_node,
+                        compact_to_scope[compact_idx as usize],
                         &mut used_compact_indices,
+                        &mut captured_read_compact_indices,
                     );
                     pending_assignment_lhs = None;
                 }
@@ -232,7 +238,9 @@ impl Rule for NoUselessAssignment {
                             compact_idx,
                             var_decl,
                             decl_node,
+                            compact_to_scope[compact_idx as usize],
                             &mut used_compact_indices,
+                            &mut captured_read_compact_indices,
                         );
                     }
                     pending_assignment_lhs = Some(reference);
@@ -245,7 +253,9 @@ impl Rule for NoUselessAssignment {
                         compact_idx,
                         var_decl,
                         decl_node,
+                        compact_to_scope[compact_idx as usize],
                         &mut used_compact_indices,
+                        &mut captured_read_compact_indices,
                     );
                 }
             }
@@ -259,7 +269,9 @@ impl Rule for NoUselessAssignment {
                     compact_idx,
                     var_decl,
                     decl_node,
+                    compact_to_scope[compact_idx as usize],
                     &mut used_compact_indices,
+                    &mut captured_read_compact_indices,
                 );
             }
         }
@@ -283,6 +295,11 @@ impl Rule for NoUselessAssignment {
             exported_symbols.set_bit(*idx as usize);
         }
 
+        let mut captured_read_symbols = BitSet::new_in(num_tracked, &allocator);
+        for idx in &captured_read_compact_indices {
+            captured_read_symbols.set_bit(*idx as usize);
+        }
+
         let mut cfg_traverse_state: CfgTraverseState<'_> =
             CfgTraverseState::with_capacity(num_blocks);
         cfg_traverse_state.resize_with(num_blocks, || TraverseState::new(num_tracked, &allocator));
@@ -295,6 +312,8 @@ impl Rule for NoUselessAssignment {
         let mut scratch_loop_visited = BitSet::new_in(num_blocks, &allocator);
         let mut scratch_loop_killed = BitSet::new_in(num_tracked, &allocator);
         let mut scratch_find_loop = BitSet::new_in(graph.node_count(), &allocator);
+        let mut cached_loop_liveness: Vec<Option<BitSet<'_>>> =
+            std::iter::repeat_with(|| None).take(graph.node_count()).collect();
 
         depth_first_search(
             graph,
@@ -318,11 +337,34 @@ impl Rule for NoUselessAssignment {
                         match edge.weight() {
                             // Normal Flow: We will process these through the block's Ops
                             EdgeType::Normal
-                            | EdgeType::Jump
                             | EdgeType::NewFunction
                             | EdgeType::Finalize
                             | EdgeType::Join => {
                                 scratch_live.union(&cfg_traverse_state[succ_id].live);
+                            }
+                            EdgeType::Jump => {
+                                scratch_live.union(&cfg_traverse_state[succ_id].live);
+
+                                // `continue` edges are modeled as `Jump`s to the loop header, so
+                                // account for values that are first observed on the next iteration.
+                                if Self::is_continue_to_loop_header(
+                                    ctx.cfg(),
+                                    graph,
+                                    block_node_id,
+                                    edge.target(),
+                                ) {
+                                    Self::merge_loop_liveness(
+                                        &allocator,
+                                        graph,
+                                        edge.target(),
+                                        &cfg_ops,
+                                        &mut cached_loop_liveness,
+                                        &mut scratch_loop_req,
+                                        &mut scratch_live,
+                                        &mut scratch_loop_visited,
+                                        &mut scratch_loop_killed,
+                                    );
+                                }
                             }
                             // Error Flow: This is the "Branch" that bypasses this block's Ops
                             EdgeType::Error(_) => {
@@ -342,21 +384,17 @@ impl Rule for NoUselessAssignment {
                                     scratch_live
                                         .union(&cfg_traverse_state[loop_header_block_id].live);
 
-                                    scratch_loop_req.clear();
-                                    scratch_loop_visited.clear();
-                                    scratch_loop_killed.clear();
-
-                                    Self::analyze_loop_recursive(
+                                    Self::merge_loop_liveness(
+                                        &allocator,
                                         graph,
                                         loop_header,
-                                        loop_header,
                                         &cfg_ops,
+                                        &mut cached_loop_liveness,
                                         &mut scratch_loop_req,
-                                        &mut scratch_loop_killed,
+                                        &mut scratch_live,
                                         &mut scratch_loop_visited,
+                                        &mut scratch_loop_killed,
                                     );
-
-                                    scratch_live.union(&scratch_loop_req);
                                 }
                             }
                             EdgeType::Unreachable => {}
@@ -378,6 +416,7 @@ impl Rule for NoUselessAssignment {
                                 if !scratch_live.has_bit(compact_idx)
                                     && !scratch_catch.has_bit(compact_idx)
                                     && !exported_symbols.has_bit(compact_idx)
+                                    && !captured_read_symbols.has_bit(compact_idx)
                                     && !Self::is_in_try_block(graph, block_node_id)
                                     && Self::has_same_parent_variable_scope(
                                         ctx,
@@ -430,7 +469,9 @@ impl NoUselessAssignment {
         compact_idx: u32,
         var_decl: &oxc_ast::ast::VariableDeclarator,
         decl_node: &oxc_semantic::AstNode,
+        symbol_scope: ScopeId,
         used_compact_indices: &mut SmallVec<[u32; 32]>,
+        captured_read_compact_indices: &mut SmallVec<[u32; 8]>,
     ) {
         let op_node = reference.node_id();
 
@@ -440,6 +481,14 @@ impl NoUselessAssignment {
                 .expect("expected a valid node id in graph");
             cfg_ops[ref_block].push(OpAtNode { op: Operation::Read, node: op_node, compact_idx });
             used_compact_indices.push(compact_idx);
+            if !Self::has_same_parent_variable_scope(
+                ctx,
+                symbol_scope,
+                ctx.nodes().get_node(op_node).scope_id(),
+            ) && !captured_read_compact_indices.contains(&compact_idx)
+            {
+                captured_read_compact_indices.push(compact_idx);
+            }
         }
 
         if reference.is_write() {
@@ -591,6 +640,52 @@ impl NoUselessAssignment {
         for sym_idx in newly_killed {
             killed_on_path.unset_bit(sym_idx);
         }
+    }
+
+    fn merge_loop_liveness<'a>(
+        allocator: &'a Allocator,
+        graph: &Graph,
+        loop_header: BlockNodeId,
+        cfg_ops: &CfgOps,
+        cached_loop_liveness: &mut [Option<BitSet<'a>>],
+        scratch_loop_req: &mut BitSet<'a>,
+        scratch_live: &mut BitSet<'a>,
+        scratch_loop_visited: &mut BitSet<'a>,
+        scratch_loop_killed: &mut BitSet<'a>,
+    ) {
+        if let Some(loop_liveness) = cached_loop_liveness[loop_header.index()].as_ref() {
+            scratch_live.union(loop_liveness);
+            return;
+        }
+
+        scratch_loop_req.clear();
+        scratch_loop_visited.clear();
+        scratch_loop_killed.clear();
+
+        Self::analyze_loop_recursive(
+            graph,
+            loop_header,
+            loop_header,
+            cfg_ops,
+            scratch_loop_req,
+            scratch_loop_killed,
+            scratch_loop_visited,
+        );
+
+        cached_loop_liveness[loop_header.index()] = Some(scratch_loop_req.clone_in(allocator));
+        scratch_live.union(scratch_loop_req);
+    }
+
+    fn is_continue_to_loop_header(
+        cfg: &ControlFlowGraph,
+        graph: &Graph,
+        source: BlockNodeId,
+        target: BlockNodeId,
+    ) -> bool {
+        graph
+            .edges_directed(target, Direction::Incoming)
+            .any(|edge| matches!(edge.weight(), EdgeType::Backedge))
+            && cfg.is_reachable(target, source)
     }
 }
 #[test]
@@ -1037,6 +1132,38 @@ fn test() {
                             } = obj;
                             return <A prop={a} />;
                         }", // { "parserOptions": { "ecmaFeatures": { "jsx": true }, }, }
+        "
+            let index = 0;
+            while (index < length) {
+                if (condition) {
+                    index++;
+                    continue;
+                }
+                while (index < length2) {
+                    index++;
+                }
+            }
+        ",
+        "function createStore() {
+                        const options = { onTrigger: undefined };
+                        let isListening = false;
+                        options.onTrigger = () => {
+                            if (isListening) {
+                                console.log('event');
+                            }
+                        };
+                        isListening = true;
+                        return options;
+                    }",
+        "let state = 0;
+                    const api = { read: () => state };
+                    state = 1;
+                    export { api };",
+        "function foo() {
+                        let x = 0;
+                        (() => console.log(x))();
+                        x = 1;
+                    }",
     ];
 
     let fail = vec![
@@ -1355,7 +1482,7 @@ fn test() {
                         x = 1;
                         x = 2;
                         return <A prop={x} />;
-                        }", // { "parserOptions": { "ecmaFeatures": { "jsx": true }, }, }
+                        }", // { "parserOptions": { "ecmaFeatures": { "jsx": true }, }, },
     ];
 
     Tester::new(NoUselessAssignment::NAME, NoUselessAssignment::PLUGIN, pass, fail)

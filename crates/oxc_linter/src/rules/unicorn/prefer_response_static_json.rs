@@ -47,7 +47,8 @@ declare_oxc_lint!(
     PreferResponseStaticJson,
     unicorn,
     style,
-    suggestion
+    suggestion,
+    version = "1.29.0",
 );
 
 impl Rule for PreferResponseStaticJson {

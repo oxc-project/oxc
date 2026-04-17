@@ -37,7 +37,7 @@ jobs:
       - uses: oxc-project/setup-node@4c26e7cb3605b6bdef5450dacd02c434b10fd8ba # v1.2.0
 
       - run: rustup component add llvm-tools-preview
-      - uses: taiki-e/install-action@7a562dfa955aa2e4d5b0fd6ebd57ff9715c07b0b # v2.73.0
+      - uses: taiki-e/install-action@0abfcd587b70a713fdaa7fb502c885e2112acb15 # v2.75.7
         with:
           tool: cargo-llvm-cov
 
@@ -48,7 +48,7 @@ jobs:
         run: cargo codecov --lcov --output-path lcov.info
 
       - name: Upload Artifact
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           if-no-files-found: error
           name: codecov

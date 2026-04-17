@@ -46,7 +46,8 @@ declare_oxc_lint!(
     Scope,
     jsx_a11y,
     correctness,
-    fix
+    fix,
+    version = "0.0.19",
 );
 
 impl Rule for Scope {

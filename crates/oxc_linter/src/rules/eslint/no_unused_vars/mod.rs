@@ -192,7 +192,8 @@ declare_oxc_lint!(
     eslint,
     correctness,
     fix = conditional_dangerous_fix_or_suggestion,
-    config = NoUnusedVarsOptions
+    config = NoUnusedVarsOptions,
+    version = "0.7.0",
 );
 
 impl Deref for NoUnusedVars {

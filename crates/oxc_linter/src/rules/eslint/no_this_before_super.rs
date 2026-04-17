@@ -50,7 +50,8 @@ declare_oxc_lint!(
     /// ```
     NoThisBeforeSuper,
     eslint,
-    correctness
+    correctness,
+    version = "0.2.6",
 );
 
 #[derive(Default, Copy, Clone, Debug)]

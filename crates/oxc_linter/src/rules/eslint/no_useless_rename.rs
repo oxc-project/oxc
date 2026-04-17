@@ -77,6 +77,7 @@ declare_oxc_lint!(
     correctness,
     fix,
     config = NoUselessRenameConfig,
+    version = "0.2.14",
 );
 
 impl Rule for NoUselessRename {

@@ -256,6 +256,17 @@ impl TriviaBuilder {
                 }
                 // Fall through to check for coverage ignore patterns
             }
+            b't' => {
+                // Check for turbopack comments
+                if bytes[start..].starts_with(b"turbopack")
+                    && start + 9 < bytes.len()
+                    && bytes[start + 9].is_ascii_uppercase()
+                {
+                    comment.content = CommentContent::Turbopack;
+                    return;
+                }
+                // Fall through to check for coverage ignore patterns
+            }
             b'v' | b'c' | b'n' | b'i' => {
                 // Check coverage ignore patterns: "v8 ignore", "c8 ignore", "node:coverage", "istanbul ignore"
                 let rest = &bytes[start..];
@@ -602,6 +613,7 @@ token /* Trailing 1 */
             ("/* @__NO_SIDE_EFFECTS__ */", CommentContent::NoSideEffects),
             ("/* #__PURE__ */", CommentContent::Pure),
             ("/* #__NO_SIDE_EFFECTS__ */", CommentContent::NoSideEffects),
+            ("/* turbopackOptional: true */", CommentContent::Turbopack),
         ];
 
         for (source_text, expected) in data {

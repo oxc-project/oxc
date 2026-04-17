@@ -114,6 +114,7 @@ declare_oxc_lint!(
     NoDuplicateHooks,
     jest,
     style,
+    version = "0.4.0",
 );
 
 impl Rule for NoDuplicateHooks {

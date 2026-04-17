@@ -43,7 +43,8 @@ declare_oxc_lint!(
     NoLonelyIf,
     unicorn,
     pedantic,
-    pending
+    pending,
+    version = "0.0.18",
 );
 
 impl Rule for NoLonelyIf {

@@ -58,6 +58,7 @@ declare_oxc_lint!(
     BadArrayMethodOnArguments,
     oxc,
     correctness,
+    version = "0.0.3",
 );
 
 impl Rule for BadArrayMethodOnArguments {

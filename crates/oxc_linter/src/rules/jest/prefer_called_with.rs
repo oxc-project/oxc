@@ -66,7 +66,8 @@ declare_oxc_lint!(
     PreferCalledWith,
     jest,
     style,
-    fix
+    fix,
+    version = "0.2.5",
 );
 
 impl Rule for PreferCalledWith {

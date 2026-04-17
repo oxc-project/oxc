@@ -1,14 +1,14 @@
 File                       | File size      || Sys allocs     | Sys reallocs   || Arena allocs   | Arena reallocs | Arena bytes    
 -------------------------------------------------------------------------------------------------------------------------------------------
-checker.ts                 | 2.92 MB        ||           9672 |             21 ||         267640 |          22847
+checker.ts                 | 2.92 MB        ||           9672 |             21 ||         267651 |          22847
 
-cal.com.tsx                | 1.06 MB        ||           1083 |             49 ||         136127 |          13697
+cal.com.tsx                | 1.06 MB        ||           1083 |             49 ||         136145 |          13697
 
-RadixUIAdoptionSection.jsx | 2.52 kB        ||              1 |              0 ||            363 |             66
+RadixUIAdoptionSection.jsx | 2.52 kB        ||              1 |              0 ||            367 |             66
 
-pdf.mjs                    | 567.30 kB      ||            703 |             75 ||          90547 |           8148
+pdf.mjs                    | 567.30 kB      ||            703 |             75 ||          90583 |           8148
 
-antd.js                    | 6.69 MB        ||           7132 |            235 ||         528505 |          55357
+antd.js                    | 6.69 MB        ||           7132 |            235 ||         528577 |          55357
 
-binder.ts                  | 193.08 kB      ||            530 |              7 ||          16788 |           1467
+binder.ts                  | 193.08 kB      ||            530 |              7 ||          16791 |           1467
 

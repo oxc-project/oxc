@@ -78,6 +78,7 @@ declare_oxc_lint!(
     pedantic,
     fix,
     config = NoUselessUndefined,
+    version = "0.6.1",
 );
 
 // Create a static set for all function names

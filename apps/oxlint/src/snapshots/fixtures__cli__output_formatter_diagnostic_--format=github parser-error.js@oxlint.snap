@@ -8,6 +8,7 @@ working directory: fixtures/cli/output_formatter_diagnostic
 ::error file=parser-error.js,line=3,endLine=3,col=9,endColumn=10,title=oxlint::Expected `;` but found `:`
 
 Found 0 warnings and 1 error.
+Finished in <variable>ms on 1 file with 2 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
 ----------

@@ -75,7 +75,8 @@ declare_oxc_lint!(
     /// ```
     NoUselessBackreference,
     eslint,
-    correctness
+    correctness,
+    version = "0.16.10",
 );
 
 impl Rule for NoUselessBackreference {

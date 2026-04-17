@@ -55,7 +55,8 @@ declare_oxc_lint!(
     /// ```
     NoThisAssignment,
     unicorn,
-    pedantic
+    pedantic,
+    version = "0.0.18",
 );
 
 impl Rule for NoThisAssignment {

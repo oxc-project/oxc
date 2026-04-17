@@ -86,6 +86,7 @@ declare_oxc_lint!(
     promise,
     correctness,
     config = NoCallbackInPromiseConfig,
+    version = "0.10.0",
 );
 
 const TIMEOUT_WHITELIST: [&str; 4] =

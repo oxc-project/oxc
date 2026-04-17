@@ -53,7 +53,8 @@ declare_oxc_lint!(
     NoNegatedCondition,
     eslint,
     pedantic,
-    pending
+    pending,
+    version = "0.0.18",
 );
 
 impl Rule for NoNegatedCondition {

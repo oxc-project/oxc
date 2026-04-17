@@ -232,6 +232,7 @@ pub(crate) mod typescript {
     pub mod consistent_type_imports;
     pub mod dot_notation;
     pub mod explicit_function_return_type;
+    pub mod explicit_member_accessibility;
     pub mod explicit_module_boundary_types;
     pub mod no_array_delete;
     pub mod no_base_to_string;
@@ -360,10 +361,12 @@ pub(crate) mod jest {
     pub mod prefer_called_with;
     pub mod prefer_comparison_matcher;
     pub mod prefer_each;
+    pub mod prefer_ending_with_an_expect;
     pub mod prefer_equality_matcher;
     pub mod prefer_expect_resolves;
     pub mod prefer_hooks_in_order;
     pub mod prefer_hooks_on_top;
+    pub mod prefer_importing_jest_globals;
     pub mod prefer_jest_mocked;
     pub mod prefer_lowercase_title;
     pub mod prefer_mock_promise_shorthand;

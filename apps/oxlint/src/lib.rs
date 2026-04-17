@@ -60,7 +60,14 @@ const DEFAULT_OXLINTRC_NAME: &str = ".oxlintrc.json";
 const DEFAULT_JSONC_OXLINTRC_NAME: &str = ".oxlintrc.jsonc";
 const DEFAULT_TS_OXLINTRC_NAME: &str = "oxlint.config.ts";
 /// Vite config file that may contain oxlint config under a `.lint` field.
+#[cfg(feature = "napi")]
 const VITE_CONFIG_NAME: &str = "vite.config.ts";
+
+/// Whether Vite+ mode is active (i.e., `VP_VERSION` env var is set).
+#[cfg(feature = "napi")]
+fn is_vite_plus_mode() -> bool {
+    std::env::var_os("VP_VERSION").is_some()
+}
 
 /// Return a JSON blob containing metadata for all available oxlint rules.
 ///

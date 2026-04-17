@@ -595,7 +595,7 @@ impl CliRunner {
 
 pub fn print_and_flush_stdout(stdout: &mut dyn Write, message: &str) {
     stdout.write_all(message.as_bytes()).or_else(check_for_writer_error).unwrap();
-    stdout.flush().unwrap();
+    stdout.flush().or_else(check_for_writer_error).unwrap();
 }
 
 fn check_for_writer_error(error: std::io::Error) -> Result<(), std::io::Error> {

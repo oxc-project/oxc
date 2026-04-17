@@ -1422,7 +1422,7 @@ export function isSpaceBetweenTokens(first: NodeOrToken, second: NodeOrToken): b
     const token = getTokenOrComment(index);
     if (
       tokenStart !== lastTokenEnd ||
-      (token.type === "JSXText" && JSX_WHITESPACE_REGEXP.test(token.value))
+      (tokenStart < rangeEnd && token.type === "JSXText" && JSX_WHITESPACE_REGEXP.test(token.value))
     ) {
       return true;
     }

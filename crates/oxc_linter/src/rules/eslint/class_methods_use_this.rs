@@ -130,6 +130,7 @@ declare_oxc_lint!(
     eslint,
     restriction,
     config = ClassMethodsUseThisConfig,
+    version = "1.16.0",
 );
 
 impl Rule for ClassMethodsUseThis {

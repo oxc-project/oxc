@@ -56,11 +56,54 @@ pub struct NoRestrictedExports(Box<NoRestrictedExportsConfig>);
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoRestrictedExportsConfig {
+    /// An array of strings, where each string is a name to be restricted.
+    ///
+    /// Example of **incorrect** code for `"restrictedNamedExports": ["foo"]`:
+    ///
+    /// ```ts
+    /// export const foo = 1;
+    /// ```
+    ///
+    /// Example of **correct** code for `"restrictedNamedExports": ["foo"]`:
+    ///
+    /// ```ts
+    /// export const bar = 1;
+    /// ```
+    ///
+    /// By design, this option doesn't disallow export default declarations. If
+    /// you configure `default` as a restricted name, that restriction will apply
+    /// only to named export declarations.
+    ///
+    /// Example of **incorrect** code for `"restrictedNamedExports": ["default"]`:
+    ///
+    /// ```ts
+    /// function foo() {}
+    /// export { foo as default };
+    ///
+    /// export { default } from "some_module";
+    /// ```
     restricted_named_exports: FxHashSet<String>,
+    /// A string representing a regular expression pattern. Named exports
+    /// matching this pattern will be restricted. This option does not apply to
+    /// default named exports.
+    ///
+    /// Example of **incorrect** code for `"restrictedNamedExportsPattern": "bar$":
+    ///
+    /// ```ts
+    /// export const foobar = 1;
+    /// ```
+    ///
+    /// Example of **correct** code for `"restrictedNamedExportsPattern": "bar$":
+    ///
+    /// ```ts
+    /// export const foo = 1;
+    /// ```
     #[serde(deserialize_with = "deserialize_regex_option")]
     restricted_named_exports_pattern: Option<Regex>,
+    /// An object with boolean properties to restrict certain default export
+    /// declarations. This option works only if the `restrictedNamedExports`
+    /// option does not contain the `"default"` value.
     restrict_default_exports: RestrictDefaultExports,
-
     #[serde(skip_serializing)]
     has_default_restricted_named_export: bool,
 }
@@ -68,10 +111,47 @@ pub struct NoRestrictedExportsConfig {
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 struct RestrictDefaultExports {
+    /// Whether to restrict `export { default } from` declarations.
+    ///
+    /// Example of **incorrect** code for `"restrictDefaultExports": { "defaultFrom": true }`:
+    ///
+    /// ```js
+    /// export { default } from 'foo';
+    /// ```
     default_from: bool,
+    /// Whether to restrict `export default` declarations.
+    ///
+    /// Example of **incorrect** code for `"restrictDefaultExports": { "direct": true }`:
+    ///
+    /// ```js
+    /// const foo = 123;
+    /// export default foo;
+    /// ```
     direct: bool,
+    /// Whether to restrict `export { foo as default }` declarations.
+    ///
+    /// Example of **incorrect** code for `"restrictDefaultExports": { "named": true }`:
+    ///
+    /// ```js
+    /// const foo = 123;
+    /// export { foo as default };
+    /// ```
     named: bool,
+    /// Whether to restrict `export { foo as default } from` declarations.
+    ///
+    /// Example of **incorrect** code for `"restrictDefaultExports": { "namedFrom": true }`:
+    ///
+    /// ```js
+    /// export { foo as default } from 'foo';
+    /// ```
     named_from: bool,
+    /// Whether to restrict `export * as default from` declarations.
+    ///
+    /// Example of **incorrect** code for `"restrictDefaultExports": { "namespaceFrom": true }`:
+    ///
+    /// ```js
+    /// export * as default from 'foo';
+    /// ```
     namespace_from: bool,
 }
 
@@ -94,129 +174,16 @@ declare_oxc_lint!(
     ///
     /// This rule disallows specified names from being used as exported names.
     ///
+    /// By default, this rule doesn’t disallow any names. Only the names you specify in the configuration will be disallowed.
+    ///
     /// ### Why is this bad?
     ///
     /// In a project, certain names may be disallowed from being used as exported names for various reasons.
-    ///
-    /// ### Options
-    ///
-    /// By default, this rule doesn’t disallow any names. Only the names you specify in the configuration will be disallowed.
-    ///
-    /// #### restrictedNamedExports
-    ///
-    /// This option is an array of strings, where each string is a name to be restricted.
-    ///
-    /// ```json
-    /// {"rules: {"no-restricted-exports": ["error", { "restrictedNamedExports": ["foo", "bar"] }]}}
-    /// ```
-    ///
-    /// Example of **incorrect** code for the "restrictedNamedExports" option:
-    ///
-    /// ```js
-    /// {"rules: {"no-restricted-exports": ["error", { "restrictedNamedExports": ["foo"] }]}}
-    ///
-    /// export const foo = 1;
-    /// ```
-    ///
-    /// ##### Default exports
-    ///
-    /// By design, the `restrictedNamedExports` option doesn’t disallow export default declarations. If you configure `default` as a restricted name, that restriction will apply only to named export declarations.
-    ///
-    /// Examples of additional **incorrect** code for the `"restrictedNamedExports": ["default"]` option:
-    ///
-    /// ```js
-    /// {"rules: {"no-restricted-exports": ["error", { "restrictedNamedExports": ["default"] }]}}
-    ///
-    /// function foo() {}
-    /// export { foo as default };
-    /// ```
-    ///
-    /// ```js
-    /// {"rules: {"no-restricted-exports": ["error", { "restrictedNamedExports": ["default"] }]}}
-    ///
-    /// export { default } from "some_module";
-    /// ```
-    ///
-    /// #### restrictedNamedExportsPattern
-    ///
-    /// This option is a string representing a regular expression pattern. Named exports matching this pattern will be restricted. This option does not apply to default named exports.
-    ///
-    /// Example of **incorrect** code for the "restrictedNamedExportsPattern" option:
-    ///
-    /// ```js
-    /// {"rules: {"no-restricted-exports": ["error", { "restrictedNamedExportsPattern": "bar$" }]}}
-    ///
-    /// export const foobar = 1;
-    /// ```
-    ///
-    /// #### restrictDefaultExports
-    ///
-    /// This option is an object option with boolean properties to restrict certain default export declarations. The option works only if the restrictedNamedExports option does not contain the "default" value.
-    ///
-    /// ##### direct
-    ///
-    /// Whether to restricts `export default` declarations.
-    ///
-    /// Example of **incorrect** code for the `"restrictDefaultExports": { "direct": true }` option:
-    ///
-    /// ```js
-    /// {"rules: {"no-restricted-exports": ["error", { "restrictDefaultExports": { "direct": true } }]}}
-    ///
-    /// export default foo;
-    /// ```
-    ///
-    /// ##### named
-    ///
-    /// Whether to restricts `export { foo as default };` declarations.
-    ///
-    /// Example of **incorrect** code for the `"restrictDefaultExports": { "named": true }` option:
-    ///
-    /// ```js
-    /// {"rules: {"no-restricted-exports": ["error", { "restrictDefaultExports": { "named": true } }]}}
-    ///
-    /// const foo = 123;
-    /// export { foo as default };
-    /// ```
-    ///
-    /// ##### defaultFrom
-    ///
-    /// Whether to restricts `export { default } from 'foo';` declarations.
-    ///
-    /// Example of **incorrect** code for the `"restrictDefaultExports": { "defaultFrom": true }` option:
-    ///
-    /// ```js
-    /// {"rules: {"no-restricted-exports": ["error", { "restrictDefaultExports": { "defaultFrom": true } }]}}
-    ///
-    /// export { default } from 'foo';
-    /// ```
-    ///
-    /// ##### namedFrom
-    ///
-    /// Whether to restricts `export { foo as default } from 'foo';` declarations.
-    ///
-    /// Example of **incorrect** code for the `"restrictDefaultExports": { "namedFrom": true }` option:
-    ///
-    /// ```js
-    /// {"rules: {"no-restricted-exports": ["error", { "restrictDefaultExports": { "namedFrom": true } }]}}
-    ///
-    /// export { foo as default } from 'foo';
-    /// ```
-    ///
-    /// ##### namespaceFrom
-    ///
-    /// Whether to restricts `export * as default from 'foo';` declarations.
-    ///
-    /// Example of **incorrect** code for the `"restrictDefaultExports": { "namespaceFrom": true }` option:
-    ///
-    /// ```js
-    /// {"rules: {"no-restricted-exports": ["error", { "restrictDefaultExports": { "namespaceFrom": true } }]}}
-    ///
-    /// export * as default from 'foo';
-    /// ```
     NoRestrictedExports,
     eslint,
     nursery, // TODO: change category to `restriction`
     config = NoRestrictedExportsConfig,
+    version = "1.59.0",
 );
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

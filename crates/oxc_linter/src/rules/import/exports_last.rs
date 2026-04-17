@@ -47,7 +47,8 @@ declare_oxc_lint!(
     /// ```
     ExportsLast,
     import,
-    style
+    style,
+    version = "0.15.14",
 );
 
 impl Rule for ExportsLast {

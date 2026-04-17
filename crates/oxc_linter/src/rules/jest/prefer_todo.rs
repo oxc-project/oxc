@@ -56,7 +56,8 @@ declare_oxc_lint!(
     PreferTodo,
     jest,
     style,
-    fix
+    fix,
+    version = "0.0.16",
 );
 
 impl Rule for PreferTodo {

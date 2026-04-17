@@ -20,7 +20,7 @@ use std::{
 
 use rustc_hash::FxBuildHasher;
 
-use crate::bump::Bump;
+use crate::arena::Arena;
 
 // Re-export additional types from `hashbrown`
 pub use hashbrown::{
@@ -33,7 +33,7 @@ pub use hashbrown::{
 
 use crate::Allocator;
 
-type InnerHashMap<'alloc, K, V, S> = hashbrown::HashMap<K, V, S, &'alloc Bump>;
+type InnerHashMap<'alloc, K, V, S> = hashbrown::HashMap<K, V, S, &'alloc Arena>;
 
 /// A hash map without `Drop` that stores data in arena allocator.
 ///
@@ -66,27 +66,27 @@ impl<K: fmt::Debug, V: fmt::Debug, S> fmt::Debug for HashMap<'_, K, V, S> {
     }
 }
 
-/// SAFETY: Even though `Bump` is not `Sync`, we can make `HashMap<K, V>` `Sync` if both `K` and `V`
+/// SAFETY: Even though `Arena` is not `Sync`, we can make `HashMap<K, V>` `Sync` if both `K` and `V`
 /// are `Sync` because:
 ///
-/// 1. No public methods allow access to the `&Bump` that `HashMap` contains (in `hashbrown::HashMap`),
-///    so user cannot illegally obtain 2 `&Bump`s on different threads via `HashMap`.
+/// 1. No public methods allow access to the `&Arena` that `HashMap` contains (in `hashbrown::HashMap`),
+///    so user cannot illegally obtain 2 `&Arena`s on different threads via `HashMap`.
 ///
-/// 2. All internal methods which access the `&Bump` take a `&mut self`.
+/// 2. All internal methods which access the `&Arena` take a `&mut self`.
 ///    `&mut HashMap` cannot be transferred across threads, and nor can an owned `HashMap`
 ///    (`HashMap` is not `Send`).
 ///    Therefore these methods taking `&mut self` can be sure they're not operating on a `HashMap`
 ///    which has been moved across threads.
 ///
 /// Note: `HashMap` CANNOT be `Send`, even if `K` and `V` are `Send`, because that would allow 2 `HashMap`s
-/// on different threads to both allocate into same arena simultaneously. `Bump` is not thread-safe,
+/// on different threads to both allocate into same arena simultaneously. `Arena` is not thread-safe,
 /// and this would be undefined behavior.
 ///
 /// ### Soundness holes
 ///
 /// This is not actually fully sound. There are 2 holes I (@overlookmotel) am aware of:
 ///
-/// 1. `allocator` method, which does allow access to the `&Bump` that `HashMap` contains.
+/// 1. `allocator` method, which does allow access to the `&Arena` that `HashMap` contains.
 /// 2. `Clone` impl on `hashbrown::HashMap`, which may perform allocations in the arena, given only a
 ///    `&self` reference.
 ///
@@ -127,7 +127,7 @@ impl<'alloc, K, V, S> HashMap<'alloc, K, V, S> {
     pub fn with_hasher_in(hasher: S, allocator: &'alloc Allocator) -> Self {
         const { Self::ASSERT_K_AND_V_ARE_NOT_DROP };
 
-        let inner = InnerHashMap::with_hasher_in(hasher, allocator.bump());
+        let inner = InnerHashMap::with_hasher_in(hasher, allocator.arena());
         Self(ManuallyDrop::new(inner))
     }
 
@@ -144,7 +144,7 @@ impl<'alloc, K, V, S> HashMap<'alloc, K, V, S> {
     ) -> Self {
         const { Self::ASSERT_K_AND_V_ARE_NOT_DROP };
 
-        let inner = InnerHashMap::with_capacity_and_hasher_in(capacity, hasher, allocator.bump());
+        let inner = InnerHashMap::with_capacity_and_hasher_in(capacity, hasher, allocator.arena());
         Self(ManuallyDrop::new(inner))
     }
 
@@ -152,7 +152,7 @@ impl<'alloc, K, V, S> HashMap<'alloc, K, V, S> {
     ///
     /// The map cannot be used after calling this. The iterator element type is `K`.
     #[inline(always)]
-    pub fn into_keys(self) -> IntoKeys<K, V, &'alloc Bump> {
+    pub fn into_keys(self) -> IntoKeys<K, V, &'alloc Arena> {
         let inner = ManuallyDrop::into_inner(self.0);
         inner.into_keys()
     }
@@ -161,7 +161,7 @@ impl<'alloc, K, V, S> HashMap<'alloc, K, V, S> {
     ///
     /// The map cannot be used after calling this. The iterator element type is `V`.
     #[inline(always)]
-    pub fn into_values(self) -> IntoValues<K, V, &'alloc Bump> {
+    pub fn into_values(self) -> IntoValues<K, V, &'alloc Arena> {
         let inner = ManuallyDrop::into_inner(self.0);
         inner.into_values()
     }
@@ -169,7 +169,7 @@ impl<'alloc, K, V, S> HashMap<'alloc, K, V, S> {
     /// Calling this method produces a compile-time panic.
     ///
     /// This method would be unsound, because [`HashMap`] is `Sync`, and the underlying allocator
-    /// (`Bump`) is not `Sync`.
+    /// (`Arena`) is not `Sync`.
     ///
     /// This method exists only to block access as much as possible to the underlying
     /// `hashbrown::HashMap::allocator` method. That method can still be accessed via explicit `Deref`
@@ -178,7 +178,7 @@ impl<'alloc, K, V, S> HashMap<'alloc, K, V, S> {
     /// We'll prevent access to it completely and remove this method as soon as we can.
     // TODO: Do that!
     #[expect(clippy::unused_self)]
-    pub fn allocator(&self) -> &'alloc Bump {
+    pub fn allocator(&self) -> &'alloc Arena {
         const { panic!("This method cannot be called") };
         unreachable!();
     }
@@ -232,7 +232,7 @@ impl<'alloc, K, V, S: Default> HashMap<'alloc, K, V, S> {
         //   e.g. filter iterators.
         let capacity = iter.size_hint().0;
         let map =
-            InnerHashMap::with_capacity_and_hasher_in(capacity, S::default(), allocator.bump());
+            InnerHashMap::with_capacity_and_hasher_in(capacity, S::default(), allocator.arena());
         // Wrap in `ManuallyDrop` *before* calling `for_each`, so compiler doesn't insert unnecessary code
         // to drop the `FxHashMap` in case of a panic in iterator's `next` method
         let mut map = ManuallyDrop::new(map);
@@ -263,7 +263,7 @@ impl<'alloc, K, V, S> DerefMut for HashMap<'alloc, K, V, S> {
 }
 
 impl<'alloc, K, V, S> IntoIterator for HashMap<'alloc, K, V, S> {
-    type IntoIter = IntoIter<K, V, &'alloc Bump>;
+    type IntoIter = IntoIter<K, V, &'alloc Arena>;
     type Item = (K, V);
 
     /// Creates a consuming iterator, that is, one that moves each key-value pair out of the map

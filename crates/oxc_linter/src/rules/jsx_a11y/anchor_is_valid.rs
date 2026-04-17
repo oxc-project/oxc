@@ -123,7 +123,8 @@ declare_oxc_lint!(
     AnchorIsValid,
     jsx_a11y,
     correctness,
-    config = AnchorIsValidConfig
+    config = AnchorIsValidConfig,
+    version = "0.0.19",
 );
 
 impl Rule for AnchorIsValid {

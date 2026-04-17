@@ -142,6 +142,7 @@ declare_oxc_lint!(
     react,
     restriction,
     config = ForbidDomPropsConfig,
+    version = "1.24.0",
 );
 
 impl Rule for ForbidDomProps {

@@ -96,6 +96,7 @@ declare_oxc_lint!(
     pedantic,
     pending,
     config = RequireReturnsConfig,
+    version = "0.4.0",
 );
 
 impl Rule for RequireReturns {

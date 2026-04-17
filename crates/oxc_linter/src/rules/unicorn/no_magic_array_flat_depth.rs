@@ -48,6 +48,7 @@ declare_oxc_lint!(
     NoMagicArrayFlatDepth,
     unicorn,
     restriction,
+    version = "0.4.2",
 );
 
 impl Rule for NoMagicArrayFlatDepth {

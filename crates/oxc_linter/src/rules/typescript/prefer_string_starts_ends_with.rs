@@ -7,10 +7,13 @@ use crate::rule::{DefaultRuleConfig, Rule};
 #[derive(Debug, Default, Clone, Deserialize)]
 pub struct PreferStringStartsEndsWith(Box<PreferStringStartsEndsWithConfig>);
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[derive(Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "kebab-case")]
 pub enum AllowSingleElementEquality {
+    /// Always allow equality checks against the first or last character.
     Always,
+    /// Never allow equality checks against the first or last character.
+    #[default]
     Never,
 }
 
@@ -18,7 +21,7 @@ pub enum AllowSingleElementEquality {
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct PreferStringStartsEndsWithConfig {
     /// Whether equality checks against the first/last character are allowed.
-    pub allow_single_element_equality: Option<AllowSingleElementEquality>,
+    pub allow_single_element_equality: AllowSingleElementEquality,
 }
 
 declare_oxc_lint!(
@@ -48,6 +51,7 @@ declare_oxc_lint!(
     typescript,
     style,
     config = PreferStringStartsEndsWithConfig,
+    version = "0.0.8",
 );
 
 impl Rule for PreferStringStartsEndsWith {

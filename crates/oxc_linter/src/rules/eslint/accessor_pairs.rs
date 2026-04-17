@@ -118,6 +118,7 @@ declare_oxc_lint!(
     eslint,
     pedantic,
     config = AccessorPairsConfig,
+    version = "1.33.0",
 );
 
 impl Rule for AccessorPairs {

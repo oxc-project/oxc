@@ -78,15 +78,15 @@ pub struct NoInstanceofBuiltinsConfig {
     /// to be available.
     use_error_is_error: bool,
     /// Controls which built-in constructors are checked.
-    /// - `"loose"` (default): Only checks Array, Function, Error (if `useErrorIsError` is true), and primitive wrappers
-    /// - `"strict"`: Additionally checks Error types, collections, typed arrays, and other built-in constructors
     strategy: Strategy,
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, JsonSchema, Serialize)]
 #[serde(rename_all = "camelCase")]
 enum Strategy {
+    /// Additionally checks Error types, collections, typed arrays, and other built-in constructors.
     Strict,
+    /// Only checks Array, Function, Error (if `useErrorIsError` is true), and primitive wrappers.
     #[default]
     Loose,
 }
@@ -126,6 +126,7 @@ declare_oxc_lint!(
     suspicious,
     conditional_suggestion,
     config = NoInstanceofBuiltinsConfig,
+    version = "0.16.12",
 );
 
 impl Rule for NoInstanceofBuiltins {

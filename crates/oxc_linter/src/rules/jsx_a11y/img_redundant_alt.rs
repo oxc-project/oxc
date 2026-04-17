@@ -103,6 +103,7 @@ declare_oxc_lint!(
     jsx_a11y,
     correctness,
     config = ImgRedundantAltConfig,
+    version = "0.0.19",
 );
 
 impl Rule for ImgRedundantAlt {

@@ -61,6 +61,7 @@ declare_oxc_lint!(
     style,
     none,
     config = NoReturnAssignMode,
+    version = "0.9.10",
 );
 
 fn is_sentinel_node(ast_kind: AstKind) -> bool {

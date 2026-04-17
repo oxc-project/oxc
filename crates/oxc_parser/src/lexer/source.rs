@@ -730,13 +730,15 @@ impl<'a> SourcePosition<'a> {
     /// # Implementation details
     ///
     /// Using `as_ref()` for reading is copied from `core::slice::iter::next`.
-    /// https://doc.rust-lang.org/src/core/slice/iter.rs.html#132
-    /// https://doc.rust-lang.org/src/core/slice/iter/macros.rs.html#156-168
     ///
     /// Using `ptr.as_ref().unwrap_unchecked()` instead of `*ptr` or `ptr.read()` produces
     /// a 7% speed-up on Lexer benchmarks.
-    /// Presumably this is because it tells the compiler it can rely on the memory being immutable,
-    /// because if a `&mut` reference existed, that would violate Rust's aliasing rules.
+    ///
+    /// The likely explanation is that going through `as_ref()` + `unwrap_unchecked()` produces a `&u8`,
+    /// which carries `nonnull` and `dereferenceable` metadata in LLVM IR that a raw `*const u8` dereference does not.
+    /// This may allow LLVM to better optimize the surrounding control flow in the lexer's hot loops
+    /// (e.g. eliminating dead paths, speculative loads).
+    /// Rust's stdlib uses the same technique in its slice iterator for similar reasons.
     #[inline]
     pub(super) unsafe fn read(self) -> u8 {
         debug_assert!(!self.ptr.is_null());

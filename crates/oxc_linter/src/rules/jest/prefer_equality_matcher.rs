@@ -69,7 +69,8 @@ declare_oxc_lint!(
     PreferEqualityMatcher,
     jest,
     style,
-    suggestion
+    suggestion,
+    version = "0.2.9",
 );
 
 impl Rule for PreferEqualityMatcher {

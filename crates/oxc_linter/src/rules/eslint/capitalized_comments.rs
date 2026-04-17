@@ -153,7 +153,8 @@ declare_oxc_lint!(
     eslint,
     style,
     fix,
-    config = CapitalizedCommentsOptions
+    config = CapitalizedCommentsOptions,
+    version = "1.34.0",
 );
 
 impl Rule for CapitalizedComments {

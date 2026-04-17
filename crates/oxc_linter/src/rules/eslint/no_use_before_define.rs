@@ -97,6 +97,7 @@ declare_oxc_lint!(
     eslint,
     restriction,
     config = NoUseBeforeDefineConfig,
+    version = "1.49.0",
 );
 
 impl Rule for NoUseBeforeDefine {

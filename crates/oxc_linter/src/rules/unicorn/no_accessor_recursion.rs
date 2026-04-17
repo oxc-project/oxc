@@ -71,6 +71,7 @@ declare_oxc_lint!(
     NoAccessorRecursion,
     unicorn,
     suspicious,
+    version = "0.16.5",
 );
 
 impl Rule for NoAccessorRecursion {

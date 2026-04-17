@@ -96,7 +96,8 @@ declare_oxc_lint!(
     PreferToBe,
     jest,
     style,
-    fix
+    fix,
+    version = "0.2.14",
 );
 
 #[derive(Clone, Debug, PartialEq)]

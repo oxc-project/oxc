@@ -55,6 +55,7 @@ declare_oxc_lint!(
     PreferAwaitToCallbacks,
     promise,
     style,
+    version = "0.9.10",
 );
 
 impl Rule for PreferAwaitToCallbacks {

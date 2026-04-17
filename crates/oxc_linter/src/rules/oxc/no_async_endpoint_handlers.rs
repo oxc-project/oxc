@@ -177,7 +177,8 @@ declare_oxc_lint!(
     NoAsyncEndpointHandlers,
     oxc,
     suspicious,
-    config = NoAsyncEndpointHandlersConfig
+    config = NoAsyncEndpointHandlersConfig,
+    version = "0.9.2",
 );
 
 impl Rule for NoAsyncEndpointHandlers {

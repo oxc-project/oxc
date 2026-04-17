@@ -82,6 +82,7 @@ declare_oxc_lint!(
     restriction,
     none,
     config = NoMultiComp,
+    version = "1.43.0",
 );
 
 /// Represents a detected React component

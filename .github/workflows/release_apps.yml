@@ -136,7 +136,7 @@ jobs:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
 
       - name: Install cross
-        uses: taiki-e/install-action@7a562dfa955aa2e4d5b0fd6ebd57ff9715c07b0b # v2.73.0
+        uses: taiki-e/install-action@0abfcd587b70a713fdaa7fb502c885e2112acb15 # v2.75.7
         with:
           tool: cross # cross installs the latest rust toolchain
 
@@ -172,7 +172,7 @@ jobs:
           cargo zigbuild --release -p oxlint --features allocator --target=${{ matrix.target }}
 
       - name: Upload NAPI artifact
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           if-no-files-found: error
           name: oxlint-bindings-${{ matrix.target }}
@@ -192,7 +192,7 @@ jobs:
       # For github release
       - name: Upload Rust binary
         if: ${{ !contains(matrix.target, 'wasm') && !contains(matrix.target, 'android') && !contains(matrix.target, 'ohos') }}
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           if-no-files-found: error
           name: rust-oxlint-${{ matrix.target }}
@@ -209,7 +209,7 @@ jobs:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
       - name: Build
         id: build
-        uses: cross-platform-actions/action@492b0c80085400348c599edace11141a4ee73524 # v0.32.0
+        uses: cross-platform-actions/action@233156312992f3f169d8d0c633c21d12a5d30455 # v1.0.0
         env:
           DEBUG: napi:*
           RUSTUP_IO_THREADS: 1
@@ -246,7 +246,7 @@ jobs:
             rm -rf target/x86_64-unknown-freebsd/release/incremental
 
       - name: Upload NAPI artifact
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           if-no-files-found: error
           name: oxlint-bindings-x86_64-unknown-freebsd
@@ -260,7 +260,7 @@ jobs:
           archive_name: rust-oxlint-x86_64-unknown-freebsd
 
       - name: Upload Rust binary
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           if-no-files-found: error
           name: rust-oxlint-x86_64-unknown-freebsd
@@ -429,7 +429,7 @@ jobs:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
 
       - name: Install cross
-        uses: taiki-e/install-action@7a562dfa955aa2e4d5b0fd6ebd57ff9715c07b0b # v2.73.0
+        uses: taiki-e/install-action@0abfcd587b70a713fdaa7fb502c885e2112acb15 # v2.75.7
         with:
           tool: cross # cross installs the latest rust toolchain
 
@@ -465,7 +465,7 @@ jobs:
           cargo zigbuild --release -p oxfmt --no-default-features --features allocator --target=${{ matrix.target }}
 
       - name: Upload NAPI artifact
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           if-no-files-found: error
           name: oxfmt-bindings-${{ matrix.target }}
@@ -485,7 +485,7 @@ jobs:
       # For github release
       - name: Upload Rust binary
         if: ${{ !contains(matrix.target, 'wasm') && !contains(matrix.target, 'android') && !contains(matrix.target, 'ohos') }}
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           if-no-files-found: error
           name: rust-oxfmt-${{ matrix.target }}
@@ -502,7 +502,7 @@ jobs:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
       - name: Build
         id: build
-        uses: cross-platform-actions/action@492b0c80085400348c599edace11141a4ee73524 # v0.32.0
+        uses: cross-platform-actions/action@233156312992f3f169d8d0c633c21d12a5d30455 # v1.0.0
         env:
           DEBUG: napi:*
           RUSTUP_IO_THREADS: 1
@@ -539,7 +539,7 @@ jobs:
             rm -rf target/x86_64-unknown-freebsd/release/incremental
 
       - name: Upload NAPI artifact
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           if-no-files-found: error
           name: oxfmt-bindings-x86_64-unknown-freebsd
@@ -553,7 +553,7 @@ jobs:
           archive_name: rust-oxfmt-x86_64-unknown-freebsd
 
       - name: Upload Rust binary
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           if-no-files-found: error
           name: rust-oxfmt-x86_64-unknown-freebsd

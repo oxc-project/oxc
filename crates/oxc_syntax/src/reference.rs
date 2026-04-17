@@ -117,13 +117,14 @@ bitflags! {
         /// a type parameter that might shadow it, since type parameters cannot
         /// have member access.
         const Namespace = 1 << 4;
-        /// The identifier is read as the object of a member expression in an
-        /// assignment target position. For example, `A` in `A.foo = 1`.
+        /// The identifier is read as the object of a member expression in a
+        /// property modification context. For example, `A` in `A.foo = 1`,
+        /// `A.foo += 1`, `++A.foo`, `delete A.foo`, or `for (A.foo in obj)`.
         ///
         /// This flag is always combined with [`Read`] (since the identifier is
-        /// read to access the property). It helps the minifier determine if a
-        /// symbol's only reads are property-write targets, enabling dead code
-        /// elimination of patterns like `function A() {} A.foo = 1;`.
+        /// read to access the property). It helps the minifier and linter
+        /// determine if a symbol's only reads are property-modification targets,
+        /// enabling dead code elimination and unused variable detection.
         ///
         /// [`Read`]: ReferenceFlags::Read
         const MemberWriteTarget = 1 << 5;
@@ -183,8 +184,9 @@ impl ReferenceFlags {
         self.contains(Self::Read | Self::Write)
     }
 
-    /// The identifier is read only as the object of a member expression
-    /// in an assignment target position (e.g., `A` in `A.foo = 1`).
+    /// The identifier is read as the object of a member expression
+    /// in a property modification context (e.g., `A` in `A.foo = 1`,
+    /// `A.foo += 1`, `++A.foo`, `delete A.foo`, or `for (A.foo in obj)`).
     #[inline]
     pub const fn is_member_write_target(self) -> bool {
         self.intersects(Self::MemberWriteTarget)

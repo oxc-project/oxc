@@ -72,12 +72,9 @@ impl StdinRunner {
                 return CliRunResult::InvalidOptionConfig;
             }
         };
-        match config_resolver.build_and_validate() {
-            Ok(_) => {}
-            Err(err) => {
-                utils::print_and_flush(stderr, &format!("Failed to parse configuration.\n{err}\n"));
-                return CliRunResult::InvalidOptionConfig;
-            }
+        if let Err(err) = config_resolver.build_and_validate() {
+            utils::print_and_flush(stderr, &format!("Failed to parse configuration.\n{err}\n"));
+            return CliRunResult::InvalidOptionConfig;
         }
 
         // Use `block_in_place()` to avoid nested async runtime access

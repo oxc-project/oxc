@@ -88,6 +88,7 @@ declare_oxc_lint!(
     jsx_a11y,
     correctness,
     config = NoNoninteractiveTabindexConfig,
+    version = "0.15.4",
 );
 
 // https://www.w3.org/TR/wai-aria/#widget_roles

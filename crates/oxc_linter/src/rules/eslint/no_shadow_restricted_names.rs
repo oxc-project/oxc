@@ -94,7 +94,8 @@ declare_oxc_lint!(
     NoShadowRestrictedNames,
     eslint,
     correctness,
-    config = NoShadowRestrictedNamesConfig
+    config = NoShadowRestrictedNamesConfig,
+    version = "0.0.3",
 );
 
 impl Rule for NoShadowRestrictedNames {

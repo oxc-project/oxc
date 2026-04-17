@@ -11,7 +11,10 @@ use tower_lsp_server::{
 };
 use tracing::debug;
 
-use crate::{capabilities::DiagnosticMode, tool::ToolBuilder, worker::WorkspaceWorker};
+use crate::{
+    capabilities::DiagnosticMode, file_system::ResolvedPath, tool::ToolBuilder,
+    worker::WorkspaceWorker,
+};
 
 /// A RAII guard that holds a shared read lock over the workers list and exposes
 /// a reference to a single [`WorkspaceWorker`] inside it.
@@ -114,14 +117,16 @@ impl WorkerManager {
             return if workers.is_empty() { None } else { Some(0) };
         }
 
-        let file_path = uri.to_file_path()?;
+        let resolved_path = ResolvedPath::try_from(uri).ok()?;
+        let file_path = resolved_path.as_path();
 
         workers
             .iter()
             .enumerate()
             .filter_map(|(i, worker)| {
-                let root_path = worker.get_root_uri().to_file_path()?;
-                if file_path.starts_with(&root_path) {
+                let resolved_path = ResolvedPath::try_from(worker.get_root_uri()).ok()?;
+                let root_path = resolved_path.as_path();
+                if file_path.starts_with(root_path) {
                     Some((i, root_path.as_os_str().len()))
                 } else {
                     None
@@ -332,6 +337,8 @@ impl WorkerManager {
 
 #[cfg(test)]
 mod tests {
+    #[cfg(target_os = "windows")]
+    use std::path::PathBuf;
     use std::sync::Arc;
 
     use tower_lsp_server::ls_types::Uri;
@@ -343,6 +350,11 @@ mod tests {
 
     fn create_builder() -> Arc<dyn ToolBuilder> {
         Arc::new(FakeToolBuilder::default()) as Arc<dyn ToolBuilder>
+    }
+
+    #[cfg(target_os = "windows")]
+    fn path_from_fixture(fixture: &str) -> PathBuf {
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("fixtures").join(fixture)
     }
 
     #[test]
@@ -542,5 +554,29 @@ mod tests {
         let no_path_file: Uri = "file:///".parse().unwrap();
         // Path is "/", so parent() returns None
         assert!(WorkerManager::get_parent_dir_uri(&no_path_file).is_none());
+    }
+
+    #[test]
+    #[cfg(target_os = "windows")]
+    fn test_get_workspace_folder_case_insensitivity() {
+        let fixture = path_from_fixture("same_path_different_uri");
+        let root_path = PathBuf::from(
+            fixture
+                .to_string_lossy()
+                .replace("same_path_different_uri", "Same_Path_different_uri")
+                .replace("fixtures", "Fixtures"),
+        );
+
+        let workspace = WorkspaceWorker::new(
+            Uri::from_file_path(root_path).unwrap(),
+            create_builder(),
+            DiagnosticMode::None,
+        );
+        let workers = vec![workspace];
+
+        // File with different case should still match on Windows
+        let file: Uri = Uri::from_file_path(fixture.join("text.txt")).unwrap();
+        let worker = WorkerManager::find_worker_for_uri(&workers, &file);
+        assert!(worker.is_some());
     }
 }

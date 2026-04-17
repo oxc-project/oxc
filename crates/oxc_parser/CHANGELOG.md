@@ -4,6 +4,30 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.126.0] - 2026-04-15
+
+### 🚀 Features
+
+- ce5072d parser: Support `turbopack` magic comments (#20803) (Kane Wang)
+
+### ⚡ Performance
+
+- da3cc16 parser: Refactor out `LexerContext` (#21275) (Ulrich Stark)
+
+### 📚 Documentation
+
+- 091e88e lexer: Update doc comment about perf benefit of reading through references (#21423) (overlookmotel)
+
+## [0.125.0] - 2026-04-13
+
+### 💥 BREAKING CHANGES
+
+- 382958a span: [**BREAKING**] Remove re-exports of string types from `oxc_span` crate (#21246) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- aa9259f parser: Add missing error code for optional param diagnostic (#21258) (camc314)
+
 ## [0.123.0] - 2026-03-30
 
 ### 🚀 Features

@@ -54,7 +54,8 @@ declare_oxc_lint!(
     NoArrayCallbackReference,
     unicorn,
     pedantic,
-    pending
+    pending,
+    version = "1.19.0",
 );
 
 impl Rule for NoArrayCallbackReference {

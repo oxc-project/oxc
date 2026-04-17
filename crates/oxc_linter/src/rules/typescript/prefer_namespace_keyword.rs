@@ -61,7 +61,8 @@ declare_oxc_lint!(
     PreferNamespaceKeyword,
     typescript,
     correctness,
-    fix
+    fix,
+    version = "0.7.0",
 );
 
 fn is_valid_module(module: &TSModuleDeclaration) -> bool {

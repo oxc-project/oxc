@@ -80,7 +80,8 @@ declare_oxc_lint!(
     RequireAwait,
     eslint,
     pedantic,
-    fix_dangerous
+    fix_dangerous,
+    version = "0.4.2",
 );
 
 impl Rule for RequireAwait {

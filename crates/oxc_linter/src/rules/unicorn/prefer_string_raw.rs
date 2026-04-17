@@ -43,6 +43,7 @@ declare_oxc_lint!(
     unicorn,
     style,
     fix,
+    version = "0.12.0",
 );
 
 fn unescape_backslash(input: &str, quote: char) -> String {

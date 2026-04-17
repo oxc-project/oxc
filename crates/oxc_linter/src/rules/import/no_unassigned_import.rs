@@ -81,7 +81,8 @@ declare_oxc_lint!(
     NoUnassignedImport,
     import,
     suspicious,
-    config = NoUnassignedImportConfig
+    config = NoUnassignedImportConfig,
+    version = "0.16.11",
 );
 
 impl Rule for NoUnassignedImport {

@@ -75,6 +75,7 @@ declare_oxc_lint!(
     typescript,
     pedantic,
     pending,
+    version = "1.12.0",
 );
 
 impl Rule for RequireAwait {}

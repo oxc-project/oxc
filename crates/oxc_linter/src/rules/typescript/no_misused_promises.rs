@@ -126,6 +126,7 @@ declare_oxc_lint!(
     typescript,
     pedantic,
     config = NoMisusedPromisesConfig,
+    version = "1.11.0",
 );
 
 impl Rule for NoMisusedPromises {

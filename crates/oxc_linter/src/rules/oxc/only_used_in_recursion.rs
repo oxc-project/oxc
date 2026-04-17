@@ -62,7 +62,8 @@ declare_oxc_lint!(
     OnlyUsedInRecursion,
     oxc,
     correctness,
-    dangerous_fix
+    dangerous_fix,
+    version = "0.1.1",
 );
 
 fn is_exported(id: &BindingIdentifier<'_>, ctx: &LintContext<'_>) -> bool {

@@ -1473,6 +1473,18 @@ impl RuleRunner
 }
 
 impl RuleRunner
+    for crate::rules::typescript::explicit_member_accessibility::ExplicitMemberAccessibility
+{
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::AccessorProperty,
+        AstType::FormalParameter,
+        AstType::MethodDefinition,
+        AstType::PropertyDefinition,
+    ]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
+}
+
+impl RuleRunner
     for crate::rules::typescript::explicit_module_boundary_types::ExplicitModuleBoundaryTypes
 {
     const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
@@ -2246,6 +2258,11 @@ impl RuleRunner for crate::rules::jest::prefer_each::PreferEach {
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnce;
 }
 
+impl RuleRunner for crate::rules::jest::prefer_ending_with_an_expect::PreferEndingWithAnExpect {
+    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnJestNode;
+}
+
 impl RuleRunner for crate::rules::jest::prefer_equality_matcher::PreferEqualityMatcher {
     const NODE_TYPES: Option<&AstTypesBitset> = None;
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnJestNode;
@@ -2262,6 +2279,11 @@ impl RuleRunner for crate::rules::jest::prefer_hooks_in_order::PreferHooksInOrde
 }
 
 impl RuleRunner for crate::rules::jest::prefer_hooks_on_top::PreferHooksOnTop {
+    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnce;
+}
+
+impl RuleRunner for crate::rules::jest::prefer_importing_jest_globals::PreferImportingJestGlobals {
     const NODE_TYPES: Option<&AstTypesBitset> = None;
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnce;
 }

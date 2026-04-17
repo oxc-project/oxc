@@ -53,6 +53,7 @@ declare_oxc_lint!(
     eslint,
     nursery,
     config = NoUndef,
+    version = "0.0.8",
 );
 
 impl Rule for NoUndef {

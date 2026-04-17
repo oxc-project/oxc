@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.125.0] - 2026-04-13
+
+### 🚀 Features
+
+- f134e24 minifier: Support `property_write_side_effects` option to drop unused property assignments (#20773) (Dunqing)
+
 ## [0.119.0] - 2026-03-14
 
 ### 🚀 Features

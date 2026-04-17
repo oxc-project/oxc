@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.60.0] - 2026-04-13
+
+### 📚 Documentation
+
+- cfd8a4f linter: Don't rely on old eslint doc for available globals (#21334) (Nicolas Le Cam)
+
 ## [1.59.0] - 2026-04-06
 
 ### 🐛 Bug Fixes

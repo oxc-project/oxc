@@ -174,7 +174,8 @@ declare_oxc_lint!(
     RequireHook,
     jest,
     style,
-    config = RequireHookConfig
+    config = RequireHookConfig,
+    version = "0.3.2",
 );
 
 impl Rule for RequireHook {

@@ -78,6 +78,7 @@ declare_oxc_lint!(
     vue,
     style,
     config = DefinePropsDestructuring,
+    version = "1.20.0",
 );
 
 impl Rule for DefinePropsDestructuring {

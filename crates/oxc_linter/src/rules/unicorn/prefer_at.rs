@@ -86,6 +86,7 @@ declare_oxc_lint!(
     pedantic,
     dangerous_fix,
     config = PreferAtConfig,
+    version = "1.20.0",
 );
 
 impl Rule for PreferAt {

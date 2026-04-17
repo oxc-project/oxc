@@ -57,7 +57,8 @@ declare_oxc_lint!(
     PreferObjectHasOwn,
     eslint,
     style,
-    conditional_fix
+    conditional_fix,
+    version = "0.11.0",
 );
 
 impl Rule for PreferObjectHasOwn {

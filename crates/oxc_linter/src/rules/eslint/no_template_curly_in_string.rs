@@ -46,7 +46,8 @@ declare_oxc_lint!(
     /// ```
     NoTemplateCurlyInString,
     eslint,
-    style
+    style,
+    version = "0.2.14",
 );
 
 impl Rule for NoTemplateCurlyInString {

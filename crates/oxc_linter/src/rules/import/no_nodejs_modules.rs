@@ -79,6 +79,7 @@ declare_oxc_lint!(
     import,
     style,
     config = NoNodejsModulesConfig,
+    version = "1.43.0",
 );
 
 impl Rule for NoNodejsModules {

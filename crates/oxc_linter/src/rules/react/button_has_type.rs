@@ -76,6 +76,7 @@ declare_oxc_lint!(
     react,
     restriction,
     config = ButtonHasType,
+    version = "0.1.1",
 );
 
 impl Rule for ButtonHasType {

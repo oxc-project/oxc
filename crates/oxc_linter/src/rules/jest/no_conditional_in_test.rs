@@ -108,6 +108,7 @@ declare_oxc_lint!(
     NoConditionalInTest,
     jest,
     pedantic,
+    version = "0.8.0",
 );
 
 impl Rule for NoConditionalInTest {

@@ -69,7 +69,8 @@ declare_oxc_lint!(
     vitest,
     style,
     fix,
-    config = PreferImportInMockConfig
+    config = PreferImportInMockConfig,
+    version = "1.49.0",
 );
 
 impl Rule for PreferImportInMock {

@@ -179,7 +179,8 @@ declare_oxc_lint!(
     IdLength,
     eslint,
     style,
-    config = IdLengthConfig
+    config = IdLengthConfig,
+    version = "1.4.0",
 );
 
 impl Rule for IdLength {
