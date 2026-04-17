@@ -54,6 +54,15 @@ fn remove_unused_variable_declaration() {
     test_options("for (var x; ; );", "for (; ;);", &options);
     test_options("for (var x = 1; ; );", "for (; ;);", &options);
     test_same_options("for (var x = foo; ; );", &options); // can be improved
+
+    // https://github.com/oxc-project/oxc/issues/17480
+    test_options("var removeThis = /* @__PURE__ */ (() => stuff())();", "", &options);
+    test_options(
+        "var removeThis = /* @__PURE__ */ (() => { return stuff() })();",
+        "",
+        &options,
+    );
+    test_options("var removeThis = /* @__PURE__ */ (() => new Thing())();", "", &options);
 }
 
 #[test]
