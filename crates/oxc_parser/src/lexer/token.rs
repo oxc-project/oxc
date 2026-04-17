@@ -123,8 +123,18 @@ impl Token {
 
     #[inline]
     pub(super) fn set_start(&mut self, start: u32) {
-        self.0 &= !(START_MASK << START_SHIFT); // Clear current `start` bits
-        self.0 |= u128::from(start) << START_SHIFT;
+        #[cfg(target_endian = "little")]
+        unsafe {
+            // `start` occupies the low 32 bits of `Token` on little-endian targets.
+            // Writing those bytes directly avoids a wider read-modify-write of the `u128`.
+            ptr::from_mut(&mut self.0).cast::<u32>().write(start);
+        }
+
+        #[cfg(not(target_endian = "little"))]
+        {
+            self.0 &= !(START_MASK << START_SHIFT); // Clear current `start` bits
+            self.0 |= u128::from(start) << START_SHIFT;
+        }
     }
 
     #[inline]
