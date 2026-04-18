@@ -7,44 +7,19 @@ import { parseArgs } from "node:util";
 
 const DEFAULT_RULES_ROOT = path.join("crates", "oxc_linter", "src", "rules");
 
-type RuleChange = {
-  file: string;
-  from: "next";
-  to: string;
-};
+function analyzeRuleFile(source: string, releaseVersion: string): string {
+  return source.replace(/declare_oxc_lint!\(([\s\S]*?\n)\s*\);/g, (match, body: string) => {
+    // Strip leading doc comments, then extract comma-delimited fields: name, plugin, category
+    const stripped = body.replace(/^(?:\s*\/\/\/.*\n)*/, "");
+    const fields = [...stripped.matchAll(/(\w+)\s*,/g)];
+    if (fields.length < 3) return match;
 
-type AnalyzeReport = {
-  updatedSource: string;
-  updatedRules: RuleChange[];
-};
+    const category = fields[2][1];
+    if (category === "nursery") return match;
+    if (!/version\s*=\s*"next"/.test(body)) return match;
 
-function analyzeRuleFile(
-  source: string,
-  filePath: string,
-  releaseVersion: string,
-  repoRoot: string,
-): AnalyzeReport {
-  const relativeFile = path.relative(repoRoot, filePath).replaceAll(path.sep, "/");
-  const updatedRules: RuleChange[] = [];
-
-  const updatedSource = source.replace(
-    /declare_oxc_lint!\(([\s\S]*?\n)\s*\);/g,
-    (match, body: string) => {
-      // Strip leading doc comments, then extract comma-delimited fields: name, plugin, category
-      const stripped = body.replace(/^(?:\s*\/\/\/.*\n)*/, "");
-      const fields = [...stripped.matchAll(/(\w+)\s*,/g)];
-      if (fields.length < 3) return match;
-
-      const category = fields[2][1];
-      if (category === "nursery") return match;
-      if (!/version\s*=\s*"next"/.test(body)) return match;
-
-      updatedRules.push({ file: relativeFile, from: "next", to: releaseVersion });
-      return match.replace(/(version\s*=\s*)"next"/, `$1"${releaseVersion}"`);
-    },
-  );
-
-  return { updatedSource, updatedRules };
+    return match.replace(/(version\s*=\s*)"next"/, `$1"${releaseVersion}"`);
+  });
 }
 
 const { values } = parseArgs({
@@ -97,17 +72,17 @@ const ruleFiles = readdirSync(rulesRoot, { recursive: true })
 
 for (const filePath of ruleFiles) {
   const source = readFileSync(filePath, "utf8");
-  const fileReport = analyzeRuleFile(source, filePath, releaseVersion, repoRoot);
+  const updatedSource = analyzeRuleFile(source, releaseVersion);
+  if (updatedSource === source) continue;
 
-  for (const change of fileReport.updatedRules) {
-    console.log(
-      `${dryRun ? "Would update" : "Updated"} ${change.file}: version = "next" -> version = "${change.to}"`,
-    );
-  }
-  updatedCount += fileReport.updatedRules.length;
+  const relativeFile = path.relative(repoRoot, filePath).replaceAll(path.sep, "/");
+  console.log(
+    `${dryRun ? "Would update" : "Updated"} ${relativeFile}: version = "next" -> version = "${releaseVersion}"`,
+  );
+  updatedCount++;
 
-  if (!dryRun && fileReport.updatedRules.length > 0) {
-    writeFileSync(filePath, fileReport.updatedSource);
+  if (!dryRun) {
+    writeFileSync(filePath, updatedSource);
   }
 }
 
