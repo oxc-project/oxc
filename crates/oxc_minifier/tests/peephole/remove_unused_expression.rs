@@ -322,6 +322,12 @@ fn test_fold_iife() {
         "var a = /* @__PURE__ */ (() => c ? foo() : bar())()",
         "var a = c ? /* @__PURE__ */ foo() : /* @__PURE__ */ bar()",
     );
+    // The conditional's test itself can also be a call — the outer PURE covers
+    // it too, so it gets the annotation.
+    test(
+        "var a = /* @__PURE__ */ (() => foo() ? x : y)()",
+        "var a = /* @__PURE__ */ foo() ? x : y",
+    );
     test(
         "var a = /* @__PURE__ */ (() => c || foo())()",
         "var a = c || /* @__PURE__ */ foo()",
