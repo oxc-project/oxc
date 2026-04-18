@@ -152,6 +152,11 @@ impl<'a> PeepholeOptimizations {
                                 {
                                     assignment_expr.span = *logical_span;
                                     assignment_expr.operator = AssignmentOperator::LogicalNullish;
+                                    // `??=` reads the LHS to check for nullish, so update reference flags.
+                                    Self::mark_assignment_target_as_read(
+                                        &assignment_expr.left,
+                                        ctx,
+                                    );
                                     *e = logical_right.take_in(ctx.ast);
                                     ctx.state.changed = true;
                                     return false;
