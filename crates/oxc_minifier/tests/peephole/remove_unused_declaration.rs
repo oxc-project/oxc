@@ -77,6 +77,13 @@ fn remove_unused_variable_declaration() {
     // pure disjunction over the operands.
     test_options("var removeThis = /* @__PURE__ */ (() => !a())();", "", &options);
     test_options("var removeThis = /* @__PURE__ */ (() => a() == b())();", "", &options);
+    // Nested calls in call/new arguments also inherit PURE; the outer call
+    // alone is enough to drop the declaration, and the inner marks keep the
+    // invariant consistent if the outer call is later unwrapped.
+    // (Spread arguments aren't dropped — they invoke the iterator protocol,
+    // which has its own side effects beyond the outer call's PURE scope.)
+    test_options("var removeThis = /* @__PURE__ */ (() => foo(bar()))();", "", &options);
+    test_options("var removeThis = /* @__PURE__ */ (() => new Foo(bar()))();", "", &options);
     // TS wrappers (`as`/`!`/`satisfies`/`<T>x`) around the inlined pure call
     // are transparent at runtime, so the declaration also drops.
     test_options_source_type(

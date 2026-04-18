@@ -343,6 +343,23 @@ fn test_fold_iife() {
         "var a = /* @__PURE__ */ (() => !foo() == bar())()",
         "var a = !/* @__PURE__ */ foo() == /* @__PURE__ */ bar()",
     );
+    // Call/new arguments (including spreads) also inherit the outer PURE, so
+    // nested calls in argument position keep the annotation after inlining.
+    test(
+        "var a = /* @__PURE__ */ (() => foo(bar()))()",
+        "var a = /* @__PURE__ */ foo(/* @__PURE__ */ bar())",
+    );
+    test(
+        "var a = /* @__PURE__ */ (() => foo(...xs, bar()))()",
+        "var a = /* @__PURE__ */ foo(...xs, /* @__PURE__ */ bar())",
+    );
+    test(
+        "var a = /* @__PURE__ */ (() => new Foo(bar()))()",
+        "var a = /* @__PURE__ */ new Foo(/* @__PURE__ */ bar())",
+    );
+    // Member-object positions have no `pure` flag of their own, but inner calls
+    // along the access path still inherit the outer PURE.
+    test("var a = /* @__PURE__ */ (() => foo()?.bar)()", "var a = (/* @__PURE__ */ foo())?.bar");
     // Tagged templates have no `pure` flag, so the annotation can't hop onto
     // them — they're left without PURE after inlining.
     test("var a = /* @__PURE__ */ (() => foo``)()", "var a = foo``");

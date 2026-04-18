@@ -1732,8 +1732,16 @@ impl<'a> PeepholeOptimizations {
 
     fn mark_inlined_pure(expr: &mut Expression<'a>) {
         match expr {
-            Expression::CallExpression(c) => c.pure = true,
-            Expression::NewExpression(n) => n.pure = true,
+            Expression::CallExpression(c) => {
+                c.pure = true;
+                Self::mark_inlined_pure(&mut c.callee);
+                Self::mark_arguments_pure(&mut c.arguments);
+            }
+            Expression::NewExpression(n) => {
+                n.pure = true;
+                Self::mark_inlined_pure(&mut n.callee);
+                Self::mark_arguments_pure(&mut n.arguments);
+            }
             Expression::SequenceExpression(s) => {
                 for e in &mut s.expressions {
                     Self::mark_inlined_pure(e);
@@ -1755,6 +1763,11 @@ impl<'a> PeepholeOptimizations {
                 Self::mark_inlined_pure(&mut b.right);
             }
             Expression::ChainExpression(c) => Self::mark_chain_element_pure(&mut c.expression),
+            // Member variants have no `pure` flag, but the outer PURE still
+            // covers evaluation of the object, so recurse into it.
+            Expression::StaticMemberExpression(m) => Self::mark_inlined_pure(&mut m.object),
+            Expression::ComputedMemberExpression(m) => Self::mark_inlined_pure(&mut m.object),
+            Expression::PrivateFieldExpression(m) => Self::mark_inlined_pure(&mut m.object),
             Expression::TSAsExpression(_)
             | Expression::TSNonNullExpression(_)
             | Expression::TSSatisfiesExpression(_)
@@ -1766,12 +1779,28 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
+    fn mark_arguments_pure(args: &mut Vec<'a, Argument<'a>>) {
+        for arg in args {
+            match arg {
+                Argument::SpreadElement(s) => Self::mark_inlined_pure(&mut s.argument),
+                match_expression!(Argument) => Self::mark_inlined_pure(arg.to_expression_mut()),
+            }
+        }
+    }
+
     fn mark_chain_element_pure(element: &mut ChainElement<'a>) {
         match element {
-            ChainElement::CallExpression(c) => c.pure = true,
+            ChainElement::CallExpression(c) => {
+                c.pure = true;
+                Self::mark_inlined_pure(&mut c.callee);
+                Self::mark_arguments_pure(&mut c.arguments);
+            }
             ChainElement::TSNonNullExpression(e) => Self::mark_inlined_pure(&mut e.expression),
-            // `MemberExpression` variants have no `pure` flag to set.
-            _ => {}
+            // Member variants have no `pure` flag, but the outer PURE still
+            // covers evaluation of the object, so recurse into it.
+            ChainElement::StaticMemberExpression(m) => Self::mark_inlined_pure(&mut m.object),
+            ChainElement::ComputedMemberExpression(m) => Self::mark_inlined_pure(&mut m.object),
+            ChainElement::PrivateFieldExpression(m) => Self::mark_inlined_pure(&mut m.object),
         }
     }
 }
