@@ -1254,6 +1254,26 @@ fn test_call_like_expressions() {
 }
 
 #[test]
+fn test_ts_wrapper_expressions() {
+    // TS wrappers are runtime-transparent — delegate to the inner expression.
+    // `<T>x` syntax is not exercised here because `test_ts` parses as TSX,
+    // where `<any>` starts a JSX element; it is covered end-to-end by the
+    // minifier tests in `remove_unused_declaration.rs`.
+    test_ts("foo() as any", true);
+    test_ts("/* #__PURE__ */ foo() as any", false);
+    test_ts("foo()!", true);
+    test_ts("/* #__PURE__ */ foo()!", false);
+    test_ts("foo() satisfies any", true);
+    test_ts("/* #__PURE__ */ foo() satisfies any", false);
+    // TSInstantiationExpression: `foo<T>` is just a value reference, so it's
+    // side-effect-free exactly when `foo` is.
+    test_ts("foo<number>", false);
+    // Nested wrappers unwrap recursively.
+    test_ts("((/* #__PURE__ */ foo() as any) satisfies any)!", false);
+    test_ts("((foo() as any) satisfies any)!", true);
+}
+
+#[test]
 fn test_is_pure_call_support() {
     let ctx = Ctx {
         pure_function_names: vec!["foo".to_string(), "Foo".to_string()],
