@@ -436,16 +436,6 @@ impl<'a> ConfigLoader<'a> {
 
             if !is_root_config {
                 let options = &config.options;
-                if options.type_aware.is_some() {
-                    errors
-                        .push(ConfigLoadError::Diagnostic(nested_type_aware_not_supported(&path)));
-                    continue;
-                }
-                if options.type_check.is_some() {
-                    errors
-                        .push(ConfigLoadError::Diagnostic(nested_type_check_not_supported(&path)));
-                    continue;
-                }
                 if options.deny_warnings.is_some() {
                     errors.push(ConfigLoadError::Diagnostic(nested_deny_warnings_not_supported(
                         &path,
@@ -790,22 +780,6 @@ fn is_js_config_path(path: &Path) -> bool {
     )
 }
 
-fn nested_type_aware_not_supported(path: &Path) -> OxcDiagnostic {
-    OxcDiagnostic::error(format!(
-        "The `options.typeAware` option is only supported in the root config, but it was found in {}.",
-        path.display()
-    ))
-    .with_help("Move `options.typeAware` to the root configuration file.")
-}
-
-fn nested_type_check_not_supported(path: &Path) -> OxcDiagnostic {
-    OxcDiagnostic::error(format!(
-        "The `options.typeCheck` option is only supported in the root config, but it was found in {}.",
-        path.display()
-    ))
-    .with_help("Move `options.typeCheck` to the root configuration file.")
-}
-
 fn nested_deny_warnings_not_supported(path: &Path) -> OxcDiagnostic {
     OxcDiagnostic::error(format!(
         "The `options.denyWarnings` option is only supported in the root config, but it was found in {}.",
@@ -962,7 +936,7 @@ mod test {
     }
 
     #[test]
-    fn test_nested_json_config_rejects_type_aware() {
+    fn test_nested_json_config_allows_type_aware() {
         let root_dir = tempfile::tempdir().unwrap();
         let nested_path = root_dir.path().join("nested/.oxlintrc.json");
         std::fs::create_dir_all(nested_path.parent().unwrap()).unwrap();
@@ -970,10 +944,10 @@ mod test {
 
         let mut external_plugin_store = ExternalPluginStore::new(false);
         let mut loader = ConfigLoader::new(None, &mut external_plugin_store, &[], None);
-        let (_configs, errors) = loader
+        let (configs, errors) = loader
             .load_discovered_with_root_dir(root_dir.path(), [DiscoveredConfig::Json(nested_path)]);
-        assert_eq!(errors.len(), 1);
-        assert!(matches!(errors[0], ConfigLoadError::Diagnostic(_)));
+        assert!(errors.is_empty());
+        assert_eq!(configs.len(), 1);
     }
 
     #[test]
@@ -1117,7 +1091,7 @@ mod test {
 
     #[cfg(feature = "napi")]
     #[test]
-    fn test_nested_oxlint_config_ts_rejects_type_aware() {
+    fn test_nested_oxlint_config_ts_allows_type_aware() {
         let root_dir = tempfile::tempdir().unwrap();
         let nested_path = root_dir.path().join("nested/oxlint.config.ts");
         std::fs::create_dir_all(nested_path.parent().unwrap()).unwrap();
@@ -1134,15 +1108,15 @@ mod test {
         });
         loader = loader.with_js_config_loader(Some(&js_loader));
 
-        let (_configs, errors) = loader
+        let (configs, errors) = loader
             .load_discovered_with_root_dir(root_dir.path(), [DiscoveredConfig::Js(nested_path)]);
-        assert_eq!(errors.len(), 1);
-        assert!(matches!(errors[0], ConfigLoadError::Diagnostic(_)));
+        assert!(errors.is_empty());
+        assert_eq!(configs.len(), 1);
     }
 
     #[cfg(feature = "napi")]
     #[test]
-    fn test_nested_oxlint_config_ts_rejects_type_check() {
+    fn test_nested_oxlint_config_ts_allows_type_check() {
         let root_dir = tempfile::tempdir().unwrap();
         let nested_path = root_dir.path().join("nested/oxlint.config.ts");
         std::fs::create_dir_all(nested_path.parent().unwrap()).unwrap();
@@ -1159,10 +1133,10 @@ mod test {
         });
         loader = loader.with_js_config_loader(Some(&js_loader));
 
-        let (_configs, errors) = loader
+        let (configs, errors) = loader
             .load_discovered_with_root_dir(root_dir.path(), [DiscoveredConfig::Js(nested_path)]);
-        assert_eq!(errors.len(), 1);
-        assert!(matches!(errors[0], ConfigLoadError::Diagnostic(_)));
+        assert!(errors.is_empty());
+        assert_eq!(configs.len(), 1);
     }
 
     #[cfg(feature = "napi")]
