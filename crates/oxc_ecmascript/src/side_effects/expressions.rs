@@ -72,6 +72,12 @@ impl<'a> MayHaveSideEffects<'a> for Expression<'a> {
             Expression::TaggedTemplateExpression(e) => e.may_have_side_effects(ctx),
             Expression::AssignmentExpression(e) => e.may_have_side_effects(ctx),
             Expression::UpdateExpression(e) => e.may_have_side_effects(ctx),
+            // TS wrappers are runtime-transparent; defer to the inner expression.
+            Expression::TSAsExpression(e) => e.expression.may_have_side_effects(ctx),
+            Expression::TSNonNullExpression(e) => e.expression.may_have_side_effects(ctx),
+            Expression::TSSatisfiesExpression(e) => e.expression.may_have_side_effects(ctx),
+            Expression::TSTypeAssertion(e) => e.expression.may_have_side_effects(ctx),
+            Expression::TSInstantiationExpression(e) => e.expression.may_have_side_effects(ctx),
             _ => true,
         }
     }

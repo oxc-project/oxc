@@ -74,10 +74,38 @@ fn remove_unused_variable_declaration() {
     );
     test_options("var c; var removeThis = /* @__PURE__ */ (() => c || a())();", "", &options);
     test_options("var a; var removeThis = /* @__PURE__ */ (() => a?.())();", "", &options);
-    // TS wrappers (`as`/`!`/`satisfies`/`<T>x`/generic call) are covered at
-    // the expression level in `test_fold_iife`; the unused-declaration pass
-    // does not unwrap them, so they would stay as e.g.
-    // `var x = /* @__PURE__ */ a() as any;` here.
+    // TS wrappers (`as`/`!`/`satisfies`/`<T>x`) around the inlined pure call
+    // are transparent at runtime, so the declaration also drops.
+    test_options_source_type(
+        "var removeThis = /* @__PURE__ */ (() => a() as any)();",
+        "",
+        SourceType::ts().with_module(true),
+        &options,
+    );
+    test_options_source_type(
+        "var a; var removeThis = /* @__PURE__ */ (() => a()!)();",
+        "",
+        SourceType::ts().with_module(true),
+        &options,
+    );
+    test_options_source_type(
+        "var removeThis = /* @__PURE__ */ (() => a() satisfies any)();",
+        "",
+        SourceType::ts().with_module(true),
+        &options,
+    );
+    test_options_source_type(
+        "var removeThis = /* @__PURE__ */ (() => <any>a())();",
+        "",
+        SourceType::ts().with_module(true),
+        &options,
+    );
+    test_options_source_type(
+        "var a; var removeThis = /* @__PURE__ */ (() => a<number>())();",
+        "",
+        SourceType::ts().with_module(true),
+        &options,
+    );
     // Function-expression IIFEs aren't inlined, but their outer `pure` flag
     // still lets the unused-declaration pass drop them.
     test_options(
