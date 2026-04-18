@@ -1755,11 +1755,13 @@ impl<'a> PeepholeOptimizations {
                 Self::mark_inlined_pure(&mut b.right);
             }
             Expression::ChainExpression(c) => Self::mark_chain_element_pure(&mut c.expression),
-            Expression::TSAsExpression(e) => Self::mark_inlined_pure(&mut e.expression),
-            Expression::TSNonNullExpression(e) => Self::mark_inlined_pure(&mut e.expression),
-            Expression::TSSatisfiesExpression(e) => Self::mark_inlined_pure(&mut e.expression),
-            Expression::TSTypeAssertion(e) => Self::mark_inlined_pure(&mut e.expression),
-            Expression::TSInstantiationExpression(e) => Self::mark_inlined_pure(&mut e.expression),
+            Expression::TSAsExpression(_)
+            | Expression::TSNonNullExpression(_)
+            | Expression::TSSatisfiesExpression(_)
+            | Expression::TSTypeAssertion(_)
+            | Expression::TSInstantiationExpression(_) => {
+                Self::mark_inlined_pure(expr.get_inner_expression_mut());
+            }
             _ => {}
         }
     }

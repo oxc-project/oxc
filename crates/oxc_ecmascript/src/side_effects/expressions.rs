@@ -73,11 +73,13 @@ impl<'a> MayHaveSideEffects<'a> for Expression<'a> {
             Expression::AssignmentExpression(e) => e.may_have_side_effects(ctx),
             Expression::UpdateExpression(e) => e.may_have_side_effects(ctx),
             // TS wrappers are runtime-transparent; defer to the inner expression.
-            Expression::TSAsExpression(e) => e.expression.may_have_side_effects(ctx),
-            Expression::TSNonNullExpression(e) => e.expression.may_have_side_effects(ctx),
-            Expression::TSSatisfiesExpression(e) => e.expression.may_have_side_effects(ctx),
-            Expression::TSTypeAssertion(e) => e.expression.may_have_side_effects(ctx),
-            Expression::TSInstantiationExpression(e) => e.expression.may_have_side_effects(ctx),
+            Expression::TSAsExpression(_)
+            | Expression::TSNonNullExpression(_)
+            | Expression::TSSatisfiesExpression(_)
+            | Expression::TSTypeAssertion(_)
+            | Expression::TSInstantiationExpression(_) => {
+                self.get_inner_expression().may_have_side_effects(ctx)
+            }
             _ => true,
         }
     }
