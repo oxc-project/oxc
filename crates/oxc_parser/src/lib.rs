@@ -474,7 +474,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             if !self.lexer.errors.is_empty() && self.cur_kind().is_eof() {
                 // Noop
             } else {
-                self.error(fatal_error.error);
+                self.error(fatal_error.kind.into_diagnostic());
             }
 
             program = Program::dummy(self.ast.allocator);
@@ -547,8 +547,8 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
         // initialize cur_token and prev_token by moving onto the first token
         self.bump_any();
         let expr = self.parse_expr();
-        if let Some(FatalError { error, .. }) = self.fatal_error.take() {
-            return Err(vec![error]);
+        if let Some(FatalError { kind, .. }) = self.fatal_error.take() {
+            return Err(vec![kind.into_diagnostic()]);
         }
         self.check_unfinished_errors();
         let errors = self.lexer.errors.into_iter().chain(self.errors).collect::<Vec<_>>();

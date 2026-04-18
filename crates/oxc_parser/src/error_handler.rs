@@ -9,10 +9,61 @@ use crate::{ParserConfig as Config, ParserImpl, diagnostics, lexer::Kind};
 /// Fatal parsing error.
 #[derive(Debug, Clone)]
 pub struct FatalError {
-    /// The fatal error
-    pub error: OxcDiagnostic,
-    /// Length of `errors` at time fatal error is recorded
+    /// What went wrong. The actual `OxcDiagnostic` is only materialized at the
+    /// top-level parser exit — before that, `FatalErrorKind` carries just the
+    /// inputs needed to rebuild the message.
+    pub kind: FatalErrorKind,
+    /// Length of `errors` at time fatal error is recorded.
     pub errors_len: usize,
+}
+
+/// Lazy description of a fatal error.
+///
+/// Variants are `Copy` so that `set_fatal_error` inside a speculative
+/// block allocates nothing even when the error will be rewound.
+/// `Other` is the escape hatch for cold call sites that already hold an
+/// owned `OxcDiagnostic`.
+#[derive(Debug, Clone)]
+pub enum FatalErrorKind {
+    /// `diagnostics::unexpected_token(span)`
+    Unexpected(Span),
+    /// `diagnostics::expect_token(expected, actual, span)`
+    Expect { expected: Kind, actual: Kind, span: Span },
+    /// `diagnostics::expect_closing(expected, actual, span, opening)`
+    ExpectClosing { expected: Kind, actual: Kind, span: Span, opening: Span },
+    /// `diagnostics::expect_conditional_alternative(actual, span, question)`
+    ExpectConditionalAlternative { actual: Kind, span: Span, question: Span },
+    /// `diagnostics::auto_semicolon_insertion(span)`
+    AutoSemicolonInsertion(Span),
+    /// Pre-built diagnostic. Used by cold call sites (not in any speculative path)
+    /// and by `set_unexpected`'s lexer-error-pop case.
+    Other(OxcDiagnostic),
+}
+
+impl FatalErrorKind {
+    #[cold]
+    pub fn into_diagnostic(self) -> OxcDiagnostic {
+        match self {
+            Self::Unexpected(span) => diagnostics::unexpected_token(span),
+            Self::Expect { expected, actual, span } => {
+                diagnostics::expect_token(expected.to_str(), actual.to_str(), span)
+            }
+            Self::ExpectClosing { expected, actual, span, opening } => {
+                diagnostics::expect_closing(expected.to_str(), actual.to_str(), span, opening)
+            }
+            Self::ExpectConditionalAlternative { actual, span, question } => {
+                diagnostics::expect_conditional_alternative(actual.to_str(), span, question)
+            }
+            Self::AutoSemicolonInsertion(span) => diagnostics::auto_semicolon_insertion(span),
+            Self::Other(d) => d,
+        }
+    }
+}
+
+impl From<OxcDiagnostic> for FatalErrorKind {
+    fn from(error: OxcDiagnostic) -> Self {
+        Self::Other(error)
+    }
 }
 
 impl<'a, C: Config> ParserImpl<'a, C> {
@@ -35,8 +86,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             return;
         }
 
-        let error = diagnostics::unexpected_token(self.cur_token().span());
-        self.set_fatal_error(error);
+        self.set_fatal_error(FatalErrorKind::Unexpected(self.cur_token().span()));
     }
 
     /// Return error info at current token
@@ -76,18 +126,24 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.errors.len() + self.lexer.errors.len()
     }
 
-    /// Advance lexer's cursor to end of file.
+    /// Record a fatal error and advance the lexer to EOF.
+    ///
+    /// Cheap call sites build a `FatalErrorKind` variant directly
+    /// (no heap). Call sites that already hold an `OxcDiagnostic`
+    /// rely on the `From<OxcDiagnostic>` impl to auto-wrap in
+    /// `FatalErrorKind::Other`.
     #[cold]
-    pub(crate) fn set_fatal_error(&mut self, error: OxcDiagnostic) {
+    pub(crate) fn set_fatal_error(&mut self, kind: impl Into<FatalErrorKind>) {
         if self.fatal_error.is_none() {
             self.lexer.advance_to_end();
-            self.fatal_error = Some(FatalError { error, errors_len: self.errors.len() });
+            self.fatal_error =
+                Some(FatalError { kind: kind.into(), errors_len: self.errors.len() });
         }
     }
 
     #[cold]
-    pub(crate) fn fatal_error<T: Dummy<'a>>(&mut self, error: OxcDiagnostic) -> T {
-        self.set_fatal_error(error);
+    pub(crate) fn fatal_error<T: Dummy<'a>>(&mut self, kind: impl Into<FatalErrorKind>) -> T {
+        self.set_fatal_error(kind);
         Dummy::dummy(self.ast.allocator)
     }
 

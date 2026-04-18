@@ -7,7 +7,7 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{
     Context, ParserConfig as Config, ParserImpl, diagnostics,
-    error_handler::FatalError,
+    error_handler::{FatalError, FatalErrorKind},
     lexer::{Kind, LexerCheckpoint, Token},
 };
 
@@ -144,8 +144,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             /* no op */
         } else {
             let span = Span::empty(self.prev_token_end);
-            let error = diagnostics::auto_semicolon_insertion(span);
-            self.set_fatal_error(error);
+            self.set_fatal_error(FatalErrorKind::AutoSemicolonInsertion(span));
         }
     }
 
@@ -158,11 +157,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// Cold path for expect failures - separated to improve branch prediction
     #[cold]
     #[inline(never)]
-    fn handle_expect_failure(&mut self, expected_kind: Kind) {
-        let range = self.cur_token().span();
-        let error =
-            diagnostics::expect_token(expected_kind.to_str(), self.cur_kind().to_str(), range);
-        self.set_fatal_error(error);
+    fn handle_expect_failure(&mut self, expected: Kind) {
+        let actual = self.cur_kind();
+        let span = self.cur_token().span();
+        self.set_fatal_error(FatalErrorKind::Expect { expected, actual, span });
     }
 
     /// # Errors
@@ -184,30 +182,30 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     #[inline]
-    pub(crate) fn expect_closing(&mut self, kind: Kind, opening_span: Span) {
+    pub(crate) fn expect_closing(&mut self, kind: Kind, opening: Span) {
         if !self.at(kind) {
-            let range = self.cur_token().span();
-            let error = diagnostics::expect_closing(
-                kind.to_str(),
-                self.cur_kind().to_str(),
-                range,
-                opening_span,
-            );
-            self.set_fatal_error(error);
+            let actual = self.cur_kind();
+            let span = self.cur_token().span();
+            self.set_fatal_error(FatalErrorKind::ExpectClosing {
+                expected: kind,
+                actual,
+                span,
+                opening,
+            });
         }
         self.advance(kind);
     }
 
     #[inline]
-    pub(crate) fn expect_conditional_alternative(&mut self, question_span: Span) {
+    pub(crate) fn expect_conditional_alternative(&mut self, question: Span) {
         if !self.at(Kind::Colon) {
-            let range = self.cur_token().span();
-            let error = diagnostics::expect_conditional_alternative(
-                self.cur_kind().to_str(),
-                range,
-                question_span,
-            );
-            self.set_fatal_error(error);
+            let actual = self.cur_kind();
+            let span = self.cur_token().span();
+            self.set_fatal_error(FatalErrorKind::ExpectConditionalAlternative {
+                actual,
+                span,
+                question,
+            });
         }
         self.bump_any(); // bump `:`
     }
