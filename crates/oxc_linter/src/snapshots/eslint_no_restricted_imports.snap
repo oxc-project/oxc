@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+assertion_line: 444
 ---
 
   ⚠ eslint(no-restricted-imports): 'fs' import is restricted from being used.
@@ -841,6 +842,30 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_restricted_imports.tsx:1:1]
  1 │ import('fs')
    · ────────────
+   ╰────
+
+  ⚠ eslint(no-restricted-imports): 'foo' import is restricted from being used.
+   ╭─[no_restricted_imports.tsx:1:1]
+ 1 │ import(`foo`)
+   · ─────────────
+   ╰────
+
+  ⚠ eslint(no-restricted-imports): 'foo' import is restricted from being used.
+   ╭─[no_restricted_imports.tsx:1:1]
+ 1 │ import("foo" as string)
+   · ───────────────────────
+   ╰────
+
+  ⚠ eslint(no-restricted-imports): 'foo' import is restricted from being used.
+   ╭─[no_restricted_imports.tsx:1:1]
+ 1 │ import("foo" satisfies string)
+   · ──────────────────────────────
+   ╰────
+
+  ⚠ eslint(no-restricted-imports): 'lodash/pick' import is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:1]
+ 1 │ import(`lodash/pick`)
+   · ─────────────────────
    ╰────
 
   ⚠ eslint(no-restricted-imports): 'foo' import is restricted from being used.

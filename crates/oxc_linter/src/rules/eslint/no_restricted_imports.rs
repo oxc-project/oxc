@@ -9,7 +9,7 @@ use serde_json::Value;
 use oxc_ast::{
     AstKind,
     ast::{
-        Expression, ImportOrExportKind, StringLiteral, TSImportEqualsDeclaration, TSModuleReference,
+        Expression, ImportOrExportKind, TSImportEqualsDeclaration, TSModuleReference,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -752,19 +752,20 @@ impl RestrictedPath {
 
     fn get_string_literal_result(
         &self,
-        literal: &StringLiteral,
+        value: &str,
+        span: Span,
         is_type: bool,
     ) -> ImportNameResult {
         if is_type && self.allow_type_imports.is_some_and(|x| x) {
             return ImportNameResult::Allowed;
         }
 
-        let name = literal.value.into_compact_str();
+        let name = CompactStr::from(value);
         let unused_name = &CompactStr::from("__<>import_name_that_cant_be_used<>__");
 
         match self.is_name_span_allowed(unused_name) {
             NameSpanAllowedResult::NameDisallowed => {
-                ImportNameResult::NameDisallowed(NameSpan::new(name, literal.span))
+                ImportNameResult::NameDisallowed(NameSpan::new(name, span))
             }
             NameSpanAllowedResult::GeneralDisallowed => ImportNameResult::GeneralDisallowed,
             NameSpanAllowedResult::Allowed => ImportNameResult::Allowed,
@@ -856,19 +857,20 @@ impl RestrictedPattern {
 
     fn get_string_literal_result(
         &self,
-        literal: &StringLiteral,
+        value: &str,
+        span: Span,
         is_type: bool,
     ) -> ImportNameResult {
         if is_type && self.allow_type_imports.is_some_and(|x| x) {
             return ImportNameResult::Allowed;
         }
 
-        let name = literal.value.into_compact_str();
+        let name = CompactStr::from(value);
         let unused_name = &CompactStr::from("__<>import_name_that_cant_be_used<>__");
 
         match self.is_name_span_allowed(unused_name) {
             NameSpanAllowedResult::NameDisallowed => {
-                ImportNameResult::NameDisallowed(NameSpan::new(name, literal.span))
+                ImportNameResult::NameDisallowed(NameSpan::new(name, span))
             }
             NameSpanAllowedResult::GeneralDisallowed => ImportNameResult::GeneralDisallowed,
             NameSpanAllowedResult::Allowed => ImportNameResult::Allowed,
@@ -988,8 +990,30 @@ impl Rule for NoRestrictedImports {
                 self.report_ts_import_equals_declaration_allowed(ctx, declaration);
             }
             AstKind::ImportExpression(import_expr) => {
-                if let Expression::StringLiteral(source) = &import_expr.source {
-                    self.report_import_expression_allowed(ctx, source, import_expr.span);
+                let source = import_expr.source.get_inner_expression();
+                match source {
+                    Expression::StringLiteral(lit) => {
+                        self.report_import_expression_allowed(
+                            ctx,
+                            &lit.value,
+                            lit.span,
+                            import_expr.span,
+                        );
+                    }
+                    Expression::TemplateLiteral(tpl) if tpl.expressions.is_empty() => {
+                        let Some(cooked) =
+                            tpl.quasis.first().and_then(|q| q.value.cooked.as_ref())
+                        else {
+                            return;
+                        };
+                        self.report_import_expression_allowed(
+                            ctx,
+                            cooked,
+                            tpl.span,
+                            import_expr.span,
+                        );
+                    }
+                    _ => {}
                 }
             }
             _ => {}
@@ -1225,7 +1249,8 @@ impl NoRestrictedImports {
             }
 
             let result = &path.get_string_literal_result(
-                &reference.expression,
+                &reference.expression.value,
+                reference.expression.span,
                 entry.import_kind == ImportOrExportKind::Type,
             );
 
@@ -1244,7 +1269,8 @@ impl NoRestrictedImports {
 
         for pattern in &self.patterns {
             let result = &pattern.get_string_literal_result(
-                &reference.expression,
+                &reference.expression.value,
+                reference.expression.span,
                 entry.import_kind == ImportOrExportKind::Type,
             );
 
@@ -1284,23 +1310,24 @@ impl NoRestrictedImports {
     fn report_import_expression_allowed(
         &self,
         ctx: &LintContext<'_>,
-        source: &StringLiteral,
-        span: Span,
+        source_value: &str,
+        source_span: Span,
+        expr_span: Span,
     ) {
         for path in &self.paths {
-            if source.value.as_str() != path.name.as_str() {
+            if source_value != path.name.as_str() {
                 continue;
             }
 
             // Dynamic imports are never type-only
-            let result = &path.get_string_literal_result(source, false);
+            let result = &path.get_string_literal_result(source_value, source_span, false);
 
             if *result == ImportNameResult::Allowed {
                 continue;
             }
 
             let diagnostic =
-                get_diagnostic_from_import_name_result_path(span, &source.value, result, path);
+                get_diagnostic_from_import_name_result_path(expr_span, source_value, result, path);
 
             ctx.diagnostic(diagnostic);
         }
@@ -1310,21 +1337,21 @@ impl NoRestrictedImports {
 
         for pattern in &self.patterns {
             // Dynamic imports are never type-only
-            let result = &pattern.get_string_literal_result(source, false);
+            let result = &pattern.get_string_literal_result(source_value, source_span, false);
 
             if *result == ImportNameResult::Allowed {
                 continue;
             }
 
-            match pattern.get_group_glob_result(&source.value) {
+            match pattern.get_group_glob_result(source_value) {
                 GlobResult::Whitelist => {
                     whitelist_found = true;
                     break;
                 }
                 GlobResult::Found => {
                     let diagnostic = get_diagnostic_from_import_name_result_pattern(
-                        span,
-                        &source.value,
+                        expr_span,
+                        source_value,
                         result,
                         pattern,
                     );
@@ -1334,10 +1361,10 @@ impl NoRestrictedImports {
                 GlobResult::None => (),
             }
 
-            if pattern.get_regex_result(&source.value) {
+            if pattern.get_regex_result(source_value) {
                 ctx.diagnostic(get_diagnostic_from_import_name_result_pattern(
-                    span,
-                    &source.value,
+                    expr_span,
+                    source_value,
                     result,
                     pattern,
                 ));
@@ -3563,13 +3590,28 @@ fn test() {
                 }]
             }])),
         ),
-        // Template literal (not a string literal) should be ignored
-        ("import(`foo`)", Some(serde_json::json!(["foo"]))),
+        // Template literal with substitutions can't be resolved statically
+        ("import(`foo${bar}`)", Some(serde_json::json!(["foo"]))),
+        // Tagged templates are not a statically-resolvable string source
+        ("import(tag`foo`)", Some(serde_json::json!(["foo"]))),
     ];
 
     let fail_dynamic_import = vec![
         // Simple string restriction
         (r"import('fs')", Some(serde_json::json!(["fs"]))),
+        // Template literal without substitutions should be treated like a string literal
+        ("import(`foo`)", Some(serde_json::json!(["foo"]))),
+        // TypeScript `as` cast wrapping a string literal should be unwrapped
+        (r#"import("foo" as string)"#, Some(serde_json::json!(["foo"]))),
+        // TypeScript `satisfies` operator should also be unwrapped
+        (r#"import("foo" satisfies string)"#, Some(serde_json::json!(["foo"]))),
+        // Template literal sources should also match patterns
+        (
+            "import(`lodash/pick`)",
+            Some(serde_json::json!([{
+                "patterns": ["lodash/*"]
+            }])),
+        ),
         // Path with message
         (
             r"import('foo')",
