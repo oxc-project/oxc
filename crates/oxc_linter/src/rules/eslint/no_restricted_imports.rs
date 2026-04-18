@@ -8,9 +8,7 @@ use serde_json::Value;
 
 use oxc_ast::{
     AstKind,
-    ast::{
-        Expression, ImportOrExportKind, TSImportEqualsDeclaration, TSModuleReference,
-    },
+    ast::{Expression, ImportOrExportKind, TSImportEqualsDeclaration, TSModuleReference},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -1001,8 +999,7 @@ impl Rule for NoRestrictedImports {
                         );
                     }
                     Expression::TemplateLiteral(tpl) if tpl.expressions.is_empty() => {
-                        let Some(cooked) =
-                            tpl.quasis.first().and_then(|q| q.value.cooked.as_ref())
+                        let Some(cooked) = tpl.quasis.first().and_then(|q| q.value.cooked.as_ref())
                         else {
                             return;
                         };
