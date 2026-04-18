@@ -1671,7 +1671,7 @@ impl<'a> PeepholeOptimizations {
                 if is_pure && Self::is_expression_result_unused(ctx) {
                     *e = ctx.ast.void_0(call_expr.span);
                 } else {
-                    *e = Self::take_propagating_pure(expr, is_pure, ctx);
+                    *e = Self::take_and_propagate_pure(expr, is_pure, ctx);
                 }
                 ctx.state.changed = true;
                 return;
@@ -1683,7 +1683,7 @@ impl<'a> PeepholeOptimizations {
                         *e = ctx.ast.void_0(call_expr.span);
                     } else {
                         let inner =
-                            Self::take_propagating_pure(&mut expr_stmt.expression, is_pure, ctx);
+                            Self::take_and_propagate_pure(&mut expr_stmt.expression, is_pure, ctx);
                         *e = ctx.ast.expression_sequence(expr_stmt.span, {
                             let mut sequence = ctx.ast.vec();
                             sequence.push(inner);
@@ -1700,7 +1700,7 @@ impl<'a> PeepholeOptimizations {
                         if is_pure && Self::is_expression_result_unused(ctx) {
                             *e = ctx.ast.void_0(call_expr.span);
                         } else {
-                            *e = Self::take_propagating_pure(argument, is_pure, ctx);
+                            *e = Self::take_and_propagate_pure(argument, is_pure, ctx);
                         }
                         ctx.state.changed = true;
                     }
@@ -1718,7 +1718,7 @@ impl<'a> PeepholeOptimizations {
     /// silently lost when the body is a tagged template. `manual_pure_functions`
     /// can't match an arrow/function-expression callee, so `is_pure` here
     /// really only reflects the outer `/* @__PURE__ */`.
-    fn take_propagating_pure(
+    fn take_and_propagate_pure(
         expr: &mut Expression<'a>,
         is_pure: bool,
         ctx: &TraverseCtx<'a>,
