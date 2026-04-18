@@ -67,13 +67,16 @@ fn remove_unused_variable_declaration() {
     // forward PURE to the inner calls so the declaration drops. (The condition
     // `c` itself is a declared local with no side-effect on read, which is why
     // the minifier can drop everything — an undeclared global would stay.)
-    test_options(
-        "var c; var removeThis = /* @__PURE__ */ (() => c ? a() : b())();",
-        "",
-        &options,
-    );
+    test_options("var c; var removeThis = /* @__PURE__ */ (() => c ? a() : b())();", "", &options);
     test_options("var c; var removeThis = /* @__PURE__ */ (() => c || a())();", "", &options);
     test_options("var a; var removeThis = /* @__PURE__ */ (() => a?.())();", "", &options);
+    // Unary / binary: PURE forwards onto the inner call so `may_have_side_effects`
+    // on the unwrapped body is false. Binary-op `may_have_side_effects` has its
+    // own constraints (for arithmetic, ToPrimitive on unknown calls stays
+    // unknown), so we stick to a comparison operator here where the check is a
+    // pure disjunction over the operands.
+    test_options("var removeThis = /* @__PURE__ */ (() => !a())();", "", &options);
+    test_options("var removeThis = /* @__PURE__ */ (() => a() == b())();", "", &options);
     // TS wrappers (`as`/`!`/`satisfies`/`<T>x`) around the inlined pure call
     // are transparent at runtime, so the declaration also drops.
     test_options_source_type(

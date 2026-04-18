@@ -1711,10 +1711,13 @@ impl<'a> PeepholeOptimizations {
     }
 
     /// Take the expression being inlined out of the IIFE body. If the enclosing
-    /// IIFE was pure-annotated, carry the annotation onto the inlined call/new
-    /// (recursing into `SequenceExpression` elements) so later passes can still
-    /// drop it. `manual_pure_functions` can't match an arrow/function-expression
-    /// callee, so `is_pure` here really only reflects the outer `/* @__PURE__ */`.
+    /// IIFE was pure-annotated, carry the annotation onto the inlined call/new,
+    /// recursing through container shapes (sequence/conditional/logical/unary
+    /// /binary/chain/TS wrappers) so later passes can still drop the inlined
+    /// expression. `TaggedTemplateExpression` has no `pure` flag, so PURE is
+    /// silently lost when the body is a tagged template. `manual_pure_functions`
+    /// can't match an arrow/function-expression callee, so `is_pure` here
+    /// really only reflects the outer `/* @__PURE__ */`.
     fn take_propagating_pure(
         expr: &mut Expression<'a>,
         is_pure: bool,
@@ -1745,6 +1748,11 @@ impl<'a> PeepholeOptimizations {
             Expression::LogicalExpression(l) => {
                 Self::mark_inlined_pure(&mut l.left);
                 Self::mark_inlined_pure(&mut l.right);
+            }
+            Expression::UnaryExpression(u) => Self::mark_inlined_pure(&mut u.argument),
+            Expression::BinaryExpression(b) => {
+                Self::mark_inlined_pure(&mut b.left);
+                Self::mark_inlined_pure(&mut b.right);
             }
             Expression::ChainExpression(c) => Self::mark_chain_element_pure(&mut c.expression),
             Expression::TSAsExpression(e) => Self::mark_inlined_pure(&mut e.expression),

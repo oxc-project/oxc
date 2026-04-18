@@ -328,11 +328,18 @@ fn test_fold_iife() {
         "var a = /* @__PURE__ */ (() => foo() ? x : y)()",
         "var a = /* @__PURE__ */ foo() ? x : y",
     );
-    test(
-        "var a = /* @__PURE__ */ (() => c || foo())()",
-        "var a = c || /* @__PURE__ */ foo()",
-    );
+    test("var a = /* @__PURE__ */ (() => c || foo())()", "var a = c || /* @__PURE__ */ foo()");
     test("var a = /* @__PURE__ */ (() => foo?.())()", "var a = /* @__PURE__ */ foo?.()");
+    // Unary / binary bodies: the outer PURE covers the whole expression, so
+    // marking each inner call/new preserves the annotation.
+    test("var a = /* @__PURE__ */ (() => !foo())()", "var a = !/* @__PURE__ */ foo()");
+    test(
+        "var a = /* @__PURE__ */ (() => foo() == bar())()",
+        "var a = /* @__PURE__ */ foo() == /* @__PURE__ */ bar()",
+    );
+    // Tagged templates have no `pure` flag, so the annotation can't hop onto
+    // them — they're left without PURE after inlining.
+    test("var a = /* @__PURE__ */ (() => foo``)()", "var a = foo``");
     // TS wrappers around the inlined call also forward the outer PURE.
     test_options_source_type(
         "var a = /* @__PURE__ */ (() => foo() as any)()",
