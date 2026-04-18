@@ -63,6 +63,21 @@ fn remove_unused_variable_declaration() {
     // Sequence-expression body: propagating PURE onto each call lets the
     // unused-declaration pass drop the whole initializer.
     test_options("var removeThis = /* @__PURE__ */ (() => (a(), b()))();", "", &options);
+    // Container shapes: conditional / logical / optional-chain bodies also
+    // forward PURE to the inner calls so the declaration drops. (The condition
+    // `c` itself is a declared local with no side-effect on read, which is why
+    // the minifier can drop everything — an undeclared global would stay.)
+    test_options(
+        "var c; var removeThis = /* @__PURE__ */ (() => c ? a() : b())();",
+        "",
+        &options,
+    );
+    test_options("var c; var removeThis = /* @__PURE__ */ (() => c || a())();", "", &options);
+    test_options("var a; var removeThis = /* @__PURE__ */ (() => a?.())();", "", &options);
+    // TS wrappers (`as`/`!`/`satisfies`/`<T>x`/generic call) are covered at
+    // the expression level in `test_fold_iife`; the unused-declaration pass
+    // does not unwrap them, so they would stay as e.g.
+    // `var x = /* @__PURE__ */ a() as any;` here.
     // Function-expression IIFEs aren't inlined, but their outer `pure` flag
     // still lets the unused-declaration pass drop them.
     test_options(

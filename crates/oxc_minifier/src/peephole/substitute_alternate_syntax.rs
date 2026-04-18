@@ -1736,6 +1736,31 @@ impl<'a> PeepholeOptimizations {
                     Self::mark_inlined_pure(e);
                 }
             }
+            Expression::ConditionalExpression(c) => {
+                // The outer PURE covers evaluation of all three sub-expressions.
+                Self::mark_inlined_pure(&mut c.test);
+                Self::mark_inlined_pure(&mut c.consequent);
+                Self::mark_inlined_pure(&mut c.alternate);
+            }
+            Expression::LogicalExpression(l) => {
+                Self::mark_inlined_pure(&mut l.left);
+                Self::mark_inlined_pure(&mut l.right);
+            }
+            Expression::ChainExpression(c) => Self::mark_chain_element_pure(&mut c.expression),
+            Expression::TSAsExpression(e) => Self::mark_inlined_pure(&mut e.expression),
+            Expression::TSNonNullExpression(e) => Self::mark_inlined_pure(&mut e.expression),
+            Expression::TSSatisfiesExpression(e) => Self::mark_inlined_pure(&mut e.expression),
+            Expression::TSTypeAssertion(e) => Self::mark_inlined_pure(&mut e.expression),
+            Expression::TSInstantiationExpression(e) => Self::mark_inlined_pure(&mut e.expression),
+            _ => {}
+        }
+    }
+
+    fn mark_chain_element_pure(element: &mut ChainElement<'a>) {
+        match element {
+            ChainElement::CallExpression(c) => c.pure = true,
+            ChainElement::TSNonNullExpression(e) => Self::mark_inlined_pure(&mut e.expression),
+            // `MemberExpression` variants have no `pure` flag to set.
             _ => {}
         }
     }

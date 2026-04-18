@@ -1,4 +1,5 @@
 use oxc_ecmascript::side_effects::PropertyReadSideEffects;
+use oxc_span::SourceType;
 
 use crate::{
     CompressOptions, CompressOptionsUnused, TreeShakeOptions, default_options, test, test_options,
@@ -316,6 +317,41 @@ fn test_fold_iife() {
     // Sequence-expression body: annotation propagates to each call/new element
     // so a follow-on pass can drop the unused `foo()` and unwrap the sequence.
     test("var a = /* @__PURE__ */ (() => (foo(), bar()))()", "var a = /* @__PURE__ */ bar()");
+    // Container shapes that also forward the outer PURE onto their inner calls.
+    test(
+        "var a = /* @__PURE__ */ (() => c ? foo() : bar())()",
+        "var a = c ? /* @__PURE__ */ foo() : /* @__PURE__ */ bar()",
+    );
+    test(
+        "var a = /* @__PURE__ */ (() => c || foo())()",
+        "var a = c || /* @__PURE__ */ foo()",
+    );
+    test("var a = /* @__PURE__ */ (() => foo?.())()", "var a = /* @__PURE__ */ foo?.()");
+    // TS wrappers around the inlined call also forward the outer PURE.
+    test_options_source_type(
+        "var a = /* @__PURE__ */ (() => foo() as any)()",
+        "var a = /* @__PURE__ */ foo() as any",
+        SourceType::ts(),
+        &default_options(),
+    );
+    test_options_source_type(
+        "var a = /* @__PURE__ */ (() => foo()!)()",
+        "var a = /* @__PURE__ */ foo()!",
+        SourceType::ts(),
+        &default_options(),
+    );
+    test_options_source_type(
+        "var a = /* @__PURE__ */ (() => foo() satisfies any)()",
+        "var a = /* @__PURE__ */ foo() satisfies any",
+        SourceType::ts(),
+        &default_options(),
+    );
+    test_options_source_type(
+        "var a = /* @__PURE__ */ (() => <any>foo())()",
+        "var a = (<any>(/* @__PURE__ */ foo()))",
+        SourceType::ts(),
+        &default_options(),
+    );
     // IIFE inlining only handles arrows, so function-expression IIFEs are left
     // as-is for the outer call's `pure` to be picked up directly.
     test_same("var a = /* @__PURE__ */ (function() { return foo() })()");
