@@ -337,6 +337,12 @@ fn test_fold_iife() {
         "var a = /* @__PURE__ */ (() => foo() == bar())()",
         "var a = /* @__PURE__ */ foo() == /* @__PURE__ */ bar()",
     );
+    // Nested container recursion: BinaryExpression → UnaryExpression → Call on
+    // the left side, BinaryExpression → Call on the right side.
+    test(
+        "var a = /* @__PURE__ */ (() => !foo() == bar())()",
+        "var a = !/* @__PURE__ */ foo() == /* @__PURE__ */ bar()",
+    );
     // Tagged templates have no `pure` flag, so the annotation can't hop onto
     // them — they're left without PURE after inlining.
     test("var a = /* @__PURE__ */ (() => foo``)()", "var a = foo``");
