@@ -645,8 +645,8 @@ pub struct NewExpression<'a> {
     pub callee: Expression<'a>,
     #[ts]
     pub type_arguments: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
-    /// `true` if the new expression is marked with a `/* @__PURE__ */` comment
     pub arguments: Vec<'a, Argument<'a>>,
+    /// `true` if the new expression is marked with a `/* @__PURE__ */` comment
     #[builder(default)]
     #[estree(skip)]
     pub pure: bool,

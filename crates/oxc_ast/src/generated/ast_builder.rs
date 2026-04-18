@@ -837,7 +837,7 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
     /// * `type_arguments`
-    /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
+    /// * `arguments`
     #[inline]
     pub fn expression_new<T1>(
         self,
@@ -865,8 +865,8 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
     /// * `type_arguments`
-    /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
-    /// * `pure`
+    /// * `arguments`
+    /// * `pure`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
     #[inline]
     pub fn expression_new_with_pure<T1>(
         self,
@@ -2209,7 +2209,7 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
     /// * `type_arguments`
-    /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
+    /// * `arguments`
     #[inline]
     pub fn new_expression<T1>(
         self,
@@ -2240,7 +2240,7 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
     /// * `type_arguments`
-    /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
+    /// * `arguments`
     #[inline]
     pub fn alloc_new_expression<T1>(
         self,
@@ -2264,8 +2264,8 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
     /// * `type_arguments`
-    /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
-    /// * `pure`
+    /// * `arguments`
+    /// * `pure`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
     #[inline]
     pub fn new_expression_with_pure<T1>(
         self,
@@ -2297,8 +2297,8 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
     /// * `type_arguments`
-    /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
-    /// * `pure`
+    /// * `arguments`
+    /// * `pure`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
     #[inline]
     pub fn alloc_new_expression_with_pure<T1>(
         self,
