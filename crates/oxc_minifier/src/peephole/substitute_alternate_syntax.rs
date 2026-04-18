@@ -1731,6 +1731,9 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn mark_inlined_pure(expr: &mut Expression<'a>) {
+        // Strip TS wrappers (and any `ParenthesizedExpression` layers) in one
+        // step so the match below only has to handle runtime-meaningful shapes.
+        let expr = expr.get_inner_expression_mut();
         match expr {
             Expression::CallExpression(c) => {
                 c.pure = true;
@@ -1768,13 +1771,6 @@ impl<'a> PeepholeOptimizations {
             Expression::StaticMemberExpression(m) => Self::mark_inlined_pure(&mut m.object),
             Expression::ComputedMemberExpression(m) => Self::mark_inlined_pure(&mut m.object),
             Expression::PrivateFieldExpression(m) => Self::mark_inlined_pure(&mut m.object),
-            Expression::TSAsExpression(_)
-            | Expression::TSNonNullExpression(_)
-            | Expression::TSSatisfiesExpression(_)
-            | Expression::TSTypeAssertion(_)
-            | Expression::TSInstantiationExpression(_) => {
-                Self::mark_inlined_pure(expr.get_inner_expression_mut());
-            }
             _ => {}
         }
     }
