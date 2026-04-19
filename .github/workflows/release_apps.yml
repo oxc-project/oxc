@@ -622,9 +622,15 @@ jobs:
       contents: write # for `gh release create`
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/create-github-app-token@1b10c78c7865c340bc4f6099eb2f838309f1e8c3 # v3
+        id: app-token
+        with:
+          client-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          token: ${{ secrets.OXC_BOT_PAT }}
+          token: ${{ steps.app-token.outputs.token }}
           fetch-depth: 0 # for changelog
           persist-credentials: true
 
@@ -731,12 +737,24 @@ jobs:
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
 
+      - uses: actions/create-github-app-token@1b10c78c7865c340bc4f6099eb2f838309f1e8c3 # v3
+        id: app-token
+        with:
+          client-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: oxc-project
+          repositories: |
+            eslint-plugin-oxlint
+            oxlint-migrate
+            mirrors-oxlint
+            mirrors-oxfmt
+
       - name: Bump oxc-project/eslint-plugin-oxlint
         uses: benc-uk/workflow-dispatch@7a027648b88c2413826b6ddd6c76114894dc5ec4 # v1.3.1
         with:
           repo: oxc-project/eslint-plugin-oxlint
           workflow: bump_oxlint.yml
-          token: ${{ secrets.OXC_BOT_PAT }}
+          token: ${{ steps.app-token.outputs.token }}
           ref: main
           inputs: '{ "version": "${{ needs.check.outputs.oxlint_version }}" }'
 
@@ -745,7 +763,7 @@ jobs:
         with:
           repo: oxc-project/oxlint-migrate
           workflow: bump_oxlint.yml
-          token: ${{ secrets.OXC_BOT_PAT }}
+          token: ${{ steps.app-token.outputs.token }}
           ref: main
           inputs: '{ "version": "${{ needs.check.outputs.oxlint_version }}" }'
 
@@ -754,7 +772,7 @@ jobs:
         with:
           repo: oxc-project/mirrors-oxlint
           workflow: main.yml
-          token: ${{ secrets.OXC_BOT_PAT }}
+          token: ${{ steps.app-token.outputs.token }}
           ref: main
 
       - name: Bump oxc-project/mirrors-oxfmt
@@ -762,5 +780,5 @@ jobs:
         with:
           repo: oxc-project/mirrors-oxfmt
           workflow: main.yml
-          token: ${{ secrets.OXC_BOT_PAT }}
+          token: ${{ steps.app-token.outputs.token }}
           ref: main

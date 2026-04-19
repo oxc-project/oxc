@@ -65,12 +65,18 @@ jobs:
       - name: Update Cargo.lock
         run: cargo check
 
+      - uses: actions/create-github-app-token@1b10c78c7865c340bc4f6099eb2f838309f1e8c3 # v3
+        id: app-token
+        with:
+          client-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
       - uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
         id: pr
         with:
           # bot account with PAT required for triggering workflow runs
           # See https://github.com/peter-evans/create-pull-request/blob/main/docs/concepts-guidelines.md#triggering-further-workflow-runs
-          token: ${{ secrets.OXC_BOT_PAT }}
+          token: ${{ steps.app-token.outputs.token }}
           commit-message: "release(crates): oxc v${{ steps.run.outputs.CRATES_VERSION }}"
           title: "release(crates): oxc v${{ steps.run.outputs.CRATES_VERSION }}"
           branch: release/crates
@@ -96,10 +102,18 @@ jobs:
           issue-number: ${{ needs.prepare.outputs.pull-request-number }}
           body: Triggering Monitor Oxc https://github.com/oxc-project/monitor-oxc/actions/workflows/ci.yml
 
+      - uses: actions/create-github-app-token@1b10c78c7865c340bc4f6099eb2f838309f1e8c3 # v3
+        id: app-token
+        with:
+          client-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: oxc-project
+          repositories: monitor-oxc
+
       - uses: benc-uk/workflow-dispatch@7a027648b88c2413826b6ddd6c76114894dc5ec4 # v1.3.1
         with:
           repo: oxc-project/monitor-oxc
           workflow: ci.yml
-          token: ${{ secrets.OXC_BOT_PAT }}
+          token: ${{ steps.app-token.outputs.token }}
           ref: main
           inputs: '{ "issue-number": "${{ needs.prepare.outputs.pull-request-number }}", "comment-id": "${{ steps.comment.outputs.comment-id }}" }'

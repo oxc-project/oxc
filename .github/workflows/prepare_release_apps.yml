@@ -57,12 +57,18 @@ jobs:
       - name: Update Cargo.lock
         run: cargo check
 
+      - uses: actions/create-github-app-token@1b10c78c7865c340bc4f6099eb2f838309f1e8c3 # v3
+        id: app-token
+        with:
+          client-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
       - uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
         id: pr
         with:
           # bot account with PAT required for triggering workflow runs
           # See https://github.com/peter-evans/create-pull-request/blob/main/docs/concepts-guidelines.md#triggering-further-workflow-runs
-          token: ${{ secrets.OXC_BOT_PAT }}
+          token: ${{ steps.app-token.outputs.token }}
           commit-message: "release(apps): oxlint v${{ steps.run.outputs.OXLINT_VERSION }} && oxfmt v${{ steps.run.outputs.OXFMT_VERSION }}"
           title: "release(apps): oxlint v${{ steps.run.outputs.OXLINT_VERSION }} && oxfmt v${{ steps.run.outputs.OXFMT_VERSION }}"
           branch: release/apps
@@ -99,11 +105,19 @@ jobs:
             Triggering Oxfmt Ecosystem CI
             https://github.com/oxc-project/oxc-ecosystem-ci/actions/workflows/oxfmt-ci.yml
 
+      - uses: actions/create-github-app-token@1b10c78c7865c340bc4f6099eb2f838309f1e8c3 # v3
+        id: app-token
+        with:
+          client-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: oxc-project
+          repositories: oxc-ecosystem-ci
+
       - uses: benc-uk/workflow-dispatch@7a027648b88c2413826b6ddd6c76114894dc5ec4 # v1.3.1
         with:
           repo: oxc-project/oxc-ecosystem-ci
           workflow: oxlint-ci.yml
-          token: ${{ secrets.OXC_BOT_PAT }}
+          token: ${{ steps.app-token.outputs.token }}
           ref: main
           inputs: '{ "issue-number": "${{ needs.prepare.outputs.pull-request-number }}", "comment-id": "${{ steps.comment-oxlint.outputs.comment-id }}" }'
 
@@ -111,7 +125,7 @@ jobs:
         with:
           repo: oxc-project/oxc-ecosystem-ci
           workflow: oxfmt-ci.yml
-          token: ${{ secrets.OXC_BOT_PAT }}
+          token: ${{ steps.app-token.outputs.token }}
           ref: main
           inputs: '{ "issue-number": "${{ needs.prepare.outputs.pull-request-number }}", "comment-id": "${{ steps.comment-oxfmt.outputs.comment-id }}" }'
 
@@ -123,10 +137,17 @@ jobs:
       actions: write
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
+      - uses: actions/create-github-app-token@1b10c78c7865c340bc4f6099eb2f838309f1e8c3 # v3
+        id: app-token
+        with:
+          client-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: oxc-project
+          repositories: website
       - uses: benc-uk/workflow-dispatch@7a027648b88c2413826b6ddd6c76114894dc5ec4 # v1.3.1
         with:
           repo: oxc-project/website
           workflow: release.yml
-          token: ${{ secrets.OXC_BOT_PAT }}
+          token: ${{ steps.app-token.outputs.token }}
           ref: main
           inputs: '{ "issue-number": "${{ needs.prepare.outputs.pull-request-number }}", "version": "${{ needs.prepare.outputs.oxlint_version }}" }'

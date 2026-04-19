@@ -281,11 +281,18 @@ jobs:
           UPDATE_SNAPSHOT: 1
         run: just coverage
 
+      - uses: actions/create-github-app-token@1b10c78c7865c340bc4f6099eb2f838309f1e8c3 # v3
+        id: app-token
+        if: steps.check-updates.outputs.updates_needed == 'true'
+        with:
+          client-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
       - name: Create Pull Request
         if: steps.check-updates.outputs.updates_needed == 'true'
         uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
         with:
-          token: ${{ secrets.OXC_BOT_PAT }}
+          token: ${{ steps.app-token.outputs.token }}
           commit-message: "chore(submodules): update submodule SHAs to latest commits"
           branch: update-submodules
           branch-suffix: timestamp

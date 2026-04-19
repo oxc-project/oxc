@@ -48,11 +48,19 @@ jobs:
             core.setOutput('ref', `refs/pull/${context.issue.number}/head`);
             core.setOutput('comment-id', comment.id);
 
+      - uses: actions/create-github-app-token@1b10c78c7865c340bc4f6099eb2f838309f1e8c3 # v3
+        id: app-token
+        with:
+          client-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: oxc-project
+          repositories: oxc-ecosystem-ci
+
       - uses: benc-uk/workflow-dispatch@7a027648b88c2413826b6ddd6c76114894dc5ec4 # v1.3.1
         with:
           repo: oxc-project/oxc-ecosystem-ci
           workflow: oxfmt-ci.yml
-          token: ${{ secrets.OXC_BOT_PAT }}
+          token: ${{ steps.app-token.outputs.token }}
           ref: main
           inputs: >-
             {
