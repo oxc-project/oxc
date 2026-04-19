@@ -360,6 +360,16 @@ fn test_fold_iife() {
     // Member-object positions have no `pure` flag of their own, but inner calls
     // along the access path still inherit the outer PURE.
     test("var a = /* @__PURE__ */ (() => foo()?.bar)()", "var a = (/* @__PURE__ */ foo())?.bar");
+    // Chain whose tail is a call and whose callee has an inner call: the outer
+    // PURE travels both onto the chain's call (codegen prints it at the front
+    // of the chain) and through the member object onto the inner `foo()`.
+    test(
+        "var a = /* @__PURE__ */ (() => foo()?.bar())()",
+        "var a = /* @__PURE__ */ (/* @__PURE__ */ foo())?.bar()",
+    );
+    // Computed-member chain index isn't recursed into by `mark_chain_element_pure`,
+    // so a call in the index position keeps no PURE annotation after inlining.
+    test("var a = /* @__PURE__ */ (() => foo?.[bar()])()", "var a = foo?.[bar()]");
     // Tagged templates have no `pure` flag, so the annotation can't hop onto
     // them — they're left without PURE after inlining.
     test("var a = /* @__PURE__ */ (() => foo``)()", "var a = foo``");
