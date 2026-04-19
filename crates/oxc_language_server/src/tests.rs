@@ -65,10 +65,6 @@ const WORKSPACE: &str = "file:///path/to/workspace";
 const WORKSPACE_2: &str = "file:///path/to/another_workspace";
 
 impl Tool for FakeTool {
-    fn name(&self) -> &'static str {
-        "FakeTool"
-    }
-
     fn execute_command(
         &self,
         command: &str,
@@ -812,7 +808,7 @@ mod test_suite {
             Some(&json!({
                 "registrations": [
                     {
-                        "id": format!("watcher-FakeTool-{WORKSPACE}"),
+                        "id": format!("watcher-{WORKSPACE}"),
                         "method": "workspace/didChangeWatchedFiles",
                         "registerOptions": {
                             "watchers": [

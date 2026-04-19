@@ -28,6 +28,8 @@ pub fn handle_alloc_error(layout: Layout) -> ! {
     panic!("encountered allocation error: {layout:?}")
 }
 
+// TODO: `Layout::repeat` was stabilized in Rust 1.95. Remove this trait and use the
+// standard library method directly once MSRV reaches 1.95.
 pub trait UnstableLayoutMethods {
     fn padding_needed_for(&self, align: usize) -> usize;
     fn repeat(&self, n: usize) -> Result<(Layout, usize), LayoutError>;
@@ -71,7 +73,7 @@ impl UnstableLayoutMethods for Layout {
     }
 
     fn array<T>(n: usize) -> Result<Layout, LayoutError> {
-        Layout::new::<T>().repeat(n).map(|(k, offs)| {
+        UnstableLayoutMethods::repeat(&Layout::new::<T>(), n).map(|(k, offs)| {
             debug_assert!(offs == mem::size_of::<T>());
             k
         })

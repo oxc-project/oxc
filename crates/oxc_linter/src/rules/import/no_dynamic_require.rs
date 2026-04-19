@@ -64,10 +64,10 @@ impl Rule for NoDynamicRequire {
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            AstKind::ImportExpression(import) => {
-                if self.esmodule && !is_static_value(&import.source) {
-                    ctx.diagnostic(no_dnyamic_require_diagnostic(import.source.span()));
-                }
+            AstKind::ImportExpression(import)
+                if self.esmodule && !is_static_value(&import.source) =>
+            {
+                ctx.diagnostic(no_dnyamic_require_diagnostic(import.source.span()));
             }
             AstKind::CallExpression(call) => {
                 if call.arguments.is_empty() {

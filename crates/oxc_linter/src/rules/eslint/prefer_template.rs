@@ -199,10 +199,8 @@ fn check_octal_escape(raw: &str) -> bool {
             }
             match bytes[i] {
                 b'1'..=b'9' => return true,
-                b'0' => {
-                    if i + 1 < bytes.len() && bytes[i + 1].is_ascii_digit() {
-                        return true;
-                    }
+                b'0' if i + 1 < bytes.len() && bytes[i + 1].is_ascii_digit() => {
+                    return true;
                 }
                 b'\\' => {
                     // Skip escaped backslash — the next char is not part of an escape

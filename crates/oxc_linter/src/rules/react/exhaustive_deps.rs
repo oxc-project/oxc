@@ -84,7 +84,7 @@ fn missing_dependency_diagnostic(
         let all_but_last = iter
             .by_ref()
             .take(deps.len() - 1)
-            .map(|s| format!("'{s}'",))
+            .map(|s| format!("'{s}'"))
             .collect::<Vec<_>>()
             .join(", ");
         let last = iter.next().unwrap();

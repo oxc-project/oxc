@@ -592,22 +592,22 @@ impl NoShadow {
 
                     break;
                 }
-                AstKind::FormalParameter(parameter) => {
-                    if binding_pattern_contains_symbol(&parameter.pattern, shadowed_symbol_span)
-                        && parameter
-                            .initializer
-                            .as_ref()
-                            .is_some_and(|init| is_in_range(init.span(), call_expression_end))
-                    {
-                        return true;
-                    }
+                AstKind::FormalParameter(parameter)
+                    if binding_pattern_contains_symbol(
+                        &parameter.pattern,
+                        shadowed_symbol_span,
+                    ) && parameter
+                        .initializer
+                        .as_ref()
+                        .is_some_and(|init| is_in_range(init.span(), call_expression_end)) =>
+                {
+                    return true;
                 }
-                AstKind::AssignmentPattern(pattern) => {
+                AstKind::AssignmentPattern(pattern)
                     if binding_pattern_contains_symbol(&pattern.left, shadowed_symbol_span)
-                        && is_in_range(pattern.right.span(), call_expression_end)
-                    {
-                        return true;
-                    }
+                        && is_in_range(pattern.right.span(), call_expression_end) =>
+                {
+                    return true;
                 }
                 kind if is_initializer_sentinel(kind) => break,
                 _ => {}
@@ -633,10 +633,10 @@ impl NoShadow {
                         return Some(initializer);
                     }
                 }
-                AstKind::AssignmentPattern(pattern) => {
-                    if binding_pattern_contains_symbol(&pattern.left, symbol_span) {
-                        return Some(&pattern.right);
-                    }
+                AstKind::AssignmentPattern(pattern)
+                    if binding_pattern_contains_symbol(&pattern.left, symbol_span) =>
+                {
+                    return Some(&pattern.right);
                 }
                 AstKind::VariableDeclarator(declarator) => {
                     if let Some(initializer) =

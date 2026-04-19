@@ -202,34 +202,32 @@ impl Rule for ConsistentTypeImports {
         if matches!(self.prefer, Prefer::NoTypeImports) {
             match node.kind() {
                 // `import type { Foo } from 'foo'`
-                AstKind::ImportDeclaration(import_decl) => {
-                    if import_decl.import_kind.is_type() {
-                        ctx.diagnostic_with_fix(
-                            avoid_import_type_diagnostic(import_decl.span),
-                            |fixer| {
-                                fix_remove_type_specifier_from_import_declaration(
-                                    fixer,
-                                    import_decl.span,
-                                    ctx,
-                                )
-                            },
-                        );
-                    }
+                AstKind::ImportDeclaration(import_decl) if import_decl.import_kind.is_type() => {
+                    ctx.diagnostic_with_fix(
+                        avoid_import_type_diagnostic(import_decl.span),
+                        |fixer| {
+                            fix_remove_type_specifier_from_import_declaration(
+                                fixer,
+                                import_decl.span,
+                                ctx,
+                            )
+                        },
+                    );
                 }
                 // import { type Foo } from 'foo'
-                AstKind::ImportSpecifier(import_specifier) => {
-                    if import_specifier.import_kind.is_type() {
-                        ctx.diagnostic_with_fix(
-                            avoid_import_type_diagnostic(import_specifier.span),
-                            |fixer| {
-                                fix_remove_type_specifier_from_import_specifier(
-                                    fixer,
-                                    import_specifier.span,
-                                    ctx,
-                                )
-                            },
-                        );
-                    }
+                AstKind::ImportSpecifier(import_specifier)
+                    if import_specifier.import_kind.is_type() =>
+                {
+                    ctx.diagnostic_with_fix(
+                        avoid_import_type_diagnostic(import_specifier.span),
+                        |fixer| {
+                            fix_remove_type_specifier_from_import_specifier(
+                                fixer,
+                                import_specifier.span,
+                                ctx,
+                            )
+                        },
+                    );
                 }
                 _ => {}
             }

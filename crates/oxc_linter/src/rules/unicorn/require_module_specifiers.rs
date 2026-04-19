@@ -66,15 +66,15 @@ impl Rule for RequireModuleSpecifiers {
                     |fixer| fix_import(fixer, import_decl),
                 );
             }
-            AstKind::ExportNamedDeclaration(export_decl) => {
-                if export_decl.declaration.is_none() && export_decl.specifiers.is_empty() {
-                    let span =
-                        find_empty_braces_in_export(ctx, export_decl).unwrap_or(export_decl.span);
-                    ctx.diagnostic_with_fix(
-                        require_module_specifiers_diagnostic(span, "export"),
-                        |fixer| fix_export(fixer, export_decl),
-                    );
-                }
+            AstKind::ExportNamedDeclaration(export_decl)
+                if export_decl.declaration.is_none() && export_decl.specifiers.is_empty() =>
+            {
+                let span =
+                    find_empty_braces_in_export(ctx, export_decl).unwrap_or(export_decl.span);
+                ctx.diagnostic_with_fix(
+                    require_module_specifiers_diagnostic(span, "export"),
+                    |fixer| fix_export(fixer, export_decl),
+                );
             }
             _ => {}
         }

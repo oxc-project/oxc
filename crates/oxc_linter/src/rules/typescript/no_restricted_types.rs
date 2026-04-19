@@ -228,16 +228,12 @@ impl Rule for NoRestrictedTypes {
                 }
             }
             // Handle empty tuple type `[]`
-            AstKind::TSTupleType(tuple) => {
-                if tuple.element_types.is_empty() {
-                    self.check_banned_types(tuple.span, ctx);
-                }
+            AstKind::TSTupleType(tuple) if tuple.element_types.is_empty() => {
+                self.check_banned_types(tuple.span, ctx);
             }
             // Handle empty object type `{}`
-            AstKind::TSTypeLiteral(lit) => {
-                if lit.members.is_empty() {
-                    self.check_banned_types(lit.span, ctx);
-                }
+            AstKind::TSTypeLiteral(lit) if lit.members.is_empty() => {
+                self.check_banned_types(lit.span, ctx);
             }
             // Handle `class X implements Banned`
             AstKind::TSClassImplements(implements) => {

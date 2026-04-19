@@ -102,20 +102,16 @@ impl Rule for NoLoneBlocks {
         }
 
         match parent_node.kind() {
-            AstKind::FunctionBody(parent) => {
-                if parent.statements.len() == 1 && stmt.body.len() == 1 {
-                    report(ctx, node, parent_node);
-                }
+            AstKind::FunctionBody(parent)
+                if parent.statements.len() == 1 && stmt.body.len() == 1 =>
+            {
+                report(ctx, node, parent_node);
             }
-            AstKind::BlockStatement(parent_statement) => {
-                if parent_statement.body.len() == 1 {
-                    report(ctx, node, parent_node);
-                }
+            AstKind::BlockStatement(parent_statement) if parent_statement.body.len() == 1 => {
+                report(ctx, node, parent_node);
             }
-            AstKind::StaticBlock(parent_statement) => {
-                if parent_statement.body.len() == 1 {
-                    report(ctx, node, parent_node);
-                }
+            AstKind::StaticBlock(parent_statement) if parent_statement.body.len() == 1 => {
+                report(ctx, node, parent_node);
             }
             _ => {}
         }

@@ -703,7 +703,7 @@ impl Oxc {
                     self.write_line("Bindings: {");
                     for (name, &symbol_id) in bindings {
                         let symbol_flags = self.scoping.symbol_flags(symbol_id);
-                        self.write_line(format!("  {name} ({symbol_id:?} {symbol_flags:?})",));
+                        self.write_line(format!("  {name} ({symbol_id:?} {symbol_flags:?})"));
                     }
                     self.write_line("}");
                 }

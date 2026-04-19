@@ -86,7 +86,7 @@ impl<'a> IsolatedDeclarations<'a> {
     pub(crate) fn transform_accessibility(
         accessibility: Option<TSAccessibility>,
     ) -> Option<TSAccessibility> {
-        if accessibility.is_none() || accessibility.is_some_and(|a| a == TSAccessibility::Public) {
+        if accessibility.is_none_or(|a| a == TSAccessibility::Public) {
             None
         } else {
             accessibility

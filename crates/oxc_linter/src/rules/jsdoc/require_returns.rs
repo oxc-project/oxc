@@ -201,15 +201,11 @@ impl Rule for RequireReturns {
             // If config disabled checking, skip
             if let AstKind::MethodDefinition(method_def) = func_def_node.kind() {
                 match method_def.kind {
-                    MethodDefinitionKind::Get => {
-                        if !config.check_getters {
-                            continue;
-                        }
+                    MethodDefinitionKind::Get if !config.check_getters => {
+                        continue;
                     }
-                    MethodDefinitionKind::Constructor => {
-                        if !config.check_constructors {
-                            continue;
-                        }
+                    MethodDefinitionKind::Constructor if !config.check_constructors => {
+                        continue;
                     }
                     _ => {}
                 }

@@ -70,10 +70,10 @@ impl Rule for PreferNumericLiterals {
         };
 
         match &call_expr.callee.without_parentheses() {
-            Expression::Identifier(ident) if ident.name == "parseInt" => {
-                if is_parse_int_call(ctx, ident, None) {
-                    check_arguments(call_expr, ctx);
-                }
+            Expression::Identifier(ident)
+                if ident.name == "parseInt" && is_parse_int_call(ctx, ident, None) =>
+            {
+                check_arguments(call_expr, ctx);
             }
             Expression::StaticMemberExpression(member_expr) => {
                 if let Expression::Identifier(ident) = &member_expr.object {

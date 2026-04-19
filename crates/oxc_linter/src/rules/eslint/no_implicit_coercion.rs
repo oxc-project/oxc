@@ -293,17 +293,16 @@ impl Rule for NoImplicitCoercion {
                     }
                 }
             }
-            AstKind::AssignmentExpression(assign_expr) => {
+            AstKind::AssignmentExpression(assign_expr)
                 // Check for foo += "" (string coercion)
                 if self.string
                     && assign_expr.operator == AssignmentOperator::Addition
                     && !self.is_allowed(AllowedOperators::PLUS)
                     && is_empty_string(&assign_expr.right)
-                {
+                => {
                     ctx.diagnostic(string_coercion_diagnostic(assign_expr.span));
                 }
-            }
-            AstKind::TemplateLiteral(template) => {
+            AstKind::TemplateLiteral(template)
                 // Check for `${foo}` (string coercion via template literal)
                 // Skip if this is a tagged template literal (e.g., tag`${foo}`)
                 if self.string
@@ -311,7 +310,7 @@ impl Rule for NoImplicitCoercion {
                     && template.quasis.len() == 2
                     && template.expressions.len() == 1
                     && !is_tagged_template(ctx, node)
-                {
+                => {
                     let first_quasi = &template.quasis[0];
                     let last_quasi = &template.quasis[1];
 
@@ -342,7 +341,6 @@ impl Rule for NoImplicitCoercion {
                         }
                     }
                 }
-            }
             _ => {}
         }
     }

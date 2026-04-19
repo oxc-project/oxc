@@ -1273,10 +1273,8 @@ impl<'a> PeepholeOptimizations {
         ctx: &mut TraverseCtx<'a>,
     ) {
         match key {
-            PropertyKey::NumericLiteral(_) => {
-                if *computed {
-                    *computed = false;
-                }
+            PropertyKey::NumericLiteral(_) if *computed => {
+                *computed = false;
             }
             PropertyKey::StringLiteral(s) => {
                 let value = s.value.as_str();

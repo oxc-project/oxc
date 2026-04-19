@@ -391,26 +391,23 @@ impl<'a> IsolatedDeclarations<'a> {
                         new_stmts.push(Statement::ImportDeclaration(new_decl));
                     }
                 }
-                Statement::VariableDeclaration(decl) => {
-                    if decl.declarations.len() > 1 {
-                        // Remove unreferenced declarations
-                        let declarations = self.ast.vec_from_iter(
-                            decl.declarations.iter().filter_map(|declarator| {
-                                transformed_variable_declarator.remove(&declarator.span)
-                            }),
-                        );
-                        if declarations.is_empty() {
-                            continue;
-                        }
-                        new_stmts.push(Statement::VariableDeclaration(
-                            self.ast.alloc_variable_declaration(
-                                decl.span,
-                                decl.kind,
-                                declarations,
-                                self.is_declare(),
-                            ),
-                        ));
+                Statement::VariableDeclaration(decl) if decl.declarations.len() > 1 => {
+                    // Remove unreferenced declarations
+                    let declarations =
+                        self.ast.vec_from_iter(decl.declarations.iter().filter_map(|declarator| {
+                            transformed_variable_declarator.remove(&declarator.span)
+                        }));
+                    if declarations.is_empty() {
+                        continue;
                     }
+                    new_stmts.push(Statement::VariableDeclaration(
+                        self.ast.alloc_variable_declaration(
+                            decl.span,
+                            decl.kind,
+                            declarations,
+                            self.is_declare(),
+                        ),
+                    ));
                 }
                 _ => {}
             }

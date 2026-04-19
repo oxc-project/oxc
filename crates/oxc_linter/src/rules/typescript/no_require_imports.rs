@@ -157,10 +157,13 @@ impl Rule for NoRequireImports {
                                 return;
                             }
                         }
-                        Argument::StringLiteral(string_literal) => {
-                            if match_argument_value_with_regex(&self.allow, &string_literal.value) {
-                                return;
-                            }
+                        Argument::StringLiteral(string_literal)
+                            if match_argument_value_with_regex(
+                                &self.allow,
+                                &string_literal.value,
+                            ) =>
+                        {
+                            return;
                         }
                         _ => {}
                     }

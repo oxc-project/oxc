@@ -388,10 +388,6 @@ pub struct ServerLinter {
 }
 
 impl Tool for ServerLinter {
-    fn name(&self) -> &'static str {
-        "linter"
-    }
-
     /// # Panics
     /// Panics if the root URI cannot be converted to a file path.
     fn handle_configuration_change(

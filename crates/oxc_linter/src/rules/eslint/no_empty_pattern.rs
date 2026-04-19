@@ -101,15 +101,14 @@ impl Rule for NoEmptyPattern {
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            AstKind::ArrayPattern(array) => {
-                if array.is_empty() {
-                    ctx.diagnostic(no_empty_array_pattern_diagnostic(array.span));
-                }
+            AstKind::ArrayPattern(array) if array.is_empty() => {
+                ctx.diagnostic(no_empty_array_pattern_diagnostic(array.span));
             }
-            AstKind::ObjectPattern(object) => {
-                if object.is_empty() && !self.is_allowed_empty_parameter_object_pattern(node, ctx) {
-                    ctx.diagnostic(no_empty_object_pattern_diagnostic(object.span));
-                }
+            AstKind::ObjectPattern(object)
+                if object.is_empty()
+                    && !self.is_allowed_empty_parameter_object_pattern(node, ctx) =>
+            {
+                ctx.diagnostic(no_empty_object_pattern_diagnostic(object.span));
             }
             _ => {}
         }

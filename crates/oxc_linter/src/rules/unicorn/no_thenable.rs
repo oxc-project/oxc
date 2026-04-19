@@ -140,10 +140,8 @@ impl Rule for NoThenable {
                         ctx.diagnostic(class(span));
                     }
                 }
-                AssignmentTarget::StaticMemberExpression(expr) => {
-                    if expr.property.name == "then" {
-                        ctx.diagnostic(class(expr.span));
-                    }
+                AssignmentTarget::StaticMemberExpression(expr) if expr.property.name == "then" => {
+                    ctx.diagnostic(class(expr.span));
                 }
                 _ => {}
             },

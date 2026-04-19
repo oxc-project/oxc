@@ -162,10 +162,8 @@ impl Rule for NoStaticElementInteractions {
                     }
                 }
             }
-            JSXAttributeValue::ExpressionContainer(_) => {
-                if self.allow_expression_values {
-                    return;
-                }
+            JSXAttributeValue::ExpressionContainer(_) if self.allow_expression_values => {
+                return;
             }
             _ => {}
         }

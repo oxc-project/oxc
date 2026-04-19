@@ -139,10 +139,6 @@ pub struct ServerFormatter {
 }
 
 impl Tool for ServerFormatter {
-    fn name(&self) -> &'static str {
-        "formatter"
-    }
-
     /// # Panics
     /// Panics if the root URI cannot be converted to a file path.
     fn handle_configuration_change(
