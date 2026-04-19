@@ -1727,7 +1727,10 @@ impl<'a> PeepholeOptimizations {
     ///
     /// - `TaggedTemplateExpression` (and any inner calls inside its `tag`),
     /// - `ArrayExpression` / `ObjectExpression` elements,
-    /// - `TemplateLiteral` interpolations.
+    /// - `TemplateLiteral` interpolations,
+    /// - `AssignmentExpression` right-hand sides (the assignment itself is
+    ///   side-effectful, so it won't drop — but if the assigned value is
+    ///   later substituted, the inner call will have lost its PURE mark).
     ///
     /// These are missed-optimization gaps rather than correctness issues —
     /// the outer call's drop is what matters for the typical pattern, and
