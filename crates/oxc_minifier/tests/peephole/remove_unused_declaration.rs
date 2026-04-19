@@ -70,11 +70,12 @@ fn remove_unused_variable_declaration() {
     test_options("var c; var removeThis = /* @__PURE__ */ (() => c ? a() : b())();", "", &options);
     test_options("var c; var removeThis = /* @__PURE__ */ (() => c || a())();", "", &options);
     test_options("var a; var removeThis = /* @__PURE__ */ (() => a?.())();", "", &options);
-    // Unary / binary: PURE forwards onto the inner call so `may_have_side_effects`
-    // on the unwrapped body is false. Binary-op `may_have_side_effects` has its
-    // own constraints (for arithmetic, ToPrimitive on unknown calls stays
-    // unknown), so we stick to a comparison operator here where the check is a
-    // pure disjunction over the operands.
+    // Unary / binary bodies: `mark_inlined_pure` flips `pure = true` on the
+    // inner call(s) themselves, so when `may_have_side_effects` walks the
+    // unwrapped `!a()` / `a() == b()` it finds no side effects and drops the
+    // declaration. `==` (and the other comparison/equality operators) is a
+    // plain disjunction over the operands; arithmetic / numeric operators
+    // are stricter and don't drop — see the negative cases at the end.
     test_options("var removeThis = /* @__PURE__ */ (() => !a())();", "", &options);
     test_options("var removeThis = /* @__PURE__ */ (() => a() == b())();", "", &options);
     // Nested calls in call/new arguments also inherit PURE; the outer call
@@ -140,6 +141,23 @@ fn remove_unused_variable_declaration() {
     );
     test_options("var keepThis = /* @__PURE__ */ (() => foo(...xs))();", "[...xs];", &options);
     test_options("var keepThis = /* @__PURE__ */ (() => foo``)();", "foo``;", &options);
+    // Arithmetic / numeric-coercing operators force `to_numeric` /
+    // `to_primitive` on each operand to detect user-visible coercion
+    // (`valueOf` / `toString` calls). For an unknown call those return
+    // `Undetermined`, so even with both inner calls marked PURE the binary /
+    // unary expression itself stays side-effectful and the var can't drop —
+    // it just collapses to the bare expression statement, with the inner
+    // PURE marks still visible.
+    test_options(
+        "var keepThis = /* @__PURE__ */ (() => a() + b())();",
+        "/* @__PURE__ */ a() + /* @__PURE__ */ b();",
+        &options,
+    );
+    test_options(
+        "var keepThis = /* @__PURE__ */ (() => +a())();",
+        "+/* @__PURE__ */ a();",
+        &options,
+    );
 }
 
 #[test]
