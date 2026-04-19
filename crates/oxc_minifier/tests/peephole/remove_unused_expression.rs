@@ -304,6 +304,9 @@ fn test_fold_iife() {
     test_same("(function () { return x })()");
 
     test("var a = /* @__PURE__ */ (() => x)()", "var a = x");
+    // Without an outer PURE, arrow-IIFE inlining still fires but nothing is
+    // marked — the inner call is inlined as-is.
+    test("var a = (() => foo())()", "var a = foo();");
     // https://github.com/oxc-project/oxc/issues/17480
     test("var a = /* @__PURE__ */ (() => foo())()", "var a = /* @__PURE__ */ foo()");
     test("var a = /* @__PURE__ */ (() => { return foo() })()", "var a = /* @__PURE__ */ foo()");
