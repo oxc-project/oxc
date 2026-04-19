@@ -123,6 +123,23 @@ fn remove_unused_variable_declaration() {
         "",
         &options,
     );
+
+    // Negative cases: PURE only covers what was inside the IIFE body. When the
+    // body itself touches state outside the call's scope — an undeclared
+    // global, an iterator-invoking spread, a tagged template — the
+    // declaration must not drop.
+    test_options(
+        "var keepThis = /* @__PURE__ */ (() => undeclaredGlobal ? a() : b())();",
+        "undeclaredGlobal;",
+        &options,
+    );
+    test_options(
+        "var keepThis = /* @__PURE__ */ (() => undeclaredGlobal || a())();",
+        "undeclaredGlobal;",
+        &options,
+    );
+    test_options("var keepThis = /* @__PURE__ */ (() => foo(...xs))();", "[...xs];", &options);
+    test_options("var keepThis = /* @__PURE__ */ (() => foo``)();", "foo``;", &options);
 }
 
 #[test]
