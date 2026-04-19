@@ -141,6 +141,11 @@ fn remove_unused_variable_declaration() {
     );
     test_options("var keepThis = /* @__PURE__ */ (() => foo(...xs))();", "[...xs];", &options);
     test_options("var keepThis = /* @__PURE__ */ (() => foo``)();", "foo``;", &options);
+    // Member-access body: the outer PURE is dropped by the inlining and the
+    // member expression has no `pure` flag of its own, so the property read on
+    // an unknown global keeps the declaration alive. Documents the
+    // missed-optimization gap noted on `mark_inlined_pure`.
+    test_options("var keepThis = /* @__PURE__ */ (() => g.x)();", "g.x;", &options);
     // Arithmetic / numeric-coercing operators force `to_numeric` /
     // `to_primitive` on each operand to detect user-visible coercion
     // (`valueOf` / `toString` calls). For an unknown call those return
