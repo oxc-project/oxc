@@ -1712,12 +1712,31 @@ impl<'a> PeepholeOptimizations {
 
     /// Take the expression being inlined out of the IIFE body. If the enclosing
     /// IIFE was pure-annotated, carry the annotation onto the inlined call/new,
-    /// recursing through container shapes (sequence/conditional/logical/unary
-    /// /binary/chain/TS wrappers) so later passes can still drop the inlined
-    /// expression. `TaggedTemplateExpression` has no `pure` flag, so PURE is
-    /// silently lost when the body is a tagged template. `manual_pure_functions`
-    /// can't match an arrow/function-expression callee, so `is_pure` here
-    /// really only reflects the outer `/* @__PURE__ */`.
+    /// recursing through:
+    ///
+    /// - container shapes (sequence/conditional/logical/unary/binary/chain/TS
+    ///   wrappers),
+    /// - `CallExpression`/`NewExpression` callees and arguments (including
+    ///   spread elements), and
+    /// - member-access object positions (static/computed/private),
+    ///
+    /// so later passes can still drop the inlined expression.
+    ///
+    /// PURE is silently lost in a few positions where the AST has no `pure`
+    /// flag of its own and the recursion stops:
+    ///
+    /// - `TaggedTemplateExpression` (and any inner calls inside its `tag`),
+    /// - `ArrayExpression` / `ObjectExpression` elements,
+    /// - `TemplateLiteral` interpolations.
+    ///
+    /// These are missed-optimization gaps rather than correctness issues —
+    /// the outer call's drop is what matters for the typical pattern, and
+    /// these shapes can't appear directly under the IIFE-result position
+    /// without breaking the drop anyway.
+    ///
+    /// `manual_pure_functions` can't match an arrow/function-expression
+    /// callee, so `is_pure` here really only reflects the outer
+    /// `/* @__PURE__ */`.
     fn take_and_propagate_pure(
         expr: &mut Expression<'a>,
         is_pure: bool,
@@ -1730,9 +1749,14 @@ impl<'a> PeepholeOptimizations {
         taken
     }
 
+    /// Recursive PURE marker. Keep in sync with [`Self::mark_chain_element_pure`].
     fn mark_inlined_pure(expr: &mut Expression<'a>) {
-        // Strip TS wrappers (and any `ParenthesizedExpression` layers) in one
-        // step so the match below only has to handle runtime-meaningful shapes.
+        // Strip TS wrappers in one step so the match below only has to handle
+        // runtime-meaningful shapes. This also strips `ParenthesizedExpression`
+        // layers, which is fine here because `normalize.rs` removes parens
+        // before this peephole runs — if this helper is ever called from a
+        // pre-normalization context, parens would silently disappear from the
+        // recursion target.
         let expr = expr.get_inner_expression_mut();
         match expr {
             Expression::CallExpression(c) => {
@@ -1784,6 +1808,9 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
+    /// Chain-element variant of [`Self::mark_inlined_pure`]. Keep the two in
+    /// sync — `ChainElement` and `Expression` overlap on `CallExpression`,
+    /// `TSNonNullExpression`, and the three member-expression variants.
     fn mark_chain_element_pure(element: &mut ChainElement<'a>) {
         match element {
             ChainElement::CallExpression(c) => {
