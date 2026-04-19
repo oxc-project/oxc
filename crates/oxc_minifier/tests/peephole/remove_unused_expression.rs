@@ -455,6 +455,14 @@ fn treeshake_options_annotations_false() {
     // Without annotations, IIFE inlining still fires but must not forward the
     // ignored PURE annotation onto the unwrapped call.
     test_options("var a = /* @__PURE__ */ (() => foo())()", "var a = foo()", &options);
+    // An inner PURE annotation that the parser already attached must survive
+    // the inlining unchanged — the annotations option only governs whether
+    // the minifier acts on the flag, not whether codegen prints it.
+    test_options(
+        "var a = /* @__PURE__ */ (() => /* @__PURE__ */ foo())()",
+        "var a = /* @__PURE__ */ foo()",
+        &options,
+    );
 
     let options = CompressOptions {
         treeshake: TreeShakeOptions { annotations: true, ..TreeShakeOptions::default() },
