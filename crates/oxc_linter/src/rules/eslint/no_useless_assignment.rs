@@ -146,6 +146,7 @@ impl Rule for NoUselessAssignment {
         let mut cfg_ops: CfgOps = IndexVec::with_capacity(num_blocks);
         cfg_ops.resize_with(num_blocks, Vec::new);
         let mut used_compact_indices: SmallVec<[u32; 32]> = SmallVec::new();
+        let mut compact_to_symbol: Vec<SymbolId> = Vec::new();
         let mut compact_to_scope: Vec<ScopeId> = Vec::new();
         let mut exported_compact_indices: SmallVec<[u32; 8]> = SmallVec::new();
         let mut captured_read_compact_indices: SmallVec<[u32; 8]> = SmallVec::new();
@@ -168,6 +169,7 @@ impl Rule for NoUselessAssignment {
 
             let compact_idx = num_tracked;
             num_tracked += 1;
+            compact_to_symbol.push(symbol_id);
             compact_to_scope.push(ctx.scoping().symbol_scope_id(symbol_id));
             if Self::is_exported(ctx, symbol_id) {
                 exported_compact_indices.push(compact_idx);
@@ -424,9 +426,14 @@ impl Rule for NoUselessAssignment {
                                         ctx.nodes().get_node(op.node).scope_id(),
                                     )
                                 {
-                                    ctx.diagnostic(no_useless_assignment_diagnostic(
-                                        ctx.nodes().get_node(op.node).span(),
-                                    ));
+                                    let symbol_id = compact_to_symbol[compact_idx];
+                                    let span =
+                                        if ctx.scoping().symbol_declaration(symbol_id) == op.node {
+                                            ctx.scoping().symbol_span(symbol_id)
+                                        } else {
+                                            ctx.nodes().get_node(op.node).span()
+                                        };
+                                    ctx.diagnostic(no_useless_assignment_diagnostic(span));
                                 }
                                 scratch_live.unset_bit(compact_idx);
                             }
@@ -1421,6 +1428,13 @@ fn test() {
                             a,
                             b = (a = 2)
                         } = obj;
+                        a = 3
+                        console.log(a, b);",
+        "const arr = [1, 2];
+                        let [
+                            a,
+                            b
+                        ] = arr;
                         a = 3
                         console.log(a, b);",
         r#"function App() {

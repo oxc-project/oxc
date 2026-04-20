@@ -40,7 +40,7 @@ impl<'a> PeepholeOptimizations {
     /// Whether the nearest non-arrow, non-block function scope is a constructor
     /// of a class that extends another class (derived class).
     /// Only derived constructors have the TDZ for `this` before `super()`.
-    fn this_is_inside_derived_constructor(ctx: &TraverseCtx<'a>) -> bool {
+    pub(crate) fn this_is_inside_derived_constructor(ctx: &TraverseCtx<'a>) -> bool {
         for scope_id in ctx.ancestor_scopes() {
             let flags = ctx.scoping().scope_flags(scope_id);
             if flags.is_block() || flags.is_arrow() {

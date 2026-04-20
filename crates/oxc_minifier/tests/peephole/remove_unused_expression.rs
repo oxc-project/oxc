@@ -40,11 +40,44 @@ fn test_remove_unused_this() {
 
     // Non-derived constructors always have `this` initialized — safe to drop.
     test("export class Foo { constructor() { this; } }", "export class Foo { constructor() {} }");
-    // Derived constructor, but `this` is after `super()` — still kept conservatively
-    // because we don't track whether `super()` has been called.
+    // Derived constructor, but `this` is after `super()` — safe to drop.
     test(
         "export class Foo extends Bar { constructor() { super(); this; } }",
-        "export class Foo extends Bar { constructor() { super(), this; } }",
+        "export class Foo extends Bar { constructor() { super(); } }",
+    );
+
+    // Non-adjacent `super()` and `this` — `this` is dropped because `super()`
+    // was called unconditionally in a preceding statement.
+    test(
+        "export class Foo extends Bar { constructor() { super(); foo(); this; } }",
+        "export class Foo extends Bar { constructor() { super(), foo(); } }",
+    );
+    // Conditional `super()` — `this` must be kept.
+    test(
+        "export class Foo extends Bar { constructor() { if (x) { super(); } this; } }",
+        "export class Foo extends Bar { constructor() { x && super(), this; } }",
+    );
+    test(
+        "export class Foo extends Bar { constructor() { x ? super() : foo(); this; } }",
+        "export class Foo extends Bar { constructor() { x ? super() : foo(), this; } }",
+    );
+    // `super()` in closure — `this` must be kept (it's before the `super()` call).
+    test(
+        "export class Foo extends Bar { constructor() { const s = () => super(); this; s(); } }",
+        "export class Foo extends Bar { constructor() { this, super(); } }",
+    );
+
+    // A regular function inside a derived constructor has its own `this` — safe to drop.
+    test(
+        "export class Foo extends Bar { constructor() { (function() { this; })(); super(); } }",
+        "export class Foo extends Bar { constructor() { super(); } }",
+    );
+
+    // Nested class constructor inside a derived constructor — the inner `this`
+    // belongs to the inner constructor, not the outer one.
+    test(
+        "export class A extends B { constructor() { class C { constructor() { this; } } super(); } }",
+        "export class A extends B { constructor() { class C { constructor() {} } super(); } }",
     );
 
     // In all other positions `this` is always initialized and can be dropped.
@@ -53,6 +86,8 @@ fn test_remove_unused_this() {
     test("export class Foo { static foo() { this; } }", "export class Foo { static foo() {} }");
     test("export class Foo { static { this; } }", "export class Foo {}");
     test("export function foo() { this; }", "export function foo() {}");
+    test("export class Foo { get bar() { this; } }", "export class Foo { get bar() {} }");
+    test("export class Foo { set bar(v) { this; } }", "export class Foo { set bar(v) {} }");
 }
 
 #[test]

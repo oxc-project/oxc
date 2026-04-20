@@ -443,6 +443,18 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
+    /// Whether an expression is or contains a `super()` call at the top level
+    /// (i.e., in a sequence expression, but not nested inside conditionals/functions).
+    fn expression_contains_super_call(expr: &Expression<'a>) -> bool {
+        match expr {
+            _ if expr.is_super_call_expression() => true,
+            Expression::SequenceExpression(seq) => {
+                seq.expressions.iter().any(Expression::is_super_call_expression)
+            }
+            _ => false,
+        }
+    }
+
     fn handle_expression_statement(
         mut expr_stmt: Box<'a, ExpressionStatement<'a>>,
         result: &mut Vec<'a, Statement<'a>>,
@@ -457,6 +469,24 @@ impl<'a> PeepholeOptimizations {
         );
         if changed {
             ctx.state.changed = true;
+        }
+
+        // In a derived constructor, `this` after an unconditional `super()` is safe to drop.
+        // Walk backwards through preceding sibling statements looking for `super()`.
+        // Only consider top-level expression statements — `super()` inside `if`/loops
+        // is conditional and doesn't guarantee `this` is initialized.
+        if matches!(expr_stmt.expression, Expression::ThisExpression(_))
+            && Self::this_is_inside_derived_constructor(ctx)
+            && result.iter().rev().any(|stmt| {
+                matches!(
+                    stmt,
+                    Statement::ExpressionStatement(prev)
+                        if Self::expression_contains_super_call(&prev.expression)
+                )
+            })
+        {
+            ctx.state.changed = true;
+            return;
         }
 
         if ctx.options().sequences
