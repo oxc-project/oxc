@@ -13,7 +13,7 @@ function topLevelFunction(param: number) {
   return localVar;
 }
 
-export module TopLevelModule {
+export namespace TopLevelModule {
   interface ConcreteInterface {
     concreteVar: number;
   }

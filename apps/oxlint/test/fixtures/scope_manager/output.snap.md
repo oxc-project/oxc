@@ -46,7 +46,7 @@
   x scope-manager-plugin(scope): TopLevelModule has 3 local variables: ConcreteInterface, GenericInterface, x. Child scopes: 1.
     ,-[files/index.ts:16:8]
  15 |     
- 16 | ,-> export module TopLevelModule {
+ 16 | ,-> export namespace TopLevelModule {
  17 | |     interface ConcreteInterface {
  18 | |       concreteVar: number;
  19 | |     }
