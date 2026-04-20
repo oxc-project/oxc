@@ -1586,9 +1586,17 @@ impl GenExpr for ObjectExpression<'_> {
                 }
                 if is_multi_line {
                     p.print_soft_newline();
+                    p.print_comments_at(item.span().start);
                     p.print_indent();
                 } else {
                     p.print_soft_space();
+                    if let Some(comments) = p.get_comments(item.span().start) {
+                        p.print_comments(&comments);
+                        if p.print_next_indent_as_space {
+                            p.print_hard_space();
+                            p.print_next_indent_as_space = false;
+                        }
+                    }
                 }
                 item.print(p, ctx);
             }

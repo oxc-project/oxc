@@ -419,6 +419,29 @@ impl NoEmptyFunction {
                     return ("function", None).into();
                 }
                 AstKind::VariableDeclarator(decl) => {
+                    if let Some(init) = &decl.init {
+                        match init.get_inner_expression() {
+                            Expression::FunctionExpression(function)
+                                if (function.r#async
+                                    && self.allow.contains(Allowed::AsyncFunctions)
+                                    || function.generator
+                                        && self.allow.contains(Allowed::GeneratorFunctions)
+                                    || !function.r#async
+                                        && !function.generator
+                                        && self.allow.contains(Allowed::Function)) =>
+                            {
+                                return ViolationInfo::default();
+                            }
+                            Expression::ArrowFunctionExpression(function)
+                                if (self.allow.contains(Allowed::ArrowFunction)
+                                    || function.r#async
+                                        && self.allow.contains(Allowed::AsyncFunctions)) =>
+                            {
+                                return ViolationInfo::default();
+                            }
+                            _ => {}
+                        }
+                    }
                     return ("function", decl.id.get_identifier_name().map(Into::into)).into();
                 }
                 _ => return ("function", None).into(),
@@ -699,19 +722,22 @@ fn test() {
             "function* foo(param: string) {}",
             Some(serde_json::json!([{ "allow": ["generatorFunctions"] }])),
         ),
-        // TODO: Fix these.
-        // (
-        //     "const foo = function*(param: string) {};",
-        //     Some(serde_json::json!([{ "allow": ["generatorFunctions"] }])),
-        // ),
-        // (
-        //     "const obj = {foo: function*(param: string) {}};",
-        //     Some(serde_json::json!([{ "allow": ["generatorFunctions"] }])),
-        // ),
-        // (
-        //     "const obj = {foo(param: string) {}};",
-        //     Some(serde_json::json!([{ "allow": ["methods"] }])),
-        // ),
+        (
+            "const foo = function(param: string) {};",
+            Some(serde_json::json!([{ "allow": ["functions"] }])),
+        ),
+        (
+            "const foo = function*(param: string) {};",
+            Some(serde_json::json!([{ "allow": ["generatorFunctions"] }])),
+        ),
+        (
+            "const obj = {foo: function*(param: string) {}};",
+            Some(serde_json::json!([{ "allow": ["generatorFunctions"] }])),
+        ),
+        (
+            "const obj = {foo(param: string) {}};",
+            Some(serde_json::json!([{ "allow": ["methods"] }])),
+        ),
         ("class A { foo(param: string) {} }", Some(serde_json::json!([{ "allow": ["methods"] }]))),
         ("class A { private foo() {} }", Some(serde_json::json!([{ "allow": ["methods"] }]))),
         ("class A { protected foo() {} }", Some(serde_json::json!([{ "allow": ["methods"] }]))),
@@ -761,11 +787,10 @@ fn test() {
                 serde_json::json!([{ "allow": ["methods", "decoratedFunctions", "overrideMethods"] }]),
             ),
         ),
-        // TODO: Fix.
-        // (
-        //     "const obj = {*foo(param: string) {}};",
-        //     Some(serde_json::json!([{ "allow": ["generatorMethods"] }])),
-        // ),
+        (
+            "const obj = {*foo(param: string) {}};",
+            Some(serde_json::json!([{ "allow": ["generatorMethods"] }])),
+        ),
         (
             "class A { *foo(param: string) {} }",
             Some(serde_json::json!([{ "allow": ["generatorMethods"] }])),
@@ -790,11 +815,10 @@ fn test() {
             "const A = class {static *foo(param: string) {}};",
             Some(serde_json::json!([{ "allow": ["generatorMethods"] }])),
         ),
-        // TODO: Fix.
-        // (
-        //     "const obj = {get foo(): string {}};",
-        //     Some(serde_json::json!([{ "allow": ["getters"] }])),
-        // ),
+        (
+            "const obj = {get foo(): string {}};",
+            Some(serde_json::json!([{ "allow": ["getters"] }])),
+        ),
         ("class A {get foo(): string {}}", Some(serde_json::json!([{ "allow": ["getters"] }]))),
         (
             "class A {static get foo(): string {}}",
@@ -840,11 +864,10 @@ fn test() {
             "const A = class extends B {static override get foo(): string {}};",
             Some(serde_json::json!([{ "allow": ["getters", "overrideMethods"] }])),
         ),
-        // TODO: Fix
-        // (
-        //     "const obj = {set foo(value: string) {}};",
-        //     Some(serde_json::json!([{ "allow": ["setters"] }])),
-        // ),
+        (
+            "const obj = {set foo(value: string) {}};",
+            Some(serde_json::json!([{ "allow": ["setters"] }])),
+        ),
         (
             "class A {set foo(value: string) {}}",
             Some(serde_json::json!([{ "allow": ["setters"] }])),
@@ -917,20 +940,18 @@ fn test() {
             "const B = class { protected constructor() {} }",
             Some(serde_json::json!([{ "allow": ["constructors", "protectedConstructors"] }])),
         ),
-        // TODO: Fix.
-        // (
-        //     "const foo = { async method(param: string) {} }",
-        //     Some(serde_json::json!([{ "allow": ["asyncMethods"] }])),
-        // ),
+        (
+            "const foo = { async method(param: string) {} }",
+            Some(serde_json::json!([{ "allow": ["asyncMethods"] }])),
+        ),
         (
             "async function a(param: string){}",
             Some(serde_json::json!([{ "allow": ["asyncFunctions"] }])),
         ),
-        // TODO: Fix
-        // (
-        //     "const foo = async function(param: string) {}",
-        //     Some(serde_json::json!([{ "allow": ["asyncFunctions"] }])),
-        // ),
+        (
+            "const foo = async function(param: string) {}",
+            Some(serde_json::json!([{ "allow": ["asyncFunctions"] }])),
+        ),
         (
             "class A { async foo(param: string) {} }",
             Some(serde_json::json!([{ "allow": ["asyncMethods"] }])),

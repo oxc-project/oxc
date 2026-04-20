@@ -77,30 +77,23 @@ impl Rule for IframeHasTitle {
         };
 
         match get_prop_value(alt_prop) {
-            Some(JSXAttributeValue::StringLiteral(str)) => {
-                if !str.value.as_str().is_empty() {
-                    return;
-                }
+            Some(JSXAttributeValue::StringLiteral(str)) if !str.value.as_str().is_empty() => {
+                return;
             }
             Some(JSXAttributeValue::ExpressionContainer(container)) => {
                 match &container.expression {
-                    JSXExpression::StringLiteral(str) => {
-                        if !str.value.is_empty() {
-                            return;
-                        }
+                    JSXExpression::StringLiteral(str) if !str.value.is_empty() => {
+                        return;
                     }
-                    JSXExpression::TemplateLiteral(tmpl) => {
+                    JSXExpression::TemplateLiteral(tmpl)
                         if !tmpl.quasis.is_empty()
                             & !tmpl.expressions.is_empty()
-                            & tmpl.quasis.iter().any(|q| !q.value.raw.as_str().is_empty())
-                        {
-                            return;
-                        }
+                            & tmpl.quasis.iter().any(|q| !q.value.raw.as_str().is_empty()) =>
+                    {
+                        return;
                     }
-                    expr @ JSXExpression::Identifier(_) => {
-                        if !expr.is_undefined() {
-                            return;
-                        }
+                    expr @ JSXExpression::Identifier(_) if !expr.is_undefined() => {
+                        return;
                     }
                     // Call expressions and member expressions are considered valid
                     // (e.g., titleGenerator('hello'), file.name, obj.prop, obj['key'])

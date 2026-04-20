@@ -608,6 +608,21 @@ fn test() {
         ("Array.fromAsync(x, function * () {})", None),
         ("Float64Array.fromAsync(x, function() {})", None),
         ("Array.fromAsync(function() {})", None),
+        (
+            "function filterNested(allItems, group) {
+  return Array.from(allItems).filter(item => {
+    let current = item.parentElement
+    while (current && current !== group) {
+      if (current.getAttribute('aria-hidden') === 'true') {
+        return false
+      }
+      current = current.parentElement
+    }
+    return true
+  })
+}",
+            None,
+        ),
     ];
 
     let fail = vec![

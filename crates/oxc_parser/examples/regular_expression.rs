@@ -52,12 +52,7 @@ impl<'a> Visit<'a> for RegularExpressionVisitor {
     }
 
     fn visit_new_expression(&mut self, new_expr: &NewExpression<'a>) {
-        if new_expr
-            .callee
-            .get_identifier_reference()
-            .filter(|ident| ident.name == "RegExp")
-            .is_some()
-        {
+        if new_expr.callee.get_identifier_reference().is_some_and(|ident| ident.name == "RegExp") {
             println!("🍀 {}", new_expr.span.source_text(&self.source_text));
 
             let pattern_span = match new_expr.arguments.first() {

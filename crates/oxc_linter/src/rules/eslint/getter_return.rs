@@ -168,15 +168,13 @@ impl GetterReturn {
                 let parent_3 = ctx.nodes().parent_node(parent_2.id());
                 // handle (X())
                 match parent_3.kind() {
-                    AstKind::ParenthesizedExpression(p) => {
-                        if Self::handle_paren_expr(&p.expression) {
-                            return true;
-                        }
+                    AstKind::ParenthesizedExpression(p)
+                        if Self::handle_paren_expr(&p.expression) =>
+                    {
+                        return true;
                     }
-                    AstKind::CallExpression(ce) => {
-                        if Self::handle_actual_expression(&ce.callee) {
-                            return true;
-                        }
+                    AstKind::CallExpression(ce) if Self::handle_actual_expression(&ce.callee) => {
+                        return true;
                     }
                     _ => {}
                 }

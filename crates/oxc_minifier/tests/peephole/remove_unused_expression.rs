@@ -168,6 +168,46 @@ fn test_logical_expression() {
     test("typeof x > 'u' || x", "");
 }
 
+// Regression tests for https://github.com/oxc-project/oxc/issues/21457.
+//
+// When `a == null && (a = b)` is converted to `a ??= b`, the LHS reference
+// must be flagged as Read; otherwise unused-removal sees zero read references
+// on the next iteration and strips the assignment, dropping the nullish guard.
+//
+// Each sub-case is a separate test so one regression doesn't mask the others.
+#[test]
+fn test_nullish_assign_preserves_guard() {
+    let options = CompressOptions::smallest();
+    test_options(
+        "let rafId; export function foo() { if (rafId == null) { rafId = requestAnimationFrame(() => { console.log('callback'); }); } }",
+        "let rafId; export function foo() { rafId ??= requestAnimationFrame(() => { console.log('callback'); }); }",
+        &options,
+    );
+    test_options(
+        "let rafId; export function foo() { if (rafId != null) {} else { rafId = requestAnimationFrame(() => { console.log('callback'); }); } }",
+        "let rafId; export function foo() { rafId ??= requestAnimationFrame(() => { console.log('callback'); }); }",
+        &options,
+    );
+    test_options(
+        "let a; export function foo() { a == null && (a = compute()); }",
+        "let a; export function foo() { a ??= compute(); }",
+        &options,
+    );
+    test_options(
+        "let a; export function foo() { a != null || (a = compute()); }",
+        "let a; export function foo() { a ??= compute(); }",
+        &options,
+    );
+    // Member LHS goes through `remove_unused_member_assignment`, not the
+    // identifier path, so it was never affected by the reference-flag bug.
+    // Still covered here to pin down expected behavior under `smallest()`.
+    test_options(
+        "export let o = {}; export function foo() { o.y == null && (o.y = compute()); }",
+        "export let o = {}; export function foo() { o.y ??= compute(); }",
+        &options,
+    );
+}
+
 #[expect(clippy::literal_string_with_formatting_args)]
 #[test]
 fn test_object_literal() {
@@ -673,4 +713,49 @@ fn test_property_write_side_effects() {
     let default_opts =
         CompressOptions { unused: CompressOptionsUnused::Remove, ..CompressOptions::smallest() };
     test_same_options("function A() {} A.from = () => {};", &default_opts);
+}
+
+#[test]
+fn test_update_expression_respects_property_read_side_effects() {
+    // `obj.prop++` performs an implicit read, so it's side-effectful when
+    // `property_read_side_effects` is `All` — even if writes are free.
+    let options = CompressOptions {
+        unused: CompressOptionsUnused::Remove,
+        treeshake: TreeShakeOptions {
+            property_write_side_effects: false,
+            property_read_side_effects: PropertyReadSideEffects::All,
+            ..TreeShakeOptions::default()
+        },
+        ..CompressOptions::smallest()
+    };
+
+    test_options(
+        "import { counter } from './c'; counter.value++; console.log(counter);",
+        "import { counter } from './c'; counter.value++, console.log(counter);",
+        &options,
+    );
+    test_options(
+        "import { counter } from './c'; ++counter.count; console.log(counter);",
+        "import { counter } from './c'; ++counter.count, console.log(counter);",
+        &options,
+    );
+    test_options(
+        "import { counter } from './c'; counter['another']--; console.log(counter);",
+        "import { counter } from './c'; counter.another--, console.log(counter);",
+        &options,
+    );
+
+    // Static block runs on class evaluation.
+    test_options(
+        "import { counter } from './c'; (class { static { ++counter.count; } }); console.log(counter);",
+        "import { counter } from './c'; (class { static { ++counter.count; } }), console.log(counter);",
+        &options,
+    );
+
+    // Computed key runs on class evaluation; class body is unused, so only the key's side effect is extracted.
+    test_options(
+        "import { counter } from './c'; class A { [counter.another++] = 123; } console.log(counter);",
+        "import { counter } from './c'; counter.another++, console.log(counter);",
+        &options,
+    );
 }

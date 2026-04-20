@@ -381,12 +381,10 @@ impl OnlyExportComponents {
                     analysis.anonymous_span = Some(class.span);
                 }
             }
-            ExportDefaultDeclarationKind::CallExpression(call_expr) => {
-                if self.is_hoc_call_expression(call_expr) {
-                    analysis.has_react_export = true;
-                } else {
-                    analysis.anonymous_span = Some(export_default.span);
-                }
+            ExportDefaultDeclarationKind::CallExpression(call_expr)
+                if self.is_hoc_call_expression(call_expr) =>
+            {
+                analysis.has_react_export = true;
             }
             ExportDefaultDeclarationKind::Identifier(ident) => {
                 let export_type =
@@ -419,12 +417,8 @@ impl OnlyExportComponents {
         let mut analysis = ExportAnalysis::default();
 
         match expr {
-            Expression::CallExpression(call_expr) => {
-                if self.is_hoc_call_expression(call_expr) {
-                    analysis.has_react_export = true;
-                } else {
-                    analysis.anonymous_span = Some(export_default.span);
-                }
+            Expression::CallExpression(call_expr) if self.is_hoc_call_expression(call_expr) => {
+                analysis.has_react_export = true;
             }
             Expression::Identifier(ident) => {
                 let export_type =

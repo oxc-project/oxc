@@ -88,3 +88,4 @@ allocator = ["dep:mimalloc-safe"]
 # - Enables test reporter.
 # - Sorts file paths before linting if oxlint is run with `--threads 1`.
 testing = ["oxc_linter/force_test_reporter"]
+ruledocs = ["oxc_linter/ruledocs"]

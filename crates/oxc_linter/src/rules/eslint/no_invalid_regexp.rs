@@ -17,9 +17,7 @@ use crate::{
 // Use the same prefix with `oxc_regular_expression` crate
 fn duplicated_flag_diagnostic(span: Span, flag: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("Invalid regular expression: Duplicated flag")
-        .with_help(
-            format!("Remove the duplicated '{flag}' flag from the regular expression flags",),
-        )
+        .with_help(format!("Remove the duplicated '{flag}' flag from the regular expression flags"))
         .with_label(span.label(format!("flag '{flag}' already specified")))
 }
 

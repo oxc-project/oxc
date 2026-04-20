@@ -40,6 +40,24 @@
       }
     },
     {
+      // TODO: enable TS strict mode for these files and remove the override
+      "files": [
+        "napi/parser/test/**",
+        "napi/parser/test-browser/**",
+        "napi/parser/vitest.config.ts",
+        "napi/parser/vitest.config.browser.ts",
+        "tasks/e2e/**"
+      ],
+      "rules": {
+        "typescript/no-useless-default-assignment": "off",
+        // TODO(camc314): there's some weird interaction between overrides
+        // and vitest/jest mappings happening here, these three lines shouldn't be necessary
+        "vitest/expect-expect": "error",
+        "vitest/no-standalone-expect": "error",
+        "vitest/no-conditional-expect": "error"
+      }
+    },
+    {
       "files": ["apps/oxlint/test/fixtures/**"],
       "rules": {
         "no-restricted-imports": [

@@ -131,23 +131,17 @@ impl Rule for AccessorPairs {
             AstKind::ObjectExpression(obj) => {
                 self.check_object_expression(obj, ctx);
             }
-            AstKind::ClassBody(class_body) => {
-                if self.enforce_for_class_members {
-                    self.check_class_body(class_body, ctx);
-                }
+            AstKind::ClassBody(class_body) if self.enforce_for_class_members => {
+                self.check_class_body(class_body, ctx);
             }
             AstKind::CallExpression(call) => {
                 self.check_call_expression(call, node, ctx);
             }
-            AstKind::TSInterfaceBody(interface_body) => {
-                if self.enforce_for_ts_types {
-                    self.check_ts_signatures(&interface_body.body, ctx);
-                }
+            AstKind::TSInterfaceBody(interface_body) if self.enforce_for_ts_types => {
+                self.check_ts_signatures(&interface_body.body, ctx);
             }
-            AstKind::TSTypeLiteral(type_literal) => {
-                if self.enforce_for_ts_types {
-                    self.check_ts_type_literal(type_literal, ctx);
-                }
+            AstKind::TSTypeLiteral(type_literal) if self.enforce_for_ts_types => {
+                self.check_ts_type_literal(type_literal, ctx);
             }
             _ => {}
         }

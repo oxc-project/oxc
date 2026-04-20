@@ -24,10 +24,10 @@ describe("LSP initialization", () => {
   });
 
   it.each([
-    [undefined, [".oxfmtrc.json", ".oxfmtrc.jsonc", "oxfmt.config.ts", ".editorconfig"]],
+    [undefined, ["**/.oxfmtrc.json", "**/.oxfmtrc.jsonc", "**/oxfmt.config.ts", ".editorconfig"]],
     [
       { "fmt.configPath": "" },
-      [".oxfmtrc.json", ".oxfmtrc.jsonc", "oxfmt.config.ts", ".editorconfig"],
+      ["**/.oxfmtrc.json", "**/.oxfmtrc.jsonc", "**/oxfmt.config.ts", ".editorconfig"],
     ],
     [{ "fmt.configPath": "./custom-config.json" }, ["./custom-config.json", ".editorconfig"]],
   ])(
@@ -49,7 +49,7 @@ describe("LSP initialization", () => {
       const registrations = await client.getDynamicRegistration();
       expect(registrations).toEqual([
         {
-          id: `watcher-formatter-${dirUri}`,
+          id: `watcher-${dirUri}`,
           method: "workspace/didChangeWatchedFiles",
           registerOptions: {
             watchers: expectedPatterns.map((pattern) => ({

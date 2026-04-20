@@ -301,8 +301,8 @@ pub trait RuleMeta {
 
     /// The version of oxlint in which this rule was first available.
     ///
-    /// Defaults to `None`. Set via `version = "x.y.z"` in `declare_oxc_lint!`.
-    const VERSION: Option<&'static str> = None;
+    /// Set via `version = "x.y.z"` or `version = "next"` in `declare_oxc_lint!`.
+    const VERSION: &'static str;
 }
 
 /// Rule categories defined by rust-clippy

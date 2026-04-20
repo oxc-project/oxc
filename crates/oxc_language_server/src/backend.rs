@@ -236,10 +236,9 @@ impl LanguageServer for Backend {
 
                 for uri in &known_uris {
                     // Check if this worker is the most specific one for this URI
-                    let responsible_worker = WorkerManager::find_worker_for_uri(workers, uri);
-                    if responsible_worker.is_none_or(|w| !std::ptr::eq(w, worker)) {
+                    let Some(worker) = self.worker_manager.get_worker_for_uri(uri).await else {
                         continue;
-                    }
+                    };
                     let document = {
                         let fs_guard = self.file_system.read().await;
                         fs_guard.get_document(uri)
@@ -440,7 +439,6 @@ impl LanguageServer for Backend {
     ///
     /// See: <https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_didChangeWatchedFiles>
     async fn did_change_watched_files(&self, params: DidChangeWatchedFilesParams) {
-        let workers = self.worker_manager.read_workers().await;
         // ToDo: what if an empty changes flag is passed?
         debug!("watched file did change");
 
@@ -462,7 +460,7 @@ impl LanguageServer for Backend {
             // We do not expect multiple changes from the same workspace folder.
             // If we should consider it, we need to map the events to the workers first,
             // to only restart the internal linter / diagnostics for once
-            let Some(worker) = WorkerManager::find_worker_for_uri(&workers, &file_event.uri) else {
+            let Some(worker) = self.worker_manager.get_worker_for_uri(&file_event.uri).await else {
                 continue;
             };
             let (diagnostics, registrations, unregistrations) = worker

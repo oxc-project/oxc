@@ -79,6 +79,10 @@ impl Rule for PreferDomNodeRemove {
 
         // Check if the callee object (the thing `.removeChild()` is called on) is a non-DOM type
         if let Some(member_expr) = call_expr.callee.get_member_expr() {
+            if member_expr.is_computed() {
+                return;
+            }
+
             let object = member_expr.object().without_parentheses();
             if is_non_dom_node(object) {
                 return;
@@ -113,8 +117,7 @@ fn test() {
         "new parentNode.removeChild(bar);",
         "removeChild(foo);",
         // `callee.property` is not an `Identifier`
-        // TODO: Get this passing.
-        // "parentNode['removeChild'](bar);",
+        "parentNode['removeChild'](bar);",
         // Computed
         "parentNode[removeChild](bar);",
         "parentNode.foo(bar);",

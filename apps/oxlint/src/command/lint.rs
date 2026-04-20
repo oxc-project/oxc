@@ -266,8 +266,6 @@ fn default_output_format() -> Result<OutputFormat, std::convert::Infallible> {
         Ok(OutputFormat::Default)
     } else if std::env::var("GITHUB_ACTIONS").ok().is_some_and(|value| value == "true") {
         Ok(OutputFormat::Github)
-    } else if std::env::var("GITLAB_CI").ok().is_some_and(|value| value == "true") {
-        Ok(OutputFormat::Gitlab)
     } else {
         Ok(OutputFormat::Default)
     }

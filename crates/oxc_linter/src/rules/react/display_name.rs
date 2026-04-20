@@ -631,26 +631,24 @@ fn is_anonymous_export_component(
     ignore_transpiler_name: bool,
 ) -> Option<ReactComponentInfo> {
     match &export.declaration {
-        ExportDefaultDeclarationKind::ArrowFunctionExpression(func) => {
+        ExportDefaultDeclarationKind::ArrowFunctionExpression(func)
             // Uses visitor pattern to handle JSX in nested control flow
-            if function_body_contains_jsx(&func.body) {
+            if function_body_contains_jsx(&func.body) => {
                 return Some(ReactComponentInfo {
                     span: export.span,
                     is_context: false,
                     name: None,
                 });
             }
-        }
-        ExportDefaultDeclarationKind::FunctionExpression(func) => {
+        ExportDefaultDeclarationKind::FunctionExpression(func)
             // Uses visitor pattern to handle JSX in nested control flow
-            if function_contains_jsx(func) && (func.id.is_none() || ignore_transpiler_name) {
+            if function_contains_jsx(func) && (func.id.is_none() || ignore_transpiler_name) => {
                 return Some(ReactComponentInfo {
                     span: export.span,
                     is_context: false,
                     name: None,
                 });
             }
-        }
         ExportDefaultDeclarationKind::FunctionDeclaration(func) => {
             if let Some(name) = &func.id
                 && ignore_transpiler_name
@@ -727,26 +725,24 @@ fn is_module_exports_component(
         && member.property.name == "exports"
     {
         match &assign.right {
-            Expression::ArrowFunctionExpression(func) => {
+            Expression::ArrowFunctionExpression(func)
                 // Uses visitor pattern to handle JSX in nested control flow
-                if function_body_contains_jsx(&func.body) {
+                if function_body_contains_jsx(&func.body) => {
                     return Some(ReactComponentInfo {
                         span: assign.span,
                         is_context: false,
                         name: None,
                     });
                 }
-            }
-            Expression::FunctionExpression(func) => {
+            Expression::FunctionExpression(func)
                 // Uses visitor pattern to handle JSX in nested control flow
-                if function_contains_jsx(func) && (func.id.is_none() || ignore_transpiler_name) {
+                if function_contains_jsx(func) && (func.id.is_none() || ignore_transpiler_name) => {
                     return Some(ReactComponentInfo {
                         span: assign.span,
                         is_context: false,
                         name: None,
                     });
                 }
-            }
             Expression::CallExpression(call) => {
                 if let Some(callee_name) = call.callee_name() {
                     if callee_name == "createClass" || callee_name == "createReactClass" {

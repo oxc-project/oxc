@@ -162,7 +162,7 @@ pub struct Interned<'a>(&'a [FormatElement<'a>]);
 
 impl<'a> Interned<'a> {
     pub(super) fn new(content: ArenaVec<'a, FormatElement<'a>>) -> Self {
-        Self(content.into_bump_slice())
+        Self(content.into_arena_slice())
     }
 }
 
@@ -336,7 +336,7 @@ impl<'a> BestFittingElement<'a> {
             "Requires at least the least expanded and most expanded variants"
         );
 
-        Self { variants: variants.into_bump_slice() }
+        Self { variants: variants.into_arena_slice() }
     }
 
     /// Returns the most expanded variant

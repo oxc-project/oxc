@@ -21,6 +21,7 @@ for (let i = 0; i <= 64; i++) stringDecodeArrays[i] = Array(i).fill(0);
 
 const NodeProto = Object.create(Object.prototype, {
   loc: {
+    // Note: Not configurable
     get() {
       return getNodeLoc(this);
     },
@@ -4967,6 +4968,7 @@ function deserializeTSModuleDeclaration(pos) {
       __proto__: NodeProto,
       type: "TSModuleDeclaration",
       id: null,
+      // No `body` field
       kind,
       declare,
       global: false,

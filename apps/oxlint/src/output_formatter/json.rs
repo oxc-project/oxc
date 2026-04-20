@@ -30,6 +30,8 @@ impl InternalFormatter for JsonOutputFormatter {
             fix: String,
             default: bool,
             docs_url: CompactStr,
+            #[cfg(feature = "ruledocs")]
+            version: &'a str,
         }
 
         // Determine which rules are turned on by default (same logic as RuleTable)
@@ -58,6 +60,8 @@ impl InternalFormatter for JsonOutputFormatter {
                     rule.name()
                 )
                 .into(),
+                #[cfg(feature = "ruledocs")]
+                version: rule.version(),
             })
             .collect();
 

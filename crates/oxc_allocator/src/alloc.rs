@@ -1,4 +1,4 @@
-// All methods just delegate to `Bump`'s methods
+// All methods just delegate to `Arena`'s methods
 #![expect(clippy::inline_always)]
 
 use std::{
@@ -8,7 +8,7 @@ use std::{
 
 use allocator_api2::alloc::Allocator;
 
-use crate::bump::Bump;
+use crate::arena::Arena;
 
 /// Trait describing an allocator.
 ///
@@ -82,10 +82,10 @@ pub trait Alloc {
     ) -> NonNull<u8>;
 }
 
-/// Implement [`Alloc`] for [`Bump`].
+/// Implement [`Alloc`] for [`Arena`].
 ///
-/// All methods except `alloc` delegate to [`Bump`]'s impl of `allocator_api2`'s [`Allocator`] trait.
-impl Alloc for Bump {
+/// All methods except `alloc` delegate to [`Arena`]'s impl of `allocator_api2`'s [`Allocator`] trait.
+impl Alloc for Arena {
     /// Allocate space for an object with the given [`Layout`].
     ///
     /// The returned pointer points at uninitialized memory, and should be initialized

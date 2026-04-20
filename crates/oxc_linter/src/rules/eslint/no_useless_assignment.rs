@@ -148,6 +148,7 @@ impl Rule for NoUselessAssignment {
         let mut used_compact_indices: SmallVec<[u32; 32]> = SmallVec::new();
         let mut compact_to_scope: Vec<ScopeId> = Vec::new();
         let mut exported_compact_indices: SmallVec<[u32; 8]> = SmallVec::new();
+        let mut captured_read_compact_indices: SmallVec<[u32; 8]> = SmallVec::new();
 
         for symbol_id in ctx.scoping().symbol_ids() {
             let decl_node = ctx.symbol_declaration(symbol_id);
@@ -206,7 +207,9 @@ impl Rule for NoUselessAssignment {
                             compact_idx,
                             var_decl,
                             decl_node,
+                            compact_to_scope[compact_idx as usize],
                             &mut used_compact_indices,
+                            &mut captured_read_compact_indices,
                         );
                         continue;
                     }
@@ -218,7 +221,9 @@ impl Rule for NoUselessAssignment {
                         compact_idx,
                         var_decl,
                         decl_node,
+                        compact_to_scope[compact_idx as usize],
                         &mut used_compact_indices,
+                        &mut captured_read_compact_indices,
                     );
                     pending_assignment_lhs = None;
                 }
@@ -233,7 +238,9 @@ impl Rule for NoUselessAssignment {
                             compact_idx,
                             var_decl,
                             decl_node,
+                            compact_to_scope[compact_idx as usize],
                             &mut used_compact_indices,
+                            &mut captured_read_compact_indices,
                         );
                     }
                     pending_assignment_lhs = Some(reference);
@@ -246,7 +253,9 @@ impl Rule for NoUselessAssignment {
                         compact_idx,
                         var_decl,
                         decl_node,
+                        compact_to_scope[compact_idx as usize],
                         &mut used_compact_indices,
+                        &mut captured_read_compact_indices,
                     );
                 }
             }
@@ -260,7 +269,9 @@ impl Rule for NoUselessAssignment {
                     compact_idx,
                     var_decl,
                     decl_node,
+                    compact_to_scope[compact_idx as usize],
                     &mut used_compact_indices,
+                    &mut captured_read_compact_indices,
                 );
             }
         }
@@ -282,6 +293,11 @@ impl Rule for NoUselessAssignment {
         let mut exported_symbols = BitSet::new_in(num_tracked, &allocator);
         for idx in &exported_compact_indices {
             exported_symbols.set_bit(*idx as usize);
+        }
+
+        let mut captured_read_symbols = BitSet::new_in(num_tracked, &allocator);
+        for idx in &captured_read_compact_indices {
+            captured_read_symbols.set_bit(*idx as usize);
         }
 
         let mut cfg_traverse_state: CfgTraverseState<'_> =
@@ -400,6 +416,7 @@ impl Rule for NoUselessAssignment {
                                 if !scratch_live.has_bit(compact_idx)
                                     && !scratch_catch.has_bit(compact_idx)
                                     && !exported_symbols.has_bit(compact_idx)
+                                    && !captured_read_symbols.has_bit(compact_idx)
                                     && !Self::is_in_try_block(graph, block_node_id)
                                     && Self::has_same_parent_variable_scope(
                                         ctx,
@@ -452,7 +469,9 @@ impl NoUselessAssignment {
         compact_idx: u32,
         var_decl: &oxc_ast::ast::VariableDeclarator,
         decl_node: &oxc_semantic::AstNode,
+        symbol_scope: ScopeId,
         used_compact_indices: &mut SmallVec<[u32; 32]>,
+        captured_read_compact_indices: &mut SmallVec<[u32; 8]>,
     ) {
         let op_node = reference.node_id();
 
@@ -462,6 +481,14 @@ impl NoUselessAssignment {
                 .expect("expected a valid node id in graph");
             cfg_ops[ref_block].push(OpAtNode { op: Operation::Read, node: op_node, compact_idx });
             used_compact_indices.push(compact_idx);
+            if !Self::has_same_parent_variable_scope(
+                ctx,
+                symbol_scope,
+                ctx.nodes().get_node(op_node).scope_id(),
+            ) && !captured_read_compact_indices.contains(&compact_idx)
+            {
+                captured_read_compact_indices.push(compact_idx);
+            }
         }
 
         if reference.is_write() {
@@ -1117,6 +1144,26 @@ fn test() {
                 }
             }
         ",
+        "function createStore() {
+                        const options = { onTrigger: undefined };
+                        let isListening = false;
+                        options.onTrigger = () => {
+                            if (isListening) {
+                                console.log('event');
+                            }
+                        };
+                        isListening = true;
+                        return options;
+                    }",
+        "let state = 0;
+                    const api = { read: () => state };
+                    state = 1;
+                    export { api };",
+        "function foo() {
+                        let x = 0;
+                        (() => console.log(x))();
+                        x = 1;
+                    }",
     ];
 
     let fail = vec![
@@ -1435,7 +1482,7 @@ fn test() {
                         x = 1;
                         x = 2;
                         return <A prop={x} />;
-                        }", // { "parserOptions": { "ecmaFeatures": { "jsx": true }, }, }
+                        }", // { "parserOptions": { "ecmaFeatures": { "jsx": true }, }, },
     ];
 
     Tester::new(NoUselessAssignment::NAME, NoUselessAssignment::PLUGIN, pass, fail)
