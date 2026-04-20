@@ -16,7 +16,7 @@ use crate::{context::LintContext, rule::Rule};
 fn no_importing_vitest_globals_diagnostic(spans: &[Span]) -> OxcDiagnostic {
     let help = format!("You can import anything except `{}`.", VITEST_GLOBALS.join(", "));
 
-    OxcDiagnostic::warn("Do not import/require global functions from 'vitest'.")
+    OxcDiagnostic::warn("Do not `import`/`require` global functions from 'vitest'.")
         .with_help(help)
         .with_labels(spans.iter().map(|span| span.label("Remove this global vitest import")))
 }
@@ -27,18 +27,22 @@ pub struct NoImportingVitestGlobals;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// The rule disallows import any vitest global function.
+    /// The rule disallows importing any vitest global functions.
     ///
     /// ### Why is this bad?
     ///
-    /// If the project is configured to use globals from vitest, the rule ensure
-    /// that never imports the globals from `import` or `require`.
+    /// If a project is [configured to provide Vitest functions as globals](https://vitest.dev/config/globals.html),
+    /// this rule can be used to ensure that the globals are never imported
+    /// via `import` or `require`.
+    ///
+    /// Note that this rule should *not* be used if the `globals` config
+    /// option is set to `false` in Vitest (`false` is the default configuration).
     ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```js
-    /// import { test, expect } from 'vitest'
+    /// import { test, expect } from 'vitest';
     ///
     /// test('foo', () => {
     ///   expect(1).toBe(1)
@@ -46,7 +50,7 @@ declare_oxc_lint!(
     /// ```
     ///
     /// ```js
-    /// const { test, expect } = require('vitest')
+    /// const { test, expect } = require('vitest');
     ///
     /// test('foo', () => {
     ///   expect(1).toBe(1)

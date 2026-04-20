@@ -302,10 +302,34 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     fn parse_type_parameter_of_infer_type(&mut self) -> Box<'a, TSTypeParameter<'a>> {
         let span = self.start_span();
         let name = self.parse_binding_identifier();
-        let constraint = self.try_parse(Self::try_parse_constraint_of_infer_type).unwrap_or(None);
+        let constraint = self.parse_constraint_of_infer_type();
         let span = self.end_span(span);
 
         self.ast.alloc_ts_type_parameter(span, name, constraint, None, false, false, false)
+    }
+
+    /// Parse the `extends U` constraint of an `infer T extends U` type.
+    ///
+    /// Returns `None` when:
+    ///
+    ///   * the current token is not `extends`, or
+    ///   * we're in a conditional-type-allowed context and the constraint
+    ///     we'd have parsed is followed by `?`, meaning `extends` actually
+    ///     belongs to an enclosing conditional (`infer T extends U ? A : B`).
+    ///     In this case the parsed constraint is rewound.
+    fn parse_constraint_of_infer_type(&mut self) -> Option<TSType<'a>> {
+        if !self.at(Kind::Extends) {
+            return None;
+        }
+        let checkpoint = self.checkpoint();
+        self.bump_any();
+        let constraint = self.context_add(Context::DisallowConditionalTypes, Self::parse_ts_type);
+        if self.ctx.has_disallow_conditional_types() || !self.at(Kind::Question) {
+            Some(constraint)
+        } else {
+            self.rewind(checkpoint);
+            None
+        }
     }
 
     fn parse_postfix_type_or_higher(&mut self) -> TSType<'a> {
@@ -372,10 +396,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             | Kind::Object
             // Parse `null` as `TSNullKeyword` instead of null literal to align with typescript eslint.
             | Kind::Null => {
-                if let Some(ty) = self.try_parse(Self::parse_keyword_and_no_dot) {
-                    ty
-                } else {
+                if self.lexer.peek_token().kind() == Kind::Dot {
                     self.parse_type_reference()
+                } else {
+                    self.parse_keyword_type()
                 }
             }
             // TODO: js doc types: `JSDocAllType`, `JSDocFunctionType`
@@ -461,9 +485,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.cur_kind().is_identifier_name() && !self.cur_token().is_on_new_line()
     }
 
-    fn parse_keyword_and_no_dot(&mut self) -> TSType<'a> {
+    fn parse_keyword_type(&mut self) -> TSType<'a> {
         let span = self.start_span();
-        let ty = match self.cur_kind() {
+        match self.cur_kind() {
             Kind::Any => {
                 self.bump_any();
                 self.ast.ts_type_any_keyword(self.end_span(span))
@@ -508,12 +532,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 self.bump_any();
                 self.ast.ts_type_null_keyword(self.end_span(span))
             }
-            _ => return self.unexpected(),
-        };
-        if self.at(Kind::Dot) {
-            return self.unexpected();
+            _ => self.unexpected(),
         }
-        ty
     }
 
     fn is_start_of_type(&mut self, in_start_of_parameter: bool) -> bool {
@@ -856,31 +876,39 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         None
     }
 
+    /// Speculatively parse a `<T, U>` type-argument list in an expression
+    /// position (e.g. `foo<T>(arg)` vs `foo < T`). Returns `None` and rewinds
+    /// any parser/lexer state when the upcoming tokens turn out not to be a
+    /// valid type-argument list.
     pub(crate) fn parse_type_arguments_in_expression(
         &mut self,
-    ) -> Box<'a, TSTypeParameterInstantiation<'a>> {
+    ) -> Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
+        let checkpoint = self.checkpoint();
         let span = self.start_span();
         if !self.re_lex_ts_l_angle() {
-            return self.unexpected();
+            self.rewind(checkpoint);
+            return None;
         }
         let opening_span = self.cur_token().span();
         self.expect(Kind::LAngle);
         let (params, _) =
             self.parse_delimited_list(Kind::RAngle, Kind::Comma, opening_span, Self::parse_ts_type);
-        // `a < b> = c`` is valid but `a < b >= c` is BinaryExpression
+        // `a < b> = c` is valid but `a < b >= c` is BinaryExpression
         if matches!(self.re_lex_right_angle(), Kind::GtEq) {
-            return self.unexpected();
+            self.rewind(checkpoint);
+            return None;
         }
         self.re_lex_ts_r_angle();
         self.expect(Kind::RAngle);
-        if !self.can_follow_type_arguments_in_expr() {
-            return self.unexpected();
+        if self.fatal_error.is_some() || !self.can_follow_type_arguments_in_expr() {
+            self.rewind(checkpoint);
+            return None;
         }
         let span = self.end_span(span);
         if params.is_empty() {
             self.error(diagnostics::ts_empty_type_argument_list(span));
         }
-        self.ast.alloc_ts_type_parameter_instantiation(span, params)
+        Some(self.ast.alloc_ts_type_parameter_instantiation(span, params))
     }
 
     fn can_follow_type_arguments_in_expr(&mut self) -> bool {
@@ -1252,17 +1280,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.ast.object_expression(self.end_span(span), properties)
     }
 
-    fn try_parse_constraint_of_infer_type(&mut self) -> Option<TSType<'a>> {
-        if self.eat(Kind::Extends) {
-            let constraint =
-                self.context_add(Context::DisallowConditionalTypes, Self::parse_ts_type);
-            if self.ctx.has_disallow_conditional_types() || !self.at(Kind::Question) {
-                return Some(constraint);
-            }
-        }
-        self.unexpected()
-    }
-
     pub(crate) fn parse_ts_return_type_annotation(
         &mut self,
     ) -> Option<Box<'a, TSTypeAnnotation<'a>>> {
@@ -1281,11 +1298,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     fn parse_type_or_type_predicate(&mut self) -> TSType<'a> {
         let span = self.start_span();
-        let type_predicate_variable = if self.cur_kind().is_identifier_name() {
-            self.try_parse(Self::parse_type_predicate_prefix)
-        } else {
-            None
-        };
+        let type_predicate_variable = self.parse_type_predicate_prefix();
 
         let ty = self.parse_ts_type();
         if let Some(parameter_name) = type_predicate_variable {
@@ -1300,19 +1313,25 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         ty
     }
 
-    fn parse_type_predicate_prefix(&mut self) -> TSTypePredicateName<'a> {
+    /// Parse `<ident> is` or `this is` prefix of a type predicate.
+    /// Returns `None` (without consuming anything) when the current token is
+    /// not followed by `is` on the same line.
+    fn parse_type_predicate_prefix(&mut self) -> Option<TSTypePredicateName<'a>> {
+        if !self.cur_kind().is_identifier_name() {
+            return None;
+        }
+        let next = self.lexer.peek_token();
+        if next.kind() != Kind::Is || next.is_on_new_line() {
+            return None;
+        }
         let parameter_name = if self.at(Kind::This) {
             TSTypePredicateName::This(self.parse_this_type_node())
         } else {
             let ident_name = self.parse_identifier_name();
             TSTypePredicateName::Identifier(self.alloc(ident_name))
         };
-        let token = self.cur_token();
-        if token.kind() == Kind::Is && !token.is_on_new_line() {
-            self.bump_any();
-            return parameter_name;
-        }
-        self.unexpected()
+        self.bump_any(); // bump `is`
+        Some(parameter_name)
     }
 
     pub(super) fn parse_signature_member(

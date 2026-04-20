@@ -323,22 +323,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.fatal_error = fatal_error;
     }
 
-    pub(crate) fn try_parse<T>(
-        &mut self,
-        func: impl FnOnce(&mut ParserImpl<'a, C>) -> T,
-    ) -> Option<T> {
-        let checkpoint = self.checkpoint_with_error_recovery();
-        let ctx = self.ctx;
-        let node = func(self);
-        if self.fatal_error.is_none() {
-            Some(node)
-        } else {
-            self.ctx = ctx;
-            self.rewind(checkpoint);
-            None
-        }
-    }
-
     pub(crate) fn lookahead<U>(&mut self, predicate: impl Fn(&mut ParserImpl<'a, C>) -> U) -> U {
         let checkpoint = self.checkpoint();
         let answer = predicate(self);
