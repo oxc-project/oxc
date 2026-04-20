@@ -4,6 +4,17 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.61.0] - 2026-04-20
+
+### 🐛 Bug Fixes
+
+- 00fc136 codegen: Preserve coverage comments before object properties (#21312) (bab)
+- a56b7b9 oxlint: Dont enable gitlab formatter by default (#21501) (camc314)
+
+### 📚 Documentation
+
+- c1eeae3 linter: Add version to `rule.json` (#21547) (camchenry)
+
 ## [1.60.0] - 2026-04-13
 
 ### 💥 BREAKING CHANGES
