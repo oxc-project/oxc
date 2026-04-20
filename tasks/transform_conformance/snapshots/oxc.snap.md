@@ -1482,10 +1482,28 @@ after transform: ["Function", "babelHelpers"]
 rebuilt        : ["babelHelpers", "dec"]
 
 * typescript/method/decoratorOnClassMethod11/input.ts
-x Output mismatch
+
+  x TS(1540): A 'namespace' declaration should not be declared using the
+  | 'module' keyword. Please use the 'namespace' keyword instead.
+   ,-[tasks/transform_conformance/tests/legacy-decorators/test/fixtures/typescript/method/decoratorOnClassMethod11/input.ts:3:1]
+ 2 | // @experimentaldecorators: true
+ 3 | module M {
+   : ^^^^^^
+ 4 |     class C {
+   `----
+
 
 * typescript/method/decoratorOnClassMethod12/input.ts
-x Output mismatch
+
+  x TS(1540): A 'namespace' declaration should not be declared using the
+  | 'module' keyword. Please use the 'namespace' keyword instead.
+   ,-[tasks/transform_conformance/tests/legacy-decorators/test/fixtures/typescript/method/decoratorOnClassMethod12/input.ts:3:1]
+ 2 | // @experimentaldecorators: true
+ 3 | module M {
+   : ^^^^^^
+ 4 |     class S {
+   `----
+
 
 * typescript/method/decoratorOnClassMethod13/input.ts
 Bindings mismatch:

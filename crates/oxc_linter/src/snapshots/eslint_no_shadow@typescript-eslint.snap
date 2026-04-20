@@ -323,7 +323,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                           ─┬─
    ·                            ╰── shadowed declaration is here
  3 │ 
- 4 │             module bar {
+ 4 │             namespace bar {
  5 │               export interface Foo {
    ·                                ─┬─
    ·                                 ╰── 'Foo' is declared here

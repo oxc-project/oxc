@@ -693,7 +693,7 @@ fn test() {
         ),
         (
             "
-            declare module foo {
+            declare namespace foo {
               function f(): void;
               function f(x: string): string;
               function f(x?: string): string | void {

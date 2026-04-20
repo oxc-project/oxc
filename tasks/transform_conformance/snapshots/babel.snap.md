@@ -1268,9 +1268,16 @@ after transform: ScopeId(0): ["E"]
 rebuilt        : ScopeId(0): []
 
 * declarations/erased/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["C", "E", "M", "N", "f", "x"]
-rebuilt        : ScopeId(0): []
+
+  x TS(1540): A 'namespace' declaration should not be declared using the
+  | 'module' keyword. Please use the 'namespace' keyword instead.
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/declarations/erased/input.ts:7:9]
+ 6 | declare module "m" {}
+ 7 | declare module M {}
+   :         ^^^^^^
+ 8 | declare namespace N {}
+   `----
+
 
 * declarations/export-declare-enum/input.ts
 Bindings mismatch:

@@ -3473,7 +3473,7 @@ fn test_typescript_eslint() {
             "
             import type { Foo } from 'bar';
 
-            module bar {
+            namespace bar {
               export interface Foo {
                 x: string;
               }
