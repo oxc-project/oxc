@@ -1,7 +1,7 @@
 use oxc_allocator::Allocator;
 use oxc_benchmark::{BenchmarkId, Criterion, criterion_group, criterion_main};
 use oxc_formatter::{
-    FormatOptions, Formatter, JsdocOptions, SortImportsOptions, get_parse_options,
+    Formatter, JsFormatOptions, JsdocOptions, SortImportsOptions, get_parse_options,
 };
 use oxc_parser::Parser;
 use oxc_tasks_common::TestFiles;
@@ -21,7 +21,7 @@ fn bench_formatter(criterion: &mut Criterion) {
                     .with_options(get_parse_options())
                     .parse()
                     .program;
-                let format_options = FormatOptions {
+                let format_options = JsFormatOptions {
                     sort_imports: Some(SortImportsOptions::default()),
                     jsdoc: Some(JsdocOptions::default()),
                     ..Default::default()

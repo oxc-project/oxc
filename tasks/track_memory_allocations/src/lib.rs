@@ -7,7 +7,7 @@ use humansize::{DECIMAL, format_size};
 use mimalloc_safe::MiMalloc;
 
 use oxc_allocator::Allocator;
-use oxc_formatter::{FormatOptions, Formatter, get_parse_options as get_formatter_parse_options};
+use oxc_formatter::{Formatter, JsFormatOptions, get_parse_options as get_formatter_parse_options};
 use oxc_minifier::{CompressOptions, MangleOptions, Minifier, MinifierOptions};
 use oxc_parser::{ParseOptions, Parser};
 use oxc_semantic::SemanticBuilder;
@@ -172,7 +172,7 @@ pub fn run() -> Result<(), io::Error> {
             .with_options(formatter_parse_options)
             .parse();
         assert!(parsed.errors.is_empty());
-        let _ = Formatter::new(&allocator, FormatOptions::default()).build(&parsed.program);
+        let _ = Formatter::new(&allocator, JsFormatOptions::default()).build(&parsed.program);
     }
 
     for file in files.files() {
@@ -255,7 +255,7 @@ pub fn run() -> Result<(), io::Error> {
         assert!(parsed.errors.is_empty());
 
         let (_, formatter_stats) = record_stats_in(&allocator, || {
-            Formatter::new(&allocator, FormatOptions::default()).build(&parsed.program)
+            Formatter::new(&allocator, JsFormatOptions::default()).build(&parsed.program)
         });
 
         formatter_out.push_str(&format_table_row(

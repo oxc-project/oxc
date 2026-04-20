@@ -21,7 +21,7 @@ use tracing::instrument;
 
 use oxc_config::{ConfigDiscovery, ConfigFileNames, DiscoveredConfigFile, is_js_config_path};
 #[cfg(feature = "napi")]
-use oxc_formatter::FormatOptions;
+use oxc_formatter::JsFormatOptions;
 
 use self::{
     editorconfig::{apply_editorconfig, has_editorconfig_overrides, load_editorconfig},
@@ -151,7 +151,7 @@ pub fn resolve_for_api(
 #[cfg(feature = "napi")]
 #[derive(Debug)]
 pub struct EmbeddedCallbackResolved {
-    pub format_options: Box<FormatOptions>,
+    pub format_options: Box<JsFormatOptions>,
     /// Retained so nested embedded callbacks can derive Prettier options on demand.
     /// (e.g., CSS-in-JS inside the embedded JS)
     pub config: Box<FormatConfig>,

@@ -16,7 +16,7 @@ use similar::TextDiff;
 use walkdir::WalkDir;
 
 use oxc_allocator::Allocator;
-use oxc_formatter::{FormatOptions, Formatter, enable_jsx_source_type, get_parse_options};
+use oxc_formatter::{Formatter, JsFormatOptions, enable_jsx_source_type, get_parse_options};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 
@@ -404,7 +404,7 @@ impl TestRunner {
     fn run_oxc_formatter(
         path: &Path,
         source_text: &str,
-        format_options: FormatOptions,
+        format_options: JsFormatOptions,
     ) -> Option<String> {
         let allocator = Allocator::default();
 

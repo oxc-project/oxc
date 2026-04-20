@@ -8,7 +8,7 @@ use rustc_hash::FxHashMap;
 use super::super::prelude::*;
 use super::tag::Tag;
 use crate::formatter::prelude::tag::{DedentMode, GroupMode};
-use crate::{Format, formatter::FormatContext, formatter::Formatter};
+use crate::{Format, formatter::Formatter, formatter::JsFormatContext};
 
 use crate::{format, write};
 
@@ -169,7 +169,7 @@ impl<'a> Deref for Document<'a> {
 impl std::fmt::Display for Document<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let allocator = Allocator::default();
-        let mut context = FormatContext::dummy(&allocator);
+        let mut context = JsFormatContext::dummy(&allocator);
         // Set the sorted Tailwind CSS classes in the context, so that `FormatElement::TailwindClass` can access them.
         context.set_tailwind_classes(self.sorted_tailwind_classes.clone());
         let formatted = format!(context, [self.elements]);

@@ -1327,7 +1327,7 @@ mod tests {
 
     use crate::formatter::prelude::document::Document;
     use crate::formatter::printer::{PrintWidth, Printer, PrinterOptions};
-    use crate::formatter::{FormatContext, FormatState, Printed, VecBuffer};
+    use crate::formatter::{FormatState, JsFormatContext, Printed, VecBuffer};
     use crate::{IndentStyle, LineEnding};
     use crate::{format_args, formatter::prelude::*, write};
 
@@ -1349,7 +1349,7 @@ mod tests {
         root: &dyn Format<'a>,
         options: PrinterOptions,
     ) -> Printed {
-        let formatted = crate::format!(FormatContext::dummy(allocator), [root]);
+        let formatted = crate::format!(JsFormatContext::dummy(allocator), [root]);
 
         Printer::new(options, &[]).print(formatted.document()).expect("Document to be valid")
     }
@@ -1589,7 +1589,7 @@ two lines`,
     #[test]
     fn test_fill_breaks() {
         let allocator = Allocator::default();
-        let mut state = FormatState::new(FormatContext::dummy(&allocator));
+        let mut state = FormatState::new(JsFormatContext::dummy(&allocator));
         let mut buffer = VecBuffer::new(&mut state);
         let mut formatter = Formatter::new(&mut buffer);
 

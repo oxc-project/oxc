@@ -28,8 +28,8 @@ pub use crate::formatter::format_element::tag::{
 pub use crate::formatter::format_element::{
     BestFittingElement, FormatElement, LineMode, PrintMode, TextWidth,
 };
-pub use crate::formatter::{Format, Formatted};
-pub use crate::formatter::{GroupId, UniqueGroupIdBuilder};
+pub use crate::formatter::{Format, FormatContext, FormatOptions, Formatted};
+pub use crate::formatter::{GroupId, JsFormatContext, UniqueGroupIdBuilder};
 pub use crate::ir_transform::options::*;
 pub use crate::options::*;
 pub use crate::print::{FormatVueBindingParams, FormatVueScriptGeneric};
@@ -37,15 +37,15 @@ pub use crate::service::*;
 #[cfg(feature = "detect_code_removal")]
 pub use detect_code_removal::detect_code_removal;
 
-use self::formatter::{FormatContext, prelude::tag::Label};
+use self::formatter::prelude::tag::Label;
 
 pub struct Formatter<'a> {
     allocator: &'a Allocator,
-    options: FormatOptions,
+    options: JsFormatOptions,
 }
 
 impl<'a> Formatter<'a> {
-    pub fn new(allocator: &'a Allocator, options: FormatOptions) -> Self {
+    pub fn new(allocator: &'a Allocator, options: JsFormatOptions) -> Self {
         Self { allocator, options }
     }
 
@@ -68,7 +68,7 @@ impl<'a> Formatter<'a> {
     ) -> Formatted<'a> {
         let program_node = AstNode::new(program, AstNodes::Dummy(), self.allocator);
 
-        let context = FormatContext::new(
+        let context = JsFormatContext::new(
             program.source_text,
             program.source_type,
             &program.comments,
@@ -100,7 +100,7 @@ impl<'a> Formatter<'a> {
         comments: &'a [Comment],
         external_callbacks: Option<ExternalCallbacks>,
     ) -> Formatted<'a> {
-        let context = FormatContext::new(
+        let context = JsFormatContext::new(
             source_text,
             source_type,
             comments,

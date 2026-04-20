@@ -22,6 +22,7 @@ pub mod buffer;
 mod builders;
 pub mod comments;
 mod context;
+pub mod core_traits;
 pub mod diagnostics;
 pub mod format_element;
 mod format_extensions;
@@ -48,7 +49,8 @@ pub use self::comments::Comments;
 use self::printer::Printer;
 pub use self::{
     arguments::{Argument, Arguments},
-    context::{FormatContext, TailwindContextEntry},
+    context::{JsFormatContext, TailwindContextEntry},
+    core_traits::{FormatContext, FormatOptions},
     diagnostics::{ActualStart, FormatError, InvalidDocumentError, PrintError},
     formatter::Formatter,
     source_text::SourceText,
@@ -60,16 +62,16 @@ use self::{format_element::document::Document, prelude::TagKind};
 #[derive(Debug)]
 pub struct Formatted<'a> {
     document: Document<'a>,
-    context: FormatContext<'a>,
+    context: JsFormatContext<'a>,
 }
 
 impl<'a> Formatted<'a> {
-    pub fn new(document: Document<'a>, context: FormatContext<'a>) -> Self {
+    pub fn new(document: Document<'a>, context: JsFormatContext<'a>) -> Self {
         Self { document, context }
     }
 
     /// Returns the context used during formatting.
-    pub fn context(&self) -> &FormatContext<'a> {
+    pub fn context(&self) -> &JsFormatContext<'a> {
         &self.context
     }
 
@@ -319,7 +321,7 @@ pub fn write<'ast>(output: &mut dyn Buffer<'ast>, args: Arguments<'_, 'ast>) {
 /// # }
 /// ```
 pub fn format<'ast>(
-    context: FormatContext<'ast>,
+    context: JsFormatContext<'ast>,
     arguments: Arguments<'_, 'ast>,
 ) -> Formatted<'ast> {
     // Pre-allocate buffer at 40% of source length (source_len * 2 / 5).
