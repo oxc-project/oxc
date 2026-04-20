@@ -6,7 +6,7 @@ use oxc_span::{GetSpan, SourceType, Span};
 use rustc_hash::FxHashMap;
 
 use crate::{
-    external_formatter::ExternalCallbacks, formatter::FormatElement, options::FormatOptions,
+    external_formatter::ExternalCallbacks, formatter::FormatElement, options::JsFormatOptions,
 };
 
 use super::{Comments, SourceText};
@@ -80,8 +80,8 @@ impl TailwindContextEntry {
 }
 
 /// Context object storing data relevant when formatting an object.
-pub struct FormatContext<'ast> {
-    options: FormatOptions,
+pub struct JsFormatContext<'ast> {
+    options: JsFormatOptions,
 
     source_text: SourceText<'ast>,
 
@@ -93,7 +93,7 @@ pub struct FormatContext<'ast> {
 
     /// Tracks whether quotes are needed for properties in the current object-like node.
     ///
-    /// When [`FormatOptions::quote_properties`] is [`crate::QuoteProperties::Consistent`], each entry indicates
+    /// When [`JsFormatOptions::quote_properties`] is [`crate::QuoteProperties::Consistent`], each entry indicates
     /// whether at least one property key requires quotes. A stack is used to handle nested object-like
     /// structures (e.g., `{ a: { "b-c": 1 } }` where only the inner object needs quoted keys).
     quote_needed_stack: Vec<bool>,
@@ -111,9 +111,9 @@ pub struct FormatContext<'ast> {
     allocator: &'ast Allocator,
 }
 
-impl std::fmt::Debug for FormatContext<'_> {
+impl std::fmt::Debug for JsFormatContext<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("FormatContext")
+        f.debug_struct("JsFormatContext")
             .field("options", &self.options)
             .field("source_text", &self.source_text)
             .field("source_type", &self.source_type)
@@ -125,13 +125,25 @@ impl std::fmt::Debug for FormatContext<'_> {
     }
 }
 
-impl<'ast> FormatContext<'ast> {
+impl super::core_traits::FormatContext for JsFormatContext<'_> {
+    type Options = JsFormatOptions;
+
+    fn options(&self) -> &JsFormatOptions {
+        &self.options
+    }
+
+    fn source_code(&self) -> &str {
+        &self.source_text
+    }
+}
+
+impl<'ast> JsFormatContext<'ast> {
     pub fn new(
         source_text: &'ast str,
         source_type: SourceType,
         comments: &'ast [Comment],
         allocator: &'ast Allocator,
-        options: FormatOptions,
+        options: JsFormatOptions,
         external_callbacks: Option<ExternalCallbacks>,
     ) -> Self {
         let source_text = SourceText::new(source_text);
@@ -151,7 +163,7 @@ impl<'ast> FormatContext<'ast> {
 
     pub(crate) fn dummy(allocator: &'ast Allocator) -> Self {
         Self {
-            options: FormatOptions::default(),
+            options: JsFormatOptions::default(),
             source_text: SourceText::new(""),
             source_type: SourceType::default(),
             comments: Comments::new(SourceText::new(""), &[]),
@@ -170,7 +182,7 @@ impl<'ast> FormatContext<'ast> {
     }
 
     /// Returns the formatting options
-    pub fn options(&self) -> &FormatOptions {
+    pub fn options(&self) -> &JsFormatOptions {
         &self.options
     }
 

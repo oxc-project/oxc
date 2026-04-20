@@ -1,5 +1,5 @@
 use crate::{
-    FormatOptions,
+    JsFormatOptions,
     options::{IndentStyle, IndentWidth, LineEnding, LineWidth},
 };
 
@@ -47,8 +47,8 @@ impl From<PrintWidth> for usize {
     }
 }
 
-impl<'a> From<&'a FormatOptions> for PrinterOptions {
-    fn from(options: &'a FormatOptions) -> Self {
+impl<'a> From<&'a JsFormatOptions> for PrinterOptions {
+    fn from(options: &'a JsFormatOptions) -> Self {
         PrinterOptions::default()
             .with_indent_style(options.indent_style)
             .with_indent_width(options.indent_width)

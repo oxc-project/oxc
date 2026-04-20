@@ -18,8 +18,8 @@ use oxc::{
 };
 use oxc_estree_tokens::{ESTreeTokenOptions, to_estree_tokens_pretty_json};
 use oxc_formatter::{
-    ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, Expand, FormatOptions,
-    Formatter, IndentStyle, IndentWidth, LineEnding, LineWidth, QuoteProperties, QuoteStyle,
+    ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, Expand, Formatter,
+    IndentStyle, IndentWidth, JsFormatOptions, LineEnding, LineWidth, QuoteProperties, QuoteStyle,
     Semicolons, TrailingCommas, get_parse_options,
 };
 use rayon::prelude::*;
@@ -444,10 +444,10 @@ pub fn run_codegen_misc(files: &[MiscFile]) -> Vec<CoverageResult> {
 // Formatter
 // ================================
 
-fn get_formatter_options_list() -> [FormatOptions; 3] {
+fn get_formatter_options_list() -> [JsFormatOptions; 3] {
     [
-        FormatOptions::default(),
-        FormatOptions {
+        JsFormatOptions::default(),
+        JsFormatOptions {
             indent_style: IndentStyle::Tab,
             indent_width: IndentWidth::try_from(4).unwrap(),
             line_ending: LineEnding::Crlf,
@@ -464,7 +464,7 @@ fn get_formatter_options_list() -> [FormatOptions; 3] {
             expand: Expand::Never,
             ..Default::default()
         },
-        FormatOptions {
+        JsFormatOptions {
             indent_width: IndentWidth::try_from(8).unwrap(),
             line_width: LineWidth::try_from(120).unwrap(),
             line_ending: LineEnding::Lf,

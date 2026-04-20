@@ -120,7 +120,7 @@ macro_rules! dbg_write {
 
 /// Creates the Format IR for a value.
 ///
-/// The first argument `format!` receives is the [FormatContext] that specify how elements must be formatted.
+/// The first argument `format!` receives is the [JsFormatContext] that specify how elements must be formatted.
 /// Additional parameters passed get formatted by using their [crate::Format] implementation.
 ///
 ///

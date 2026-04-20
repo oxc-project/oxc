@@ -3,7 +3,7 @@ use oxc_parser::Parser;
 use oxc_span::SourceType;
 
 use crate::options::TrailingCommas;
-use crate::{FormatOptions, Formatter, LineWidth, get_parse_options};
+use crate::{Formatter, JsFormatOptions, LineWidth, get_parse_options};
 
 use super::serialize::truncate_trim_end;
 
@@ -74,7 +74,7 @@ pub(super) fn update_template_depth(line: &str, mut depth: u32) -> u32 {
 pub(super) fn format_embedded_js(
     code: &str,
     print_width: usize,
-    format_options: &FormatOptions,
+    format_options: &JsFormatOptions,
     allocator: &Allocator,
 ) -> Option<String> {
     let width = u16::try_from(print_width).unwrap_or(80).clamp(1, 320);
@@ -84,7 +84,7 @@ pub(super) fn format_embedded_js(
     // to embedded code, and their Vec fields make cloning expensive.
     // Inherit indent_style from parent so embedded code uses tabs when useTabs=true,
     // matching upstream prettier-plugin-jsdoc behavior.
-    let base_options = FormatOptions {
+    let base_options = JsFormatOptions {
         line_width,
         jsdoc: None,
         sort_imports: None,
@@ -113,7 +113,7 @@ pub(super) fn format_embedded_js(
         // Use TrailingCommas::None for object literals since JSON-like code
         // shouldn't have trailing commas
         let obj_options =
-            FormatOptions { trailing_commas: TrailingCommas::None, ..base_options.clone() };
+            JsFormatOptions { trailing_commas: TrailingCommas::None, ..base_options.clone() };
 
         let try_format_obj = |code: &str, source_type: SourceType| -> Option<String> {
             let ret =
@@ -188,7 +188,7 @@ pub(super) fn format_embedded_js(
 /// preventing the formatter from changing quote style inside type expressions.
 pub(super) fn format_type_via_formatter(
     type_str: &str,
-    type_options: &FormatOptions,
+    type_options: &JsFormatOptions,
     allocator: &Allocator,
 ) -> Option<String> {
     if type_str.is_empty() {

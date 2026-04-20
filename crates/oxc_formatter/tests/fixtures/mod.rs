@@ -2,8 +2,8 @@ use std::{env::current_dir, fs, path::Path};
 
 use oxc_allocator::Allocator;
 use oxc_formatter::{
-    ArrowParentheses, BracketSameLine, BracketSpacing, FormatOptions, Formatter, IndentStyle,
-    IndentWidth, JsdocOptions, LineEnding, LineWidth, QuoteProperties, QuoteStyle, Semicolons,
+    ArrowParentheses, BracketSameLine, BracketSpacing, Formatter, IndentStyle, IndentWidth,
+    JsFormatOptions, JsdocOptions, LineEnding, LineWidth, QuoteProperties, QuoteStyle, Semicolons,
     TrailingCommas, get_parse_options,
 };
 use oxc_parser::Parser;
@@ -39,9 +39,9 @@ fn resolve_options(test_file: &Path) -> Vec<OptionSet> {
     vec![serde_json::Map::new()]
 }
 
-/// Parse JSON options into FormatOptions
-fn parse_format_options(json: &OptionSet) -> FormatOptions {
-    let mut options = FormatOptions::default();
+/// Parse JSON options into JsFormatOptions
+fn parse_format_options(json: &OptionSet) -> JsFormatOptions {
+    let mut options = JsFormatOptions::default();
 
     for (key, value) in json {
         match key.as_str() {
@@ -151,7 +151,7 @@ fn format_options_display(json: &OptionSet) -> String {
 }
 
 /// Format a source file with given options
-fn format_source(source_text: &str, source_type: SourceType, options: FormatOptions) -> String {
+fn format_source(source_text: &str, source_type: SourceType, options: JsFormatOptions) -> String {
     let allocator = Allocator::default();
     let ret =
         Parser::new(&allocator, source_text, source_type).with_options(get_parse_options()).parse();
