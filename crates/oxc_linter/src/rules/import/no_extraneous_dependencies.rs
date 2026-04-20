@@ -1,10 +1,11 @@
 use std::{
-    env, fs, io,
+    env,
     path::{Path, PathBuf},
 };
 
 use fast_glob::glob_match;
 use lazy_regex::{Regex, regex::Error as RegexError};
+use nodejs_built_in_modules::is_nodejs_builtin_module;
 use oxc_ast::{
     AstKind,
     ast::{
@@ -15,7 +16,6 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_resolver::NODEJS_BUILTINS;
 use oxc_span::Span;
 use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
@@ -25,6 +25,7 @@ use serde_json::{Map, Value};
 use crate::{
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
+    utils::{PackageJsonError, find_nearest_package_json, read_package_json},
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -118,15 +119,14 @@ declare_oxc_lint!(
     import,
     restriction,
     config = NoExtraneousDependenciesConfig,
+    version = "next",
 );
 
 impl Rule for NoExtraneousDependencies {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let config =
-            serde_json::from_value::<DefaultRuleConfig<NoExtraneousDependenciesConfig>>(value)
-                .map(DefaultRuleConfig::into_inner)
-                .unwrap_or_default();
-        Self { config }
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<NoExtraneousDependenciesConfig>>(value)
+            .map(DefaultRuleConfig::into_inner)
+            .map(|config| Self { config })
     }
 
     fn run_once(&self, ctx: &LintContext<'_>) {
@@ -496,7 +496,7 @@ fn normalize_specifier(raw: &str) -> Option<NormalizedModuleName> {
 }
 
 fn is_builtin(name: &NormalizedModuleName) -> bool {
-    NODEJS_BUILTINS.binary_search(&name.package_base.as_str()).is_ok()
+    is_nodejs_builtin_module(name.package_base.as_str())
 }
 
 struct NormalizedModuleName {
@@ -575,8 +575,8 @@ fn load_dependencies(
         for dir in dirs {
             let path = dir.join("package.json");
             match read_package_json(&path)? {
-                Some(dep) => {
-                    combined.merge(dep);
+                Some(package_json) => {
+                    combined.merge(build_dependency_sets(&package_json));
                     found_any = true;
                 }
                 None => {
@@ -597,41 +597,8 @@ fn load_dependencies(
         return Err(PackageJsonError::Missing(missing_path));
     }
 
-    let mut current = Some(start_dir);
-    while let Some(dir) = current {
-        let candidate = dir.join("package.json");
-        match read_package_json(&candidate)? {
-            Some(dep) => return Ok(Some(dep)),
-            None => {
-                current = dir.parent();
-            }
-        }
-    }
-
-    Ok(None)
-}
-
-fn read_package_json(path: &Path) -> Result<Option<DependencySets>, PackageJsonError> {
-    let contents = match fs::read_to_string(path) {
-        Ok(contents) => contents,
-        Err(err) if err.kind() == std::io::ErrorKind::NotFound => return Ok(None),
-        Err(err) => return Err(PackageJsonError::Io(path.to_path_buf(), err)),
-    };
-
-    let value: Value = serde_json::from_str(&contents)
-        .map_err(|err| PackageJsonError::Parse(path.to_path_buf(), err))?;
-
-    let object = value.as_object().ok_or_else(|| {
-        PackageJsonError::Parse(
-            path.to_path_buf(),
-            serde_json::Error::io(io::Error::new(
-                io::ErrorKind::InvalidData,
-                "package.json must be an object",
-            )),
-        )
-    })?;
-
-    Ok(Some(build_dependency_sets(object)))
+    Ok(find_nearest_package_json(start_dir)?
+        .map(|(_, package_json)| build_dependency_sets(&package_json)))
 }
 
 fn build_dependency_sets(map: &Map<String, Value>) -> DependencySets {
@@ -671,13 +638,6 @@ fn collect_bundled_dependencies(map: &Map<String, Value>) -> FxHashSet<String> {
     }
 
     set
-}
-
-#[derive(Debug)]
-enum PackageJsonError {
-    Missing(PathBuf),
-    Io(PathBuf, std::io::Error),
-    Parse(PathBuf, serde_json::Error),
 }
 
 fn package_json_error_diagnostic(err: &PackageJsonError) -> OxcDiagnostic {
