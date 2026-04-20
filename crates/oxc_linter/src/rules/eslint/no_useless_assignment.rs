@@ -107,8 +107,8 @@ declare_oxc_lint!(
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Operation {
-    Read = 0,
-    Write = 1,
+    Read,
+    Write,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -116,24 +116,21 @@ pub struct OpAtNode {
     pub op: Operation,
     pub node: NodeId,
     pub compact_idx: u32,
-    pub previous_value_read: bool,
 }
 
 pub type BlockOps = Vec<OpAtNode>;
 
 pub type CfgOps = IndexVec<BasicBlockId, BlockOps>;
 
-pub struct TraverseState<'a> {
-    pub(crate) live: BitSet<'a>,
-}
+pub type CfgTraverseState<'a> = IndexVec<BasicBlockId, BitSet<'a>>;
 
-impl<'a> TraverseState<'a> {
-    pub fn new(num_symbols: usize, allocator: &'a Allocator) -> Self {
-        Self { live: BitSet::new_in(num_symbols, allocator) }
-    }
+struct TrackedSymbol {
+    symbol_id: SymbolId,
+    scope_id: ScopeId,
+    is_used: bool,
+    is_exported: bool,
+    has_captured_read: bool,
 }
-
-pub type CfgTraverseState<'a> = IndexVec<BasicBlockId, TraverseState<'a>>;
 
 impl Rule for NoUselessAssignment {
     fn run_once(&self, ctx: &LintContext) {
@@ -142,15 +139,9 @@ impl Rule for NoUselessAssignment {
         let num_blocks = ctx.cfg().basic_blocks.len();
 
         // Single pass: collect ops and build tracking data.
-        // Defer BitSet allocations until num_tracked is known.
-        let mut num_tracked: u32 = 0;
         let mut cfg_ops: CfgOps = IndexVec::with_capacity(num_blocks);
         cfg_ops.resize_with(num_blocks, Vec::new);
-        let mut used_compact_indices: SmallVec<[u32; 32]> = SmallVec::new();
-        let mut compact_to_symbol: Vec<SymbolId> = Vec::new();
-        let mut compact_to_scope: Vec<ScopeId> = Vec::new();
-        let mut exported_compact_indices: SmallVec<[u32; 8]> = SmallVec::new();
-        let mut captured_read_compact_indices: SmallVec<[u32; 8]> = SmallVec::new();
+        let mut tracked_symbols: Vec<TrackedSymbol> = Vec::new();
 
         for symbol_id in ctx.scoping().symbol_ids() {
             let decl_node = ctx.symbol_declaration(symbol_id);
@@ -168,26 +159,26 @@ impl Rule for NoUselessAssignment {
                 continue;
             }
 
-            let compact_idx = num_tracked;
-            num_tracked += 1;
-            compact_to_symbol.push(symbol_id);
-            compact_to_scope.push(ctx.scoping().symbol_scope_id(symbol_id));
-            if Self::is_exported(ctx, symbol_id) {
-                exported_compact_indices.push(compact_idx);
-            }
+            #[expect(clippy::cast_possible_truncation)]
+            let compact_idx = tracked_symbols.len() as u32;
+            tracked_symbols.push(TrackedSymbol {
+                symbol_id,
+                scope_id: ctx.scoping().symbol_scope_id(symbol_id),
+                is_used: false,
+                is_exported: Self::is_exported(ctx, symbol_id, decl_node),
+                has_captured_read: false,
+            });
 
             // Collect ops for this symbol (formerly Pass 2)
-            let block_id = *graph
-                .node_weight(ctx.nodes().cfg_id(decl_node.id()))
-                .expect("expected a valid node id in graph");
-
             if var_decl.init.is_some() {
-                cfg_ops[block_id].push(OpAtNode {
-                    op: Operation::Write,
-                    node: decl_node.id(),
+                Self::push_op(
+                    ctx,
+                    graph,
+                    &mut cfg_ops,
+                    decl_node.id(),
+                    Operation::Write,
                     compact_idx,
-                    previous_value_read: false,
-                });
+                );
             }
 
             // Process references inline with reordering for assignment expressions like a = a + 1
@@ -214,10 +205,8 @@ impl Rule for NoUselessAssignment {
                             compact_idx,
                             var_decl,
                             decl_node,
-                            compact_to_scope[compact_idx as usize],
+                            &mut tracked_symbols[compact_idx as usize],
                             false,
-                            &mut used_compact_indices,
-                            &mut captured_read_compact_indices,
                         );
                         continue;
                     }
@@ -229,10 +218,8 @@ impl Rule for NoUselessAssignment {
                         compact_idx,
                         var_decl,
                         decl_node,
-                        compact_to_scope[compact_idx as usize],
+                        &mut tracked_symbols[compact_idx as usize],
                         previous_value_read,
-                        &mut used_compact_indices,
-                        &mut captured_read_compact_indices,
                     );
                     pending_assignment_lhs = None;
                 }
@@ -247,10 +234,8 @@ impl Rule for NoUselessAssignment {
                             compact_idx,
                             var_decl,
                             decl_node,
-                            compact_to_scope[compact_idx as usize],
+                            &mut tracked_symbols[compact_idx as usize],
                             previous_value_read,
-                            &mut used_compact_indices,
-                            &mut captured_read_compact_indices,
                         );
                     }
                     pending_assignment_lhs = Some((reference, reference.is_read()));
@@ -263,10 +248,8 @@ impl Rule for NoUselessAssignment {
                         compact_idx,
                         var_decl,
                         decl_node,
-                        compact_to_scope[compact_idx as usize],
+                        &mut tracked_symbols[compact_idx as usize],
                         false,
-                        &mut used_compact_indices,
-                        &mut captured_read_compact_indices,
                     );
                 }
             }
@@ -280,41 +263,22 @@ impl Rule for NoUselessAssignment {
                     compact_idx,
                     var_decl,
                     decl_node,
-                    compact_to_scope[compact_idx as usize],
+                    &mut tracked_symbols[compact_idx as usize],
                     previous_value_read,
-                    &mut used_compact_indices,
-                    &mut captured_read_compact_indices,
                 );
             }
         }
 
-        let num_tracked = num_tracked as usize;
+        let num_tracked = tracked_symbols.len();
 
         // Early exit if no symbols to track
         if num_tracked == 0 {
             return;
         }
 
-        // Now allocate BitSets with the correct size
-        let mut used_symbols = BitSet::new_in(num_tracked, &allocator);
-        for idx in &used_compact_indices {
-            used_symbols.set_bit(*idx as usize);
-        }
-
-        // Pre-compute exported symbols BitSet (avoids hash lookups in hot loop)
-        let mut exported_symbols = BitSet::new_in(num_tracked, &allocator);
-        for idx in &exported_compact_indices {
-            exported_symbols.set_bit(*idx as usize);
-        }
-
-        let mut captured_read_symbols = BitSet::new_in(num_tracked, &allocator);
-        for idx in &captured_read_compact_indices {
-            captured_read_symbols.set_bit(*idx as usize);
-        }
-
         let mut cfg_traverse_state: CfgTraverseState<'_> =
             CfgTraverseState::with_capacity(num_blocks);
-        cfg_traverse_state.resize_with(num_blocks, || TraverseState::new(num_tracked, &allocator));
+        cfg_traverse_state.resize_with(num_blocks, || BitSet::new_in(num_tracked, &allocator));
 
         let mut scratch_live = BitSet::new_in(num_tracked, &allocator);
         let mut scratch_catch = BitSet::new_in(num_tracked, &allocator);
@@ -352,10 +316,10 @@ impl Rule for NoUselessAssignment {
                             | EdgeType::NewFunction
                             | EdgeType::Finalize
                             | EdgeType::Join => {
-                                scratch_live.union(&cfg_traverse_state[succ_id].live);
+                                scratch_live.union(&cfg_traverse_state[succ_id]);
                             }
                             EdgeType::Jump => {
-                                scratch_live.union(&cfg_traverse_state[succ_id].live);
+                                scratch_live.union(&cfg_traverse_state[succ_id]);
 
                                 // `continue` edges are modeled as `Jump`s to the loop header, so
                                 // account for values that are first observed on the next iteration.
@@ -380,7 +344,7 @@ impl Rule for NoUselessAssignment {
                             }
                             // Error Flow: This is the "Branch" that bypasses this block's Ops
                             EdgeType::Error(_) => {
-                                scratch_catch.union(&cfg_traverse_state[succ_id].live);
+                                scratch_catch.union(&cfg_traverse_state[succ_id]);
                             }
                             EdgeType::Backedge => {
                                 scratch_find_loop.clear();
@@ -393,8 +357,7 @@ impl Rule for NoUselessAssignment {
                                         .node_weight(loop_header)
                                         .expect("expected a valid node id in graph");
 
-                                    scratch_live
-                                        .union(&cfg_traverse_state[loop_header_block_id].live);
+                                    scratch_live.union(&cfg_traverse_state[loop_header_block_id]);
 
                                     Self::merge_loop_liveness(
                                         &allocator,
@@ -413,13 +376,14 @@ impl Rule for NoUselessAssignment {
                         }
                     }
 
+                    let mut is_in_try_block = None;
+
                     // Walk back from the end of the block to the start
                     for op in cfg_ops[current_block_id].iter().rev() {
                         let compact_idx = op.compact_idx as usize;
+                        let tracked_symbol = &tracked_symbols[compact_idx];
 
-                        if !used_symbols.has_bit(compact_idx)
-                            && !exported_symbols.has_bit(compact_idx)
-                        {
+                        if !tracked_symbol.is_used && !tracked_symbol.is_exported {
                             continue;
                         }
 
@@ -427,16 +391,18 @@ impl Rule for NoUselessAssignment {
                             Operation::Write => {
                                 if !scratch_live.has_bit(compact_idx)
                                     && !scratch_catch.has_bit(compact_idx)
-                                    && !exported_symbols.has_bit(compact_idx)
-                                    && !captured_read_symbols.has_bit(compact_idx)
-                                    && !Self::is_in_try_block(graph, block_node_id)
+                                    && !tracked_symbol.is_exported
+                                    && !tracked_symbol.has_captured_read
+                                    && !*is_in_try_block.get_or_insert_with(|| {
+                                        Self::is_in_try_block(graph, block_node_id)
+                                    })
                                     && Self::has_same_parent_variable_scope(
                                         ctx,
-                                        compact_to_scope[compact_idx],
+                                        tracked_symbol.scope_id,
                                         ctx.nodes().get_node(op.node).scope_id(),
                                     )
                                 {
-                                    let symbol_id = compact_to_symbol[compact_idx];
+                                    let symbol_id = tracked_symbol.symbol_id;
                                     let span =
                                         if ctx.scoping().symbol_declaration(symbol_id) == op.node {
                                             ctx.scoping().symbol_span(symbol_id)
@@ -451,17 +417,11 @@ impl Rule for NoUselessAssignment {
                                 scratch_live.set_bit(compact_idx);
                             }
                         }
-                        if matches!(op.op, Operation::Write) && op.previous_value_read {
-                            scratch_live.set_bit(compact_idx);
-                        }
                     }
 
                     scratch_live.union(&scratch_catch);
 
-                    std::mem::swap(
-                        &mut scratch_live,
-                        &mut cfg_traverse_state[current_block_id].live,
-                    );
+                    std::mem::swap(&mut scratch_live, &mut cfg_traverse_state[current_block_id]);
 
                     Control::<()>::Continue
                 }
@@ -472,12 +432,30 @@ impl Rule for NoUselessAssignment {
 }
 
 impl NoUselessAssignment {
-    fn is_exported(ctx: &LintContext, symbol_id: SymbolId) -> bool {
+    fn block_id_for_node(ctx: &LintContext, graph: &Graph, node_id: NodeId) -> BasicBlockId {
+        *graph.node_weight(ctx.nodes().cfg_id(node_id)).expect("expected a valid node id in graph")
+    }
+
+    fn push_op(
+        ctx: &LintContext,
+        graph: &Graph,
+        cfg_ops: &mut CfgOps,
+        node: NodeId,
+        op: Operation,
+        compact_idx: u32,
+    ) {
+        let block_id = Self::block_id_for_node(ctx, graph, node);
+        cfg_ops[block_id].push(OpAtNode { op, node, compact_idx });
+    }
+
+    fn is_exported(
+        ctx: &LintContext,
+        symbol_id: SymbolId,
+        decl_node: &oxc_semantic::AstNode,
+    ) -> bool {
         let symbol_name = ctx.scoping().symbol_name(symbol_id);
         ctx.module_record().exported_bindings.contains_key(symbol_name)
-            || ctx.module_record().local_export_entries.iter().any(|e| {
-                e.span == ctx.nodes().get_node(ctx.symbol_declaration(symbol_id).id()).span()
-            })
+            || ctx.module_record().local_export_entries.iter().any(|e| e.span == decl_node.span())
     }
 
     #[expect(clippy::too_many_arguments)]
@@ -489,35 +467,33 @@ impl NoUselessAssignment {
         compact_idx: u32,
         var_decl: &oxc_ast::ast::VariableDeclarator,
         decl_node: &oxc_semantic::AstNode,
-        symbol_scope: ScopeId,
+        tracked_symbol: &mut TrackedSymbol,
         previous_value_read: bool,
-        used_compact_indices: &mut SmallVec<[u32; 32]>,
-        captured_read_compact_indices: &mut SmallVec<[u32; 8]>,
     ) {
         let op_node = reference.node_id();
 
         if reference.is_read() {
-            let ref_block = *graph
-                .node_weight(ctx.nodes().cfg_id(op_node))
-                .expect("expected a valid node id in graph");
-            cfg_ops[ref_block].push(OpAtNode {
-                op: Operation::Read,
-                node: op_node,
-                compact_idx,
-                previous_value_read: false,
-            });
-            used_compact_indices.push(compact_idx);
-            if !Self::has_same_parent_variable_scope(
-                ctx,
-                symbol_scope,
-                ctx.nodes().get_node(op_node).scope_id(),
-            ) && !captured_read_compact_indices.contains(&compact_idx)
+            Self::push_op(ctx, graph, cfg_ops, op_node, Operation::Read, compact_idx);
+            tracked_symbol.is_used = true;
+            if !tracked_symbol.has_captured_read
+                && !Self::has_same_parent_variable_scope(
+                    ctx,
+                    tracked_symbol.scope_id,
+                    ctx.nodes().get_node(op_node).scope_id(),
+                )
             {
-                captured_read_compact_indices.push(compact_idx);
+                tracked_symbol.has_captured_read = true;
             }
         }
 
         if reference.is_write() {
+            if previous_value_read && !reference.is_read() {
+                // Model RHS self-reads before the deferred assignment write.
+                // This keeps the previous value live without making nested
+                // read-write expressions like `x = x++` live after their write.
+                Self::push_op(ctx, graph, cfg_ops, op_node, Operation::Read, compact_idx);
+            }
+
             if matches!(
                 &var_decl.id,
                 BindingPattern::ObjectPattern(_) | BindingPattern::ArrayPattern(_)
@@ -528,15 +504,7 @@ impl NoUselessAssignment {
                 return;
             }
 
-            let ref_block = *graph
-                .node_weight(ctx.nodes().cfg_id(op_node))
-                .expect("expected a valid node id in graph");
-            cfg_ops[ref_block].push(OpAtNode {
-                op: Operation::Write,
-                node: op_node,
-                compact_idx,
-                previous_value_read,
-            });
+            Self::push_op(ctx, graph, cfg_ops, op_node, Operation::Write, compact_idx);
         }
     }
 
