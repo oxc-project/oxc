@@ -64,6 +64,8 @@ mod test {
             "foo.astro",
             "foo.svelte",
             "foo.vue",
+            "foo.gjs",
+            "foo.gts",
         ];
 
         for path in paths {

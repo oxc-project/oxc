@@ -1071,7 +1071,7 @@ impl Runtime {
         allocator: &'a Allocator,
         mut out_sections: Option<&mut SectionContents<'a>>,
     ) -> SmallVec<[Result<ResolvedModuleRecord, Vec<OxcDiagnostic>>; 1]> {
-        let section_sources = PartialLoader::parse(ext, source_text)
+        let section_sources = PartialLoader::parse(ext, source_text, allocator)
             .unwrap_or_else(|| vec![JavaScriptSource::partial(source_text, source_type, 0)]);
 
         let mut section_module_records = SmallVec::<

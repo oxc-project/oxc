@@ -331,9 +331,9 @@ impl Rule for ConsistentTypeImports {
 
     fn should_run(&self, ctx: &ContextHost) -> bool {
         ctx.source_type().is_typescript()
-            && !ctx
-                .file_extension()
-                .is_some_and(|ext| ext == "vue" || ext == "svelte" || ext == "astro")
+            && !ctx.file_extension().is_some_and(|ext| {
+                ext == "vue" || ext == "svelte" || ext == "astro" || ext == "gts"
+            })
     }
 }
 

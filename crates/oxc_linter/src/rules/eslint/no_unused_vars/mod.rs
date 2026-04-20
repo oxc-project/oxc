@@ -237,14 +237,13 @@ impl Rule for NoUnusedVars {
     }
 
     fn should_run(&self, ctx: &ContextHost) -> bool {
-        // ignore .d.ts and vue/svelte/astro files.
+        // ignore .d.ts and vue/svelte/astro/gjs/gts files.
         // 1. declarations have side effects (they get merged together)
-        // 2. vue/svelte/astro scripts declare variables that get used in the template, which
-        //    we can't detect
+        // 2. these scripts declare variables that get used in the template, which we can't detect
         !ctx.source_type().is_typescript_definition()
-            && !ctx
-                .file_extension()
-                .is_some_and(|ext| ext == "vue" || ext == "svelte" || ext == "astro")
+            && !ctx.file_extension().is_some_and(|ext| {
+                ext == "vue" || ext == "svelte" || ext == "astro" || ext == "gjs" || ext == "gts"
+            })
     }
 }
 
