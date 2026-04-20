@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -27,6 +27,46 @@ pub struct Oxfmtrc {
     /// - Default: `[]`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub ignore_patterns: Option<Vec<String>>,
+    /// Paths of configuration files that this configuration file extends (inherits from). The files
+    /// are resolved relative to the location of the configuration file that contains the `extends`
+    /// property. The configuration files are merged from the first to the last, with the last file
+    /// overriding the previous ones.
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub extends: Vec<PathBuf>,
+}
+
+impl Oxfmtrc {
+    /// Merge another `Oxfmtrc`, overwriting fields from `other` onto `self`.
+    ///
+    /// The merge follows this priority order (highest to lowest):
+    /// 1. `other` (the extending config)
+    /// 2. `self` (the base config)
+    ///
+    /// For arrays like `overrides` and `ignore_patterns`, they are concatenated
+    /// with `other`'s items coming first.
+    ///
+    /// `extends` is not merged as it should only be processed for the root config.
+    pub fn merge(&mut self, other: &Self) {
+        // Merge format_config
+        self.format_config.merge(&other.format_config);
+
+        // Merge overrides: other first, then self
+        let mut merged_overrides = other.overrides.clone().unwrap_or_default();
+        if let Some(self_overrides) = &self.overrides {
+            merged_overrides.extend(self_overrides.clone());
+        }
+        self.overrides = if merged_overrides.is_empty() { None } else { Some(merged_overrides) };
+
+        // Merge ignore_patterns: other first, then self
+        let mut merged_ignore_patterns = other.ignore_patterns.clone().unwrap_or_default();
+        if let Some(self_ignore_patterns) = &self.ignore_patterns {
+            merged_ignore_patterns.extend(self_ignore_patterns.clone());
+        }
+        self.ignore_patterns =
+            if merged_ignore_patterns.is_empty() { None } else { Some(merged_ignore_patterns) };
+
+        // extends is not merged
+    }
 }
 
 // ---

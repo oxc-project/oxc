@@ -1,0 +1,4 @@
+{
+  "extends": ["./intermediate.json"],
+  "printWidth": 80
+}

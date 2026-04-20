@@ -399,13 +399,104 @@ impl ConfigResolver {
         };
 
         // Parse as raw JSON value
-        let raw_config: Value =
+        let mut raw_config: Value =
             serde_json::from_str(&json_string).map_err(|err| err.to_string())?;
         // Store the config directory for override path resolution
         let config_dir = oxfmtrc_path.and_then(|p| p.parent().map(Path::to_path_buf));
+
+        // Resolve and merge extended configs
+        if let Some(config_dir) = &config_dir {
+            raw_config = Self::resolve_extends(&raw_config, config_dir)?;
+        }
+
         let editorconfig = load_editorconfig(cwd, editorconfig_path)?;
 
         Ok(Self::new(raw_config, config_dir, editorconfig))
+    }
+
+    /// Resolve `extends` field by loading and merging extended configurations.
+    ///
+    /// Paths in `extends` are resolved relative to `base_dir`.
+    /// Extended configs are merged from first to last, with later files overriding earlier ones.
+    /// The current config then overrides all extended configs.
+    ///
+    /// # Errors
+    /// Returns an error if:
+    /// - Any extended config file cannot be read
+    /// - Any extended config file has invalid syntax
+    /// - The `extends` field is not an array of strings
+    fn resolve_extends(config: &Value, base_dir: &Path) -> Result<Value, String> {
+        let extends_list: Vec<PathBuf> = match config.get("extends") {
+            None => Vec::new(),
+            Some(Value::Array(arr)) => arr
+                .iter()
+                .map(|v| {
+                    v.as_str()
+                        .ok_or_else(|| {
+                            "`extends` must be an array of strings (file paths)".to_string()
+                        })
+                        .map(PathBuf::from)
+                })
+                .collect::<Result<Vec<_>, _>>()?,
+            Some(_) => {
+                return Err("`extends` must be an array of strings (file paths)".to_string());
+            }
+        };
+
+        if extends_list.is_empty() {
+            return Ok(config.clone());
+        }
+
+        // Load and merge all extended configs
+        let mut merged = Value::Object(Default::default());
+        for extend_path in extends_list {
+            let full_path = base_dir.join(&extend_path);
+            let mut extend_string = utils::read_to_string(&full_path)
+                .map_err(|_| format!("Failed to read extended config: {}", full_path.display()))?;
+            json_strip_comments::strip(&mut extend_string).map_err(|err| {
+                format!("Failed to parse extended config {}: {err}", full_path.display())
+            })?;
+            let extend_config: Value = serde_json::from_str(&extend_string)
+                .map_err(|err| format!("Failed to parse extended config: {err}"))?;
+
+            // Get the directory of the extended config for resolving its own extends
+            let extend_dir = full_path.parent().unwrap_or(base_dir);
+
+            // Recursively resolve extends in the extended config
+            let extend_config = Self::resolve_extends(&extend_config, extend_dir)?;
+
+            // Merge extended config onto merged
+            merged = Self::json_deep_merge(merged, extend_config);
+        }
+
+        // Merge current config onto merged (current config overrides extended)
+        let current_without_extends = {
+            let mut obj = config.clone();
+            if let Some(obj_mut) = obj.as_object_mut() {
+                obj_mut.remove("extends");
+            }
+            obj
+        };
+        Ok(Self::json_deep_merge(merged, current_without_extends))
+    }
+
+    /// Merge two JSON values recursively.
+    /// `overlay` values override `base` values.
+    fn json_deep_merge(base: Value, overlay: Value) -> Value {
+        match (base, overlay) {
+            (Value::Object(mut base_map), Value::Object(overlay_map)) => {
+                for (key, overlay_value) in overlay_map {
+                    let merged = if let Some(base_value) = base_map.remove(&key) {
+                        Self::json_deep_merge(base_value, overlay_value)
+                    } else {
+                        overlay_value
+                    };
+                    base_map.insert(key, merged);
+                }
+                Value::Object(base_map)
+            }
+            (_, overlay) => overlay,
+        }
     }
 
     /// Validate config and return ignore patterns (= non-formatting option) for file walking.

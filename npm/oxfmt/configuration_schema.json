@@ -41,6 +41,14 @@
       ],
       "markdownDescription": "Which end of line characters to apply.\n\nNOTE: `\"auto\"` is not supported.\n\n- Default: `\"lf\"`\n- Overrides `.editorconfig.end_of_line`"
     },
+    "extends": {
+      "description": "Paths of configuration files that this configuration file extends (inherits from). The files\nare resolved relative to the location of the configuration file that contains the `extends`\nproperty. The configuration files are merged from the first to the last, with the last file\noverriding the previous ones.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "markdownDescription": "Paths of configuration files that this configuration file extends (inherits from). The files\nare resolved relative to the location of the configuration file that contains the `extends`\nproperty. The configuration files are merged from the first to the last, with the last file\noverriding the previous ones."
+    },
     "htmlWhitespaceSensitivity": {
       "description": "Specify the global whitespace sensitivity for HTML, Vue, Angular, and Handlebars.\n\n- Default: `\"css\"`",
       "allOf": [
