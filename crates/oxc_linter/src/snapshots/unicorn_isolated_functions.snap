@@ -1,0 +1,175 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 444
+---
+
+  ⚠ eslint-plugin-unicorn(isolated-functions): 'foo' is not defined in isolated function scope
+   ╭─[isolated_functions.tsx:2:35]
+ 1 │ const foo = 'hi';
+ 2 │             makeSynchronous(() => foo.slice());
+   ·                                   ───
+   ╰────
+  help: Move all necessary variables inside the function or pass them as parameters.
+
+  ⚠ eslint-plugin-unicorn(isolated-functions): 'foo' is not defined in isolated function scope
+   ╭─[isolated_functions.tsx:2:41]
+ 1 │ const foo = 'hi';
+ 2 │             makeSynchronous(async () => foo.slice());
+   ·                                         ───
+   ╰────
+  help: Move all necessary variables inside the function or pass them as parameters.
+
+  ⚠ eslint-plugin-unicorn(isolated-functions): 'foo' is not defined in isolated function scope
+   ╭─[isolated_functions.tsx:3:24]
+ 2 │             makeSynchronous(function () {
+ 3 │                 return foo.slice();
+   ·                        ───
+ 4 │             });
+   ╰────
+  help: Move all necessary variables inside the function or pass them as parameters.
+
+  ⚠ eslint-plugin-unicorn(isolated-functions): 'foo' is not defined in isolated function scope
+   ╭─[isolated_functions.tsx:3:24]
+ 2 │             makeSynchronous(async function () {
+ 3 │                 return foo.slice();
+   ·                        ───
+ 4 │             });
+   ╰────
+  help: Move all necessary variables inside the function or pass them as parameters.
+
+  ⚠ eslint-plugin-unicorn(isolated-functions): 'foo' is not defined in isolated function scope
+   ╭─[isolated_functions.tsx:3:24]
+ 2 │             makeSynchronous(function abc () {
+ 3 │                 return foo.slice();
+   ·                        ───
+ 4 │             });
+   ╰────
+  help: Move all necessary variables inside the function or pass them as parameters.
+
+  ⚠ eslint-plugin-unicorn(isolated-functions): 'foo' is not defined in isolated function scope
+   ╭─[isolated_functions.tsx:3:24]
+ 2 │             makeSynchronous(async function abc () {
+ 3 │                 return foo.slice();
+   ·                        ───
+ 4 │             });
+   ╰────
+  help: Move all necessary variables inside the function or pass them as parameters.
+
+  ⚠ eslint-plugin-unicorn(isolated-functions): 'foo' is not defined in isolated function scope
+   ╭─[isolated_functions.tsx:4:24]
+ 3 │             function abc () {
+ 4 │                 return foo.slice();
+   ·                        ───
+ 5 │             }
+   ╰────
+  help: Move all necessary variables inside the function or pass them as parameters.
+
+  ⚠ eslint-plugin-unicorn(isolated-functions): 'foo' is not defined in isolated function scope
+   ╭─[isolated_functions.tsx:3:31]
+ 2 │             /** @isolated */
+ 3 │             const abc = () => foo.slice();
+   ·                               ───
+   ╰────
+  help: Move all necessary variables inside the function or pass them as parameters.
+
+  ⚠ eslint-plugin-unicorn(isolated-functions): 'foo' is not defined in isolated function scope
+   ╭─[isolated_functions.tsx:3:32]
+ 2 │             // @isolated - explanation
+ 3 │             const abc1 = () => foo.slice();
+   ·                                ───
+ 4 │             // @isolated -- explanation
+   ╰────
+  help: Move all necessary variables inside the function or pass them as parameters.
+
+  ⚠ eslint-plugin-unicorn(isolated-functions): 'foo' is not defined in isolated function scope
+   ╭─[isolated_functions.tsx:5:32]
+ 4 │             // @isolated -- explanation
+ 5 │             const abc2 = () => foo.slice();
+   ·                                ───
+   ╰────
+  help: Move all necessary variables inside the function or pass them as parameters.
+
+  ⚠ eslint-plugin-unicorn(isolated-functions): 'foo' is not defined in isolated function scope
+   ╭─[isolated_functions.tsx:3:32]
+ 2 │             /* @isolated */
+ 3 │             const abc1 = () => foo.slice();
+   ·                                ───
+ 4 │             /** @isolated */
+   ╰────
+  help: Move all necessary variables inside the function or pass them as parameters.
+
+  ⚠ eslint-plugin-unicorn(isolated-functions): 'foo' is not defined in isolated function scope
+   ╭─[isolated_functions.tsx:5:32]
+ 4 │             /** @isolated */
+ 5 │             const abc2 = () => foo.slice();
+   ·                                ───
+ 6 │             /**
+   ╰────
+  help: Move all necessary variables inside the function or pass them as parameters.
+
+  ⚠ eslint-plugin-unicorn(isolated-functions): 'foo' is not defined in isolated function scope
+   ╭─[isolated_functions.tsx:9:32]
+ 8 │              */
+ 9 │             const abc3 = () => foo.slice();
+   ·                                ───
+   ╰────
+  help: Move all necessary variables inside the function or pass them as parameters.
+
+  ⚠ eslint-plugin-unicorn(isolated-functions): 'foo' is not defined in isolated function scope
+   ╭─[isolated_functions.tsx:3:31]
+ 2 │             // @isolated
+ 3 │             const abc = () => foo.slice();
+   ·                               ───
+   ╰────
+  help: Move all necessary variables inside the function or pass them as parameters.
+
+  ⚠ eslint-plugin-unicorn(isolated-functions): 'foo' is not defined in isolated function scope
+   ╭─[isolated_functions.tsx:3:38]
+ 2 │             // @isolated
+ 3 │             export const abc = () => foo.slice();
+   ·                                      ───
+ 4 │             // @isolated
+   ╰────
+  help: Move all necessary variables inside the function or pass them as parameters.
+
+  ⚠ eslint-plugin-unicorn(isolated-functions): 'foo' is not defined in isolated function scope
+   ╭─[isolated_functions.tsx:5:34]
+ 4 │             // @isolated
+ 5 │             export default () => foo.slice();
+   ·                                  ───
+   ╰────
+  help: Move all necessary variables inside the function or pass them as parameters.
+
+  ⚠ eslint-plugin-unicorn(isolated-functions): 'URL' is a global variable, and its usage conflicts with the overrideGlobals option.
+   ╭─[isolated_functions.tsx:2:28]
+ 1 │ makeSynchronous(function () {
+ 2 │                 return new URL('https://example.com?') + new URLSearchParams({a: 'b'}).toString();
+   ·                            ───
+ 3 │             });
+   ╰────
+  help: fix overrideGlobals in config file.
+
+  ⚠ eslint-plugin-unicorn(isolated-functions):  overrideGlobals: 'location' is a global variable, and its usage conflicts with the default property.
+   ╭─[isolated_functions.tsx:2:17]
+ 1 │ makeSynchronous(function () {
+ 2 │                 location = new URL('https://example.com');
+   ·                 ────────
+ 3 │                 process = {env: {}};
+   ╰────
+  help: add overrideGlobals option in config file.
+
+  ⚠ eslint-plugin-unicorn(isolated-functions):  overrideGlobals: 'process' is a global variable, and its usage conflicts with the default property.
+   ╭─[isolated_functions.tsx:3:17]
+ 2 │                 location = new URL('https://example.com');
+ 3 │                 process = {env: {}};
+   ·                 ───────
+ 4 │                 process.env.FOO = 'bar';
+   ╰────
+  help: add overrideGlobals option in config file.
+
+  ⚠ eslint-plugin-unicorn(isolated-functions): 'Array' is a global variable, and its usage conflicts with the overrideGlobals option.
+   ╭─[isolated_functions.tsx:1:27]
+ 1 │ makeSynchronous(() => new Array())
+   ·                           ─────
+   ╰────
+  help: fix overrideGlobals in config file.
