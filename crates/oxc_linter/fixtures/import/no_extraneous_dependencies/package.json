@@ -1,0 +1,20 @@
+{
+  "name": "no-extraneous-dependencies",
+  "version": "1.0.0",
+  "dependencies": {
+    "react": "18.2.0",
+    "@scope/pkg": "1.0.0"
+  },
+  "devDependencies": {
+    "dev-only": "1.0.0"
+  },
+  "optionalDependencies": {
+    "optional-only": "1.0.0"
+  },
+  "peerDependencies": {
+    "peer-only": "1.0.0"
+  },
+  "bundledDependencies": [
+    "bundled-only"
+  ]
+}

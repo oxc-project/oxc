@@ -200,6 +200,7 @@ pub use crate::rules::import::no_default_export::NoDefaultExport as ImportNoDefa
 pub use crate::rules::import::no_duplicates::NoDuplicates as ImportNoDuplicates;
 pub use crate::rules::import::no_dynamic_require::NoDynamicRequire as ImportNoDynamicRequire;
 pub use crate::rules::import::no_empty_named_blocks::NoEmptyNamedBlocks as ImportNoEmptyNamedBlocks;
+pub use crate::rules::import::no_extraneous_dependencies::NoExtraneousDependencies as ImportNoExtraneousDependencies;
 pub use crate::rules::import::no_mutable_exports::NoMutableExports as ImportNoMutableExports;
 pub use crate::rules::import::no_named_as_default::NoNamedAsDefault as ImportNoNamedAsDefault;
 pub use crate::rules::import::no_named_as_default_member::NoNamedAsDefaultMember as ImportNoNamedAsDefaultMember;
@@ -757,6 +758,7 @@ pub enum RuleEnum {
     ImportNoDuplicates(ImportNoDuplicates),
     ImportNoDynamicRequire(ImportNoDynamicRequire),
     ImportNoEmptyNamedBlocks(ImportNoEmptyNamedBlocks),
+    ImportNoExtraneousDependencies(ImportNoExtraneousDependencies),
     ImportNoMutableExports(ImportNoMutableExports),
     ImportNoNamedAsDefault(ImportNoNamedAsDefault),
     ImportNoNamedAsDefaultMember(ImportNoNamedAsDefaultMember),
@@ -1483,7 +1485,8 @@ const IMPORT_NO_DEFAULT_EXPORT_ID: usize = IMPORT_NO_CYCLE_ID + 1usize;
 const IMPORT_NO_DUPLICATES_ID: usize = IMPORT_NO_DEFAULT_EXPORT_ID + 1usize;
 const IMPORT_NO_DYNAMIC_REQUIRE_ID: usize = IMPORT_NO_DUPLICATES_ID + 1usize;
 const IMPORT_NO_EMPTY_NAMED_BLOCKS_ID: usize = IMPORT_NO_DYNAMIC_REQUIRE_ID + 1usize;
-const IMPORT_NO_MUTABLE_EXPORTS_ID: usize = IMPORT_NO_EMPTY_NAMED_BLOCKS_ID + 1usize;
+const IMPORT_NO_EXTRANEOUS_DEPENDENCIES_ID: usize = IMPORT_NO_EMPTY_NAMED_BLOCKS_ID + 1usize;
+const IMPORT_NO_MUTABLE_EXPORTS_ID: usize = IMPORT_NO_EXTRANEOUS_DEPENDENCIES_ID + 1usize;
 const IMPORT_NO_NAMED_AS_DEFAULT_ID: usize = IMPORT_NO_MUTABLE_EXPORTS_ID + 1usize;
 const IMPORT_NO_NAMED_AS_DEFAULT_MEMBER_ID: usize = IMPORT_NO_NAMED_AS_DEFAULT_ID + 1usize;
 const IMPORT_NO_NAMED_DEFAULT_ID: usize = IMPORT_NO_NAMED_AS_DEFAULT_MEMBER_ID + 1usize;
@@ -2299,6 +2302,7 @@ impl RuleEnum {
             Self::ImportNoDuplicates(_) => IMPORT_NO_DUPLICATES_ID,
             Self::ImportNoDynamicRequire(_) => IMPORT_NO_DYNAMIC_REQUIRE_ID,
             Self::ImportNoEmptyNamedBlocks(_) => IMPORT_NO_EMPTY_NAMED_BLOCKS_ID,
+            Self::ImportNoExtraneousDependencies(_) => IMPORT_NO_EXTRANEOUS_DEPENDENCIES_ID,
             Self::ImportNoMutableExports(_) => IMPORT_NO_MUTABLE_EXPORTS_ID,
             Self::ImportNoNamedAsDefault(_) => IMPORT_NO_NAMED_AS_DEFAULT_ID,
             Self::ImportNoNamedAsDefaultMember(_) => IMPORT_NO_NAMED_AS_DEFAULT_MEMBER_ID,
@@ -3136,6 +3140,7 @@ impl RuleEnum {
             Self::ImportNoDuplicates(_) => ImportNoDuplicates::NAME,
             Self::ImportNoDynamicRequire(_) => ImportNoDynamicRequire::NAME,
             Self::ImportNoEmptyNamedBlocks(_) => ImportNoEmptyNamedBlocks::NAME,
+            Self::ImportNoExtraneousDependencies(_) => ImportNoExtraneousDependencies::NAME,
             Self::ImportNoMutableExports(_) => ImportNoMutableExports::NAME,
             Self::ImportNoNamedAsDefault(_) => ImportNoNamedAsDefault::NAME,
             Self::ImportNoNamedAsDefaultMember(_) => ImportNoNamedAsDefaultMember::NAME,
@@ -3963,6 +3968,7 @@ impl RuleEnum {
             Self::ImportNoDuplicates(_) => ImportNoDuplicates::CATEGORY,
             Self::ImportNoDynamicRequire(_) => ImportNoDynamicRequire::CATEGORY,
             Self::ImportNoEmptyNamedBlocks(_) => ImportNoEmptyNamedBlocks::CATEGORY,
+            Self::ImportNoExtraneousDependencies(_) => ImportNoExtraneousDependencies::CATEGORY,
             Self::ImportNoMutableExports(_) => ImportNoMutableExports::CATEGORY,
             Self::ImportNoNamedAsDefault(_) => ImportNoNamedAsDefault::CATEGORY,
             Self::ImportNoNamedAsDefaultMember(_) => ImportNoNamedAsDefaultMember::CATEGORY,
@@ -4841,6 +4847,7 @@ impl RuleEnum {
             Self::ImportNoDuplicates(_) => ImportNoDuplicates::FIX,
             Self::ImportNoDynamicRequire(_) => ImportNoDynamicRequire::FIX,
             Self::ImportNoEmptyNamedBlocks(_) => ImportNoEmptyNamedBlocks::FIX,
+            Self::ImportNoExtraneousDependencies(_) => ImportNoExtraneousDependencies::FIX,
             Self::ImportNoMutableExports(_) => ImportNoMutableExports::FIX,
             Self::ImportNoNamedAsDefault(_) => ImportNoNamedAsDefault::FIX,
             Self::ImportNoNamedAsDefaultMember(_) => ImportNoNamedAsDefaultMember::FIX,
@@ -5671,6 +5678,9 @@ impl RuleEnum {
             Self::ImportNoDuplicates(_) => ImportNoDuplicates::documentation(),
             Self::ImportNoDynamicRequire(_) => ImportNoDynamicRequire::documentation(),
             Self::ImportNoEmptyNamedBlocks(_) => ImportNoEmptyNamedBlocks::documentation(),
+            Self::ImportNoExtraneousDependencies(_) => {
+                ImportNoExtraneousDependencies::documentation()
+            }
             Self::ImportNoMutableExports(_) => ImportNoMutableExports::documentation(),
             Self::ImportNoNamedAsDefault(_) => ImportNoNamedAsDefault::documentation(),
             Self::ImportNoNamedAsDefaultMember(_) => ImportNoNamedAsDefaultMember::documentation(),
@@ -6743,6 +6753,10 @@ impl RuleEnum {
                 .or_else(|| ImportNoDynamicRequire::schema(generator)),
             Self::ImportNoEmptyNamedBlocks(_) => ImportNoEmptyNamedBlocks::config_schema(generator)
                 .or_else(|| ImportNoEmptyNamedBlocks::schema(generator)),
+            Self::ImportNoExtraneousDependencies(_) => {
+                ImportNoExtraneousDependencies::config_schema(generator)
+                    .or_else(|| ImportNoExtraneousDependencies::schema(generator))
+            }
             Self::ImportNoMutableExports(_) => ImportNoMutableExports::config_schema(generator)
                 .or_else(|| ImportNoMutableExports::schema(generator)),
             Self::ImportNoNamedAsDefault(_) => ImportNoNamedAsDefault::config_schema(generator)
@@ -8775,6 +8789,7 @@ impl RuleEnum {
             Self::ImportNoDuplicates(_) => "import",
             Self::ImportNoDynamicRequire(_) => "import",
             Self::ImportNoEmptyNamedBlocks(_) => "import",
+            Self::ImportNoExtraneousDependencies(_) => "import",
             Self::ImportNoMutableExports(_) => "import",
             Self::ImportNoNamedAsDefault(_) => "import",
             Self::ImportNoNamedAsDefaultMember(_) => "import",
@@ -9536,6 +9551,9 @@ impl RuleEnum {
             }
             Self::ImportNoEmptyNamedBlocks(_) => Ok(Self::ImportNoEmptyNamedBlocks(
                 ImportNoEmptyNamedBlocks::from_configuration(value)?,
+            )),
+            Self::ImportNoExtraneousDependencies(_) => Ok(Self::ImportNoExtraneousDependencies(
+                ImportNoExtraneousDependencies::from_configuration(value)?,
             )),
             Self::ImportNoMutableExports(_) => {
                 Ok(Self::ImportNoMutableExports(ImportNoMutableExports::from_configuration(value)?))
@@ -11826,6 +11844,7 @@ impl RuleEnum {
             Self::ImportNoDuplicates(rule) => rule.to_configuration(),
             Self::ImportNoDynamicRequire(rule) => rule.to_configuration(),
             Self::ImportNoEmptyNamedBlocks(rule) => rule.to_configuration(),
+            Self::ImportNoExtraneousDependencies(rule) => rule.to_configuration(),
             Self::ImportNoMutableExports(rule) => rule.to_configuration(),
             Self::ImportNoNamedAsDefault(rule) => rule.to_configuration(),
             Self::ImportNoNamedAsDefaultMember(rule) => rule.to_configuration(),
@@ -12555,6 +12574,7 @@ impl RuleEnum {
             Self::ImportNoDuplicates(rule) => rule.run(node, ctx),
             Self::ImportNoDynamicRequire(rule) => rule.run(node, ctx),
             Self::ImportNoEmptyNamedBlocks(rule) => rule.run(node, ctx),
+            Self::ImportNoExtraneousDependencies(rule) => rule.run(node, ctx),
             Self::ImportNoMutableExports(rule) => rule.run(node, ctx),
             Self::ImportNoNamedAsDefault(rule) => rule.run(node, ctx),
             Self::ImportNoNamedAsDefaultMember(rule) => rule.run(node, ctx),
@@ -13280,6 +13300,7 @@ impl RuleEnum {
             Self::ImportNoDuplicates(rule) => rule.run_once(ctx),
             Self::ImportNoDynamicRequire(rule) => rule.run_once(ctx),
             Self::ImportNoEmptyNamedBlocks(rule) => rule.run_once(ctx),
+            Self::ImportNoExtraneousDependencies(rule) => rule.run_once(ctx),
             Self::ImportNoMutableExports(rule) => rule.run_once(ctx),
             Self::ImportNoNamedAsDefault(rule) => rule.run_once(ctx),
             Self::ImportNoNamedAsDefaultMember(rule) => rule.run_once(ctx),
@@ -14009,6 +14030,7 @@ impl RuleEnum {
             Self::ImportNoDuplicates(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ImportNoDynamicRequire(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ImportNoEmptyNamedBlocks(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ImportNoExtraneousDependencies(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ImportNoMutableExports(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ImportNoNamedAsDefault(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ImportNoNamedAsDefaultMember(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -14834,6 +14856,7 @@ impl RuleEnum {
             Self::ImportNoDuplicates(rule) => rule.should_run(ctx),
             Self::ImportNoDynamicRequire(rule) => rule.should_run(ctx),
             Self::ImportNoEmptyNamedBlocks(rule) => rule.should_run(ctx),
+            Self::ImportNoExtraneousDependencies(rule) => rule.should_run(ctx),
             Self::ImportNoMutableExports(rule) => rule.should_run(ctx),
             Self::ImportNoNamedAsDefault(rule) => rule.should_run(ctx),
             Self::ImportNoNamedAsDefaultMember(rule) => rule.should_run(ctx),
@@ -15563,6 +15586,9 @@ impl RuleEnum {
             Self::ImportNoDuplicates(_) => ImportNoDuplicates::IS_TSGOLINT_RULE,
             Self::ImportNoDynamicRequire(_) => ImportNoDynamicRequire::IS_TSGOLINT_RULE,
             Self::ImportNoEmptyNamedBlocks(_) => ImportNoEmptyNamedBlocks::IS_TSGOLINT_RULE,
+            Self::ImportNoExtraneousDependencies(_) => {
+                ImportNoExtraneousDependencies::IS_TSGOLINT_RULE
+            }
             Self::ImportNoMutableExports(_) => ImportNoMutableExports::IS_TSGOLINT_RULE,
             Self::ImportNoNamedAsDefault(_) => ImportNoNamedAsDefault::IS_TSGOLINT_RULE,
             Self::ImportNoNamedAsDefaultMember(_) => ImportNoNamedAsDefaultMember::IS_TSGOLINT_RULE,
@@ -16605,6 +16631,7 @@ impl RuleEnum {
             Self::ImportNoDuplicates(_) => ImportNoDuplicates::HAS_CONFIG,
             Self::ImportNoDynamicRequire(_) => ImportNoDynamicRequire::HAS_CONFIG,
             Self::ImportNoEmptyNamedBlocks(_) => ImportNoEmptyNamedBlocks::HAS_CONFIG,
+            Self::ImportNoExtraneousDependencies(_) => ImportNoExtraneousDependencies::HAS_CONFIG,
             Self::ImportNoMutableExports(_) => ImportNoMutableExports::HAS_CONFIG,
             Self::ImportNoNamedAsDefault(_) => ImportNoNamedAsDefault::HAS_CONFIG,
             Self::ImportNoNamedAsDefaultMember(_) => ImportNoNamedAsDefaultMember::HAS_CONFIG,
@@ -17508,6 +17535,7 @@ impl RuleEnum {
             Self::ImportNoDuplicates(rule) => rule.types_info(),
             Self::ImportNoDynamicRequire(rule) => rule.types_info(),
             Self::ImportNoEmptyNamedBlocks(rule) => rule.types_info(),
+            Self::ImportNoExtraneousDependencies(rule) => rule.types_info(),
             Self::ImportNoMutableExports(rule) => rule.types_info(),
             Self::ImportNoNamedAsDefault(rule) => rule.types_info(),
             Self::ImportNoNamedAsDefaultMember(rule) => rule.types_info(),
@@ -18233,6 +18261,7 @@ impl RuleEnum {
             Self::ImportNoDuplicates(rule) => rule.run_info(),
             Self::ImportNoDynamicRequire(rule) => rule.run_info(),
             Self::ImportNoEmptyNamedBlocks(rule) => rule.run_info(),
+            Self::ImportNoExtraneousDependencies(rule) => rule.run_info(),
             Self::ImportNoMutableExports(rule) => rule.run_info(),
             Self::ImportNoNamedAsDefault(rule) => rule.run_info(),
             Self::ImportNoNamedAsDefaultMember(rule) => rule.run_info(),
@@ -18980,6 +19009,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::ImportNoDuplicates(ImportNoDuplicates::default()),
         RuleEnum::ImportNoDynamicRequire(ImportNoDynamicRequire::default()),
         RuleEnum::ImportNoEmptyNamedBlocks(ImportNoEmptyNamedBlocks::default()),
+        RuleEnum::ImportNoExtraneousDependencies(ImportNoExtraneousDependencies::default()),
         RuleEnum::ImportNoMutableExports(ImportNoMutableExports::default()),
         RuleEnum::ImportNoNamedAsDefault(ImportNoNamedAsDefault::default()),
         RuleEnum::ImportNoNamedAsDefaultMember(ImportNoNamedAsDefaultMember::default()),

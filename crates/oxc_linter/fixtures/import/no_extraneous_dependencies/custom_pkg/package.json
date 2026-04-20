@@ -1,0 +1,7 @@
+{
+  "name": "custom-pkg",
+  "version": "1.0.0",
+  "dependencies": {
+    "custom-only": "1.0.0"
+  }
+}
