@@ -31,8 +31,6 @@ impl InternalFormatter for JsonOutputFormatter {
             fix: String,
             default: bool,
             docs_url: CompactStr,
-            #[cfg(feature = "ruledocs")]
-            version: &'a str,
         }
 
         // Determine which rules are turned on by default (same logic as RuleTable)
@@ -52,7 +50,7 @@ impl InternalFormatter for JsonOutputFormatter {
                 scope: rule.plugin_name(),
                 value: rule.name(),
                 category: rule.category(),
-                version: rule.version().expect("all rules should declare version metadata"),
+                version: rule.version(),
                 type_aware: rule.is_tsgolint_rule(),
                 fix: rule.fix().to_string(),
                 default: default_rules.contains(rule.name()),
@@ -62,8 +60,6 @@ impl InternalFormatter for JsonOutputFormatter {
                     rule.name()
                 )
                 .into(),
-                #[cfg(feature = "ruledocs")]
-                version: rule.version(),
             })
             .collect();
 

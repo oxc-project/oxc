@@ -60,7 +60,7 @@ impl RuleTable {
                 let name = rule.name();
                 RuleTableRow {
                     name,
-                    version: rule.version().expect("all rules should declare version metadata"),
+                    version: rule.version(),
                     #[cfg(feature = "ruledocs")]
                     documentation: rule.documentation(),
                     #[cfg(feature = "ruledocs")]
