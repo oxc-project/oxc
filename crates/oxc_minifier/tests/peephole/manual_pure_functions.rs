@@ -75,7 +75,6 @@ mod terser_tests {
         );
     }
 
-    // we can remove `this` to reduce code size further
     #[test]
     fn babel() {
         test(
@@ -89,9 +88,7 @@ mod terser_tests {
                 };
             "#,
             r"
-                export var Foo = function() {
-                    this;
-                };
+                export var Foo = function() {};
             ",
             &["_classCallCheck"],
         );

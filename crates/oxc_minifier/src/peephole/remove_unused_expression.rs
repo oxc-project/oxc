@@ -1,6 +1,6 @@
 use std::iter;
 
-use crate::{CompressOptionsUnused, TraverseCtx};
+use crate::{CompressOptionsUnused, TraverseCtx, generated::ancestor::Ancestor};
 use oxc_allocator::{TakeIn, Vec};
 use oxc_ast::ast::*;
 use oxc_compat::ESFeature;
@@ -29,8 +29,35 @@ impl<'a> PeepholeOptimizations {
             Expression::SequenceExpression(_) => Self::remove_unused_sequence_expr(e, ctx),
             Expression::TemplateLiteral(_) => Self::remove_unused_template_literal(e, ctx),
             Expression::UnaryExpression(_) => Self::remove_unused_unary_expr(e, ctx),
+            // In a derived class constructor, accessing `this` before `super()` throws
+            // a `ReferenceError`, so we must keep it. In all other positions (including
+            // non-derived constructors) `this` is always initialized and can be dropped.
+            Expression::ThisExpression(_) => !Self::this_is_inside_derived_constructor(ctx),
             _ => !e.may_have_side_effects(ctx),
         }
+    }
+
+    /// Whether the nearest non-arrow, non-block function scope is a constructor
+    /// of a class that extends another class (derived class).
+    /// Only derived constructors have the TDZ for `this` before `super()`.
+    pub(crate) fn this_is_inside_derived_constructor(ctx: &TraverseCtx<'a>) -> bool {
+        for scope_id in ctx.ancestor_scopes() {
+            let flags = ctx.scoping().scope_flags(scope_id);
+            if flags.is_block() || flags.is_arrow() {
+                continue;
+            }
+            if !flags.is_constructor() {
+                return false;
+            }
+            // Found a constructor — check if the class has `extends`.
+            for ancestor in ctx.ancestors() {
+                if let Ancestor::ClassBody(class) = ancestor {
+                    return class.super_class().is_some();
+                }
+            }
+            return false;
+        }
+        false
     }
 
     fn remove_unused_unary_expr(e: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) -> bool {

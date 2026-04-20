@@ -1,4 +1,7 @@
-use crate::tester::{test, test_same};
+use crate::{
+    test_idempotency,
+    tester::{test, test_same},
+};
 
 #[test]
 fn test_comment_at_top_of_file() {
@@ -643,4 +646,9 @@ function foo() {
             }
         }
     }
+}
+
+#[test]
+fn test_pure_comment_on_object_idempotency() {
+    test_idempotency("export const X = /* @__PURE__ */ { a: 1 };");
 }

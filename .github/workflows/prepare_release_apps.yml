@@ -32,6 +32,8 @@ jobs:
           cache-key: warm
           tools: cargo-release-oxc
 
+      - uses: oxc-project/setup-node@4c26e7cb3605b6bdef5450dacd02c434b10fd8ba # v1.2.0
+
       - name: Generate version and changelog
         id: run
         run: |
@@ -47,7 +49,10 @@ jobs:
             cat ./target/OXFMT_CHANGELOG
           } > ./target/PR_BODY.md
 
-      - uses: oxc-project/setup-node@4c26e7cb3605b6bdef5450dacd02c434b10fd8ba # v1.2.0
+      - name: Rewrite rule versions
+        env:
+          OXLINT_VERSION: ${{ steps.run.outputs.OXLINT_VERSION }}
+        run: node .github/scripts/update-rule-versions.mts --release-version "$OXLINT_VERSION" --write
 
       - name: Rebuild NAPI bindings
         run: |

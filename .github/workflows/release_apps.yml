@@ -26,6 +26,9 @@ jobs:
       oxlint_version: ${{ steps.oxlint.outputs.version }}
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
+
+      - uses: oxc-project/setup-node@4c26e7cb3605b6bdef5450dacd02c434b10fd8ba # v1.2.0
+
       - uses: ./.github/actions/check-version
         id: oxfmt
         with:
@@ -37,6 +40,13 @@ jobs:
         with:
           file-name: npm/oxlint/package.json
           file-url: https://unpkg.com/oxlint@latest/package.json
+
+      - name: Validate rule versions
+        env:
+          OXLINT_VERSION: ${{ steps.oxlint.outputs.version }}
+        run: |
+          node .github/scripts/update-rule-versions.mts --release-version "$OXLINT_VERSION" --write
+          git diff --exit-code -- crates/oxc_linter/src/rules
 
   build-oxlint:
     needs: check
