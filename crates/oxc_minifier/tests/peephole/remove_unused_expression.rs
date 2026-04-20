@@ -175,57 +175,32 @@ fn test_logical_expression() {
 // on the next iteration and strips the assignment, dropping the nullish guard.
 //
 // Each sub-case is a separate test so one regression doesn't mask the others.
-
 #[test]
-fn test_nullish_assign_preserves_if_null_guard() {
-    // The original issue shape: `if (x == null) { x = expr; }` → `x ??= expr`.
+fn test_nullish_assign_preserves_guard() {
     let options = CompressOptions::smallest();
     test_options(
         "let rafId; export function foo() { if (rafId == null) { rafId = requestAnimationFrame(() => { console.log('callback'); }); } }",
         "let rafId; export function foo() { rafId ??= requestAnimationFrame(() => { console.log('callback'); }); }",
         &options,
     );
-}
-
-#[test]
-fn test_nullish_assign_preserves_if_not_null_else_guard() {
-    // The inverted shape: `if (x != null) {} else { x = expr; }` → `x ??= expr`.
-    let options = CompressOptions::smallest();
     test_options(
         "let rafId; export function foo() { if (rafId != null) {} else { rafId = requestAnimationFrame(() => { console.log('callback'); }); } }",
         "let rafId; export function foo() { rafId ??= requestAnimationFrame(() => { console.log('callback'); }); }",
         &options,
     );
-}
-
-#[test]
-fn test_nullish_assign_preserves_logical_and_shape() {
-    // The already-lowered shape: `x == null && (x = expr)` → `x ??= expr`.
-    let options = CompressOptions::smallest();
     test_options(
         "let a; export function foo() { a == null && (a = compute()); }",
         "let a; export function foo() { a ??= compute(); }",
         &options,
     );
-}
-
-#[test]
-fn test_nullish_assign_preserves_logical_or_shape() {
-    // The `!= null ||` variant: `x != null || (x = expr)` → `x ??= expr`.
-    let options = CompressOptions::smallest();
     test_options(
         "let a; export function foo() { a != null || (a = compute()); }",
         "let a; export function foo() { a ??= compute(); }",
         &options,
     );
-}
-
-#[test]
-fn test_nullish_assign_preserves_member_lhs() {
     // Member LHS goes through `remove_unused_member_assignment`, not the
     // identifier path, so it was never affected by the reference-flag bug.
     // Still covered here to pin down expected behavior under `smallest()`.
-    let options = CompressOptions::smallest();
     test_options(
         "export let o = {}; export function foo() { o.y == null && (o.y = compute()); }",
         "export let o = {}; export function foo() { o.y ??= compute(); }",
