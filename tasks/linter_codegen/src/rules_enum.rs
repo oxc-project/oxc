@@ -326,13 +326,6 @@ fn generate_rule_enum_impl(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
                 }
             }
 
-            /// The version of oxlint in which this rule was first available.
-            pub fn version(&self) -> &'static str {
-                match self {
-                    #(#version_arms),*
-                }
-            }
-
             pub fn plugin_name(&self) -> &'static str {
                 match self {
                     #(#plugin_name_arms),*
@@ -382,6 +375,13 @@ fn generate_rule_enum_impl(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
             pub fn is_tsgolint_rule(&self) -> bool {
                 match self {
                     #(#is_tsgolint_rule_arms),*
+                }
+            }
+
+            /// The version of oxlint in which this rule was first available.
+            pub fn version(&self) -> &'static str {
+                match self {
+                    #(#version_arms),*
                 }
             }
 
