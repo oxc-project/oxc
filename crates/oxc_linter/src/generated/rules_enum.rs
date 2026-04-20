@@ -373,6 +373,7 @@ pub use crate::rules::oxc::no_rest_spread_properties::NoRestSpreadProperties as 
 pub use crate::rules::oxc::no_this_in_exported_function::NoThisInExportedFunction as OxcNoThisInExportedFunction;
 pub use crate::rules::oxc::number_arg_out_of_range::NumberArgOutOfRange as OxcNumberArgOutOfRange;
 pub use crate::rules::oxc::only_used_in_recursion::OnlyUsedInRecursion as OxcOnlyUsedInRecursion;
+pub use crate::rules::oxc::prefer_private_elements::PreferPrivateElements as OxcPreferPrivateElements;
 pub use crate::rules::oxc::uninvoked_array_callback::UninvokedArrayCallback as OxcUninvokedArrayCallback;
 pub use crate::rules::promise::always_return::AlwaysReturn as PromiseAlwaysReturn;
 pub use crate::rules::promise::avoid_new::AvoidNew as PromiseAvoidNew;
@@ -1359,6 +1360,7 @@ pub enum RuleEnum {
     OxcNoThisInExportedFunction(OxcNoThisInExportedFunction),
     OxcNumberArgOutOfRange(OxcNumberArgOutOfRange),
     OxcOnlyUsedInRecursion(OxcOnlyUsedInRecursion),
+    OxcPreferPrivateElements(OxcPreferPrivateElements),
     OxcUninvokedArrayCallback(OxcUninvokedArrayCallback),
     NextjsGoogleFontDisplay(NextjsGoogleFontDisplay),
     NextjsGoogleFontPreconnect(NextjsGoogleFontPreconnect),
@@ -2167,7 +2169,8 @@ const OXC_NO_REST_SPREAD_PROPERTIES_ID: usize = OXC_NO_OPTIONAL_CHAINING_ID + 1u
 const OXC_NO_THIS_IN_EXPORTED_FUNCTION_ID: usize = OXC_NO_REST_SPREAD_PROPERTIES_ID + 1usize;
 const OXC_NUMBER_ARG_OUT_OF_RANGE_ID: usize = OXC_NO_THIS_IN_EXPORTED_FUNCTION_ID + 1usize;
 const OXC_ONLY_USED_IN_RECURSION_ID: usize = OXC_NUMBER_ARG_OUT_OF_RANGE_ID + 1usize;
-const OXC_UNINVOKED_ARRAY_CALLBACK_ID: usize = OXC_ONLY_USED_IN_RECURSION_ID + 1usize;
+const OXC_PREFER_PRIVATE_ELEMENTS_ID: usize = OXC_ONLY_USED_IN_RECURSION_ID + 1usize;
+const OXC_UNINVOKED_ARRAY_CALLBACK_ID: usize = OXC_PREFER_PRIVATE_ELEMENTS_ID + 1usize;
 const NEXTJS_GOOGLE_FONT_DISPLAY_ID: usize = OXC_UNINVOKED_ARRAY_CALLBACK_ID + 1usize;
 const NEXTJS_GOOGLE_FONT_PRECONNECT_ID: usize = NEXTJS_GOOGLE_FONT_DISPLAY_ID + 1usize;
 const NEXTJS_INLINE_SCRIPT_ID_ID: usize = NEXTJS_GOOGLE_FONT_PRECONNECT_ID + 1usize;
@@ -3005,6 +3008,7 @@ impl RuleEnum {
             Self::OxcNoThisInExportedFunction(_) => OXC_NO_THIS_IN_EXPORTED_FUNCTION_ID,
             Self::OxcNumberArgOutOfRange(_) => OXC_NUMBER_ARG_OUT_OF_RANGE_ID,
             Self::OxcOnlyUsedInRecursion(_) => OXC_ONLY_USED_IN_RECURSION_ID,
+            Self::OxcPreferPrivateElements(_) => OXC_PREFER_PRIVATE_ELEMENTS_ID,
             Self::OxcUninvokedArrayCallback(_) => OXC_UNINVOKED_ARRAY_CALLBACK_ID,
             Self::NextjsGoogleFontDisplay(_) => NEXTJS_GOOGLE_FONT_DISPLAY_ID,
             Self::NextjsGoogleFontPreconnect(_) => NEXTJS_GOOGLE_FONT_PRECONNECT_ID,
@@ -3832,6 +3836,7 @@ impl RuleEnum {
             Self::OxcNoThisInExportedFunction(_) => OxcNoThisInExportedFunction::NAME,
             Self::OxcNumberArgOutOfRange(_) => OxcNumberArgOutOfRange::NAME,
             Self::OxcOnlyUsedInRecursion(_) => OxcOnlyUsedInRecursion::NAME,
+            Self::OxcPreferPrivateElements(_) => OxcPreferPrivateElements::NAME,
             Self::OxcUninvokedArrayCallback(_) => OxcUninvokedArrayCallback::NAME,
             Self::NextjsGoogleFontDisplay(_) => NextjsGoogleFontDisplay::NAME,
             Self::NextjsGoogleFontPreconnect(_) => NextjsGoogleFontPreconnect::NAME,
@@ -4701,6 +4706,7 @@ impl RuleEnum {
             Self::OxcNoThisInExportedFunction(_) => OxcNoThisInExportedFunction::CATEGORY,
             Self::OxcNumberArgOutOfRange(_) => OxcNumberArgOutOfRange::CATEGORY,
             Self::OxcOnlyUsedInRecursion(_) => OxcOnlyUsedInRecursion::CATEGORY,
+            Self::OxcPreferPrivateElements(_) => OxcPreferPrivateElements::CATEGORY,
             Self::OxcUninvokedArrayCallback(_) => OxcUninvokedArrayCallback::CATEGORY,
             Self::NextjsGoogleFontDisplay(_) => NextjsGoogleFontDisplay::CATEGORY,
             Self::NextjsGoogleFontPreconnect(_) => NextjsGoogleFontPreconnect::CATEGORY,
@@ -5537,6 +5543,7 @@ impl RuleEnum {
             Self::OxcNoThisInExportedFunction(_) => OxcNoThisInExportedFunction::FIX,
             Self::OxcNumberArgOutOfRange(_) => OxcNumberArgOutOfRange::FIX,
             Self::OxcOnlyUsedInRecursion(_) => OxcOnlyUsedInRecursion::FIX,
+            Self::OxcPreferPrivateElements(_) => OxcPreferPrivateElements::FIX,
             Self::OxcUninvokedArrayCallback(_) => OxcUninvokedArrayCallback::FIX,
             Self::NextjsGoogleFontDisplay(_) => NextjsGoogleFontDisplay::FIX,
             Self::NextjsGoogleFontPreconnect(_) => NextjsGoogleFontPreconnect::FIX,
@@ -6557,6 +6564,7 @@ impl RuleEnum {
             Self::OxcNoThisInExportedFunction(_) => OxcNoThisInExportedFunction::documentation(),
             Self::OxcNumberArgOutOfRange(_) => OxcNumberArgOutOfRange::documentation(),
             Self::OxcOnlyUsedInRecursion(_) => OxcOnlyUsedInRecursion::documentation(),
+            Self::OxcPreferPrivateElements(_) => OxcPreferPrivateElements::documentation(),
             Self::OxcUninvokedArrayCallback(_) => OxcUninvokedArrayCallback::documentation(),
             Self::NextjsGoogleFontDisplay(_) => NextjsGoogleFontDisplay::documentation(),
             Self::NextjsGoogleFontPreconnect(_) => NextjsGoogleFontPreconnect::documentation(),
@@ -8474,6 +8482,8 @@ impl RuleEnum {
                 .or_else(|| OxcNumberArgOutOfRange::schema(generator)),
             Self::OxcOnlyUsedInRecursion(_) => OxcOnlyUsedInRecursion::config_schema(generator)
                 .or_else(|| OxcOnlyUsedInRecursion::schema(generator)),
+            Self::OxcPreferPrivateElements(_) => OxcPreferPrivateElements::config_schema(generator)
+                .or_else(|| OxcPreferPrivateElements::schema(generator)),
             Self::OxcUninvokedArrayCallback(_) => {
                 OxcUninvokedArrayCallback::config_schema(generator)
                     .or_else(|| OxcUninvokedArrayCallback::schema(generator))
@@ -9375,6 +9385,7 @@ impl RuleEnum {
             Self::OxcNoThisInExportedFunction(_) => "oxc",
             Self::OxcNumberArgOutOfRange(_) => "oxc",
             Self::OxcOnlyUsedInRecursion(_) => "oxc",
+            Self::OxcPreferPrivateElements(_) => "oxc",
             Self::OxcUninvokedArrayCallback(_) => "oxc",
             Self::NextjsGoogleFontDisplay(_) => "nextjs",
             Self::NextjsGoogleFontPreconnect(_) => "nextjs",
@@ -11485,6 +11496,9 @@ impl RuleEnum {
             Self::OxcOnlyUsedInRecursion(_) => {
                 Ok(Self::OxcOnlyUsedInRecursion(OxcOnlyUsedInRecursion::from_configuration(value)?))
             }
+            Self::OxcPreferPrivateElements(_) => Ok(Self::OxcPreferPrivateElements(
+                OxcPreferPrivateElements::from_configuration(value)?,
+            )),
             Self::OxcUninvokedArrayCallback(_) => Ok(Self::OxcUninvokedArrayCallback(
                 OxcUninvokedArrayCallback::from_configuration(value)?,
             )),
@@ -12428,6 +12442,7 @@ impl RuleEnum {
             Self::OxcNoThisInExportedFunction(rule) => rule.to_configuration(),
             Self::OxcNumberArgOutOfRange(rule) => rule.to_configuration(),
             Self::OxcOnlyUsedInRecursion(rule) => rule.to_configuration(),
+            Self::OxcPreferPrivateElements(rule) => rule.to_configuration(),
             Self::OxcUninvokedArrayCallback(rule) => rule.to_configuration(),
             Self::NextjsGoogleFontDisplay(rule) => rule.to_configuration(),
             Self::NextjsGoogleFontPreconnect(rule) => rule.to_configuration(),
@@ -13155,6 +13170,7 @@ impl RuleEnum {
             Self::OxcNoThisInExportedFunction(rule) => rule.run(node, ctx),
             Self::OxcNumberArgOutOfRange(rule) => rule.run(node, ctx),
             Self::OxcOnlyUsedInRecursion(rule) => rule.run(node, ctx),
+            Self::OxcPreferPrivateElements(rule) => rule.run(node, ctx),
             Self::OxcUninvokedArrayCallback(rule) => rule.run(node, ctx),
             Self::NextjsGoogleFontDisplay(rule) => rule.run(node, ctx),
             Self::NextjsGoogleFontPreconnect(rule) => rule.run(node, ctx),
@@ -13880,6 +13896,7 @@ impl RuleEnum {
             Self::OxcNoThisInExportedFunction(rule) => rule.run_once(ctx),
             Self::OxcNumberArgOutOfRange(rule) => rule.run_once(ctx),
             Self::OxcOnlyUsedInRecursion(rule) => rule.run_once(ctx),
+            Self::OxcPreferPrivateElements(rule) => rule.run_once(ctx),
             Self::OxcUninvokedArrayCallback(rule) => rule.run_once(ctx),
             Self::NextjsGoogleFontDisplay(rule) => rule.run_once(ctx),
             Self::NextjsGoogleFontPreconnect(rule) => rule.run_once(ctx),
@@ -14705,6 +14722,7 @@ impl RuleEnum {
             Self::OxcNoThisInExportedFunction(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::OxcNumberArgOutOfRange(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::OxcOnlyUsedInRecursion(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcPreferPrivateElements(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::OxcUninvokedArrayCallback(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::NextjsGoogleFontDisplay(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::NextjsGoogleFontPreconnect(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -15434,6 +15452,7 @@ impl RuleEnum {
             Self::OxcNoThisInExportedFunction(rule) => rule.should_run(ctx),
             Self::OxcNumberArgOutOfRange(rule) => rule.should_run(ctx),
             Self::OxcOnlyUsedInRecursion(rule) => rule.should_run(ctx),
+            Self::OxcPreferPrivateElements(rule) => rule.should_run(ctx),
             Self::OxcUninvokedArrayCallback(rule) => rule.should_run(ctx),
             Self::NextjsGoogleFontDisplay(rule) => rule.should_run(ctx),
             Self::NextjsGoogleFontPreconnect(rule) => rule.should_run(ctx),
@@ -16449,6 +16468,7 @@ impl RuleEnum {
             Self::OxcNoThisInExportedFunction(_) => OxcNoThisInExportedFunction::IS_TSGOLINT_RULE,
             Self::OxcNumberArgOutOfRange(_) => OxcNumberArgOutOfRange::IS_TSGOLINT_RULE,
             Self::OxcOnlyUsedInRecursion(_) => OxcOnlyUsedInRecursion::IS_TSGOLINT_RULE,
+            Self::OxcPreferPrivateElements(_) => OxcPreferPrivateElements::IS_TSGOLINT_RULE,
             Self::OxcUninvokedArrayCallback(_) => OxcUninvokedArrayCallback::IS_TSGOLINT_RULE,
             Self::NextjsGoogleFontDisplay(_) => NextjsGoogleFontDisplay::IS_TSGOLINT_RULE,
             Self::NextjsGoogleFontPreconnect(_) => NextjsGoogleFontPreconnect::IS_TSGOLINT_RULE,
@@ -17369,6 +17389,7 @@ impl RuleEnum {
             Self::OxcNoThisInExportedFunction(_) => OxcNoThisInExportedFunction::HAS_CONFIG,
             Self::OxcNumberArgOutOfRange(_) => OxcNumberArgOutOfRange::HAS_CONFIG,
             Self::OxcOnlyUsedInRecursion(_) => OxcOnlyUsedInRecursion::HAS_CONFIG,
+            Self::OxcPreferPrivateElements(_) => OxcPreferPrivateElements::HAS_CONFIG,
             Self::OxcUninvokedArrayCallback(_) => OxcUninvokedArrayCallback::HAS_CONFIG,
             Self::NextjsGoogleFontDisplay(_) => NextjsGoogleFontDisplay::HAS_CONFIG,
             Self::NextjsGoogleFontPreconnect(_) => NextjsGoogleFontPreconnect::HAS_CONFIG,
@@ -18108,6 +18129,7 @@ impl RuleEnum {
             Self::OxcNoThisInExportedFunction(rule) => rule.types_info(),
             Self::OxcNumberArgOutOfRange(rule) => rule.types_info(),
             Self::OxcOnlyUsedInRecursion(rule) => rule.types_info(),
+            Self::OxcPreferPrivateElements(rule) => rule.types_info(),
             Self::OxcUninvokedArrayCallback(rule) => rule.types_info(),
             Self::NextjsGoogleFontDisplay(rule) => rule.types_info(),
             Self::NextjsGoogleFontPreconnect(rule) => rule.types_info(),
@@ -18833,6 +18855,7 @@ impl RuleEnum {
             Self::OxcNoThisInExportedFunction(rule) => rule.run_info(),
             Self::OxcNumberArgOutOfRange(rule) => rule.run_info(),
             Self::OxcOnlyUsedInRecursion(rule) => rule.run_info(),
+            Self::OxcPreferPrivateElements(rule) => rule.run_info(),
             Self::OxcUninvokedArrayCallback(rule) => rule.run_info(),
             Self::NextjsGoogleFontDisplay(rule) => rule.run_info(),
             Self::NextjsGoogleFontPreconnect(rule) => rule.run_info(),
@@ -19676,6 +19699,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::OxcNoThisInExportedFunction(OxcNoThisInExportedFunction::default()),
         RuleEnum::OxcNumberArgOutOfRange(OxcNumberArgOutOfRange::default()),
         RuleEnum::OxcOnlyUsedInRecursion(OxcOnlyUsedInRecursion::default()),
+        RuleEnum::OxcPreferPrivateElements(OxcPreferPrivateElements::default()),
         RuleEnum::OxcUninvokedArrayCallback(OxcUninvokedArrayCallback::default()),
         RuleEnum::NextjsGoogleFontDisplay(NextjsGoogleFontDisplay::default()),
         RuleEnum::NextjsGoogleFontPreconnect(NextjsGoogleFontPreconnect::default()),

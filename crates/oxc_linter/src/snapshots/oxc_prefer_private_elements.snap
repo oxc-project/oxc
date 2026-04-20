@@ -1,0 +1,64 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 444
+---
+
+  ⚠ oxc(prefer-private-elements): Prefer ECMAScript private elements over TypeScript `private` for `value`.
+   ╭─[prefer_private_elements.ts:1:13]
+ 1 │ class Foo { private value: string; }
+   ·             ───────
+   ╰────
+  help: Convert `value` to an ECMAScript private element
+
+  ⚠ oxc(prefer-private-elements): Prefer ECMAScript private elements over TypeScript `private` for `method`.
+   ╭─[prefer_private_elements.ts:1:13]
+ 1 │ class Foo { private method() {} }
+   ·             ───────
+   ╰────
+  help: Convert `method` to an ECMAScript private element
+
+  ⚠ oxc(prefer-private-elements): Prefer ECMAScript private elements over TypeScript `private` for `value`.
+   ╭─[prefer_private_elements.ts:1:13]
+ 1 │ class Foo { private get value() { return 1; } }
+   ·             ───────
+   ╰────
+  help: Convert `value` to an ECMAScript private element
+
+  ⚠ oxc(prefer-private-elements): Prefer ECMAScript private elements over TypeScript `private` for `value`.
+   ╭─[prefer_private_elements.ts:1:13]
+ 1 │ class Foo { private set value(next: number) {} }
+   ·             ───────
+   ╰────
+  help: Convert `value` to an ECMAScript private element
+
+  ⚠ oxc(prefer-private-elements): Prefer ECMAScript private elements over TypeScript `private` for `value`.
+   ╭─[prefer_private_elements.ts:1:13]
+ 1 │ class Foo { private accessor value = 1; }
+   ·             ───────
+   ╰────
+  help: Convert `value` to an ECMAScript private element
+
+  ⚠ oxc(prefer-private-elements): Prefer ECMAScript private elements over TypeScript `private` for `value`.
+   ╭─[prefer_private_elements.ts:1:13]
+ 1 │ class Foo { private static value = 1; }
+   ·             ───────
+   ╰────
+  help: Convert `value` to an ECMAScript private element
+
+  ⚠ oxc(prefer-private-elements): Prefer ECMAScript private elements over TypeScript `private` for `value`.
+   ╭─[prefer_private_elements.ts:1:13]
+ 1 │ class Foo { private value = 1; method() { return other.value; } }
+   ·             ───────
+   ╰────
+
+  ⚠ oxc(prefer-private-elements): Prefer ECMAScript private elements over TypeScript `private` for `value`.
+   ╭─[prefer_private_elements.ts:1:13]
+ 1 │ class Foo { private static value = 1; static method() { return this.value; } }
+   ·             ───────
+   ╰────
+
+  ⚠ oxc(prefer-private-elements): Prefer ECMAScript private elements over TypeScript `private` for `value`.
+   ╭─[prefer_private_elements.ts:1:21]
+ 1 │ const Foo = class { private static value = 1; static method() { return Foo.value; } }
+   ·                     ───────
+   ╰────
