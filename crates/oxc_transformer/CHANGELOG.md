@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.127.0] - 2026-04-20
+
+### 🐛 Bug Fixes
+
+- 91e5bde transformer/typescript: Preserve computed-key static block when class has an empty constructor (#21562) (Dunqing)
+
 ## [0.126.0] - 2026-04-15
 
 ### 🐛 Bug Fixes
