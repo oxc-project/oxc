@@ -290,6 +290,11 @@ impl Default for CodegenOptions {
 }
 
 impl CodegenOptions {
+    /// Convert N-API codegen options into codegen options.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if `legal_comments` is not a supported value.
     pub fn to_codegen_options(&self) -> Result<oxc_codegen::CodegenOptions, String> {
         let mut opts = if self.remove_whitespace.is_some_and(|b| b) {
             oxc_codegen::CodegenOptions::minify()
