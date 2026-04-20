@@ -164,7 +164,7 @@ impl LanguageServer for Backend {
             }
         }
 
-        self.worker_manager.set_all_workers(workers).await;
+        self.worker_manager.start_manager(workers).await;
 
         self.capabilities.set(capabilities).map_err(|err| {
             let message = match err {
@@ -196,11 +196,11 @@ impl LanguageServer for Backend {
             return;
         };
 
-        let workers = &*self.worker_manager.read_workers().await;
+        let workspace_workers = &*self.worker_manager.read_workspace_workers().await;
         let needed_configurations =
-            ConcurrentHashMap::with_capacity_and_hasher(workers.len(), FxBuildHasher);
+            ConcurrentHashMap::with_capacity_and_hasher(workspace_workers.len(), FxBuildHasher);
         let needed_configurations = needed_configurations.pin_owned();
-        for worker in workers {
+        for worker in workspace_workers {
             if worker.needs_init_options().await {
                 needed_configurations.insert(worker.get_root_uri().clone(), worker);
             }
@@ -236,10 +236,9 @@ impl LanguageServer for Backend {
 
                 for uri in &known_uris {
                     // Check if this worker is the most specific one for this URI
-                    let responsible_worker = WorkerManager::find_worker_for_uri(workers, uri);
-                    if responsible_worker.is_none_or(|w| !std::ptr::eq(w, worker)) {
+                    let Some(worker) = self.worker_manager.get_worker_for_uri(uri).await else {
                         continue;
-                    }
+                    };
                     let document = {
                         let fs_guard = self.file_system.read().await;
                         fs_guard.get_document(uri)
@@ -281,8 +280,12 @@ impl LanguageServer for Backend {
 
         // init all file watchers
         if capabilities.dynamic_watchers {
-            for worker in workers {
+            for worker in workspace_workers {
                 registrations.extend(worker.init_watchers().await);
+            }
+
+            if let Some(dynamic_worker) = self.worker_manager.read_dynamic_worker().await {
+                registrations.extend(dynamic_worker.init_watchers().await);
             }
         }
 
@@ -298,15 +301,7 @@ impl LanguageServer for Backend {
     ///
     /// See: <https://microsoft.github.io/language-server-protocol/specifications/specification-current/#shutdown>
     async fn shutdown(&self) -> Result<()> {
-        let mut clearing_diagnostics = Vec::new();
-
-        for worker in &*self.worker_manager.read_workers().await {
-            // shutdown each worker and collect the URIs to clear diagnostics.
-            // unregistering file watchers is not necessary, because the client will do it automatically on shutdown.
-            // some clients (`helix`) do not expect any requests after shutdown is sent.
-            let (uris, _) = worker.shutdown().await;
-            clearing_diagnostics.extend(uris);
-        }
+        let clearing_diagnostics = self.worker_manager.stop_manager().await;
 
         // only clear diagnostics when we are using push diagnostics
         if self.capabilities.get().is_some_and(|cap| cap.diagnostic_mode == DiagnosticMode::Push)
@@ -326,7 +321,7 @@ impl LanguageServer for Backend {
     ///
     /// See: <https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_didChangeConfiguration>
     async fn did_change_configuration(&self, params: DidChangeConfigurationParams) {
-        let workers = self.worker_manager.read_workers().await;
+        let workers = self.worker_manager.read_workspace_workers().await;
         let mut new_diagnostics = Vec::new();
         let mut removing_registrations = vec![];
         let mut adding_registrations = vec![];
@@ -440,7 +435,6 @@ impl LanguageServer for Backend {
     ///
     /// See: <https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_didChangeWatchedFiles>
     async fn did_change_watched_files(&self, params: DidChangeWatchedFilesParams) {
-        let workers = self.worker_manager.read_workers().await;
         // ToDo: what if an empty changes flag is passed?
         debug!("watched file did change");
 
@@ -462,7 +456,7 @@ impl LanguageServer for Backend {
             // We do not expect multiple changes from the same workspace folder.
             // If we should consider it, we need to map the events to the workers first,
             // to only restart the internal linter / diagnostics for once
-            let Some(worker) = WorkerManager::find_worker_for_uri(&workers, &file_event.uri) else {
+            let Some(worker) = self.worker_manager.get_worker_for_uri(&file_event.uri).await else {
                 continue;
             };
             let (diagnostics, registrations, unregistrations) = worker
@@ -804,16 +798,32 @@ impl LanguageServer for Backend {
         }
         // Collect all edits under a brief read lock, then release it
         // before performing client RPCs to avoid blocking writers.
+        // TODO: recheck if we should return the first found workspace edit instead of merging edits from all workers.
+        // This can cause edit conflicts when the same line/column on the same file is edited by different workers.
         let edits: Vec<WorkspaceEdit> = {
-            let workers = self.worker_manager.read_workers().await;
             let mut edits = Vec::new();
-            for worker in workers.iter() {
-                match worker.execute_command(&params.command, params.arguments.clone()).await {
-                    Ok(Some(edit)) => edits.push(edit),
-                    Ok(None) => {}
-                    Err(err) => return Err(Error::new(err)),
+            {
+                let workers = self.worker_manager.read_workspace_workers().await;
+                for worker in workers.iter() {
+                    match worker.execute_command(&params.command, params.arguments.clone()).await {
+                        Ok(Some(edit)) => edits.push(edit),
+                        Ok(None) => {}
+                        Err(err) => return Err(Error::new(err)),
+                    }
                 }
             }
+
+            {
+                let dynamic_worker = self.worker_manager.read_dynamic_worker().await;
+                if let Some(worker) = dynamic_worker {
+                    match worker.execute_command(&params.command, params.arguments.clone()).await {
+                        Ok(Some(edit)) => edits.push(edit),
+                        Ok(None) => {}
+                        Err(err) => return Err(Error::new(err)),
+                    }
+                }
+            }
+
             edits
         };
 

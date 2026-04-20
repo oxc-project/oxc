@@ -124,10 +124,10 @@ impl Rule for NoStringRefs {
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            AstKind::JSXAttribute(attr) => {
-                if is_literal_ref_attribute(attr, self.no_template_literals) {
-                    ctx.diagnostic(string_in_ref_deprecated(attr.span));
-                }
+            AstKind::JSXAttribute(attr)
+                if is_literal_ref_attribute(attr, self.no_template_literals) =>
+            {
+                ctx.diagnostic(string_in_ref_deprecated(attr.span));
             }
             member_expr if member_expr.is_member_expression_kind() => {
                 let Some(member_expr) = member_expr.as_member_expression_kind() else {

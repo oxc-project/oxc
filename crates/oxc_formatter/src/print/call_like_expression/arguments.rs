@@ -200,10 +200,8 @@ pub fn is_function_composition_args(args: &[Argument<'_>]) -> bool {
                     false
                 };
             }
-            Argument::CallExpression(call) => {
-                if is_call_expression_with_arrow_or_function(call) {
-                    return true;
-                }
+            Argument::CallExpression(call) if is_call_expression_with_arrow_or_function(call) => {
+                return true;
             }
             _ => {}
         }

@@ -1,6 +1,6 @@
 use oxc_allocator::{TakeIn, Vec as ArenaVec};
 use oxc_ast::ast::*;
-use oxc_semantic::ScopeFlags;
+use oxc_semantic::{ScopeFlags, ScopeId};
 use oxc_span::SPAN;
 use oxc_str::Ident;
 use oxc_syntax::operator::AssignmentOperator;
@@ -100,6 +100,10 @@ impl<'a> TypeScript<'a> {
             )
         });
 
+        // Static blocks created below must be parented to the class body scope,
+        // not the current traversal scope (which is the scope enclosing the class).
+        let class_scope_id = class.scope_id();
+
         let mut constructor = None;
         let mut property_assignments = Vec::new();
         let mut computed_key_assignments = Vec::new();
@@ -123,7 +127,7 @@ impl<'a> TypeScript<'a> {
                             // `class C { static x = 1; }` -> `class C { static { this.x = 1; } }`
                             // `class C { static [x] = 1; }` -> `let _x; class C { static { this[_x] = 1; } }`
                             let body = ctx.ast.vec1(assignment);
-                            *element = Self::create_class_static_block(body, ctx);
+                            *element = Self::create_class_static_block(body, class_scope_id, ctx);
                         } else {
                             property_assignments.push(assignment);
                         }
@@ -170,7 +174,7 @@ impl<'a> TypeScript<'a> {
                     .ast
                     .expression_sequence(SPAN, ctx.ast.vec_from_iter(computed_key_assignments));
                 let statement = ctx.ast.statement_expression(SPAN, sequence_expression);
-                Self::create_class_static_block(ctx.ast.vec1(statement), ctx)
+                Self::create_class_static_block(ctx.ast.vec1(statement), class_scope_id, ctx)
             });
 
         if let Some(constructor) = constructor {
@@ -179,8 +183,13 @@ impl<'a> TypeScript<'a> {
             let params_assignment = Self::convert_constructor_params(params, ctx);
             property_assignments.splice(0..0, params_assignment);
 
-            // Exit if there are no property and parameter assignments
             if property_assignments.is_empty() {
+                // No property/parameter assignments to inject, but computed-key temp
+                // inits still need their static block (e.g. `static [expr] = value` +
+                // empty `constructor()`), otherwise the temp var is left uninitialized.
+                if let Some(element) = computed_key_assignment_static_block {
+                    class.body.body.insert(0, element);
+                }
                 return;
             }
 
@@ -429,21 +438,22 @@ impl<'a> TypeScript<'a> {
         )
     }
 
-    /// Create `static { body }`
+    /// Create `static { body }` as a child of `class_scope_id`.
+    ///
+    /// The enclosing traversal scope is the scope around the class, not the class body,
+    /// so pass `class.scope_id()` explicitly to parent the static block correctly.
     #[inline]
     fn create_class_static_block(
         body: ArenaVec<'a, Statement<'a>>,
+        class_scope_id: ScopeId,
         ctx: &mut TraverseCtx<'a>,
     ) -> ClassElement<'a> {
-        let scope_id = ctx.insert_scope_below_statements(
-            &body,
+        let scope_id = ctx.insert_scope_below_statement_from_scope_id(
+            &body[0],
+            class_scope_id,
             ScopeFlags::StrictMode | ScopeFlags::ClassStaticBlock,
         );
 
-        ctx.ast.class_element_static_block_with_scope_id(
-            SPAN,
-            ctx.ast.vec_from_iter(body),
-            scope_id,
-        )
+        ctx.ast.class_element_static_block_with_scope_id(SPAN, body, scope_id)
     }
 }

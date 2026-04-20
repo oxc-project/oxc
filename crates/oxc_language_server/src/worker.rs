@@ -22,10 +22,10 @@ use crate::{
 };
 
 /// A worker that manages the individual tool for a specific workspace
-/// and reports back the results to the [`Backend`](crate::backend::Backend).
+/// and returns back the results of the running tool.
 ///
 /// Each worker is responsible for a specific root URI and configures the tool's `cwd` to that root URI.
-/// The [`Backend`](crate::backend::Backend) is responsible to target the correct worker for a given file URI.
+/// The [`WorkerManager`](crate::worker_manager::WorkerManager) is responsible to target the correct worker for a given file URI.
 pub struct WorkspaceWorker {
     root_uri: Uri,
     tool: RwLock<Option<Box<dyn Tool>>>,
@@ -88,7 +88,7 @@ impl WorkspaceWorker {
         if patterns.is_empty() {
             Vec::new()
         } else {
-            vec![registration_tool_watcher_id(tool.name(), &self.root_uri, patterns)]
+            vec![registration_watcher_id(&self.root_uri, patterns)]
         }
     }
 
@@ -149,6 +149,9 @@ impl WorkspaceWorker {
     }
 
     /// Run different tools to collect diagnostics.
+    ///
+    /// # Errors
+    /// When calling `Tool::run_diagnostic` results into an error.
     pub async fn run_diagnostic(
         &self,
         document: &TextDocument<'_>,
@@ -158,6 +161,9 @@ impl WorkspaceWorker {
     }
 
     /// Run different tools to collect diagnostics on change.
+    ///
+    /// # Errors
+    /// When calling `Tool::run_diagnostic_on_change` results into an error.
     pub async fn run_diagnostic_on_change(
         &self,
         document: &TextDocument<'_>,
@@ -169,6 +175,9 @@ impl WorkspaceWorker {
     }
 
     /// Run different tools to collect diagnostics on save.
+    ///
+    /// # Errors
+    /// When calling `Tool::run_diagnostic_on_save` results into an error.
     pub async fn run_diagnostic_on_save(
         &self,
         document: &TextDocument<'_>,
@@ -183,6 +192,9 @@ impl WorkspaceWorker {
     /// - If the file is not formattable or is ignored, an empty vector is returned
     /// - If the file is formattable, but no changes are made, an empty vector is returned
     /// - If a tool error occurs, an Err is returned
+    ///
+    /// # Errors
+    /// When calling `Tool::run_format` results into an error.
     pub async fn format_file(&self, document: &TextDocument<'_>) -> Result<Vec<TextEdit>, String> {
         let tool_guard = self.tool.read().await;
         let Some(tool) = tool_guard.as_ref() else {
@@ -206,12 +218,8 @@ impl WorkspaceWorker {
             self.published_diagnostics.lock().await.drain().collect::<Vec<Uri>>();
         let mut watchers_to_unregister = Vec::new();
 
-        if let Some(tool) = self.tool.read().await.as_ref() {
-            self.builder.shutdown(&self.root_uri);
-
-            watchers_to_unregister
-                .push(unregistration_tool_watcher_id(tool.name(), &self.root_uri));
-        }
+        self.builder.shutdown(&self.root_uri);
+        watchers_to_unregister.push(unregistration_watcher_id(&self.root_uri));
 
         (uris_to_clear_diagnostics, watchers_to_unregister)
     }
@@ -336,13 +344,9 @@ impl WorkspaceWorker {
         let change = change_handler(tool, self.builder.as_ref());
 
         if let Some(patterns) = change.watch_patterns {
-            unregistrations.push(unregistration_tool_watcher_id(tool.name(), &self.root_uri));
+            unregistrations.push(unregistration_watcher_id(&self.root_uri));
             if !patterns.is_empty() {
-                registrations.push(registration_tool_watcher_id(
-                    tool.name(),
-                    &self.root_uri,
-                    patterns,
-                ));
+                registrations.push(registration_watcher_id(&self.root_uri, patterns));
             }
         }
         if let Some(replaced_tool) = change.tool {
@@ -390,18 +394,18 @@ impl WorkspaceWorker {
     }
 }
 
-/// Create an unregistration for a file system watcher for the given tool
-fn unregistration_tool_watcher_id(tool: &str, root_uri: &Uri) -> Unregistration {
+/// Create an unregistration for a file system watcher
+fn unregistration_watcher_id(root_uri: &Uri) -> Unregistration {
     Unregistration {
-        id: format!("watcher-{tool}-{}", root_uri.as_str()),
+        id: format!("watcher-{}", root_uri.as_str()),
         method: "workspace/didChangeWatchedFiles".to_string(),
     }
 }
 
-/// Create a registration for a file system watcher for the given tool and patterns
-fn registration_tool_watcher_id(tool: &str, root_uri: &Uri, patterns: Vec<String>) -> Registration {
+/// Create a registration for a file system watcher for the given patterns
+fn registration_watcher_id(root_uri: &Uri, patterns: Vec<String>) -> Registration {
     Registration {
-        id: format!("watcher-{tool}-{}", root_uri.as_str()),
+        id: format!("watcher-{}", root_uri.as_str()),
         method: "workspace/didChangeWatchedFiles".to_string(),
         register_options: Some(json!(DidChangeWatchedFilesRegistrationOptions {
             watchers: patterns
@@ -474,7 +478,7 @@ mod tests {
         worker.start_worker(serde_json::Value::Null).await;
         let registrations = worker.init_watchers().await;
         assert_eq!(registrations.len(), 1);
-        assert_eq!(registrations[0].id, "watcher-FakeTool-file:///root/");
+        assert_eq!(registrations[0].id, "watcher-file:///root/");
 
         // with no watchers
         let worker_no_watchers = WorkspaceWorker::new(
@@ -559,9 +563,9 @@ mod tests {
         // Since FakeToolBuilder knows about "watcher.config", registrations are expected
         assert!(diagnostics.is_none());
         assert_eq!(unregistrations.len(), 1); // One unregistration expected
-        assert_eq!(unregistrations[0].id, "watcher-FakeTool-file:///root/");
+        assert_eq!(unregistrations[0].id, "watcher-file:///root/");
         assert_eq!(registrations.len(), 1); // One new registration expected
-        assert_eq!(registrations[0].id, "watcher-FakeTool-file:///root/");
+        assert_eq!(registrations[0].id, "watcher-file:///root/");
         assert!(!needs_diagnostic_refresh); // No need to refresh diagnostics
 
         let (diagnostics, registrations, unregistrations) = worker
@@ -642,9 +646,9 @@ mod tests {
         // Since FakeToolBuilder changes watcher patterns based on configuration, registrations are expected
         assert!(diagnostics.is_none());
         assert_eq!(unregistrations.len(), 1); // One unregistration expected
-        assert_eq!(unregistrations[0].id, "watcher-FakeTool-file:///root/");
+        assert_eq!(unregistrations[0].id, "watcher-file:///root/");
         assert_eq!(registrations.len(), 1); // One new registration expected
-        assert_eq!(registrations[0].id, "watcher-FakeTool-file:///root/");
+        assert_eq!(registrations[0].id, "watcher-file:///root/");
         assert!(!needs_diagnostic_refresh); // No need to refresh diagnostics
 
         let (diagnostics, registrations, unregistrations) = worker

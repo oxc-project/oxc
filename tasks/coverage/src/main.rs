@@ -20,7 +20,7 @@ fn main() {
     let thread_count = if app_args.debug {
         1
     } else {
-        std::thread::available_parallelism().map(NonZeroUsize::get).unwrap_or(1)
+        std::thread::available_parallelism().map_or(1, NonZeroUsize::get)
     };
     ThreadPoolBuilder::new().num_threads(thread_count).build_global().unwrap();
 

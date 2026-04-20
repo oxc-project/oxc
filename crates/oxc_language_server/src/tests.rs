@@ -65,10 +65,6 @@ const WORKSPACE: &str = "file:///path/to/workspace";
 const WORKSPACE_2: &str = "file:///path/to/another_workspace";
 
 impl Tool for FakeTool {
-    fn name(&self) -> &'static str {
-        "FakeTool"
-    }
-
     fn execute_command(
         &self,
         command: &str,
@@ -217,7 +213,7 @@ impl TestServer {
             _params: Value,
         ) -> Result<Value, tower_lsp_server::jsonrpc::Error> {
             let mut configs = vec![];
-            for worker in &*service.worker_manager.read_workers().await {
+            for worker in &*service.worker_manager.read_workspace_workers().await {
                 configs.push(worker.options.lock().await.clone());
             }
             Ok(json!(configs))
@@ -812,7 +808,7 @@ mod test_suite {
             Some(&json!({
                 "registrations": [
                     {
-                        "id": format!("watcher-FakeTool-{WORKSPACE}"),
+                        "id": format!("watcher-{WORKSPACE}"),
                         "method": "workspace/didChangeWatchedFiles",
                         "registerOptions": {
                             "watchers": [

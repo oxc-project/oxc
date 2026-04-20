@@ -463,13 +463,12 @@ impl JsxCurlyBracePresence {
         let Some(inner) = container.expression.as_expression() else { return };
         let allowed = if parent_is_attribute { self.props } else { self.children };
         match inner {
-            Expression::JSXFragment(_) => {
+            Expression::JSXFragment(_)
                 if !parent_is_attribute
                     && self.children.is_never()
-                    && !has_adjacent_jsx_expression_containers(ctx, container, node.id())
-                {
-                    report_unnecessary_curly(ctx, container, inner.span());
-                }
+                    && !has_adjacent_jsx_expression_containers(ctx, container, node.id()) =>
+            {
+                report_unnecessary_curly(ctx, container, inner.span());
             }
             Expression::JSXElement(el) => {
                 if parent_is_attribute {
@@ -482,44 +481,42 @@ impl JsxCurlyBracePresence {
                     report_unnecessary_curly(ctx, container, inner.span());
                 }
             }
-            Expression::StringLiteral(string) => {
-                if allowed.is_never() {
-                    let raw = ctx.source_range(string.span().shrink_left(1).shrink_right(1));
-                    if is_allowed_string_like_in_container(
+            Expression::StringLiteral(string) if allowed.is_never() => {
+                let raw = ctx.source_range(string.span().shrink_left(1).shrink_right(1));
+                if is_allowed_string_like_in_container(
+                    ctx,
+                    raw,
+                    container,
+                    node.id(),
+                    parent_is_attribute,
+                ) {
+                    return;
+                }
+                if parent_is_attribute {
+                    report_unnecessary_curly_for_attribute_value(ctx, container, string.span);
+                } else {
+                    report_unnecessary_curly(ctx, container, string.span);
+                }
+            }
+            Expression::TemplateLiteral(template)
+                if allowed.is_never() && template.is_no_substitution_template() =>
+            {
+                let string = template.single_quasi().unwrap();
+                if !parent_is_attribute && contains_quote_characters(string.as_str())
+                    || is_allowed_string_like_in_container(
                         ctx,
-                        raw,
+                        string.as_str(),
                         container,
                         node.id(),
                         parent_is_attribute,
-                    ) {
-                        return;
-                    }
-                    if parent_is_attribute {
-                        report_unnecessary_curly_for_attribute_value(ctx, container, string.span);
-                    } else {
-                        report_unnecessary_curly(ctx, container, string.span);
-                    }
+                    )
+                {
+                    return;
                 }
-            }
-            Expression::TemplateLiteral(template) => {
-                if allowed.is_never() && template.is_no_substitution_template() {
-                    let string = template.single_quasi().unwrap();
-                    if !parent_is_attribute && contains_quote_characters(string.as_str())
-                        || is_allowed_string_like_in_container(
-                            ctx,
-                            string.as_str(),
-                            container,
-                            node.id(),
-                            parent_is_attribute,
-                        )
-                    {
-                        return;
-                    }
-                    if parent_is_attribute {
-                        report_unnecessary_curly_for_attribute_value(ctx, container, template.span);
-                    } else {
-                        report_unnecessary_curly(ctx, container, template.span);
-                    }
+                if parent_is_attribute {
+                    report_unnecessary_curly_for_attribute_value(ctx, container, template.span);
+                } else {
+                    report_unnecessary_curly(ctx, container, template.span);
                 }
             }
             _ => {}

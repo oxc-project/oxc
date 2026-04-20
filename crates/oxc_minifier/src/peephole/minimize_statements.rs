@@ -9,7 +9,7 @@ use oxc_ecmascript::{
     side_effects::MayHaveSideEffects,
 };
 use oxc_semantic::ScopeFlags;
-use oxc_span::{ContentEq, GetSpan};
+use oxc_span::{ContentEq, GetSpan, GetSpanMut};
 
 use crate::{TraverseCtx, keep_var::KeepVar};
 
@@ -477,40 +477,39 @@ impl<'a> PeepholeOptimizations {
                     return;
                 }
             }
-            Expression::SequenceExpression(sequence_expr) => {
+            Expression::SequenceExpression(sequence_expr)
                 if result
                     .last()
-                    .is_some_and(|stmt| matches!(stmt, Statement::VariableDeclaration(_)))
-                {
-                    let first_non_merged_index =
-                        sequence_expr.expressions.iter_mut().position(|expr| {
-                            if let Expression::AssignmentExpression(assign_expr) = expr {
-                                !Self::merge_assignment_to_declaration(assign_expr, result, ctx)
-                            } else {
-                                true
-                            }
-                        });
-                    let sequence_len = sequence_expr.expressions.len();
-                    match first_non_merged_index {
-                        None => {
-                            // all elements are merged
-                            ctx.state.changed = true;
-                            return;
+                    .is_some_and(|stmt| matches!(stmt, Statement::VariableDeclaration(_))) =>
+            {
+                let first_non_merged_index =
+                    sequence_expr.expressions.iter_mut().position(|expr| {
+                        if let Expression::AssignmentExpression(assign_expr) = expr {
+                            !Self::merge_assignment_to_declaration(assign_expr, result, ctx)
+                        } else {
+                            true
                         }
-                        Some(val) if val == sequence_len - 1 => {
-                            // all elements are merged except for the last expression
-                            let last_expr = sequence_expr.expressions.pop().unwrap();
-                            result.push(ctx.ast.statement_expression(last_expr.span(), last_expr));
-                            ctx.state.changed = true;
-                            return;
-                        }
-                        Some(0) => {
-                            // no elements are merged
-                        }
-                        Some(val) => {
-                            sequence_expr.expressions.drain(0..val);
-                            ctx.state.changed = true;
-                        }
+                    });
+                let sequence_len = sequence_expr.expressions.len();
+                match first_non_merged_index {
+                    None => {
+                        // all elements are merged
+                        ctx.state.changed = true;
+                        return;
+                    }
+                    Some(val) if val == sequence_len - 1 => {
+                        // all elements are merged except for the last expression
+                        let last_expr = sequence_expr.expressions.pop().unwrap();
+                        result.push(ctx.ast.statement_expression(last_expr.span(), last_expr));
+                        ctx.state.changed = true;
+                        return;
+                    }
+                    Some(0) => {
+                        // no elements are merged
+                    }
+                    Some(val) => {
+                        sequence_expr.expressions.drain(0..val);
+                        ctx.state.changed = true;
                     }
                 }
             }
@@ -1309,7 +1308,13 @@ impl<'a> PeepholeOptimizations {
         match target_expr {
             Expression::Identifier(id) => {
                 if id.name == search_for {
+                    // Preserve the span of the target identifier so that comments
+                    // attached to it (via `attached_to`) remain correctly associated
+                    // with the replacement expression.
+                    // https://github.com/rolldown/rolldown/issues/8248
+                    let target_span = target_expr.span();
                     *target_expr = replacement.take_in(ctx.ast);
+                    *target_expr.span_mut() = target_span;
                     return Some(true);
                 }
                 // If the identifier is not a getter and the identifier is read-only,
@@ -1589,12 +1594,12 @@ impl<'a> PeepholeOptimizations {
                     return Some(changed);
                 }
             }
-            Expression::CallExpression(call_expr) => {
+            Expression::CallExpression(call_expr)
                 // Don't substitute something into a call target that could change "this"
                 if !((replacement.is_member_expression()
                     || matches!(replacement, Expression::ChainExpression(_)))
                     && call_expr.callee.is_identifier_reference())
-                {
+                => {
                     if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
                         &mut call_expr.callee,
                         search_for,
@@ -1642,13 +1647,12 @@ impl<'a> PeepholeOptimizations {
                         }
                     }
                 }
-            }
-            Expression::NewExpression(new_expr) => {
+            Expression::NewExpression(new_expr)
                 // Don't substitute something into a call target that could change "this"
                 if !((replacement.is_member_expression()
                     || matches!(replacement, Expression::ChainExpression(_)))
                     && new_expr.callee.is_identifier_reference())
-                {
+                => {
                     if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
                         &mut new_expr.callee,
                         search_for,
@@ -1692,7 +1696,6 @@ impl<'a> PeepholeOptimizations {
                         }
                     }
                 }
-            }
             Expression::ArrayExpression(array_expr) => {
                 for elem in &mut array_expr.elements {
                     match elem {

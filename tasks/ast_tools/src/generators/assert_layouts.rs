@@ -693,7 +693,7 @@ fn generate_layout_assertions_for_struct<'s>(
 
     // Sort fields in memory layout order
     let mut fields = struct_def.fields.iter().collect_vec();
-    fields.sort_by(|f1, f2| f1.offset.layout_index.cmp(&f2.offset.layout_index));
+    fields.sort_by_key(|f1| f1.offset.layout_index);
 
     let (assertions_64, assertions_32) =
         assertions.entry(struct_def.file(schema).krate()).or_default();

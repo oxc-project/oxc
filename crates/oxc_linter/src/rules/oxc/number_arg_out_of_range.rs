@@ -66,20 +66,16 @@ impl Rule for NumberArgOutOfRange {
         if let Some(Argument::NumericLiteral(literal)) = expr.arguments.first() {
             let value = literal.value;
             match member.static_property_name() {
-                Some(name @ "toString") => {
-                    if !(2.0_f64..=36.0_f64).contains(&value) {
-                        ctx.diagnostic(number_arg_out_of_range_diagnostic(name, 2, 36, expr.span));
-                    }
+                Some(name @ "toString") if !(2.0_f64..=36.0_f64).contains(&value) => {
+                    ctx.diagnostic(number_arg_out_of_range_diagnostic(name, 2, 36, expr.span));
                 }
-                Some(name @ ("toFixed" | "toExponential")) => {
-                    if !(0.0_f64..=20.0_f64).contains(&value) {
-                        ctx.diagnostic(number_arg_out_of_range_diagnostic(name, 0, 20, expr.span));
-                    }
+                Some(name @ ("toFixed" | "toExponential"))
+                    if !(0.0_f64..=20.0_f64).contains(&value) =>
+                {
+                    ctx.diagnostic(number_arg_out_of_range_diagnostic(name, 0, 20, expr.span));
                 }
-                Some(name @ "toPrecision") => {
-                    if !(1.0_f64..=21.0_f64).contains(&value) {
-                        ctx.diagnostic(number_arg_out_of_range_diagnostic(name, 1, 21, expr.span));
-                    }
+                Some(name @ "toPrecision") if !(1.0_f64..=21.0_f64).contains(&value) => {
+                    ctx.diagnostic(number_arg_out_of_range_diagnostic(name, 1, 21, expr.span));
                 }
                 _ => {}
             }

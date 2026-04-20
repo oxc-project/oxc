@@ -79,32 +79,26 @@ impl Rule for ValidParams {
         let args_len = call_expr.arguments.len();
 
         match prop_name.as_str() {
-            "resolve" | "reject" => {
-                if args_len > 1 {
-                    ctx.diagnostic(zero_or_one_argument_required_diagnostic(
-                        call_expr.span,
-                        &prop_name,
-                        args_len,
-                    ));
-                }
+            "resolve" | "reject" if args_len > 1 => {
+                ctx.diagnostic(zero_or_one_argument_required_diagnostic(
+                    call_expr.span,
+                    &prop_name,
+                    args_len,
+                ));
             }
-            "then" => {
-                if args_len != 1 && args_len != 2 {
-                    ctx.diagnostic(one_or_two_argument_required_diagnostic(
-                        call_expr.span,
-                        &prop_name,
-                        args_len,
-                    ));
-                }
+            "then" if args_len != 1 && args_len != 2 => {
+                ctx.diagnostic(one_or_two_argument_required_diagnostic(
+                    call_expr.span,
+                    &prop_name,
+                    args_len,
+                ));
             }
-            "race" | "all" | "allSettled" | "any" | "catch" | "finally" => {
-                if args_len != 1 {
-                    ctx.diagnostic(one_argument_required_diagnostic(
-                        call_expr.span,
-                        &prop_name,
-                        args_len,
-                    ));
-                }
+            "race" | "all" | "allSettled" | "any" | "catch" | "finally" if args_len != 1 => {
+                ctx.diagnostic(one_argument_required_diagnostic(
+                    call_expr.span,
+                    &prop_name,
+                    args_len,
+                ));
             }
             _ => {}
         }

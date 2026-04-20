@@ -205,10 +205,10 @@ impl Rule for RequireHook {
                             self.check_block_body(&func_body.statements, ctx);
                         }
                     }
-                    Argument::ArrowFunctionExpression(arrow_func_expr) => {
-                        if !arrow_func_expr.expression {
-                            self.check_block_body(&arrow_func_expr.body.statements, ctx);
-                        }
+                    Argument::ArrowFunctionExpression(arrow_func_expr)
+                        if !arrow_func_expr.expression =>
+                    {
+                        self.check_block_body(&arrow_func_expr.body.statements, ctx);
                     }
                     _ => (),
                 }

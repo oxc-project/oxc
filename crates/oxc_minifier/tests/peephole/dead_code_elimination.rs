@@ -414,3 +414,23 @@ fn drop_labels_with_vars() {
 fn keep_use_strict_directives() {
     test_same("'use strict'; export function foo() { 'use strict'; return 1; }");
 }
+
+#[test]
+fn preserve_annotation_comments_when_inlining_single_use_variable() {
+    // https://github.com/rolldown/rolldown/issues/8248
+    test(
+        "const bar = 'some-url'; import(/* @vite-ignore */ bar);",
+        "import(/* @vite-ignore */ 'some-url');",
+    );
+    // `test` replaces "true"/"false" literals, so use `test_with_options` for webpackIgnore
+    test_with_options(
+        "const bar = 'some-url'; import(/* webpackIgnore: true */ bar);",
+        "import(/* webpackIgnore: true */ 'some-url');",
+        CompressOptions::dce(),
+    );
+    test_with_options(
+        "const bar = 'some-url'; import(/* @vite-ignore */ /* webpackIgnore: true */ bar);",
+        "import(/* @vite-ignore */ /* webpackIgnore: true */ 'some-url');",
+        CompressOptions::dce(),
+    );
+}

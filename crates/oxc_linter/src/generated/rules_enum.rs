@@ -16581,6 +16581,887 @@ impl RuleEnum {
             Self::VueValidDefineProps(_) => VueValidDefineProps::IS_TSGOLINT_RULE,
         }
     }
+    #[doc = r" The version of oxlint in which this rule was first available."]
+    #[cfg(feature = "ruledocs")]
+    pub fn version(&self) -> &'static str {
+        match self {
+            Self::ImportConsistentTypeSpecifierStyle(_) => {
+                ImportConsistentTypeSpecifierStyle::VERSION
+            }
+            Self::ImportDefault(_) => ImportDefault::VERSION,
+            Self::ImportExport(_) => ImportExport::VERSION,
+            Self::ImportExportsLast(_) => ImportExportsLast::VERSION,
+            Self::ImportExtensions(_) => ImportExtensions::VERSION,
+            Self::ImportFirst(_) => ImportFirst::VERSION,
+            Self::ImportGroupExports(_) => ImportGroupExports::VERSION,
+            Self::ImportMaxDependencies(_) => ImportMaxDependencies::VERSION,
+            Self::ImportNamed(_) => ImportNamed::VERSION,
+            Self::ImportNamespace(_) => ImportNamespace::VERSION,
+            Self::ImportNoAbsolutePath(_) => ImportNoAbsolutePath::VERSION,
+            Self::ImportNoAmd(_) => ImportNoAmd::VERSION,
+            Self::ImportNoAnonymousDefaultExport(_) => ImportNoAnonymousDefaultExport::VERSION,
+            Self::ImportNoCommonjs(_) => ImportNoCommonjs::VERSION,
+            Self::ImportNoCycle(_) => ImportNoCycle::VERSION,
+            Self::ImportNoDefaultExport(_) => ImportNoDefaultExport::VERSION,
+            Self::ImportNoDuplicates(_) => ImportNoDuplicates::VERSION,
+            Self::ImportNoDynamicRequire(_) => ImportNoDynamicRequire::VERSION,
+            Self::ImportNoEmptyNamedBlocks(_) => ImportNoEmptyNamedBlocks::VERSION,
+            Self::ImportNoMutableExports(_) => ImportNoMutableExports::VERSION,
+            Self::ImportNoNamedAsDefault(_) => ImportNoNamedAsDefault::VERSION,
+            Self::ImportNoNamedAsDefaultMember(_) => ImportNoNamedAsDefaultMember::VERSION,
+            Self::ImportNoNamedDefault(_) => ImportNoNamedDefault::VERSION,
+            Self::ImportNoNamedExport(_) => ImportNoNamedExport::VERSION,
+            Self::ImportNoNamespace(_) => ImportNoNamespace::VERSION,
+            Self::ImportNoNodejsModules(_) => ImportNoNodejsModules::VERSION,
+            Self::ImportNoRelativeParentImports(_) => ImportNoRelativeParentImports::VERSION,
+            Self::ImportNoSelfImport(_) => ImportNoSelfImport::VERSION,
+            Self::ImportNoUnassignedImport(_) => ImportNoUnassignedImport::VERSION,
+            Self::ImportNoWebpackLoaderSyntax(_) => ImportNoWebpackLoaderSyntax::VERSION,
+            Self::ImportPreferDefaultExport(_) => ImportPreferDefaultExport::VERSION,
+            Self::ImportUnambiguous(_) => ImportUnambiguous::VERSION,
+            Self::EslintAccessorPairs(_) => EslintAccessorPairs::VERSION,
+            Self::EslintArrayCallbackReturn(_) => EslintArrayCallbackReturn::VERSION,
+            Self::EslintArrowBodyStyle(_) => EslintArrowBodyStyle::VERSION,
+            Self::EslintBlockScopedVar(_) => EslintBlockScopedVar::VERSION,
+            Self::EslintCapitalizedComments(_) => EslintCapitalizedComments::VERSION,
+            Self::EslintClassMethodsUseThis(_) => EslintClassMethodsUseThis::VERSION,
+            Self::EslintComplexity(_) => EslintComplexity::VERSION,
+            Self::EslintConstructorSuper(_) => EslintConstructorSuper::VERSION,
+            Self::EslintCurly(_) => EslintCurly::VERSION,
+            Self::EslintDefaultCase(_) => EslintDefaultCase::VERSION,
+            Self::EslintDefaultCaseLast(_) => EslintDefaultCaseLast::VERSION,
+            Self::EslintDefaultParamLast(_) => EslintDefaultParamLast::VERSION,
+            Self::EslintEqeqeq(_) => EslintEqeqeq::VERSION,
+            Self::EslintForDirection(_) => EslintForDirection::VERSION,
+            Self::EslintFuncNames(_) => EslintFuncNames::VERSION,
+            Self::EslintFuncStyle(_) => EslintFuncStyle::VERSION,
+            Self::EslintGetterReturn(_) => EslintGetterReturn::VERSION,
+            Self::EslintGroupedAccessorPairs(_) => EslintGroupedAccessorPairs::VERSION,
+            Self::EslintGuardForIn(_) => EslintGuardForIn::VERSION,
+            Self::EslintIdLength(_) => EslintIdLength::VERSION,
+            Self::EslintInitDeclarations(_) => EslintInitDeclarations::VERSION,
+            Self::EslintMaxClassesPerFile(_) => EslintMaxClassesPerFile::VERSION,
+            Self::EslintMaxDepth(_) => EslintMaxDepth::VERSION,
+            Self::EslintMaxLines(_) => EslintMaxLines::VERSION,
+            Self::EslintMaxLinesPerFunction(_) => EslintMaxLinesPerFunction::VERSION,
+            Self::EslintMaxNestedCallbacks(_) => EslintMaxNestedCallbacks::VERSION,
+            Self::EslintMaxParams(_) => EslintMaxParams::VERSION,
+            Self::EslintMaxStatements(_) => EslintMaxStatements::VERSION,
+            Self::EslintNewCap(_) => EslintNewCap::VERSION,
+            Self::EslintNoAlert(_) => EslintNoAlert::VERSION,
+            Self::EslintNoArrayConstructor(_) => EslintNoArrayConstructor::VERSION,
+            Self::EslintNoAsyncPromiseExecutor(_) => EslintNoAsyncPromiseExecutor::VERSION,
+            Self::EslintNoAwaitInLoop(_) => EslintNoAwaitInLoop::VERSION,
+            Self::EslintNoBitwise(_) => EslintNoBitwise::VERSION,
+            Self::EslintNoCaller(_) => EslintNoCaller::VERSION,
+            Self::EslintNoCaseDeclarations(_) => EslintNoCaseDeclarations::VERSION,
+            Self::EslintNoClassAssign(_) => EslintNoClassAssign::VERSION,
+            Self::EslintNoCompareNegZero(_) => EslintNoCompareNegZero::VERSION,
+            Self::EslintNoCondAssign(_) => EslintNoCondAssign::VERSION,
+            Self::EslintNoConsole(_) => EslintNoConsole::VERSION,
+            Self::EslintNoConstAssign(_) => EslintNoConstAssign::VERSION,
+            Self::EslintNoConstantBinaryExpression(_) => EslintNoConstantBinaryExpression::VERSION,
+            Self::EslintNoConstantCondition(_) => EslintNoConstantCondition::VERSION,
+            Self::EslintNoConstructorReturn(_) => EslintNoConstructorReturn::VERSION,
+            Self::EslintNoContinue(_) => EslintNoContinue::VERSION,
+            Self::EslintNoControlRegex(_) => EslintNoControlRegex::VERSION,
+            Self::EslintNoDebugger(_) => EslintNoDebugger::VERSION,
+            Self::EslintNoDeleteVar(_) => EslintNoDeleteVar::VERSION,
+            Self::EslintNoDivRegex(_) => EslintNoDivRegex::VERSION,
+            Self::EslintNoDupeClassMembers(_) => EslintNoDupeClassMembers::VERSION,
+            Self::EslintNoDupeElseIf(_) => EslintNoDupeElseIf::VERSION,
+            Self::EslintNoDupeKeys(_) => EslintNoDupeKeys::VERSION,
+            Self::EslintNoDuplicateCase(_) => EslintNoDuplicateCase::VERSION,
+            Self::EslintNoDuplicateImports(_) => EslintNoDuplicateImports::VERSION,
+            Self::EslintNoElseReturn(_) => EslintNoElseReturn::VERSION,
+            Self::EslintNoEmpty(_) => EslintNoEmpty::VERSION,
+            Self::EslintNoEmptyCharacterClass(_) => EslintNoEmptyCharacterClass::VERSION,
+            Self::EslintNoEmptyFunction(_) => EslintNoEmptyFunction::VERSION,
+            Self::EslintNoEmptyPattern(_) => EslintNoEmptyPattern::VERSION,
+            Self::EslintNoEmptyStaticBlock(_) => EslintNoEmptyStaticBlock::VERSION,
+            Self::EslintNoEqNull(_) => EslintNoEqNull::VERSION,
+            Self::EslintNoEval(_) => EslintNoEval::VERSION,
+            Self::EslintNoExAssign(_) => EslintNoExAssign::VERSION,
+            Self::EslintNoExtendNative(_) => EslintNoExtendNative::VERSION,
+            Self::EslintNoExtraBind(_) => EslintNoExtraBind::VERSION,
+            Self::EslintNoExtraBooleanCast(_) => EslintNoExtraBooleanCast::VERSION,
+            Self::EslintNoExtraLabel(_) => EslintNoExtraLabel::VERSION,
+            Self::EslintNoFallthrough(_) => EslintNoFallthrough::VERSION,
+            Self::EslintNoFuncAssign(_) => EslintNoFuncAssign::VERSION,
+            Self::EslintNoGlobalAssign(_) => EslintNoGlobalAssign::VERSION,
+            Self::EslintNoImplicitCoercion(_) => EslintNoImplicitCoercion::VERSION,
+            Self::EslintNoImportAssign(_) => EslintNoImportAssign::VERSION,
+            Self::EslintNoInlineComments(_) => EslintNoInlineComments::VERSION,
+            Self::EslintNoInnerDeclarations(_) => EslintNoInnerDeclarations::VERSION,
+            Self::EslintNoInvalidRegexp(_) => EslintNoInvalidRegexp::VERSION,
+            Self::EslintNoIrregularWhitespace(_) => EslintNoIrregularWhitespace::VERSION,
+            Self::EslintNoIterator(_) => EslintNoIterator::VERSION,
+            Self::EslintNoLabelVar(_) => EslintNoLabelVar::VERSION,
+            Self::EslintNoLabels(_) => EslintNoLabels::VERSION,
+            Self::EslintNoLoneBlocks(_) => EslintNoLoneBlocks::VERSION,
+            Self::EslintNoLonelyIf(_) => EslintNoLonelyIf::VERSION,
+            Self::EslintNoLoopFunc(_) => EslintNoLoopFunc::VERSION,
+            Self::EslintNoLossOfPrecision(_) => EslintNoLossOfPrecision::VERSION,
+            Self::EslintNoMagicNumbers(_) => EslintNoMagicNumbers::VERSION,
+            Self::EslintNoMisleadingCharacterClass(_) => EslintNoMisleadingCharacterClass::VERSION,
+            Self::EslintNoMultiAssign(_) => EslintNoMultiAssign::VERSION,
+            Self::EslintNoMultiStr(_) => EslintNoMultiStr::VERSION,
+            Self::EslintNoNegatedCondition(_) => EslintNoNegatedCondition::VERSION,
+            Self::EslintNoNestedTernary(_) => EslintNoNestedTernary::VERSION,
+            Self::EslintNoNew(_) => EslintNoNew::VERSION,
+            Self::EslintNoNewFunc(_) => EslintNoNewFunc::VERSION,
+            Self::EslintNoNewNativeNonconstructor(_) => EslintNoNewNativeNonconstructor::VERSION,
+            Self::EslintNoNewWrappers(_) => EslintNoNewWrappers::VERSION,
+            Self::EslintNoNonoctalDecimalEscape(_) => EslintNoNonoctalDecimalEscape::VERSION,
+            Self::EslintNoObjCalls(_) => EslintNoObjCalls::VERSION,
+            Self::EslintNoObjectConstructor(_) => EslintNoObjectConstructor::VERSION,
+            Self::EslintNoParamReassign(_) => EslintNoParamReassign::VERSION,
+            Self::EslintNoPlusplus(_) => EslintNoPlusplus::VERSION,
+            Self::EslintNoPromiseExecutorReturn(_) => EslintNoPromiseExecutorReturn::VERSION,
+            Self::EslintNoProto(_) => EslintNoProto::VERSION,
+            Self::EslintNoPrototypeBuiltins(_) => EslintNoPrototypeBuiltins::VERSION,
+            Self::EslintNoRedeclare(_) => EslintNoRedeclare::VERSION,
+            Self::EslintNoRegexSpaces(_) => EslintNoRegexSpaces::VERSION,
+            Self::EslintNoRestrictedExports(_) => EslintNoRestrictedExports::VERSION,
+            Self::EslintNoRestrictedGlobals(_) => EslintNoRestrictedGlobals::VERSION,
+            Self::EslintNoRestrictedImports(_) => EslintNoRestrictedImports::VERSION,
+            Self::EslintNoReturnAssign(_) => EslintNoReturnAssign::VERSION,
+            Self::EslintNoScriptUrl(_) => EslintNoScriptUrl::VERSION,
+            Self::EslintNoSelfAssign(_) => EslintNoSelfAssign::VERSION,
+            Self::EslintNoSelfCompare(_) => EslintNoSelfCompare::VERSION,
+            Self::EslintNoSequences(_) => EslintNoSequences::VERSION,
+            Self::EslintNoSetterReturn(_) => EslintNoSetterReturn::VERSION,
+            Self::EslintNoShadow(_) => EslintNoShadow::VERSION,
+            Self::EslintNoShadowRestrictedNames(_) => EslintNoShadowRestrictedNames::VERSION,
+            Self::EslintNoSparseArrays(_) => EslintNoSparseArrays::VERSION,
+            Self::EslintNoTemplateCurlyInString(_) => EslintNoTemplateCurlyInString::VERSION,
+            Self::EslintNoTernary(_) => EslintNoTernary::VERSION,
+            Self::EslintNoThisBeforeSuper(_) => EslintNoThisBeforeSuper::VERSION,
+            Self::EslintNoThrowLiteral(_) => EslintNoThrowLiteral::VERSION,
+            Self::EslintNoUnassignedVars(_) => EslintNoUnassignedVars::VERSION,
+            Self::EslintNoUndef(_) => EslintNoUndef::VERSION,
+            Self::EslintNoUndefined(_) => EslintNoUndefined::VERSION,
+            Self::EslintNoUnexpectedMultiline(_) => EslintNoUnexpectedMultiline::VERSION,
+            Self::EslintNoUnmodifiedLoopCondition(_) => EslintNoUnmodifiedLoopCondition::VERSION,
+            Self::EslintNoUnneededTernary(_) => EslintNoUnneededTernary::VERSION,
+            Self::EslintNoUnreachable(_) => EslintNoUnreachable::VERSION,
+            Self::EslintNoUnsafeFinally(_) => EslintNoUnsafeFinally::VERSION,
+            Self::EslintNoUnsafeNegation(_) => EslintNoUnsafeNegation::VERSION,
+            Self::EslintNoUnsafeOptionalChaining(_) => EslintNoUnsafeOptionalChaining::VERSION,
+            Self::EslintNoUnusedExpressions(_) => EslintNoUnusedExpressions::VERSION,
+            Self::EslintNoUnusedLabels(_) => EslintNoUnusedLabels::VERSION,
+            Self::EslintNoUnusedPrivateClassMembers(_) => {
+                EslintNoUnusedPrivateClassMembers::VERSION
+            }
+            Self::EslintNoUnusedVars(_) => EslintNoUnusedVars::VERSION,
+            Self::EslintNoUseBeforeDefine(_) => EslintNoUseBeforeDefine::VERSION,
+            Self::EslintNoUselessAssignment(_) => EslintNoUselessAssignment::VERSION,
+            Self::EslintNoUselessBackreference(_) => EslintNoUselessBackreference::VERSION,
+            Self::EslintNoUselessCall(_) => EslintNoUselessCall::VERSION,
+            Self::EslintNoUselessCatch(_) => EslintNoUselessCatch::VERSION,
+            Self::EslintNoUselessComputedKey(_) => EslintNoUselessComputedKey::VERSION,
+            Self::EslintNoUselessConcat(_) => EslintNoUselessConcat::VERSION,
+            Self::EslintNoUselessConstructor(_) => EslintNoUselessConstructor::VERSION,
+            Self::EslintNoUselessEscape(_) => EslintNoUselessEscape::VERSION,
+            Self::EslintNoUselessRename(_) => EslintNoUselessRename::VERSION,
+            Self::EslintNoUselessReturn(_) => EslintNoUselessReturn::VERSION,
+            Self::EslintNoVar(_) => EslintNoVar::VERSION,
+            Self::EslintNoVoid(_) => EslintNoVoid::VERSION,
+            Self::EslintNoWarningComments(_) => EslintNoWarningComments::VERSION,
+            Self::EslintNoWith(_) => EslintNoWith::VERSION,
+            Self::EslintObjectShorthand(_) => EslintObjectShorthand::VERSION,
+            Self::EslintOperatorAssignment(_) => EslintOperatorAssignment::VERSION,
+            Self::EslintPreferConst(_) => EslintPreferConst::VERSION,
+            Self::EslintPreferDestructuring(_) => EslintPreferDestructuring::VERSION,
+            Self::EslintPreferExponentiationOperator(_) => {
+                EslintPreferExponentiationOperator::VERSION
+            }
+            Self::EslintPreferNumericLiterals(_) => EslintPreferNumericLiterals::VERSION,
+            Self::EslintPreferObjectHasOwn(_) => EslintPreferObjectHasOwn::VERSION,
+            Self::EslintPreferObjectSpread(_) => EslintPreferObjectSpread::VERSION,
+            Self::EslintPreferPromiseRejectErrors(_) => EslintPreferPromiseRejectErrors::VERSION,
+            Self::EslintPreferRestParams(_) => EslintPreferRestParams::VERSION,
+            Self::EslintPreferSpread(_) => EslintPreferSpread::VERSION,
+            Self::EslintPreferTemplate(_) => EslintPreferTemplate::VERSION,
+            Self::EslintPreserveCaughtError(_) => EslintPreserveCaughtError::VERSION,
+            Self::EslintRadix(_) => EslintRadix::VERSION,
+            Self::EslintRequireAwait(_) => EslintRequireAwait::VERSION,
+            Self::EslintRequireYield(_) => EslintRequireYield::VERSION,
+            Self::EslintSortImports(_) => EslintSortImports::VERSION,
+            Self::EslintSortKeys(_) => EslintSortKeys::VERSION,
+            Self::EslintSortVars(_) => EslintSortVars::VERSION,
+            Self::EslintSymbolDescription(_) => EslintSymbolDescription::VERSION,
+            Self::EslintUnicodeBom(_) => EslintUnicodeBom::VERSION,
+            Self::EslintUseIsnan(_) => EslintUseIsnan::VERSION,
+            Self::EslintValidTypeof(_) => EslintValidTypeof::VERSION,
+            Self::EslintVarsOnTop(_) => EslintVarsOnTop::VERSION,
+            Self::EslintYoda(_) => EslintYoda::VERSION,
+            Self::TypescriptAdjacentOverloadSignatures(_) => {
+                TypescriptAdjacentOverloadSignatures::VERSION
+            }
+            Self::TypescriptArrayType(_) => TypescriptArrayType::VERSION,
+            Self::TypescriptAwaitThenable(_) => TypescriptAwaitThenable::VERSION,
+            Self::TypescriptBanTsComment(_) => TypescriptBanTsComment::VERSION,
+            Self::TypescriptBanTslintComment(_) => TypescriptBanTslintComment::VERSION,
+            Self::TypescriptBanTypes(_) => TypescriptBanTypes::VERSION,
+            Self::TypescriptClassLiteralPropertyStyle(_) => {
+                TypescriptClassLiteralPropertyStyle::VERSION
+            }
+            Self::TypescriptConsistentGenericConstructors(_) => {
+                TypescriptConsistentGenericConstructors::VERSION
+            }
+            Self::TypescriptConsistentIndexedObjectStyle(_) => {
+                TypescriptConsistentIndexedObjectStyle::VERSION
+            }
+            Self::TypescriptConsistentReturn(_) => TypescriptConsistentReturn::VERSION,
+            Self::TypescriptConsistentTypeAssertions(_) => {
+                TypescriptConsistentTypeAssertions::VERSION
+            }
+            Self::TypescriptConsistentTypeDefinitions(_) => {
+                TypescriptConsistentTypeDefinitions::VERSION
+            }
+            Self::TypescriptConsistentTypeExports(_) => TypescriptConsistentTypeExports::VERSION,
+            Self::TypescriptConsistentTypeImports(_) => TypescriptConsistentTypeImports::VERSION,
+            Self::TypescriptDotNotation(_) => TypescriptDotNotation::VERSION,
+            Self::TypescriptExplicitFunctionReturnType(_) => {
+                TypescriptExplicitFunctionReturnType::VERSION
+            }
+            Self::TypescriptExplicitMemberAccessibility(_) => {
+                TypescriptExplicitMemberAccessibility::VERSION
+            }
+            Self::TypescriptExplicitModuleBoundaryTypes(_) => {
+                TypescriptExplicitModuleBoundaryTypes::VERSION
+            }
+            Self::TypescriptNoArrayDelete(_) => TypescriptNoArrayDelete::VERSION,
+            Self::TypescriptNoBaseToString(_) => TypescriptNoBaseToString::VERSION,
+            Self::TypescriptNoConfusingNonNullAssertion(_) => {
+                TypescriptNoConfusingNonNullAssertion::VERSION
+            }
+            Self::TypescriptNoConfusingVoidExpression(_) => {
+                TypescriptNoConfusingVoidExpression::VERSION
+            }
+            Self::TypescriptNoDeprecated(_) => TypescriptNoDeprecated::VERSION,
+            Self::TypescriptNoDuplicateEnumValues(_) => TypescriptNoDuplicateEnumValues::VERSION,
+            Self::TypescriptNoDuplicateTypeConstituents(_) => {
+                TypescriptNoDuplicateTypeConstituents::VERSION
+            }
+            Self::TypescriptNoDynamicDelete(_) => TypescriptNoDynamicDelete::VERSION,
+            Self::TypescriptNoEmptyInterface(_) => TypescriptNoEmptyInterface::VERSION,
+            Self::TypescriptNoEmptyObjectType(_) => TypescriptNoEmptyObjectType::VERSION,
+            Self::TypescriptNoExplicitAny(_) => TypescriptNoExplicitAny::VERSION,
+            Self::TypescriptNoExtraNonNullAssertion(_) => {
+                TypescriptNoExtraNonNullAssertion::VERSION
+            }
+            Self::TypescriptNoExtraneousClass(_) => TypescriptNoExtraneousClass::VERSION,
+            Self::TypescriptNoFloatingPromises(_) => TypescriptNoFloatingPromises::VERSION,
+            Self::TypescriptNoForInArray(_) => TypescriptNoForInArray::VERSION,
+            Self::TypescriptNoImpliedEval(_) => TypescriptNoImpliedEval::VERSION,
+            Self::TypescriptNoImportTypeSideEffects(_) => {
+                TypescriptNoImportTypeSideEffects::VERSION
+            }
+            Self::TypescriptNoInferrableTypes(_) => TypescriptNoInferrableTypes::VERSION,
+            Self::TypescriptNoInvalidVoidType(_) => TypescriptNoInvalidVoidType::VERSION,
+            Self::TypescriptNoMeaninglessVoidOperator(_) => {
+                TypescriptNoMeaninglessVoidOperator::VERSION
+            }
+            Self::TypescriptNoMisusedNew(_) => TypescriptNoMisusedNew::VERSION,
+            Self::TypescriptNoMisusedPromises(_) => TypescriptNoMisusedPromises::VERSION,
+            Self::TypescriptNoMisusedSpread(_) => TypescriptNoMisusedSpread::VERSION,
+            Self::TypescriptNoMixedEnums(_) => TypescriptNoMixedEnums::VERSION,
+            Self::TypescriptNoNamespace(_) => TypescriptNoNamespace::VERSION,
+            Self::TypescriptNoNonNullAssertedNullishCoalescing(_) => {
+                TypescriptNoNonNullAssertedNullishCoalescing::VERSION
+            }
+            Self::TypescriptNoNonNullAssertedOptionalChain(_) => {
+                TypescriptNoNonNullAssertedOptionalChain::VERSION
+            }
+            Self::TypescriptNoNonNullAssertion(_) => TypescriptNoNonNullAssertion::VERSION,
+            Self::TypescriptNoRedundantTypeConstituents(_) => {
+                TypescriptNoRedundantTypeConstituents::VERSION
+            }
+            Self::TypescriptNoRequireImports(_) => TypescriptNoRequireImports::VERSION,
+            Self::TypescriptNoRestrictedTypes(_) => TypescriptNoRestrictedTypes::VERSION,
+            Self::TypescriptNoThisAlias(_) => TypescriptNoThisAlias::VERSION,
+            Self::TypescriptNoUnnecessaryBooleanLiteralCompare(_) => {
+                TypescriptNoUnnecessaryBooleanLiteralCompare::VERSION
+            }
+            Self::TypescriptNoUnnecessaryCondition(_) => TypescriptNoUnnecessaryCondition::VERSION,
+            Self::TypescriptNoUnnecessaryParameterPropertyAssignment(_) => {
+                TypescriptNoUnnecessaryParameterPropertyAssignment::VERSION
+            }
+            Self::TypescriptNoUnnecessaryQualifier(_) => TypescriptNoUnnecessaryQualifier::VERSION,
+            Self::TypescriptNoUnnecessaryTemplateExpression(_) => {
+                TypescriptNoUnnecessaryTemplateExpression::VERSION
+            }
+            Self::TypescriptNoUnnecessaryTypeArguments(_) => {
+                TypescriptNoUnnecessaryTypeArguments::VERSION
+            }
+            Self::TypescriptNoUnnecessaryTypeAssertion(_) => {
+                TypescriptNoUnnecessaryTypeAssertion::VERSION
+            }
+            Self::TypescriptNoUnnecessaryTypeConstraint(_) => {
+                TypescriptNoUnnecessaryTypeConstraint::VERSION
+            }
+            Self::TypescriptNoUnnecessaryTypeConversion(_) => {
+                TypescriptNoUnnecessaryTypeConversion::VERSION
+            }
+            Self::TypescriptNoUnnecessaryTypeParameters(_) => {
+                TypescriptNoUnnecessaryTypeParameters::VERSION
+            }
+            Self::TypescriptNoUnsafeArgument(_) => TypescriptNoUnsafeArgument::VERSION,
+            Self::TypescriptNoUnsafeAssignment(_) => TypescriptNoUnsafeAssignment::VERSION,
+            Self::TypescriptNoUnsafeCall(_) => TypescriptNoUnsafeCall::VERSION,
+            Self::TypescriptNoUnsafeDeclarationMerging(_) => {
+                TypescriptNoUnsafeDeclarationMerging::VERSION
+            }
+            Self::TypescriptNoUnsafeEnumComparison(_) => TypescriptNoUnsafeEnumComparison::VERSION,
+            Self::TypescriptNoUnsafeFunctionType(_) => TypescriptNoUnsafeFunctionType::VERSION,
+            Self::TypescriptNoUnsafeMemberAccess(_) => TypescriptNoUnsafeMemberAccess::VERSION,
+            Self::TypescriptNoUnsafeReturn(_) => TypescriptNoUnsafeReturn::VERSION,
+            Self::TypescriptNoUnsafeTypeAssertion(_) => TypescriptNoUnsafeTypeAssertion::VERSION,
+            Self::TypescriptNoUnsafeUnaryMinus(_) => TypescriptNoUnsafeUnaryMinus::VERSION,
+            Self::TypescriptNoUselessDefaultAssignment(_) => {
+                TypescriptNoUselessDefaultAssignment::VERSION
+            }
+            Self::TypescriptNoUselessEmptyExport(_) => TypescriptNoUselessEmptyExport::VERSION,
+            Self::TypescriptNoVarRequires(_) => TypescriptNoVarRequires::VERSION,
+            Self::TypescriptNoWrapperObjectTypes(_) => TypescriptNoWrapperObjectTypes::VERSION,
+            Self::TypescriptNonNullableTypeAssertionStyle(_) => {
+                TypescriptNonNullableTypeAssertionStyle::VERSION
+            }
+            Self::TypescriptOnlyThrowError(_) => TypescriptOnlyThrowError::VERSION,
+            Self::TypescriptParameterProperties(_) => TypescriptParameterProperties::VERSION,
+            Self::TypescriptPreferAsConst(_) => TypescriptPreferAsConst::VERSION,
+            Self::TypescriptPreferEnumInitializers(_) => TypescriptPreferEnumInitializers::VERSION,
+            Self::TypescriptPreferFind(_) => TypescriptPreferFind::VERSION,
+            Self::TypescriptPreferForOf(_) => TypescriptPreferForOf::VERSION,
+            Self::TypescriptPreferFunctionType(_) => TypescriptPreferFunctionType::VERSION,
+            Self::TypescriptPreferIncludes(_) => TypescriptPreferIncludes::VERSION,
+            Self::TypescriptPreferLiteralEnumMember(_) => {
+                TypescriptPreferLiteralEnumMember::VERSION
+            }
+            Self::TypescriptPreferNamespaceKeyword(_) => TypescriptPreferNamespaceKeyword::VERSION,
+            Self::TypescriptPreferNullishCoalescing(_) => {
+                TypescriptPreferNullishCoalescing::VERSION
+            }
+            Self::TypescriptPreferOptionalChain(_) => TypescriptPreferOptionalChain::VERSION,
+            Self::TypescriptPreferPromiseRejectErrors(_) => {
+                TypescriptPreferPromiseRejectErrors::VERSION
+            }
+            Self::TypescriptPreferReadonly(_) => TypescriptPreferReadonly::VERSION,
+            Self::TypescriptPreferReadonlyParameterTypes(_) => {
+                TypescriptPreferReadonlyParameterTypes::VERSION
+            }
+            Self::TypescriptPreferReduceTypeParameter(_) => {
+                TypescriptPreferReduceTypeParameter::VERSION
+            }
+            Self::TypescriptPreferRegexpExec(_) => TypescriptPreferRegexpExec::VERSION,
+            Self::TypescriptPreferReturnThisType(_) => TypescriptPreferReturnThisType::VERSION,
+            Self::TypescriptPreferStringStartsEndsWith(_) => {
+                TypescriptPreferStringStartsEndsWith::VERSION
+            }
+            Self::TypescriptPreferTsExpectError(_) => TypescriptPreferTsExpectError::VERSION,
+            Self::TypescriptPromiseFunctionAsync(_) => TypescriptPromiseFunctionAsync::VERSION,
+            Self::TypescriptRelatedGetterSetterPairs(_) => {
+                TypescriptRelatedGetterSetterPairs::VERSION
+            }
+            Self::TypescriptRequireArraySortCompare(_) => {
+                TypescriptRequireArraySortCompare::VERSION
+            }
+            Self::TypescriptRequireAwait(_) => TypescriptRequireAwait::VERSION,
+            Self::TypescriptRestrictPlusOperands(_) => TypescriptRestrictPlusOperands::VERSION,
+            Self::TypescriptRestrictTemplateExpressions(_) => {
+                TypescriptRestrictTemplateExpressions::VERSION
+            }
+            Self::TypescriptReturnAwait(_) => TypescriptReturnAwait::VERSION,
+            Self::TypescriptStrictBooleanExpressions(_) => {
+                TypescriptStrictBooleanExpressions::VERSION
+            }
+            Self::TypescriptStrictVoidReturn(_) => TypescriptStrictVoidReturn::VERSION,
+            Self::TypescriptSwitchExhaustivenessCheck(_) => {
+                TypescriptSwitchExhaustivenessCheck::VERSION
+            }
+            Self::TypescriptTripleSlashReference(_) => TypescriptTripleSlashReference::VERSION,
+            Self::TypescriptUnboundMethod(_) => TypescriptUnboundMethod::VERSION,
+            Self::TypescriptUnifiedSignatures(_) => TypescriptUnifiedSignatures::VERSION,
+            Self::TypescriptUseUnknownInCatchCallbackVariable(_) => {
+                TypescriptUseUnknownInCatchCallbackVariable::VERSION
+            }
+            Self::JestConsistentTestIt(_) => JestConsistentTestIt::VERSION,
+            Self::JestExpectExpect(_) => JestExpectExpect::VERSION,
+            Self::JestMaxExpects(_) => JestMaxExpects::VERSION,
+            Self::JestMaxNestedDescribe(_) => JestMaxNestedDescribe::VERSION,
+            Self::JestNoAliasMethods(_) => JestNoAliasMethods::VERSION,
+            Self::JestNoCommentedOutTests(_) => JestNoCommentedOutTests::VERSION,
+            Self::JestNoConditionalExpect(_) => JestNoConditionalExpect::VERSION,
+            Self::JestNoConditionalInTest(_) => JestNoConditionalInTest::VERSION,
+            Self::JestNoConfusingSetTimeout(_) => JestNoConfusingSetTimeout::VERSION,
+            Self::JestNoDeprecatedFunctions(_) => JestNoDeprecatedFunctions::VERSION,
+            Self::JestNoDisabledTests(_) => JestNoDisabledTests::VERSION,
+            Self::JestNoDoneCallback(_) => JestNoDoneCallback::VERSION,
+            Self::JestNoDuplicateHooks(_) => JestNoDuplicateHooks::VERSION,
+            Self::JestNoExport(_) => JestNoExport::VERSION,
+            Self::JestNoFocusedTests(_) => JestNoFocusedTests::VERSION,
+            Self::JestNoHooks(_) => JestNoHooks::VERSION,
+            Self::JestNoIdenticalTitle(_) => JestNoIdenticalTitle::VERSION,
+            Self::JestNoInterpolationInSnapshots(_) => JestNoInterpolationInSnapshots::VERSION,
+            Self::JestNoJasmineGlobals(_) => JestNoJasmineGlobals::VERSION,
+            Self::JestNoLargeSnapshots(_) => JestNoLargeSnapshots::VERSION,
+            Self::JestNoMocksImport(_) => JestNoMocksImport::VERSION,
+            Self::JestNoRestrictedJestMethods(_) => JestNoRestrictedJestMethods::VERSION,
+            Self::JestNoRestrictedMatchers(_) => JestNoRestrictedMatchers::VERSION,
+            Self::JestNoStandaloneExpect(_) => JestNoStandaloneExpect::VERSION,
+            Self::JestNoTestPrefixes(_) => JestNoTestPrefixes::VERSION,
+            Self::JestNoTestReturnStatement(_) => JestNoTestReturnStatement::VERSION,
+            Self::JestNoUnneededAsyncExpectFunction(_) => {
+                JestNoUnneededAsyncExpectFunction::VERSION
+            }
+            Self::JestNoUntypedMockFactory(_) => JestNoUntypedMockFactory::VERSION,
+            Self::JestPaddingAroundAfterAllBlocks(_) => JestPaddingAroundAfterAllBlocks::VERSION,
+            Self::JestPaddingAroundTestBlocks(_) => JestPaddingAroundTestBlocks::VERSION,
+            Self::JestPreferCalledWith(_) => JestPreferCalledWith::VERSION,
+            Self::JestPreferComparisonMatcher(_) => JestPreferComparisonMatcher::VERSION,
+            Self::JestPreferEach(_) => JestPreferEach::VERSION,
+            Self::JestPreferEndingWithAnExpect(_) => JestPreferEndingWithAnExpect::VERSION,
+            Self::JestPreferEqualityMatcher(_) => JestPreferEqualityMatcher::VERSION,
+            Self::JestPreferExpectResolves(_) => JestPreferExpectResolves::VERSION,
+            Self::JestPreferHooksInOrder(_) => JestPreferHooksInOrder::VERSION,
+            Self::JestPreferHooksOnTop(_) => JestPreferHooksOnTop::VERSION,
+            Self::JestPreferImportingJestGlobals(_) => JestPreferImportingJestGlobals::VERSION,
+            Self::JestPreferJestMocked(_) => JestPreferJestMocked::VERSION,
+            Self::JestPreferLowercaseTitle(_) => JestPreferLowercaseTitle::VERSION,
+            Self::JestPreferMockPromiseShorthand(_) => JestPreferMockPromiseShorthand::VERSION,
+            Self::JestPreferMockReturnShorthand(_) => JestPreferMockReturnShorthand::VERSION,
+            Self::JestPreferSnapshotHint(_) => JestPreferSnapshotHint::VERSION,
+            Self::JestPreferSpyOn(_) => JestPreferSpyOn::VERSION,
+            Self::JestPreferStrictEqual(_) => JestPreferStrictEqual::VERSION,
+            Self::JestPreferToBe(_) => JestPreferToBe::VERSION,
+            Self::JestPreferToContain(_) => JestPreferToContain::VERSION,
+            Self::JestPreferToHaveBeenCalled(_) => JestPreferToHaveBeenCalled::VERSION,
+            Self::JestPreferToHaveBeenCalledTimes(_) => JestPreferToHaveBeenCalledTimes::VERSION,
+            Self::JestPreferToHaveLength(_) => JestPreferToHaveLength::VERSION,
+            Self::JestPreferTodo(_) => JestPreferTodo::VERSION,
+            Self::JestRequireHook(_) => JestRequireHook::VERSION,
+            Self::JestRequireToThrowMessage(_) => JestRequireToThrowMessage::VERSION,
+            Self::JestRequireTopLevelDescribe(_) => JestRequireTopLevelDescribe::VERSION,
+            Self::JestValidDescribeCallback(_) => JestValidDescribeCallback::VERSION,
+            Self::JestValidExpect(_) => JestValidExpect::VERSION,
+            Self::JestValidExpectInPromise(_) => JestValidExpectInPromise::VERSION,
+            Self::JestValidTitle(_) => JestValidTitle::VERSION,
+            Self::ReactButtonHasType(_) => ReactButtonHasType::VERSION,
+            Self::ReactCheckedRequiresOnchangeOrReadonly(_) => {
+                ReactCheckedRequiresOnchangeOrReadonly::VERSION
+            }
+            Self::ReactDisplayName(_) => ReactDisplayName::VERSION,
+            Self::ReactExhaustiveDeps(_) => ReactExhaustiveDeps::VERSION,
+            Self::ReactForbidDomProps(_) => ReactForbidDomProps::VERSION,
+            Self::ReactForbidElements(_) => ReactForbidElements::VERSION,
+            Self::ReactForwardRefUsesRef(_) => ReactForwardRefUsesRef::VERSION,
+            Self::ReactHookUseState(_) => ReactHookUseState::VERSION,
+            Self::ReactIframeMissingSandbox(_) => ReactIframeMissingSandbox::VERSION,
+            Self::ReactJsxBooleanValue(_) => ReactJsxBooleanValue::VERSION,
+            Self::ReactJsxCurlyBracePresence(_) => ReactJsxCurlyBracePresence::VERSION,
+            Self::ReactJsxFilenameExtension(_) => ReactJsxFilenameExtension::VERSION,
+            Self::ReactJsxFragments(_) => ReactJsxFragments::VERSION,
+            Self::ReactJsxHandlerNames(_) => ReactJsxHandlerNames::VERSION,
+            Self::ReactJsxKey(_) => ReactJsxKey::VERSION,
+            Self::ReactJsxMaxDepth(_) => ReactJsxMaxDepth::VERSION,
+            Self::ReactJsxNoCommentTextnodes(_) => ReactJsxNoCommentTextnodes::VERSION,
+            Self::ReactJsxNoConstructedContextValues(_) => {
+                ReactJsxNoConstructedContextValues::VERSION
+            }
+            Self::ReactJsxNoDuplicateProps(_) => ReactJsxNoDuplicateProps::VERSION,
+            Self::ReactJsxNoScriptUrl(_) => ReactJsxNoScriptUrl::VERSION,
+            Self::ReactJsxNoTargetBlank(_) => ReactJsxNoTargetBlank::VERSION,
+            Self::ReactJsxNoUndef(_) => ReactJsxNoUndef::VERSION,
+            Self::ReactJsxNoUselessFragment(_) => ReactJsxNoUselessFragment::VERSION,
+            Self::ReactJsxPascalCase(_) => ReactJsxPascalCase::VERSION,
+            Self::ReactJsxPropsNoSpreadMulti(_) => ReactJsxPropsNoSpreadMulti::VERSION,
+            Self::ReactJsxPropsNoSpreading(_) => ReactJsxPropsNoSpreading::VERSION,
+            Self::ReactNoArrayIndexKey(_) => ReactNoArrayIndexKey::VERSION,
+            Self::ReactNoChildrenProp(_) => ReactNoChildrenProp::VERSION,
+            Self::ReactNoCloneElement(_) => ReactNoCloneElement::VERSION,
+            Self::ReactNoDanger(_) => ReactNoDanger::VERSION,
+            Self::ReactNoDangerWithChildren(_) => ReactNoDangerWithChildren::VERSION,
+            Self::ReactNoDidMountSetState(_) => ReactNoDidMountSetState::VERSION,
+            Self::ReactNoDirectMutationState(_) => ReactNoDirectMutationState::VERSION,
+            Self::ReactNoFindDomNode(_) => ReactNoFindDomNode::VERSION,
+            Self::ReactNoIsMounted(_) => ReactNoIsMounted::VERSION,
+            Self::ReactNoMultiComp(_) => ReactNoMultiComp::VERSION,
+            Self::ReactNoNamespace(_) => ReactNoNamespace::VERSION,
+            Self::ReactNoReactChildren(_) => ReactNoReactChildren::VERSION,
+            Self::ReactNoRedundantShouldComponentUpdate(_) => {
+                ReactNoRedundantShouldComponentUpdate::VERSION
+            }
+            Self::ReactNoRenderReturnValue(_) => ReactNoRenderReturnValue::VERSION,
+            Self::ReactNoSetState(_) => ReactNoSetState::VERSION,
+            Self::ReactNoStringRefs(_) => ReactNoStringRefs::VERSION,
+            Self::ReactNoThisInSfc(_) => ReactNoThisInSfc::VERSION,
+            Self::ReactNoUnescapedEntities(_) => ReactNoUnescapedEntities::VERSION,
+            Self::ReactNoUnknownProperty(_) => ReactNoUnknownProperty::VERSION,
+            Self::ReactNoUnsafe(_) => ReactNoUnsafe::VERSION,
+            Self::ReactNoWillUpdateSetState(_) => ReactNoWillUpdateSetState::VERSION,
+            Self::ReactOnlyExportComponents(_) => ReactOnlyExportComponents::VERSION,
+            Self::ReactPreferEs6Class(_) => ReactPreferEs6Class::VERSION,
+            Self::ReactPreferFunctionComponent(_) => ReactPreferFunctionComponent::VERSION,
+            Self::ReactReactInJsxScope(_) => ReactReactInJsxScope::VERSION,
+            Self::ReactRequireRenderReturn(_) => ReactRequireRenderReturn::VERSION,
+            Self::ReactRulesOfHooks(_) => ReactRulesOfHooks::VERSION,
+            Self::ReactSelfClosingComp(_) => ReactSelfClosingComp::VERSION,
+            Self::ReactStateInConstructor(_) => ReactStateInConstructor::VERSION,
+            Self::ReactStylePropObject(_) => ReactStylePropObject::VERSION,
+            Self::ReactVoidDomElementsNoChildren(_) => ReactVoidDomElementsNoChildren::VERSION,
+            Self::ReactPerfJsxNoJsxAsProp(_) => ReactPerfJsxNoJsxAsProp::VERSION,
+            Self::ReactPerfJsxNoNewArrayAsProp(_) => ReactPerfJsxNoNewArrayAsProp::VERSION,
+            Self::ReactPerfJsxNoNewFunctionAsProp(_) => ReactPerfJsxNoNewFunctionAsProp::VERSION,
+            Self::ReactPerfJsxNoNewObjectAsProp(_) => ReactPerfJsxNoNewObjectAsProp::VERSION,
+            Self::UnicornCatchErrorName(_) => UnicornCatchErrorName::VERSION,
+            Self::UnicornConsistentAssert(_) => UnicornConsistentAssert::VERSION,
+            Self::UnicornConsistentDateClone(_) => UnicornConsistentDateClone::VERSION,
+            Self::UnicornConsistentEmptyArraySpread(_) => {
+                UnicornConsistentEmptyArraySpread::VERSION
+            }
+            Self::UnicornConsistentExistenceIndexCheck(_) => {
+                UnicornConsistentExistenceIndexCheck::VERSION
+            }
+            Self::UnicornConsistentFunctionScoping(_) => UnicornConsistentFunctionScoping::VERSION,
+            Self::UnicornConsistentTemplateLiteralEscape(_) => {
+                UnicornConsistentTemplateLiteralEscape::VERSION
+            }
+            Self::UnicornCustomErrorDefinition(_) => UnicornCustomErrorDefinition::VERSION,
+            Self::UnicornEmptyBraceSpaces(_) => UnicornEmptyBraceSpaces::VERSION,
+            Self::UnicornErrorMessage(_) => UnicornErrorMessage::VERSION,
+            Self::UnicornEscapeCase(_) => UnicornEscapeCase::VERSION,
+            Self::UnicornExplicitLengthCheck(_) => UnicornExplicitLengthCheck::VERSION,
+            Self::UnicornFilenameCase(_) => UnicornFilenameCase::VERSION,
+            Self::UnicornNewForBuiltins(_) => UnicornNewForBuiltins::VERSION,
+            Self::UnicornNoAbusiveEslintDisable(_) => UnicornNoAbusiveEslintDisable::VERSION,
+            Self::UnicornNoAccessorRecursion(_) => UnicornNoAccessorRecursion::VERSION,
+            Self::UnicornNoAnonymousDefaultExport(_) => UnicornNoAnonymousDefaultExport::VERSION,
+            Self::UnicornNoArrayCallbackReference(_) => UnicornNoArrayCallbackReference::VERSION,
+            Self::UnicornNoArrayForEach(_) => UnicornNoArrayForEach::VERSION,
+            Self::UnicornNoArrayMethodThisArgument(_) => UnicornNoArrayMethodThisArgument::VERSION,
+            Self::UnicornNoArrayReduce(_) => UnicornNoArrayReduce::VERSION,
+            Self::UnicornNoArrayReverse(_) => UnicornNoArrayReverse::VERSION,
+            Self::UnicornNoArraySort(_) => UnicornNoArraySort::VERSION,
+            Self::UnicornNoAwaitExpressionMember(_) => UnicornNoAwaitExpressionMember::VERSION,
+            Self::UnicornNoAwaitInPromiseMethods(_) => UnicornNoAwaitInPromiseMethods::VERSION,
+            Self::UnicornNoConsoleSpaces(_) => UnicornNoConsoleSpaces::VERSION,
+            Self::UnicornNoDocumentCookie(_) => UnicornNoDocumentCookie::VERSION,
+            Self::UnicornNoEmptyFile(_) => UnicornNoEmptyFile::VERSION,
+            Self::UnicornNoHexEscape(_) => UnicornNoHexEscape::VERSION,
+            Self::UnicornNoImmediateMutation(_) => UnicornNoImmediateMutation::VERSION,
+            Self::UnicornNoInstanceofArray(_) => UnicornNoInstanceofArray::VERSION,
+            Self::UnicornNoInstanceofBuiltins(_) => UnicornNoInstanceofBuiltins::VERSION,
+            Self::UnicornNoInvalidFetchOptions(_) => UnicornNoInvalidFetchOptions::VERSION,
+            Self::UnicornNoInvalidRemoveEventListener(_) => {
+                UnicornNoInvalidRemoveEventListener::VERSION
+            }
+            Self::UnicornNoLengthAsSliceEnd(_) => UnicornNoLengthAsSliceEnd::VERSION,
+            Self::UnicornNoLonelyIf(_) => UnicornNoLonelyIf::VERSION,
+            Self::UnicornNoMagicArrayFlatDepth(_) => UnicornNoMagicArrayFlatDepth::VERSION,
+            Self::UnicornNoNegationInEqualityCheck(_) => UnicornNoNegationInEqualityCheck::VERSION,
+            Self::UnicornNoNestedTernary(_) => UnicornNoNestedTernary::VERSION,
+            Self::UnicornNoNewArray(_) => UnicornNoNewArray::VERSION,
+            Self::UnicornNoNewBuffer(_) => UnicornNoNewBuffer::VERSION,
+            Self::UnicornNoNull(_) => UnicornNoNull::VERSION,
+            Self::UnicornNoObjectAsDefaultParameter(_) => {
+                UnicornNoObjectAsDefaultParameter::VERSION
+            }
+            Self::UnicornNoProcessExit(_) => UnicornNoProcessExit::VERSION,
+            Self::UnicornNoSinglePromiseInPromiseMethods(_) => {
+                UnicornNoSinglePromiseInPromiseMethods::VERSION
+            }
+            Self::UnicornNoStaticOnlyClass(_) => UnicornNoStaticOnlyClass::VERSION,
+            Self::UnicornNoThenable(_) => UnicornNoThenable::VERSION,
+            Self::UnicornNoThisAssignment(_) => UnicornNoThisAssignment::VERSION,
+            Self::UnicornNoTypeofUndefined(_) => UnicornNoTypeofUndefined::VERSION,
+            Self::UnicornNoUnnecessaryArrayFlatDepth(_) => {
+                UnicornNoUnnecessaryArrayFlatDepth::VERSION
+            }
+            Self::UnicornNoUnnecessaryArraySpliceCount(_) => {
+                UnicornNoUnnecessaryArraySpliceCount::VERSION
+            }
+            Self::UnicornNoUnnecessaryAwait(_) => UnicornNoUnnecessaryAwait::VERSION,
+            Self::UnicornNoUnnecessarySliceEnd(_) => UnicornNoUnnecessarySliceEnd::VERSION,
+            Self::UnicornNoUnreadableArrayDestructuring(_) => {
+                UnicornNoUnreadableArrayDestructuring::VERSION
+            }
+            Self::UnicornNoUnreadableIife(_) => UnicornNoUnreadableIife::VERSION,
+            Self::UnicornNoUselessCollectionArgument(_) => {
+                UnicornNoUselessCollectionArgument::VERSION
+            }
+            Self::UnicornNoUselessErrorCaptureStackTrace(_) => {
+                UnicornNoUselessErrorCaptureStackTrace::VERSION
+            }
+            Self::UnicornNoUselessFallbackInSpread(_) => UnicornNoUselessFallbackInSpread::VERSION,
+            Self::UnicornNoUselessIteratorToArray(_) => UnicornNoUselessIteratorToArray::VERSION,
+            Self::UnicornNoUselessLengthCheck(_) => UnicornNoUselessLengthCheck::VERSION,
+            Self::UnicornNoUselessPromiseResolveReject(_) => {
+                UnicornNoUselessPromiseResolveReject::VERSION
+            }
+            Self::UnicornNoUselessSpread(_) => UnicornNoUselessSpread::VERSION,
+            Self::UnicornNoUselessSwitchCase(_) => UnicornNoUselessSwitchCase::VERSION,
+            Self::UnicornNoUselessUndefined(_) => UnicornNoUselessUndefined::VERSION,
+            Self::UnicornNoZeroFractions(_) => UnicornNoZeroFractions::VERSION,
+            Self::UnicornNumberLiteralCase(_) => UnicornNumberLiteralCase::VERSION,
+            Self::UnicornNumericSeparatorsStyle(_) => UnicornNumericSeparatorsStyle::VERSION,
+            Self::UnicornPreferAddEventListener(_) => UnicornPreferAddEventListener::VERSION,
+            Self::UnicornPreferArrayFind(_) => UnicornPreferArrayFind::VERSION,
+            Self::UnicornPreferArrayFlat(_) => UnicornPreferArrayFlat::VERSION,
+            Self::UnicornPreferArrayFlatMap(_) => UnicornPreferArrayFlatMap::VERSION,
+            Self::UnicornPreferArrayIndexOf(_) => UnicornPreferArrayIndexOf::VERSION,
+            Self::UnicornPreferArraySome(_) => UnicornPreferArraySome::VERSION,
+            Self::UnicornPreferAt(_) => UnicornPreferAt::VERSION,
+            Self::UnicornPreferBigintLiterals(_) => UnicornPreferBigintLiterals::VERSION,
+            Self::UnicornPreferBlobReadingMethods(_) => UnicornPreferBlobReadingMethods::VERSION,
+            Self::UnicornPreferClassFields(_) => UnicornPreferClassFields::VERSION,
+            Self::UnicornPreferClasslistToggle(_) => UnicornPreferClasslistToggle::VERSION,
+            Self::UnicornPreferCodePoint(_) => UnicornPreferCodePoint::VERSION,
+            Self::UnicornPreferDateNow(_) => UnicornPreferDateNow::VERSION,
+            Self::UnicornPreferDefaultParameters(_) => UnicornPreferDefaultParameters::VERSION,
+            Self::UnicornPreferDomNodeAppend(_) => UnicornPreferDomNodeAppend::VERSION,
+            Self::UnicornPreferDomNodeDataset(_) => UnicornPreferDomNodeDataset::VERSION,
+            Self::UnicornPreferDomNodeRemove(_) => UnicornPreferDomNodeRemove::VERSION,
+            Self::UnicornPreferDomNodeTextContent(_) => UnicornPreferDomNodeTextContent::VERSION,
+            Self::UnicornPreferEventTarget(_) => UnicornPreferEventTarget::VERSION,
+            Self::UnicornPreferGlobalThis(_) => UnicornPreferGlobalThis::VERSION,
+            Self::UnicornPreferImportMetaProperties(_) => {
+                UnicornPreferImportMetaProperties::VERSION
+            }
+            Self::UnicornPreferIncludes(_) => UnicornPreferIncludes::VERSION,
+            Self::UnicornPreferKeyboardEventKey(_) => UnicornPreferKeyboardEventKey::VERSION,
+            Self::UnicornPreferLogicalOperatorOverTernary(_) => {
+                UnicornPreferLogicalOperatorOverTernary::VERSION
+            }
+            Self::UnicornPreferMathMinMax(_) => UnicornPreferMathMinMax::VERSION,
+            Self::UnicornPreferMathTrunc(_) => UnicornPreferMathTrunc::VERSION,
+            Self::UnicornPreferModernDomApis(_) => UnicornPreferModernDomApis::VERSION,
+            Self::UnicornPreferModernMathApis(_) => UnicornPreferModernMathApis::VERSION,
+            Self::UnicornPreferModule(_) => UnicornPreferModule::VERSION,
+            Self::UnicornPreferNativeCoercionFunctions(_) => {
+                UnicornPreferNativeCoercionFunctions::VERSION
+            }
+            Self::UnicornPreferNegativeIndex(_) => UnicornPreferNegativeIndex::VERSION,
+            Self::UnicornPreferNodeProtocol(_) => UnicornPreferNodeProtocol::VERSION,
+            Self::UnicornPreferNumberProperties(_) => UnicornPreferNumberProperties::VERSION,
+            Self::UnicornPreferObjectFromEntries(_) => UnicornPreferObjectFromEntries::VERSION,
+            Self::UnicornPreferOptionalCatchBinding(_) => {
+                UnicornPreferOptionalCatchBinding::VERSION
+            }
+            Self::UnicornPreferPrototypeMethods(_) => UnicornPreferPrototypeMethods::VERSION,
+            Self::UnicornPreferQuerySelector(_) => UnicornPreferQuerySelector::VERSION,
+            Self::UnicornPreferReflectApply(_) => UnicornPreferReflectApply::VERSION,
+            Self::UnicornPreferRegexpTest(_) => UnicornPreferRegexpTest::VERSION,
+            Self::UnicornPreferResponseStaticJson(_) => UnicornPreferResponseStaticJson::VERSION,
+            Self::UnicornPreferSetHas(_) => UnicornPreferSetHas::VERSION,
+            Self::UnicornPreferSetSize(_) => UnicornPreferSetSize::VERSION,
+            Self::UnicornPreferSpread(_) => UnicornPreferSpread::VERSION,
+            Self::UnicornPreferStringRaw(_) => UnicornPreferStringRaw::VERSION,
+            Self::UnicornPreferStringReplaceAll(_) => UnicornPreferStringReplaceAll::VERSION,
+            Self::UnicornPreferStringSlice(_) => UnicornPreferStringSlice::VERSION,
+            Self::UnicornPreferStringStartsEndsWith(_) => {
+                UnicornPreferStringStartsEndsWith::VERSION
+            }
+            Self::UnicornPreferStringTrimStartEnd(_) => UnicornPreferStringTrimStartEnd::VERSION,
+            Self::UnicornPreferStructuredClone(_) => UnicornPreferStructuredClone::VERSION,
+            Self::UnicornPreferTernary(_) => UnicornPreferTernary::VERSION,
+            Self::UnicornPreferTopLevelAwait(_) => UnicornPreferTopLevelAwait::VERSION,
+            Self::UnicornPreferTypeError(_) => UnicornPreferTypeError::VERSION,
+            Self::UnicornRelativeUrlStyle(_) => UnicornRelativeUrlStyle::VERSION,
+            Self::UnicornRequireArrayJoinSeparator(_) => UnicornRequireArrayJoinSeparator::VERSION,
+            Self::UnicornRequireModuleAttributes(_) => UnicornRequireModuleAttributes::VERSION,
+            Self::UnicornRequireModuleSpecifiers(_) => UnicornRequireModuleSpecifiers::VERSION,
+            Self::UnicornRequireNumberToFixedDigitsArgument(_) => {
+                UnicornRequireNumberToFixedDigitsArgument::VERSION
+            }
+            Self::UnicornRequirePostMessageTargetOrigin(_) => {
+                UnicornRequirePostMessageTargetOrigin::VERSION
+            }
+            Self::UnicornSwitchCaseBraces(_) => UnicornSwitchCaseBraces::VERSION,
+            Self::UnicornSwitchCaseBreakPosition(_) => UnicornSwitchCaseBreakPosition::VERSION,
+            Self::UnicornTextEncodingIdentifierCase(_) => {
+                UnicornTextEncodingIdentifierCase::VERSION
+            }
+            Self::UnicornThrowNewError(_) => UnicornThrowNewError::VERSION,
+            Self::JsxA11YAltText(_) => JsxA11YAltText::VERSION,
+            Self::JsxA11YAnchorAmbiguousText(_) => JsxA11YAnchorAmbiguousText::VERSION,
+            Self::JsxA11YAnchorHasContent(_) => JsxA11YAnchorHasContent::VERSION,
+            Self::JsxA11YAnchorIsValid(_) => JsxA11YAnchorIsValid::VERSION,
+            Self::JsxA11YAriaActivedescendantHasTabindex(_) => {
+                JsxA11YAriaActivedescendantHasTabindex::VERSION
+            }
+            Self::JsxA11YAriaProps(_) => JsxA11YAriaProps::VERSION,
+            Self::JsxA11YAriaProptypes(_) => JsxA11YAriaProptypes::VERSION,
+            Self::JsxA11YAriaRole(_) => JsxA11YAriaRole::VERSION,
+            Self::JsxA11YAriaUnsupportedElements(_) => JsxA11YAriaUnsupportedElements::VERSION,
+            Self::JsxA11YAutocompleteValid(_) => JsxA11YAutocompleteValid::VERSION,
+            Self::JsxA11YClickEventsHaveKeyEvents(_) => JsxA11YClickEventsHaveKeyEvents::VERSION,
+            Self::JsxA11YHeadingHasContent(_) => JsxA11YHeadingHasContent::VERSION,
+            Self::JsxA11YHtmlHasLang(_) => JsxA11YHtmlHasLang::VERSION,
+            Self::JsxA11YIframeHasTitle(_) => JsxA11YIframeHasTitle::VERSION,
+            Self::JsxA11YImgRedundantAlt(_) => JsxA11YImgRedundantAlt::VERSION,
+            Self::JsxA11YLabelHasAssociatedControl(_) => JsxA11YLabelHasAssociatedControl::VERSION,
+            Self::JsxA11YLang(_) => JsxA11YLang::VERSION,
+            Self::JsxA11YMediaHasCaption(_) => JsxA11YMediaHasCaption::VERSION,
+            Self::JsxA11YMouseEventsHaveKeyEvents(_) => JsxA11YMouseEventsHaveKeyEvents::VERSION,
+            Self::JsxA11YNoAccessKey(_) => JsxA11YNoAccessKey::VERSION,
+            Self::JsxA11YNoAriaHiddenOnFocusable(_) => JsxA11YNoAriaHiddenOnFocusable::VERSION,
+            Self::JsxA11YNoAutofocus(_) => JsxA11YNoAutofocus::VERSION,
+            Self::JsxA11YNoDistractingElements(_) => JsxA11YNoDistractingElements::VERSION,
+            Self::JsxA11YNoNoninteractiveTabindex(_) => JsxA11YNoNoninteractiveTabindex::VERSION,
+            Self::JsxA11YNoRedundantRoles(_) => JsxA11YNoRedundantRoles::VERSION,
+            Self::JsxA11YNoStaticElementInteractions(_) => {
+                JsxA11YNoStaticElementInteractions::VERSION
+            }
+            Self::JsxA11YPreferTagOverRole(_) => JsxA11YPreferTagOverRole::VERSION,
+            Self::JsxA11YRoleHasRequiredAriaProps(_) => JsxA11YRoleHasRequiredAriaProps::VERSION,
+            Self::JsxA11YRoleSupportsAriaProps(_) => JsxA11YRoleSupportsAriaProps::VERSION,
+            Self::JsxA11YScope(_) => JsxA11YScope::VERSION,
+            Self::JsxA11YTabindexNoPositive(_) => JsxA11YTabindexNoPositive::VERSION,
+            Self::OxcApproxConstant(_) => OxcApproxConstant::VERSION,
+            Self::OxcBadArrayMethodOnArguments(_) => OxcBadArrayMethodOnArguments::VERSION,
+            Self::OxcBadBitwiseOperator(_) => OxcBadBitwiseOperator::VERSION,
+            Self::OxcBadCharAtComparison(_) => OxcBadCharAtComparison::VERSION,
+            Self::OxcBadComparisonSequence(_) => OxcBadComparisonSequence::VERSION,
+            Self::OxcBadMinMaxFunc(_) => OxcBadMinMaxFunc::VERSION,
+            Self::OxcBadObjectLiteralComparison(_) => OxcBadObjectLiteralComparison::VERSION,
+            Self::OxcBadReplaceAllArg(_) => OxcBadReplaceAllArg::VERSION,
+            Self::OxcBranchesSharingCode(_) => OxcBranchesSharingCode::VERSION,
+            Self::OxcConstComparisons(_) => OxcConstComparisons::VERSION,
+            Self::OxcDoubleComparisons(_) => OxcDoubleComparisons::VERSION,
+            Self::OxcErasingOp(_) => OxcErasingOp::VERSION,
+            Self::OxcMisrefactoredAssignOp(_) => OxcMisrefactoredAssignOp::VERSION,
+            Self::OxcMissingThrow(_) => OxcMissingThrow::VERSION,
+            Self::OxcNoAccumulatingSpread(_) => OxcNoAccumulatingSpread::VERSION,
+            Self::OxcNoAsyncAwait(_) => OxcNoAsyncAwait::VERSION,
+            Self::OxcNoAsyncEndpointHandlers(_) => OxcNoAsyncEndpointHandlers::VERSION,
+            Self::OxcNoBarrelFile(_) => OxcNoBarrelFile::VERSION,
+            Self::OxcNoConstEnum(_) => OxcNoConstEnum::VERSION,
+            Self::OxcNoMapSpread(_) => OxcNoMapSpread::VERSION,
+            Self::OxcNoOptionalChaining(_) => OxcNoOptionalChaining::VERSION,
+            Self::OxcNoRestSpreadProperties(_) => OxcNoRestSpreadProperties::VERSION,
+            Self::OxcNoThisInExportedFunction(_) => OxcNoThisInExportedFunction::VERSION,
+            Self::OxcNumberArgOutOfRange(_) => OxcNumberArgOutOfRange::VERSION,
+            Self::OxcOnlyUsedInRecursion(_) => OxcOnlyUsedInRecursion::VERSION,
+            Self::OxcUninvokedArrayCallback(_) => OxcUninvokedArrayCallback::VERSION,
+            Self::NextjsGoogleFontDisplay(_) => NextjsGoogleFontDisplay::VERSION,
+            Self::NextjsGoogleFontPreconnect(_) => NextjsGoogleFontPreconnect::VERSION,
+            Self::NextjsInlineScriptId(_) => NextjsInlineScriptId::VERSION,
+            Self::NextjsNextScriptForGa(_) => NextjsNextScriptForGa::VERSION,
+            Self::NextjsNoAssignModuleVariable(_) => NextjsNoAssignModuleVariable::VERSION,
+            Self::NextjsNoAsyncClientComponent(_) => NextjsNoAsyncClientComponent::VERSION,
+            Self::NextjsNoBeforeInteractiveScriptOutsideDocument(_) => {
+                NextjsNoBeforeInteractiveScriptOutsideDocument::VERSION
+            }
+            Self::NextjsNoCssTags(_) => NextjsNoCssTags::VERSION,
+            Self::NextjsNoDocumentImportInPage(_) => NextjsNoDocumentImportInPage::VERSION,
+            Self::NextjsNoDuplicateHead(_) => NextjsNoDuplicateHead::VERSION,
+            Self::NextjsNoHeadElement(_) => NextjsNoHeadElement::VERSION,
+            Self::NextjsNoHeadImportInDocument(_) => NextjsNoHeadImportInDocument::VERSION,
+            Self::NextjsNoHtmlLinkForPages(_) => NextjsNoHtmlLinkForPages::VERSION,
+            Self::NextjsNoImgElement(_) => NextjsNoImgElement::VERSION,
+            Self::NextjsNoPageCustomFont(_) => NextjsNoPageCustomFont::VERSION,
+            Self::NextjsNoScriptComponentInHead(_) => NextjsNoScriptComponentInHead::VERSION,
+            Self::NextjsNoStyledJsxInDocument(_) => NextjsNoStyledJsxInDocument::VERSION,
+            Self::NextjsNoSyncScripts(_) => NextjsNoSyncScripts::VERSION,
+            Self::NextjsNoTitleInDocumentHead(_) => NextjsNoTitleInDocumentHead::VERSION,
+            Self::NextjsNoTypos(_) => NextjsNoTypos::VERSION,
+            Self::NextjsNoUnwantedPolyfillio(_) => NextjsNoUnwantedPolyfillio::VERSION,
+            Self::JsdocCheckAccess(_) => JsdocCheckAccess::VERSION,
+            Self::JsdocCheckPropertyNames(_) => JsdocCheckPropertyNames::VERSION,
+            Self::JsdocCheckTagNames(_) => JsdocCheckTagNames::VERSION,
+            Self::JsdocEmptyTags(_) => JsdocEmptyTags::VERSION,
+            Self::JsdocImplementsOnClasses(_) => JsdocImplementsOnClasses::VERSION,
+            Self::JsdocNoDefaults(_) => JsdocNoDefaults::VERSION,
+            Self::JsdocRequireParam(_) => JsdocRequireParam::VERSION,
+            Self::JsdocRequireParamDescription(_) => JsdocRequireParamDescription::VERSION,
+            Self::JsdocRequireParamName(_) => JsdocRequireParamName::VERSION,
+            Self::JsdocRequireParamType(_) => JsdocRequireParamType::VERSION,
+            Self::JsdocRequireProperty(_) => JsdocRequireProperty::VERSION,
+            Self::JsdocRequirePropertyDescription(_) => JsdocRequirePropertyDescription::VERSION,
+            Self::JsdocRequirePropertyName(_) => JsdocRequirePropertyName::VERSION,
+            Self::JsdocRequirePropertyType(_) => JsdocRequirePropertyType::VERSION,
+            Self::JsdocRequireReturns(_) => JsdocRequireReturns::VERSION,
+            Self::JsdocRequireReturnsDescription(_) => JsdocRequireReturnsDescription::VERSION,
+            Self::JsdocRequireReturnsType(_) => JsdocRequireReturnsType::VERSION,
+            Self::JsdocRequireYields(_) => JsdocRequireYields::VERSION,
+            Self::PromiseAlwaysReturn(_) => PromiseAlwaysReturn::VERSION,
+            Self::PromiseAvoidNew(_) => PromiseAvoidNew::VERSION,
+            Self::PromiseCatchOrReturn(_) => PromiseCatchOrReturn::VERSION,
+            Self::PromiseNoCallbackInPromise(_) => PromiseNoCallbackInPromise::VERSION,
+            Self::PromiseNoMultipleResolved(_) => PromiseNoMultipleResolved::VERSION,
+            Self::PromiseNoNesting(_) => PromiseNoNesting::VERSION,
+            Self::PromiseNoNewStatics(_) => PromiseNoNewStatics::VERSION,
+            Self::PromiseNoPromiseInCallback(_) => PromiseNoPromiseInCallback::VERSION,
+            Self::PromiseNoReturnInFinally(_) => PromiseNoReturnInFinally::VERSION,
+            Self::PromiseNoReturnWrap(_) => PromiseNoReturnWrap::VERSION,
+            Self::PromiseParamNames(_) => PromiseParamNames::VERSION,
+            Self::PromisePreferAwaitToCallbacks(_) => PromisePreferAwaitToCallbacks::VERSION,
+            Self::PromisePreferAwaitToThen(_) => PromisePreferAwaitToThen::VERSION,
+            Self::PromisePreferCatch(_) => PromisePreferCatch::VERSION,
+            Self::PromiseSpecOnly(_) => PromiseSpecOnly::VERSION,
+            Self::PromiseValidParams(_) => PromiseValidParams::VERSION,
+            Self::VitestConsistentEachFor(_) => VitestConsistentEachFor::VERSION,
+            Self::VitestConsistentTestFilename(_) => VitestConsistentTestFilename::VERSION,
+            Self::VitestConsistentVitestVi(_) => VitestConsistentVitestVi::VERSION,
+            Self::VitestHoistedApisOnTop(_) => VitestHoistedApisOnTop::VERSION,
+            Self::VitestNoConditionalTests(_) => VitestNoConditionalTests::VERSION,
+            Self::VitestNoImportNodeTest(_) => VitestNoImportNodeTest::VERSION,
+            Self::VitestNoImportingVitestGlobals(_) => VitestNoImportingVitestGlobals::VERSION,
+            Self::VitestPreferCalledExactlyOnceWith(_) => {
+                VitestPreferCalledExactlyOnceWith::VERSION
+            }
+            Self::VitestPreferCalledOnce(_) => VitestPreferCalledOnce::VERSION,
+            Self::VitestPreferCalledTimes(_) => VitestPreferCalledTimes::VERSION,
+            Self::VitestPreferDescribeFunctionTitle(_) => {
+                VitestPreferDescribeFunctionTitle::VERSION
+            }
+            Self::VitestPreferExpectTypeOf(_) => VitestPreferExpectTypeOf::VERSION,
+            Self::VitestPreferImportInMock(_) => VitestPreferImportInMock::VERSION,
+            Self::VitestPreferImportingVitestGlobals(_) => {
+                VitestPreferImportingVitestGlobals::VERSION
+            }
+            Self::VitestPreferStrictBooleanMatchers(_) => {
+                VitestPreferStrictBooleanMatchers::VERSION
+            }
+            Self::VitestPreferToBeFalsy(_) => VitestPreferToBeFalsy::VERSION,
+            Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::VERSION,
+            Self::VitestPreferToBeTruthy(_) => VitestPreferToBeTruthy::VERSION,
+            Self::VitestRequireAwaitedExpectPoll(_) => VitestRequireAwaitedExpectPoll::VERSION,
+            Self::VitestRequireLocalTestContextForConcurrentSnapshots(_) => {
+                VitestRequireLocalTestContextForConcurrentSnapshots::VERSION
+            }
+            Self::VitestRequireMockTypeParameters(_) => VitestRequireMockTypeParameters::VERSION,
+            Self::VitestRequireTestTimeout(_) => VitestRequireTestTimeout::VERSION,
+            Self::VitestWarnTodo(_) => VitestWarnTodo::VERSION,
+            Self::NodeGlobalRequire(_) => NodeGlobalRequire::VERSION,
+            Self::NodeHandleCallbackErr(_) => NodeHandleCallbackErr::VERSION,
+            Self::NodeNoExportsAssign(_) => NodeNoExportsAssign::VERSION,
+            Self::NodeNoNewRequire(_) => NodeNoNewRequire::VERSION,
+            Self::NodeNoPathConcat(_) => NodeNoPathConcat::VERSION,
+            Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::VERSION,
+            Self::VueDefineEmitsDeclaration(_) => VueDefineEmitsDeclaration::VERSION,
+            Self::VueDefinePropsDeclaration(_) => VueDefinePropsDeclaration::VERSION,
+            Self::VueDefinePropsDestructuring(_) => VueDefinePropsDestructuring::VERSION,
+            Self::VueMaxProps(_) => VueMaxProps::VERSION,
+            Self::VueNoArrowFunctionsInWatch(_) => VueNoArrowFunctionsInWatch::VERSION,
+            Self::VueNoDeprecatedDestroyedLifecycle(_) => {
+                VueNoDeprecatedDestroyedLifecycle::VERSION
+            }
+            Self::VueNoExportInScriptSetup(_) => VueNoExportInScriptSetup::VERSION,
+            Self::VueNoImportCompilerMacros(_) => VueNoImportCompilerMacros::VERSION,
+            Self::VueNoLifecycleAfterAwait(_) => VueNoLifecycleAfterAwait::VERSION,
+            Self::VueNoMultipleSlotArgs(_) => VueNoMultipleSlotArgs::VERSION,
+            Self::VueNoRequiredPropWithDefault(_) => VueNoRequiredPropWithDefault::VERSION,
+            Self::VueNoThisInBeforeRouteEnter(_) => VueNoThisInBeforeRouteEnter::VERSION,
+            Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::VERSION,
+            Self::VueRequireDefaultExport(_) => VueRequireDefaultExport::VERSION,
+            Self::VueRequireTypedRef(_) => VueRequireTypedRef::VERSION,
+            Self::VueValidDefineEmits(_) => VueValidDefineEmits::VERSION,
+            Self::VueValidDefineProps(_) => VueValidDefineProps::VERSION,
+        }
+    }
     #[doc = r" Whether this rule declares a configuration type."]
     pub fn has_config(&self) -> bool {
         match self {

@@ -604,15 +604,11 @@ fn ancestor_has_return_type<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bo
 
     for ancestor in ctx.nodes().ancestors(node.id()) {
         match ancestor.kind() {
-            AstKind::ArrowFunctionExpression(func) => {
-                if func.return_type.is_some() {
-                    return true;
-                }
+            AstKind::ArrowFunctionExpression(func) if func.return_type.is_some() => {
+                return true;
             }
-            AstKind::Function(func) => {
-                if func.return_type.is_some() {
-                    return true;
-                }
+            AstKind::Function(func) if func.return_type.is_some() => {
+                return true;
             }
             AstKind::VariableDeclarator(decl) => {
                 return decl.type_annotation.is_some();
@@ -620,10 +616,10 @@ fn ancestor_has_return_type<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bo
             AstKind::PropertyDefinition(def) => {
                 return def.type_annotation.is_some();
             }
-            AstKind::ExpressionStatement(expr) => {
-                if !matches!(expr.expression, Expression::ArrowFunctionExpression(_)) {
-                    return false;
-                }
+            AstKind::ExpressionStatement(expr)
+                if !matches!(expr.expression, Expression::ArrowFunctionExpression(_)) =>
+            {
+                return false;
             }
             _ => {}
         }

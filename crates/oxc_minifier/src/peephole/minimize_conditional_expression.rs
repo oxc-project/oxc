@@ -30,34 +30,32 @@ impl<'a> PeepholeOptimizations {
     ) -> Option<Expression<'a>> {
         match &mut expr.test {
             // "(a, b) ? c : d" => "a, b ? c : d"
-            Expression::SequenceExpression(sequence_expr) => {
-                if sequence_expr.expressions.len() > 1 {
-                    let span = expr.span();
-                    let mut sequence = expr.test.take_in(ctx.ast);
-                    let Expression::SequenceExpression(sequence_expr) = &mut sequence else {
-                        unreachable!()
-                    };
-                    let expr = Self::minimize_conditional(
-                        span,
-                        sequence_expr.expressions.pop().unwrap(),
-                        expr.consequent.take_in(ctx.ast),
-                        expr.alternate.take_in(ctx.ast),
-                        ctx,
-                    );
-                    sequence_expr.expressions.push(expr);
-                    return Some(sequence);
-                }
+            Expression::SequenceExpression(sequence_expr)
+                if sequence_expr.expressions.len() > 1 =>
+            {
+                let span = expr.span();
+                let mut sequence = expr.test.take_in(ctx.ast);
+                let Expression::SequenceExpression(sequence_expr) = &mut sequence else {
+                    unreachable!()
+                };
+                let expr = Self::minimize_conditional(
+                    span,
+                    sequence_expr.expressions.pop().unwrap(),
+                    expr.consequent.take_in(ctx.ast),
+                    expr.alternate.take_in(ctx.ast),
+                    ctx,
+                );
+                sequence_expr.expressions.push(expr);
+                return Some(sequence);
             }
             // "!a ? b : c" => "a ? c : b"
-            Expression::UnaryExpression(test_expr) => {
-                if test_expr.operator.is_not() {
-                    let test = test_expr.argument.take_in(ctx.ast);
-                    let consequent = expr.alternate.take_in(ctx.ast);
-                    let alternate = expr.consequent.take_in(ctx.ast);
-                    return Some(Self::minimize_conditional(
-                        expr.span, test, consequent, alternate, ctx,
-                    ));
-                }
+            Expression::UnaryExpression(test_expr) if test_expr.operator.is_not() => {
+                let test = test_expr.argument.take_in(ctx.ast);
+                let consequent = expr.alternate.take_in(ctx.ast);
+                let alternate = expr.consequent.take_in(ctx.ast);
+                return Some(Self::minimize_conditional(
+                    expr.span, test, consequent, alternate, ctx,
+                ));
             }
             Expression::Identifier(id) => {
                 // "a ? a : b" => "a || b"
@@ -433,10 +431,10 @@ impl<'a> PeepholeOptimizations {
                     ));
                 }
             }
-            (Some(0.0), Some(1.0)) => {
+            (Some(0.0), Some(1.0))
                 // "a ? 0 : 1" => "+!a"
                 // Skip if parens would be needed (e.g., "a+b?0:1" => "+!(a+b)" is same length)
-                if !Self::test_needs_parens(&expr.test) {
+                if !Self::test_needs_parens(&expr.test) => {
                     let test = expr.test.take_in(ctx.ast);
                     let test = Self::minimize_not(expr.span, test, ctx);
                     return Some(ctx.ast.expression_unary(
@@ -445,7 +443,6 @@ impl<'a> PeepholeOptimizations {
                         test,
                     ));
                 }
-            }
             _ => {}
         }
 

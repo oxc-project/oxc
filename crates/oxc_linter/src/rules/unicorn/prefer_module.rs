@@ -64,15 +64,11 @@ declare_oxc_lint!(
 impl Rule for PreferModule {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            AstKind::Directive(directive) => {
-                if directive.directive == "use strict" {
-                    ctx.diagnostic(use_strict_directive_diagnostic(directive.span));
-                }
+            AstKind::Directive(directive) if directive.directive == "use strict" => {
+                ctx.diagnostic(use_strict_directive_diagnostic(directive.span));
             }
-            AstKind::ReturnStatement(return_statement) => {
-                if is_top_level_return(node, ctx) {
-                    ctx.diagnostic(global_return_diagnostic(return_statement.span));
-                }
+            AstKind::ReturnStatement(return_statement) if is_top_level_return(node, ctx) => {
+                ctx.diagnostic(global_return_diagnostic(return_statement.span));
             }
             AstKind::IdentifierReference(identifier) => {
                 let name = identifier.name.as_str();

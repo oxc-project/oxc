@@ -83,21 +83,21 @@ impl Rule for ConsistentEmptyArraySpread {
             conditional_expr.consequent.get_inner_expression(),
             conditional_expr.alternate.get_inner_expression(),
         ) {
-            (Expression::ArrayExpression(_), Expression::StringLiteral(right_str_lit)) => {
-                if right_str_lit.value.is_empty() {
-                    ctx.diagnostic_with_suggestion(
-                        consistent_empty_array_spread_diagnostic(conditional_expr.span),
-                        |fixer| fixer.replace(right_str_lit.span, "[]"),
-                    );
-                }
+            (Expression::ArrayExpression(_), Expression::StringLiteral(right_str_lit))
+                if right_str_lit.value.is_empty() =>
+            {
+                ctx.diagnostic_with_suggestion(
+                    consistent_empty_array_spread_diagnostic(conditional_expr.span),
+                    |fixer| fixer.replace(right_str_lit.span, "[]"),
+                );
             }
-            (Expression::StringLiteral(_), Expression::ArrayExpression(right_array_expr)) => {
-                if right_array_expr.elements.is_empty() {
-                    ctx.diagnostic_with_suggestion(
-                        consistent_empty_array_spread_diagnostic(conditional_expr.span),
-                        |fixer| fixer.replace(right_array_expr.span, "''"),
-                    );
-                }
+            (Expression::StringLiteral(_), Expression::ArrayExpression(right_array_expr))
+                if right_array_expr.elements.is_empty() =>
+            {
+                ctx.diagnostic_with_suggestion(
+                    consistent_empty_array_spread_diagnostic(conditional_expr.span),
+                    |fixer| fixer.replace(right_array_expr.span, "''"),
+                );
             }
             _ => {}
         }

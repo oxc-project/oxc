@@ -531,7 +531,7 @@ impl ConfigStoreBuilder {
                 )?;
 
                 // Convert to vectors
-                builtin_rules.extend(rules_map.into_iter());
+                builtin_rules.extend(rules_map);
                 external_rules.extend(
                     external_rules_map
                         .into_iter()

@@ -67,7 +67,7 @@ describe("LSP initialization", () => {
       const registrations = await client.getDynamicRegistration();
       expect(registrations).toEqual([
         {
-          id: `watcher-linter-${dirUri}`,
+          id: `watcher-${dirUri}`,
           method: "workspace/didChangeWatchedFiles",
           registerOptions: {
             watchers: expectedPatterns.map((pattern) => ({

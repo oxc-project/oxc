@@ -91,16 +91,15 @@ impl Rule for BadBitwiseOperator {
                     );
                 }
             }
-            AstKind::AssignmentExpression(assign_expr) => {
+            AstKind::AssignmentExpression(assign_expr)
                 if assign_expr.operator == AssignmentOperator::BitwiseOR
-                    && !is_numeric_expr(&assign_expr.right, true)
-                {
-                    let start = assign_expr.left.span().end;
-                    ctx.diagnostic_with_suggestion(
-                        bad_bitwise_or_operator_diagnostic(assign_expr.span),
-                        |fixer| Self::fix_assignment_operator(fixer, start, ctx),
-                    );
-                }
+                    && !is_numeric_expr(&assign_expr.right, true) =>
+            {
+                let start = assign_expr.left.span().end;
+                ctx.diagnostic_with_suggestion(
+                    bad_bitwise_or_operator_diagnostic(assign_expr.span),
+                    |fixer| Self::fix_assignment_operator(fixer, start, ctx),
+                );
             }
             _ => {}
         }

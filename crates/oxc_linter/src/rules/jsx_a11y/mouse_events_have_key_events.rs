@@ -124,10 +124,10 @@ impl Rule for MouseEventsHaveKeyEvents {
                 }
 
                 match has_jsx_prop(jsx_opening_el, "onBlur").and_then(get_prop_value) {
-                    Some(JSXAttributeValue::ExpressionContainer(container)) => {
-                        if container.expression.is_undefined() {
-                            ctx.diagnostic(miss_on_blur(jsx_attr.span(), handler));
-                        }
+                    Some(JSXAttributeValue::ExpressionContainer(container))
+                        if container.expression.is_undefined() =>
+                    {
+                        ctx.diagnostic(miss_on_blur(jsx_attr.span(), handler));
                     }
                     None => {
                         ctx.diagnostic(miss_on_blur(jsx_attr.span(), handler));

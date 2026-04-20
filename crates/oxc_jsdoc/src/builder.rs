@@ -32,7 +32,7 @@ impl<'a> JSDocBuilder<'a> {
     pub fn build(self) -> JSDocBuilderResult<'a> {
         JSDocBuilderResult {
             attached: self.attached_docs,
-            not_attached: self.not_attached_docs.into_iter().flat_map(|(_, v)| v).collect(),
+            not_attached: self.not_attached_docs.into_values().flatten().collect(),
         }
     }
 
