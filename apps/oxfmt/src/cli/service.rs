@@ -28,6 +28,93 @@ impl FormatService {
         Self { cwd: cwd.into(), format_mode, formatter }
     }
 
+    /// Process all entries in batch (walk-then-format approach)
+    pub fn run_batch(
+        &self,
+        entries: Vec<FormatEntry>,
+        tx_error: &DiagnosticSender,
+        tx_success: &mpsc::Sender<SuccessResult>,
+    ) {
+        entries.into_par_iter().for_each(|entry| {
+            let start_time = matches!(self.format_mode, OutputMode::Check).then(Instant::now);
+
+            let FormatEntry { strategy, config_resolver } = entry;
+            let path = strategy.path();
+            let Ok(source_text) = utils::read_to_string(path) else {
+                let diagnostics = DiagnosticService::wrap_diagnostics(
+                    self.cwd.clone(),
+                    path,
+                    "",
+                    vec![
+                        oxc_diagnostics::OxcDiagnostic::error(format!(
+                            "Failed to read file: {}",
+                            path.display()
+                        ))
+                        .with_help("This may be due to the file being a binary or inaccessible."),
+                    ],
+                );
+                let _ = tx_error.send(diagnostics);
+                return;
+            };
+
+            let resolved_options = config_resolver.resolve(&strategy);
+
+            let (code, is_changed) =
+                match self.formatter.format(&strategy, &source_text, resolved_options) {
+                    FormatResult::Success { code, is_changed } => (code, is_changed),
+                    FormatResult::Error(diagnostics) => {
+                        let errors = DiagnosticService::wrap_diagnostics(
+                            self.cwd.clone(),
+                            path,
+                            &source_text,
+                            diagnostics,
+                        );
+                        let _ = tx_error.send(errors);
+                        return;
+                    }
+                };
+
+            if matches!(self.format_mode, OutputMode::Write) && is_changed {
+                match fs::write(path, &code) {
+                    Ok(()) => (),
+                    Err(err) => {
+                        let diagnostics = DiagnosticService::wrap_diagnostics(
+                            self.cwd.clone(),
+                            path,
+                            "",
+                            vec![oxc_diagnostics::OxcDiagnostic::error(format!(
+                                "Failed to save '{}': {err}",
+                                path.display()
+                            ))],
+                        );
+                        let _ = tx_error.send(diagnostics);
+                        return;
+                    }
+                }
+            }
+
+            let result = match (&self.format_mode, is_changed) {
+                (OutputMode::Check | OutputMode::ListDifferent, true) => {
+                    let display_path = path
+                        .strip_prefix(&self.cwd)
+                        .unwrap_or(path)
+                        .to_string_lossy()
+                        .cow_replace('\\', "/")
+                        .to_string();
+
+                    if matches!(self.format_mode, OutputMode::Check) {
+                        let elapsed = start_time.unwrap().elapsed().as_millis();
+                        SuccessResult::Changed(format!("{display_path} ({elapsed}ms)"))
+                    } else {
+                        SuccessResult::Changed(display_path)
+                    }
+                }
+                _ => SuccessResult::Unchanged,
+            };
+            let _ = tx_success.send(result);
+        });
+    }
+
     /// Process entries as they are received from the channel
     pub fn run_streaming(
         &self,

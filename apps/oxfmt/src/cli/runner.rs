@@ -152,12 +152,20 @@ impl CliRunner {
         #[cfg(feature = "napi")]
         let source_formatter = source_formatter.with_external_formatter(self.external_formatter);
 
-        // Spawn formatting service on a dedicated thread so it doesn't occupy the rayon pool.
-        // It just blocks on `rx_entry` waiting for entries; `par_bridge()` inside still uses rayon.
-        std::thread::spawn(move || {
-            let format_service = FormatService::new(cwd, format_mode, source_formatter);
-            format_service.run_streaming(rx_entry, &tx_error, &tx_success);
-        });
+        let walk_then_format = env::var("OXFMT_WALK_THEN_FORMAT").is_ok();
+
+        // In streaming mode, spawn format service BEFORE walk starts (original behavior)
+        let batch_ctx = if walk_then_format {
+            Some((cwd, source_formatter, rx_entry, tx_error, tx_success))
+        } else {
+            // Spawn formatting service on a dedicated thread so it doesn't occupy the rayon pool.
+            // It just blocks on `rx_entry` waiting for entries; `par_bridge()` inside still uses rayon.
+            std::thread::spawn(move || {
+                let format_service = FormatService::new(cwd, format_mode, source_formatter);
+                format_service.run_streaming(rx_entry, &tx_error, &tx_success);
+            });
+            None
+        };
 
         // Run scoped walks (root + nested) — sends entries to `tx_entry`
         let any_config_found = match scoped_walker.run(
@@ -179,8 +187,16 @@ impl CliRunner {
                 return CliRunResult::InvalidOptionConfig;
             }
         };
-        // Drop sender so the formatting service knows no more entries are coming
         drop(tx_entry);
+
+        // In walk-then-format mode, collect entries and format after walk completes
+        if let Some((cwd, source_formatter, rx_entry, tx_error, tx_success)) = batch_ctx {
+            let entries: Vec<FormatEntry> = rx_entry.into_iter().collect();
+            let format_service = FormatService::new(cwd, format_mode, source_formatter);
+            format_service.run_batch(entries, &tx_error, &tx_success);
+            drop(tx_success);
+            drop(tx_error);
+        }
 
         // Collect results and separate changed paths from unchanged count
         let mut changed_paths: Vec<String> = vec![];
