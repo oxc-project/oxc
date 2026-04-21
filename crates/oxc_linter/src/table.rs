@@ -22,6 +22,7 @@ pub struct RuleTableRow {
     pub name: &'static str,
     pub plugin: String,
     pub category: RuleCategory,
+    #[cfg(feature = "ruledocs")]
     pub version: &'static str,
     #[cfg(feature = "ruledocs")]
     pub documentation: Option<&'static str>,
@@ -60,6 +61,7 @@ impl RuleTable {
                 let name = rule.name();
                 RuleTableRow {
                     name,
+                    #[cfg(feature = "ruledocs")]
                     version: rule.version(),
                     #[cfg(feature = "ruledocs")]
                     documentation: rule.documentation(),

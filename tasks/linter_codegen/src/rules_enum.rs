@@ -379,6 +379,7 @@ fn generate_rule_enum_impl(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
             }
 
             /// The version of oxlint in which this rule was first available.
+            #[cfg(feature = "ruledocs")]
             pub fn version(&self) -> &'static str {
                 match self {
                     #(#version_arms),*
