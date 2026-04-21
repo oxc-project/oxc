@@ -612,19 +612,24 @@ impl Runtime {
                             dep.section_contents.len()
                         );
 
+                        let support_eslint_disable_directives =
+                            me.linter.support_eslint_disable_directives(path);
                         let context_sub_hosts: Vec<ContextSubHost<'_>> = module_to_lint
                             .section_module_records
                             .into_iter()
                             .zip(dep.section_contents.drain(..))
                             .filter_map(|(record_result, section)| match record_result {
                                 Ok(module_record) => {
-                                    Some(ContextSubHost::new_with_framework_options(
-                                        section.semantic.unwrap(),
-                                        Arc::clone(&module_record),
-                                        section.source.start,
-                                        section.source.framework_options,
-                                        section.parser_tokens,
-                                    ))
+                                    Some(
+                                        ContextSubHost::new_with_framework_options_and_directive_support(
+                                            section.semantic.unwrap(),
+                                            Arc::clone(&module_record),
+                                            section.source.start,
+                                            section.source.framework_options,
+                                            section.parser_tokens,
+                                            support_eslint_disable_directives,
+                                        ),
+                                    )
                                 }
                                 Err(messages) => {
                                     if !messages.is_empty() {
@@ -732,19 +737,25 @@ impl Runtime {
                             section_contents.len()
                         );
 
+                        let path = Path::new(&module_to_lint.path);
+                        let support_eslint_disable_directives =
+                            me.linter.support_eslint_disable_directives(path);
                         let context_sub_hosts: Vec<ContextSubHost<'_>> = module_to_lint
                             .section_module_records
                             .into_iter()
                             .zip(section_contents.drain(..))
                             .filter_map(|(record_result, section)| match record_result {
                                 Ok(module_record) => {
-                                    Some(ContextSubHost::new_with_framework_options(
-                                        section.semantic.unwrap(),
-                                        Arc::clone(&module_record),
-                                        section.source.start,
-                                        section.source.framework_options,
-                                        section.parser_tokens,
-                                    ))
+                                    Some(
+                                        ContextSubHost::new_with_framework_options_and_directive_support(
+                                            section.semantic.unwrap(),
+                                            Arc::clone(&module_record),
+                                            section.source.start,
+                                            section.source.framework_options,
+                                            section.parser_tokens,
+                                            support_eslint_disable_directives,
+                                        ),
+                                    )
                                 }
                                 Err(diagnostics) => {
                                     if !diagnostics.is_empty() {
@@ -762,8 +773,6 @@ impl Runtime {
                         if context_sub_hosts.is_empty() {
                             return;
                         }
-
-                        let path = Path::new(&module_to_lint.path);
 
                         let (section_messages, disable_directives) = me
                             .linter
@@ -860,18 +869,24 @@ impl Runtime {
                     |allocator_guard, ModuleContentDependent { source_text: _, section_contents }| {
                         assert_eq!(module.section_module_records.len(), section_contents.len());
 
+                        let path = Path::new(&module.path);
+                        let support_eslint_disable_directives =
+                            me.linter.support_eslint_disable_directives(path);
                         let context_sub_hosts: Vec<ContextSubHost<'_>> = module
                             .section_module_records
                             .into_iter()
                             .zip(section_contents.drain(..))
                             .filter_map(|(record_result, section)| match record_result {
-                                Ok(module_record) => Some(ContextSubHost::new_with_framework_options(
-                                    section.semantic.unwrap(),
-                                    Arc::clone(&module_record),
-                                    section.source.start,
-                                    section.source.framework_options,
-                                    section.parser_tokens,
-                                )),
+                                Ok(module_record) => Some(
+                                    ContextSubHost::new_with_framework_options_and_directive_support(
+                                        section.semantic.unwrap(),
+                                        Arc::clone(&module_record),
+                                        section.source.start,
+                                        section.source.framework_options,
+                                        section.parser_tokens,
+                                        support_eslint_disable_directives,
+                                    ),
+                                ),
                                 Err(errors) => {
                                     if !errors.is_empty() {
                                         messages
@@ -893,7 +908,7 @@ impl Runtime {
 
                         messages.lock().unwrap().extend(
                             me.linter.run(
-                                Path::new(&module.path),
+                                path,
                                 context_sub_hosts,
                                 allocator_guard
                             )

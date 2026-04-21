@@ -69,6 +69,26 @@ impl<'a> ContextSubHost<'a> {
         frameworks_options: FrameworkOptions,
         parser_tokens: ArenaBox<'a, [Token]>,
     ) -> Self {
+        Self::new_with_framework_options_and_directive_support(
+            semantic,
+            module_record,
+            source_text_offset,
+            frameworks_options,
+            parser_tokens,
+            true,
+        )
+    }
+
+    /// # Panics
+    /// If `semantic.cfg()` is `None`.
+    pub(crate) fn new_with_framework_options_and_directive_support(
+        semantic: Semantic<'a>,
+        module_record: Arc<ModuleRecord>,
+        source_text_offset: u32,
+        frameworks_options: FrameworkOptions,
+        parser_tokens: ArenaBox<'a, [Token]>,
+        support_eslint_disable_directives: bool,
+    ) -> Self {
         // We should always check for `semantic.cfg()` being `Some` since we depend on it and it is
         // unwrapped without any runtime checks after construction.
         assert!(
@@ -76,8 +96,9 @@ impl<'a> ContextSubHost<'a> {
             "`LintContext` depends on `Semantic::cfg`, Build your semantic with cfg enabled(`SemanticBuilder::with_cfg`)."
         );
 
-        let disable_directives =
-            DisableDirectivesBuilder::new().build(semantic.source_text(), semantic.comments());
+        let disable_directives = DisableDirectivesBuilder::new()
+            .with_support_eslint_disable_directives(support_eslint_disable_directives)
+            .build(semantic.source_text(), semantic.comments());
 
         Self {
             semantic,
@@ -170,7 +191,7 @@ impl<'a> ContextHost<'a> {
     /// If `sub_hosts` is empty.
     pub fn new<P: AsRef<Path>>(
         file_path: P,
-        mut sub_hosts: Vec<ContextSubHost<'a>>,
+        sub_hosts: Vec<ContextSubHost<'a>>,
         options: LintOptions,
         config: Arc<LintConfig>,
     ) -> Self {
@@ -183,14 +204,6 @@ impl<'a> ContextHost<'a> {
 
         let file_path = file_path.as_ref().to_path_buf().into_boxed_path();
         let file_extension = file_path.extension().map(|ext| ext.to_owned().into_boxed_os_str());
-        let support_eslint_disable_directives =
-            config.options.support_eslint_disable_directives.unwrap_or(true);
-
-        for sub_host in &mut sub_hosts {
-            sub_host.disable_directives = DisableDirectivesBuilder::new()
-                .with_support_eslint_disable_directives(support_eslint_disable_directives)
-                .build(sub_host.semantic.source_text(), sub_host.semantic.comments());
-        }
 
         Self {
             sub_hosts,
