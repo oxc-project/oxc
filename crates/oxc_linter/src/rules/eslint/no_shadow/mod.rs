@@ -143,6 +143,7 @@ impl NoShadow {
         symbol_name: &str,
     ) -> bool {
         self.allow.iter().any(|allowed| allowed.as_str() == symbol_name)
+            || ctx.scoping().symbol_flags(symbol_id).is_enum_member()
             || Self::is_declare_in_definition_file(ctx, symbol_id)
             || Self::is_in_global_augmentation(ctx, symbol_id)
     }

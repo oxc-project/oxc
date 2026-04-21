@@ -1417,17 +1417,3 @@ source: crates/oxc_linter/src/tester.rs
  4 │                     
    ╰────
   help: Consider renaming 'has' to avoid shadowing the variable from the outer scope.
-
-  ⚠ eslint(no-shadow): 'A' is already declared in the upper scope.
-   ╭─[no_shadow.tsx:2:31]
- 1 │ 
- 2 │                         const A = 2;
-   ·                               ┬
-   ·                               ╰── shadowed declaration is here
- 3 │                         enum Test {
- 4 │                             A = 1,
-   ·                             ──┬──
-   ·                               ╰── 'A' is declared here
- 5 │                             B = A,
-   ╰────
-  help: Consider renaming 'A' to avoid shadowing the variable from the outer scope.

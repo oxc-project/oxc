@@ -1515,6 +1515,29 @@ fn test_eslint() {
         ), // { "globals": { "Foopy5": false, }, },
         (
             "
+              export const Priority = 1234;
+              export enum SomeEnum {
+                Priority = 'PRIORITY',
+              }
+                    ",
+            None,
+            None,
+            None,
+        ),
+        (
+            "
+              const A = 2;
+              enum Test {
+                A = 1,
+                B = A,
+              }
+                    ",
+            None,
+            None,
+            None,
+        ),
+        (
+            "
               declare;
               foo5: boolean;
                     ",
@@ -2295,18 +2318,6 @@ fn test_eslint() {
             None,
             Some(PathBuf::from("foo.d.ts")),
         ), // { "globals": { "has": false, }, },
-        (
-            "
-                        const A = 2;
-                        enum Test {
-                            A = 1,
-                            B = A,
-                        }
-                    ",
-            None,
-            None,
-            None,
-        ),
     ];
 
     Tester::new(NoShadow::NAME, NoShadow::PLUGIN, pass, fail).test_and_snapshot();
