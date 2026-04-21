@@ -1272,14 +1272,6 @@ fn test() {
         //     Some(json!(["always"])),
         // ),
         // TODO: Fix this
-        //(
-        //    r#"
-        //        import bar from "./bar.js";
-        //        import pack from "./package";
-        //    "#,
-        //    Some(json!(["never", { "js": "always", "json": "never"}])),
-        //),
-        // TODO: Fix this
         // Edge case: Fragment identifiers
         //(r"import x from './foo.js#section';", Some(json!(["always"]))),
     ];
@@ -1741,6 +1733,15 @@ fn test() {
             Some(json!(["never", { "ts": "never" }])),
         ),
         (r"import utils from './utils.spec.js';", Some(json!(["never", { "js": "never" }]))),
+        // Both package.json and package/index.js exist, module resolution prefers
+        // directory over file.
+        (
+            r#"
+                import bar from "./bar.js";
+                import pack from "./package";
+            "#,
+            Some(json!(["never", { "js": "always", "json": "never"}])),
+        ),
         (r"import dot from './dots/file.with.dot';", Some(json!(["always"]))),
         // TODO: This should probably fail? Needs further investigation.
         // (

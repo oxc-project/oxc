@@ -725,6 +725,15 @@ source: crates/oxc_linter/src/tester.rs
   help: Remove the file extension from this import.
 
   ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration.
+   ╭─[extensions.tsx:3:17]
+ 2 │                 import bar from "./bar.js";
+ 3 │                 import pack from "./package";
+   ·                 ─────────────────────────────
+ 4 │             
+   ╰────
+  help: Add a file extension to this import.
+
+  ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration.
    ╭─[extensions.tsx:1:1]
  1 │ import dot from './dots/file.with.dot';
    · ───────────────────────────────────────
