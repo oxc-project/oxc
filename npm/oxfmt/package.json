@@ -44,6 +44,14 @@
   "dependencies": {
     "tinypool": "2.1.0"
   },
+  "peerDependencies": {
+    "vite-plus": "*"
+  },
+  "peerDependenciesMeta": {
+    "vite-plus": {
+      "optional": true
+    }
+  },
   "napi": {
     "binaryName": "oxfmt",
     "packageName": "@oxfmt/binding",

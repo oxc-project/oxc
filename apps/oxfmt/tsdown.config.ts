@@ -14,10 +14,11 @@ export default defineConfig({
   fixedExtension: false,
   define: { "import.meta.vitest": "undefined" },
   deps: {
-    // Optional peer plugins that `prettier-plugin-tailwindcss` tries to dynamic import.
-    // They are not installed and not needed for us,
-    // mark as external to suppress "UNRESOLVED_IMPORT" warnings.
     neverBundle: [
+      "vite-plus",
+      // Optional peer plugins that `prettier-plugin-tailwindcss` tries to dynamic import.
+      // They are not installed and not needed for us,
+      // mark as external to suppress "UNRESOLVED_IMPORT" warnings.
       "@prettier/plugin-oxc",
       "@prettier/plugin-hermes",
       "@prettier/plugin-pug",

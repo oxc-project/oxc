@@ -20,6 +20,7 @@ catalog:
   publint: 0.3.18
   rolldown: 1.0.0-rc.17
   tsdown: 0.21.10
+  vite-plus: 0.1.19
   vitest: 4.1.4
 
 onlyBuiltDependencies:
