@@ -1,4 +1,5 @@
 mod es_target;
+mod pure;
 mod targets;
 
 use std::path::Path;

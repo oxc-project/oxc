@@ -80,6 +80,8 @@ pub struct BabelPlugins {
     // Built-in plugins
     pub styled_components: Option<StyledComponentsOptions>,
     pub tagged_template_escape: bool,
+    // @babel/plugin-transform-react-pure-annotations
+    pub react_pure_annotations: bool,
 }
 
 impl TryFrom<PluginPresetEntries> for BabelPlugins {
@@ -178,6 +180,7 @@ impl TryFrom<PluginPresetEntries> for BabelPlugins {
                 "tagged-template-transform" => {
                     p.tagged_template_escape = true;
                 }
+                "transform-react-pure-annotations" => p.react_pure_annotations = true,
                 s => p.unsupported.push(s.to_string()),
             }
         }
