@@ -453,7 +453,7 @@ impl Tool for ServerLinter {
             Some("") | None => {
                 // Watch both JSON/JSONC and TS config files
                 #[cfg(feature = "napi")]
-                if crate::is_vite_plus_mode() {
+                if crate::vp_version().is_some() {
                     vec!["**/vite.config.ts".to_string()]
                 } else {
                     vec![

@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.61.0] - 2026-04-20
+
+### 🚀 Features
+
+- 38d8090 linter/jest: Implemented jest `version` settings in config file. (#21522) (Said Atrahouch)
+
 ## [1.60.0] - 2026-04-13
 
 ### 📚 Documentation

@@ -45,12 +45,6 @@ fn is_vite_plus_config(path: &Path) -> bool {
     path.file_name().and_then(|f| f.to_str()).is_some_and(|name| name == VITE_PLUS_CONFIG_NAME)
 }
 
-/// Whether Vite+ mode is active (i.e., `VP_VERSION` env var is set).
-#[cfg(feature = "napi")]
-fn is_vite_plus_mode() -> bool {
-    std::env::var_os("VP_VERSION").is_some()
-}
-
 /// Returns an iterator of all supported config file names, in priority order.
 ///
 /// When `VP_VERSION` env var is set, only `vite.config.ts` is recognized.
@@ -58,7 +52,7 @@ fn is_vite_plus_mode() -> bool {
 pub fn all_config_file_names() -> impl Iterator<Item = &'static str> {
     #[cfg(feature = "napi")]
     {
-        if is_vite_plus_mode() {
+        if utils::vp_version().is_some() {
             return vec![VITE_PLUS_CONFIG_NAME].into_iter();
         }
         JSON_CONFIG_FILES

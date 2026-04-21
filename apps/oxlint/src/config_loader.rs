@@ -15,7 +15,7 @@ use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
 use crate::{DEFAULT_JSONC_OXLINTRC_NAME, DEFAULT_OXLINTRC_NAME, DEFAULT_TS_OXLINTRC_NAME};
 
 #[cfg(feature = "napi")]
-use crate::{VITE_CONFIG_NAME, is_vite_plus_mode};
+use crate::{VITE_CONFIG_NAME, vp_version};
 
 const GIT_DIR: &str = ".git";
 const NODE_MODULES_DIR: &str = "node_modules";
@@ -517,7 +517,7 @@ impl<'a> ConfigLoader<'a> {
     fn try_load_config_from_dir(&self, dir: &Path) -> Result<Option<Oxlintrc>, OxcDiagnostic> {
         // Vite+ mode: only vite.config.ts is a candidate
         #[cfg(feature = "napi")]
-        if is_vite_plus_mode() {
+        if vp_version().is_some() {
             let vite_config_path = dir.join(VITE_CONFIG_NAME);
             if vite_config_path.is_file() {
                 return self.load_root_js_config(&vite_config_path);
