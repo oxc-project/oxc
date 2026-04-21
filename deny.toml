@@ -22,7 +22,8 @@ yanked = "warn"
 # A list of advisory IDs to ignore. Note that ignored advisories will still
 # output a note when they are encountered.
 ignore = [
-  # "RUSTSEC-0000-0000",
+  # Low impact: requires compromising a trusted issuing authority. No fix in stable rustls-webpki yet.
+  "RUSTSEC-2026-0049",
 ]
 # Threshold for security vulnerabilities, any vulnerability with a CVSS score
 # lower than the range specified will be ignored. Note that ignored advisories

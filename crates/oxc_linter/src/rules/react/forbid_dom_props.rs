@@ -1,7 +1,8 @@
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
+use oxc_str::CompactStr;
 use rustc_hash::{FxHashMap, FxHashSet};
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -141,6 +142,7 @@ declare_oxc_lint!(
     react,
     restriction,
     config = ForbidDomPropsConfig,
+    version = "1.24.0",
 );
 
 impl Rule for ForbidDomProps {

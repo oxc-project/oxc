@@ -46,6 +46,7 @@ declare_oxc_lint!(
     NoPromiseInCallback,
     promise,
     suspicious,
+    version = "0.13.1",
 );
 
 impl Rule for NoPromiseInCallback {

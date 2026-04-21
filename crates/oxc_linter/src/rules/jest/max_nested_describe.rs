@@ -134,7 +134,8 @@ declare_oxc_lint!(
     MaxNestedDescribe,
     jest,
     style,
-    config = MaxNestedDescribe
+    config = MaxNestedDescribe,
+    version = "0.4.4",
 );
 
 impl Rule for MaxNestedDescribe {

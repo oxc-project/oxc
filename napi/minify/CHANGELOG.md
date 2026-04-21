@@ -4,6 +4,28 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.125.0] - 2026-04-13
+
+### 🚀 Features
+
+- f134e24 minifier: Support `property_write_side_effects` option to drop unused property assignments (#20773) (Dunqing)
+
+## [0.119.0] - 2026-03-14
+
+### 🚀 Features
+
+- e7163b6 ecmascript: Add known-globals to side-effect-free property reads (#20212) (Dunqing)
+
+## [0.117.0] - 2026-03-09
+
+### 🐛 Bug Fixes
+
+- ee0491e apps,napi: Explicitly specify libs in tsconfigs (#20071) (camc314)
+
+### ⚡ Performance
+
+- 2baa5fb napi: Unify build-test profile to coverage for cache sharing (#20090) (Boshen)
+
 ## [0.113.0] - 2026-02-10
 
 ### 💥 BREAKING CHANGES

@@ -49,10 +49,8 @@ impl Generator for AstKindGenerator {
     /// Enums do not have an `AstKind`, unless included in `ENUMS_WHITE_LIST`.
     fn prepare(&self, schema: &mut Schema, _codegen: &Codegen) {
         // Set `has_kind = true` for all visited structs
-        for type_def in &mut schema.types {
-            if let TypeDef::Struct(struct_def) = type_def {
-                struct_def.kind.has_kind = struct_def.visit.has_visitor();
-            }
+        for struct_def in schema.structs_mut() {
+            struct_def.kind.has_kind = struct_def.visit.has_visitor();
         }
 
         // Set `has_kind = false` for structs in black list
@@ -81,18 +79,13 @@ impl Generator for AstKindGenerator {
         let mut as_methods = quote!();
 
         let mut next_index = 0u16;
-        for type_def in &schema.types {
-            let has_kind = match type_def {
-                TypeDef::Struct(struct_def) => struct_def.kind.has_kind,
-                TypeDef::Enum(enum_def) => enum_def.kind.has_kind,
-                _ => false,
-            };
-            if !has_kind {
+        for struct_def in schema.structs() {
+            if !struct_def.kind.has_kind {
                 continue;
             }
 
-            let type_ident = type_def.ident();
-            let type_ty = type_def.ty(schema);
+            let type_ident = struct_def.ident();
+            let type_ty = struct_def.ty(schema);
 
             assert!(u8::try_from(next_index).is_ok());
             let index = number_lit(next_index);
@@ -101,22 +94,14 @@ impl Generator for AstKindGenerator {
 
             span_match_arms.extend(quote!( Self::#type_ident(it) => it.span(), ));
 
-            let get_address = match type_def {
-                TypeDef::Struct(_) => quote!(it.unstable_address()),
-                TypeDef::Enum(_) => quote!(it.address()),
-                _ => unreachable!(),
-            };
-            address_match_arms.extend(quote!( Self::#type_ident(it) => #get_address, ));
+            address_match_arms.extend(quote!( Self::#type_ident(it) => it.unstable_address(), ));
 
-            let set_node_id = match type_def {
-                TypeDef::Struct(struct_def)
-                    if struct_def.fields.iter().any(|field| {
-                        field.name() == "node_id" && field.type_def(schema).as_cell().is_some()
-                    }) =>
-                {
-                    quote!(it.set_node_id(node_id))
-                }
-                _ => quote!(),
+            let set_node_id = if struct_def.fields.iter().any(|field| {
+                field.name() == "node_id" && field.type_def(schema).as_cell().is_some()
+            }) {
+                quote!(it.set_node_id(node_id))
+            } else {
+                quote!()
             };
 
             if set_node_id.is_empty() {
@@ -127,7 +112,7 @@ impl Generator for AstKindGenerator {
                 set_node_id_match_arms.extend(quote!( Self::#type_ident(it) => #set_node_id, ));
             }
 
-            let as_method_name = format_ident!("as_{}", type_def.snake_name());
+            let as_method_name = format_ident!("as_{}", struct_def.snake_name());
             as_methods.extend(quote! {
                 ///@@line_break
                 #[inline]
@@ -190,6 +175,7 @@ impl Generator for AstKindGenerator {
 
                 ///@@line_break
                 /// Get [`NodeId`] of an [`AstKind`].
+                ///@ `node_id` field is in consistent position in all AST structs, so this boils down to 1 instruction.
                 #[inline]
                 pub fn node_id(&self) -> NodeId {
                     match self {
@@ -199,11 +185,8 @@ impl Generator for AstKindGenerator {
 
                 ///@@line_break
                 /// Set [`NodeId`] of an [`AstKind`].
-                #[expect(
-                    clippy::inline_always,
-                    reason = "enables compile-time match elimination in semantic builder"
-                )]
-                #[inline(always)]
+                ///@ `node_id` field is in consistent position in all AST structs, so this boils down to 1 instruction.
+                #[inline]
                 pub fn set_node_id(&self, node_id: NodeId) {
                     match self {
                         #set_node_id_match_arms
@@ -213,6 +196,10 @@ impl Generator for AstKindGenerator {
 
             ///@@line_break
             impl GetSpan for AstKind<'_> {
+                ///@@line_break
+                /// Get [`Span`] of an [`AstKind`].
+                ///@ `span` field is in consistent position in all AST structs, so this boils down to 1 instruction.
+                #[inline]
                 fn span(&self) -> Span {
                     match self {
                         #span_match_arms
@@ -222,8 +209,11 @@ impl Generator for AstKindGenerator {
 
             ///@@line_break
             impl GetAddress for AstKind<'_> {
-                // TODO: Once only structs have `AstKind`s (https://github.com/oxc-project/oxc/issues/11490),
-                // mark this method `#[inline]`, because then it'll be boiled down to a single instruction.
+                ///@@line_break
+                /// Get [`Address`] of an [`AstKind`].
+                ///@ This boils down to 1 instruction.
+                ///@ In all cases, it gets the pointer from the reference in the `AstKind`.
+                #[inline]
                 fn address(&self) -> Address {
                     match *self {
                         #address_match_arms

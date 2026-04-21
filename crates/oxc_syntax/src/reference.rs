@@ -117,6 +117,17 @@ bitflags! {
         /// a type parameter that might shadow it, since type parameters cannot
         /// have member access.
         const Namespace = 1 << 4;
+        /// The identifier is read as the object of a member expression in a
+        /// property modification context. For example, `A` in `A.foo = 1`,
+        /// `A.foo += 1`, `++A.foo`, `delete A.foo`, or `for (A.foo in obj)`.
+        ///
+        /// This flag is always combined with [`Read`] (since the identifier is
+        /// read to access the property). It helps the minifier and linter
+        /// determine if a symbol's only reads are property-modification targets,
+        /// enabling dead code elimination and unused variable detection.
+        ///
+        /// [`Read`]: ReferenceFlags::Read
+        const MemberWriteTarget = 1 << 5;
         /// The symbol being referenced is a value.
         ///
         /// Note that this does not necessarily indicate the reference is used
@@ -164,13 +175,21 @@ impl ReferenceFlags {
     /// The identifier is only written to. It is not read from in this reference.
     #[inline]
     pub const fn is_write_only(self) -> bool {
-        !self.contains(Self::Read)
+        self.intersects(Self::Write) && !self.contains(Self::Read)
     }
 
     /// The identifier is both read from and written to, e.g `a += 1`.
     #[inline]
     pub fn is_read_write(self) -> bool {
         self.contains(Self::Read | Self::Write)
+    }
+
+    /// The identifier is read as the object of a member expression
+    /// in a property modification context (e.g., `A` in `A.foo = 1`,
+    /// `A.foo += 1`, `++A.foo`, `delete A.foo`, or `for (A.foo in obj)`).
+    #[inline]
+    pub const fn is_member_write_target(self) -> bool {
+        self.intersects(Self::MemberWriteTarget)
     }
 
     /// Checks if the reference is a value being used in a type context.

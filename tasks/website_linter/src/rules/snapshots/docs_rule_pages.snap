@@ -6,6 +6,7 @@ expression: snapshot
 ---
 title: "eslint/no-unused-vars"
 category: "Correctness"
+version: "0.7.0"
 default: true
 type_aware: false
 fix: "conditional_dangerous_fix_or_suggestion"
@@ -19,7 +20,6 @@ const source = `https://github.com/oxc-project/oxc/blob/${ data }/crates/oxc_lin
 </script>
 
 <RuleHeader />
-
 
 ### What it does
 
@@ -324,7 +324,7 @@ Fine-grained auto-fix controls for `no-unused-vars`.
 
 #### fix.imports
 
-type: `"off" | "suggestion" | "fix"`
+type: `"off" | "suggestion" | "fix" | "safe-fix"`
 
 
 
@@ -349,11 +349,19 @@ Emit suggestion-style fixes (current behavior).
 
 
 Emit fix-style fixes.
+
+
+##### `"safe-fix"`
+
+
+
+Like `Fix`, but does not mark them as dangerous.
+Only applicable for imports, unavailable for variables.
 
 
 #### fix.variables
 
-type: `"off" | "suggestion" | "fix"`
+type: `"off" | "suggestion" | "fix" | "safe-fix"`
 
 
 
@@ -378,6 +386,14 @@ Emit suggestion-style fixes (current behavior).
 
 
 Emit fix-style fixes.
+
+
+##### `"safe-fix"`
+
+
+
+Like `Fix`, but does not mark them as dangerous.
+Only applicable for imports, unavailable for variables.
 
 
 ### ignoreClassWithStaticInitBlock
@@ -595,35 +611,20 @@ console.log(b);
 
 
 ## How to use
+<RuleHowToUse />
 
-To **enable** this rule using the config file or in the CLI, you can use:
-
-::: code-group
-
-```json [Config (.oxlintrc.json)]
-{
-    "rules": {
-        "no-unused-vars": "error"
-    }
-}
-```
-
-```bash [CLI]
-oxlint --deny no-unused-vars
-```
-
-:::
-
+## Version
+This rule was added in v0.7.0.
 
 ## References
-
-- <a v-bind:href="source" target="_blank" rel="noreferrer">Rule Source</a>
+<RuleReferences />
 
 
 --- import/namespace.md ---
 ---
 title: "import/namespace"
 category: "Correctness"
+version: "0.2.11"
 default: false
 type_aware: false
 fix: "none"
@@ -637,7 +638,6 @@ const source = `https://github.com/oxc-project/oxc/blob/${ data }/crates/oxc_lin
 </script>
 
 <RuleHeader />
-
 
 ### What it does
 
@@ -707,36 +707,20 @@ Whether to allow computed references to an imported namespace.
 
 
 ## How to use
+<RuleHowToUse />
 
-To **enable** this rule using the config file or in the CLI, you can use:
-
-::: code-group
-
-```json [Config (.oxlintrc.json)]
-{
-    "plugins": ["import"],
-    "rules": {
-        "import/namespace": "error"
-    }
-}
-```
-
-```bash [CLI]
-oxlint --deny import/namespace --import-plugin
-```
-
-:::
-
+## Version
+This rule was added in v0.2.11.
 
 ## References
-
-- <a v-bind:href="source" target="_blank" rel="noreferrer">Rule Source</a>
+<RuleReferences />
 
 
 --- jest/expect-expect.md ---
 ---
 title: "jest/expect-expect"
 category: "Correctness"
+version: "0.0.12"
 default: false
 type_aware: false
 fix: "none"
@@ -750,7 +734,6 @@ const source = `https://github.com/oxc-project/oxc/blob/${ data }/crates/oxc_lin
 </script>
 
 <RuleHeader />
-
 
 ### What it does
 
@@ -811,36 +794,20 @@ NOTE: The default value is `["expect"]` for Jest and
 
 
 ## How to use
+<RuleHowToUse />
 
-To **enable** this rule using the config file or in the CLI, you can use:
-
-::: code-group
-
-```json [Config (.oxlintrc.json)]
-{
-    "plugins": ["jest"],
-    "rules": {
-        "jest/expect-expect": "error"
-    }
-}
-```
-
-```bash [CLI]
-oxlint --deny jest/expect-expect --jest-plugin
-```
-
-:::
-
+## Version
+This rule was added in v0.0.12.
 
 ## References
-
-- <a v-bind:href="source" target="_blank" rel="noreferrer">Rule Source</a>
+<RuleReferences />
 
 
 --- nextjs/no-duplicate-head.md ---
 ---
 title: "nextjs/no-duplicate-head"
 category: "Correctness"
+version: "0.3.3"
 default: false
 type_aware: false
 fix: "none"
@@ -854,7 +821,6 @@ const source = `https://github.com/oxc-project/oxc/blob/${ data }/crates/oxc_lin
 </script>
 
 <RuleHeader />
-
 
 ### What it does
 
@@ -911,36 +877,20 @@ export default MyDocument
 
 
 ## How to use
+<RuleHowToUse />
 
-To **enable** this rule using the config file or in the CLI, you can use:
-
-::: code-group
-
-```json [Config (.oxlintrc.json)]
-{
-    "plugins": ["nextjs"],
-    "rules": {
-        "nextjs/no-duplicate-head": "error"
-    }
-}
-```
-
-```bash [CLI]
-oxlint --deny nextjs/no-duplicate-head --nextjs-plugin
-```
-
-:::
-
+## Version
+This rule was added in v0.3.3.
 
 ## References
-
-- <a v-bind:href="source" target="_blank" rel="noreferrer">Rule Source</a>
+<RuleReferences />
 
 
 --- promise/no-callback-in-promise.md ---
 ---
 title: "promise/no-callback-in-promise"
 category: "Correctness"
+version: "0.10.0"
 default: false
 type_aware: false
 fix: "none"
@@ -954,7 +904,6 @@ const source = `https://github.com/oxc-project/oxc/blob/${ data }/crates/oxc_lin
 </script>
 
 <RuleHeader />
-
 
 ### What it does
 
@@ -1025,36 +974,20 @@ Boolean as to whether callbacks in timeout functions like `setTimeout` will err.
 
 
 ## How to use
+<RuleHowToUse />
 
-To **enable** this rule using the config file or in the CLI, you can use:
-
-::: code-group
-
-```json [Config (.oxlintrc.json)]
-{
-    "plugins": ["promise"],
-    "rules": {
-        "promise/no-callback-in-promise": "error"
-    }
-}
-```
-
-```bash [CLI]
-oxlint --deny promise/no-callback-in-promise --promise-plugin
-```
-
-:::
-
+## Version
+This rule was added in v0.10.0.
 
 ## References
-
-- <a v-bind:href="source" target="_blank" rel="noreferrer">Rule Source</a>
+<RuleReferences />
 
 
 --- react/no-will-update-set-state.md ---
 ---
 title: "react/no-will-update-set-state"
 category: "Correctness"
+version: "1.37.0"
 default: false
 type_aware: false
 fix: "none"
@@ -1068,7 +1001,6 @@ const source = `https://github.com/oxc-project/oxc/blob/${ data }/crates/oxc_lin
 </script>
 
 <RuleHeader />
-
 
 ### What it does
 
@@ -1112,41 +1044,38 @@ var Hello = createReactClass({
 
 This rule accepts one of the following string values:
 
-type: `"allowed" | "disallow-in-func"`
+### `"allowed"`
+
+
+
+Forbids any call to `this.setState` in `componentWillUpdate` outside of functions.
+
+
+### `"disallow-in-func"`
+
+
+
+Makes this rule more strict by disallowing calls to `this.setState`` even within functions.
+
+
 
 
 
 ## How to use
+<RuleHowToUse />
 
-To **enable** this rule using the config file or in the CLI, you can use:
-
-::: code-group
-
-```json [Config (.oxlintrc.json)]
-{
-    "plugins": ["react"],
-    "rules": {
-        "react/no-will-update-set-state": "error"
-    }
-}
-```
-
-```bash [CLI]
-oxlint --deny react/no-will-update-set-state --react-plugin
-```
-
-:::
-
+## Version
+This rule was added in v1.37.0.
 
 ## References
-
-- <a v-bind:href="source" target="_blank" rel="noreferrer">Rule Source</a>
+<RuleReferences />
 
 
 --- typescript/no-floating-promises.md ---
 ---
 title: "typescript/no-floating-promises"
 category: "Correctness"
+version: "1.11.0"
 default: true
 type_aware: true
 fix: "fixable_suggestion"
@@ -1161,7 +1090,6 @@ const tsgolintSource = `https://github.com/oxc-project/tsgolint/blob/main/intern
 </script>
 
 <RuleHeader />
-
 
 ### What it does
 
@@ -1416,36 +1344,20 @@ Ignore Promises that are void expressions.
 
 
 ## How to use
+<RuleHowToUse />
 
-To **enable** this rule using the config file or in the CLI, you can use:
-
-::: code-group
-
-```json [Config (.oxlintrc.json)]
-{
-    "rules": {
-        "typescript/no-floating-promises": "error"
-    }
-}
-```
-
-```bash [CLI]
-oxlint --type-aware --deny typescript/no-floating-promises
-```
-
-:::
-
+## Version
+This rule was added in v1.11.0.
 
 ## References
-
-- <a v-bind:href="source" target="_blank" rel="noreferrer">Rule Source</a>
-- <a v-bind:href="tsgolintSource" target="_blank" rel="noreferrer">Rule Source (tsgolint)</a>
+<RuleReferences />
 
 
 --- vue/no-lifecycle-after-await.md ---
 ---
 title: "vue/no-lifecycle-after-await"
 category: "Correctness"
+version: "1.39.0"
 default: false
 type_aware: false
 fix: "none"
@@ -1459,7 +1371,6 @@ const source = `https://github.com/oxc-project/oxc/blob/${ data }/crates/oxc_lin
 </script>
 
 <RuleHeader />
-
 
 ### What it does
 
@@ -1501,36 +1412,20 @@ export default {
 
 
 ## How to use
+<RuleHowToUse />
 
-To **enable** this rule using the config file or in the CLI, you can use:
-
-::: code-group
-
-```json [Config (.oxlintrc.json)]
-{
-    "plugins": ["vue"],
-    "rules": {
-        "vue/no-lifecycle-after-await": "error"
-    }
-}
-```
-
-```bash [CLI]
-oxlint --deny vue/no-lifecycle-after-await --vue-plugin
-```
-
-:::
-
+## Version
+This rule was added in v1.39.0.
 
 ## References
-
-- <a v-bind:href="source" target="_blank" rel="noreferrer">Rule Source</a>
+<RuleReferences />
 
 
 --- unicorn/prefer-array-find.md ---
 ---
 title: "unicorn/prefer-array-find"
 category: "Perf"
+version: "0.16.12"
 default: false
 type_aware: false
 fix: "pending"
@@ -1544,7 +1439,6 @@ const source = `https://github.com/oxc-project/oxc/blob/${ data }/crates/oxc_lin
 </script>
 
 <RuleHeader />
-
 
 ### What it does
 
@@ -1573,35 +1467,20 @@ const match = users.find(fn);
 
 
 ## How to use
+<RuleHowToUse />
 
-To **enable** this rule using the config file or in the CLI, you can use:
-
-::: code-group
-
-```json [Config (.oxlintrc.json)]
-{
-    "rules": {
-        "unicorn/prefer-array-find": "error"
-    }
-}
-```
-
-```bash [CLI]
-oxlint --deny unicorn/prefer-array-find
-```
-
-:::
-
+## Version
+This rule was added in v0.16.12.
 
 ## References
-
-- <a v-bind:href="source" target="_blank" rel="noreferrer">Rule Source</a>
+<RuleReferences />
 
 
 --- oxc/no-barrel-file.md ---
 ---
 title: "oxc/no-barrel-file"
 category: "Restriction"
+version: "0.3.0"
 default: false
 type_aware: false
 fix: "none"
@@ -1615,7 +1494,6 @@ const source = `https://github.com/oxc-project/oxc/blob/${ data }/crates/oxc_lin
 </script>
 
 <RuleHeader />
-
 
 ### What it does
 
@@ -1671,35 +1549,20 @@ before the rule is triggered.
 
 
 ## How to use
+<RuleHowToUse />
 
-To **enable** this rule using the config file or in the CLI, you can use:
-
-::: code-group
-
-```json [Config (.oxlintrc.json)]
-{
-    "rules": {
-        "oxc/no-barrel-file": "error"
-    }
-}
-```
-
-```bash [CLI]
-oxlint --deny oxc/no-barrel-file
-```
-
-:::
-
+## Version
+This rule was added in v0.3.0.
 
 ## References
-
-- <a v-bind:href="source" target="_blank" rel="noreferrer">Rule Source</a>
+<RuleReferences />
 
 
 --- react/forbid-dom-props.md ---
 ---
 title: "react/forbid-dom-props"
 category: "Restriction"
+version: "1.24.0"
 default: false
 type_aware: false
 fix: "none"
@@ -1713,7 +1576,6 @@ const source = `https://github.com/oxc-project/oxc/blob/${ data }/crates/oxc_lin
 </script>
 
 <RuleHeader />
-
 
 ### What it does
 
@@ -1806,36 +1668,20 @@ The name of the prop to forbid.
 
 
 ## How to use
+<RuleHowToUse />
 
-To **enable** this rule using the config file or in the CLI, you can use:
-
-::: code-group
-
-```json [Config (.oxlintrc.json)]
-{
-    "plugins": ["react"],
-    "rules": {
-        "react/forbid-dom-props": "error"
-    }
-}
-```
-
-```bash [CLI]
-oxlint --deny react/forbid-dom-props --react-plugin
-```
-
-:::
-
+## Version
+This rule was added in v1.24.0.
 
 ## References
-
-- <a v-bind:href="source" target="_blank" rel="noreferrer">Rule Source</a>
+<RuleReferences />
 
 
 --- typescript/no-explicit-any.md ---
 ---
 title: "typescript/no-explicit-any"
 category: "Restriction"
+version: "0.0.13"
 default: false
 type_aware: false
 fix: "conditional_fix"
@@ -1849,7 +1695,6 @@ const source = `https://github.com/oxc-project/oxc/blob/${ data }/crates/oxc_lin
 </script>
 
 <RuleHeader />
-
 
 ### What it does
 
@@ -1920,35 +1765,20 @@ Whether to ignore rest parameter arrays.
 
 
 ## How to use
+<RuleHowToUse />
 
-To **enable** this rule using the config file or in the CLI, you can use:
-
-::: code-group
-
-```json [Config (.oxlintrc.json)]
-{
-    "rules": {
-        "typescript/no-explicit-any": "error"
-    }
-}
-```
-
-```bash [CLI]
-oxlint --deny typescript/no-explicit-any
-```
-
-:::
-
+## Version
+This rule was added in v0.0.13.
 
 ## References
-
-- <a v-bind:href="source" target="_blank" rel="noreferrer">Rule Source</a>
+<RuleReferences />
 
 
 --- jsdoc/require-returns.md ---
 ---
 title: "jsdoc/require-returns"
 category: "Pedantic"
+version: "0.4.0"
 default: false
 type_aware: false
 fix: "pending"
@@ -1962,7 +1792,6 @@ const source = `https://github.com/oxc-project/oxc/blob/${ data }/crates/oxc_lin
 </script>
 
 <RuleHeader />
-
 
 ### What it does
 
@@ -2047,36 +1876,20 @@ Whether to require a `@returns` tag for async functions.
 
 
 ## How to use
+<RuleHowToUse />
 
-To **enable** this rule using the config file or in the CLI, you can use:
-
-::: code-group
-
-```json [Config (.oxlintrc.json)]
-{
-    "plugins": ["jsdoc"],
-    "rules": {
-        "jsdoc/require-returns": "error"
-    }
-}
-```
-
-```bash [CLI]
-oxlint --deny jsdoc/require-returns --jsdoc-plugin
-```
-
-:::
-
+## Version
+This rule was added in v0.4.0.
 
 ## References
-
-- <a v-bind:href="source" target="_blank" rel="noreferrer">Rule Source</a>
+<RuleReferences />
 
 
 --- react/rules-of-hooks.md ---
 ---
 title: "react/rules-of-hooks"
 category: "Pedantic"
+version: "0.3.3"
 default: false
 type_aware: false
 fix: "none"
@@ -2090,7 +1903,6 @@ const source = `https://github.com/oxc-project/oxc/blob/${ data }/crates/oxc_lin
 </script>
 
 <RuleHeader />
-
 
 ### What it does
 
@@ -2152,36 +1964,20 @@ function useCustomHook() {
 
 
 ## How to use
+<RuleHowToUse />
 
-To **enable** this rule using the config file or in the CLI, you can use:
-
-::: code-group
-
-```json [Config (.oxlintrc.json)]
-{
-    "plugins": ["react"],
-    "rules": {
-        "react/rules-of-hooks": "error"
-    }
-}
-```
-
-```bash [CLI]
-oxlint --deny react/rules-of-hooks --react-plugin
-```
-
-:::
-
+## Version
+This rule was added in v0.3.3.
 
 ## References
-
-- <a v-bind:href="source" target="_blank" rel="noreferrer">Rule Source</a>
+<RuleReferences />
 
 
 --- typescript/class-literal-property-style.md ---
 ---
 title: "typescript/class-literal-property-style"
 category: "Style"
+version: "1.47.0"
 default: false
 type_aware: false
 fix: "pending"
@@ -2195,7 +1991,6 @@ const source = `https://github.com/oxc-project/oxc/blob/${ data }/crates/oxc_lin
 </script>
 
 <RuleHeader />
-
 
 ### What it does
 
@@ -2229,31 +2024,60 @@ class C {
 
 This rule accepts one of the following string values:
 
-type: `"fields" | "getters"`
+### `"fields"`
+
+
+
+Enforce using readonly fields for literal values.
+
+Examples of **incorrect** code with this option:
+```ts
+class C {
+get name() {
+return "oxc";
+}
+}
+```
+
+Examples of **correct** code with this option:
+```ts
+class C {
+readonly name = "oxc";
+}
+```
+
+
+### `"getters"`
+
+
+
+Enforce using getters for literal values.
+
+Examples of **incorrect** code with this option:
+```ts
+class C {
+readonly name = "oxc";
+}
+```
+
+Examples of **correct** code with this option:
+```ts
+class C {
+get name() {
+return "oxc";
+}
+}
+```
+
+
 
 
 
 ## How to use
+<RuleHowToUse />
 
-To **enable** this rule using the config file or in the CLI, you can use:
-
-::: code-group
-
-```json [Config (.oxlintrc.json)]
-{
-    "rules": {
-        "typescript/class-literal-property-style": "error"
-    }
-}
-```
-
-```bash [CLI]
-oxlint --deny typescript/class-literal-property-style
-```
-
-:::
-
+## Version
+This rule was added in v1.47.0.
 
 ## References
-
-- <a v-bind:href="source" target="_blank" rel="noreferrer">Rule Source</a>
+<RuleReferences />

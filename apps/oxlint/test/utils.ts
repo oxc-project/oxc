@@ -38,6 +38,8 @@ export interface Fixture {
 
     // Additional arguments to run Oxlint with. Default: `[]`.
     args: string[];
+    // Additional environment variables. Default: `{}`.
+    env: Record<string, string>;
   };
 }
 
@@ -49,6 +51,7 @@ const DEFAULT_OPTIONS: Fixture["options"] = {
   singleThread: false,
   cwd: null,
   args: [],
+  env: {},
 };
 
 /**
@@ -95,6 +98,14 @@ export function getFixtures(): Fixture[] {
     }
     if (!Array.isArray(options.args) || !options.args.every((arg) => typeof arg === "string")) {
       throw new TypeError("`args` property in `options.json` must be an array of strings");
+    }
+    if (
+      typeof options.env !== "object" ||
+      options.env === null ||
+      Array.isArray(options.env) ||
+      !Object.values(options.env).every((v) => typeof v === "string")
+    ) {
+      throw new TypeError("`env` property in `options.json` must be an object of strings");
     }
 
     fixtures.push({ name, dirPath, options });
@@ -150,6 +161,7 @@ export async function testFixtureWithCommand(options: TestFixtureOptions): Promi
   let { stdout, stderr, exitCode } = await execa(options.command, options.args, {
     cwd,
     reject: false,
+    env: { ...process.env, ...fixtureOptions.env },
   });
 
   // Build snapshot `.snap.md` file

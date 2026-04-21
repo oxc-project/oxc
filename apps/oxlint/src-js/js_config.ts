@@ -1,11 +1,13 @@
 import { getErrorMessage } from "./utils/utils.ts";
-import { isDefineConfig } from "./package/config.ts";
 import { DateNow, JSONStringify } from "./utils/globals.ts";
+import { getUnsupportedTypeScriptModuleLoadHintForError } from "./utils/node_version.ts";
 
 interface JsConfigResult {
   path: string;
-  config: unknown; // Will be validated as Oxlintrc on Rust side
+  config: unknown; // Will be validated as Oxlintrc on Rust side, `null` means "skip this config"
 }
+
+const isObject = (v: unknown) => typeof v === "object" && v !== null && !Array.isArray(v);
 
 type LoadJsConfigsResult =
   | { Success: JsConfigResult[] }
@@ -52,7 +54,7 @@ function validateConfigExtends(root: object): void {
       }
       for (let i = 0; i < maybeExtends.length; i++) {
         const item = maybeExtends[i];
-        if (typeof item !== "object" || item === null || Array.isArray(item)) {
+        if (!isObject(item)) {
           throw new Error(
             `\`extends[${i}]\` must be a config object (strings/paths are not supported).`,
           );
@@ -79,43 +81,76 @@ function validateConfigExtends(root: object): void {
 }
 
 /**
- * Load JavaScript config files in parallel.
- *
- * Uses native Node.js TypeScript support to import the config files.
- * Each config file should have a default export containing the oxlint configuration.
- *
- * @param paths - Array of absolute paths to JavaScript/TypeScript config files
- * @returns JSON-stringified result with all configs or error
+ * Import a JS/TS config file and return its default export.
  */
-export async function loadJsConfigs(paths: string[]): Promise<string> {
+async function importConfig(path: string, cacheKey: number): Promise<unknown> {
+  // Bypass Node.js module cache to allow reloading changed config files (used for LSP)
+  const fileUrl = new URL(`file://${path}?cache=${cacheKey}`);
+  const module = await import(fileUrl.href);
+  const config = module.default;
+
+  if (config === undefined) {
+    throw new Error(`Configuration file has no default export.`);
+  }
+
+  return config;
+}
+
+/**
+ * Resolve a single config path to a `JsConfigResult`.
+ * Standard mode: default export must be a plain object.
+ */
+async function resolveJsConfig(path: string, cacheKey: number): Promise<JsConfigResult> {
+  const config = await importConfig(path, cacheKey);
+
+  if (!isObject(config)) {
+    throw new Error(`Configuration file must have a default export that is an object.`);
+  }
+  validateConfigExtends(config as object);
+  return { path, config };
+}
+
+const VITE_OXLINT_CONFIG_FIELD = "lint";
+
+/**
+ * Resolve a single Vite+ config path to a `JsConfigResult`.
+ * Extracts the `.lint` field. Returns `null` config when missing (signals "skip").
+ */
+async function resolveVitePlusConfig(path: string, cacheKey: number): Promise<JsConfigResult> {
+  const config = await importConfig(path, cacheKey);
+
+  // NOTE: Vite configs may export a function via `defineConfig(() => ({ ... }))`,
+  // but we don't know the arguments to call the function.
+  // Treat non-object exports as "no config" and skip.
+  if (!isObject(config)) {
+    return { path, config: null };
+  }
+
+  const lintConfig = (config as Record<string, unknown>)[VITE_OXLINT_CONFIG_FIELD];
+  // NOTE: return `null` if `.lint` is missing which signals "skip" this
+  if (lintConfig === undefined) {
+    return { path, config: null };
+  }
+
+  if (!isObject(lintConfig)) {
+    throw new Error(
+      `The \`${VITE_OXLINT_CONFIG_FIELD}\` field in the default export must be an object.`,
+    );
+  }
+  validateConfigExtends(lintConfig as object);
+  return { path, config: lintConfig };
+}
+
+/**
+ * Load config files in parallel using the given resolver, and return JSON-stringified result.
+ */
+async function loadConfigs(
+  paths: string[],
+  resolver: (path: string, cacheKey: number) => Promise<JsConfigResult>,
+): Promise<string> {
   try {
     const cacheKey = DateNow();
-    const results = await Promise.allSettled(
-      paths.map(async (path): Promise<JsConfigResult> => {
-        // Bypass Node.js module cache to allow reloading changed config files (used for LSP, where we reload configs after important changes)
-        const fileUrl = new URL(`file://${path}?cache=${cacheKey}`);
-        const module = await import(fileUrl.href);
-        const config = module.default;
-
-        if (config === undefined) {
-          throw new Error(`Configuration file has no default export.`);
-        }
-
-        if (typeof config !== "object" || config === null || Array.isArray(config)) {
-          throw new Error(`Configuration file must have a default export that is an object.`);
-        }
-
-        if (!isDefineConfig(config)) {
-          throw new Error(
-            `Configuration file must wrap its default export with defineConfig() from "oxlint".`,
-          );
-        }
-
-        validateConfigExtends(config as object);
-
-        return { path, config };
-      }),
-    );
+    const results = await Promise.allSettled(paths.map((path) => resolver(path, cacheKey)));
 
     const successes: JsConfigResult[] = [];
     const errors: { path: string; error: string }[] = [];
@@ -125,11 +160,18 @@ export async function loadJsConfigs(paths: string[]): Promise<string> {
       if (result.status === "fulfilled") {
         successes.push(result.value);
       } else {
-        errors.push({ path: paths[i], error: getErrorMessage(result.reason) });
+        const path = paths[i];
+        const unsupportedNodeHint = getUnsupportedTypeScriptModuleLoadHintForError(
+          result.reason,
+          path,
+        );
+        errors.push({
+          path,
+          error: unsupportedNodeHint ?? getErrorMessage(result.reason),
+        });
       }
     }
 
-    // If any config failed to load, report all errors
     if (errors.length > 0) {
       return JSONStringify({ Failures: errors } satisfies LoadJsConfigsResult);
     }
@@ -141,3 +183,16 @@ export async function loadJsConfigs(paths: string[]): Promise<string> {
     } satisfies LoadJsConfigsResult);
   }
 }
+
+export type ConfigLoader = (paths: string[]) => Promise<string>;
+
+/**
+ * Load standard oxlint JS/TS config files in parallel.
+ */
+export const loadJsConfigs: ConfigLoader = (paths) => loadConfigs(paths, resolveJsConfig);
+
+/**
+ * Load Vite+ config files in parallel, extracting the `.lint` field from each.
+ */
+export const loadVitePlusConfigs: ConfigLoader = (paths) =>
+  loadConfigs(paths, resolveVitePlusConfig);

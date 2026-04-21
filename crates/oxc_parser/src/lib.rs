@@ -11,7 +11,7 @@
 //! The parser has a minimal API with three inputs (a [memory arena](oxc_allocator::Allocator), a
 //! source string, and a [`SourceType`]) and one return struct (a [ParserReturn]).
 //!
-//! ```rust
+//! ```rust,ignore
 //! let parser_return = Parser::new(&allocator, &source_text, source_type).parse();
 //! ```
 //!
@@ -36,12 +36,12 @@
 //!
 //! <https://github.com/oxc-project/oxc/blob/main/crates/oxc_parser/examples/parser.rs>
 //!
-//! ```rust
+//! ```rust,ignore
 #![doc = include_str!("../examples/parser.rs")]
 //! ```
 //!
 //! ### Parsing TSX
-//! ```rust
+//! ```rust,ignore
 #![doc = include_str!("../examples/parser_tsx.rs")]
 //! ```
 //!
@@ -54,7 +54,7 @@
 //! For ad-hoc tasks, the semantic analyzer can be used to get a parent pointing tree with untyped nodes,
 //! the nodes can be iterated through a sequential loop.
 //!
-//! ```rust
+//! ```rust,ignore
 //! for node in semantic.nodes().iter() {
 //!     match node.kind() {
 //!         // check node

@@ -4,6 +4,64 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.126.0] - 2026-04-15
+
+### 🚀 Features
+
+- ce5072d parser: Support `turbopack` magic comments (#20803) (Kane Wang)
+
+## [0.125.0] - 2026-04-13
+
+### 💥 BREAKING CHANGES
+
+- 382958a span: [**BREAKING**] Remove re-exports of string types from `oxc_span` crate (#21246) (overlookmotel)
+
+### ⚡ Performance
+
+- 3068ded napi/parser, linter/plugins: Shift before add when calculating positions in raw transfer deserializer (#21141) (overlookmotel)
+- 8c51121 napi/parser, linter/plugins: Raw transfer deserialize `Span` fields as `i32`s (#21135) (overlookmotel)
+- bc1bcdd napi/parser, linter/plugins: Inline trivial raw transfer field deserializers into node object definitions (#21134) (overlookmotel)
+- c0278ab napi/parser, linter/plugins: Use `Int32Array` in raw transfer deserializer (#21132) (overlookmotel)
+
+## [0.124.0] - 2026-04-06
+
+### ⚡ Performance
+
+- 0503a78 napi/parser, linter/plugins: Faster deserialization of `raw` fields (#20923) (overlookmotel)
+
+## [0.123.0] - 2026-03-30
+
+### 🚀 Features
+
+- 59fd797 parser: Mark pure comments that cannot be applied (#20687) (Boshen)
+
+### 📚 Documentation
+
+- 868448e ast: Correct comment (#20837) (overlookmotel)
+
+## [0.122.0] - 2026-03-23
+
+### 🚀 Features
+
+- 76cd0b1 ast: Add method to retrieve `SymbolId`s from BindingPattern (#20532) (camc314)
+
+### ⚡ Performance
+
+- 89946e1 ast: Mark `AstKind::address` as `#[inline]` (#20586) (overlookmotel)
+- 3420abb ast: Mark `AstKind::span` as `#[inline]` (#20585) (overlookmotel)
+- c6ea0a0 ast: Place `NodeId` field after `Span` in structs (#20584) (overlookmotel)
+- d176ecc napi/parser, oxlint/plugins: Shorten deserializer for `WithClause` (#20575) (overlookmotel)
+
+## [0.120.0] - 2026-03-16
+
+### 🐛 Bug Fixes
+
+- f8fbd6e linter/plugins: Remove `hashbang` property from AST (#20365) (overlookmotel)
+
+### ⚡ Performance
+
+- 9cd612f linter/plugins: Recycle comment objects (#20362) (overlookmotel)
+
 ## [0.114.0] - 2026-02-16
 
 ### 🚀 Features

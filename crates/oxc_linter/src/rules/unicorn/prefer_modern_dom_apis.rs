@@ -78,7 +78,8 @@ declare_oxc_lint!(
     PreferModernDomApis,
     unicorn,
     style,
-    suggestion
+    suggestion,
+    version = "0.0.20",
 );
 
 impl Rule for PreferModernDomApis {

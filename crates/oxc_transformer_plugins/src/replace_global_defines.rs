@@ -2,13 +2,14 @@ use std::{cmp::Ordering, sync::Arc};
 
 use rustc_hash::FxHashSet;
 
-use oxc_allocator::{Address, Allocator, GetAddress, UnstableAddress};
+use oxc_allocator::{Address, Allocator, GetAddress, TakeIn, UnstableAddress};
 use oxc_ast::ast::*;
 use oxc_ast_visit::{VisitMut, walk_mut};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_parser::Parser;
 use oxc_semantic::{IsGlobalReference, ReferenceFlags, ScopeFlags, Scoping};
-use oxc_span::{CompactStr, SPAN, SourceType};
+use oxc_span::{SPAN, SourceType};
+use oxc_str::CompactStr;
 use oxc_syntax::identifier::is_identifier_name;
 use oxc_syntax::node::NodeId;
 use oxc_syntax::reference::Reference;
@@ -22,7 +23,7 @@ use oxc_syntax::reference::Reference;
 #[derive(Debug, Clone)]
 pub struct ReplaceGlobalDefinesConfig(Arc<ReplaceGlobalDefinesConfigImpl>);
 
-static THIS_ATOM: Atom<'static> = Atom::new_const("this");
+static THIS_STR: Str<'static> = Str::new_const("this");
 
 #[derive(Debug)]
 struct IdentifierDefine {
@@ -258,6 +259,13 @@ impl<'a> VisitMut<'a> for ReplaceGlobalDefines<'a> {
         walk_mut::walk_expression(self, expr);
         if self.ast_node_lock == Some(expr.address()) {
             self.ast_node_lock = None;
+        }
+        // A define replacement inside a `ChainExpression` may remove the node that
+        // carried `optional: true` (e.g. `process?.env[0]` with define `process.env -> {}`),
+        // leaving an invalid `ChainExpression` with no optional elements.
+        // Unwrap it to a plain expression to produce a valid AST.
+        if matches!(expr, Expression::ChainExpression(_)) {
+            Self::unwrap_chain_expression_if_no_optional(self.allocator, expr);
         }
     }
 
@@ -687,6 +695,62 @@ impl<'a> ReplaceGlobalDefines<'a> {
         if self.non_arrow_function_depth > 0 { ScopeFlags::Function } else { ScopeFlags::Top }
     }
 
+    /// If `expr` is a `ChainExpression` whose chain no longer contains any
+    /// `optional: true` markers (because a define replacement removed them),
+    /// unwrap it to a plain expression.
+    fn unwrap_chain_expression_if_no_optional(allocator: &'a Allocator, expr: &mut Expression<'a>) {
+        let Expression::ChainExpression(chain) = &*expr else { return };
+
+        // Check the chain element's optional flag and get the first object/callee to walk.
+        let (optional, mut current) = match &chain.expression {
+            ChainElement::CallExpression(c) => (c.optional, Some(&c.callee)),
+            ChainElement::TSNonNullExpression(ts) => (false, Some(&ts.expression)),
+            _ => match chain.expression.as_member_expression() {
+                Some(m) => (m.optional(), Some(m.object())),
+                None => return,
+            },
+        };
+        if optional {
+            return;
+        }
+
+        // Walk down the object/callee chain. If any node has `optional: true`, keep the chain.
+        while let Some(e) = current {
+            match e {
+                Expression::StaticMemberExpression(m) => {
+                    if m.optional {
+                        return;
+                    }
+                    current = Some(&m.object);
+                }
+                Expression::ComputedMemberExpression(m) => {
+                    if m.optional {
+                        return;
+                    }
+                    current = Some(&m.object);
+                }
+                Expression::PrivateFieldExpression(m) => {
+                    if m.optional {
+                        return;
+                    }
+                    current = Some(&m.object);
+                }
+                Expression::CallExpression(c) => {
+                    if c.optional {
+                        return;
+                    }
+                    current = Some(&c.callee);
+                }
+                _ => break,
+            }
+        }
+
+        // No optional markers remain — unwrap the chain to a plain expression.
+        let chain_expr = expr.take_in(allocator);
+        let Expression::ChainExpression(chain) = chain_expr else { unreachable!() };
+        *expr = Expression::from(chain.unbox().expression);
+    }
+
     pub fn is_dot_define<'b>(
         scoping: &Scoping,
         scope_flags: ScopeFlags,
@@ -729,7 +793,7 @@ impl<'a> ReplaceGlobalDefines<'a> {
                         None
                     }
                     Expression::ThisExpression(_) if should_replace_this_expr => {
-                        cur_part_name = THIS_ATOM.as_str();
+                        cur_part_name = THIS_STR.as_str();
                         None
                     }
                     Expression::MetaProperty(meta) => {
@@ -805,10 +869,10 @@ pub enum DotDefineMemberExpression<'b, 'ast: 'b> {
 }
 
 impl<'b, 'a> DotDefineMemberExpression<'b, 'a> {
-    fn name(&self) -> Option<Atom<'a>> {
+    fn name(&self) -> Option<Str<'a>> {
         match self {
             DotDefineMemberExpression::StaticMemberExpression(expr) => {
-                Some(expr.property.name.as_atom())
+                Some(expr.property.name.as_arena_str())
             }
             DotDefineMemberExpression::ComputedMemberExpression(expr) => {
                 static_property_name_of_computed_expr(expr).copied()
@@ -826,7 +890,7 @@ impl<'b, 'a> DotDefineMemberExpression<'b, 'a> {
 
 fn static_property_name_of_computed_expr<'b, 'a: 'b>(
     expr: &'b ComputedMemberExpression<'a>,
-) -> Option<&'b Atom<'a>> {
+) -> Option<&'b Str<'a>> {
     match &expr.expression {
         Expression::StringLiteral(lit) => Some(&lit.value),
         Expression::TemplateLiteral(lit) if lit.expressions.is_empty() && lit.quasis.len() == 1 => {

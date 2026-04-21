@@ -9,57 +9,6 @@ use crate::ast::*;
 
 use super::{EmptyArray, Null};
 
-#[ast_meta]
-#[estree(raw_deser = "
-        const previousParent = parent;
-        const variableDeclarator = parent = {
-            type: 'VariableDeclarator',
-            id: null,
-            init: null,
-            ...(IS_TS && { definite: false }),
-            start: DESER[u32]( POS_OFFSET.span.start ),
-            end: DESER[u32]( POS_OFFSET.span.end ),
-            ...(RANGE && { range: [DESER[u32]( POS_OFFSET.span.start ), DESER[u32]( POS_OFFSET.span.end )] }),
-            ...(PARENT && { parent: previousParent }),
-        };
-        variableDeclarator.id = DESER[BindingPattern](POS_OFFSET.id);
-        if (IS_TS) {
-            if (PARENT) parent = variableDeclarator.id;
-            const typeAnnotation = DESER[Option<Box<TSTypeAnnotation>>](POS_OFFSET.type_annotation);
-            variableDeclarator.id.typeAnnotation = typeAnnotation;
-            if (typeAnnotation !== null) {
-                variableDeclarator.id.end = typeAnnotation.end;
-                if (RANGE) variableDeclarator.id.range[1] = typeAnnotation.end;
-            }
-            if (PARENT) parent = variableDeclarator;
-            variableDeclarator.definite = DESER[bool](POS_OFFSET.definite);
-        }
-        variableDeclarator.init = DESER[Option<Expression>](POS_OFFSET.init);
-        if (PARENT) parent = previousParent;
-        variableDeclarator
-    ")]
-pub struct VariableDeclaratorConverter<'a, 'b>(pub &'b VariableDeclarator<'a>);
-
-impl ESTree for VariableDeclaratorConverter<'_, '_> {
-    fn serialize<S: Serializer>(&self, serializer: S) {
-        let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "VariableDeclarator");
-        state.serialize_field(
-            "id",
-            &BindingPatternKindAndTsFields {
-                kind: &self.0.id,
-                decorators: Some(&[]),
-                optional: false,
-                type_annotation: self.0.type_annotation.as_deref(),
-                override_span: None,
-            },
-        );
-        state.serialize_field("init", &self.0.init);
-        state.serialize_ts_field("definite", &self.0.definite);
-        state.serialize_span(self.0.span);
-        state.end();
-    }
-}
 // ----------------------------------------
 // Binding patterns and function params
 // ----------------------------------------
@@ -137,6 +86,46 @@ impl ESTree for BindingPatternKindAndTsFields<'_, '_> {
     }
 }
 
+/// Converter for `id` field of [`VariableDeclarator`].
+///
+/// Merges `type_annotation` from the parent into the binding pattern.
+#[ast_meta]
+#[estree(
+    ts_type = "BindingPattern",
+    raw_deser = "
+        const pattern = DESER[BindingPattern](POS_OFFSET.id);
+        if (IS_TS) {
+            const previousParent = parent;
+            if (PARENT) parent = pattern;
+            const typeAnnotation = DESER[Option<Box<TSTypeAnnotation>>](POS_OFFSET.type_annotation);
+            if (typeAnnotation !== null) {
+                pattern.typeAnnotation = typeAnnotation;
+                if (RANGE) {
+                    pattern.range[1] = pattern.end = typeAnnotation.end;
+                } else {
+                    pattern.end = typeAnnotation.end;
+                }
+            }
+            if (PARENT) parent = previousParent;
+        }
+        pattern
+    "
+)]
+pub struct VariableDeclaratorId<'a, 'b>(pub &'b VariableDeclarator<'a>);
+
+impl ESTree for VariableDeclaratorId<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        BindingPatternKindAndTsFields {
+            kind: &self.0.id,
+            decorators: Some(&[]),
+            optional: false,
+            type_annotation: self.0.type_annotation.as_deref(),
+            override_span: None,
+        }
+        .serialize(serializer);
+    }
+}
+
 /// Converter for [`CatchParameter`].
 ///
 /// Serializes as the pattern with type annotation if in TS mode.
@@ -182,8 +171,9 @@ impl ESTree for CatchParameterConverter<'_, '_> {
     ts_type = "ParamPattern[]",
     raw_deser = "
         const params = DESER[Vec<FormalParameter>](POS_OFFSET.items);
-        if (uint32[(POS_OFFSET.rest) >> 2] !== 0 && uint32[(POS_OFFSET.rest + 4) >> 2] !== 0) {
-            pos = uint32[(POS_OFFSET.rest) >> 2];
+        const restFieldPos32 = POS_OFFSET.rest >> 2;
+        if (int32[restFieldPos32] !== 0 && int32[restFieldPos32 + 1] !== 0) {
+            pos = int32[restFieldPos32];
 
             let start, end;
             const previousParent = parent;
@@ -196,8 +186,8 @@ impl ESTree for CatchParameterConverter<'_, '_> {
                     typeAnnotation: null,
                     value: null,
                 }),
-                start: start = DESER[u32]( POS_OFFSET<FormalParameterRest>.rest.span.start ),
-                end: end = DESER[u32]( POS_OFFSET<FormalParameterRest>.rest.span.end ),
+                start: start = DESER[i32]( POS_OFFSET<FormalParameterRest>.rest.span.start ),
+                end: end = DESER[i32]( POS_OFFSET<FormalParameterRest>.rest.span.end ),
                 ...(RANGE && { range: [start, end] }),
                 ...(PARENT && { parent: previousParent }),
             };
@@ -266,7 +256,8 @@ impl ESTree for FormalParameterRest<'_> {
     raw_deser = "
         let param;
         const previousParent = parent;
-        const hasInitializer = uint32[(POS_OFFSET.initializer) >> 2] !== 0 && uint32[(POS_OFFSET.initializer + 4) >> 2] !== 0;
+        const initializerFieldPos32 = POS_OFFSET.initializer >> 2;
+        const hasInitializer = int32[initializerFieldPos32] !== 0 && int32[initializerFieldPos32 + 1] !== 0;
 
         if (IS_TS) {
             const accessibility = DESER[Option<TSAccessibility>](POS_OFFSET.accessibility),
@@ -284,8 +275,8 @@ impl ESTree for FormalParameterRest<'_> {
                         right: null,
                         optional,
                         typeAnnotation: null,
-                        start: start = DESER[u32]( POS_OFFSET.span.start ),
-                        end: end = DESER[u32]( POS_OFFSET.span.end ),
+                        start: start = DESER[i32]( POS_OFFSET.span.start ),
+                        end: end = DESER[i32]( POS_OFFSET.span.end ),
                         ...(RANGE && { range: [start, end] }),
                         ...(PARENT && { parent: previousParent }),
                     };
@@ -316,8 +307,8 @@ impl ESTree for FormalParameterRest<'_> {
                         param.end = typeAnnotation.end;
                         if (RANGE) param.range[1] = typeAnnotation.end;
                     } else if (optional) {
-                        param.end = DESER[u32]( POS_OFFSET.span.end );
-                        if (RANGE) param.range[1] = DESER[u32]( POS_OFFSET.span.end );
+                        param.end = DESER[i32]( POS_OFFSET.span.end );
+                        if (RANGE) param.range[1] = DESER[i32]( POS_OFFSET.span.end );
                     }
                     if (PARENT) parent = previousParent;
                 }
@@ -331,8 +322,8 @@ impl ESTree for FormalParameterRest<'_> {
                     parameter: null,
                     readonly,
                     static: false,
-                    start: start = DESER[u32]( POS_OFFSET.span.start ),
-                    end: end = DESER[u32]( POS_OFFSET.span.end ),
+                    start: start = DESER[i32]( POS_OFFSET.span.start ),
+                    end: end = DESER[i32]( POS_OFFSET.span.end ),
                     ...(RANGE && { range: [start, end] }),
                     ...(PARENT && { parent: previousParent }),
                 };
@@ -380,7 +371,7 @@ impl ESTree for FormalParameterRest<'_> {
                         param.parameter.end = paramTypeAnnotation.end;
                         if (RANGE) param.parameter.range[1] = paramTypeAnnotation.end;
                     } else if (paramOptional) {
-                        const paramEnd = DESER[u32]( POS_OFFSET.span.end );
+                        const paramEnd = DESER[i32]( POS_OFFSET.span.end );
                         const pattern = param.parameter;
                         param.parameter.end = paramEnd;
                         if (RANGE) param.parameter.range[1] = paramEnd;
@@ -395,8 +386,8 @@ impl ESTree for FormalParameterRest<'_> {
                     type: 'AssignmentPattern',
                     left: null,
                     right: null,
-                    start: start = DESER[u32]( POS_OFFSET.span.start ),
-                    end: end = DESER[u32]( POS_OFFSET.span.end ),
+                    start: start = DESER[i32]( POS_OFFSET.span.start ),
+                    end: end = DESER[i32]( POS_OFFSET.span.end ),
                     ...(RANGE && { range: [start, end] }),
                     ...(PARENT && { parent: previousParent }),
                 };
@@ -778,8 +769,8 @@ impl ESTree for AssignmentTargetPropertyIdentifierInit<'_> {
         node = parent = {
             type: 'ParenthesizedExpression',
             expression: null,
-            start: start = DESER[u32]( POS_OFFSET.span.start ),
-            end: end = DESER[u32]( POS_OFFSET.span.end ),
+            start: start = DESER[i32]( POS_OFFSET.span.start ),
+            end: end = DESER[i32]( POS_OFFSET.span.end ),
             ...(RANGE && { range: [start, end] }),
             ...(PARENT && { parent }),
         };

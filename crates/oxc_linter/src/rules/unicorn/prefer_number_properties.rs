@@ -84,6 +84,7 @@ declare_oxc_lint!(
     restriction,
     dangerous_fix,
     config = PreferNumberPropertiesConfig,
+    version = "0.0.19",
 );
 
 impl Rule for PreferNumberProperties {

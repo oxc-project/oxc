@@ -6,7 +6,8 @@ use serde_json::Value;
 use oxc_ast::{AstKind, ast::JSXAttributeItem};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
+use oxc_str::CompactStr;
 
 use crate::{
     AstNode,
@@ -75,6 +76,7 @@ declare_oxc_lint!(
     suspicious,
     pending,
     config = JsxNoScriptUrlConfig,
+    version = "0.13.2",
 );
 
 fn is_link_attribute(tag_name: &str, prop_value_literal: String, ctx: &LintContext) -> bool {

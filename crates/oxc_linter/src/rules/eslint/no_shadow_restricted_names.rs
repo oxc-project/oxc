@@ -52,7 +52,7 @@ declare_oxc_lint!(
     /// var undefined = "foo";
     /// ```
     ///
-    /// Then any code used within the same scope would not get the global undefined, but rather the
+    /// Then any code used within the same scope would not get the global `undefined`, but rather the
     /// local version with a very different meaning.
     ///
     /// ### Examples
@@ -94,7 +94,8 @@ declare_oxc_lint!(
     NoShadowRestrictedNames,
     eslint,
     correctness,
-    config = NoShadowRestrictedNamesConfig
+    config = NoShadowRestrictedNamesConfig,
+    version = "0.0.3",
 );
 
 impl Rule for NoShadowRestrictedNames {

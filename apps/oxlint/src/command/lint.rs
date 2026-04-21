@@ -58,6 +58,10 @@ pub struct LintCommand {
     #[bpaf(switch, hide_usage)]
     pub type_check: bool,
 
+    /// Run only TypeScript type checking diagnostics without regular lint diagnostics
+    #[bpaf(long("type-check-only"), switch, hide)]
+    pub type_check_only: bool,
+
     #[bpaf(external)]
     pub inline_config_options: InlineConfigOptions,
 
@@ -123,8 +127,15 @@ pub struct BasicOptions {
     #[bpaf(long, short, argument("./.oxlintrc.json"))]
     pub config: Option<PathBuf>,
 
-    /// TypeScript `tsconfig.json` path for reading path alias and project references for import plugin.
-    /// If not provided, will look for `tsconfig.json` in the current working directory.
+    /// Override the TypeScript config used for import resolution.
+    /// Oxlint automatically discovers the relevant `tsconfig.json` for each file.
+    /// Use this only when your project uses a non-standard tsconfig name or location.
+    ///
+    /// ::: warning
+    /// Avoid using this option. It can cause differences between import resolution,
+    /// and type-aware linting. Type aware linting **does not** respect this option,
+    /// and will always discover the appropriate `tsconfig.json` for each file automatically.
+    /// :::
     #[bpaf(argument("./tsconfig.json"), hide_usage)]
     pub tsconfig: Option<PathBuf>,
 
@@ -255,8 +266,6 @@ fn default_output_format() -> Result<OutputFormat, std::convert::Infallible> {
         Ok(OutputFormat::Default)
     } else if std::env::var("GITHUB_ACTIONS").ok().is_some_and(|value| value == "true") {
         Ok(OutputFormat::Github)
-    } else if std::env::var("GITLAB_CI").ok().is_some_and(|value| value == "true") {
-        Ok(OutputFormat::Gitlab)
     } else {
         Ok(OutputFormat::Default)
     }
@@ -291,8 +300,6 @@ pub struct EnablePlugins {
     pub typescript_plugin: OverrideToggle,
 
     /// Enable import plugin and detect ESM problems.
-    /// It should be used with the `--tsconfig` flag if your project has a
-    /// tsconfig with a name other than `tsconfig.json`.
     #[bpaf(flag(OverrideToggle::Enable, OverrideToggle::NotSet), hide_usage)]
     pub import_plugin: OverrideToggle,
 
@@ -639,6 +646,14 @@ mod lint_options {
         assert!(options.type_check);
         let options = get_lint_options(".");
         assert!(!options.type_check);
+    }
+
+    #[test]
+    fn type_check_only() {
+        let options = get_lint_options("--type-check-only");
+        assert!(options.type_check_only);
+        let options = get_lint_options(".");
+        assert!(!options.type_check_only);
     }
 }
 

@@ -1,7 +1,8 @@
 use oxc_ast::{AstKind, ast::Argument};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
+use oxc_str::CompactStr;
 use rustc_hash::FxHashMap;
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -58,7 +59,12 @@ impl From<ForbidElementsConfig> for ForbidElements {
 #[serde(untagged)]
 pub enum ForbidItem {
     ElementName(CompactStr),
-    ElementWithMessage { element: CompactStr, message: Option<CompactStr> },
+    ElementWithMessage {
+        /// The element name to forbid.
+        element: CompactStr,
+        /// The message to display when this element is found
+        message: Option<CompactStr>,
+    },
 }
 
 // Raw config for deserialization.
@@ -118,6 +124,7 @@ declare_oxc_lint!(
     react,
     restriction,
     config = ForbidElementsConfig,
+    version = "0.16.11",
 );
 
 impl Rule for ForbidElements {

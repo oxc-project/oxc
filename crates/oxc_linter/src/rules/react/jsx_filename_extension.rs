@@ -8,7 +8,8 @@ use serde_json::Value;
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
+use oxc_str::CompactStr;
 
 use crate::{context::LintContext, rule::Rule};
 
@@ -34,8 +35,10 @@ fn extension_only_for_jsx_diagnostic(ext: &str, span: Span) -> OxcDiagnostic {
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize, Serialize)]
 #[serde(rename_all = "kebab-case")]
 enum AllowType {
+    /// Always allow a `.jsx` file extension.
     #[default]
     Always,
+    /// Only allow `.jsx` file extension for files that contain JSX syntax.
     AsNeeded,
 }
 
@@ -114,6 +117,7 @@ declare_oxc_lint!(
     restriction,
     pending,
     config = JsxFilenameExtensionConfig,
+    version = "0.15.14",
 );
 
 impl Rule for JsxFilenameExtension {

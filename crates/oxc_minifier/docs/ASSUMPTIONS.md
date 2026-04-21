@@ -98,6 +98,17 @@ eval("var x = 1");
 console.log(x); // 1
 ```
 
+### Known globals exist and are side-effect-free to access
+
+Accessing known global identifiers (e.g. `Math`, `Array`, `Object`, `console`, `document`, `window`, DOM classes, etc.) does not throw a `ReferenceError` and has no side effects. Reading their properties (e.g. `Math.PI`, `Object.keys`) and select 3-level chains (e.g. `Object.prototype.hasOwnProperty`) are also side-effect-free. This list is ported from Rolldown's `GLOBAL_IDENT` set, which mirrors Rollup's [`knownGlobals`](https://github.com/rollup/rollup/blob/e3d65918b7527c24093534d9f8a10e715f6c30c3/src/ast/nodes/shared/knownGlobals.ts#L171), and includes browser/host-specific APIs intentionally.
+
+```javascript
+// The minifier assumes these are always available:
+Math.PI; // side-effect-free
+Array.isArray; // side-effect-free
+console; // side-effect-free to access (calling methods may still have side effects)
+```
+
 ### No side effects from accessing to a global variable named `arguments`
 
 Accessing a global variable named `arguments` does not have a side effect. We intend to change this assumption to optional in the future.
@@ -151,6 +162,8 @@ pub struct CompressOptions {
 pub struct TreeShakeOptions {
     // Whether property reads have side effects
     pub property_read_side_effects: PropertyReadSideEffects,
+    // Whether property writes have side effects
+    pub property_write_side_effects: bool,
     // Whether accessing unknown globals has side effects
     pub unknown_global_side_effects: bool,
     // Respect pure annotations like /* @__PURE__ */

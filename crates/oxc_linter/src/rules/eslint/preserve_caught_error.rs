@@ -7,10 +7,8 @@ use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{IsGlobalReference, ScopeFlags};
-use oxc_span::{
-    GetSpan, Span,
-    ident::{AGGREGATE_ERROR, ERROR, TYPE_ERROR},
-};
+use oxc_span::{GetSpan, Span};
+use oxc_str::static_ident;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -201,13 +199,13 @@ fn is_builtin_error_constructor(expr: &Expression, ctx: &LintContext) -> bool {
         return false;
     };
 
-    ident.is_global_reference_name(ERROR, ctx.scoping())
-        || ident.is_global_reference_name(TYPE_ERROR, ctx.scoping())
+    ident.is_global_reference_name(static_ident!("Error"), ctx.scoping())
+        || ident.is_global_reference_name(static_ident!("TypeError"), ctx.scoping())
         || is_aggregate_error(ident, ctx)
 }
 
 fn is_aggregate_error(ident: &IdentifierReference, ctx: &LintContext) -> bool {
-    ident.is_global_reference_name(AGGREGATE_ERROR, ctx.scoping())
+    ident.is_global_reference_name(static_ident!("AggregateError"), ctx.scoping())
 }
 
 fn has_cause_property(
@@ -287,6 +285,7 @@ declare_oxc_lint!(
     suspicious,
     conditional_fix,
     config = PreserveCaughtErrorOptions,
+    version = "1.16.0",
 );
 impl PreserveCaughtError {
     fn check_try_statement<'a>(&self, try_stmt: &'a TryStatement<'a>, ctx: &LintContext<'a>) {

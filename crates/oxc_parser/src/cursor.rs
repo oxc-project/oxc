@@ -8,7 +8,7 @@ use oxc_span::{GetSpan, Span};
 use crate::{
     Context, ParserConfig as Config, ParserImpl, diagnostics,
     error_handler::FatalError,
-    lexer::{Kind, LexerCheckpoint, LexerContext, Token},
+    lexer::{Kind, LexerCheckpoint, Token},
 };
 
 #[derive(Clone)]
@@ -219,12 +219,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.advance_for_jsx_child();
     }
 
-    /// Expect the next next token to be a `JsxString` or any other token
-    /// # Errors
-    pub(crate) fn expect_jsx_attribute_value(&mut self, kind: Kind) {
-        self.lexer.set_context(LexerContext::JsxAttributeValue);
-        self.expect(kind);
-        self.lexer.set_context(LexerContext::Regular);
+    /// Move to the next token, lexing it as a JSX attribute value.
+    pub(crate) fn advance_for_jsx_attribute_value(&mut self) {
+        self.prev_token_end = self.token.end();
+        self.token = self.lexer.next_jsx_attribute_value();
     }
 
     /// Tell lexer to read a regex
@@ -323,22 +321,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.prev_token_end = prev_span_end;
         self.errors.truncate(errors_pos);
         self.fatal_error = fatal_error;
-    }
-
-    pub(crate) fn try_parse<T>(
-        &mut self,
-        func: impl FnOnce(&mut ParserImpl<'a, C>) -> T,
-    ) -> Option<T> {
-        let checkpoint = self.checkpoint_with_error_recovery();
-        let ctx = self.ctx;
-        let node = func(self);
-        if self.fatal_error.is_none() {
-            Some(node)
-        } else {
-            self.ctx = ctx;
-            self.rewind(checkpoint);
-            None
-        }
     }
 
     pub(crate) fn lookahead<U>(&mut self, predicate: impl Fn(&mut ParserImpl<'a, C>) -> U) -> U {
@@ -476,6 +458,53 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             if self.cur_kind() == close {
                 let trailing_separator = self.prev_token_end - 1;
                 return (list, Some(trailing_separator));
+            }
+            list.push(f(self));
+        }
+    }
+
+    pub(crate) fn parse_delimited_list_into<F, T>(
+        &mut self,
+        list: &mut Vec<'a, T>,
+        close: Kind,
+        separator: Kind,
+        opening_span: Span,
+        mut f: F,
+    ) -> Option<u32>
+    where
+        F: FnMut(&mut Self) -> T,
+    {
+        // Cache cur_kind() to avoid redundant calls in compound checks
+        let kind = self.cur_kind();
+        if kind == close
+            || matches!(kind, Kind::Eof | Kind::Undetermined)
+            || self.fatal_error.is_some()
+        {
+            return None;
+        }
+        list.push(f(self));
+        loop {
+            let kind = self.cur_kind();
+            if kind == close
+                || matches!(kind, Kind::Eof | Kind::Undetermined)
+                || self.fatal_error.is_some()
+            {
+                return None;
+            }
+            if !self.at(separator) {
+                self.set_fatal_error(diagnostics::expect_closing_or_separator(
+                    close.to_str(),
+                    separator.to_str(),
+                    kind.to_str(),
+                    self.cur_token().span(),
+                    opening_span,
+                ));
+                return None;
+            }
+            self.advance(separator);
+            if self.cur_kind() == close {
+                let trailing_separator = self.prev_token_end - 1;
+                return Some(trailing_separator);
             }
             list.push(f(self));
         }

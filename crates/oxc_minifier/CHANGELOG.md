@@ -4,6 +4,81 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.127.0] - 2026-04-20
+
+### 🐛 Bug Fixes
+
+- 50e9d26 mangler: Assign correct slot to shadowed function-expression names (#21535) (Dunqing)
+- d676e0c minifier: Mark LHS of `??=` as read when converting from `== null &&` (#21546) (Gunnlaugur Thor Briem)
+
+## [0.126.0] - 2026-04-15
+
+### 🐛 Bug Fixes
+
+- d7a359a ecmascript: Treat update expressions as unconditionally side-effectful (#21456) (Dunqing)
+- b3ed467 minifier: Avoid illegal `var;` when folding unused arguments copy loop (#21421) (fazba)
+- b0e8f13 minifier: Preserve `var` inside `catch` with same-named parameter (#21366) (Dunqing)
+
+## [0.125.0] - 2026-04-13
+
+### 💥 BREAKING CHANGES
+
+- 382958a span: [**BREAKING**] Remove re-exports of string types from `oxc_span` crate (#21246) (overlookmotel)
+
+### 🚀 Features
+
+- f134e24 minifier: Support `property_write_side_effects` option to drop unused property assignments (#20773) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- 2338e28 ecmascript: Treat `this` as potentially having side effects (#21297) (sapphi-red)
+
+### ⚡ Performance
+
+- 61adedd minifier: Fix O(n²) perf on very many var decls (#21062) (Gunnlaugur Thor Briem)
+
+## [0.123.0] - 2026-03-30
+
+### 🚀 Features
+
+- 2917bb2 minifier: Minify `x ? 1 : 0` to `+x` or `+!!x` (#20594) (John Costa)
+
+### 🐛 Bug Fixes
+
+- 1a370a6 minifier: Inline single-use vars past non-computed object keys (#20810) (Ulrich Stark)
+- 9a5ff73 semantic: Hoist Annex B block-scoped function declarations to var scope (#20728) (Dunqing)
+
+## [0.121.0] - 2026-03-19
+
+### 🐛 Bug Fixes
+
+- 4ae3f3f ecmascript: Apply coercion-is-pure assumption to constructor side-effect detection (#20420) (Dunqing)
+- efeba28 ecmascript: Add argument validation for NewExpression side-effect detection (#20395) (Dunqing)
+
+## [0.120.0] - 2026-03-16
+
+### 🐛 Bug Fixes
+
+- edb8677 ecmascript: Treat collection constructor with variable arg as side-effectful (#20383) (Dunqing)
+- e62524d minifier: Treat object spread of getters as having side effects (#20380) (Boshen)
+
+### ⚡ Performance
+
+- 30a2b0f minifier: Use atom_from_strs_array for template literal concat (#20386) (Boshen)
+- 690ce17 minifier: Use Vec::with_capacity for inline template expressions (#20389) (Boshen)
+
+## [0.119.0] - 2026-03-14
+
+### 🚀 Features
+
+- e7163b6 ecmascript: Add known-globals to side-effect-free property reads (#20212) (Dunqing)
+- 139ab68 ecmascript: Add `property_write_side_effects` to `MayHaveSideEffectsContext` (#20217) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- 5c97b14 minifier: Recognize object spread of object literals as side-effect-free (#20299) (Boshen)
+- ade14d4 ecmascript: Enhance side-effect detection for classes, TypedArrays, computed members, and spread (#20213) (Dunqing)
+
 ## [0.116.0] - 2026-03-02
 
 ### 🐛 Bug Fixes

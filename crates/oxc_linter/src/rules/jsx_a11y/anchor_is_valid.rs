@@ -6,7 +6,8 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
+use oxc_str::CompactStr;
 use schemars::JsonSchema;
 use serde_json::Value;
 
@@ -122,7 +123,8 @@ declare_oxc_lint!(
     AnchorIsValid,
     jsx_a11y,
     correctness,
-    config = AnchorIsValidConfig
+    config = AnchorIsValidConfig,
+    version = "0.0.19",
 );
 
 impl Rule for AnchorIsValid {

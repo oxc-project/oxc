@@ -7,7 +7,8 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
+use oxc_str::CompactStr;
 use serde::Deserialize;
 
 use crate::{
@@ -80,7 +81,8 @@ declare_oxc_lint!(
     NoUnassignedImport,
     import,
     suspicious,
-    config = NoUnassignedImportConfig
+    config = NoUnassignedImportConfig,
+    version = "0.16.11",
 );
 
 impl Rule for NoUnassignedImport {

@@ -11,7 +11,7 @@ use crate::{Error, Severity};
 /// receive diagnostics.
 ///
 /// ## Example
-/// ```
+/// ```rust,ignore
 /// use oxc_diagnostics::{DiagnosticReporter, Error, Severity};
 ///
 /// #[derive(Default)]
@@ -46,6 +46,15 @@ pub trait DiagnosticReporter {
     /// While this method _should_ only ever be called a single time, this is not a guarantee
     /// upheld in Oxc's API. Do not rely on this behavior.
     fn finish(&mut self, result: &DiagnosticResult) -> Option<String>;
+
+    /// Whether [`DiagnosticService`](crate::service::DiagnosticService) should replace very long
+    /// rendered lines with the synthetic "minified file" warning.
+    ///
+    /// Human-readable reporters generally want this behavior to avoid dumping unreadable output.
+    /// Machine-readable or intentionally single-line reporters should disable it.
+    fn supports_minified_file_fallback(&self) -> bool {
+        true
+    }
 
     /// Render a diagnostic into this reporter's desired format. For example, a JSONLinesReporter
     /// might return a stringified JSON object on a single line. Returns [`None`] to skip reporting

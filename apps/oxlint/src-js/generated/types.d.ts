@@ -1,16 +1,16 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
 // To edit this generated file you have to edit `tasks/ast_tools/src/generators/typescript.rs`.
 
-import { Span } from "../plugins/location.ts";
-import { Token } from "../plugins/tokens.ts";
-import { Comment } from "../plugins/types.ts";
-export { Span, Comment, Token };
+import type { Comment } from "../plugins/comments.ts";
+import type { Span } from "../plugins/location.ts";
+import type { Token } from "../plugins/tokens.ts";
+
+export type { Comment, Span, Token };
 
 export interface Program extends Span {
   type: "Program";
   body: Array<Directive | Statement>;
   sourceType: ModuleKind;
-  hashbang: Hashbang | null;
   comments: Comment[];
   tokens: Token[];
   parent: null;
@@ -1677,6 +1677,8 @@ export interface JSDocUnknownType extends Span {
   parent: Node;
 }
 
+export type ModuleKind = "script" | "module" | "commonjs";
+
 export type AssignmentOperator =
   | "="
   | "+="
@@ -1724,8 +1726,6 @@ export type LogicalOperator = "||" | "&&" | "??";
 export type UnaryOperator = "+" | "-" | "!" | "~" | "typeof" | "void" | "delete";
 
 export type UpdateOperator = "++" | "--";
-
-export type ModuleKind = "script" | "module" | "commonjs";
 
 export type Node =
   | Program

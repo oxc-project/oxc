@@ -1,6 +1,6 @@
 [package]
 name = "oxc_linter"
-version = "1.51.0"
+version = "1.61.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -25,7 +25,7 @@ workspace = true
 doctest = true
 
 [dependencies]
-oxc_allocator = { workspace = true, features = ["fixed_size"] }
+oxc_allocator = { workspace = true, features = ["fixed_size", "bitset"] }
 oxc_ast = { workspace = true }
 oxc_ast_macros = { workspace = true }
 oxc_ast_visit = { workspace = true, features = ["serialize"] }
@@ -42,6 +42,7 @@ oxc_regular_expression = { workspace = true }
 oxc_resolver = { workspace = true }
 oxc_semantic = { workspace = true, features = ["cfg", "linter"] }
 oxc_span = { workspace = true, features = ["schemars", "serialize"] }
+oxc_str = { workspace = true, features = ["serialize"] }
 oxc_syntax = { workspace = true, features = ["serialize"] }
 
 #

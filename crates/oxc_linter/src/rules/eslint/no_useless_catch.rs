@@ -26,7 +26,7 @@ pub struct NoUselessCatch;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow unnecessary catch clauses
+    /// Disallow unnecessary catch clauses.
     ///
     /// ### Why is this bad?
     ///
@@ -52,7 +52,8 @@ declare_oxc_lint!(
     /// ```
     NoUselessCatch,
     eslint,
-    correctness
+    correctness,
+    version = "0.0.5",
 );
 
 impl Rule for NoUselessCatch {

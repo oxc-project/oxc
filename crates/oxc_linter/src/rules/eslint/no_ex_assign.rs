@@ -19,7 +19,7 @@ pub struct NoExAssign;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow reassigning exceptions in catch clauses
+    /// Disallow reassigning exceptions in catch clauses.
     ///
     /// ### Why is this bad?
     ///
@@ -50,7 +50,8 @@ declare_oxc_lint!(
     /// ```
     NoExAssign,
     eslint,
-    correctness
+    correctness,
+    version = "0.0.4",
 );
 
 impl Rule for NoExAssign {

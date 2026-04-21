@@ -34,15 +34,15 @@ fn radix_map(base: &str) -> Option<(&'static str, &'static str)> {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow parseInt() and Number.parseInt() in favor of binary, octal, and hexadecimal
+    /// Disallow `parseInt()` and `Number.parseInt()` in favor of binary, octal, and hexadecimal
     /// literals.
     ///
     /// ### Why is this bad?
     ///
-    /// The parseInt() and Number.parseInt() functions can be used to turn binary, octal, and
+    /// The `parseInt()` and `Number.parseInt()` functions can be used to turn binary, octal, and
     /// hexadecimal strings into integers. As binary, octal, and hexadecimal literals are supported
-    /// in ES2015, this rule encourages use of those numeric literals instead of parseInt() or
-    /// Number.parseInt().
+    /// in ES2015, this rule encourages use of those numeric literals instead of `parseInt()` or
+    /// `Number.parseInt()`.
     ///
     /// ### Examples
     ///
@@ -59,7 +59,8 @@ declare_oxc_lint!(
     PreferNumericLiterals,
     eslint,
     style,
-    conditional_fix
+    conditional_fix,
+    version = "0.7.0",
 );
 
 impl Rule for PreferNumericLiterals {
@@ -69,10 +70,10 @@ impl Rule for PreferNumericLiterals {
         };
 
         match &call_expr.callee.without_parentheses() {
-            Expression::Identifier(ident) if ident.name == "parseInt" => {
-                if is_parse_int_call(ctx, ident, None) {
-                    check_arguments(call_expr, ctx);
-                }
+            Expression::Identifier(ident)
+                if ident.name == "parseInt" && is_parse_int_call(ctx, ident, None) =>
+            {
+                check_arguments(call_expr, ctx);
             }
             Expression::StaticMemberExpression(member_expr) => {
                 if let Expression::Identifier(ident) = &member_expr.object {

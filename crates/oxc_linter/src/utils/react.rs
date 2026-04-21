@@ -12,6 +12,7 @@ use oxc_ast::{
 use oxc_ast_visit::{Visit, walk};
 use oxc_ecmascript::{ToBoolean, WithoutGlobalReferenceInformation};
 use oxc_semantic::AstNode;
+use oxc_syntax::operator::UnaryOperator;
 use oxc_syntax::scope::ScopeFlags;
 
 use crate::globals::HTML_TAG;
@@ -20,9 +21,25 @@ use crate::{LintContext, OxlintSettings};
 pub fn is_create_element_call(call_expr: &CallExpression) -> bool {
     match &call_expr.callee {
         Expression::StaticMemberExpression(member_expr) => {
+            if member_expr
+                .object
+                .get_identifier_reference()
+                .is_some_and(|object_caller| object_caller.name == "document")
+            {
+                return false;
+            }
+
             member_expr.property.name == "createElement"
         }
         Expression::ComputedMemberExpression(member_expr) => {
+            if member_expr
+                .object
+                .get_identifier_reference()
+                .is_some_and(|object_caller| object_caller.name == "document")
+            {
+                return false;
+            }
+
             member_expr.static_property_name().is_some_and(|name| name == "createElement")
         }
         Expression::Identifier(ident) => ident.name == "createElement",
@@ -474,6 +491,17 @@ pub fn parse_jsx_value(value: &JSXAttributeValue) -> Result<f64, ()> {
                 tmpl.quasis.first().unwrap().value.raw.parse().or(Err(()))
             }
             JSXExpression::NumericLiteral(num) => Ok(num.value),
+            JSXExpression::UnaryExpression(expr) => {
+                let Expression::NumericLiteral(num) = &expr.argument else {
+                    return Err(());
+                };
+
+                match expr.operator {
+                    UnaryOperator::UnaryPlus => Ok(num.value),
+                    UnaryOperator::UnaryNegation => Ok(-num.value),
+                    _ => Err(()),
+                }
+            }
             _ => Err(()),
         },
         _ => Err(()),

@@ -157,7 +157,6 @@ impl OxlintOptions {
 ///       }
 ///     }
 ///   ]
-///  }
 /// });
 /// ```
 #[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
@@ -179,7 +178,7 @@ pub struct Oxlintrc {
     /// Read more about JS plugins in
     /// [the docs](https://oxc.rs/docs/guide/usage/linter/js-plugins.html).
     ///
-    /// Note: JS plugins are experimental and not subject to semver.
+    /// Note: JS plugins are in alpha and not subject to semver.
     ///
     /// Examples:
     ///
@@ -188,6 +187,24 @@ pub struct Oxlintrc {
     /// ```json
     /// {
     ///   "jsPlugins": ["./custom-plugin.js"],
+    ///   "rules": {
+    ///     "custom/rule-name": "warn"
+    ///   }
+    /// }
+    /// ```
+    ///
+    /// Basic usage with a TypeScript plugin and a local plugin path.
+    ///
+    /// TypeScript plugin files are supported in the following environments:
+    /// - Deno and Bun: TypeScript files are supported natively.
+    /// - Node.js >=22.18.0 and Node.js ^20.19.0: TypeScript files are supported natively with built-in
+    ///   type-stripping enabled by default.
+    ///
+    /// For older Node.js versions, TypeScript plugins are not supported. Please use JavaScript plugins or upgrade your Node version.
+    ///
+    /// ```json
+    /// {
+    ///   "jsPlugins": ["./custom-plugin.ts"],
     ///   "rules": {
     ///     "custom/rule-name": "warn"
     ///   }
@@ -504,6 +521,8 @@ mod test {
         .unwrap();
         assert_eq!(config.options.report_unused_disable_directives, Some(AllowWarnDeny::Warn));
 
+        // error and deny
+
         let config: Oxlintrc = serde_json::from_value(
             json!({ "options": { "reportUnusedDisableDirectives": "error" } }),
         )
@@ -511,7 +530,21 @@ mod test {
         assert_eq!(config.options.report_unused_disable_directives, Some(AllowWarnDeny::Deny));
 
         let config: Oxlintrc = serde_json::from_value(
+            json!({ "options": { "reportUnusedDisableDirectives": "deny" } }),
+        )
+        .unwrap();
+        assert_eq!(config.options.report_unused_disable_directives, Some(AllowWarnDeny::Deny));
+
+        // off and allow
+
+        let config: Oxlintrc = serde_json::from_value(
             json!({ "options": { "reportUnusedDisableDirectives": "off" } }),
+        )
+        .unwrap();
+        assert_eq!(config.options.report_unused_disable_directives, Some(AllowWarnDeny::Allow));
+
+        let config: Oxlintrc = serde_json::from_value(
+            json!({ "options": { "reportUnusedDisableDirectives": "allow" } }),
         )
         .unwrap();
         assert_eq!(config.options.report_unused_disable_directives, Some(AllowWarnDeny::Allow));

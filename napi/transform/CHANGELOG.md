@@ -4,6 +4,28 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.126.0] - 2026-04-15
+
+### 🚀 Features
+
+- f5deb55 napi/transform: Expose `optimizeConstEnums` and `optimizeEnums` options (#21388) (Dunqing)
+
+## [0.125.0] - 2026-04-13
+
+### 🚀 Features
+
+- e7e1aea transformer/typescript: Add `optimize_enums` option for regular enum inlining (#20539) (Dunqing)
+
+## [0.117.0] - 2026-03-09
+
+### 🐛 Bug Fixes
+
+- ee0491e apps,napi: Explicitly specify libs in tsconfigs (#20071) (camc314)
+
+### ⚡ Performance
+
+- 2baa5fb napi: Unify build-test profile to coverage for cache sharing (#20090) (Boshen)
+
 ## [0.113.0] - 2026-02-10
 
 ### 🐛 Bug Fixes

@@ -106,7 +106,8 @@ use rustc_hash::FxHashMap;
 
 use oxc_ast::{NONE, ast::*};
 use oxc_ast_visit::{VisitMut, walk_mut};
-use oxc_span::{Ident, SPAN};
+use oxc_span::SPAN;
+use oxc_str::Ident;
 use oxc_syntax::{
     node::NodeId,
     scope::{ScopeFlags, ScopeId},
@@ -582,7 +583,7 @@ impl<'a> ConstructorParamsSuperReplacer<'a, '_> {
             Expression::from(ctx.ast.member_expression_static(
                 SPAN,
                 super_binding.create_read_expression(ctx),
-                ctx.ast.identifier_name(SPAN, Atom::from("call")),
+                ctx.ast.identifier_name(SPAN, Str::from("call")),
                 false,
             )),
             NONE,

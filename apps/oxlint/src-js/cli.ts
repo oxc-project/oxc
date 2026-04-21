@@ -10,7 +10,7 @@ let lintFile: typeof import("./plugins/index.ts").lintFile | null = null;
 let createWorkspace: typeof import("./workspace/index.ts").createWorkspace | null = null;
 let destroyWorkspace: typeof import("./workspace/index.ts").destroyWorkspace | null = null;
 // Lazy-loaded JS/TS config loader (experimental)
-let loadJsConfigs: typeof import("./js_config.ts").loadJsConfigs | null = null;
+let resolvedConfigLoader: import("./js_config.ts").ConfigLoader | null = null;
 
 /**
  * Load a plugin.
@@ -147,13 +147,13 @@ function destroyWorkspaceWrapper(workspace: string): undefined {
  * @returns JSON-stringified result with all configs or error
  */
 function loadJsConfigsWrapper(paths: string[]): Promise<string> {
-  if (loadJsConfigs === null) {
-    return import("./js_config.ts").then((mod) => {
-      loadJsConfigs = mod.loadJsConfigs;
-      return loadJsConfigs(paths);
+  if (resolvedConfigLoader === null) {
+    return import("./js_config.ts").then(({ loadJsConfigs, loadVitePlusConfigs }) => {
+      resolvedConfigLoader = process.env.VP_VERSION ? loadVitePlusConfigs : loadJsConfigs;
+      return resolvedConfigLoader(paths);
     });
   }
-  return loadJsConfigs(paths);
+  return resolvedConfigLoader(paths);
 }
 
 // Get command line arguments, skipping first 2 (node binary and script path)
@@ -173,6 +173,13 @@ if (!process.stdout.isTTY) {
   // @ts-expect-error: `_handle` is an internal API
   process.stdout._handle?.setBlocking?.(true);
 }
+
+// LSP uses stdout for communication, so write logs to stderr to avoid breaking the protocol.
+// Since LSP is handled on the Rust side, we have to check the flag here. (`lint()` starts the server and waits)
+// Also, for Oxlint, this actually affects:
+// - loading JS/TS config files
+// - Execution of JS plugins
+if (args.includes("--lsp")) process.stdout.write = process.stderr.write.bind(process.stderr);
 
 // Call Rust, passing callbacks and CLI arguments
 const success = await lint(

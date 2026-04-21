@@ -1059,10 +1059,14 @@ fn should_skip_diagnostic(
     path: &Path,
     tsgolint_diagnostic: &TsGoLintRuleDiagnostic,
 ) -> bool {
-    let span = tsgolint_diagnostic
-        .labeled_ranges
-        .first()
-        .map_or(tsgolint_diagnostic.span, |range| Span::new(range.range.pos, range.range.end));
+    let span = if tsgolint_diagnostic.span.is_unspanned() {
+        tsgolint_diagnostic
+            .labeled_ranges
+            .first()
+            .map_or(tsgolint_diagnostic.span, |range| Span::new(range.range.pos, range.range.end))
+    } else {
+        tsgolint_diagnostic.span
+    };
 
     if let Some(directives) = disable_directives_map.get(path) {
         directives.contains(&tsgolint_diagnostic.rule, span)
@@ -1072,7 +1076,8 @@ fn should_skip_diagnostic(
     } else {
         debug_assert!(
             false,
-            "disable_directives_map should have an entry for every file we linted"
+            "missing disable_directives_map entry for {}; expected directives to be collected for every linted file",
+            path.display()
         );
         false
     }

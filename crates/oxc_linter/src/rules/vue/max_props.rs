@@ -8,7 +8,8 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
+use oxc_str::CompactStr;
 use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -82,6 +83,7 @@ declare_oxc_lint!(
     vue,
     restriction,
     config = MaxProps,
+    version = "1.19.0",
 );
 
 impl Rule for MaxProps {

@@ -40,7 +40,7 @@ impl<'a> SourceLine<'a> {
 
         // Check if the line is comment-only.
         // e.g.
-        // ```
+        // ```text
         // // comment
         // /* comment */
         // /* comment */ // comment
@@ -62,7 +62,7 @@ impl<'a> SourceLine<'a> {
         // Check if the line contains an import statement.
         // Sometimes, there might be leading comments in the same line,
         // so we need to check all elements in the line to find an `ImportDeclaration`.
-        // ```
+        // ```text
         // /* THIS */ import ...
         // import ...
         // ```
@@ -124,10 +124,8 @@ impl<'a> SourceLine<'a> {
                     }
                     _ => {}
                 },
-                FormatElement::Text { text, .. } => {
-                    if source.is_none() {
-                        source = Some(text);
-                    }
+                FormatElement::Text { text, .. } if source.is_none() => {
+                    source = Some(text);
                 }
                 _ => {}
             }

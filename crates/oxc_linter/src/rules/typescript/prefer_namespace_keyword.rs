@@ -44,7 +44,7 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// Namespaces are an outdated way to organize TypeScript code. ES2015 module syntax is now preferred (import/export).
+    /// Namespaces are an outdated way to organize TypeScript code. ES2015 module syntax is now preferred (`import`/`export`).
     /// For projects still using custom modules / namespaces, it's preferred to refer to them as namespaces.
     ///
     /// ### Examples
@@ -61,7 +61,8 @@ declare_oxc_lint!(
     PreferNamespaceKeyword,
     typescript,
     correctness,
-    fix
+    fix,
+    version = "0.7.0",
 );
 
 fn is_valid_module(module: &TSModuleDeclaration) -> bool {

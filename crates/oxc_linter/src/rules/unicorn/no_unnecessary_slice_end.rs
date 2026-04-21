@@ -51,6 +51,7 @@ declare_oxc_lint!(
     unicorn,
     pedantic,
     fix,
+    version = "0.16.10",
 );
 
 impl Rule for NoUnnecessarySliceEnd {

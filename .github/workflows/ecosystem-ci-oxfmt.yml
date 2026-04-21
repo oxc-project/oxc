@@ -1,0 +1,70 @@
+name: Ecosystem CI (oxfmt)
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions: {}
+
+concurrency:
+  group: ecosystem-ci-oxfmt-${{ github.event.issue.number }}
+  cancel-in-progress: true
+
+jobs:
+  trigger:
+    if: >
+      github.event.issue.pull_request &&
+      contains(github.event.comment.body, '/oxfmt-ecosys') &&
+      (
+        github.event.comment.author_association == 'MEMBER' ||
+        github.event.comment.author_association == 'OWNER'
+      )
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: read
+    steps:
+      - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        id: prepare
+        with:
+          script: |
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number,
+            });
+            await github.rest.reactions.createForIssueComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: context.payload.comment.id,
+              content: 'rocket',
+            });
+            const { data: comment } = await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: `Triggering Oxfmt Ecosystem CI for \`${pr.head.ref}\`\nhttps://github.com/oxc-project/oxc-ecosystem-ci/actions/workflows/oxfmt-ci.yml`,
+            });
+            core.setOutput('ref', `refs/pull/${context.issue.number}/head`);
+            core.setOutput('comment-id', comment.id);
+
+      - uses: actions/create-github-app-token@1b10c78c7865c340bc4f6099eb2f838309f1e8c3 # v3.1.1
+        id: app-token
+        with:
+          client-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: oxc-project
+          repositories: oxc-ecosystem-ci
+
+      - uses: benc-uk/workflow-dispatch@7a027648b88c2413826b6ddd6c76114894dc5ec4 # v1.3.1
+        with:
+          repo: oxc-project/oxc-ecosystem-ci
+          workflow: oxfmt-ci.yml
+          token: ${{ steps.app-token.outputs.token }}
+          ref: main
+          inputs: >-
+            {
+              "issue-number": "${{ github.event.issue.number }}",
+              "comment-id": "${{ steps.prepare.outputs.comment-id }}",
+              "ref": "${{ steps.prepare.outputs.ref }}"
+            }

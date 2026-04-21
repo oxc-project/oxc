@@ -12,7 +12,8 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::PropName;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNode, Reference, SymbolId};
-use oxc_span::{CompactStr, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
+use oxc_str::CompactStr;
 
 use crate::{
     ast_util::iter_outer_expressions,
@@ -63,6 +64,7 @@ declare_oxc_lint!(
     react,
     pedantic,
     config = DisplayNameConfig,
+    version = "1.42.0",
 );
 
 #[derive(Debug)]
@@ -347,7 +349,7 @@ fn has_display_name_via_semantic(
     component_name: Option<&CompactStr>,
     ctx: &LintContext,
 ) -> bool {
-    let component_name_str = component_name.map(oxc_span::CompactStr::as_str);
+    let component_name_str = component_name.map(CompactStr::as_str);
 
     // Check all references to this symbol
     for reference in ctx.scoping().get_resolved_references(symbol_id) {
@@ -629,26 +631,24 @@ fn is_anonymous_export_component(
     ignore_transpiler_name: bool,
 ) -> Option<ReactComponentInfo> {
     match &export.declaration {
-        ExportDefaultDeclarationKind::ArrowFunctionExpression(func) => {
+        ExportDefaultDeclarationKind::ArrowFunctionExpression(func)
             // Uses visitor pattern to handle JSX in nested control flow
-            if function_body_contains_jsx(&func.body) {
+            if function_body_contains_jsx(&func.body) => {
                 return Some(ReactComponentInfo {
                     span: export.span,
                     is_context: false,
                     name: None,
                 });
             }
-        }
-        ExportDefaultDeclarationKind::FunctionExpression(func) => {
+        ExportDefaultDeclarationKind::FunctionExpression(func)
             // Uses visitor pattern to handle JSX in nested control flow
-            if function_contains_jsx(func) && (func.id.is_none() || ignore_transpiler_name) {
+            if function_contains_jsx(func) && (func.id.is_none() || ignore_transpiler_name) => {
                 return Some(ReactComponentInfo {
                     span: export.span,
                     is_context: false,
                     name: None,
                 });
             }
-        }
         ExportDefaultDeclarationKind::FunctionDeclaration(func) => {
             if let Some(name) = &func.id
                 && ignore_transpiler_name
@@ -725,26 +725,24 @@ fn is_module_exports_component(
         && member.property.name == "exports"
     {
         match &assign.right {
-            Expression::ArrowFunctionExpression(func) => {
+            Expression::ArrowFunctionExpression(func)
                 // Uses visitor pattern to handle JSX in nested control flow
-                if function_body_contains_jsx(&func.body) {
+                if function_body_contains_jsx(&func.body) => {
                     return Some(ReactComponentInfo {
                         span: assign.span,
                         is_context: false,
                         name: None,
                     });
                 }
-            }
-            Expression::FunctionExpression(func) => {
+            Expression::FunctionExpression(func)
                 // Uses visitor pattern to handle JSX in nested control flow
-                if function_contains_jsx(func) && (func.id.is_none() || ignore_transpiler_name) {
+                if function_contains_jsx(func) && (func.id.is_none() || ignore_transpiler_name) => {
                     return Some(ReactComponentInfo {
                         span: assign.span,
                         is_context: false,
                         name: None,
                     });
                 }
-            }
             Expression::CallExpression(call) => {
                 if let Some(callee_name) = call.callee_name() {
                     if callee_name == "createClass" || callee_name == "createReactClass" {

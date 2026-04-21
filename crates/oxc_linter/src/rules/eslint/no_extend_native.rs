@@ -4,7 +4,8 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, GetSpan};
+use oxc_span::GetSpan;
+use oxc_str::CompactStr;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -76,6 +77,7 @@ declare_oxc_lint!(
     eslint,
     suspicious,
     config = NoExtendNativeConfig,
+    version = "0.9.7",
 );
 
 impl Rule for NoExtendNative {
@@ -90,7 +92,7 @@ impl Rule for NoExtendNative {
                 let reference = symbols.get_reference(reference_id);
                 let name = ctx.semantic().reference_name(reference);
                 // If the referenced name does not appear to be a global object, skip it.
-                if !ctx.env_contains_var(name) {
+                if !ctx.is_ecma_script_global(name) {
                     continue;
                 }
                 // If the referenced name is explicitly allowed, skip it.

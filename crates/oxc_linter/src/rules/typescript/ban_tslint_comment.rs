@@ -15,7 +15,7 @@ pub struct BanTslintComment;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This rule disallows `tslint:<rule-flag>` comments
+    /// This rule disallows `tslint:<rule-flag>` comments.
     ///
     /// ### Why is this bad?
     ///
@@ -37,7 +37,8 @@ declare_oxc_lint!(
     BanTslintComment,
     typescript,
     style,
-    fix
+    fix,
+    version = "0.2.9",
 );
 
 static ENABLE_DISABLE_REGEX: Lazy<Regex> =

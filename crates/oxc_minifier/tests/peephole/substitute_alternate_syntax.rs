@@ -711,7 +711,7 @@ fn test_fold_string_constructor() {
     // Don't fold the existence check to preserve behavior
     test_same("var a = String?.('hello')");
 
-    test_same("var s = Symbol(), a = String(s);");
+    test("var s = Symbol(), a = String(s);", "var a = String(Symbol());");
 
     test_same("var a = String('hello', bar());");
     test_same("var a = String({valueOf: function() { return 1; }});");
@@ -740,19 +740,43 @@ fn optional_catch_binding() {
     test_same("try { foo } catch([e]) {}");
     test_same("try { foo } catch({e}) {}");
     test_same("try { foo } catch(e) { var e = baz; bar(e) }");
-    test("try { foo } catch(e) { var e = 2 }", "try { foo } catch { var e = 2 }");
+    // catch param must be kept when body has a same-named var. Removing
+    // the param would change which binding the assignment targets.
+    test_same("try { foo } catch(e) { var e = 2 }");
     test_same("try { foo } catch(e) { var e = 2 } bar(e)");
+    test_same("try { foo } catch(e) { var {e} = obj }");
+    test_same("try { foo } catch(e) { var [e] = arr }");
 
-    // FIXME catch(a) has no references but it cannot be removed.
-    // test_same(
-    // r#"var a = "PASS";
-    // try {
-    // throw "FAIL1";
-    // } catch (a) {
-    // var a = "FAIL2";
-    // }
-    // console.log(a);"#,
-    // );
+    // var inside a function does NOT interact with the catch parameter;
+    // var doesn't hoist out of functions, so the catch param can be removed.
+    test(
+        "try { foo } catch(e) { (function() { var e = 2 })() }",
+        "try { foo } catch { (function() { var e = 2;})();}",
+    );
+    test(
+        "try { foo } catch(e) { function f() { var e = 2 } }",
+        "try { foo } catch { function f() { var e = 2 } }",
+    );
+
+    test_same(
+        r#"var a = "PASS";
+    try {
+    throw "FAIL1";
+    } catch (a) {
+    var a = "FAIL2";
+    }
+    console.log(a);"#,
+    );
+
+    // Regression tests for https://github.com/oxc-project/oxc/issues/17307
+    test(
+        "try {} catch (e) { try {} catch (e) { var e = 'e'; console.log(e === 'e') } } console.log(e === undefined)",
+        "try {} catch (e) { var e } console.log(e === void 0)",
+    );
+    test(
+        "try { throw 1 } catch (e) { try { throw 2 } catch (e) { var e = 'e'; console.log(e === 'e') } } console.log(e === undefined)",
+        "try { throw 1 } catch (e) { try { throw 2 } catch (e) { var e = 'e'; console.log(e === 'e') } } console.log(e === void 0)",
+    );
 
     test_target_same("try { foo } catch(e) {}", "chrome65");
 }
@@ -800,19 +824,19 @@ fn test_object_callee_indirect_call() {
 fn test_rewrite_arguments_copy_loop() {
     test(
         "function _() { for (var e = arguments.length, r = Array(e), a = 0; a < e; a++) r[a] = arguments[a]; console.log(r) }",
-        "function _() { var r = [...arguments]; console.log(r) }",
+        "function _() { console.log([...arguments]) }",
     );
     test(
         "function _() { for (var e = arguments.length, r = Array(e), a = 0; a < e; a++) { r[a] = arguments[a]; } console.log(r) }",
-        "function _() { var r = [...arguments]; console.log(r) }",
+        "function _() { console.log([...arguments]) }",
     );
     test(
         "function _() { for (var e = arguments.length, r = Array(e), a = 0; a < e; a++) { r[a] = arguments[a] } console.log(r) }",
-        "function _() { var r = [...arguments]; console.log(r) }",
+        "function _() { console.log([...arguments]) }",
     );
     test(
         "function _() { for (var e = arguments.length, r = new Array(e), a = 0; a < e; a++) r[a] = arguments[a]; console.log(r) }",
-        "function _() { var r = [...arguments]; console.log(r) }",
+        "function _() { console.log([...arguments]) }",
     );
     test(
         "function _() { for (var e = arguments.length, r = Array(e > 1 ? e - 1 : 0), a = 1; a < e; a++) r[a - 1] = arguments[a]; console.log(r) }",
@@ -824,11 +848,11 @@ fn test_rewrite_arguments_copy_loop() {
     );
     test(
         "function _() { for (var e = arguments.length, r = [], a = 0; a < e; a++) r[a] = arguments[a]; console.log(r) }",
-        "function _() { var r = [...arguments]; console.log(r) }",
+        "function _() { console.log([...arguments]) }",
     );
     test(
         "function _() { for (var r = [], a = 0; a < arguments.length; a++) r[a] = arguments[a]; console.log(r) }",
-        "function _() { var r = [...arguments]; console.log(r) }",
+        "function _() { console.log([...arguments]) }",
     );
     test(
         "function _() { for (var r = [], a = 1; a < arguments.length; a++) r[a - 1] = arguments[a]; console.log(r) }",
@@ -841,6 +865,11 @@ fn test_rewrite_arguments_copy_loop() {
     test(
         "function _() { for (var e = arguments.length, r = Array(e), a = 0; a < e; a++) r[a] = arguments[a]; }",
         "function _() {}",
+    );
+    // Unused copy result + consequent must not become illegal `var;` (see `for_stmt.init = None`).
+    test(
+        "function _(){if(window.__x)for(var n=arguments.length,a=[],i=0;i<n;i++)a[i]=arguments[i]}",
+        "function _(){window.__x}",
     );
     test(
         "function _() { for (var e = arguments.length, r = Array(e > 1 ? e - 1 : 0), a = 1; a < e; a++) r[a - 1] = arguments[a] }",
@@ -903,7 +932,7 @@ fn test_rewrite_arguments_copy_loop() {
     );
     test(
         "function _() { { let _; for (var e = arguments.length, r = Array(e), a = 0; a < e; a++) r[a] = arguments[a]; console.log(r) } }",
-        "function _() { { let _; var r = [...arguments]; console.log(r) } }",
+        "function _() { { let _; console.log([...arguments]) } }",
     );
     test_same(
         "function _() { for (var e = arguments.length, r = Array(e), a = 0; a < e; a++) r[a] = arguments[a]; console.log(r, e) }",

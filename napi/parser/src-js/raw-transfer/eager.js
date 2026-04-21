@@ -162,10 +162,11 @@ const TOKEN_TYPES = [
   "JSXIdentifier",
 ];
 
+// Mask for active bits in `ESTreeKind` discriminants
+const TOKEN_KIND_MASK = 15;
+
 // Details of Rust `Token` type
 const TOKEN_SIZE = 16;
-const KIND_FIELD_OFFSET = 8;
-const IS_ESCAPED_FIELD_OFFSET = 10;
 
 /**
  * Deserialize tokens from buffer.
@@ -175,15 +176,15 @@ const IS_ESCAPED_FIELD_OFFSET = 10;
  * @returns {Object[]} - Array of token objects
  */
 function deserializeTokens(buffer, sourceText, isJs) {
-  const { uint32 } = buffer;
+  const { int32 } = buffer;
 
-  let pos = uint32[TOKENS_OFFSET_POS_32];
-  const len = uint32[TOKENS_LEN_POS_32];
+  let pos = int32[TOKENS_OFFSET_POS_32];
+  const len = int32[TOKENS_LEN_POS_32];
   const endPos = pos + len * TOKEN_SIZE;
 
   const tokens = [];
   while (pos < endPos) {
-    tokens.push(deserializeToken(pos, buffer, sourceText, isJs));
+    tokens.push(deserializeToken(pos, int32, sourceText, isJs));
     pos += TOKEN_SIZE;
   }
   return tokens;
@@ -192,21 +193,24 @@ function deserializeTokens(buffer, sourceText, isJs) {
 /**
  * Deserialize a token from buffer at position `pos`.
  * @param {number} pos - Position in buffer containing Rust `Token` type
- * @param {Uint8Array} buffer - Buffer containing AST in raw form
+ * @param {Int32Array} int32 - Buffer containing AST in raw form as an `Int32Array`
  * @param {string} sourceText - Source for the file
  * @param {boolean} isJs - `true` if parsing in JS mode
  * @returns {Object} - Token object
  */
-function deserializeToken(pos, buffer, sourceText, isJs) {
-  const { uint32 } = buffer;
-
-  const pos32 = pos >> 2;
-  const start = uint32[pos32],
-    end = uint32[pos32 + 1];
+function deserializeToken(pos, int32, sourceText, isJs) {
+  const pos32 = pos >> 2,
+    start = int32[pos32],
+    end = int32[pos32 + 1],
+    kindAndFlags = int32[pos32 + 2];
 
   let value = sourceText.slice(start, end);
 
-  const kind = buffer[pos + KIND_FIELD_OFFSET];
+  // `Kind` is byte at index 8 in `Token`.
+  // `Kind` has 12 variants numbered from 0 to 11.
+  // We have to mask the bottom byte (`& 0xFF`), so may as well mask off bits which can't be set in `Kind` at same time.
+  // This may allow V8 to generate more efficient code for `TOKEN_TYPES[kind]`.
+  const kind = kindAndFlags & TOKEN_KIND_MASK;
 
   if (kind === REGEXP_KIND) {
     const patternEnd = value.lastIndexOf("/");
@@ -225,8 +229,9 @@ function deserializeToken(pos, buffer, sourceText, isJs) {
   // Strip leading `#` from private identifiers
   if (kind === PRIVATE_IDENTIFIER_KIND) value = value.slice(1);
 
-  // Unescape identifiers, keywords, and private identifiers in JS mode
-  if (isJs && kind <= PRIVATE_IDENTIFIER_KIND && buffer[pos + IS_ESCAPED_FIELD_OFFSET] === 1) {
+  // Unescape identifiers, keywords, and private identifiers in JS mode.
+  // `is_escaped` flag is in byte 10 of `Token`, and is a `bool`.
+  if (isJs && kind <= PRIVATE_IDENTIFIER_KIND && (kindAndFlags & 0x10000) !== 0) {
     value = unescapeIdentifier(value);
   }
 

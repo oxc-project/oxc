@@ -8,7 +8,8 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
+use oxc_str::CompactStr;
 use rustc_hash::FxHashMap;
 use serde::{Deserialize, Deserializer, de::Error};
 use serde_json::Value;
@@ -551,6 +552,7 @@ declare_oxc_lint!(
     // TODO: Replace this with an actual config struct. This is a dummy value to
     // indicate that this rule has configuration and avoid errors.
     config = Value,
+    version = "0.15.0",
 );
 
 fn add_configuration_path_from_object(

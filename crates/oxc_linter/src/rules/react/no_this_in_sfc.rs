@@ -64,12 +64,17 @@ declare_oxc_lint!(
     /// ```
     NoThisInSfc,
     react,
-    correctness
+    correctness,
+    version = "1.37.0",
 );
 
 impl Rule for NoThisInSfc {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::ThisExpression(this_expr) = node.kind() else { return };
+
+        if !ctx.nodes().parent_kind(node.id()).is_member_expression_kind() {
+            return;
+        }
 
         let Some(component_node) = get_parent_function(node, ctx) else { return };
 
@@ -340,6 +345,15 @@ fn test() {
             None,
             None,
         ),
+        (
+            "
+                    const Foo = ({query}) => {
+                      return <div onClick={reopen.bind(this, query)}>click</div>
+                    }
+                  ",
+            None,
+            None,
+        ),
     ];
 
     let fail = vec![
@@ -416,6 +430,15 @@ fn test() {
         ),
         ("const Foo = (props) => <span>{this.props.foo}</span>", None, None),
         ("const Foo = (props) => this.props.foo ? <span>{props.bar}</span> : null;", None, None),
+        (
+            "
+                    function Foo(props) {
+                      return <div>{this[\"props\"].foo}</div>;
+                    }
+                  ",
+            None,
+            None,
+        ),
         (
             "
                     function Foo(props) {

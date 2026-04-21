@@ -6,7 +6,8 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
+use oxc_str::CompactStr;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -53,9 +54,13 @@ pub struct LabelHasAssociatedControlConfig {
 #[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 enum Assert {
+    /// Assert that the label uses `htmlFor` to associate a control.
     HtmlFor,
+    /// Assert that the label has a nested control
     Nesting,
+    /// Assert that the label uses both `htmlFor` and nesting for associating a control
     Both,
+    /// Assert that the label uses either `htmlFor` or nesting for associating a control
     #[default]
     Either,
 }
@@ -120,7 +125,8 @@ declare_oxc_lint!(
     LabelHasAssociatedControl,
     jsx_a11y,
     correctness,
-    config = LabelHasAssociatedControlConfig
+    config = LabelHasAssociatedControlConfig,
+    version = "0.9.1",
 );
 
 impl Rule for LabelHasAssociatedControl {

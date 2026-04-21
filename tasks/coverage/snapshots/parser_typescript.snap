@@ -1,9 +1,9 @@
-commit: 0c2c7a35
+commit: c7a0ae10
 
 parser_typescript Summary:
-AST Parsed     : 9824/9827 (99.97%)
-Positive Passed: 9813/9827 (99.86%)
-Negative Passed: 1532/2586 (59.24%)
+AST Parsed     : 9829/9832 (99.97%)
+Positive Passed: 9818/9832 (99.86%)
+Negative Passed: 1534/2587 (59.30%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration4.ts
@@ -470,6 +470,8 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/importAssert
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/importDeclWithClassModifiers.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/importTypeAssertionDeprecation.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/importWithTrailingSlash.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/importedEnumMemberMergedWithExportedAliasIsError.ts
@@ -879,8 +881,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/superCallIns
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/superCallInsideClassExpression.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/superInConstructorParam1.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/superNewCall1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/superPropertyAccess2.ts
 
@@ -1965,8 +1965,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/scanner/e
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/scanner/ecmascript5/scannerNumericLiteral8.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/scanner/ecmascript5/scannerNumericLiteral9.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.14.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarationsInForOf.4.ts
 
@@ -6483,7 +6481,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╰────
   help: Try inserting a semicolon here
 
-  × A rest parameter cannot be optional
+  × TS(1047): A rest parameter cannot be optional
    ╭─[typescript/tests/cases/compiler/fatarrowfunctionsOptionalArgsErrors1.ts:2:8]
  1 │ (arg1?, arg2) => 101;
  2 │ (...arg?) => 102;
@@ -8698,7 +8696,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  19 │ var t4 =
     ╰────
 
-  × A rest parameter cannot be optional
+  × TS(1047): A rest parameter cannot be optional
     ╭─[typescript/tests/cases/compiler/noCrashOnMixin2.ts:11:40]
  10 │ 
  11 │ type Constructor<T = {}> = new (...args?: any[]) => T;
@@ -9451,11 +9449,11 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
 
   × Unexpected token
-   ╭─[typescript/tests/cases/compiler/parseAssertEntriesError.ts:2:32]
+   ╭─[typescript/tests/cases/compiler/parseAssertEntriesError.ts:2:30]
  1 │ export type LocalInterface =
- 2 │     & import("pkg", { assert: {1234, "resolution-mode": "require"} }).RequireInterface
-   ·                                ────
- 3 │     & import("pkg", { assert: {1234, "resolution-mode": "import"} }).ImportInterface;
+ 2 │     & import("pkg", { with: {1234, "resolution-mode": "require"} }).RequireInterface
+   ·                              ────
+ 3 │     & import("pkg", { with: {1234, "resolution-mode": "import"} }).ImportInterface;
    ╰────
 
   × Invalid characters after number
@@ -10519,7 +10517,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·                  ─
    ╰────
 
-  × A rest parameter cannot be optional
+  × TS(1047): A rest parameter cannot be optional
    ╭─[typescript/tests/cases/compiler/restParamAsOptional.ts:1:16]
  1 │ function f(...x?) { }
    ·                ─
@@ -11820,6 +11818,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  52 │                 super.method();
     ·                 ─────
  53 │             },
+    ╰────
+
+  × 'new super()' is not allowed
+    ╭─[typescript/tests/cases/compiler/superNewCall1.ts:9:13]
+  8 │     constructor() {
+  9 │         new super(value => String(value));
+    ·             ─────────────────────────────
+ 10 │     }
     ╰────
 
   × 'super' can only be used with function calls or in property accesses
@@ -13826,7 +13832,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  14 │   }
     ╰────
 
-  × Cannot use await in class static initialization block
+  × Cannot use 'for await' in class static initialization block
    ╭─[typescript/tests/cases/conformance/classes/classStaticBlock/classStaticBlock23.ts:5:5]
  4 │       static {
  5 │ ╭─▶     for await (const nn of nums) {
@@ -13835,7 +13841,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  8 │       }
    ╰────
 
-  × Cannot use await in class static initialization block
+  × Cannot use 'for await' in class static initialization block
     ╭─[typescript/tests/cases/conformance/classes/classStaticBlock/classStaticBlock23.ts:14:7]
  13 │         static {
  14 │ ╭─▶       for await (const nn of nums) {
@@ -17313,7 +17319,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  8 │ a0([1, 2, [["world"]], "string"]);  // Error
    ╰────
 
-  × A rest parameter cannot be optional
+  × TS(1047): A rest parameter cannot be optional
     ╭─[typescript/tests/cases/conformance/es6/destructuring/destructuringParameterDeclaration4.ts:14:17]
  13 │ function a2(...a: someArray) { }  // Error, rest parameter must be array type
  14 │ function a3(...b?) { }            // Error, can't be optional
@@ -24168,7 +24174,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │ }
    ╰────
 
-  × A rest parameter cannot be optional
+  × TS(1047): A rest parameter cannot be optional
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ParameterLists/parserParameterList11.ts:1:8]
  1 │ (...arg?) => 102;
    ·        ─
@@ -24265,7 +24271,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  5 │ }
    ╰────
 
-  × A rest parameter cannot be optional
+  × TS(1047): A rest parameter cannot be optional
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ParameterLists/parserParameterList9.ts:2:14]
  1 │ class C {
  2 │    foo(...bar?) { }
@@ -25867,6 +25873,22 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  2 │ 
    ╰────
   help: Wrap this code in a block or use a module
+
+  × Cannot use 'await using' in class static initialization block
+   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.14.ts:3:9]
+ 2 │     static {
+ 3 │         await using x = null;
+   ·         ─────────────────────
+ 4 │         {
+   ╰────
+
+  × Cannot use 'await using' in class static initialization block
+   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.14.ts:5:13]
+ 4 │         {
+ 5 │             await using y = null;
+   ·             ─────────────────────
+ 6 │         }
+   ╰────
 
   × TS(1546): 'await using' declarations are not allowed in ambient contexts.
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.16.ts:2:17]

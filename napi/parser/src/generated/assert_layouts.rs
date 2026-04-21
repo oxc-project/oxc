@@ -21,20 +21,20 @@ const _: () = {
     assert!(size_of::<RawTransferMetadata>() == 16);
     assert!(align_of::<RawTransferMetadata>() == 4);
     assert!(offset_of!(RawTransferMetadata, data_offset) == 0);
+    assert!(offset_of!(RawTransferMetadata, tokens_offset) == 4);
+    assert!(offset_of!(RawTransferMetadata, tokens_len) == 8);
     assert!(offset_of!(RawTransferMetadata, is_ts) == 12);
     assert!(offset_of!(RawTransferMetadata, is_jsx) == 13);
     assert!(offset_of!(RawTransferMetadata, has_bom) == 14);
-    assert!(offset_of!(RawTransferMetadata, tokens_offset) == 4);
-    assert!(offset_of!(RawTransferMetadata, tokens_len) == 8);
 
     // Padding: 7 bytes
     assert!(size_of::<Error>() == 80);
     assert!(align_of::<Error>() == 8);
-    assert!(offset_of!(Error, severity) == 72);
     assert!(offset_of!(Error, message) == 0);
     assert!(offset_of!(Error, labels) == 16);
     assert!(offset_of!(Error, help_message) == 40);
     assert!(offset_of!(Error, codeframe) == 56);
+    assert!(offset_of!(Error, severity) == 72);
 
     assert!(size_of::<ErrorSeverity>() == 1);
     assert!(align_of::<ErrorSeverity>() == 1);
@@ -42,17 +42,17 @@ const _: () = {
     // Padding: 0 bytes
     assert!(size_of::<ErrorLabel>() == 24);
     assert!(align_of::<ErrorLabel>() == 8);
-    assert!(offset_of!(ErrorLabel, message) == 8);
     assert!(offset_of!(ErrorLabel, span) == 0);
+    assert!(offset_of!(ErrorLabel, message) == 8);
 
     // Padding: 7 bytes
     assert!(size_of::<EcmaScriptModule>() == 104);
     assert!(align_of::<EcmaScriptModule>() == 8);
-    assert!(offset_of!(EcmaScriptModule, has_module_syntax) == 96);
     assert!(offset_of!(EcmaScriptModule, static_imports) == 0);
     assert!(offset_of!(EcmaScriptModule, static_exports) == 24);
     assert!(offset_of!(EcmaScriptModule, dynamic_imports) == 48);
     assert!(offset_of!(EcmaScriptModule, import_metas) == 72);
+    assert!(offset_of!(EcmaScriptModule, has_module_syntax) == 96);
 
     // Padding: 0 bytes
     assert!(size_of::<StaticImport>() == 56);
@@ -82,20 +82,20 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(size_of::<RawTransferMetadata>() == 16);
     assert!(align_of::<RawTransferMetadata>() == 4);
     assert!(offset_of!(RawTransferMetadata, data_offset) == 0);
+    assert!(offset_of!(RawTransferMetadata, tokens_offset) == 4);
+    assert!(offset_of!(RawTransferMetadata, tokens_len) == 8);
     assert!(offset_of!(RawTransferMetadata, is_ts) == 12);
     assert!(offset_of!(RawTransferMetadata, is_jsx) == 13);
     assert!(offset_of!(RawTransferMetadata, has_bom) == 14);
-    assert!(offset_of!(RawTransferMetadata, tokens_offset) == 4);
-    assert!(offset_of!(RawTransferMetadata, tokens_len) == 8);
 
     // Padding: 3 bytes
     assert!(size_of::<Error>() == 44);
     assert!(align_of::<Error>() == 4);
-    assert!(offset_of!(Error, severity) == 40);
     assert!(offset_of!(Error, message) == 0);
     assert!(offset_of!(Error, labels) == 8);
     assert!(offset_of!(Error, help_message) == 24);
     assert!(offset_of!(Error, codeframe) == 32);
+    assert!(offset_of!(Error, severity) == 40);
 
     assert!(size_of::<ErrorSeverity>() == 1);
     assert!(align_of::<ErrorSeverity>() == 1);
@@ -103,17 +103,17 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     // Padding: 0 bytes
     assert!(size_of::<ErrorLabel>() == 16);
     assert!(align_of::<ErrorLabel>() == 4);
-    assert!(offset_of!(ErrorLabel, message) == 8);
     assert!(offset_of!(ErrorLabel, span) == 0);
+    assert!(offset_of!(ErrorLabel, message) == 8);
 
     // Padding: 3 bytes
     assert!(size_of::<EcmaScriptModule>() == 68);
     assert!(align_of::<EcmaScriptModule>() == 4);
-    assert!(offset_of!(EcmaScriptModule, has_module_syntax) == 64);
     assert!(offset_of!(EcmaScriptModule, static_imports) == 0);
     assert!(offset_of!(EcmaScriptModule, static_exports) == 16);
     assert!(offset_of!(EcmaScriptModule, dynamic_imports) == 32);
     assert!(offset_of!(EcmaScriptModule, import_metas) == 48);
+    assert!(offset_of!(EcmaScriptModule, has_module_syntax) == 64);
 
     // Padding: 0 bytes
     assert!(size_of::<StaticImport>() == 40);

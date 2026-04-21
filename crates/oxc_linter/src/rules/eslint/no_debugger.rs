@@ -17,7 +17,7 @@ pub struct NoDebugger;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Checks for usage of the `debugger` statement
+    /// Checks for usage of the `debugger` statement.
     ///
     /// ### Why is this bad?
     ///
@@ -45,7 +45,8 @@ declare_oxc_lint!(
     NoDebugger,
     eslint,
     correctness,
-    fix
+    fix,
+    version = "0.0.3",
 );
 
 impl Rule for NoDebugger {

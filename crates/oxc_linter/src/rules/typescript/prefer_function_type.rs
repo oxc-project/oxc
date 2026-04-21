@@ -85,7 +85,8 @@ declare_oxc_lint!(
     PreferFunctionType,
     typescript,
     style,
-    conditional_fix
+    conditional_fix,
+    version = "0.2.11",
 );
 
 fn has_one_super_type(decl: &TSInterfaceDeclaration) -> bool {

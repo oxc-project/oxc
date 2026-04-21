@@ -54,7 +54,8 @@ declare_oxc_lint!(
     NoArrayForEach,
     unicorn,
     restriction,
-    pending
+    pending,
+    version = "0.0.19",
 );
 
 impl Rule for NoArrayForEach {
@@ -83,10 +84,8 @@ impl Rule for NoArrayForEach {
             let object = member_expr.object();
 
             match object {
-                Expression::Identifier(ident) => {
-                    if IGNORED_OBJECTS.contains(&ident.name.as_str()) {
-                        return;
-                    }
+                Expression::Identifier(ident) if IGNORED_OBJECTS.contains(&ident.name.as_str()) => {
+                    return;
                 }
                 match_member_expression!(Expression) => {
                     if let Some(name) = object.to_member_expression().static_property_name()

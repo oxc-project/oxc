@@ -98,6 +98,7 @@ declare_oxc_lint!(
     typescript,
     correctness,
     config = TripleSlashReferenceConfig,
+    version = "0.2.0",
 );
 
 impl Rule for TripleSlashReference {

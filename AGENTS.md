@@ -14,6 +14,8 @@ Oxc is a high-performance JavaScript/TypeScript toolchain written in Rust contai
 
 All AI-generated code must be thoroughly reviewed, tested, and understood by the contributor before submission. Code should meet Oxc's performance and quality standards.
 
+- **Ban policy** - Contributors who submit repeated low-quality ("slop") PRs will be banned without prior warning. Bans may be lifted if you commit to contributing to Oxc in accordance with the policy above. You may request an unban via our Discord.
+
 ## Repository Structure
 
 Rust workspace with key directories:

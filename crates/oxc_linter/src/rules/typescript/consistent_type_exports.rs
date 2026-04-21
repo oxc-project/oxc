@@ -44,8 +44,9 @@ declare_oxc_lint!(
     /// ```
     ConsistentTypeExports(tsgolint),
     typescript,
-    nursery,
+    style,
     config = ConsistentTypeExportsConfig,
+    version = "0.0.8",
 );
 
 impl Rule for ConsistentTypeExports {

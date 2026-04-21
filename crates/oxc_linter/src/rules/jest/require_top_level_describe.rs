@@ -114,7 +114,8 @@ declare_oxc_lint!(
     RequireTopLevelDescribe,
     jest,
     style,
-    config = RequireTopLevelDescribe
+    config = RequireTopLevelDescribe,
+    version = "0.4.2",
 );
 
 impl Rule for RequireTopLevelDescribe {
@@ -155,15 +156,11 @@ impl RequireTopLevelDescribe {
         };
 
         match kind {
-            JestFnKind::General(JestGeneralFnKind::Test) => {
-                if is_top {
-                    ctx.diagnostic(unexpected_test_case(call_expr.span));
-                }
+            JestFnKind::General(JestGeneralFnKind::Test) if is_top => {
+                ctx.diagnostic(unexpected_test_case(call_expr.span));
             }
-            JestFnKind::General(JestGeneralFnKind::Hook) => {
-                if is_top {
-                    ctx.diagnostic(unexpected_hook(call_expr.span));
-                }
+            JestFnKind::General(JestGeneralFnKind::Hook) if is_top => {
+                ctx.diagnostic(unexpected_hook(call_expr.span));
             }
             JestFnKind::General(JestGeneralFnKind::Describe) => {
                 if !is_top {

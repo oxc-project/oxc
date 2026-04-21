@@ -11,25 +11,26 @@ import {
 import { deserializeProgramOnly, resetBuffer } from "../generated/deserialize.js";
 
 import visitorKeys from "../generated/keys.ts";
-import * as commentMethods from "./comments.ts";
+import { resetComments } from "./comments.ts";
+import * as commentMethods from "./comments_methods.ts";
 import { ecmaVersion } from "./context.ts";
 import * as locationMethods from "./location.ts";
-import { getNodeLoc, initLines, lines, lineStartIndices, resetLines } from "./location.ts";
+import { initLines, lines, lineStartIndices, resetLinesAndLocs } from "./location.ts";
 import { resetScopeManager, SCOPE_MANAGER } from "./scope.ts";
 import * as scopeMethods from "./scope.ts";
 import { resetTokens } from "./tokens.ts";
-import { tokens, tokensAndComments, initTokens, initTokensAndComments } from "./tokens.ts";
 import * as tokenMethods from "./tokens_methods.ts";
+import { getTokensAndComments, resetTokensAndComments } from "./tokens_and_comments.ts";
 import { debugAssertIsNonNull } from "../utils/asserts.ts";
 
 import type { Program } from "../generated/types.d.ts";
+import type { Comment } from "./comments.ts";
 import type { Ranged } from "./location.ts";
-import type { Token } from "./tokens.ts";
-import type { BufferWithArrays, Comment, Node } from "./types.ts";
 import type { ScopeManager } from "./scope.ts";
+import type { Token } from "./tokens.ts";
+import type { BufferWithArrays, Node } from "./types.ts";
 
-// Text decoder, for decoding source text from buffer
-const textDecoder = new TextDecoder("utf-8", { ignoreBOM: true });
+const { utf8Slice } = Buffer.prototype;
 
 // Buffer containing AST. Set before linting a file by `setupSourceForFile`.
 export let buffer: BufferWithArrays | null = null;
@@ -59,11 +60,18 @@ export function setupSourceForFile(bufferInput: BufferWithArrays, hasBOMInput: b
  */
 export function initSourceText(): void {
   debugAssertIsNonNull(buffer);
-  const { uint32 } = buffer,
-    programPos = uint32[DATA_POINTER_POS_32];
-  sourceStartPos = uint32[(programPos + SOURCE_START_OFFSET) >> 2];
-  sourceByteLen = uint32[(programPos + SOURCE_LEN_OFFSET) >> 2];
-  sourceText = textDecoder.decode(buffer.subarray(sourceStartPos, sourceStartPos + sourceByteLen));
+  const { int32 } = buffer,
+    programPos = int32[DATA_POINTER_POS_32];
+  sourceStartPos = int32[(programPos + SOURCE_START_OFFSET) >> 2];
+  sourceByteLen = int32[(programPos + SOURCE_LEN_OFFSET) >> 2];
+
+  // This will throw an error "Cannot create a string longer than 0x1fffffe8 characters"
+  // if `sourceByteLen > (2 ** 29 - 24)` (slightly less than 512 MiB).
+  // This is a useful invariant as it means source text offsets, number of lines, and number of tokens are limited
+  // in range so they're always valid SMIs.
+  // This makes it safe to use `>>` for division on these numbers without risking turning them into negative numbers.
+  // So we can use the cheaper `>>` operator instead of `>>>` in various places.
+  sourceText = utf8Slice.call(buffer, sourceStartPos, sourceStartPos + sourceByteLen);
 }
 
 /**
@@ -74,7 +82,7 @@ export function initAst(): void {
   debugAssertIsNonNull(sourceText);
   debugAssertIsNonNull(buffer);
 
-  ast = deserializeProgramOnly(buffer, sourceText, sourceStartPos, sourceByteLen, getNodeLoc);
+  ast = deserializeProgramOnly(buffer, sourceText, sourceStartPos, sourceByteLen);
 
   // In conformance tests, fix AST when parsing as ES3
   if (CONFORMANCE) fixES3Ast();
@@ -134,9 +142,11 @@ export function resetSourceAndAst(): void {
   sourceText = null;
   ast = null;
   resetBuffer();
-  resetLines();
+  resetLinesAndLocs();
   resetScopeManager();
   resetTokens();
+  resetComments();
+  resetTokensAndComments();
 }
 
 /**
@@ -244,12 +254,7 @@ export const SOURCE_CODE = Object.freeze({
    */
   // This property is present in ESLint's `SourceCode`, but is undocumented
   get tokensAndComments(): (Token | Comment)[] {
-    if (tokensAndComments === null) {
-      if (tokens === null) initTokens();
-      initTokensAndComments();
-    }
-    debugAssertIsNonNull(tokensAndComments);
-    return tokensAndComments;
+    return getTokensAndComments();
   },
 
   /**

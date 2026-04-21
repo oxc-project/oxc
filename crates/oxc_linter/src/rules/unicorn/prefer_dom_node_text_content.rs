@@ -40,7 +40,8 @@ declare_oxc_lint!(
     PreferDomNodeTextContent,
     unicorn,
     style,
-    conditional_fix
+    conditional_fix,
+    version = "0.0.21",
 );
 
 impl Rule for PreferDomNodeTextContent {

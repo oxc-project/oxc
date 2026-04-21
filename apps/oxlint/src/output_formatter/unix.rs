@@ -33,6 +33,10 @@ impl DiagnosticReporter for UnixReporter {
         None
     }
 
+    fn supports_minified_file_fallback(&self) -> bool {
+        false
+    }
+
     fn render_error(&mut self, error: Error) -> Option<String> {
         self.total += 1;
         Some(format_unix(&error))

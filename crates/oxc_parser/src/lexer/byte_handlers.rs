@@ -79,7 +79,7 @@ pub mod byte_handler_tables {
 /// # SAFETY
 /// Only use this macro to define byte handlers for ASCII characters.
 ///
-/// ```
+/// ```rust,ignore
 /// ascii_byte_handler!(SPS(lexer) {
 ///     lexer.consume_char();
 ///     Kind::WhiteSpace
@@ -88,7 +88,7 @@ pub mod byte_handler_tables {
 ///
 /// expands to:
 ///
-/// ```
+/// ```rust,ignore
 /// #[expect(non_snake_case)]
 /// fn SPS<C: Config>(lexer: &mut Lexer<'_, C>) -> Kind {
 ///     // SAFETY: This macro is only used for ASCII characters
@@ -128,7 +128,7 @@ macro_rules! ascii_byte_handler {
 /// # SAFETY
 /// Only use this macro to define byte handlers for ASCII characters.
 ///
-/// ```
+/// ```rust,ignore
 /// ascii_identifier_handler!(L_G(id_without_first_char) match id_without_first_char {
 ///     "et" => Kind::Get,
 ///     "lobal" => Kind::Global,
@@ -138,7 +138,7 @@ macro_rules! ascii_byte_handler {
 ///
 /// expands to:
 ///
-/// ```
+/// ```rust,ignore
 /// #[expect(non_snake_case)]
 /// fn L_G<C: Config>(lexer: &mut Lexer<'_, C>) -> Kind {
 ///     // SAFETY: This macro is only used for ASCII characters

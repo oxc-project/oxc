@@ -159,6 +159,7 @@ declare_oxc_lint!(
     pedantic,
     conditional_fix,
     config = BanTsCommentConfig,
+    version = "0.0.8",
 );
 
 impl Rule for BanTsComment {

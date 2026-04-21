@@ -61,7 +61,7 @@ impl Default for NoElseReturn {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow `else` blocks after `return` statements in `if` statements
+    /// Disallow `else` blocks after `return` statements in `if` statements.
     ///
     /// ### Why is this bad?
     ///
@@ -183,6 +183,7 @@ declare_oxc_lint!(
     pedantic,
     conditional_fix,
     config = NoElseReturn,
+    version = "0.9.10",
 );
 
 fn is_safe_from_name_collisions(

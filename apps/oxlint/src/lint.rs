@@ -13,8 +13,9 @@ use ignore::{gitignore::Gitignore, overrides::OverrideBuilder};
 
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, GraphicalReportHandler, OxcDiagnostic};
 use oxc_linter::{
-    AllowWarnDeny, ConfigStore, ConfigStoreBuilder, ExternalLinter, ExternalPluginStore,
-    InvalidFilterKind, LintFilter, LintOptions, LintRunner, LintServiceOptions, Linter,
+    AllowWarnDeny, ConfigBuilderError, ConfigStore, ConfigStoreBuilder, ExternalLinter,
+    ExternalPluginStore, InvalidFilterKind, LintFilter, LintOptions, LintRunner,
+    LintServiceOptions, Linter,
 };
 
 #[cfg(feature = "napi")]
@@ -156,16 +157,13 @@ impl CliRunner {
             // If explicit paths were provided, but all have been
             // filtered, return early.
             if provided_path_count > 0 {
-                if let Some(end) = output_formatter.lint_command_info(&LintCommandInfo {
-                    number_of_files: 0,
-                    number_of_rules: None,
-                    threads_count: rayon::current_num_threads(),
-                    start_time: now.elapsed(),
-                }) {
-                    print_and_flush_stdout(stdout, &end);
-                }
-
-                return CliRunResult::LintNoFilesFound;
+                return Self::handle_no_files_found(
+                    stdout,
+                    &output_formatter,
+                    now,
+                    None,
+                    misc_options.no_error_on_unmatched_pattern,
+                );
             }
 
             paths.push(self.cwd.clone());
@@ -292,7 +290,7 @@ impl CliRunner {
                     stdout,
                     &format!(
                         "Failed to parse oxlint configuration file.\n{}\n",
-                        render_report(&handler, &OxcDiagnostic::error(e.to_string()))
+                        render_config_builder_error(&handler, e)
                     ),
                 );
                 return CliRunResult::InvalidOptionConfig;
@@ -311,7 +309,7 @@ impl CliRunner {
                     stdout,
                     &format!(
                         "Failed to build configuration.\n{}\n",
-                        render_report(&handler, &OxcDiagnostic::error(e.to_string()))
+                        render_config_builder_error(&handler, e)
                     ),
                 );
                 return CliRunResult::InvalidOptionConfig;
@@ -339,8 +337,11 @@ impl CliRunner {
             LintServiceOptions::new(self.cwd.clone()).with_cross_module(use_cross_module);
 
         let config_store = ConfigStore::new(lint_config, nested_configs, external_plugin_store);
-        let type_aware = self.options.type_aware || config_store.type_aware_enabled();
-        let type_check = self.options.type_check || config_store.type_check_enabled();
+        let type_check_only = self.options.type_check_only;
+        let type_aware =
+            type_check_only || self.options.type_aware || config_store.type_aware_enabled();
+        let type_check =
+            type_check_only || self.options.type_check || config_store.type_check_enabled();
         if type_check && !type_aware {
             print_and_flush_stdout(
                 stdout,
@@ -348,20 +349,31 @@ impl CliRunner {
             );
             return CliRunResult::InvalidOptionTypeCheckWithoutTypeAware;
         }
+        if type_check_only && fix_options.is_enabled() {
+            print_and_flush_stdout(
+                stdout,
+                "The `--type-check-only` option cannot be used with fix flags.\nRemove `--fix`, `--fix-suggestions`, and `--fix-dangerously`.\n",
+            );
+            return CliRunResult::InvalidOptionTypeCheckOnlyWithFix;
+        }
         let deny_warnings = warning_options.deny_warnings || config_store.deny_warnings();
         let max_warnings = warning_options.max_warnings.or(config_store.max_warnings());
 
         // Only propagate Warn/Deny; treat Allow (off) as disabling reports.
-        let report_unused_directives = match inline_config_options.report_unused_directives {
-            ReportUnusedDirectives::WithoutSeverity(true) => Some(AllowWarnDeny::Warn),
-            ReportUnusedDirectives::WithSeverity(Some(severity)) if severity.is_warn_deny() => {
-                Some(severity)
+        let report_unused_directives = if type_check_only {
+            None
+        } else {
+            match inline_config_options.report_unused_directives {
+                ReportUnusedDirectives::WithoutSeverity(true) => Some(AllowWarnDeny::Warn),
+                ReportUnusedDirectives::WithSeverity(Some(severity)) if severity.is_warn_deny() => {
+                    Some(severity)
+                }
+                ReportUnusedDirectives::WithSeverity(Some(_)) => None,
+                _ => match config_store.report_unused_disable_directives() {
+                    Some(severity) if severity.is_warn_deny() => Some(severity),
+                    _ => None,
+                },
             }
-            ReportUnusedDirectives::WithSeverity(Some(_)) => None,
-            _ => match config_store.report_unused_disable_directives() {
-                Some(severity) if severity.is_warn_deny() => Some(severity),
-                _ => None,
-            },
         };
         let (mut diagnostic_service, tx_error) = Self::get_diagnostic_service(
             &output_formatter,
@@ -415,7 +427,18 @@ impl CliRunner {
             }
         }
 
-        let number_of_rules = linter.number_of_rules(type_aware);
+        let number_of_rules =
+            if type_check_only { None } else { linter.number_of_rules(type_aware) };
+
+        if number_of_files == 0 {
+            return Self::handle_no_files_found(
+                stdout,
+                &output_formatter,
+                now,
+                number_of_rules,
+                misc_options.no_error_on_unmatched_pattern,
+            );
+        }
 
         // Create the LintRunner
         // TODO: Add a warning message if `tsgolint` cannot be found, but type-aware rules are enabled
@@ -424,6 +447,7 @@ impl CliRunner {
             .with_type_check(type_check)
             .with_silent(misc_options.silent)
             .with_fix_kind(fix_options.fix_kind())
+            .with_type_check_only(type_check_only)
             .build()
         {
             Ok(runner) => runner,
@@ -498,6 +522,36 @@ impl CliRunner {
         )
     }
 
+    fn handle_no_files_found(
+        stdout: &mut dyn Write,
+        output_formatter: &OutputFormatter,
+        now: Instant,
+        number_of_rules: Option<usize>,
+        no_error_on_unmatched_pattern: bool,
+    ) -> CliRunResult {
+        if !no_error_on_unmatched_pattern {
+            print_and_flush_stdout(
+                stdout,
+                "No files found to lint. Please check your paths and ignore patterns.\n",
+            );
+        }
+
+        if let Some(end) = output_formatter.lint_command_info(&LintCommandInfo {
+            number_of_files: 0,
+            number_of_rules,
+            threads_count: rayon::current_num_threads(),
+            start_time: now.elapsed(),
+        }) {
+            print_and_flush_stdout(stdout, &end);
+        }
+
+        if no_error_on_unmatched_pattern {
+            CliRunResult::LintSucceeded
+        } else {
+            CliRunResult::LintNoFilesFound
+        }
+    }
+
     // moved into a separate function for readability, but it's only ever used
     // in one place.
     fn get_filters(
@@ -541,12 +595,15 @@ impl CliRunner {
 
 pub fn print_and_flush_stdout(stdout: &mut dyn Write, message: &str) {
     stdout.write_all(message.as_bytes()).or_else(check_for_writer_error).unwrap();
-    stdout.flush().unwrap();
+    stdout.flush().or_else(check_for_writer_error).unwrap();
 }
 
 fn check_for_writer_error(error: std::io::Error) -> Result<(), std::io::Error> {
     // Do not panic when the process is killed (e.g. piping into `less`).
-    if matches!(error.kind(), ErrorKind::Interrupted | ErrorKind::BrokenPipe) {
+    if matches!(
+        error.kind(),
+        ErrorKind::Interrupted | ErrorKind::BrokenPipe | ErrorKind::WouldBlock
+    ) {
         Ok(())
     } else {
         Err(error)
@@ -557,6 +614,19 @@ fn render_report(handler: &GraphicalReportHandler, diagnostic: &OxcDiagnostic) -
     let mut err = String::new();
     handler.render_report(&mut err, diagnostic).unwrap();
     err
+}
+
+fn render_config_builder_error(
+    handler: &GraphicalReportHandler,
+    error: ConfigBuilderError,
+) -> String {
+    match error {
+        ConfigBuilderError::RuleConfigurationErrors { errors } => errors
+            .iter()
+            .map(|e| render_report(handler, &OxcDiagnostic::error(e.to_string())))
+            .collect::<String>(),
+        _ => render_report(handler, &OxcDiagnostic::error(error.to_string())),
+    }
 }
 
 #[cfg(test)]
@@ -605,6 +675,12 @@ mod test {
     }
 
     #[test]
+    fn wrong_extension_with_no_error_on_unmatched_pattern() {
+        let args = &["--no-error-on-unmatched-pattern", "foo.asdf"];
+        Tester::new().test_and_snapshot(args);
+    }
+
+    #[test]
     fn ignore_pattern() {
         let args =
             &["--ignore-pattern", "**/*.js", "--ignore-pattern", "**/*.vue", "fixtures/cli/linter"];
@@ -618,6 +694,17 @@ mod test {
     fn ignore_file_overrides_explicit_args() {
         let args =
             &["--ignore-path", "fixtures/cli/linter/.customignore", "fixtures/cli/linter/nan.js"];
+        Tester::new().test_and_snapshot(args);
+    }
+
+    #[test]
+    fn ignore_file_overrides_explicit_args_with_no_error_on_unmatched_pattern() {
+        let args = &[
+            "--no-error-on-unmatched-pattern",
+            "--ignore-path",
+            "fixtures/cli/linter/.customignore",
+            "fixtures/cli/linter/nan.js",
+        ];
         Tester::new().test_and_snapshot(args);
     }
 
@@ -956,25 +1043,27 @@ mod test {
 
     #[test]
     fn test_init_config() {
-        assert!(!fs::exists(DEFAULT_OXLINTRC_NAME).unwrap());
+        let temp_dir = tempfile::tempdir().expect("Could not create a temp dir");
+        let config_path = temp_dir.path().join(DEFAULT_OXLINTRC_NAME);
+        assert!(!fs::exists(&config_path).unwrap());
 
         let args = &["--init"];
-        Tester::new().with_cwd("fixtures".into()).test(args);
+        Tester::new().with_cwd(temp_dir.path().to_path_buf()).test(args);
 
-        assert!(fs::exists(DEFAULT_OXLINTRC_NAME).unwrap());
+        assert!(fs::exists(&config_path).unwrap());
 
-        fs::remove_file(DEFAULT_OXLINTRC_NAME).unwrap();
+        let content = fs::read_to_string(config_path).unwrap();
+
+        insta::assert_snapshot!("init_config", content);
     }
 
     #[test]
     fn test_overrides() {
-        let args_1 =
-            &["-c", "fixtures/cli/overrides/.oxlintrc.json", "fixtures/cli/overrides/test.js"];
-        let args_2 =
-            &["-c", "fixtures/cli/overrides/.oxlintrc.json", "fixtures/cli/overrides/test.ts"];
-        let args_3 =
-            &["-c", "fixtures/cli/overrides/.oxlintrc.json", "fixtures/cli/overrides/other.jsx"];
-        Tester::new().test_and_snapshot_multiple(&[args_1, args_2, args_3]);
+        // This is split into three to avoid creating a snapshot with a filename too large to be usable on Windows.
+        let tester = Tester::new().with_cwd("fixtures/cli/overrides".into());
+        tester.test_and_snapshot(&["-c", ".oxlintrc.json", "test.js"]);
+        tester.test_and_snapshot(&["-c", ".oxlintrc.json", "test.ts"]);
+        tester.test_and_snapshot(&["-c", ".oxlintrc.json", "other.jsx"]);
     }
 
     #[test]
@@ -1138,6 +1227,14 @@ mod test {
     }
 
     #[test]
+    fn test_nested_config_subdirectory_as_cwd() {
+        let args = &[];
+        Tester::new()
+            .with_cwd("fixtures/cli/nested_config/package4-as-cwd".into())
+            .test_and_snapshot(args);
+    }
+
+    #[test]
     fn test_nested_config_explicit_config_precedence() {
         // `--config` takes absolute precedence over nested configs, and will be used for
         // linting all files rather than the nested configuration files.
@@ -1213,6 +1310,12 @@ mod test {
         // https://github.com/oxc-project/oxc/pull/10597
         let args = &["--import-plugin", "-D", "import/no-cycle"];
         Tester::new().with_cwd("fixtures/cli/import-cycle".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_import_plugin_detects_cycles_with_auto_discovered_tsconfig_paths() {
+        let args = &["--import-plugin", "-D", "import/no-cycle", "deep/src/dep-a.ts"];
+        Tester::new().with_cwd("fixtures/lsp/ts_path_alias".into()).test_and_snapshot(args);
     }
 
     #[test]
@@ -1360,6 +1463,31 @@ mod test {
 
     #[test]
     #[cfg(not(target_endian = "big"))]
+    fn test_tsgolint_type_check_only() {
+        let args = &["--type-check-only"];
+        Tester::new().with_cwd("fixtures/cli/tsgolint_type_error".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_tsgolint_type_check_only_reports_syntax_errors() {
+        let args = &["--type-check-only"];
+        Tester::new()
+            .with_cwd("fixtures/cli/tsgolint_type_check_only_syntax_error".into())
+            .test_and_snapshot(args);
+    }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_tsgolint_type_check_only_reports_partial_loader_syntax_errors() {
+        let args = &["--type-check-only"];
+        Tester::new()
+            .with_cwd("fixtures/cli/tsgolint_type_check_only_svelte_syntax_error".into())
+            .test_and_snapshot(args);
+    }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
     fn test_tsgolint_type_check_requires_type_aware() {
         let args = &["--type-check"];
         Tester::new().with_cwd("fixtures/cli/tsgolint_type_error".into()).test_and_snapshot(args);
@@ -1374,6 +1502,13 @@ mod test {
 
     #[test]
     #[cfg(not(target_endian = "big"))]
+    fn test_tsgolint_type_check_with_zero_rules_enabled() {
+        let args = &["-c", "config-type-check-zero-rules.json"];
+        Tester::new().with_cwd("fixtures/cli/tsgolint_type_error".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
     fn test_tsgolint_type_check_false_via_config_file() {
         let args = &["-c", "config-type-check-false.json"];
         Tester::new().with_cwd("fixtures/cli/tsgolint_type_error".into()).test_and_snapshot(args);
@@ -1383,6 +1518,13 @@ mod test {
     #[cfg(not(target_endian = "big"))]
     fn test_tsgolint_type_check_false_overridden_by_cli_flag() {
         let args = &["--type-check", "-c", "config-type-check-false.json"];
+        Tester::new().with_cwd("fixtures/cli/tsgolint_type_error".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_tsgolint_type_check_only_rejects_fix_flags() {
+        let args = &["--type-check-only", "--fix"];
         Tester::new().with_cwd("fixtures/cli/tsgolint_type_error".into()).test_and_snapshot(args);
     }
 
@@ -1432,7 +1574,7 @@ mod test {
     #[test]
     fn test_tsgolint_disable_directives() {
         // Test that disable directives work with type-aware rules
-        let args = &["--type-aware", "test.ts"];
+        let args = &["--type-aware"];
         Tester::new()
             .with_cwd("fixtures/cli/tsgolint_disable_directives".into())
             .test_and_snapshot(args);
@@ -1522,9 +1664,23 @@ export { redundant };
     }
 
     #[test]
+    fn test_invalid_config_missing_rule_in_override() {
+        Tester::new()
+            .with_cwd("fixtures/cli/invalid_config_missing_rule_in_override".into())
+            .test_and_snapshot(&[]);
+    }
+
+    #[test]
     fn test_invalid_config_invalid_config_multiple_rules() {
         Tester::new()
             .with_cwd("fixtures/cli/invalid_config_multiple_rules".into())
+            .test_and_snapshot(&[]);
+    }
+
+    #[test]
+    fn test_invalid_config_missing_builtin_rule() {
+        Tester::new()
+            .with_cwd("fixtures/cli/invalid_config_missing_builtin_rule".into())
             .test_and_snapshot(&[]);
     }
 

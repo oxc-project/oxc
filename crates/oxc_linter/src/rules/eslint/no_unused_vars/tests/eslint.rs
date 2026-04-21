@@ -458,7 +458,7 @@ fn test() {
 
     let fail = vec![
         ("function foox() { return foox(); }", None),
-        // ("(function() { function foox() { if (true) { return foox(); } } }())", None),
+        ("(function() { function foox() { if (true) { return foox(); } } }())", None),
         ("var a=10", None),
         ("function f() { var a = 1; return function(){ f(a *= 2); }; }", None),
         ("function f() { var a = 1; return function(){ f(++a); }; }", None),

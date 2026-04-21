@@ -52,7 +52,8 @@ declare_oxc_lint!(
     PreferPrototypeMethods,
     unicorn,
     pedantic,
-    fix
+    fix,
+    version = "0.0.21",
 );
 
 impl Rule for PreferPrototypeMethods {

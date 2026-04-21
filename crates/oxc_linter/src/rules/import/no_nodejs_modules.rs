@@ -5,7 +5,8 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
+use oxc_str::CompactStr;
 use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -18,6 +19,7 @@ use crate::{
 
 fn no_nodejs_modules_diagnostic(span: Span, module_name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Do not import Node.js builtin module `{module_name}`"))
+        .with_help("Use a browser-compatible alternative or add this module to the `allow` list if Node.js usage is intentional.")
         .with_label(span)
 }
 
@@ -77,6 +79,7 @@ declare_oxc_lint!(
     import,
     style,
     config = NoNodejsModulesConfig,
+    version = "1.43.0",
 );
 
 impl Rule for NoNodejsModules {

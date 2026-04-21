@@ -47,7 +47,8 @@ declare_oxc_lint!(
     /// ```
     NoFindDomNode,
     react,
-    correctness
+    correctness,
+    version = "0.0.15",
 );
 
 impl Rule for NoFindDomNode {

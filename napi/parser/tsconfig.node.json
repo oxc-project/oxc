@@ -6,7 +6,6 @@
     "noEmit": true,
     "target": "ESNext",
     "allowImportingTsExtensions": true,
-    "noUnusedLocals": true,
     "skipLibCheck": true,
     "strict": false
   },

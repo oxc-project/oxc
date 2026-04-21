@@ -23,7 +23,7 @@ pub struct NoEmptyCharacterClass;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow empty character classes in regular expressions
+    /// Disallow empty character classes in regular expressions.
     ///
     /// ### Why is this bad?
     ///
@@ -43,7 +43,8 @@ declare_oxc_lint!(
     /// ```
     NoEmptyCharacterClass,
     eslint,
-    correctness
+    correctness,
+    version = "0.0.7",
 );
 
 impl Rule for NoEmptyCharacterClass {

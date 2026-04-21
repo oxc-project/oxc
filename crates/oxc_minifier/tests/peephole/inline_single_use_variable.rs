@@ -65,7 +65,8 @@ fn test_inline_single_use_variable() {
         }
     ",
     );
-    test(
+    // Ideally we should merge it to `this.#foo = foo;`
+    test_same(
         "
         class Foo {
             #foo;
@@ -75,14 +76,6 @@ fn test_inline_single_use_variable() {
             }
         }
         ",
-        "
-        class Foo {
-            #foo;
-            static {
-                this.#foo = foo;
-            }
-        }
-    ",
     );
     test(
         "
@@ -103,6 +96,47 @@ fn test_inline_single_use_variable() {
                 console.log(y);
             }
         }
+    ",
+    );
+    // need to avoid merging to `this.value = await ...` to avoid ReferenceError (https://github.com/oxc-project/oxc/issues/21296)
+    test(
+        "
+        class Base {
+            constructor(obj) {
+                obj.start()
+            }
+        }
+        class Wrapped extends Base {
+            constructor() {
+                super({
+                    start: async () => {
+                        let result = await new Promise(resolve => { setTimeout(() => { resolve(0) }, 0) })
+                        this.value = result
+                    }
+                })
+            }
+        }
+        let wrapped = new Wrapped()
+        setTimeout(() => { console.log('value', wrapped.value) }, 10)
+    ",
+        "
+        class Base {
+            constructor(obj) {
+                obj.start()
+            }
+        }
+        class Wrapped extends Base {
+            constructor() {
+                super({
+                    start: async () => {
+                        let result = await new Promise(resolve => { setTimeout(() => { resolve(0) }, 0) })
+                        this.value = result
+                    }
+                })
+            }
+        }
+        let wrapped = new Wrapped()
+        setTimeout(() => { console.log('value', wrapped.value) }, 10)
     ",
     );
     test(
@@ -329,6 +363,10 @@ fn keep_exposed_variables() {
     test("var x = foo; x()", "foo()");
     test_script_same("var x = foo; x()");
     test_script("{ let x = foo; x() }", "foo()");
+    test(
+        "var b = 'b', l = { '-a': 'a', b }; export { l }",
+        "var l = { '-a': 'a', b: 'b' }; export { l }",
+    );
 }
 
 #[test]
@@ -339,32 +377,29 @@ fn keep_names() {
     );
     test_keep_names(
         "var x = function() {}; var y = x; console.log(y.name)",
-        "var x = function() {}, y = x; console.log(y.name)",
+        "var x = function() {}; console.log(x.name)",
     );
     test_keep_names(
         "var x = (function() {}); var y = x; console.log(y.name)",
-        "var x = (function() {}), y = x; console.log(y.name)",
+        "var x = (function() {}); console.log(x.name)",
     );
     test_keep_names(
         "var x = function foo() {}; var y = x; console.log(y.name)",
         "console.log(function foo() {}.name)",
     );
 
-    test(
-        "var x = class {}; var y = x; console.log(y.name)",
-        "var y = class {}; console.log(y.name)",
-    );
+    test("var x = class {}; var y = x; console.log(y.name)", "console.log(class {}.name)");
     test_keep_names(
         "var x = class {}; var y = x; console.log(y.name)",
-        "var x = class {}, y = x; console.log(y.name)",
+        "var x = class {}; console.log(x.name)",
     );
     test_keep_names(
         "var x = (class {}); var y = x; console.log(y.name)",
-        "var x = (class {}), y = x; console.log(y.name)",
+        "var x = (class {}); console.log(x.name)",
     );
     test_keep_names(
         "var x = class Foo {}; var y = x; console.log(y.name)",
-        "var y = class Foo {}; console.log(y.name)",
+        "console.log(class Foo {}.name)",
     );
 }
 
