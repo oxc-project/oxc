@@ -840,6 +840,13 @@ fn test() {
             "#,
             Some(json!(["always", { "js": "never", "jsx": "never"}])),
         ),
+        (
+            r#"
+                import bar from "./bar.js";
+                import data from "./data";
+            "#,
+            Some(json!(["never", { "js": "always", "json": "never"}])),
+        ),
         (r#"import path from "path";"#, None),
         (r#"import path from "path";"#, Some(json!(["never"]))),
         (r#"import path from "path";"#, Some(json!(["always"]))),
