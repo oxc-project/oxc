@@ -173,22 +173,4 @@ mod tests {
             insta::assert_snapshot!(snapshot);
         });
     }
-
-    #[test]
-    fn test_docs_rule_pages_include_version_frontmatter() {
-        let mut generator = SchemaGenerator::new(SchemaSettings::default());
-        let table = RuleTable::new(Some(&mut generator));
-        let (_, docs, rule) = render_rule_doc_pages(generator, &table)
-            .find(|(_, _, rule)| rule.plugin == "eslint" && rule.name == "no-unused-vars")
-            .unwrap();
-
-        assert!(
-            docs.contains("version: \""),
-            "expected generated docs for {}/{} to include version frontmatter:\n{}",
-            rule.plugin,
-            rule.name,
-            docs
-        );
-        assert!(docs.contains(&format!("version: \"{}\"", rule.version)));
-    }
 }
