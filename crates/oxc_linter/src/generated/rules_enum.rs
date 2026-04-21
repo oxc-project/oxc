@@ -16582,6 +16582,7 @@ impl RuleEnum {
         }
     }
     #[doc = r" The version of oxlint in which this rule was first available."]
+    #[cfg(feature = "ruledocs")]
     pub fn version(&self) -> &'static str {
         match self {
             Self::ImportConsistentTypeSpecifierStyle(_) => {

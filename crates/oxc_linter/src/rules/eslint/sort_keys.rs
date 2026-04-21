@@ -1,7 +1,4 @@
-use std::{cmp::Ordering, str::Chars};
-
-use cow_utils::CowUtils;
-use itertools::all;
+use std::{borrow::Cow, cmp::Ordering, str::Chars};
 
 use oxc_ast::{
     AstKind,
@@ -10,6 +7,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_syntax::line_terminator::LineTerminatorSplitter;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -112,91 +110,132 @@ impl Rule for SortKeys {
                 return;
             }
 
-            let mut property_groups = collect_property_groups(dec, ctx.source_text(), options);
-
-            if !options.case_sensitive {
-                for group in &mut property_groups {
-                    *group = group
-                        .iter()
-                        .map(|s| s.cow_to_ascii_lowercase().to_string())
-                        .collect::<Vec<String>>();
-                }
+            if is_object_sorted(dec, ctx.source_text(), sort_order, options) {
+                return;
             }
 
-            let mut sorted_property_groups = property_groups.clone();
-            for group in &mut sorted_property_groups {
-                if options.natural {
-                    natural_sort(group);
-                } else {
-                    alphanumeric_sort(group);
-                }
+            if let Some((replace_span, replacement)) =
+                build_object_fix(dec, ctx, sort_order, options)
+            {
+                ctx.diagnostic_with_fix(sort_properties_diagnostic(node.span()), |fixer| {
+                    fixer.replace(replace_span, replacement)
+                });
 
-                if sort_order == &SortOrder::Desc {
-                    group.reverse();
-                }
+                return;
             }
 
-            let is_sorted =
-                all(property_groups.iter().zip(&sorted_property_groups), |(a, b)| a == b);
-
-            if !is_sorted {
-                if let Some((replace_span, replacement)) =
-                    build_object_fix(dec, ctx, sort_order, options)
-                {
-                    ctx.diagnostic_with_fix(sort_properties_diagnostic(node.span()), |fixer| {
-                        fixer.replace(replace_span, replacement)
-                    });
-
-                    return;
-                }
-
-                // Fallback: still emit diagnostic if we couldn't produce a safe fix
-                ctx.diagnostic(sort_properties_diagnostic(node.span()));
-            }
+            // Fallback: still emit diagnostic if we couldn't produce a safe fix
+            ctx.diagnostic(sort_properties_diagnostic(node.span()));
         }
     }
 }
 
-struct FixableProperty {
-    key: String,
+struct FixableProperty<'a> {
+    key: Cow<'a, str>,
     span: Span,
-    text: String,
+    text: Cow<'a, str>,
 }
 
-fn collect_property_groups(
+/// Check if all property groups within an object are already sorted.
+/// This avoids allocating by comparing adjacent keys in-place.
+fn is_object_sorted(
     object: &ObjectExpression<'_>,
     source_text: &str,
+    sort_order: &SortOrder,
     options: &SortKeysOptions,
-) -> Vec<Vec<String>> {
-    let mut property_groups: Vec<Vec<String>> = vec![vec![]];
+) -> bool {
+    let mut prev_key: Option<Cow<'_, str>> = None;
 
     for (i, prop) in object.properties.iter().enumerate() {
         match prop {
             ObjectPropertyKind::SpreadProperty(_) => {
-                property_groups.push(vec!["<ellipsis_group>".into()]);
-                property_groups.push(vec![]);
+                prev_key = None;
             }
             ObjectPropertyKind::ObjectProperty(obj) => {
                 let Some(key) = obj.key.static_name() else { continue };
-                if i != object.properties.len() - 1 && options.allow_line_separated_groups {
+
+                if let Some(ref prev) = prev_key {
+                    let ordering = compare_keys(prev, &key, options);
+                    let is_ordered = match sort_order {
+                        SortOrder::Asc => ordering != Ordering::Greater,
+                        SortOrder::Desc => ordering != Ordering::Less,
+                    };
+
+                    if !is_ordered {
+                        return false;
+                    }
+                }
+
+                if options.allow_line_separated_groups && i + 1 < object.properties.len() {
                     let text_between = extract_text_between_spans(
                         source_text,
                         prop.span(),
                         object.properties[i + 1].span(),
                     );
-                    if text_between.contains("\n\n") {
-                        property_groups.last_mut().unwrap().push(key.into());
-                        property_groups.push(vec!["<linebreak_group>".into()]);
-                        property_groups.push(vec![]);
+                    if has_blank_line(text_between) {
+                        prev_key = None;
                         continue;
                     }
                 }
-                property_groups.last_mut().unwrap().push(key.into());
+
+                prev_key = Some(key);
             }
         }
     }
 
-    property_groups
+    true
+}
+
+/// Compare two keys according to sort options, without allocating.
+fn compare_keys(a: &str, b: &str, options: &SortKeysOptions) -> Ordering {
+    if options.natural {
+        natural_compare(a, b, options.case_sensitive)
+    } else if options.case_sensitive {
+        a.cmp(b)
+    } else {
+        a.bytes().map(|b| b.to_ascii_lowercase()).cmp(b.bytes().map(|b| b.to_ascii_lowercase()))
+    }
+}
+
+/// Count contiguous groups of statically-named properties, separated by
+/// spreads or blank lines. Replaces the full `collect_property_groups`
+/// call used only for the group-count check.
+fn count_static_groups(
+    object: &ObjectExpression<'_>,
+    source_text: &str,
+    options: &SortKeysOptions,
+) -> usize {
+    let mut count = 0;
+    let mut in_static_group = false;
+
+    for (i, prop) in object.properties.iter().enumerate() {
+        match prop {
+            ObjectPropertyKind::SpreadProperty(_) => {
+                in_static_group = false;
+            }
+            ObjectPropertyKind::ObjectProperty(obj) => {
+                if obj.key.static_name().is_none() {
+                    continue;
+                }
+                if !in_static_group {
+                    count += 1;
+                    in_static_group = true;
+                }
+                if options.allow_line_separated_groups && i + 1 < object.properties.len() {
+                    let text_between = extract_text_between_spans(
+                        source_text,
+                        prop.span(),
+                        object.properties[i + 1].span(),
+                    );
+                    if has_blank_line(text_between) {
+                        in_static_group = false;
+                    }
+                }
+            }
+        }
+    }
+
+    count
 }
 
 fn build_object_fix<'a>(
@@ -207,21 +246,21 @@ fn build_object_fix<'a>(
 ) -> Option<(Span, String)> {
     let props = collect_fixable_properties(object, ctx, sort_order, options)?;
     let indices = sorted_property_indices(&props, sort_order, options);
-    let has_nested_fix = props.iter().any(|prop| prop.text.as_str() != ctx.source_range(prop.span));
+    let has_nested_fix = props.iter().any(|prop| prop.text.as_ref() != ctx.source_range(prop.span));
     let needs_reordering = indices.iter().enumerate().any(|(position, index)| position != *index);
 
     if !needs_reordering && !has_nested_fix {
         return None;
     }
 
-    let mut separators: Vec<String> = Vec::with_capacity(props.len());
+    let mut separators: Vec<&str> = Vec::with_capacity(props.len());
     for i in 0..props.len() {
         if i + 1 < props.len() {
             let sep_start = props[i].span.end;
             let sep_end = props[i + 1].span.start;
-            separators.push(ctx.source_range(Span::new(sep_start, sep_end)).to_string());
+            separators.push(ctx.source_range(Span::new(sep_start, sep_end)));
         } else {
-            separators.push(String::new());
+            separators.push("");
         }
     }
 
@@ -231,7 +270,7 @@ fn build_object_fix<'a>(
 
         if position + 1 < indices.len() {
             let separator = if position < separators.len() && !separators[position].is_empty() {
-                separators[position].as_str()
+                separators[position]
             } else {
                 ", "
             };
@@ -247,20 +286,14 @@ fn collect_fixable_properties<'a>(
     ctx: &LintContext<'a>,
     sort_order: &SortOrder,
     options: &SortKeysOptions,
-) -> Option<Vec<FixableProperty>> {
+) -> Option<Vec<FixableProperty<'a>>> {
     enum SpreadPos {
         Start,
         CanEnd,
         End,
     }
 
-    let property_groups = collect_property_groups(object, ctx.source_text(), options);
-    let static_groups_count = property_groups
-        .iter()
-        .filter(|group| !group.is_empty() && !group.iter().any(|key| key.starts_with('<')))
-        .count();
-
-    if static_groups_count != 1 {
+    if count_static_groups(object, ctx.source_text(), options) != 1 {
         return None;
     }
 
@@ -292,7 +325,7 @@ fn collect_fixable_properties<'a>(
                 let key = obj.key.static_name()?;
 
                 props.push(FixableProperty {
-                    key: key.to_string(),
+                    key,
                     span: prop.span(),
                     text: build_property_text(obj, ctx, sort_order, options),
                 });
@@ -312,45 +345,19 @@ fn collect_fixable_properties<'a>(
 }
 
 fn sorted_property_indices(
-    props: &[FixableProperty],
+    props: &[FixableProperty<'_>],
     sort_order: &SortOrder,
     options: &SortKeysOptions,
 ) -> Vec<usize> {
-    let keys_for_cmp: Vec<String> = props
-        .iter()
-        .map(|prop| {
-            if options.case_sensitive {
-                prop.key.clone()
-            } else {
-                prop.key.cow_to_ascii_lowercase().to_string()
-            }
-        })
-        .collect();
+    let mut indices: Vec<usize> = (0..props.len()).collect();
 
-    let mut sorted_keys = keys_for_cmp.clone();
-    if options.natural {
-        natural_sort(&mut sorted_keys);
-    } else {
-        alphanumeric_sort(&mut sorted_keys);
-    }
-    if sort_order == &SortOrder::Desc {
-        sorted_keys.reverse();
-    }
-
-    let mut used = vec![false; keys_for_cmp.len()];
-    let mut indices: Vec<usize> = Vec::with_capacity(keys_for_cmp.len());
-
-    for sorted_key in &sorted_keys {
-        if let Some(position) = keys_for_cmp
-            .iter()
-            .enumerate()
-            .find(|(index, key)| !used[*index] && key.as_str() == sorted_key.as_str())
-            .map(|(index, _)| index)
-        {
-            used[position] = true;
-            indices.push(position);
+    indices.sort_unstable_by(|&a, &b| {
+        let cmp = compare_keys(&props[a].key, &props[b].key, options);
+        match sort_order {
+            SortOrder::Asc => cmp,
+            SortOrder::Desc => cmp.reverse(),
         }
-    }
+    });
 
     indices
 }
@@ -360,68 +367,64 @@ fn build_property_text<'a>(
     ctx: &LintContext<'a>,
     sort_order: &SortOrder,
     options: &SortKeysOptions,
-) -> String {
-    let property_text = ctx.source_range(property.span).to_string();
+) -> Cow<'a, str> {
     let Expression::ObjectExpression(object) = &property.value else {
-        return property_text;
+        return Cow::Borrowed(ctx.source_range(property.span));
     };
     let Some((replace_span, replacement)) = build_object_fix(object, ctx, sort_order, options)
     else {
-        return property_text;
+        return Cow::Borrowed(ctx.source_range(property.span));
     };
 
-    let before_value =
-        ctx.source_range(Span::new(property.span.start, replace_span.start)).to_string();
-    let after_value = ctx.source_range(Span::new(replace_span.end, property.span.end)).to_string();
+    let before_value = ctx.source_range(Span::new(property.span.start, replace_span.start));
+    let after_value = ctx.source_range(Span::new(replace_span.end, property.span.end));
 
-    format!("{before_value}{replacement}{after_value}")
+    Cow::Owned(format!("{before_value}{replacement}{after_value}"))
 }
 
-fn alphanumeric_sort(arr: &mut [String]) {
-    arr.sort_unstable();
-}
+fn natural_compare(a: &str, b: &str, case_sensitive: bool) -> Ordering {
+    let mut a_chars = a.chars();
+    let mut b_chars = b.chars();
 
-fn natural_sort(arr: &mut [String]) {
-    arr.sort_unstable_by(|a, b| {
-        let mut a_chars = a.chars();
-        let mut b_chars = b.chars();
+    loop {
+        let a_next = a_chars.next();
+        let b_next = b_chars.next();
 
-        loop {
-            match (a_chars.next(), b_chars.next()) {
-                (Some(a_char), Some(b_char)) if a_char == b_char => {}
-                (Some(a_char), Some(b_char))
-                    if a_char.is_ascii_digit() && b_char.is_ascii_digit() =>
-                {
+        match (a_next, b_next) {
+            (None, None) => return Ordering::Equal,
+            (Some(_), None) => return Ordering::Greater,
+            (None, Some(_)) => return Ordering::Less,
+            (Some(a_raw), Some(b_raw)) => {
+                let a_char = if case_sensitive { a_raw } else { a_raw.to_ascii_lowercase() };
+                let b_char = if case_sensitive { b_raw } else { b_raw.to_ascii_lowercase() };
+
+                if a_char == b_char {
+                    continue;
+                }
+                if a_char.is_ascii_digit() && b_char.is_ascii_digit() {
                     let n1 = take_numeric(&mut a_chars, a_char);
                     let n2 = take_numeric(&mut b_chars, b_char);
                     match n1.cmp(&n2) {
-                        Ordering::Equal => {}
+                        Ordering::Equal => continue,
                         ord => return ord,
                     }
                 }
-                (Some(a_char), Some(b_char))
-                    if a_char.is_alphanumeric() && !b_char.is_alphanumeric() =>
-                {
+                if a_char.is_alphanumeric() && !b_char.is_alphanumeric() {
                     return Ordering::Greater;
                 }
-                (Some(a_char), Some(b_char))
-                    if !a_char.is_alphanumeric() && b_char.is_alphanumeric() =>
-                {
+                if !a_char.is_alphanumeric() && b_char.is_alphanumeric() {
                     return Ordering::Less;
                 }
-                (Some(a_char), Some(b_char)) if a_char == '[' && b_char.is_alphanumeric() => {
+                if a_char == '[' && b_char.is_alphanumeric() {
                     return Ordering::Greater;
                 }
-                (Some(a_char), Some(b_char)) if a_char.is_alphanumeric() && b_char == '[' => {
+                if a_char.is_alphanumeric() && b_char == '[' {
                     return Ordering::Less;
                 }
-                (Some(a_char), Some(b_char)) => return a_char.cmp(&b_char),
-                (None, None) => return Ordering::Equal,
-                (Some(_), None) => return Ordering::Greater,
-                (None, Some(_)) => return Ordering::Less,
+                return a_char.cmp(&b_char);
             }
         }
-    });
+    }
 }
 
 fn take_numeric(iter: &mut Chars, first: char) -> u32 {
@@ -440,6 +443,10 @@ fn extract_text_between_spans(source_text: &str, current_span: Span, next_span: 
     let cur_span_end = current_span.end as usize;
     let next_span_start = next_span.start as usize;
     &source_text[cur_span_end..next_span_start]
+}
+
+fn has_blank_line(text: &str) -> bool {
+    LineTerminatorSplitter::new(text).skip(1).any(str::is_empty)
 }
 
 #[test]
@@ -694,6 +701,14 @@ fn test() {
                                 c: 6
                             }
                         ",
+            Some(serde_json::json!(["asc", { "allowLineSeparatedGroups": true }])),
+        ),
+        (
+            "var obj = {\r\n  c: 1,\r\n  d: 2,\r\n\r\n  a: 3,\r\n  b: 4,\r\n};",
+            Some(serde_json::json!(["asc", { "allowLineSeparatedGroups": true }])),
+        ),
+        (
+            "var obj = {\u{2028}  c: 1,\u{2028}  d: 2,\u{2028}\u{2029}  a: 3,\u{2028}  b: 4,\u{2028}};",
             Some(serde_json::json!(["asc", { "allowLineSeparatedGroups": true }])),
         ),
         (

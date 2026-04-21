@@ -1,6 +1,5 @@
 ---
 source: tasks/website_linter/src/rules/mod.rs
-assertion_line: 173
 expression: snapshot
 ---
 --- eslint/no-unused-vars.md ---
@@ -614,6 +613,9 @@ console.log(b);
 ## How to use
 <RuleHowToUse />
 
+## Version
+This rule was added in v0.7.0.
+
 ## References
 <RuleReferences />
 
@@ -707,6 +709,9 @@ Whether to allow computed references to an imported namespace.
 ## How to use
 <RuleHowToUse />
 
+## Version
+This rule was added in v0.2.11.
+
 ## References
 <RuleReferences />
 
@@ -791,6 +796,9 @@ NOTE: The default value is `["expect"]` for Jest and
 ## How to use
 <RuleHowToUse />
 
+## Version
+This rule was added in v0.0.12.
+
 ## References
 <RuleReferences />
 
@@ -870,6 +878,9 @@ export default MyDocument
 
 ## How to use
 <RuleHowToUse />
+
+## Version
+This rule was added in v0.3.3.
 
 ## References
 <RuleReferences />
@@ -965,6 +976,9 @@ Boolean as to whether callbacks in timeout functions like `setTimeout` will err.
 ## How to use
 <RuleHowToUse />
 
+## Version
+This rule was added in v0.10.0.
+
 ## References
 <RuleReferences />
 
@@ -1049,6 +1063,9 @@ Makes this rule more strict by disallowing calls to `this.setState`` even within
 
 ## How to use
 <RuleHowToUse />
+
+## Version
+This rule was added in v1.37.0.
 
 ## References
 <RuleReferences />
@@ -1329,6 +1346,9 @@ Ignore Promises that are void expressions.
 ## How to use
 <RuleHowToUse />
 
+## Version
+This rule was added in v1.11.0.
+
 ## References
 <RuleReferences />
 
@@ -1394,6 +1414,9 @@ export default {
 ## How to use
 <RuleHowToUse />
 
+## Version
+This rule was added in v1.39.0.
+
 ## References
 <RuleReferences />
 
@@ -1445,6 +1468,9 @@ const match = users.find(fn);
 
 ## How to use
 <RuleHowToUse />
+
+## Version
+This rule was added in v0.16.12.
 
 ## References
 <RuleReferences />
@@ -1524,6 +1550,9 @@ before the rule is triggered.
 
 ## How to use
 <RuleHowToUse />
+
+## Version
+This rule was added in v0.3.0.
 
 ## References
 <RuleReferences />
@@ -1641,6 +1670,9 @@ The name of the prop to forbid.
 ## How to use
 <RuleHowToUse />
 
+## Version
+This rule was added in v1.24.0.
+
 ## References
 <RuleReferences />
 
@@ -1734,6 +1766,9 @@ Whether to ignore rest parameter arrays.
 
 ## How to use
 <RuleHowToUse />
+
+## Version
+This rule was added in v0.0.13.
 
 ## References
 <RuleReferences />
@@ -1843,6 +1878,9 @@ Whether to require a `@returns` tag for async functions.
 ## How to use
 <RuleHowToUse />
 
+## Version
+This rule was added in v0.4.0.
+
 ## References
 <RuleReferences />
 
@@ -1927,6 +1965,9 @@ function useCustomHook() {
 
 ## How to use
 <RuleHowToUse />
+
+## Version
+This rule was added in v0.3.3.
 
 ## References
 <RuleReferences />
@@ -2034,6 +2075,9 @@ return "oxc";
 
 ## How to use
 <RuleHowToUse />
+
+## Version
+This rule was added in v1.47.0.
 
 ## References
 <RuleReferences />

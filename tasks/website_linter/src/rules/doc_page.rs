@@ -122,7 +122,7 @@ const source = `{}`;{}
         // how-to-use and rule references components.
         writeln!(
             self.page,
-            "\n## How to use\n<RuleHowToUse />\n\n## References\n<RuleReferences />"
+            "\n## How to use\n<RuleHowToUse />\n\n## Version\nThis rule was added in v{version}.\n\n## References\n<RuleReferences />"
         )?;
 
         Ok(self.page.take())

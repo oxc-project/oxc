@@ -26,6 +26,7 @@ impl InternalFormatter for JsonOutputFormatter {
             scope: &'a str,
             value: &'a str,
             category: RuleCategory,
+            #[cfg(feature = "ruledocs")]
             version: &'a str,
             type_aware: bool,
             fix: String,
@@ -50,6 +51,7 @@ impl InternalFormatter for JsonOutputFormatter {
                 scope: rule.plugin_name(),
                 value: rule.name(),
                 category: rule.category(),
+                #[cfg(feature = "ruledocs")]
                 version: rule.version(),
                 type_aware: rule.is_tsgolint_rule(),
                 fix: rule.fix().to_string(),
@@ -155,7 +157,6 @@ mod test {
 
     use oxc_diagnostics::{NamedSource, OxcDiagnostic, reporter::DiagnosticResult};
     use oxc_span::Span;
-    use serde_json::Value;
 
     use crate::output_formatter::{InternalFormatter, LintCommandInfo, json::JsonOutputFormatter};
 
@@ -189,18 +190,5 @@ mod test {
             &output,
             "{ \"diagnostics\": [{\"message\": \"error message\",\"severity\": \"warning\",\"causes\": [],\"filename\": \"file://test.ts\",\"labels\": [{\"span\": {\"offset\": 0,\"length\": 8,\"line\": 1,\"column\": 1}}],\"related\": []}],\n              \"number_of_files\": 0,\n              \"number_of_rules\": 0,\n              \"threads_count\": 1,\n              \"start_time\": 0\n            }\n            "
         );
-    }
-
-    #[test]
-    fn all_rules_json_includes_version_metadata() {
-        let formatter = JsonOutputFormatter::default();
-        let output = formatter.all_rules(rustc_hash::FxHashSet::default()).unwrap();
-        let rules: Value = serde_json::from_str(&output).unwrap();
-        let rules = rules.as_array().unwrap();
-
-        assert!(!rules.is_empty());
-        assert!(rules.iter().all(|rule| {
-            rule.get("version").and_then(Value::as_str).is_some_and(|version| !version.is_empty())
-        }));
     }
 }
