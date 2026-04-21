@@ -16617,6 +16617,7 @@ impl RuleEnum {
             Self::ImportMaxDependencies(_) => ImportMaxDependencies::VERSION,
             Self::ImportNamed(_) => ImportNamed::VERSION,
             Self::ImportNamespace(_) => ImportNamespace::VERSION,
+            Self::ImportNewlineAfterImport(_) => ImportNewlineAfterImport::VERSION,
             Self::ImportNoAbsolutePath(_) => ImportNoAbsolutePath::VERSION,
             Self::ImportNoAmd(_) => ImportNoAmd::VERSION,
             Self::ImportNoAnonymousDefaultExport(_) => ImportNoAnonymousDefaultExport::VERSION,
